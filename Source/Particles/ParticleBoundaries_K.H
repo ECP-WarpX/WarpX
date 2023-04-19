@@ -86,8 +86,11 @@ namespace ApplyParticleBoundaries {
 #ifndef WARPX_DIM_1D_Z
               amrex::ParticleReal& x, amrex::Real xmin, amrex::Real xmax,
 #endif
-#ifdef WARPX_DIM_3D
-                      amrex::ParticleReal& y, amrex::Real ymin, amrex::Real ymax,
+#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
+                      amrex::ParticleReal& y,
+#endif
+#if (defined WARPX_DIM_3D)
+                      amrex::Real ymin, amrex::Real ymax,
 #endif
                       amrex::ParticleReal& z, amrex::Real zmin, amrex::Real zmax,
                       amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
@@ -121,8 +124,25 @@ namespace ApplyParticleBoundaries {
             change_sign_uy = true;
             change_sign_uz = true;
         }
+#ifdef WARPX_DIM_RZ
+        // Note that the reflection of the position does "r = 2*rmax - r", but this is only approximate.
+        // The exact calculation requires the position at the start of the step.
+        if (change_sign_ux && change_sign_uy) {
+            ux = -ux;
+            uy = -uy;
+        } else if (change_sign_ux) {
+            // Reflect only ur
+            // Note that y is theta
+            amrex::Real ur = ux*std::cos(y) + uy*std::sin(y);
+            amrex::Real ut = -ux*std::sin(y) + uy*std::cos(y);
+            ur = -ur;
+            ux = ur*std::cos(y) - ut*std::sin(y);
+            uy = ur*std::sin(y) + ut*std::cos(y);
+        }
+#else
         if (change_sign_ux) ux = -ux;
         if (change_sign_uy) uy = -uy;
+#endif
         if (change_sign_uz) uz = -uz;
     }
 

@@ -58,10 +58,12 @@ namespace BinaryCollisionUtils{
                     return NuclearFusionType::DeuteriumDeuteriumToNeutronHelium;
                 } else if (
                     (product_species1.AmIA<PhysicalSpecies::hydrogen3>() && product_species2.AmIA<PhysicalSpecies::proton>())
-                  ||(product_species1.AmIA<PhysicalSpecies::proton>() && product_species2.AmIA<PhysicalSpecies::hydrogen3>())){
+                  ||(product_species1.AmIA<PhysicalSpecies::proton>() && product_species2.AmIA<PhysicalSpecies::hydrogen3>())
+                  ||(product_species1.AmIA<PhysicalSpecies::hydrogen3>() && product_species2.AmIA<PhysicalSpecies::hydrogen1>())
+                  ||(product_species1.AmIA<PhysicalSpecies::hydrogen1>() && product_species2.AmIA<PhysicalSpecies::hydrogen3>())){
                     return NuclearFusionType::DeuteriumDeuteriumToProtonTritium;
                 } else {
-                    amrex::Abort("ERROR: Product species of proton-boron fusion must be of type helium3 and neutron, or tritium and proton");
+                    amrex::Abort("ERROR: Product species of deuterium-deuterium fusion must be of type helium3 and neutron, or tritium and proton");
                 }
             }
             else if ((species1.AmIA<PhysicalSpecies::hydrogen2>() && species2.AmIA<PhysicalSpecies::helium3>())

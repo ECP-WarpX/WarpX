@@ -27,6 +27,8 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
+#include "Python/WarpX_py.H"
 
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/UsedInputsFile.H>
@@ -387,12 +389,14 @@ WarpX::InitData ()
         ComputeDt();
         WarpX::PrintDtDxDyDz();
         InitFromScratch();
+        InitDiagnostics();
     }
     else
     {
         InitFromCheckpoint();
         WarpX::PrintDtDxDyDz();
         PostRestart();
+        reduced_diags->InitData();
     }
 
     ComputeMaxStep();
@@ -408,8 +412,6 @@ WarpX::InitData ()
     if (WarpX::em_solver_medium==1) {
         m_macroscopic_properties->InitData();
     }
-
-    InitDiagnostics();
 
     if (ParallelDescriptor::IOProcessor()) {
         std::cout << "\nGrids Summary:\n";
@@ -427,7 +429,9 @@ WarpX::InitData ()
     {
         // Loop through species and calculate their space-charge field
         bool const reset_fields = false; // Do not erase previous user-specified values on the grid
+        ExecutePythonCallback("beforeInitEsolve");
         ComputeSpaceChargeField(reset_fields);
+        ExecutePythonCallback("afterInitEsolve");
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
             ComputeMagnetostaticField();
 

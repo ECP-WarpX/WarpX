@@ -110,7 +110,7 @@ Periodically commit your changes with
 
    git commit
 
-The commit message (between quotation marks) is super important in order to follow the developments during code-review and identify bugs.
+The commit message is super important in order to follow the developments during code-review and identify bugs.
 A typical format is:
 
 .. code-block:: text
