@@ -1,7 +1,7 @@
 .. _building-fugaku:
 
 Fugaku (Riken)
-==================
+==============
 
 The `Fugaku cluster <https://docs.nersc.gov/systems/perlmutter/>`_ is located at the Riken Center for Computational Science (Japan).
 
