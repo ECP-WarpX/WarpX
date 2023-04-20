@@ -252,7 +252,7 @@ WarpX::EvolveImplicitPicard (int numsteps)
             amrex::Real deltaE0 = Efield_save[0][0]->norm0(0, 0)/maxE0;
             amrex::Real deltaE1 = Efield_save[0][1]->norm0(0, 0)/maxE1;
             amrex::Real deltaE2 = Efield_save[0][2]->norm0(0, 0)/maxE2;
-            /* std::cout << "deltaE " << iteration_count << " " << deltaE0 << " " << deltaE1 << " " << deltaE2 << "\n"; */
+            /* amrex::Print() << "deltaE " << iteration_count << " " << deltaE0 << " " << deltaE1 << " " << deltaE2 << "\n"; */
             deltaE = std::max(std::max(deltaE0, deltaE1), deltaE2);
             Bfield_save[0][0]->minus(*Bfield_fp[0][0], 0, 1, 0);
             Bfield_save[0][1]->minus(*Bfield_fp[0][1], 0, 1, 0);
@@ -263,15 +263,15 @@ WarpX::EvolveImplicitPicard (int numsteps)
             amrex::Real deltaB0 = Bfield_save[0][0]->norm0(0, 0)/maxB0;
             amrex::Real deltaB1 = Bfield_save[0][1]->norm0(0, 0)/maxB1;
             amrex::Real deltaB2 = Bfield_save[0][2]->norm0(0, 0)/maxB2;
-            /* std::cout << "deltaB " << iteration_count << " " << deltaB0 << " " << deltaB1 << " " << deltaB2 << "\n"; */
+            /* amrex::Print() << "deltaB " << iteration_count << " " << deltaB0 << " " << deltaB1 << " " << deltaB2 << "\n"; */
             deltaB = std::max(std::max(deltaB0, deltaB1), deltaB2);
-            /* std::cout << "Max delta " << iteration_count << " " << deltaE << " " << deltaB << "\n"; */
+            amrex::Print() << "Max delta " << iteration_count << " " << deltaE << " " << deltaB << "\n";
 
             // Now, the particle positions and velocities and the Efield_fp and Bfield_fp hold
             // the new values at n+1/2
         }
 
-        std::cout << "Picard iterations = " << iteration_count << ", Eerror =  " << deltaE << ", Berror =  " << deltaB << "\n";
+        amrex::Print() << "Picard iterations = " << iteration_count << ", Eerror =  " << deltaE << ", Berror =  " << deltaB << "\n";
 
         // Advance particles to step n+1
         for (auto const& pc : *mypc) {
