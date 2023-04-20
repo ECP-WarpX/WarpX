@@ -413,7 +413,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const auto domain = geom.Domain();
 
     amrex::Box sample_tbox(IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
-    sample_tbox.grow((depos_order+1) / 2);
+    sample_tbox.grow(depos_order);
 
     amrex::Box sample_tbox_x = convert(sample_tbox, jx_type);
     amrex::Box sample_tbox_y = convert(sample_tbox, jy_type);
@@ -465,7 +465,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             getTileIndex(iv, box, true, bin_size, buffer_box);
         }
 
-        buffer_box.grow((depos_order+1)/2);
+        buffer_box.grow(depos_order);
         Box tbox_x = convert(buffer_box, jx_type);
         Box tbox_y = convert(buffer_box, jy_type);
         Box tbox_z = convert(buffer_box, jz_type);
