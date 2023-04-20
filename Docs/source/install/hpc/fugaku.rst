@@ -100,7 +100,7 @@ Running
 .. _running-cpp-fugaku-A64FX-CPUs:
 
 A64FX CPUs
-^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^
 
 In non-interactive runs, you can use `pjsub submit.sh` where `submit.sh` can be adapted from:
 
