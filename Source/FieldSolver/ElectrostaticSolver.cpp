@@ -168,9 +168,9 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     // Deposit particle charge density (source of Poisson solver)
     bool const local = false;
     bool const reset = false;
-    bool const do_rz_volume_scaling = true;
+    bool const apply_boundary_and_scale_volume = true;
     if ( !pc.do_not_deposit) {
-        pc.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+        pc.DepositCharge(rho, local, reset, apply_boundary_and_scale_volume);
     }
 
     // Get the particle beta vector
@@ -207,7 +207,13 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     // Deposit particle charge density (source of Poisson solver)
     mypc->DepositCharge(rho_fp, 0.0_rt);
 
-    SyncRho(); // Apply filter, perform MPI exchange, interpolate across levels
+    SyncRho(rho_fp, rho_cp); // Apply filter, perform MPI exchange, interpolate across levels
+#ifndef WARPX_DIM_RZ
+    for (int lev = 0; lev <= finestLevel(); lev++) {
+        // Reflect density over PEC boundaries, if needed.
+        ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
+    }
+#endif
 
     // beta is zero in lab frame
     // Todo: use simpler finite difference form with beta=0

@@ -37,9 +37,6 @@ Use the following commands to download the WarpX source code and switch to the c
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
-To enable HDF5, work-around the broken ``HDF5_VERSION`` variable (empty) in the Cray PE by commenting out the following lines in ``$HOME/src/openPMD-api/CMakeLists.txt``:
-https://github.com/openPMD/openPMD-api/blob/0.15.1/CMakeLists.txt#L216-L220
-
 We use the following modules and environments on the system (``$HOME/frontier_warpx.profile``).
 
 .. literalinclude:: ../../../../Tools/machines/frontier-olcf/frontier_warpx.profile.example
@@ -60,11 +57,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build   \
-     -DWarpX_COMPUTE=HIP \
-     -DWarpX_amrex_src=$HOME/src/amrex \
-     -DWarpX_picsar_src=$HOME/src/picsar \
-     -DWarpX_openpmd_src=$HOME/src/openPMD-api
+   cmake -S . -B build -DWarpX_COMPUTE=HIP
    cmake --build build -j 32
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -138,6 +131,6 @@ Known System Issues
 
    January, 2023 (OLCFDEV-1284, AMD Ticket: ORNLA-130):
    We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
-   Reported to AMD and investigating.
+   Reported to AMD and fixed for the next release of ROCm.
 
    Stay with the ROCm 5.2 module to avoid.

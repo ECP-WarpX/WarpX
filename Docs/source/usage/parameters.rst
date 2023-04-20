@@ -161,7 +161,13 @@ Overall simulation parameters
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
     This will cause severe performance drops.
     Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
-    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
+
+* ``amrex.the_arena_is_managed``  (``0`` or ``1``; default is ``0`` for false)
+    When running on GPUs, device memory that is accessed from the host will automatically be transferred with managed memory.
+    This is useful for convenience during development, but has sometimes severe performance and memory footprint implications if relied on (and sometimes vendor bugs).
+    For all regular WarpX operations, we therefore do explicit memory transfers without the need for managed memory and thus changed the AMReX default to false.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
 
 Signal Handling
 ^^^^^^^^^^^^^^^
@@ -337,7 +343,7 @@ Domain Boundary Conditions
 
     * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
 
-    * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
+    * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. Please see the :ref:`PEC theory section <theory-bc-pec>` for more details. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
       If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
     * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`.
@@ -2787,25 +2793,25 @@ Reduced Diagnostics
         so the time of the diagnostic may be long
         depending on the simulation size.
 
-* ``ChargeOnEB``
-    This type computes the total surface charge on the embedded boundary
-    (in Coulombs), by using the formula
+    * ``ChargeOnEB``
+        This type computes the total surface charge on the embedded boundary
+        (in Coulombs), by using the formula
 
-    .. math::
+        .. math::
 
-        Q_{tot} = \epsilon_0 \iint dS \cdot E
+            Q_{tot} = \epsilon_0 \iint dS \cdot E
 
-    where the integral is performed over the surface of the embedded boundary.
+        where the integral is performed over the surface of the embedded boundary.
 
-    When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
-    computed integral is weighted:
-    .. math::
+        When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
+        computed integral is weighted:
+        .. math::
 
-        Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
+            Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
 
-    In particular, by choosing a weighting function which returns either
-    1 or 0, it is possible to compute the charge on only some part of the
-    embedded boundary.
+        In particular, by choosing a weighting function which returns either
+        1 or 0, it is possible to compute the charge on only some part of the
+        embedded boundary.
 
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
