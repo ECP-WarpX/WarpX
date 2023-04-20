@@ -24,6 +24,7 @@ HPC Systems
 .. toctree::
    :maxdepth: 1
 
+   hpc/adastra
    hpc/cori
    hpc/perlmutter
    hpc/summit
