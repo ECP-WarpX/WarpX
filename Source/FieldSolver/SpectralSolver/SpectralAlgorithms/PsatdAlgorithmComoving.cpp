@@ -13,6 +13,7 @@
 #include <AMReX_GpuComplex.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>
 
@@ -198,21 +199,21 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
         {
             // Calculate norm of finite-order k vector
             const amrex::Real knorm_mod = std::sqrt(
-                std::pow(kx_mod[i], 2) +
+                amrex::Math::powi<2>(kx_mod[i]) +
 #if defined(WARPX_DIM_3D)
-                std::pow(ky_mod[j], 2) +
-                std::pow(kz_mod[k], 2));
+                amrex::Math::powi<2>(ky_mod[j]) +
+                amrex::Math::powi<2>(kz_mod[k]));
 #else
-                std::pow(kz_mod[j], 2));
+                amrex::Math::powi<2>(kz_mod[j]));
 #endif
             // Calculate norm of infinite-order k vector
             const amrex::Real knorm = std::sqrt(
-                std::pow(kx[i], 2) +
+                amrex::Math::powi<2>(kx[i]) +
 #if defined(WARPX_DIM_3D)
-                std::pow(ky[j], 2) +
-                std::pow(kz[k], 2));
+                amrex::Math::powi<2>(ky[j]) +
+                amrex::Math::powi<2>(kz[k]));
 #else
-                std::pow(kz[j], 2));
+                amrex::Math::powi<2>(kz[j]));
 #endif
             // Physical constants c, c**2, and epsilon_0, and imaginary unit
             constexpr amrex::Real c   = PhysConst::c;

@@ -10,8 +10,10 @@
 #include "Particles/WarpXParticleContainer.H"
 
 #include <AMReX_AmrParticles.H>
+#include <AMReX_ParIter.H>
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
+
 
 enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
 
@@ -45,12 +47,14 @@ particlesConvertUnits (ConvertDirection convert_direction, T_ParticleContainer* 
         factor = 1._rt/mass;
     }
 
+    using PinnedParIter = typename T_ParticleContainer::ParIterType;
+
     const int nLevels = pc->finestLevel();
     for (int lev=0; lev<=nLevels; lev++){
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (ParIter pti(*pc, lev); pti.isValid(); ++pti)
+        for (PinnedParIter pti(*pc, lev); pti.isValid(); ++pti)
         {
             // - momenta are stored as a struct of array, in `attribs`
             // The GetStructOfArrays is called directly since the convenience routine GetAttribs

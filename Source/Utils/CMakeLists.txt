@@ -14,4 +14,3 @@ target_sources(WarpX
 
 add_subdirectory(Logo)
 add_subdirectory(Parser)
-add_subdirectory(Strings)

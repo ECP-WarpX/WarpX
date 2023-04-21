@@ -30,6 +30,7 @@ HPC Systems
    hpc/spock
    hpc/crusher
    hpc/frontier
+   hpc/fugaku
    hpc/juwels
    hpc/lassen
    hpc/quartz
