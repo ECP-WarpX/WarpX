@@ -13,9 +13,6 @@
 #include "Particles/ShapeFactors.H"
 #include "Particles/Deposition/ChargeDeposition.H"
 #include "ablastr/utils/TextMsg.H"
-#ifdef WARPX_DIM_RZ
-#   include "Utils/WarpX_Complex.H"
-#endif
 
 #include <AMReX.H>
 
