@@ -817,13 +817,17 @@ void doGatherShapeNImplicit (
         Exp += Ex_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdxi;
     }
     for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
-        amrex::Real const sdyj = 0.5_rt*(sz_E_old[k] + sz_E_new[k]);
-        Eyp += Ey_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdyj;
+        amrex::Real const sdzk = 0.5_rt*(sz_E_old[k] + sz_E_new[k]);
+        Exp += Ex_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdzk;
+        Eyp += Ey_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdzk;
+        Bzp += Bz_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdzk;
     }
     amrex::Real sdzk = 0._rt;
     for (int k=dkl_E; k<=depos_order+1-dku_E; k++) {
         sdzk += (sz_E_old[k] - sz_E_new[k]);
         amrex::Real sdzkov = ((z_new - z_old) == 0. ? 1. : sdzk/(z_new - z_old));
+        Bxp += Bx_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdzkov;
+        Byp += By_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdzkov;
         Ezp += Ez_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdzkov;
     }
 #endif
