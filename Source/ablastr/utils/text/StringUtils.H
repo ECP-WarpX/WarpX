@@ -6,15 +6,15 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_UTILS_STRINGS_STRINGUTILS_H_
-#define WARPX_UTILS_STRINGS_STRINGUTILS_H_
+#ifndef ABLASTR_UTILS_TEXT_STRINGUTILS_H_
+#define ABLASTR_UTILS_TEXT_STRINGUTILS_H_
 
 #include <AMReX_Utility.H>
 
 #include <string>
 #include <vector>
 
-namespace utils::strings
+namespace ablastr::utils::text
 {
     /** \brief Splits a string using a string separator. This is somewhat similar to
      *  amrex::Tokenize. The main difference is that, if the separator ":" is used,
@@ -31,7 +31,7 @@ namespace utils::strings
      * @return cont the split string
      */
     template <typename Container>
-    auto split (std::string const& instr, std::string const& separator,
+    auto split_string (std::string const& instr, std::string const& separator,
                   bool const trim = false, std::string const& trim_space = " \t")
     {
         Container cont;
@@ -65,4 +65,4 @@ namespace utils::strings
 
 }
 
-#endif //WARPX_UTILS_STRINGS_STRINGUTILS_H_
+#endif // ABLASTR_UTILS_TEXT_STRINGUTILS_H_
