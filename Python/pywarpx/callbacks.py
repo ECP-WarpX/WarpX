@@ -565,13 +565,13 @@ def onbreaksignal(f):
     installonbreaksignal(f)
     return f
 def installonbreaksignal(f):
-    "Adds a function to the list of functions called on checkpoint signal"
+    "Adds a function to the list of functions called on a break signal"
     _onbreaksignal.installfuncinlist(f)
 def uninstallonbreaksignal(f):
-    "Removes the function from the list of functions called on checkpoint signal"
+    "Removes the function from the list of functions called on a break signal"
     _onbreaksignal.uninstallfuncinlist(f)
 def isinstalledonbreaksignal(f):
-    "Checks if the function is called on checkpoint signal"
+    "Checks if the function is called on a break signal"
     return _onbreaksignal.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
