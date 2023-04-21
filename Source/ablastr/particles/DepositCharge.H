@@ -8,7 +8,6 @@
 #define ABLASTR_DEPOSIT_CHARGE_H_
 
 #include "ablastr/profiler/ProfilerWrapper.H"
-#include "Parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Particles/Deposition/ChargeDeposition.H"
