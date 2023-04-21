@@ -1106,6 +1106,10 @@ WarpX::ReadParameters ()
             utils::parser::queryWithParser(
                 pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
         }
+#   ifndef WARPX_USE_GPUCLOCK
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::load_balance_costs_update_algo!=LoadBalanceCostsUpdateAlgo::GpuClock,
+            "`algo.load_balance_costs_update = gpuclock` requires to compile with `-DWarpX_GPUCLOCK=ON`.");
+#   endif // !WARPX_USE_GPUCLOCK
 
         // Parse algo.particle_shape and check that input is acceptable
         // (do this only if there is at least one particle or laser species)
