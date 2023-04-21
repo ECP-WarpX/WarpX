@@ -75,7 +75,7 @@ Uniform plasma
 Capacitive discharge
 --------------------
 
-The Monte-Carlo collision (MCC) model can be used to simulate electron and ion collisions with a neutral background gas. In particular this can be used to study capacitive discharges between parallel plates. The implementation has been tested against the benchmark results from Turner et al. in `Phys. Plasmas 20, 013507, 2013 <https://aip.scitation.org/doi/abs/10.1063/1.4775084>`_. The figure below shows a comparison of the ion density as calculated in WarpX (in June 2022 with `PR #3118 <https://github.com/ECP-WarpX/WarpX/pull/3118>`_) compared to the literature results (which can be found `here <https://aip.scitation.org/doi/suppl/10.1063/1.4775084>`__).
+The Monte-Carlo collision (MCC) model can be used to simulate electron and ion collisions with a neutral background gas. In particular this can be used to study capacitive discharges between parallel plates. The implementation has been tested against the benchmark results from :cite:t:`Turner2013`. The figure below shows a comparison of the ion density as calculated in WarpX (in June 2022 with `PR #3118 <https://github.com/ECP-WarpX/WarpX/pull/3118>`_) compared to the literature results (which can be found `here <https://aip.scitation.org/doi/suppl/10.1063/1.4775084>`__).
 
 .. figure:: https://user-images.githubusercontent.com/40245517/171573007-f7d733c7-c0de-490c-9ed6-ff4c02154358.png
    :alt: MCC benchmark against Turner et. al. (2013).
@@ -128,7 +128,7 @@ Kinetic-fluid hybrid model
 --------------------------
 
 Several examples / benchmarks of the kinetic-fluid hybrid model are shown below. The first few examples are replications
-of the verification tests described in `Munoz et al. (2018) <https://www.sciencedirect.com/science/article/abs/pii/S0010465517303521>`_.
+of the verification tests described in :cite:t:`MUNOZ2018`.
 The hybrid-PIC model was added to WarpX in April 2023 (`PR #3665 <https://github.com/ECP-WarpX/WarpX/pull/3665>`_) - the below figures
 were generated at that time.
 
@@ -200,7 +200,7 @@ are damped by transferring energy to particles satisfying a resonance condition.
 The process can be simulated by seeding a plasma with a specific acoustic mode
 (density perturbation) and tracking the strength of the mode as a function of
 time. The figure below shows a set of such simulations with parameters matching
-those described in section 4.5 of Munoz et al. (2018). The straight lines show
+those described in section 4.5 of :cite:t:`MUNOZ2018`. The straight lines show
 the theoretical damping rate for the given temperature ratios.
 
 .. figure:: https://user-images.githubusercontent.com/40245517/230523935-3c8d63bd-ee69-4639-b111-f06dad5587f6.png
@@ -224,7 +224,7 @@ Magnetic reconnection
 
 Hybrid-PIC codes are often used to simulate magnetic reconnection in space
 plasmas. An example of magnetic reconnection from a force-free sheet is
-provided, based on the simulation described in `Le et al. (2016) <https://aip.scitation.org/doi/10.1063/1.4943893>`__.
+provided, based on the simulation described in :cite:t:`Le2016`.
 
 .. figure:: https://user-images.githubusercontent.com/40245517/229639784-b5d3b596-3550-4570-8761-8d9a67aa4b3b.gif
    :alt: Magnetic reconnection
