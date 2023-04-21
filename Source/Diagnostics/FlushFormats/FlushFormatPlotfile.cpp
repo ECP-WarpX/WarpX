@@ -10,6 +10,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "Diagnostics/MultiDiagnostics.H"
 
 #include <AMReX.H>
 #include <AMReX_Box.H>
@@ -306,6 +307,27 @@ FlushFormatPlotfile::WriteWarpXHeader(
         HeaderFile << warpx.getdo_moving_window() << "\n";
 
         HeaderFile << warpx.time_of_last_gal_shift << "\n";
+
+        for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
+        {
+            if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
+            {
+                auto& diag = warpx.GetMultiDiags().GetDiag(idiag);
+                for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
+                    HeaderFile << diag.gettlab(i_buffer) << "\n";
+                    HeaderFile << diag.get_buffer_k_index_hi(i_buffer) << "\n";
+                    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                        HeaderFile << diag.get_snapshot_domain_lo(i_buffer, idim) << "\n";
+                    }
+                    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                        HeaderFile << diag.get_snapshot_domain_hi(i_buffer, idim) << "\n";
+                    }
+                    HeaderFile << diag.get_flush_counter(i_buffer) << "\n";
+                    HeaderFile << diag.get_last_valid_Zslice(i_buffer) << "\n";
+                    HeaderFile << diag.get_snapshot_full_flag(i_buffer) << "\n";
+                }
+            }
+        }
     }
 }
 
@@ -315,11 +337,11 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                     bool isBTD) const
 {
 
-    for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
-        WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
+    for (auto& part_diag : particle_diags) {
+        WarpXParticleContainer* pc = part_diag.getParticleContainer();
         auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
         if (isBTD) {
-            PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
+            PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
             tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
         }
 
@@ -344,7 +366,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
         // plot any "extra" fields by default
-        real_flags = particle_diags[i].m_plot_flags;
+        real_flags = part_diag.m_plot_flags;
         real_flags.resize(pc->NumRealComps(), 1);
 
         // and the names
@@ -356,17 +378,17 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         int_flags.resize(pc->NumIntComps(), 1);
 
         const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
-        RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
-                                         particle_diags[i].m_random_fraction);
-        UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
-                                           particle_diags[i].m_uniform_stride);
-        ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
+        RandomFilter const random_filter(part_diag.m_do_random_filter,
+                                         part_diag.m_random_fraction);
+        UniformFilter const uniform_filter(part_diag.m_do_uniform_filter,
+                                           part_diag.m_uniform_stride);
+        ParserFilter parser_filter(part_diag.m_do_parser_filter,
                                    utils::parser::compileParser<ParticleDiag::m_nvars>
-                                       (particle_diags[i].m_particle_filter_parser.get()),
+                                       (part_diag.m_particle_filter_parser.get()),
                                    pc->getMass());
         parser_filter.m_units = InputUnits::SI;
-        GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
-                                             particle_diags[i].m_diag_domain);
+        GeometryFilter const geometry_filter(part_diag.m_do_geom_filter,
+                                             part_diag.m_diag_domain);
 
         if (!isBTD) {
             particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
@@ -380,14 +402,14 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             }, true);
             particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
         } else {
-            PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
+            PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
             tmp.copyParticles(*pinned_pc, true);
             particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
         }
         // real_names contains a list of all particle attributes.
         // real_flags & int_flags are 1 or 0, whether quantity is dumped or not.
         tmp.WritePlotFile(
-            dir, particle_diags[i].getSpeciesName(),
+            dir, part_diag.getSpeciesName(),
             real_flags, int_flags,
             real_names, int_names);
     }

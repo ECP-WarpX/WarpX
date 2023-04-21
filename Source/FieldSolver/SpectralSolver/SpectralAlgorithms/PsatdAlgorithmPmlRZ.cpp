@@ -21,9 +21,9 @@ PsatdAlgorithmPmlRZ::PsatdAlgorithmPmlRZ (SpectralKSpaceRZ const & spectral_kspa
                                           amrex::DistributionMapping const & dm,
                                           const SpectralFieldIndex& spectral_index,
                                           int const n_rz_azimuthal_modes, int const norder_z,
-                                          bool const nodal, amrex::Real const dt)
+                                          short const grid_type, amrex::Real const dt)
      // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, nodal),
+     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
        m_spectral_index(spectral_index),
        m_dt(dt)
 {

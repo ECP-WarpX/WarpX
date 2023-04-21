@@ -46,7 +46,7 @@ class SpectralSolver
          * \param[in] norder_x spectral order along x
          * \param[in] norder_y spectral order along y
          * \param[in] norder_z spectral order along z
-         * \param[in] nodal whether the spectral solver is applied to a nodal or staggered grid
+         * \param[in] grid_type type of grid (collocated or not)
          * \param[in] v_galilean three-dimensional vector containing the components of the Galilean
          *                       velocity for the standard or averaged Galilean PSATD solvers
          * \param[in] v_comoving three-dimensional vector containing the components of the comoving
@@ -73,7 +73,7 @@ class SpectralSolver
                         const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
                         const int norder_x, const int norder_y,
-                        const int norder_z, const bool nodal,
+                        const int norder_z, const short grid_type,
                         const amrex::Vector<amrex::Real>& v_galilean,
                         const amrex::Vector<amrex::Real>& v_comoving,
                         const amrex::RealVect dx,

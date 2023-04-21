@@ -93,9 +93,9 @@ void ChargeOnEB::ComputeDiags (const int step)
     int const lev = 0;
 
     // get MultiFab data at lev
-    const amrex::MultiFab & Ex = warpx.getEfield(lev,0);
-    const amrex::MultiFab & Ey = warpx.getEfield(lev,1);
-    const amrex::MultiFab & Ez = warpx.getEfield(lev,2);
+    const amrex::MultiFab & Ex = warpx.getEfield_fp(lev,0);
+    const amrex::MultiFab & Ey = warpx.getEfield_fp(lev,1);
+    const amrex::MultiFab & Ez = warpx.getEfield_fp(lev,2);
 
     // get EB structures
     amrex::EBFArrayBoxFactory const& eb_box_factory = warpx.fieldEBFactory(lev);
@@ -120,10 +120,10 @@ void ChargeOnEB::ComputeDiags (const int step)
     amrex::Gpu::Buffer<amrex::Real> surface_integral({0.0_rt});
     amrex::Real* surface_integral_pointer = surface_integral.data();
 
+    // Loop over boxes
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    // Loop over boxes
     for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
       const amrex::Box & box = mfi.tilebox( amrex::IntVect::TheCellVector() );
@@ -173,9 +173,9 @@ void ChargeOnEB::ComputeDiags (const int step)
 
                 // Compute contribution to the surface integral $\int dS \cdot E$)
                 amrex::Real local_integral_contribution = 0;
-                local_integral_contribution += Ex_arr(i_c,j_n,k_n)*dSx*(dSx_fraction_arr(i,j,k)-dSx_fraction_arr(i+1,j,k));
-                local_integral_contribution += Ey_arr(i_n,j_c,k_n)*dSy*(dSy_fraction_arr(i,j,k)-dSy_fraction_arr(i,j+1,k));
-                local_integral_contribution += Ez_arr(i_n,j_n,k_c)*dSz*(dSz_fraction_arr(i,j,k)-dSz_fraction_arr(i,j,k+1));
+                local_integral_contribution += Ex_arr(i_c,j_n,k_n)*dSx*(dSx_fraction_arr(i+1,j,k)-dSx_fraction_arr(i,j,k));
+                local_integral_contribution += Ey_arr(i_n,j_c,k_n)*dSy*(dSy_fraction_arr(i,j+1,k)-dSy_fraction_arr(i,j,k));
+                local_integral_contribution += Ez_arr(i_n,j_n,k_c)*dSz*(dSz_fraction_arr(i,j,k+1)-dSz_fraction_arr(i,j,k));
 
                 // Add weighting if requested by user
                 if (do_parser_weighting) {
@@ -190,7 +190,7 @@ void ChargeOnEB::ComputeDiags (const int step)
                 // Given that only a tiny fraction of the cells have a non-zero contribution
                 // (the ones that intersect with the EB), it is not clear whether ReduceOpSum
                 // or AtomicAdd would be faster. However, the implementation with AtomicAdd is easier.
-                amrex::Gpu::Atomic::AddNoRet( surface_integral_pointer, local_integral_contribution );
+                amrex::HostDevice::Atomic::Add( surface_integral_pointer, local_integral_contribution );
         });
     }
 

@@ -62,6 +62,8 @@ public:
     virtual void Flush (int i_buffer) = 0;
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     void InitData ();
+    void InitDataBeforeRestart ();
+    void InitDataAfterRestart ();
     /** Initialize functors that store pointers to the fields requested by the user.
      *
      * Derived classes MUST implement this function, and it must allocate m_all_field_functors
@@ -104,6 +106,75 @@ public:
     void FilterComputePackFlush (int step, bool force_flush=false);
     /** Whether the last timestep is always dumped */
     bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
+    /** Returns the number of snapshots used in BTD. For Full-Diagnostics, the value is 1*/
+    int getnumbuffers() {return m_num_buffers;}
+    /** Time in lab-frame associated with the ith snapshot
+     * \param[in] i_buffer index of the buffer
+     */
+    virtual amrex::Real gettlab ( [[maybe_unused]] int i_buffer) {return 0.;}
+    /** Set time in lab-frame for the ith snapshot
+     * \param[in] i_buffer index of the buffer
+     * \param[in] tlab value used to set the lab-frame time for the ith buffer
+     */
+    virtual void settlab ( [[maybe_unused]] int i_buffer, [[maybe_unused]] amrex::Real tlab) { }
+    /** Returns k-index in big end of the buffer box currently being filled for the ith snapshot in BTD
+     * \param[in] i_buffer index of the buffer
+     */
+    virtual int get_buffer_k_index_hi ( [[maybe_unused]] int i_buffer) {return 0; }
+    /** Set k-index of the buffer in the moving window direction currently being filled for the ith snapshot
+     * \param[in] i_buffer index of the buffer
+     * \param[in] kindex value used to set the k-index for the big end of the buffer box
+     */
+    virtual void set_buffer_k_index_hi ( [[maybe_unused]] int i_buffer, [[maybe_unused]] int kindex) { }
+    /** Returns lo-end of the lab-frame physical domain for the ith snapshot in BTD
+     * \param[in] i_buffer index of the buffer
+     * \param[in] idim dimension along which the lo-end of the lab-frame physical domain is returned
+     */
+    virtual amrex::Real get_snapshot_domain_lo ([[maybe_unused]] int i_buffer, [[maybe_unused]] int idim) {return 0.; }
+    /** Returns hi-end of the lab-frame physical domain for the ith snapshot in BTD
+     * \param[in] i_buffer index of the buffer
+     * \param[in] idim dimension along which the hi-end of the lab-frame physical domain is returned
+     */
+    virtual amrex::Real get_snapshot_domain_hi ([[maybe_unused]] int i_buffer, [[maybe_unused]] int idim) {return 0.; }
+    /** Sets lo-end of the lab-frame physical domain for the ith snapshot in BTD
+     * \param[in] i_buffer index of the buffer
+     * \param[in] idim dimension along which the lo-end of the lab-frame physical domain is set
+     * \param[in] domain_lab_lo value of the lo-end of the lab-frame physical domain for the ith snapshot
+     */
+    void setSnapshotDomainLo(int i_buffer, int idim,  amrex::Real domain_lab_lo) {m_snapshot_domain_lab[i_buffer].setLo(idim, domain_lab_lo); }
+    /** Sets hi-end of the lab-frame physical domain for the ith snapshot in BTD
+     * \param[in] i_buffer index of the buffer
+     * \param[in] idim dimension along which the hi-end of the lab-frame physical domain is set
+     * \param[in] domain_lab_hi value of the hi-end of the lab-frame physical domain for the ith snapshot
+     */
+    void setSnapshotDomainHi(int i_buffer, int idim,  amrex::Real domain_lab_hi) {m_snapshot_domain_lab[i_buffer].setHi(idim, domain_lab_hi); }
+    /** Returns counter for the number of times buffer data for the ith snapshot has been flushed
+     * \param[in] i_buffer index of the buffer
+     */
+    virtual int get_flush_counter ( [[maybe_unused]] int i_buffer) { return 0; }
+    /** Sets counter for the number of times buffer data for the ith snapshot has been flushed to parameter input in the function
+     * \param[in] i_buffer index of the buffer
+     * \param[in] flush_counter value of the counter
+     */
+    virtual void set_flush_counter ( [[maybe_unused]] int i_buffer, [[maybe_unused]] int flush_counter) { }
+    /** Returns 0/1 if the last valid Zslice for the ith snapshot has been filled (1) or not(0)
+     * \param[in] i_buffer index of the buffer
+     */
+    virtual int get_last_valid_Zslice ( [[maybe_unused]] int i_buffer) { return 0; }
+    /** Sets if the last valid Zslice for the ith snapshot has been filled (1) or not(0) with input parameter last_Valid_Zslice
+     * \param[in] i_buffer index of the buffer
+     * \param[in] last_valid_Zslice value to set m_lastValidZSlice in BTD for the ith snapshot (i_buffer)
+     */
+    virtual void set_last_valid_Zslice ( [[maybe_unused]] int i_buffer, [[maybe_unused]] int last_valid_Zslice) { }
+    /** Returns 0/1 if the snapshot is fully filled and BTD for that snapshot is complete(1) or not(0)
+     * \param[in] i_buffer index of the buffer
+     */
+    virtual int get_snapshot_full_flag ( [[maybe_unused]] int i_buffer) { return 0; }
+    /** Sets the value for m_snapshot_full for the ith snapshot in BTD using parameter snapshot_full
+     * \param[in] i_buffer index of the buffer
+     * \param[in] snapshot_full value to set m_snapshot_full in BTD for the ith snapshot (i_buffer)
+     */
+    virtual void set_snapshot_full ( [[maybe_unused]] int i_buffer, [[maybe_unused]] int snapshot_full) { }
 
 protected:
     /** Read Parameters of the base Diagnostics class */
@@ -114,7 +185,7 @@ protected:
      * \param[in] i_buffer index of buffer for which the output MultiFab is defined.
      * \param[in] lev level on which the output MultiFab is defined
      */
-    virtual void InitializeBufferData (int i_buffer, int lev) = 0;
+    virtual void InitializeBufferData (int i_buffer, int lev, bool restart=false) = 0;
     /** Initialize member variables and arrays specific to the diagnostics in the
      *  derived classes.(FullDiagnostics, BTDiagnostics)
      */
@@ -241,6 +312,9 @@ protected:
      *  over the total number of species selected for diagnostics.
      */
     amrex::Vector< amrex::Vector <int> > m_totalParticles_in_buffer;
+    /** Vector of user-defined physical region for diagnostics in lab-frame
+     *  for each back-transformed snapshot */
+    amrex::Vector<amrex::RealBox> m_snapshot_domain_lab;
 
 };
 

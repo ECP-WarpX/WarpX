@@ -38,7 +38,7 @@ class Bucket(object):
         try:
             return self.argvattrs[name]
         except KeyError:
-            return object.__getattr__(self, name)
+            return object.__getattribute__(self, name)
 
     def check_consistency(self, vname, value, errmsg):
         if vname in self.argvattrs:

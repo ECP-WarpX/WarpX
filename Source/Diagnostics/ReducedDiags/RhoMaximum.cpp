@@ -103,14 +103,14 @@ RhoMaximum::RhoMaximum (std::string rd_name)
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]max_rho_lev" + std::to_string(lev) + " (C/m^3)";
+                ofs << "[" << c++ << "]max_rho_lev" + std::to_string(lev) + "(C/m^3)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]min_rho_lev" + std::to_string(lev) + " (C/m^3)";
+                ofs << "[" << c++ << "]min_rho_lev" + std::to_string(lev) + "(C/m^3)";
                 for (int i = 0; i < n_charged_species; ++i)
                 {
                     ofs << m_sep;
                     ofs << "[" << c++ << "]max_" + species_names[indices_charged_species[i]]
-                                         + "_|rho|_lev" + std::to_string(lev) + " (C/m^3)";
+                                         + "_|rho|_lev" + std::to_string(lev) + "(C/m^3)";
                 }
             }
             ofs << std::endl;

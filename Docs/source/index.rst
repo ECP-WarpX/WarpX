@@ -99,6 +99,7 @@ Data Analysis
    dataanalysis/visualpic
    dataanalysis/picviewer
    dataanalysis/reduced_diags
+   dataanalysis/workflows
 
 Theory
 ------
