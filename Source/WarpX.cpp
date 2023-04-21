@@ -134,17 +134,14 @@ int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
 
 bool WarpX::do_shared_mem_charge_deposition = false;
-#if (defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)) && (defined(WARPX_DIM_3D) || defined(WARPX_DIM_2D))
-bool WarpX::do_shared_mem_current_deposition = true;
-#else
 bool WarpX::do_shared_mem_current_deposition = false;
-#endif
 #if defined(WARPX_DIM_3D)
 amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(6,6,8));
 #elif defined(WARPX_DIM_2D)
 amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(14,14));
 #else
-amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1)); //Not used
+//Have not experimented with good tilesize here because expect use case to be low
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1));
 #endif
 int WarpX::shared_mem_current_tpb = 128;
 
