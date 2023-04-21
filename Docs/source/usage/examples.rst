@@ -127,7 +127,7 @@ An example of initializing the fields by accessing their data through Python, ad
 Kinetic-fluid hybrid model
 --------------------------
 
-Several examples / benchmarks of the kinetic-fluid hybrid model are shown below. The first few examples are replications
+Several examples and benchmarks of the kinetic-fluid hybrid model are shown below. The first few examples are replications
 of the verification tests described in :cite:t:`MUNOZ2018`.
 The hybrid-PIC model was added to WarpX in April 2023 (`PR #3665 <https://github.com/ECP-WarpX/WarpX/pull/3665>`_) - the below figures
 were generated at that time.
