@@ -673,8 +673,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
 void
 PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
-                    amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                        NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                        NArrayReal, NArrayInt,
+                                        amrex::PinnedArenaAllocator>& pinned_tile,
                     const int n_external_attr_real,
                     const int n_external_attr_int,
                     const amrex::RandomEngine& engine)
@@ -1253,7 +1254,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
                 Real theta;
-                if (nmodes == 1) {
+                if (nmodes == 1 && rz_random_theta) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
                     theta = 2._rt*MathConst::pi*amrex::Random(engine);
@@ -1792,7 +1793,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
                 Real theta;
-                if (nmodes == 1) {
+                if (nmodes == 1 && m_rz_random_theta) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
                     theta = 2._prt*MathConst::pi*amrex::Random(engine);
