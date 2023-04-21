@@ -108,11 +108,11 @@ if sim.resonant:
     idx = np.where((t_grid > 10) & (t_grid < 40))
     t_points = t_grid[idx]
 
-    A4 = np.exp(np.mean(np.log(np.abs(field_kt[:, 4] / sim.B0))[idx] - t_points*gamma4))
+    A4 = np.exp(np.mean(np.log(np.abs(field_kt[idx, 4] / sim.B0)) - t_points*gamma4))
     plt.plot(t_points, A4*np.exp(t_points*gamma4), 'r--', lw=3)
-    A5 = np.exp(np.mean(np.log(np.abs(field_kt[:, 5] / sim.B0))[idx] - t_points*gamma5))
+    A5 = np.exp(np.mean(np.log(np.abs(field_kt[idx, 5] / sim.B0)) - t_points*gamma5))
     plt.plot(t_points, A5*np.exp(t_points*gamma5), 'b--', lw=3)
-    A6 = np.exp(np.mean(np.log(np.abs(field_kt[:, 6] / sim.B0))[idx] - t_points*gamma6))
+    A6 = np.exp(np.mean(np.log(np.abs(field_kt[idx, 6] / sim.B0)) - t_points*gamma6))
     plt.plot(t_points, A6*np.exp(t_points*gamma6), 'k--', lw=3)
 
     plt.grid()
