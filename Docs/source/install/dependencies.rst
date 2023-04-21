@@ -46,6 +46,16 @@ Pick *one* of the installation methods below to install all dependencies for War
 Conda (Linux/macOS/Windows)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. tip::
+
+   We recommend to configure your conda to use the faster `libmamba` `dependency solver <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`__.
+
+   .. code-block:: bash
+
+      conda update -n base conda
+      conda install -n base conda-libmamba-solver
+      conda config --set solver libmamba
+
 With MPI (only Linux/macOS):
 
 .. code-block:: bash
@@ -70,7 +80,7 @@ For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you als
    export BLASPP_HOME=${CONDA_PREFIX}
    export LAPACKPP_HOME=${CONDA_PREFIX}
 
-.. note::
+.. tip::
 
    A general option to deactivate that conda self-activates its base environment.
    This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.
