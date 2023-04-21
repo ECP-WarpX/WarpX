@@ -98,7 +98,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
 #if defined(WARPX_USE_GPUCLOCK)
-            const auto KernelTimer = ablastr::parallelization::kernelTimer(
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
                 cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
                 cost_real);
 #endif
