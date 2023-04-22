@@ -132,7 +132,7 @@ extern "C" {
   void warpx_MoveWindow (int step, bool move_j);
 
   void warpx_EvolveE (amrex::Real dt);
-  void warpx_EvolveB (amrex::Real dt, DtType a_dt_type);
+  void warpx_EvolveB (amrex::Real dt);
   void warpx_FillBoundaryE ();
   void warpx_FillBoundaryB ();
   void warpx_SyncRho ();

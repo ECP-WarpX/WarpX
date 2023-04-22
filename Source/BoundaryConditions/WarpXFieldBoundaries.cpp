@@ -18,64 +18,73 @@ using namespace amrex::literals;
 using namespace amrex;
 
 void
-WarpX::ApplyEfieldBoundary (const IntVect ng, const std::optional<bool> nodal_sync)
+WarpX::ApplyEfieldBoundary (const amrex::IntVect& ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        ApplyEfieldBoundary(lev, ng, nodal_sync);
+        ApplyEfieldBoundary(lev, ng);
     }
 }
 
 void
-WarpX::ApplyEfieldBoundary (const int lev, const IntVect ng, const std::optional<bool> nodal_sync)
+WarpX::ApplyEfieldBoundary (const int lev, const amrex::IntVect& ng)
 {
-    ApplyEfieldBoundary(lev, PatchType::fine, ng, nodal_sync);
-    if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse, ng, nodal_sync);
+    ApplyEfieldBoundary(lev, PatchType::fine, ng);
+    if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse, ng);
 }
 
-void WarpX::ApplyEfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect ng, const std::optional<bool> nodal_sync)
-{
-    ApplyEfieldBoundary(lev, patch_type);
-    // This will later go first after checking is done
-    FillBoundaryE(lev, patch_type, ng, nodal_sync);
-}
-
-void WarpX::ApplyEfieldBoundary (const int lev, const PatchType patch_type)
+void WarpX::ApplyEfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect& ng)
 {
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoEfield( { get_pointer_Efield_fp(lev, 0),
                                      get_pointer_Efield_fp(lev, 1),
-                                     get_pointer_Efield_fp(lev, 2) }, lev, patch_type);
+                                     get_pointer_Efield_fp(lev, 2) }, lev, patch_type, ng);
             if (WarpX::isAnyBoundaryPML()) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
-                PEC::ApplyPECtoEfield( pml[lev]->GetE_fp(), lev, patch_type, split_pml_field);
+                PEC::ApplyPECtoEfield( pml[lev]->GetE_fp(), lev, patch_type, ng, split_pml_field);
             }
         } else {
             PEC::ApplyPECtoEfield( { get_pointer_Efield_cp(lev, 0),
                                      get_pointer_Efield_cp(lev, 1),
-                                     get_pointer_Efield_cp(lev, 2) }, lev, patch_type);
+                                     get_pointer_Efield_cp(lev, 2) }, lev, patch_type, ng);
             if (WarpX::isAnyBoundaryPML()) {
                 // apply pec on split E-fields in PML region
                 const bool split_pml_field = true;
-                PEC::ApplyPECtoEfield( pml[lev]->GetE_cp(), lev, patch_type, split_pml_field);
+                PEC::ApplyPECtoEfield( pml[lev]->GetE_cp(), lev, patch_type, ng, split_pml_field);
             }
         }
     }
 }
 
-void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_dt_type)
+void
+WarpX::ApplyBfieldBoundary (const amrex::IntVect& ng, const DtType a_dt_type)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        ApplyBfieldBoundary(lev, ng, a_dt_type);
+    }
+}
+
+void
+WarpX::ApplyBfieldBoundary (const int lev, const amrex::IntVect& ng, const DtType a_dt_type)
+{
+    ApplyBfieldBoundary(lev, PatchType::fine, ng, a_dt_type);
+    if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, ng, a_dt_type);
+}
+
+void WarpX::ApplyBfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect& ng, const DtType a_dt_type)
 {
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
             PEC::ApplyPECtoBfield( { get_pointer_Bfield_fp(lev, 0),
                                      get_pointer_Bfield_fp(lev, 1),
-                                     get_pointer_Bfield_fp(lev, 2) }, lev, patch_type);
+                                     get_pointer_Bfield_fp(lev, 2) }, lev, patch_type, ng);
         } else {
             PEC::ApplyPECtoBfield( { get_pointer_Bfield_cp(lev, 0),
                                      get_pointer_Bfield_cp(lev, 1),
-                                     get_pointer_Bfield_cp(lev, 2) }, lev, patch_type);
+                                     get_pointer_Bfield_cp(lev, 2) }, lev, patch_type, ng);
         }
     }
 

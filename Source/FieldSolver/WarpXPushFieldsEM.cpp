@@ -791,26 +791,26 @@ WarpX::PushPSATD ()
 }
 
 void
-WarpX::EvolveB (amrex::Real a_dt, DtType a_dt_type)
+WarpX::EvolveB (amrex::Real a_dt)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
-        EvolveB(lev, a_dt, a_dt_type);
+        EvolveB(lev, a_dt);
     }
 }
 
 void
-WarpX::EvolveB (int lev, amrex::Real a_dt, DtType a_dt_type)
+WarpX::EvolveB (int lev, amrex::Real a_dt)
 {
     WARPX_PROFILE("WarpX::EvolveB()");
-    EvolveB(lev, PatchType::fine, a_dt, a_dt_type);
+    EvolveB(lev, PatchType::fine, a_dt);
     if (lev > 0)
     {
-        EvolveB(lev, PatchType::coarse, a_dt, a_dt_type);
+        EvolveB(lev, PatchType::coarse, a_dt);
     }
 }
 
 void
-WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type)
+WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 {
 
     // Evolve B field in regular cells
@@ -835,7 +835,6 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
         }
     }
 
-    ApplyBfieldBoundary(lev, patch_type, a_dt_type);
 }
 
 

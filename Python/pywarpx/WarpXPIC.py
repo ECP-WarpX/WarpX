@@ -52,11 +52,11 @@ class WarpXPIC(PICAPI):
         libwarpx.libwarpx_so.warpx_CurrentDeposition(0)
 
     def push_Efields(self, dt):
-        libwarpx.libwarpx_so.warpx_EvolveE(0, dt)
+        libwarpx.libwarpx_so.warpx_EvolveE(dt)
         libwarpx.libwarpx_so.warpx_FillBoundaryE(0, True)
 
     def push_Bfields(self, dt):
-        libwarpx.libwarpx_so.warpx_EvolveB(0, dt)
+        libwarpx.libwarpx_so.warpx_EvolveB(dt)
         libwarpx.libwarpx_so.warpx_FillBoundaryB(0, True)
 
     def apply_particle_boundary_conditions(self):

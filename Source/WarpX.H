@@ -584,13 +584,13 @@ public:
     void ResetProbDomain (const amrex::RealBox& rb);
     void EvolveE (         amrex::Real dt);
     void EvolveE (int lev, amrex::Real dt);
-    void EvolveB (         amrex::Real dt, DtType dt_type);
-    void EvolveB (int lev, amrex::Real dt, DtType dt_type);
+    void EvolveB (         amrex::Real dt);
+    void EvolveB (int lev, amrex::Real dt);
     void EvolveF (         amrex::Real dt, DtType dt_type);
     void EvolveF (int lev, amrex::Real dt, DtType dt_type);
     void EvolveG (         amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, amrex::Real dt, DtType dt_type);
-    void EvolveB (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
@@ -683,11 +683,13 @@ public:
                               amrex::MultiFab* Jy, amrex::MultiFab* Jz,
                               PatchType patch_type);
 
-    void ApplyEfieldBoundary (const amrex::IntVect ng, const std::optional<bool> nodal_sync = std::nullopt);
-    void ApplyEfieldBoundary (const int lev, const amrex::IntVect ng, const std::optional<bool> nodal_sync = std::nullopt);
-    void ApplyEfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect ng, const std::optional<bool> nodal_sync = std::nullopt);
-    void ApplyEfieldBoundary (const int lev, const PatchType patch_type);
-    void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
+    void ApplyEfieldBoundary (const amrex::IntVect& ng);
+    void ApplyEfieldBoundary (const int lev, const amrex::IntVect& ng);
+    void ApplyEfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect& ng);
+
+    void ApplyBfieldBoundary (const amrex::IntVect& ng, const DtType a_dt_type);
+    void ApplyBfieldBoundary (const int lev, const amrex::IntVect& ng, const DtType a_dt_type);
+    void ApplyBfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect& ng, const DtType a_dt_type);
 
     void DampPML ();
     void DampPML (const int lev);

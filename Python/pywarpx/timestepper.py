@@ -39,7 +39,7 @@ class TimeStepper(object):
         # --- At the beginning, we have B^{n-1/2} and E^{n}.
         # --- Particles have p^{n-1/2} and x^{n}.
         libwarpx.libwarpx_so.warpx_FillBoundaryE()
-        libwarpx.libwarpx_so.warpx_EvolveB(0.5*dt,1) # We now B^{n}
+        libwarpx.libwarpx_so.warpx_EvolveB(0.5*dt) # We now B^{n}
 
         libwarpx.libwarpx_so.warpx_FillBoundaryB()
         libwarpx.libwarpx_so.warpx_UpdateAuxilaryData()
@@ -55,7 +55,7 @@ class TimeStepper(object):
         libwarpx.libwarpx_so.mypc_Redistribute() # Redistribute particles
 
         libwarpx.libwarpx_so.warpx_FillBoundaryE()
-        libwarpx.libwarpx_so.warpx_EvolveB(0.5*dt,2) # We now B^{n+1/2}
+        libwarpx.libwarpx_so.warpx_EvolveB(0.5*dt) # We now B^{n+1/2}
 
         libwarpx.libwarpx_so.warpx_SyncCurrent()
 

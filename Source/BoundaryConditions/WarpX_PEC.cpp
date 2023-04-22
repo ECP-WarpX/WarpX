@@ -25,7 +25,7 @@ PEC::isAnyBoundaryPEC() {
 
 void
 PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
-                       PatchType patch_type, const bool split_pml_field)
+                       PatchType patch_type, const amrex::IntVect& ng, const bool split_pml_field)
 {
     auto& warpx = WarpX::GetInstance();
     amrex::Box domain_box = warpx.Geom(lev).Domain();
@@ -44,7 +44,6 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
     amrex::IntVect Ex_nodal = Efield[0]->ixType().toIntVect();
     amrex::IntVect Ey_nodal = Efield[1]->ixType().toIntVect();
     amrex::IntVect Ez_nodal = Efield[2]->ixType().toIntVect();
-    amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
     // For each Efield multifab, apply PEC boundary condition to ncomponents
     // If not split E-field, the PEC is applied to the regular Efield used in Maxwell's eq.
     // If split_pml_field is true, then PEC is applied to all the split field components of the tangential field.
@@ -61,17 +60,13 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
         amrex::Array4<amrex::Real> const& Ez = Efield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        // if split field, the box includes nodal flag
-        // For E-field used in Maxwell's update, nodal flag plus cells that particles
-        // gather fields from in the guard-cell region are included.
-        // Note that for simulations without particles or laser, ng_field_gather is 0
-        // and the guard-cell values of the E-field multifab will not be modified.
+        // If split field, the box includes nodal flag.
         amrex::Box const& tex = (split_pml_field) ? mfi.tilebox(Efield[0]->ixType().toIntVect())
-                                                  : mfi.tilebox(Efield[0]->ixType().toIntVect(), ng_fieldgather);
+                                                  : mfi.tilebox(Efield[0]->ixType().toIntVect(), ng);
         amrex::Box const& tey = (split_pml_field) ? mfi.tilebox(Efield[1]->ixType().toIntVect())
-                                                  : mfi.tilebox(Efield[1]->ixType().toIntVect(), ng_fieldgather);
+                                                  : mfi.tilebox(Efield[1]->ixType().toIntVect(), ng);
         amrex::Box const& tez = (split_pml_field) ? mfi.tilebox(Efield[2]->ixType().toIntVect())
-                                                  : mfi.tilebox(Efield[2]->ixType().toIntVect(), ng_fieldgather);
+                                                  : mfi.tilebox(Efield[2]->ixType().toIntVect(), ng);
 
         // loop over cells and update fields
         amrex::ParallelFor(
@@ -121,7 +116,7 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
 
 void
 PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
-                       PatchType patch_type)
+                       PatchType patch_type, const amrex::IntVect& ng)
 {
     auto& warpx = WarpX::GetInstance();
     amrex::Box domain_box = warpx.Geom(lev).Domain();
@@ -140,7 +135,6 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
     amrex::IntVect Bx_nodal = Bfield[0]->ixType().toIntVect();
     amrex::IntVect By_nodal = Bfield[1]->ixType().toIntVect();
     amrex::IntVect Bz_nodal = Bfield[2]->ixType().toIntVect();
-    amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
     const int nComp_x = Bfield[0]->nComp();
     const int nComp_y = Bfield[1]->nComp();
     const int nComp_z = Bfield[2]->nComp();
@@ -156,13 +150,9 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
         amrex::Array4<amrex::Real> const& Bz = Bfield[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        // For B-field used in Maxwell's update, nodal flag plus cells that particles
-        // gather fields from in the guard-cell region are included.
-        // Note that for simulations without particles or laser, ng_field_gather is 0
-        // and the guard-cell values of the B-field multifab will not be modified.
-        amrex::Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect(), ng_fieldgather);
-        amrex::Box const& tby = mfi.tilebox(Bfield[1]->ixType().toIntVect(), ng_fieldgather);
-        amrex::Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect(), ng_fieldgather);
+        amrex::Box const& tbx = mfi.tilebox(Bfield[0]->ixType().toIntVect(), ng);
+        amrex::Box const& tby = mfi.tilebox(Bfield[1]->ixType().toIntVect(), ng);
+        amrex::Box const& tbz = mfi.tilebox(Bfield[2]->ixType().toIntVect(), ng);
 
         // loop over cells and update fields
         amrex::ParallelFor(

@@ -689,9 +689,9 @@ namespace
         WarpX& warpx = WarpX::GetInstance();
         warpx.EvolveE(dt);
     }
-    void warpx_EvolveB (amrex::Real dt, DtType a_dt_type) {
+    void warpx_EvolveB (amrex::Real dt) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.EvolveB(dt, a_dt_type);
+        warpx.EvolveB(dt);
     }
     void warpx_FillBoundaryE () {
         WarpX& warpx = WarpX::GetInstance();

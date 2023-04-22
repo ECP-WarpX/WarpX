@@ -457,8 +457,9 @@ WarpX::OneStep_nosub (Real cur_time)
         FillBoundaryF(guard_cells.ng_FieldSolverF);
         FillBoundaryG(guard_cells.ng_FieldSolverG);
 
-        EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
+        EvolveB(0.5_rt * dt[0]); // We now have B^{n+1/2}
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+        ApplyBfieldBoundary(guard_cells.ng_FieldSolver, DtType::FirstHalf);
 
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
             // vacuum medium
@@ -469,11 +470,14 @@ WarpX::OneStep_nosub (Real cur_time)
         } else {
             amrex::Abort(Utils::TextMsg::Err("Medium for EM is unknown"));
         }
-        ApplyEfieldBoundary(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+        ApplyEfieldBoundary(guard_cells.ng_FieldGather);
 
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
-        EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
+        EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
+        FillBoundaryB(guard_cells.ng_FieldGather, WarpX::sync_nodal_points);
+        ApplyBfieldBoundary(guard_cells.ng_FieldGather, DtType::SecondHalf);
 
         if (do_pml) {
             DampPML();
@@ -701,10 +705,10 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         {
             pml[lev]->PushPSATD(lev);
         }
-        ApplyEfieldBoundary(lev, PatchType::fine);
-        if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
-        ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
-        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
+        ApplyEfieldBoundary(lev, guard_cells.ng_FieldSolver, PatchType::fine);
+        if (lev > 0) ApplyEfieldBoundary(lev, guard_cells.ng_FieldSolver, PatchType::coarse);
+        ApplyBfieldBoundary(lev, guard_cells.ng_FieldSolver, PatchType::fine, DtType::FirstHalf);
+        if (lev > 0) ApplyBfieldBoundary(lev, guard_cells.ng_FieldSolver, PatchType::coarse, DtType::FirstHalf);
     }
 
     // Damp fields in PML before exchanging guard cells
@@ -770,17 +774,19 @@ WarpX::OneStep_sub1 (Real curtime)
     SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
     ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, 2*ncomps);
 
-    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
+    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev]);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver,
                   WarpX::sync_nodal_points);
+    ApplyBfieldBoundary(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver, DtType::FirstHalf);
     FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_alloc_F,
                   WarpX::sync_nodal_points);
 
     EvolveE(fine_lev, PatchType::fine, dt[fine_lev]);
+    FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldGather);
     ApplyEfieldBoundary(fine_lev, PatchType::fine, guard_cells.ng_FieldGather);
 
-    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
+    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev]);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
 
     if (do_pml) {
@@ -790,6 +796,7 @@ WarpX::OneStep_sub1 (Real curtime)
     }
 
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldGather);
+    ApplyBfieldBoundary(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver, DtType::SecondHalf);
 
     // ii) Push particles on the coarse patch and mother grid.
     // Push the fields on the coarse patch and mother grid
@@ -799,22 +806,26 @@ WarpX::OneStep_sub1 (Real curtime)
     AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev);
     AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, 0, ncomps);
 
-    EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
+    EvolveB(fine_lev, PatchType::coarse, dt[fine_lev]);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
     FillBoundaryB(fine_lev, PatchType::coarse, guard_cells.ng_FieldGather);
+    ApplyBfieldBoundary(fine_lev, PatchType::coarse, guard_cells.ng_FieldGather, DtType::FirstHalf);
     FillBoundaryF(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolverF);
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
+    FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldGather);
     ApplyEfieldBoundary(fine_lev, PatchType::coarse, guard_cells.ng_FieldGather);
 
-    EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::FirstHalf);
+    EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::FirstHalf);
     FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather,
                     WarpX::sync_nodal_points);
+    ApplyBfieldBoundary(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather, DtType::FirstHalf);
     FillBoundaryF(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolverF,
                     WarpX::sync_nodal_points);
 
     EvolveE(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
+    FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather);
     ApplyEfieldBoundary(coarse_lev, PatchType::fine, guard_cells.ng_FieldGather);
 
     // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
@@ -831,16 +842,18 @@ WarpX::OneStep_sub1 (Real curtime)
     SumBoundaryJ(current_fp, fine_lev, Geom(fine_lev).periodicity());
     ApplyFilterandSumBoundaryRho(rho_fp, rho_cp, fine_lev, PatchType::fine, 0, ncomps);
 
-    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
+    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev]);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::FirstHalf);
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+    ApplyBfieldBoundary(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver, DtType::FirstHalf);
     FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_FieldSolverF);
 
     EvolveE(fine_lev, PatchType::fine, dt[fine_lev]);
-    ApplyEfieldBoundary(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver,
-                        WarpX::sync_nodal_points);
+    FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                    WarpX::sync_nodal_points);
+    ApplyEfieldBoundary(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 
-    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
+    EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev]);
     EvolveF(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], DtType::SecondHalf);
 
     if (do_pml) {
@@ -851,6 +864,7 @@ WarpX::OneStep_sub1 (Real curtime)
     if ( safe_guard_cells )
         FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+    ApplyBfieldBoundary(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver, DtType::SecondHalf);
 
     // v) Push the fields on the coarse patch and mother grid
     // by only half a coarse step (second half)
@@ -859,10 +873,11 @@ WarpX::OneStep_sub1 (Real curtime)
     AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, ncomps, ncomps);
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
-    ApplyEfieldBoundary(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,
-                        WarpX::sync_nodal_points);
+    FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,
+                  WarpX::sync_nodal_points);
+    ApplyEfieldBoundary(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver);
 
-    EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::SecondHalf);
+    EvolveB(fine_lev, PatchType::coarse, dt[fine_lev]);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::SecondHalf);
 
     if (do_pml) {
@@ -874,14 +889,16 @@ WarpX::OneStep_sub1 (Real curtime)
 
     FillBoundaryB(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,
                   WarpX::sync_nodal_points);
+    ApplyBfieldBoundary(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver, DtType::SecondHalf);
     FillBoundaryF(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolverF,
                   WarpX::sync_nodal_points);
 
     EvolveE(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
-    ApplyEfieldBoundary(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
-                        WarpX::sync_nodal_points);
+    FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
+                  WarpX::sync_nodal_points);
+    ApplyEfieldBoundary(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 
-    EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
+    EvolveB(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev]);
     EvolveF(coarse_lev, PatchType::fine, 0.5_rt*dt[coarse_lev], DtType::SecondHalf);
 
     if (do_pml) {
@@ -891,6 +908,7 @@ WarpX::OneStep_sub1 (Real curtime)
             // evolved.
             FillBoundaryB(coarse_lev, PatchType::fine, IntVect::TheZeroVector(),
                           WarpX::sync_nodal_points);
+            ApplyBfieldBoundary(coarse_lev, PatchType::fine, IntVect::TheZeroVector(), DtType::SecondHalf);
             FillBoundaryF(coarse_lev, PatchType::fine, IntVect::TheZeroVector(),
                           WarpX::sync_nodal_points);
         }
@@ -899,9 +917,11 @@ WarpX::OneStep_sub1 (Real curtime)
             FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
                           WarpX::sync_nodal_points);
     }
-    if ( safe_guard_cells )
+    if ( safe_guard_cells ) {
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
                       WarpX::sync_nodal_points);
+        ApplyBfieldBoundary(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver, DtType::SecondHalf);
+    }
 
     // Synchronize nodal points at the end of the time step
     if (do_pml) NodalSyncPML();
