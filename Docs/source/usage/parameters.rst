@@ -813,10 +813,6 @@ Particle initialization
     Whether particle's weight is varied with their radius. This only applies to cylindrical geometry.
     The only valid value is true.
 
-    * ``predefined``: use one of WarpX predefined plasma profiles. It requires additional
-      arguments ``<species_name>.predefined_profile_name`` and
-      ``<species_name>.predefined_profile_params`` (see below).
-
 * ``<species_name>.momentum_distribution_type`` (`string`)
     Distribution of the normalized momentum (`u=p/mc`) for this species. The options are:
 
