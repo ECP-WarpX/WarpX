@@ -249,11 +249,11 @@ node, or without a workload management system.
 
    # record
    dcgmi profile --pause
-   ncu -f -o out\
+   ncu -f -o out \
    --target-processes all \
    --set detailed \ 
    --nvtx --nvtx-include="WarpXParticleContainer::DepositCurrent::CurrentDeposition/" \
-   ./warpx input max_step=1\
+   ./warpx input max_step=1 \
    &> warpxOut.txt
 
 .. note::
