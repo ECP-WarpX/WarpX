@@ -259,8 +259,8 @@ node, or without a workload management system.
 .. note::
 
     For those used to Nsight-Systems, Nsight-Compute runs much slower. A
-    single process can take a few minutes for every step, but since you're
-    profiling at the kernel level, a single step and single process are often
+    single process can take a few minutes for every step, but since we're
+    profiling at the kernel level, a single step of a single process is often
     enough to extract relevant information.
 
 Details
@@ -277,7 +277,7 @@ In the example above, the individual lines for recording a trace profile are:
   ``detailed`` gets pretty much everything.
 * ``--nvtx``: collects NVTX data. See note.
 * ``--nvtx-include``: tells the profiler to only profile the given sections.
-  (You can also use ``-k`` to profile only a given kernel)
+  You can also use ``-k`` to profile only a given kernel.
 * ``./warpx...``: select the WarpX executable and a good inputs file.
 
 Now open the created trace file in the Nsight-Compute GUI. As with
@@ -288,5 +288,4 @@ For example, if you record on a cluster and open the analysis GUI on your laptop
 .. note::
     
     nvtx-include syntax is very particular. The trailing / in the example is
-    significant. For full information, see the section on `NVTX filtering <https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html#nvtx-filtering>`_
-
+    significant. For full information, see the section on `NVTX filtering <https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html#nvtx-filtering>`_ .
