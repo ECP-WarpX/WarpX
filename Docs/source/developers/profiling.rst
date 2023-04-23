@@ -218,9 +218,9 @@ Nvidia Nsight-Compute
 
 `Vendor homepage <https://developer.nvidia.com/nsight-compute>`__ and `product manual <https://docs.nvidia.com/nsight-compute/>`__.
 
-Nsight-Compute captures fine grained information at the kernel level 
+Nsight-Compute captures fine grained information at the kernel level
 concerning resource utilization. It collects a lot of data, and runs slowly (can
-be a few minutes per step), but provides detailed information about occupancy, 
+be a few minutes per step), but provides detailed information about occupancy,
 and memory bandwidth for a kernel.
 
 
@@ -229,12 +229,12 @@ Example
 
 Example of how to create traces on a single-GPU system. A jobscript for
 Perlmutter is shown, but the `SBATCH` headers are not strictly necessary as the
-command only profiles a single process. This can also be run on an interactive 
+command only profiles a single process. This can also be run on an interactive
 node, or without a workload management system.
 
 .. code-block:: bash
 
-   #!/bin/bash -l                                                                                       
+   #!/bin/bash -l
    #SBATCH -t 00:30:00
    #SBATCH -N 1
    #SBATCH -J ncuProfiling
@@ -251,7 +251,7 @@ node, or without a workload management system.
    dcgmi profile --pause
    ncu -f -o out \
    --target-processes all \
-   --set detailed \ 
+   --set detailed \
    --nvtx --nvtx-include="WarpXParticleContainer::DepositCurrent::CurrentDeposition/" \
    ./warpx input max_step=1 \
    &> warpxOut.txt
@@ -267,7 +267,7 @@ Details
 """""""
 In the example above, the individual lines for recording a trace profile are:
 
-* ``dcgmi profile --pause`` other profiling tools can't be collecting data, 
+* ``dcgmi profile --pause`` other profiling tools can't be collecting data,
   `see this Q&A <https://forums.developer.nvidia.com/t/profiling-failed-because-a-driver-resource-was-unavailable/205435>`_.
 * ``-f`` overwrite previously written trace profiles.
 * ``-o``: output file for profiling.
@@ -286,6 +286,6 @@ this can be done on another system than the one that recorded the traces.
 For example, if you record on a cluster and open the analysis GUI on your laptop, it is recommended to make sure that versions of Nsight-Compute match on the remote and local system.
 
 .. note::
-    
+
     nvtx-include syntax is very particular. The trailing / in the example is
     significant. For full information, see the section on `NVTX filtering <https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html#nvtx-filtering>`_ .
