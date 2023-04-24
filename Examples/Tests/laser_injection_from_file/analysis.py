@@ -169,6 +169,20 @@ def launch_analysis(executable):
 
 
 def main() :
+
+    from lasy.laser import Laser
+    from lasy.profiles import GaussianProfile
+    # Create a laser using lasy
+    pol = (1, 0)
+    laser_energy = 1.0  # J
+    profile = GaussianProfile(wavelength, pol, laser_energy, w0, tt, t_peak=0)
+    dim = "xyt"
+    lo = (-10e-6, -10e-6, -60e-15)
+    hi = (+10e-6, +10e-6, +60e-15)
+    npoints = (100, 100, 100)
+    laser = Laser(dim, lo, hi, npoints, profile)
+    laser.write_to_file("gaussianlaser3d")
+
     executables = glob.glob("*.ex")
     if len(executables) == 1 :
         launch_analysis(executables[0])
