@@ -782,10 +782,10 @@ WarpX::PushPSATD ()
         {
             pml[lev]->PushPSATD(lev);
         }
-        ApplyEfieldBoundary(lev, PatchType::fine);
-        if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
-        ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
-        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
+        ApplyEfieldBoundary(lev, PatchType::fine, guard_cells.ng_FieldSolver);
+        if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse, guard_cells.ng_FieldSolver);
+        ApplyBfieldBoundary(lev, PatchType::fine, guard_cells.ng_FieldSolver, DtType::FirstHalf);
+        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, guard_cells.ng_FieldSolver, DtType::FirstHalf);
     }
 #endif
 }

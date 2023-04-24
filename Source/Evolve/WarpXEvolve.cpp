@@ -705,10 +705,10 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         {
             pml[lev]->PushPSATD(lev);
         }
-        ApplyEfieldBoundary(lev, guard_cells.ng_FieldSolver, PatchType::fine);
-        if (lev > 0) ApplyEfieldBoundary(lev, guard_cells.ng_FieldSolver, PatchType::coarse);
-        ApplyBfieldBoundary(lev, guard_cells.ng_FieldSolver, PatchType::fine, DtType::FirstHalf);
-        if (lev > 0) ApplyBfieldBoundary(lev, guard_cells.ng_FieldSolver, PatchType::coarse, DtType::FirstHalf);
+        ApplyEfieldBoundary(lev, PatchType::fine, guard_cells.ng_FieldSolver);
+        if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse, guard_cells.ng_FieldSolver);
+        ApplyBfieldBoundary(lev, PatchType::fine, guard_cells.ng_FieldSolver, DtType::FirstHalf);
+        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, guard_cells.ng_FieldSolver, DtType::FirstHalf);
     }
 
     // Damp fields in PML before exchanging guard cells
