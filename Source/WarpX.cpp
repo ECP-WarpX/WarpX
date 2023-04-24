@@ -88,6 +88,8 @@ Vector<Real> WarpX::B_external_grid(3, 0.0);
 std::string WarpX::authors = "";
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
+bool WarpX::add_external_E_field = false;
+bool WarpX::add_external_B_field = false;
 
 // Parser for B_external on the grid
 std::string WarpX::str_Bx_ext_grid_function;
@@ -309,6 +311,10 @@ WarpX::WarpX ()
         Efield_avg_fp.resize(nlevs_max);
         Bfield_avg_fp.resize(nlevs_max);
     }
+
+    // Same as Bfield_fp/Efield_fp for reading external field data
+    Bfield_fp_external.resize(1);
+    Efield_fp_external.resize(1);
 
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
@@ -669,6 +675,22 @@ WarpX::ReadParameters ()
             utils::parser::getWithParser(
                 pp_warpx, "moving_window_v", moving_window_v);
             moving_window_v *= PhysConst::c;
+        }
+
+        pp_warpx.query("B_ext_grid_init_style", WarpX::B_ext_grid_s);
+        pp_warpx.query("E_ext_grid_init_style", WarpX::E_ext_grid_s);
+
+        if (WarpX::B_ext_grid_s == "read_from_file")
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+                                             "External field reading is not implemented for more than one level");
+            add_external_B_field = true;
+        }
+        if (WarpX::E_ext_grid_s == "read_from_file")
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+                                             "External field reading is not implemented for more than one level");
+            add_external_E_field = true;
         }
 
         electrostatic_solver_id = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
@@ -2073,6 +2095,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(current_fp[lev][0], amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, tag("current_fp[x]"), 0.0_rt);
     AllocInitMultiFab(current_fp[lev][1], amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, tag("current_fp[y]"), 0.0_rt);
     AllocInitMultiFab(current_fp[lev][2], amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, tag("current_fp[z]"), 0.0_rt);
+
+    // Match external field MultiFabs to fine patch
+    if (add_external_B_field) {
+        AllocInitMultiFab(Bfield_fp_external[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[x]"));
+        AllocInitMultiFab(Bfield_fp_external[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[y]"));
+        AllocInitMultiFab(Bfield_fp_external[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[z]"));
+    }
+    if (add_external_E_field) {
+        AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[x]"));
+        AllocInitMultiFab(Efield_fp_external[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[y]"));
+        AllocInitMultiFab(Efield_fp_external[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[z]"));
+    }
 
     if (do_current_centering)
     {
