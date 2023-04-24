@@ -208,3 +208,5 @@ subprocess.call('cd ../; doxygen;'
                 'cp -r doxyhtml source/_static/;'
                 'cp warpx-doxygen-web.tag.xml source/_static/doxyhtml/',
                 shell=True)
+
+suppress_warnings = ["bibtex.duplicate_label"]
