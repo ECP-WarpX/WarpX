@@ -225,7 +225,7 @@ and memory bandwidth for a kernel.
 
 
 Example
-""""""""""""""""""
+"""""""
 
 Example of how to create traces on a single-GPU system. A jobscript for
 Perlmutter is shown, but the `SBATCH` headers are not strictly necessary as the
