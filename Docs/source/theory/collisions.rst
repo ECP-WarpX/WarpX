@@ -11,7 +11,7 @@ Several types of collisions between simulation particles and a neutral backgroun
 An instance of the class :cpp:class:`MCCProcess` is created for each type of collision included in a simulation. This class saves information about the type of collision and the collision cross-section as a function of energy.
 
 The so-called null collision strategy is used in order to minimize the computational burden of the MCC module.
-This strategy is standard in PIC-MCC and a detailed description can be found elsewhere, for example in :cite:t:`Birdsall1991`.
+This strategy is standard in PIC-MCC and a detailed description can be found elsewhere, for example in :cite:t:`b-Birdsall1991`.
 In short the maximum collision probability is found over a sensible range of energies and is used to pre-select the appropriate number of macroparticles for collision consideration. Only these pre-selected particles are then individually considered for a collision based on their energy and the cross-sections of all the different collisional processes included.
 
 The MCC implementation assumes that the background neutral particles are **thermal**, and are moving at non-relativistic velocities in the lab frame. For each simulation particle considered for a collision, a velocity vector for a neutral particle is randomly chosen. The particle velocity is then boosted to the stationary frame of the neutral through a Galilean transformation. The energy of the collision is calculated using the particle utility function, ``ParticleUtils::getCollisionEnergy()``, as
@@ -78,7 +78,7 @@ Particle cooling due to elastic collisions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is straight forward to determine the energy a projectile loses during an elastic collision with another body, as a function of scattering angle, through energy and momentum conservation.
-See for example :cite:t:`Lim2007` for a derivation. The result is that given a projectile with mass :math:`m`, a target with mass :math:`M`, a scattering angle :math:`\theta`, and collision energy :math:`E`, the post collision energy of the projectile is given by
+See for example :cite:t:`b-Lim2007` for a derivation. The result is that given a projectile with mass :math:`m`, a target with mass :math:`M`, a scattering angle :math:`\theta`, and collision energy :math:`E`, the post collision energy of the projectile is given by
 
     .. math::
 
@@ -92,3 +92,7 @@ The impact of incorporating relativistic effects in the MCC routine can be seen 
 .. figure:: https://user-images.githubusercontent.com/40245517/170900079-74e505a5-2790-44f5-ac84-5847eda954e6.png
    :alt: Classical v relativistic MCC
    :width: 96%
+
+.. bibliography::
+    :labelprefix: B
+    :keyprefix: b-
