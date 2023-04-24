@@ -161,7 +161,13 @@ Overall simulation parameters
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
     This will cause severe performance drops.
     Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
-    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
+
+* ``amrex.the_arena_is_managed``  (``0`` or ``1``; default is ``0`` for false)
+    When running on GPUs, device memory that is accessed from the host will automatically be transferred with managed memory.
+    This is useful for convenience during development, but has sometimes severe performance and memory footprint implications if relied on (and sometimes vendor bugs).
+    For all regular WarpX operations, we therefore do explicit memory transfers without the need for managed memory and thus changed the AMReX default to false.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
 
 Signal Handling
 ^^^^^^^^^^^^^^^
@@ -337,7 +343,7 @@ Domain Boundary Conditions
 
     * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
 
-    * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
+    * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. Please see the :ref:`PEC theory section <theory-bc-pec>` for more details. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
       If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
     * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`.
@@ -357,6 +363,11 @@ Domain Boundary Conditions
 * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
+* ``boundary.verboncoeur_axis_correction`` (`bool`) optional (default `true`)
+    Whether to apply the Verboncoeur correction on the charge and current density on axis when using RZ.
+    For nodal values (rho and Jz), the cell volume for values on axis is calculated as :math:`\pi*\Delta r^2/4`.
+    In `Verboncoeur JCP 174, 421-427 (2001) <https://doi.org/10.1006/jcph.2001.6923>`__, it is shown that using
+    :math:`\pi*\Delta r^2/3` instead will give a uniform density if the particle density is uniform.
 
 Additional PML parameters
 -------------------------
@@ -801,10 +812,6 @@ Particle initialization
 * ``<species_name>.radially_weighted`` (`bool`) optional (default `true`)
     Whether particle's weight is varied with their radius. This only applies to cylindrical geometry.
     The only valid value is true.
-
-    * ``predefined``: use one of WarpX predefined plasma profiles. It requires additional
-      arguments ``<species_name>.predefined_profile_name`` and
-      ``<species_name>.predefined_profile_params`` (see below).
 
 * ``<species_name>.momentum_distribution_type`` (`string`)
     Distribution of the normalized momentum (`u=p/mc`) for this species. The options are:
@@ -1375,6 +1382,14 @@ Grid initialization
     Note that the current implementation of the parser for external B-field
     does not work with RZ and the code will abort with an error message.
 
+    If ``B_ext_grid_init_style`` is set to be ``read_from_file``, an additional parameter,
+    indicating the path of an openPMD data file,
+    ``warpx.read_fields_from_path`` must be specified,
+    from which external B field data can be loaded into WarpX.
+    One can refer to input files in ``Examples/Tests/LoadExternalField`` for more information.
+    Regarding how to prepare the openPMD data file, one can refer to
+    the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
+
 * ``warpx.E_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     electric field. The "default" style initializes the
@@ -1399,6 +1414,17 @@ Grid initialization
     and the value of `y` is set to zero.
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
+
+    If ``E_ext_grid_init_style`` is set to be ``read_from_file``, an additional parameter,
+    indicating the path of an openPMD data file,
+    ``warpx.read_fields_from_path`` must be specified,
+    from which external E field data can be loaded into WarpX.
+    One can refer to input files in ``Examples/Tests/LoadExternalField`` for more information.
+    Regarding how to prepare the openPMD data file, one can refer to
+    the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
+    Note that if both `B_ext_grid_init_style` and `E_ext_grid_init_style` are set to
+    `read_from_file`, the openPMD file specified by `warpx.read_fields_from_path`
+    should contain both B and E external fields data.
 
 * ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
     required when ``warpx.E_ext_grid_init_style="constant"``
@@ -1476,6 +1502,9 @@ Note that elements of the same type cannot overlap each other.
     A list of names (one name per lattice element), in the order that they
     appear in the lattice.
 
+* ``lattice.reverse`` (``boolean``) optional (default: ``false``)
+    Reverse the list of elements in the lattice.
+
 * ``<element_name>.type`` (``string``)
     Indicates the element type for this lattice element. This should be one of:
 
@@ -1511,6 +1540,15 @@ Note that elements of the same type cannot overlap each other.
 
             * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic field gradient
               The field applied to the particles will be `Bx = dBdx*y` and `By = -dBdx*x`.
+
+        * ``line`` a sub-lattice (line) of elements to append to the lattice.
+
+            * ``<element_name>.elements`` (``list of strings``) optional (default: no elements)
+              A list of names (one name per lattice element), in the order that they appear in the lattice.
+
+            * ``<element_name>.reverse`` (``boolean``) optional (default: ``false``)
+              Reverse the list of elements in the line before appending to the lattice.
+
 
 .. _running-cpp-parameters-collision:
 
@@ -2214,18 +2252,18 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
 
 * ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
-     openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.14.0/usage/concepts.html#iteration-and-series>`__.
+     openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.15.1/usage/concepts.html#iteration-and-series>`__.
      File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
-     ``variable based`` is an `experimental feature with ADIOS2 <https://openpmd-api.readthedocs.io/en/0.14.0/backends/adios2.html#experimental-new-adios2-schema>`__ and not supported for back-transformed diagnostics.
+     ``variable based`` is an `experimental feature with ADIOS2 <https://openpmd-api.readthedocs.io/en/0.15.1/backends/adios2.html#experimental-new-adios2-schema>`__ and not supported for back-transformed diagnostics.
      Default: ``f`` (full diagnostics)
 
 * ``<diag_name>.adios2_operator.type`` (``zfp``, ``blosc``) optional,
-    `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
 * ``<diag_name>.adios2_operator.parameters.*`` optional,
-    `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
-    A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
+    A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
 
     .. code-block:: text
 
@@ -2244,11 +2282,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
         <diag_name>.adios2_operator.parameters.precision = 3
 
 * ``<diag_name>.adios2_engine.type`` (``bp4``, ``sst``, ``ssc``, ``dataman``) optional,
-    `ADIOS2 Engine type <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 Engine type <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
     See full list of engines at `ADIOS2 readthedocs <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
 
 * ``<diag_name>.adios2_engine.parameters.*`` optional,
-    `ADIOS2 Engine parameters <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 Engine parameters <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
     An example for parameters for the BP engine are setting the number of writers (``NumAggregators``), transparently redirecting data to burst buffers etc.
     A detailed list of engine-specific parameters are available at the official `ADIOS2 documentation <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
@@ -2809,25 +2847,25 @@ Reduced Diagnostics
         so the time of the diagnostic may be long
         depending on the simulation size.
 
-* ``ChargeOnEB``
-    This type computes the total surface charge on the embedded boundary
-    (in Coulombs), by using the formula
+    * ``ChargeOnEB``
+        This type computes the total surface charge on the embedded boundary
+        (in Coulombs), by using the formula
 
-    .. math::
+        .. math::
 
-        Q_{tot} = \epsilon_0 \iint dS \cdot E
+            Q_{tot} = \epsilon_0 \iint dS \cdot E
 
-    where the integral is performed over the surface of the embedded boundary.
+        where the integral is performed over the surface of the embedded boundary.
 
-    When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
-    computed integral is weighted:
-    .. math::
+        When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
+        computed integral is weighted:
+        .. math::
 
-        Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
+            Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
 
-    In particular, by choosing a weighting function which returns either
-    1 or 0, it is possible to compute the charge on only some part of the
-    embedded boundary.
+        In particular, by choosing a weighting function which returns either
+        1 or 0, it is possible to compute the charge on only some part of the
+        embedded boundary.
 
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced

@@ -588,21 +588,26 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         auto const npart = ps["position"]["x"].getExtent()[0];
 #if !defined(WARPX_DIM_1D_Z)  // 2D, 3D, and RZ
         std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
+        std::shared_ptr<ParticleReal> ptr_offset_x = ps["positionOffset"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
+        double const position_offset_unit_x = ps["positionOffset"]["x"].unitSI();
+#endif
+#if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
+        std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
+        std::shared_ptr<ParticleReal> ptr_offset_y = ps["positionOffset"]["y"].loadChunk<ParticleReal>();
+        double const position_unit_y = ps["position"]["y"].unitSI();
+        double const position_offset_unit_y = ps["positionOffset"]["y"].unitSI();
 #endif
         std::shared_ptr<ParticleReal> ptr_z = ps["position"]["z"].loadChunk<ParticleReal>();
+        std::shared_ptr<ParticleReal> ptr_offset_z = ps["positionOffset"]["z"].loadChunk<ParticleReal>();
         double const position_unit_z = ps["position"]["z"].unitSI();
+        double const position_offset_unit_z = ps["positionOffset"]["z"].unitSI();
         std::shared_ptr<ParticleReal> ptr_ux = ps["momentum"]["x"].loadChunk<ParticleReal>();
         double const momentum_unit_x = ps["momentum"]["x"].unitSI();
         std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
         double const momentum_unit_z = ps["momentum"]["z"].unitSI();
         std::shared_ptr<ParticleReal> ptr_w = ps["weighting"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>();
         double const w_unit = ps["weighting"][openPMD::RecordComponent::SCALAR].unitSI();
-
-#   if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
-        std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
-        double const position_unit_y = ps["position"]["y"].unitSI();
-#endif
         std::shared_ptr<ParticleReal> ptr_uy = nullptr;
         double momentum_unit_y = 1.0;
         if (ps["momentum"].contains("y")) {
@@ -623,23 +628,23 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
             ParticleReal const weight = ptr_w.get()[i]*w_unit;
 
 #if !defined(WARPX_DIM_1D_Z)
-
-            ParticleReal const x = ptr_x.get()[i]*position_unit_x;
+            ParticleReal const x = ptr_x.get()[i]*position_unit_x + ptr_offset_x.get()[i]*position_offset_unit_x;
 #else
             ParticleReal const x = 0.0_prt;
 #endif
-            ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-            ParticleReal const y = ptr_y.get()[i]*position_unit_y;
+            ParticleReal const y = ptr_y.get()[i]*position_unit_y + ptr_offset_y.get()[i]*position_offset_unit_y;
 #else
             ParticleReal const y = 0.0_prt;
 #endif
+            ParticleReal const z = ptr_z.get()[i]*position_unit_z + ptr_offset_z.get()[i]*position_offset_unit_z + z_shift;
+
             if (plasma_injector->insideBounds(x, y, z)) {
-                ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
-                ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
+                ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/mass;
+                ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/mass;
                 ParticleReal uy = 0.0_prt;
                 if (ps["momentum"].contains("y")) {
-                    uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
+                    uy = ptr_uy.get()[i]*momentum_unit_y/mass;
                 }
                 CheckAndAddParticle(x, y, z, ux, uy, uz, weight,
                                     particle_x,  particle_y,  particle_z,
@@ -668,8 +673,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
 void
 PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
-                    amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                        NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                        NArrayReal, NArrayInt,
+                                        amrex::PinnedArenaAllocator>& pinned_tile,
                     const int n_external_attr_real,
                     const int n_external_attr_int,
                     const amrex::RandomEngine& engine)
@@ -1248,7 +1254,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
                 Real theta;
-                if (nmodes == 1) {
+                if (nmodes == 1 && rz_random_theta) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
                     theta = 2._rt*MathConst::pi*amrex::Random(engine);
@@ -1787,7 +1793,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
                 Real theta;
-                if (nmodes == 1) {
+                if (nmodes == 1 && m_rz_random_theta) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
                     theta = 2._prt*MathConst::pi*amrex::Random(engine);

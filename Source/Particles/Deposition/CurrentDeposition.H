@@ -8,8 +8,8 @@
 #ifndef CURRENTDEPOSITION_H_
 #define CURRENTDEPOSITION_H_
 
-#include "Parallelization/KernelTimer.H"
 #include "Particles/Deposition/SharedDepositionUtils.H"
+#include "ablastr/parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -126,8 +126,9 @@ void doDepositionShapeN (const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
 #if defined(WARPX_USE_GPUCLOCK)
-            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
 
             // --- Get particle quantities
@@ -650,8 +651,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long const ip) {
 #if defined(WARPX_USE_GPUCLOCK)
-            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
 
             // --- Get particle quantities
@@ -1045,8 +1047,9 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)
     {
 #if defined(WARPX_USE_GPUCLOCK)
-        KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                             == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+        const auto KernelTimer = ablastr::parallelization::KernelTimer(
+            cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+            cost_real);
 #endif
 
         // Inverse of Lorentz factor gamma

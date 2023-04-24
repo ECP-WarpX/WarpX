@@ -88,6 +88,8 @@ Vector<Real> WarpX::B_external_grid(3, 0.0);
 std::string WarpX::authors = "";
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
+bool WarpX::add_external_E_field = false;
+bool WarpX::add_external_B_field = false;
 
 // Parser for B_external on the grid
 std::string WarpX::str_Bx_ext_grid_function;
@@ -172,6 +174,8 @@ int WarpX::current_centering_noz = 2;
 
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
+
+bool WarpX::verboncoeur_axis_correction = true;
 
 bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
@@ -320,6 +324,10 @@ WarpX::WarpX ()
         Efield_avg_fp.resize(nlevs_max);
         Bfield_avg_fp.resize(nlevs_max);
     }
+
+    // Same as Bfield_fp/Efield_fp for reading external field data
+    Bfield_fp_external.resize(1);
+    Efield_fp_external.resize(1);
 
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
@@ -682,6 +690,22 @@ WarpX::ReadParameters ()
             moving_window_v *= PhysConst::c;
         }
 
+        pp_warpx.query("B_ext_grid_init_style", WarpX::B_ext_grid_s);
+        pp_warpx.query("E_ext_grid_init_style", WarpX::E_ext_grid_s);
+
+        if (WarpX::B_ext_grid_s == "read_from_file")
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+                                             "External field reading is not implemented for more than one level");
+            add_external_B_field = true;
+        }
+        if (WarpX::E_ext_grid_s == "read_from_file")
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+                                             "External field reading is not implemented for more than one level");
+            add_external_E_field = true;
+        }
+
         electrostatic_solver_id = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
         // if an electrostatic solver is used, set the Maxwell solver to None
         if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
@@ -717,6 +741,10 @@ WarpX::ReadParameters ()
         pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
+
+#ifdef WARPX_DIM_RZ
+        pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
+#endif
 
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 
@@ -1129,6 +1157,10 @@ WarpX::ReadParameters ()
             utils::parser::queryWithParser(
                 pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
         }
+#   ifndef WARPX_USE_GPUCLOCK
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::load_balance_costs_update_algo!=LoadBalanceCostsUpdateAlgo::GpuClock,
+            "`algo.load_balance_costs_update = gpuclock` requires to compile with `-DWarpX_GPUCLOCK=ON`.");
+#   endif // !WARPX_USE_GPUCLOCK
 
         // Parse algo.particle_shape and check that input is acceptable
         // (do this only if there is at least one particle or laser species)
@@ -1304,6 +1336,14 @@ WarpX::ReadParameters ()
         // and rho (linear, quadratic) for the PSATD algorithm
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
         rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
+
+        if (psatd_solution_type != PSATDSolutionType::FirstOrder || do_multi_J == false)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                rho_in_time == RhoInTime::Linear,
+                "psatd.rho_in_time=constant not yet implemented, "
+                "except for psatd.solution_type=first-order and warpx.do_multi_J=1");
+        }
 
         // Current correction activated by default, unless a charge-conserving
         // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
@@ -1644,6 +1684,12 @@ WarpX::BackwardCompatibility ()
         !pp_warpx.queryarr("sort_int", backward_strings),
         "warpx.sort_int is no longer a valid option. "
         "Please use the renamed option warpx.sort_intervals instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_nodal", backward_int),
+        "warpx.do_nodal is not supported anymore. "
+        "Please use the flag warpx.grid_type instead."
     );
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -2078,6 +2124,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(current_fp[lev][0], amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, tag("current_fp[x]"), 0.0_rt);
     AllocInitMultiFab(current_fp[lev][1], amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, tag("current_fp[y]"), 0.0_rt);
     AllocInitMultiFab(current_fp[lev][2], amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, tag("current_fp[z]"), 0.0_rt);
+
+    // Match external field MultiFabs to fine patch
+    if (add_external_B_field) {
+        AllocInitMultiFab(Bfield_fp_external[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[x]"));
+        AllocInitMultiFab(Bfield_fp_external[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[y]"));
+        AllocInitMultiFab(Bfield_fp_external[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[z]"));
+    }
+    if (add_external_E_field) {
+        AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[x]"));
+        AllocInitMultiFab(Efield_fp_external[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[y]"));
+        AllocInitMultiFab(Efield_fp_external[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[z]"));
+    }
 
     if (do_current_centering)
     {

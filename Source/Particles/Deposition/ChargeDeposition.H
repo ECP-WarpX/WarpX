@@ -8,8 +8,8 @@
 #ifndef CHARGEDEPOSITION_H_
 #define CHARGEDEPOSITION_H_
 
-#include "Parallelization/KernelTimer.H"
 #include "Particles/Deposition/SharedDepositionUtils.H"
+#include "ablastr/parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -99,8 +99,9 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
 #if defined(WARPX_USE_GPUCLOCK)
-            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                    == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
             // --- Get particle quantities
             amrex::Real wq = q*wp[ip]*invvol;
