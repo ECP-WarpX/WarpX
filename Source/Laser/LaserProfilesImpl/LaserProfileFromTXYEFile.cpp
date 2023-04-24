@@ -151,7 +151,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 
         auto series = io::Series(txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
-        auto E = i.meshes["E_real"];
+        auto E = i.meshes["laserEnvelope"];
         auto E_laser = E[io::RecordComponent::SCALAR];
 
         auto extent = E_laser.getExtent();
