@@ -62,7 +62,7 @@ def read_lattice(rootname, z_location):
             quad_lengths.append(length)
             quad_strengths_E.append(float(ds.parameters.get(f'{element}.dEdx')))
             z_location += length
-        elif element_type == 'lattice':
+        elif element_type == 'line':
             z_location = read_lattice(element, z_location)
     return z_location
 
@@ -70,7 +70,7 @@ read_lattice('lattice', z_location)
 
 # Fetch the initial position of the particle
 x0 = [float(x) for x in ds.parameters.get('electron.single_particle_pos').split()]
-ux0 = [float(x)*c for x in ds.parameters.get('electron.single_particle_vel').split()]
+ux0 = [float(x)*c for x in ds.parameters.get('electron.single_particle_u').split()]
 
 xx = x0[0]
 zz = x0[2]

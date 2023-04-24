@@ -50,10 +50,14 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=HIP
+   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON
    cmake --build build -j 6
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lumi>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in LUMI-P.
 
 
 .. _running-cpp-lumi:
@@ -96,3 +100,11 @@ Known System Issues
       #export FI_MR_CACHE_MAX_COUNT=0  # libfabric disable caching
       # or, less invasive:
       export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
+
+.. warning::
+
+   January, 2023:
+   We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
+   Reported to AMD and investigating.
+
+   Stay with the ROCm 5.2 module to avoid.

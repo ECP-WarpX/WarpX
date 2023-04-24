@@ -84,11 +84,12 @@ data = ds.covering_grid(level=0,
                         dims=ds.domain_dimensions)
 
 # Extract the E field along the axes
-if ndims == 2:
-    Ex = data[('mesh','Ex')].to_ndarray()
+# if ndims == 2:
+if ds.parameters['geometry.dims'] == 'RZ':
+    Ex = data[('boxlib','Er')].to_ndarray()
     Ex_axis = Ex[:,iz0,0]
     Ey_axis = Ex_axis
-    Ez = data[('mesh','Ez')].to_ndarray()
+    Ez = data[('boxlib','Ez')].to_ndarray()
     Ez_axis = Ez[ix0,:,0]
 else:
     Ex = data[('mesh','Ex')].to_ndarray()

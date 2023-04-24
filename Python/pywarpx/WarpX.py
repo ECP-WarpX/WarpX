@@ -10,6 +10,7 @@ import re
 from . import Particles
 from .Algo import algo
 from .Amr import amr
+from .Amrex import amrex
 from .Boundary import boundary
 from .Bucket import Bucket
 from .Collisions import collisions, collisions_list
@@ -40,6 +41,7 @@ class WarpX(Bucket):
         argv += warpx.attrlist()
         argv += my_constants.attrlist()
         argv += amr.attrlist()
+        argv += amrex.attrlist()
         argv += geometry.attrlist()
         argv += boundary.attrlist()
         argv += algo.attrlist()
@@ -84,10 +86,7 @@ class WarpX(Bucket):
         reduced_diagnostics.reduced_diags_names = reduced_diagnostics._diagnostics_dict.keys()
         argv += reduced_diagnostics.attrlist()
         for diagnostic in reduced_diagnostics._diagnostics_dict.values():
-            diagnostic.species = diagnostic._species_dict.keys()
             argv += diagnostic.attrlist()
-            for species_diagnostic in diagnostic._species_dict.values():
-                argv += species_diagnostic.attrlist()
 
         return argv
 

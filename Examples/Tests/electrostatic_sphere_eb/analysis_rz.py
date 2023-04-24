@@ -32,7 +32,7 @@ ds = yt.load( fn )
 
 all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 phi = all_data_level_0['boxlib', 'phi'].v.squeeze()
-Er = all_data_level_0['boxlib', 'Ex'].v.squeeze()
+Er = all_data_level_0['boxlib', 'Er'].v.squeeze()
 
 Dx = ds.domain_width/ds.domain_dimensions
 dr = Dx[0]

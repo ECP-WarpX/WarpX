@@ -15,14 +15,14 @@
 spack:
   specs:
   - adios2
-  - blaspp
+  - blaspp ~cuda +openmp ~rocm
   - boost
   - ccache
   - cmake
   - ecp-data-vis-sdk +adios2 +ascent +hdf5 +sensei
   - fftw
   - hdf5
-  - lapackpp
+  - lapackpp ~cuda ~rocm ^blaspp ~cuda +openmp ~rocm
   - mpi
   - pkgconfig
   - python
@@ -49,7 +49,7 @@ spack:
 
   packages:
     all:
-      variants: +mpi ~fortran
+      variants: +mpi ~fortran ~cuda ~rocm
     # default blocks at HDF5 1.8, resulting in unmergable solution
     conduit:
       variants: ~hdf5_compat

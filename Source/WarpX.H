@@ -98,6 +98,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
+    MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
 
@@ -120,6 +121,11 @@ public:
     static std::string B_ext_grid_s;
     //! Initialization type for external electric field on the grid
     static std::string E_ext_grid_s;
+
+    //! Whether to apply the effect of an externally-defined electric field
+    static bool add_external_E_field;
+    //! Whether to apply the effect of an externally-defined magnetic field
+    static bool add_external_B_field;
 
     //! String storing parser function to initialize x-component of the magnetic field on the grid
     static std::string str_Bx_ext_grid_function;
@@ -162,7 +168,7 @@ public:
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
     static short load_balance_costs_update_algo;
-    //! Integer that corresponds to electromagnetic Maxwell solver (vaccum - 0, macroscopic - 1)
+    //! Integer that corresponds to electromagnetic Maxwell solver (vacuum - 0, macroscopic - 1)
     static int em_solver_medium;
     /** Integer that correspond to macroscopic Maxwell solver algorithm
      *  (BackwardEuler - 0, Lax-Wendroff - 1)
@@ -270,6 +276,10 @@ public:
     //! small time steps.
     static bool galerkin_interpolation;
 
+    //! Flag whether the Verboncoeur correction is applied to the current and charge density
+    //! on the axis when using RZ.
+    static bool verboncoeur_axis_correction;
+
     //! If true, a bilinear filter is used to smooth charge and currents
     static bool use_filter;
     //! If true, the bilinear filtering of charge and currents is done in Fourier space
@@ -294,12 +304,23 @@ public:
     //! the maximum number of iterations is computed automatically so that the lower end of the
     //! simulation domain along z reaches #zmax_plasma_to_compute_max_step in the boosted frame
     static bool do_compute_max_step_from_zmax;
+    //! store initial value of zmin_domain_boost because WarpX::computeMaxStepBoostAccelerator
+    //! needs the initial value of zmin_domain_boost, even if restarting from a checkpoint file
+    static amrex::Real zmin_domain_boost_step_0;
+
+    //! If true, the code will compute max_step from the back transformed diagnostics
+    static bool compute_max_step_from_btd;
 
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
 
     static utils::parser::IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
+
+    //! If true, particles will be sorted in the order x -> y -> z -> ppc for faster deposition
+    static bool sort_particles_for_deposition;
+    //! Specifies the type of grid used for the above sorting, i.e. cell-centered, nodal, or mixed
+    static amrex::IntVect sort_idx_type;
 
     static bool do_subcycling;
     static bool do_multi_J;
@@ -317,8 +338,9 @@ public:
     //! and current onto the lower refinement level instead of the refinement patch itself
     static int n_current_deposition_buffer;
 
-    //! If true, all fields are evaluated on a nodal grid and all MultiFabs have a nodal index type
-    static bool do_nodal;
+    //! Integer that corresponds to the type of grid used in the simulation
+    //! (collocated, staggered, hybrid)
+    static short grid_type;
 
     // Global rho nodal flag to know about rho index type when rho MultiFab is not allocated
     amrex::IntVect m_rho_nodal_flag;
@@ -343,7 +365,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value = {});
 
     /**
@@ -366,7 +388,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
-        const std::string name,
+        const std::string& name,
         std::optional<const int> initial_value = {});
 
     /**
@@ -384,7 +406,7 @@ public:
         const amrex::MultiFab& mf_to_alias,
         const int scomp,
         const int ncomp,
-        const std::string name,
+        const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
     // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
@@ -399,7 +421,7 @@ public:
      * \param name The name of the MultiFab use to reference the MultiFab
      * \param mf The MultiFab to be added to the map (via a pointer to it)
      */
-    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::MultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::MultiFab>& mf) {
         multifab_map[name] = mf.get();
     }
 
@@ -409,7 +431,7 @@ public:
      * \param name The name of the iMultiFab use to reference the iMultiFab
      * \param mf The iMultiFab to be added to the map (via a pointer to it)
      */
-    static void AddToMultiFabMap(const std::string name, const std::unique_ptr<amrex::iMultiFab>& mf) {
+    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::iMultiFab>& mf) {
         imultifab_map[name] = mf.get();
     }
 
@@ -549,7 +571,7 @@ public:
      */
     void ComputeMaxStep ();
     // Compute max_step automatically for simulations in a boosted frame.
-    void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
+    void computeMaxStepBoostAccelerator();
 
     /** \brief Move the moving window
      * \param step Time step
@@ -648,6 +670,23 @@ public:
     void ApplyInverseVolumeScalingToChargeDensity(amrex::MultiFab* Rho,
                                                   int lev);
 #endif
+
+    /**
+     * \brief If a PEC boundary conditions is used the charge
+     * density deposited in the guard cells have to be reflected back into
+     * the simulation domain. This function performs that logic.
+     */
+    void ApplyRhofieldBoundary (const int lev, amrex::MultiFab* Rho,
+                                PatchType patch_type);
+
+    /**
+     * \brief If a PEC boundary conditions is used the current
+     * density deposited in the guard cells have to be reflected back into
+     * the simulation domain. This function performs that logic.
+     */
+    void ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
+                              amrex::MultiFab* Jy, amrex::MultiFab* Jz,
+                              PatchType patch_type);
 
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
@@ -761,6 +800,10 @@ public:
 
     void SyncRho ();
 
+    void SyncRho (
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp);
+
     amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
     int getnsubsteps (int lev) const {return nsubsteps[lev];}
     amrex::Vector<int> getistep () const {return istep;}
@@ -779,7 +822,9 @@ public:
     bool getis_synchronized() const {return is_synchronized;}
 
     int maxStep () const {return max_step;}
+    void updateMaxStep (const int new_max_step) {max_step = new_max_step;}
     amrex::Real stopTime () const {return stop_time;}
+    void updateStopTime (const amrex::Real new_stop_time) {stop_time = new_stop_time;}
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
@@ -936,6 +981,10 @@ public:
          const char field,
          const int lev, PatchType patch_type);
 
+    void ReadExternalFieldFromFile (
+         std::string read_fields_from_path, amrex::MultiFab* mf,
+         std::string F_name, std::string F_component);
+
     /**
      * \brief
      * This function initializes and calculates grid quantities used along with
@@ -961,10 +1010,9 @@ public:
      * (up to order \c n_order).
      *
      * \param[in] n_order order of the finite-difference approximation
-     * \param[in] nodal   whether the finite-difference approximation is computed
-     *                    on a nodal grid or a staggered grid
+     * \param[in] a_grid_type type of grid (collocated or not)
      */
-    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const bool nodal);
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const short a_grid_type);
 
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
@@ -1059,6 +1107,8 @@ private:
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
+
+    void AddExternalFields ();
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
@@ -1203,13 +1253,15 @@ private:
      * \param[in] centering_nox order of the finite-order centering along x
      * \param[in] centering_noy order of the finite-order centering along y
      * \param[in] centering_noz order of the finite-order centering along z
+     * \param[in] a_grid_type type of grid (collocated or not)
      */
     void AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_x,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_y,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
                                         const int centering_nox,
                                         const int centering_noy,
-                                        const int centering_noz);
+                                        const int centering_noz,
+                                        const short a_grid_type);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
@@ -1269,6 +1321,10 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
+
+    // Same as Bfield_fp/Efield_fp for reading external field data
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_external;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp_external;
 
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
@@ -1480,6 +1536,7 @@ private:
         return *m_field_factory[lev];
     }
 #ifdef AMREX_USE_EB
+public:
     amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }

@@ -38,6 +38,7 @@
 #include <cctype>
 #include <map>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -185,8 +186,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::getArrWithParser(
             pp_species_name, "single_particle_pos", single_particle_pos, 0, 3);
         utils::parser::getArrWithParser(
-            pp_species_name, "single_particle_vel", single_particle_vel, 0, 3);
-        for (auto& x : single_particle_vel) {
+            pp_species_name, "single_particle_u", single_particle_u, 0, 3);
+        for (auto& x : single_particle_u) {
             x *= PhysConst::c;
         }
         utils::parser::getWithParser(
@@ -201,24 +202,24 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::getArrWithParser(
             pp_species_name, "multiple_particles_pos_z", multiple_particles_pos_z);
         utils::parser::getArrWithParser(
-            pp_species_name, "multiple_particles_vel_x", multiple_particles_vel_x);
+            pp_species_name, "multiple_particles_ux", multiple_particles_ux);
         utils::parser::getArrWithParser(
-            pp_species_name, "multiple_particles_vel_y", multiple_particles_vel_y);
+            pp_species_name, "multiple_particles_uy", multiple_particles_uy);
         utils::parser::getArrWithParser(
-            pp_species_name, "multiple_particles_vel_z", multiple_particles_vel_z);
+            pp_species_name, "multiple_particles_uz", multiple_particles_uz);
         utils::parser::getArrWithParser(
             pp_species_name, "multiple_particles_weight", multiple_particles_weight);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             ((multiple_particles_pos_x.size() == multiple_particles_pos_y.size()) &&
              (multiple_particles_pos_x.size() == multiple_particles_pos_z.size()) &&
-             (multiple_particles_pos_x.size() == multiple_particles_vel_x.size()) &&
-             (multiple_particles_pos_x.size() == multiple_particles_vel_y.size()) &&
-             (multiple_particles_pos_x.size() == multiple_particles_vel_z.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_ux.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_uy.size()) &&
+             (multiple_particles_pos_x.size() == multiple_particles_uz.size()) &&
              (multiple_particles_pos_x.size() == multiple_particles_weight.size())),
             "Error: The multiple particles source quantities must all have the same number of elements");
-        for (auto& vx : multiple_particles_vel_x) { vx *= PhysConst::c; }
-        for (auto& vy : multiple_particles_vel_y) { vy *= PhysConst::c; }
-        for (auto& vz : multiple_particles_vel_z) { vz *= PhysConst::c; }
+        for (auto& vx : multiple_particles_ux) { vx *= PhysConst::c; }
+        for (auto& vy : multiple_particles_uy) { vy *= PhysConst::c; }
+        for (auto& vz : multiple_particles_uz) { vz *= PhysConst::c; }
         add_multiple_particles = true;
         return;
     } else if (injection_style == "gaussian_beam") {
@@ -235,6 +236,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::getWithParser(pp_species_name, "q_tot", q_tot);
         utils::parser::getWithParser(pp_species_name, "npart", npart);
         pp_species_name.query("do_symmetrize", do_symmetrize);
+        pp_species_name.query("symmetrization_order", symmetrization_order);
+        std::set<int> valid_symmetries = {4,8};
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
+            "Error: Symmetrization only supported to orders 4 or 8 ");
         gaussian_beam = true;
         parseMomentum(pp_species_name);
 #if defined(WARPX_DIM_XZ)
@@ -261,7 +266,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         if (WarpX::n_rz_azimuthal_modes > 1) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             num_particles_per_cell>=2*WarpX::n_rz_azimuthal_modes,
-            "Error: For accurate use of WarpX cylindrical gemoetry the number "
+            "Error: For accurate use of WarpX cylindrical geometry the number "
             "of particles should be at least two times n_rz_azimuthal_modes "
             "(Please visit PR#765 for more information.)");
         }
@@ -512,9 +517,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     amrex::Gpu::synchronize();
 }
 
+#ifdef AMREX_USE_GPU
 PlasmaInjector::~PlasmaInjector ()
 {
-#ifdef AMREX_USE_GPU
     if (d_inj_pos) {
         amrex::The_Arena()->free(d_inj_pos);
     }
@@ -524,8 +529,10 @@ PlasmaInjector::~PlasmaInjector ()
     if (d_inj_mom) {
         amrex::The_Arena()->free(d_inj_mom);
     }
-#endif
 }
+#else
+PlasmaInjector::~PlasmaInjector () = default;
+#endif
 
 // Depending on injection type at runtime, initialize inj_rho
 // so that inj_rho->getDensity calls

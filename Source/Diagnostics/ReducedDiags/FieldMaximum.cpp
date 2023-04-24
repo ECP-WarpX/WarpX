@@ -74,21 +74,21 @@ FieldMaximum::FieldMaximum (std::string rd_name)
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]max_Ex_lev" + std::to_string(lev) + " (V/m)";
+                ofs << "[" << c++ << "]max_Ex_lev" + std::to_string(lev) + "(V/m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]max_Ey_lev" + std::to_string(lev) + " (V/m)";
+                ofs << "[" << c++ << "]max_Ey_lev" + std::to_string(lev) + "(V/m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]max_Ez_lev" + std::to_string(lev) + " (V/m)";
+                ofs << "[" << c++ << "]max_Ez_lev" + std::to_string(lev) + "(V/m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]max_|E|_lev" + std::to_string(lev) + " (V/m)";
+                ofs << "[" << c++ << "]max_|E|_lev" + std::to_string(lev) + "(V/m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]max_Bx_lev" + std::to_string(lev) + " (T)";
+                ofs << "[" << c++ << "]max_Bx_lev" + std::to_string(lev) + "(T)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]max_By_lev" + std::to_string(lev) + " (T)";
+                ofs << "[" << c++ << "]max_By_lev" + std::to_string(lev) + "(T)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]max_Bz_lev" + std::to_string(lev) + " (T)";
+                ofs << "[" << c++ << "]max_Bz_lev" + std::to_string(lev) + "(T)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]max_|B|_lev" + std::to_string(lev) + " (T)";
+                ofs << "[" << c++ << "]max_|B|_lev" + std::to_string(lev) + "(T)";
             }
             ofs << std::endl;
             // close file

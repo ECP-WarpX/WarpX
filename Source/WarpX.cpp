@@ -88,6 +88,8 @@ Vector<Real> WarpX::B_external_grid(3, 0.0);
 std::string WarpX::authors = "";
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
+bool WarpX::add_external_E_field = false;
+bool WarpX::add_external_B_field = false;
 
 // Parser for B_external on the grid
 std::string WarpX::str_Bx_ext_grid_function;
@@ -114,7 +116,9 @@ Real WarpX::gamma_boost = 1._rt;
 Real WarpX::beta_boost = 0._rt;
 Vector<int> WarpX::boost_direction = {0,0,0};
 bool WarpX::do_compute_max_step_from_zmax = false;
+bool WarpX::compute_max_step_from_btd = false;
 Real WarpX::zmax_plasma_to_compute_max_step = 0._rt;
+Real WarpX::zmin_domain_boost_step_0 = 0._rt;
 
 short WarpX::current_deposition_algo;
 short WarpX::charge_deposition_algo;
@@ -158,6 +162,8 @@ int WarpX::current_centering_noz = 2;
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
+bool WarpX::verboncoeur_axis_correction = true;
+
 bool WarpX::use_filter = true;
 bool WarpX::use_kspace_filter       = true;
 bool WarpX::use_filter_compensation = false;
@@ -169,6 +175,14 @@ int WarpX::num_mirrors = 0;
 
 utils::parser::IntervalsParser WarpX::sort_intervals;
 amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(1,1,1));
+
+#if defined(AMREX_USE_CUDA)
+bool WarpX::sort_particles_for_deposition = true;
+#else
+bool WarpX::sort_particles_for_deposition = false;
+#endif
+
+amrex::IntVect WarpX::sort_idx_type(AMREX_D_DECL(0,0,0));
 
 bool WarpX::do_dynamic_scheduling = true;
 
@@ -191,7 +205,7 @@ IntVect WarpX::filter_npass_each_dir(1);
 int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
-bool WarpX::do_nodal = false;
+short WarpX::grid_type;
 amrex::IntVect m_rho_nodal_flag;
 
 int WarpX::do_similar_dm_pml = 1;
@@ -297,6 +311,10 @@ WarpX::WarpX ()
         Efield_avg_fp.resize(nlevs_max);
         Bfield_avg_fp.resize(nlevs_max);
     }
+
+    // Same as Bfield_fp/Efield_fp for reading external field data
+    Bfield_fp_external.resize(1);
+    Efield_fp_external.resize(1);
 
     m_edge_lengths.resize(nlevs_max);
     m_face_areas.resize(nlevs_max);
@@ -622,6 +640,9 @@ WarpX::ReadParameters ()
             pp_warpx, "zmax_plasma_to_compute_max_step",
             zmax_plasma_to_compute_max_step);
 
+        pp_warpx.query("compute_max_step_from_btd",
+            compute_max_step_from_btd);
+
         pp_warpx.query("do_moving_window", do_moving_window);
         if (do_moving_window)
         {
@@ -654,6 +675,22 @@ WarpX::ReadParameters ()
             utils::parser::getWithParser(
                 pp_warpx, "moving_window_v", moving_window_v);
             moving_window_v *= PhysConst::c;
+        }
+
+        pp_warpx.query("B_ext_grid_init_style", WarpX::B_ext_grid_s);
+        pp_warpx.query("E_ext_grid_init_style", WarpX::E_ext_grid_s);
+
+        if (WarpX::B_ext_grid_s == "read_from_file")
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+                                             "External field reading is not implemented for more than one level");
+            add_external_B_field = true;
+        }
+        if (WarpX::E_ext_grid_s == "read_from_file")
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,
+                                             "External field reading is not implemented for more than one level");
+            add_external_E_field = true;
         }
 
         electrostatic_solver_id = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
@@ -691,6 +728,10 @@ WarpX::ReadParameters ()
         pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
+
+#ifdef WARPX_DIM_RZ
+        pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
+#endif
 
         utils::parser::queryWithParser(pp_warpx, "const_dt", m_const_dt);
 
@@ -903,9 +944,12 @@ WarpX::ReadParameters ()
 
         pp_warpx.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
-        pp_warpx.query("do_nodal", do_nodal);
+        // Integer that corresponds to the type of grid used in the simulation
+        // (collocated, staggered, hybrid)
+        grid_type = GetAlgorithmInteger(pp_warpx, "grid_type");
+
         // Use same shape factors in all directions, for gathering
-        if (do_nodal) galerkin_interpolation = false;
+        if (grid_type == GridType::Collocated) galerkin_interpolation = false;
 
 #ifdef WARPX_DIM_RZ
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
@@ -914,13 +958,47 @@ WarpX::ReadParameters ()
             "The number of azimuthal modes (n_rz_azimuthal_modes) must be at least 1");
 #endif
 
-        // If true, the current is deposited on a nodal grid and centered onto a staggered grid.
-        // Setting warpx.do_current_centering = 1 makes sense only if warpx.do_nodal = 0. Instead,
-        // if warpx.do_nodal = 1, Maxwell's equations are solved on a nodal grid and the current
-        // should not be centered onto a staggered grid.
-        if (WarpX::do_nodal == 0)
+        // Set default parameters with hybrid grid (parsed later below)
+        if (grid_type == GridType::Hybrid)
         {
-            pp_warpx.query("do_current_centering", do_current_centering);
+            // Finite-order centering of fields (staggered to nodal)
+            // Default field gathering algorithm will be set below
+            field_centering_nox = 8;
+            field_centering_noy = 8;
+            field_centering_noz = 8;
+            // Finite-order centering of currents (nodal to staggered)
+            do_current_centering = true;
+            current_centering_nox = 8;
+            current_centering_noy = 8;
+            current_centering_noz = 8;
+        }
+
+        // If true, the current is deposited on a nodal grid and centered onto
+        // a staggered grid. Setting warpx.do_current_centering=1 makes sense
+        // only if warpx.grid_type=hybrid. Instead, if warpx.grid_type=nodal or
+        // warpx.grid_type=staggered, Maxwell's equations are solved either on a
+        // collocated grid or on a staggered grid without current centering.
+        pp_warpx.query("do_current_centering", do_current_centering);
+        if (do_current_centering)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                grid_type == GridType::Hybrid,
+                "warpx.do_current_centering=1 can be used only with warpx.grid_type=hybrid");
+
+            utils::parser::queryWithParser(
+                pp_warpx, "current_centering_nox", current_centering_nox);
+            utils::parser::queryWithParser(
+                pp_warpx, "current_centering_noy", current_centering_noy);
+            utils::parser::queryWithParser(
+                pp_warpx, "current_centering_noz", current_centering_noz);
+
+            AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
+                                          device_current_centering_stencil_coeffs_y,
+                                          device_current_centering_stencil_coeffs_z,
+                                          current_centering_nox,
+                                          current_centering_noy,
+                                          current_centering_noz,
+                                          grid_type);
         }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -952,9 +1030,9 @@ WarpX::ReadParameters ()
         }
 
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
-            // Force do_nodal=true (that is, not staggered) and
-            // use same shape factors in all directions, for gathering
-            do_nodal = true;
+            // Force grid_type=collocated (neither staggered nor hybrid)
+            // and use same shape factors in all directions for gathering
+            grid_type = GridType::Collocated;
             galerkin_interpolation = false;
         }
 #endif
@@ -993,11 +1071,39 @@ WarpX::ReadParameters ()
                 "Vay deposition not implemented with multi-J algorithm");
         }
 
+        // Query algo.field_gathering from input, set field_gathering_algo to
+        // "default" if not found (default defined in Utils/WarpXAlgorithmSelection.cpp)
         field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
-        if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
-            // Use same shape factors in all directions, for gathering
-            galerkin_interpolation = false;
+
+        // Set default field gathering algorithm for hybrid grids (momentum-conserving)
+        std::string tmp_algo;
+        // - algo.field_gathering not found in the input
+        // - field_gathering_algo set to "default" above
+        //   (default defined in Utils/WarpXAlgorithmSelection.cpp)
+        // - reset default value here for hybrid grids
+        if (pp_algo.query("field_gathering", tmp_algo) == false)
+        {
+            if (grid_type == GridType::Hybrid)
+            {
+                field_gathering_algo = GatheringAlgo::MomentumConserving;
+            }
         }
+        // - algo.field_gathering found in the input
+        // - field_gathering_algo read above and set to user-defined value
+        else
+        {
+            if (grid_type == GridType::Hybrid)
+            {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    field_gathering_algo == GatheringAlgo::MomentumConserving,
+                    "Hybrid grid (warpx.grid_type=hybrid) should be used only with "
+                    "momentum-conserving field gathering algorithm "
+                    "(algo.field_gathering=momentum-conserving)");
+            }
+        }
+
+        // Use same shape factors in all directions, for gathering
+        if (field_gathering_algo == GatheringAlgo::MomentumConserving) galerkin_interpolation = false;
 
         em_solver_medium = GetAlgorithmInteger(pp_algo, "em_solver_medium");
         if (em_solver_medium == MediumForEM::Macroscopic ) {
@@ -1022,6 +1128,10 @@ WarpX::ReadParameters ()
             utils::parser::queryWithParser(
                 pp_algo, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
         }
+#   ifndef WARPX_USE_GPUCLOCK
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::load_balance_costs_update_algo!=LoadBalanceCostsUpdateAlgo::GpuClock,
+            "`algo.load_balance_costs_update = gpuclock` requires to compile with `-DWarpX_GPUCLOCK=ON`.");
+#   endif // !WARPX_USE_GPUCLOCK
 
         // Parse algo.particle_shape and check that input is acceptable
         // (do this only if there is at least one particle or laser species)
@@ -1032,6 +1142,19 @@ WarpX::ReadParameters ()
         ParmParse pp_lasers("lasers");
         std::vector<std::string> lasers_names;
         pp_lasers.queryarr("names", lasers_names);
+
+#ifdef WARPX_DIM_RZ
+        // Here we check if the simulation includes laser and the number of
+        // azimuthal modes is less than 2.
+        // In that case we should throw a specific warning since
+        // representation of a laser pulse in cylindrical coordinates
+        // requires at least 2 azimuthal modes
+        if (lasers_names.size() > 0 && n_rz_azimuthal_modes < 2) {
+            ablastr::warn_manager::WMRecordWarning("Laser",
+            "Laser pulse representation in RZ requires at least 2 azimuthal modes",
+            ablastr::warn_manager::WarnPriority::high);
+        }
+#endif
 
         std::vector<std::string> sort_intervals_string_vec = {"-1"};
         int particle_shape;
@@ -1082,68 +1205,61 @@ WarpX::ReadParameters ()
             for (int i=0; i<AMREX_SPACEDIM; i++)
                 sort_bin_size[i] = vect_sort_bin_size[i];
         }
+
+        pp_warpx.query("sort_particles_for_deposition",sort_particles_for_deposition);
+        Vector<int> vect_sort_idx_type(AMREX_SPACEDIM,0);
+        bool sort_idx_type_is_specified =
+            utils::parser::queryArrWithParser(
+                pp_warpx, "sort_idx_type",
+                vect_sort_idx_type, 0, AMREX_SPACEDIM);
+        if (sort_idx_type_is_specified){
+            for (int i=0; i<AMREX_SPACEDIM; i++)
+                sort_idx_type[i] = vect_sort_idx_type[i];
+        }
+
     }
 
     {
         ParmParse pp_interpolation("interpolation");
 
         pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
+    }
 
-        // Read order of finite-order centering of fields (staggered to nodal).
-        // Read this only if warpx.do_nodal = 0. Instead, if warpx.do_nodal = 1,
-        // Maxwell's equations are solved on a nodal grid and the electromagnetic
-        // forces are gathered from a nodal grid, hence the fields do not need to
-        // be centered onto a nodal grid.
+    {
+        ParmParse pp_warpx("warpx");
+
+        // If warpx.grid_type=staggered or warpx.grid_type=hybrid,
+        // and algo.field_gathering=momentum-conserving, the fields are solved
+        // on a staggered grid and centered onto a nodal grid for gathering.
+        // Instead, if warpx.grid_type=collocated, the momentum-conserving and
+        // energy conserving field gathering algorithms are equivalent (forces
+        // gathered from the collocated grid) and no fields centering occurs.
         if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-            WarpX::do_nodal == 0)
+            WarpX::grid_type != GridType::Collocated)
         {
             utils::parser::queryWithParser(
-                pp_interpolation, "field_centering_nox", field_centering_nox);
+                pp_warpx, "field_centering_nox", field_centering_nox);
             utils::parser::queryWithParser(
-                pp_interpolation, "field_centering_noy", field_centering_noy);
+                pp_warpx, "field_centering_noy", field_centering_noy);
             utils::parser::queryWithParser(
-                pp_interpolation, "field_centering_noz", field_centering_noz);
-        }
+                pp_warpx, "field_centering_noz", field_centering_noz);
 
-        // Read order of finite-order centering of currents (nodal to staggered)
-        if (WarpX::do_current_centering)
-        {
-            utils::parser::queryWithParser(
-                pp_interpolation, "current_centering_nox", current_centering_nox);
-            utils::parser::queryWithParser(
-                pp_interpolation, "current_centering_noy", current_centering_noy);
-            utils::parser::queryWithParser(
-                pp_interpolation, "current_centering_noz", current_centering_noz);
-        }
-
-        // Finite-order centering is not implemented with mesh refinement
-        // (note that when WarpX::do_nodal = 1 finite-order centering is not used anyways)
-        if (maxLevel() > 0 && WarpX::do_nodal == 0)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
-                "High-order centering of fields (order > 2) is not implemented with mesh refinement");
-        }
-
-        if (WarpX::field_gathering_algo == GatheringAlgo::MomentumConserving &&
-            WarpX::do_nodal == 0)
-        {
             AllocateCenteringCoefficients(device_field_centering_stencil_coeffs_x,
                                           device_field_centering_stencil_coeffs_y,
                                           device_field_centering_stencil_coeffs_z,
                                           field_centering_nox,
                                           field_centering_noy,
-                                          field_centering_noz);
+                                          field_centering_noz,
+                                          grid_type);
         }
 
-        if (WarpX::do_current_centering)
+        // Finite-order centering is not implemented with mesh refinement
+        // (note that when warpx.grid_type=collocated, finite-order centering is not used anyways)
+        if (maxLevel() > 0 && WarpX::grid_type != GridType::Collocated)
         {
-            AllocateCenteringCoefficients(device_current_centering_stencil_coeffs_x,
-                                          device_current_centering_stencil_coeffs_y,
-                                          device_current_centering_stencil_coeffs_z,
-                                          current_centering_nox,
-                                          current_centering_noy,
-                                          current_centering_noz);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                field_centering_nox == 2 && field_centering_noy == 2 && field_centering_noz == 2,
+                "High-order centering of fields (order > 2) is not implemented with mesh refinement");
         }
     }
 
@@ -1191,6 +1307,14 @@ WarpX::ReadParameters ()
         // and rho (linear, quadratic) for the PSATD algorithm
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
         rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
+
+        if (psatd_solution_type != PSATDSolutionType::FirstOrder || do_multi_J == false)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                rho_in_time == RhoInTime::Linear,
+                "psatd.rho_in_time=constant not yet implemented, "
+                "except for psatd.solution_type=first-order and warpx.do_multi_J=1");
+        }
 
         // Current correction activated by default, unless a charge-conserving
         // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
@@ -1534,6 +1658,12 @@ WarpX::BackwardCompatibility ()
     );
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_warpx.query("do_nodal", backward_int),
+        "warpx.do_nodal is not supported anymore. "
+        "Please use the flag warpx.grid_type instead."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_warpx.query("use_kspace_filter", backward_int),
         "warpx.use_kspace_filter is not supported anymore. "
         "Please use the flag use_filter, see documentation."
@@ -1635,6 +1765,34 @@ WarpX::BackwardCompatibility ()
         ablastr::warn_manager::WMRecordWarning("Species",
             "particles.nspecies is ignored. Just use particles.species_names please.",
             ablastr::warn_manager::WarnPriority::low);
+    }
+
+    std::vector<std::string> backward_sp_names;
+    pp_particles.queryarr("species_names", backward_sp_names);
+    for(std::string speciesiter : backward_sp_names){
+        ParmParse pp_species(speciesiter);
+        std::vector<amrex::Real> backward_vel;
+        std::stringstream ssspecies;
+
+        ssspecies << "'" << speciesiter << ".multiple_particles_vel_<x,y,z>'";
+        ssspecies << " are not supported anymore. ";
+        ssspecies << "Please use the renamed variables ";
+        ssspecies << "'" << speciesiter << ".multiple_particles_u<x,y,z>' .";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !pp_species.queryarr("multiple_particles_vel_x", backward_vel) &&
+            !pp_species.queryarr("multiple_particles_vel_y", backward_vel) &&
+            !pp_species.queryarr("multiple_particles_vel_z", backward_vel),
+            ssspecies.str());
+
+        ssspecies.str("");
+        ssspecies.clear();
+        ssspecies << "'" << speciesiter << ".single_particle_vel'";
+        ssspecies << " is not supported anymore. ";
+        ssspecies << "Please use the renamed variable ";
+        ssspecies << "'" << speciesiter << ".single_particle_u' .";
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !pp_species.queryarr("single_particle_vel", backward_vel),
+            ssspecies.str());
     }
 
     ParmParse pp_collisions("collisions");
@@ -1759,7 +1917,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         dx,
         do_subcycling,
         WarpX::use_fdtd_nci_corr,
-        do_nodal,
+        grid_type,
         do_moving_window,
         moving_window_dir,
         WarpX::nox,
@@ -1874,7 +2032,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     G_nodal_flag = amrex::IntVect::TheCellVector();
 
     // Overwrite nodal flags if necessary
-    if (do_nodal) {
+    if (grid_type == GridType::Collocated) {
         Ex_nodal_flag  = IntVect::TheNodeVector();
         Ey_nodal_flag  = IntVect::TheNodeVector();
         Ez_nodal_flag  = IntVect::TheNodeVector();
@@ -1937,6 +2095,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     AllocInitMultiFab(current_fp[lev][0], amrex::convert(ba, jx_nodal_flag), dm, ncomps, ngJ, tag("current_fp[x]"), 0.0_rt);
     AllocInitMultiFab(current_fp[lev][1], amrex::convert(ba, jy_nodal_flag), dm, ncomps, ngJ, tag("current_fp[y]"), 0.0_rt);
     AllocInitMultiFab(current_fp[lev][2], amrex::convert(ba, jz_nodal_flag), dm, ncomps, ngJ, tag("current_fp[z]"), 0.0_rt);
+
+    // Match external field MultiFabs to fine patch
+    if (add_external_B_field) {
+        AllocInitMultiFab(Bfield_fp_external[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[x]"));
+        AllocInitMultiFab(Bfield_fp_external[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[y]"));
+        AllocInitMultiFab(Bfield_fp_external[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp_external[z]"));
+    }
+    if (add_external_E_field) {
+        AllocInitMultiFab(Efield_fp_external[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[x]"));
+        AllocInitMultiFab(Efield_fp_external[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[y]"));
+        AllocInitMultiFab(Efield_fp_external[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps, ngEB, tag("Efield_fp_external[z]"));
+    }
 
     if (do_current_centering)
     {
@@ -2125,13 +2295,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #endif
     } // ElectromagneticSolverAlgo::PSATD
     else {
-        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(electromagnetic_solver_id, dx, do_nodal);
+        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(electromagnetic_solver_id, dx, grid_type);
     }
 
     //
     // The Aux patch (i.e., the full solution)
     //
-    if (aux_is_nodal and !do_nodal)
+    if (aux_is_nodal and grid_type != GridType::Collocated)
     {
         // Create aux multifabs on Nodal Box Array
         BoxArray const nba = amrex::convert(ba,IntVect::TheNodeVector());
@@ -2220,11 +2390,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
         if (do_divb_cleaning)
         {
-            if (do_nodal)
+            if (grid_type == GridType::Collocated)
             {
                 AllocInitMultiFab(G_cp[lev], amrex::convert(cba, IntVect::TheUnitVector()), dm, ncomps, ngG, tag("G_cp"), 0.0_rt);
             }
-            else // do_nodal = 0
+            else // grid_type=staggered or grid_type=hybrid
             {
                 AllocInitMultiFab(G_cp[lev], amrex::convert(cba, IntVect::TheZeroVector()), dm, ncomps, ngG, tag("G_cp"), 0.0_rt);
             }
@@ -2268,7 +2438,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         } // ElectromagneticSolverAlgo::PSATD
         else {
             m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(electromagnetic_solver_id, cdx,
-                                                                             do_nodal);
+                                                                             grid_type);
         }
     }
 
@@ -2355,7 +2525,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                                   dm,
                                                   n_rz_azimuthal_modes,
                                                   noz_fft,
-                                                  do_nodal,
+                                                  grid_type,
                                                   m_v_galilean,
                                                   dx_vect,
                                                   solver_dt,
@@ -2409,7 +2579,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                                 nox_fft,
                                                 noy_fft,
                                                 noz_fft,
-                                                do_nodal,
+                                                grid_type,
                                                 m_v_galilean,
                                                 m_v_comoving,
                                                 dx_vect,
@@ -2511,9 +2681,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
-        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
+        "ComputeDivB not implemented with warpx.grid_type=Collocated.");
 
     Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
@@ -2549,9 +2718,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx, IntVect const ngrow)
 {
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
-        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
+        "ComputeDivB not implemented with warpx.grid_type=collocated.");
 
     Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
@@ -2749,7 +2917,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
 #endif
 }
 
-amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const bool nodal)
+amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const short a_grid_type)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
 
@@ -2761,8 +2929,8 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
     // an overflow when evaluated numerically. One way to avoid the overflow is
     // to calculate the coefficients by recurrence.
 
-    // Coefficients for nodal (centered) finite-difference approximation
-    if (nodal == true)
+    // Coefficients for collocated (nodal) finite-difference approximation
+    if (a_grid_type == GridType::Collocated)
     {
        // First coefficient
        coeffs.at(0) = m * 2. / (m+1);
@@ -2810,7 +2978,8 @@ void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>
                                            amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
                                            const int centering_nox,
                                            const int centering_noy,
-                                           const int centering_noz)
+                                           const int centering_noz,
+                                           const short a_grid_type)
 {
     // Vectors of Fornberg stencil coefficients
     amrex::Vector<amrex::Real> Fornberg_stencil_coeffs_x;
@@ -2822,9 +2991,9 @@ void WarpX::AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
 
-    Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(centering_nox, false);
-    Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(centering_noy, false);
-    Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(centering_noz, false);
+    Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(centering_nox, a_grid_type);
+    Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(centering_noy, a_grid_type);
+    Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(centering_noz, a_grid_type);
 
     host_centering_stencil_coeffs_x.resize(centering_nox);
     host_centering_stencil_coeffs_y.resize(centering_noy);
@@ -2912,10 +3081,10 @@ WarpX::AllocInitMultiFab (
     const amrex::DistributionMapping& dm,
     const int ncomp,
     const amrex::IntVect& ngrow,
-    const std::string name,
+    const std::string& name,
     std::optional<const amrex::Real> initial_value)
 {
-    const auto tag = amrex::MFInfo().SetTag(std::move(name));
+    const auto tag = amrex::MFInfo().SetTag(name);
     mf = std::make_unique<amrex::MultiFab>(ba, dm, ncomp, ngrow, tag);
     if (initial_value) {
         mf->setVal(*initial_value);
@@ -2930,10 +3099,10 @@ WarpX::AllocInitMultiFab (
     const amrex::DistributionMapping& dm,
     const int ncomp,
     const amrex::IntVect& ngrow,
-    const std::string name,
+    const std::string& name,
     std::optional<const int> initial_value)
 {
-    const auto tag = amrex::MFInfo().SetTag(std::move(name));
+    const auto tag = amrex::MFInfo().SetTag(name);
     mf = std::make_unique<amrex::iMultiFab>(ba, dm, ncomp, ngrow, tag);
     if (initial_value) {
         mf->setVal(*initial_value);
@@ -2947,7 +3116,7 @@ WarpX::AliasInitMultiFab (
     const amrex::MultiFab& mf_to_alias,
     const int scomp,
     const int ncomp,
-    const std::string name,
+    const std::string& name,
     std::optional<const amrex::Real> initial_value)
 {
     mf = std::make_unique<amrex::MultiFab>(mf_to_alias, amrex::make_alias, scomp, ncomp);
