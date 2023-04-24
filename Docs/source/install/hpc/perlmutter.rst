@@ -55,25 +55,25 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
         # c-blosc (I/O compression)
         git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
         rm -rf src/c-blosc-pm-build
-        cmake -S src/c-blosc -B src/c-blosc-pm-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/gpu/c-blosc-1.21.1
+        cmake -S src/c-blosc -B src/c-blosc-pm-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/c-blosc-1.21.1
         cmake --build src/c-blosc-pm-build --target install --parallel 16
 
         # ADIOS2
         git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git src/adios2
         rm -rf src/adios2-pm-build
-        cmake -S src/adios2 -B src/adios2-pm-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/gpu/adios2-2.8.3
+        cmake -S src/adios2 -B src/adios2-pm-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/adios2-2.8.3
         cmake --build src/adios2-pm-build --target install -j 16
 
         # BLAS++ (for PSATD+RZ)
         git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
         rm -rf src/blaspp-pm-build
-        CXX=$(which CC) cmake -S src/blaspp -B src/blaspp-pm-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/gpu/blaspp-master
+        CXX=$(which CC) cmake -S src/blaspp -B src/blaspp-pm-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/blaspp-master
         cmake --build src/blaspp-pm-build --target install --parallel 16
 
         # LAPACK++ (for PSATD+RZ)
         git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
         rm -rf src/lapackpp-pm-build
-        CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-pm-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/gpu/lapackpp-master
+        CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-pm-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/lapackpp-master
         cmake --build src/lapackpp-pm-build --target install --parallel 16
 
       Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` or dynamic ensemble optimizations (:ref:`libEnsemble <libensemble>`):
@@ -83,9 +83,9 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
         python3 -m pip install --user --upgrade pip
         python3 -m pip install --user virtualenv
         python3 -m pip cache purge
-        rm -rf $HOME/sw/perlmutter/gpu/venvs/warpx
-        python3 -m venv $HOME/sw/perlmutter/gpu/venvs/warpx
-        source $HOME/sw/perlmutter/gpu/venvs/warpx/bin/activate
+        rm -rf ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx
+        python3 -m venv ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx
+        source ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx/bin/activate
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade wheel
         python3 -m pip install --upgrade cython
@@ -98,6 +98,9 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
         python3 -m pip install --upgrade yt
         # optional: for libEnsemble
         python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
+        # optional: for optimas (based on libEnsemble & ax->botorch->gpytorch->pytorch)
+        python3 -m pip install --upgrade torch  # CUDA 11.7 compatible wheel
+        python3 -m pip install -r $HOME/src/warpx/Tools/optimas/requirements.txt
 
      Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
@@ -131,25 +134,25 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
         # c-blosc (I/O compression)
         git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
         rm -rf src/c-blosc-pm-build
-        cmake -S src/c-blosc -B src/c-blosc-pm-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/cpu/c-blosc-1.21.1
+        cmake -S src/c-blosc -B src/c-blosc-pm-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/c-blosc-1.21.1
         cmake --build src/c-blosc-pm-build --target install --parallel 16
 
         # ADIOS2
         git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git src/adios2
         rm -rf src/adios2-pm-build
-        cmake -S src/adios2 -B src/adios2-pm-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_CUDA=OFF -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/cpu/adios2-2.8.3
+        cmake -S src/adios2 -B src/adios2-pm-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_CUDA=OFF -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/adios2-2.8.3
         cmake --build src/adios2-pm-build --target install -j 16
 
         # BLAS++ (for PSATD+RZ)
         git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
         rm -rf src/blaspp-pm-build
-        CXX=$(which CC) cmake -S src/blaspp -B src/blaspp-pm-build -Duse_openmp=ON -Dgpu_backend=OFF -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/cpu/blaspp-master
+        CXX=$(which CC) cmake -S src/blaspp -B src/blaspp-pm-build -Duse_openmp=ON -Dgpu_backend=OFF -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/blaspp-master
         cmake --build src/blaspp-pm-build --target install --parallel 16
 
         # LAPACK++ (for PSATD+RZ)
         git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
         rm -rf src/lapackpp-pm-build
-        CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-pm-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/perlmutter/cpu/lapackpp-master
+        CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-pm-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/lapackpp-master
         cmake --build src/lapackpp-pm-build --target install --parallel 16
 
       Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` or dynamic ensemble optimizations (:ref:`libEnsemble <libensemble>`):
@@ -159,9 +162,9 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
         python3 -m pip install --user --upgrade pip
         python3 -m pip install --user virtualenv
         python3 -m pip cache purge
-        rm -rf $HOME/sw/perlmutter/cpu/venvs/warpx
-        python3 -m venv $HOME/sw/perlmutter/cpu/venvs/warpx
-        source $HOME/sw/perlmutter/cpu/venvs/warpx/bin/activate
+        rm -rf ${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/venvs/warpx
+        python3 -m venv ${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/venvs/warpx
+        source ${CFS}/${proj%_g}/${USER}/sw/perlmutter/cpu/venvs/warpx/bin/activate
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade wheel
         python3 -m pip install --upgrade cython
@@ -285,5 +288,6 @@ For post-processing, most users use Python via NERSC's `Jupyter service <https:/
 Please follow the same process as for :ref:`NERSC Cori post-processing <post-processing-cori>`.
 **Important:** The *environment + Jupyter kernel* must separate from the one you create for Cori.
 
-The Perlmutter ``$PSCRATCH`` filesystem is currently not yet available on Jupyter.
-Thus, store or copy your data to Cori's ``$SCRATCH`` or use the Community FileSystem (CFS) for now.
+The Perlmutter ``$PSCRATCH`` filesystem is only available on *Perlmutter* Jupyter nodes.
+Likewise, Cori's ``$SCRATCH`` filesystem is only available on *Cori* Jupyter nodes.
+You can use the Community FileSystem (CFS) from everywhere.

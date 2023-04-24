@@ -17,7 +17,7 @@ of light.
 
 Many authors have described variations of the kinetic ion & fluid electron model,
 generally referred to as particle-fluid hybrid or just hybrid-PIC models. The implementation
-in WarpX follows the outline from :cite:t:`winske2022hybrid`.
+in WarpX follows the outline from :cite:t:`c-winske2022hybrid`.
 This description follows mostly from that reference.
 
 Model
@@ -27,7 +27,7 @@ The basic justification for the hybrid model is that the system to which it is
 applied is dominated by ion kinetics, with ions moving much slower than electrons
 and photons. In this scenario two critical approximations can be made, namely,
 neutrality (:math:`n_e=n_i`) and the Maxwell-Ampere equation can be simplified by
-neglecting the displacement current term (Darwin approximation :cite:p:`NIELSON1976367`),
+neglecting the displacement current term (Darwin approximation :cite:p:`c-NIELSON1976`),
 giving,
 
     .. math::
@@ -139,3 +139,6 @@ input parameters, :math:`T_e`, :math:`n_0` and :math:`\gamma` using
 
 The isothermal limit is given by :math:`\gamma = 1` while :math:`\gamma = 5/3`
 (default) produces the adiabatic limit.
+
+.. bibliography::
+    :keyprefix: c-

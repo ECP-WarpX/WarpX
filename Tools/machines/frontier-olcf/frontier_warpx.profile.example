@@ -46,7 +46,7 @@ alias runNode="srun -A $proj -J warpx -t 00:30:00 -p batch -N 1 --ntasks-per-nod
 # GPU-aware MPI
 export MPICH_GPU_SUPPORT_ENABLED=1
 
-# optimize CUDA compilation for MI250X
+# optimize ROCm/HIP compilation for MI250X
 export AMREX_AMD_ARCH=gfx90a
 
 # compiler environment hints

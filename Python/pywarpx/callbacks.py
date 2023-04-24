@@ -21,6 +21,8 @@ if an instance method is used, an extra reference to the method's object is save
 The install can be done using a decorator, which has the prefix "callfrom". See example below.
 
 Functions can be called at the following times:
+ - beforeInitEsolve <installbeforeInitEsolve>: before the initial solve for the E fields (i.e. before the PIC loop starts)
+ - afterInitEsolve <installafterInitEsolve>: after the initial solve for the E fields (i.e. before the PIC loop starts)
  - afterinit <installafterinit>: immediately after the init is complete
  - beforeEsolve <installbeforeEsolve>: before the solve for E fields
  - poissonsolver <installpoissonsolver>: In place of the computePhi call but only in an electrostatic simulation
@@ -30,6 +32,9 @@ Functions can be called at the following times:
  - beforestep <installbeforestep>: before the time step
  - afterstep <installafterstep>: after the time step
  - afterdiagnostics <installafterdiagnostics>: after diagnostic output
+ - oncheckpointsignal <installoncheckpointsignal>: on a checkpoint signal
+ - onbreaksignal <installonbreaksignal>: on a break signal. These callbacks will be the last ones executed
+                                             before the simulation ends.
  - particlescraper <installparticlescraper>: just after the particle boundary conditions are applied
                                              but before lost particles are processed
  - particleloader <installparticleloader>: at the time that the standard particle loader is called
@@ -250,6 +255,8 @@ class CallbackFunctions(object):
 #=============================================================================
 
 # --- Now create the actual instances.
+_beforeInitEsolve = CallbackFunctions('beforeInitEsolve')
+_afterInitEsolve = CallbackFunctions('afterInitEsolve')
 _afterinit = CallbackFunctions('afterinit')
 _beforecollisions = CallbackFunctions('beforecollisions')
 _aftercollisions = CallbackFunctions('aftercollisions')
@@ -265,6 +272,7 @@ _afterstep = CallbackFunctions('afterstep')
 _afterdiagnostics = CallbackFunctions('afterdiagnostics')
 _afterrestart = CallbackFunctions('afterrestart',lcallonce=1)
 _oncheckpointsignal = CallbackFunctions('oncheckpointsignal')
+_onbreaksignal = CallbackFunctions('onbreaksignal')
 _particleinjection = CallbackFunctions('particleinjection')
 _appliedfields = CallbackFunctions('appliedfields')
 
@@ -277,13 +285,16 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
     - ff=None: If given, timings will be written to the file object instead of stdout
     """
     if ff is None: ff = sys.stdout
-    for c in [_afterinit,_beforeEsolve,_poissonsolver,_afterEsolve,
+    for c in [ _beforeInitEsolve, _afterInitEsolve,
+              _afterinit,_beforeEsolve,_poissonsolver,_afterEsolve,
               _beforedeposition,_afterdeposition,
               _particlescraper,
               _particleloader,
               _beforestep,_afterstep,
               _afterdiagnostics,
               _afterrestart,
+              _oncheckpointsignal,
+              _onbreaksignal,
               _particleinjection,
               _appliedfields]:
         for fname, time in c.timers.items():
@@ -305,6 +316,34 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
             ff.write('\n')
 
 #=============================================================================
+# ----------------------------------------------------------------------------
+def callfrombeforeInitEsolve(f):
+    installbeforeInitEsolve(f)
+    return f
+def installbeforeInitEsolve(f):
+    "Adds a function to the list of functions called before the initial E solve"
+    _beforeInitEsolve.installfuncinlist(f)
+def uninstallbeforeInitEsolve(f):
+    "Removes the function from the list of functions called before the initial E solve"
+    _beforeInitEsolve.uninstallfuncinlist(f)
+def isinstalledbeforeInitEsolve(f):
+    "Checks if the function is called before the initial E solve"
+    return _beforeInitEsolve.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def callfromafterInitEsolve(f):
+    installafterInitEsolve(f)
+    return f
+def installafterInitEsolve(f):
+    "Adds a function to the list of functions called after the initial E solve"
+    _afterInitEsolve.installfuncinlist(f)
+def uninstallafterInitEsolve(f):
+    "Removes the function from the list of functions called after the initial E solve"
+    _afterInitEsolve.uninstallfuncinlist(f)
+def isinstalledafterInitEsolve(f):
+    "Checks if the function is called after the initial E solve"
+    return _afterInitEsolve.isinstalledfuncinlist(f)
+
 # ----------------------------------------------------------------------------
 def callfromafterinit(f):
     installafterinit(f)
@@ -520,6 +559,20 @@ def uninstalloncheckpointsignal(f):
 def isinstalledoncheckpointsignal(f):
     "Checks if the function is called on checkpoint signal"
     return _oncheckpointsignal.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def onbreaksignal(f):
+    installonbreaksignal(f)
+    return f
+def installonbreaksignal(f):
+    "Adds a function to the list of functions called on a break signal"
+    _onbreaksignal.installfuncinlist(f)
+def uninstallonbreaksignal(f):
+    "Removes the function from the list of functions called on a break signal"
+    _onbreaksignal.uninstallfuncinlist(f)
+def isinstalledonbreaksignal(f):
+    "Checks if the function is called on a break signal"
+    return _onbreaksignal.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfromparticleinjection(f):

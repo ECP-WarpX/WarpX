@@ -357,6 +357,7 @@ WarpX::Evolve (int numsteps)
                     // This is currently a lab frame calculation.
                     ComputeMagnetostaticField();
                 }
+                AddExternalFields();
             } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
                 // Hybrid-PIC case:
                 // The particles are now at p^{n+1/2} and x^{n+1}. The fields
@@ -364,7 +365,6 @@ WarpX::Evolve (int numsteps)
                 // and Ampere's law).
                 HybridPICEvolveFields();
             }
-
             ExecutePythonCallback("afterEsolve");
         }
 
@@ -422,6 +422,7 @@ WarpX::Evolve (int numsteps)
     if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])
         || exit_loop_due_to_interrupt_signal) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+        if (exit_loop_due_to_interrupt_signal) ExecutePythonCallback("onbreaksignal");
     }
 }
 

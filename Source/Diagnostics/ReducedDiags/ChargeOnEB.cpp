@@ -173,9 +173,9 @@ void ChargeOnEB::ComputeDiags (const int step)
 
                 // Compute contribution to the surface integral $\int dS \cdot E$)
                 amrex::Real local_integral_contribution = 0;
-                local_integral_contribution += Ex_arr(i_c,j_n,k_n)*dSx*(dSx_fraction_arr(i,j,k)-dSx_fraction_arr(i+1,j,k));
-                local_integral_contribution += Ey_arr(i_n,j_c,k_n)*dSy*(dSy_fraction_arr(i,j,k)-dSy_fraction_arr(i,j+1,k));
-                local_integral_contribution += Ez_arr(i_n,j_n,k_c)*dSz*(dSz_fraction_arr(i,j,k)-dSz_fraction_arr(i,j,k+1));
+                local_integral_contribution += Ex_arr(i_c,j_n,k_n)*dSx*(dSx_fraction_arr(i+1,j,k)-dSx_fraction_arr(i,j,k));
+                local_integral_contribution += Ey_arr(i_n,j_c,k_n)*dSy*(dSy_fraction_arr(i,j+1,k)-dSy_fraction_arr(i,j,k));
+                local_integral_contribution += Ez_arr(i_n,j_n,k_c)*dSz*(dSz_fraction_arr(i,j,k+1)-dSz_fraction_arr(i,j,k));
 
                 // Add weighting if requested by user
                 if (do_parser_weighting) {
