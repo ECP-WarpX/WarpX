@@ -122,6 +122,11 @@ public:
     //! Initialization type for external electric field on the grid
     static std::string E_ext_grid_s;
 
+    //! Whether to apply the effect of an externally-defined electric field
+    static bool add_external_E_field;
+    //! Whether to apply the effect of an externally-defined magnetic field
+    static bool add_external_B_field;
+
     //! String storing parser function to initialize x-component of the magnetic field on the grid
     static std::string str_Bx_ext_grid_function;
     //! String storing parser function to initialize y-component of the magnetic field on the grid
@@ -976,6 +981,10 @@ public:
          const char field,
          const int lev, PatchType patch_type);
 
+    void ReadExternalFieldFromFile (
+         std::string read_fields_from_path, amrex::MultiFab* mf,
+         std::string F_name, std::string F_component);
+
     /**
      * \brief
      * This function initializes and calculates grid quantities used along with
@@ -1098,6 +1107,8 @@ private:
 
     void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
+
+    void AddExternalFields ();
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
@@ -1310,6 +1321,10 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
+
+    // Same as Bfield_fp/Efield_fp for reading external field data
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_external;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp_external;
 
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;

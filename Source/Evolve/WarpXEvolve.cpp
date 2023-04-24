@@ -324,6 +324,7 @@ WarpX::Evolve (int numsteps)
                 // This is currently a lab frame calculation.
                 ComputeMagnetostaticField();
             }
+            AddExternalFields();
             ExecutePythonCallback("afterEsolve");
         }
 
