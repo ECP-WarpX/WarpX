@@ -268,7 +268,7 @@ Details
 In the example above, the individual lines for recording a trace profile are:
 
 * ``dcgmi profile --pause`` other profiling tools can't be collecting data,
-  `see this Q&A <https://forums.developer.nvidia.com/t/profiling-failed-because-a-driver-resource-was-unavailable/205435>`_.
+  `see this Q&A <https://forums.developer.nvidia.com/t/profiling-failed-because-a-driver-resource-was-unavailable/205435>`__.
 * ``-f`` overwrite previously written trace profiles.
 * ``-o``: output file for profiling.
 * ``--target-processes all``: required for multiprocess code.
