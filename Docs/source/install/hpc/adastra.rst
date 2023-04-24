@@ -52,7 +52,7 @@ And since Adastra does not yet provide a module for them, install c-blosc and AD
 .. code-block:: bash
 
    export CMAKE_PREFIX_PATH=${HOME}/sw/adastra/gpu/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=${HOME}/sw/adastra/gpu//adios2-2.8.3:$CMAKE_PREFIX_PATH
+   export CMAKE_PREFIX_PATH=${HOME}/sw/adastra/gpu/adios2-2.8.3:$CMAKE_PREFIX_PATH
 
    # c-blosc (I/O compression)
    git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
