@@ -219,9 +219,9 @@ Nvidia Nsight-Compute
 `Vendor homepage <https://developer.nvidia.com/nsight-compute>`__ and `product manual <https://docs.nvidia.com/nsight-compute/>`__.
 
 Nsight-Compute captures fine grained information at the kernel level
-concerning resource utilization. It collects a lot of data, and runs slowly (can
-be a few minutes per step), but provides detailed information about occupancy,
-and memory bandwidth for a kernel.
+concerning resource utilization. By default, it collects a lot of data and runs
+slowly (can be a few minutes per step), but provides detailed information about
+occupancy, and memory bandwidth for a kernel.
 
 
 Example
@@ -258,10 +258,11 @@ node, or without a workload management system.
 
 .. note::
 
-    For those used to Nsight-Systems, Nsight-Compute runs much slower. A
-    single process can take a few minutes for every step, but since we're
-    profiling at the kernel level, a single step of a single process is often
-    enough to extract relevant information.
+    To collect full statistics, Nsight-Compute reruns kernels,
+    temporarilly saving device memory in host memory. This makes it
+    slower than Nsight-Systems, so the provided script profiles only a single
+    step of a single process. This is generally enough to extract relevant
+    information.
 
 Details
 """""""
@@ -288,4 +289,4 @@ For example, if you record on a cluster and open the analysis GUI on your laptop
 .. note::
 
     nvtx-include syntax is very particular. The trailing / in the example is
-    significant. For full information, see the section on `NVTX filtering <https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html#nvtx-filtering>`_ .
+    significant. For full information, see the Nvidia's documentation on `NVTX filtering <https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html#nvtx-filtering>`__ .
