@@ -389,8 +389,9 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             unsigned int ip = permutation[ip_orig];
 
 #if defined(WARPX_USE_GPUCLOCK)
-            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
             // --- Get particle quantities
             amrex::Real wq = q*wp[ip]*invvol;

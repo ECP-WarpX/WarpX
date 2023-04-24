@@ -438,8 +438,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
             [=] AMREX_GPU_DEVICE () noexcept {
 #if defined(WARPX_USE_GPUCLOCK)
-        KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+        const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
         const int bin_id = blockIdx.x;
         const unsigned int bin_start = offsets_ptr[bin_id];

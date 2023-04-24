@@ -7,7 +7,6 @@
 #ifndef SHAREDDEPOSITIONUTILS_H_
 #define SHAREDDEPOSITIONUTILS_H_
 
-#include "Parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
