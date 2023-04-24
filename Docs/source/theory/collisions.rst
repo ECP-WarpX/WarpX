@@ -94,5 +94,4 @@ The impact of incorporating relativistic effects in the MCC routine can be seen 
    :width: 96%
 
 .. bibliography::
-    :labelprefix: B
     :keyprefix: b-
