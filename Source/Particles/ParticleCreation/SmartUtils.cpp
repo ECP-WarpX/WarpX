@@ -15,12 +15,19 @@
 
 PolicyVec getPolicies (const NameMap& names) noexcept
 {
-    PolicyVec policies;
-    policies.resize(names.size());
+    std::vector<InitializationPolicy> h_policies;
+    h_policies.resize(names.size());
     for (const auto& kv : names)
     {
-        policies[kv.second] = initialization_policies[kv.first];
+        h_policies[kv.second] = initialization_policies[kv.first];
     }
+
+    // host-to-device copy
+    PolicyVec policies;
+    policies.resize(names.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_policies.begin(), h_policies.end(), policies.begin());
+    amrex::Gpu::Device::streamSynchronize();
+
     return policies;
 }
 
@@ -57,6 +64,7 @@ SmartCopyTag getSmartCopyTag (const NameMap& src, const NameMap& dst) noexcept
         }
     }
 
+    // host-to-device copies
     tag.src_comps.resize(h_src_comps.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_src_comps.begin(), h_src_comps.end(), tag.src_comps.begin());
 
