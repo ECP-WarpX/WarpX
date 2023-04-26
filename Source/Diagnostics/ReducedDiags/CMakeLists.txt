@@ -18,4 +18,5 @@ target_sources(WarpX
     ParticleNumber.cpp
     FieldReduction.cpp
     FieldProbe.cpp
+    ChargeOnEB.cpp
 )

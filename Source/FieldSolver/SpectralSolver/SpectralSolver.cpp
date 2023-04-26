@@ -25,7 +25,7 @@ SpectralSolver::SpectralSolver(
                 const amrex::BoxArray& realspace_ba,
                 const amrex::DistributionMapping& dm,
                 const int norder_x, const int norder_y,
-                const int norder_z, const bool nodal,
+                const int norder_z, const short grid_type,
                 const amrex::Vector<amrex::Real>& v_galilean,
                 const amrex::Vector<amrex::Real>& v_comoving,
                 const amrex::RealVect dx, const amrex::Real dt,
@@ -55,7 +55,7 @@ SpectralSolver::SpectralSolver(
     if (pml) // PSATD equations in the PML region
     {
         algorithm = std::make_unique<PsatdAlgorithmPml>(
-            k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+            k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
             dt, dive_cleaning, divb_cleaning);
     }
     else // PSATD equations in the regular domain
@@ -64,14 +64,14 @@ SpectralSolver::SpectralSolver(
         if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.)
         {
             algorithm = std::make_unique<PsatdAlgorithmComoving>(
-                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
                 v_comoving, dt, update_with_rho);
         }
         // Galilean PSATD algorithm (only J constant in time)
         else if (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0.)
         {
             algorithm = std::make_unique<PsatdAlgorithmJConstantInTime>(
-                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
                 v_galilean, dt, update_with_rho, fft_do_time_averaging,
                 dive_cleaning, divb_cleaning);
         }
@@ -88,7 +88,7 @@ SpectralSolver::SpectralSolver(
             const bool div_cleaning = (dive_cleaning && divb_cleaning);
 
             algorithm = std::make_unique<PsatdAlgorithmFirstOrder>(
-                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
                 dt, div_cleaning, J_in_time, rho_in_time);
         }
         else if (psatd_solution_type == PSATDSolutionType::SecondOrder)
@@ -96,14 +96,14 @@ SpectralSolver::SpectralSolver(
             if (J_in_time == JInTime::Constant)
             {
                 algorithm = std::make_unique<PsatdAlgorithmJConstantInTime>(
-                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
                     v_galilean, dt, update_with_rho, fft_do_time_averaging,
                     dive_cleaning, divb_cleaning);
             }
             else if (J_in_time == JInTime::Linear)
             {
                 algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
-                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, nodal,
+                    k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
                     dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
             }
         }

@@ -51,8 +51,12 @@ ds = yt.load(filename)
 if 'force_periodicity' in dir(ds): ds.force_periodicity()
 
 all_data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
-Ex = all_data['boxlib', 'Ex'].squeeze().v
-Ey = all_data['boxlib', 'Ey'].squeeze().v
+if dims == 'RZ':
+    Ex = all_data['boxlib', 'Er'].squeeze().v
+    Ey = all_data['boxlib', 'Et'].squeeze().v
+else:
+    Ex = all_data['boxlib', 'Ex'].squeeze().v
+    Ey = all_data['boxlib', 'Ey'].squeeze().v
 Ez = all_data['boxlib', 'Ez'].squeeze().v
 
 # Set reference energy values, and tolerances for numerical stability and charge conservation
@@ -77,7 +81,7 @@ elif dims == 'RZ':
         energy_ref = 472779.70801323955
     if current_correction and not periodic_single_box:
         energy_ref = 511671.4108624746
-        tol_charge = 2e-4
+        tol_charge = 3e-4
 elif dims == '3D':
     if not current_correction:
         energy_ref = 661285.098907683

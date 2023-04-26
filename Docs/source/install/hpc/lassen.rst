@@ -76,11 +76,14 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON
    cmake --build build -j 10
 
-This will build an executable in ``build/bin/``.
 The other :ref:`general compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lassen>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``/p/gpfs1/$(whoami)``.
 
 
 .. _running-cpp-lassen:

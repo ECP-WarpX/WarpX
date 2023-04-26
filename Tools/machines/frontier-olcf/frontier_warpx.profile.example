@@ -2,11 +2,11 @@
 #export proj=APH114-frontier
 
 # required dependencies
-module load cmake/3.22.2
+module load cmake/3.23.2
 module load craype-accel-amd-gfx90a
-module load rocm/5.1.0
+module load rocm/5.2.0  # waiting for 5.5 for next bump
 module load cray-mpich
-module load cce/14.0.1  # must be loaded after rocm
+module load cce/15.0.0  # must be loaded after rocm
 
 # optional: faster builds
 module load ccache
@@ -24,11 +24,11 @@ module load nano
 module load boost/1.79.0-cxx17
 
 # optional: for openPMD support
-#module load adios2/2.7.1
-module load cray-hdf5-parallel/1.12.1.1
+module load adios2/2.8.3
+module load cray-hdf5-parallel/1.12.2.3
 
 # optional: for Python bindings or libEnsemble
-module load cray-python/3.9.12.1
+module load cray-python/3.9.13.1
 
 # fix system defaults: do not escape $ with a \ on tab completion
 shopt -s direxpand
@@ -46,7 +46,7 @@ alias runNode="srun -A $proj -J warpx -t 00:30:00 -p batch -N 1 --ntasks-per-nod
 # GPU-aware MPI
 export MPICH_GPU_SUPPORT_ENABLED=1
 
-# optimize CUDA compilation for MI250X
+# optimize ROCm/HIP compilation for MI250X
 export AMREX_AMD_ARCH=gfx90a
 
 # compiler environment hints

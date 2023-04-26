@@ -4,18 +4,21 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef KERNELTIMER_H_
-#define KERNELTIMER_H_
+#ifndef ABLASTR_KERNELTIMER_H_
+#define ABLASTR_KERNELTIMER_H_
 
-#include "Utils/TextMsg.H"
-#include "WarpX.H"
+#include "ablastr/utils/TextMsg.H"
 
 #include <AMReX.H>
+#include <AMReX_BLassert.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_REAL.H>
 
-// #ifdef WARPX_USE_GPUCLOCK
-
 #include <climits>
+
+namespace ablastr::parallelization
+{
 
 /**
  * \brief Defines a timer object to be used on GPU; measures summed thread cycles.
@@ -30,31 +33,24 @@ public:
      */
     AMREX_GPU_DEVICE
     KernelTimer
+    (const bool do_timing, amrex::Real* cost)
 #if (defined AMREX_USE_GPU)
-    (const bool do_timing, amrex::Real* cost)
         : m_do_timing(do_timing)
-#else
-    (const bool do_timing, amrex::Real* cost)
 #endif
     {
 #if (defined AMREX_USE_GPU)
-#   if (defined WARPX_USE_GPUCLOCK)
-        if (m_do_timing && cost) {
-            m_cost = cost;
-#       if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
-            // Start the timer
-            m_wt = clock64();
+    if (m_do_timing && cost) {
+        m_cost = cost;
+#   if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+        // Start the timer
+        m_wt = clock64();
 
-#       elif defined(AMREX_USE_DPCPP)
-            // To be updated
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( m_do_timing == false,
-                                              "KernelTimer not yet supported for this hardware." );
-#       endif
-        }
-#   else // WARPX_USE_GPUCLOCK
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( m_do_timing == false,
-                                          "`algo.load_balance_costs_update = gpuclock` requires to compile with `-DWarpX_GPUCLOCK=ON`.");
-#   endif // WARPX_USE_GPUCLOCK
+#   elif defined(AMREX_USE_DPCPP)
+        // To be updated
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(m_do_timing == false,
+            "KernelTimer not yet supported for this hardware.");
+#   endif
+    }
 #else  // AMREX_USE_GPU
         amrex::ignore_unused(do_timing, cost);
 #endif // AMREX_USE_GPU
@@ -72,7 +68,7 @@ public:
             // To be updated
 #   endif
         }
-#endif
+#endif //AMREX_USE_GPU
     }
 
 #if (defined AMREX_USE_GPU)
@@ -85,6 +81,9 @@ private:
 
     //! Store the time difference (cost) from a single thread.
     long long int m_wt;
-#endif
+#endif //AMREX_USE_GPU
 };
-#endif
+
+} // namespace ablastr::parallelization
+
+#endif // ABLASTR_KERNELTIMER_H_

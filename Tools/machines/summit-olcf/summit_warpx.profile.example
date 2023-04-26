@@ -28,7 +28,7 @@ module load hdf5/1.10.7
 # optional: for openPMD support (GNUmake only)
 #module load ums
 #module load ums-aph114
-#module load openpmd-api/0.14.2
+#module load openpmd-api/0.15.1
 
 # often unstable at runtime with dependencies
 module unload darshan-runtime

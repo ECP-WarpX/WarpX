@@ -169,6 +169,12 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         {
             RemakeMultiFab(Bfield_fp[lev][idim], dm, true);
             RemakeMultiFab(Efield_fp[lev][idim], dm, true);
+            if (add_external_B_field) {
+                RemakeMultiFab(Bfield_fp_external[lev][idim], dm, true);
+            }
+            if (add_external_E_field) {
+                RemakeMultiFab(Efield_fp_external[lev][idim], dm, true);
+            }
             RemakeMultiFab(current_fp[lev][idim], dm, false);
             RemakeMultiFab(current_store[lev][idim], dm, false);
             if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
