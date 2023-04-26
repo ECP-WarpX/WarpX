@@ -33,7 +33,8 @@ WarpX::ApplyEfieldBoundary (const int lev, const amrex::IntVect& ng)
     if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse, ng);
 }
 
-void WarpX::ApplyEfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect& ng)
+void
+WarpX::ApplyEfieldBoundary (const int lev, const PatchType patch_type, const amrex::IntVect& ng)
 {
     if (PEC::isAnyBoundaryPEC()) {
         if (patch_type == PatchType::fine) {
