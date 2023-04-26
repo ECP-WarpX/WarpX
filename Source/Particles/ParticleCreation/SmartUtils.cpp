@@ -7,7 +7,7 @@
  */
 #include "SmartUtils.H"
 
-#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuContainers.H>
 
 #include <algorithm>
 #include <utility>
@@ -58,12 +58,10 @@ SmartCopyTag getSmartCopyTag (const NameMap& src, const NameMap& dst) noexcept
     }
 
     tag.src_comps.resize(h_src_comps.size());
-    amrex::Gpu::htod_memcpy_async(tag.src_comps.data(), h_src_comps.data(),
-                                  h_src_comps.size()*sizeof(int));
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_src_comps.begin(), h_src_comps.end(), tag.src_comps.begin());
 
     tag.dst_comps.resize(h_dst_comps.size());
-    amrex::Gpu::htod_memcpy_async(tag.dst_comps.data(), h_dst_comps.data(),
-                                  h_dst_comps.size()*sizeof(int));
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_dst_comps.begin(), h_dst_comps.end(), tag.dst_comps.begin());
 
     return tag;
 }
