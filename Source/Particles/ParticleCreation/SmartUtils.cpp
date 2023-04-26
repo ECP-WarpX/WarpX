@@ -7,8 +7,11 @@
  */
 #include "SmartUtils.H"
 
+#include <AMReX_GpuDevice.H>
+
 #include <algorithm>
 #include <utility>
+#include <vector>
 
 PolicyVec getPolicies (const NameMap& names) noexcept
 {
