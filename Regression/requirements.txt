@@ -6,3 +6,4 @@ openpmd-viewer
 pandas
 scipy
 yt
+lasy @ https://github.com/LASY-org/lasy
