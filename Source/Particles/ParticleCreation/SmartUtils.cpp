@@ -25,6 +25,9 @@ SmartCopyTag getSmartCopyTag (const NameMap& src, const NameMap& dst) noexcept
 {
     SmartCopyTag tag;
 
+    std::vector<int> h_src_comps;
+    std::vector<int> h_dst_comps;
+
     // we use the fact that maps are sorted
     auto i_src = src.begin();
     auto i_dst = dst.begin();
@@ -44,12 +47,20 @@ SmartCopyTag getSmartCopyTag (const NameMap& src, const NameMap& dst) noexcept
         {
             // name is in both...
             tag.common_names.push_back(i_src->first);
-            tag.src_comps.push_back(i_src->second);
-            tag.dst_comps.push_back(i_dst->second);
+            h_src_comps.push_back(i_src->second);
+            h_dst_comps.push_back(i_dst->second);
             ++i_src;
             ++i_dst;
         }
     }
+
+    tag.src_comps.resize(h_src_comps.size());
+    amrex::Gpu::htod_memcpy_async(tag.src_comps.data(), h_src_comps.data(),
+                                  h_src_comps.size()*sizeof(int));
+
+    tag.dst_comps.resize(h_dst_comps.size());
+    amrex::Gpu::htod_memcpy_async(tag.dst_comps.data(), h_dst_comps.data(),
+                                  h_dst_comps.size()*sizeof(int));
 
     return tag;
 }
