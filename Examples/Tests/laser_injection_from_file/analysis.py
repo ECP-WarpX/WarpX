@@ -81,11 +81,11 @@ def do_analysis(fname, compname, steps):
     env = abs(hilbert(F_laser))
     extent = [ds.domain_left_edge[ds.dimensionality-1], ds.domain_right_edge[ds.dimensionality-1],
           ds.domain_left_edge[0], ds.domain_right_edge[0] ]
-    
+
     F_slice= F_laser[:,F_laser.shape[1]//2, :]
     env_slice= env[:,env.shape[1]//2, :]
     env_theory_slice= env_theory[:,env_theory.shape[1]//2, :]
-    
+
     # Plot results
     plt.figure(figsize=(8,6))
     plt.subplot(221)
@@ -116,7 +116,7 @@ def do_analysis(fname, compname, steps):
     freq_x = np.fft.fftfreq(F_laser.shape[0],dt)
     freq_y = np.fft.fftfreq(F_laser.shape[1],dt)
     freq_z = np.fft.fftfreq(F_laser.shape[2],dt)
-    
+
     pos_max = np.unravel_index(np.abs(fft_F_laser).argmax(), fft_F_laser.shape)
 
     freq = np.sqrt((freq_x[pos_max[0]])**2 +  (freq_y[pos_max[1]]**2) + (freq_z[pos_max[2]])**2)
@@ -136,6 +136,7 @@ def main() :
 
     from lasy.laser import Laser
     from lasy.profiles import GaussianProfile
+
     # Create a laser using lasy
     pol = (1, 0)
     laser_energy = 1.0  # J
@@ -154,6 +155,6 @@ def main() :
     else :
         assert(False)
     print('Passed')
-    
+
 if __name__ == "__main__":
     main()
