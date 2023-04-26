@@ -1,3 +1,4 @@
+lasy @ https://github.com/LASY-org/lasy
 matplotlib
 mpi4py
 numpy
@@ -6,4 +7,3 @@ openpmd-viewer
 pandas
 scipy
 yt
-lasy @ https://github.com/LASY-org/lasy
