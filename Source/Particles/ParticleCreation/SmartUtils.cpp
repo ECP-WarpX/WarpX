@@ -64,6 +64,7 @@ SmartCopyTag getSmartCopyTag (const NameMap& src, const NameMap& dst) noexcept
     tag.dst_comps.resize(h_dst_comps.size());
     amrex::Gpu::htod_memcpy_async(tag.dst_comps.data(), h_dst_comps.data(),
                                   h_dst_comps.size()*sizeof(int));
+    amrex::Gpu::Device::streamSynchronize();
 
     return tag;
 }
