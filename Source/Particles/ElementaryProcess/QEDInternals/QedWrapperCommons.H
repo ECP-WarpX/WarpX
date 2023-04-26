@@ -7,7 +7,7 @@
 #ifndef WARPX_amrex_qed_wrapper_commons_h_
 #define WARPX_amrex_qed_wrapper_commons_h_
 /*
- * This header contain some common #define directives
+ * This header contains some common #define directives
  * used by the QED library wrappers and related
  * components. It also defines a thin wrapper around
  * amrex::Gpu::DeviceVector.
