@@ -40,15 +40,18 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-
-#include <openPMD/openPMD.hpp>
-
 // example: data handling & print
 #include <vector>   // std::vector
 #include <iostream> // std::cout
 #include <memory>   // std::shared_ptr
 
-namespace io = openPMD;
+#ifdef WARPX_USE_OPENPMD 
+#   include <openPMD/openPMD.hpp>
+    namespace io = openPMD;
+#endif
+
+
+
 
 using namespace amrex;
 
@@ -57,6 +60,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     const amrex::ParmParse& ppl,
     CommonLaserParameters params)
 {
+
+#ifndef WARPX_USE_OPENPMD
+    amrex::Abort(Utils::TextMsg::Err("WarpX should be compiled with option OpenPMD : ON"));
+#endif
+
     if (!std::numeric_limits< double >::is_iec559)
     {
         ablastr::warn_manager::WMRecordWarning("Laser",
