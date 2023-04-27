@@ -14,6 +14,11 @@ Plasma-Based Acceleration
 
 Scientific works in laser-plasma and beam-plasma acceleration.
 
+#. Wang J, Zeng M, Li D, Wang X, Gao J.
+   **High quality beam produced by tightly focused laser driven wakefield accelerators**.
+   arXiv pre-print, 2023.
+   `DOI:10.48550/arXiv.2304.10730 <https://doi.org/10.48550/arXiv.2304.10730>`__ 
+
 #. Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
    **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
    *SC22: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)*. ISSN:2167-4337, pp. 25-36, Dallas, TX, US, 2022.
