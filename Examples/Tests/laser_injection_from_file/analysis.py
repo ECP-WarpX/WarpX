@@ -18,6 +18,7 @@
 
 import glob
 import os
+import sys
 
 import matplotlib
 
@@ -25,8 +26,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import hilbert
-
 import yt ; yt.funcs.mylog.setLevel(50)
+
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 #Maximum acceptable error for this test
 relative_error_threshold = 0.1
@@ -148,12 +151,14 @@ def main() :
     laser = Laser(dim, lo, hi, npoints, profile)
     laser.normalize(laser_energy, kind="energy")
     laser.write_to_file("gaussianlaser3d")
-
     executables = glob.glob("*.ex")
     if len(executables) == 1 :
         launch_analysis(executables[0])
     else :
         assert(False)
+    filename_end = sys.argv[1]
+    test_name = os.path.split(os.getcwd())[1]
+    checksumAPI.evaluate_checksum(test_name, filename_end)
     print('Passed')
 
 if __name__ == "__main__":
