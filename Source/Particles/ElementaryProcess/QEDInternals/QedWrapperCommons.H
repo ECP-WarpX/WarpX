@@ -19,6 +19,8 @@
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_Vector.H>
 
+#include <vector>
+
 
 /**
  * PICSAR uses PXRMP_GPU to decorate methods which should be
@@ -41,26 +43,31 @@
 //_________________________
 
 
+#ifdef AMREX_USE_GPU
 /**
-* Thin Wrapper around amrex::Gpu::DeviceVector<Real> to make it usable
-* as the building block of the lookup tables when managed memory is not used.
+* This class provides a vector suitable to be used as the building block
+* of the picsar QED lookup tables when managed memory is not used. It behaves as a
+* std::vector<Real> when data is written into it, but, "under the hood", it copies data to
+* an amrex::Gpu::DeviceVector. It provides a pointer to the Device data via the data() function.
 *
 * @tparam Real the floating point type to be used
 */
 template <typename Real>
-class AmrexDeviceVectorWrapper : public amrex::Gpu::DeviceVector<Real>
+class PicsarQedVector : public std::vector<Real>
 {
+    using HV = std::vector<Real>;
     using AGDV = amrex::Gpu::DeviceVector<Real>;
+
     public:
 
     /**
-    * All the arguments passed to AmrexDeviceVectorWrapper constructor
-    * are forwarded to amrex::Gpu::DeviceVector constructor.
+    * All the arguments passed to PicsarQedVector constructor
+    * are forwarded to the std::vector constructor.
     *
     * @tparam Args the constructor arguments
     */
     template<typename... Args>
-    AmrexDeviceVectorWrapper(Args&&... args) : AGDV(std::forward<Args>(args)...)
+    PicsarQedVector(Args&&... args) : HV(std::forward<Args>(args)...)
     {}
 
     /**
@@ -70,8 +77,32 @@ class AmrexDeviceVectorWrapper : public amrex::Gpu::DeviceVector<Real>
     */
     void pxr_sync()
     {
-        amrex::Gpu::synchronize();
+        m_device_data.resize(this->size());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+            this->begin(), this->end(), m_device_data.begin());
+        amrex::Gpu::Device::streamSynchronize();
     }
+
+    /**
+    * This function returns a pointer to the raw data inside the
+    * amrex::Gpu::DeviceVector<Real> m_device_data.
+    * It is called to build table_views.
+    *
+    * @return a pointer to the raw device vector data
+    */
+    const Real* data() const
+    {
+        return m_device_data.data();
+    }
+
+    private:
+    AGDV m_device_data;
 };
+#else
+
+template <typename Real>
+using PicsarQedVector = std::vector<Real>;
+
+#endif
 
 #endif //WARPX_amrex_qed_wrapper_commons_h_

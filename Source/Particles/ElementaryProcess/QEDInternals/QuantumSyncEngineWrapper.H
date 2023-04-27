@@ -40,7 +40,7 @@ using QS_dndt_table =
     picsar::multi_physics::phys::quantum_sync::
     dndt_lookup_table<
     amrex::ParticleReal,
-    AmrexDeviceVectorWrapper<amrex::ParticleReal>>;
+    PicsarQedVector<amrex::ParticleReal>>;
 
 using QS_dndt_table_view = QS_dndt_table::view_type;
 
@@ -52,7 +52,7 @@ using QS_phot_em_table =
     picsar::multi_physics::phys::quantum_sync::
     photon_emission_lookup_table<
     amrex::ParticleReal,
-    AmrexDeviceVectorWrapper<amrex::ParticleReal>>;
+    PicsarQedVector<amrex::ParticleReal>>;
 
 using QS_phot_em_table_view = QS_phot_em_table::view_type;
 
