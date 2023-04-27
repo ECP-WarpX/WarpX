@@ -102,7 +102,7 @@ class PicsarQedVector : public std::vector<Real>
 #else
 
 template <typename Real>
-using PicsarQedVector = amrex::Gpu::DeviceVector<Real>;
+using PicsarQedVector = std::vector<Real>;
 
 #endif
 
