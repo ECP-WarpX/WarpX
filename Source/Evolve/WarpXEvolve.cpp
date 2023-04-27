@@ -218,7 +218,7 @@ WarpX::Evolve (int numsteps)
             // B : guard cells are NOT up-to-date
         }
 
-        if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
+        if (cur_time + dt[0] >= stop_time || step + 1 == numsteps_max) {
             // At the end of last step, push p by 0.5*dt to synchronize
             FillBoundaryE(guard_cells.ng_FieldGather);
             FillBoundaryB(guard_cells.ng_FieldGather);
@@ -370,20 +370,35 @@ WarpX::Evolve (int numsteps)
         }
 
         exit_loop_due_to_interrupt_signal = SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
-        if (cur_time >= stop_time - 1.e-3*dt[0] || exit_loop_due_to_interrupt_signal) {
+        if (exit_loop_due_to_interrupt_signal) {
             break;
         }
 
         // End loop on time steps
     }
+
+    if (verbose) {
+        if (istep[0] == max_step) {
+            amrex::Print() << "Simulation stopped because max_step reached.\n";
+        }
+        if (stop_time <= cur_time && cur_time < stop_time + dt[0]) {
+            amrex::Print() << "Simulation stopped because stop_time reached.\n";
+        }
+        if (exit_loop_due_to_interrupt_signal) {
+            amrex::Print() << "Simulation stopped because break signal received.\n";
+        }
+    }
+
     // This if statement is needed for PICMI, which allows the Evolve routine to be
     // called multiple times, otherwise diagnostics will be done at every call,
     // regardless of the diagnostic period parameter provided in the inputs.
-    if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])
+    if (istep[0] == max_step
+        || (stop_time <= cur_time && cur_time < stop_time + dt[0])
         || exit_loop_due_to_interrupt_signal) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
         if (exit_loop_due_to_interrupt_signal) ExecutePythonCallback("onbreaksignal");
     }
+
 }
 
 /* /brief Perform one PIC iteration, without subcycling

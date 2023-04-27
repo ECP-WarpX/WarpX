@@ -189,9 +189,10 @@ void BTDiagnostics::DerivedInitData ()
         std::stringstream warn_string;
             warn_string << "\nSimulation might not run long enough to fill all BTD snapshots.\n"
             << "Final step: " << warpx.maxStep() << "\n"
-            <<"Stop time: " << warpx.stopTime() << "\n"
-            <<"Last BTD snapshot fills around step: " << final_snapshot_fill_iteration << "\n"
-            <<" or time: " << final_snapshot_fill_time << "\n";
+            << "Stop time: " << warpx.stopTime() << "\n"
+            << "Last BTD snapshot fills around step: " << final_snapshot_fill_iteration << "\n"
+            << " or time: " << final_snapshot_fill_time << "\n"
+            << "Set `warpx.compute_max_step_from_btd = 1` to have simulation stopping calculated automatically\n";;
         ablastr::warn_manager::WMRecordWarning(
             "BTD", warn_string.str(),
             ablastr::warn_manager::WarnPriority::low);

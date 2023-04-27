@@ -638,6 +638,8 @@ WarpX::computeMaxStepBoostAccelerator() {
     max_step = computed_max_step;
     Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
            <<max_step<<std::endl;
+    // Reset stop_time to override any user input
+    stop_time = std::numeric_limits<amrex::Real>::max();
 }
 
 void
