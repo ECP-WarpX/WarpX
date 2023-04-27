@@ -8,9 +8,10 @@
 #define WARPX_amrex_qed_wrapper_commons_h_
 /*
  * This header contains some common #define directives
- * used by the QED library wrappers and related
- * components. It also defines a thin wrapper around
- * amrex::Gpu::DeviceVector.
+ * used by the QED library wrappers and related components.
+ * It also provides a vector type suitable to be used
+ * as the building block  of the picsar QED lookup tables
+ * when managed memory is not used.
  */
 
 #include <AMReX_AmrCore.H>
@@ -101,7 +102,7 @@ class PicsarQedVector : public std::vector<Real>
 #else
 
 template <typename Real>
-using PicsarQedVector = std::vector<Real>;
+using PicsarQedVector = amrex::Gpu::DeviceVector<Real>;
 
 #endif
 
