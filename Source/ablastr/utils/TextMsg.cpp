@@ -79,3 +79,10 @@ ablastr::utils::TextMsg::Assert (const char* ex, const char* file, const int lin
     const auto n_msg = "\n" + Err(msg);
     amrex::Assert(ex , file, line , n_msg.c_str());
 }
+
+void
+ablastr::utils::TextMsg::Abort (const char* file, const int line, const std::string& msg)
+{
+    const auto n_msg =  "\n" +  Err(msg + "\n( " + file + ": " + std::to_string(line) + " )");
+    amrex::Abort(n_msg);
+}
