@@ -45,7 +45,7 @@
 #include <iostream> // std::cout
 #include <memory>   // std::shared_ptr
 
-#ifdef WARPX_USE_OPENPMD 
+#ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
     namespace io = openPMD;
 #endif
