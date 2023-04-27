@@ -26,6 +26,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import hilbert
+
 import yt ; yt.funcs.mylog.setLevel(50)
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
