@@ -168,7 +168,7 @@ void BreitWheelerEngine::init_builtin_dndt_table()
     dndt_params.chi_phot_max = default_chi_phot_max;
     dndt_params.chi_phot_how_many = default_chi_phot_how_many;
 
-    const auto vals = std::vector<amrex::ParticleReal>{
+    const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
         -1.34808e+02_prt, -1.16674e+02_prt, -1.01006e+02_prt, -8.74694e+01_prt,
         -7.57742e+01_prt, -6.56699e+01_prt, -5.69401e+01_prt, -4.93981e+01_prt,
         -4.28821e+01_prt, -3.72529e+01_prt, -3.23897e+01_prt, -2.81885e+01_prt,
@@ -202,7 +202,7 @@ void BreitWheelerEngine::init_builtin_pair_prod_table()
     pair_prod_params.chi_phot_how_many = default_chi_phot_how_many;
     pair_prod_params.frac_how_many = default_frac_how_many;
 
-    const auto vals = std::vector<amrex::ParticleReal>{
+    const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
         0.00000e+00_prt, 0.00000e+00_prt, 0.00000e+00_prt, 0.00000e+00_prt,
         0.00000e+00_prt, 0.00000e+00_prt, 0.00000e+00_prt, 3.35120e-221_prt,
         1.13067e-188_prt, 2.14228e-163_prt, 3.39948e-143_prt, 1.09215e-126_prt,

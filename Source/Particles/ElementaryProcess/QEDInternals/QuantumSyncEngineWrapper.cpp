@@ -168,7 +168,7 @@ void QuantumSynchrotronEngine::init_builtin_dndt_table()
     dndt_params.chi_part_how_many = default_chi_part_how_many;
 
 
-    const auto vals = std::vector<amrex::ParticleReal>{
+    const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
         -6.13623e+00_prt, -5.94268e+00_prt, -5.74917e+00_prt, -5.55571e+00_prt,
         -5.36231e+00_prt, -5.16898e+00_prt, -4.97575e+00_prt, -4.78262e+00_prt,
         -4.58961e+00_prt, -4.39677e+00_prt, -4.20410e+00_prt, -4.01166e+00_prt,
@@ -205,7 +205,7 @@ void QuantumSynchrotronEngine::init_builtin_phot_em_table()
     phot_em_params.chi_part_how_many = default_chi_part_how_many;
     phot_em_params.frac_how_many = default_frac_how_many;
 
-    const auto vals = std::vector<amrex::ParticleReal>{
+    const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
         -6.83368e+00_prt, -6.68749e+00_prt, -6.54129e+00_prt, -6.39510e+00_prt,
         -6.24890e+00_prt, -6.10271e+00_prt, -5.95651e+00_prt, -5.81031e+00_prt,
         -5.66412e+00_prt, -5.51792e+00_prt, -5.37173e+00_prt, -5.22554e+00_prt,
