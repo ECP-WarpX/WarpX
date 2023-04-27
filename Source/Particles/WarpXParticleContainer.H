@@ -207,12 +207,12 @@ public:
                                RealVector const & wp,
                                const int * const ion_lev,
                                amrex::MultiFab* rho,
-                               int icomp,
+                               const int icomp,
                                const long offset,
                                const long np_to_depose,
-                               int thread_num,
-                               int lev,
-                               int depos_lev);
+                               const int thread_num,
+                               const int lev,
+                               const int depos_lev);
 
     virtual void DepositCurrent (WarpXParIter& pti,
                                 RealVector const & wp,

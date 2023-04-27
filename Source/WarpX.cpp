@@ -134,6 +134,19 @@ bool WarpX::do_divb_cleaning = false;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 bool WarpX::do_single_precision_comms = false;
+
+bool WarpX::do_shared_mem_charge_deposition = false;
+bool WarpX::do_shared_mem_current_deposition = false;
+#if defined(WARPX_DIM_3D)
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(6,6,8));
+#elif defined(WARPX_DIM_2D)
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(14,14));
+#else
+//Have not experimented with good tilesize here because expect use case to be low
+amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(1,1,1));
+#endif
+int WarpX::shared_mem_current_tpb = 128;
+
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
 amrex::Vector<ParticleBoundaryType> WarpX::particle_boundary_lo(AMREX_SPACEDIM,ParticleBoundaryType::Absorbing);
@@ -797,6 +810,22 @@ WarpX::ReadParameters ()
                 ablastr::warn_manager::WarnPriority::low);
         }
 #endif
+        pp_warpx.query("do_shared_mem_charge_deposition", do_shared_mem_charge_deposition);
+        pp_warpx.query("do_shared_mem_current_deposition", do_shared_mem_current_deposition);
+#if !(defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA))
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_shared_mem_current_deposition,
+                "requested shared memory for current deposition, but shared memory is only available for CUDA or HIP");
+#endif
+        pp_warpx.query("shared_mem_current_tpb", shared_mem_current_tpb);
+
+        // initialize the shared tilesize
+        Vector<int> vect_shared_tilesize(AMREX_SPACEDIM, 1);
+        bool shared_tilesize_is_specified = utils::parser::queryArrWithParser(pp_warpx, "shared_tilesize",
+                                                            vect_shared_tilesize, 0, AMREX_SPACEDIM);
+        if (shared_tilesize_is_specified){
+            for (int i=0; i<AMREX_SPACEDIM; i++)
+                shared_tilesize[i] = vect_shared_tilesize[i];
+        }
 
         pp_warpx.query("serialize_initial_conditions", serialize_initial_conditions);
         pp_warpx.query("refine_plasma", refine_plasma);
