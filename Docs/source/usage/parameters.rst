@@ -2215,7 +2215,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     changed using the parameter ``<diag_name>.dump_last_timestep`` described below.
 
 * ``<diag_name>.dump_last_timestep`` (`bool` optional, default `1`)
-    If this is `1`, the last timestep is dumped regardless of ``<diag_name>.period``.
+    If this is `1`, the last timestep is dumped regardless of ``<diag_name>.intervals``.
 
 * ``<diag_name>.diag_type`` (`string`)
     Type of diagnostics. ``Full``, ``BackTransformed``, and ``BoundaryScraping``
