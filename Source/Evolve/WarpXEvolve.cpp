@@ -469,7 +469,7 @@ WarpX::OneStep_nosub (Real cur_time)
             // macroscopic medium
             MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
         } else {
-            aWARPX_ABORT_WITH_MESSAGE("Medium for EM is unknown");
+            WARPX_ABORT_WITH_MESSAGE("Medium for EM is unknown");
         }
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
