@@ -430,8 +430,8 @@ void PsatdAlgorithmJLinearInTime::CurrentCorrection (SpectralFieldData& field_da
     BL_PROFILE("PsatdAlgorithmJLinearInTime::CurrentCorrection");
 
     amrex::ignore_unused(field_data);
-    amrex::Abort(Utils::TextMsg::Err(
-        "Current correction not implemented for multi-J PSATD algorithm"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Current correction not implemented for multi-J PSATD algorithm");
 }
 
 void
@@ -441,8 +441,8 @@ PsatdAlgorithmJLinearInTime::VayDeposition (SpectralFieldData& field_data)
     BL_PROFILE("PsatdAlgorithmJLinearInTime::VayDeposition()");
 
     amrex::ignore_unused(field_data);
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented for multi-J PSATD algorithm"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented for multi-J PSATD algorithm");
 }
 
 #endif // WARPX_USE_PSATD

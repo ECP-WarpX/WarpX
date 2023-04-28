@@ -19,8 +19,6 @@
 
 #include <AMReX_Print.H>
 
-#include <Utils/TextMsg.H>
-
 int main(int argc, char* argv[])
 {
     utils::warpx_mpi_init(argc, argv);

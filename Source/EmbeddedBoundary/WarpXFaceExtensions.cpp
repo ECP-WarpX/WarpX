@@ -155,8 +155,8 @@ WarpX::CountExtFaces() {
 #elif defined(WARPX_DIM_3D)
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "CountExtFaces: Only implemented in 2D3V and 3D3V"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "CountExtFaces: Only implemented in 2D3V and 3D3V");
 #endif
         amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
         amrex::ReduceData<int> reduce_data(reduce_ops);
@@ -420,8 +420,8 @@ WarpX::ComputeOneWayExtensions() {
 #elif defined(WARPX_DIM_3D)
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V");
 #endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 
@@ -542,8 +542,8 @@ WarpX::ComputeEightWaysExtensions() {
 #elif defined(WARPX_DIM_3D)
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V");
 #endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 
