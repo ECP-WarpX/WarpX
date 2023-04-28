@@ -253,7 +253,7 @@ Note that the simulation will stop if the time exceeds ``stop_time``.
 Any further calls to ``step`` will do nothing.
 
 The simulation can also be stopped by sending the appropriate signal (see :ref:`signal handling <signal-handling>`.).
-When a breaking signal is received, WarpX will finish it's current time step, write out a check point file, and then exit.
+When a breaking signal is received, WarpX will finish its current time step, write out a check point file, and then exit.
 This overrides all other methods for controlling when the simulation stops.
 
 Setting up the field mesh
