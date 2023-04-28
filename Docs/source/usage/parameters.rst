@@ -24,9 +24,11 @@ Overall simulation parameters
     The number of PIC cycles to perform. See :ref:`stopping the simulation <stopping-the-simulation>`.
 
 * ``stop_time`` (`float`; in seconds)
-    The maximum physical time of the simulation. Can be provided instead of ``max_step``. If both
-    ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
-    when the first criterion is hit. See :ref:`stopping the simulation <stopping-the-simulation>`.
+    The maximum physical time of the simulation (in the boosted frame in a boosted-frame calculation).
+    Can be provided instead of ``max_step``.
+    If both ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
+    when the first criterion is hit.
+    See :ref:`stopping the simulation <stopping-the-simulation>`.
 
 * ``warpx.used_inputs_file`` (`string`; default: ``warpx_used_inputs``)
     Name of a file that WarpX writes to archive the used inputs.
