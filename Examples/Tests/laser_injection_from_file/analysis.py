@@ -33,7 +33,7 @@ sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 #Maximum acceptable error for this test
-relative_error_threshold = 0.1
+relative_error_threshold = 0.065
 
 #Physical parameters
 um = 1.e-6
@@ -42,11 +42,11 @@ c = 299792458
 
 #Parameters of the gaussian beam
 wavelength = 1.*um
-w0 = 6.*um
+w0 = 12.*um
 tt = 10.*fs
 t_c = 20.*fs
 
-E_max= 32599175904452.426
+E_max= 16282454014843.37
 
 # Function for the envelope
 def gauss_env(T, X, Y, Z):
@@ -146,8 +146,8 @@ def main() :
     laser_energy = 1.0  # J
     profile = GaussianProfile(wavelength, pol, laser_energy, w0, tt, t_peak=0)
     dim = "xyt"
-    lo = (-10e-6, -10e-6, -20e-15)
-    hi = (+10e-6, +10e-6, +20e-15)
+    lo = (-25e-6, -25e-6, -20e-15)
+    hi = (+25e-6, +25e-6, +20e-15)
     npoints = (100, 100, 100)
     laser = Laser(dim, lo, hi, npoints, profile)
     laser.normalize(laser_energy, kind="energy")
