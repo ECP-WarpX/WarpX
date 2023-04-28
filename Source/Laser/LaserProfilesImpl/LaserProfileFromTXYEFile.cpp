@@ -104,8 +104,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
 void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::update (amrex::Real t)
 {
-    t += m_params.t_coords[0] - m_params.t_delay;
-    if(t >= m_params.t_coords.back())
+    t += m_params.t_min - m_params.t_delay;
+    if(t >= m_params.t_max)
         return;
     const auto idx_times = find_left_right_time_indices(t);
     const auto idx_t_left = idx_times.first;
@@ -122,9 +122,9 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {
-    t += m_params.t_coords[0] - m_params.t_delay;
+    t += m_params.t_min - m_params.t_delay;
     //Amplitude is 0 if time is out of range
-    if(t < m_params.t_coords.front() ||  t > m_params.t_coords.back()){
+    if(t < m_params.t_min ||  t > m_params.t_max){
         amrex::ParallelFor(np,
             [=] AMREX_GPU_DEVICE (int i) {
                 amplitude[i] = 0.0_rt;});
@@ -144,14 +144,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 {
 #ifdef WARPX_USE_OPENPMD
     if(ParallelDescriptor::IOProcessor()){
-
         auto series = io::Series(txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
         auto E = i.meshes["laserEnvelope"];
         auto E_laser = E[io::RecordComponent::SCALAR];
-
         auto extent = E_laser.getExtent();
-
         m_params.nt = extent[0];
         m_params.nx = extent[1];
         m_params.ny = extent[2];
@@ -162,63 +159,18 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 #elif defined(WARPX_DIM_XZ)
         if(m_params.ny != 1) Abort("ny in txye file must be 1 in 2D");
 #endif
-        // Allocate arrays that contain min/max
-        // of the grid in each direction
-        m_params.t_coords.resize(2);
-        m_params.h_x_coords.resize(2);
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
-        m_params.h_y_coords.resize(2);
-#elif defined(WARPX_DIM_XZ)
-        m_params.h_y_coords.resize(1);
-#endif
         // Extract grid offset and grid spacing
         std::vector<double> offset = E.gridGlobalOffset();
         std::vector<double> position = E_laser.position<double>();
         std::vector<double> spacing = E.gridSpacing<double>();
-
         // Calculate the min and max of the grid
-        m_params.t_coords[0] = offset[0] + position[0]*spacing[0];
-        m_params.t_coords[1] = m_params.t_coords[0] + (m_params.nt-1)*spacing[0];
-        m_params.h_x_coords[0] = offset[1] + position[1]*spacing[1];
-        m_params.h_x_coords[1] = m_params.h_x_coords[0] + (m_params.nx-1)*spacing[1];
-        m_params.h_y_coords[0] = offset[2] + position[2]*spacing[2];
-        m_params.h_y_coords[1] = m_params.h_y_coords[0] + (m_params.ny-1)*spacing[2];
+        m_params.t_min = offset[0] + position[0]*spacing[0];
+        m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
+        m_params.x_min = offset[1] + position[1]*spacing[1];
+        m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[1];
+        m_params.y_min = offset[2] + position[2]*spacing[2];
+        m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[2];
     }
-    //Broadcast grid size and coordinate sizes
-    //When a non-uniform grid is used, nt, nx and ny are identical
-    //to t_coords.size(), x_coords.size() and y_coords.size().
-    //When a uniform grid is used, nt,nx and ny store the number of points
-    //used for the mesh, while t_coords, x_coords and y_coords store the
-    //extrems in each direaction. Thus t_coords and x_coords in this case
-    //have size 2 and y_coords has size 1 in 2D and size 2 in 3D.
-    int t_sizes[6] = {m_params.nt, m_params.nx, m_params.ny,
-        static_cast<int>(m_params.t_coords.size()),
-        static_cast<int>(m_params.h_x_coords.size()),
-        static_cast<int>(m_params.h_y_coords.size())};
-    ParallelDescriptor::Bcast(t_sizes, 6,
-        ParallelDescriptor::IOProcessorNumber());
-    m_params.nt = t_sizes[0]; m_params.nx = t_sizes[1]; m_params.ny = t_sizes[2];
-    //Broadcast coordinates
-    if(!ParallelDescriptor::IOProcessor()){
-        m_params.t_coords.resize(t_sizes[3]);
-        m_params.h_x_coords.resize(t_sizes[4]);
-        m_params.h_y_coords.resize(t_sizes[5]);
-    }
-    ParallelDescriptor::Bcast(m_params.t_coords.dataPtr(),
-        m_params.t_coords.size(), ParallelDescriptor::IOProcessorNumber());
-    ParallelDescriptor::Bcast(m_params.h_x_coords.dataPtr(),
-        m_params.h_x_coords.size(), ParallelDescriptor::IOProcessorNumber());
-    ParallelDescriptor::Bcast(m_params.h_y_coords.dataPtr(),
-        m_params.h_y_coords.size(), ParallelDescriptor::IOProcessorNumber());
-    m_params.d_x_coords.resize(m_params.h_x_coords.size());
-    m_params.d_y_coords.resize(m_params.h_y_coords.size());
-    Gpu::copyAsync(Gpu::hostToDevice,
-                   m_params.h_x_coords.begin(), m_params.h_x_coords.end(),
-                   m_params.d_x_coords.begin());
-    Gpu::copyAsync(Gpu::hostToDevice,
-                   m_params.h_y_coords.begin(), m_params.h_y_coords.end(),
-                   m_params.d_y_coords.begin());
-    Gpu::synchronize();
 #else
     amrex::ignore_unused(txye_file_name);
 #endif
@@ -228,8 +180,8 @@ std::pair<int,int>
 WarpXLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex::Real t) const
 {
     int idx_t_right;
-    const auto t_min = m_params.t_coords.front();
-    const auto t_max = m_params.t_coords.back();
+    const auto t_min = m_params.t_min;
+    const auto t_max = m_params.t_max;
     const auto temp_idx_t_right = static_cast<int>(std::ceil( (m_params.nt-1)*(t-t_min)/(t_max-t_min)));
     idx_t_right = max(min(temp_idx_t_right, m_params.nt-1),1);
     return std::make_pair(idx_t_right-1, idx_t_right);
@@ -260,7 +212,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         for (int j=0; j<read_size; j++) {
             h_E_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
         }
-    }
+    }   
     //Broadcast E_data
     ParallelDescriptor::Bcast(h_E_data.dataPtr(),
         h_E_data.size(), ParallelDescriptor::IOProcessorNumber());
@@ -286,11 +238,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     // and get pointers to underlying data for GPU.
     const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
     const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
-    const auto tmp_x_min = m_params.h_x_coords.front();
-    const auto tmp_x_max = m_params.h_x_coords.back();
+    const auto tmp_x_min = m_params.x_min;
+    const auto tmp_x_max = m_params.x_max;
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
-    const auto tmp_y_min = m_params.h_y_coords.front();
-    const auto tmp_y_max = m_params.h_y_coords.back();
+    const auto tmp_y_min = m_params.y_min;
+    const auto tmp_y_max = m_params.y_max;
 #endif
     const auto tmp_nx = m_params.nx;
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
@@ -300,11 +252,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     const auto tmp_idx_first_time = m_params.first_time_index;
     const int idx_t_right = idx_t_left+1;
     const auto t_left = idx_t_left*
-        (m_params.t_coords.back()-m_params.t_coords.front())/(m_params.nt-1) +
-        m_params.t_coords.front();
+        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+        m_params.t_min;
     const auto t_right = idx_t_right*
-        (m_params.t_coords.back()-m_params.t_coords.front())/(m_params.nt-1) +
-        m_params.t_coords.front();
+        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+        m_params.t_min;
 #if (defined WARPX_DIM_1D_Z)
     amrex::Abort(Utils::TextMsg::Err(
         "WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D"));

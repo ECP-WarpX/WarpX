@@ -314,15 +314,16 @@ private:
         int nt, nx, ny;
         /** Vector of temporal coordinates. It contains only the start and stop
          * times and intermediate times are obtained with nt */
-        amrex::Vector<amrex::Real> t_coords;
+        amrex::Real t_min;
+        amrex::Real t_max;
         /** Vector or x coordinates. It contains only the min and max
          * x coordinates, and intermediate positions are obtained with nx */
-        amrex::Vector<amrex::Real> h_x_coords;
-        amrex::Gpu::DeviceVector<amrex::Real> d_x_coords;
+        amrex::Real x_min;
+        amrex::Real x_max;
         /** Vector or y coordinates. It contains only the min and max
          * y coordinates, and intermediate positions are obtained with ny */
-        amrex::Vector<amrex::Real> h_y_coords;
-        amrex::Gpu::DeviceVector<amrex::Real> d_y_coords;
+        amrex::Real y_min;
+        amrex::Real y_max;
         /** Size of the timestep range to load */
         int time_chunk_size;
         /** Index of the first timestep in memory */
