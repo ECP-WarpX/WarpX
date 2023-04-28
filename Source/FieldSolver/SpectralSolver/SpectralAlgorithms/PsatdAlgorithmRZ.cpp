@@ -492,5 +492,5 @@ void
 PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
     WARPX_ABORT_WITH_MESSAGE(
-        "Vay deposition not implemented in RZ geometry"));
+        "Vay deposition not implemented in RZ geometry");
 }
