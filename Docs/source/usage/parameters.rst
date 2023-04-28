@@ -240,7 +240,7 @@ The basic ways are to set either the maximum number of time steps (by setting
 When using the boosted frame and/or the back-transformed diagnostics, other
 criteria can be used.
 The quantity ``warpx.zmax_plasma_to_compute_max_step`` can be specified, setting the
-stopping based on the location of the boosted frame.
+stopping criteria based on the location of the boosted frame.
 Also, ``warpx.compute_max_step_from_btd`` can be set, in which case the
 simulation will continue until the back-transformed diagnostics have been completed.
 Both of these methods override any input values of ``max_step`` and ``stop_time``.
