@@ -381,6 +381,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         amrex::ignore_unused(Yp);
 #else
         // TODO: implement WARPX_DIM_1D_Z
+        Complex val = 0;
         amrex::ignore_unused(x_0, x_1, p_E_data, tmp_idx_first_time,
                              t_left, t_right, Xp, Yp, t, idx_x_left);
 #endif
