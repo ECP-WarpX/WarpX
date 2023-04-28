@@ -212,7 +212,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         for (int j=0; j<read_size; j++) {
             h_E_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
         }
-    }   
+    }
     //Broadcast E_data
     ParallelDescriptor::Bcast(h_E_data.dataPtr(),
         h_E_data.size(), ParallelDescriptor::IOProcessorNumber());
