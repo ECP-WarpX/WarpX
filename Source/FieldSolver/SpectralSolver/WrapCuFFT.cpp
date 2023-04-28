@@ -95,7 +95,7 @@ namespace AnyFFT
         if ( result != CUFFT_SUCCESS ) {
             WARPX_ABORT_WITH_MESSAGE(
                 "forward transform using cufftExec failed ! Error: "
-                +cufftErrorToString(result);
+                +cufftErrorToString(result));
         }
     }
 
