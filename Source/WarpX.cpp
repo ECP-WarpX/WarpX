@@ -2893,57 +2893,23 @@ void
 WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                const amrex::IArrayBox &guard_mask, const int ng )
 {
-    bool setnull;
-    const amrex::Dim3 lo = amrex::lbound( tbx );
-    const amrex::Dim3 hi = amrex::ubound( tbx );
-    Array4<int> msk = buffer_mask.array();
-    Array4<int const> gmsk = guard_mask.array();
-#if defined(WARPX_DIM_1D_Z)
-    int k = lo.z;
-    int j = lo.y;
-    for (int i = lo.x; i <= hi.x; ++i) {
-        setnull = false;
-        // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-        for (int ii = i-ng; ii <= i+ng; ++ii) {
-            if ( gmsk(ii,j,k) == 0 ) setnull = true;
-        }
-        if ( setnull ) msk(i,j,k) = 0;
-        else           msk(i,j,k) = 1;
-    }
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    int k = lo.z;
-    for     (int j = lo.y; j <= hi.y; ++j) {
-        for (int i = lo.x; i <= hi.x; ++i) {
-            setnull = false;
-            // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-            for     (int jj = j-ng; jj <= j+ng; ++jj) {
-                for (int ii = i-ng; ii <= i+ng; ++ii) {
-                    if ( gmsk(ii,jj,k) == 0 ) setnull = true;
-                }
-            }
-            if ( setnull ) msk(i,j,k) = 0;
-            else           msk(i,j,k) = 1;
-        }
-    }
-#elif defined(WARPX_DIM_3D)
-    for         (int k = lo.z; k <= hi.z; ++k) {
-        for     (int j = lo.y; j <= hi.y; ++j) {
-            for (int i = lo.x; i <= hi.x; ++i) {
-                setnull = false;
-                // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-                for         (int kk = k-ng; kk <= k+ng; ++kk) {
-                    for     (int jj = j-ng; jj <= j+ng; ++jj) {
-                        for (int ii = i-ng; ii <= i+ng; ++ii) {
-                            if ( gmsk(ii,jj,kk) == 0 ) setnull = true;
-                        }
+    auto const& msk = buffer_mask.array();
+    auto const& gmsk = guard_mask.const_array();
+    amrex::Dim3 ng3 = amrex::IntVect(ng).dim3();
+    amrex::ParallelFor(tbx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
+    {
+        for         (int kk = k-ng3.z; kk <= k+ng3.z; ++kk) {
+            for     (int jj = j-ng3.y; jj <= j+ng3.y; ++jj) {
+                for (int ii = i-ng3.x; ii <= i+ng3.x; ++ii) {
+                    if ( gmsk(ii,jj,kk) == 0 ) {
+                        msk(i,j,k) = 0;
+                        return;
                     }
                 }
-                if ( setnull ) msk(i,j,k) = 0;
-                else           msk(i,j,k) = 1;
             }
         }
-    }
-#endif
+        msk(i,j,k) = 1;
+    });
 }
 
 amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const short a_grid_type)
