@@ -613,8 +613,8 @@ public:
      * Function to update the E-field using Ohm's law (hybrid-PIC model).
      */
     void HybridPICSolveE (                               DtType dt_type);
-    void HybridPICSolveE (int lev,                       DtType dt_type);
-    void HybridPICSolveE (int lev, PatchType patch_type, DtType dt_type);
+    void HybridPICSolveE (const int lev,                       DtType dt_type);
+    void HybridPICSolveE (const int lev, PatchType patch_type, DtType dt_type);
 
     /**
      * \brief
@@ -623,7 +623,7 @@ public:
      * solver (kinetic-fluid hybrid model).
      */
     void CalculateCurrentAmpere ();
-    void CalculateCurrentAmpere (int lev);
+    void CalculateCurrentAmpere (const int lev);
 
     /**
      * \brief
@@ -729,7 +729,7 @@ public:
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
     /**
-     * \brief When the Ohm's law solver is used, the elctron pressure values
+     * \brief When the Ohm's law solver is used, the electron pressure values
      * on PEC boundaries are set to enforce a zero derivative Neumann condition,
      * otherwise the E_perp values have large spikes (that grows as 1/dx). This
      * has to be done since the E-field is algebraically calculated instead of

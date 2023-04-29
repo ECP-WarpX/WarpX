@@ -141,7 +141,7 @@ void WarpX::CalculateCurrentAmpere ()
     }
 }
 
-void WarpX::CalculateCurrentAmpere (int lev)
+void WarpX::CalculateCurrentAmpere (const int lev)
 {
     WARPX_PROFILE("WarpX::CalculateCurrentAmpere()");
 
@@ -166,7 +166,7 @@ void WarpX::HybridPICSolveE (DtType a_dt_type)
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 }
 
-void WarpX::HybridPICSolveE (int lev, DtType a_dt_type)
+void WarpX::HybridPICSolveE (const int lev, DtType a_dt_type)
 {
     WARPX_PROFILE("WarpX::HybridPICSolveE()");
 
@@ -175,11 +175,10 @@ void WarpX::HybridPICSolveE (int lev, DtType a_dt_type)
     {
         amrex::Abort(Utils::TextMsg::Err(
         "HybridPICSolveE: Only one level implemented for hybrid-PIC solver."));
-        HybridPICSolveE(lev, PatchType::coarse, a_dt_type);
     }
 }
 
-void WarpX::HybridPICSolveE (int lev, PatchType patch_type, DtType a_dt_type)
+void WarpX::HybridPICSolveE (const int lev, PatchType patch_type, DtType a_dt_type)
 {
     // Solve E field in regular cells
     // The first half step uses t=n quantities, the second half t=n+1/2
