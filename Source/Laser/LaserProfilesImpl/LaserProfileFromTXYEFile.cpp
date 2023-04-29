@@ -195,9 +195,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         "Reading [" + std::to_string(t_begin) + ", " + std::to_string(t_end) +
         ") data chunk from " + m_params.txye_file_name);
     //Indices of the first and last timestep to read
-    auto i_first = max(0, t_begin);
-    auto i_last = min(t_end-1, m_params.nt-1);
-    if((i_last-i_first+1)*m_params.nx*m_params.ny > static_cast<int>(m_params.E_data.size()))
+    std::uint64_t const i_first = max(0, t_begin);
+    std::uint64_t const i_last = min(t_end-1, m_params.nt-1);
+    auto const time_chunk_size = static_cast<std::uint64_t>( m_params.time_chunk_size);
+    if((i_last-i_first+1)*m_params.nx*m_params.ny > static_cast<std::uint64_t>(m_params.E_data.size()))
         Abort("Data chunk to read from file is too large");
     Vector<Complex> h_E_data(m_params.E_data.size());
     if(ParallelDescriptor::IOProcessor()){
@@ -205,8 +206,9 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         auto i = series.iterations[0];
         auto E = i.meshes["laserEnvelope"];
         auto E_laser = E[io::RecordComponent::SCALAR];
-        // alternatively, pass pre-allocated
-        std::shared_ptr< std::complex<double> > x_data = E_laser.loadChunk< std::complex<double> >();
+        openPMD:: Extent full_extent = E_laser.getExtent();
+        openPMD::Extent read_extent = {full_extent[0], full_extent[1],time_chunk_size};
+        auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{0, 0, i_first}, read_extent);
         const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
         series.flush();
         for (int j=0; j<read_size; j++) {
