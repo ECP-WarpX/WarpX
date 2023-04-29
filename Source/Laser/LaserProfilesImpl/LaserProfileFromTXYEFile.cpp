@@ -96,7 +96,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     //Copy common params
     m_common_params = params;
 #else
-    amrex::Abort(Utils::TextMsg::Err("WarpX should be compiled with option OpenPMD : ON"));
+    amrex::Abort(Utils::TextMsg::Err("WarpX has to be compiled with option openPMD=ON to read lasy file"));
     amrex::ignore_unused(ppl, params);
 #endif
 }
