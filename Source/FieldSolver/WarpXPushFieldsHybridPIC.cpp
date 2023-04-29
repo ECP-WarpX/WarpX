@@ -23,9 +23,10 @@ void WarpX::HybridPICEvolveFields ()
         finest_level == 0,
         "Ohm's law E-solve only works with a single level.");
 
-    // Perform charge deposition in component 0 of rho_fp
+    // The particles have now been pushed to their t_{n+1} positions.
+    // Perform charge deposition in component 0 of rho_fp at t_{n+1}.
     mypc->DepositCharge(rho_fp, 0._rt);
-    // Perform current deposition at t_{n+1/2}
+    // Perform current deposition at t_{n+1/2}.
     mypc->DepositCurrent(current_fp, dt[0], -0.5_rt * dt[0]);
 
     // Synchronize J and rho:
@@ -46,13 +47,16 @@ void WarpX::HybridPICEvolveFields ()
     // small timestep using this simpler implementation
 
     // Note: E^{n} is recalculated with the accurate J_i^{n} since at the end
-    // of the last step we had to "guess" J_i^{n}. It also needs to be
+    // of the last step we had to "guess" it. It also needs to be
     // recalculated to include the resistivity before evolving B.
 
-    // Firstly J_i^{n} is calculated as the average of J_i^{n-1/2} and J_i^{n+1/2}
+    // J_i^{n} is calculated as the average of J_i^{n-1/2} and J_i^{n+1/2}.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         for (int idim = 0; idim < 3; ++idim) {
+            // Perform a linear combination of values in the 0'th index (1 comp)
+            // of J_i^{n-1/2} and J_i^{n+1/2} (with 0.5 prefactors), writing
+            // the result into the 0'th index of `current_fp_temp[lev][idim]`
             MultiFab::LinComb(
                 *current_fp_temp[lev][idim],
                 0.5_rt, *current_fp_temp[lev][idim], 0,
@@ -79,6 +83,9 @@ void WarpX::HybridPICEvolveFields ()
     // Average rho^{n} and rho^{n+1} to get rho^{n+1/2} in rho_fp_temp
     for (int lev = 0; lev <= finest_level; ++lev)
     {
+        // Perform a linear combination of values in the 0'th index (1 comp)
+        // of rho^{n} and rho^{n+1} (with 0.5 prefactors), writing
+        // the result into the 0'th index of `rho_fp_temp[lev]`
         MultiFab::LinComb(
             *rho_fp_temp[lev], 0.5_rt, *rho_fp_temp[lev], 0,
             0.5_rt, *rho_fp[lev], 0, 0, 1, rho_fp_temp[lev]->nGrowVect()
@@ -103,6 +110,9 @@ void WarpX::HybridPICEvolveFields ()
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         for (int idim = 0; idim < 3; ++idim) {
+            // Perform a linear combination of values in the 0'th index (1 comp)
+            // of J_i^{n-1/2} and J_i^{n+1/2} (with -1.0 and 2.0 prefactors),
+            // writing the result into the 0'th index of `current_fp_temp[lev][idim]`
             MultiFab::LinComb(
                 *current_fp_temp[lev][idim],
                 -1._rt, *current_fp_temp[lev][idim], 0,
@@ -124,6 +134,7 @@ void WarpX::HybridPICEvolveFields ()
     // rho^{n} and J_i^{n-1/2}.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
+        // copy 1 component value starting at index 0 to index 0
         MultiFab::Copy(*rho_fp_temp[lev], *rho_fp[lev],
                         0, 0, 1, rho_fp_temp[lev]->nGrowVect());
         for (int idim = 0; idim < 3; ++idim) {
