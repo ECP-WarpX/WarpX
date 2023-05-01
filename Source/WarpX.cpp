@@ -526,8 +526,8 @@ WarpX::ReadParameters ()
             else if (str_abort_on_warning_threshold == "low")
                 abort_on_warning_threshold = ablastr::warn_manager::WarnPriority::low;
             else {
-                Abort(Utils::TextMsg::Err(str_abort_on_warning_threshold
-                    +"is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)"));
+                WARPX_ABORT_WITH_MESSAGE(str_abort_on_warning_threshold
+                    +"is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)");
             }
             ablastr::warn_manager::GetWMInstance().SetAbortThreshold(abort_on_warning_threshold);
         }
@@ -618,8 +618,8 @@ WarpX::ReadParameters ()
                 unsigned long gpu_seed = (myproc_1 + nprocs) * seed_long;
                 ResetRandomSeed(cpu_seed, gpu_seed);
             } else {
-                Abort(Utils::TextMsg::Err(
-                    "warpx.random_seed must be \"default\", \"random\" or an integer > 0."));
+                WARPX_ABORT_WITH_MESSAGE(
+                    "warpx.random_seed must be \"default\", \"random\" or an integer > 0.");
             }
         }
 
@@ -677,7 +677,7 @@ WarpX::ReadParameters ()
                 moving_window_dir = WARPX_ZINDEX;
             }
             else {
-                amrex::Abort(Utils::TextMsg::Err("Unknown moving_window_dir: "+s));
+                WARPX_ABORT_WITH_MESSAGE("Unknown moving_window_dir: "+s);
             }
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(moving_window_dir) == 0,
@@ -1200,9 +1200,9 @@ WarpX::ReadParameters ()
                 noz = particle_shape;
             }
             else{
-                amrex::Abort(Utils::TextMsg::Err(
+                WARPX_ABORT_WITH_MESSAGE(
                     "algo.particle_shape must be set in the input file:"
-                    " please set algo.particle_shape to 1, 2, or 3"));
+                    " please set algo.particle_shape to 1, 2, or 3");
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
@@ -1855,7 +1855,7 @@ void
 WarpX::MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
                                          const amrex::DistributionMapping& /*dm*/)
 {
-    amrex::Abort(Utils::TextMsg::Err("MakeNewLevelFromCoarse: To be implemented"));
+    WARPX_ABORT_WITH_MESSAGE("MakeNewLevelFromCoarse: To be implemented");
 }
 
 void
@@ -2786,8 +2786,8 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 #ifdef WARPX_USE_PSATD
         spectral_solver_fp[lev]->ComputeSpectralDivE( lev, Efield_aux[lev], divE );
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "ComputeDivE: PSATD requested but not compiled"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "ComputeDivE: PSATD requested but not compiled");
 #endif
     } else {
         m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );

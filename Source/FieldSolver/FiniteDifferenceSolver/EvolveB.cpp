@@ -93,7 +93,7 @@ void FiniteDifferenceSolver::EvolveB (
 #endif
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("EvolveB: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveB: Unknown algorithm");
     }
 }
 
@@ -212,8 +212,8 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 #ifdef AMREX_USE_EB
 
 #if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
-    amrex::Abort(Utils::TextMsg::Err(
-        "EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
 
     amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);

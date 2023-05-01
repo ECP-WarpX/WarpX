@@ -487,19 +487,19 @@ Diagnostics::InitBaseData ()
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
             m_diag_name);
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "To use SENSEI in situ, compile with USE_SENSEI=TRUE"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "To use SENSEI in situ, compile with USE_SENSEI=TRUE");
 #endif
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
         m_flush_format = std::make_unique<FlushFormatOpenPMD>(m_diag_name);
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "To use openpmd output format, need to compile with USE_OPENPMD=TRUE"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "To use openpmd output format, need to compile with USE_OPENPMD=TRUE");
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err(
-            "unknown output format"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "unknown output format");
     }
 
     // allocate vector of buffers then allocate vector of levels for each buffer

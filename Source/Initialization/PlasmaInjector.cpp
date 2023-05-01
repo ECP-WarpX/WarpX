@@ -50,7 +50,7 @@ namespace {
         std::string string;
         stringstream << var << " string '" << name << "' not recognized.";
         string = stringstream.str();
-        amrex::Abort(Utils::TextMsg::Err(string.c_str()));
+        WARPX_ABORT_WITH_MESSAGE(string.c_str());
     }
 }
 
@@ -388,9 +388,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseMomentum(pp_species_name);
     } else if (injection_style == "external_file") {
 #ifndef WARPX_USE_OPENPMD
-        amrex::Abort(Utils::TextMsg::Err(
+        WARPX_ABORT_WITH_MESSAGE(
             "WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
-            " to read the external openPMD file with species data"));
+            " to read the external openPMD file with species data");
 #endif
         external_file = true;
         std::string str_injection_file;
@@ -475,9 +475,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             amrex::ParallelDescriptor::Bcast(&mass, 1,
                 amrex::ParallelDescriptor::IOProcessorNumber());
 #else
-        amrex::Abort(Utils::TextMsg::Err(
+        WARPX_ABORT_WITH_MESSAGE(
             "Plasma injection via external_file requires openPMD support: "
-            "Add USE_OPENPMD=TRUE when compiling WarpX."));
+            "Add USE_OPENPMD=TRUE when compiling WarpX.");
 #endif  // WARPX_USE_OPENPMD
 
     } else {

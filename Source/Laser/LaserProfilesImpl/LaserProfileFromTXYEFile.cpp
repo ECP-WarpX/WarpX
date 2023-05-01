@@ -356,8 +356,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         m_params.t_coords.front();
 
 #if (defined WARPX_DIM_1D_Z)
-    amrex::Abort(Utils::TextMsg::Err(
-        "WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D"));
+    WARPX_ABORT_WITH_MESSAGE("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D");
 #endif
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
@@ -469,8 +468,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
     const auto t_right = m_params.t_coords[idx_t_right];
 
 #if (defined WARPX_DIM_1D_Z)
-    amrex::Abort(Utils::TextMsg::Err(
-        "WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D"));
+    WARPX_ABORT_WITH_MESSAGE("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D");
 #endif
 
     // Loop through the macroparticle to calculate the proper amplitude
