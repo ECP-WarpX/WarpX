@@ -37,8 +37,9 @@
 #include <ostream>
 #include <vector>
 #include <string>
-#include <openPMD/openPMD.hpp>
-
+#ifdef WARPX_USE_OPENPMD
+#   include <openPMD/openPMD.hpp>
+#endif
 
 namespace io = openPMD;
 
@@ -82,6 +83,16 @@ ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
                                       function_string_ord);
     m_parser_ord = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(function_string_ord,{"t","x","y","z","ux","uy","uz"}));
+
+    /*// read histogram function
+    utils::parser::Store_parserString(pp_rd_name,"histogram_function_abs(t,x,y,z,ux,uy,uz,w)",
+                                      function_string_abs);
+    m_parser_abs = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(function_string_abs,{"t","x","y","z","ux","uy","uz","w"}));
+    utils::parser::Store_parserString(pp_rd_name,"histogram_function_ord(t,x,y,z,ux,uy,uz,w)",
+                                      function_string_ord);
+    m_parser_ord = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(function_string_ord,{"t","x","y","z","ux","uy","uz","w"}));*/
 
     // read normalization type
     std::string norm_string = "default";
@@ -127,15 +138,24 @@ ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
         m_parser_filter = std::make_unique<amrex::Parser>(
                 utils::parser::makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
     }
-/*
+
+    /*// Read optional filter
+    std::string buf;
+    m_do_parser_filter = pp_rd_name.query("filter_function(t,x,y,z,ux,uy,uz,w)", buf);
+    if (m_do_parser_filter) {
+        utils::parser::Store_parserString(
+                pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz,w)", filter_string);
+        m_parser_filter = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(filter_string,{"t","x","y","z","ux","uy","uz","w"}));
+    }
+
     // Read optional value function
     m_do_parser_value = pp_rd_name.query("value_function(t,x,y,z,ux,uy,uz,w)", buf);
     if (m_do_parser_value) {
         utils::parser::Store_parserString(
                 pp_rd_name,"value_function(t,x,y,z,ux,uy,uz,w)", value_string);
-        m_w = std::make_unique<amrex::Parser>(
-                utils::parser::makeParser(value_string,{"t","x","y","z","ux","uy","uz","w"}));
-    }*/
+        m_parser_value = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(value_string,{"t","x","y","z","ux","uy","uz","w"}));*/
 }
 // end constructor
 
@@ -183,6 +203,10 @@ void ParticleHistogram2D::ComputeDiags (int step)
     // get filter parser
     auto fun_filterparser =
             utils::parser::compileParser<m_nvars>(m_parser_filter.get());
+
+    /*// get value parser
+    auto fun_valueparser =
+            utils::parser::compileParser<m_nvars>(m_parser_value.get());*/
 
     // declare local variables
     auto const num_bins_abs = m_bin_num_abs;
@@ -234,6 +258,16 @@ void ParticleHistogram2D::ComputeDiags (int step)
                                        auto const f_abs = fun_partparser_abs(t, x, y, z, ux, uy, uz);
                                        auto const f_ord = fun_partparser_ord(t, x, y, z, ux, uy, uz);
 
+                                       /*// don't count a particle if it is filtered out
+                                       if (do_parser_filter)
+                                           if (!fun_filterparser(t, x, y, z, ux, uy, uz, w))
+                                               return;
+
+                                       // continue function if particle is not filtered out
+                                       auto const f_abs = fun_partparser_abs(t, x, y, z, ux, uy, uz, w);
+                                       auto const f_ord = fun_partparser_ord(t, x, y, z, ux, uy, uz, w);
+                                       auto const w_test = fun_valueparser(t, x, y, z, ux, uy, uz, w);*/
+
                                        // determine particle bin
                                        int const bin_abs = int(Math::floor((f_abs-bin_min_abs)/bin_size_abs));
                                        if ( bin_abs<0 || bin_abs>=num_bins_abs ) return; // discard if out-of-range
@@ -242,6 +276,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
                                        if ( bin_ord<0 || bin_ord>=num_bins_ord ) return; // discard if out-of-range
 
                                        amrex::Real &data = d_table(bin_abs, bin_ord);
+                                       //amrex::HostDevice::Atomic::Add(&data, w_test);
                                        if ( is_unity_particle_weight ) {
                                            amrex::HostDevice::Atomic::Add(&data, 1.0_rt);
                                        } else {
@@ -257,7 +292,6 @@ void ParticleHistogram2D::ComputeDiags (int step)
 
     // reduced sum over mpi ranks
     int size = static_cast<int> (d_data_2D.size());
-    //int size = static_cast<int> (m_h_data_2D.size());
     ParallelDescriptor::ReduceRealSum
             (h_table_data.p, size, ParallelDescriptor::IOProcessorNumber());
 
@@ -298,6 +332,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
 
 void ParticleHistogram2D::WriteToFile (int step) const
 {
+#ifdef WARPX_USE_OPENPMD
     // only IO processor writes
     if ( !ParallelDescriptor::IOProcessor() ) { return; }
 
@@ -337,4 +372,7 @@ void ParticleHistogram2D::WriteToFile (int step) const
             {static_cast<unsigned long>(m_bin_num_ord)+1, static_cast<unsigned long>(m_bin_num_abs)+1});
 
     series.flush();
+#else
+    amrex::Abort(Utils::TextMsg::Err("openPMD-api cannot be used!"));
+#endif
 }
