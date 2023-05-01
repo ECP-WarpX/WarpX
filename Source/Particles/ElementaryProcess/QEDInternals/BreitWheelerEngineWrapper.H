@@ -14,7 +14,6 @@
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_Extension.H>
-#include <AMReX_GpuContainers.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Random.H>
@@ -43,7 +42,7 @@ using BW_dndt_table =
     picsar::multi_physics::phys::breit_wheeler::
     dndt_lookup_table<
     amrex::ParticleReal,
-    amrex::Gpu::DeviceVector<amrex::ParticleReal>>;
+    PicsarQedVector<amrex::ParticleReal>>;
 
 using BW_dndt_table_view = BW_dndt_table::view_type;
 
@@ -55,7 +54,7 @@ using BW_pair_prod_table =
     picsar::multi_physics::phys::breit_wheeler::
     pair_prod_lookup_table<
     amrex::ParticleReal,
-    amrex::Gpu::DeviceVector<amrex::ParticleReal>>;
+    PicsarQedVector<amrex::ParticleReal>>;
 
 using BW_pair_prod_table_view = BW_pair_prod_table::view_type;
 

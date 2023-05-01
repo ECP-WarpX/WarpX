@@ -769,8 +769,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (B_ext_grid_s == "parse_b_ext_grid_function") {
 
 #ifdef WARPX_DIM_RZ
-       amrex::Abort(Utils::TextMsg::Err(
-           "E and B parser for external fields does not work with RZ -- TO DO"));
+       WARPX_ABORT_WITH_MESSAGE(
+           "E and B parser for external fields does not work with RZ -- TO DO");
 #endif
        utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
           str_Bx_ext_grid_function);
@@ -827,8 +827,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (E_ext_grid_s == "parse_e_ext_grid_function") {
 
 #ifdef WARPX_DIM_RZ
-       amrex::Abort(Utils::TextMsg::Err(
-           "E and B parser for external fields does not work with RZ -- TO DO"));
+       WARPX_ABORT_WITH_MESSAGE(
+           "E and B parser for external fields does not work with RZ -- TO DO");
 #endif
        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
            str_Ex_ext_grid_function);
@@ -1336,8 +1336,8 @@ WarpX::ReadExternalFieldFromFile (
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "z",
                                      "XZ expects axisLabels {x, z}");
 #elif defined(WARPX_DIM_1D_Z)
-    amrex::Abort(Utils::TextMsg::Err(
-           "Reading from openPMD for external fields is not known to work with 1D3V (see #3830)"));
+    WARPX_ABORT_WITH_MESSAGE(
+           "Reading from openPMD for external fields is not known to work with 1D3V (see #3830)");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "1D3V can only read from files with cartesian geometry");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "z");
 #elif defined(WARPX_DIM_RZ)
@@ -1485,12 +1485,11 @@ void
 WarpX::ReadExternalFieldFromFile (std::string , amrex::MultiFab* ,std::string, std::string)
 {
 #if defined(WARPX_DIM_1D)
-    Abort(Utils::TextMsg::Err("Reading fields from openPMD files is not supported in 1D");
+    WARPX_ABORT_WITH_MESSAGE("Reading fields from openPMD files is not supported in 1D");
 #elif defined(WARPX_DIM_XZ)
-    Abort(Utils::TextMsg::Err(
-        "Reading from openPMD for external fields is not known to work with XZ (see #3828)"));
+    WARPX_ABORT_WITH_MESSAGE("Reading from openPMD for external fields is not known to work with XZ (see #3828)");
 #elif !defined(WARPX_USE_OPENPMD)
-    Abort(Utils::TextMsg::Err("OpenPMD field reading requires OpenPMD support to be enabled"));
+    WARPX_ABORT_WITH_MESSAGE("OpenPMD field reading requires OpenPMD support to be enabled");
 #endif
 }
 #endif // WARPX_USE_OPENPMD

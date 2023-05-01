@@ -118,8 +118,8 @@ Priority abl_msg_logger::StringToPriority(const std::string& priority_string)
     else if (priority_string == "low")
         return Priority::low;
     else
-        amrex::Abort(abl_utils::TextMsg::Err(
-            "Priority string '" + priority_string + "' not recognized"));
+        ABLASTR_ABORT_WITH_MESSAGE(
+            "Priority string '" + priority_string + "' not recognized");
 
     //this silences a "non-void function does not return a value in all control paths" warning
     return Priority::low;
