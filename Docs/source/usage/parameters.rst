@@ -28,6 +28,8 @@ Overall simulation parameters
     ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
     when the first criterion is hit.
 
+    Note: in boosted-frame simulations, ``stop_time`` refers to the time in the boosted frame.
+
 * ``warpx.used_inputs_file`` (`string`; default: ``warpx_used_inputs``)
     Name of a file that WarpX writes to archive the used inputs.
     The context of this file will contain an exact copy of all explicitly and implicitly used inputs parameters, including those :ref:`extended and overwritten from the command line <usage_run>`.
@@ -36,13 +38,9 @@ Overall simulation parameters
     The Lorentz factor of the boosted frame in which the simulation is run.
     (The corresponding Lorentz transformation is assumed to be along ``warpx.boost_direction``.)
 
-    When using this parameter, some of the input parameters are automatically
-    converted to the boosted frame. (See the corresponding documentation of each
-    input parameters.)
-
-    .. note::
-
-        For now, only the laser parameters will be converted.
+    When using this parameter, the input parameters are interpreted as in the
+    lab-frame and automatically converted to the boosted frame.
+    (See the corresponding documentation of each input parameters for exceptions.)
 
 * ``warpx.boost_direction`` (string: ``x``, ``y`` or ``z``)
     The direction of the Lorentz-transform for boosted-frame simulations
@@ -2449,7 +2447,7 @@ BackTransformed Diagnostics
 
 * ``<diag_name>.dt_snapshots_lab`` (`float`, in seconds)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
-    The time interval inbetween the lab-frame snapshots (where this
+    The time interval in between the lab-frame snapshots (where this
     time interval is expressed in the laboratory frame).
 
 * ``<diag_name>.dz_snapshots_lab`` (`float`, in meters)
