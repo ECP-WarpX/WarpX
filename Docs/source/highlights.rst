@@ -14,10 +14,20 @@ Plasma-Based Acceleration
 
 Scientific works in laser-plasma and beam-plasma acceleration.
 
+#. Wang J, Zeng M, Li D, Wang X, Gao J.
+   **High quality beam produced by tightly focused laser driven wakefield accelerators**.
+   arXiv pre-print, 2023.
+   `DOI:10.48550/arXiv.2304.10730 <https://doi.org/10.48550/arXiv.2304.10730>`__
+
 #. Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
    **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
    *SC22: International Conference for High Performance Computing, Networking, Storage and Analysis (SC)*. ISSN:2167-4337, pp. 25-36, Dallas, TX, US, 2022.
    `DOI:10.1109/SC41404.2022.00008 <https://doi.org/10.1109/SC41404.2022.00008>`__ (`preprint here <https://www.computer.org/csdl/proceedings-article/sc/2022/544400a025/1I0bSKaoECc>`__)
+
+#. Zhao Y, Lehe R, Myers A, Thevenet M, Huebl A, Schroeder CB, Vay J-L.
+   **Plasma electron contribution to beam emittance growth from Coulomb collisions in plasma-based accelerators**.
+   Physics of Plasmas **29**, 103109, 2022.
+   `DOI:10.1063/5.0102919 <https://doi.org/10.1063/5.0102919>`__
 
 #. Wang J, Zeng M, Li D, Wang X, Lu W, Gao J.
    **Injection induced by coaxial laser interference in laser wakefield accelerators**.
@@ -33,6 +43,11 @@ Scientific works in laser-plasma and beam-plasma acceleration.
    **Superintense laser-driven photon activation analysis**.
    Nature Communications Physics volume **4**.185, 2021.
    `DOI:10.1038/s42005-021-00685-2 <https://doi.org/10.1038/s42005-021-00685-2>`__
+
+#. Zhao Y, Lehe R, Myers A, Thevenet M, Huebl A, Schroeder CB, Vay J-L.
+   **Modeling of emittance growth due to Coulomb collisions in plasma-based accelerators**.
+   Physics of Plasmas **27**, 113105, 2020.
+   `DOI:10.1063/5.0023776 <https://doi.org/10.1063/5.0023776>`__
 
 
 Laser-Plasma Interaction
@@ -61,6 +76,15 @@ Particle Accelerator & Beam Physics
 
 Scientific works in particle and beam modeling.
 
+High Energy Astrophysical Plasma Physics
+****************************************
+
+Scientific works in astrophysical plasma modeling.
+
+#. Klion H, Jambunathan R, Rowan ME, Yang E, Willcox D, Vay J-L, Lehe R, Myers A, Huebl A, Zhang W.
+   **Particle-in-Cell simulations of relativistic magnetic reconnection with advanced Maxwell solver algorithms**.
+   arXiv pre-print, 2023.
+   `DOI:10.48550/arXiv.2304.10566 <https://doi.org/10.48550/arXiv.2304.10566>`__
 
 Microelectronics
 ****************

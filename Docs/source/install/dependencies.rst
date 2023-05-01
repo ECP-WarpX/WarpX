@@ -22,7 +22,7 @@ Optional dependencies include:
   - also needs the ``pkg-config`` tool on Unix
 - `BLAS++ <https://github.com/icl-utk-edu/blaspp>`_ and `LAPACK++ <https://github.com/icl-utk-edu/lapackpp>`_: for spectral solver (PSATD) support in RZ geometry
 - `Boost 1.66.0+ <https://www.boost.org/>`__: for QED lookup tables generation support
-- `openPMD-api 0.14.2+ <https://github.com/openPMD/openPMD-api>`__: we automatically download and compile a copy of openPMD-api for openPMD I/O support
+- `openPMD-api 0.15.1+ <https://github.com/openPMD/openPMD-api>`__: we automatically download and compile a copy of openPMD-api for openPMD I/O support
 
   - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`__
 - `Ascent 0.8.0+ <https://ascent.readthedocs.io>`__: for in situ 3D visualization
@@ -45,6 +45,16 @@ Pick *one* of the installation methods below to install all dependencies for War
 
 Conda (Linux/macOS/Windows)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. tip::
+
+   We recommend to configure your conda to use the faster `libmamba` `dependency solver <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`__.
+
+   .. code-block:: bash
+
+      conda update -n base conda
+      conda install -n base conda-libmamba-solver
+      conda config --set solver libmamba
 
 With MPI (only Linux/macOS):
 
@@ -70,7 +80,7 @@ For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you als
    export BLASPP_HOME=${CONDA_PREFIX}
    export LAPACKPP_HOME=${CONDA_PREFIX}
 
-.. note::
+.. tip::
 
    A general option to deactivate that conda self-activates its base environment.
    This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.
@@ -162,7 +172,7 @@ If you also want to compile with PSATD in RZ, you need to manually install BLAS+
 .. code-block:: bash
 
    sudo mkdir -p /usr/local/bin/
-   sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+   sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.com/ax3l/cmake-easyinstall/main/cmake-easyinstall
    sudo chmod a+x /usr/local/bin/cmake-easyinstall
 
    cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/blaspp.git \

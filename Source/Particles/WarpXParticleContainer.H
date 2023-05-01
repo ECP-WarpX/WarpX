@@ -25,6 +25,7 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
+#include <AMReX_GpuAllocators.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_INT.H>
 #include <AMReX_ParIter.H>
@@ -144,8 +145,9 @@ public:
      * class.
      */
     virtual void DefaultInitializeRuntimeAttributes (
-                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                            NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                        amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                            NArrayReal, NArrayInt,
+                                            amrex::PinnedArenaAllocator>& pinned_tile,
                         const int n_external_attr_real,
                         const int n_external_attr_int,
                         const amrex::RandomEngine& engine) = 0;
@@ -189,13 +191,13 @@ public:
      * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
      * \param[in] local if false, exchange the data in the guard cells after the deposition
      * \param[in] reset if true, reset all values of rho to zero
-     * \param[in] do_rz_volume_scaling whether to scale the final density by some volume norm in RZ geometry
+     * \param[in] apply_boundary_and_scale_volume whether to apply boundary conditions and scale the final density by some volume norm in RZ geometry
      * \param[in] interpolate_across_levels whether to average down from the fine patch to the coarse patch
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                         const bool local = false, const bool reset = false,
-                        const bool do_rz_volume_scaling = false,
+                        const bool apply_boundary_and_scale_volume = false,
                         const bool interpolate_across_levels = true,
                         const int icomp = 0);
 
@@ -205,12 +207,12 @@ public:
                                RealVector const & wp,
                                const int * const ion_lev,
                                amrex::MultiFab* rho,
-                               int icomp,
+                               const int icomp,
                                const long offset,
                                const long np_to_depose,
-                               int thread_num,
-                               int lev,
-                               int depos_lev);
+                               const int thread_num,
+                               const int lev,
+                               const int depos_lev);
 
     virtual void DepositCurrent (WarpXParIter& pti,
                                 RealVector const & wp,

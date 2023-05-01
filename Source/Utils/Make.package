@@ -1,6 +1,7 @@
 CEXE_sources += WarpXMovingWindow.cpp
 CEXE_sources += WarpXTagging.cpp
 CEXE_sources += WarpXUtil.cpp
+CEXE_sources += WarpXrocfftUtil.cpp
 CEXE_sources += WarpXVersion.cpp
 CEXE_sources += WarpXAlgorithmSelection.cpp
 CEXE_sources += Interpolate.cpp
@@ -13,6 +14,5 @@ include $(WARPX_HOME)/Source/Utils/Algorithms/Make.package
 include $(WARPX_HOME)/Source/Utils/Logo/Make.package
 include $(WARPX_HOME)/Source/Utils/Parser/Make.package
 include $(WARPX_HOME)/Source/Utils/Physics/Make.package
-include $(WARPX_HOME)/Source/Utils/Strings/Make.package
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Utils

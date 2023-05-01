@@ -39,12 +39,14 @@ FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
 #endif
 }
 
+#ifdef AMREX_USE_SENSEI_INSITU
 FlushFormatSensei::~FlushFormatSensei ()
 {
-#ifdef AMREX_USE_SENSEI_INSITU
     delete m_insitu_bridge;
-#endif
 }
+#else
+FlushFormatSensei::~FlushFormatSensei () = default;
+#endif
 
 void
 FlushFormatSensei::WriteToFile (
@@ -100,9 +102,9 @@ FlushFormatSensei::WriteParticles (
 {
     amrex::ignore_unused(particle_diags);
 #ifdef AMREX_USE_SENSEI_INSITU
-    amrex::Abort(Utils::TextMsg::Err(
+    WARPX_ABORT_WITH_MESSAGE(
         "FlushFormatSensei::WriteParticles : "
         "Not yet implemented."
-    ));
+    );
 #endif
 }

@@ -38,6 +38,7 @@
 #include <cctype>
 #include <map>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -49,7 +50,7 @@ namespace {
         std::string string;
         stringstream << var << " string '" << name << "' not recognized.";
         string = stringstream.str();
-        amrex::Abort(Utils::TextMsg::Err(string.c_str()));
+        WARPX_ABORT_WITH_MESSAGE(string.c_str());
     }
 }
 
@@ -235,6 +236,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::getWithParser(pp_species_name, "q_tot", q_tot);
         utils::parser::getWithParser(pp_species_name, "npart", npart);
         pp_species_name.query("do_symmetrize", do_symmetrize);
+        pp_species_name.query("symmetrization_order", symmetrization_order);
+        std::set<int> valid_symmetries = {4,8};
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
+            "Error: Symmetrization only supported to orders 4 or 8 ");
         gaussian_beam = true;
         parseMomentum(pp_species_name);
 #if defined(WARPX_DIM_XZ)
@@ -383,9 +388,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseMomentum(pp_species_name);
     } else if (injection_style == "external_file") {
 #ifndef WARPX_USE_OPENPMD
-        amrex::Abort(Utils::TextMsg::Err(
+        WARPX_ABORT_WITH_MESSAGE(
             "WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
-            " to read the external openPMD file with species data"));
+            " to read the external openPMD file with species data");
 #endif
         external_file = true;
         std::string str_injection_file;
@@ -470,9 +475,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             amrex::ParallelDescriptor::Bcast(&mass, 1,
                 amrex::ParallelDescriptor::IOProcessorNumber());
 #else
-        amrex::Abort(Utils::TextMsg::Err(
+        WARPX_ABORT_WITH_MESSAGE(
             "Plasma injection via external_file requires openPMD support: "
-            "Add USE_OPENPMD=TRUE when compiling WarpX."));
+            "Add USE_OPENPMD=TRUE when compiling WarpX.");
 #endif  // WARPX_USE_OPENPMD
 
     } else {
@@ -512,9 +517,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     amrex::Gpu::synchronize();
 }
 
+#ifdef AMREX_USE_GPU
 PlasmaInjector::~PlasmaInjector ()
 {
-#ifdef AMREX_USE_GPU
     if (d_inj_pos) {
         amrex::The_Arena()->free(d_inj_pos);
     }
@@ -524,8 +529,10 @@ PlasmaInjector::~PlasmaInjector ()
     if (d_inj_mom) {
         amrex::The_Arena()->free(d_inj_mom);
     }
-#endif
 }
+#else
+PlasmaInjector::~PlasmaInjector () = default;
+#endif
 
 // Depending on injection type at runtime, initialize inj_rho
 // so that inj_rho->getDensity calls

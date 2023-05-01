@@ -308,8 +308,8 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             }
         }
         else {
-            amrex::Abort(Utils::TextMsg::Err(
-                "Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry"));
+            WARPX_ABORT_WITH_MESSAGE(
+                "Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry");
         }
     }
     // Sum the number of components in input vector m_all_field_functors
@@ -443,7 +443,8 @@ FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
 
 
 void
-FullDiagnostics::InitializeBufferData (int i_buffer, int lev ) {
+FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
+    amrex::ignore_unused(restart);
     auto & warpx = WarpX::GetInstance();
     amrex::RealBox diag_dom;
     bool use_warpxba = true;
@@ -638,7 +639,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "At" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 1), lev, m_crse_ratio);
             } else {
-                amrex::Abort(Utils::TextMsg::Err(m_varnames[comp] + " is not a known field output type for RZ geometry"));
+                WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for RZ geometry");
             }
 #else
         // Valid transverse fields in Cartesian coordinates
@@ -659,7 +660,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "Ay" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 1), lev, m_crse_ratio);
             } else {
-                amrex::Abort(Utils::TextMsg::Err(m_varnames[comp] + " is not a known field output type for this geometry"));
+                WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for this geometry");
             }
 #endif
         }
@@ -705,6 +706,9 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
 {
     auto & warpx = WarpX::GetInstance();
 
+    // Get current finest level available
+    const int finest_level = warpx.finestLevel();
+
     // Account for galilean shift
     amrex::Real new_lo[AMREX_SPACEDIM];
     amrex::Real new_hi[AMREX_SPACEDIM];
@@ -734,7 +738,7 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
     }
 #endif
     // Update RealBox of geometry with galilean-shifted boundary.
-    for (int lev = 0; lev < nmax_lev; ++lev) {
+    for (int lev = 0; lev <= finest_level; ++lev) {
         // Note that Full diagnostics has only one snapshot, m_num_buffers = 1
         // Thus here we set the prob domain for the 0th snapshot only.
         m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );

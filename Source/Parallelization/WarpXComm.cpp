@@ -949,12 +949,19 @@ WarpX::SyncCurrent (
 }
 
 void
-WarpX::SyncRho ()
+WarpX::SyncRho () {
+    SyncRho(rho_fp, rho_cp);
+}
+
+void
+WarpX::SyncRho (
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp)
 {
     WARPX_PROFILE("WarpX::SyncRho()");
 
-    if (!rho_fp[0]) return;
-    const int ncomp = rho_fp[0]->nComp();
+    if (!charge_fp[0]) return;
+    const int ncomp = charge_fp[0]->nComp();
 
     std::unique_ptr<MultiFab> mf_comm; // for communication between levels
     for (int lev = finest_level; lev >= 0; --lev)
@@ -966,8 +973,8 @@ WarpX::SyncRho ()
             // On a coarse level, the data in mf_comm comes from the
             // fine level. They are unfiltered and uncommuncatied. We
             // need to add it to the current level.
-            MultiFab fine_lev_cp(rho_fp[lev]->boxArray(),
-                                 rho_fp[lev]->DistributionMap(),
+            MultiFab fine_lev_cp(charge_fp[lev]->boxArray(),
+                                 charge_fp[lev]->DistributionMap(),
                                  ncomp, 0);
             fine_lev_cp.setVal(0.0);
             fine_lev_cp.ParallelAdd(*mf_comm, 0, 0, ncomp, mf_comm->nGrowVect(),
@@ -976,7 +983,7 @@ WarpX::SyncRho ()
             auto owner_mask = amrex::OwnerMask(fine_lev_cp, period);
             auto const& mma = owner_mask->const_arrays();
             auto const& sma = fine_lev_cp.const_arrays();
-            auto const& dma = rho_fp[lev]->arrays();
+            auto const& dma = charge_fp[lev]->arrays();
             amrex::ParallelFor(fine_lev_cp, IntVect(0), ncomp,
             [=] AMREX_GPU_DEVICE (int bno, int i, int j, int k, int n)
             {
@@ -984,8 +991,8 @@ WarpX::SyncRho ()
                     dma[bno](i,j,k,n) += sma[bno](i,j,k,n);
                 }
             });
-            // Now it's safe to apply filter and sumboundary on rho_cp
-            ApplyFilterandSumBoundaryRho(lev+1, lev, *rho_cp[lev+1], 0, ncomp);
+            // Now it's safe to apply filter and sumboundary on charge_cp
+            ApplyFilterandSumBoundaryRho(lev+1, lev, *charge_cp[lev+1], 0, ncomp);
         }
 
         if (lev > 0)
@@ -995,26 +1002,26 @@ WarpX::SyncRho ()
             // filtering depends on the level. This is also done before any
             // same level communication because it's easier this way to
             // avoid double counting.
-            rho_cp[lev]->setVal(0.0);
-            ablastr::coarsen::average::Coarsen(*rho_cp[lev],
-                                               *rho_fp[lev],
+            charge_cp[lev]->setVal(0.0);
+            ablastr::coarsen::average::Coarsen(*charge_cp[lev],
+                                               *charge_fp[lev],
                                                refRatio(lev-1));
             if (charge_buf[lev])
             {
-                IntVect const& ng = rho_cp[lev]->nGrowVect();
+                IntVect const& ng = charge_cp[lev]->nGrowVect();
                 AMREX_ASSERT(ng.allLE(charge_buf[lev]->nGrowVect()));
-                MultiFab::Add(*charge_buf[lev], *rho_cp[lev], 0, 0, ncomp, ng);
+                MultiFab::Add(*charge_buf[lev], *charge_cp[lev], 0, 0, ncomp, ng);
                 mf_comm = std::make_unique<MultiFab>
                     (*charge_buf[lev], amrex::make_alias, 0, ncomp);
             }
             else
             {
                 mf_comm = std::make_unique<MultiFab>
-                    (*rho_cp[lev], amrex::make_alias, 0, ncomp);
+                    (*charge_cp[lev], amrex::make_alias, 0, ncomp);
             }
         }
 
-        ApplyFilterandSumBoundaryRho(lev, lev, *rho_fp[lev], 0, ncomp);
+        ApplyFilterandSumBoundaryRho(lev, lev, *charge_fp[lev], 0, ncomp);
     }
 }
 

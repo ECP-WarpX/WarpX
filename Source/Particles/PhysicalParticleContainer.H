@@ -200,7 +200,7 @@ public:
         const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
         const amrex::Real x_rms, const amrex::Real y_rms, const amrex::Real z_rms,
         const amrex::Real x_cut, const amrex::Real y_cut, const amrex::Real z_cut,
-        const amrex::Real q_tot, long npart, const int do_symmetrize);
+        const amrex::Real q_tot, long npart, const int do_symmetrize, const int symmetrization_order);
 
     /** Load a particle beam from an external file
      * @param[in] q_tot total charge of the particle species to be initialized
@@ -234,8 +234,9 @@ public:
      * @param[in] engine the random engine, used in initialization of QED optical depths
      */
     virtual void DefaultInitializeRuntimeAttributes (
-                    amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                        NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                        NArrayReal, NArrayInt,
+                                        amrex::PinnedArenaAllocator>& pinned_tile,
                     const int n_external_attr_real,
                     const int n_external_attr_int,
                     const amrex::RandomEngine& engine) override final;

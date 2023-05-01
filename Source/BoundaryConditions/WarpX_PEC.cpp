@@ -115,7 +115,6 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
                                            Ez, Ez_nodal, fbndry_lo, fbndry_hi);
             }
         );
-
     }
 }
 
@@ -207,7 +206,260 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
                                      Bz, Bz_nodal, fbndry_lo, fbndry_hi);
             }
         );
+    }
+}
 
+
+void
+PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_type)
+{
+    auto& warpx = WarpX::GetInstance();
+
+    amrex::Box domain_box = warpx.Geom(lev).Domain();
+    if (patch_type == PatchType::coarse) {
+        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        domain_box.coarsen(ref_ratio);
+    }
+    amrex::IntVect domain_lo = domain_box.smallEnd();
+    amrex::IntVect domain_hi = domain_box.bigEnd();
+
+    amrex::GpuArray<int, 3> fbndry_lo, fbndry_hi;
+    amrex::GpuArray<ParticleBoundaryType, 3> pbndry_lo, pbndry_hi;
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
+        fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
+        pbndry_lo[idim] = WarpX::particle_boundary_lo[idim];
+        pbndry_hi[idim] = WarpX::particle_boundary_hi[idim];
+    }
+    amrex::IntVect rho_nodal = rho->ixType().toIntVect();
+    amrex::IntVect ng_fieldgather = rho->nGrowVect();
+
+    const int nComp = rho->nComp();
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+        // Extract field data
+        amrex::Array4<amrex::Real> const& rho_array = rho->array(mfi);
+
+        // Construct a tilebox to loop over the grid
+        amrex::Box tb = convert( mfi.tilebox(), rho_nodal );
+
+        // Grow the tilebox to include the guard cells for the PEC boundaries
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (fbndry_lo[idim] == FieldBoundaryType::PEC)
+                tb.growLo(idim, ng_fieldgather[idim]);
+            if (fbndry_hi[idim] == FieldBoundaryType::PEC)
+                tb.growHi(idim, ng_fieldgather[idim]);
+        }
+
+        // The rho boundary is handled in 2 steps:
+        // 1) The cells internal to the domain are updated using the
+        //    charge deposited in the guard cells
+        // 2) The guard cells are updated with the appropriate image charges
+        //    based on the charge in the valid cells
+        // loop over cells and update fields
+        amrex::ParallelFor(
+            tb, nComp,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#elif (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                PEC::SetRhofieldFromPEC(
+                    domain_lo, domain_hi, ng_fieldgather, iv, n,
+                    rho_array, rho_nodal,
+                    fbndry_lo, fbndry_hi, pbndry_lo, pbndry_hi
+                );
+            }
+        );
+
+        amrex::ParallelFor(
+            tb, nComp,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#elif (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                PEC::SetRhofieldOnPEC(
+                    domain_lo, domain_hi, iv, n, rho_array, rho_nodal,
+                    fbndry_lo, fbndry_hi
+                );
+            }
+        );
+    }
+}
+
+void
+PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
+                      amrex::MultiFab* Jz, const int lev,
+                      PatchType patch_type)
+{
+    auto& warpx = WarpX::GetInstance();
+
+    amrex::Box domain_box = warpx.Geom(lev).Domain();
+    if (patch_type == PatchType::coarse) {
+        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        domain_box.coarsen(ref_ratio);
+    }
+    amrex::IntVect domain_lo = domain_box.smallEnd();
+    amrex::IntVect domain_hi = domain_box.bigEnd();
+
+    amrex::GpuArray<int, 3> fbndry_lo, fbndry_hi;
+    amrex::GpuArray<ParticleBoundaryType, 3> pbndry_lo, pbndry_hi;
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
+        fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
+        pbndry_lo[idim] = WarpX::particle_boundary_lo[idim];
+        pbndry_hi[idim] = WarpX::particle_boundary_hi[idim];
     }
 
+    const amrex::IntVect ngJ = Jx->nGrowVect();
+
+    amrex::IntVect Jx_nodal = Jx->ixType().toIntVect();
+    amrex::IntVect Jy_nodal = Jy->ixType().toIntVect();
+    amrex::IntVect Jz_nodal = Jz->ixType().toIntVect();
+
+    for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    {
+
+        Array4<Real> const& Jx_arr = Jx->array(mfi);
+        Array4<Real> const& Jy_arr = Jy->array(mfi);
+        Array4<Real> const& Jz_arr = Jz->array(mfi);
+
+        Box const & tilebox = mfi.tilebox();
+        Box tbx = convert( tilebox, Jx_nodal );
+        Box tby = convert( tilebox, Jy_nodal );
+        Box tbz = convert( tilebox, Jz_nodal );
+
+        // Grow the tileboxes to include the guard cells for the PEC boundaries
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (fbndry_lo[idim] == FieldBoundaryType::PEC)
+            {
+                tbx.growLo(idim, ngJ[idim]);
+                tby.growLo(idim, ngJ[idim]);
+                tbz.growLo(idim, ngJ[idim]);
+            }
+            if (fbndry_hi[idim] == FieldBoundaryType::PEC)
+            {
+                tbx.growHi(idim, ngJ[idim]);
+                tby.growHi(idim, ngJ[idim]);
+                tbz.growHi(idim, ngJ[idim]);
+            }
+        }
+
+        // The J boundary is handled in 2 steps:
+        // 1) The cells internal to the domain are updated using the
+        //    current deposited in the guard cells
+        // 2) The guard cells are updated with the appropriate reverse current
+        //    based on the current in the valid cells
+        // loop over cells and update fields
+        amrex::ParallelFor(
+            tbx, tby, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const int icomp = 0;
+                PEC::SetJfieldFromPEC(
+                    icomp, domain_lo, domain_hi, ngJ, iv, Jx_arr,
+                    Jx_nodal, fbndry_lo, fbndry_hi, pbndry_lo, pbndry_hi
+                );
+            },
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const int icomp = 1;
+                PEC::SetJfieldFromPEC(
+                    icomp, domain_lo, domain_hi, ngJ, iv, Jy_arr,
+                    Jy_nodal, fbndry_lo, fbndry_hi, pbndry_lo, pbndry_hi
+                );
+            },
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const int icomp = 2;
+                PEC::SetJfieldFromPEC(
+                    icomp, domain_lo, domain_hi, ngJ, iv, Jz_arr,
+                    Jz_nodal, fbndry_lo, fbndry_hi, pbndry_lo, pbndry_hi
+                );
+            }
+        );
+
+        amrex::ParallelFor(
+            tbx, tby, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const int icomp = 0;
+                PEC::SetJfieldOnPEC(
+                    icomp, domain_lo, domain_hi, iv, Jx_arr,
+                    Jx_nodal, fbndry_lo, fbndry_hi
+                );
+            },
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const int icomp = 1;
+                PEC::SetJfieldOnPEC(
+                    icomp, domain_lo, domain_hi, iv, Jy_arr,
+                    Jy_nodal, fbndry_lo, fbndry_hi
+                );
+            },
+
+            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+#endif
+#if (defined WARPX_DIM_1D_Z)
+                amrex::ignore_unused(j,k);
+#endif
+                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const int icomp = 2;
+                PEC::SetJfieldOnPEC(
+                    icomp, domain_lo, domain_hi, iv, Jz_arr,
+                    Jz_nodal, fbndry_lo, fbndry_hi
+                );
+            }
+        );
+    }
 }

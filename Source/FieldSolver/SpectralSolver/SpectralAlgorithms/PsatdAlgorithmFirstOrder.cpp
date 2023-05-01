@@ -357,8 +357,8 @@ void PsatdAlgorithmFirstOrder::CurrentCorrection (SpectralFieldData& field_data)
     BL_PROFILE("PsatdAlgorithmFirstOrder::CurrentCorrection");
 
     amrex::ignore_unused(field_data);
-    amrex::Abort(Utils::TextMsg::Err(
-        "Current correction not implemented for first-order PSATD equations"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Current correction not implemented for first-order PSATD equations");
 }
 
 void
@@ -368,8 +368,8 @@ PsatdAlgorithmFirstOrder::VayDeposition (SpectralFieldData& field_data)
     BL_PROFILE("PsatdAlgorithmFirstOrder::VayDeposition()");
 
     amrex::ignore_unused(field_data);
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented for first-order PSATD equations"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented for first-order PSATD equations");
 }
 
 #endif // WARPX_USE_PSATD
