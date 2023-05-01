@@ -1008,7 +1008,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
 
 
-class HybridPICSolver():
+class HybridPICSolver(picmistandard.base._ClassWithInit):
     """
     Hybrid-PIC solver based on Ohm's law.
     See `Theory Section <https://warpx.readthedocs.io/en/latest/theory/kinetic_fluid_hybrid_model.html>`_ for more information.
@@ -1034,7 +1034,7 @@ class HybridPICSolver():
         Number of substeps to take when updating the B-field.
     """
     def __init__(self, grid, Te=None, n0=None, gamma=None,
-                 n_floor=None, plasma_resistivity=None, substeps=None):
+                 n_floor=None, plasma_resistivity=None, substeps=None, **kw):
         self.grid = grid
         self.method = "hybrid"
 
@@ -1046,6 +1046,8 @@ class HybridPICSolver():
 
         self.substeps = substeps
 
+        self.handle_init(kw)
+
     def initialize_inputs(self):
 
         self.grid.initialize_inputs()
@@ -1056,7 +1058,9 @@ class HybridPICSolver():
         pywarpx.hybridpicmodel.n0_ref = self.n0
         pywarpx.hybridpicmodel.gamma = self.gamma
         pywarpx.hybridpicmodel.n_floor = self.n_floor
-        pywarpx.hybridpicmodel.__setattr__('plasma_resistivity(rho)', self.plasma_resistivity)
+        pywarpx.hybridpicmodel.__setattr__(
+            'plasma_resistivity(rho)', self.plasma_resistivity
+        )
         pywarpx.hybridpicmodel.substeps = self.substeps
 
 
