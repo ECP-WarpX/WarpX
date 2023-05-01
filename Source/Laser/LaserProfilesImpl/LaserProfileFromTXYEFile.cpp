@@ -197,7 +197,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
     //Indices of the first and last timestep to read
     std::uint64_t const i_first = max(0, t_begin);
     std::uint64_t const i_last = min(t_end-1, m_params.nt-1);
-    auto const time_chunk_size = static_cast<std::uint64_t>( m_params.time_chunk_size);
     if((i_last-i_first+1)*m_params.nx*m_params.ny > static_cast<std::uint64_t>(m_params.E_data.size()))
         Abort("Data chunk to read from file is too large");
     Vector<Complex> h_E_data(m_params.E_data.size());
