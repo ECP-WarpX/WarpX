@@ -207,7 +207,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         auto E = i.meshes["laserEnvelope"];
         auto E_laser = E[io::RecordComponent::SCALAR];
         openPMD:: Extent full_extent = E_laser.getExtent();
-        openPMD::Extent read_extent = {full_extent[0], full_extent[1],time_chunk_size};
+        openPMD::Extent read_extent = {full_extent[0], full_extent[1],(i_last - i_first + 1)};
         auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{0, 0, i_first}, read_extent);
         const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
         series.flush();
