@@ -45,4 +45,5 @@ txye_laser.delay = 0.0
 # Diagnostics
 diagnostics.diags_names = diag1
 diag1.intervals = -1
+diag1.fields_to_plot = Ex Ey Ez Bx Bz jx jy jz
 diag1.diag_type = Full
