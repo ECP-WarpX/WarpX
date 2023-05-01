@@ -30,6 +30,10 @@
 #include <AMReX_TableData.H>
 #include <AMReX_FabConv.H>
 
+#ifdef WARPX_USE_OPENPMD
+#   include <openPMD/openPMD.hpp>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <limits>
@@ -37,11 +41,10 @@
 #include <ostream>
 #include <vector>
 #include <string>
-#ifdef WARPX_USE_OPENPMD
-#   include <openPMD/openPMD.hpp>
-#endif
 
+#ifdef WARPX_USE_OPENPMD
 namespace io = openPMD;
+#endif
 
 using namespace amrex;
 
@@ -155,7 +158,8 @@ ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
         utils::parser::Store_parserString(
                 pp_rd_name,"value_function(t,x,y,z,ux,uy,uz,w)", value_string);
         m_parser_value = std::make_unique<amrex::Parser>(
-                utils::parser::makeParser(value_string,{"t","x","y","z","ux","uy","uz","w"}));*/
+                utils::parser::makeParser(value_string, {"t", "x", "y", "z", "ux", "uy", "uz", "w"}));
+    }*/
 }
 // end constructor
 
@@ -352,7 +356,6 @@ void ParticleHistogram2D::WriteToFile (int step) const
 
     // meta data
     f_mesh.setAxisLabels({function_string_ord, function_string_abs}); // ord, abs
-    //f_mesh.setAxisLabels({"y", "x"}); // ord, abs
     std::vector< double > const& gridGlobalOffset = {0,0};
     f_mesh.setGridGlobalOffset(gridGlobalOffset);
     f_mesh.setGridSpacing<amrex::Real>({m_bin_size_ord, m_bin_size_abs});
