@@ -1030,7 +1030,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     for (const auto& x : xlim)
                         for (const auto& y : ylim)
                             for (const auto& z : zlim)
-                                if (inj_pos->insideBounds(x,y,z) and (inj_rho->getDensity(x,y,z) > 0) ) {
+                                if (inj_pos->insideBounds(x,y,z) and (inj_rho->getDensity(x,y,z,0) > 0) ) {
                                     return 1;
                                 }
                     return 0;
@@ -1281,7 +1281,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     }
 
                     u = inj_mom->getMomentum(pos.x, pos.y, z0, engine);
-                    dens = inj_rho->getDensity(pos.x, pos.y, z0);
+                    dens = inj_rho->getDensity(pos.x, pos.y, z0, 0);
 
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
@@ -1312,7 +1312,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                         continue;
                     }
                     // call `getDensity` with lab-frame parameters
-                    dens = inj_rho->getDensity(pos.x, pos.y, z0_lab);
+                    dens = inj_rho->getDensity(pos.x, pos.y, z0_lab, 0);
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
                         ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
@@ -1812,7 +1812,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     pu.y = sin_theta*ur + cos_theta*ut;
                 }
 #endif
-                Real dens = inj_rho->getDensity(ppos.x, ppos.y, ppos.z);
+                Real dens = inj_rho->getDensity(ppos.x, ppos.y, ppos.z, t);
                 // Remove particle if density below threshold
                 if ( dens < density_min ){
                     p.id() = -1;

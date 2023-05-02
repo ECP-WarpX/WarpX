@@ -29,7 +29,7 @@ struct InjectorDensityConstant
 
     AMREX_GPU_HOST_DEVICE
     amrex::Real
-    getDensity (amrex::Real, amrex::Real, amrex::Real) const noexcept
+    getDensity (amrex::Real, amrex::Real, amrex::Real, amrex::Real) const noexcept
     {
         return m_rho;
     }
@@ -41,17 +41,17 @@ private:
 // struct whose getDensity returns local density computed from parser.
 struct InjectorDensityParser
 {
-    InjectorDensityParser (amrex::ParserExecutor<3> const& a_parser) noexcept
+    InjectorDensityParser (amrex::ParserExecutor<4> const& a_parser) noexcept
         : m_parser(a_parser) {}
 
     AMREX_GPU_HOST_DEVICE
     amrex::Real
-    getDensity (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getDensity (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t) const noexcept
     {
-        return m_parser(x,y,z);
+        return m_parser(x,y,z,t);
     }
 
-    amrex::ParserExecutor<3> m_parser;
+    amrex::ParserExecutor<4> m_parser;
 };
 
 // struct whose getDensity returns local density computed from predefined profile.
@@ -63,7 +63,7 @@ struct InjectorDensityPredefined
 
     AMREX_GPU_HOST_DEVICE
     amrex::Real
-    getDensity (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getDensity (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t) const noexcept
     {
         // Choices for profile are:
         // - parabolic_channel
@@ -134,7 +134,7 @@ struct InjectorDensity
     { }
 
     // This constructor stores a InjectorDensityParser in union object.
-    InjectorDensity (InjectorDensityParser* t, amrex::ParserExecutor<3> const& a_parser)
+    InjectorDensity (InjectorDensityParser* t, amrex::ParserExecutor<4> const& a_parser)
         : type(Type::parser),
           object(t,a_parser)
     { }
@@ -164,25 +164,25 @@ struct InjectorDensity
     // (the union is called Object, and the instance is called object).
     AMREX_GPU_HOST_DEVICE
     amrex::Real
-    getDensity (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getDensity (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t) const noexcept
     {
         switch (type)
         {
         case Type::parser:
         {
-            return object.parser.getDensity(x,y,z);
+            return object.parser.getDensity(x,y,z,t);
         }
         case Type::constant:
         {
-            return object.constant.getDensity(x,y,z);
+            return object.constant.getDensity(x,y,z,t);
         }
         case Type::custom:
         {
-            return object.custom.getDensity(x,y,z);
+            return object.custom.getDensity(x,y,z,t);
         }
         case Type::predefined:
         {
-            return object.predefined.getDensity(x,y,z);
+            return object.predefined.getDensity(x,y,z,t);
         }
         default:
         {
@@ -201,7 +201,7 @@ private:
     union Object {
         Object (InjectorDensityConstant*, amrex::Real a_rho) noexcept
             : constant(a_rho) {}
-        Object (InjectorDensityParser*, amrex::ParserExecutor<3> const& a_parser) noexcept
+        Object (InjectorDensityParser*, amrex::ParserExecutor<4> const& a_parser) noexcept
             : parser(a_parser) {}
         Object (InjectorDensityCustom*, std::string const& a_species_name) noexcept
             : custom(a_species_name) {}

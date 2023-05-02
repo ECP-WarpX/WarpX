@@ -39,7 +39,7 @@ struct InjectorDensityCustom
     // stored in p.
     AMREX_GPU_HOST_DEVICE
     amrex::Real
-    getDensity (amrex::Real, amrex::Real, amrex::Real) const noexcept
+    getDensity (amrex::Real, amrex::Real, amrex::Real, amrex::Real) const noexcept
     {
         return p[0];
     }

@@ -559,9 +559,9 @@ void PlasmaInjector::parseDensity (amrex::ParmParse& pp)
             pp, "density_function(x,y,z)", str_density_function);
         // Construct InjectorDensity with InjectorDensityParser.
         density_parser = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(str_density_function,{"x","y","z"}));
+            utils::parser::makeParser(str_density_function,{"x","y","z","t"}));
         h_inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
-            density_parser->compile<3>()));
+            density_parser->compile<4>()));
     } else {
         //No need for profile definition if external file is used
         std::string injection_style = "none";
