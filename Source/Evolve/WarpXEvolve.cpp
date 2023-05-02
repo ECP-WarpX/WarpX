@@ -475,6 +475,9 @@ WarpX::OneStep_nosub (Real cur_time)
 
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
+        FillBoundaryF(guard_cells.ng_FieldSolverF);
+        FillBoundaryG(guard_cells.ng_FieldSolverG);
+
         EvolveB(0.5_rt * dt[0]); // We now have B^{n+1}
         FillBoundaryB(guard_cells.ng_FieldGather, WarpX::sync_nodal_points);
         ApplyBfieldBoundary(guard_cells.ng_FieldGather, DtType::SecondHalf);
