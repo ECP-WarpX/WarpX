@@ -297,7 +297,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             idx_x_left*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
         const auto x_1 =
             idx_x_right*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
         //Find indices and coordinates along y
         const int temp_idx_y_right = static_cast<int>(
             std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
@@ -328,26 +327,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             p_E_data[idx(idx_t_right, idx_y_right, idx_x_left)],
             p_E_data[idx(idx_t_right, idx_y_right, idx_x_right)],
             t, Xp[i], Yp[i]);
-#elif defined(WARPX_DIM_XZ)
-        //Interpolate amplitude
-        const auto idx = [=](int i_interp, int j_interp){
-            return (i_interp-tmp_idx_first_time) * tmp_nx + j_interp;
-        };
-        Complex val = utils::algorithms::bilinear_interp(
-            t_left, t_right,
-            x_0, x_1,
-            p_E_data[idx(idx_t_left, idx_x_left)],
-            p_E_data[idx(idx_t_left, idx_x_right)],
-            p_E_data[idx(idx_t_right, idx_x_left)],
-            p_E_data[idx(idx_t_right, idx_x_right)],
-            t, Xp[i]);
-        amrex::ignore_unused(Yp);
-#else
-        // TODO: implement WARPX_DIM_1D_Z
-        Complex val = 0;
-        amrex::ignore_unused(x_0, x_1, p_E_data, tmp_idx_first_time,
-                             t_left, t_right, Xp, Yp, t, idx_x_left);
-#endif
         // The interpolated amplitude was only the envelope.
         // Here we add the laser oscillations.
         amplitude[i] = (val*exp_omega_t).real();
