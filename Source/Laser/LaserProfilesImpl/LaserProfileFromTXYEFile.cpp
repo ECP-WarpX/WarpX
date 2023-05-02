@@ -147,11 +147,20 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         auto series = io::Series(txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
         auto E = i.meshes["laserEnvelope"];
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(E.getAttribute("dataOrder").get<std::string>() == "C",
+                                         "Reading from files with non-C dataOrder is not implemented");
+        auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
+        auto fileGeom = E.getAttribute("geometry").get<std::string>();
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "WarpX can only read laser files with cartesian 3D geometry.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "t" && axisLabels[1] == "y" && axisLabels[2] == "x",
+                                         "WarpX expects laser files with axisLabels {t, y, x}.");
+
         auto E_laser = E[io::RecordComponent::SCALAR];
         auto extent = E_laser.getExtent();
         m_params.nt = extent[0];
-        m_params.nx = extent[1];
-        m_params.ny = extent[2];
+        m_params.ny = extent[1];
+        m_params.nx = extent[2];
         if(m_params.nt <= 1) Abort("nt in txye file must be >=2");
         if(m_params.nx <= 1) Abort("nx in txye file must be >=2");
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
@@ -303,20 +312,20 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         const auto idx = [=](int i_interp, int j_interp, int k_interp){
             return
                 (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
-                j_interp*tmp_ny + k_interp;
+                j_interp*tmp_nx + k_interp;
         };
         Complex val = utils::algorithms::trilinear_interp(
             t_left, t_right,
             x_0, x_1,
             y_0, y_1,
-            p_E_data[idx(idx_t_left, idx_x_left, idx_y_left)],
-            p_E_data[idx(idx_t_left, idx_x_left, idx_y_right)],
-            p_E_data[idx(idx_t_left, idx_x_right, idx_y_left)],
-            p_E_data[idx(idx_t_left, idx_x_right, idx_y_right)],
-            p_E_data[idx(idx_t_right, idx_x_left, idx_y_left)],
-            p_E_data[idx(idx_t_right, idx_x_left, idx_y_right)],
-            p_E_data[idx(idx_t_right, idx_x_right, idx_y_left)],
-            p_E_data[idx(idx_t_right, idx_x_right, idx_y_right)],
+            p_E_data[idx(idx_t_left, idx_y_left, idx_x_left)],
+            p_E_data[idx(idx_t_left, idx_y_left, idx_x_right)],
+            p_E_data[idx(idx_t_left, idx_y_right, idx_x_left)],
+            p_E_data[idx(idx_t_left, idx_y_right, idx_x_right)],
+            p_E_data[idx(idx_t_right, idx_y_left, idx_x_left)],
+            p_E_data[idx(idx_t_right, idx_y_left, idx_x_right)],
+            p_E_data[idx(idx_t_right, idx_y_right, idx_x_left)],
+            p_E_data[idx(idx_t_right, idx_y_right, idx_x_right)],
             t, Xp[i], Yp[i]);
 #elif defined(WARPX_DIM_XZ)
         //Interpolate amplitude
