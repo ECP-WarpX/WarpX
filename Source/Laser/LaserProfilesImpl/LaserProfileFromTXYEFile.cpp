@@ -149,9 +149,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         auto E = i.meshes["laserEnvelope"];
         auto E_laser = E[io::RecordComponent::SCALAR];
         auto extent = E_laser.getExtent();
+        //Dimensions of lasy file datas: {t,y,x}
         m_params.nt = extent[0];
-        m_params.nx = extent[1];
-        m_params.ny = extent[2];
+        m_params.ny = extent[1];
+        m_params.nx = extent[2];
         if(m_params.nt <= 1) Abort("nt in txye file must be >=2");
         if(m_params.nx <= 1) Abort("nx in txye file must be >=2");
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
@@ -165,11 +166,12 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         std::vector<double> spacing = E.gridSpacing<double>();
         // Calculate the min and max of the grid
         m_params.t_min = offset[0] + position[0]*spacing[0];
-        m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
-        m_params.x_min = offset[1] + position[1]*spacing[1];
-        m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[1];
-        m_params.y_min = offset[2] + position[2]*spacing[2];
-        m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[2];
+        m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];        
+        m_params.y_min = offset[1] + position[1]*spacing[1];
+        m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[1];
+        m_params.x_min = offset[2] + position[2]*spacing[2];
+        m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
+
     }
 #else
     amrex::ignore_unused(txye_file_name);
