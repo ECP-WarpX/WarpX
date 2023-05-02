@@ -96,7 +96,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     //Copy common params
     m_common_params = params;
 #else
-    amrex::Abort(Utils::TextMsg::Err("WarpX has to be compiled with option openPMD=ON to read lasy file"));
+    amrex::Abort(Utils::TextMsg::Err("WarpX has to be compiled with option openPMD=ON to read a lasy file"));
     amrex::ignore_unused(ppl, params);
 #endif
 }
@@ -158,6 +158,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 
         auto E_laser = E[io::RecordComponent::SCALAR];
         auto extent = E_laser.getExtent();
+        //Dimensions of lasy file datas: {t,y,x}
         m_params.nt = extent[0];
         m_params.ny = extent[1];
         m_params.nx = extent[2];
@@ -175,10 +176,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         // Calculate the min and max of the grid
         m_params.t_min = offset[0] + position[0]*spacing[0];
         m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
-        m_params.x_min = offset[1] + position[1]*spacing[1];
-        m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[1];
-        m_params.y_min = offset[2] + position[2]*spacing[2];
-        m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[2];
+        m_params.y_min = offset[1] + position[1]*spacing[1];
+        m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[1];
+        m_params.x_min = offset[2] + position[2]*spacing[2];
+        m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
+
     }
 #else
     amrex::ignore_unused(txye_file_name);
@@ -206,7 +208,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
     //Indices of the first and last timestep to read
     std::uint64_t const i_first = max(0, t_begin);
     std::uint64_t const i_last = min(t_end-1, m_params.nt-1);
-    auto const time_chunk_size = static_cast<std::uint64_t>( m_params.time_chunk_size);
     if((i_last-i_first+1)*m_params.nx*m_params.ny > static_cast<std::uint64_t>(m_params.E_data.size()))
         Abort("Data chunk to read from file is too large");
     Vector<Complex> h_E_data(m_params.E_data.size());
@@ -216,8 +217,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         auto E = i.meshes["laserEnvelope"];
         auto E_laser = E[io::RecordComponent::SCALAR];
         openPMD:: Extent full_extent = E_laser.getExtent();
-        openPMD::Extent read_extent = {full_extent[0], full_extent[1],(i_last - i_first + 1)};
-        auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{0, 0, i_first}, read_extent);
+        openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
+        auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{i_first, 0, 0}, read_extent);
         const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
         series.flush();
         for (int j=0; j<read_size; j++) {
