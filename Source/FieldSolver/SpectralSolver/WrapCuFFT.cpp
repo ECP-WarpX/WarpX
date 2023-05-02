@@ -37,7 +37,7 @@ namespace AnyFFT
                 result = cufftPlan2d(
                     &(fft_plan.m_plan), real_size[1], real_size[0], VendorR2C);
             } else {
-                amrex::Abort(Utils::TextMsg::Err("only dim=2 and dim=3 have been implemented"));
+                WARPX_ABORT_WITH_MESSAGE("only dim=2 and dim=3 have been implemented");
             }
         } else {
             if (dim == 3) {
@@ -47,7 +47,7 @@ namespace AnyFFT
                 result = cufftPlan2d(
                     &(fft_plan.m_plan), real_size[1], real_size[0], VendorC2R);
             } else {
-                amrex::Abort(Utils::TextMsg::Err("only dim=2 and dim=3 have been implemented"));
+                WARPX_ABORT_WITH_MESSAGE("only dim=2 and dim=3 have been implemented");
             }
         }
 
@@ -89,11 +89,11 @@ namespace AnyFFT
             result = cufftExecZ2D(fft_plan.m_plan, fft_plan.m_complex_array, fft_plan.m_real_array);
 #endif
         } else {
-            amrex::Abort(Utils::TextMsg::Err(
-                "direction must be AnyFFT::direction::R2C or AnyFFT::direction::C2R"));
+            WARPX_ABORT_WITH_MESSAGE(
+                "direction must be AnyFFT::direction::R2C or AnyFFT::direction::C2R");
         }
         if ( result != CUFFT_SUCCESS ) {
-            amrex::Print() << Utils::TextMsg::Err(
+            WARPX_ABORT_WITH_MESSAGE(
                 "forward transform using cufftExec failed ! Error: "
                 +cufftErrorToString(result));
         }

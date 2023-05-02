@@ -2751,7 +2751,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                 CompileTimeOptions<no_qed  ,has_qed>>{},
                        {exteb_runtime_flag, qed_runtime_flag},
                        np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                                         [[maybe_unused]] auto qed_control)
+                                                         auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
@@ -2824,6 +2824,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            dt, p_optical_depth_QSR[ip]);
             }
         }
+#else
+            amrex::ignore_unused(qed_control);
 #endif
     });
 }

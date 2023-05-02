@@ -65,7 +65,7 @@ void FiniteDifferenceSolver::ComputeDivE (
 
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("ComputeDivE: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("ComputeDivE: Unknown algorithm");
     }
 
 }

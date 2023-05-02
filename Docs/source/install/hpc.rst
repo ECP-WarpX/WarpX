@@ -24,12 +24,14 @@ HPC Systems
 .. toctree::
    :maxdepth: 1
 
+   hpc/adastra
    hpc/cori
    hpc/perlmutter
    hpc/summit
    hpc/spock
    hpc/crusher
    hpc/frontier
+   hpc/fugaku
    hpc/juwels
    hpc/lassen
    hpc/quartz

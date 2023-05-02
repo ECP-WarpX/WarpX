@@ -58,8 +58,8 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
                               m_stencil_coefs_z.begin());
         amrex::Gpu::synchronize();
     } else {
-        amrex::Abort(Utils::TextMsg::Err(
-            "FiniteDifferenceSolver: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "FiniteDifferenceSolver: Unknown algorithm");
     }
 #else
     if (grid_type == GridType::Collocated) {
@@ -78,8 +78,8 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
             m_h_stencil_coefs_x, m_h_stencil_coefs_y, m_h_stencil_coefs_z );
 
     } else {
-        amrex::Abort(Utils::TextMsg::Err(
-            "FiniteDifferenceSolver: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "FiniteDifferenceSolver: Unknown algorithm");
     }
 
     m_stencil_coefs_x.resize(m_h_stencil_coefs_x.size());
