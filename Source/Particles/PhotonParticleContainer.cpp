@@ -177,7 +177,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                        {exteb_runtime_flag, qed_runtime_flag},
                        np_to_push,
                        [=] AMREX_GPU_DEVICE (long i, auto exteb_control,
-                                             [[maybe_unused]] auto qed_control) {
+                                             auto qed_control) {
             if (do_copy) copyAttribs(i);
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
@@ -210,6 +210,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                 evolve_opt(ux[i], uy[i], uz[i], Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                            dt, p_optical_depth_BW[i]);
             }
+#else
+            amrex::ignore_unused(qed_control);
 #endif
 
             UpdatePositionPhoton( x, y, z, ux[i], uy[i], uz[i], dt );
