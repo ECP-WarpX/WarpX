@@ -2,6 +2,8 @@
 
 # This script displays a 2D histogram.
 
+import argparse
+
 import matplotlib.pyplot as plt
 from openpmd_viewer import OpenPMDTimeSeries
 
@@ -14,14 +16,17 @@ print('The axis of the histogram are (0: ordinate ; 1: abscissa):', info.axes)
 x, y = data.shape
 print('The data shape is:', (x - 1, y - 1))
 
-iter = input("Which iteration do you want to plot? [enters a number from the list above or 'All' if you want all plots]")
-if iter == 'All' :
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument("iter", help="Iteration number of the simulation that is plotted. Enter a number from the list of iterations or 'All' if you want all plots.")
+args = parser.parse_args()
+
+if args.iter == 'All' :
     for i in it :
-        fig = plt.figure()
+        plt.figure()
         data, info = ts.get_field(field = "data", iteration = i, plot = True)
         plt.savefig('Histogram_2D_iteration_' + str(i) + '.pdf')
 else :
-    i = int(iter)
-    fig = plt.figure()
+    i = int(args.iter)
+    plt.figure()
     data, info = ts.get_field(field = "data", iteration = i, plot = True)
     plt.savefig('Histogram_2D_iteration_' + str(i) + '.pdf')
