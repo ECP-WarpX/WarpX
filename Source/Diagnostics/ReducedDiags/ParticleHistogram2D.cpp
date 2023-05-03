@@ -125,7 +125,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
 
     // resize data array
     Array<int,2> tlo{0,0}; // lower bounds
-    Array<int,2> thi{m_bin_num_abs, m_bin_num_ord}; // inclusive upper bounds
+    Array<int,2> thi{m_bin_num_abs-1, m_bin_num_ord-1}; // inclusive upper bounds
     amrex::TableData<amrex::Real,2> d_data_2D(tlo, thi);
     m_h_data_2D = amrex::TableData<amrex::Real,2> (tlo, thi, The_Pinned_Arena());
     auto const& h_table_data = m_h_data_2D.table();
@@ -272,7 +272,7 @@ void ParticleHistogram2D::WriteToFile (int step) const
 
     auto dataset = io::Dataset(
             io::determineDatatype<double>(),
-            {static_cast<unsigned long>(m_bin_num_ord)+1, static_cast<unsigned long>(m_bin_num_abs)+1});
+            {static_cast<unsigned long>(m_bin_num_ord), static_cast<unsigned long>(m_bin_num_abs)});
     data.resetDataset(dataset);
 
     // UNITS ?!
@@ -280,7 +280,7 @@ void ParticleHistogram2D::WriteToFile (int step) const
     data.storeChunkRaw(
             h_table_data.p,
             {0, 0},
-            {static_cast<unsigned long>(m_bin_num_ord)+1, static_cast<unsigned long>(m_bin_num_abs)+1});
+            {static_cast<unsigned long>(m_bin_num_ord), static_cast<unsigned long>(m_bin_num_abs)});
 
     series.flush();
 #else
