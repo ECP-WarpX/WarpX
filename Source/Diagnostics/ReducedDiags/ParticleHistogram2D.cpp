@@ -48,14 +48,6 @@ namespace io = openPMD;
 
 using namespace amrex;
 
-struct NormalizationType {
-    enum {
-        no_normalization = 0,
-        unity_particle_weight,
-        max_to_unity,
-        area_to_unity
-    };
-};
 
 // constructor
 ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
@@ -78,16 +70,6 @@ ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
     m_bin_size_ord = (m_bin_max_ord - m_bin_min_ord) / m_bin_num_ord;
 
     // read histogram function
-    utils::parser::Store_parserString(pp_rd_name,"histogram_function_abs(t,x,y,z,ux,uy,uz)",
-                                      function_string_abs);
-    m_parser_abs = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(function_string_abs,{"t","x","y","z","ux","uy","uz"}));
-    utils::parser::Store_parserString(pp_rd_name,"histogram_function_ord(t,x,y,z,ux,uy,uz)",
-                                      function_string_ord);
-    m_parser_ord = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(function_string_ord,{"t","x","y","z","ux","uy","uz"}));
-
-    /*// read histogram function
     utils::parser::Store_parserString(pp_rd_name,"histogram_function_abs(t,x,y,z,ux,uy,uz,w)",
                                       function_string_abs);
     m_parser_abs = std::make_unique<amrex::Parser>(
@@ -95,25 +77,7 @@ ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
     utils::parser::Store_parserString(pp_rd_name,"histogram_function_ord(t,x,y,z,ux,uy,uz,w)",
                                       function_string_ord);
     m_parser_ord = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(function_string_ord,{"t","x","y","z","ux","uy","uz","w"}));*/
-
-    // read normalization type
-    std::string norm_string = "default";
-    pp_rd_name.query("normalization",norm_string);
-
-    // set normalization type
-    if ( norm_string == "default" ) {
-        m_norm = NormalizationType::no_normalization;
-    } else if ( norm_string == "unity_particle_weight" ) {
-        m_norm = NormalizationType::unity_particle_weight;
-    } else if ( norm_string == "max_to_unity" ) {
-        m_norm = NormalizationType::max_to_unity;
-    } else if ( norm_string == "area_to_unity" ) {
-        m_norm = NormalizationType::area_to_unity;
-    } else {
-        Abort(Utils::TextMsg::Err(
-                "Unknown ParticleHistogram2D normalization type."));
-    }
+            utils::parser::makeParser(function_string_ord,{"t","x","y","z","ux","uy","uz","w"}));
 
     // get MultiParticleContainer class object
     const auto & mypc = WarpX::GetInstance().GetPartContainer();
@@ -134,16 +98,6 @@ ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
 
     // Read optional filter
     std::string buf;
-    m_do_parser_filter = pp_rd_name.query("filter_function(t,x,y,z,ux,uy,uz)", buf);
-    if (m_do_parser_filter) {
-        utils::parser::Store_parserString(
-                pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
-        m_parser_filter = std::make_unique<amrex::Parser>(
-                utils::parser::makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
-    }
-
-    /*// Read optional filter
-    std::string buf;
     m_do_parser_filter = pp_rd_name.query("filter_function(t,x,y,z,ux,uy,uz,w)", buf);
     if (m_do_parser_filter) {
         utils::parser::Store_parserString(
@@ -159,7 +113,7 @@ ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
                 pp_rd_name,"value_function(t,x,y,z,ux,uy,uz,w)", value_string);
         m_parser_value = std::make_unique<amrex::Parser>(
                 utils::parser::makeParser(value_string, {"t", "x", "y", "z", "ux", "uy", "uz", "w"}));
-    }*/
+    }
 }
 // end constructor
 
@@ -171,7 +125,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
 
     // resize data array
     Array<int,2> tlo{0,0}; // lower bounds
-    Array<int,2> thi{m_bin_num_abs, m_bin_num_ord}; // upper bounds
+    Array<int,2> thi{m_bin_num_abs, m_bin_num_ord}; // inclusive upper bounds
     amrex::TableData<amrex::Real,2> d_data_2D(tlo, thi);
     m_h_data_2D = amrex::TableData<amrex::Real,2> (tlo, thi, The_Pinned_Arena());
     auto const& h_table_data = m_h_data_2D.table();
@@ -208,9 +162,9 @@ void ParticleHistogram2D::ComputeDiags (int step)
     auto fun_filterparser =
             utils::parser::compileParser<m_nvars>(m_parser_filter.get());
 
-    /*// get value parser
+    // get value parser
     auto fun_valueparser =
-            utils::parser::compileParser<m_nvars>(m_parser_value.get());*/
+            utils::parser::compileParser<m_nvars>(m_parser_value.get());
 
     // declare local variables
     auto const num_bins_abs = m_bin_num_abs;
@@ -219,8 +173,6 @@ void ParticleHistogram2D::ComputeDiags (int step)
     Real const bin_size_abs = m_bin_size_abs;
     Real const bin_min_ord  = m_bin_min_ord;
     Real const bin_size_ord = m_bin_size_ord;
-    const bool is_unity_particle_weight =
-            (m_norm == NormalizationType::unity_particle_weight) ? true : false;
 
     bool const do_parser_filter = m_do_parser_filter;
 
@@ -255,22 +207,13 @@ void ParticleHistogram2D::ComputeDiags (int step)
 
                                        // don't count a particle if it is filtered out
                                        if (do_parser_filter)
-                                           if (!fun_filterparser(t, x, y, z, ux, uy, uz))
-                                               return;
-
-                                       // continue function if particle is not filtered out
-                                       auto const f_abs = fun_partparser_abs(t, x, y, z, ux, uy, uz);
-                                       auto const f_ord = fun_partparser_ord(t, x, y, z, ux, uy, uz);
-
-                                       /*// don't count a particle if it is filtered out
-                                       if (do_parser_filter)
                                            if (!fun_filterparser(t, x, y, z, ux, uy, uz, w))
                                                return;
 
                                        // continue function if particle is not filtered out
                                        auto const f_abs = fun_partparser_abs(t, x, y, z, ux, uy, uz, w);
                                        auto const f_ord = fun_partparser_ord(t, x, y, z, ux, uy, uz, w);
-                                       auto const w_test = fun_valueparser(t, x, y, z, ux, uy, uz, w);*/
+                                       auto const weight = fun_valueparser(t, x, y, z, ux, uy, uz, w);
 
                                        // determine particle bin
                                        int const bin_abs = int(Math::floor((f_abs-bin_min_abs)/bin_size_abs));
@@ -280,12 +223,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
                                        if ( bin_ord<0 || bin_ord>=num_bins_ord ) return; // discard if out-of-range
 
                                        amrex::Real &data = d_table(bin_abs, bin_ord);
-                                       //amrex::HostDevice::Atomic::Add(&data, w_test);
-                                       if ( is_unity_particle_weight ) {
-                                           amrex::HostDevice::Atomic::Add(&data, 1.0_rt);
-                                       } else {
-                                           amrex::HostDevice::Atomic::Add(&data, w);
-                                       }
+                                       amrex::HostDevice::Atomic::Add(&data, weight);
                                    });
             }
         }
@@ -301,36 +239,6 @@ void ParticleHistogram2D::ComputeDiags (int step)
 
     // Return for all that are not IO processor
     if ( !ParallelDescriptor::IOProcessor() ) { return; }
-/*
-    // normalize the maximum value to be one
-    if ( m_norm == NormalizationType::max_to_unity )
-    {
-        Real f_max = 0.0_rt;
-        for (int i = tlo[0]; i <= thi[0]; ++i) {
-            for (int j = tlo[1]; j <= thi[1]; ++j) {
-                if ( h_table_data(i,j) > f_max ) f_max = h_table_data(i,j);
-            }}
-        for (int i = tlo[0]; i <= thi[0]; ++i) {
-            for (int j = tlo[1]; j <= thi[1]; ++j) {
-                if ( f_max > std::numeric_limits<Real>::min() ) h_table_data(i,j) /= f_max;
-            }}
-        return;
-    }
-
-    // normalize the area (integral) to be one
-    if ( m_norm == NormalizationType::area_to_unity )
-    {
-        Real f_area = 0.0_rt;
-        for (int i = tlo[0]; i <= thi[0]; ++i) {
-            for (int j = tlo[1]; j <= thi[1]; ++j) {
-                f_area += h_table_data(i,j) * m_bin_size_abs * m_bin_size_ord;
-            }}
-        for (int i = tlo[0]; i <= thi[0]; ++i) {
-            for (int j = tlo[1]; j <= thi[1]; ++j) {
-                if ( f_area > std::numeric_limits<Real>::min() ) h_table_data(i,j) /= f_area;
-            }}
-    }
-    */
 }
 // end void ParticleHistogram2D::ComputeDiags
 
