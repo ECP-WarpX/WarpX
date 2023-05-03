@@ -238,6 +238,7 @@ WarpX::MoveWindow (const int step, bool move_j)
         if (do_dive_cleaning)
         {
             // Fine grid
+            amrex::Print() << *F_fp[lev]
             shiftMF(*F_fp[lev], geom[lev], num_shift, dir, lev, do_update_cost);
             if (lev > 0)
             {
