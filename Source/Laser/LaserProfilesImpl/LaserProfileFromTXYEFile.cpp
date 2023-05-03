@@ -164,11 +164,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         m_params.nx = extent[2];
         if(m_params.nt <= 1) Abort("nt in txye file must be >=2");
         if(m_params.nx <= 1) Abort("nx in txye file must be >=2");
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
         if(m_params.ny <= 1) Abort("ny in txye file must be >=2 in 3D");
-#elif defined(WARPX_DIM_XZ)
-        if(m_params.ny != 1) Abort("ny in txye file must be 1 in 2D");
-#endif
         // Extract grid offset and grid spacing
         std::vector<double> offset = E.gridGlobalOffset();
         std::vector<double> position = E_laser.position<double>();
@@ -204,7 +200,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
 #ifdef WARPX_USE_OPENPMD
     amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(t_begin) + ", " + std::to_string(t_end) +
-        ") data chunk from " + m_params.txye_file_name);
+        "] data chunk from " + m_params.txye_file_name);
     //Indices of the first and last timestep to read
     std::uint64_t const i_first = max(0, t_begin);
     std::uint64_t const i_last = min(t_end-1, m_params.nt-1);
@@ -252,14 +248,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
     const auto tmp_x_min = m_params.x_min;
     const auto tmp_x_max = m_params.x_max;
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
     const auto tmp_y_min = m_params.y_min;
     const auto tmp_y_max = m_params.y_max;
-#endif
     const auto tmp_nx = m_params.nx;
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
     const auto tmp_ny = m_params.ny;
-#endif
     const auto p_E_data = m_params.E_data.dataPtr();
     const auto tmp_idx_first_time = m_params.first_time_index;
     const int idx_t_right = idx_t_left+1;
@@ -296,17 +288,17 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         const auto x_0 =
             idx_x_left*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
         const auto x_1 =
-            idx_x_right*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
-        //Find indices and coordinates along y
-        const int temp_idx_y_right = static_cast<int>(
-            std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
-        const int idx_y_right =
-            max(min(temp_idx_y_right,tmp_ny-1),static_cast<int>(1));
-        const int idx_y_left = idx_y_right - 1;
-        const auto y_0 =
-            idx_y_left*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
-        const auto y_1 =
-            idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
+            idx_x_right*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;   
+            //Find indices and coordinates along y
+            const int temp_idx_y_right = static_cast<int>(
+                std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
+            const int idx_y_right =
+                max(min(temp_idx_y_right,tmp_ny-1),static_cast<int>(1));
+            const int idx_y_left = idx_y_right - 1;
+            const auto y_0 =
+                idx_y_left*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
+            const auto y_1 =
+                idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
 
         //Interpolate amplitude
         const auto idx = [=](int i_interp, int j_interp, int k_interp){
@@ -326,10 +318,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             p_E_data[idx(idx_t_right, idx_y_left, idx_x_right)],
             p_E_data[idx(idx_t_right, idx_y_right, idx_x_left)],
             p_E_data[idx(idx_t_right, idx_y_right, idx_x_right)],
-            t, Xp[i], Yp[i]);
+            t, Xp[i], Yp[i]);  
         // The interpolated amplitude was only the envelope.
         // Here we add the laser oscillations.
         amplitude[i] = (val*exp_omega_t).real();
-        }
+            }
     );
 }
