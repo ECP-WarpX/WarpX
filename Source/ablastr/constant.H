@@ -57,9 +57,9 @@ namespace ablastr::constant
 
         //! reduced Planck Constant = h / tau [J*s]
         static constexpr auto hbar = 1.054571817e-34_rt;
-        //! fine-structure constant = mu0/(4*MathConst::pi)*q_e*q_e*c/hbar [dimensionless]
+        //! fine-structure constant = mu0/(4*pi)*q_e*q_e*c/hbar [dimensionless]
         static constexpr auto alpha = 0.007297352573748943_rt;
-        //! classical electron radius = 1./(4*MathConst::pi*ep0) * q_e*q_e/(m_e*c*c) [m]
+        //! classical electron radius = 1./(4*pi*ep0) * q_e*q_e/(m_e*c*c) [m]
         static constexpr auto r_e = 2.817940326204929e-15_rt;
         //! xi: nonlinearity parameter of Heisenberg-Euler effective theory = (2.*alpha*alpha*ep0*ep0*hbar*hbar*hbar)/(45.*m_e*m_e*m_e*m_e*c*c*c*c*c)
         static constexpr double xi = 1.3050122447005176e-52;

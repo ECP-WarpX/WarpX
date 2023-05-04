@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 22.10)
+project(WarpX VERSION 23.05)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -223,6 +223,7 @@ if(WarpX_APP)
 endif()
 
 add_subdirectory(Source/ablastr)
+add_subdirectory(Source/AcceleratorLattice)
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
 add_subdirectory(Source/EmbeddedBoundary)
@@ -269,7 +270,6 @@ if(WarpX_PSATD)
 endif()
 
 if(WarpX_OPENPMD)
-    target_compile_definitions(ablastr PUBLIC WARPX_USE_OPENPMD)
     target_link_libraries(ablastr PUBLIC openPMD::openPMD)
 endif()
 
@@ -391,23 +391,21 @@ install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
 # this is currently expected by Python bindings
 if(WarpX_LIB)
     if(WarpX_DIMS STREQUAL RZ)
-        set(lib_suffix "rz")
+        set(lib_dim "rz")
     else()
-        set(lib_suffix "${WarpX_DIMS}d")
-    endif()
-    if(WIN32)
-        set(mod_ext "dll")
-    else()
-        set(mod_ext "so")
+        set(lib_dim "${WarpX_DIMS}d")
     endif()
     if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
         set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
     else()
         set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
     endif()
+    # escape spaces for generated cmake_install.cmake file
+    file(TO_CMAKE_PATH "${ABS_INSTALL_LIB_DIR}" ABS_INSTALL_LIB_DIR)
+
     install(CODE "file(CREATE_LINK
         $<TARGET_FILE_NAME:shared>
-        ${ABS_INSTALL_LIB_DIR}/libwarpx.${lib_suffix}.${mod_ext}
+        \"${ABS_INSTALL_LIB_DIR}/libwarpx.${lib_dim}$<TARGET_FILE_SUFFIX:shared>\"
         COPY_ON_ERROR SYMBOLIC)")
 endif()
 

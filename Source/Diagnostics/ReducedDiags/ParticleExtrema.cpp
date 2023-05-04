@@ -369,7 +369,6 @@ void ParticleExtrema::ComputeDiags (int step)
         // compute chimin and chimax
         Real chimin_f = 0.0_rt;
         Real chimax_f = 0.0_rt;
-        GetExternalEBField get_externalEB;
 
         if (myspc.DoQED())
         {

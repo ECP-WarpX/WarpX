@@ -1,7 +1,5 @@
 target_sources(WarpX
   PRIVATE
-    CoarsenIO.cpp
-    CoarsenMR.cpp
     Interpolate.cpp
     MPIInitHelpers.cpp
     ParticleUtils.cpp
@@ -10,9 +8,9 @@ target_sources(WarpX
     WarpXMovingWindow.cpp
     WarpXTagging.cpp
     WarpXUtil.cpp
+    WarpXrocfftUtil.cpp
     WarpXVersion.cpp
 )
 
 add_subdirectory(Logo)
 add_subdirectory(Parser)
-add_subdirectory(Strings)

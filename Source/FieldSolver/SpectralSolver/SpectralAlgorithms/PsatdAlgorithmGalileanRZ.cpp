@@ -21,12 +21,12 @@ PsatdAlgorithmGalileanRZ::PsatdAlgorithmGalileanRZ (SpectralKSpaceRZ const & spe
                                                     amrex::DistributionMapping const & dm,
                                                     const SpectralFieldIndex& spectral_index,
                                                     int const n_rz_azimuthal_modes, int const norder_z,
-                                                    bool const nodal,
+                                                    short const grid_type,
                                                     const amrex::Vector<amrex::Real>& v_galilean,
                                                     amrex::Real const dt,
                                                     bool const update_with_rho)
      // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, nodal),
+     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
        m_spectral_index(spectral_index),
        m_dt(dt),
        m_v_galilean(v_galilean),
@@ -103,9 +103,9 @@ PsatdAlgorithmGalileanRZ::pushSpectralFields (SpectralFieldDataRZ & f)
             auto const Bp_m = Idx.Bx + Idx.n_fields*mode;
             auto const Bm_m = Idx.By + Idx.n_fields*mode;
             auto const Bz_m = Idx.Bz + Idx.n_fields*mode;
-            auto const Jp_m = Idx.Jx + Idx.n_fields*mode;
-            auto const Jm_m = Idx.Jy + Idx.n_fields*mode;
-            auto const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            auto const Jp_m = Idx.Jx_mid + Idx.n_fields*mode;
+            auto const Jm_m = Idx.Jy_mid + Idx.n_fields*mode;
+            auto const Jz_m = Idx.Jz_mid + Idx.n_fields*mode;
             auto const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
             auto const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 
@@ -323,9 +323,9 @@ PsatdAlgorithmGalileanRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
             // All of the fields of each mode are grouped together
-            auto const Jp_m = Idx.Jx + Idx.n_fields*mode;
-            auto const Jm_m = Idx.Jy + Idx.n_fields*mode;
-            auto const Jz_m = Idx.Jz + Idx.n_fields*mode;
+            auto const Jp_m = Idx.Jx_mid + Idx.n_fields*mode;
+            auto const Jm_m = Idx.Jy_mid + Idx.n_fields*mode;
+            auto const Jz_m = Idx.Jz_mid + Idx.n_fields*mode;
             auto const rho_old_m = Idx.rho_old + Idx.n_fields*mode;
             auto const rho_new_m = Idx.rho_new + Idx.n_fields*mode;
 
@@ -364,6 +364,6 @@ PsatdAlgorithmGalileanRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 void
 PsatdAlgorithmGalileanRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented in RZ geometry"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented in RZ geometry");
 }

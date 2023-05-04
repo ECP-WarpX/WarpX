@@ -8,6 +8,7 @@
 #include "WarnManager.H"
 
 #include "ablastr/utils/msg_logger/MsgLogger.H"
+#include "ablastr/utils/text/StringUtils.H"
 #include "ablastr/utils/TextMsg.H"
 
 #include <AMReX_ParallelDescriptor.H>
@@ -31,7 +32,7 @@ namespace
         else if (priority == Priority::high)
             return WarnPriority::high;
         else
-            ablastr::utils::TextMsg::Err(
+            ABLASTR_ABORT_WITH_MESSAGE(
                 "Parsing Priority to WarnPriority has failed");
 
         return WarnPriority::high;
@@ -287,7 +288,7 @@ WarnManager::MsgFormatter(
     const auto prefix = "*" + std::string(tab_size, ' ');
     const auto prefix_length = static_cast<int>(prefix.length());
 
-    const auto wrapped_text = ablastr::utils::automatic_text_wrap(
+    const auto wrapped_text = ablastr::utils::text::automatic_text_wrap(
         msg, line_size-prefix_length);
 
     std::stringstream ss_out;

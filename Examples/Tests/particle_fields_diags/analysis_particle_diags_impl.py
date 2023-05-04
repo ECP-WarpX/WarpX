@@ -16,10 +16,7 @@ import sys
 
 import numpy as np
 import openpmd_api as io
-from scipy.constants import c, e
-from scipy.constants import epsilon_0 as eps0
-from scipy.constants import m_e, m_p
-from scipy.constants import mu_0 as mu0
+from scipy.constants import c, e, m_e, m_p
 import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
@@ -219,6 +216,7 @@ def do_analysis(single_precision = False):
         error_opmd[k] = np.max(abs(values_yt[k] - values_opmd[k].T)[values_yt[k] != 0] / abs(values_yt[k])[values_yt[k] != 0])
         assert(error_opmd[k] < tolerance)
         print(k, 'relative error openPMD = ', error_opmd[k])
+
 
 
     test_name = os.path.split(os.getcwd())[1]

@@ -21,7 +21,10 @@ boundary.field_hi = periodic periodic periodic
 #################################
 warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
-warpx.cfl = 1.0
+warpx.const_dt = 1.224744871e-07
+
+# Do not evolve the E and B fields
+algo.maxwell_solver = none
 
 # Order of particle shape factors
 algo.particle_shape = 1
@@ -42,7 +45,6 @@ electron.ux_th = 0.044237441120300
 electron.uy_th = 0.044237441120300
 electron.uz_th = 0.044237441120300
 electron.ux_m  = 0.044237441120300
-electron.do_not_deposit = 1
 
 ion.charge = q_e
 ion.mass = 4.554691780000000e-30
@@ -54,7 +56,6 @@ ion.momentum_distribution_type = "gaussian"
 ion.ux_th = 0.006256118919701
 ion.uy_th = 0.006256118919701
 ion.uz_th = 0.006256118919701
-ion.do_not_deposit = 1
 
 #################################
 ############ COLLISION ##########

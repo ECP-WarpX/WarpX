@@ -4,9 +4,9 @@ periodictable~=1.5
 
 # PICMI
 # note: don't forget to update the version in Docs/requirements.txt, too
-#picmistandard==0.0.20
+picmistandard==0.23.2
 #   for development against an unreleased PICMI version, use:
-picmistandard @ git+https://github.com/NeilZaim/picmi.git@IonizationClass#subdirectory=PICMI_Python
+#picmistandard @ git+https://github.com/picmi-standard/picmi.git#subdirectory=PICMI_Python
 
 # optional, some used for testing:
 # yt

@@ -56,7 +56,7 @@ void FiniteDifferenceSolver::EvolveE (
     int lev, amrex::Real const dt ) {
 
 #ifdef AMREX_USE_EB
-    if (m_fdtd_algo != MaxwellSolverAlgo::ECT) {
+    if (m_fdtd_algo != ElectromagneticSolverAlgo::ECT) {
         amrex::ignore_unused(face_areas, ECTRhofield);
     }
 #else
@@ -66,25 +66,25 @@ void FiniteDifferenceSolver::EvolveE (
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
         ignore_unused(edge_lengths);
         EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee || m_fdtd_algo == MaxwellSolverAlgo::ECT) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee || m_fdtd_algo == ElectromagneticSolverAlgo::ECT) {
 
         EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("EvolveE: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveE: Unknown algorithm");
     }
 
 }
@@ -166,9 +166,14 @@ void FiniteDifferenceSolver::EvolveECartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 // Skip field push if this cell is fully covered by embedded boundaries
+#ifdef WARPX_DIM_3D
                 if (ly(i,j,k) <= 0) return;
+#elif defined(WARPX_DIM_XZ)
+                //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
+                amrex::ignore_unused(ly);
+                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
 #endif
-
+#endif
                 Ey(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)

@@ -10,11 +10,12 @@ import re
 from . import Particles
 from .Algo import algo
 from .Amr import amr
+from .Amrex import amrex
 from .Boundary import boundary
 from .Bucket import Bucket
 from .Collisions import collisions, collisions_list
 from .Constants import my_constants
-from .Diagnostics import diagnostics
+from .Diagnostics import diagnostics, reduced_diagnostics
 from .EB2 import eb2
 from .Geometry import geometry
 from .Interpolation import interpolation
@@ -30,11 +31,17 @@ class WarpX(Bucket):
     A Python wrapper for the WarpX C++ class
     """
 
-    def create_argv_list(self):
+    def create_argv_list(self, **kw):
         argv = []
+
+        for k, v in kw.items():
+            if v is not None:
+                argv.append(f'{k} = {v}')
+
         argv += warpx.attrlist()
         argv += my_constants.attrlist()
         argv += amr.attrlist()
+        argv += amrex.attrlist()
         argv += geometry.attrlist()
         argv += boundary.attrlist()
         argv += algo.attrlist()
@@ -76,10 +83,15 @@ class WarpX(Bucket):
             for species_diagnostic in diagnostic._species_dict.values():
                 argv += species_diagnostic.attrlist()
 
+        reduced_diagnostics.reduced_diags_names = reduced_diagnostics._diagnostics_dict.keys()
+        argv += reduced_diagnostics.attrlist()
+        for diagnostic in reduced_diagnostics._diagnostics_dict.values():
+            argv += diagnostic.attrlist()
+
         return argv
 
-    def init(self, mpi_comm=None):
-        argv = ['warpx'] + self.create_argv_list()
+    def init(self, mpi_comm=None, **kw):
+        argv = ['warpx'] + self.create_argv_list(**kw)
         libwarpx.initialize(argv, mpi_comm=mpi_comm)
 
     def evolve(self, nsteps=-1):
@@ -95,10 +107,7 @@ class WarpX(Bucket):
         return libwarpx.libwarpx_so.warpx_getProbHi(direction)
 
     def write_inputs(self, filename='inputs', **kw):
-        argv = self.create_argv_list()
-
-        for k, v in kw.items():
-            argv.append(f'{k} = {v}')
+        argv = self.create_argv_list(**kw)
 
         # Sort the argv list to make it more human readable
         argv.sort()

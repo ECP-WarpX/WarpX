@@ -32,7 +32,6 @@ using namespace amrex;
 void
 WarpXLaserProfiles::GaussianLaserProfile::init (
     const amrex::ParmParse& ppl,
-    const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
 {
     //Copy common params

@@ -32,11 +32,22 @@
 void
 WarpX::ComputeDt ()
 {
-    // Determine
+    // Handle cases where the timestep is not limited by the speed of light
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_const_dt.has_value(), "warpx.const_dt must be specified with the electrostatic solver.");
+        for (int lev=0; lev<=max_level; lev++) {
+            dt[lev] = m_const_dt.value();
+        }
+        return;
+    }
+
+    // Determine the appropriate timestep as limited by the speed of light
     const amrex::Real* dx = geom[max_level].CellSize();
     amrex::Real deltat = 0.;
 
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+    if (m_const_dt.has_value()) {
+        deltat = m_const_dt.value();
+    } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         // Computation of dt for spectral algorithm
         // (determined by the minimum cell size in all directions)
 #if defined(WARPX_DIM_1D_Z)
@@ -50,21 +61,20 @@ WarpX::ComputeDt ()
         // Computation of dt for FDTD algorithm
 #ifdef WARPX_DIM_RZ
         // - In RZ geometry
-        if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee) {
             deltat = cfl * CylindricalYeeAlgorithm::ComputeMaxDt(dx,  n_rz_azimuthal_modes);
 #else
         // - In Cartesian geometry
-        if (do_nodal) {
+        if (grid_type == GridType::Collocated) {
             deltat = cfl * CartesianNodalAlgorithm::ComputeMaxDt(dx);
-        } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee
-                    || maxwell_solver_id == MaxwellSolverAlgo::ECT) {
+        } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee
+                    || electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
             deltat = cfl * CartesianYeeAlgorithm::ComputeMaxDt(dx);
-        } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
+        } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) {
             deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt(dx);
 #endif
         } else {
-            amrex::Abort(Utils::TextMsg::Err(
-                "ComputeDt: Unknown algorithm"));
+            WARPX_ABORT_WITH_MESSAGE("ComputeDt: Unknown algorithm");
         }
     }
 
@@ -74,12 +84,6 @@ WarpX::ComputeDt ()
     if (do_subcycling) {
         for (int lev = max_level-1; lev >= 0; --lev) {
             dt[lev] = dt[lev+1] * refRatio(lev)[0];
-        }
-    }
-
-    if (do_electrostatic != ElectrostaticSolverAlgo::None) {
-        for (int lev=0; lev<=max_level; lev++) {
-            dt[lev] = const_dt;
         }
     }
 }

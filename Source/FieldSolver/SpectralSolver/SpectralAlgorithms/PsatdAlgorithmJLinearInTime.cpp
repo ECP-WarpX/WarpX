@@ -18,6 +18,7 @@
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_Math.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>
 
@@ -34,13 +35,13 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     const int norder_x,
     const int norder_y,
     const int norder_z,
-    const bool nodal,
+    const short grid_type,
     const amrex::Real dt,
     const bool time_averaging,
     const bool dive_cleaning,
     const bool divb_cleaning)
     // Initializer list
-    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal),
+    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
     m_spectral_index(spectral_index),
     m_dt(dt),
     m_time_averaging(time_averaging),
@@ -120,9 +121,9 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
             // Shortcuts for the values of J and rho
-            const Complex Jx_old = fields(i,j,k,Idx.Jx);
-            const Complex Jy_old = fields(i,j,k,Idx.Jy);
-            const Complex Jz_old = fields(i,j,k,Idx.Jz);
+            const Complex Jx_old = fields(i,j,k,Idx.Jx_old);
+            const Complex Jy_old = fields(i,j,k,Idx.Jy_old);
+            const Complex Jz_old = fields(i,j,k,Idx.Jz_old);
             const Complex Jx_new = fields(i,j,k,Idx.Jx_new);
             const Complex Jy_new = fields(i,j,k,Idx.Jy_new);
             const Complex Jz_new = fields(i,j,k,Idx.Jz_new);
@@ -291,21 +292,21 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficients (
         {
             // Calculate norm of k vector
             const amrex::Real knorm_s = std::sqrt(
-                std::pow(kx_s[i], 2) +
+                amrex::Math::powi<2>(kx_s[i]) +
 #if defined(WARPX_DIM_3D)
-                std::pow(ky_s[j], 2) + std::pow(kz_s[k], 2));
+                amrex::Math::powi<2>(ky_s[j]) + amrex::Math::powi<2>(kz_s[k]));
 #else
-                std::pow(kz_s[j], 2));
+                amrex::Math::powi<2>(kz_s[j]));
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
 
-            const amrex::Real c2 = std::pow(c, 2);
-            const amrex::Real dt2 = std::pow(dt, 2);
+            const amrex::Real c2 = amrex::Math::powi<2>(c);
+            const amrex::Real dt2 = amrex::Math::powi<2>(dt);
 
             const amrex::Real om_s = c * knorm_s;
-            const amrex::Real om2_s = std::pow(om_s, 2);
+            const amrex::Real om2_s = amrex::Math::powi<2>(om_s);
 
             // C
             C(i,j,k) = std::cos(om_s * dt);
@@ -383,11 +384,11 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficientsAveraging (
         {
             // Calculate norm of k vector
             const amrex::Real knorm_s = std::sqrt(
-                std::pow(kx_s[i], 2) +
+                amrex::Math::powi<2>(kx_s[i]) +
 #if defined(WARPX_DIM_3D)
-                std::pow(ky_s[j], 2) + std::pow(kz_s[k], 2));
+                amrex::Math::powi<2>(ky_s[j]) + amrex::Math::powi<2>(kz_s[k]));
 #else
-                std::pow(kz_s[j], 2));
+                amrex::Math::powi<2>(kz_s[j]));
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
@@ -429,8 +430,8 @@ void PsatdAlgorithmJLinearInTime::CurrentCorrection (SpectralFieldData& field_da
     BL_PROFILE("PsatdAlgorithmJLinearInTime::CurrentCorrection");
 
     amrex::ignore_unused(field_data);
-    amrex::Abort(Utils::TextMsg::Err(
-        "Current correction not implemented for multi-J PSATD algorithm"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Current correction not implemented for multi-J PSATD algorithm");
 }
 
 void
@@ -440,8 +441,8 @@ PsatdAlgorithmJLinearInTime::VayDeposition (SpectralFieldData& field_data)
     BL_PROFILE("PsatdAlgorithmJLinearInTime::VayDeposition()");
 
     amrex::ignore_unused(field_data);
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented for multi-J PSATD algorithm"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented for multi-J PSATD algorithm");
 }
 
 #endif // WARPX_USE_PSATD

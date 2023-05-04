@@ -72,16 +72,16 @@ public:
 
     bool add_single_particle = false;
     amrex::Vector<amrex::ParticleReal> single_particle_pos;
-    amrex::Vector<amrex::ParticleReal> single_particle_vel;
+    amrex::Vector<amrex::ParticleReal> single_particle_u;
     amrex::ParticleReal single_particle_weight;
 
     bool add_multiple_particles = false;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_x;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_y;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_z;
-    amrex::Vector<amrex::ParticleReal> multiple_particles_vel_x;
-    amrex::Vector<amrex::ParticleReal> multiple_particles_vel_y;
-    amrex::Vector<amrex::ParticleReal> multiple_particles_vel_z;
+    amrex::Vector<amrex::ParticleReal> multiple_particles_ux;
+    amrex::Vector<amrex::ParticleReal> multiple_particles_uy;
+    amrex::Vector<amrex::ParticleReal> multiple_particles_uz;
     amrex::Vector<amrex::ParticleReal> multiple_particles_weight;
 
     bool gaussian_beam = false;
@@ -97,6 +97,7 @@ public:
     amrex::Real q_tot = 0.0;
     long npart;
     int do_symmetrize = 0;
+    int symmetrization_order = 4;
 
     bool external_file = false; //! initialize from an openPMD file
     amrex::Real z_shift = 0.0; //! additional z offset for particle positions

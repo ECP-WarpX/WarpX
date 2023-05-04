@@ -1,6 +1,6 @@
 /* Copyright 2019 Andrew Myers, Ann Almgren, Axel Huebl
  * David Grote, Maxence Thevenet, Michael Rowan
- * Remi Lehe, Weiqun Zhang, levinem
+ * Remi Lehe, Weiqun Zhang, levinem, Revathi Jambunathan
  *
  * This file is part of WarpX.
  *
@@ -151,7 +151,8 @@ RemakeMultiFab (std::unique_ptr<MultiFabType>& mf, const DistributionMapping& dm
 {
     if (mf == nullptr) return;
     const IntVect& ng = mf->nGrowVect();
-    auto pmf = std::make_unique<MultiFabType>(mf->boxArray(), dm, mf->nComp(), ng);
+    std::unique_ptr<MultiFabType> pmf;
+    WarpX::AllocInitMultiFab(pmf, mf->boxArray(), dm, mf->nComp(), ng, mf->tags()[0]);
     if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
     mf = std::move(pmf);
 }
@@ -168,16 +169,29 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         {
             RemakeMultiFab(Bfield_fp[lev][idim], dm, true);
             RemakeMultiFab(Efield_fp[lev][idim], dm, true);
+            if (add_external_B_field) {
+                RemakeMultiFab(Bfield_fp_external[lev][idim], dm, true);
+            }
+            if (add_external_E_field) {
+                RemakeMultiFab(Efield_fp_external[lev][idim], dm, true);
+            }
             RemakeMultiFab(current_fp[lev][idim], dm, false);
             RemakeMultiFab(current_store[lev][idim], dm, false);
-
+            if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
+                RemakeMultiFab(current_fp_vay[lev][idim], dm, false);
+            }
+            if (do_current_centering) {
+                RemakeMultiFab(current_fp_nodal[lev][idim], dm, false);
+            }
+            if (fft_do_time_averaging) {
+                RemakeMultiFab(Efield_avg_fp[lev][idim], dm, true);
+                RemakeMultiFab(Bfield_avg_fp[lev][idim], dm, true);
+            }
 #ifdef AMREX_USE_EB
-            if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::Yee ||
-                WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT ||
-                WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC){
+            if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
                 RemakeMultiFab(m_edge_lengths[lev][idim], dm, false);
                 RemakeMultiFab(m_face_areas[lev][idim], dm, false);
-                if(WarpX::maxwell_solver_id == MaxwellSolverAlgo::ECT){
+                if(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
                     RemakeMultiFab(Venl[lev][idim], dm, false);
                     RemakeMultiFab(m_flag_info_face[lev][idim], dm, false);
                     RemakeMultiFab(m_flag_ext_face[lev][idim], dm, false);
@@ -209,7 +223,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 #endif
 
 #ifdef WARPX_USE_PSATD
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             if (spectral_solver_fp[lev] != nullptr) {
                 // Get the cell-centered box
                 BoxArray realspace_ba = ba;   // Copy box
@@ -264,12 +278,16 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 RemakeMultiFab(Bfield_cp[lev][idim], dm, true);
                 RemakeMultiFab(Efield_cp[lev][idim], dm, true);
                 RemakeMultiFab(current_cp[lev][idim], dm, false);
+                if (fft_do_time_averaging) {
+                    RemakeMultiFab(Efield_avg_cp[lev][idim], dm, true);
+                    RemakeMultiFab(Bfield_avg_cp[lev][idim], dm, true);
+                }
             }
             RemakeMultiFab(F_cp[lev], dm, true);
             RemakeMultiFab(rho_cp[lev], dm, false);
 
 #ifdef WARPX_USE_PSATD
-            if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
                 if (spectral_solver_cp[lev] != nullptr) {
                     BoxArray cba = ba;
                     cba.coarsen(refRatio(lev-1));
@@ -318,6 +336,9 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             if (current_buffer_masks[lev] || gather_buffer_masks[lev])
                 BuildBufferMasks();
         }
+
+        // Re-initialize the lattice element finder with the new ba and dm.
+        m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
 
         if (costs[lev] != nullptr)
         {

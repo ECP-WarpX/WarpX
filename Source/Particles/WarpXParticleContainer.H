@@ -25,6 +25,7 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
+#include <AMReX_GpuAllocators.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_INT.H>
 #include <AMReX_ParIter.H>
@@ -137,11 +138,6 @@ public:
 
     virtual void PostRestart () = 0;
 
-    virtual void GetParticleSlice(const int /*direction*/, const amrex::Real /*z_old*/,
-                                  const amrex::Real /*z_new*/, const amrex::Real /*t_boost*/,
-                                  const amrex::Real /*t_lab*/, const amrex::Real /*dt*/,
-                                  DiagnosticParticles& /*diagnostic_particles*/) {}
-
     void AllocData ();
 
     /**
@@ -149,8 +145,9 @@ public:
      * class.
      */
     virtual void DefaultInitializeRuntimeAttributes (
-                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                            NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                        amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                            NArrayReal, NArrayInt,
+                                            amrex::PinnedArenaAllocator>& pinned_tile,
                         const int n_external_attr_real,
                         const int n_external_attr_int,
                         const amrex::RandomEngine& engine) = 0;
@@ -194,13 +191,13 @@ public:
      * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
      * \param[in] local if false, exchange the data in the guard cells after the deposition
      * \param[in] reset if true, reset all values of rho to zero
-     * \param[in] do_rz_volume_scaling whether to scale the final density by some volume norm in RZ geometry
+     * \param[in] apply_boundary_and_scale_volume whether to apply boundary conditions and scale the final density by some volume norm in RZ geometry
      * \param[in] interpolate_across_levels whether to average down from the fine patch to the coarse patch
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                         const bool local = false, const bool reset = false,
-                        const bool do_rz_volume_scaling = false,
+                        const bool apply_boundary_and_scale_volume = false,
                         const bool interpolate_across_levels = true,
                         const int icomp = 0);
 
@@ -210,12 +207,12 @@ public:
                                RealVector const & wp,
                                const int * const ion_lev,
                                amrex::MultiFab* rho,
-                               int icomp,
+                               const int icomp,
                                const long offset,
                                const long np_to_depose,
-                               int thread_num,
-                               int lev,
-                               int depos_lev);
+                               const int thread_num,
+                               const int lev,
+                               const int depos_lev);
 
     virtual void DepositCurrent (WarpXParIter& pti,
                                 RealVector const & wp,
@@ -284,7 +281,7 @@ public:
      */
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
-                        const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
+                        const amrex::ParticleReal* ux, const amrex::ParticleReal* uy, const amrex::ParticleReal* uz,
                         const int nattr_real, const amrex::ParticleReal* attr_real,
                         const int nattr_int, const int* attr_int,
                         int uniqueparticles, amrex::Long id=-1);
@@ -298,9 +295,6 @@ public:
     static void BackwardCompatibility ();
 
     /** \brief Apply particle BC.
-     *
-     * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
-     * are supported
      */
     void ApplyBoundaryConditions ();
 
@@ -315,7 +309,6 @@ public:
     // split along diagonals (0) or axes (1)
     int split_type = 0;
 
-    int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
     /** Whether back-transformed diagnostics need to be performed for a particular species.
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
@@ -408,7 +401,6 @@ protected:
 
     int do_resampling = 0;
 
-    int do_back_transformed_diagnostics = 1;
     /** Whether back-transformed diagnostics is turned on for the corresponding species.*/
     bool m_do_back_transformed_particles = false;
 

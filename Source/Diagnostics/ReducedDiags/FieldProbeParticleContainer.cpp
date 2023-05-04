@@ -12,7 +12,6 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/ParticleBoundaries_K.H"
-#include "Utils/CoarsenMR.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -92,7 +91,8 @@ FieldProbeParticleContainer::AddNParticles (int lev,
      * (particle_tile).
      */
 
-    using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
+    using PinnedTile = ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                    NArrayReal, NArrayInt,
                                     amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
@@ -107,9 +107,12 @@ FieldProbeParticleContainer::AddNParticles (int lev,
         p.pos(1) = y[i];
         p.pos(2) = z[i];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::ignore_unused(y) ;
+        amrex::ignore_unused(y);
         p.pos(0) = x[i];
         p.pos(1) = z[i];
+#elif defined(WARPX_DIM_1D_Z)
+        amrex::ignore_unused(x, y);
+        p.pos(0) = z[i];
 #endif
         // write position, cpu id, and particle id to particle
         pinned_tile.push_back(p);

@@ -9,8 +9,9 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 
 #include "ReducedDiags.H"
-#include "Utils/CoarsenIO.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Box.H>
@@ -149,26 +150,32 @@ public:
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
                  // 0.5 is here because position are computed on the cell centers
+
+#if defined(WARPX_DIM_1D_Z)
+                const amrex::Real x = 0._rt;
+                const amrex::Real y = 0._rt;
+                const amrex::Real z = (k + 0.5_rt)*dx[0] + real_box.lo(0);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 const amrex::Real x = (i + 0.5_rt)*dx[0] + real_box.lo(0);
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 const amrex::Real y = 0._rt;
                 const amrex::Real z = (j + 0.5_rt)*dx[1] + real_box.lo(1);
 #else
+                const amrex::Real x = (i + 0.5_rt)*dx[0] + real_box.lo(0);
                 const amrex::Real y = (j + 0.5_rt)*dx[1] + real_box.lo(1);
                 const amrex::Real z = (k + 0.5_rt)*dx[2] + real_box.lo(2);
 #endif
-                const amrex::Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Ey_interp = CoarsenIO::Interp(arrEy, Eytype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Ez_interp = CoarsenIO::Interp(arrEz, Eztype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Bx_interp = CoarsenIO::Interp(arrBx, Bxtype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real By_interp = CoarsenIO::Interp(arrBy, Bytype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Bz_interp = CoarsenIO::Interp(arrBz, Bztype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Ex_interp = ablastr::coarsen::sample::Interp(arrEx, Extype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Ey_interp = ablastr::coarsen::sample::Interp(arrEy, Eytype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Ez_interp = ablastr::coarsen::sample::Interp(arrEz, Eztype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Bx_interp = ablastr::coarsen::sample::Interp(arrBx, Bxtype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real By_interp = ablastr::coarsen::sample::Interp(arrBy, Bytype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Bz_interp = ablastr::coarsen::sample::Interp(arrBz, Bztype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
                 return reduction_function_parser(x, y, z, Ex_interp, Ey_interp, Ez_interp,
                                                           Bx_interp, By_interp, Bz_interp);
             });
@@ -190,7 +197,9 @@ public:
             amrex::ParallelDescriptor::ReduceRealSum(reduce_value);
         // If reduction operation is a sum, multiply the value by the cell volume so that the
         // result is the integral of the function over the simulation domain.
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_1D_Z)
+            reduce_value *= dx[0];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             reduce_value *= dx[0]*dx[1];
 #else
             reduce_value *= dx[0]*dx[1]*dx[2];

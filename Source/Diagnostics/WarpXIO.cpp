@@ -13,10 +13,10 @@
 #endif
 #include "FieldIO.H"
 #include "Particles/MultiParticleContainer.H"
-#include "Utils/CoarsenIO.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "Diagnostics/MultiDiagnostics.H"
 
 #include <ablastr/utils/Communication.H>
 
@@ -123,9 +123,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < istep.size(); ++i) {
+            for (auto& istep_lev : istep) {
                 lis >> word;
-                istep.at(i) = std::stoi(word);
+                istep_lev = std::stoi(word);
             }
         }
 
@@ -133,9 +133,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < nsubsteps.size(); ++i) {
+            for (auto& nsub : nsubsteps) {
                 lis >> word;
-                nsubsteps.at(i) = std::stoi(word);
+                nsub = std::stoi(word);
             }
         }
 
@@ -143,9 +143,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < t_new.size(); ++i) {
+            for (auto& t_new_lev : t_new) {
                 lis >> word;
-                t_new.at(i) = static_cast<Real>(std::stod(word));
+                t_new_lev = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -153,9 +153,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < t_old.size(); ++i) {
+            for (auto& t_old_lev : t_old) {
                 lis >> word;
-                t_old.at(i) = static_cast<Real>(std::stod(word));
+                t_old_lev = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -163,9 +163,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < dt.size(); ++i) {
+            for (auto& dt_lev : dt) {
                 lis >> word;
-                dt.at(i) = static_cast<Real>(std::stod(word));
+                dt_lev = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -181,9 +181,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < prob_lo.size(); ++i) {
+            for (auto& prob_lo_comp : prob_lo) {
                 lis >> word;
-                prob_lo.at(i) = static_cast<Real>(std::stod(word));
+                prob_lo_comp = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -192,9 +192,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < prob_hi.size(); ++i) {
+            for (auto& prob_hi_comp : prob_hi) {
                 lis >> word;
-                prob_hi.at(i) = static_cast<Real>(std::stod(word));
+                prob_hi_comp = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -224,6 +224,56 @@ WarpX::InitFromCheckpoint ()
 
         is >> time_of_last_gal_shift;
         GotoNextLine(is);
+
+
+        auto & warpx = WarpX::GetInstance();
+        for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
+        {
+            if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
+            {
+                auto& diag = warpx.GetMultiDiags().GetDiag(idiag);
+                if (diag.getnumbuffers() > 0) {
+                    diag.InitDataBeforeRestart();
+                    for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
+                        amrex::Real tlab;
+                        is >> tlab;
+                        diag.settlab(i_buffer, tlab);
+                        int kindex_hi;
+                        is >> kindex_hi;
+                        diag.set_buffer_k_index_hi(i_buffer, kindex_hi);
+
+                        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                            amrex::Real snapshot_lo;
+                            is >> snapshot_lo;
+                            diag.setSnapshotDomainLo(i_buffer, idim, snapshot_lo);
+                        }
+                        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                            amrex::Real snapshot_hi;
+                            is >> snapshot_hi;
+                            diag.setSnapshotDomainHi(i_buffer, idim, snapshot_hi);
+                        }
+
+                        int flush_counter;
+                        is >> flush_counter;
+                        diag.set_flush_counter(i_buffer, flush_counter);
+
+                        int last_valid_Zslice;
+                        is >> last_valid_Zslice;
+                        diag.set_last_valid_Zslice(i_buffer, last_valid_Zslice);
+
+                        int snapshot_full_flag;
+                        is >> snapshot_full_flag;
+                        diag.set_snapshot_full(i_buffer, snapshot_full_flag);
+
+                    }
+                    diag.InitDataAfterRestart();
+                } else {
+                    diag.InitData();
+                }
+            } else {
+                warpx.GetMultiDiags().GetDiag(idiag).InitData();
+            }
+        }
     }
 
     const int nlevs = finestLevel()+1;
@@ -351,44 +401,4 @@ WarpX::InitFromCheckpoint ()
     mypc->AllocData();
     mypc->Restart(restart_chkfile);
 
-}
-
-
-std::unique_ptr<MultiFab>
-WarpX::GetCellCenteredData() {
-
-    WARPX_PROFILE("WarpX::GetCellCenteredData()");
-
-    const amrex::IntVect ng(1);
-    const int nc = 10;
-
-    Vector<std::unique_ptr<MultiFab> > cc(finest_level+1);
-
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        cc[lev] = std::make_unique<MultiFab>(grids[lev], dmap[lev], nc, ng );
-
-        int dcomp = 0;
-        // first the electric field
-        AverageAndPackVectorField( *cc[lev], Efield_aux[lev], dmap[lev], dcomp, ng );
-        dcomp += 3;
-        // then the magnetic field
-        AverageAndPackVectorField( *cc[lev], Bfield_aux[lev], dmap[lev], dcomp, ng );
-        dcomp += 3;
-        // then the current density
-        AverageAndPackVectorField( *cc[lev], current_fp[lev], dmap[lev], dcomp, ng );
-        dcomp += 3;
-        // then the charge density
-        const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev);
-        AverageAndPackScalarField( *cc[lev], *charge_density, dmap[lev], dcomp, ng );
-
-        ablastr::utils::communication::FillBoundary(*cc[lev], WarpX::do_single_precision_comms, geom[lev].periodicity());
-    }
-
-    for (int lev = finest_level; lev > 0; --lev)
-    {
-        CoarsenIO::Coarsen( *cc[lev-1], *cc[lev], 0, 0, nc, 0, refRatio(lev-1) );
-    }
-
-    return std::move(cc[0]);
 }

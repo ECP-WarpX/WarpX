@@ -46,26 +46,26 @@ void FiniteDifferenceSolver::ComputeDivE (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
 
         ComputeDivECylindrical <CylindricalYeeAlgorithm> ( Efield, divEfield );
 
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         ComputeDivECartesian <CartesianNodalAlgorithm> ( Efield, divEfield );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         ComputeDivECartesian <CartesianYeeAlgorithm> ( Efield, divEfield );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         ComputeDivECartesian <CartesianCKCAlgorithm> ( Efield, divEfield );
 
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("ComputeDivE: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("ComputeDivE: Unknown algorithm");
     }
 
 }

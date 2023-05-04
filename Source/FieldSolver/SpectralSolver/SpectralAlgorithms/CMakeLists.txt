@@ -1,5 +1,6 @@
 target_sources(WarpX
   PRIVATE
+    PsatdAlgorithmFirstOrder.cpp
     PsatdAlgorithmJConstantInTime.cpp
     PsatdAlgorithmJLinearInTime.cpp
     PsatdAlgorithmPml.cpp

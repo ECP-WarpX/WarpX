@@ -6,6 +6,8 @@
 #include "Particles/WarpXParticleContainer_fwd.H"
 #include "Utils/WarpXConst.H"
 
+#include "AcceleratorLattice/LatticeElementFinder.H"
+
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_Extension.H>
@@ -13,13 +15,15 @@
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 
-enum ExternalFieldInitType { None, Constant, Parser, RepeatedPlasmaLens, Unknown };
+#include <optional>
+
 
 /** \brief Functor class that assigns external
  *         field values (E and B) to particles.
 */
 struct GetExternalEBField
 {
+    enum ExternalFieldInitType { None, Constant, Parser, RepeatedPlasmaLens, Unknown };
 
     GetExternalEBField () = default;
 
@@ -55,6 +59,11 @@ struct GetExternalEBField
     const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uz = nullptr;
 
+    std::optional<LatticeElementFinderDevice> d_lattice_element_finder;
+
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    bool isNoOp () const { return (m_Etype == None && m_Btype == None && !d_lattice_element_finder.has_value()); }
+
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (long i,
                       amrex::ParticleReal& field_Ex,
@@ -65,6 +74,12 @@ struct GetExternalEBField
                       amrex::ParticleReal& field_Bz) const noexcept
     {
         using namespace amrex::literals;
+
+        if (d_lattice_element_finder) {
+            // Note that the "*" is needed since d_lattice_element_finder is optional
+            (*d_lattice_element_finder)(i, field_Ex, field_Ey, field_Ez,
+                                           field_Bx, field_By, field_Bz);
+        }
 
         if (m_Etype == None && m_Btype == None) return;
 
