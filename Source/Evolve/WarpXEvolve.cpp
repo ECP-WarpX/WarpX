@@ -145,9 +145,9 @@ WarpX::Evolve (int numsteps)
             {
                 mypc->DepositCharge(rho_fp_temp, 0._rt);
                 mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
+                SyncRho(rho_fp_temp, rho_cp);
                 SyncCurrent(current_fp_temp, current_cp);
                 for (int lev=0; lev <= finest_level; ++lev) {
-                    AddRhoFromFineLevelandSumBoundary(rho_fp_temp, rho_cp, lev, 0, 1);
                     ApplyRhofieldBoundary(lev, rho_fp_temp[lev].get(), PatchType::fine);
                     // Set current density at PEC boundaries, if needed.
                     ApplyJfieldBoundary(
