@@ -9,6 +9,7 @@ This section collects typical user workflows and best practices for WarpX.
    :maxdepth: 2
 
    workflows/debugging
+   workflows/generate_lookup_tables_with_tools.rst
    workflows/libensemble
    workflows/plot_timestep_duration
    workflows/plot_distribution_mapping
