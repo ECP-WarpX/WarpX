@@ -51,7 +51,6 @@ E_max= 16282454014843.37
 # Function for the envelope
 def gauss_env(T, X, Y, Z):
     # Function to compute the theory for the envelope
-
     inv_tau2 = 1./tt/tt
     inv_w_2 = 1.0/(w0*w0)
     exp_arg = - (X*X)*inv_w_2 - (Y*Y)*inv_w_2- inv_tau2 / c/c * (Z-T*c)*(Z-T*c)
@@ -85,20 +84,17 @@ def do_analysis(fname, compname, steps):
     env = abs(hilbert(F_laser))
     extent = [ds.domain_left_edge[ds.dimensionality-1], ds.domain_right_edge[ds.dimensionality-1],
           ds.domain_left_edge[0], ds.domain_right_edge[0] ]
-
-    F_slice= F_laser[:,F_laser.shape[1]//2, :]
-    env_slice= env[:,env.shape[1]//2, :]
     env_theory_slice= env_theory[:,env_theory.shape[1]//2, :]
 
     # Plot results
     plt.figure(figsize=(8,6))
     plt.subplot(221)
     plt.title('PIC field')
-    plt.imshow(F_slice, extent=extent)
+    plt.imshow(F_laser, extent=extent)
     plt.colorbar()
     plt.subplot(222)
     plt.title('PIC envelope')
-    plt.imshow(env_slice, extent=extent)
+    plt.imshow(env, extent=extent)
     plt.colorbar()
     plt.subplot(223)
     plt.title('Theory envelope')
@@ -106,24 +102,23 @@ def do_analysis(fname, compname, steps):
     plt.colorbar()
     plt.subplot(224)
     plt.title('Difference')
-    plt.imshow(env_slice-env_theory_slice, extent=extent)
+    plt.imshow(env-env_theory_slice, extent=extent)
     plt.colorbar()
     plt.tight_layout()
     plt.savefig(compname, bbox_inches='tight')
 
-    relative_error_env = np.sum(np.abs(env-env_theory)) / np.sum(np.abs(env))
+    relative_error_env = np.sum(np.abs(env-env_theory_slice)) / np.sum(np.abs(env))
     print("Relative error envelope: ", relative_error_env)
     assert(relative_error_env < relative_error_threshold)
 
     fft_F_laser = np.fft.fftn(F_laser)
 
     freq_x = np.fft.fftfreq(F_laser.shape[0],dt)
-    freq_y = np.fft.fftfreq(F_laser.shape[1],dt)
-    freq_z = np.fft.fftfreq(F_laser.shape[2],dt)
+    freq_z = np.fft.fftfreq(F_laser.shape[1],dt)
 
     pos_max = np.unravel_index(np.abs(fft_F_laser).argmax(), fft_F_laser.shape)
 
-    freq = np.sqrt((freq_x[pos_max[0]])**2 +  (freq_y[pos_max[1]]**2) + (freq_z[pos_max[2]])**2)
+    freq = np.sqrt((freq_x[pos_max[0]])**2 + (freq_z[pos_max[1]])**2)
     exp_freq = c/wavelength
     relative_error_freq = np.abs(freq-exp_freq)/exp_freq
     print("Relative error frequency: ", relative_error_freq)
@@ -132,7 +127,7 @@ def do_analysis(fname, compname, steps):
 
 
 def launch_analysis(executable):
-    os.system("./" + executable + " inputs.3d_test_txye diag1.file_prefix=diags/plotfiles/plt")
+    os.system("./" + executable + " inputs.2d_test_txye diag1.file_prefix=diags/plotfiles/plt")
     do_analysis("diags/plotfiles/plt000251/", "comp_unf.pdf", 251)
 
 
@@ -157,6 +152,8 @@ def main() :
         launch_analysis(executables[0])
     else :
         assert(False)
+
+    # Do the test
     filename_end = "diags/plotfiles/plt000251/"
     test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
