@@ -236,6 +236,11 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
 
     const int nComp = rho->nComp();
 
+    // The rho boundary is handled in 2 steps:
+    // 1) The cells internal to the domain are updated using the
+    //    charge deposited in the guard cells
+    // 2) The guard cells are updated with the appropriate image charges
+    //    based on the charge in the valid cells
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -255,12 +260,6 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
                 tb.growHi(idim, ng_fieldgather[idim]);
         }
 
-        // The rho boundary is handled in 2 steps:
-        // 1) The cells internal to the domain are updated using the
-        //    charge deposited in the guard cells
-        // 2) The guard cells are updated with the appropriate image charges
-        //    based on the charge in the valid cells
-        // loop over cells and update fields
         amrex::ParallelFor(
             tb, nComp,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
@@ -277,6 +276,26 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
                 );
             }
         );
+    }
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+
+        // Extract field data
+        amrex::Array4<amrex::Real> const& rho_array = rho->array(mfi);
+
+        // Construct a tilebox to loop over the grid
+        amrex::Box tb = convert( mfi.tilebox(), rho_nodal );
+
+        // Grow the tilebox to include the guard cells for the PEC boundaries
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (fbndry_lo[idim] == FieldBoundaryType::PEC)
+                tb.growLo(idim, ng_fieldgather[idim]);
+            if (fbndry_hi[idim] == FieldBoundaryType::PEC)
+                tb.growHi(idim, ng_fieldgather[idim]);
+        }
 
         amrex::ParallelFor(
             tb, nComp,
