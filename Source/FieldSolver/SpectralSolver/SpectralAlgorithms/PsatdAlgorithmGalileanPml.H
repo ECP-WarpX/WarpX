@@ -1,4 +1,4 @@
-/* Copyright 2019 Axel Huebl, Remi Lehe
+/* Copyright 2019-2023 Axel Huebl, Remi Lehe, Edoardo Zoni
  *
  * This file is part of WarpX.
  *
@@ -17,22 +17,34 @@
 class PsatdAlgorithmGalileanPml : public SpectralBaseAlgorithm
 {
     public:
-        PsatdAlgorithmGalileanPml(const SpectralKSpace& spectral_kspace,
+
+        /*
+         * TODO Add Doxygen docstrings
+         */
+        PsatdAlgorithmGalileanPml (
+            const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
-            const int norder_x, const int norder_y,
-            const int norder_z, const short grid_type,
+            const int norder_x,
+            const int norder_y,
+            const int norder_z,
+            const short grid_type,
             const amrex::Vector<amrex::Real>& v_galilean,
             const amrex::Real dt);
 
-        void InitializeSpectralCoefficients(
+        /*
+         * TODO Add Doxygen docstrings
+         */
+        void InitializeSpectralCoefficients (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const amrex::Vector<amrex::Real>& v_galilean,
             const amrex::Real dt);
 
-        // Redefine functions from base class
-        virtual void pushSpectralFields(SpectralFieldData& f) const override final;
+        /*
+         * TODO Add Doxygen docstrings
+         */
+        virtual void pushSpectralFields (SpectralFieldData& f) const override final;
 
         /**
          * \brief Virtual function for current correction in Fourier space
@@ -56,10 +68,10 @@ class PsatdAlgorithmGalileanPml : public SpectralBaseAlgorithm
          */
         virtual void VayDeposition (SpectralFieldData& field_data) override final;
 
-
     private:
+
         SpectralRealCoefficients C_coef, S_ck_coef;
-        SpectralComplexCoefficients Theta2_coef;
+        SpectralComplexCoefficients T2_coef;
 
 };
 
