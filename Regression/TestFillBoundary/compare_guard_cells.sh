@@ -160,7 +160,7 @@ for NCI_CORR in 0 1; do
                                                        particles.use_fdtd_nci_corr=$NCI_CORR \
                                                        warpx.use_filter=$FILTER \
                                                        warpx.do_moving_window=$MOVING_WINDOW \
-                                                       interpolation.nox=$NOX interpolation.noy=$NOX interpolation.noz=$NOX \
+                                                       algo.particle_shape=$NOX \
                                                        algo.maxwell_solver=$SOLVER \
                                                        amr.plot_file=$WHICH/plt \
                                                        warpx.do_pml=$PML \

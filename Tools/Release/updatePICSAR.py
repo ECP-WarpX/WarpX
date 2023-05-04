@@ -11,9 +11,9 @@
 import datetime
 from pathlib import Path
 import re
-import requests
 import sys
 
+import requests
 
 # Maintainer Inputs ###########################################################
 
@@ -94,20 +94,6 @@ if not REPLY in ["Y", "y"]:
 
 
 # Updates #####################################################################
-
-# run_test.sh (used also for Azure Pipelines)
-run_test_path = str(REPO_DIR.joinpath("run_test.sh"))
-with open(run_test_path, encoding='utf-8') as f:
-    run_test_content = f.read()
-    #   branch/commit/tag (git fetcher) version
-    #     cd picsar && git checkout COMMIT_TAG_OR_BRANCH && cd -
-    run_test_content = re.sub(
-        r'(.*cd\s+picsar.+git checkout\s+)(.+)(\s+&&\s.*)',
-        r'\g<1>{}\g<3>'.format(PICSAR_new_branch),
-        run_test_content, flags = re.MULTILINE)
-
-with open(run_test_path, "w", encoding='utf-8') as f:
-    f.write(run_test_content)
 
 # WarpX references to PICSAR: cmake/dependencies/PICSAR.cmake
 with open(PICSAR_cmake_path, encoding='utf-8') as f:

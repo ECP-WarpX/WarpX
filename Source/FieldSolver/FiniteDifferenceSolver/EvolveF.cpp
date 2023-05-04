@@ -4,19 +4,39 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
-#ifdef WARPX_DIM_RZ
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+
+#ifndef WARPX_DIM_RZ
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #else
-#   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
-#   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
-#   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
+#include "Utils/TextMsg.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#include "WarpX.H"
-#include <AMReX_Gpu.H>
+#ifdef WARPX_DIM_RZ
+#   include "WarpX.H"
+#endif
+
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 using namespace amrex;
 
@@ -33,26 +53,26 @@ void FiniteDifferenceSolver::EvolveF (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
 
         EvolveFCylindrical <CylindricalYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveFCartesian <CartesianNodalAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         EvolveFCartesian <CartesianYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveFCartesian <CartesianCKCAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
 #endif
     } else {
-        amrex::Abort("EvolveF: Unknown algorithm");
+        WARPX_ABORT_WITH_MESSAGE("EvolveF: Unknown algorithm");
     }
 
 }
@@ -149,14 +169,13 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
         Box const& tf  = mfi.tilebox(Ffield->ixType().toIntVect());
 
         Real constexpr inv_epsilon0 = 1./PhysConst::ep0;
-        Real constexpr c2 = PhysConst::c * PhysConst::c;
 
         // Use the right shift in components:
-        // - the first 2*n_rz_azimuthal_modes-1 components correspond to rho old (i.e. rhocomp=0)
-        // - the next 2*n_rz_azimuthal_modes-1 components correspond to rho new (i.e. rhocomp=1)
+        // - the first WarpX::ncomps (2*n_rz_azimuthal_modes-1) components correspond to rho old (i.e. rhocomp=0)
+        // - the next WarpX::ncomps (2*n_rz_azimuthal_modes-1) components correspond to rho new (i.e. rhocomp=1)
         int rho_shift = 0;
         if (rhocomp == 1) {
-            rho_shift = 2*WarpX::n_rz_azimuthal_modes-1;
+            rho_shift = WarpX::ncomps;
         }
 
         // Loop over the cells and update the fields
@@ -175,7 +194,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
                             + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
                             + m * Et( i, j, 0, 2*m )/r
                             + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 2*m-1) ); // Real part
-                        F(i, j, 0, 2*m  ) += c2 * dt *(
+                        F(i, j, 0, 2*m  ) += dt *(
                             - rho(i, j, 0, rho_shift + 2*m-1) * inv_epsilon0
                             + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
                             - m * Et( i, j, 0, 2*m-1 )/r

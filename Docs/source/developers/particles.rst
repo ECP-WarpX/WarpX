@@ -85,11 +85,9 @@ On a loop over particles it can be useful to access the fields on the box we are
 Main functions
 --------------
 
-.. doxygenfunction:: PhysicalParticleContainer::FieldGather
-
 .. doxygenfunction:: PhysicalParticleContainer::PushPX
 
-.. doxygenfunction:: WarpXParticleContainer::DepositCurrent
+.. doxygenfunction:: WarpXParticleContainer::DepositCurrent(amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &J, const amrex::Real dt, const amrex::Real relative_time)
 
 .. note::
    The current deposition is used both by ``PhysicalParticleContainer`` and ``LaserParticleContainer``, so it is in the parent class ``WarpXParticleContainer``.
@@ -106,3 +104,51 @@ To reduce numerical artifacts at the boundary of a mesh-refinement patch, WarpX 
 .. note::
 
    Buffers are complex!
+
+Particle attributes
+-------------------
+
+WarpX adds the following particle attributes by default to WarpX particles.
+These attributes are either stored in an Array-of-Struct (AoS) or Struct-of-Array (SoA) location of the AMReX particle containers.
+The data structures for those are either pre-described at compile-time (CT) or runtime (RT).
+
+====================  ================  ==================================  ===== ==== =====================
+Attribute name        ``int``/``real``  Description                         Where When Notes
+====================  ================  ==================================  ===== ==== =====================
+``position_x/y/z``    ``real``          Particle position.                  AoS   CT
+``cpu``               ``int``           CPU index where the particle        AoS   CT
+                                        was created.
+``id``                ``int``           CPU-local particle index            AoS   CT
+                                        where the particle was created.
+``ionizationLevel``   ``int``           Ion ionization level                SoA   RT   Added when ionization
+                                                                                       physics is used.
+``opticalDepthQSR``   ``real``          QED: optical depth of the Quantum-  SoA   RT   Added when PICSAR QED
+                                        Synchrotron process                            physics is used.
+``opticalDepthBW``    ``real``          QED: optical depth of the Breit-    SoA   RT   Added when PICSAR QED
+                                        Wheeler process                                physics is used.
+====================  ================  ==================================  ===== ==== =====================
+
+WarpX allows extra runtime attributes to be added to particle containers (through ``AddRealComp("attrname")`` or ``AddIntComp("attrname")``).
+The attribute name can then be used to access the values of that attribute.
+For example, using a particle iterator, ``pti``, to loop over the particles the command ``pti.GetAttribs(particle_comps["attrname"]).dataPtr();`` will return the values of the ``"attrname"`` attribute.
+
+User-defined integer or real attributes are initialized when particles are generated in ``AddPlasma()``.
+The attribute is initialized with a required user-defined parser function.
+Please see the :ref:`input options <running-cpp-parameters-particle>` ``addIntegerAttributes`` and ``addRealAttributes`` for a user-facing documentation.
+
+Commonly used runtime attributes are described in the table below and are all part of SoA particle storage:
+
+==================  ================  =================================  ==============
+Attribute name      ``int``/``real``  Description                        Default value
+==================  ================  =================================  ==============
+``prev_x/y/z``      ``real``          The coordinates of the particles   *user-defined*
+                                      at the previous timestep.
+``orig_x/y/z``      ``real``          The coordinates of the particles   *user-defined*
+                                      when they were created.
+==================  ================  =================================  ==============
+
+A Python example that adds runtime options can be found in :download:`Examples/Tests/particle_data_python <../../../Examples/Tests/particle_data_python/PICMI_inputs_prev_pos_2d.py>`
+
+.. note::
+
+   Only use ``_`` to separate components of vectors!

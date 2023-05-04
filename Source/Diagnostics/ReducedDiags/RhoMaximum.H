@@ -8,8 +8,13 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_RHOMAXIMUM_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_RHOMAXIMUM_H_
 
-#include "ReducedDiags.H"
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "ReducedDiags.H"
+
+#include <AMReX_Vector.H>
+
+#include <memory>
+#include <string>
 
 /**
  *  This class mainly contains a function that computes the extrema of the total charge density
@@ -19,13 +24,17 @@ class RhoMaximum : public ReducedDiags
 {
 public:
 
-    /** constructor
-     *  @param[in] rd_name reduced diags names
+    /**
+     * constructor
+     * @param[in] rd_name reduced diags names
      */
     RhoMaximum(std::string rd_name);
 
-    /** This function computes the maximum and minimum values of rho (summed over all species) and
+    /**
+     * This function computes the maximum and minimum values of rho (summed over all species) and
      * the maximum absolute value of rho for each species.
+     *
+     * @param[in] step current time step
      */
     virtual void ComputeDiags(int step) override final;
 

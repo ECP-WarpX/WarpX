@@ -6,36 +6,49 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Laser/LaserProfiles.H"
-#include "Utils/WarpX_Complex.H"
+
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
+#include "Utils/WarpX_Complex.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
 #include <cmath>
-
+#include <cstdlib>
+#include <numeric>
+#include <vector>
 
 using namespace amrex;
 
 void
 WarpXLaserProfiles::GaussianLaserProfile::init (
     const amrex::ParmParse& ppl,
-    const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
 {
     //Copy common params
     m_common_params = params;
 
     // Parse the properties of the Gaussian profile
-    getWithParser(ppl, "profile_waist", m_params.waist);
-    getWithParser(ppl, "profile_duration", m_params.duration);
-    getWithParser(ppl, "profile_t_peak", m_params.t_peak);
-    getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
-    queryWithParser(ppl, "zeta", m_params.zeta);
-    queryWithParser(ppl, "beta", m_params.beta);
-    queryWithParser(ppl, "phi2", m_params.phi2);
-    queryWithParser(ppl, "phi0", m_params.phi0);
+    utils::parser::getWithParser(ppl, "profile_waist", m_params.waist);
+    utils::parser::getWithParser(ppl, "profile_duration", m_params.duration);
+    utils::parser::getWithParser(ppl, "profile_t_peak", m_params.t_peak);
+    utils::parser::getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
+    utils::parser::queryWithParser(ppl, "zeta", m_params.zeta);
+    utils::parser::queryWithParser(ppl, "beta", m_params.beta);
+    utils::parser::queryWithParser(ppl, "phi2", m_params.phi2);
+    utils::parser::queryWithParser(ppl, "phi0", m_params.phi0);
 
     m_params.stc_direction = m_common_params.p_X;
-    ppl.queryarr("stc_direction", m_params.stc_direction);
+    utils::parser::queryArrWithParser(ppl, "stc_direction", m_params.stc_direction);
     auto const s = 1.0_rt / std::sqrt(
         m_params.stc_direction[0]*m_params.stc_direction[0] +
         m_params.stc_direction[1]*m_params.stc_direction[1] +
@@ -49,16 +62,21 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
             m_common_params.nvec.begin(),
             m_common_params.nvec.end(),
             m_params.stc_direction.begin(), 0.0);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp2) < 1.0e-14,
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp2) < 1.0e-14,
         "stc_direction is not perpendicular to the laser plane vector");
 
     // Get angle between p_X and stc_direction
     // in 2d, stcs are in the simulation plane
-#if AMREX_SPACEDIM == 3
-    m_params.theta_stc = std::acos(
-        m_params.stc_direction[0]*m_common_params.p_X[0] +
+#if defined(WARPX_DIM_3D)
+    auto arg = m_params.stc_direction[0]*m_common_params.p_X[0] +
         m_params.stc_direction[1]*m_common_params.p_X[1] +
-        m_params.stc_direction[2]*m_common_params.p_X[2]);
+        m_params.stc_direction[2]*m_common_params.p_X[2];
+
+    if (arg < -1.0_rt || arg > 1.0_rt)
+        m_params.theta_stc = 0._rt;
+    else
+        m_params.theta_stc = std::acos(arg);
 #else
     m_params.theta_stc = 0.;
 #endif
@@ -98,10 +116,9 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     // Time stretching due to STCs and phi2 complex envelope
     // (1 if zeta=0, beta=0, phi2=0)
     const Complex stretch_factor = 1._rt + 4._rt *
-        (m_params.zeta+m_params.beta*m_params.focal_distance)
-        * (m_params.zeta+m_params.beta*m_params.focal_distance)
-        * (inv_tau2*inv_complex_waist_2) + 2._rt *I * (m_params.phi2
-        - m_params.beta*m_params.beta*k0*m_params.focal_distance) * inv_tau2;
+        (m_params.zeta+m_params.beta*m_params.focal_distance*inv_tau2)
+        * (m_params.zeta+m_params.beta*m_params.focal_distance*inv_complex_waist_2)
+        + 2._rt*I*(m_params.phi2-m_params.beta*m_params.beta*k0*m_params.focal_distance)*inv_tau2;
 
     // Amplitude and monochromatic oscillations
     Complex prefactor =
@@ -110,9 +127,9 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     // Because diffract_factor is a complex, the code below takes into
     // account the impact of the dimensionality on both the Gouy phase
     // and the amplitude of the laser
-#if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
+#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
     prefactor = prefactor / diffract_factor;
-#elif (AMREX_SPACEDIM == 2)
+#elif defined(WARPX_DIM_XZ)
     prefactor = prefactor / amrex::sqrt(diffract_factor);
 #endif
 

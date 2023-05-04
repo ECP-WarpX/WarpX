@@ -1,32 +1,37 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 1000
+max_step = 200 # for production, run for longer time, e.g. max_step = 1000
 amr.n_cell =  64  512
 amr.max_grid_size = 64   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
-geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0     0      # Is periodic?
+geometry.dims = 2
 geometry.prob_lo     = -30.e-6   -56.e-6    # physical domain
 geometry.prob_hi     =  30.e-6    12.e-6
-amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
-# warpx.fine_tag_lo = -5.e-6   -35.e-6
-# warpx.fine_tag_hi =  5.e-6   -25.e-6
+amr.max_level = 1 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
+warpx.fine_tag_lo = -5.e-6   -35.e-6
+warpx.fine_tag_hi =  5.e-6   -25.e-6
+
+#################################
+####### Boundary condition ######
+#################################
+boundary.field_lo = pml pml
+boundary.field_hi = pml pml
 
 #################################
 ############ NUMERICS ###########
 #################################
-interpolation.nox = 3 # Particle interpolation order. Must be the same in x, y, and z
-interpolation.noy = 3
-interpolation.noz = 3
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
 warpx.cfl = 1. # if 1., the time step is set to its CFL limit
-warpx.do_pml = 1 # use Perfectly Matched Layer as boundary condition
 warpx.do_moving_window = 1
-warpx.moving_window_dir = z # Only z is supported for the moment
+warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # units of speed of light
+warpx.serialize_initial_conditions = 1 # for production, set this to 0 (default)
+
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ PLASMA #############
@@ -41,7 +46,7 @@ electrons.xmax =  20.e-6
 electrons.zmin =  10.e-6
 electrons.profile = constant
 electrons.density = 2.e23  # number of electrons per m^3
-electrons.momentum_distribution_type = "constant"
+electrons.momentum_distribution_type = "at_rest"
 electrons.do_continuous_injection = 1
 
 beam.species_type = electron
@@ -63,7 +68,7 @@ beam.uy_th = 2.
 beam.uz_th = 50.
 
 #################################
-############ PLASMA #############
+############ LASER ##############
 #################################
 lasers.names        = laser1
 laser1.profile      = Gaussian
@@ -82,3 +87,17 @@ diagnostics.diags_names = diag1
 diag1.intervals = 200
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+
+# Reduced Diagnostics
+warpx.reduced_diags_names               = FP
+
+FP.type = FieldProbe
+FP.intervals = 10
+FP.integrate = 0
+FP.probe_geometry = Line
+FP.x_probe = 0
+FP.z_probe = -56e-6
+FP.x1_probe = 0
+FP.z1_probe = 12e-6
+FP.resolution = 300
+FP.do_moving_window_FP = 1

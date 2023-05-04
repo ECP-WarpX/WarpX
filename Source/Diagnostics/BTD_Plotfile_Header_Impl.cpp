@@ -1,14 +1,24 @@
+/* Copyright 2021 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "BTD_Plotfile_Header_Impl.H"
+
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_PlotFileUtil.H>
+#include <AMReX.H>
 #include <AMReX_FileSystem.H>
 #include <AMReX_INT.H>
-#include <memory>
+#include <AMReX_Print.H>
+#include <AMReX_Utility.H>
+
+#include <array>
+#include <istream>
 
 using namespace amrex::literals;
-
 
 BTDPlotfileHeaderImpl::BTDPlotfileHeaderImpl (std::string const & Headerfile_path)
     : m_Header_path(Headerfile_path)
@@ -24,8 +34,13 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
     amrex::Vector<char> HeaderCharPtr;
     amrex::Long fileLength(0), fileLengthPadded(0);
     std::ifstream iss;
+    iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     iss.open(m_Header_path.c_str(), std::ios::in);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        iss,"Failed to load BTD MultiFabHeader"
+    );
+
     iss.seekg(0, std::ios::end);
     fileLength = static_cast<std::streamoff>(iss.tellg());
     iss.seekg(0, std::ios::beg);
@@ -37,6 +52,7 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
     HeaderCharPtr[fileLength] = '\0';
 
     std::istringstream is(HeaderCharPtr.dataPtr(), std::istringstream::in);
+    is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     is >> m_file_version;
 
@@ -95,7 +111,6 @@ void
 BTDPlotfileHeaderImpl::WriteHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
-        amrex::Print() << " removing this file : " << m_Header_path << "\n";
         amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream HeaderFile;
@@ -111,8 +126,8 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     // number of components
     HeaderFile << m_varnames.size() << '\n';
     // write the component string
-    for (int icomp = 0; icomp < m_varnames.size(); ++icomp ) {
-        HeaderFile << m_varnames[icomp] << '\n';
+    for (const auto& vname : m_varnames) {
+        HeaderFile << vname << '\n';
     }
     // space dim
     HeaderFile << m_spacedim << '\n';
@@ -174,8 +189,13 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     amrex::Vector<char> HeaderCharPtr;
     amrex::Long fileLength(0), fileLengthPadded(0);
     std::ifstream iss;
+    iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     iss.open(m_Header_path.c_str(), std::ios::in);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        iss, "Failed to load BTD MultiFabHeader"
+    );
+
     iss.seekg(0, std::ios::end);
     fileLength = static_cast<std::streamoff>(iss.tellg());
     iss.seekg(0, std::ios::beg);
@@ -187,6 +207,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     HeaderCharPtr[fileLength] = '\0';
 
     std::istringstream is(HeaderCharPtr.dataPtr(), std::istringstream::in);
+    is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     is >> m_vers;
     is >> m_how;
@@ -240,7 +261,6 @@ void
 BTDMultiFabHeaderImpl::WriteMultiFabHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
-        amrex::Print() << " removing this file : " << m_Header_path << "\n";
         amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream FabHeaderFile;
@@ -332,3 +352,180 @@ BTDMultiFabHeaderImpl::CopyVec(amrex::Vector<amrex::Real>& dst,
 }
 
 
+BTDSpeciesHeaderImpl::BTDSpeciesHeaderImpl (std::string const & Headerfile_path, std::string const& species_name)
+    : m_Header_path(Headerfile_path), m_species_name(species_name)
+{
+
+}
+
+void
+BTDSpeciesHeaderImpl::ReadHeader ()
+{
+    amrex::Vector<char> HeaderCharPtr;
+    amrex::Long fileLength(0), fileLengthPadded(0);
+    std::ifstream iss;
+
+    iss.open(m_Header_path.c_str(), std::ios::in);
+    iss.seekg(0, std::ios::end);
+    fileLength = static_cast<std::streamoff>(iss.tellg());
+    iss.seekg(0, std::ios::beg);
+
+    fileLengthPadded = fileLength + 1;
+    HeaderCharPtr.resize(fileLengthPadded);
+    iss.read(HeaderCharPtr.dataPtr(), fileLength);
+    iss.close();
+    HeaderCharPtr[fileLength] = '\0';
+
+    std::istringstream is(HeaderCharPtr.dataPtr(), std::istringstream::in);
+    is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+
+    is >> m_file_version;
+    is >> m_spacedim;
+    is >> m_num_output_real;
+    m_real_comp_names.resize(m_num_output_real);
+    for (auto& real_comp_name : m_real_comp_names) {
+        is >> real_comp_name;
+    }
+    is >> m_num_output_int;
+    for (auto& int_comp_name : m_int_comp_names) {
+        is >> int_comp_name;
+    }
+    is >> m_is_checkpoint;
+    is >> m_total_particles;
+    is >> m_nextid;
+    is >> m_finestLevel;
+    m_particleBoxArray_size.resize(m_finestLevel+1);
+    m_which_data.resize(m_finestLevel+1);
+    m_particles_per_box.resize(m_finestLevel+1);
+    m_offset_per_box.resize(m_finestLevel+1);
+    for (int lev = 0; lev <= m_finestLevel; ++lev) {
+        is >> m_particleBoxArray_size[lev];
+        m_which_data[lev].resize(m_particleBoxArray_size[lev]);
+        m_particles_per_box[lev].resize(m_particleBoxArray_size[lev]);
+        m_offset_per_box[lev].resize(m_particleBoxArray_size[lev]);
+        for (int i = 0; i < m_particleBoxArray_size[lev]; ++i) {
+            is >> m_which_data[lev][i] >> m_particles_per_box[lev][i] >> m_offset_per_box[lev][i];
+        }
+    }
+
+}
+
+void
+BTDSpeciesHeaderImpl::WriteHeader ()
+{
+    if (amrex::FileExists(m_Header_path)) {
+        amrex::FileSystem::Remove(m_Header_path);
+    }
+    std::ofstream HeaderFile;
+    HeaderFile.open(m_Header_path.c_str(), std::ofstream::out |
+                                           std::ofstream::trunc |
+                                           std::ofstream::binary);
+    if ( !HeaderFile.good()) amrex::FileOpenFailed(m_Header_path);
+
+    HeaderFile.precision(17);
+
+    // File Version
+    HeaderFile << m_file_version << '\n';
+    // spacedim
+    HeaderFile << m_spacedim << '\n';
+    // number of real components output
+    HeaderFile << m_num_output_real << '\n';
+    for (int i = 0; i < m_num_output_real; ++i) {
+        HeaderFile << m_real_comp_names[i] << '\n';
+    }
+    HeaderFile << m_num_output_int << '\n';
+    for (int i = 0; i < m_num_output_int; ++i) {
+        HeaderFile << m_int_comp_names[i] << '\n';
+    }
+    HeaderFile << m_is_checkpoint << '\n';
+    HeaderFile << m_total_particles << '\n';
+    HeaderFile << m_nextid << '\n';
+    HeaderFile << m_finestLevel << '\n';
+    for (int lev = 0; lev <= m_finestLevel; ++lev) {
+        HeaderFile << m_particleBoxArray_size[lev] << '\n';
+        for (int i = 0; i < m_particleBoxArray_size[lev]; ++i) {
+            HeaderFile << m_which_data[lev][i] << ' ' << m_particles_per_box[lev][i] << ' ' << m_offset_per_box[lev][i] << '\n';
+        }
+    }
+}
+
+void
+BTDSpeciesHeaderImpl::set_DataIndex(const int lev, const int box_id, const int data_index)
+{
+    m_which_data[lev][box_id] = data_index;
+}
+
+void
+BTDSpeciesHeaderImpl::AppendParticleInfoForNewBox ( const int data_index,
+                                                    const int particles_per_box,
+                                                    const int offset)
+{
+    m_which_data[m_finestLevel].resize(m_particleBoxArray_size[m_finestLevel]);
+    m_particles_per_box[m_finestLevel].resize(m_particleBoxArray_size[m_finestLevel]);
+    m_offset_per_box[m_finestLevel].resize(m_particleBoxArray_size[m_finestLevel]);
+
+    const int last_boxId = m_particleBoxArray_size[m_finestLevel] - 1;
+    m_which_data[m_finestLevel][last_boxId] = data_index;
+    m_particles_per_box[m_finestLevel][last_boxId] = particles_per_box;
+    m_offset_per_box[m_finestLevel][last_boxId] = offset;
+
+}
+
+BTDParticleDataHeaderImpl::BTDParticleDataHeaderImpl (std::string const & Headerfile_path)
+    : m_Header_path(Headerfile_path)
+{
+
+}
+
+void
+BTDParticleDataHeaderImpl::ReadHeader ()
+{
+    // Read existing fab Header first
+    amrex::Vector<char> HeaderCharPtr;
+    amrex::Long fileLength(0), fileLengthPadded(0);
+    std::ifstream iss;
+
+    iss.open(m_Header_path.c_str(), std::ios::in);
+    iss.seekg(0, std::ios::end);
+    fileLength = static_cast<std::streamoff>(iss.tellg());
+    iss.seekg(0, std::ios::beg);
+
+    fileLengthPadded = fileLength + 1;
+    HeaderCharPtr.resize(fileLengthPadded);
+    iss.read(HeaderCharPtr.dataPtr(), fileLength);
+    iss.close();
+    HeaderCharPtr[fileLength] = '\0';
+
+    std::istringstream is(HeaderCharPtr.dataPtr(), std::istringstream::in);
+    is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
+
+
+    int in_hash;
+    int bl_ignore_max = 100000;
+
+    is.ignore(bl_ignore_max,'(') >> m_ba_size >> in_hash;
+    m_ba.resize(m_ba_size);
+    for (int ibox = 0; ibox < m_ba.size(); ++ibox) {
+        amrex::Box bx;
+        is >> bx;
+        m_ba.set(ibox, bx);
+    }
+    is.ignore(bl_ignore_max, ')');
+
+}
+
+void
+BTDParticleDataHeaderImpl::WriteHeader ()
+{
+    if (amrex::FileExists(m_Header_path)) {
+        amrex::FileSystem::Remove(m_Header_path);
+    }
+    std::ofstream HeaderFile;
+    HeaderFile.open(m_Header_path.c_str(), std::ofstream::out |
+                                           std::ofstream::trunc |
+                                           std::ofstream::binary);
+    if ( !HeaderFile.good()) amrex::FileOpenFailed(m_Header_path);
+
+    HeaderFile.precision(17);
+    m_ba.writeOn(HeaderFile);
+}

@@ -9,8 +9,12 @@
 
 #include "ResamplingTrigger.H"
 
-class WarpXParIter; // forward declaration
-class WarpXParticleContainer; // forward declaration
+#include "Particles/WarpXParticleContainer_fwd.H"
+
+#include <AMReX_REAL.H>
+
+#include <memory>
+#include <string>
 
 /**
  * \brief An empty base class from which specific resampling algorithms are derived.

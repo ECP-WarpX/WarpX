@@ -8,13 +8,12 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_REDUCEDDIAGS_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_REDUCEDDIAGS_H_
 
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 
 #include <AMReX_REAL.H>
 
 #include <string>
 #include <vector>
-#include <fstream>
 
 /**
  *  Base class for reduced diagnostics. Each type of reduced diagnostics is
@@ -35,7 +34,7 @@ public:
     std::string m_rd_name;
 
     /// output intervals
-    IntervalsParser m_intervals;
+    utils::parser::IntervalsParser m_intervals;
 
     /// check if it is a restart run
     int m_IsNotRestart = 1;
@@ -46,23 +45,44 @@ public:
     /// output data
     std::vector<amrex::Real> m_data;
 
-    /** constructor
-     *  @param[in] rd_name reduced diags name */
-    ReducedDiags(std::string rd_name);
-
-    /** Virtual destructor for polymorphism
+    /**
+     * constructor
+     * @param[in] rd_name reduced diags names
      */
-    virtual ~ReducedDiags() = default;
+    ReducedDiags (std::string rd_name);
 
-    /// function to compute diags
-    virtual void ComputeDiags(int step) = 0;
+    /**
+     * Virtual destructor for polymorphism
+     */
+    virtual ~ReducedDiags () = default;
 
-    /** write to file function
-     *  @param[in] step time step */
-    virtual void WriteToFile(int step) const;
+    /**
+     * function to initialize data after amr
+     * levels are initialized.
+     */
+    virtual void InitData ();
 
-    /** This function queries deprecated input parameters and abort
-     *  the run if one of them is specified.
+    /** Redistribute parallel data structures during load balance
+     */
+    virtual void LoadBalance ();
+
+    /**
+     * function to compute diags
+     *
+     * @param[in] step current time step
+     */
+    virtual void ComputeDiags (int step) = 0;
+
+    /**
+     * write to file function
+     *
+     * @param[in] step current time step
+     */
+    virtual void WriteToFile (int step) const;
+
+    /**
+     * This function queries deprecated input parameters and aborts
+     * the run if one of them is specified.
      */
     void BackwardCompatibility ();
 

@@ -9,8 +9,12 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEHISTOGRAM_H_
 
 #include "ReducedDiags.H"
-#include "WarpX.H"
-#include <fstream>
+
+#include <AMReX_Parser.H>
+#include <AMReX_REAL.H>
+
+#include <memory>
+#include <string>
 
 /**
  * Reduced diagnostics that computes a histogram over particles
@@ -20,8 +24,10 @@ class ParticleHistogram : public ReducedDiags
 {
 public:
 
-    /** constructor
-     *  @param[in] rd_name reduced diags names */
+    /**
+     * constructor
+     * @param[in] rd_name reduced diags names
+     */
     ParticleHistogram(std::string rd_name);
 
     /// normalization type
@@ -43,16 +49,18 @@ public:
     /// Parser to read expression for particle quantity from the input file.
     /// 7 elements are t, x, y, z, ux, uy, uz
     static constexpr int m_nvars = 7;
-    std::unique_ptr<ParserWrapper<m_nvars>> m_parser;
+    std::unique_ptr<amrex::Parser> m_parser;
 
     /// Optional parser to filter particles before doing the histogram
-    std::unique_ptr<ParserWrapper<m_nvars>> m_parser_filter;
+    std::unique_ptr<amrex::Parser> m_parser_filter;
 
     /// Whether the filter is activated
     bool m_do_parser_filter = false;
 
-    /** This function computes a histogram of user defined quantity.
-     *  \param [in] step current time step.
+    /**
+     * This function computes a histogram of user defined quantity.
+     *
+     * @param[in] step current time step
      */
     virtual void ComputeDiags(int step) override final;
 

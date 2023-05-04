@@ -7,68 +7,62 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+
 #include "Initialization/WarpXAMReXInit.H"
 #include "Utils/MPIInitHelpers.H"
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXrocfftUtil.H"
+#include "Utils/WarpXUtil.H"
 
-#include <AMReX.H>
-#include <AMReX_BLProfiler.H>
-#include <AMReX_ParallelDescriptor.H>
+#include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/utils/timer/Timer.H>
 
-#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
-#include <rocfft.h>
-#endif
+#include <AMReX_Print.H>
 
 int main(int argc, char* argv[])
 {
-    using namespace amrex;
-
-    auto mpi_thread_levels = utils::warpx_mpi_init(argc, argv);
+    utils::warpx_mpi_init(argc, argv);
 
     warpx_amrex_init(argc, argv);
 
-    utils::warpx_check_mpi_thread_level(mpi_thread_levels);
+    utils::rocfft::setup();
 
-#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
-    rocfft_setup();
-#endif
+    ParseGeometryInput();
 
     ConvertLabParamsToBoost();
+    ReadBCParams();
 
 #ifdef WARPX_DIM_RZ
     CheckGriddingForRZSpectral();
 #endif
 
-    WARPX_PROFILE_VAR("main()", pmain);
-
-    const auto strt_total = static_cast<Real>(amrex::second());
-
     {
+        WARPX_PROFILE_VAR("main()", pmain);
+
+        auto timer = ablastr::utils::timer::Timer{};
+        timer.record_start_time();
+
         WarpX warpx;
 
         warpx.InitData();
 
         warpx.Evolve();
 
-        auto end_total = static_cast<Real>(amrex::second()) - strt_total;
+        //Print warning messages at the end of the simulation
+        ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 
-        ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());
+        timer.record_stop_time();
         if (warpx.Verbose()) {
-            Print() << "Total Time                     : " << end_total << '\n';
-            Print() << "WarpX Version: " << WarpX::Version() << '\n';
-            Print() << "PICSAR Version: " << WarpX::PicsarVersion() << '\n';
+            amrex::Print() << "Total Time                     : "
+                    << timer.get_global_duration() << '\n';
         }
+
+        WARPX_PROFILE_VAR_STOP(pmain);
     }
 
-    WARPX_PROFILE_VAR_STOP(pmain);
+    utils::rocfft::cleanup();
 
-#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
-    rocfft_cleanup();
-#endif
+    amrex::Finalize();
 
-    Finalize();
-#if defined(AMREX_USE_MPI)
-    MPI_Finalize();
-#endif
+    utils::warpx_mpi_finalize ();
 }

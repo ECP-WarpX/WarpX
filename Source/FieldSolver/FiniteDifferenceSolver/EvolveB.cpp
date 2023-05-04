@@ -4,18 +4,43 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "WarpX.H"
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
-#ifdef WARPX_DIM_RZ
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#else
+
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#ifndef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#else
+#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
-#include <AMReX_Gpu.H>
+#include "Utils/TextMsg.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuDevice.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_LayoutData.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_iMultiFab.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 using namespace amrex;
 
@@ -25,33 +50,51 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    std::unique_ptr<amrex::MultiFab> const& Gfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
+    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
+    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
     int lev, amrex::Real const dt ) {
+
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(area_mod, ECTRhofield, Venl, flag_info_cell, borrowing);
+#endif
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
-
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
+        ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
-
 #else
-    if (m_do_nodal) {
-
-        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, lev, dt );
-
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
-
-        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, lev, dt );
-
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
-
-        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, lev, dt );
-
-#endif
-    } else {
-        amrex::Abort("EvolveB: Unknown algorithm");
+    if(m_grid_type == GridType::Collocated || m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
+        amrex::ignore_unused(face_areas);
     }
 
+    if (m_grid_type == GridType::Collocated) {
+
+        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
+
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
+
+        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
+
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
+
+        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
+#ifdef AMREX_USE_EB
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::ECT) {
+
+        EvolveBCartesianECT(Bfield, face_areas, area_mod, ECTRhofield, Venl, flag_info_cell,
+                            borrowing, lev, dt);
+#endif
+#endif
+    } else {
+        WARPX_ABORT_WITH_MESSAGE("EvolveB: Unknown algorithm");
+    }
 }
 
 
@@ -61,6 +104,7 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    std::unique_ptr<amrex::MultiFab> const& Gfield,
     int lev, amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
@@ -101,21 +145,50 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         amrex::ParallelFor(tbx, tby, tbz,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
                 Bx(i, j, k) += dt * T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
                              - dt * T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k);
+
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
                 By(i, j, k) += dt * T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
                              - dt * T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k);
+
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
                 Bz(i, j, k) += dt * T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
                              - dt * T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k);
-            }
 
+            }
         );
+
+        // div(B) cleaning correction for errors in magnetic Gauss law (div(B) = 0)
+        if (Gfield)
+        {
+            // Extract field data for this grid/tile
+            Array4<Real> G = Gfield->array(mfi);
+
+            // Loop over cells and update G
+            amrex::ParallelFor(tbx, tby, tbz,
+
+                [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                {
+                    Bx(i,j,k) += dt * T_Algo::DownwardDx(G, coefs_x, n_coefs_x, i, j, k);
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                {
+                    By(i,j,k) += dt * T_Algo::DownwardDy(G, coefs_y, n_coefs_y, i, j, k);
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k)
+                {
+                    Bz(i,j,k) += dt * T_Algo::DownwardDz(G, coefs_z, n_coefs_z, i, j, k);
+                }
+            );
+        }
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -124,6 +197,171 @@ void FiniteDifferenceSolver::EvolveBCartesian (
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
+}
+
+
+void FiniteDifferenceSolver::EvolveBCartesianECT (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_mod,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& ECTRhofield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Venl,
+    std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_info_cell,
+    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
+    const int lev, amrex::Real const dt ) {
+#ifdef AMREX_USE_EB
+
+#if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
+    WARPX_ABORT_WITH_MESSAGE(
+        "EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+#endif
+
+    amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
+
+    Venl[0]->setVal(0.);
+    Venl[1]->setVal(0.);
+    Venl[2]->setVal(0.);
+
+    // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (MFIter mfi(*Bfield[0]); mfi.isValid(); ++mfi) {
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            // Extract field data for this grid/tile
+            Array4<Real> const &B = Bfield[idim]->array(mfi);
+            Array4<Real> const &Rho = ECTRhofield[idim]->array(mfi);
+            Array4<Real> const &Venl_dim = Venl[idim]->array(mfi);
+
+            amrex::Array4<int> const &flag_info_cell_dim = flag_info_cell[idim]->array(mfi);
+            amrex::Array4<Real> const &S = face_areas[idim]->array(mfi);
+            amrex::Array4<Real> const &S_mod = area_mod[idim]->array(mfi);
+
+            auto &borrowing_dim = (*borrowing[idim])[mfi];
+            auto borrowing_dim_neigh_faces = borrowing_dim.neigh_faces.data();
+            auto borrowing_dim_area = borrowing_dim.area.data();
+
+            auto const &borrowing_inds = (*borrowing[idim])[mfi].inds.data();
+            auto const &borrowing_size = (*borrowing[idim])[mfi].size.array();
+            auto const &borrowing_inds_pointer = (*borrowing[idim])[mfi].inds_pointer.array();
+
+            // Extract tileboxes for which to loop
+            Box const &tb = mfi.tilebox(Bfield[idim]->ixType().toIntVect());
+
+            //Take care of the unstable cells
+            amrex::ParallelFor(tb, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+
+                if (S(i, j, k) <= 0) return;
+
+                if (!(flag_info_cell_dim(i, j, k) == 0))
+                    return;
+
+                Venl_dim(i, j, k) = Rho(i, j, k) * S(i, j, k);
+                amrex::Real rho_enl;
+
+                // First we compute the rho of the enlarged face
+                for (int offset = 0; offset<borrowing_size(i, j, k); offset++) {
+                    int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
+                    auto vec = FaceInfoBox::uint8_to_inds(borrowing_dim_neigh_faces[ind]);
+                    int ip, jp, kp;
+                    if(idim == 0){
+                        ip = i;
+                        jp = j + vec(0);
+                        kp = k + vec(1);
+                    }else if(idim == 1){
+#ifdef WARPX_DIM_XZ
+                        ip = i + vec(0);
+                        jp = j + vec(1);
+                        kp = k;
+#elif defined(WARPX_DIM_3D)
+                        ip = i + vec(0);
+                        jp = j;
+                        kp = k + vec(1);
+#else
+                        amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+#endif
+                    }else{
+                        ip = i + vec(0);
+                        jp = j + vec(1);
+                        kp = k;
+                    }
+
+                    Venl_dim(i, j, k) += Rho(ip, jp, kp) * borrowing_dim_area[ind];
+
+                }
+
+                rho_enl = Venl_dim(i, j, k) / S_mod(i, j, k);
+
+                for (int offset = 0; offset < borrowing_size(i, j, k); offset++) {
+                    int ind = borrowing_inds[*borrowing_inds_pointer(i, j, k) + offset];
+                    auto vec = FaceInfoBox::uint8_to_inds(borrowing_dim_neigh_faces[ind]);
+                    int ip, jp, kp;
+                    if(idim == 0){
+                        ip = i;
+                        jp = j + vec(0);
+                        kp = k + vec(1);
+                    }else if(idim == 1){
+#ifdef WARPX_DIM_XZ
+                        ip = i + vec(0);
+                        jp = j + vec(1);
+                        kp = k;
+#elif defined(WARPX_DIM_3D)
+                        ip = i + vec(0);
+                        jp = j;
+                        kp = k + vec(1);
+#else
+                        amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+#endif
+                    }else{
+                        ip = i + vec(0);
+                        jp = j + vec(1);
+                        kp = k;
+                    }
+
+                    Venl_dim(ip, jp, kp) += rho_enl * borrowing_dim_area[ind];
+
+                }
+
+                B(i, j, k) = B(i, j, k) - dt * rho_enl;
+
+            });
+
+            //Take care of the stable cells
+            amrex::ParallelFor(tb, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+                if (S(i, j, k) <= 0) return;
+
+                if (flag_info_cell_dim(i, j, k) == 0) {
+                    return;
+                }
+                else if (flag_info_cell_dim(i, j, k) == 1) {
+                    //Stable cell which hasn't been intruded
+                    B(i, j, k) = B(i, j, k) - dt * Rho(i, j, k);
+                } else if (flag_info_cell_dim(i, j, k) == 2) {
+                    //Stable cell which has been intruded
+                    Venl_dim(i, j, k) += Rho(i, j, k) * S_mod(i, j, k);
+                    B(i, j, k) = B(i, j, k) - dt * Venl_dim(i, j, k) / S(i, j, k);
+                }
+
+            });
+
+        }
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
+    }
+#else
+    amrex::ignore_unused(Bfield, face_areas, area_mod, ECTRhofield, Venl, flag_info_cell, borrowing,
+                         lev, dt);
+#endif
 }
 
 #else // corresponds to ifndef WARPX_DIM_RZ

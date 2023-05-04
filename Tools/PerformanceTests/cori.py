@@ -5,7 +5,8 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import os, copy
+import copy
+import os
 
 from functions_perftest import test_element
 
@@ -13,7 +14,7 @@ module_name = {'cpu': 'haswell.', 'knl': 'mic-knl.', 'gpu':'.'}
 
 def executable_name(compiler, architecture):
     return 'perf_tests3d.' + compiler + \
-        '.' + module_name[architecture] + 'TPROF.MPI.OMP.ex'
+        '.' + module_name[architecture] + 'TPROF.MTMPI.OMP.QED.ex'
 
 def get_config_command(compiler, architecture):
     config_command = ''

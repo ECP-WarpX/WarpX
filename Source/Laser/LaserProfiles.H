@@ -7,18 +7,17 @@
 #ifndef WARPX_LaserProfiles_H_
 #define WARPX_LaserProfiles_H_
 
-#include "Parser/WarpXParserWrapper.H"
-
-#include <AMReX_REAL.H>
-#include <AMReX_ParmParse.H>
-#include <AMReX_Vector.H>
 #include <AMReX_Gpu.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
 
-#include <map>
-#include <string>
-#include <memory>
 #include <functional>
 #include <limits>
+#include <map>
+#include <memory>
+#include <string>
 #include <utility>
 
 
@@ -59,13 +58,11 @@ public:
      * member variables of the laser profile class.
      *
      * @param[in] ppl should be amrex::ParmParse(laser_name)
-     * @param[in] ppc should be amrex::ParmParse("my_constants")
      * @param[in] params common laser profile parameters
      */
     virtual void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) = 0;
 
     /** Update Laser Profile
@@ -110,7 +107,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     //No update needed
@@ -153,7 +149,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     //No update needed
@@ -188,7 +183,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     //No update needed
@@ -208,8 +202,7 @@ private:
         std::string field_function;
     } m_params;
 
-    WarpXParser m_parser;
-    std::unique_ptr<ParserWrapper<3> > m_gpu_parser;
+    amrex::Parser m_parser;
 };
 
 /**
@@ -225,7 +218,6 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        const amrex::ParmParse& ppc,
         CommonLaserParameters params) override final;
 
     /** \brief Reads new field data chunk from file if needed
@@ -363,6 +355,10 @@ private:
         int last_time_index;
         /** Field data */
         amrex::Gpu::DeviceVector<amrex::Real> E_data;
+        /** This parameter is subtracted to simulation time before interpolating field data in txye file.
+        *   If t_delay > 0, the laser is delayed, otherwise it is anticipated. */
+        amrex::Real t_delay = amrex::Real(0.0);
+
     } m_params;
 
     CommonLaserParameters m_common_params;

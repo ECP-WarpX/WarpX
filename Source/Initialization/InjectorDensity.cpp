@@ -6,8 +6,17 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "InjectorDensity.H"
-#include "PlasmaInjector.H"
 
+#include "Initialization/CustomDensityProb.H"
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_ParmParse.H>
+
+#include <algorithm>
+#include <cctype>
+#include <vector>
 
 using namespace amrex;
 
@@ -17,7 +26,6 @@ void InjectorDensity::clear ()
     {
     case Type::parser:
     {
-        object.parser.m_parser.clear();
         break;
     }
     case Type::custom:
@@ -39,12 +47,13 @@ InjectorDensityPredefined::InjectorDensityPredefined (
     std::string const& a_species_name) noexcept
     : profile(Profile::null)
 {
-    ParmParse pp(a_species_name);
+    ParmParse pp_species_name(a_species_name);
 
     std::vector<amrex::Real> v;
     // Read parameters for the predefined plasma profile.
-    pp.getarr("predefined_profile_params", v);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
+    utils::parser::getArrWithParser(
+        pp_species_name, "predefined_profile_params", v);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                      "Too many parameters for InjectorDensityPredefined");
     for (int i = 0; i < static_cast<int>(v.size()); ++i) {
         p[i] = v[i];
@@ -52,12 +61,12 @@ InjectorDensityPredefined::InjectorDensityPredefined (
 
     // Parse predefined profile name, and update member variable profile.
     std::string which_profile_s;
-    pp.query("predefined_profile_name", which_profile_s);
+    pp_species_name.query("predefined_profile_name", which_profile_s);
     std::transform(which_profile_s.begin(), which_profile_s.end(),
                    which_profile_s.begin(), ::tolower);
     if (which_profile_s == "parabolic_channel"){
         profile = Profile::parabolic_channel;
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() > 5,
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() > 5,
             "InjectorDensityPredefined::parabolic_channel: not enough parameters");
     }
 }

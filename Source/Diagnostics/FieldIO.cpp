@@ -6,23 +6,70 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "FieldIO.H"
-#include "WarpX.H"
-#include "Utils/CoarsenIO.H"
-#include "Utils/WarpXUtil.H"
 
-#ifdef WARPX_USE_PSATD
-#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
-#endif
+#include "Utils/TextMsg.H"
 
-#ifdef WARPX_USE_OPENPMD
-#   include <openPMD/openPMD.hpp>
-#endif
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX.H>
+#include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_SPACE.H>
 
+#include <algorithm>
+#include <cstdint>
 #include <memory>
 
 using namespace amrex;
+
+/** \brief
+ * Convert an IntVect to a std::vector<std::uint64_t>
+ * (used for compatibility with openPMD-api)
+ */
+std::vector<std::uint64_t>
+getVec( const IntVect& v, bool reverse)
+{
+  // Convert the IntVect v to and std::vector u
+  std::vector<std::uint64_t> u = {
+    AMREX_D_DECL(
+                 static_cast<std::uint64_t>(v[0]),
+                 static_cast<std::uint64_t>(v[1]),
+                 static_cast<std::uint64_t>(v[2])
+                 )
+  };
+  // Reverse the order of elements, if v corresponds to the indices of a
+  // Fortran-order array (like an AMReX FArrayBox)
+  // but u is intended to be used with a C-order API (like openPMD)
+  if (reverse) {
+    std::reverse( u.begin(), u.end() );
+  }
+
+  return u;
+}
+/** \brief
+ * Convert Real* pointer to a std::vector<double>,
+ * (used for compatibility with the openPMD API)
+ */
+std::vector<double>
+getVec( const Real* v , bool reverse)
+{
+  // Convert Real* v to and std::vector u
+  std::vector<double> u = {
+    AMREX_D_DECL(
+                 static_cast<double>(v[0]),
+                 static_cast<double>(v[1]),
+                 static_cast<double>(v[2])
+                 )
+  };
+  // Reverse the order of elements, if v corresponds to the indices of a
+  // Fortran-order array (like an AMReX FArrayBox)
+  // but u is intended to be used with a C-order API (like openPMD-api)
+  if (reverse) {
+    std::reverse( u.begin(), u.end() );
+  }
+
+  return u;
+}
 
 /** \brief
  * Convert an IntVect to a std::vector<std::uint64_t>
@@ -110,7 +157,7 @@ void
 AverageAndPackVectorField( MultiFab& mf_avg,
                            const std::array< std::unique_ptr<MultiFab>, 3 >& vector_field,
                            const DistributionMapping& dm,
-                           const int dcomp, const int ngrow )
+                           const int dcomp, const IntVect ngrow )
 {
 #ifndef WARPX_DIM_RZ
     (void)dm;
@@ -137,9 +184,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     const std::array<std::unique_ptr<MultiFab>,3> &vector_total = vector_field;
 #endif
 
-    CoarsenIO::Coarsen( mf_avg, *(vector_total[0]), dcomp  , 0, 1, ngrow );
-    CoarsenIO::Coarsen( mf_avg, *(vector_total[1]), dcomp+1, 0, 1, ngrow );
-    CoarsenIO::Coarsen( mf_avg, *(vector_total[2]), dcomp+2, 0, 1, ngrow );
+    ablastr::coarsen::sample::Coarsen(mf_avg, *(vector_total[0]), dcomp  , 0, 1, ngrow );
+    ablastr::coarsen::sample::Coarsen(mf_avg, *(vector_total[1]), dcomp + 1, 0, 1, ngrow );
+    ablastr::coarsen::sample::Coarsen(mf_avg, *(vector_total[2]), dcomp + 2, 0, 1, ngrow );
 }
 
 /** \brief Take a MultiFab `scalar_field`
@@ -150,22 +197,21 @@ void
 AverageAndPackScalarField (MultiFab& mf_avg,
                            const MultiFab & scalar_field,
                            const DistributionMapping& dm,
-                           const int dcomp, const int ngrow )
+                           const int dcomp, const IntVect ngrow )
 {
+    const MultiFab *scalar_total = &scalar_field;
 
 #ifdef WARPX_DIM_RZ
-    MultiFab *scalar_total;
+    MultiFab tmp;
     if (scalar_field.nComp() > 1) {
         // With the RZ solver, there are more than one component, so the total
         // fields needs to be constructed in temporary a MultiFab.
-        scalar_total = new MultiFab(scalar_field.boxArray(), dm, 1, scalar_field.nGrowVect());
-        ConstructTotalRZScalarField(*scalar_total, scalar_field);
-    } else {
-        scalar_total = new MultiFab(scalar_field, amrex::make_alias, 0, 1);
+        tmp.define(scalar_field.boxArray(), dm, 1, scalar_field.nGrowVect());
+        ConstructTotalRZScalarField(tmp, scalar_field);
+        scalar_total = &tmp;
     }
 #else
     amrex::ignore_unused(dm);
-    const MultiFab *scalar_total = &scalar_field;
 #endif
 
     // Check the type of staggering of the 3-component `vector_field`
@@ -175,8 +221,8 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, *scalar_total, 0, dcomp, 1, ngrow);
     } else if ( scalar_total->is_nodal() ){
         // - Fully nodal
-        CoarsenIO::Coarsen( mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
+        ablastr::coarsen::sample::Coarsen(mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
     } else {
-        amrex::Abort("Unknown staggering.");
+        WARPX_ABORT_WITH_MESSAGE("Unknown staggering.");
     }
 }

@@ -5,7 +5,10 @@
 # License: BSD-3-Clause-LBNL
 
 import numpy as np
-from . import _libwarpx
+
+from ._libwarpx import libwarpx
+from ._picmi import constants
+
 
 class PGroup(object):
     """Implements a class that has the same API as a warp ParticleGroup instance.
@@ -63,7 +66,7 @@ class PGroup(object):
         pass
 
     def getnpid(self):
-        return _libwarpx.get_nattr()
+        return libwarpx.get_nattr()
     npid = property(getnpid)
 
     def getnps(self):
@@ -83,45 +86,45 @@ class PGroup(object):
     npmax = property(getnpmax)
 
     def getxp(self):
-        return _libwarpx.get_particle_x(self.ispecie, self.level)[self.igroup]
+        return libwarpx.get_particle_x(self.ispecie, self.level)[self.igroup]
     xp = property(getxp)
 
     def getyp(self):
-        return _libwarpx.get_particle_y(self.ispecie, self.level)[self.igroup]
+        return libwarpx.get_particle_y(self.ispecie, self.level)[self.igroup]
     yp = property(getyp)
 
     def getrp(self):
-        return _libwarpx.get_particle_r(self.ispecie, self.level)[self.igroup]
+        return libwarpx.get_particle_r(self.ispecie, self.level)[self.igroup]
     rp = property(getrp)
 
     def getzp(self):
-        return _libwarpx.get_particle_z(self.ispecie, self.level)[self.igroup]
+        return libwarpx.get_particle_z(self.ispecie, self.level)[self.igroup]
     zp = property(getzp)
 
     def getuxp(self):
-        return _libwarpx.get_particle_ux(self.ispecie, self.level)[self.igroup]
+        return libwarpx.get_particle_ux(self.ispecie, self.level)[self.igroup]
     uxp = property(getuxp)
 
     def getuyp(self):
-        return _libwarpx.get_particle_uy(self.ispecie, self.level)[self.igroup]
+        return libwarpx.get_particle_uy(self.ispecie, self.level)[self.igroup]
     uyp = property(getuyp)
 
     def getuzp(self):
-        return _libwarpx.get_particle_uz(self.ispecie, self.level)[self.igroup]
+        return libwarpx.get_particle_uz(self.ispecie, self.level)[self.igroup]
     uzp = property(getuzp)
 
     def getw(self):
-        return _libwarpx.get_particle_weight(self.ispecie, self.level)[self.igroup]
+        return libwarpx.get_particle_weight(self.ispecie, self.level)[self.igroup]
 
     def getpid(self, id):
-        pid = _libwarpx.get_particle_arrays(self.ispecie, id, self.level)[self.igroup]
+        pid = libwarpx.get_particle_arrays(self.ispecie, id, self.level)[self.igroup]
         return np.array([pid]).T
 
     def getgaminv(self):
         uxp = self.getuxp()
         uyp = self.getuyp()
         uzp = self.getuzp()
-        return np.sqrt(1. - (uxp**2 + uyp**2 + uzp**2)/_libwarpx.clight**2)
+        return np.sqrt(1. - (uxp**2 + uyp**2 + uzp**2)/constants.c**2)
     gaminv = property(getgaminv)
 
     def getex(self):
@@ -149,7 +152,7 @@ class PGroup(object):
     bz = property(getbz)
 
     def gettheta(self):
-        return _libwarpx.get_particle_theta(self.ispecie, self.level)[self.igroup]
+        return libwarpx.get_particle_theta(self.ispecie, self.level)[self.igroup]
     theta = property(gettheta)
 
 class PGroups(object):
@@ -158,7 +161,7 @@ class PGroups(object):
         self.level = level
 
     def setuppgroups(self):
-        xall = _libwarpx.get_particle_x(self.ispecie, self.level)
+        xall = libwarpx.get_particle_x(self.ispecie, self.level)
         self.ngroups = len(xall)
 
         self._pgroups = []

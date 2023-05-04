@@ -5,7 +5,7 @@ max_step = 10
 amr.n_cell = 32 32 # 128 128 # 32 32
 amr.max_grid_size = 16 # 64 # 16
 amr.blocking_factor = 16 # 64 # 16
-geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.dims = 2
 geometry.is_periodic = 1     0      # Is periodic?
 geometry.prob_lo     = -20.e-6   -20.e-6    # physical domain
 geometry.prob_hi     =  20.e-6    20.e-6
@@ -13,7 +13,7 @@ geometry.prob_hi     =  20.e-6    20.e-6
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.serialize_ics = 1
+warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
 warpx.cfl = .9999
 amr.plot_int = 1000
@@ -23,11 +23,9 @@ particles.use_fdtd_nci_corr = 0
 warpx.use_filter=0
 warpx.filter_npass_each_dir=1 4
 warpx.do_moving_window = 0
-warpx.moving_window_dir = z # Only z is supported for the moment
+warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # units of speed of light
-interpolation.nox = 1
-interpolation.noy = 1
-interpolation.noz = 1
+algo.particle_shape = 1
 algo.maxwell_solver = yee
 algo.current_deposition = esirkepov
 amr.plot_file = "plotfiles/plt"

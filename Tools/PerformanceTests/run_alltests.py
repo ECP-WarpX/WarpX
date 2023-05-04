@@ -5,10 +5,14 @@
 #
 # License: BSD-3-Clause-LBNL
 
-import os, sys, shutil
-import argparse, re, time
-from functions_perftest import *
+import argparse
 import datetime
+import os
+import re
+import shutil
+import time
+
+from functions_perftest import *
 
 # This script runs automated performance tests for WarpX.
 # It runs tests in list test_list defined below, and write
@@ -137,7 +141,7 @@ module_Cname = {'cpu': 'haswell', 'knl': 'knl,quad,cache'}
 cwd = os.getcwd() + '/'
 res_dir_base = os.environ['SCRATCH'] + '/performance_warpx/'
 bin_dir = cwd + 'Bin/'
-bin_name = 'perf_tests3d.' + args.compiler + '.' + module_name[args.architecture] + '.TPROF.MPI.OMP.ex'
+bin_name = 'perf_tests3d.' + args.compiler + '.' + module_name[args.architecture] + '.TPROF.MTMPI.OMP.QED.ex'
 log_dir  = cwd
 
 perf_database_file = cwd + 'perf_database_warpx.h5'

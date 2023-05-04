@@ -1,9 +1,12 @@
 target_sources(WarpX
   PRIVATE
-    PsatdAlgorithm.cpp
-    PMLPsatdAlgorithm.cpp
+    PsatdAlgorithmFirstOrder.cpp
+    PsatdAlgorithmJConstantInTime.cpp
+    PsatdAlgorithmJLinearInTime.cpp
+    PsatdAlgorithmPml.cpp
+    PsatdAlgorithmGalileanPml.cpp
     SpectralBaseAlgorithm.cpp
-    ComovingPsatdAlgorithm.cpp
+    PsatdAlgorithmComoving.cpp
 )
 
 if(WarpX_DIMS STREQUAL RZ)
@@ -11,6 +14,7 @@ if(WarpX_DIMS STREQUAL RZ)
       PRIVATE
         SpectralBaseAlgorithmRZ.cpp
         PsatdAlgorithmRZ.cpp
-        GalileanPsatdAlgorithmRZ.cpp
+        PsatdAlgorithmGalileanRZ.cpp
+        PsatdAlgorithmPmlRZ.cpp
     )
 endif()

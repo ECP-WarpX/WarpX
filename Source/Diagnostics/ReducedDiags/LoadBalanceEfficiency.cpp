@@ -4,9 +4,18 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "WarpX.H"
 #include "LoadBalanceEfficiency.H"
+
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "WarpX.H"
+
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+
+#include <algorithm>
+#include <ostream>
+#include <vector>
 
 using namespace amrex;
 
@@ -16,8 +25,8 @@ LoadBalanceEfficiency::LoadBalanceEfficiency (std::string rd_name)
 {
     // read number of levels
     int nLevel = 0;
-    ParmParse pp("amr");
-    pp.query("max_level", nLevel);
+    ParmParse pp_amr("amr");
+    pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
     // resize data array
@@ -31,16 +40,15 @@ LoadBalanceEfficiency::LoadBalanceEfficiency (std::string rd_name)
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
 
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
-            constexpr int shift = 3;
+            ofs << "[" << c++ << "]time(s)";
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift+lev) + "]";
-                ofs << "lev"+std::to_string(lev);
+                ofs << "[" << c++ << "]lev" + std::to_string(lev);
             }
             ofs << std::endl;
 

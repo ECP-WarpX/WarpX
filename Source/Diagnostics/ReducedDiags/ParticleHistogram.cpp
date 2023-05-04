@@ -6,20 +6,37 @@
  */
 
 #include "ParticleHistogram.H"
-#include "WarpX.H"
-#include "Particles/Pusher/GetAndSetPosition.H"
-#include "Utils/WarpXUtil.H"
-#include "Particles/Filter/FilterFunctors.H"
 
+#include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX.H"
+
+#include <AMReX.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuAtomic.H>
 #include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_Math.H>
-#include <AMReX_ParticleReduce.H>
+#include <AMReX_PODVector.H>
+#include <AMReX_ParIter.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <memory>
-
+#include <ostream>
+#include <vector>
 
 using namespace amrex;
 
@@ -36,29 +53,28 @@ struct NormalizationType {
 ParticleHistogram::ParticleHistogram (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
-    ParmParse pp(rd_name);
+    ParmParse pp_rd_name(rd_name);
 
     // read species
     std::string selected_species_name;
-    pp.get("species",selected_species_name);
+    pp_rd_name.get("species",selected_species_name);
 
     // read bin parameters
-    pp.get("bin_number",m_bin_num);
-    getWithParser(pp, "bin_max",   m_bin_max);
-    getWithParser(pp, "bin_min",   m_bin_min);
+    utils::parser::getWithParser(pp_rd_name, "bin_number",m_bin_num);
+    utils::parser::getWithParser(pp_rd_name, "bin_max",   m_bin_max);
+    utils::parser::getWithParser(pp_rd_name, "bin_min",   m_bin_min);
     m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
 
     // read histogram function
     std::string function_string = "";
-    Store_parserString(pp,"histogram_function(t,x,y,z,ux,uy,uz)",
+    utils::parser::Store_parserString(pp_rd_name,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
-    m_parser = std::make_unique<ParserWrapper<m_nvars>>(
-        makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
+    m_parser = std::make_unique<amrex::Parser>(
+        utils::parser::makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
 
     // read normalization type
     std::string norm_string = "default";
-    pp.query("normalization",norm_string);
+    pp_rd_name.query("normalization",norm_string);
 
     // set normalization type
     if ( norm_string == "default" ) {
@@ -70,7 +86,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     } else if ( norm_string == "area_to_unity" ) {
         m_norm = NormalizationType::area_to_unity;
     } else {
-        Abort("Unknown ParticleHistogram normalization type.");
+        WARPX_ABORT_WITH_MESSAGE(
+            "Unknown ParticleHistogram normalization type.");
     }
 
     // get MultiParticleContainer class object
@@ -86,17 +103,19 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     }
     // if m_selected_species_id is not modified
     if ( m_selected_species_id == -1 ){
-        Abort("Unknown species for ParticleHistogram reduced diagnostic.");
+        WARPX_ABORT_WITH_MESSAGE(
+            "Unknown species for ParticleHistogram reduced diagnostic.");
     }
 
     // Read optional filter
     std::string buf;
-    m_do_parser_filter = pp.query("filter_function(t,x,y,z,ux,uy,uz)", buf);
+    m_do_parser_filter = pp_rd_name.query("filter_function(t,x,y,z,ux,uy,uz)", buf);
     if (m_do_parser_filter) {
         std::string filter_string = "";
-        Store_parserString(pp,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
-        m_parser_filter = std::make_unique<ParserWrapper<m_nvars>>(
-                                     makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
+        utils::parser::Store_parserString(
+            pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
+        m_parser_filter = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
     }
 
     // resize data array
@@ -109,14 +128,15 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
+            int c = 0;
             ofs << "#";
-            ofs << "[1]step()";
+            ofs << "[" << c++ << "]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
+            ofs << "[" << c++ << "]time(s)";
             for (int i = 0; i < m_bin_num; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(3+i) + "]";
+                ofs << "[" << c++ << "]";
                 Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
                 ofs << "bin" + std::to_string(1+i)
                              + "=" + std::to_string(b) + "()";
@@ -126,14 +146,12 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             ofs.close();
         }
     }
-
 }
 // end constructor
 
 // function that computes the histogram
 void ParticleHistogram::ComputeDiags (int step)
 {
-
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) return;
 
@@ -150,10 +168,12 @@ void ParticleHistogram::ComputeDiags (int step)
     auto & myspc = mypc.GetParticleContainer(m_selected_species_id);
 
     // get parser
-    HostDeviceParser<m_nvars> fun_partparser = getParser(m_parser);
+    auto fun_partparser =
+        utils::parser::compileParser<m_nvars>(m_parser.get());
 
     // get filter parser
-    HostDeviceParser<m_nvars> fun_filterparser = getParser(m_parser_filter);
+    auto fun_filterparser =
+        utils::parser::compileParser<m_nvars>(m_parser_filter.get());
 
     // declare local variables
     auto const num_bins = m_bin_num;
@@ -180,10 +200,10 @@ void ParticleHistogram::ComputeDiags (int step)
                 auto const GetPosition = GetParticlePosition(pti);
 
                 auto & attribs = pti.GetAttribs();
-                Real* const AMREX_RESTRICT d_w = attribs[PIdx::w].dataPtr();
-                Real* const AMREX_RESTRICT d_ux = attribs[PIdx::ux].dataPtr();
-                Real* const AMREX_RESTRICT d_uy = attribs[PIdx::uy].dataPtr();
-                Real* const AMREX_RESTRICT d_uz = attribs[PIdx::uz].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_w = attribs[PIdx::w].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_ux = attribs[PIdx::ux].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_uy = attribs[PIdx::uy].dataPtr();
+                ParticleReal* const AMREX_RESTRICT d_uz = attribs[PIdx::uz].dataPtr();
 
                 long const np = pti.numParticles();
 
@@ -193,7 +213,7 @@ void ParticleHistogram::ComputeDiags (int step)
                 {
                     amrex::ParticleReal x, y, z;
                     GetPosition(i, x, y, z);
-                    auto const w  = d_w[i];
+                    auto const w  = (amrex::Real)d_w[i];
                     auto const ux = d_ux[i] / PhysConst::c;
                     auto const uy = d_uy[i] / PhysConst::c;
                     auto const uz = d_uz[i] / PhysConst::c;
@@ -204,7 +224,6 @@ void ParticleHistogram::ComputeDiags (int step)
                             return;
                     // continue function if particle is not filtered out
                     auto const f = fun_partparser(t, x, y, z, ux, uy, uz);
-
                     // determine particle bin
                     int const bin = int(Math::floor((f-bin_min)/bin_size));
                     if ( bin<0 || bin>=num_bins ) return; // discard if out-of-range
@@ -260,6 +279,5 @@ void ParticleHistogram::ComputeDiags (int step)
         }
         return;
     }
-
 }
 // end void ParticleHistogram::ComputeDiags

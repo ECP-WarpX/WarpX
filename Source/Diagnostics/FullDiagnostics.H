@@ -2,6 +2,9 @@
 #define WARPX_FULLDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
+#include "Utils/Parser/IntervalsParser.H"
+
+#include <string>
 
 class
 FullDiagnostics final : public Diagnostics
@@ -12,15 +15,13 @@ private:
     /** Read user-requested parameters for full diagnostics */
     void ReadParameters ();
     /** Determines timesteps at which full diagnostics are written to file */
-    IntervalsParser m_intervals;
+    utils::parser::IntervalsParser m_intervals;
     /** Whether to plot raw (i.e., NOT cell-centered) fields */
     bool m_plot_raw_fields = false;
     /** Whether to plot guard cells of raw fields */
     bool m_plot_raw_fields_guards = false;
-    /** Whether to plot charge density rho in raw fields */
-    bool m_plot_raw_rho = false;
-    /** Whether to plot F (charge conservation error) in raw fields */
-    bool m_plot_raw_F = false;
+    /** Whether to dump the RZ modes */
+    bool m_dump_rz_modes = false;
     /** Flush m_mf_output and particles to file for the i^th buffer */
     void Flush (int i_buffer) override;
     /** Flush raw data */
@@ -34,6 +35,7 @@ private:
     bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** whether to flush at this time step
      * \param[in] step current time step
+     * \param[in] i_buffer index of a back-transformed snapshot
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
@@ -43,20 +45,23 @@ private:
      * \param[in] ncomp number of components (modes, real and imag)
      */
     void AddRZModesToOutputNames (const std::string& field, int ncomp);
+    /** Define the cell-centered multifab m_mf_output depending on user-defined
+      * lo and hi and coarsening ratio. This MultiFab may have a different BoxArray and
+      * DistributionMap than field MultiFabs in the simulation.
+      *
+      * \param[in] i_buffer index of a back-transformed snapshot
+      * \param[in] lev level on which source multifabs are defined
+      */
+    void InitializeBufferData ( int i_buffer, int lev, bool restart=false ) override;
+    /** Initialize functors that store pointers to the RZ fields requested by the user.
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     */
+    void InitializeFieldFunctorsRZopenPMD (int lev) override;
     /** Append m_all_field_functors[lev] with all modes of all components of E B and j
      * and add name to varnames.
      * \param[in] lev level on which source multifabs are defined.
      */
     void AddRZModesToDiags (int lev);
-    /** Whether to dump the RZ modes */
-    bool m_dump_rz_modes = false;
-    /** Define the cell-centered multifab m_mf_output depending on user-defined
-      * lo and hi and coarsening ratio. This MultiFab may have a different BoxArray and
-      * DistributionMap than field MultiFabs in the simulation.
-      *
-      * \param[in] lev level on which source multifabs are defined
-      */
-    void InitializeFieldBufferData ( int i_buffer, int lev ) override;
     /** Initialize functors that store pointers to the fields requested by the user.
       * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
       */
@@ -64,10 +69,14 @@ private:
     void InitializeParticleBuffer () override;
     /** Prepare field data to be used for diagnostics */
     void PrepareFieldDataForOutput () override;
+    /** Prepare particle data to be used for diagnostics. */
+    void PrepareParticleDataForOutput() override {}
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
+     *
+     * \param[in] step current time step
      */
-    void MovingWindowAndGalileanDomainShift () override;
+    void MovingWindowAndGalileanDomainShift (int step) override;
     /** This function queries deprecated input parameters and abort
      *  the run if one of them is specified.
      */

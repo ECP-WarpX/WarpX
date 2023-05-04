@@ -4,19 +4,35 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
-#ifdef WARPX_DIM_RZ
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
-#else
-#   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+
+#include "Utils/TextMsg.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#ifndef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#else
+#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #endif
-#include "Utils/WarpXConst.H"
-#include "WarpX.H"
-#include <AMReX_Gpu.H>
+
+#include <AMReX.H>
+#include <AMReX_Array4.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_GpuControl.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_IndexType.H>
+#include <AMReX_MFIter.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_REAL.H>
+
+#include <AMReX_BaseFwd.H>
+
+#include <array>
+#include <memory>
 
 using namespace amrex;
 
@@ -30,26 +46,26 @@ void FiniteDifferenceSolver::ComputeDivE (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
 
         ComputeDivECylindrical <CylindricalYeeAlgorithm> ( Efield, divEfield );
 
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         ComputeDivECartesian <CartesianNodalAlgorithm> ( Efield, divEfield );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         ComputeDivECartesian <CartesianYeeAlgorithm> ( Efield, divEfield );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         ComputeDivECartesian <CartesianCKCAlgorithm> ( Efield, divEfield );
 
 #endif
     } else {
-        amrex::Abort("ComputeDivE: Unknown algorithm");
+        WARPX_ABORT_WITH_MESSAGE("ComputeDivE: Unknown algorithm");
     }
 
 }
