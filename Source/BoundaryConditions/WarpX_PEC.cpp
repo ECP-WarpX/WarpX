@@ -260,6 +260,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
                 tb.growHi(idim, ng_fieldgather[idim]);
         }
 
+        // loop over cells and update field inside the domain
         amrex::ParallelFor(
             tb, nComp,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
@@ -297,6 +298,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
                 tb.growHi(idim, ng_fieldgather[idim]);
         }
 
+        // loop over cells and update field inside the PEC boundary
         amrex::ParallelFor(
             tb, nComp,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
@@ -345,9 +347,13 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
     amrex::IntVect Jy_nodal = Jy->ixType().toIntVect();
     amrex::IntVect Jz_nodal = Jz->ixType().toIntVect();
 
+    // The J boundary is handled in 2 steps:
+    // 1) The cells internal to the domain are updated using the
+    //    current deposited in the guard cells
+    // 2) The guard cells are updated with the appropriate reverse current
+    //    based on the current in the valid cells
     for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
-
         Array4<Real> const& Jx_arr = Jx->array(mfi);
         Array4<Real> const& Jy_arr = Jy->array(mfi);
         Array4<Real> const& Jz_arr = Jz->array(mfi);
@@ -373,12 +379,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             }
         }
 
-        // The J boundary is handled in 2 steps:
-        // 1) The cells internal to the domain are updated using the
-        //    current deposited in the guard cells
-        // 2) The guard cells are updated with the appropriate reverse current
-        //    based on the current in the valid cells
-        // loop over cells and update fields
+        // loop over cells and update fields inside the domain
         amrex::ParallelFor(
             tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k)
@@ -429,7 +430,36 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                 );
             }
         );
+    }
 
+    for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    {
+        Array4<Real> const& Jx_arr = Jx->array(mfi);
+        Array4<Real> const& Jy_arr = Jy->array(mfi);
+        Array4<Real> const& Jz_arr = Jz->array(mfi);
+
+        Box const & tilebox = mfi.tilebox();
+        Box tbx = convert( tilebox, Jx_nodal );
+        Box tby = convert( tilebox, Jy_nodal );
+        Box tbz = convert( tilebox, Jz_nodal );
+
+        // Grow the tileboxes to include the guard cells for the PEC boundaries
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (fbndry_lo[idim] == FieldBoundaryType::PEC)
+            {
+                tbx.growLo(idim, ngJ[idim]);
+                tby.growLo(idim, ngJ[idim]);
+                tbz.growLo(idim, ngJ[idim]);
+            }
+            if (fbndry_hi[idim] == FieldBoundaryType::PEC)
+            {
+                tbx.growHi(idim, ngJ[idim]);
+                tby.growHi(idim, ngJ[idim]);
+                tbz.growHi(idim, ngJ[idim]);
+            }
+        }
+
+        // loop over cells and update fields inside the PEC boundary
         amrex::ParallelFor(
             tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k)
