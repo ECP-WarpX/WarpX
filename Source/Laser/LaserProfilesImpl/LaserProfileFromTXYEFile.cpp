@@ -270,12 +270,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             amplitude[i] = 0.0_rt;
             return;
         }
-#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
         if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
             amplitude[i] = 0.0_rt;
             return;
         }
-#endif
         //Find indices and coordinates along x
         const int temp_idx_x_right = static_cast<int>(
             std::ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
@@ -316,9 +314,9 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             p_E_data[idx(idx_t_right, idx_y_left, idx_x_right)],
             p_E_data[idx(idx_t_right, idx_y_right, idx_x_right)],
             t, Xp[i], Yp[i]);
-        // The interpolated amplitude was only the envelope.
-        // Here we add the laser oscillations.
-        amplitude[i] = (val*exp_omega_t).real();
-            }
+            // The interpolated amplitude was only the envelope.
+            // Here we add the laser oscillations.
+            amplitude[i] = (val*exp_omega_t).real();
+        }
     );
 }
