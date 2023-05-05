@@ -1302,13 +1302,24 @@ void WarpX::CheckKnownIssues()
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD &&
         (std::any_of(do_pml_Lo[0].begin(),do_pml_Lo[0].end(),[](const auto& ee){return ee;}) ||
         std::any_of(do_pml_Hi[0].begin(),do_pml_Hi[0].end(),[](const auto& ee){return ee;})) )
-        {
-            ablastr::warn_manager::WMRecordWarning(
-                "PML",
-                "Using PSATD together with PML may lead to instabilities if the plasma touches the PML region. "
-                "It is recommended to leave enough empty space between the plasma boundary and the PML region.",
-                ablastr::warn_manager::WarnPriority::low);
-        }
+    {
+        ablastr::warn_manager::WMRecordWarning(
+            "PML",
+            "Using PSATD together with PML may lead to instabilities if the plasma touches the PML region. "
+            "It is recommended to leave enough empty space between the plasma boundary and the PML region.",
+            ablastr::warn_manager::WarnPriority::low);
+    }
+
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC &&
+        WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov)
+    {
+        ablastr::warn_manager::WMRecordWarning(
+            "Hybrid-PIC",
+            "When using Esirkepov current deposition together with the hybrid-PIC "
+            "algorithm, a segfault will occur if a particle moves over multiple cells "
+            "in a single step, so be careful with your choice of time step.",
+            ablastr::warn_manager::WarnPriority::low);
+    }
 }
 
 #if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z) && !defined(WARPX_DIM_XZ)
