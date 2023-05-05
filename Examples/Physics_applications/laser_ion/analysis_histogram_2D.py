@@ -13,8 +13,7 @@ it = ts.iterations
 data, info = ts.get_field(field = "data", iteration = 0, plot = True)
 print('The available iterations of the simulation are:', it)
 print('The axis of the histogram are (0: ordinate ; 1: abscissa):', info.axes)
-x, y = data.shape
-print('The data shape is:', (x - 1, y - 1))
+print('The data shape is:', data.shape)
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument("iter", help="Iteration number of the simulation that is plotted. Enter a number from the list of iterations or 'All' if you want all plots.")
