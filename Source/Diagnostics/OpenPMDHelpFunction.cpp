@@ -8,7 +8,7 @@
 std::string
 WarpXOpenPMDFileType ()
 {
-    std::string openPMDFileType =
+    std::string openPMDFileType;
 #if openPMD_HAVE_ADIOS2==1
     openPMDFileType = "bp";
 #elif openPMD_HAVE_ADIOS1==1
