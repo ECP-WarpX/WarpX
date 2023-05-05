@@ -286,16 +286,16 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             idx_x_left*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
         const auto x_1 =
             idx_x_right*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
-            //Find indices and coordinates along y
-            const int temp_idx_y_right = static_cast<int>(
-                std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
-            const int idx_y_right =
-                max(min(temp_idx_y_right,tmp_ny-1),static_cast<int>(1));
-            const int idx_y_left = idx_y_right - 1;
-            const auto y_0 =
-                idx_y_left*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
-            const auto y_1 =
-                idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
+        //Find indices and coordinates along y
+        const int temp_idx_y_right = static_cast<int>(
+            std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
+        const int idx_y_right =
+            max(min(temp_idx_y_right,tmp_ny-1),static_cast<int>(1));
+        const int idx_y_left = idx_y_right - 1;
+        const auto y_0 =
+            idx_y_left*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
+        const auto y_1 =
+            idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
 
         //Interpolate amplitude
         const auto idx = [=](int i_interp, int j_interp, int k_interp){
@@ -308,12 +308,12 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             x_0, x_1,
             y_0, y_1,
             p_E_data[idx(idx_t_left, idx_y_left, idx_x_left)],
-            p_E_data[idx(idx_t_left, idx_y_left, idx_x_right)],
             p_E_data[idx(idx_t_left, idx_y_right, idx_x_left)],
+            p_E_data[idx(idx_t_left, idx_y_left, idx_x_right)],
             p_E_data[idx(idx_t_left, idx_y_right, idx_x_right)],
             p_E_data[idx(idx_t_right, idx_y_left, idx_x_left)],
-            p_E_data[idx(idx_t_right, idx_y_left, idx_x_right)],
             p_E_data[idx(idx_t_right, idx_y_right, idx_x_left)],
+            p_E_data[idx(idx_t_right, idx_y_left, idx_x_right)],
             p_E_data[idx(idx_t_right, idx_y_right, idx_x_right)],
             t, Xp[i], Yp[i]);
         // The interpolated amplitude was only the envelope.
