@@ -5,6 +5,7 @@
 #include "ParticleHistogram2D.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
+#include "Diagnostics/OpenPMDHelpFunction.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -54,6 +55,12 @@ ParticleHistogram2D::ParticleHistogram2D (std::string rd_name)
         : ReducedDiags{rd_name}
 {
     ParmParse pp_rd_name(rd_name);
+
+    pp_rd_name.query("openpmd_backend", m_openpmd_backend);
+    // pick first available backend if default is chosen
+    if( m_openpmd_backend == "default" )
+        m_openpmd_backend = WarpXOpenPMDFileType();
+    pp_rd_name.add("openpmd_backend", m_openpmd_backend);
 
     // read species
     std::string selected_species_name;
@@ -250,7 +257,7 @@ void ParticleHistogram2D::WriteToFile (int step) const
 
     // Create the OpenPMD series
     auto series = io::Series(
-            m_path + "hist2D/openpmd_%06T.bp",
+            m_path + "hist2D/openpmd_%06T." + m_openpmd_backend,
             io::Access::APPEND);
     auto i = series.iterations[step + 1];
     // record

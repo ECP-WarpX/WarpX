@@ -31,8 +31,8 @@ public:
      */
     ParticleHistogram2D(std::string rd_name);
 
-    /// normalization type
-    int m_norm;
+    /// File type
+    std::string m_openpmd_backend {"default"};
 
     /// number of bins on the abscissa and ordinate
     int m_bin_num_abs;
