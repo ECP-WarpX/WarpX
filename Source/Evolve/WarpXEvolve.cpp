@@ -438,16 +438,16 @@ WarpX::OneStep_nosub (Real cur_time)
         if (use_hybrid_QED) {
             FillBoundaryE(guard_cells.ng_alloc_EB);
             FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-            ApplyBfieldEoundary(guard_cells.ng_alloc_EB);
+            ApplyEfieldBoundary(guard_cells.ng_alloc_EB);
             ApplyBfieldBoundary(guard_cells.ng_alloc_EB, DtType::SecondHalf);
             WarpX::Hybrid_QED_Push(dt);
             FillBoundaryE(guard_cells.ng_afterPushPSATD, WarpX::sync_nodal_points);
-            ApplyBfieldEoundary(guard_cells.ng_afterPushPSATD);
+            ApplyEfieldBoundary(guard_cells.ng_afterPushPSATD);
         }
         else {
             FillBoundaryE(guard_cells.ng_afterPushPSATD, WarpX::sync_nodal_points);
             FillBoundaryB(guard_cells.ng_afterPushPSATD, WarpX::sync_nodal_points);
-            ApplyBfieldEoundary(guard_cells.ng_afterPushPSATD);
+            ApplyEfieldBoundary(guard_cells.ng_afterPushPSATD);
             ApplyBfieldBoundary(guard_cells.ng_afterPushPSATD, DtType::SecondHalf);
             if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
                 FillBoundaryF(guard_cells.ng_alloc_F, WarpX::sync_nodal_points);
@@ -732,7 +732,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     // Exchange guard cells and synchronize nodal points
     FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
     FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-    ApplyBfieldEoundary(guard_cells.ng_alloc_EB);
+    ApplyEfieldBoundary(guard_cells.ng_alloc_EB);
     ApplyBfieldBoundary(guard_cells.ng_alloc_EB, DtType::SecondHalf);
     if (WarpX::do_dive_cleaning || WarpX::do_pml_dive_cleaning)
         FillBoundaryF(guard_cells.ng_alloc_F, WarpX::sync_nodal_points);
