@@ -198,12 +198,12 @@ void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int t_end)
 {
 #ifdef WARPX_USE_OPENPMD
-    amrex::Print() << Utils::TextMsg::Info(
-        "Reading [" + std::to_string(t_begin) + ", " + std::to_string(t_end) +
-        "] data chunk from " + m_params.txye_file_name);
     //Indices of the first and last timestep to read
     std::uint64_t const i_first = max(0, t_begin);
     std::uint64_t const i_last = min(t_end-1, m_params.nt-1);
+    amrex::Print() << Utils::TextMsg::Info(
+        "Reading [" + std::to_string(i_first) + ", " + std::to_string(i_last) +
+        "] data chunk from " + m_params.txye_file_name);
     if((i_last-i_first+1)*m_params.nx*m_params.ny > static_cast<std::uint64_t>(m_params.E_data.size()))
         Abort("Data chunk to read from file is too large");
     Vector<Complex> h_E_data(m_params.E_data.size());
@@ -261,9 +261,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     const auto t_right = idx_t_right*
         (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
         m_params.t_min;
-#if (defined WARPX_DIM_1D_Z)
-    WARPX_ABORT_WITH_MESSAGE("WarpXLaserProfiles::FromTXYEFileLaserProfile Not implemented for 1D");
-#endif
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
     np,

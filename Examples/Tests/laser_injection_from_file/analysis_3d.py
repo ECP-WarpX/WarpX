@@ -157,7 +157,7 @@ def main() :
     else :
         assert(False)
 
-    # Do the test
+    # Do the checksum test
     filename_end = "diags/plotfiles/plt000251/"
     test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
