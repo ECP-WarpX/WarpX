@@ -443,9 +443,8 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             // Store the array index
             amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
-            const int icomp = 0;
             PEC::SetJfieldFromPEC(
-                icomp, n, iv, Jx_array, mirrorfac[0], psign[0], is_pec,
+                n, iv, Jx_array, mirrorfac[0], psign[0], is_pec,
                 is_tangent_to_bndy[0], fabbox
             );
         });
@@ -479,9 +478,8 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             // Store the array index
             amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
-            const int icomp = 0;
             PEC::SetJfieldFromPEC(
-                icomp, n, iv, Jy_array, mirrorfac[1], psign[1], is_pec,
+                n, iv, Jy_array, mirrorfac[1], psign[1], is_pec,
                 is_tangent_to_bndy[1], fabbox
             );
         });
@@ -515,9 +513,8 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             // Store the array index
             amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
-            const int icomp = 0;
             PEC::SetJfieldFromPEC(
-                icomp, n, iv, Jz_array, mirrorfac[2], psign[2], is_pec,
+                n, iv, Jz_array, mirrorfac[2], psign[2], is_pec,
                 is_tangent_to_bndy[2], fabbox
             );
         });

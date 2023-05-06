@@ -349,9 +349,6 @@ using namespace amrex;
      *        location inside the domain - representing image charges - in the
      *        normal (tangential) direction.
      *
-     * \param[in] icomp        component of the Jfield being updated
-     *                         (0=x, 1=y, 2=z in Cartesian)
-     *                         (0=r, 1=theta, 2=z in RZ)
      * \param[in] n            index of the MultiFab component being updated
      * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of the rho Array4
      * \param[in out] Jfield   field data to be updated
@@ -362,7 +359,7 @@ using namespace amrex;
      * \param[in] fabbox       multifab box including ghost cells
      */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    void SetJfieldFromPEC (const int icomp, const int n,
+    void SetJfieldFromPEC (const int n,
                            const amrex::IntVect & ijk_vec,
                            amrex::Array4<amrex::Real> const& Jfield,
                            amrex::GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM> const& mirrorfac,
