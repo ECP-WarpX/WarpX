@@ -1219,8 +1219,9 @@ Laser initialization
       (i.e. only one read is performed at the beginning of the simulation).
       It also accepts the optional parameter ``<laser_name>.delay`` (`float`; in seconds), which allows
       delaying (``delay > 0``) or anticipating (``delay < 0``) the laser by the specified amount of time.
-
-      A lasy file can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file``
+      A lasy file is always 3D, but in the case where WarpX is compiled in 2D (or 1D), the laser antenna
+      will emit the field values that correspond to y=0 in the lasy file (and x=0 in the 1D case).
+      One can generate a lasy file from Python, see an example at ``Examples/Tests/laser_injection_from_file``.
 
 * ``<laser_name>.profile_t_peak`` (`float`; in seconds)
     The time at which the laser reaches its peak intensity, at the position
