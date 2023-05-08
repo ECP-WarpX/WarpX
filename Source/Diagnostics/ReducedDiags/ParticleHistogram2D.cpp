@@ -292,6 +292,6 @@ void ParticleHistogram2D::WriteToFile (int step) const
 
     series.flush();
 #else
-    amrex::Abort(Utils::TextMsg::Err("openPMD-api cannot be used!"));
+    WARPX_ABORT_WITH_MESSAGE("openPMD-api cannot be used!");
 #endif
 }
