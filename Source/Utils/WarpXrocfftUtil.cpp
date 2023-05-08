@@ -13,7 +13,11 @@
 // cstddef: work-around for ROCm/rocFFT <=4.3.0
 // https://github.com/ROCmSoftwarePlatform/rocFFT/blob/rocm-4.3.0/library/include/rocfft.h#L36-L42
 #  include <cstddef>
-#  include <rocfft/rocfft.h>
+#  if __has_include(<rocfft/rocfft.h>)  // ROCm 5.3+
+#    include <rocfft/rocfft.h>
+#  else
+#    include <rocfft.h>
+#  endif
 #endif
 
 void
