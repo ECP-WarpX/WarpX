@@ -6,8 +6,8 @@ amr.n_cell = 32 1024
 amr.max_grid_size = 512
 amr.blocking_factor = 32
 amr.max_level = 0
-geometry.dims = 2
-geometry.prob_lo     = -25.e-6  -25.e-6   # physical domain
+geometry.dims = RZ
+geometry.prob_lo     = 0.e-6  -25.e-6   # physical domain
 geometry.prob_hi     =  25.e-6   25.e-6
 warpx.verbose = 1
 warpx.serialize_initial_conditions = 1
@@ -15,16 +15,17 @@ warpx.serialize_initial_conditions = 1
 #################################
 ####### Boundary condition ######
 #################################
-boundary.field_lo = periodic periodic
-boundary.field_hi = periodic periodic
+boundary.field_lo = none periodic
+boundary.field_hi = pec periodic
 
 #################################
 ############ NUMERICS ###########
 #################################
 warpx.cfl = 0.98
 warpx.use_filter = 0
-algo.maxwell_solver = ckc
+#algo.maxwell_solver = ckc
 algo.load_balance_intervals = -1
+warpx.n_rz_azimuthal_modes=2
 
 # Order of particle shape factors
 algo.particle_shape = 3
@@ -46,5 +47,5 @@ txye_laser.delay = 0.0
 # Diagnostics
 diagnostics.diags_names = diag1
 diag1.intervals = -1
-diag1.fields_to_plot = Ex Ey Ez Bx Bz jx jy jz
+diag1.fields_to_plot = Er Et Ez Br Bz jr jt jz
 diag1.diag_type = Full

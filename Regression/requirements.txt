@@ -1,3 +1,4 @@
+lasy @ https://github.com/LASY-org/lasy/archive/refs/heads/development.zip
 matplotlib
 mpi4py
 numpy
