@@ -5,7 +5,7 @@
 #include "ParticleHistogram2D.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
-#include "Diagnostics/OpenPMDHelpFunction.H"
+//#include "Diagnostics/OpenPMDHelpFunction.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -33,6 +33,7 @@
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
+#   include "Diagnostics/OpenPMDHelpFunction.H"
 #endif
 
 #include <algorithm>

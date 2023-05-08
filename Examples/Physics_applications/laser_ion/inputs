@@ -50,7 +50,7 @@ warpx.use_filter = 1          # bilinear current/charge filter
 #   the numprocs product must be equal to the number of MPI ranks and splits
 #   the domain on the coarsest level equally into grids;
 #   slicing in the 2nd dimension is preferred for ideal performance
-#warpx.numprocs = 1 2   # 2 MPI ranks
+warpx.numprocs = 1 2   # 2 MPI ranks
 #warpx.numprocs = 1 4  # 4 MPI ranks
 
 # detail tuning instead of warpx.numprocs:
