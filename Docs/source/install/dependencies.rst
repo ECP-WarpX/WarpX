@@ -63,14 +63,14 @@ With MPI (only Linux/macOS):
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python llvm-openmp numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
    source activate warpx-dev
 
 Without MPI:
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
+   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python llvm-openmp numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
    source activate warpx-dev
 
    # compile WarpX with -DWarpX_MPI=OFF
