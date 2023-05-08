@@ -262,14 +262,6 @@ class Species(picmistandard.PICMI_Species):
             self.species.rigid_advance = 1
             self.species.zinject_plane = injection_plane_position
 
-        for interaction in self.interactions:
-            assert interaction[0] == 'ionization'
-            assert interaction[1] == 'ADK', 'WarpX only has ADK ionization model implemented'
-            self.species.do_field_ionization=1
-            self.species.physical_element=self.particle_type
-            self.species.ionization_product_species = interaction[2].name
-            self.species.ionization_initial_level = self.charge_state
-            self.species.charge = 'q_e'
 
 picmistandard.PICMI_MultiSpecies.Species_class = Species
 class MultiSpecies(picmistandard.PICMI_MultiSpecies):
@@ -1216,6 +1208,19 @@ class Mirror(picmistandard.PICMI_Mirror):
         pywarpx.warpx.mirror_z_npoints.append(self.number_of_cells)
 
 
+class FieldIonization(picmistandard.PICMI_FieldIonization):
+    """
+    WarpX only has ADK ionization model implemented.
+    """
+    def initialize_inputs(self):
+        assert self.model == 'ADK', 'WarpX only has ADK ionization model implemented'
+        self.ionized_species.species.do_field_ionization = 1
+        self.ionized_species.species.physical_element = self.ionized_species.particle_type
+        self.ionized_species.species.ionization_product_species = self.product_species.name
+        self.ionized_species.species.ionization_initial_level = self.ionized_species.charge_state
+        self.ionized_species.species.charge = 'q_e'
+
+
 class CoulombCollisions(picmistandard.base._ClassWithInit):
     """
     Custom class to handle setup of binary Coulmb collisions in WarpX. If
@@ -1718,6 +1723,10 @@ class Simulation(picmistandard.PICMI_Simulation):
                                               self.initialize_self_fields[i],
                                               self.injection_plane_positions[i],
                                               self.injection_plane_normal_vectors[i])
+
+        for interaction in self.interactions:
+            assert(isinstance(interaction, FieldIonization))
+            interaction.initialize_inputs()
 
         if self.collisions is not None:
             pywarpx.collisions.collision_names = []
