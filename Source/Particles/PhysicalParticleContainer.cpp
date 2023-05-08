@@ -1482,6 +1482,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
 #ifdef WARPX_DIM_RZ
     const int nmodes = WarpX::n_rz_azimuthal_modes;
+    const bool rz_random_theta = m_rz_random_theta;
     bool radially_weighted = plasma_injector->radially_weighted;
 #endif
 
@@ -1793,7 +1794,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
                 Real theta;
-                if (nmodes == 1 && m_rz_random_theta) {
+                if (nmodes == 1 && rz_random_theta) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
                     theta = 2._prt*MathConst::pi*amrex::Random(engine);
