@@ -14,9 +14,6 @@
 #if defined(AMREX_USE_CUDA)
 #  include <cufft.h>
 #elif defined(AMREX_USE_HIP)
-// cstddef: work-around for ROCm/rocFFT <=4.3.0
-// https://github.com/ROCmSoftwarePlatform/rocFFT/blob/rocm-4.3.0/library/include/rocfft.h#L36-L42
-#  include <cstddef>
 #  if __has_include(<rocfft/rocfft.h>)  // ROCm 5.3+
 #    include <rocfft/rocfft.h>
 #  else
