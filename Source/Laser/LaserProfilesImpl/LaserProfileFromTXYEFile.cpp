@@ -139,18 +139,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     internal_fill_amplitude_uniform(idx_t_left, np, Xp, Yp, t, amplitude);
 }
 
-bool compare_coords(std::vector<std::string> vec1, std::vector<std::string> vec2) {
-        if (vec1.size() != vec2.size()) {
-            return false;
-        }
-        for (std::vector<std::__cxx11::basic_string<char> >::size_type i = 0; i < vec1.size(); i++) {
-            if (vec1[i] != vec2[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
 void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_file_name)
 {
@@ -162,7 +150,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(E.getAttribute("dataOrder").get<std::string>() == "C",
                                          "Reading from files with non-C dataOrder is not implemented");
-        auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
         auto fileGeom = E.getAttribute("geometry").get<std::string>();
         auto E_laser = E[io::RecordComponent::SCALAR];
         auto extent = E_laser.getExtent();
@@ -171,9 +158,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         std::vector<double> position = E_laser.position<double>();
         std::vector<double> spacing = E.gridSpacing<double>();
 
-        std::vector<std::string> RZCoords = {"t","r"};
-        std::vector<std::string> CartesianCoords = {"t","y","x"};
-        if (compare_coords(axisLabels, RZCoords)) {
+        if (fileGeom=="thetaMode") {
             std::cout << "Found: lasy file datasets in RZ coordinates" << std::endl;
             m_params.ny = 1;
             m_params.nt = extent[1];
@@ -187,7 +172,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
             m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[1];
             m_params.x_min = offset[2] + position[2]*spacing[2];
             m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
-        } else if (compare_coords(axisLabels, CartesianCoords)){
+        } else if (fileGeom=="cartesian"){
             std::cout << "Found: lasy file datasets in 3D cartesian coordinates" << std::endl;
             m_params.nt = extent[0];
             m_params.ny = extent[1];
@@ -240,11 +225,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
         auto E = i.meshes["laserEnvelope"];
-        auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
-        std::vector<std::string> RZCoords = {"t","r"};
+        auto fileGeom = E.getAttribute("geometry").get<std::string>();
         auto E_laser = E[io::RecordComponent::SCALAR];
         openPMD:: Extent full_extent = E_laser.getExtent();
-        if (compare_coords(axisLabels, RZCoords)) {
+        if (fileGeom=="thetaMode") {
         openPMD::Extent read_extent = {full_extent[0], (i_last - i_first + 1), full_extent[2]};
         auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{0, i_first, 0}, read_extent);
         const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
@@ -286,8 +270,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
     auto s = series.iterations[0];
     auto E = s.meshes["laserEnvelope"];
-    auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
-    std::vector<std::string> RZCoords = {"t","r"};
+    auto fileGeom = E.getAttribute("geometry").get<std::string>();
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
     const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
@@ -341,7 +324,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         const auto y_1 =
             idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
 
-        if (compare_coords(axisLabels, RZCoords)) {
+        if (fileGeom=="thetaMode") {
         //Interpolate amplitude
         const auto idx = [=](int i_interp, int j_interp){
             return
