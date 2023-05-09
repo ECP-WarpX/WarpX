@@ -257,7 +257,7 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
         }
     }
 #elif defined(AMREX_USE_HIP)
-    rocfft_execution_info execinfo = NULL;
+    rocfft_execution_info execinfo = nullptr;
     rocfft_status result = rocfft_execution_info_create(&execinfo);
     std::size_t buffersize = 0;
     result = rocfft_plan_get_work_buffer_size(forward_plan[mfi], &buffersize);
@@ -370,7 +370,7 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
         }
     }
 #elif defined(AMREX_USE_HIP)
-    rocfft_execution_info execinfo = NULL;
+    rocfft_execution_info execinfo = nullptr;
     rocfft_status result = rocfft_execution_info_create(&execinfo);
     std::size_t buffersize = 0;
     result = rocfft_plan_get_work_buffer_size(forward_plan[mfi], &buffersize);

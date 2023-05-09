@@ -105,7 +105,9 @@ struct CartesianCKCAlgorithm {
      * Compute the maximum timestep, for which the scheme remains stable
      * (Courant-Friedrichs-Levy limit) */
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
-#if (defined WARPX_DIM_XZ)
+#if (defined WARPX_DIM_1D_Z)
+            amrex::Real const delta_t = dx[0]/PhysConst::c;
+#elif (defined WARPX_DIM_XZ)
             // - In Cartesian 2D geometry: determined by the minimum cell size in all direction
             amrex::Real const delta_t = std::min( dx[0], dx[1] )/PhysConst::c;
 #else

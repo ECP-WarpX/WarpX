@@ -2,21 +2,21 @@
 ####### GENERAL PARAMETERS ######
 #################################
 stop_time = 40.e-15
-amr.n_cell = 32 1024
+amr.n_cell = 1024
 amr.max_grid_size = 512
 amr.blocking_factor = 32
 amr.max_level = 0
-geometry.dims = 2
-geometry.prob_lo     = -25.e-6  -25.e-6   # physical domain
-geometry.prob_hi     =  25.e-6   25.e-6
+geometry.dims = 1
+geometry.prob_lo     = -25.e-6   # physical domain
+geometry.prob_hi     =  25.e-6
 warpx.verbose = 1
 warpx.serialize_initial_conditions = 1
 
 #################################
 ####### Boundary condition ######
 #################################
-boundary.field_lo = periodic periodic
-boundary.field_hi = periodic periodic
+boundary.field_lo = periodic
+boundary.field_hi = periodic
 
 #################################
 ############ NUMERICS ###########

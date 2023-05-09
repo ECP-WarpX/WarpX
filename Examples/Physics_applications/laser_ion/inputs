@@ -34,6 +34,10 @@ boundary.field_hi = pml pml
 # Order of particle shape factors
 algo.particle_shape = 3
 
+# improved plasma stability for 2D with very low initial target temperature
+# when using Esirkepov current deposition with energy-conserving field gather
+interpolation.galerkin_scheme = 0
+
 # numerical tuning
 warpx.cfl = 0.999
 warpx.use_filter = 1          # bilinear current/charge filter

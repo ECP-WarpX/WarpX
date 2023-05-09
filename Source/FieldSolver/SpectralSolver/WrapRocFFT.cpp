@@ -65,7 +65,7 @@ namespace AnyFFT
 
     void Execute (FFTplan& fft_plan)
     {
-        rocfft_execution_info execinfo = NULL;
+        rocfft_execution_info execinfo = nullptr;
         rocfft_status result = rocfft_execution_info_create(&execinfo);
         assert_rocfft_status("rocfft_execution_info_create", result);
 
