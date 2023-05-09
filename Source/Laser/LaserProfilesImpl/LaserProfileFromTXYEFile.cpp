@@ -163,9 +163,9 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(E.getAttribute("dataOrder").get<std::string>() == "C",
                                          "Reading from files with non-C dataOrder is not implemented");
         auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
-        auto fileGeom = E.getAttribute("geometry").get<std::string>();      
+        auto fileGeom = E.getAttribute("geometry").get<std::string>();
         auto E_laser = E[io::RecordComponent::SCALAR];
-        auto extent = E_laser.getExtent();        
+        auto extent = E_laser.getExtent();
         // Extract grid offset and grid spacing
         std::vector<double> offset = E.gridGlobalOffset();
         std::vector<double> position = E_laser.position<double>();
@@ -260,7 +260,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         for (int j=0; j<read_size; j++) {
             h_E_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
         }
-        }  
+        }
     }
     //Broadcast E_data
     ParallelDescriptor::Bcast(h_E_data.dataPtr(),
@@ -350,12 +350,12 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         };
         Complex val = utils::algorithms::bilinear_interp(
         t_left, t_right,
-		x_0, x_1,
-		p_E_data[idx(idx_t_left, idx_x_left)],
+        x_0, x_1,
+        p_E_data[idx(idx_t_left, idx_x_left)],
         p_E_data[idx(idx_t_left, idx_x_right)],
-		p_E_data[idx(idx_t_right, idx_x_left)],
-		p_E_data[idx(idx_t_right, idx_x_right)],
-		t, Xp[i]); 		
+        p_E_data[idx(idx_t_right, idx_x_left)],
+        p_E_data[idx(idx_t_right, idx_x_right)],
+        t, Xp[i]);
         amplitude[i] = (val*exp_omega_t).real();
         } else{
         //Interpolate amplitude
