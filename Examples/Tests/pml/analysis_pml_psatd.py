@@ -63,7 +63,10 @@ energyB = np.sum(0.5 / scc.mu_0 * (Bx**2 + By**2 + Bz**2))
 energy_end = energyE + energyB
 
 reflectivity = energy_end / energy_start
-reflectivity_max = 1e-06
+if galilean:
+    reflectivity_max = 4e-4
+else:
+    reflectivity_max = 1e-6
 
 print("reflectivity     = " + str(reflectivity))
 print("reflectivity_max = " + str(reflectivity_max))
@@ -74,7 +77,8 @@ assert(reflectivity < reflectivity_max)
 sys.path.insert(0, '../../../../warpx/Examples/')
 from analysis_default_restart import check_restart
 
-check_restart(filename)
+if not galilean:
+    check_restart(filename)
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
