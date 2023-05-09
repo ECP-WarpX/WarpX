@@ -32,8 +32,10 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
         m_background_type = BackgroundStoppingType::ELECTRONS;
     } else if (background_type_str == "ions") {
         m_background_type = BackgroundStoppingType::IONS;
+    } else if (background_type_str == "deuterium") {
+        m_background_type = BackgroundStoppingType::DEUTERIUM;
     } else {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false, "background_type must be either electrons or ions");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false, "background_type must be either electrons, ions, or deuterium");
     }
 
     amrex::ParticleReal background_density;
@@ -75,6 +77,11 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
         utils::parser::queryWithParser(
             pp_collision_name, "background_mass", m_background_mass);
     } else if (m_background_type == BackgroundStoppingType::IONS) {
+        utils::parser::getWithParser(
+            pp_collision_name, "background_mass", m_background_mass);
+        utils::parser::getWithParser(
+            pp_collision_name, "background_charge_state", m_background_charge_state);
+    } else if (m_background_type == BackgroundStoppingType::DEUTERIUM) {
         utils::parser::getWithParser(
             pp_collision_name, "background_mass", m_background_mass);
         utils::parser::getWithParser(
@@ -121,6 +128,8 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
                 doBackgroundStoppingOnElectronsWithinTile(pti, dt, cur_time, species_mass, species_charge);
             } else if (background_type == BackgroundStoppingType::IONS) {
                 doBackgroundStoppingOnIonsWithinTile(pti, dt, cur_time, species_mass, species_charge);
+            } else if (background_type == BackgroundStoppingType::DEUTERIUM) {
+                doBackgroundStoppingOnDeuteriumWithinTile(pti, dt, cur_time, species_mass, species_charge);
             }
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
@@ -285,4 +294,15 @@ void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti
 
         }
         );
+}
+
+// TODO
+void BackgroundStopping::doBackgroundStoppingOnDeuteriumWithinTile (
+    WarpXParIter& pti,
+    amrex::Real dt,
+    amrex::Real t,
+    amrex::ParticleReal species_mass,
+    amrex::ParticleReal species_charge)
+{
+    amrex::ignore_unused(pti, dt, t, species_mass, species_charge);
 }

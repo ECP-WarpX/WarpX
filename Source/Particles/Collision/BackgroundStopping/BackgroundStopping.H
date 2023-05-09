@@ -18,6 +18,7 @@ enum class BackgroundStoppingType {
     INVALID,
     ELECTRONS,
     IONS,
+    DEUTERIUM
 };
 
 class BackgroundStopping final
@@ -60,6 +61,14 @@ public:
      */
     void doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti, amrex::Real dt, amrex::Real t,
                                                amrex::ParticleReal species_mass, amrex::ParticleReal species_charge);
+
+    // TODO
+    void doBackgroundStoppingOnDeuteriumWithinTile (
+        WarpXParIter& pti,
+        amrex::Real dt,
+        amrex::Real t,
+        amrex::ParticleReal species_mass,
+        amrex::ParticleReal species_charge);
 
 private:
 
