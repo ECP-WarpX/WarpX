@@ -2,6 +2,7 @@
 // Created by juliette on 03/05/23.
 //
 #include "OpenPMDHelpFunction.H"
+#include "Utils/TextMsg.H"
 
 std::string
 WarpXOpenPMDFileType ()
