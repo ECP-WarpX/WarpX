@@ -139,6 +139,18 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     internal_fill_amplitude_uniform(idx_t_left, np, Xp, Yp, t, amplitude);
 }
 
+bool compare_coords(std::vector<std::string> vec1, std::vector<std::string> vec2) {
+        if (vec1.size() != vec2.size()) {
+            return false;
+        }
+        for (std::vector<std::__cxx11::basic_string<char> >::size_type i = 0; i < vec1.size(); i++) {
+            if (vec1[i] != vec2[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 void
 WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_file_name)
 {
@@ -151,31 +163,48 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(E.getAttribute("dataOrder").get<std::string>() == "C",
                                          "Reading from files with non-C dataOrder is not implemented");
         auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
-        auto fileGeom = E.getAttribute("geometry").get<std::string>();
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "WarpX can only read laser files with cartesian 3D geometry.");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "t" && axisLabels[1] == "y" && axisLabels[2] == "x",
-                                         "WarpX expects laser files with axisLabels {t, y, x}.");
-
+        auto fileGeom = E.getAttribute("geometry").get<std::string>();      
         auto E_laser = E[io::RecordComponent::SCALAR];
-        auto extent = E_laser.getExtent();
-        //Dimensions of lasy file datas: {t,y,x}
-        m_params.nt = extent[0];
-        m_params.ny = extent[1];
-        m_params.nx = extent[2];
-        if(m_params.nt <= 1) Abort("nt in txye file must be >=2");
-        if(m_params.nx <= 1) Abort("nx in txye file must be >=2");
-        if(m_params.ny <= 1) Abort("ny in txye file must be >=2 in 3D");
+        auto extent = E_laser.getExtent();        
         // Extract grid offset and grid spacing
         std::vector<double> offset = E.gridGlobalOffset();
         std::vector<double> position = E_laser.position<double>();
         std::vector<double> spacing = E.gridSpacing<double>();
-        // Calculate the min and max of the grid
-        m_params.t_min = offset[0] + position[0]*spacing[0];
-        m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
-        m_params.y_min = offset[1] + position[1]*spacing[1];
-        m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[1];
-        m_params.x_min = offset[2] + position[2]*spacing[2];
-        m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
+
+        std::vector<std::string> RZCoords = {"t","r"};
+        std::vector<std::string> CartesianCoords = {"t","y","x"};
+        if (compare_coords(axisLabels, RZCoords)) {
+            std::cout << "Found: lasy file datasets in RZ coordinates" << std::endl;
+            m_params.ny = 1;
+            m_params.nt = extent[1];
+            m_params.nx = extent[2];
+            if(m_params.nt <= 1) Abort("nt in lasy file must be >=2");
+            if(m_params.nx <= 1) Abort("nr in lasy file must be >=2");
+                    // Calculate the min and max of the grid
+            //m_params.y_min = offset[0] + position[0]*spacing[0];
+            //m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[0];
+            m_params.t_min = offset[1] + position[1]*spacing[1];
+            m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[1];
+            m_params.x_min = offset[2] + position[2]*spacing[2];
+            m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
+        } else if (compare_coords(axisLabels, CartesianCoords)){
+            std::cout << "Found: lasy file datasets in 3D cartesian coordinates" << std::endl;
+            m_params.nt = extent[0];
+            m_params.ny = extent[1];
+            m_params.nx = extent[2];
+            if(m_params.nt <= 1) Abort("nt in lasy file must be >=2");
+            if(m_params.nx <= 1) Abort("nx in lasy file must be >=2");
+            if(m_params.ny <= 1) Abort("ny in lasy file must be >=2 in 3D");
+            m_params.t_min = offset[0] + position[0]*spacing[0];
+            m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
+            m_params.y_min = offset[1] + position[1]*spacing[1];
+            m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[1];
+            m_params.x_min = offset[2] + position[2]*spacing[2];
+            m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
+        } else{
+        amrex::Abort(Utils::TextMsg::Err("lasy file datasets have to be in either RZ or 3D cartesian coordinates!"));
+        }
+
 
     }
 #else
@@ -211,8 +240,19 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
         auto E = i.meshes["laserEnvelope"];
+        auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
+        std::vector<std::string> RZCoords = {"t","r"};
         auto E_laser = E[io::RecordComponent::SCALAR];
         openPMD:: Extent full_extent = E_laser.getExtent();
+        if (compare_coords(axisLabels, RZCoords)) {
+        openPMD::Extent read_extent = {full_extent[0], (i_last - i_first + 1), full_extent[2]};
+        auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{0, i_first, 0}, read_extent);
+        const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
+        series.flush();
+        for (int j=0; j<read_size; j++) {
+            h_E_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
+        }
+        } else{
         openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
         auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{i_first, 0, 0}, read_extent);
         const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
@@ -220,6 +260,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         for (int j=0; j<read_size; j++) {
             h_E_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
         }
+        }  
     }
     //Broadcast E_data
     ParallelDescriptor::Bcast(h_E_data.dataPtr(),
@@ -242,6 +283,11 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {
+    auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
+    auto s = series.iterations[0];
+    auto E = s.meshes["laserEnvelope"];
+    auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
+    std::vector<std::string> RZCoords = {"t","r"};
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
     const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
@@ -250,8 +296,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     const auto tmp_x_max = m_params.x_max;
     const auto tmp_y_min = m_params.y_min;
     const auto tmp_y_max = m_params.y_max;
-    const auto tmp_nx = m_params.nx;
     const auto tmp_ny = m_params.ny;
+    const auto tmp_nx = m_params.nx;
     const auto p_E_data = m_params.E_data.dataPtr();
     const auto tmp_idx_first_time = m_params.first_time_index;
     const int idx_t_right = idx_t_left+1;
@@ -270,10 +316,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             amplitude[i] = 0.0_rt;
             return;
         }
-        if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
-            amplitude[i] = 0.0_rt;
-            return;
-        }
+            if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
+                amplitude[i] = 0.0_rt;
+                return;
+            }
         //Find indices and coordinates along x
         const int temp_idx_x_right = static_cast<int>(
             std::ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
@@ -295,6 +341,23 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
         const auto y_1 =
             idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
 
+        if (compare_coords(axisLabels, RZCoords)) {
+        //Interpolate amplitude
+        const auto idx = [=](int i_interp, int j_interp){
+            return
+                (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
+                j_interp*tmp_nx;
+        };
+        Complex val = utils::algorithms::bilinear_interp(
+        t_left, t_right,
+		x_0, x_1,
+		p_E_data[idx(idx_t_left, idx_x_left)],
+        p_E_data[idx(idx_t_left, idx_x_right)],
+		p_E_data[idx(idx_t_right, idx_x_left)],
+		p_E_data[idx(idx_t_right, idx_x_right)],
+		t, Xp[i]); 		
+        amplitude[i] = (val*exp_omega_t).real();
+        } else{
         //Interpolate amplitude
         const auto idx = [=](int i_interp, int j_interp, int k_interp){
             return
@@ -318,5 +381,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             // Here we add the laser oscillations.
             amplitude[i] = (val*exp_omega_t).real();
         }
+    }
     );
 }
