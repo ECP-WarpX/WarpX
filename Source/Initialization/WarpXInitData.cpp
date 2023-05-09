@@ -768,30 +768,67 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // provided in the input file.
     if (B_ext_grid_s == "parse_b_ext_grid_function") {
 
-#ifdef WARPX_DIM_RZ
-       WARPX_ABORT_WITH_MESSAGE(
-           "E and B parser for external fields does not work with RZ -- TO DO");
-#endif
-       utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
+#if defined(WARPX_DIM_1D_Z)
+        utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(z)",
           str_Bx_ext_grid_function);
-       utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
+        utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(z)",
           str_By_ext_grid_function);
-       utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
+        utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(z)",
           str_Bz_ext_grid_function);
-       Bxfield_parser = std::make_unique<amrex::Parser>(
-       utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
-       Byfield_parser = std::make_unique<amrex::Parser>(
+        Bxfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Bx_ext_grid_function,{"z"}));
+        Byfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_By_ext_grid_function,{"z"}));
+        Bzfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Bz_ext_grid_function,{"z"}));
+#elif defined(WARPX_DIM_XZ)
+        utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,z)",
+          str_Bx_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,z)",
+          str_By_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,z)",
+          str_Bz_ext_grid_function);
+        Bxfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Bx_ext_grid_function,{"x","z"}));
+        Byfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_By_ext_grid_function,{"x","z"}));
+        Bzfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Bz_ext_grid_function,{"x","z"}));
+#elif defined(WARPX_DIM_RZ)
+        utils::parser::Store_parserString(pp_warpx, "Br_external_grid_function(r,z)",
+          str_Bx_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Bt_external_grid_function(r,z)",
+          str_By_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(r,z)",
+          str_Bz_ext_grid_function);
+        Bxfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Bx_ext_grid_function,{"r","z"}));
+        Byfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_By_ext_grid_function,{"r","z"}));
+        Bzfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Bz_ext_grid_function,{"r","z"}));
+#else
+        utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
+          str_Bx_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
+          str_By_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
+          str_Bz_ext_grid_function);
+        Bxfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+        Byfield_parser = std::make_unique<amrex::Parser>(
           utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
-       Bzfield_parser = std::make_unique<amrex::Parser>(
+        Bzfield_parser = std::make_unique<amrex::Parser>(
           utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
+#endif
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
                                                  Bfield_fp[lev][1].get(),
                                                  Bfield_fp[lev][2].get(),
-                                                 Bxfield_parser->compile<3>(),
-                                                 Byfield_parser->compile<3>(),
-                                                 Bzfield_parser->compile<3>(),
+                                                 Bxfield_parser->compile<AMREX_SPACEDIM>(),
+                                                 Byfield_parser->compile<AMREX_SPACEDIM>(),
+                                                 Bzfield_parser->compile<AMREX_SPACEDIM>(),
                                                  m_edge_lengths[lev],
                                                  m_face_areas[lev],
                                                  'B',
@@ -800,9 +837,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
           InitializeExternalFieldsOnGridUsingParser(Bfield_aux[lev][0].get(),
                                                     Bfield_aux[lev][1].get(),
                                                     Bfield_aux[lev][2].get(),
-                                                    Bxfield_parser->compile<3>(),
-                                                    Byfield_parser->compile<3>(),
-                                                    Bzfield_parser->compile<3>(),
+                                                    Bxfield_parser->compile<AMREX_SPACEDIM>(),
+                                                    Byfield_parser->compile<AMREX_SPACEDIM>(),
+                                                    Bzfield_parser->compile<AMREX_SPACEDIM>(),
                                                     m_edge_lengths[lev],
                                                     m_face_areas[lev],
                                                     'B',
@@ -811,9 +848,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
           InitializeExternalFieldsOnGridUsingParser(Bfield_cp[lev][0].get(),
                                                     Bfield_cp[lev][1].get(),
                                                     Bfield_cp[lev][2].get(),
-                                                    Bxfield_parser->compile<3>(),
-                                                    Byfield_parser->compile<3>(),
-                                                    Bzfield_parser->compile<3>(),
+                                                    Bxfield_parser->compile<AMREX_SPACEDIM>(),
+                                                    Byfield_parser->compile<AMREX_SPACEDIM>(),
+                                                    Bzfield_parser->compile<AMREX_SPACEDIM>(),
                                                     m_edge_lengths[lev],
                                                     m_face_areas[lev],
                                                     'B',
@@ -826,31 +863,67 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // provided in the input file.
     if (E_ext_grid_s == "parse_e_ext_grid_function") {
 
-#ifdef WARPX_DIM_RZ
-       WARPX_ABORT_WITH_MESSAGE(
-           "E and B parser for external fields does not work with RZ -- TO DO");
-#endif
-       utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
+#if defined(WARPX_DIM_1D_Z)
+        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(z)",
+          str_Ex_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(z)",
+          str_Ey_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(z)",
+          str_Ez_ext_grid_function);
+        Exfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Ex_ext_grid_function,{"z"}));
+        Eyfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Ey_ext_grid_function,{"z"}));
+        Ezfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Ez_ext_grid_function,{"z"}));
+#elif defined(WARPX_DIM_XZ)
+        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,z)",
+          str_Ex_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,z)",
+          str_Ey_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(x,z)",
+          str_Ez_ext_grid_function);
+        Exfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Ex_ext_grid_function,{"x","z"}));
+        Eyfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Ey_ext_grid_function,{"x","z"}));
+        Ezfield_parser = std::make_unique<amrex::Parser>(
+          utils::parser::makeParser(str_Ez_ext_grid_function,{"x","z"}));
+#elif defined(WARPX_DIM_RZ)
+        utils::parser::Store_parserString(pp_warpx, "Er_external_grid_function(r,z)",
            str_Ex_ext_grid_function);
-       utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
+        utils::parser::Store_parserString(pp_warpx, "Et_external_grid_function(r,z)",
            str_Ey_ext_grid_function);
-       utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
+        utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(r,z)",
            str_Ez_ext_grid_function);
-
-       Exfield_parser = std::make_unique<amrex::Parser>(
+        Exfield_parser = std::make_unique<amrex::Parser>(
+           utils::parser::makeParser(str_Ex_ext_grid_function,{"r","z"}));
+        Eyfield_parser = std::make_unique<amrex::Parser>(
+           utils::parser::makeParser(str_Ey_ext_grid_function,{"r","z"}));
+        Ezfield_parser = std::make_unique<amrex::Parser>(
+           utils::parser::makeParser(str_Ez_ext_grid_function,{"r","z"}));
+#else
+        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
+           str_Ex_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
+           str_Ey_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
+           str_Ez_ext_grid_function);
+        Exfield_parser = std::make_unique<amrex::Parser>(
            utils::parser::makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
-       Eyfield_parser = std::make_unique<amrex::Parser>(
+        Eyfield_parser = std::make_unique<amrex::Parser>(
            utils::parser::makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
-       Ezfield_parser = std::make_unique<amrex::Parser>(
+        Ezfield_parser = std::make_unique<amrex::Parser>(
            utils::parser::makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
+#endif
 
        // Initialize Efield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Efield_fp[lev][0].get(),
                                                  Efield_fp[lev][1].get(),
                                                  Efield_fp[lev][2].get(),
-                                                 Exfield_parser->compile<3>(),
-                                                 Eyfield_parser->compile<3>(),
-                                                 Ezfield_parser->compile<3>(),
+                                                 Exfield_parser->compile<AMREX_SPACEDIM>(),
+                                                 Eyfield_parser->compile<AMREX_SPACEDIM>(),
+                                                 Ezfield_parser->compile<AMREX_SPACEDIM>(),
                                                  m_edge_lengths[lev],
                                                  m_face_areas[lev],
                                                  'E',
@@ -869,9 +942,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
           InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
                                                     Efield_aux[lev][1].get(),
                                                     Efield_aux[lev][2].get(),
-                                                    Exfield_parser->compile<3>(),
-                                                    Eyfield_parser->compile<3>(),
-                                                    Ezfield_parser->compile<3>(),
+                                                    Exfield_parser->compile<AMREX_SPACEDIM>(),
+                                                    Eyfield_parser->compile<AMREX_SPACEDIM>(),
+                                                    Ezfield_parser->compile<AMREX_SPACEDIM>(),
                                                     m_edge_lengths[lev],
                                                     m_face_areas[lev],
                                                     'E',
@@ -880,9 +953,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
           InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
                                                     Efield_cp[lev][1].get(),
                                                     Efield_cp[lev][2].get(),
-                                                    Exfield_parser->compile<3>(),
-                                                    Eyfield_parser->compile<3>(),
-                                                    Ezfield_parser->compile<3>(),
+                                                    Exfield_parser->compile<AMREX_SPACEDIM>(),
+                                                    Eyfield_parser->compile<AMREX_SPACEDIM>(),
+                                                    Ezfield_parser->compile<AMREX_SPACEDIM>(),
                                                     m_edge_lengths[lev],
                                                     m_face_areas[lev],
                                                     'E',
@@ -942,8 +1015,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 void
 WarpX::InitializeExternalFieldsOnGridUsingParser (
        MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
-       ParserExecutor<3> const& xfield_parser, ParserExecutor<3> const& yfield_parser,
-       ParserExecutor<3> const& zfield_parser,
+       ParserExecutor<AMREX_SPACEDIM> const& xfield_parser,
+       ParserExecutor<AMREX_SPACEDIM> const& yfield_parser,
+       ParserExecutor<AMREX_SPACEDIM> const& zfield_parser,
        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
        const char field,
@@ -1010,16 +1084,15 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
 #if defined(WARPX_DIM_1D_Z)
-                amrex::Real x = 0._rt;
-                amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
+                mfxfab(i,j,k) = xfield_parser(z);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                mfxfab(i,j,k) = xfield_parser(x,z);
 #else
                 amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
@@ -1027,9 +1100,8 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
                 amrex::Real fac_z = (1._rt - x_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
                 amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
-#endif
-                // Initialize the x-component of the field.
                 mfxfab(i,j,k) = xfield_parser(x,y,z);
+#endif
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
@@ -1045,16 +1117,15 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #endif
 #endif
 #if defined(WARPX_DIM_1D_Z)
-                amrex::Real x = 0._rt;
-                amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
+                mfyfab(i,j,k)  = yfield_parser(z);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                mfyfab(i,j,k)  = yfield_parser(x,z);
 #elif defined(WARPX_DIM_3D)
                 amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
@@ -1062,9 +1133,8 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
                 amrex::Real fac_z = (1._rt - y_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
                 amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
-#endif
-                // Initialize the y-component of the field.
                 mfyfab(i,j,k)  = yfield_parser(x,y,z);
+#endif
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 #ifdef AMREX_USE_EB
@@ -1076,16 +1146,15 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #endif
 #endif
 #if defined(WARPX_DIM_1D_Z)
-                amrex::Real x = 0._rt;
-                amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real z = j*dx_lev[0] + real_box.lo(0) + fac_z;
+                mfzfab(i,j,k) = zfield_parser(z);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
-                amrex::Real y = 0._rt;
                 amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
                 amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                mfzfab(i,j,k) = zfield_parser(x,z);
 #elif defined(WARPX_DIM_3D)
                 amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
                 amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
@@ -1093,9 +1162,8 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
                 amrex::Real fac_z = (1._rt - z_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
                 amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
-#endif
-                // Initialize the z-component of the field.
                 mfzfab(i,j,k) = zfield_parser(x,y,z);
+#endif
             }
         );
     }

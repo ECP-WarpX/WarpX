@@ -985,9 +985,9 @@ public:
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
-         amrex::ParserExecutor<3> const& xfield_parser,
-         amrex::ParserExecutor<3> const& yfield_parser,
-         amrex::ParserExecutor<3> const& zfield_parser,
+         amrex::ParserExecutor<AMREX_SPACEDIM> const& xfield_parser,
+         amrex::ParserExecutor<AMREX_SPACEDIM> const& yfield_parser,
+         amrex::ParserExecutor<AMREX_SPACEDIM> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
          const char field,
