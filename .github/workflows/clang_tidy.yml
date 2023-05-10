@@ -23,7 +23,7 @@ jobs:
         export CC=$(which clang)
 
         cmake -S . -B build_clang_tidy \
-          -DCMAKE_CXX_CLANG_TIDY="$(which clang-tidy);-system-headers=0" \
+          -DCMAKE_CXX_CLANG_TIDY="$(which clang-tidy);--system-headers=0;--config-file=$PWD/.clang-tidy" \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_DIMS=3               \
           -DWarpX_MPI=ON               \
