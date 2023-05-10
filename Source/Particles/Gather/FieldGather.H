@@ -174,6 +174,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int k_cell = 0;
     int k_node_v = 0;
     int k_cell_v = 0;
+    /*
     if ((ex_type[1] == NODE) || (ez_type[1] == NODE) || (by_type[1] == NODE)) {
         k_node = compute_shape_factor(sy_node, y);
     }
@@ -184,6 +185,18 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         k_node_v = compute_shape_factor_galerkin(sy_node_v, y);
     }
     if ((ey_type[1] == CELL) || (bx_type[1] == CELL) || (bz_type[1] == CELL)) {
+        k_cell_v = compute_shape_factor_galerkin(sy_cell_v, y - 0.5_rt);
+    }*/
+    if ((ex_type[1] == NODE) || (ez_type[1] == NODE) || (by_type[1] == NODE) || (bx_type[1] == NODE) || (bz_type[1] == NODE)) {
+        k_node = compute_shape_factor(sy_node, y);
+    }
+    if ((ex_type[1] == CELL) || (ez_type[1] == CELL) || (by_type[1] == CELL) || (bx_type[1] == CELL) || (bz_type[1] == CELL)) {
+        k_cell = compute_shape_factor(sy_cell, y - 0.5_rt);
+    }
+    if ((ey_type[1] == NODE)) {
+        k_node_v = compute_shape_factor_galerkin(sy_node_v, y);
+    }
+    if ((ey_type[1] == CELL)) {
         k_cell_v = compute_shape_factor_galerkin(sy_cell_v, y - 0.5_rt);
     }
     const amrex::Real (&sy_ex)[depos_order + 1             ] = ((ex_type[1] == NODE) ? sy_node   : sy_cell  );
