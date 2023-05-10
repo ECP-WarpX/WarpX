@@ -34,7 +34,7 @@ jobs:
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
 
-        cmake --build build_clang_tidy -j 2 2> build/clang-tidy.log
+        cmake --build build_clang_tidy -j 2 2> build_clang_tidy/clang-tidy.log
 
-        cat build/clang-tidy.log
-        if [[ $(wc -m <build/clang-tidy.log) -gt 1 ]]; then exit 1; fi
+        cat build_clang_tidy/clang-tidy.log
+        if [[ $(wc -m <build_clang_tidy/clang-tidy.log) -gt 1 ]]; then exit 1; fi
