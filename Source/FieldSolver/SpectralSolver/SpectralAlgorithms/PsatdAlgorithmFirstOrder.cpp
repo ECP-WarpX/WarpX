@@ -42,7 +42,6 @@ PsatdAlgorithmFirstOrder::PsatdAlgorithmFirstOrder(
     const int rho_in_time)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
-    m_spectral_index(spectral_index),
     m_dt(dt),
     m_div_cleaning(div_cleaning),
     m_J_in_time(J_in_time),

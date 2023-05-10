@@ -33,7 +33,6 @@ PsatdAlgorithmComoving::PsatdAlgorithmComoving (const SpectralKSpace& spectral_k
                                                 const bool update_with_rho)
      // Members initialization
      : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
-       m_spectral_index(spectral_index),
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
        // the infinite order option, the argument grid_type=GridType::Staggered is then irrelevant)
        kx_vec(spectral_kspace.getModifiedKComponent(dm, 0, -1, GridType::Staggered)),

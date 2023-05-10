@@ -42,7 +42,6 @@ PsatdAlgorithmJLinearInTime::PsatdAlgorithmJLinearInTime(
     const bool divb_cleaning)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
-    m_spectral_index(spectral_index),
     m_dt(dt),
     m_time_averaging(time_averaging),
     m_dive_cleaning(dive_cleaning),
