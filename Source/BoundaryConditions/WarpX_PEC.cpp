@@ -256,7 +256,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
         psign[idim][1] = (WarpX::particle_boundary_hi[idim] == ParticleBoundaryType::Reflecting)
                          ? 1._rt : -1._rt;
         mirrorfac[idim][0] = 2*domain_lo[idim] - (1 - rho_nodal[idim]);
-        mirrorfac[idim][1] = 2*domain_hi[idim] - (1 - rho_nodal[idim]);
+        mirrorfac[idim][1] = 2*domain_hi[idim] + (1 - rho_nodal[idim]);
     }
     const int nComp = rho->nComp();
 
