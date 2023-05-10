@@ -335,7 +335,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                 else {
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                         "Field boundary conditions have to be either periodic, PEC, or neumann "
-                        "when using the electrostatic solver"
+                        "when using the magnetostatic solver"
                     );
                 }
             }
