@@ -501,7 +501,7 @@ Distribution across MPI ranks and parallelization
 
     .. math::
 
-            c = n_{\text{particle}} \cdot w_{\text{particle}} + n_{\text{cell}} \cdot w_{\text{cell}},
+       c = n_{\text{particle}} \cdot w_{\text{particle}} + n_{\text{cell}} \cdot w_{\text{cell}},
 
     where
     :math:`n_{\text{particle}}` is the number of particles on the box,
@@ -2835,6 +2835,7 @@ Reduced Diagnostics
 
         When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
         computed integral is weighted:
+
         .. math::
 
             Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
