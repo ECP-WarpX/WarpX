@@ -1211,7 +1211,7 @@ Laser initialization
       though ``<laser_name>.wavelength`` and ``<laser_name>.e_max`` should be included in the laser
       function, they still have to be specified as they are used for numerical purposes.
     - ``"from_txye_file"``: the electric field of the laser is read from an external lasy file
-      (see lasy docs: https://lasydoc.readthedocs.io/en/latest/ ). It requires to provide the name of the lasy file
+      (see the `lasy docs <https://lasydoc.readthedocs.io>`__). It requires to provide the name of the lasy file
       setting the additional parameter ``<laser_name>.txye_file_name`` (`string`). It accepts an
       optional parameter ``<laser_name>.time_chunk_size`` (`int`). This allows to read only
       time_chunk_size timesteps from the lasy file. New timesteps are read as soon as they are needed.
