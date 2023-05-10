@@ -162,6 +162,10 @@ MCCCollisions
 """""""""""""
 .. autoclass:: pywarpx.picmi.MCCCollisions
 
+FieldIonization
+"""""""""""""""
+.. autoclass:: pywarpx.picmi.FieldIonization
+
 Lasers
 ^^^^^^
 
@@ -229,8 +233,8 @@ specific location in the WarpX simulation loop.
 
 Places in the WarpX loop where callbacks are available include:
 ``afterinit``, ``beforecollisions``, ``aftercollisions``, ``beforeEsolve``, ``afterEsolve``,
-``beforedeposition``, ``afterdeposition``, ``beforestep``, ``afterstep``, ``afterdiagnostics``,
-``afterrestart`` and ``oncheckpointsignal``.
+``beforeInitEsolve``, ``afterInitEsolve``, ``beforedeposition``, ``afterdeposition``,
+``beforestep``, ``afterstep``, ``afterdiagnostics``,``afterrestart`` and ``oncheckpointsignal``.
 See the examples in *Examples/Tests/ParticleDataPython* for references on how to use
 ``callbacks``.
 

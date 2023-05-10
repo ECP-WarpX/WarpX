@@ -308,8 +308,8 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             }
         }
         else {
-            amrex::Abort(Utils::TextMsg::Err(
-                "Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry"));
+            WARPX_ABORT_WITH_MESSAGE(
+                "Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry");
         }
     }
     // Sum the number of components in input vector m_all_field_functors
@@ -639,7 +639,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "At" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 1), lev, m_crse_ratio);
             } else {
-                amrex::Abort(Utils::TextMsg::Err(m_varnames[comp] + " is not a known field output type for RZ geometry"));
+                WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for RZ geometry");
             }
 #else
         // Valid transverse fields in Cartesian coordinates
@@ -660,7 +660,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "Ay" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 1), lev, m_crse_ratio);
             } else {
-                amrex::Abort(Utils::TextMsg::Err(m_varnames[comp] + " is not a known field output type for this geometry"));
+                WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for this geometry");
             }
 #endif
         }

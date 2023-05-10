@@ -19,6 +19,7 @@
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_Math.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>
 
@@ -44,7 +45,6 @@ PsatdAlgorithmJConstantInTime::PsatdAlgorithmJConstantInTime(
     const bool divb_cleaning)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
-    m_spectral_index(spectral_index),
     // Initialize the centered finite-order modified k vectors:
     // these are computed always with the assumption of centered grids
     // (argument grid_type=GridType::Collocated), for both collocated and staggered grids
@@ -405,19 +405,19 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
         {
             // Calculate norm of k vector
             const amrex::Real knorm_s = std::sqrt(
-                std::pow(kx_s[i], 2) +
+                amrex::Math::powi<2>(kx_s[i]) +
 #if defined(WARPX_DIM_3D)
-                std::pow(ky_s[j], 2) + std::pow(kz_s[k], 2));
+                amrex::Math::powi<2>(ky_s[j]) + amrex::Math::powi<2>(kz_s[k]));
 #else
-                std::pow(kz_s[j], 2));
+                amrex::Math::powi<2>(kz_s[j]));
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
-            const amrex::Real c2 = std::pow(c, 2);
-            const amrex::Real dt2 = std::pow(dt, 2);
+            const amrex::Real c2 = amrex::Math::powi<2>(c);
+            const amrex::Real dt2 = amrex::Math::powi<2>(dt);
 
             // Calculate the dot product of the k vector with the Galilean velocity.
             // This has to be computed always with the centered (collocated) finite-order
@@ -429,10 +429,10 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
 #else
                 kz_c[j]*vg_z;
 #endif
-            const amrex::Real w2_c = std::pow(w_c, 2);
+            const amrex::Real w2_c = amrex::Math::powi<2>(w_c);
 
             const amrex::Real om_s = c * knorm_s;
-            const amrex::Real om2_s = std::pow(om_s, 2);
+            const amrex::Real om2_s = amrex::Math::powi<2>(om_s);
 
             const Complex theta_c      = amrex::exp( I * w_c * dt * 0.5_rt);
             const Complex theta2_c     = amrex::exp( I * w_c * dt);
@@ -566,19 +566,19 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
         {
             // Calculate norm of k vector
             const amrex::Real knorm_s = std::sqrt(
-                std::pow(kx_s[i], 2) +
+                amrex::Math::powi<2>(kx_s[i]) +
 #if defined(WARPX_DIM_3D)
-                std::pow(ky_s[j], 2) + std::pow(kz_s[k], 2));
+                amrex::Math::powi<2>(ky_s[j]) + amrex::Math::powi<2>(kz_s[k]));
 #else
-                std::pow(kz_s[j], 2));
+                amrex::Math::powi<2>(kz_s[j]));
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
-            const amrex::Real c2 = std::pow(c, 2);
-            const amrex::Real dt2 = std::pow(dt, 2);
+            const amrex::Real c2 = amrex::Math::powi<2>(c);
+            const amrex::Real dt2 = amrex::Math::powi<2>(dt);
 
             // Calculate the dot product of the k vector with the Galilean velocity.
             // This has to be computed always with the centered (collocated) finite-order
@@ -590,12 +590,12 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
 #else
                 kz_c[j]*vg_z;
 #endif
-            const amrex::Real w2_c = std::pow(w_c, 2);
-            const amrex::Real w3_c = std::pow(w_c, 3);
+            const amrex::Real w2_c = amrex::Math::powi<2>(w_c);
+            const amrex::Real w3_c = amrex::Math::powi<3>(w_c);
 
             const amrex::Real om_s = c * knorm_s;
-            const amrex::Real om2_s = std::pow(om_s, 2);
-            const amrex::Real om4_s = std::pow(om_s, 4);
+            const amrex::Real om2_s = amrex::Math::powi<2>(om_s);
+            const amrex::Real om4_s = amrex::Math::powi<4>(om_s);
 
             const Complex theta_c  = amrex::exp(I * w_c * dt * 0.5_rt);
             const Complex theta2_c = amrex::exp(I * w_c * dt);

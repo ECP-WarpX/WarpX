@@ -673,8 +673,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
 void
 PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
-                    amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                        NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                        NArrayReal, NArrayInt,
+                                        amrex::PinnedArenaAllocator>& pinned_tile,
                     const int n_external_attr_real,
                     const int n_external_attr_int,
                     const amrex::RandomEngine& engine)
@@ -1253,7 +1254,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
                 Real theta;
-                if (nmodes == 1) {
+                if (nmodes == 1 && rz_random_theta) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
                     theta = 2._rt*MathConst::pi*amrex::Random(engine);
@@ -1481,6 +1482,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
 #ifdef WARPX_DIM_RZ
     const int nmodes = WarpX::n_rz_azimuthal_modes;
+    const bool rz_random_theta = m_rz_random_theta;
     bool radially_weighted = plasma_injector->radially_weighted;
 #endif
 
@@ -1792,7 +1794,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
                 Real theta;
-                if (nmodes == 1) {
+                if (nmodes == 1 && rz_random_theta) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
                     theta = 2._prt*MathConst::pi*amrex::Random(engine);
@@ -2750,7 +2752,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                 CompileTimeOptions<no_qed  ,has_qed>>{},
                        {exteb_runtime_flag, qed_runtime_flag},
                        np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                                         [[maybe_unused]] auto qed_control)
+                                                         auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
@@ -2823,6 +2825,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            dt, p_optical_depth_QSR[ip]);
             }
         }
+#else
+            amrex::ignore_unused(qed_control);
 #endif
     });
 }

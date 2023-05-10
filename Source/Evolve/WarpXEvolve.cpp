@@ -202,9 +202,9 @@ WarpX::Evolve (int numsteps)
         }
         else
         {
-            amrex::Abort(Utils::TextMsg::Err(
+            WARPX_ABORT_WITH_MESSAGE(
                 "do_subcycling = " + std::to_string(do_subcycling)
-                + " is an unsupported do_subcycling type."));
+                + " is an unsupported do_subcycling type.");
         }
 
         // Resample particles
@@ -324,6 +324,7 @@ WarpX::Evolve (int numsteps)
                 // This is currently a lab frame calculation.
                 ComputeMagnetostaticField();
             }
+            AddExternalFields();
             ExecutePythonCallback("afterEsolve");
         }
 
@@ -381,6 +382,7 @@ WarpX::Evolve (int numsteps)
     if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])
         || exit_loop_due_to_interrupt_signal) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+        if (exit_loop_due_to_interrupt_signal) ExecutePythonCallback("onbreaksignal");
     }
 }
 
@@ -467,7 +469,7 @@ WarpX::OneStep_nosub (Real cur_time)
             // macroscopic medium
             MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
         } else {
-            amrex::Abort(Utils::TextMsg::Err("Medium for EM is unknown"));
+            WARPX_ABORT_WITH_MESSAGE("Medium for EM is unknown");
         }
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
@@ -537,6 +539,27 @@ void WarpX::SyncCurrentAndRho ()
     {
         SyncCurrent(current_fp, current_cp);
         SyncRho(rho_fp, rho_cp);
+    }
+
+    // Reflect charge and current density over PEC boundaries, if needed.
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (rho_fp[lev].get()) {
+            ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
+        }
+        ApplyJfieldBoundary(
+            lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
+            current_fp[lev][2].get(), PatchType::fine
+        );
+        if (lev > 0) {
+            if (rho_cp[lev].get()) {
+                ApplyRhofieldBoundary(lev, rho_cp[lev].get(), PatchType::coarse);
+            }
+            ApplyJfieldBoundary(
+                lev, current_cp[lev][0].get(), current_cp[lev][1].get(),
+                current_cp[lev][2].get(), PatchType::coarse
+            );
+        }
     }
 }
 
@@ -648,8 +671,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         if (WarpX::current_correction)
         {
-            amrex::Abort(Utils::TextMsg::Err(
-                "Current correction not implemented for multi-J algorithm."));
+            WARPX_ABORT_WITH_MESSAGE(
+                "Current correction not implemented for multi-J algorithm.");
         }
 
         // Advance E,B,F,G fields in time and update the average fields
@@ -707,8 +730,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     }
 #else
     amrex::ignore_unused(cur_time);
-    amrex::Abort(Utils::TextMsg::Err(
-        "multi-J algorithm not implemented for FDTD"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "multi-J algorithm not implemented for FDTD");
 #endif // WARPX_USE_PSATD
 }
 
@@ -966,8 +989,8 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
                  cur_time, dt[lev], a_dt_type, skip_deposition);
-#ifdef WARPX_DIM_RZ
     if (! skip_deposition) {
+#ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
         ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get(), lev);
         if (current_buf[lev][0].get()) {
@@ -979,8 +1002,15 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                 ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
             }
         }
-    }
+// #else
+        // I left this comment here as a reminder that currently the
+        // boundary handling for cartesian grids are not matching the RZ handling
+        // (done in the ApplyInverseScalingToChargeDensity function). The
+        // Cartesian grid code had to be moved from here to after the application
+        // of the filter to avoid incorrect results (moved to `SyncCurrentAndRho()`).
+        // Might this be related to issue #1943?
 #endif
+    }
 }
 
 /* \brief Apply perfect mirror condition inside the box (not at a boundary).

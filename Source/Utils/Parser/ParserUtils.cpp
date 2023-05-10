@@ -140,7 +140,7 @@ amrex::Parser utils::parser::makeParser (
         ++it;
     }
     for (auto const& s : symbols) {
-        amrex::Abort(Utils::TextMsg::Err("makeParser::Unknown symbol "+s));
+        WARPX_ABORT_WITH_MESSAGE("makeParser::Unknown symbol "+s);
     }
     return parser;
 }

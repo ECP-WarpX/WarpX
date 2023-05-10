@@ -183,8 +183,8 @@ void Filter::DoFilter (const Box& tbx,
         dst(i,j,k,dcomp+n) = d;
     });
 #else
-    amrex::Abort(Utils::TextMsg::Err(
-        "Filter not implemented for the current geometry!"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Filter not implemented for the current geometry!");
 #endif
 }
 
@@ -327,8 +327,8 @@ void Filter::DoFilter (const Box& tbx,
                                 dst(i,j,k,dcomp+n) += sss*(tmp(i-ix,j,k,scomp+n)
                                                           +tmp(i+ix,j,k,scomp+n));
 #else
-    amrex::Abort(Utils::TextMsg::Err(
-        "Filter not implemented for the current geometry!"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Filter not implemented for the current geometry!");
 #endif
                             }
                         }

@@ -28,7 +28,7 @@ MultiDiagnostics::MultiDiagnostics ()
         } else if ( diags_types[i] == DiagTypes::BoundaryScraping ){
             alldiags[i] = std::make_unique<BoundaryScrapingDiagnostics>(i, diags_names[i]);
         } else {
-            amrex::Abort(Utils::TextMsg::Err("Unknown diagnostic type"));
+            WARPX_ABORT_WITH_MESSAGE("Unknown diagnostic type");
         }
     }
 }

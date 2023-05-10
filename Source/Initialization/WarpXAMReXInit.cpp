@@ -26,6 +26,9 @@ namespace {
         bool abort_on_out_of_gpu_memory = true; // AMReX' default: false
         pp_amrex.queryAdd("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
 
+        bool the_arena_is_managed = false; // AMReX' default: true
+        pp_amrex.queryAdd("the_arena_is_managed", the_arena_is_managed);
+
         // Work-around:
         // If warpx.numprocs is used for the domain decomposition, we will not use blocking factor
         // to generate grids. Nonetheless, AMReX has asserts in place that validate that the

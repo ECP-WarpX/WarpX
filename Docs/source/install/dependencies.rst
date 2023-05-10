@@ -15,16 +15,19 @@ Please see installation instructions below.
 Optional dependencies include:
 
 - `MPI 3.0+ <https://www.mpi-forum.org/docs/>`__: for multi-node and/or multi-GPU execution
-- `CUDA Toolkit 11.0+ <https://developer.nvidia.com/cuda-downloads>`__: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_)
-- `OpenMP 3.1+ <https://www.openmp.org>`__: for threaded CPU execution (currently not fully accelerated)
-- `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support
+- for on-node accelerated compute *one of either*:
+
+  - `OpenMP 3.1+ <https://www.openmp.org>`__: for threaded CPU execution or
+  - `CUDA Toolkit 11.0+ <https://developer.nvidia.com/cuda-downloads>`__: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_) or
+  - `ROCm 5.2+ (5.5+ recommended) <https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-rocm-installation-readme/>`__: for AMD GPU support
+- `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support when running on CPU or SYCL
 
   - also needs the ``pkg-config`` tool on Unix
 - `BLAS++ <https://github.com/icl-utk-edu/blaspp>`_ and `LAPACK++ <https://github.com/icl-utk-edu/lapackpp>`_: for spectral solver (PSATD) support in RZ geometry
 - `Boost 1.66.0+ <https://www.boost.org/>`__: for QED lookup tables generation support
 - `openPMD-api 0.15.1+ <https://github.com/openPMD/openPMD-api>`__: we automatically download and compile a copy of openPMD-api for openPMD I/O support
 
-  - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`__
+  - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`__, i.e., ADIOS2 and/or HDF5
 - `Ascent 0.8.0+ <https://ascent.readthedocs.io>`__: for in situ 3D visualization
 - `SENSEI 4.0.0+ <https://sensei-insitu.org>`__: for in situ analysis and visualization
 - `CCache <https://ccache.dev>`__: to speed up rebuilds (For CUDA support, needs version 3.7.9+ and 4.2+ is recommended)
@@ -46,18 +49,28 @@ Pick *one* of the installation methods below to install all dependencies for War
 Conda (Linux/macOS/Windows)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. tip::
+
+   We recommend to configure your conda to use the faster `libmamba` `dependency solver <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`__.
+
+   .. code-block:: bash
+
+      conda update -n base conda
+      conda install -n base conda-libmamba-solver
+      conda config --set solver libmamba
+
 With MPI (only Linux/macOS):
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
+   conda create -n warpx-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
    source activate warpx-dev
 
 Without MPI:
 
 .. code-block:: bash
 
-   conda create -n warpx-dev -c conda-forge blaspp ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
+   conda create -n warpx-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
    source activate warpx-dev
 
    # compile WarpX with -DWarpX_MPI=OFF
@@ -70,7 +83,7 @@ For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you als
    export BLASPP_HOME=${CONDA_PREFIX}
    export LAPACKPP_HOME=${CONDA_PREFIX}
 
-.. note::
+.. tip::
 
    A general option to deactivate that conda self-activates its base environment.
    This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.

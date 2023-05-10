@@ -20,12 +20,13 @@ import os
 import sys
 
 import numpy as np
+from unyt import m
 import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-tolerance = 0.004
+tolerance = 0.0041
 
 fn = sys.argv[1]
 ds = yt.load( fn )
@@ -47,7 +48,8 @@ err = 0.0
 errmax_phi = 0.0
 errmax_Er = 0.0
 for i in range(len(r)):
-    if r[i]>=0.1:
+    # outside EB and last cutcell
+    if r[i] > 0.1*m + dr:
         phi_theory = A+B*np.log(r[i])
         Er_theory = -B/float(r[i])
         err = abs( phi_theory - phi[i,:] ).max() / phi_theory

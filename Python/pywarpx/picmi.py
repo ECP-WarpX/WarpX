@@ -262,14 +262,6 @@ class Species(picmistandard.PICMI_Species):
             self.species.rigid_advance = 1
             self.species.zinject_plane = injection_plane_position
 
-        for interaction in self.interactions:
-            assert interaction[0] == 'ionization'
-            assert interaction[1] == 'ADK', 'WarpX only has ADK ionization model implemented'
-            self.species.do_field_ionization=1
-            self.species.physical_element=self.particle_type
-            self.species.ionization_product_species = interaction[2].name
-            self.species.ionization_initial_level = self.charge_state
-            self.species.charge = 'q_e'
 
 picmistandard.PICMI_MultiSpecies.Species_class = Species
 class MultiSpecies(picmistandard.PICMI_MultiSpecies):
@@ -416,6 +408,8 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
         species.flux_normal_axis = self.flux_normal_axis
         species.surface_flux_pos = self.surface_flux_position
         species.flux_direction = self.flux_direction
+        species.flux_tmin = self.flux_tmin
+        species.flux_tmax = self.flux_tmax
 
         # --- Use specific attributes for flux injection
         species.injection_style = "nfluxpercell"
@@ -537,6 +531,10 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
     warpx_potential_hi_z: float, default=0.
        Electrostatic potential on the upper longitudinal boundary
+
+    warpx_reflect_all_velocities: bool default=False
+        Whether the sign of all of the particle velocities are changed upon
+        reflection on a boundary, or only the velocity normal to the surface
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -552,6 +550,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         self.potential_ymax = None
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
+        self.reflect_all_velocities = kw.pop('warpx_reflect_all_velocities', None)
 
         # Geometry
         # Set these as soon as the information is available
@@ -582,6 +581,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.boundary.field_hi = [BC_map[bc] for bc in self.upper_boundary_conditions]
         pywarpx.boundary.particle_lo = self.lower_boundary_conditions_particles
         pywarpx.boundary.particle_hi = self.upper_boundary_conditions_particles
+        pywarpx.boundary.reflect_all_velocities = self.reflect_all_velocities
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -1208,6 +1208,19 @@ class Mirror(picmistandard.PICMI_Mirror):
         pywarpx.warpx.mirror_z_npoints.append(self.number_of_cells)
 
 
+class FieldIonization(picmistandard.PICMI_FieldIonization):
+    """
+    WarpX only has ADK ionization model implemented.
+    """
+    def initialize_inputs(self):
+        assert self.model == 'ADK', 'WarpX only has ADK ionization model implemented'
+        self.ionized_species.species.do_field_ionization = 1
+        self.ionized_species.species.physical_element = self.ionized_species.particle_type
+        self.ionized_species.species.ionization_product_species = self.product_species.name
+        self.ionized_species.species.ionization_initial_level = self.ionized_species.charge_state
+        self.ionized_species.species.charge = 'q_e'
+
+
 class CoulombCollisions(picmistandard.base._ClassWithInit):
     """
     Custom class to handle setup of binary Coulmb collisions in WarpX. If
@@ -1335,12 +1348,15 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         Analytic expression defining the potential. Can only be specified
         when the solver is electrostatic.
 
+    cover_multiple_cuts: bool, default=None
+        Whether to cover cells with multiple cuts.
+        (If False, this will raise an error if some cells have multiple cuts)
 
     Parameters used in the analytic expressions should be given as additional keyword arguments.
 
     """
     def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=False,
-                 potential=None, **kw):
+                 potential=None, cover_multiple_cuts=None, **kw):
 
         assert stl_file is None or implicit_function is None, Exception('Only one between implicit_function and '
                                                                             'stl_file can be specified')
@@ -1358,6 +1374,8 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
         self.stl_reverse_normal = stl_reverse_normal
 
         self.potential = potential
+
+        self.cover_multiple_cuts = cover_multiple_cuts
 
         # Handle keyword arguments used in expressions
         self.user_defined_kw = {}
@@ -1386,6 +1404,8 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
             pywarpx.eb2.stl_scale = self.stl_scale
             pywarpx.eb2.stl_center = self.stl_center
             pywarpx.eb2.stl_reverse_normal = self.stl_reverse_normal
+
+        pywarpx.eb2.cover_multiple_cuts = self.cover_multiple_cuts
 
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
@@ -1703,6 +1723,10 @@ class Simulation(picmistandard.PICMI_Simulation):
                                               self.initialize_self_fields[i],
                                               self.injection_plane_positions[i],
                                               self.injection_plane_normal_vectors[i])
+
+        for interaction in self.interactions:
+            assert(isinstance(interaction, FieldIonization))
+            interaction.initialize_inputs()
 
         if self.collisions is not None:
             pywarpx.collisions.collision_names = []
