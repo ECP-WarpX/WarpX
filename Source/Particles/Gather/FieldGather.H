@@ -123,6 +123,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int j_cell = 0;
     int j_node_v = 0;
     int j_cell_v = 0;
+    /*
     if ((ey_type[0] == NODE) || (ez_type[0] == NODE) || (bx_type[0] == NODE)) {
         j_node = compute_shape_factor(sx_node, x);
     }
@@ -133,6 +134,19 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         j_node_v = compute_shape_factor_galerkin(sx_node_galerkin, x);
     }
     if ((ex_type[0] == CELL) || (by_type[0] == CELL) || (bz_type[0] == CELL)) {
+        j_cell_v = compute_shape_factor_galerkin(sx_cell_galerkin, x - 0.5_rt);
+    }
+    */
+    if ((ey_type[0] == NODE) || (ez_type[0] == NODE) || (bx_type[0] == NODE) || (by_type[0] == NODE) || (bz_type[0] == NODE)) {
+        j_node = compute_shape_factor(sx_node, x);
+    }
+    if ((ey_type[0] == CELL) || (ez_type[0] == CELL) || (bx_type[0] == CELL) || (by_type[0] == CELL) || (bz_type[0] == CELL)) {
+        j_cell = compute_shape_factor(sx_cell, x - 0.5_rt);
+    }
+    if ((ex_type[0] == NODE) ) {
+        j_node_v = compute_shape_factor_galerkin(sx_node_galerkin, x);
+    }
+    if ((ex_type[0] == CELL) ) {
         j_cell_v = compute_shape_factor_galerkin(sx_cell_galerkin, x - 0.5_rt);
     }
     const amrex::Real (&sx_ex)[depos_order + 1 - galerkin_interpolation] = ((ex_type[0] == NODE) ? sx_node_galerkin : sx_cell_galerkin);
@@ -200,6 +214,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int l_cell = 0;
     int l_node_v = 0;
     int l_cell_v = 0;
+    /*
     if ((ex_type[zdir] == NODE) || (ey_type[zdir] == NODE) || (bz_type[zdir] == NODE)) {
         l_node = compute_shape_factor(sz_node, z);
     }
@@ -210,6 +225,18 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         l_node_v = compute_shape_factor_galerkin(sz_node_v, z);
     }
     if ((ez_type[zdir] == CELL) || (bx_type[zdir] == CELL) || (by_type[zdir] == CELL)) {
+        l_cell_v = compute_shape_factor_galerkin(sz_cell_v, z - 0.5_rt);
+    }*/
+    if ((ex_type[zdir] == NODE) || (ey_type[zdir] == NODE) || (bz_type[zdir] == NODE) || (bx_type[zdir] == NODE) || (by_type[zdir] == NODE)) {
+        l_node = compute_shape_factor(sz_node, z);
+    }
+    if ((ex_type[zdir] == CELL) || (ey_type[zdir] == CELL) || (bz_type[zdir] == CELL) || (bx_type[zdir] == CELL) || (by_type[zdir] == CELL)) {
+        l_cell = compute_shape_factor(sz_cell, z - 0.5_rt);
+    }
+    if ((ez_type[zdir] == NODE) ) {
+        l_node_v = compute_shape_factor_galerkin(sz_node_v, z);
+    }
+    if ((ez_type[zdir] == CELL) ) {
         l_cell_v = compute_shape_factor_galerkin(sz_cell_v, z - 0.5_rt);
     }
     const amrex::Real (&sz_ex)[depos_order + 1             ] = ((ex_type[zdir] == NODE) ? sz_node   : sz_cell  );
