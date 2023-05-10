@@ -1,0 +1,4 @@
+Checks:'
+    bugprone-branch-clone,
+    modernize-use-nullptr
+'

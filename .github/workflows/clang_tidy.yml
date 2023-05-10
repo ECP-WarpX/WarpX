@@ -1,0 +1,40 @@
+name: 🧹 clang-tidy
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.head_ref }}-ubuntu
+  cancel-in-progress: true
+
+jobs:
+  run_clang_tidy:
+    name: clang-tidy
+    runs-on: ubuntu-22.04
+    if: github.event.pull_request.draft == false
+    steps:
+    - uses: actions/checkout@v3
+    - name: install dependencies
+      run: |
+        .github/workflows/dependencies/clang14.sh
+    - name: build WarpX using clang-tidy
+      run: |
+
+        export CXX=$(which clang++)
+        export CC=$(which clang)
+
+        cmake -S . -B build_clang_tidy \
+          -DCMAKE_CXX_CLANG_TIDY="$(which clang-tidy);-system-headers=0" \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_DIMS=3               \
+          -DWarpX_MPI=ON               \
+          -DWarpX_COMPUTE=OMP          \
+          -DWarpX_PSATD=ON             \
+          -DWarpX_QED=ON               \
+          -DWarpX_QED_TABLE_GEN=ON     \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_PRECISION=SINGLE
+
+        cmake --build build_clang_tidy -j 2 2> build/clang-tidy.log
+
+        cat build/clang-tidy.log
+        if [[ $(wc -m <build/clang-tidy.log) -gt 1 ]]; then exit 1; fi
