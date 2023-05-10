@@ -15,6 +15,7 @@ echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
 sudo apt-get -qqq update
 sudo apt-get install -y \
     cmake               \
+    ccache              \
     clang-14            \
     clang-tidy-14       \
     libc++-14-dev       \
@@ -23,4 +24,5 @@ sudo apt-get install -y \
     libfftw3-mpi-dev    \
     libhdf5-openmpi-dev \
     libopenmpi-dev      \
+    libomp-dev          \
     ninja-build
