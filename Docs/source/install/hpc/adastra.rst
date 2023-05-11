@@ -37,7 +37,7 @@ Use the following commands to download the WarpX source code and switch to the c
 
 We use the following modules and environments on the system (``$HOME/adastra_warpx.profile``).
 
-.. literalinclude:: ../../../../Tools/machines/frontier-olcf/adastra_warpx.profile.example
+.. literalinclude:: ../../../../Tools/machines/adastra-cines/adastra_warpx.profile.example
    :language: bash
    :caption: You can copy this file from ``Tools/machines/adastra-cines/adastra_warpx.profile.example``.
 
