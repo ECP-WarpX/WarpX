@@ -312,6 +312,7 @@ private:
          * If DIM=3, ny must be >=2 as well.
          * If DIM=2, ny must be 1 */
         int nt, nx, ny;
+        int nr;
         /** Vector of temporal coordinates. It contains only the start and stop
          * times and intermediate times are obtained with nt */
         amrex::Real t_min;
@@ -324,6 +325,8 @@ private:
          * y coordinates, and intermediate positions are obtained with ny */
         amrex::Real y_min;
         amrex::Real y_max;
+        amrex::Real r_min;
+        amrex::Real r_max;
         /** Size of the timestep range to load */
         int time_chunk_size;
         /** Index of the first timestep in memory */
