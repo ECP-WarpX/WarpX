@@ -5,6 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmGalileanPml.H"
+
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 
 #include <cmath>
@@ -22,7 +24,17 @@ PsatdAlgorithmGalileanPml::PsatdAlgorithmGalileanPml (
     const amrex::Vector<amrex::Real>& v_galilean,
     const amrex::Real dt)
     // Initialize members of base class
-    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type)
+    : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
+    // Initialize the centered finite-order modified k vectors:
+    // these are computed always with the assumption of centered grids
+    // (argument grid_type=GridType::Collocated), for both collocated and staggered grids
+    modified_kx_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_x, GridType::Collocated)),
+#if defined(WARPX_DIM_3D)
+    modified_ky_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_y, GridType::Collocated)),
+    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_z, GridType::Collocated))
+#else
+    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, GridType::Collocated))
+#endif
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -119,11 +131,14 @@ void PsatdAlgorithmGalileanPml::InitializeSpectralCoefficients (
         const amrex::Box& bx = ba[mfi];
 
         // Extract pointers for the k vectors
-        const amrex::Real* modified_kx = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* kx   = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* kx_c = modified_kx_vec_centered[mfi].dataPtr();
 #if (AMREX_SPACEDIM==3)
-        const amrex::Real* modified_ky = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* ky   = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* ky_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
-        const amrex::Real* modified_kz = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* kz   = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
 
         // Extract arrays for the coefficients
         amrex::Array4<amrex::Real> C = C_coef[mfi].array();
@@ -141,32 +156,35 @@ void PsatdAlgorithmGalileanPml::InitializeSpectralCoefficients (
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Calculate norm of vector
-            const amrex::Real k_norm = std::sqrt(
-                amrex::Math::powi<2>(modified_kx[i]) +
+            const amrex::Real knorm = std::sqrt(
+                amrex::Math::powi<2>(kx[i]) +
 #if (AMREX_SPACEDIM==3)
-                amrex::Math::powi<2>(modified_ky[j]) + amrex::Math::powi<2>(modified_kz[k]));
+                amrex::Math::powi<2>(ky[j]) + amrex::Math::powi<2>(kz[k]));
 #else
-                amrex::Math::powi<2>(modified_kz[j]));
+                amrex::Math::powi<2>(kz[j]));
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
             constexpr Complex I{0._rt,1._rt};
 
-            if (k_norm != 0._rt)
+            if (knorm != 0._rt)
             {
-                C(i,j,k) = std::cos(c*k_norm*dt);
-                S_ck(i,j,k) = std::sin(c*k_norm*dt)/(c*k_norm);
+                C(i,j,k) = std::cos(c*knorm*dt);
+                S_ck(i,j,k) = std::sin(c*knorm*dt)/(c*knorm);
 
-                // Calculate the dot product of the k vector with the Galilean velocity
-                const amrex::Real w_c = modified_kx[i]*vg_x +
+                // Calculate the dot product of the k vector with the Galilean velocity.
+                // This has to be computed always with the centered (collocated) finite-order
+                // modified k vectors, to work correctly for both collocated and staggered grids.
+                // w_c = 0 always with standard PSATD (zero Galilean velocity).
+                const amrex::Real w_c = kx_c[i]*vg_x +
 #if (AMREX_SPACEDIM==3)
-                    modified_ky[j]*vg_y + modified_kz[k]*vg_z;
+                    ky_c[j]*vg_y + kz_c[k]*vg_z;
 #else
-                    modified_kz[j]*vg_z;
+                    kz_c[j]*vg_z;
 #endif
                 T2(i,j,k) = amrex::exp(I*w_c*dt);
             }
-            else // Handle k_norm=0 by using the analytical limits
+            else // Handle knorm=0 by using the analytical limits
             {
                 C(i,j,k) = 1._rt;
                 S_ck(i,j,k) = dt;

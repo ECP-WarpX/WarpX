@@ -73,6 +73,12 @@ class PsatdAlgorithmGalileanPml : public SpectralBaseAlgorithm
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients T2_coef;
 
+        // Centered modified finite-order k vectors
+        KVectorComponent modified_kx_vec_centered;
+#if defined(WARPX_DIM_3D)
+        KVectorComponent modified_ky_vec_centered;
+#endif
+        KVectorComponent modified_kz_vec_centered;
 };
 
 #endif // WARPX_USE_PSATD
