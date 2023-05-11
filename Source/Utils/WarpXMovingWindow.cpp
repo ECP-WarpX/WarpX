@@ -247,23 +247,20 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
 
         // Shift scalar field F with div(E) cleaning in pml region
-        if (do_pml_dive_cleaning)
-        {
+        if (do_pml && pml[lev]->ok())
+        {   
+            amrex::MultiFab* pml_F = pml[lev]->GetF_fp();
             // Fine grid
-            if (do_pml && pml[lev]->ok())
+            if (pml_F)
             {
-                amrex::MultiFab* pml_F = pml[lev]->GetF_fp();
                 shiftMF(*pml_F, geom[lev], num_shift, dir, lev, dont_update_cost);
             }
             if (lev > 0)
             {
                 // Coarse grid
-                if (do_pml && pml[lev]->ok())
-                {
-                    amrex::MultiFab* pml_F = pml[lev]->GetF_cp();
-                    shiftMF(*pml_F, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
-                }
-            }
+                amrex::MultiFab* pml_F = pml[lev]->GetF_cp();
+                shiftMF(*pml_F, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
+           }
         }
 
         // Shift scalar field G with div(B) cleaning in valid domain
@@ -280,22 +277,19 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
 
         // Shift scalar field G with div(B) cleaning in pml region
-        if (do_pml_divb_cleaning)
-        {
+        if (do_pml && pml[lev]->ok())
+        {   
+            amrex::MultiFab* pml_G = pml[lev]->GetG_fp();
             // Fine grid
-            if (do_pml && pml[lev]->ok())
+            if (pml_G)
             {
-                amrex::MultiFab* pml_G = pml[lev]->GetG_fp();
                 shiftMF(*pml_G, geom[lev], num_shift, dir, lev, dont_update_cost);
             }
             if (lev > 0)
             {
                 // Coarse grid
-                if (do_pml && pml[lev]->ok())
-                {
                     amrex::MultiFab* pml_G = pml[lev]->GetG_cp();
                     shiftMF(*pml_G, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
-                }
             }
         }
 
