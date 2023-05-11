@@ -177,7 +177,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
             m_params.r_min = offset[1] + position[1]*spacing[1];
             m_params.r_max = m_params.r_min + (m_params.nr-1)*spacing[1];
         } else if (fileGeom=="cartesian"){
-            amrex::Print() << Utils::TextMsg::Info( "Found: lasy file's geometry in 3D cartesian coordinates"); 
+            amrex::Print() << Utils::TextMsg::Info( "Found: lasy file's geometry in 3D cartesian coordinates");
             m_params.nt = extent[0];
             m_params.ny = extent[1];
             m_params.nx = extent[2];
@@ -244,7 +244,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         for (int j=0; j<read_size; j++) {
                             amrex::Print() << Utils::TextMsg::Info(std::to_string(j));
             h_E_data[j] = Complex{ r_data.get()[j].real(), r_data.get()[j].imag() };
-                            
+
         }
         amrex::Print() << Utils::TextMsg::Info("6");
         } else{
@@ -360,7 +360,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
              //Here we add the laser oscillations.
             amplitude[i] = (val*exp_omega_t).real();
         }
-    ); 
+    );
         }
 // RZ BLOCK
 
@@ -436,10 +436,10 @@ else if (fileGeom=="thetaMode"){
     delete[] Rp;
 
         }
-    
+
 
     );
-  
+
 }
 
 }
