@@ -51,8 +51,6 @@ class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
 
     private:
 
-        SpectralFieldIndex m_spectral_index;
-
         bool coefficients_initialized;
         // Note that dt and v_galilean are saved to use in InitializeSpectralCoefficients
         amrex::Real const m_dt;
