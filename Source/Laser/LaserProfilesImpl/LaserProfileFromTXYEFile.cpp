@@ -170,25 +170,27 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         std::vector<double> offset = E.gridGlobalOffset();
         std::vector<double> position = E_laser.position<double>();
         std::vector<double> spacing = E.gridSpacing<double>();
-
-        std::vector<std::string> RZCoords = {"t","r"};
-        std::vector<std::string> CartesianCoords = {"t","y","x"};
-        if (compare_coords(axisLabels, RZCoords)) {
-            std::cout << "Found: lasy file datasets in RZ coordinates" << std::endl;
-            m_params.ny = 1;
+        series.flush();
+        amrex::Print() << Utils::TextMsg::Info(
+        "offset[" + std::to_string(offset[0]) + std::to_string(offset[1]) +"]" );
+        amrex::Print() << Utils::TextMsg::Info(
+        "position[" + std::to_string(position[0]) + std::to_string(position[1])  +"]" );
+        amrex::Print() << Utils::TextMsg::Info(
+        "spacing[" + std::to_string(spacing[0]) + std::to_string(spacing[1])  +"]" );
+        if (fileGeom=="thetaMode") {
+            amrex::Print() << Utils::TextMsg::Info( "Found: lasy file's geometry in RZ coordinates" );
+            //m_params.ny = 1;
             m_params.nt = extent[1];
-            m_params.nx = extent[2];
+            m_params.nr = extent[2];
             if(m_params.nt <= 1) Abort("nt in lasy file must be >=2");
-            if(m_params.nx <= 1) Abort("nr in lasy file must be >=2");
+            if(m_params.nr <= 1) Abort("nr in lasy file must be >=2");
                     // Calculate the min and max of the grid
-            //m_params.y_min = offset[0] + position[0]*spacing[0];
-            //m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[0];
-            m_params.t_min = offset[1] + position[1]*spacing[1];
-            m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[1];
-            m_params.x_min = offset[2] + position[2]*spacing[2];
-            m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
-        } else if (compare_coords(axisLabels, CartesianCoords)){
-            std::cout << "Found: lasy file datasets in 3D cartesian coordinates" << std::endl;
+            m_params.t_min = offset[0] + position[0]*spacing[0];
+            m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
+            m_params.r_min = offset[1] + position[1]*spacing[1];
+            m_params.r_max = m_params.r_min + (m_params.nr-1)*spacing[1];
+        } else if (fileGeom=="cartesian"){
+            amrex::Print() << Utils::TextMsg::Info( "Found: lasy file's geometry in 3D cartesian coordinates"); 
             m_params.nt = extent[0];
             m_params.ny = extent[1];
             m_params.nx = extent[2];
@@ -202,7 +204,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
             m_params.x_min = offset[2] + position[2]*spacing[2];
             m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
         } else{
-        amrex::Abort(Utils::TextMsg::Err("lasy file datasets have to be in either RZ or 3D cartesian coordinates!"));
+        amrex::Abort(Utils::TextMsg::Err("The lasy file's geometry has to be in either RZ or 3D cartesian coordinates"));
         }
 
 
@@ -244,14 +246,21 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         std::vector<std::string> RZCoords = {"t","r"};
         auto E_laser = E[io::RecordComponent::SCALAR];
         openPMD:: Extent full_extent = E_laser.getExtent();
-        if (compare_coords(axisLabels, RZCoords)) {
+        if (fileGeom=="thetaMode") {
+                amrex::Print() << Utils::TextMsg::Info("1");
         openPMD::Extent read_extent = {full_extent[0], (i_last - i_first + 1), full_extent[2]};
-        auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{0, i_first, 0}, read_extent);
-        const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
+                        amrex::Print() << Utils::TextMsg::Info("2");
+        auto r_data = E_laser.loadChunk< std::complex<double> >(io::Offset{0, i_first, 0}, full_extent);
+
+        const int read_size = (i_last - i_first + 1)*m_params.nr;
+
         series.flush();
         for (int j=0; j<read_size; j++) {
-            h_E_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
+                            amrex::Print() << Utils::TextMsg::Info(std::to_string(j));
+            h_E_data[j] = Complex{ r_data.get()[j].real(), r_data.get()[j].imag() };
+                            
         }
+        amrex::Print() << Utils::TextMsg::Info("6");
         } else{
         openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
         auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{i_first, 0, 0}, read_extent);
@@ -292,6 +301,9 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     // and get pointers to underlying data for GPU.
     const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
     const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
+
+    // CARTESIAN BLOCK
+    if (fileGeom=="cartesian") {
     const auto tmp_x_min = m_params.x_min;
     const auto tmp_x_max = m_params.x_max;
     const auto tmp_y_min = m_params.y_min;
@@ -316,10 +328,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             amplitude[i] = 0.0_rt;
             return;
         }
-            if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
-                amplitude[i] = 0.0_rt;
-                return;
-            }
+        if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
+            amplitude[i] = 0.0_rt;
+            return;
+        }
         //Find indices and coordinates along x
         const int temp_idx_x_right = static_cast<int>(
             std::ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
@@ -340,24 +352,6 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             idx_y_left*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
         const auto y_1 =
             idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
-
-        if (compare_coords(axisLabels, RZCoords)) {
-        //Interpolate amplitude
-        const auto idx = [=](int i_interp, int j_interp){
-            return
-                (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
-                j_interp*tmp_nx;
-        };
-        Complex val = utils::algorithms::bilinear_interp(
-        t_left, t_right,
-		x_0, x_1,
-		p_E_data[idx(idx_t_left, idx_x_left)],
-        p_E_data[idx(idx_t_left, idx_x_right)],
-		p_E_data[idx(idx_t_right, idx_x_left)],
-		p_E_data[idx(idx_t_right, idx_x_right)],
-		t, Xp[i]); 		
-        amplitude[i] = (val*exp_omega_t).real();
-        } else{
         //Interpolate amplitude
         const auto idx = [=](int i_interp, int j_interp, int k_interp){
             return
@@ -377,10 +371,90 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             p_E_data[idx(idx_t_right, idx_y_left, idx_x_right)],
             p_E_data[idx(idx_t_right, idx_y_right, idx_x_right)],
             t, Xp[i], Yp[i]);
-            // The interpolated amplitude was only the envelope.
-            // Here we add the laser oscillations.
+             //The interpolated amplitude was only the envelope.
+             //Here we add the laser oscillations.
             amplitude[i] = (val*exp_omega_t).real();
         }
-    }
+    ); 
+        }
+// RZ BLOCK
+
+else if (fileGeom=="thetaMode"){
+    const auto tmp_r_min = m_params.r_min;
+    const auto tmp_r_max = m_params.r_max;
+    const auto tmp_nr = m_params.nr;
+    const auto p_E_data = m_params.E_data.dataPtr();
+    const auto tmp_idx_first_time = m_params.first_time_index;
+    const int idx_t_right = idx_t_left+1;
+    const auto t_left = idx_t_left*
+        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+        m_params.t_min;
+    const auto t_right = idx_t_right*
+        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+        m_params.t_min;
+
+    // Loop through the macroparticle to calculate the proper amplitude
+
+    amrex::ParallelFor(
+    np,
+    [=] AMREX_GPU_DEVICE (int i) {
+        size_t N = sizeof(Xp)/sizeof(Real);
+        std::cout << "N " << N << std::endl;
+        std::cout << "Xp " << sizeof(Xp)<< std::endl;
+        std::cout << "Yp " << sizeof(Yp) << std::endl;
+        std::cout << "Xp/real " << sizeof(Xp)/sizeof(Real) << std::endl;
+        //Real const* AMREX_RESTRICT const Rp = new Real[N];  // Allocate memory for Rp
+        Real* AMREX_RESTRICT const Rp= new Real[N];
+        Rp[i] = std::sqrt(Xp[i] * Xp[i] + Yp[i] * Yp[i]);
+        //Real const * AMREX_RESTRICT const Rp= std::sqrt{Xp * Xp + Yp * Yp};
+        //Real const Rp_i = {std::sqrt(Xp[i] * Xp[i] + Yp[i] * Yp[i])};
+        //Real const Rp_i = std::sqrt(Xp[i] * Xp[i] + Yp[i] * Yp[i]);
+        //Amplitude is zero if we are out of bounds
+        if (Rp[i] <= tmp_r_min || Rp[i] >= tmp_r_max){
+            amplitude[i] = 0.0_rt;
+            return;
+        }
+        //Find indices and coordinates along x
+        const int temp_idx_r_right = static_cast<int>(
+            std::ceil((tmp_nr-1)*(Rp[i]- tmp_r_min)/(tmp_r_max-tmp_r_min)));
+        const int idx_r_right =
+            max(min(temp_idx_r_right,tmp_nr-1),static_cast<int>(1));
+        const int idx_r_left = idx_r_right - 1;
+        const auto r_0 =
+            idx_r_left*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
+        const auto r_1 =
+            idx_r_right*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
+
+    const auto idx = [=](int i_interp, int j_interp){
+            return
+                (i_interp-tmp_idx_first_time)*tmp_nr+
+                j_interp;
+        };
+        Complex val = utils::algorithms::bilinear_interp(
+        t_left, t_right,
+        r_0, r_1,
+        p_E_data[idx(idx_t_left, idx_r_left)],
+        p_E_data[idx(idx_t_left, idx_r_right)],
+        p_E_data[idx(idx_t_right, idx_r_left)],
+        p_E_data[idx(idx_t_right, idx_r_right)],
+        t, Rp[i]);
+        amplitude[i] = (val*exp_omega_t).real();
+        amrex::Print() << Utils::TextMsg::Info(
+        "tmp_r_min, tmp_r_max = ("+ std::to_string(tmp_r_min)+",  " +std::to_string(tmp_r_max) );
+        amrex::Print() << Utils::TextMsg::Info(
+        "Rp["+ std::to_string(i)+"] = " + std::to_string(Rp[i]) );
+        //amrex::Print() << Utils::TextMsg::Info(
+        //"amplitude[" + std::to_string(i) + "] = " + std::to_string(amplitude[i]));
+        //std::cout << "val " << val.real() << std::endl;amrex::Print() << Utils::TextMsg::Info(
+    //"amplitude[" + std::to_string(i) + "] = " + std::to_string(amplitude[i]));
+    //std::cout << "amplitude " << amplitude[i] << std::endl;
+    delete[] Rp;
+
+        }
+    
+
     );
+  
+}
+
 }
