@@ -1,4 +1,5 @@
 Checks: '-*,
     cppcoreguidelines-avoid-goto,
     modernize-use-nullptr
+    readability-magic-numbers
     '
