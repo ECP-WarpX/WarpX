@@ -1,4 +1,3 @@
 Checks: '-*,
     modernize-use-nullptr
-    readability-magic-numbers
     '
