@@ -248,7 +248,7 @@ WarpX::MoveWindow (const int step, bool move_j)
 
         // Shift scalar field F with div(E) cleaning in pml region
         if (do_pml && pml[lev]->ok())
-        {   
+        {
             amrex::MultiFab* pml_F = pml[lev]->GetF_fp();
             // Fine grid
             if (pml_F)
@@ -278,7 +278,7 @@ WarpX::MoveWindow (const int step, bool move_j)
 
         // Shift scalar field G with div(B) cleaning in pml region
         if (do_pml && pml[lev]->ok())
-        {   
+        {
             amrex::MultiFab* pml_G = pml[lev]->GetG_fp();
             // Fine grid
             if (pml_G)
