@@ -314,6 +314,7 @@ private:
          * If DIM=3, ny must be >=2 as well.
          * If DIM=2, ny must be 1 */
         int nt, nx, ny;
+        int nr;
         /** Start time*/
         amrex::Real t_min;
         /** Stop time*/
@@ -326,6 +327,8 @@ private:
         amrex::Real y_min;
         /** max of y coordinates*/
         amrex::Real y_max;
+        amrex::Real r_min;
+        amrex::Real r_max;
         /** Size of the timestep range to load */
         int time_chunk_size;
         /** Index of the first timestep in memory */
