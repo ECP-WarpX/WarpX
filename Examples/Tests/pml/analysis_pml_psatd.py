@@ -64,7 +64,7 @@ energy_end = energyE + energyB
 
 reflectivity = energy_end / energy_start
 if galilean:
-    reflectivity_max = 4e-4
+    reflectivity_max = 2e-4
 else:
     reflectivity_max = 1e-6
 
