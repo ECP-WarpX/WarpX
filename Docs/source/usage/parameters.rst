@@ -501,7 +501,7 @@ Distribution across MPI ranks and parallelization
 
     .. math::
 
-            c = n_{\text{particle}} \cdot w_{\text{particle}} + n_{\text{cell}} \cdot w_{\text{cell}},
+       c = n_{\text{particle}} \cdot w_{\text{particle}} + n_{\text{cell}} \cdot w_{\text{cell}},
 
     where
     :math:`n_{\text{particle}}` is the number of particles on the box,
@@ -2375,7 +2375,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Users can provide an expression returning a boolean for whether a particle is dumped.
     `t` represents the physical time in seconds during the simulation.
     `x, y, z` represent particle positions in the unit of meter.
-    `ux, uy, uz` represent particle velocities in the unit of
+    `ux, uy, uz` represent particle momenta in the unit of
     :math:`\gamma v/c`, where
     :math:`\gamma` is the Lorentz factor,
     :math:`v/c` is the particle velocity normalized by the speed of light.
@@ -2789,7 +2789,7 @@ Reduced Diagnostics
             into account when calculating the histogram.
             `t` represents the physical time in seconds during the simulation.
             `x, y, z` represent particle positions in the unit of meter.
-            `ux, uy, uz` represent particle velocities in the unit of
+            `ux, uy, uz` represent particle momenta in the unit of
             :math:`\gamma v/c`, where
             :math:`\gamma` is the Lorentz factor,
             :math:`v/c` is the particle velocity normalized by the speed of light.
@@ -2835,6 +2835,7 @@ Reduced Diagnostics
 
         When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
         computed integral is weighted:
+
         .. math::
 
             Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
