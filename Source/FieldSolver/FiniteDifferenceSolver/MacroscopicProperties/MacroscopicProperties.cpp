@@ -244,3 +244,9 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
 
     }
 }
+
+// void JAModel::ComputeH(std::array<amrex::Real, 3UL> H,
+//                        std::array<amrex::Real, 3UL> B,
+//                     std::array<amrex::Real, 3UL> E,
+//             amrex::Real dt
+// );

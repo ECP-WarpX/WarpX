@@ -158,12 +158,20 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         int const n_coefs_z = m_stencil_coefs_z.size();
 
-        // This functor computes Hx = Bx/mu
-        // Note that mu is cell-centered here and will be interpolated/averaged
-        // to the location where the B-field and H-field are defined
-        FieldAccessorMacroscopic const Hx(Bx, mu_arr);
-        FieldAccessorMacroscopic const Hy(By, mu_arr);
-        FieldAccessorMacroscopic const Hz(Bz, mu_arr);
+
+
+        if (macroscopic_properties->is_ferromagnetic_material_present() == false){
+            // This functor computes Hx = Bx/mu
+            // Note that mu is cell-centered here and will be interpolated/averaged
+            // to the location where the B-field and H-field are defined
+            FieldAccessorMacroscopic const Hx(Bx, mu_arr);
+            FieldAccessorMacroscopic const Hy(By, mu_arr);
+            FieldAccessorMacroscopic const Hz(Bz, mu_arr);
+        }
+        else{
+
+        }
+
 
         // Extract tileboxes for which to loop
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
