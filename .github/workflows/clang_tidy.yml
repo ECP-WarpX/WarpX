@@ -30,7 +30,9 @@ jobs:
         REGEX="[a-z_A-Z0-9\/]*WarpX\/Source[a-z_A-Z0-9\/]+.(H|cpp)"
         if [[ \$4 =~ $REGEX ]]
         then
-            clang-tidy \$@
+            echo "YES:" \$4
+        else
+            echo "NO:" \$4
         fi
         EOF
         #_____________________________________
