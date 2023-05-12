@@ -43,6 +43,11 @@ public:
      amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
      /** return MultiFab, mu (permeability) of the medium. */
      amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
+     /** return MultiFab */
+     amrex::iMultiFab& getferromagnetic_id_mf  () {return (*m_ferromagnetic_id_mf);}
+
+     /** Bool flag on whether there are any ferromagnetic materials present. */
+     bool is_ferromagnetic_material_present () { return m_ferromagnetic_material_present_flag; }
 
      /** Initializes the Multifabs storing macroscopic properties
       *  with user-defined functions(x,y,z).
@@ -80,6 +85,10 @@ private:
      std::unique_ptr<amrex::MultiFab> m_eps_mf;
      /** Multifab for m_mu */
      std::unique_ptr<amrex::MultiFab> m_mu_mf;
+     /** iMultifab for m_ferromagnetic_id. The integer refers specifies which ferromagnetic material is at
+      *  the indexed location. Note that 0 (or maybe -1 ...) corresponds to non-ferromagnetic and defaults to m_mu. 
+      */
+     std::unique_ptr<amrex::iMultiFab> m_ferromagnetic_id_mf;
 
      /** Stores initialization type for conductivity : constant or parser */
      std::string m_sigma_s = "constant";
@@ -97,6 +106,95 @@ private:
      std::unique_ptr<amrex::Parser> m_epsilon_parser;
      std::unique_ptr<amrex::Parser> m_mu_parser;
 
+     /** Vector for storing ferromagnetic objects */
+     std::vector<FerromagneticObject> m_ferro_objects;
+
+     /** Bool flag on whether ferromagnetic material is present. */
+     bool m_ferromagnetic_material_present_flag = false;
+
+
+
+
+};
+
+class FerromagneticObject {
+
+private:
+     /** String for storing parser function, which specifies where the object is location. */
+     std::string m_str_ferro_location_function;
+     /** Location parser wrappers. Describes where the object is location */
+     std::unique_ptr<amrex::Parser> m_ferro_location_parser;
+     /** Specifies the hysteretic properties of the ferromagnetic object using the Jiles-Atherton model */
+     JAModelParameters m_ferro_ja_model_properties;
+};
+
+struct FerromagneticMaterials {
+public:
+     static JAModelParameters M330_50_A_steel JAModelParameters(alphaj = 7.45E-5_rt,
+                                                                a = 26.1_rt /* A/m */,
+                                                                Ms = 1.26E6_rt /* A/m */,
+                                                                k = 52.3_rt /* A/m */,
+                                                                c = 0.13_rt);
+}
+
+/**
+ * \brief This struct contains the five parameters necessary to describe ferromagnetic
+ * hysteresis using the Jiles-Atherton (JA) model. 
+ */
+struct JAModelParameters {
+     
+public:
+
+     JAModelParameters (amrex::Real alphaj, 
+                        amrex::Real a,
+                        amrex::Real Ms,
+                        amrex::Real k,
+                        amrex::Real c) {
+          m_alphaj = alphaj;
+          m_a = a;
+          m_Ms = Ms;
+          m_k = k;
+          m_c = c;
+     }
+     /** The `alpha_j` parameter of the JA model is used to define the effective field `H_e = H + alpha_j M`, 
+      *  where `H` is the magnetic field and `M` is the total magnetization. It is a unitless parameter. */
+     amrex::Real alphaj () { return m_alphaj; }
+     /** The `a` parameter of the JA model describes the scale of 
+      *  the `H` field at which the ferromagnetic material saturates.
+      *  It is used in the Langevin function as `L(H_e / a)`, and
+      *  has same units as the H field (A/m).
+      */
+     amrex::Real a () { return m_a; }
+     /** The `M_s` parameter of the JA model specifies the magnetization 
+      *  of the ferromagnetic material at maximum saturation.
+      *  It has same units as the `H` field (A/m).
+      */
+     amrex::Real Msaturation () { return m_Ms; }
+     /** The `k` parameter of the JA model describes the scale by which 
+      *  the irreversible magnetization `M_irr` changes due to a change 
+      *  in the effective field `H_e`. In particular, 
+      *       `dM_irr / dH_e = (M_an - M_irr) / k`, 
+      *  where `M_an` is the anhysteretic magnetization.
+      *  It has the same units as the `H` field (A/m). 
+      */
+     amrex::Real k () { return m_k; }
+     /** The `c` parameter of the JA is used in the equation 
+      *        `M_rev = c (M_an - M_irr)`, 
+      *  where `M_rev`, `M_an`, and `M_irr` are the reversible, anhysteretic, 
+      *  and irreversible magnetizations, respectively. 
+      *  This equation corresponds to the bulge of the walls between magnetic
+      *  domains for small displacement. Given that the total magnetization `M`
+      *  is the sum of the reversible and irreversible parts, we can write 
+      *  `M = c M_an + (1-c) M_irr`. Note `c` is a unitless parameter. 
+      */
+     amrex::Real c () { return m_c; }
+     
+private:
+     amrex::Real m_alphaj;
+     amrex::Real m_a;
+     amrex::Real m_Ms;
+     amrex::Real m_k;
+     amrex::Real m_c;
 };
 
 /**
