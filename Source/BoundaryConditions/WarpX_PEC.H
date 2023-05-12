@@ -339,19 +339,19 @@ using namespace amrex;
 
 
     /**
-     * \brief Sets the J field value in cells close to and on a PEC boundary. The
-     *        current density deposited in the guard cells are either reflected
+     * \brief Sets the rho or J field value in cells close to and on a PEC boundary. The
+     *        charge/current density deposited in the guard cells are either reflected
      *        back into the simulation domain (if a reflecting particle
-     *        boundary is used), or the opposite current density is deposited
+     *        boundary is used), or the opposite charge/current density is deposited
      *        back in the domain to capture the effect of an image charge.
-     *        The current density on the PEC boundary is set to 0 while values
+     *        The charge/current density on the PEC boundary is set to 0 while values
      *        in the guard cells are set equal (and opposite) to their mirror
      *        location inside the domain - representing image charges - in the
      *        normal (tangential) direction.
      *
      * \param[in] n            index of the MultiFab component being updated
      * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of the rho Array4
-     * \param[in out] Jfield   field data to be updated
+     * \param[in out] field    field data to be updated
      * \param[in] mirrorfac    mirror cell is given by mirrorfac - ijk_vec
      * \param[in] psign        Whether the field value should be flipped across the boundary
      * \param[in] is_pec       Whether the given boundary is PEC
@@ -359,14 +359,14 @@ using namespace amrex;
      * \param[in] fabbox       multifab box including ghost cells
      */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    void SetJfieldFromPEC (const int n,
-                           const amrex::IntVect & ijk_vec,
-                           amrex::Array4<amrex::Real> const& Jfield,
-                           amrex::GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM> const& mirrorfac,
-                           amrex::GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM> const& psign,
-                           amrex::GpuArray<GpuArray<bool, 2>, AMREX_SPACEDIM> const& is_pec,
-                           GpuArray<bool, AMREX_SPACEDIM> const& tangent_to_bndy,
-                           amrex::Box const& fabbox)
+    void SetRhoOrJfieldFromPEC (const int n,
+                                const amrex::IntVect & ijk_vec,
+                                amrex::Array4<amrex::Real> const& field,
+                                amrex::GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM> const& mirrorfac,
+                                amrex::GpuArray<GpuArray<amrex::Real, 2>, AMREX_SPACEDIM> const& psign,
+                                amrex::GpuArray<GpuArray<bool, 2>, AMREX_SPACEDIM> const& is_pec,
+                                amrex::GpuArray<bool, AMREX_SPACEDIM> const& tangent_to_bndy,
+                                amrex::Box const& fabbox)
     {
         // The boundary is handled in 2 steps:
         // 1) The cells internal to the domain are updated using the
@@ -382,11 +382,11 @@ using namespace amrex;
                 iv_mirror[idim] = mirrorfac[idim][iside] - ijk_vec[idim];
 
                 // On the PEC boundary the current density is set to 0
-                if (ijk_vec == iv_mirror) Jfield(ijk_vec, n) = 0._rt;
+                if (ijk_vec == iv_mirror) field(ijk_vec, n) = 0._rt;
                 // otherwise update the internal cell if the mirror guard cell exists
                 else if (fabbox.contains(iv_mirror))
                 {
-                    Jfield(ijk_vec,n) += psign[idim][iside] * Jfield(iv_mirror,n);
+                    field(ijk_vec,n) += psign[idim][iside] * field(iv_mirror,n);
                 }
             }
         }
@@ -403,9 +403,9 @@ using namespace amrex;
                 if (ijk_vec != iv_mirror && fabbox.contains(iv_mirror))
                 {
                     if (tangent_to_bndy[idim])
-                        Jfield(iv_mirror, n) = -Jfield(ijk_vec, n);
+                        field(iv_mirror, n) = -field(ijk_vec, n);
                     else
-                        Jfield(iv_mirror, n) = Jfield(ijk_vec, n);
+                        field(iv_mirror, n) = field(ijk_vec, n);
                 }
             }
         }

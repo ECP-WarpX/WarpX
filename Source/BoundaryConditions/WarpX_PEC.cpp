@@ -243,6 +243,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
     amrex::Box grown_domain_box = domain_box;
 
     amrex::GpuArray<GpuArray<bool,2>, AMREX_SPACEDIM> is_pec;
+    amrex::GpuArray<bool, AMREX_SPACEDIM> is_tangent_to_bndy;
     amrex::GpuArray<GpuArray<amrex::Real,2>, AMREX_SPACEDIM> psign;
     amrex::GpuArray<GpuArray<int,2>, AMREX_SPACEDIM> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
@@ -250,6 +251,10 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
         is_pec[idim][1] = WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC;
         if (!is_pec[idim][0]) grown_domain_box.growLo(idim, ng_fieldgather[idim]);
         if (!is_pec[idim][1]) grown_domain_box.growHi(idim, ng_fieldgather[idim]);
+
+        // rho values inside guard cells are updated the same as tangential
+        // components of the current density
+        is_tangent_to_bndy[idim] = true;
 
         psign[idim][0] = (WarpX::particle_boundary_lo[idim] == ParticleBoundaryType::Reflecting)
                          ? 1._rt : -1._rt;
@@ -286,44 +291,10 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
             // Store the array index
             amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
-            // The boundary is handled in 2 steps:
-            // 1) The cells internal to the domain are updated using the
-            //    charge deposited in the guard cells
-            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-            {
-                for (int iside = 0; iside < 2; ++iside)
-                {
-                    if (!is_pec[idim][iside]) continue;
-
-                    // Get the mirror guard cell index
-                    amrex::IntVect iv_mirror = iv;
-                    iv_mirror[idim] = mirrorfac[idim][iside] - iv[idim];
-
-                    // On the PEC boundary the charge density is set to 0
-                    if (iv == iv_mirror) rho_array(iv, n) = 0._rt;
-                    // otherwise update the internal cell if the mirror guard cell exists
-                    else if (fabbox.contains(iv_mirror))
-                    {
-                        rho_array(iv, n) += psign[idim][iside] * rho_array(iv_mirror, n);
-                    }
-                }
-            }
-            // 2) The guard cells are updated with the appropriate image
-            //    charges based on the charge in the valid cells
-            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-            {
-                for (int iside = 0; iside < 2; ++iside)
-                {
-                    if (!is_pec[idim][iside]) continue;
-
-                    amrex::IntVect iv_mirror = iv;
-                    iv_mirror[idim] = mirrorfac[idim][iside] - iv[idim];
-                    if (iv != iv_mirror && fabbox.contains(iv_mirror))
-                    {
-                        rho_array(iv_mirror, n) = -rho_array(iv, n);
-                    }
-                }
-            }
+            PEC::SetRhoOrJfieldFromPEC(
+                n, iv, rho_array, mirrorfac, psign, is_pec,
+                is_tangent_to_bndy, fabbox
+            );
         });
     }
 }
@@ -365,7 +336,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
 
     amrex::GpuArray<GpuArray<bool, 2>, AMREX_SPACEDIM> is_pec;
     amrex::GpuArray<GpuArray<bool, AMREX_SPACEDIM>, 3> is_tangent_to_bndy;
-    amrex::GpuArray<GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM>, 3> psign;
+    amrex::GpuArray<GpuArray<GpuArray<amrex::Real, 2>, AMREX_SPACEDIM>, 3> psign;
     amrex::GpuArray<GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM>, 3> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         is_pec[idim][0] = WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC;
@@ -443,7 +414,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             // Store the array index
             amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
-            PEC::SetJfieldFromPEC(
+            PEC::SetRhoOrJfieldFromPEC(
                 n, iv, Jx_array, mirrorfac[0], psign[0], is_pec,
                 is_tangent_to_bndy[0], fabbox
             );
@@ -478,7 +449,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             // Store the array index
             amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
-            PEC::SetJfieldFromPEC(
+            PEC::SetRhoOrJfieldFromPEC(
                 n, iv, Jy_array, mirrorfac[1], psign[1], is_pec,
                 is_tangent_to_bndy[1], fabbox
             );
@@ -513,7 +484,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             // Store the array index
             amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
-            PEC::SetJfieldFromPEC(
+            PEC::SetRhoOrJfieldFromPEC(
                 n, iv, Jz_array, mirrorfac[2], psign[2], is_pec,
                 is_tangent_to_bndy[2], fabbox
             );
