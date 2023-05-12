@@ -28,8 +28,7 @@ jobs:
         cat > clang_tidy_wrapper << EOF
         #_____________________________________
         #!/bin/bash
-        REGEX="[a-z_A-Z0-9\/]*WarpX\/Source[a-z_A-Z0-9\/]+.(H|cpp)"
-        if [[ \$4 =~ \$REGEX ]]
+        if [[ \$4 =~ [a-z_A-Z0-9\/]*WarpX\/Source[a-z_A-Z0-9\/]+.(H|cpp) ]]
         then
             clang-tidy \$@
         fi
