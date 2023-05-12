@@ -25,15 +25,16 @@ jobs:
 
         # The following wrapper ensures that only source files
         # in WarpX/Source/* are actually processed by clang-tidy
+        #_______________________________
         cat > clang_tidy_wrapper << EOF
-        #_____________________________________
         #!/bin/bash
-        if [[ \$4 =~ [a-z_A-Z0-9\/]*WarpX\/Source[a-z_A-Z0-9\/]+.(H|cpp) ]];then
+        REGEX="[a-z_A-Z0-9\/]*WarpX\/Source[a-z_A-Z0-9\/]+.(H|cpp)"
+        if [[ \$4 =~ \$REGEX ]];then
           clang-tidy \$@
         fi
         EOF
-        #_____________________________________
         chmod +x clang_tidy_wrapper
+        #_____________________________________
 
         cmake -S . -B build_clang_tidy \
           -DCMAKE_CXX_CLANG_TIDY="$PWD/clang_tidy_wrapper;--system-headers=0;--config-file=$PWD/.clang-tidy" \
