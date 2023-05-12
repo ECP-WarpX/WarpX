@@ -19,6 +19,7 @@ jobs:
     - name: build WarpX using clang-tidy
       run: |
 
+
         export CXX=$(which clang++)
         export CC=$(which clang)
 
@@ -28,7 +29,7 @@ jobs:
         #_____________________________________
         #!/bin/bash
         REGEX="[a-z_A-Z0-9\/]*WarpX\/Source[a-z_A-Z0-9\/]+.(H|cpp)"
-        if [[ \$4 =~ $REGEX ]]
+        if [[ \$4 =~ \$REGEX ]]
         then
             echo "YES:" \$4
         else
