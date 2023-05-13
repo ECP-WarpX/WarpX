@@ -79,7 +79,7 @@ Build Options
 ============================= ============================================ =========================================================
 CMake Option                  Default & Values                             Description
 ============================= ============================================ =========================================================
-``CMAKE_BUILD_TYPE``          RelWithDebInfo/**Release**/Debug             Type of build, symbols & optimizations
+``CMAKE_BUILD_TYPE``          RelWithDebInfo/**Release**/Debug             Type of build, symbols & optimizations. Full building list here: '<https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html>`
 ``CMAKE_INSTALL_PREFIX``      system-dependent path                        Install path prefix
 ``CMAKE_VERBOSE_MAKEFILE``    ON/**OFF**                                   Print all compiler commands to the terminal during build
 ``PYINSTALLOPTIONS``                                                       Additional options for ``pip install``, e.g., ``-v --user``
