@@ -267,7 +267,7 @@ public:
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
         amrex::Real * AMREX_RESTRICT const amplitude) const;
-    
+
         void internal_fill_amplitude_uniform_binary(
         const int idx_t_left,
         const int np,

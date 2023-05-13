@@ -65,7 +65,7 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
             "things will happen parsing the X, Y and T profiles for the laser!)",
             ablastr::warn_manager::WarnPriority::high);
     }
-    
+
     // Parse the lasy or binary file
     //ParmParse pp_qed_qs("qed_qs");
     //ParmParse pp_qed_qs("qed_qs");
@@ -75,12 +75,12 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     ppl.query("binary_file_name", m_params.binary_file_name);
     std::string lasy_file_name = m_params.lasy_file_name;
     std::string binary_file_name = m_params.binary_file_name;
-    m_params.file_in_lasy_format = false;    
+    m_params.file_in_lasy_format = false;
     if (!lasy_file_name.empty() && binary_file_name.empty()) {
 #ifdef WARPX_USE_OPENPMD
         m_params.file_in_lasy_format = true;
         parse_lasy_file(lasy_file_name);
-#else   
+#else
     amrex::Abort(Utils::TextMsg::Err("WarpX has to be compiled with the option openPMD=ON to read a lasy file"));
     amrex::ignore_unused(ppl, params);
 #endif
@@ -93,7 +93,7 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     else{
         Abort("binary_file_name or lasy_file_name must be provided for laser profile!");
     }
-    
+
     //Set time_chunk_size
     m_params.time_chunk_size = m_params.nt;
     int temp = 1;
@@ -140,7 +140,7 @@ WarpXLaserProfiles::FromFileLaserProfile::update (amrex::Real t)
         if (m_params.file_in_lasy_format){
         read_data_t_chunk(idx_t_left, idx_t_left+m_params.time_chunk_size);
         } else{
-        read_binary_data_t_chunk(idx_t_left, idx_t_left+m_params.time_chunk_size);    
+        read_binary_data_t_chunk(idx_t_left, idx_t_left+m_params.time_chunk_size);
         }
     }
 }
@@ -342,15 +342,15 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk(int t_begin, 
         3*sizeof(uint32_t) +
         2*sizeof(double) +
         2*sizeof(double) +
-        2*sizeof(double) +          
+        2*sizeof(double) +
         sizeof(double)*t_begin*m_params.nx*m_params.ny;
 #else
         auto skip_amount = 1 +
         3*sizeof(uint32_t) +
         2*sizeof(double) +
         2*sizeof(double) +
-        1*sizeof(double) +          
-        sizeof(double)*t_begin*m_params.nx*m_params.ny;   
+        1*sizeof(double) +
+        sizeof(double)*t_begin*m_params.nx*m_params.ny;
 #endif
         inp.seekg(skip_amount);
         if(!inp) Abort("Failed to read field data from binary file");
@@ -477,7 +477,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_binary
     const auto tmp_y_min = m_params.y_min;
     const auto tmp_y_max = m_params.y_max;
     const auto tmp_ny = m_params.ny;
-#endif    
+#endif
     const auto tmp_nx = m_params.nx;
     const auto p_E_binary_data = m_params.E_binary_data.dataPtr();
     const auto tmp_idx_first_time = m_params.first_time_index;
