@@ -207,12 +207,12 @@ private:
 };
 
 /**
- * Laser profile read from an 'TXYE' file
+ * Laser profile read from a file
  * The binary file must contain:
  * - 3 unsigned integers (4 bytes): nt (points along t), nx (points along x) and ny (points along y)
  * - nt*nx*ny doubles (8 bytes) in row major order : field amplitude
  */
-class FromTXYEFileLaserProfile : public ILaserProfile
+class FromFileLaserProfile : public ILaserProfile
 {
 
 public:
@@ -267,11 +267,19 @@ public:
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
         amrex::Real * AMREX_RESTRICT const amplitude) const;
+    
+        void internal_fill_amplitude_uniform_binary(
+        const int idx_t_left,
+        const int np,
+        amrex::Real const * AMREX_RESTRICT const Xp,
+        amrex::Real const * AMREX_RESTRICT const Yp,
+        amrex::Real t,
+        amrex::Real * AMREX_RESTRICT const amplitude) const;
 
 private:
-    /** \brief parse a field file in the binary 'txye' format (whose details are given below).
+    /** \brief parse a field file in the binary 'binary' format (whose details are given below).
     *
-    * A 'txye' file should be a binary file with the following format:
+    * A 'binary' file should be a binary file with the following format:
     * -np, number of timesteps (uint32_t, must be >=2)
     * -nx, number of points along x (uint32_t, must be >=2)
     * -ny, number of points along y (uint32_t, must be 1 for 2D simulations and >=2 for 3D simulations)
@@ -280,10 +288,11 @@ private:
     * -y_coords (double[1] if 2D, double[2] if 3D
     * -field_data (double[nt * nx * ny], with nt being the slowest coordinate).
     * The spatiotemporal grid must be rectangular.
-    *
-    * \param txye_file_name: name of the file to parse
+    * \param lasy_file_name: name of the lasy file to parse
+    * \param binary_file_name: name of the binary file to parse
     */
-    void parse_txye_file(std::string txye_file_name);
+    void parse_lasy_file(std::string lasy_file_name);
+    void parse_binary_file(std::string binary_file_name);
 
     /** \brief Finds left and right time indices corresponding to time t
     *
@@ -294,12 +303,13 @@ private:
 
     /** \brief Load field data within the temporal range [t_begin, t_end)
     *
-    * Must be called after having parsed a data file with parse_txye_file.
+    * Must be called after having parsed a data file with parse_binary_file.
     *
     * \param t_begin: left limit of the timestep range to read
     * \param t_end: right limit of the timestep range to read (t_end is not read)
     */
-    void read_data_t_chuck(int t_begin, int t_end);
+    void read_data_t_chunk(int t_begin, int t_end);
+    void read_binary_data_t_chunk(int t_begin, int t_end);
 
     /**
      * \brief m_params contains all the internal parameters
@@ -307,7 +317,11 @@ private:
      */
     struct{
         /** Name of the file containing the data */
-        std::string txye_file_name;
+        std::string binary_file_name;
+        std::string lasy_file_name;
+
+        /** boolean true if the file is in the lasy format, false if it is in the binary format */
+        bool file_in_lasy_format;
         /** Dimensions of E_data. nt, nx must be >=2.
          * If DIM=3, ny must be >=2 as well.
          * If DIM=2, ny must be 1 */
@@ -331,8 +345,9 @@ private:
         /** Index of the last timestep in memory */
         int last_time_index;
         /** Field data */
-        amrex::Gpu::DeviceVector<Complex> E_data;
-        /** This parameter is subtracted to simulation time before interpolating field data in txye file.
+        amrex::Gpu::DeviceVector<Complex> E_lasy_data;
+        amrex::Gpu::DeviceVector<amrex::Real> E_binary_data;
+        /** This parameter is subtracted to simulation time before interpolating field data in binary file.
         *   If t_delay > 0, the laser is delayed, otherwise it is anticipated. */
         amrex::Real t_delay = amrex::Real(0.0);
 
@@ -358,8 +373,8 @@ laser_profiles_dictionary =
         [] () {return std::make_unique<HarrisLaserProfile>();} },
     {"parse_field_function",
         [] () {return std::make_unique<FieldFunctionLaserProfile>();} },
-    {"from_txye_file",
-        [] () {return std::make_unique<FromTXYEFileLaserProfile>();} }
+    {"from_file",
+        [] () {return std::make_unique<FromFileLaserProfile>();} }
 };
 
 } //WarpXLaserProfiles

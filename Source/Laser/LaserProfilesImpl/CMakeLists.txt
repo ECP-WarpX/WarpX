@@ -1,7 +1,7 @@
 target_sources(WarpX
   PRIVATE
     LaserProfileFieldFunction.cpp
-    LaserProfileFromTXYEFile.cpp
+    LaserProfileFromFile.cpp
     LaserProfileGaussian.cpp
     LaserProfileHarris.cpp
 )

@@ -127,7 +127,7 @@ def do_analysis(fname, compname, steps):
 
 
 def launch_analysis(executable):
-    os.system("./" + executable + " inputs.2d_test_txye diag1.file_prefix=diags/plotfiles/plt")
+    os.system("./" + executable + " inputs.2d_test diag1.file_prefix=diags/plotfiles/plt")
     do_analysis("diags/plotfiles/plt000251/", "comp_unf.pdf", 251)
 
 
