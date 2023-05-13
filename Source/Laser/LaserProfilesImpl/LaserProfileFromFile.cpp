@@ -65,12 +65,7 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
             "things will happen parsing the X, Y and T profiles for the laser!)",
             ablastr::warn_manager::WarnPriority::high);
     }
-
     // Parse the lasy or binary file
-    //ParmParse pp_qed_qs("qed_qs");
-    //ParmParse pp_qed_qs("qed_qs");
-    //pp_qed_qs.query("load_table_from", load_table_name);
-
     ppl.query("lasy_file_name", m_params.lasy_file_name);
     ppl.query("binary_file_name", m_params.binary_file_name);
     std::string lasy_file_name = m_params.lasy_file_name;
@@ -107,7 +102,7 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     //Reads the (optional) delay
     utils::parser::queryWithParser(ppl, "delay", m_params.t_delay);
 
-    //Allocate memory for E_lasy_data Vector
+    //Allocate memory for E_lasy_data or E_binary_data Vector
     const int data_size = m_params.time_chunk_size*
             m_params.nx*m_params.ny;
     if (m_params.file_in_lasy_format){
