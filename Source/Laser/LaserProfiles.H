@@ -288,7 +288,7 @@ public:
         amrex::Real * AMREX_RESTRICT const amplitude) const;
 
 private:
-    /** \brief parse a field file in the HDF5 'lasy' format 
+    /** \brief parse a field file in the HDF5 'lasy' format
     * \param lasy_file_name: name of the lasy file to parse
     */
     void parse_lasy_file(std::string lasy_file_name);

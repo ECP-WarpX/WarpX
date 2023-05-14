@@ -1240,7 +1240,7 @@ Laser initialization
         * y_coords (double[1] if 2D, double[2]=[y_min,y_max] if 3D)
         * field_data (double[nt * nx * ny], with nt being the slowest coordinate).
 
-      A binary file can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file`` 
+      A binary file can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file``
 
 * ``<laser_name>.profile_t_peak`` (`float`; in seconds)
     The time at which the laser reaches its peak intensity, at the position
