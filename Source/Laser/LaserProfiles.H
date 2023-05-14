@@ -1,5 +1,5 @@
 /* Copyright 2019-2020 Luca Fedeli, Maxence Thevenet
- *
+ * Ilian Kara-Mostefa
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL

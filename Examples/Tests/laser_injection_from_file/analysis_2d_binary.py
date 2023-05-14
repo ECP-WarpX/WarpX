@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright 2020 Andrew Myers, Axel Huebl, Luca Fedeli
-# Remi Lehe
+# Remi Lehe, Ilian Kara-Mostefa
 #
 # This file is part of WarpX.
 #
@@ -14,10 +14,11 @@
 # - Generate an input binary file with a gaussian laser pulse.
 # - Run the WarpX simulation for time T, when the pulse is fully injected
 # - Compute the theory for laser envelope at time T
-# - Compare theory and simulation, for both envelope and central frequency
+# - Compare theory and simulation in 2D, for both envelope and central frequency
 
 import glob
 import os
+import sys
 
 import matplotlib
 
@@ -27,6 +28,9 @@ import numpy as np
 from scipy.signal import hilbert
 
 import yt ; yt.funcs.mylog.setLevel(50)
+
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 #Maximum acceptable error for this test
 relative_error_threshold = 0.065
@@ -200,6 +204,11 @@ def main() :
         launch_analysis(executables[0])
     else :
         assert(False)
+
+    # Do the checksum test
+    filename_end = "diags/plotfiles/plt000250/"
+    test_name = "LaserInjectionFromBINARYFile"
+    checksumAPI.evaluate_checksum(test_name, filename_end)
     print('Passed')
 
 if __name__ == "__main__":
