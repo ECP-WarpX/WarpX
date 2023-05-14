@@ -1210,18 +1210,37 @@ Laser initialization
       none of the parameters below are used when ``<laser_name>.parse_field_function=1``. Even
       though ``<laser_name>.wavelength`` and ``<laser_name>.e_max`` should be included in the laser
       function, they still have to be specified as they are used for numerical purposes.
-    - ``"from_txye_file"``: the electric field of the laser is read from an external lasy file
-      (see lasy docs: https://lasydoc.readthedocs.io/en/latest/ ). It requires to provide the name of the lasy file
-      setting the additional parameter ``<laser_name>.txye_file_name`` (`string`). It accepts an
-      optional parameter ``<laser_name>.time_chunk_size`` (`int`). This allows to read only
+    - ``"from_file"``: the electric field of the laser is read from an external file. Currently both Laser Symple Manipulator (lasy) and binary formats are supported
+      (see the lasy docs: https://lasydoc.readthedocs.io/en/latest/ ). It requires to provide the name of the file to load
+      setting the additional parameter ``<laser_name>.binary_file_name`` or ``<laser_name>.lasy_file_name`` (`string`). It accepts an
+      optional parameter ``<laser_name>.time_chunk_size`` (`int`) , only supported for a lasy file; this allows to read only
       time_chunk_size timesteps from the lasy file. New timesteps are read as soon as they are needed.
       The default value is automatically set to the number of timesteps contained in the lasy file
       (i.e. only one read is performed at the beginning of the simulation).
       It also accepts the optional parameter ``<laser_name>.delay`` (`float`; in seconds), which allows
       delaying (``delay > 0``) or anticipating (``delay < 0``) the laser by the specified amount of time.
-      A lasy file is always 3D, but in the case where WarpX is compiled in 2D (or 1D), the laser antenna
+
+      Details about the usage of the lasy format: A lasy file is always 3D, but in the case where WarpX is compiled in 2D (or 1D), the laser antenna
       will emit the field values that correspond to y=0 in the lasy file (and x=0 in the 1D case).
       One can generate a lasy file from Python, see an example at ``Examples/Tests/laser_injection_from_file``.
+
+      Details about the usage of the binary format: The external binary file should provide E(x,y,t) on a rectangular (necessarily uniform)
+      grid. The code performs a bi-linear (in 2D) or tri-linear (in 3D) interpolation to set the field
+      values. x,y,t are meant to be in S.I. units, while the field value is meant to be multiplied by
+      ``<laser_name>.e_max`` (i.e. in most cases the maximum of abs(E(x,y,t)) should be 1,
+      so that the maximum field intensity can be set straightforwardly with ``<laser_name>.e_max``).
+      The binary file has to respect the following format:
+
+        * flag to indicate the grid is uniform(1 byte, 0 means non-uniform, !=0 means uniform) - only uniform is supported
+        * np, numbrer of timesteps (uint32_t, must be >=2)
+        * nx, number of points along x (uint32_t, must be >=2)
+        * ny, number of points along y (uint32_t, must be 1 for 2D simulations and >=2 for 3D simulations)
+        * timesteps (double[2]=[t_min,t_max])
+        * x_coords (double[2]=[x_min,x_max])
+        * y_coords (double[1] if 2D, double[2]=[y_min,y_max] if 3D)
+        * field_data (double[nt * nx * ny], with nt being the slowest coordinate).
+
+      A binary file can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file`` 
 
 * ``<laser_name>.profile_t_peak`` (`float`; in seconds)
     The time at which the laser reaches its peak intensity, at the position
