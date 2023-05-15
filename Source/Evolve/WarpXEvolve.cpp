@@ -386,9 +386,9 @@ WarpX::Evolve (int numsteps)
     }
 }
 
-/* /brief Perform one PIC iteration, without subcycling
-*  i.e. all levels/patches use the same timestep (that of the finest level)
-*  for the field advance and particle pusher.
+/** \brief Perform one PIC iteration, without subcycling
+*   i.e. all levels/patches use the same timestep (that of the finest level)
+*   for the field advance and particle pusher.
 */
 void
 WarpX::OneStep_nosub (Real cur_time)
@@ -735,7 +735,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 #endif // WARPX_USE_PSATD
 }
 
-/* /brief Perform one PIC iteration, with subcycling
+/** \brief Perform one PIC iteration, with subcycling
 *  i.e. The fine patch uses a smaller timestep (and steps more often)
 *  than the coarse patch, for the field advance and particle pusher.
 *
@@ -1013,10 +1013,10 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
     }
 }
 
-/* \brief Apply perfect mirror condition inside the box (not at a boundary).
- * In practice, set all fields to 0 on a section of the simulation domain
- * (as for a perfect conductor with a given thickness).
- * The mirror normal direction has to be parallel to the z axis.
+/** \brief Apply perfect mirror condition inside the box (not at a boundary).
+ *  In practice, set all fields to 0 on a section of the simulation domain
+ *  (as for a perfect conductor with a given thickness).
+ *  The mirror normal direction has to be parallel to the z axis.
  */
 void
 WarpX::applyMirrors(Real time)

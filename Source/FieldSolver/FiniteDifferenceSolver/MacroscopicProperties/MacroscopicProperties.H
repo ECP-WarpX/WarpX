@@ -294,37 +294,128 @@ public:
                 JAModelParameters* ja_model_parameters)
     {
         amrex::Real alpha = ja_model_parameters->alpha();
+        amrex::Real k =  ja_model_parameters->k();
         amrex::RealVect M = (B / PhysConst::mu0) - H;
         amrex::RealVect H_e = H + (alpha * M);
-        amrex::RealVect M_an; // The anhysteric magnetization
-        std::array<amrex::Real, 6> dM_an_dH_e; // The reversible contribution to chi
-        Compute_M_an_and_its_derivative(M_an, dM_an_dH_e, H_e, ja_model_parameters);
+        amrex::RealVect M_an; // The anhysteretic magnetization
+        std::array<amrex::Real, 6> chi_an; // The anhysteretic contribution to chi
+
+        amrex::Vector<amrex::Real> v1(3);
+        amrex::Vector<amrex::Real> v2(3);
+        amrex::Vector<amrex::Real> v3 = v1 - v2;
+
+        ComputeAnhystereticContribution(M_an, chi_an, H_e, ja_model_parameters);
 
         amrex::RealVect M_diff = M_an - M;
         amrex::Real M_diff_mag = M_diff.vectorLength();
+        amrex::Real denominator = k * M_diff_mag;
 
-        std::array<amrex::Real, 6> chi_irr; // The irreversible contribution to chi
-        if 
+        std::array<amrex::Real, 6> chi; // The total contribution
+
+        // Now account for the irreversible contribution
+        // The order of elements is xx, xy, yy, xz, yz, zz)
+        chi[0] = chi_an[0] + M_diff[0] * M_diff[0] / denominator;
+#if AMREX_SPACEDIM > 1
+        chi[1] = chi_an[1] + M_diff[1] * M_diff[0] / denominator;
+        chi[2] = chi_an[2] + M_diff[1] * M_diff[1] / denominator;
+#endif
+#if AMREX_SPACEDIM > 2
+        chi[3] = chi_an[3] + M_diff[2] * M_diff[0] / denominator;
+        chi[4] = chi_an[4] + M_diff[2] * M_diff[1] / denominator;
+        chi[5] = chi_an[5] + M_diff[2] * M_diff[2] / denominator;
+#endif
+
+        Matrix chi_matrix(AMREX_SPACEDIM, amrex::Vector<amrex::Real>(AMREX_SPACEDIM, 0));
+        Matrix chi_an_matrix(AMREX_SPACEDIM, amrex::Vector<amrex::Real>(AMREX_SPACEDIM, 0));
+        for (int j = 0; j < AMREX_SPACEDIM; ++j){
+            chi_matrix[j][j] = chi[i * (3 + i) / 2];
+            chi_an_matrix[j][j] = chi_an[i * (3 + i) / 2];
+            for (int i = 0; i < j; ++i){
+                chi_matrix[i][j] = chi[i + j * (j + 1) / 2];
+                chi_matrix[j][i] = chi[i + j * (j + 1) / 2];
+                chi_an_matrix[i][j] = chi_an[i + j * (j + 1) / 2];
+                chi_an_matrix[j][i] = chi_an[i + j * (j + 1) / 2];
+            }
+        }
+
+        Matrix dHdB = Compute_dHdB(chi_matrix, alpha);
+
         
-    }
+
+
+        /* Compute dH = (dH/dB)dB = (dH/dB)(-curl E)dt/2 */
+
+        /* Compute dH_e = (1 - alpha)dH + alpha/mu0 dB 
+                        = ((1 - alpha)(dH/dB) + alpha/mu0 identity) dB
+                        = ((1 - alpha)(dH/dB) + alpha/mu0 identity) (-curl E) dt/2
+                        */
+
+        /** Determine sign of (M_an - M) \cdot dH_e.
+         *  If negative, recalculate H by replacing chi with chi_an */
+
+    };
 
 
 private:
+
+    typedef amrex::Vector<amrex::Vector<amrex::Real>> Matrix;
+
+    // typedef std::array<amrex::Real, AMREX_SPACEDIM * AMREX_SPACEDIM> Matrix;
+
+    /**
+     * \brief Compute the derivative matrix dH/dB. 
+     * 
+     * \param chi Matrix elements of dM/dH_e. Always symmetric.
+     * \param alpha Parameter from Jiles-Atherton model.
+     * \return Matrix with elements dH_j/dB_i, where i (j) is the row (column) index.
+     */
+    Matrix Compute_dHdB(Matrix chi, amrex::Real alpha){
+
+        /* Compute I - alpha chi */
+        int n = chi.size();
+        Matrix I_alphachi(n, amrex::Vector<amrex::Real>(n, 0));
+        for (int i = 0; i < n; ++i){
+            for (int j = 0; j < n; ++j){
+                I_alphachi[i][j] = ((i == j) ? 1._rt : 0._rt) - alpha * chi[i][j];
+            }
+        }
+
+        /* Compute (I - alpha chi)^(-1) */
+        Matrix I_alphachi_inv = MatrixInverse(I_alphachi);
+
+        /* Compute dM_j/dH_i = ([I - alpha chi]^(-1) chi)_{ij} */
+        Matrix dMdH = MatrixProduct(I_alphachi_inv, chi);
+
+        Matrix dBdH;
+        /* Compute dB_j/dH_i = m0 (I + dM/dH) */
+        for (int i = 0; i < n; ++i){
+            for (int j = 0; j < n; ++j){
+                dBdH[i][j] = PhysConst::mu0 * ( (i == j ? 1._rt : 0._rt) + dMdH[i][j]);
+            }
+        }
+
+        /* Compute dH/dB = [identity + [identity - alpha chi]^(-1) chi ]^(-1)  */
+        return MatrixInverse(dBdH);
+    }
+
+
     /**
      * \brief 
      * 
-     * \param[out] M_an The anhysteric
-     * \param[out] dM_an_dH_e The matrix of derivatives of M_an w.r.t. H_e. Turns out to be symmetric in this case, so only 6 components are necessary. The elements are ordered xx, xy, yy, xz, yz, zz.
+     * \param[out] M_an The anhysteretic magnetization
+     * \param[out] chi_an The matrix of derivatives of M_an w.r.t. H_e. Turns out to be symmetric in this case, so only 6 components are necessary. The elements are ordered xx, xy, yy, xz, yz, zz.
      * \param[in] H_e The effective magnetic field
-     * \param[in] ja_model_parameters 
+     * \param[in] ja_model_parameters Parameters from the Jiles-Atherton model
      */
-    void Compute_M_an_and_its_derivative(amrex::RealVect & M_an,
-                                        std::array<amrex::Real, 6>& dM_an_dH_e,
+    void ComputeAnhystereticContribution(amrex::RealVect & M_an,
+                                        std::array<amrex::Real, 6>& chi_an,
                                         amrex::RealVect const& H_e,
                                         JAModelParameters* ja_model_parameters){
         amrex::Real a = ja_model_parameters->a();
         amrex::Real Ms = ja_model_parameters->Ms();
-        amrex::Real Ms_over_a = Ms / a;
+        amrex::Real c = ja_model_parameters->c();
+
+        amrex::Real c_Ms_over_a = c * Ms / a;
         amrex::Real H_e_mag = H_e.vectorLength();
         if (H_e_mag <= 0._rt){
             return;
@@ -334,30 +425,113 @@ private:
         amrex::Real dLdx = Langevin::dLdx(x);
         
         
-        M_an = (Ms_over_a * L_over_x) * H_e;
+        M_an = ((Ms / a) * L_over_x) * H_e;
 
         amrex::Real delta = dLdx - L_over_x;
         amrex::RealVect H_e_hat = H_e / H_e_mag; // Division errors could be an issue here
 
+        // for (int k = 0; k < AMREX_SPACEDIM; ++k){
+        //     int kchoose2 = k * (k + 1) / 2;
+        //     for (int i = 0; i <= k; ++i){
+        //         chi_an[i + kchoose2] = c_Ms_over_a * (delta * H_e_hat[i] * H_e_hat[k] + L_over_x);
+        //     }
+        // }
 
-        // dM_an_dH_e is a symmetric matrix, so only 6 components need to be specified.
-        // The order of elements is xx, yx, yy, zx, zy, zz)
-        dM_an_dH_e[0] = Ms_over_a * (delta * H_e_hat[0] * H_e_hat[0] + L_over_x);
+        // chi_an is a symmetric matrix, so only 6 components need to be specified.
+        // The order of elements is xx, xy, yy, xz, yz, zz)
+        chi_an[0] = c_Ms_over_a * (delta * H_e_hat[0] * H_e_hat[0] + L_over_x);
 #if AMREX_SPACEDIM > 1
-        dM_an_dH_e[1] = Ms_over_a * (delta * H_e_hat[1] * H_e_hat[0]           );
-        dM_an_dH_e[2] = Ms_over_a * (delta * H_e_hat[1] * H_e_hat[1] + L_over_x);
+        chi_an[1] = c_Ms_over_a * (delta * H_e_hat[1] * H_e_hat[0]           );
+        chi_an[2] = c_Ms_over_a * (delta * H_e_hat[1] * H_e_hat[1] + L_over_x);
 #endif
 #if AMREX_SPACEDIM > 2
-        dM_an_dH_e[3] = Ms_over_a * (delta * H_e_hat[2] * H_e_hat[0]           );
-        dM_an_dH_e[4] = Ms_over_a * (delta * H_e_hat[2] * H_e_hat[1]           );
-        dM_an_dH_e[5] = Ms_over_a * (delta * H_e_hat[2] * H_e_hat[2] + L_over_x);
+        chi_an[3] = c_Ms_over_a * (delta * H_e_hat[2] * H_e_hat[0]           );
+        chi_an[4] = c_Ms_over_a * (delta * H_e_hat[2] * H_e_hat[1]           );
+        chi_an[5] = c_Ms_over_a * (delta * H_e_hat[2] * H_e_hat[2] + L_over_x);
 #endif        
     }
 
 
+    // void SymmetricMatrixInverse(std::array<amrex::Real, 6>& invS, std::array<amrex::Real, 6> const& S){
+    //     amrex::Real det = S[]
+    // }
 
+    // template <int n>
+    // void MatrixInverse(std::array<amrex::Real>& invM, std::array<amrex::Real, 6> const& S){
+    //     amrex::Real det = S[]
+    // }
 
+    
 
+    Matrix MatrixInverse(Matrix A) {
+        int n = A.size();
+        Matrix B(n, amrex::Vector<amrex::Real>(n * 2, 0));
+
+        // copy A into B and create identity matrix
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                B[i][j] = A[i][j];
+            }
+            B[i][i + n] = 1;
+        }
+
+        // perform row operations
+        for (int i = 0; i < n; i++) {
+            // pivot element
+            double pivot = B[i][i];
+            if (pivot == 0) {
+                // matrix is singular
+                return Matrix();
+            }
+
+            // divide row i by pivot
+            for (int j = 0; j < n * 2; j++) {
+                B[i][j] /= pivot;
+            }
+
+            // eliminate other rows
+            for (int j = 0; j < n; j++) {
+                if (i != j) {
+                    double factor = B[j][i];
+                    for (int k = 0; k < n * 2; k++) {
+                        B[j][k] -= factor * B[i][k];
+                    }
+                }
+            }
+        }
+
+        // extract inverse matrix
+        Matrix inverse(n, amrex::Vector<amrex::Real>(n));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                inverse[i][j] = B[i][j + n];
+            }
+        }
+        return inverse;
+    }
+
+    Matrix MatrixProduct(Matrix A, Matrix B){
+        int n = A.size();
+        Matrix product(n, amrex::Vector<amrex::Real>(n, 0));
+        for (int i = 0; i < n; ++i){
+            for (int j = 0; j < n; ++j){
+                for (int k = 0; k < n; ++k){
+                    product[i][j] += A[i][k] * B[k][j];
+                }
+            }
+        }
+        return product;
+    }
+
+    amrex::RealVect MatrixVectorProduct(Matrix A, amrex::RealVect v, int order){
+        amrex::RealVect result;
+        for (int i = 0; i < order; ++i){
+            for (int k = 0; k < order; ++k){
+                result[i] += A[i][k] * v[k];
+            }
+        }
+        return result;
+    }
 
 
 };
@@ -372,6 +546,12 @@ private:
 
 public:
 
+    /**
+     * \brief The Langevin function L(x).
+     * 
+     * \param x Input (unitless)
+     * \return L(x) = coth(x) - 1/x
+     */
      static amrex::Real L(amrex::Real x){
           if (x < 0.01_rt){
                return l1 * x + l3 * pow(x, 3); // Use Taylor expansion for small x
@@ -380,6 +560,12 @@ public:
           return (1._rt + y) / (1._rt - y) - 1._rt / x;
      };
 
+    /**
+     * \brief The Langevin function L(x) over x.
+     * 
+     * \param x Input (unitless)
+     * \return L(x)/x = coth(x)/x - 1/x^2
+     */
      static amrex::Real L_over_x(amrex::Real x){
           if (x < 0.01_rt){
                return l1 + l3 * pow(x, 2); // Use Taylor expansion for small x
@@ -388,6 +574,12 @@ public:
           return (1._rt + y) / (1._rt - y) / x - 1._rt / pow(x, 2);
      };
 
+    /**
+     * \brief The derivative of the Langevin function.
+     * 
+     * \param x Input (unitless)
+     * \return L'(x) = - 4 e^(-2x)/(1-e^(-2x)) + 1/x^2
+     */
      static amrex::Real dLdx(amrex::Real x){
           if (x < 0.01_rt){
                return l1 + dldx2 * pow(x, 2); // Use Taylor expansion for small x
