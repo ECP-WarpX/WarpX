@@ -254,10 +254,12 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file(std::string binary_f
 
         m_params.t_min = static_cast<amrex::Real>(dbuf_t[0]);
         m_params.t_max = static_cast<amrex::Real>(dbuf_t[1]);
-        m_params.y_min = static_cast<amrex::Real>(dbuf_y[0]);
-        m_params.y_max = static_cast<amrex::Real>(dbuf_y[1]);
         m_params.x_min = static_cast<amrex::Real>(dbuf_x[0]);
         m_params.x_max = static_cast<amrex::Real>(dbuf_x[1]);
+#if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
+        m_params.y_min = static_castamrex::Real(dbuf_y[0]);
+        m_params.y_max = static_castamrex::Real(dbuf_y[1]);
+#endif
     }
 }
 
