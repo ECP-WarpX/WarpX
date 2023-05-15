@@ -79,9 +79,9 @@ Build Options
 ============================= ============================================ =========================================================
 CMake Option                  Default & Values                             Description
 ============================= ============================================ =========================================================
-``CMAKE_BUILD_TYPE``          RelWithDebInfo/**Release**/Debug             Type of build, symbols & optimizations
-``CMAKE_INSTALL_PREFIX``      system-dependent path                        Install path prefix
-``CMAKE_VERBOSE_MAKEFILE``    ON/**OFF**                                   Print all compiler commands to the terminal during build
+``CMAKE_BUILD_TYPE``          RelWithDebInfo/**Release**/Debug             `Type of build, symbols & optimizations <https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html>`__
+``CMAKE_INSTALL_PREFIX``      system-dependent path                        `Install path prefix <https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html>`__
+``CMAKE_VERBOSE_MAKEFILE``    ON/**OFF**                                   `Print all compiler commands to the terminal during build <https://cmake.org/cmake/help/latest/variable/CMAKE_VERBOSE_MAKEFILE.html>`__
 ``PYINSTALLOPTIONS``                                                       Additional options for ``pip install``, e.g., ``-v --user``
 ``WarpX_APP``                 **ON**/OFF                                   Build the WarpX executable application
 ``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
@@ -113,7 +113,7 @@ By default, the most important dependencies of WarpX are automatically downloade
 ============================= ============================================== ===========================================================
 CMake Option                  Default & Values                               Description
 ============================= ============================================== ===========================================================
-``BUILD_SHARED_LIBS``         ON/**OFF**                                     Build shared libraries for dependencies
+``BUILD_SHARED_LIBS``         ON/**OFF**                                     `Build shared libraries for dependencies <https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html>`__
 ``CCACHE_PROGRAM``            First found ``ccache`` executable.             Set to ``-DCCACHE_PROGRAM=NO`` to disable CCache.
 ``AMReX_CUDA_PTX_VERBOSE``    ON/**OFF**                                     Print CUDA code generation statistics from ``ptxas``.
 ``WarpX_amrex_src``           *None*                                         Path to AMReX source directory (preferred if set)
