@@ -1,6 +1,7 @@
 #include "BoundaryConditions/WarpX_PEC.H"
-
 #include "WarpX.H"
+
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Box.H>
 #include <AMReX_Geometry.H>
@@ -265,6 +266,15 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
     }
     const int nComp = rho->nComp();
 
+#ifdef WARPX_DIM_RZ
+    if (is_pec[0][1]) {
+        ablastr::warn_manager::WMRecordWarning(
+          "PEC",
+          "PEC boundary handling is not yet properly implemented for r_max",
+          ablastr::warn_manager::WarnPriority::high);
+    }
+#endif
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -385,6 +395,15 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
         mirrorfac[2][idim][0] = 2*domain_lo[idim] - (1 - Jz_nodal[idim]);
         mirrorfac[2][idim][1] = 2*domain_hi[idim] - (1 - Jz_nodal[idim]);
     }
+
+#ifdef WARPX_DIM_RZ
+    if (is_pec[0][1]) {
+        ablastr::warn_manager::WMRecordWarning(
+          "PEC",
+          "PEC boundary handling is not yet properly implemented for r_max",
+          ablastr::warn_manager::WarnPriority::high);
+    }
+#endif
 
     // Each current component is handled separately below, starting with Jx.
 #ifdef AMREX_USE_OMP
