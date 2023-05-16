@@ -270,8 +270,9 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
     if (is_pec[0][1]) {
         ablastr::warn_manager::WMRecordWarning(
           "PEC",
-          "PEC boundary handling is not yet properly implemented for r_max",
+          "PEC boundary handling is not yet properly implemented for r_max so it is skipped in PEC::ApplyPECtoRhofield",
           ablastr::warn_manager::WarnPriority::high);
+          is_pec[0][1] = false;
     }
 #endif
 
@@ -400,8 +401,9 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
     if (is_pec[0][1]) {
         ablastr::warn_manager::WMRecordWarning(
           "PEC",
-          "PEC boundary handling is not yet properly implemented for r_max",
+          "PEC boundary handling is not yet properly implemented for r_max so it is skipped in PEC::ApplyPECtoJfield",
           ablastr::warn_manager::WarnPriority::high);
+          is_pec[0][1] = false;
     }
 #endif
 
