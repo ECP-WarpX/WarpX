@@ -893,7 +893,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     // If no part_realbox is provided, initialize particles in the whole domain
     const Geometry& geom = Geom(lev);
-    if (!part_realbox.ok()) part_realbox = geom.ProbDomain();
+    bool part_realbox_is_probdomain = false;
+    if (!part_realbox.ok()) {
+        part_realbox_is_probdomain = true;
+        part_realbox = geom.ProbDomain();
+    }
 
     int num_ppc = plasma_injector->num_particles_per_cell;
 #ifdef WARPX_DIM_RZ
@@ -961,6 +965,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         // If there is no overlap, just go to the next tile in the loop
         RealBox overlap_realbox;
         Box overlap_box;
+        GpuArray<Real,AMREX_SPACEDIM> overlap_corner;
         bool no_overlap = false;
 
         for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
@@ -983,6 +988,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             overlap_box.setBig( dir, shifted +
                 int( std::round((overlap_realbox.hi(dir)-overlap_realbox.lo(dir))
                                 /dx[dir] )) - 1);
+            if (part_realbox_is_probdomain) {
+                overlap_corner[dir] = problo[dir];
+            } else {
+                overlap_corner[dir] = overlap_realbox.lo(dir) - shifted*dx[dir];
+            }
         }
         if (no_overlap == 1) {
             continue; // Go to the next tile
@@ -1003,8 +1013,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         amrex::ParallelFor(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
             IntVect iv(AMREX_D_DECL(i, j, k));
-            auto lo = getCellCoords(problo, dx, {0._rt, 0._rt, 0._rt}, iv);
-            auto hi = getCellCoords(problo, dx, {1._rt, 1._rt, 1._rt}, iv);
+            auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
+            auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
 
             lo.z = applyBallisticCorrection(lo, inj_mom, gamma_boost, beta_boost, t);
             hi.z = applyBallisticCorrection(hi, inj_mom, gamma_boost, beta_boost, t);
@@ -1202,7 +1212,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
                   inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
-                auto pos = getCellCoords(problo, dx, r, iv);
+                auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if defined(WARPX_DIM_3D)
                 if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
