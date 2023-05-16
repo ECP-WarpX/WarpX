@@ -84,7 +84,7 @@ WarpX::ComputeDt ()
             deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt(dx);
 #endif
         } else {
-            amrex::Abort(Utils::TextMsg::Err("ComputeDt: Unknown algorithm"));
+            WARPX_ABORT_WITH_MESSAGE("ComputeDt: Unknown algorithm");
         }
     }
 

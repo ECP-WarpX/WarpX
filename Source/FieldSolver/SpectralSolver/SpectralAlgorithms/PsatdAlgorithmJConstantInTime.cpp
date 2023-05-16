@@ -45,7 +45,6 @@ PsatdAlgorithmJConstantInTime::PsatdAlgorithmJConstantInTime(
     const bool divb_cleaning)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
-    m_spectral_index(spectral_index),
     // Initialize the centered finite-order modified k vectors:
     // these are computed always with the assumption of centered grids
     // (argument grid_type=GridType::Collocated), for both collocated and staggered grids

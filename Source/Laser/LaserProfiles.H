@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 
+#include "Utils/WarpX_Complex.H"
 
 namespace WarpXLaserProfiles {
 
@@ -267,36 +268,16 @@ public:
         amrex::Real t,
         amrex::Real * AMREX_RESTRICT const amplitude) const;
 
-    /** \brief Function to fill the amplitude in case of a non-uniform grid.
-    * This function cannot be private due to restrictions related to
-    * the use of extended __device__ lambda
-    *
-    * \param idx_t_left index of the last time coordinate < t
-    * \param np: number of laser particles
-    * \param Xp: pointer to first component of positions of laser particles
-    * \param Yp: pointer to second component of positions of laser particles
-    * \param t: Current physical time
-    * \param amplitude: pointer to array of field amplitude.
-    */
-    void internal_fill_amplitude_nonuniform(
-        const int idx_t_left,
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
-        amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const;
-
 private:
     /** \brief parse a field file in the binary 'txye' format (whose details are given below).
     *
     * A 'txye' file should be a binary file with the following format:
-    * -flag to indicate if the grid is uniform or not (1 byte, 0 means non-uniform, !=0 means uniform)
     * -np, number of timesteps (uint32_t, must be >=2)
     * -nx, number of points along x (uint32_t, must be >=2)
     * -ny, number of points along y (uint32_t, must be 1 for 2D simulations and >=2 for 3D simulations)
-    * -timesteps (double[2] if grid is uniform, double[np] otherwise)
-    * -x_coords (double[2] if grid is uniform, double[nx] otherwise)
-    * -y_coords (double[1] if 2D, double[2] if 3D & uniform grid, double[ny] if 3D & non uniform grid)
+    * -timesteps (double[2])
+    * -x_coords (double[2])
+    * -y_coords (double[1] if 2D, double[2] if 3D
     * -field_data (double[nt * nx * ny], with nt being the slowest coordinate).
     * The spatiotemporal grid must be rectangular.
     *
@@ -327,26 +308,22 @@ private:
     struct{
         /** Name of the file containing the data */
         std::string txye_file_name;
-        /** Flag to store if the grid is uniform */
-        bool is_grid_uniform = false;
         /** Dimensions of E_data. nt, nx must be >=2.
          * If DIM=3, ny must be >=2 as well.
          * If DIM=2, ny must be 1 */
         int nt, nx, ny;
-        /** Vector of temporal coordinates. For a non-uniform grid, it contains
-         * all values of time. For a uniform grid, it contains only the start and stop
+        /** Vector of temporal coordinates. It contains only the start and stop
          * times and intermediate times are obtained with nt */
-        amrex::Vector<amrex::Real> t_coords;
-        /** Vector or x coordinates. For a non-uniform grid, it contains all values
-         * of space dimension x. For a uniform grid, it contains only the min and max
+        amrex::Real t_min;
+        amrex::Real t_max;
+        /** Vector or x coordinates. It contains only the min and max
          * x coordinates, and intermediate positions are obtained with nx */
-        amrex::Vector<amrex::Real> h_x_coords;
-        amrex::Gpu::DeviceVector<amrex::Real> d_x_coords;
-        /** Vector or y coordinates. For a non-uniform grid, it contains all values
-         * of space dimension y. For a uniform grid, it contains only the min and max
+        amrex::Real x_min;
+        amrex::Real x_max;
+        /** Vector or y coordinates. It contains only the min and max
          * y coordinates, and intermediate positions are obtained with ny */
-        amrex::Vector<amrex::Real> h_y_coords;
-        amrex::Gpu::DeviceVector<amrex::Real> d_y_coords;
+        amrex::Real y_min;
+        amrex::Real y_max;
         /** Size of the timestep range to load */
         int time_chunk_size;
         /** Index of the first timestep in memory */
@@ -354,7 +331,7 @@ private:
         /** Index of the last timestep in memory */
         int last_time_index;
         /** Field data */
-        amrex::Gpu::DeviceVector<amrex::Real> E_data;
+        amrex::Gpu::DeviceVector<Complex> E_data;
         /** This parameter is subtracted to simulation time before interpolating field data in txye file.
         *   If t_delay > 0, the laser is delayed, otherwise it is anticipated. */
         amrex::Real t_delay = amrex::Real(0.0);

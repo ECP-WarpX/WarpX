@@ -35,13 +35,7 @@ ions.physical_element = N
 
 electrons.mass = m_e
 electrons.charge = -q_e
-electrons.injection_style = nuniformpercell
-electrons.num_particles_per_cell_each_dim = 1 1
-electrons.zmin = 1.
-electrons.zmax = 15.e-6
-electrons.profile = constant
-electrons.density = 2.
-electrons.momentum_distribution_type = at_rest
+electrons.injection_style = none
 
 lasers.names        = laser1
 laser1.profile      = Gaussian

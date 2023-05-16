@@ -504,7 +504,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
 #else
-        amrex::Abort(Utils::TextMsg::Err("openPMD-api not built with MPI support!"));
+        WARPX_ABORT_WITH_MESSAGE("openPMD-api not built with MPI support!");
 #endif
     } else {
         m_Series = std::make_unique<openPMD::Series>(filepath, access, m_OpenPMDoptions);
