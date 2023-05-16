@@ -38,6 +38,7 @@ Optional dependencies include:
   - `numpy <https://numpy.org>`__
   - `periodictable <https://periodictable.readthedocs.io>`__
   - `picmistandard <https://picmi-standard.github.io>`__
+  - `lasy <https://lasydoc.readthedocs.io>`__
   - see our ``requirements.txt`` file for compatible versions
 
 
