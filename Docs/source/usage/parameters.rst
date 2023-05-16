@@ -1197,8 +1197,6 @@ Laser initialization
     implemented are:
 
     - ``"Gaussian"``: The transverse and longitudinal profiles are Gaussian.
-    - ``"Harris"``: The transverse profile is Gaussian, but the longitudinal profile
-      is given by the Harris function (see ``<laser_name>.profile_duration`` for more details)
     - ``"parse_field_function"``: the laser electric field is given by a function in the
       input file. It requires additional argument ``<laser_name>.field_function(X,Y,t)``, which
       is a mathematical expression , e.g.
@@ -1232,21 +1230,13 @@ Laser initialization
     to automatically perform the conversion to the boosted frame.
 
 * ``<laser_name>.profile_duration`` (`float` ; in seconds)
-    The duration of the laser pulse, defined as :math:`\tau` below:
-
-    - For the ``"gaussian"`` profile:
+    The duration of the laser pulse for the ``"gaussian"`` profile, defined as :math:`\tau` below:
 
     .. math::
 
         E(\boldsymbol{x},t) \propto \exp\left( -\frac{(t-t_{peak})^2}{\tau^2} \right)
 
     Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.174`.
-
-    - For the ``"harris"`` profile:
-
-    .. math::
-
-        E(\boldsymbol{x},t) \propto \frac{1}{32}\left[10 - 15 \cos\left(\frac{2\pi t}{\tau}\right) + 6 \cos\left(\frac{4\pi t}{\tau}\right) - \cos\left(\frac{6\pi t}{\tau}\right) \right]\Theta(\tau - t)
 
     When running a **boosted-frame simulation**, provide the value of
     ``<laser_name>.profile_duration`` in the laboratory frame, and use ``warpx.gamma_boost``
