@@ -6,6 +6,7 @@
  */
 #include "PsatdAlgorithmGalileanPml.H"
 
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 
@@ -199,10 +200,10 @@ void PsatdAlgorithmGalileanPml::InitializeSpectralCoefficients (
 
 void PsatdAlgorithmGalileanPml::CurrentCorrection (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort("Current correction not implemented for PML PSATD");
+    WARPX_ABORT_WITH_MESSAGE("Current correction not implemented for Galilean PSATD in the PML");
 }
 
 void PsatdAlgorithmGalileanPml::VayDeposition (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort("Vay deposition not implemented for PML PSATD");
+    WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented for Galilean PSATD in the PML");
 }
