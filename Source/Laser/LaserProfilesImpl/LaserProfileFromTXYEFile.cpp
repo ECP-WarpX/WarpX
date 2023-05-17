@@ -162,10 +162,9 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(E.getAttribute("dataOrder").get<std::string>() == "C",
                                          "Reading from files with non-C dataOrder is not implemented");
-        auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
-        auto fileGeom = E.getAttribute("geometry").get<std::string>();      
+        auto fileGeom = E.getAttribute("geometry").get<std::string>();
         auto E_laser = E[io::RecordComponent::SCALAR];
-        auto extent = E_laser.getExtent();        
+        auto extent = E_laser.getExtent();
         // Extract grid offset and grid spacing
         std::vector<double> offset = E.gridGlobalOffset();
         std::vector<double> position = E_laser.position<double>();
@@ -190,7 +189,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
             m_params.r_min = offset[1] + position[1]*spacing[1];
             m_params.r_max = m_params.r_min + (m_params.nr-1)*spacing[1];
         } else if (fileGeom=="cartesian"){
-            amrex::Print() << Utils::TextMsg::Info( "Found: lasy file's geometry in 3D cartesian coordinates"); 
+            amrex::Print() << Utils::TextMsg::Info( "Found: lasy file's geometry in 3D cartesian coordinates");
             m_params.nt = extent[0];
             m_params.ny = extent[1];
             m_params.nx = extent[2];
@@ -242,8 +241,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
         auto i = series.iterations[0];
         auto E = i.meshes["laserEnvelope"];
-        auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
-        std::vector<std::string> RZCoords = {"t","r"};
+        auto fileGeom = E.getAttribute("geometry").get<std::string>();
         auto E_laser = E[io::RecordComponent::SCALAR];
         openPMD:: Extent full_extent = E_laser.getExtent();
         if (fileGeom=="thetaMode") {
@@ -258,7 +256,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         for (int j=0; j<read_size; j++) {
                             amrex::Print() << Utils::TextMsg::Info(std::to_string(j));
             h_E_data[j] = Complex{ r_data.get()[j].real(), r_data.get()[j].imag() };
-                            
+
         }
         amrex::Print() << Utils::TextMsg::Info("6");
         } else{
@@ -269,7 +267,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
         for (int j=0; j<read_size; j++) {
             h_E_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
         }
-        }  
+        }
     }
     //Broadcast E_data
     ParallelDescriptor::Bcast(h_E_data.dataPtr(),
@@ -295,8 +293,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     auto series = io::Series(m_params.txye_file_name, io::Access::READ_ONLY);
     auto s = series.iterations[0];
     auto E = s.meshes["laserEnvelope"];
-    auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
-    std::vector<std::string> RZCoords = {"t","r"};
+    auto fileGeom = E.getAttribute("geometry").get<std::string>();
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
     const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
@@ -375,7 +372,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
              //Here we add the laser oscillations.
             amplitude[i] = (val*exp_omega_t).real();
         }
-    ); 
+    );
         }
 // RZ BLOCK
 
@@ -451,10 +448,10 @@ else if (fileGeom=="thetaMode"){
     delete[] Rp;
 
         }
-    
+
 
     );
-  
+
 }
 
 }
