@@ -1,5 +1,4 @@
 CEXE_sources += LaserProfileGaussian.cpp
-CEXE_sources += LaserProfileHarris.cpp
 CEXE_sources += LaserProfileFieldFunction.cpp
 CEXE_sources += LaserProfileFromFile.cpp
 

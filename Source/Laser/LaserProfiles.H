@@ -141,40 +141,6 @@ private:
 };
 
 /**
- * Harris laser profile
- */
-class HarrisLaserProfile : public ILaserProfile
-{
-
-public:
-    void
-    init (
-        const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
-
-    //No update needed
-    void
-    update (amrex::Real /*t */) override final {}
-
-    void
-    fill_amplitude (
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
-        amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
-
-private:
-    struct {
-        amrex::Real waist          = std::numeric_limits<amrex::Real>::quiet_NaN();
-        amrex::Real duration       = std::numeric_limits<amrex::Real>::quiet_NaN();
-        amrex::Real focal_distance = std::numeric_limits<amrex::Real>::quiet_NaN();
-    } m_params;
-
-    CommonLaserParameters m_common_params;
-};
-
-/**
  * Laser profile defined by the used with an analytical expression
  */
 class FieldFunctionLaserProfile : public ILaserProfile
@@ -392,8 +358,6 @@ laser_profiles_dictionary =
 {
     {"gaussian",
         [] () {return std::make_unique<GaussianLaserProfile>();} },
-    {"harris",
-        [] () {return std::make_unique<HarrisLaserProfile>();} },
     {"parse_field_function",
         [] () {return std::make_unique<FieldFunctionLaserProfile>();} },
     {"from_file",
