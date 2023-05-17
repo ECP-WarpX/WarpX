@@ -40,11 +40,9 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-
-// example: data handling & print
-#include <vector>   // std::vector
-#include <iostream> // std::cout
-#include <memory>   // std::shared_ptr
+#include <vector>   
+#include <iostream> 
+#include <memory>   
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
@@ -62,8 +60,8 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     {
         ablastr::warn_manager::WMRecordWarning("Laser",
             "(Double does not comply with IEEE 754: bad"
-            "things will happen parsing the X, Y and T profiles for the laser!)",
-            ablastr::warn_manager::WarnPriority::high);
+                "things will happen parsing the X, Y and T profiles for the laser!)",
+        ablastr::warn_manager::WarnPriority::high);
     }
     // Parse the lasy or binary file
     ppl.query("lasy_file_name", m_params.lasy_file_name);
@@ -71,22 +69,23 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     std::string lasy_file_name = m_params.lasy_file_name;
     std::string binary_file_name = m_params.binary_file_name;
     m_params.file_in_lasy_format = false;
-    if (!lasy_file_name.empty() && binary_file_name.empty()) {
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE (
+        lasy_file_name.empty() != binary_file_name.empty(),
+        "Exactly one of 'binary_file_name' and 'lasy_file_name' has to be specified");
+    if (!lasy_file_name.empty()) {
 #ifdef WARPX_USE_OPENPMD
         m_params.file_in_lasy_format = true;
         parse_lasy_file(lasy_file_name);
 #else
-    amrex::Abort(Utils::TextMsg::Err("WarpX has to be compiled with the option openPMD=ON to read a lasy file"));
-    amrex::ignore_unused(ppl, params);
+        WARPX_ABORT_WITH_MESSAGE("WarpX has to be compiled with the option openPMD=ON to read a lasy file");
+        amrex::ignore_unused(ppl, params);
 #endif
-    } else if (lasy_file_name.empty() && !binary_file_name.empty()){
+    } else{
         parse_binary_file(binary_file_name);
-    }
-    else if (!lasy_file_name.empty() && !binary_file_name.empty()){
-        Abort("Specify only one file format to load, either lasy_file_name or binary_file_name");
-    }
-    else{
-        Abort("binary_file_name or lasy_file_name must be provided for laser profile!");
+        std::stringstream warnMsg;
+            warnMsg << "Laser profile from a binary file will soon be replaced by 'lasy' files reading. " ;
+            ablastr::warn_manager::WMRecordWarning("AddPlasmaFromFile",
+               warnMsg.str(), ablastr::warn_manager::WarnPriority::low);
     }
 
     //Set time_chunk_size
@@ -94,10 +93,11 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     int temp = 1;
     if(utils::parser::queryWithParser(ppl ,"time_chunk_size", temp)){
         m_params.time_chunk_size = min(
-            temp, m_params.time_chunk_size);
+        temp, m_params.time_chunk_size);
     }
     if(m_params.time_chunk_size < 2){
-        Abort("Error! time_chunk_size must be >= 2!");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.time_chunk_size >= 2,
+        "Error! time_chunk_size must be >= 2!");
     }
     //Reads the (optional) delay
     utils::parser::queryWithParser(ppl, "delay", m_params.t_delay);
@@ -112,9 +112,9 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     }
     //Read first time chunk
     if (m_params.file_in_lasy_format){
-    read_data_t_chunk(0, m_params.time_chunk_size);
+        read_data_t_chunk(0, m_params.time_chunk_size);
     } else{
-    read_binary_data_t_chunk(0, m_params.time_chunk_size);
+        read_binary_data_t_chunk(0, m_params.time_chunk_size);
     }
     //Copy common params
     m_common_params = params;
@@ -133,9 +133,9 @@ WarpXLaserProfiles::FromFileLaserProfile::update (amrex::Real t)
     //Load data chunk if needed
     if(idx_t_right >  m_params.last_time_index){
         if (m_params.file_in_lasy_format){
-        read_data_t_chunk(idx_t_left, idx_t_left+m_params.time_chunk_size);
+            read_data_t_chunk(idx_t_left, idx_t_left+m_params.time_chunk_size);
         } else{
-        read_binary_data_t_chunk(idx_t_left, idx_t_left+m_params.time_chunk_size);
+            read_binary_data_t_chunk(idx_t_left, idx_t_left+m_params.time_chunk_size);
         }
     }
 }
@@ -157,7 +157,8 @@ WarpXLaserProfiles::FromFileLaserProfile::fill_amplitude (
     //Find left time index
     const auto idx_t_left = find_left_right_time_indices(t).first;
     if(idx_t_left <  m_params.first_time_index){
-        Abort("Something bad has happened with the simulation time");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(idx_t_left >=  m_params.first_time_index,
+        "Something bad has happened with the simulation time");
     }
     if (m_params.file_in_lasy_format){
         internal_fill_amplitude_uniform(idx_t_left, np, Xp, Yp, t, amplitude);
@@ -189,9 +190,9 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
         m_params.nt = extent[0];
         m_params.ny = extent[1];
         m_params.nx = extent[2];
-        if(m_params.nt <= 1) Abort("nt in lasy file must be >=2");
-        if(m_params.nx <= 1) Abort("nx in lasy file must be >=2");
-        if(m_params.ny <= 1) Abort("ny in lasy file must be >=2 in 3D");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nt > 1, "nt in lasy file must be >=2");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nx > 1, "nx in lasy file must be >=2");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.ny > 1, "ny in lasy file must be >=2 in 3D");
         // Extract grid offset and grid spacing
         std::vector<double> offset = E.gridGlobalOffset();
         std::vector<double> position = E_laser.position<double>();
@@ -214,27 +215,24 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file(std::string binary_f
 {
     if(ParallelDescriptor::IOProcessor()){
         std::ifstream inp(binary_file_name, std::ios::binary);
-        if(!inp) Abort("Failed to open binary file");
+        if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to open binary file");
         inp.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-
         //Uniform grid flag
         char flag;
         inp.read(&flag, 1);
-        if(!inp) Abort("Failed to read grid type from binary file");
-
+        if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read grid type from binary file");
         //Grid points along t, x and y
         inp.read(reinterpret_cast<char*>(&m_params.nt), sizeof(uint32_t));
         inp.read(reinterpret_cast<char*>(&m_params.nx), sizeof(uint32_t));
         inp.read(reinterpret_cast<char*>(&m_params.ny), sizeof(uint32_t));
-        if(!inp) Abort("Failed to read sizes from binary file");
-        if(m_params.nt <= 1) Abort("nt in binary file must be >=2");
-        if(m_params.nx <= 1) Abort("nx in binary file must be >=2");
+        if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read sizes from binary file");
+        if(m_params.nt <= 1) WARPX_ABORT_WITH_MESSAGE("nt in binary file must be >=2");
+        if(m_params.nx <= 1) WARPX_ABORT_WITH_MESSAGE("nx in binary file must be >=2");
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
-        if(m_params.ny <= 1) Abort("ny in binary file must be >=2 in 3D");
+        if(m_params.ny <= 1) WARPX_ABORT_WITH_MESSAGE("ny in binary file must be >=2 in 3D");
 #elif defined(WARPX_DIM_XZ)
-        if(m_params.ny != 1) Abort("ny in binary file must be 1 in 2D");
+        if(m_params.ny != 1) WARPX_ABORT_WITH_MESSAGE("ny in binary file must be 1 in 2D");
 #endif
-
         //Coordinates
         Vector<double> dbuf_t, dbuf_x, dbuf_y;
         dbuf_t.resize(2);
@@ -250,7 +248,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file(std::string binary_f
             dbuf_x.size()*sizeof(double));
         inp.read(reinterpret_cast<char*>(dbuf_y.dataPtr()),
             dbuf_y.size()*sizeof(double));
-        if(!inp) Abort("Failed to read coords from binary file");
+        if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read coords from binary file");
 
         m_params.t_min = static_cast<amrex::Real>(dbuf_t[0]);
         m_params.t_max = static_cast<amrex::Real>(dbuf_t[1]);
@@ -266,11 +264,10 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file(std::string binary_f
 std::pair<int,int>
 WarpXLaserProfiles::FromFileLaserProfile::find_left_right_time_indices(amrex::Real t) const
 {
-    int idx_t_right;
     const auto t_min = m_params.t_min;
     const auto t_max = m_params.t_max;
     const auto temp_idx_t_right = static_cast<int>(std::ceil( (m_params.nt-1)*(t-t_min)/(t_max-t_min)));
-    idx_t_right = max(min(temp_idx_t_right, m_params.nt-1),1);
+    const int idx_t_right = max(min(temp_idx_t_right, m_params.nt-1),1);
     return std::make_pair(idx_t_right-1, idx_t_right);
 }
 
@@ -283,9 +280,9 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
     std::uint64_t const i_last = min(t_end-1, m_params.nt-1);
     amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(i_first) + ", " + std::to_string(i_last) +
-        "] data chunk from " + m_params.lasy_file_name);
+            "] data chunk from " + m_params.lasy_file_name);
     if((i_last-i_first+1)*m_params.nx*m_params.ny > static_cast<std::uint64_t>(m_params.E_lasy_data.size()))
-        Abort("Data chunk to read from file is too large");
+        WARPX_ABORT_WITH_MESSAGE("Data chunk to read from file is too large");
     Vector<Complex> h_E_lasy_data(m_params.E_lasy_data.size());
     if(ParallelDescriptor::IOProcessor()){
         auto series = io::Series(m_params.lasy_file_name, io::Access::READ_ONLY);
@@ -304,7 +301,6 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
     //Broadcast E_lasy_data
     ParallelDescriptor::Bcast(h_E_lasy_data.dataPtr(),
         h_E_lasy_data.size(), ParallelDescriptor::IOProcessorNumber());
-
     Gpu::copyAsync(Gpu::hostToDevice,h_E_lasy_data.begin(),h_E_lasy_data.end(),m_params.E_lasy_data.begin());
     Gpu::synchronize();
     //Update first and last indices
@@ -320,18 +316,18 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk(int t_begin, 
 {
     amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(t_begin) + ", " + std::to_string(t_end) +
-        "] data chunk from " + m_params.binary_file_name);
+            "] data chunk from " + m_params.binary_file_name);
 
     //Indices of the first and last timestep to read
     auto i_first = max(0, t_begin);
     auto i_last = min(t_end-1, m_params.nt-1);
     if(i_last-i_first+1 > static_cast<int>(m_params.E_binary_data.size()))
-        Abort("Data chunk to read from file is too large");
+        WARPX_ABORT_WITH_MESSAGE("Data chunk to read from file is too large");
     Vector<Real> h_E_binary_data(m_params.E_binary_data.size());
     if(ParallelDescriptor::IOProcessor()){
         //Read data chunk
         std::ifstream inp(m_params.binary_file_name, std::ios::binary);
-        if(!inp) Abort("Failed to open binary file");
+        if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to open binary file");
         inp.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 #if (defined(WARPX_DIM_3D))
         auto skip_amount = 1 +
@@ -349,12 +345,12 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk(int t_begin, 
         sizeof(double)*t_begin*m_params.nx*m_params.ny;
 #endif
         inp.seekg(skip_amount);
-        if(!inp) Abort("Failed to read field data from binary file");
+        if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read field data from binary file");
         const int read_size = (i_last - i_first + 1)*
             m_params.nx*m_params.ny;
         Vector<double> buf_e(read_size);
         inp.read(reinterpret_cast<char*>(buf_e.dataPtr()), read_size*sizeof(double));
-        if(!inp) Abort("Failed to read field data from binary file");
+        if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read field data from binary file");
         std::transform(buf_e.begin(), buf_e.end(), h_E_binary_data.begin(),
             [](auto x) {return static_cast<amrex::Real>(x);} );
     }
