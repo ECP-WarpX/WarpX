@@ -178,32 +178,45 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(E.getAttribute("dataOrder").get<std::string>() == "C",
                                          "Reading from files with non-C dataOrder is not implemented");
-        auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
-        auto fileGeom = E.getAttribute("geometry").get<std::string>();
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "WarpX can only read laser files with cartesian 3D geometry.");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "t" && axisLabels[1] == "y" && axisLabels[2] == "x",
-                                         "WarpX expects laser files with axisLabels {t, y, x}.");
 
+        auto fileGeom = E.getAttribute("geometry").get<std::string>();
         auto E_laser = E[io::RecordComponent::SCALAR];
         auto extent = E_laser.getExtent();
-        //Dimensions of lasy file datas: {t,y,x}
-        m_params.nt = extent[0];
-        m_params.ny = extent[1];
-        m_params.nx = extent[2];
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nt > 1, "nt in lasy file must be >=2");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nx > 1, "nx in lasy file must be >=2");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.ny > 1, "ny in lasy file must be >=2 in 3D");
         // Extract grid offset and grid spacing
         std::vector<double> offset = E.gridGlobalOffset();
         std::vector<double> position = E_laser.position<double>();
         std::vector<double> spacing = E.gridSpacing<double>();
-        // Calculate the min and max of the grid
-        m_params.t_min = offset[0] + position[0]*spacing[0];
-        m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
-        m_params.y_min = offset[1] + position[1]*spacing[1];
-        m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[1];
-        m_params.x_min = offset[2] + position[2]*spacing[2];
-        m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
+        if (fileGeom=="thetaMode") {
+            amrex::Print() << Utils::TextMsg::Info( "Found: lasy file in RZ geometry" );
+            //m_params.ny = 1;
+            m_params.nt = extent[1];
+            m_params.nr = extent[2];
+            if(m_params.nt <= 1) Abort("nt in lasy file must be >=2");
+            if(m_params.nr <= 1) Abort("nr in lasy file must be >=2");
+            // Calculate the min and max of the grid
+            m_params.t_min = offset[0] + position[0]*spacing[0];
+            m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
+            m_params.r_min = offset[1] + position[1]*spacing[1];
+            m_params.r_max = m_params.r_min + (m_params.nr-1)*spacing[1];
+        } else if (fileGeom=="cartesian"){
+            //Dimensions of lasy file datas: {t,y,x}
+            amrex::Print() << Utils::TextMsg::Info( "Found: lasy file in 3D cartesian geometry");
+            m_params.nt = extent[0];
+            m_params.ny = extent[1];
+            m_params.nx = extent[2];
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nt > 1, "nt in lasy file must be >=2");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nx > 1, "nx in lasy file must be >=2");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.ny > 1, "ny in lasy file must be >=2 in 3D");
+            // Calculate the min and max of the grid
+            m_params.t_min = offset[0] + position[0]*spacing[0];
+            m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
+            m_params.y_min = offset[1] + position[1]*spacing[1];
+            m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[1];
+            m_params.x_min = offset[2] + position[2]*spacing[2];
+            m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
+        } else{
+            amrex::Abort(Utils::TextMsg::Err("The lasy file's geometry has to be in either RZ or 3D cartesian coordinates"));
+        }
     }
 #else
     amrex::ignore_unused(lasy_file_name);
@@ -290,12 +303,23 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
         auto E = i.meshes["laserEnvelope"];
         auto E_laser = E[io::RecordComponent::SCALAR];
         openPMD:: Extent full_extent = E_laser.getExtent();
-        openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
-        auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{i_first, 0, 0}, read_extent);
-        const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
-        series.flush();
-        for (int j=0; j<read_size; j++) {
-            h_E_lasy_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
+        if (fileGeom=="thetaMode") {
+            openPMD::Extent read_extent = {full_extent[0], (i_last - i_first + 1), full_extent[2]};
+            auto r_data = E_laser.loadChunk< std::complex<double> >(io::Offset{0, i_first, 0}, full_extent);
+            const int read_size = (i_last - i_first + 1)*m_params.nr;
+            series.flush();
+            for (int j=0; j<read_size; j++) {
+                amrex::Print() << Utils::TextMsg::Info(std::to_string(j));
+                    h_E_lasy_data[j] = Complex{ r_data.get()[j].real(), r_data.get()[j].imag() };
+            }
+        } else{
+            openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
+            auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{i_first, 0, 0}, read_extent);
+            const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
+            series.flush();
+            for (int j=0; j<read_size; j++) {
+                h_E_lasy_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
+            }
         }
     }
     //Broadcast E_lasy_data
@@ -365,92 +389,6 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk(int t_begin, 
     //Update first and last indices
     m_params.first_time_index = i_first;
     m_params.last_time_index = i_last;
-}
-
-void
-WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
-    const int idx_t_left,
-    const int np,
-    Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
-    Real t, Real * AMREX_RESTRICT const amplitude) const
-{
-    // Copy member variables to tmp copies
-    // and get pointers to underlying data for GPU.
-    const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
-    const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
-    const auto tmp_x_min = m_params.x_min;
-    const auto tmp_x_max = m_params.x_max;
-    const auto tmp_y_min = m_params.y_min;
-    const auto tmp_y_max = m_params.y_max;
-    const auto tmp_nx = m_params.nx;
-    const auto tmp_ny = m_params.ny;
-    const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
-    const auto tmp_idx_first_time = m_params.first_time_index;
-    const int idx_t_right = idx_t_left+1;
-    const auto t_left = idx_t_left*
-        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
-        m_params.t_min;
-    const auto t_right = idx_t_right*
-        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
-        m_params.t_min;
-    // Loop through the macroparticle to calculate the proper amplitude
-    amrex::ParallelFor(
-    np,
-    [=] AMREX_GPU_DEVICE (int i) {
-        //Amplitude is zero if we are out of bounds
-        if (Xp[i] <= tmp_x_min || Xp[i] >= tmp_x_max){
-            amplitude[i] = 0.0_rt;
-            return;
-        }
-        if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
-            amplitude[i] = 0.0_rt;
-            return;
-        }
-        //Find indices and coordinates along x
-        const int temp_idx_x_right = static_cast<int>(
-            std::ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
-        const int idx_x_right =
-            max(min(temp_idx_x_right,tmp_nx-1),static_cast<int>(1));
-        const int idx_x_left = idx_x_right - 1;
-        const auto x_0 =
-            idx_x_left*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
-        const auto x_1 =
-            idx_x_right*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
-        //Find indices and coordinates along y
-        const int temp_idx_y_right = static_cast<int>(
-            std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
-        const int idx_y_right =
-            max(min(temp_idx_y_right,tmp_ny-1),static_cast<int>(1));
-        const int idx_y_left = idx_y_right - 1;
-        const auto y_0 =
-            idx_y_left*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
-        const auto y_1 =
-            idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
-
-        //Interpolate amplitude
-        const auto idx = [=](int i_interp, int j_interp, int k_interp){
-            return
-                (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
-                j_interp*tmp_nx + k_interp;
-        };
-        Complex val = utils::algorithms::trilinear_interp(
-            t_left, t_right,
-            x_0, x_1,
-            y_0, y_1,
-            p_E_lasy_data[idx(idx_t_left, idx_y_left, idx_x_left)],
-            p_E_lasy_data[idx(idx_t_left, idx_y_right, idx_x_left)],
-            p_E_lasy_data[idx(idx_t_left, idx_y_left, idx_x_right)],
-            p_E_lasy_data[idx(idx_t_left, idx_y_right, idx_x_right)],
-            p_E_lasy_data[idx(idx_t_right, idx_y_left, idx_x_left)],
-            p_E_lasy_data[idx(idx_t_right, idx_y_right, idx_x_left)],
-            p_E_lasy_data[idx(idx_t_right, idx_y_left, idx_x_right)],
-            p_E_lasy_data[idx(idx_t_right, idx_y_right, idx_x_right)],
-            t, Xp[i], Yp[i]);
-            // The interpolated amplitude was only the envelope.
-            // Here we add the laser oscillations.
-            amplitude[i] = (val*exp_omega_t).real();
-        }
-    );
 }
 
 void
@@ -564,3 +502,150 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_binary
         }
     );
 }
+
+void
+WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
+    const int idx_t_left,
+    const int np,
+    Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
+    Real t, Real * AMREX_RESTRICT const amplitude) const
+{
+    // Copy member variables to tmp copies
+    // and get pointers to underlying data for GPU.
+    const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
+    const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
+    // CARTESIAN BLOCK
+    if (fileGeom=="cartesian") {
+        const auto tmp_x_min = m_params.x_min;
+        const auto tmp_x_max = m_params.x_max;
+        const auto tmp_y_min = m_params.y_min;
+        const auto tmp_y_max = m_params.y_max;
+        const auto tmp_nx = m_params.nx;
+        const auto tmp_ny = m_params.ny;
+        const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
+        const auto tmp_idx_first_time = m_params.first_time_index;
+        const int idx_t_right = idx_t_left+1;
+        const auto t_left = idx_t_left*
+            (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+            m_params.t_min;
+        const auto t_right = idx_t_right*
+            (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+            m_params.t_min;
+        // Loop through the macroparticle to calculate the proper amplitude
+        amrex::ParallelFor(
+        np,
+        [=] AMREX_GPU_DEVICE (int i) {
+            //Amplitude is zero if we are out of bounds
+            if (Xp[i] <= tmp_x_min || Xp[i] >= tmp_x_max){
+                amplitude[i] = 0.0_rt;
+                return;
+            }
+            if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
+                amplitude[i] = 0.0_rt;
+                return;
+            }
+            //Find indices and coordinates along x
+            const int temp_idx_x_right = static_cast<int>(
+                std::ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
+            const int idx_x_right =
+                max(min(temp_idx_x_right,tmp_nx-1),static_cast<int>(1));
+            const int idx_x_left = idx_x_right - 1;
+            const auto x_0 =
+                idx_x_left*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
+            const auto x_1 =
+                idx_x_right*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
+            //Find indices and coordinates along y
+            const int temp_idx_y_right = static_cast<int>(
+                std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
+            const int idx_y_right =
+                max(min(temp_idx_y_right,tmp_ny-1),static_cast<int>(1));
+            const int idx_y_left = idx_y_right - 1;
+            const auto y_0 =
+                idx_y_left*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
+            const auto y_1 =
+                idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
+            //Interpolate amplitude
+            const auto idx = [=](int i_interp, int j_interp, int k_interp){
+                return
+                    (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
+                    j_interp*tmp_nx + k_interp;
+            };
+            Complex val = utils::algorithms::trilinear_interp(
+                t_left, t_right,
+                x_0, x_1,
+                y_0, y_1,
+                p_E_lasy_data[idx(idx_t_left, idx_y_left, idx_x_left)],
+                p_E_lasy_data[idx(idx_t_left, idx_y_right, idx_x_left)],
+                p_E_lasy_data[idx(idx_t_left, idx_y_left, idx_x_right)],
+                p_E_lasy_data[idx(idx_t_left, idx_y_right, idx_x_right)],
+                p_E_lasy_data[idx(idx_t_right, idx_y_left, idx_x_left)],
+                p_E_lasy_data[idx(idx_t_right, idx_y_right, idx_x_left)],
+                p_E_lasy_data[idx(idx_t_right, idx_y_left, idx_x_right)],
+                p_E_lasy_data[idx(idx_t_right, idx_y_right, idx_x_right)],
+                t, Xp[i], Yp[i]);
+                // The interpolated amplitude was only the envelope.
+                // Here we add the laser oscillations.
+                amplitude[i] = (val*exp_omega_t).real();
+            }
+        );
+    } // RZ BLOCK
+
+    else if (fileGeom=="thetaMode"){
+        const auto tmp_r_min = m_params.r_min;
+        const auto tmp_r_max = m_params.r_max;
+        const auto tmp_nr = m_params.nr;
+        const auto p_E_lasy_data = m_params.E_data.dataPtr();
+        const auto tmp_idx_first_time = m_params.first_time_index;
+        const int idx_t_right = idx_t_left+1;
+        const auto t_left = idx_t_left*
+            (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+            m_params.t_min;
+        const auto t_right = idx_t_right*
+            (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+            m_params.t_min;
+
+        // Loop through the macroparticle to calculate the proper amplitude
+
+        amrex::ParallelFor(
+        np,
+        [=] AMREX_GPU_DEVICE (int i) {
+            Real* AMREX_RESTRICT const Rp= new Real[N];
+            Rp[i] = std::sqrt(Xp[i] * Xp[i] + Yp[i] * Yp[i]);
+            //Amplitude is zero if we are out of bounds
+            if (Rp[i] <= tmp_r_min || Rp[i] >= tmp_r_max){
+                amplitude[i] = 0.0_rt;
+                return;
+            }
+            //Find indices and coordinates along x
+            const int temp_idx_r_right = static_cast<int>(
+                std::ceil((tmp_nr-1)*(Rp[i]- tmp_r_min)/(tmp_r_max-tmp_r_min)));
+            const int idx_r_right =
+                max(min(temp_idx_r_right,tmp_nr-1),static_cast<int>(1));
+            const int idx_r_left = idx_r_right - 1;
+            const auto r_0 =
+                idx_r_left*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
+            const auto r_1 =
+                idx_r_right*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
+
+            const auto idx = [=](int i_interp, int j_interp){
+                return
+                    (i_interp-tmp_idx_first_time)*tmp_nr+
+                        j_interp;
+            };
+            Complex val = utils::algorithms::bilinear_interp(
+            t_left, t_right,
+            r_0, r_1,
+            p_E_lasy_data[idx(idx_t_left, idx_r_left)],
+            p_E_lasy_data[idx(idx_t_left, idx_r_right)],
+            p_E_lasy_data[idx(idx_t_right, idx_r_left)],
+            p_E_lasy_data[idx(idx_t_right, idx_r_right)],
+            t, Rp[i]);
+            amplitude[i] = (val*exp_omega_t).real();
+        delete[] Rp;
+
+            }
+        );
+    }
+}
+
+
