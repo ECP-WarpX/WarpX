@@ -18,8 +18,18 @@ class PsatdAlgorithmGalileanPml : public SpectralBaseAlgorithm
 {
     public:
 
-        /*
-         * TODO Add Doxygen docstrings
+        /**
+         * \brief Constructor of the class PsatdAlgorithmGalileanPml
+         *
+         * \param[in] spectral_kspace spectral space
+         * \param[in] dm distribution mapping
+         * \param[in] spectral_index object containing indices to access data in spectral space
+         * \param[in] norder_x order of the spectral solver along x
+         * \param[in] norder_y order of the spectral solver along y
+         * \param[in] norder_z order of the spectral solver along z
+         * \param[in] grid_type type of grid (collocated or not)
+         * \param[in] v_galilean Galilean velocity (three-dimensional array)
+         * \param[in] dt time step of the simulation
          */
         PsatdAlgorithmGalileanPml (
             const SpectralKSpace& spectral_kspace,
@@ -32,17 +42,20 @@ class PsatdAlgorithmGalileanPml : public SpectralBaseAlgorithm
             const amrex::Vector<amrex::Real>& v_galilean,
             const amrex::Real dt);
 
-        /*
-         * TODO Add Doxygen docstrings
+        /**
+         * \brief Initializes the coefficients used in \c pushSpectralFields to update the E and B fields
+         *
+         * \param[in] spectral_kspace spectral space
+         * \param[in] dm distribution mapping
          */
         void InitializeSpectralCoefficients (
             const SpectralKSpace& spectral_kspace,
-            const amrex::DistributionMapping& dm,
-            const amrex::Vector<amrex::Real>& v_galilean,
-            const amrex::Real dt);
+            const amrex::DistributionMapping& dm);
 
-        /*
-         * TODO Add Doxygen docstrings
+        /**
+         * \brief Updates the E and B fields in spectral space, according to the relevant PSATD equations
+         *
+         * \param[in,out] f all the fields in spectral space
          */
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
 
@@ -79,6 +92,10 @@ class PsatdAlgorithmGalileanPml : public SpectralBaseAlgorithm
         KVectorComponent modified_ky_vec_centered;
 #endif
         KVectorComponent modified_kz_vec_centered;
+
+        // Other private member variables
+        amrex::Vector<amrex::Real> m_v_galilean;
+        amrex::Real m_dt;
 };
 
 #endif // WARPX_USE_PSATD

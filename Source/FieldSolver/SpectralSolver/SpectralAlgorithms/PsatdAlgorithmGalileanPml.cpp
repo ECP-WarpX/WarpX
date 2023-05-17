@@ -31,10 +31,12 @@ PsatdAlgorithmGalileanPml::PsatdAlgorithmGalileanPml (
     modified_kx_vec_centered(spectral_kspace.getModifiedKComponent(dm, 0, norder_x, GridType::Collocated)),
 #if defined(WARPX_DIM_3D)
     modified_ky_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_y, GridType::Collocated)),
-    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_z, GridType::Collocated))
+    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 2, norder_z, GridType::Collocated)),
 #else
-    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, GridType::Collocated))
+    modified_kz_vec_centered(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, GridType::Collocated)),
 #endif
+    m_v_galilean(v_galilean),
+    m_dt(dt)
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -43,7 +45,7 @@ PsatdAlgorithmGalileanPml::PsatdAlgorithmGalileanPml (
     S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     T2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
-    InitializeSpectralCoefficients(spectral_kspace, dm, v_galilean, dt);
+    InitializeSpectralCoefficients(spectral_kspace, dm);
 }
 
 void PsatdAlgorithmGalileanPml::pushSpectralFields (SpectralFieldData& f) const
@@ -119,10 +121,11 @@ void PsatdAlgorithmGalileanPml::pushSpectralFields (SpectralFieldData& f) const
 
 void PsatdAlgorithmGalileanPml::InitializeSpectralCoefficients (
     const SpectralKSpace& spectral_kspace,
-    const amrex::DistributionMapping& dm,
-    const amrex::Vector<amrex::Real>& v_galilean,
-    const amrex::Real dt)
+    const amrex::DistributionMapping& dm)
 {
+    const amrex::Vector<amrex::Real> v_galilean = m_v_galilean;
+    const amrex::Real dt = m_dt;
+
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Loop over boxes
