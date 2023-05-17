@@ -647,5 +647,3 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
         );
     }
 }
-
-
