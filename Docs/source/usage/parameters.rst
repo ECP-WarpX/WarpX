@@ -1208,10 +1208,10 @@ Laser initialization
       none of the parameters below are used when ``<laser_name>.parse_field_function=1``. Even
       though ``<laser_name>.wavelength`` and ``<laser_name>.e_max`` should be included in the laser
       function, they still have to be specified as they are used for numerical purposes.
-    - ``"from_file"``: the electric field of the laser is read from an external file. Currently both 
-      the `lasy <https://lasydoc.readthedocs.io/en/latest/>` format as well as a custom binary format are supported. It requires to provide 
-      the name of the file to load setting the additional parameter ``<laser_name>.binary_file_name`` or ``<laser_name>.lasy_file_name`` (`string`). 
-      It accepts an optional parameter ``<laser_name>.time_chunk_size`` (`int`) , only supported for a lasy file; 
+    - ``"from_file"``: the electric field of the laser is read from an external file. Currently both
+      the `lasy <https://lasydoc.readthedocs.io/en/latest/>` format as well as a custom binary format are supported. It requires to provide
+      the name of the file to load setting the additional parameter ``<laser_name>.binary_file_name`` or ``<laser_name>.lasy_file_name`` (`string`).
+      It accepts an optional parameter ``<laser_name>.time_chunk_size`` (`int`) , only supported for a lasy file;
       this allows to read only time_chunk_size timesteps from the lasy file. New timesteps are read as soon as they are needed.
 
       The default value is automatically set to the number of timesteps contained in the lasy file

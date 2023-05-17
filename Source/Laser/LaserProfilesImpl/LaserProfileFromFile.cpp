@@ -40,9 +40,9 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <vector>   
-#include <iostream> 
-#include <memory>   
+#include <vector>
+#include <iostream>
+#include <memory>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
