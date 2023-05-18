@@ -316,6 +316,7 @@ private:
          * If DIM=3, ny must be >=2 as well.
          * If DIM=2, ny must be 1 */
         int nt, nx, ny;
+        /** Dimensions of E_lasy_data in RZ*/
         int nr;
         /** Start time*/
         amrex::Real t_min;
