@@ -32,7 +32,7 @@ namespace
         else if (priority == Priority::high)
             return WarnPriority::high;
         else
-            ablastr::utils::TextMsg::Err(
+            ABLASTR_ABORT_WITH_MESSAGE(
                 "Parsing Priority to WarnPriority has failed");
 
         return WarnPriority::high;

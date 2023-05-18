@@ -47,8 +47,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
-    amrex::Abort(Utils::TextMsg::Err(
-        "currently macro E-push does not work for RZ"));
+
+    WARPX_ABORT_WITH_MESSAGE("currently macro E-push does not work for RZ");
 #else
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_grid_type != GridType::Collocated, "Macroscopic E field solver does not work on collocated grids");
@@ -86,8 +86,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         }
 
     } else {
-        amrex::Abort(Utils::TextMsg::Err(
-            "MacroscopicEvolveE: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "MacroscopicEvolveE: Unknown algorithm");
     }
 #endif
 

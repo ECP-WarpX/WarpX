@@ -7,8 +7,7 @@
 #ifndef ABLASTR_POISSON_SOLVER_H
 #define ABLASTR_POISSON_SOLVER_H
 
-#include "Utils/WarpXConst.H"
-
+#include <ablastr/constant.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>

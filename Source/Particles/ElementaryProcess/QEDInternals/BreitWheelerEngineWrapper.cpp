@@ -168,7 +168,7 @@ void BreitWheelerEngine::init_builtin_dndt_table()
     dndt_params.chi_phot_max = default_chi_phot_max;
     dndt_params.chi_phot_how_many = default_chi_phot_how_many;
 
-    const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
+    const auto vals = std::vector<amrex::ParticleReal>{
         -1.34808e+02_prt, -1.16674e+02_prt, -1.01006e+02_prt, -8.74694e+01_prt,
         -7.57742e+01_prt, -6.56699e+01_prt, -5.69401e+01_prt, -4.93981e+01_prt,
         -4.28821e+01_prt, -3.72529e+01_prt, -3.23897e+01_prt, -2.81885e+01_prt,
@@ -186,8 +186,6 @@ void BreitWheelerEngine::init_builtin_dndt_table()
         -2.50493e+00_prt, -2.54261e+00_prt, -2.58143e+00_prt, -2.62127e+00_prt,
         -2.66201e+00_prt, -2.70357e+00_prt, -2.74585e+00_prt, -2.78877e+00_prt};
 
-    amrex::Gpu::synchronize();
-
     m_dndt_table = BW_dndt_table{dndt_params, vals};
 }
 
@@ -204,7 +202,7 @@ void BreitWheelerEngine::init_builtin_pair_prod_table()
     pair_prod_params.chi_phot_how_many = default_chi_phot_how_many;
     pair_prod_params.frac_how_many = default_frac_how_many;
 
-    const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
+    const auto vals = std::vector<amrex::ParticleReal>{
         0.00000e+00_prt, 0.00000e+00_prt, 0.00000e+00_prt, 0.00000e+00_prt,
         0.00000e+00_prt, 0.00000e+00_prt, 0.00000e+00_prt, 3.35120e-221_prt,
         1.13067e-188_prt, 2.14228e-163_prt, 3.39948e-143_prt, 1.09215e-126_prt,
@@ -1229,8 +1227,6 @@ void BreitWheelerEngine::init_builtin_pair_prod_table()
         4.47452e-01_prt, 4.52336e-01_prt, 4.57189e-01_prt, 4.62015e-01_prt,
         4.66816e-01_prt, 4.71596e-01_prt, 4.76358e-01_prt, 4.81105e-01_prt,
         4.85839e-01_prt, 4.90564e-01_prt, 4.95284e-01_prt, 5.00000e-01_prt};
-
-    amrex::Gpu::synchronize();
 
     m_pair_prod_table = BW_pair_prod_table{pair_prod_params, vals};
 }

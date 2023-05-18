@@ -10,7 +10,9 @@ The Monte Carlo collisions (MCC) module can be found in *Source/Particles/Collis
 Several types of collisions between simulation particles and a neutral background gas are supported including elastic scattering, back scattering, charge exchange, excitation collisions and impact ionization.
 An instance of the class :cpp:class:`MCCProcess` is created for each type of collision included in a simulation. This class saves information about the type of collision and the collision cross-section as a function of energy.
 
-The so-called null collision strategy is used in order to minimize the computational burden of the MCC module. This strategy is standard in PIC-MCC and a detailed description can be found elsewhere, for example in `Birdsall (IEEE Transactions on Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_. In short the maximum collision probability is found over a sensible range of energies and is used to pre-select the appropriate number of macroparticles for collision consideration. Only these pre-selected particles are then individually considered for a collision based on their energy and the cross-sections of all the different collisional processes included.
+The so-called null collision strategy is used in order to minimize the computational burden of the MCC module.
+This strategy is standard in PIC-MCC and a detailed description can be found elsewhere, for example in :cite:t:`b-Birdsall1991`.
+In short the maximum collision probability is found over a sensible range of energies and is used to pre-select the appropriate number of macroparticles for collision consideration. Only these pre-selected particles are then individually considered for a collision based on their energy and the cross-sections of all the different collisional processes included.
 
 The MCC implementation assumes that the background neutral particles are **thermal**, and are moving at non-relativistic velocities in the lab frame. For each simulation particle considered for a collision, a velocity vector for a neutral particle is randomly chosen. The particle velocity is then boosted to the stationary frame of the neutral through a Galilean transformation. The energy of the collision is calculated using the particle utility function, ``ParticleUtils::getCollisionEnergy()``, as
 
@@ -75,7 +77,8 @@ The process is also the same as for elastic scattering except the excitation ene
 Particle cooling due to elastic collisions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It is straight forward to determine the energy a projectile loses during an elastic collision with another body, as a function of scattering angle, through energy and momentum conservation. See for example `Lim (2007) <https://search.library.berkeley.edu/permalink/01UCS_BER/s4lks2/cdi_proquest_miscellaneous_35689087>`_ for a derivation. The result is that given a projectile with mass :math:`m`, a target with mass :math:`M`, a scattering angle :math:`\theta`, and collision energy :math:`E`, the post collision energy of the projectile is given by
+It is straight forward to determine the energy a projectile loses during an elastic collision with another body, as a function of scattering angle, through energy and momentum conservation.
+See for example :cite:t:`b-Lim2007` for a derivation. The result is that given a projectile with mass :math:`m`, a target with mass :math:`M`, a scattering angle :math:`\theta`, and collision energy :math:`E`, the post collision energy of the projectile is given by
 
     .. math::
 
@@ -89,3 +92,6 @@ The impact of incorporating relativistic effects in the MCC routine can be seen 
 .. figure:: https://user-images.githubusercontent.com/40245517/170900079-74e505a5-2790-44f5-ac84-5847eda954e6.png
    :alt: Classical v relativistic MCC
    :width: 96%
+
+.. bibliography::
+    :keyprefix: b-

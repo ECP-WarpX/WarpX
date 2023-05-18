@@ -269,15 +269,10 @@ function(set_warpx_binary_name)
         else()
             set(lib_suffix "${WarpX_DIMS}d")
         endif()
-        if(WIN32)
-            set(mod_ext "dll")
-        else()
-            set(mod_ext "so")
-        endif()
         add_custom_command(TARGET shared POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E create_symlink
                 $<TARGET_FILE_NAME:shared>
-                $<TARGET_FILE_DIR:shared>/libwarpx.${lib_suffix}.${mod_ext}
+                $<TARGET_FILE_DIR:shared>/libwarpx.${lib_suffix}$<TARGET_FILE_SUFFIX:shared>
         )
     endif()
 endfunction()

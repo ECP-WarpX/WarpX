@@ -9,7 +9,6 @@
 
 #include "ablastr/profiler/ProfilerWrapper.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/ShapeFactors.H"
 #include "Particles/Deposition/ChargeDeposition.H"
 #include "ablastr/utils/TextMsg.H"
 
