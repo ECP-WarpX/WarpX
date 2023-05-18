@@ -101,11 +101,11 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     //Reads the (optional) delay
     utils::parser::queryWithParser(ppl, "delay", m_params.t_delay);
 
-    //Allocate memory for E_lasy_data or E_binary_data Vector      
+    //Allocate memory for E_lasy_data or E_binary_data Vector
 
- 
+
     int data_size = m_params.time_chunk_size*
-        m_params.nx*m_params.ny;   
+        m_params.nx*m_params.ny;
     if (m_params.file_in_lasy_format){
         if (m_params.fileGeom=="thetaMode") {
             data_size = m_params.time_chunk_size*
