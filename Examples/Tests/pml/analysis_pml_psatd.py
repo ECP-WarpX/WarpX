@@ -25,7 +25,7 @@ galilean = True if re.search("galilean", filename) else False
 # Initial laser energy (at iteration 50)
 if galilean:
     filename_init = 'pml_x_galilean_plt000050'
-    energy_start = 4.439376199595627e-08
+    energy_start = 4.439376199524034e-08
 else:
     filename_init = 'pml_x_psatd_plt000050'
     energy_start = 7.282940107273505e-08
@@ -63,7 +63,7 @@ energyB = np.sum(0.5 / scc.mu_0 * (Bx**2 + By**2 + Bz**2))
 energy_end = energyE + energyB
 
 reflectivity = energy_end / energy_start_diags
-reflectivity_max = 3e-6
+reflectivity_max = 1e-6
 
 print("reflectivity     = " + str(reflectivity))
 print("reflectivity_max = " + str(reflectivity_max))

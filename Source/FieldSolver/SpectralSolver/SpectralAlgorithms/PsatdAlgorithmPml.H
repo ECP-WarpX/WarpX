@@ -21,27 +21,40 @@
 
 #if WARPX_USE_PSATD
 
-/* \brief Class that updates the field in spectral space
+/*
+ * \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
  */
 class PsatdAlgorithmPml : public SpectralBaseAlgorithm
 {
     public:
-        PsatdAlgorithmPml(const SpectralKSpace& spectral_kspace,
-                          const amrex::DistributionMapping& dm,
-                          const SpectralFieldIndex& spectral_index,
-                          const int norder_x, const int norder_y,
-                          const int norder_z, const short grid_type,
-                          const amrex::Real dt,
-                          const bool dive_cleaning,
-                          const bool divb_cleaning);
 
-        void InitializeSpectralCoefficients(
+        /*
+         * TODO Add Doxygen
+         */
+        PsatdAlgorithmPml(
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
-            const amrex::Real dt);
+            const SpectralFieldIndex& spectral_index,
+            const int norder_x,
+            const int norder_y,
+            const int norder_z,
+            const short grid_type,
+            const amrex::Vector<amrex::Real>& v_galilean,
+            const amrex::Real dt,
+            const bool dive_cleaning,
+            const bool divb_cleaning);
 
-        // Redefine functions from base class
+        /*
+         * TODO Add Doxygen
+         */
+        void InitializeSpectralCoefficients(
+            const SpectralKSpace& spectral_kspace,
+            const amrex::DistributionMapping& dm);
+
+        /*
+         * TODO Add Doxygen
+         */
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
 
         /**
@@ -67,10 +80,20 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
         virtual void VayDeposition (SpectralFieldData& field_data) override final;
 
     private:
+
         SpectralRealCoefficients C_coef, S_ck_coef, inv_k2_coef;
+        SpectralComplexCoefficients T2_coef;
+        // Centered modified finite-order k vectors
+        KVectorComponent modified_kx_vec_centered;
+#if defined(WARPX_DIM_3D)
+        KVectorComponent modified_ky_vec_centered;
+#endif
+        KVectorComponent modified_kz_vec_centered;
+        amrex::Vector<amrex::Real> m_v_galilean;
         amrex::Real m_dt;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
+        bool m_is_galilean;
 };
 
 #endif // WARPX_USE_PSATD

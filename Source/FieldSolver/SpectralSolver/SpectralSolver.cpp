@@ -53,20 +53,11 @@ SpectralSolver::SpectralSolver(
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
 
-    if (pml) // PSATD equations in the PML region
+    if (pml) // PSATD or Galilean PSATD equations in the PML region
     {
-        if (v_galilean[0] == 0 && v_galilean[1] == 0 && v_galilean[2] == 0)
-        {
-            algorithm = std::make_unique<PsatdAlgorithmPml>(
-                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
-                dt, dive_cleaning, divb_cleaning);
-        }
-        else // Galilean PSATD algorithm in the PML region
-        {
-            algorithm = std::make_unique<PsatdAlgorithmGalileanPml>(
-                k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
-                v_galilean, dt);
-        }
+        algorithm = std::make_unique<PsatdAlgorithmPml>(
+            k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
+            v_galilean, dt, dive_cleaning, divb_cleaning);
     }
     else // PSATD equations in the regular domain
     {
