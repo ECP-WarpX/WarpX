@@ -822,7 +822,7 @@ Particle initialization
 
     * ``uniform``: uniform probability distribution between a minumum and a maximum value.
       The x, y and z directions are sampled independently and the final momentum space is a cuboid.
-      The parameters that control the minimum and maximum domain of the  distribution
+      The parameters that control the minimum and maximum domain of the distribution
       are ``<species_name>.u<x,y,z>_min`` and ``<species_name>.u<x,y,z>_max`` in each
       direction respectively (e.g., ``<species_name>.uz_min = 0.2`` and ``<species_name>.uz_max = 0.4``
       to control the generation along the ``z`` direction).
