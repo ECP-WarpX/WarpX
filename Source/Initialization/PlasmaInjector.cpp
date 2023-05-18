@@ -639,7 +639,7 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussianFlux*)nullptr,
                                              ux_m, uy_m, uz_m, ux_th, uy_th, uz_th,
                                              flux_normal_axis, flux_direction));
-    } else if (mom_dist_s == "waterbag") {
+    } else if (mom_dist_s == "uniform") {
         amrex::Real ux_min = 0._rt;
         amrex::Real uy_min = 0._rt;
         amrex::Real uz_min = 0._rt;
@@ -652,8 +652,8 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
         utils::parser::queryWithParser(pp, "ux_max", ux_max);
         utils::parser::queryWithParser(pp, "uy_max", uy_max);
         utils::parser::queryWithParser(pp, "uz_max", uz_max);
-        // Construct InjectorMomentum with InjectorMomentumWaterbag.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumWaterbag*)nullptr,
+        // Construct InjectorMomentum with InjectorMomentumUniform.
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumUniform*)nullptr,
                                              ux_min, uy_min, uz_min, ux_max, uy_max, uz_max));
     } else if (mom_dist_s == "maxwell_boltzmann"){
         h_mom_temp = std::make_unique<TemperatureProperties>(pp);
