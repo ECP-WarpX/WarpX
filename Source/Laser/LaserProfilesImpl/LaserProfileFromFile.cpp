@@ -100,7 +100,7 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     }
     //Reads the (optional) delay
     utils::parser::queryWithParser(ppl, "delay", m_params.t_delay);
-  
+
     //Allocate memory for E_lasy_data or E_binary_data Vector
     int data_size = m_params.time_chunk_size*
         m_params.nx*m_params.ny;
@@ -180,7 +180,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(E.getAttribute("dataOrder").get<std::string>() == "C",
                                          "Reading from files with non-C dataOrder is not implemented");
-      
+
         m_params.fileGeom = E.getAttribute("geometry").get<std::string>();
         auto E_laser = E[io::RecordComponent::SCALAR];
         auto extent = E_laser.getExtent();
