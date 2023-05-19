@@ -3,7 +3,7 @@
 Kinetic-fluid Hybrid Model
 ==========================
 
-Many problems in plasma physics fall in a class where electron kinetics do not
+Many problems in plasma physics fall in a class where both electron kinetics and electromagnetic waves do not
 play a critical role in the solution. Examples of such situations include the
 study of collisionless magnetic reconnection and instabilities driven by ion
 temperature anisotropy, to mention only two. For these kinds of problems the
@@ -48,7 +48,7 @@ equation yields,
         \frac{d(n_em_e\vec{V}_e)}{dt} = 0 = -en_e\vec{E}-\vec{J}_e\times\vec{B}-\nabla\cdot\vec{P}_e+en_e\vec{\eta}\cdot\vec{J},
 
 where :math:`\vec{V_e}=\vec{J}_e/(en_e)`, :math:`\vec{P}_e` is the electron pressure
-tensor and :math:`\vec{\eta}` is the resistivity. An expression for the electric field
+tensor and :math:`\vec{\eta}` is the resistivity tensor. An expression for the electric field
 (generalized Ohm's law) can be obtained from the above as:
 
     .. math::
@@ -67,9 +67,9 @@ Implementation details
     Various verification tests of the hybrid model implementation can be found in
     the :ref:`examples section <examples-hybrid-model>`.
 
-The kinetic-fluid hybrid extension mostly uses the same routines as the standard
+The kinetic-fluid hybrid extension mostly uses the same routines as the standard electromagnetic
 PIC algorithm with the only exception that the E-field is calculated from the
-above equation rather than it being integrated from a differential equation. The
+above equation rather than it being updated from the full Maxwell-Ampere equation. The
 function ``WarpX::HybridPICEvolveFields()`` handles the logic to update the E&M fields
 when the "hybridPIC" model is used. This function is executed after particle pushing
 and deposition (charge and current density) has been completed. Therefore, based
@@ -90,7 +90,7 @@ be interpolated to the correct time, using :math:`\vec{J}_i^n = 1/2(\vec{J}_i^{n
 The electron pressure is simply calculated using :math:`\rho^n` and the B-field is also already
 known at the correct time since it was calculated for :math:`t=t_n` at the end of the last step.
 Once :math:`\vec{E}^n` is calculated, it is used to push :math:`\vec{B}^n` forward in time
-(using Faraday's law, i.e. the same as in the regular PIC routine with ``WarpX::EvolveB()``)
+(using the Maxwell-Faraday equation, i.e. the same as in the regular PIC routine with ``WarpX::EvolveB()``)
 to :math:`\vec{B}^{n+1/2}`.
 
 Second half step
@@ -132,11 +132,11 @@ Electron pressure
 ^^^^^^^^^^^^^^^^^
 
 The electron pressure is assumed to be a scalar quantity and calculated using the given
-input parameters, :math:`T_e`, :math:`n_0` and :math:`\gamma` using
+input parameters, :math:`T_{e0}`, :math:`n_0` and :math:`\gamma` using
 
     .. math::
 
-        P_e = n_0T_e\left( \frac{n_e}{n_0} \right)^\gamma.
+        P_e = n_0T_{e0}\left( \frac{n_e}{n_0} \right)^\gamma.
 
 The isothermal limit is given by :math:`\gamma = 1` while :math:`\gamma = 5/3`
 (default) produces the adiabatic limit.
