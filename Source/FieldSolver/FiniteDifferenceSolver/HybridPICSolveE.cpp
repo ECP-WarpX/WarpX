@@ -147,7 +147,7 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
             // Jy calculation
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
-                // Skip field push if this cell is fully covered by embedded boundaries
+                // Skip if this cell is fully covered by embedded boundaries
 #ifdef WARPX_DIM_3D
                 if (ly(i,j,k) <= 0) return;
 #elif defined(WARPX_DIM_XZ)
@@ -305,8 +305,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     // Create a temporary multifab to hold the nodal E-field values
     // Note the multifab has 3 values for Ex, Ey and Ez which we can do here
     // since all three components will be calculated on the same grid.
-    auto const& ba = convert(Efield[0]->boxArray(), IntVect::TheNodeVector());
-    MultiFab enE_nodal_mf(ba, Efield[0]->DistributionMap(), 3, Efield[0]->nGrow());
+    auto const& ba = convert(rhofield->boxArray(), IntVect::TheNodeVector());
+    MultiFab enE_nodal_mf(ba, rhofield->DistributionMap(), 3, rhofield->nGrow());
 
     // Loop through the grids, and over the tiles within each grid for the
     // initial, nodal calculation of E
@@ -331,10 +331,8 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
         Array4<Real const> const& By = Bfield[1]->const_array(mfi);
         Array4<Real const> const& Bz = Bfield[2]->const_array(mfi);
 
-        Box const& bx  = mfi.tilebox();
-
         // Loop over the cells and update the nodal E field
-        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
+        amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int k){
 
             // interpolate the total current to a nodal grid
             auto const jx_interp = Interp(Jx, Jx_stag, nodal, coarsen, i, j, k, 0);

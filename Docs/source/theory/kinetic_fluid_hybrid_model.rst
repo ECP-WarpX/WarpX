@@ -8,7 +8,9 @@ play a critical role in the solution. Examples of such situations include the
 study of collisionless magnetic reconnection and instabilities driven by ion
 temperature anisotropy, to mention only two. For these kinds of problems the
 computational cost of resolving the electron dynamics can be avoided by modeling
-the electrons as a fluid rather than kinetic particles. The simulation resolution
+the electrons as a neutralizing fluid rather than kinetic particles. By further
+using Ohm's law to compute the electric field rather than evolving it with the
+Maxwell-Faraday equation, light waves can be stepped over. The simulation resolution
 can then be set by the ion time and length scales (commonly the ion cyclotron
 period :math:`1/\Omega_i` and ion skin depth :math:`l_i`, respectively), which
 can reduce the total simulation time drastically compared to a simulation that
@@ -27,8 +29,7 @@ The basic justification for the hybrid model is that the system to which it is
 applied is dominated by ion kinetics, with ions moving much slower than electrons
 and photons. In this scenario two critical approximations can be made, namely,
 neutrality (:math:`n_e=n_i`) and the Maxwell-Ampere equation can be simplified by
-neglecting the displacement current term (Darwin approximation :cite:p:`c-NIELSON1976`),
-giving,
+neglecting the displacement current term :cite:p:`c-NIELSON1976`, giving,
 
     .. math::
 

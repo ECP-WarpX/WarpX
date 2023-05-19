@@ -154,8 +154,8 @@ Perpendicularly propagating modes are also supported, commonly referred to as io
 
 The input file for these examples and the corresponding analysis can be found at:
 
-* :download:`EM modes input <../../../Examples/Tests/ohm_solver/EM_modes/PICMI_inputs.py>`
-* :download:`Analysis script <../../../Examples/Tests/ohm_solver/EM_modes/analysis.py>`
+* :download:`EM modes input <../../../Examples/Tests/ohm_solver_EM_modes/PICMI_inputs.py>`
+* :download:`Analysis script <../../../Examples/Tests/ohm_solver_EM_modes/analysis.py>`
 
 The same input script can be used for 1d, 2d or 3d simulations as well as replicating either the parallel propagating or
 ion-Bernstein modes as indicated below.
@@ -182,8 +182,8 @@ core plasma interact.
 
 The input file for these examples and the corresponding analysis can be found at:
 
-* :download:`Ion beam R instability input <../../../Examples/Tests/ohm_solver/ion_beam_instability/PICMI_inputs.py>`
-* :download:`Analysis script <../../../Examples/Tests/ohm_solver/ion_beam_instability/analysis.py>`
+* :download:`Ion beam R instability input <../../../Examples/Tests/ohm_solver_ion_beam_instability/PICMI_inputs.py>`
+* :download:`Analysis script <../../../Examples/Tests/ohm_solver_ion_beam_instability/analysis.py>`
 
 The same input script can be used for 1d, 2d or 3d simulations as well as replicating either the resonant or non-resonant
 condition as indicated below.
@@ -209,8 +209,8 @@ the theoretical damping rate for the given temperature ratios.
 
 The input file for these examples and the corresponding analysis can be found at:
 
-* :download:`Ion Landau damping input <../../../Examples/Tests/ohm_solver/ion_Landau_damping/PICMI_inputs.py>`
-* :download:`Analysis script <../../../Examples/Tests/ohm_solver/ion_Landau_damping/analysis.py>`
+* :download:`Ion Landau damping input <../../../Examples/Tests/ohm_solver_ion_Landau_damping/PICMI_inputs.py>`
+* :download:`Analysis script <../../../Examples/Tests/ohm_solver_ion_Landau_damping/analysis.py>`
 
 The same input script can be used for 1d, 2d or 3d simulations and to sweep different
 temperature ratios.
@@ -232,8 +232,8 @@ provided, based on the simulation described in :cite:t:`ex-Le2016`.
 
 The input file for this example and corresponding analysis can be found at:
 
-* :download:`Magnetic reconnection input <../../../Examples/Tests/ohm_solver/magnetic_reconnection/PICMI_inputs.py>`
-* :download:`Analysis script <../../../Examples/Tests/ohm_solver/magnetic_reconnection/analysis.py>`
+* :download:`Magnetic reconnection input <../../../Examples/Tests/ohm_solver_magnetic_reconnection/PICMI_inputs.py>`
+* :download:`Analysis script <../../../Examples/Tests/ohm_solver_magnetic_reconnection/analysis.py>`
 
 .. bibliography::
     :keyprefix: ex-

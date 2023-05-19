@@ -13,10 +13,8 @@ constants = picmi.constants
 
 matplotlib.rcParams.update({'font.size': 20})
 
-B_dir = 'z'
-
 # load simulation parameters
-with open(f'sim_parameters_{B_dir}.dpkl', 'rb') as f:
+with open(f'sim_parameters.dpkl', 'rb') as f:
     sim = dill.load(f)
 
 if sim.test:

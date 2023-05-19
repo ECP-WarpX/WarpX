@@ -223,25 +223,6 @@ void WarpX::HybridPICSolveE (const int lev, PatchType patch_type, DtType a_dt_ty
         );
     }
 
-    // Evolve E field in PML cells
-    // if (do_pml && pml[lev]->ok()) {
-    //     if (patch_type == PatchType::fine) {
-    //         m_fdtd_solver_fp[lev]->EvolveEPML(
-    //             pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
-    //             pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
-    //             pml[lev]->GetF_fp(),
-    //             pml[lev]->GetMultiSigmaBox_fp(),
-    //             a_dt, pml_has_particles );
-    //     } else {
-    //         m_fdtd_solver_cp[lev]->EvolveEPML(
-    //             pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
-    //             pml[lev]->Getj_cp(), pml[lev]->Get_edge_lengths(),
-    //             pml[lev]->GetF_cp(),
-    //             pml[lev]->GetMultiSigmaBox_cp(),
-    //             a_dt, pml_has_particles );
-    //     }
-    // }
-
     ApplyEfieldBoundary(lev, patch_type);
 }
 
