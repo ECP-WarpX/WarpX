@@ -39,7 +39,7 @@ void WarpX::HybridPICEvolveFields ()
     // a nodal grid
     for (int lev = 0; lev <= finest_level; ++lev)
         for (int idim = 0; idim < 3; ++idim)
-            current_fp[lev][idim]->FillBoundary();
+            current_fp[lev][idim]->FillBoundary(Geom(lev).periodicity());
 
     // Get requested number of substeps to use
     int sub_steps = m_hybrid_pic_model->m_substeps / 2;

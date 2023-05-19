@@ -15,17 +15,6 @@ plt.rcParams.update({'font.size': 20})
 with open(f'sim_parameters.dpkl', 'rb') as f:
     sim = dill.load(f)
 
-if sim.test:
-    import os
-    import sys
-    sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-    import checksumAPI
-
-    # this will be the name of the plot file
-    fn = sys.argv[1]
-    test_name = os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, fn)
-
 x_idx = 2
 z_idx = 4
 Ey_idx = 6
@@ -182,3 +171,14 @@ if not sim.test:
 
     writervideo = FFMpegWriter(fps=14)
     anim.save('diags/mag_reconnection.mp4', writer=writervideo)
+
+if sim.test:
+    import os
+    import sys
+    sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+    import checksumAPI
+
+    # this will be the name of the plot file
+    fn = sys.argv[1]
+    test_name = os.path.split(os.getcwd())[1]
+    checksumAPI.evaluate_checksum(test_name, fn)

@@ -144,7 +144,6 @@ class EMModes(object):
         self.m_ion = self.m_ion[idx]
         self.vA_over_c = self.vA_over_c[idx]
         self.Nz = self.Nz[idx]
-        # self.DZ = self.DZ[idx]
         self.DT = self.DT[idx]
 
         self.NPPC = self.NPPC[self.dim-1]
@@ -207,7 +206,8 @@ class EMModes(object):
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
-        simulation.particle_shape = 3
+        simulation.current_deposition_algo = 'direct'
+        simulation.particle_shape = 1
         simulation.verbose = self.verbose
 
         #######################################################################

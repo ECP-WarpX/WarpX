@@ -17,17 +17,6 @@ matplotlib.rcParams.update({'font.size': 20})
 with open(f'sim_parameters.dpkl', 'rb') as f:
     sim = dill.load(f)
 
-if sim.test:
-    import os
-    import sys
-    sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-    import checksumAPI
-
-    # this will be the name of the plot file
-    fn = sys.argv[1]
-    test_name = os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, fn)
-
 if sim.B_dir == 'z':
     field_idx_dict = {'z': 4, 'Ez': 7, 'Bx': 8, 'By': 9}
     data = np.loadtxt("diags/par_field_data.txt", skiprows=1)
@@ -184,3 +173,14 @@ plt.savefig(
 )
 if not sim.test:
     plt.show()
+
+if sim.test:
+    import os
+    import sys
+    sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+    import checksumAPI
+
+    # this will be the name of the plot file
+    fn = sys.argv[1]
+    test_name = os.path.split(os.getcwd())[1]
+    checksumAPI.evaluate_checksum(test_name, fn)

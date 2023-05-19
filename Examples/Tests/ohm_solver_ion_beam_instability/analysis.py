@@ -18,17 +18,6 @@ matplotlib.rcParams.update({'font.size': 20})
 with open(f'sim_parameters.dpkl', 'rb') as f:
     sim = dill.load(f)
 
-if sim.test:
-    import os
-    import sys
-    sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-    import checksumAPI
-
-    # this will be the name of the plot file
-    fn = sys.argv[1]
-    test_name = os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, fn)
-
 if sim.resonant:
     resonant_str = 'resonant'
 else:
@@ -124,6 +113,21 @@ if sim.resonant:
     plt.savefig(f"diags/ion_beam_R_instability_{resonant_str}_eta_{sim.eta}_substeps_{sim.substeps}_low_modes.png")
     plt.close()
 
+    # check if the growth rate matches expectation
+    m4_rms_error = np.sqrt(np.mean(
+        (np.abs(field_kt[idx, 4] / sim.B0) - A4*np.exp(t_points*gamma4))**2
+    ))
+    m5_rms_error = np.sqrt(np.mean(
+        (np.abs(field_kt[idx, 5] / sim.B0) - A5*np.exp(t_points*gamma5))**2
+    ))
+    m6_rms_error = np.sqrt(np.mean(
+        (np.abs(field_kt[idx, 6] / sim.B0) - A6*np.exp(t_points*gamma6))**2
+    ))
+    print("Growth rate RMS errors:")
+    print(f"    m = 4: {m4_rms_error:.3e}")
+    print(f"    m = 5: {m5_rms_error:.3e}")
+    print(f"    m = 6: {m6_rms_error:.3e}")
+
 if not sim.test:
     with h5py.File('diags/Python_hybrid_PIC_plt/openpmd_004000.h5', 'r') as data:
 
@@ -178,3 +182,21 @@ if not sim.test:
     ax1.set_title(f"Ion beam R instability - {resonant_str} case")
     plt.savefig(f"diags/ion_beam_R_instability_{resonant_str}_eta_{sim.eta}_substeps_{sim.substeps}_beam_phase_space.png")
     plt.show()
+
+if sim.test:
+
+    # physics based check
+    assert m4_rms_error < 0.2
+    assert m5_rms_error < 0.4
+    assert m6_rms_error < 1.0
+
+    # checksum check
+    import os
+    import sys
+    sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+    import checksumAPI
+
+    # this will be the name of the plot file
+    fn = sys.argv[1]
+    test_name = os.path.split(os.getcwd())[1]
+    checksumAPI.evaluate_checksum(test_name, fn)

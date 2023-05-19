@@ -94,12 +94,15 @@ class HybridPICBeamInstability(object):
         diag_period = 1 / 4.0 # Output interval (ion cyclotron periods)
         self.diag_steps = int(diag_period / self.DT)
 
-        # if this is a test case run for only 1 cyclotron period
+        # if this is a test case run for only 25 cyclotron periods and use
+        # fewer substeps to speed up the simulation
         if self.test:
-            self.LT = 1.0
+            self.LT = 25.0
+            self.substeps = 100
+
         self.total_steps = int(np.ceil(self.LT / self.DT))
 
-        self.dt = self.DT / self.w_ci # self.DT * self.t_ci
+        self.dt = self.DT / self.w_ci
 
         # dump all the current attributes to a dill pickle file
         if comm.rank == 0:
@@ -188,8 +191,11 @@ class HybridPICBeamInstability(object):
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
-        simulation.load_balance_intervals = self.total_steps // 20
+        simulation.current_deposition_algo = 'direct'
+        simulation.particle_shape = 1
         simulation.verbose = self.verbose
+        if not self.test:
+            simulation.load_balance_intervals = self.total_steps // 10
 
         #######################################################################
         # Field solver and external field                                     #
@@ -255,7 +261,7 @@ class HybridPICBeamInstability(object):
             field_diag = picmi.FieldDiagnostic(
                 name='field_diag',
                 grid=self.grid,
-                period=100,
+                period=1250,
                 write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
             )

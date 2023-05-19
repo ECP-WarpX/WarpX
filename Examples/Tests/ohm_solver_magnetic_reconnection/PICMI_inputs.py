@@ -199,6 +199,7 @@ class ForceFreeSheetReconnection(object):
         )
         simulation.time_step_size = self.dt
         simulation.max_steps = self.total_steps
+        simulation.current_deposition_algo = 'direct'
         simulation.particle_shape = 1
         simulation.use_filter = False
         simulation.verbose = self.verbose

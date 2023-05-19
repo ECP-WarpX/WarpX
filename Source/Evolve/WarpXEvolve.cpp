@@ -151,9 +151,9 @@ WarpX::Evolve (int numsteps)
                     // SyncCurrent does not include a call to FillBoundary, but it is needed
                     // for the hybrid-PIC solver since current values are interpolated to
                     // a nodal grid
-                    current_fp_temp[lev][0]->FillBoundary();
-                    current_fp_temp[lev][1]->FillBoundary();
-                    current_fp_temp[lev][2]->FillBoundary();
+                    current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
+                    current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
+                    current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
 
                     ApplyRhofieldBoundary(lev, rho_fp_temp[lev].get(), PatchType::fine);
                     // Set current density at PEC boundaries, if needed.
