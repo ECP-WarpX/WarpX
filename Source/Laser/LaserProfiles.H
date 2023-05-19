@@ -304,6 +304,7 @@ private:
      * used by this laser profile
      */
     struct{
+
         /** Name of the lasy file geometry ("cartesian" for 3D cartesian or "thetaMode" for RZ) */
         std::string fileGeom;
         /** Name of the binary file containing the data */
