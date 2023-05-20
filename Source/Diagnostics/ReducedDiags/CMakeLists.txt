@@ -1,22 +1,25 @@
-target_sources(WarpX
-  PRIVATE
-    BeamRelevant.cpp
-    FieldEnergy.cpp
-    FieldProbe.cpp
-    FieldProbeParticleContainer.cpp
-    FieldMomentum.cpp
-    LoadBalanceCosts.cpp
-    LoadBalanceEfficiency.cpp
-    MultiReducedDiags.cpp
-    ParticleEnergy.cpp
-    ParticleMomentum.cpp
-    ParticleHistogram.cpp
-    ReducedDiags.cpp
-    FieldMaximum.cpp
-    ParticleExtrema.cpp
-    RhoMaximum.cpp
-    ParticleNumber.cpp
-    FieldReduction.cpp
-    FieldProbe.cpp
-    ChargeOnEB.cpp
-)
+foreach(D IN LISTS WarpX_DIMS)
+    warpx_set_suffix_dims(SD ${D})
+    target_sources(WarpX_${SD}
+      PRIVATE
+        BeamRelevant.cpp
+        FieldEnergy.cpp
+        FieldProbe.cpp
+        FieldProbeParticleContainer.cpp
+        FieldMomentum.cpp
+        LoadBalanceCosts.cpp
+        LoadBalanceEfficiency.cpp
+        MultiReducedDiags.cpp
+        ParticleEnergy.cpp
+        ParticleMomentum.cpp
+        ParticleHistogram.cpp
+        ReducedDiags.cpp
+        FieldMaximum.cpp
+        ParticleExtrema.cpp
+        RhoMaximum.cpp
+        ParticleNumber.cpp
+        FieldReduction.cpp
+        FieldProbe.cpp
+        ChargeOnEB.cpp
+    )
+endforeach()

@@ -32,22 +32,15 @@ jobs:
           ccache-openmp-cxxminimal-
     - name: build WarpX
       run: |
-        cmake -S . -B build_3D         \
+        cmake -S . -B build            \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_DIMS="RZ;3"          \
           -DWarpX_EB=OFF               \
           -DWarpX_MPI=OFF              \
           -DWarpX_QED=OFF
-        cmake --build build_3D -j 2
-        ./build_3D/bin/warpx Examples/Physics_applications/laser_acceleration/inputs_3d
-
-        cmake -S . -B build_RZ         \
-          -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_DIMS=RZ              \
-          -DWarpX_EB=OFF               \
-          -DWarpX_MPI=OFF              \
-          -DWarpX_QED=OFF
-        cmake --build build_RZ -j 2
-        ./build_RZ/bin/warpx Examples/Physics_applications/laser_acceleration/inputs_rz
+        cmake --build build -j 2
+        ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_3d
+        ./build/bin/warpx.rz Examples/Physics_applications/laser_acceleration/inputs_rz
 
   build_1D_2D:
     name: GCC 1D & 2D w/ MPI
@@ -76,25 +69,16 @@ jobs:
           ccache-openmp-1D-2D-
     - name: build WarpX
       run: |
-        cmake -S . -B build_1D         \
+        cmake -S . -B build            \
           -GNinja                      \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_DIMS=1               \
+          -DWarpX_DIMS="1;2"           \
           -DWarpX_EB=OFF               \
           -DWarpX_PSATD=ON             \
           -DWarpX_QED_TABLE_GEN=ON
-        cmake --build build_1D -j 2
-        ./build_1D/bin/warpx Examples/Physics_applications/laser_acceleration/inputs_1d
-
-        cmake -S . -B build_2D         \
-          -GNinja                      \
-          -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_DIMS=2               \
-          -DWarpX_EB=OFF               \
-          -DWarpX_PSATD=ON             \
-          -DWarpX_QED_TABLE_GEN=ON
-        cmake --build build_2D -j 2
-        ./build_2D/bin/warpx Examples/Physics_applications/laser_acceleration/inputs_2d
+        cmake --build build -j 2
+        ./build/bin/warpx.1d Examples/Physics_applications/laser_acceleration/inputs_1d
+        ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_2d
 
   build_gcc_ablastr:
     name: GCC ABLASTR w/o MPI
