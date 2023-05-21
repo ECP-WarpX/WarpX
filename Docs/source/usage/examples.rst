@@ -180,6 +180,13 @@ core plasma interact.
    :alt: Non-resonant ion beam R instability
    :width: 70%
 
+The growth rates of the strongest growing modes for the resonant case are compared
+to theory (dashed lines) in the figure below.
+
+.. figure:: https://github.com/ECP-WarpX/WarpX/assets/40245517/a94bb6e5-30e9-4d8f-9e6b-844dc8f51d17
+   :alt: Resonant ion beam R instability growth rates
+   :width: 50%
+
 The input file for these examples and the corresponding analysis can be found at:
 
 * :download:`Ion beam R instability input <../../../Examples/Tests/ohm_solver_ion_beam_instability/PICMI_inputs.py>`

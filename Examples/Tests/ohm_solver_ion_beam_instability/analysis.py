@@ -185,10 +185,16 @@ if not sim.test:
 
 if sim.test:
 
-    # physics based check
-    assert m4_rms_error < 0.2
-    assert m5_rms_error < 0.4
-    assert m6_rms_error < 1.0
+    # physics based check - these error tolerances are not set from theory
+    # but from the errors that were present when the test was created. If these
+    # assert's fail, the full benchmark should be rerun (same as the test but
+    # without the `--test` argument) and the growth rates (up to saturation)
+    # compared to the theoretical ones to determine if the physics test passes.
+    # At creation, the full test had the following errors when ran on 8 procs:
+    # m4_rms_error = 4.476; m5_rms_error = 9.211; m6_rms_error = 3.252
+    assert m4_rms_error < 1.55
+    assert m5_rms_error < 0.75
+    assert m6_rms_error < 0.40
 
     # checksum check
     import os
