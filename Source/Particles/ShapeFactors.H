@@ -16,7 +16,7 @@
 /**
  *  Compute shape factor and return index of leftmost cell where
  *  particle writes.
- *  Specializations are defined for orders 0 to 3 (using "if constexpr").
+ *  Specializations are defined for orders 0 to 4 (using "if constexpr").
  *  Shape factor functors may be evaluated with double arguments
  *  in current deposition to ensure that current deposited by
  *  particles that move only a small distance is still resolved.
@@ -67,13 +67,11 @@ struct Compute_shape_factor
         else if constexpr (depos_order == 4){
             const auto j = static_cast<int>(xmid + T(0.5));
             const T xint = xmid - T(j);
-            const T xint_p1 = xint + T(1.0);
-            const T xint_m1 = xint - T(1.0);
-            sx[0] = T(1.0)/T(384.0)*(T(1.0) - T(2.0)*xint)*(T(1.0) - T(2.0)*xint)*(T(1.0) - T(2.0)*xint)*(T(1.0) - T(2.0)*xint);
-            sx[1] = T(1.0)/T(96.0)*(T(55.0) + T(4.0)*xint_p1*(T(5.0) - T(2.0)*xint_p1*(T(15.0) + T(2.0)*xint_p1*(xint_p1 - T(5.0)))));
-            sx[2] = T(115.0)/T(192.0) + xint*xint*(xint*xint/T(4.0) - T(5.0)/T(8.0));
-            sx[3] = T(1.0)/T(96.0)*(T(55.0) - T(4.0)*xint_m1*(T(5.0) + T(2.0)*xint_m1*(T(15.0) - T(2.0)*xint_m1*(-xint_m1 - T(5.0)))));
-            sx[4] = T(1.0)/T(384.0)*(T(1.0) + T(2.0)*xint)*(T(1.0) + T(2.0)*xint)*(T(1.0) + T(2.0)*xint)*(T(1.0) + T(2.0)*xint);
+            sx[0] = (T(1.0))/(T(24.0))*(T(0.5) - xint)*(T(0.5) - xint)*(T(0.5) - xint)*(T(0.5) - xint);
+	    sx[1] = (T(1.0))/(T(24.0))*(T(4.75) - T(11.0)*xint + T(4.0)*xint*xint*(T(1.5) + xint - xint*xint));
+	    sx[2] = (T(1.0))/(T(24.0))*(T(14.375) + T(6.0)*xint*xint*(xint*xint - T(2.5)));
+	    sx[3] = (T(1.0))/(T(24.0))*(T(4.75) + T(11.0)*xint + T(4.0)*xint*xint*(T(1.5) - xint - xint*xint));
+            sx[4] = (T(1.0))/(T(24.0))*(T(0.5) + xint)*(T(0.5) + xint)*(T(0.5) + xint)*(T(0.5)+xint);
             // index of the leftmost cell where particle deposits
             return j-2;
         }
@@ -90,7 +88,7 @@ struct Compute_shape_factor
 /**
  *  Compute shifted shape factor and return index of leftmost cell where
  *  particle writes, for Esirkepov algorithm.
- *  Specializations are defined below for orders 1, 2 and 3 (using "if constexpr").
+ *  Specializations are defined below for orders 1, 2, 3, and 4 (using "if constexpr").
  */
 template <int depos_order>
 struct Compute_shifted_shape_factor
@@ -129,13 +127,25 @@ struct Compute_shifted_shape_factor
         else if constexpr (depos_order == 3){
             const auto i = static_cast<int>(x_old);
             const int i_shift = i - (i_new + 1);
-            const T xint = x_old - i;
+            const T xint = x_old - T(i);
             sx[1+i_shift] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
             sx[2+i_shift] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
             sx[3+i_shift] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
             sx[4+i_shift] = (T(1.0))/(T(6.0))*xint*xint*xint;
             // index of the leftmost cell where particle deposits
             return i - 1;
+        }
+        else if constexpr (depos_order == 4){
+            const auto i = static_cast<int>(x_old + T(0.5));
+            const int i_shift = i - (i_new + 2);
+            const T xint = x_old - T(i);
+            sx[1+i_shift] = (T(1.0))/(T(24.0))*(T(0.5) - xint)*(T(0.5) - xint)*(T(0.5) - xint)*(T(0.5) - xint);
+	    sx[2+i_shift] = (T(1.0))/(T(24.0))*(T(4.75) - T(11.0)*xint + T(4.0)*xint*xint*(T(1.5) + xint - xint*xint));
+	    sx[3+i_shift] = (T(1.0))/(T(24.0))*(T(14.375) + T(6.0)*xint*xint*(xint*xint - T(2.5)));
+	    sx[4+i_shift] = (T(1.0))/(T(24.0))*(T(4.75) + T(11.0)*xint + T(4.0)*xint*xint*(T(1.5) - xint - xint*xint));
+            sx[5+i_shift] = (T(1.0))/(T(24.0))*(T(0.5) + xint)*(T(0.5) + xint)*(T(0.5) + xint)*(T(0.5)+xint);
+            // index of the leftmost cell where particle deposits
+            return i - 2;
         }
         else{
             WARPX_ABORT_WITH_MESSAGE("Unknown particle shape selected in Compute_shifted_shape_factor");
@@ -209,22 +219,18 @@ struct Compute_shape_factor_pair
         else if constexpr (depos_order == 4){
             const auto j = static_cast<int>(xmid + T(0.5));
             const T xint_old = xold - T(j);
-            T xint_p1 = xint_old + T(1.0);
-            T xint_m1 = xint_old - T(1.0);
-            sx_old[0] = T(1.0)/T(384.0)*(T(1.0) - T(2.0)*xint_old)*(T(1.0) - T(2.0)*xint_old)*(T(1.0) - T(2.0)*xint_old)*(T(1.0) - T(2.0)*xint_old);
-            sx_old[1] = T(1.0)/T(96.0)*(T(55.0) + T(4.0)*xint_p1*(T(5.0) - T(2.0)*xint_p1*(T(15.0) + T(2.0)*xint_p1*(xint_p1 - T(5.0)))));
-            sx_old[2] = T(115.0)/T(192.0) + xint_old*xint_old*(xint_old*xint_old/T(4.0) - T(5.0)/T(8.0));
-            sx_old[3] = T(1.0)/T(96.0)*(T(55.0) - T(4.0)*xint_m1*(T(5.0) + T(2.0)*xint_m1*(T(15.0) - T(2.0)*xint_m1*(-xint_m1 - T(5.0)))));
-            sx_old[4] = T(1.0)/T(384.0)*(T(1.0) + T(2.0)*xint_old)*(T(1.0) + T(2.0)*xint_old)*(T(1.0) + T(2.0)*xint_old)*(T(1.0) + T(2.0)*xint_old);
+            sx_old[0] = (T(1.0))/(T(24.0))*(T(0.5) - xint_old)*(T(0.5) - xint_old)*(T(0.5) - xint_old)*(T(0.5) - xint_old);
+	    sx_old[1] = (T(1.0))/(T(24.0))*(T(4.75) - T(11.0)*xint_old + T(4.0)*xint_old*xint_old*(T(1.5) + xint_old - xint_old*xint_old));
+	    sx_old[2] = (T(1.0))/(T(24.0))*(T(14.375) + T(6.0)*xint_old*xint_old*(xint_old*xint_old - T(2.5)));
+	    sx_old[3] = (T(1.0))/(T(24.0))*(T(4.75) + T(11.0)*xint_old + T(4.0)*xint_old*xint_old*(T(1.5) - xint_old - xint_old*xint_old));
+            sx_old[4] = (T(1.0))/(T(24.0))*(T(0.5) + xint_old)*(T(0.5) + xint_old)*(T(0.5) + xint_old)*(T(0.5)+xint_old);
             //
             const T xint_new = xnew - T(j);
-            xint_p1 = xint_new + T(1.0);
-            xint_m1 = xint_new - T(1.0);
-            sx_new[0] = T(1.0)/T(384.0)*(T(1.0) - T(2.0)*xint_new)*(T(1.0) - T(2.0)*xint_new)*(T(1.0) - T(2.0)*xint_new)*(T(1.0) - T(2.0)*xint_new);
-            sx_new[1] = T(1.0)/T(96.0)*(T(55.0) + T(4.0)*xint_p1*(T(5.0) - T(2.0)*xint_p1*(T(15.0) + T(2.0)*xint_p1*(xint_p1 - T(5.0)))));
-            sx_new[2] = T(115.0)/T(192.0) + xint_new*xint_new*(xint_new*xint_new/T(4.0) - T(5.0)/T(8.0));
-            sx_new[3] = T(1.0)/T(96.0)*(T(55.0) - T(4.0)*xint_m1*(T(5.0) + T(2.0)*xint_m1*(T(15.0) - T(2.0)*xint_m1*(-xint_m1 - T(5.0)))));
-            sx_new[4] = T(1.0)/T(384.0)*(T(1.0) + T(2.0)*xint_new)*(T(1.0) + T(2.0)*xint_new)*(T(1.0) + T(2.0)*xint_new)*(T(1.0) + T(2.0)*xint_new);
+            sx_new[0] = (T(1.0))/(T(24.0))*(T(0.5) - xint_new)*(T(0.5) - xint_new)*(T(0.5) - xint_new)*(T(0.5) - xint_new);
+	    sx_new[1] = (T(1.0))/(T(24.0))*(T(4.75) - T(11.0)*xint_new + T(4.0)*xint_new*xint_new*(T(1.5) + xint_new - xint_new*xint_new));
+	    sx_new[2] = (T(1.0))/(T(24.0))*(T(14.375) + T(6.0)*xint_new*xint_new*(xint_new*xint_new - T(2.5)));
+	    sx_new[3] = (T(1.0))/(T(24.0))*(T(4.75) + T(11.0)*xint_new + T(4.0)*xint_new*xint_new*(T(1.5) - xint_new - xint_new*xint_new));
+            sx_new[4] = (T(1.0))/(T(24.0))*(T(0.5) + xint_new)*(T(0.5) + xint_new)*(T(0.5) + xint_new)*(T(0.5)+xint_new);
             //
             // index of the leftmost cell where particle deposits
             return j-2;

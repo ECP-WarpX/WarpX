@@ -1689,6 +1689,11 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        } else if (nox == 4) {
+            doGatherShapeN<4,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
     } else {
         if (nox == 1) {
@@ -1703,6 +1708,11 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherShapeN<3,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        } else if (nox == 4) {
+            doGatherShapeN<4,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
