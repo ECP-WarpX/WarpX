@@ -893,7 +893,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     // If no part_realbox is provided, initialize particles in the whole domain
     const Geometry& geom = Geom(lev);
-    if (!part_realbox.ok()) part_realbox = geom.ProbDomain();
+    bool part_realbox_is_probdomain = false;
+    if (!part_realbox.ok()) {
+        part_realbox_is_probdomain = true;
+        part_realbox = geom.ProbDomain();
+    }
 
     int num_ppc = plasma_injector->num_particles_per_cell;
 #ifdef WARPX_DIM_RZ
@@ -961,7 +965,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         // If there is no overlap, just go to the next tile in the loop
         RealBox overlap_realbox;
         Box overlap_box;
-        IntVect shifted;
+        GpuArray<Real,AMREX_SPACEDIM> overlap_corner;
         bool no_overlap = false;
 
         for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
@@ -977,14 +981,18 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             } else {
                 no_overlap = true; break;
             }
+            // shifted is exact in non-moving-window direction.  That's all we care.
+            int shifted = static_cast<int>(std::round((overlap_realbox.lo(dir)-problo[dir])/dx[dir]));
             // Count the number of cells in this direction in overlap_realbox
-            overlap_box.setSmall( dir, 0 );
-            overlap_box.setBig( dir,
+            overlap_box.setSmall( dir, shifted );
+            overlap_box.setBig( dir, shifted +
                 int( std::round((overlap_realbox.hi(dir)-overlap_realbox.lo(dir))
                                 /dx[dir] )) - 1);
-            shifted[dir] =
-                static_cast<int>(std::round((overlap_realbox.lo(dir)-problo[dir])/dx[dir]));
-            // shifted is exact in non-moving-window direction.  That's all we care.
+            if (part_realbox_is_probdomain) {
+                overlap_corner[dir] = problo[dir];
+            } else {
+                overlap_corner[dir] = overlap_realbox.lo(dir) - shifted*dx[dir];
+            }
         }
         if (no_overlap == 1) {
             continue; // Go to the next tile
@@ -993,11 +1001,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         const int grid_id = mfi.index();
         const int tile_id = mfi.LocalTileIndex();
 
-        const GpuArray<Real,AMREX_SPACEDIM> overlap_corner
-            {AMREX_D_DECL(overlap_realbox.lo(0),
-                          overlap_realbox.lo(1),
-                          overlap_realbox.lo(2))};
-
         // count the number of particles that each cell in overlap_box could add
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
@@ -1005,7 +1008,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
-            fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
+            fine_overlap_box = overlap_box & fine_injection_box;
         }
         amrex::ParallelFor(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
@@ -1509,7 +1512,6 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         // If there is no overlap, just go to the next tile in the loop
         RealBox overlap_realbox;
         Box overlap_box;
-        IntVect shifted;
         bool no_overlap = false;
 
         for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
@@ -1538,10 +1540,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
                 overlap_realbox.setLo( dir, plasma_injector->surface_flux_pos );
                 overlap_realbox.setHi( dir, plasma_injector->surface_flux_pos );
-                overlap_box.setSmall( dir, 0 );
-                overlap_box.setBig( dir, 0 );
-                shifted[dir] =
-                    static_cast<int>(std::round((overlap_realbox.lo(dir)-problo[dir])/dx[dir]));
+                int shifted = static_cast<int>(std::round((overlap_realbox.lo(dir)-problo[dir])/dx[dir]));
+                overlap_box.setSmall( dir, shifted );
+                overlap_box.setBig( dir, shifted );
             } else {
                 if ( tile_realbox.lo(dir) <= part_realbox.hi(dir) ) {
                     Real ncells_adjust = std::floor( (tile_realbox.lo(dir) - part_realbox.lo(dir))/dx[dir] );
@@ -1555,14 +1556,13 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 } else {
                     no_overlap = true; break;
                 }
+                // shifted is exact in non-moving-window direction.  That's all we care.
+                int shifted = static_cast<int>(std::round((overlap_realbox.lo(dir)-problo[dir])/dx[dir]));
                 // Count the number of cells in this direction in overlap_realbox
-                overlap_box.setSmall( dir, 0 );
-                overlap_box.setBig( dir,
+                overlap_box.setSmall( dir, shifted );
+                overlap_box.setBig( dir, shifted +
                     int( std::round((overlap_realbox.hi(dir)-overlap_realbox.lo(dir))
                                     /dx[dir] )) - 1);
-                shifted[dir] =
-                    static_cast<int>(std::round((overlap_realbox.lo(dir)-problo[dir])/dx[dir]));
-                // shifted is exact in non-moving-window direction.  That's all we care.
             }
         }
         if (no_overlap == 1) {
@@ -1572,11 +1572,6 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         const int grid_id = mfi.index();
         const int tile_id = mfi.LocalTileIndex();
 
-        const GpuArray<Real,AMREX_SPACEDIM> overlap_corner
-            {AMREX_D_DECL(overlap_realbox.lo(0),
-                          overlap_realbox.lo(1),
-                          overlap_realbox.lo(2))};
-
         // count the number of particles that each cell in overlap_box could add
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
@@ -1584,13 +1579,13 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
-            fine_overlap_box = overlap_box & amrex::shift(fine_injection_box, -shifted);
+            fine_overlap_box = overlap_box & fine_injection_box;
         }
         amrex::ParallelForRNG(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             IntVect iv(AMREX_D_DECL(i, j, k));
-            auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
-            auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
+            auto lo = getCellCoords(problo, dx, {0._rt, 0._rt, 0._rt}, iv);
+            auto hi = getCellCoords(problo, dx, {1._rt, 1._rt, 1._rt}, iv);
 
             int num_ppc_int = static_cast<int>(num_ppc_real + amrex::Random(engine));
 
@@ -1748,7 +1743,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
                   inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
-                auto pos = getCellCoords(overlap_corner, dx, r, iv);
+                auto pos = getCellCoords(problo, dx, r, iv);
                 auto ppos = PDim3(pos);
 
                 // inj_mom would typically be InjectorMomentumGaussianFlux
