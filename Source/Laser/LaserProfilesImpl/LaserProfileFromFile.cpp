@@ -639,11 +639,11 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
             } else {
                 costheta = 1._rt;
                 sintheta = 0._rt;
-            }   
+            }
             Complex val = 0;
             Complex fact = Complex{costheta, sintheta};
             // azimuthal mode 0
-            
+
             val += utils::algorithms::bilinear_interp(
                 t_left, t_right,
                 r_0, r_1,
@@ -652,8 +652,8 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
                 p_E_lasy_data[idx(0, idx_t_right, idx_r_left)],
                 p_E_lasy_data[idx(0, idx_t_right, idx_r_right)],
                 t, Rp_i);
-                
-            amrex::Print() << Utils::TextMsg::Info( "idx = " + std::to_string(0)+ ", " + std::to_string(idx_t_right)+ ", "+std::to_string(idx_r_right) );  
+
+            amrex::Print() << Utils::TextMsg::Info( "idx = " + std::to_string(0)+ ", " + std::to_string(idx_t_right)+ ", "+std::to_string(idx_r_right) );
 
             // higher modes
             for (int m=1 ; m <= m_params.n_rz_azimuthal_modes/2; m++) {
@@ -664,7 +664,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
                     p_E_lasy_data[idx(2*m-1, idx_t_left, idx_r_right)],
                     p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_left)],
                     p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_right)],
-                    t, Rp_i)*(fact.real()) + 
+                    t, Rp_i)*(fact.real()) +
                     utils::algorithms::bilinear_interp(
                     t_left, t_right,
                     r_0, r_1,
@@ -675,7 +675,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
                     t, Rp_i)*(fact.imag()) ;
 
                     amrex::Print() << Utils::TextMsg::Info( "idx = " + std::to_string(m)+ ", " + std::to_string(idx_t_right)+ ", "+std::to_string(idx_r_right) );
-                      
+
                 fact = fact*Complex{costheta, sintheta};
             }
             amplitude[i] = (val*exp_omega_t).real();
