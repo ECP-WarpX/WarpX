@@ -260,5 +260,79 @@ print('Maxwell-Boltzmann parser velocity difference:', f7_error)
 
 assert(f7_error < tolerance)
 
+
+#============================================
+# Cuboid distribution in momentum space
+#============================================
+
+bin_value_x, h8x = read_reduced_diags_histogram("h8x.txt")[2:]
+bin_value_y, h8y = read_reduced_diags_histogram("h8y.txt")[2:]
+bin_value_z, h8z = read_reduced_diags_histogram("h8z.txt")[2:]
+
+# Analytical distribution
+ux_min = -0.2
+ux_max = 0.3
+uy_min = -0.1
+uy_max = 0.1
+uz_min = 10
+uz_max = 11.2
+
+# Distributions along the three momentum axes are independent:
+# we can test them separately
+
+# This counts the number of bins where we expect the distribution to be nonzero
+def nonzero_bins(bins, low, high):
+    # Bin with nonzero distribution is defined when b_{i+1} > u_min & b_i < u_max
+
+    return ((bins[1:] > low) & (bins[:-1] < high))
+
+# Function that checks the validity of the histogram.
+# We have to call it for each of the axis
+
+def check_validity_uniform(bins, histogram, u_min, u_max, Ntrials=1000):
+
+    nzbins = nonzero_bins(bins, u_min, u_max)
+    Nbins = np.count_nonzero(nzbins)
+    loweredges = bins[:-1]
+    upperedges = bins[1:]
+    db = bins[1] - bins[0]
+
+    # Normalization coefficient for the histogram
+    f0 = 1 / max((u_max-u_min), db)
+
+    # First we check if Nbins = 1 because this covers the case
+    # u_max = u_min (i.e. a delta distribution)
+    if Nbins == 1:
+        # In this case the result should be exact
+        assert( (histogram[nzbins] - f0) < 1e-8 )
+
+        return
+    
+    # The probability of filling a given bin is proportional to the bin width.
+    # We normalize it to the "full bin" value (i.e. every bin except from the edges
+    # is expected to have the same p in a uniform distribution).
+    # The fill ratio is therefore 1 for a bin fully included in the domain and < 1 else.
+    # Filling a given bin is a binomial process, so we basically test each histogram with the
+    # expected average value to be (x - mu) < 3 sigma
+
+    p0 = db / (u_max - u_min)
+    probability = (np.clip(upperedges, u_min, u_max) - np.clip(loweredges, u_min, u_max)) / (u_max - u_min)
+    normalizedhist = histogram / (f0 / p0)
+    variance = probability * (1 - probability)
+    nzprob = probability[nzbins]
+    nzhist = normalizedhist[nzbins]
+    nzvar = variance[nzbins]
+    samplesigma = 1 / np.sqrt(Ntrials)
+
+    normalizedvariable = np.abs(nzhist - nzprob) / np.sqrt(nzvar)
+
+    assert (normalizedvariable < 3 * samplesigma)
+
+
+check_validity_uniform(bin_value_x, h8x, ux_min, ux_max)
+check_validity_uniform(bin_value_y, h8y, uy_min, uy_max)
+check_validity_uniform(bin_value_z, h8z, uz_min, uz_max)
+
+
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
