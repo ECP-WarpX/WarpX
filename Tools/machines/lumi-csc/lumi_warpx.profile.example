@@ -1,45 +1,26 @@
 # please set your project account
 #export proj=<yourProject>
 
-# optional: just an additional text editor
-# module load nano
-
 # required dependencies
-module load CrayEnv
-module load craype-accel-amd-gfx90a
-module load cray-mpich
-module load rocm
-module load buildtools/22.08
-
-# optional: faster re-builds
-#module load ccache
-
-# optional: for PSATD in RZ geometry support
-# TODO: BLAS++, LAPACK++
+module load LUMI/23.03  partition/G
+module load rocm/5.2.3  # waiting for 5.5 for next bump
+module load buildtools/23.03
 
 # optional: for QED lookup table generation support
-# TODO: BOOST
+module load Boost/1.81.0-cpeCray-23.03
 
 # optional: for openPMD support
-# TODO: HDF5, ADIOS2
-
-# optional: Ascent in situ support
-# TODO
+module load cray-hdf5/1.12.2.3
 
 # optional: for Python bindings or libEnsemble
-# TODO
+module load cray-python/3.9.13.1
 
-if [ -d "$HOME/sw/venvs/warpx-lumi" ]
-then
-  source $HOME/sw/venvs/warpx-lumi/bin/activate
-fi
-
-# an alias to request an interactive batch node for two hours
-#   for paralle execution, start on the batch node: jsrun <command>
-#alias getNode="..."
+# an alias to request an interactive batch node for one hour
+#   for paralle execution, start on the batch node: srun <command>
+alias getNode="salloc -A $proj -J warpx -t 01:00:00 -p dev-g -N 1 --ntasks-per-node=8 --gpus-per-task=1 --gpu-bind=closest"
 # an alias to run a command on a batch node for up to 30min
-#   usage: nrun <command>
-#alias runNode="..."
+#   usage: runNode <command>
+alias runNode="srun -A $proj -J warpx -t 00:30:00 -p dev-g -N 1 --ntasks-per-node=8 --gpus-per-task=1 --gpu-bind=closest"
 
 # GPU-aware MPI
 export MPICH_GPU_SUPPORT_ENABLED=1
@@ -51,3 +32,6 @@ export AMREX_AMD_ARCH=gfx90a
 export CC=$(which cc)
 export CXX=$(which CC)
 export FC=$(which ftn)
+export CFLAGS="-I${ROCM_PATH}/include"
+export CXXFLAGS="-I${ROCM_PATH}/include -Wno-pass-failed"
+export LDFLAGS="-L${ROCM_PATH}/lib -lamdhip64"
