@@ -283,8 +283,12 @@ uz_max = 11.2
 # This counts the number of bins where we expect the distribution to be nonzero
 def nonzero_bins(bins, low, high):
     # Bin with nonzero distribution is defined when b_{i+1} > u_min & b_i < u_max
+    # `bins` contains the bin centers
 
-    return ((bins[1:] > low) & (bins[:-1] < high))
+    db = bins[1] - bins[0]
+    loweredges = bins - 0.5 * db
+    upperedges = bins + 0.5 * db
+    return ((upperedges > low) & (loweredges < high))
 
 # Function that checks the validity of the histogram.
 # We have to call it for each of the axis
@@ -293,9 +297,9 @@ def check_validity_uniform(bins, histogram, u_min, u_max, Ntrials=1000):
 
     nzbins = nonzero_bins(bins, u_min, u_max)
     Nbins = np.count_nonzero(nzbins)
-    loweredges = bins[:-1]
-    upperedges = bins[1:]
     db = bins[1] - bins[0]
+    loweredges = bins - 0.5 * db
+    upperedges = bins + 0.5 * db
 
     # Normalization coefficient for the histogram
     f0 = 1 / max((u_max-u_min), db)
