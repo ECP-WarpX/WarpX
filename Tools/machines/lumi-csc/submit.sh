@@ -36,8 +36,6 @@ export ROCR_VISIBLE_DEVICES=\$SLURM_LOCALID
 exec \$*
 EOF
 
-sleep 1
-
 chmod +x ./select_gpu
 
 sleep 1
