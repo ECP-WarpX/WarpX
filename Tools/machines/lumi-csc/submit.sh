@@ -37,7 +37,5 @@ chmod +x ./select_gpu
 
 CPU_BIND="map_cpu:48,56,16,24,1,8,32,40"
 
-export MPICH_GPU_SUPPORT_ENABLED=1
-
 srun --cpu-bind=${CPU_BIND} ./select_gpu ./warpx inputs
 rm -rf ./select_gpu
