@@ -33,7 +33,11 @@ export ROCR_VISIBLE_DEVICES=\$SLURM_LOCALID
 exec \$*
 EOF
 
+sleep 1
+
 chmod +x ./select_gpu
+
+sleep 1
 
 CPU_BIND="map_cpu:48,56,16,24,1,8,32,40"
 
