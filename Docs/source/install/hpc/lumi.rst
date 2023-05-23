@@ -14,8 +14,8 @@ If you are new to this system, **please see the following resources**:
 
 * `Lumi user guide <https://docs.lumi-supercomputer.eu>`_
 * Batch system: `Slurm <https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/slurm-quickstart/>`_
-* `Data analytics and visualization <https://docs.lumi-supercomputer.eu/hardware/lumid/>`_
-* `Production directories <https://docs.lumi-supercomputer.eu/storage/>``:
+* `Data analytics and visualization <https://docs.lumi-supercomputer.eu/hardware/lumid/>`__
+* `Production directories <https://docs.lumi-supercomputer.eu/storage/>`__:
 
   * ``$HOME``: single user, intended to store user configuration files and personal data (20GB default quota)
   * ``/project/$proj``: shared with all members of a project, purged at the end of a project (50 GB default quota)
