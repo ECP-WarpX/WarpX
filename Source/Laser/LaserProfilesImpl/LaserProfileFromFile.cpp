@@ -29,6 +29,8 @@
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
 
 #include <algorithm>
 #include <cmath>
@@ -190,6 +192,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
         std::vector<double> spacing = E.gridSpacing<double>();
         if (m_params.fileGeom=="thetaMode") {
             amrex::Print() << Utils::TextMsg::Info( "Found lasy file in RZ geometry" );
+            m_params.n_rz_azimuthal_modes = extent[0];
             m_params.nt = extent[1];
             m_params.nr = extent[2];
             if(m_params.nt <= 1) Abort("nt in lasy file must be >=2");
@@ -623,19 +626,58 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
             const auto r_1 =
                 idx_r_right*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
 
-            const auto idx = [=](int i_interp, int j_interp){
+            const auto idx = [=](int im, int i_interp, int j_interp){
                 return
-                    (i_interp-tmp_idx_first_time)*tmp_nr+
+                     im*m_params.nt*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
                         j_interp;
             };
-            Complex val = utils::algorithms::bilinear_interp(
-            t_left, t_right,
-            r_0, r_1,
-            p_E_lasy_data[idx(idx_t_left, idx_r_left)],
-            p_E_lasy_data[idx(idx_t_left, idx_r_right)],
-            p_E_lasy_data[idx(idx_t_right, idx_r_left)],
-            p_E_lasy_data[idx(idx_t_right, idx_r_right)],
-            t, Rp_i);
+            amrex::Real costheta;
+            amrex::Real sintheta;
+            if (Rp_i > 0.) {
+                costheta = Xp[i]/Rp_i;
+                sintheta = Yp[i]/Rp_i;
+            } else {
+                costheta = 1._rt;
+                sintheta = 0._rt;
+            }   
+            Complex val = 0;
+            Complex fact = Complex{costheta, sintheta};
+            // azimuthal mode 0
+            
+            val += utils::algorithms::bilinear_interp(
+                t_left, t_right,
+                r_0, r_1,
+                p_E_lasy_data[idx(0, idx_t_left, idx_r_left)],
+                p_E_lasy_data[idx(0, idx_t_left, idx_r_right)],
+                p_E_lasy_data[idx(0, idx_t_right, idx_r_left)],
+                p_E_lasy_data[idx(0, idx_t_right, idx_r_right)],
+                t, Rp_i);
+                
+            amrex::Print() << Utils::TextMsg::Info( "idx = " + std::to_string(0)+ ", " + std::to_string(idx_t_right)+ ", "+std::to_string(idx_r_right) );  
+
+            // higher modes
+            for (int m=1 ; m <= m_params.n_rz_azimuthal_modes/2; m++) {
+                val += utils::algorithms::bilinear_interp(
+                    t_left, t_right,
+                    r_0, r_1,
+                    p_E_lasy_data[idx(2*m-1, idx_t_left, idx_r_left)],
+                    p_E_lasy_data[idx(2*m-1, idx_t_left, idx_r_right)],
+                    p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_left)],
+                    p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_right)],
+                    t, Rp_i)*(fact.real()) + 
+                    utils::algorithms::bilinear_interp(
+                    t_left, t_right,
+                    r_0, r_1,
+                    p_E_lasy_data[idx(2*m, idx_t_left, idx_r_left)],
+                    p_E_lasy_data[idx(2*m, idx_t_left, idx_r_right)],
+                    p_E_lasy_data[idx(2*m, idx_t_right, idx_r_left)],
+                    p_E_lasy_data[idx(2*m, idx_t_right, idx_r_right)],
+                    t, Rp_i)*(fact.imag()) ;
+
+                    amrex::Print() << Utils::TextMsg::Info( "idx = " + std::to_string(m)+ ", " + std::to_string(idx_t_right)+ ", "+std::to_string(idx_r_right) );
+                      
+                fact = fact*Complex{costheta, sintheta};
+            }
             amplitude[i] = (val*exp_omega_t).real();
             }
         );

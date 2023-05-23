@@ -49,12 +49,22 @@ t_c = 20.*fs
 E_max= 16282454014843.37
 
 # Function for the envelope
-def gauss_env(T, X, Y, Z):
-    # Function to compute the theory for the envelope
-    inv_tau2 = 1./tt/tt
+def laguerre_env(T, X, Y, Z, p, m):
+    if m>0:
+        complex_position= X -1j * Y
+    else:
+        complex_position= X +1j * Y
     inv_w_2 = 1.0/(w0*w0)
-    exp_arg = - (X*X)*inv_w_2 - (Y*Y)*inv_w_2- inv_tau2 / c/c * (Z-T*c)*(Z-T*c)
-    return E_max * np.real(np.exp(exp_arg))
+    inv_tau2 = 1./tt/tt
+    radius = abs(complex_position)
+    scaled_rad_squared = (radius**2)*inv_w_2
+    envelope = (
+            complex_position ** m
+            *  genlaguerre(p, m)(2 * scaled_rad_squared)
+            * np.exp(-scaled_rad_squared)
+            * np.exp(- inv_tau2 / c/c * (Z-T*c)*(Z-T*c))
+        )
+    return E_max * np.real(envelope)
 
 def do_analysis(fname, compname, steps):
     ds = yt.load(fname)
@@ -76,7 +86,7 @@ def do_analysis(fname, compname, steps):
     X, Y, Z = np.meshgrid(x, y, z, sparse=False, indexing='ij')
 
     # Compute the theory for envelope
-    env_theory = gauss_env(+t_c-ds.current_time.to_value(), X,Y,Z)+gauss_env(-t_c+ds.current_time.to_value(), X,Y,Z)
+    env_theory = laguerre_env(+t_c-ds.current_time.to_value(), X,Y,Z)+laguerre_env(-t_c+ds.current_time.to_value(), X,Y,Z)
 
     # Read laser field in PIC simulation, and compute envelope
     all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
@@ -135,19 +145,25 @@ def launch_analysis(executable):
 def main() :
 
     from lasy.laser import Laser
-    from lasy.profiles import GaussianProfile
+    from lasy.profiles import CombinedLongitudinalTransverseProfile, GaussianProfile
+    from lasy.profiles.longitudinal import GaussianLongitudinalProfile
+    from lasy.profiles.transverse import LaguerreGaussianTransverseProfile
 
-    # Create a laser in RZ geomtry using lasy
+    # Create a Laguerre Gaussian laser in RZ geometry using lasy
     pol = (1, 0)
     laser_energy = 1.0  # J
-    profile = GaussianProfile(wavelength, pol, laser_energy, w0, tt, t_peak=0)
+    profile = CombinedLongitudinalTransverseProfile(
+    wavelength,pol,laser_energy,
+    GaussianLongitudinalProfile(wavelength, tt, t_peak=0),
+    LaguerreGaussianTransverseProfile(w0, p=0, m=1),
+    )
     dim = "rt"
     lo = (0e-6, -20e-15)
     hi = (+25e-6, +20e-15)
     npoints = (100,100)
-    laser = Laser(dim, lo, hi, npoints, profile)
+    laser = Laser(dim, lo, hi, npoints, profile, n_azimuthal_modes=2)
     laser.normalize(laser_energy, kind="energy")
-    laser.write_to_file("gaussianlaserRZ")
+    laser.write_to_file("laguerrelaserRZ")
     executables = glob.glob("*.ex")
     if len(executables) == 1 :
         launch_analysis(executables[0])

@@ -23,9 +23,8 @@ boundary.field_hi = pec periodic
 #################################
 warpx.cfl = 0.98
 warpx.use_filter = 0
-#algo.maxwell_solver = ckc
 algo.load_balance_intervals = -1
-warpx.n_rz_azimuthal_modes=2
+warpx.n_rz_azimuthal_modes=3
 
 # Order of particle shape factors
 algo.particle_shape = 3
@@ -40,8 +39,8 @@ lasy_RZ_laser.polarization = 0. 1. 0.     # The main polarization vector
 lasy_RZ_laser.e_max        = 1.e14        # Maximum amplitude of the laser field (in V/m)
 lasy_RZ_laser.wavelength = 1.0e-6         # The wavelength of the laser (in meters)
 lasy_RZ_laser.profile      = from_file
-laser.time_chunk_size = 50
-lasy_RZ_laser.lasy_file_name = "gaussianlaserRZ_00000.h5"
+lasy_RZ_laser.time_chunk_size = 50
+lasy_RZ_laser.lasy_file_name = "laguerrelaserRZ_00000.h5"
 lasy_RZ_laser.delay = 0.0
 
 # Diagnostics

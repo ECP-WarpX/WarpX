@@ -12,6 +12,8 @@
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
 
 #include <functional>
 #include <limits>
@@ -317,8 +319,10 @@ private:
          * If DIM=3, ny must be >=2 as well.
          * If DIM=2, ny must be 1 */
         int nt, nx, ny;
-        /** Dimensions of E_lasy_data in RZ*/
+        /** Dimensions of E_lasy_data in RZ */
         int nr;
+        /** Number of azimuthal modes */
+        int n_rz_azimuthal_modes;
         /** Start time*/
         amrex::Real t_min;
         /** Stop time*/
@@ -341,6 +345,8 @@ private:
         int last_time_index;
         /** lasy field data */
         amrex::Gpu::DeviceVector<Complex> E_lasy_data;
+        amrex::Box box;
+        amrex::FArrayBox E_lasy_data_box;
         /** binary field data */
         amrex::Gpu::DeviceVector<amrex::Real> E_binary_data;
         /** This parameter is subtracted to simulation time before interpolating field data in file (either lasy or binary).
