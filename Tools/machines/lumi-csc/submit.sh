@@ -26,6 +26,9 @@ export ROCFFT_RTC_CACHE_PATH=/dev/null
 
 export OMP_NUM_THREADS=1
 
+# LUMI documentation suggests using the following wrapper script
+# to set the ROCR_VISIBLE_DEVICES to the value of SLURM_LOCALID
+# see https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/lumig-job/
 cat << EOF > select_gpu
 #!/bin/bash
 
@@ -39,6 +42,9 @@ chmod +x ./select_gpu
 
 sleep 1
 
+# LUMI documentation suggests using the following CPU bind
+# so that the node local rank and GPU ID match
+# see https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/lumig-job/
 CPU_BIND="map_cpu:48,56,16,24,1,8,32,40"
 
 srun --cpu-bind=${CPU_BIND} ./select_gpu ./warpx inputs | tee outputs.txt
