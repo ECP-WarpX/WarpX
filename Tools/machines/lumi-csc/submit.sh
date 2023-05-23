@@ -37,5 +37,5 @@ chmod +x ./select_gpu
 
 CPU_BIND="map_cpu:48,56,16,24,1,8,32,40"
 
-srun --cpu-bind=${CPU_BIND} ./select_gpu ./warpx inputs
+srun --cpu-bind=${CPU_BIND} ./select_gpu ./warpx inputs | tee outputs.txt
 rm -rf ./select_gpu
