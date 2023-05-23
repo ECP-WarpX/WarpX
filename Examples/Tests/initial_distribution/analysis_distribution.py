@@ -307,7 +307,7 @@ def check_validity_uniform(bins, histogram, u_min, u_max, Ntrials=1000):
         assert( (histogram[nzbins] - f0) < 1e-8 )
 
         return
-    
+
     # The probability of filling a given bin is proportional to the bin width.
     # We normalize it to the "full bin" value (i.e. every bin except from the edges
     # is expected to have the same p in a uniform distribution).
