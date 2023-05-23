@@ -43,7 +43,8 @@ jobs:
 
         cmake -S . -B build_dp \
           -DCMAKE_VERBOSE_MAKEFILE=ON \
-          -DWarpX_LIB=ON              \
+          -DWarpX_PYTHON=ON           \
+          -DWarpX_PYTHON_IPO=OFF      \
           -DWarpX_MPI=OFF             \
           -DWarpX_OPENPMD=ON          \
           -DWarpX_openpmd_internal=OFF
@@ -51,7 +52,8 @@ jobs:
 
         cmake -S . -B build_sp \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_LIB=ON               \
+          -DWarpX_PYTHON=ON            \
+          -DWarpX_PYTHON_IPO=OFF       \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
@@ -59,7 +61,8 @@ jobs:
         cmake --build build_sp -j 2
 
         python3 -m pip install --upgrade pip setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip install -v .
+        export PYWARPX_LIB_DIR=$PWD/build_sp/lib/site-packages/pywarpx/
+        python3 -m pip install -v .
 
   build_icpx:
     name: oneAPI ICX SP
@@ -103,7 +106,7 @@ jobs:
           -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_EB=ON                \
-          -DWarpX_LIB=ON               \
+          -DWarpX_PYTHON=ON            \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
@@ -111,7 +114,8 @@ jobs:
 
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade setuptools wheel
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel -v .
+        export PYWARPX_LIB_DIR=$PWD/build_sp/lib/site-packages/pywarpx/
+        python3 -m pip wheel -v .
         python3 -m pip install *.whl
 
     - name: run pywarpx
@@ -167,7 +171,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=SYCL         \
           -DWarpX_EB=ON                \
-          -DWarpX_LIB=ON               \
+          -DWarpX_PYTHON=ON            \
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
@@ -176,5 +180,5 @@ jobs:
      # Skip this as it will copy the binary artifacts and we are tight on disk space
      #   python3 -m pip install --upgrade pip
      #   python3 -m pip install --upgrade setuptools wheel
-     #   PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+     #   PYWARPX_LIB_DIR=$PWD/build_sp/lib/site-packages/pywarpx/ python3 -m pip wheel .
      #   python3 -m pip install *.whl
