@@ -3,7 +3,7 @@ name: 🧹 clang-tidy
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.head_ref }}-ubuntu
+  group: ${{ github.ref }}-${{ github.head_ref }}-clangtidy
   cancel-in-progress: true
 
 jobs:
