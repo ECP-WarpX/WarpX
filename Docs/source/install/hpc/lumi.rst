@@ -71,7 +71,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    rm -rf build
 
    cmake -S . -B build -DWarpX_COMPUTE=HIP
-   cmake --build build -j 32
+   cmake --build build -j 16
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
