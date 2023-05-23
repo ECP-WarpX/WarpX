@@ -328,10 +328,10 @@ def check_validity_uniform(bins, histogram, u_min, u_max, Ntrials=1000):
 
     assert (normalizedvariable < 3 * samplesigma)
 
-
-check_validity_uniform(bin_value_x, h8x, ux_min, ux_max)
-check_validity_uniform(bin_value_y, h8y, uy_min, uy_max)
-check_validity_uniform(bin_value_z, h8z, uz_min, uz_max)
+# Test the initial step
+check_validity_uniform(bin_value_x, h8x[0], ux_min, ux_max)
+check_validity_uniform(bin_value_y, h8y[0], uy_min, uy_max)
+check_validity_uniform(bin_value_z, h8z[0], uz_min, uz_max)
 
 
 test_name = os.path.split(os.getcwd())[1]
