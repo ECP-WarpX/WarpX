@@ -50,5 +50,8 @@ jobs:
 
         cmake --build build_clang_tidy -j 2 2> build_clang_tidy/clang-tidy.log
 
+        echo "**TEST 1**"
         cat build_clang_tidy/clang-tidy.log
+        echo "**TEST 2**"
         if [[ $(wc -m <build_clang_tidy/clang-tidy.log) -gt 1 ]]; then exit 1; fi
+        echo "**TEST 3**"
