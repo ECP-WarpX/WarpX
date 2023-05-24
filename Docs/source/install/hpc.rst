@@ -25,7 +25,6 @@ HPC Systems
    :maxdepth: 1
 
    hpc/adastra
-   hpc/cori
    hpc/perlmutter
    hpc/summit
    hpc/spock

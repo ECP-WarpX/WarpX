@@ -285,9 +285,32 @@ Post-Processing
 
 For post-processing, most users use Python via NERSC's `Jupyter service <https://jupyter.nersc.gov>`__ (`Docs <https://docs.nersc.gov/services/jupyter/>`__).
 
-Please follow the same process as for :ref:`NERSC Cori post-processing <post-processing-cori>`.
-**Important:** The *environment + Jupyter kernel* must separate from the one you create for Cori.
+As a one-time preparatory setup, `create your own Conda environment as described in NERSC docs <https://docs.nersc.gov/services/jupyter/#conda-environments-as-kernels>`__.
+In this manual, we often use this ``conda create`` line over the officially documented one:
 
-The Perlmutter ``$PSCRATCH`` filesystem is only available on *Perlmutter* Jupyter nodes.
-Likewise, Cori's ``$SCRATCH`` filesystem is only available on *Cori* Jupyter nodes.
-You can use the Community FileSystem (CFS) from everywhere.
+.. code-block:: bash
+
+   module load python
+   conda create -n myenv -c conda-forge python mamba ipykernel ipympl==0.8.6 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram dask dask-jobqueue pyarrow
+
+We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
+
+``kernel_helper.sh`` should read:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   module load python
+   source activate myenv
+   exec "$@"
+
+When opening a Jupyter notebook, just select the name you picked for your custom kernel on the top right of the notebook.
+
+Additional software can be installed later on, e.g., in a Jupyter cell using ``!mamba install -c conda-forge ...``.
+Software that is not available via conda can be installed via ``!python -m pip install ...``.
+
+.. warning::
+
+   Jan 6th, 2022 (NERSC-INC0179165 and `ipympl #416 <https://github.com/matplotlib/ipympl/issues/416>`__):
+   Above, we fixated the ``ipympl`` version to *not* take the latest release of `Matplotlib Jupyter Widgets <https://github.com/matplotlib/ipympl>`__.
+   This is an intentional work-around; the ``ipympl`` version needs to exactly fit the version pre-installed on the Jupyter base system.
