@@ -161,6 +161,19 @@ function(enable_IPO all_targets_list)
     endif()
 endfunction()
 
+# Set the suffix for targets and binaries depending on dimension
+#
+# User specify 1;2;RZ;D in WarpX_DIMS.
+# We append to CMake targets and binaries the suffix "Nd" for 1,2,3 and "rz" for RZ.
+#
+macro(warpx_set_suffix_dims suffix dim)
+    if("${dim}" STREQUAL "RZ")
+        set(${suffix} rz)
+    else()
+        set(${suffix} ${dim}d)
+    endif()
+endmacro()
+
 # Take an <imported_target> and expose it as INTERFACE target with
 # WarpX::thirdparty::<propagated_name> naming and SYSTEM includes.
 #
@@ -184,21 +197,19 @@ endfunction()
 # Set a feature-based binary name for the WarpX executable and create a generic
 # warpx symlink to it. Only sets options relevant for users (see summary).
 #
-function(set_warpx_binary_name)
+function(set_warpx_binary_name D)
+    warpx_set_suffix_dims(SD ${D})
+
     set(warpx_bin_names)
     if(WarpX_APP)
-        list(APPEND warpx_bin_names app)
+        list(APPEND warpx_bin_names app_${SD})
     endif()
     if(WarpX_LIB)
-        list(APPEND warpx_bin_names shared)
+        list(APPEND warpx_bin_names shared_${SD})
     endif()
     foreach(tgt IN LISTS warpx_bin_names)
         set_target_properties(${tgt} PROPERTIES OUTPUT_NAME "warpx")
-        if(WarpX_DIMS STREQUAL RZ)
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".RZ")
-        else()
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".${WarpX_DIMS}d")
-        endif()
+        set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".${SD}")
 
         if(WarpX_MPI)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".MPI")
@@ -252,34 +263,24 @@ function(set_warpx_binary_name)
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".DEBUG")
         endif()
-    endforeach()
 
-    if(WarpX_APP)
-        # alias to the latest build, because using the full name is often confusing
-        add_custom_command(TARGET app POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E create_symlink
-                $<TARGET_FILE_NAME:app>
-                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx
-        )
-    endif()
-    if(WarpX_LIB)
-        # alias to the latest build; this is the one expected by Python bindings
-        if(WarpX_DIMS STREQUAL RZ)
-            set(lib_suffix "rz")
-        else()
-            set(lib_suffix "${WarpX_DIMS}d")
+        if(WarpX_APP)
+            # alias to the latest build, because using the full name is often confusing
+            add_custom_command(TARGET app_${SD} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E create_symlink
+                    $<TARGET_FILE_NAME:app_${SD}>
+                    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx.${SD}
+            )
         endif()
-        if(WIN32)
-            set(mod_ext "dll")
-        else()
-            set(mod_ext "so")
+        if(WarpX_LIB)
+            # alias to the latest build; this is the one expected by Python bindings
+            add_custom_command(TARGET shared_${SD} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E create_symlink
+                    $<TARGET_FILE_NAME:shared_${SD}>
+                    $<TARGET_FILE_DIR:shared_${SD}>/libwarpx.${SD}$<TARGET_FILE_SUFFIX:shared_${SD}>
+            )
         endif()
-        add_custom_command(TARGET shared POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E create_symlink
-                $<TARGET_FILE_NAME:shared>
-                $<TARGET_FILE_DIR:shared>/libwarpx.${lib_suffix}.${mod_ext}
-        )
-    endif()
+    endforeach()
 endfunction()
 
 
