@@ -330,7 +330,7 @@ def check_validity_uniform(bins, histogram, u_min, u_max, Ntrials=1000):
 
     normalizedvariable = np.abs(nzhist - nzprob) / np.sqrt(nzvar)
 
-    assert (normalizedvariable < 3 * samplesigma)
+    assert np.all(normalizedvariable < 3 * samplesigma)
 
 # Test the initial step
 check_validity_uniform(bin_value_x, h8x[0], ux_min, ux_max)
