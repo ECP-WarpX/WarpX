@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright 2020 Andrew Myers, Axel Huebl, Luca Fedeli
-# Remi Lehe
+# Remi Lehe, Ilian Kara-Mostefa
 #
 # This file is part of WarpX.
 #
@@ -9,12 +9,12 @@
 
 
 # This file is part of the WarpX automated test suite. It is used to test the
-# injection of a laser pulse from an external binary file.
+# injection of a laser pulse from an external lasy file.
 #
-# - Generate an input binary file with a gaussian laser pulse.
+# - Generate an input lasy file with a gaussian laser pulse.
 # - Run the WarpX simulation for time T, when the pulse is fully injected
 # - Compute the theory for laser envelope at time T
-# - Compare theory and simulation, for both envelope and central frequency
+# - Compare theory and simulation in 3D, for both envelope and central frequency
 
 import glob
 import os
@@ -131,7 +131,7 @@ def do_analysis(fname, compname, steps):
 
 
 def launch_analysis(executable):
-    os.system("./" + executable + " inputs.3d_test_txye diag1.file_prefix=diags/plotfiles/plt")
+    os.system("./" + executable + " inputs.3d_test diag1.file_prefix=diags/plotfiles/plt")
     do_analysis("diags/plotfiles/plt000251/", "comp_unf.pdf", 251)
 
 
