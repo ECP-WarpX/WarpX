@@ -277,6 +277,8 @@ uy_max = 0.1
 uz_min = 10
 uz_max = 11.2
 
+N0 = n * V
+
 # Distributions along the three momentum axes are independent:
 # we can test them separately
 
@@ -292,23 +294,24 @@ def nonzero_bins(bins, low, high):
 
 # Function that checks the validity of the histogram.
 # We have to call it for each of the axis
-
 def check_validity_uniform(bins, histogram, u_min, u_max, Ntrials=1000):
-
+    """
+    - `bins` contains the bin centers
+    - `histogram` contains the normalized histogram (i.e. np.sum(histogram) = 1)
+    - `u_min` is the minimum of the histogram domain
+    - `u_max` is the maximum of the histogram domain
+    """
     nzbins = nonzero_bins(bins, u_min, u_max)
     Nbins = np.count_nonzero(nzbins)
     db = bins[1] - bins[0]
     loweredges = bins - 0.5 * db
     upperedges = bins + 0.5 * db
 
-    # Normalization coefficient for the histogram
-    f0 = 1 / max((u_max-u_min), db)
-
     # First we check if Nbins = 1 because this covers the case
     # u_max = u_min (i.e. a delta distribution)
     if Nbins == 1:
         # In this case the result should be exact
-        assert( (histogram[nzbins] - f0) < 1e-8 )
+        assert( (histogram[nzbins].item() - 1) < 1e-8 )
 
         return
 
@@ -319,12 +322,10 @@ def check_validity_uniform(bins, histogram, u_min, u_max, Ntrials=1000):
     # Filling a given bin is a binomial process, so we basically test each histogram with the
     # expected average value to be (x - mu) < 3 sigma
 
-    p0 = db / (u_max - u_min)
     probability = (np.clip(upperedges, u_min, u_max) - np.clip(loweredges, u_min, u_max)) / (u_max - u_min)
-    normalizedhist = histogram / (f0 / p0)
     variance = probability * (1 - probability)
     nzprob = probability[nzbins]
-    nzhist = normalizedhist[nzbins]
+    nzhist = histogram[nzbins]
     nzvar = variance[nzbins]
     samplesigma = 1 / np.sqrt(Ntrials)
 
@@ -332,10 +333,12 @@ def check_validity_uniform(bins, histogram, u_min, u_max, Ntrials=1000):
 
     assert np.all(normalizedvariable < 3 * samplesigma)
 
-# Test the initial step
-check_validity_uniform(bin_value_x, h8x[0], ux_min, ux_max)
-check_validity_uniform(bin_value_y, h8y[0], uy_min, uy_max)
-check_validity_uniform(bin_value_z, h8z[0], uz_min, uz_max)
+# Test the distribution at every time step
+# (this assumes that no interaction is happening)
+for timestep in range(len(h8x)):
+    check_validity_uniform(bin_value_x, h8x[timestep] / N0, ux_min, ux_max)
+    check_validity_uniform(bin_value_y, h8y[timestep] / N0, uy_min, uy_max)
+    check_validity_uniform(bin_value_z, h8z[timestep] / N0, uz_min, uz_max)
 
 
 test_name = os.path.split(os.getcwd())[1]
