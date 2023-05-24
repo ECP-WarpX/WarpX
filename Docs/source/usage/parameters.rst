@@ -396,13 +396,13 @@ Additional PML parameters
 * ``warpx.v_particle_pml`` (`float`; default: 1)
     When ``warpx.do_pml_j_damping = 1``, the assumed velocity of the particles to be absorbed in the PML, in units of the speed of light `c`.
 
-* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
+* ``warpx.do_pml_dive_cleaning`` (`bool`)
     Whether to use divergence cleaning for E in the PML region.
     The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
     This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
-    This option is implemented only for the PSATD solver.
+    This option is implemented only for the PSATD solver ; it is turned on by default for PSATD in Cartesian geometry.
 
-* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
+* ``warpx.do_pml_divb_cleaning`` (`bool`)
     Whether to use divergence cleaning for B in the PML region.
     The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
     This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
