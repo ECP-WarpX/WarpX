@@ -28,7 +28,7 @@ export OMP_NUM_THREADS=2
 #
 # Generate QED lookup tables using WarpX
 #
-./build_qed/bin/warpx \
+./build_qed/bin/warpx.3d \
     ./Examples/Tests/qed/quantum_synchrotron/inputs_3d \
     qed_bw.lookup_table_mode = "generate" \
     qed_bw.tab_dndt_chi_min = 0.01 \
