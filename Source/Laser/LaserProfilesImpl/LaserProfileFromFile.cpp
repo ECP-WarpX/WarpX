@@ -310,11 +310,10 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
             openPMD::Extent read_extent = { full_extent[0], (i_last - i_first + 1), full_extent[2]};
             auto r_data = E_laser.loadChunk< std::complex<double> >(io::Offset{ 0, i_first,  0}, read_extent);
             const int read_size = (i_last - i_first + 1)*m_params.nr;
-            const int azimuthal_offset = m_params.time_chunk_size*m_params.nr;
             series.flush();
             for (int m=0; m<m_params.n_rz_azimuthal_components; m++){
                 for (int j=0; j<read_size; j++) {
-                    h_E_lasy_data[j+m*azimuthal_offset] = Complex{ r_data.get()[j+m*azimuthal_offset].real(), r_data.get()[j+m*azimuthal_offset].imag() };
+                    h_E_lasy_data[j+m*read_size] = Complex{ r_data.get()[j+m*read_size].real(), r_data.get()[j+m*read_size].imag() };
                 }
             }
         } else{
@@ -672,7 +671,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
                     p_E_lasy_data[idx(2*m, idx_t_left, idx_r_right)],
                     p_E_lasy_data[idx(2*m, idx_t_right, idx_r_left)],
                     p_E_lasy_data[idx(2*m, idx_t_right, idx_r_right)],
-                    t, Rp_i)*(fact.imag()) ;              
+                    t, Rp_i)*(fact.imag()) ;
                 fact = fact*Complex{costheta, sintheta};
             }
             amplitude[i] = (val*exp_omega_t).real();

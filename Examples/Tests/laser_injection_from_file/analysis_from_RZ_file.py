@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import hilbert
 from scipy.special import genlaguerre
+from scipy.constants import epsilon_0, c
 
 import yt ; yt.funcs.mylog.setLevel(50)
 
@@ -47,8 +48,9 @@ w0 = 12.*um
 tt = 10.*fs
 t_c = 20.*fs
 
-#E_max= 15307127721303.91
-E_max= 9857931891961.562
+laser_energy = 1.0
+E_max = np.sqrt( 2*(2/np.pi)**(3/2)*laser_energy / (epsilon_0*w0**2*c*tt) )
+
 # Function for the envelope
 def laguerre_env(T, X, Y, Z, p, m):
     if m>0:
@@ -56,15 +58,15 @@ def laguerre_env(T, X, Y, Z, p, m):
     else:
         complex_position= X +1j * Y
     inv_w0_2 = 1.0/(w0**2)
-    inv_tau_2 = 1.0/(tt**2)
+    inv_tau2 = 1.0/(tt**2)
     radius = abs(complex_position)
     scaled_rad_squared = (radius**2)*inv_w0_2
     envelope = (
-            complex_position ** m
+            ( np.sqrt(2) * complex_position / w0 )** m
             *  genlaguerre(p, m)(2 * scaled_rad_squared)
             * np.exp(-scaled_rad_squared)
-            * np.exp(- ( inv_tau_2 / (c**2) ) * (Z-T*c)**2)
-            )
+            * np.exp(-( inv_tau2 / (c**2) ) * (Z-T*c)**2)
+        )
     return E_max * np.real(envelope)
 
 def do_analysis(fname, compname, steps):
@@ -153,15 +155,14 @@ def main() :
 
     # Create a Laguerre Gaussian laser in RZ geometry using lasy
     pol = (1, 0)
-    laser_energy = 1.0  # J
     profile = CombinedLongitudinalTransverseProfile(
     wavelength,pol,laser_energy,
     GaussianLongitudinalProfile(wavelength, tt, t_peak=0),
     LaguerreGaussianTransverseProfile(w0, p=0, m=1),
     )
     dim = "rt"
-    lo = (0e-6, -60e-15)
-    hi = (+25e-6, +60e-15)
+    lo = (0e-6, -20e-15)
+    hi = (+25e-6, +20e-15)
     npoints = (100,100)
     laser = Laser(dim, lo, hi, npoints, profile, n_azimuthal_modes=2)
     laser.normalize(laser_energy, kind="energy")
