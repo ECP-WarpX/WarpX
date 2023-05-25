@@ -7,8 +7,8 @@ amr.max_grid_size = 512
 amr.blocking_factor = 32
 amr.max_level = 0
 geometry.dims = RZ
-geometry.prob_lo     = 0.e-6  -25.e-6   # physical domain
-geometry.prob_hi     =  25.e-6   25.e-6
+geometry.prob_lo     = 0.e-6  -10.e-6   # physical domain
+geometry.prob_hi     =  25.e-6   10.e-6
 warpx.verbose = 1
 warpx.serialize_initial_conditions = 1
 

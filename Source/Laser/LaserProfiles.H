@@ -321,8 +321,8 @@ private:
         int nt, nx, ny;
         /** Dimensions of E_lasy_data in RZ */
         int nr;
-        /** Number of azimuthal modes */
-        int n_rz_azimuthal_modes;
+        /** Number of azimuthal components (2 per mode, 1 for mode 0) */
+        int n_rz_azimuthal_components;
         /** Start time*/
         amrex::Real t_min;
         /** Stop time*/
@@ -345,8 +345,6 @@ private:
         int last_time_index;
         /** lasy field data */
         amrex::Gpu::DeviceVector<Complex> E_lasy_data;
-        amrex::Box box;
-        amrex::FArrayBox E_lasy_data_box;
         /** binary field data */
         amrex::Gpu::DeviceVector<amrex::Real> E_binary_data;
         /** This parameter is subtracted to simulation time before interpolating field data in file (either lasy or binary).

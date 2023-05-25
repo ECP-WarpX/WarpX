@@ -29,8 +29,6 @@
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Box.H>
-#include <AMReX_FArrayBox.H>
 
 #include <algorithm>
 #include <cmath>
@@ -108,8 +106,8 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
         m_params.nx*m_params.ny;
     if (m_params.file_in_lasy_format){
         if (m_params.fileGeom=="thetaMode") {
-            data_size = m_params.time_chunk_size*
-                m_params.nr;
+            data_size = m_params.n_rz_azimuthal_components*
+            m_params.time_chunk_size*m_params.nr;
         }
         m_params.E_lasy_data.resize(data_size);
     } else{
@@ -191,8 +189,9 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
         std::vector<double> position = E_laser.position<double>();
         std::vector<double> spacing = E.gridSpacing<double>();
         if (m_params.fileGeom=="thetaMode") {
+            //Dimensions of lasy file data: {m,t,r}
             amrex::Print() << Utils::TextMsg::Info( "Found lasy file in RZ geometry" );
-            m_params.n_rz_azimuthal_modes = extent[0];
+            m_params.n_rz_azimuthal_components = extent[0];         
             m_params.nt = extent[1];
             m_params.nr = extent[2];
             if(m_params.nt <= 1) Abort("nt in lasy file must be >=2");
@@ -203,7 +202,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
             m_params.r_min = offset[1] + position[1]*spacing[1];
             m_params.r_max = m_params.r_min + (m_params.nr-1)*spacing[1];
         } else if (m_params.fileGeom=="cartesian"){
-            //Dimensions of lasy file datas: {t,y,x}
+            //Dimensions of lasy file data: {t,y,x}
             amrex::Print() << Utils::TextMsg::Info( "Found lasy file in 3D cartesian geometry");
             m_params.nt = extent[0];
             m_params.ny = extent[1];
@@ -311,9 +310,12 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
             openPMD::Extent read_extent = { full_extent[0], (i_last - i_first + 1), full_extent[2]};
             auto r_data = E_laser.loadChunk< std::complex<double> >(io::Offset{ 0, i_first,  0}, read_extent);
             const int read_size = (i_last - i_first + 1)*m_params.nr;
+            const int azimuthal_offset = m_params.time_chunk_size*m_params.nr;
             series.flush();
-            for (int j=0; j<read_size; j++) {
-                h_E_lasy_data[j] = Complex{ r_data.get()[j].real(), r_data.get()[j].imag() };
+            for (int m=0; m<m_params.n_rz_azimuthal_components; m++){
+                for (int j=0; j<read_size; j++) {
+                    h_E_lasy_data[j+m*azimuthal_offset] = Complex{ r_data.get()[j+m*azimuthal_offset].real(), r_data.get()[j+m*azimuthal_offset].imag() };
+                }
             }
         } else{
             openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
@@ -628,7 +630,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
 
             const auto idx = [=](int im, int i_interp, int j_interp){
                 return
-                     im*m_params.nt*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
+                     im*m_params.time_chunk_size*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
                         j_interp;
             };
             amrex::Real costheta;
@@ -642,8 +644,8 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
             }   
             Complex val = 0;
             Complex fact = Complex{costheta, sintheta};
+
             // azimuthal mode 0
-            
             val += utils::algorithms::bilinear_interp(
                 t_left, t_right,
                 r_0, r_1,
@@ -653,10 +655,8 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
                 p_E_lasy_data[idx(0, idx_t_right, idx_r_right)],
                 t, Rp_i);
                 
-            amrex::Print() << Utils::TextMsg::Info( "idx = " + std::to_string(0)+ ", " + std::to_string(idx_t_right)+ ", "+std::to_string(idx_r_right) );  
-
             // higher modes
-            for (int m=1 ; m <= m_params.n_rz_azimuthal_modes/2; m++) {
+            for (int m=1 ; m <= m_params.n_rz_azimuthal_components/2; m++) {
                 val += utils::algorithms::bilinear_interp(
                     t_left, t_right,
                     r_0, r_1,
@@ -672,10 +672,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
                     p_E_lasy_data[idx(2*m, idx_t_left, idx_r_right)],
                     p_E_lasy_data[idx(2*m, idx_t_right, idx_r_left)],
                     p_E_lasy_data[idx(2*m, idx_t_right, idx_r_right)],
-                    t, Rp_i)*(fact.imag()) ;
-
-                    amrex::Print() << Utils::TextMsg::Info( "idx = " + std::to_string(m)+ ", " + std::to_string(idx_t_right)+ ", "+std::to_string(idx_r_right) );
-                      
+                    t, Rp_i)*(fact.imag()) ;              
                 fact = fact*Complex{costheta, sintheta};
             }
             amplitude[i] = (val*exp_omega_t).real();

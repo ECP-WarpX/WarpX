@@ -26,6 +26,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import hilbert
+from scipy.special import genlaguerre
 
 import yt ; yt.funcs.mylog.setLevel(50)
 
@@ -46,7 +47,7 @@ w0 = 12.*um
 tt = 10.*fs
 t_c = 20.*fs
 
-E_max= 16282454014843.37
+E_max= 15307127721303.91
 
 # Function for the envelope
 def laguerre_env(T, X, Y, Z, p, m):
@@ -54,16 +55,16 @@ def laguerre_env(T, X, Y, Z, p, m):
         complex_position= X -1j * Y
     else:
         complex_position= X +1j * Y
-    inv_w_2 = 1.0/(w0*w0)
-    inv_tau2 = 1./tt/tt
+    inv_w0_2 = 1.0/(w0*w0)
+    inv_tau_2 = 1./tt/tt
     radius = abs(complex_position)
-    scaled_rad_squared = (radius**2)*inv_w_2
+    scaled_rad_squared = (radius**2)*inv_w0_2
     envelope = (
             complex_position ** m
             *  genlaguerre(p, m)(2 * scaled_rad_squared)
             * np.exp(-scaled_rad_squared)
-            * np.exp(- inv_tau2 / c/c * (Z-T*c)*(Z-T*c))
-        )
+            * np.exp(- ( inv_tau_2 / (c**2) ) * (Z-T*c)**2)
+            )
     return E_max * np.real(envelope)
 
 def do_analysis(fname, compname, steps):
@@ -86,7 +87,7 @@ def do_analysis(fname, compname, steps):
     X, Y, Z = np.meshgrid(x, y, z, sparse=False, indexing='ij')
 
     # Compute the theory for envelope
-    env_theory = laguerre_env(+t_c-ds.current_time.to_value(), X,Y,Z)+laguerre_env(-t_c+ds.current_time.to_value(), X,Y,Z)
+    env_theory = laguerre_env(+t_c-ds.current_time.to_value(), X,Y,Z,p=0,m=1)+laguerre_env(-t_c+ds.current_time.to_value(), X,Y,Z,p=0,m=1)
 
     # Read laser field in PIC simulation, and compute envelope
     all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
@@ -139,7 +140,7 @@ def do_analysis(fname, compname, steps):
 
 def launch_analysis(executable):
     os.system("./" + executable + " inputs.from_RZ_file_test diag1.file_prefix=diags/plotfiles/plt")
-    do_analysis("diags/plotfiles/plt000252/", "comp_unf.pdf", 252)
+    do_analysis("diags/plotfiles/plt000628/", "comp_unf.pdf", 628)
 
 
 def main() :
@@ -171,7 +172,7 @@ def main() :
         assert(False)
 
     # Do the checksum test
-    filename_end = "diags/plotfiles/plt000252/"
+    filename_end = "diags/plotfiles/plt000628/"
     test_name = "LaserInjectionFromRZLASYFile"
     checksumAPI.evaluate_checksum(test_name, filename_end)
     print('Passed')
