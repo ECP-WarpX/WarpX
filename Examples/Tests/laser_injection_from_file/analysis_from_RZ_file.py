@@ -47,16 +47,16 @@ w0 = 12.*um
 tt = 10.*fs
 t_c = 20.*fs
 
-E_max= 15307127721303.91
-
+#E_max= 15307127721303.91
+E_max= 9857931891961.562
 # Function for the envelope
 def laguerre_env(T, X, Y, Z, p, m):
     if m>0:
         complex_position= X -1j * Y
     else:
         complex_position= X +1j * Y
-    inv_w0_2 = 1.0/(w0*w0)
-    inv_tau_2 = 1./tt/tt
+    inv_w0_2 = 1.0/(w0**2)
+    inv_tau_2 = 1.0/(tt**2)
     radius = abs(complex_position)
     scaled_rad_squared = (radius**2)*inv_w0_2
     envelope = (
@@ -160,8 +160,8 @@ def main() :
     LaguerreGaussianTransverseProfile(w0, p=0, m=1),
     )
     dim = "rt"
-    lo = (0e-6, -20e-15)
-    hi = (+25e-6, +20e-15)
+    lo = (0e-6, -60e-15)
+    hi = (+25e-6, +60e-15)
     npoints = (100,100)
     laser = Laser(dim, lo, hi, npoints, profile, n_azimuthal_modes=2)
     laser.normalize(laser_energy, kind="energy")
