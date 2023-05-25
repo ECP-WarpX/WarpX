@@ -295,7 +295,7 @@ WarpX::WarpX ()
     }
 #endif
 
-    t_new.resize(nlevs_max, 0.0);
+    t_new.resize(nlevs_max, WarpX::m_t_boost_offset);
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 

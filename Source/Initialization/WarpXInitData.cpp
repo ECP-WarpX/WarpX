@@ -484,6 +484,8 @@ WarpX::InitData ()
         // solution and any external field
         AddExternalFields();
 
+        ImposeFieldsInPlane();
+
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush( -1 );
 

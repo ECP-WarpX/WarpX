@@ -144,6 +144,31 @@ public:
     //! Whether to apply the effect of an externally-defined magnetic field
     static bool add_external_B_field;
 
+    //! Whether to impose E field in a plane
+    static inline bool impose_E_field_in_plane = false;
+    //! Whether to impose E field in a plane
+    static inline bool impose_B_field_in_plane = false;
+    //! There are two types of impose field
+    enum struct ImposeFieldType { station, snapshot };
+    //! Impose field type
+    static inline ImposeFieldType m_impose_field_type;
+    //! The path to the file containing the raw fields
+    static inline std::string m_impose_field_file_path;
+    //! Information for station
+    struct ImposeStationInfo {
+        amrex::Real location;
+        amrex::Vector<std::pair<amrex::Real,amrex::Real>> time;
+        int ibuffer1, ibuffer2;
+    };
+    static inline ImposeStationInfo m_impose_station_info;
+    //! Information for snapshot
+    struct ImposeSnapshotInfo {
+        amrex::Vector<amrex::Geometry> geom;
+        amrex::Real t_lab;
+    };
+    static inline ImposeSnapshotInfo m_impose_snapshot_info;
+    static inline amrex::Real m_t_boost_offset = 0.0_rt;
+
     //! String storing parser function to initialize x-component of the magnetic field on the grid
     static std::string str_Bx_ext_grid_function;
     //! String storing parser function to initialize y-component of the magnetic field on the grid
@@ -1087,6 +1112,11 @@ public:
 
     // Return the accelerator lattice instance defined at the given refinement level
     const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}
+
+    static void InitImposeFieldsGeom ();
+    void ImposeFieldsInPlane ();
+    void ImposeStationFieldsInPlane (); // needs to be public for cuda
+    void ImposeSnapshotFieldsInPlane (); // needs to be public for cuda
 
 protected:
 

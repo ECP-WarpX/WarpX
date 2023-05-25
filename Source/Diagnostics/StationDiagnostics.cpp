@@ -47,8 +47,8 @@ StationDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile", "<diag>.format must be plotfile");
 
-    std::string station_normal_dir;
-    pp_diag_name.get("station_normal_dir", station_normal_dir);
+    std::string station_normal_dir("z");
+    pp_diag_name.query("station_normal_dir", station_normal_dir);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         station_normal_dir == "z", "<diag>.station_normal_dir is supported only for z at the moment");
     if (station_normal_dir == "z") {
@@ -140,7 +140,6 @@ StationDiagnostics::PrepareFieldDataForOutput ()
 {
     const int num_station_functors = 1;
     const int nlev = 1;
-    int k_index = m_slice_counter;
     for (int lev = 0; lev < nlev; ++lev) {
         for (int i = 0; i < num_station_functors; ++i) {
             // number of slices = 1
@@ -169,12 +168,12 @@ StationDiagnostics::UpdateBufferData ()
 {
     if (GetZSliceInDomain(0)) {
         m_slice_counter++;
+        if (m_slice_counter == 1) {
+            m_tmin = WarpX::GetInstance().gett_new(0);
+        }
     }
     if (m_slice_counter > 0 and !GetZSliceInDomain(0)) {
         m_last_timeslice_filled = true;
-    }
-    if (m_slice_counter == 1) {
-        m_tmin = WarpX::GetInstance().gett_new(0);
     }
 }
 
@@ -213,7 +212,7 @@ StationDiagnostics::Flush (int i_buffer)
         amrex::Print() << " Writing station buffer " << buffer_string << "\n";
         const std::string prefix = amrex::MultiFabFileFullPrefix(lev, filename, "Level_", buffer_string);
 
-        auto const& out = m_mf_output[i_buffer][lev];
+        auto& out = m_mf_output[i_buffer][lev];
 
         if (m_slice_counter == m_buffer_size) {
             amrex::VisMF::Write(out, prefix);
@@ -253,6 +252,7 @@ StationDiagnostics::Flush (int i_buffer)
 
     // reset counter
     m_slice_counter = 0;
+    m_tmin = m_tmax;
     // update Flush counter
     m_flush_counter++;
 }

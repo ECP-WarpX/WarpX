@@ -60,6 +60,30 @@ void ParseGeometryInput()
     // Ensure that geometry.dims is set properly.
     CheckDims();
 
+    { // We must call WarpX::InitImposeFieldsGeom here so that it can
+      // modify geometry.prob_lo and geometry.prob_hi.
+        ParmParse pp_warpx("warpx");
+        pp_warpx.query("B_ext_grid_init_style", WarpX::B_ext_grid_s);
+        pp_warpx.query("E_ext_grid_init_style", WarpX::E_ext_grid_s);
+
+        WarpX::impose_B_field_in_plane = (WarpX::B_ext_grid_s == "impose_field_in_plane");
+        WarpX::impose_E_field_in_plane = (WarpX::E_ext_grid_s == "impose_field_in_plane");
+
+        if (WarpX::impose_B_field_in_plane || WarpX::impose_E_field_in_plane) {
+            std::string impose_field_type;
+            pp_warpx.get("impose_field_type", impose_field_type);
+            if (impose_field_type == "station") {
+                WarpX::m_impose_field_type = WarpX::ImposeFieldType::station;
+            } else if (impose_field_type == "snapshot") {
+                WarpX::m_impose_field_type = WarpX::ImposeFieldType::snapshot;
+            } else {
+                WARPX_ABORT_WITH_MESSAGE("Unknown warpx.impose_field_type "+impose_field_type);
+            }
+            pp_warpx.get("read_fields_from_path", WarpX::m_impose_field_file_path);
+            WarpX::InitImposeFieldsGeom();
+        }
+    }
+
     // Parse prob_lo and hi, evaluating any expressions since geometry does not
     // parse its input
     ParmParse pp_geometry("geometry");
@@ -138,7 +162,7 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
     }
 }
 
-void ConvertLabParamsToBoost()
+void ConvertLabParamsToBoost ()
 {
     Real gamma_boost = 1., beta_boost = 0.;
     int max_level = 0;
@@ -146,7 +170,7 @@ void ConvertLabParamsToBoost()
 
     ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
 
-    if (gamma_boost <= 1.) return;
+    if (gamma_boost < 1.) return;
 
     Vector<Real> prob_lo(AMREX_SPACEDIM);
     Vector<Real> prob_hi(AMREX_SPACEDIM);
@@ -190,21 +214,39 @@ void ConvertLabParamsToBoost()
     Vector<int> dim_map {2};
 #endif
 
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-    {
-        if (boost_direction[dim_map[idim]]) {
-            amrex::Real convert_factor;
-            // Assume that the window travels with speed +c
-            convert_factor = 1._rt/( gamma_boost * ( 1 - beta_boost ) );
-            prob_lo[idim] *= convert_factor;
-            prob_hi[idim] *= convert_factor;
-            if (max_level > 0){
-              fine_tag_lo[idim] *= convert_factor;
-              fine_tag_hi[idim] *= convert_factor;
+    if (WarpX::impose_B_field_in_plane || WarpX::impose_E_field_in_plane) {
+        int const zdir = AMREX_SPACEDIM-1;
+        if (WarpX::m_impose_field_type == WarpX::ImposeFieldType::station) {
+            Real zstation = WarpX::m_impose_station_info.location;
+            Real tmin = WarpX::m_impose_station_info.time.front().first;
+            Real tmax = WarpX::m_impose_station_info.time.back().second;
+            prob_hi[zdir] = gamma_boost * (zstation - beta_boost*PhysConst::c*tmin);
+            prob_lo[zdir] = prob_hi[zdir] - gamma_boost*(1._rt+beta_boost)*PhysConst::c*(tmax-tmin);
+            WarpX::m_t_boost_offset = gamma_boost*(tmin - beta_boost*zstation/PhysConst::c);
+        } else {
+            Real zmin = prob_lo[zdir];
+            Real zmax = prob_hi[zdir];
+            prob_hi[zdir] = gamma_boost * (zmax - beta_boost*PhysConst::c*WarpX::m_impose_snapshot_info.t_lab);
+            prob_lo[zdir] = prob_hi[zdir] - gamma_boost*(1._rt+beta_boost)*(zmax-zmin);
+            WarpX::m_t_boost_offset = gamma_boost*(WarpX::m_impose_snapshot_info.t_lab-beta_boost*zmax/PhysConst::c);
+        }
+    } else {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
+        {
+            if (boost_direction[dim_map[idim]]) {
+                amrex::Real convert_factor;
+                // Assume that the window travels with speed +c
+                convert_factor = 1._rt/( gamma_boost * ( 1 - beta_boost ) );
+                prob_lo[idim] *= convert_factor;
+                prob_hi[idim] *= convert_factor;
+                if (max_level > 0){
+                    fine_tag_lo[idim] *= convert_factor;
+                    fine_tag_hi[idim] *= convert_factor;
+                }
+                slice_lo[idim] *= convert_factor;
+                slice_hi[idim] *= convert_factor;
+                break;
             }
-            slice_lo[idim] *= convert_factor;
-            slice_hi[idim] *= convert_factor;
-            break;
         }
     }
 

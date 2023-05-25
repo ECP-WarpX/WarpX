@@ -31,7 +31,7 @@ private:
 #else
     enum struct StationNormalDir {x=0, y, z};
 #endif
-    StationNormalDir m_station_normal;
+    StationNormalDir m_station_normal = StationNormalDir::z;
     /** Whether to plot raw fields*/
     bool m_plot_raw_fields = true;
     /** Whether to plot guard cells of raw fields*/

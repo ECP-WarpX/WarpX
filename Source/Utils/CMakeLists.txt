@@ -6,6 +6,7 @@ foreach(D IN LISTS WarpX_DIMS)
         ParticleUtils.cpp
         RelativeCellPosition.cpp
         WarpXAlgorithmSelection.cpp
+        WarpXImposeFields.cpp
         WarpXMovingWindow.cpp
         WarpXTagging.cpp
         WarpXUtil.cpp
