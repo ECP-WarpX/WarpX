@@ -262,17 +262,15 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file(std::string binary_f
     }
 
     //Broadcast parameters
-    constexpr auto t_params_size = 9;
-    int t_params[t_params_size] = {
-        m_params.nt, m_params.nx, m_params.ny,
-        m_params.t_min, m_params.t_max,
-        m_params.x_min, m_params.x_max,
-        m_params.y_min, m_params.y_min};
-    ParallelDescriptor::Bcast(t_params, t_params_size, ParallelDescriptor::IOProcessorNumber());
-    m_params.nt = t_sizes[0]; m_params.nx = t_sizes[1]; m_params.ny = t_sizes[2];
-    m_params.t_min = t_sizes[3]; m_params.t_max = t_sizes[4];
-    m_params.x_min = t_sizes[5]; m_params.x_max = t_sizes[6];
-    m_params.y_min = t_sizes[7]; m_params.y_max = t_sizes[8];
+    ParallelDescriptor::Bcast(&m_params.nt, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.nx, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.ny, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.t_min, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.t_max, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.x_min, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.x_max, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.y_min, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.y_max, 1, ParallelDescriptor::IOProcessorNumber());
 }
 
 std::pair<int,int>
