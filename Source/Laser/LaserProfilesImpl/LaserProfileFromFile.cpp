@@ -641,7 +641,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
             } else {
                 costheta = 1._rt;
                 sintheta = 0._rt;
-            }   
+            }
             Complex val = 0;
             Complex fact = Complex{costheta, sintheta};
 
@@ -664,7 +664,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
                     p_E_lasy_data[idx(2*m-1, idx_t_left, idx_r_right)],
                     p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_left)],
                     p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_right)],
-                    t, Rp_i)*(fact.real()) + 
+                    t, Rp_i)*(fact.real()) +
                     utils::algorithms::bilinear_interp(
                     t_left, t_right,
                     r_0, r_1,
