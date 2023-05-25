@@ -884,7 +884,7 @@ Particle initialization
     * ``radial_expansion``: momentum depends on the radial coordinate linearly. This
       can be controlled with additional parameter ``u_over_r`` which is the slope (``0.`` by default).
 
-    * ``parse_momentum_function``: the momentum is given by a function in the input
+    * ``parse_momentum_function``: the momentum :math:`u = (u_{x},u_{y},u_{z})=(\gamma v_{x}/c,\gamma v_{y}/c,\gamma v_{z}/c)` is given by a function in the input
       file. It requires additional arguments ``<species_name>.momentum_function_ux(x,y,z)``,
       ``<species_name>.momentum_function_uy(x,y,z)`` and ``<species_name>.momentum_function_uz(x,y,z)``,
       which gives the distribution of each component of the momentum as a function of space.
@@ -981,7 +981,7 @@ Particle initialization
     * ``<species_name>.attribute.<int_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
     ``t`` represents the physical time in seconds during the simulation.
     ``x``, ``y``, ``z`` represent particle positions in the unit of meter.
-    ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+    ``ux``, ``uy``, ``uz`` represent the particle momenta in the unit of
     :math:`\gamma v/c`, where
     :math:`\gamma` is the Lorentz factor,
     :math:`v/c` is the particle velocity normalized by the speed of light.
@@ -1001,7 +1001,7 @@ Particle initialization
    * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
      ``t`` represents the physical time in seconds during the simulation.
      ``x``, ``y``, ``z`` represent particle positions in the unit of meter.
-     ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+     ``ux``, ``uy``, ``uz`` represent the particle momenta in the unit of
      :math:`\gamma v/c`, where
      :math:`\gamma` is the Lorentz factor,
      :math:`v/c` is the particle velocity normalized by the speed of light.
@@ -1197,8 +1197,6 @@ Laser initialization
     implemented are:
 
     - ``"Gaussian"``: The transverse and longitudinal profiles are Gaussian.
-    - ``"Harris"``: The transverse profile is Gaussian, but the longitudinal profile
-      is given by the Harris function (see ``<laser_name>.profile_duration`` for more details)
     - ``"parse_field_function"``: the laser electric field is given by a function in the
       input file. It requires additional argument ``<laser_name>.field_function(X,Y,t)``, which
       is a mathematical expression , e.g.
@@ -1210,18 +1208,38 @@ Laser initialization
       none of the parameters below are used when ``<laser_name>.parse_field_function=1``. Even
       though ``<laser_name>.wavelength`` and ``<laser_name>.e_max`` should be included in the laser
       function, they still have to be specified as they are used for numerical purposes.
-    - ``"from_txye_file"``: the electric field of the laser is read from an external lasy file
-      (see the `lasy docs <https://lasydoc.readthedocs.io>`__). It requires to provide the name of the lasy file
-      setting the additional parameter ``<laser_name>.txye_file_name`` (`string`). It accepts an
-      optional parameter ``<laser_name>.time_chunk_size`` (`int`). This allows to read only
-      time_chunk_size timesteps from the lasy file. New timesteps are read as soon as they are needed.
+    - ``"from_file"``: the electric field of the laser is read from an external file. Currently both
+      the `lasy <https://lasydoc.readthedocs.io/en/latest/>` format as well as a custom binary format are supported. It requires to provide
+      the name of the file to load setting the additional parameter ``<laser_name>.binary_file_name`` or ``<laser_name>.lasy_file_name`` (`string`).
+      It accepts an optional parameter ``<laser_name>.time_chunk_size`` (`int`) , only supported for a lasy file;
+      this allows to read only time_chunk_size timesteps from the lasy file. New timesteps are read as soon as they are needed.
+
       The default value is automatically set to the number of timesteps contained in the lasy file
       (i.e. only one read is performed at the beginning of the simulation).
       It also accepts the optional parameter ``<laser_name>.delay`` (`float`; in seconds), which allows
       delaying (``delay > 0``) or anticipating (``delay < 0``) the laser by the specified amount of time.
-      A lasy file is always 3D, but in the case where WarpX is compiled in 2D (or 1D), the laser antenna
+
+      Details about the usage of the lasy format: A lasy file is always 3D, but in the case where WarpX is compiled in 2D (or 1D), the laser antenna
       will emit the field values that correspond to y=0 in the lasy file (and x=0 in the 1D case).
       One can generate a lasy file from Python, see an example at ``Examples/Tests/laser_injection_from_file``.
+
+      Details about the usage of the binary format: The external binary file should provide E(x,y,t) on a rectangular (necessarily uniform)
+      grid. The code performs a bi-linear (in 2D) or tri-linear (in 3D) interpolation to set the field
+      values. x,y,t are meant to be in S.I. units, while the field value is meant to be multiplied by
+      ``<laser_name>.e_max`` (i.e. in most cases the maximum of abs(E(x,y,t)) should be 1,
+      so that the maximum field intensity can be set straightforwardly with ``<laser_name>.e_max``).
+      The binary file has to respect the following format:
+
+        * flag to indicate the grid is uniform(1 byte, 0 means non-uniform, !=0 means uniform) - only uniform is supported
+        * np, numbrer of timesteps (uint32_t, must be >=2)
+        * nx, number of points along x (uint32_t, must be >=2)
+        * ny, number of points along y (uint32_t, must be 1 for 2D simulations and >=2 for 3D simulations)
+        * timesteps (double[2]=[t_min,t_max])
+        * x_coords (double[2]=[x_min,x_max])
+        * y_coords (double[1] if 2D, double[2]=[y_min,y_max] if 3D)
+        * field_data (double[nt * nx * ny], with nt being the slowest coordinate).
+
+      A binary file can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file``
 
 * ``<laser_name>.profile_t_peak`` (`float`; in seconds)
     The time at which the laser reaches its peak intensity, at the position
@@ -1232,21 +1250,13 @@ Laser initialization
     to automatically perform the conversion to the boosted frame.
 
 * ``<laser_name>.profile_duration`` (`float` ; in seconds)
-    The duration of the laser pulse, defined as :math:`\tau` below:
-
-    - For the ``"gaussian"`` profile:
+    The duration of the laser pulse for the ``"gaussian"`` profile, defined as :math:`\tau` below:
 
     .. math::
 
         E(\boldsymbol{x},t) \propto \exp\left( -\frac{(t-t_{peak})^2}{\tau^2} \right)
 
     Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.174`.
-
-    - For the ``"harris"`` profile:
-
-    .. math::
-
-        E(\boldsymbol{x},t) \propto \frac{1}{32}\left[10 - 15 \cos\left(\frac{2\pi t}{\tau}\right) + 6 \cos\left(\frac{4\pi t}{\tau}\right) - \cos\left(\frac{6\pi t}{\tau}\right) \right]\Theta(\tau - t)
 
     When running a **boosted-frame simulation**, provide the value of
     ``<laser_name>.profile_duration`` in the laboratory frame, and use ``warpx.gamma_boost``
@@ -2341,7 +2351,8 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
    where :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter. The sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor) that satisfy ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
    When ``<diag_name>.particle_fields.<field_name>.do_average`` is `0`, the division by the sum over particle weights is not done.
-   In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-velocity. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity, and :math:`c` is the speed of light.
+   In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-momentum. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity and :math:`c` is the speed of light.
+   For photons, we use the standardized momentum :math:`u = p/(m_{e}c)`, where :math:`p` is the momentum of the photon and :math:`m_{e}` the mass of an electron.
 
 * ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)`` (parser `string`, optional)
     Parser function returning a boolean for whether to include a particle in the diagnostic.
@@ -2411,7 +2422,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     :math:`\gamma` is the Lorentz factor,
     :math:`v/c` is the particle velocity normalized by the speed of light.
     E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
-    positions `x` greater than `0`, and those having velocity `uz` less than 10,
+    positions `x` greater than `0`, and those having momentum `uz` less than 10,
     will be dumped.
 
 * ``amrex.async_out`` (`0` or `1`) optional (default `0`)
@@ -2771,13 +2782,13 @@ Reduced Diagnostics
             A histogram function must be provided.
             `t` represents the physical time in seconds during the simulation.
             `x, y, z` represent particle positions in the unit of meter.
-            `ux, uy, uz` represent the particle velocities in the unit of
+            `ux, uy, uz` represent the particle momenta in the unit of
             :math:`\gamma v/c`, where
             :math:`\gamma` is the Lorentz factor,
             :math:`v/c` is the particle velocity normalized by the speed of light.
             E.g.
             ``x`` produces the position (density) distribution in `x`.
-            ``ux`` produces the velocity distribution in `x`,
+            ``ux`` produces the momentum distribution in `x`,
             ``sqrt(ux*ux+uy*uy+uz*uz)`` produces the speed distribution.
             The default value of the histogram without normalization is
             :math:`f = \sum\limits_{i=1}^N w_i`, where
@@ -2825,7 +2836,7 @@ Reduced Diagnostics
             :math:`\gamma` is the Lorentz factor,
             :math:`v/c` is the particle velocity normalized by the speed of light.
             E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
-            positions `x` greater than `0`, and those having velocity `uz` less than 10,
+            positions `x` greater than `0`, and those having momentum `uz` less than 10,
             will be taken into account when calculating the histogram.
 
         The output columns are
