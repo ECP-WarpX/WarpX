@@ -52,15 +52,15 @@ And since Lassen does not yet provide a module for them, install ADIOS2, BLAS++ 
    cmake --build src/c-blosc-lassen-build --target install --parallel 16
 
    # ADIOS2
-   git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git src/adios2
+   git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git src/adios2
    rm -rf src/adios2-lassen-build
-   cmake -S src/adios2 -B src/adios2-lassen-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_SST=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/adios2-2.7.1
+   cmake -S src/adios2 -B src/adios2-lassen-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_SST=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/adios2-2.8.3
    cmake --build src/adios2-lassen-build --target install -j 16
 
    # BLAS++ (for PSATD+RZ)
    git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
    rm -rf src/blaspp-lassen-build
-   cmake -S src/blaspp -B src/blaspp-lassen-build -Duse_openmp=ON -Dgpu_backend=CUDA -Duse_cmake_find_blas=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/blaspp-master
+   cmake -S src/blaspp -B src/blaspp-lassen-build -Duse_openmp=ON -Dgpu_backend=cuda -Duse_cmake_find_blas=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/blaspp-master
    cmake --build src/blaspp-lassen-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
@@ -74,15 +74,15 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 .. code-block:: bash
 
    cd $HOME/src/warpx
-   rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON
-   cmake --build build -j 10
+   rm -rf build_lassen
+   cmake -S . -B build_lassen -DWarpX_COMPUTE=CUDA -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PSATD=ON
+   cmake --build build_lassen -j 10
 
 The other :ref:`general compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lassen>` with a :ref:`3D example inputs file <usage-examples>`.
+WarpX executables for 1D, 2D, RZ and 3D are now in ``build_lassen/bin/`` and :ref:`can be run <running-cpp-lassen>` with the respective :ref:`example inputs files <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``/p/gpfs1/$(whoami)``.
 
 
@@ -133,7 +133,7 @@ Known System Issues
 .. warning::
 
    Feb 17th, 2022 (INC0278922):
-   The implementation of AllGatherv in IBM's MPI optimization library "libcollectives" is broken and leads to HDF5 crashes for multi-node runs.
+   The implementation of ``AllGatherv`` in IBM's MPI optimization library "libcollectives" is broken and leads to HDF5 crashes for multi-node runs.
 
    Our batch script templates above `apply this work-around <https://github.com/ECP-WarpX/WarpX/pull/2874>`__ *before* the call to ``jsrun``, which avoids the broken routines from IBM and trades them for an OpenMPI implementation of collectives:
 
