@@ -1,0 +1,77 @@
+# algo
+algo.particle_shape = 3
+
+# amr
+amr.max_level = 0
+amr.n_cell = 8 8 8
+
+# boundary
+boundary.field_hi = periodic periodic periodic
+boundary.field_lo = periodic periodic periodic
+
+# charge_exchange
+charge_exchange.background_density = 1e26
+charge_exchange.background_temperature = 7e5
+charge_exchange.charge_exchange_cross_section = ./test_mcc_charge_exchange.dat
+charge_exchange.scattering_processes = charge_exchange
+charge_exchange.species = Dplus
+charge_exchange.ionization_species = D2plus
+charge_exchange.type = background_mcc
+
+# collisions
+collisions.collision_names = charge_exchange
+
+# diag
+diag1.diag_type = Full
+diag1.fields_to_plot = rho rho_Dplus rho_D2plus
+diag1.intervals = 10
+
+# diagnostics
+diagnostics.diags_names = diag1
+
+# geometry
+geometry.dims = 3
+geometry.prob_hi =  1e-6  1e-6  1e-6
+geometry.prob_lo = -1e-6 -1e-6 -1e-6
+
+# Dplus
+Dplus.density = 1e26
+Dplus.injection_style = "NRandomPerCell"
+Dplus.momentum_distribution_type = "gaussian"
+Dplus.num_particles_per_cell = 10000
+Dplus.profile = constant
+Dplus.species_type = deuterium
+Dplus.ux_m = 0.
+Dplus.uy_m = 0.
+Dplus.uz_m = 0.5
+Dplus.ux_th = 0.
+Dplus.uy_th = 0.
+Dplus.uz_th = 0.
+Dplus.xmax =  1e-6
+Dplus.xmin = -1e-6
+Dplus.ymax =  1e-6
+Dplus.ymin = -1e-6
+Dplus.zmax =  1e-6
+Dplus.zmin = -1e-6
+
+# D2plus
+D2plus.species_type = deuterium
+D2plus.do_not_push = 1
+D2plus.do_not_deposit = 1
+
+# max_step
+max_step = 100
+
+# particle_number
+particle_number.type = ParticleNumber
+particle_number.intervals = 1
+particle_number.path = "./reduced_diags/"
+
+# particles
+particles.species_names = Dplus D2plus
+
+# warpx
+warpx.cfl = 0.5
+warpx.numprocs = 1 1 1
+warpx.reduced_diags_names = particle_number
+warpx.verbose = 1
