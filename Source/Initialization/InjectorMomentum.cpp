@@ -19,10 +19,6 @@ void InjectorMomentum::clear ()
     case Type::boltzmann:
     case Type::juttner:
     case Type::constant:
-    case Type::radial_expansion:
-    {
-        break;
-    }
     case Type::custom:
     {
         object.custom.clear();
