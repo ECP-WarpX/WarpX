@@ -282,7 +282,13 @@ void ParticleHistogram2D::WriteToFile (int step) const
             {static_cast<unsigned long>(m_bin_num_ord), static_cast<unsigned long>(m_bin_num_abs)});
     data.resetDataset(dataset);
 
-    // UNITS ?!
+    // UNIT DIMENSION IS NOT SET ON THE VALUES
+
+    // Get time at level 0
+    auto & warpx = WarpX::GetInstance();
+    auto const time = warpx.gett_new(0);
+    i.setTime(time);
+
     auto const& h_table_data = m_h_data_2D.table();
     data.storeChunkRaw(
             h_table_data.p,
