@@ -1123,7 +1123,6 @@ class LoadInitialField(picmistandard.base._ClassWithInit):
         self.read_fields_from_path = read_fields_from_path
 
     def initialize_inputs(self):
-        print(self.read_fields_from_path)
         pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
         if self.load_E:
             pywarpx.warpx.E_ext_grid_init_style = 'read_from_file'
