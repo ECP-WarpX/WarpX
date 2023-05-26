@@ -1128,7 +1128,7 @@ class LoadInitialField(picmistandard.base._ClassWithInit):
         if self.load_E:
             pywarpx.warpx.E_ext_grid_init_style = 'read_from_file'
         if self.load_B:
-            pywarpx.warpx.B_ext_grid_init_style = 'read_from_file'            
+            pywarpx.warpx.B_ext_grid_init_style = 'read_from_file'
 
 class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
     def init(self, kw):
