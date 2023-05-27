@@ -51,10 +51,16 @@ And since Lassen does not yet provide a module for them, install ADIOS2, BLAS++ 
    cmake -S src/c-blosc -B src/c-blosc-lassen-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/c-blosc-1.21.1
    cmake --build src/c-blosc-lassen-build --target install --parallel 16
 
+   # HDF5
+   git clone -b hdf5-1_14_1-2 https://github.com/HDFGroup/hdf5.git src/hdf5
+   rm -rf src/hdf5-lassen-build
+   cmake -S src/hdf5 -B src/hdf5-lassen-build -DBUILD_TESTING=OFF -DHDF5_ENABLE_PARALLEL=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/hdf5-1.14.1.2
+   cmake --build src/hdf5-lassen-build --target install --parallel 16
+
    # ADIOS2
    git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git src/adios2
    rm -rf src/adios2-lassen-build
-   cmake -S src/adios2 -B src/adios2-lassen-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_SST=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/adios2-2.8.3
+   cmake -S src/adios2 -B src/adios2-lassen-build -DBUILD_TESTING=OFF -DADIOS2_BUILD_EXAMPLES=OFF -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_SST=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/adios2-2.8.3
    cmake --build src/adios2-lassen-build --target install -j 16
 
    # BLAS++ (for PSATD+RZ)
