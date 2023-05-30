@@ -164,6 +164,7 @@ FieldProbe::FieldProbe (std::string rd_name)
 
             // write header row
             int c = 0;
+            ofs << "#";
             ofs << "[" << c++ << "]step()";
             ofs << m_sep;
             ofs << "[" << c++ << "]time(s)";
@@ -174,36 +175,36 @@ FieldProbe::FieldProbe (std::string rd_name)
             {
                 u_map =
                 {
-                    {FieldProbePIdx::Ex , "-(V*s/m)"},
-                    {FieldProbePIdx::Ey , "-(V*s/m)"},
-                    {FieldProbePIdx::Ez , "-(V*s/m)"},
-                    {FieldProbePIdx::Bx , "-(T*s)"},
-                    {FieldProbePIdx::By , "-(T*s)"},
-                    {FieldProbePIdx::Bz , "-(T*s)"},
-                    {FieldProbePIdx::S , "-(W*s/m^2)"}
+                    {FieldProbePIdx::Ex , "(V*s/m)"},
+                    {FieldProbePIdx::Ey , "(V*s/m)"},
+                    {FieldProbePIdx::Ez , "(V*s/m)"},
+                    {FieldProbePIdx::Bx , "(T*s)"},
+                    {FieldProbePIdx::By , "(T*s)"},
+                    {FieldProbePIdx::Bz , "(T*s)"},
+                    {FieldProbePIdx::S , "(W*s/m^2)"}
                 };
             }
             else
             {
                 u_map =
                 {
-                    {FieldProbePIdx::Ex , "-(V/m)"},
-                    {FieldProbePIdx::Ey , "-(V/m)"},
-                    {FieldProbePIdx::Ez , "-(V/m)"},
-                    {FieldProbePIdx::Bx , "-(T)"},
-                    {FieldProbePIdx::By , "-(T)"},
-                    {FieldProbePIdx::Bz , "-(T)"},
-                    {FieldProbePIdx::S , "-(W/m^2)"}
+                    {FieldProbePIdx::Ex , "(V/m)"},
+                    {FieldProbePIdx::Ey , "(V/m)"},
+                    {FieldProbePIdx::Ez , "(V/m)"},
+                    {FieldProbePIdx::Bx , "(T)"},
+                    {FieldProbePIdx::By , "(T)"},
+                    {FieldProbePIdx::Bz , "(T)"},
+                    {FieldProbePIdx::S , "(W/m^2)"}
                 };
             }
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]part_x_lev" + std::to_string(lev) + "-(m)";
+                ofs << "[" << c++ << "]part_x_lev" + std::to_string(lev) + "(m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]part_y_lev" + std::to_string(lev) + "-(m)";
+                ofs << "[" << c++ << "]part_y_lev" + std::to_string(lev) + "(m)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]part_z_lev" + std::to_string(lev) + "-(m)";
+                ofs << "[" << c++ << "]part_z_lev" + std::to_string(lev) + "(m)";
                 ofs << m_sep;
                 ofs << "[" << c++ << "]part_Ex_lev" + std::to_string(lev) + u_map[FieldProbePIdx::Ex];
                 ofs << m_sep;
