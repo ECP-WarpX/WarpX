@@ -221,6 +221,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file(std::string binary_f
         char flag;
         inp.read(&flag, 1);
         if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read grid type from binary file");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flag, "Binary files with non uniform grid are no longer supported");
         //Grid points along t, x and y
         inp.read(reinterpret_cast<char*>(&m_params.nt), sizeof(uint32_t));
         inp.read(reinterpret_cast<char*>(&m_params.nx), sizeof(uint32_t));
@@ -259,6 +260,17 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file(std::string binary_f
         m_params.y_max = static_cast<amrex::Real>(dbuf_y[1]);
 #endif
     }
+
+    //Broadcast parameters
+    ParallelDescriptor::Bcast(&m_params.nt, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.nx, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.ny, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.t_min, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.t_max, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.x_min, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.x_max, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.y_min, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.y_max, 1, ParallelDescriptor::IOProcessorNumber());
 }
 
 std::pair<int,int>
