@@ -191,7 +191,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
         if (m_params.fileGeom=="thetaMode") {
             //Dimensions of lasy file data: {m,t,r}
             amrex::Print() << Utils::TextMsg::Info( "Found lasy file in RZ geometry" );
-            m_params.n_rz_azimuthal_components = extent[0];         
+            m_params.n_rz_azimuthal_components = extent[0];
             m_params.nt = extent[1];
             m_params.nr = extent[2];
             if(m_params.nt <= 1) Abort("nt in lasy file must be >=2");
@@ -665,7 +665,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
                 p_E_lasy_data[idx(0, idx_t_right, idx_r_left)],
                 p_E_lasy_data[idx(0, idx_t_right, idx_r_right)],
                 t, Rp_i);
-                
+
             // higher modes
             for (int m=1 ; m <= m_params.n_rz_azimuthal_components/2; m++) {
                 val += utils::algorithms::bilinear_interp(

@@ -25,9 +25,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.constants import c, epsilon_0
 from scipy.signal import hilbert
 from scipy.special import genlaguerre
-from scipy.constants import epsilon_0, c
 
 import yt ; yt.funcs.mylog.setLevel(50)
 
