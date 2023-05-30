@@ -1272,11 +1272,11 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
     species: species instance
         The species involved in the collision
 
-    background_density: float
-        The density of the background
+    background_density: float or string
+        The density of the background. An string expression as a function of (x, y, z, t) can be used.
 
-    background_temperature: float
-        The temperature of the background
+    background_temperature: float or string
+        The temperature of the background. An string expression as a function of (x, y, z, t) can be used.
 
     scattering_processes: dictionary
         The scattering process to use and any needed information
@@ -1306,8 +1306,8 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         collision = pywarpx.Collisions.newcollision(self.name)
         collision.type = 'background_mcc'
         collision.species = self.species.name
-        collision.background_density = self.background_density
-        collision.background_temperature = self.background_temperature
+        collision.__setattr__('background_density(x,y,z,t)', self.background_density)
+        collision.__setattr__('background_temperature(x,y,z,t)', self.background_temperature)
         collision.background_mass = self.background_mass
         collision.ndt = self.ndt
 
