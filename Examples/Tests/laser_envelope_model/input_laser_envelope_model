@@ -11,7 +11,7 @@ diag.diag_type = Full
 diag.fields_to_plot = Ey
 diag.intervals = 50
 # diagnostics
-diagnostics.diags_names = diag
+diagnostics.diags_names = diag1
 # geometry
 geometry.dims = 2
 geometry.prob_hi =  100e-6  30e-6
