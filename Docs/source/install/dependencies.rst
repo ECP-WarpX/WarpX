@@ -6,7 +6,7 @@ Dependencies
 WarpX depends on the following popular third party software.
 Please see installation instructions below.
 
-- a mature `C++17 <https://en.wikipedia.org/wiki/C%2B%2B17>`__ compiler, e.g., GCC 8, Clang 7, NVCC 11.0, MSVC 19.15 or newer
+- a mature `C++17 <https://en.wikipedia.org/wiki/C%2B%2B17>`__ compiler, e.g., GCC 8.4+, Clang 7, NVCC 11.0, MSVC 19.15 or newer
 - `CMake 3.20.0+ <https://cmake.org>`__
 - `Git 2.18+ <https://git-scm.com>`__
 - `AMReX <https://amrex-codes.github.io>`__: we automatically download and compile a copy of AMReX
@@ -18,7 +18,7 @@ Optional dependencies include:
 - for on-node accelerated compute *one of either*:
 
   - `OpenMP 3.1+ <https://www.openmp.org>`__: for threaded CPU execution or
-  - `CUDA Toolkit 11.0+ <https://developer.nvidia.com/cuda-downloads>`__: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_) or
+  - `CUDA Toolkit 11.0+ (11.3+ recommended) <https://developer.nvidia.com/cuda-downloads>`__: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_) or
   - `ROCm 5.2+ (5.5+ recommended) <https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-rocm-installation-readme/>`__: for AMD GPU support
 - `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support when running on CPU or SYCL
 
