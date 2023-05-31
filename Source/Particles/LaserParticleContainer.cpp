@@ -87,7 +87,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     mass = std::numeric_limits<Real>::max();
 
     ParmParse pp_laser_name(m_laser_name);
-    
+
     CommonLaserParameters common_params;
     common_params.laser_name=m_laser_name;
     m_up_laser_profile->init(pp_laser_name, common_params);
