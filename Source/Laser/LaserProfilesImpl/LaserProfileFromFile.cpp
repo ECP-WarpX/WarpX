@@ -307,7 +307,9 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
         const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
         series.flush();
         for (int j=0; j<read_size; j++) {
-            h_E_lasy_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
+            h_E_lasy_data[j] = Complex{
+                static_cast<amrex::Real>(x_data.get()[j].real()),
+                static_cast<amrex::Real>(x_data.get()[j].imag())};
         }
     }
     //Broadcast E_lasy_data
