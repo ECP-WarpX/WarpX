@@ -608,6 +608,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
         const auto tmp_r_min = m_params.r_min;
         const auto tmp_r_max = m_params.r_max;
         const auto tmp_nr = m_params.nr;
+        const auto tmp_time_chunk_size = m_params.time_chunk_size;
         const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
         const auto tmp_idx_first_time = m_params.first_time_index;
         const int idx_t_right = idx_t_left+1;
@@ -641,7 +642,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
 
             const auto idx = [=](int im, int i_interp, int j_interp){
                 return
-                     im*m_params.time_chunk_size*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
+                     im*tmp_time_chunk_size*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
                         j_interp;
             };
             amrex::Real costheta;
