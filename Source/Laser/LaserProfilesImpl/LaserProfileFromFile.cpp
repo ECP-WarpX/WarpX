@@ -195,7 +195,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
         m_params.isLaserEnvelope = E.getAttribute("isLaserEnvelope").get<bool>();
         amrex::Print() << Utils::TextMsg::Info( "wavelength = " + std::to_string(common_params.wavelength) );
         amrex::Print() << Utils::TextMsg::Info( "isLaserEnvelope = " + std::to_string(m_params.isLaserEnvelope) );
-        
+
         if (m_params.fileGeom=="thetaMode") {
             //Dimensions of lasy file data: {m,t,r}
             amrex::Print() << Utils::TextMsg::Info( "Found lasy file in RZ geometry" );
