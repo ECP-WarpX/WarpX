@@ -325,7 +325,9 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
             series.flush();
             for (int m=0; m<m_params.n_rz_azimuthal_components; m++){
                 for (int j=0; j<read_size; j++) {
-                    h_E_lasy_data[j+m*read_size] = Complex{ r_data.get()[j+m*read_size].real(), r_data.get()[j+m*read_size].imag() };
+            h_E_lasy_data[j+m*read_size] = Complex{
+                static_cast<amrex::Real>(r_data.get()[j+m*read_size].real()),
+                static_cast<amrex::Real>(r_data.get()[j+m*read_size].imag())};
                 }
             }
         } else{
@@ -334,7 +336,9 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
             const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
             series.flush();
             for (int j=0; j<read_size; j++) {
-                h_E_lasy_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
+            h_E_lasy_data[j] = Complex{
+                static_cast<amrex::Real>(x_data.get()[j].real()),
+                static_cast<amrex::Real>(x_data.get()[j].imag())};
             }
         }
     }
