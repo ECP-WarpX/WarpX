@@ -30,7 +30,11 @@ class SpectralFieldDataRZ
 #elif defined(AMREX_USE_HIP)
         using FFTplans = amrex::LayoutData<rocfft_plan>;
 #else
+#  ifdef AMREX_USE_FLOAT
+        using FFTplans = amrex::LayoutData<fftwf_plan>;
+#else
         using FFTplans = amrex::LayoutData<fftw_plan>;
+#  endif
 #endif
         // Similarly, define the Hankel transformers and filter for each box.
         using MultiSpectralHankelTransformer = amrex::LayoutData<SpectralHankelTransformer>;
