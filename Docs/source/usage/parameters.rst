@@ -1211,15 +1211,15 @@ Laser initialization
     - ``"from_file"``: the electric field of the laser is read from an external file. Currently both
       the `lasy <https://lasydoc.readthedocs.io/en/latest/>`_ format as well as a custom binary format are supported. It requires to provide
       the name of the file to load setting the additional parameter ``<laser_name>.binary_file_name`` or ``<laser_name>.lasy_file_name`` (`string`).
-      It accepts an optional parameter ``<laser_name>.time_chunk_size`` (`int`) , only supported for a lasy file;
-      this allows to read only time_chunk_size timesteps from the lasy file. New timesteps are read as soon as they are needed.
+      It accepts an optional parameter ``<laser_name>.time_chunk_size`` (`int`), supported for both lasy and binary files;
+      this allows to read only time_chunk_size timesteps from the file. New timesteps are read as soon as they are needed.
 
-      The default value is automatically set to the number of timesteps contained in the lasy file
+      The default value is automatically set to the number of timesteps contained in the file
       (i.e. only one read is performed at the beginning of the simulation).
       It also accepts the optional parameter ``<laser_name>.delay`` (`float`; in seconds), which allows
       delaying (``delay > 0``) or anticipating (``delay < 0``) the laser by the specified amount of time.
 
-      Details about the usage of the lasy format: A lasy file is always 3D, but in the case where WarpX is compiled in 2D (or 1D), the laser antenna
+      Details about the usage of the lasy format: A lasy file can be read in 3D cartesian or in RZ geometry. In the cartesian geometry, in the case where WarpX is compiled in 2D (or 1D), the laser antenna
       will emit the field values that correspond to y=0 in the lasy file (and x=0 in the 1D case).
       One can generate a lasy file from Python, see an example at ``Examples/Tests/laser_injection_from_file``.
 
