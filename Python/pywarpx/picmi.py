@@ -1306,8 +1306,14 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         collision = pywarpx.Collisions.newcollision(self.name)
         collision.type = 'background_mcc'
         collision.species = self.species.name
-        collision.__setattr__('background_density(x,y,z,t)', self.background_density)
-        collision.__setattr__('background_temperature(x,y,z,t)', self.background_temperature)
+        if isinstance(self.background_density, str):
+            collision.__setattr__('background_density(x,y,z,t)', self.background_density)
+        else:
+            collision.background_density = self.background_density
+        if isinstance(self.background_temperature, str):
+            collision.__setattr__('background_temperature(x,y,z,t)', self.background_temperature)
+        else:
+            collision.background_temperature = self.background_temperature
         collision.background_mass = self.background_mass
         collision.ndt = self.ndt
 
