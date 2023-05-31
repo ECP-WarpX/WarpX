@@ -87,6 +87,11 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     mass = std::numeric_limits<Real>::max();
 
     ParmParse pp_laser_name(m_laser_name);
+    
+    CommonLaserParameters common_params;
+    common_params.laser_name=m_laser_name;
+    m_up_laser_profile->init(pp_laser_name, common_params);
+    m_wavelength = common_params.wavelength;
 
     // Parse the type of laser profile and set the corresponding flag `profile`
     std::string laser_type_s;
@@ -105,9 +110,6 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_p_X.size() == 3,
         m_laser_name + ".polarization must have three components.");
 
-    utils::parser::getWithParser(pp_laser_name, "wavelength", m_wavelength);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_wavelength > 0, "The laser wavelength must be >0.");
     const bool e_max_is_specified =
         utils::parser::queryWithParser(pp_laser_name, "e_max", m_e_max);
     Real a0;
@@ -266,12 +268,9 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_wavelength > 0.,
         "Laser wavelength must be positive.");
 
-    CommonLaserParameters common_params;
-    common_params.wavelength = m_wavelength;
     common_params.e_max = m_e_max;
     common_params.p_X = m_p_X;
     common_params.nvec = m_nvec;
-    m_up_laser_profile->init(pp_laser_name, common_params);
 }
 
 /* \brief Check if laser particles enter the box, and inject if necessary.

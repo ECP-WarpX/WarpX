@@ -32,11 +32,15 @@ using namespace amrex;
 void
 WarpXLaserProfiles::GaussianLaserProfile::init (
     const amrex::ParmParse& ppl,
-    CommonLaserParameters params)
+    CommonLaserParameters& params)
 {
     //Copy common params
     m_common_params = params;
 
+    //ParmParse pp_laser_name(m_common_params.laser_name);
+    utils::parser::getWithParser(ppl, "wavelength", m_common_params.wavelength);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_common_params.wavelength > 0, "The laser wavelength must be >0.");
+    
     // Parse the properties of the Gaussian profile
     utils::parser::getWithParser(ppl, "profile_waist", m_params.waist);
     utils::parser::getWithParser(ppl, "profile_duration", m_params.duration);

@@ -27,8 +27,12 @@ using namespace amrex;
 void
 WarpXLaserProfiles::FieldFunctionLaserProfile::init (
     const amrex::ParmParse& ppl,
-    CommonLaserParameters /*params*/)
+    CommonLaserParameters& params)
 {
+    //ParmParse pp_laser_name(m_common_params.laser_name);
+    utils::parser::getWithParser(ppl, "wavelength", params.wavelength);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(params.wavelength > 0, "The laser wavelength must be >0.");
+  
     // Parse the properties of the parse_field_function profile
     utils::parser::Store_parserString(
             ppl, "field_function(X,Y,t)", m_params.field_function);

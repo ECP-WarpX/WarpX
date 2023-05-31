@@ -32,6 +32,7 @@ namespace WarpXLaserProfiles {
  */
 struct CommonLaserParameters
 {
+    std::string laser_name;
     amrex::Real wavelength; //! central wavelength
     amrex::Real e_max;  //! maximum electric field at peak
     amrex::Vector<amrex::Real> p_X;// ! Polarization
@@ -66,7 +67,7 @@ public:
     virtual void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) = 0;
+        CommonLaserParameters& params) = 0;
 
     /** Update Laser Profile
      *
@@ -110,7 +111,7 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters& params) override final;
 
     //No update needed
     void
@@ -152,7 +153,7 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters& params) override final;
 
     //No update needed
     void
@@ -172,6 +173,8 @@ private:
     } m_params;
 
     amrex::Parser m_parser;
+
+    CommonLaserParameters m_common_params;
 };
 
 /**
@@ -187,7 +190,7 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters& params) override final;
 
     /** \brief Reads new field data chunk from file if needed
     *
@@ -323,6 +326,8 @@ private:
         int nr;
         /** Number of azimuthal components (2 per mode, 1 for mode 0) */
         int n_rz_azimuthal_components;
+        /** Boolean indicating whether the lasy data is the envelope of the laser (True) or the amplitude (False) */
+        bool isLaserEnvelope;
         /** Start time*/
         amrex::Real t_min;
         /** Stop time*/
