@@ -53,7 +53,7 @@ using namespace amrex;
 void
 WarpXLaserProfiles::FromFileLaserProfile::init (
     const amrex::ParmParse& ppl,
-    CommonLaserParameters params)
+    CommonLaserParameters& params)
 {
     if (!std::numeric_limits< double >::is_iec559)
     {
@@ -74,7 +74,7 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     if (!lasy_file_name.empty()) {
 #ifdef WARPX_USE_OPENPMD
         m_params.file_in_lasy_format = true;
-        parse_lasy_file(lasy_file_name);
+        parse_lasy_file(lasy_file_name, params);
 #else
         WARPX_ABORT_WITH_MESSAGE("WarpX has to be compiled with the option openPMD=ON to read a lasy file");
         amrex::ignore_unused(ppl, params);
@@ -170,7 +170,7 @@ WarpXLaserProfiles::FromFileLaserProfile::fill_amplitude(
 }
 
 void
-WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_name)
+WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_name, CommonLaserParameters& params)
 {
 #ifdef WARPX_USE_OPENPMD
     if(ParallelDescriptor::IOProcessor()){
@@ -188,6 +188,14 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
         std::vector<double> offset = E.gridGlobalOffset();
         std::vector<double> position = E_laser.position<double>();
         std::vector<double> spacing = E.gridSpacing<double>();
+
+        //Compute wavelength from file and extract isLaserEnvelope bool
+        auto angularFrequency = E.getAttribute("angularFrequency").get<double>();
+        common_params.wavelength= 2.*MathConst::pi*PhysConst::c / angularFrequency;
+        m_params.isLaserEnvelope = E.getAttribute("isLaserEnvelope").get<bool>();
+        amrex::Print() << Utils::TextMsg::Info( "wavelength = " + std::to_string(common_params.wavelength) );
+        amrex::Print() << Utils::TextMsg::Info( "isLaserEnvelope = " + std::to_string(m_params.isLaserEnvelope) );
+        
         if (m_params.fileGeom=="thetaMode") {
             //Dimensions of lasy file data: {m,t,r}
             amrex::Print() << Utils::TextMsg::Info( "Found lasy file in RZ geometry" );
