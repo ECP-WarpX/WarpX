@@ -94,6 +94,11 @@ public:
     particle_runtime_comps(p_rcomps),
     particle_runtime_icomps(p_ricomps) {}
 
+    /** Copy constructor for NamedComponentParticleContainer */
+    NamedComponentParticleContainer ( const NamedComponentParticleContainer &) = delete;
+    /** Copy operator for NamedComponentParticleContainer */
+    NamedComponentParticleContainer& operator= ( const NamedComponentParticleContainer & ) = delete;
+
     /** Move constructor for NamedComponentParticleContainer */
     NamedComponentParticleContainer ( NamedComponentParticleContainer && ) = default;
     /** Move operator for NamedComponentParticleContainer */

@@ -53,7 +53,7 @@ For PSATD+RZ simulations, you will need to build BLAS++ and LAPACK++:
   # BLAS++ (for PSATD+RZ)
   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
   rm -rf src/blaspp-summit-build
-  cmake -S src/blaspp -B src/blaspp-summit-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/summit/blaspp-master
+  cmake -S src/blaspp -B src/blaspp-summit-build -Duse_openmp=ON -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/summit/blaspp-master
   cmake --build src/blaspp-summit-build --target install --parallel 10
 
   # LAPACK++ (for PSATD+RZ)

@@ -3,7 +3,7 @@ name: 🧹 clang-tidy
 on: [push, pull_request]
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.head_ref }}-ubuntu
+  group: ${{ github.ref }}-${{ github.head_ref }}-clangtidy
   cancel-in-progress: true
 
 jobs:
@@ -39,7 +39,7 @@ jobs:
         cmake -S . -B build_clang_tidy \
           -DCMAKE_CXX_CLANG_TIDY="$PWD/clang_tidy_wrapper;--system-headers=0;--config-file=$PWD/.clang-tidy" \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_DIMS=3               \
+          -DWarpX_DIMS="1;2;RZ;3"      \
           -DWarpX_MPI=ON               \
           -DWarpX_COMPUTE=OMP          \
           -DWarpX_PSATD=ON             \
@@ -48,7 +48,15 @@ jobs:
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
 
-        cmake --build build_clang_tidy -j 2 2> build_clang_tidy/clang-tidy.log
+        set +e
+
+        #cmake --build build_clang_tidy -j 2 2> build_clang_tidy/clang-tidy.log
+        mkdir build_clang_tidy
+        cd build_clang_tidy
+        make -j 2 2> clang-tidy.log
+        cd ..
 
         cat build_clang_tidy/clang-tidy.log
         if [[ $(wc -m <build_clang_tidy/clang-tidy.log) -gt 1 ]]; then exit 1; fi
+
+        set -e

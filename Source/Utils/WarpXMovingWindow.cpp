@@ -235,7 +235,7 @@ WarpX::MoveWindow (const int step, bool move_j)
 
         // Shift scalar field F with div(E) cleaning in valid domain
         // TODO: shift F from pml_rz for RZ geometry with PSATD, once implemented
-        if (do_dive_cleaning)
+        if (F_fp[lev])
         {
             // Fine grid
             shiftMF(*F_fp[lev], geom[lev], num_shift, dir, lev, do_update_cost);
@@ -268,7 +268,7 @@ WarpX::MoveWindow (const int step, bool move_j)
 
         // Shift scalar field G with div(B) cleaning in valid domain
         // TODO: shift G from pml_rz for RZ geometry with PSATD, once implemented
-        if (do_divb_cleaning)
+        if (G_fp[lev])
         {
             // Fine grid
             shiftMF(*G_fp[lev], geom[lev], num_shift, dir, lev, do_update_cost);

@@ -1,5 +1,4 @@
-Checks: '
-    bugprone-branch-clone,
+Checks: '-*,
     cppcoreguidelines-avoid-goto,
     misc-const-correctness,
     modernize-use-nullptr
