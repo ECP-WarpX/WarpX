@@ -1116,7 +1116,7 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
                 (self.position[2] - laser.centroid_position[2])**2
             ) / constants.c
 
-            
+
 class LoadInitialField(picmistandard.PICMI_LoadInitialField):
     def initialize_inputs(self):
         pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
@@ -1124,8 +1124,8 @@ class LoadInitialField(picmistandard.PICMI_LoadInitialField):
             pywarpx.warpx.E_ext_grid_init_style = 'read_from_file'
         if self.load_B:
             pywarpx.warpx.B_ext_grid_init_style = 'read_from_file'
-            
-            
+
+
 class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
     def init(self, kw):
         self.mangle_dict = None
