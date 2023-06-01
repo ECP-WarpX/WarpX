@@ -8,8 +8,8 @@ boundary.field_hi = pml pml
 boundary.field_lo = pml pml
 # diag
 diag1.diag_type = Full
-diag1.fields_to_plot = Ey
 diag1.intervals = 50
+
 # diagnostics
 diagnostics.diags_names = diag1
 # geometry
