@@ -302,7 +302,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         warpx.GetPartContainer().WriteHeader(HeaderFile);
 
-        HeaderFile << warpx.getcurrent_injection_position() << "\n";
+        // FIXME
+        //HeaderFile << warpx.getcurrent_injection_position() << "\n";
 
         HeaderFile << warpx.getdo_moving_window() << "\n";
 

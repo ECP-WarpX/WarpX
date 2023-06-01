@@ -241,9 +241,12 @@ public:
     virtual void ContinuousInjection(const amrex::RealBox& /*injection_box*/) {}
     // Update optional sub-class-specific injection location.
     virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
+    bool doContinuousInjection() const {return do_continuous_injection;}
 
     // Inject a continuous flux of particles from a defined plane
     virtual void ContinuousFluxInjection(amrex::Real /*t*/, amrex::Real /*dt*/) {}
+
+    int getSpeciesId() const {return species_id;}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.

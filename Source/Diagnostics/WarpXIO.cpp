@@ -211,8 +211,9 @@ WarpX::InitFromCheckpoint ()
         }
 
         mypc->ReadHeader(is);
-        is >> current_injection_position;
-        GotoNextLine(is);
+        // FIXME
+        //is >> current_injection_position;
+        //GotoNextLine(is);
 
         int do_moving_window_before_restart;
         is >> do_moving_window_before_restart;
