@@ -537,13 +537,14 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
     PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
-    PinnedMemoryParticleContainer tmp;
-    if (isBTD || use_pinned_pc) {
-        if (!pinned_pc->isDefined()) continue; // Skip to the next particle container
-        tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
-    } else {
-        tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-    }
+    if (isBTD || use_pinned_pc)
+        if (!pinned_pc->isDefined())
+            continue;  // Skip to the next particle container
+
+    PinnedMemoryParticleContainer tmp = (isBTD || use_pinned_pc) ?
+        pinned_pc->make_alike<amrex::PinnedArenaAllocator>() :
+        pc->make_alike<amrex::PinnedArenaAllocator>();
+
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
