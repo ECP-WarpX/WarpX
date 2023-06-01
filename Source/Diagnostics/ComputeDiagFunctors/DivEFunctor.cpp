@@ -32,7 +32,7 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
     constexpr int ng = 1;
     // For staggered and nodal calculations, divE is computed on the nodes.
     // The temporary divE MultiFab is generated to comply with the location of divE.
-    amrex::IntVect cell_type = amrex::IntVect::TheNodeVector();
+    const amrex::IntVect cell_type = amrex::IntVect::TheNodeVector();
 #ifdef WARPX_DIM_RZ
     // For RZ spectral, all quantities are cell centered.
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)

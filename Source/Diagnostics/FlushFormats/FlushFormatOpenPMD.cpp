@@ -21,14 +21,14 @@ using namespace amrex;
 
 FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 {
-    ParmParse pp_diag_name(diag_name);
+    const ParmParse pp_diag_name(diag_name);
     // Which backend to use (ADIOS, ADIOS2 or HDF5). Default depends on what is available
     std::string openpmd_backend {"default"};
 
     // one file per timestep (or one file for all steps)
     std::string  openpmd_encoding {"f"};
     pp_diag_name.query("openpmd_backend", openpmd_backend);
-    bool encodingDefined = pp_diag_name.query("openpmd_encoding", openpmd_encoding);
+    const bool encodingDefined = pp_diag_name.query("openpmd_encoding", openpmd_encoding);
 
     openPMD::IterationEncoding encoding = openPMD::IterationEncoding::groupBased;
     if ( 0 == openpmd_encoding.compare("v") )
@@ -45,7 +45,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
       if ( ( openPMD::IterationEncoding::fileBased != encoding ) &&
            ( openPMD::IterationEncoding::groupBased != encoding ) )
       {
-        std::string warnMsg = diag_name+" Unable to support BTD with streaming. Using GroupBased ";
+        const std::string warnMsg = diag_name+" Unable to support BTD with streaming. Using GroupBased ";
         ablastr::warn_manager::WMRecordWarning("Diagnostics", warnMsg);
         encoding = openPMD::IterationEncoding::groupBased;
       }
@@ -58,7 +58,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   if ( !encodingDefined )
     {
       bool openpmd_tspf = false;
-      bool tspfDefined = pp_diag_name.query("openpmd_tspf", openpmd_tspf);
+      const bool tspfDefined = pp_diag_name.query("openpmd_tspf", openpmd_tspf);
       if ( tspfDefined && openpmd_tspf )
           encoding = openPMD::IterationEncoding::fileBased;
     }
@@ -67,7 +67,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   std::string operator_type;
   pp_diag_name.query("adios2_operator.type", operator_type);
   std::string const prefix = diag_name + ".adios2_operator.parameters";
-  ParmParse pp;
+  const ParmParse pp;
   auto entr = pp.getEntries(prefix);
 
   std::map< std::string, std::string > operator_parameters;
@@ -83,7 +83,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   std::string engine_type;
   pp_diag_name.query("adios2_engine.type", engine_type);
   std::string const engine_prefix = diag_name + ".adios2_engine.parameters";
-  ParmParse ppe;
+  const ParmParse ppe;
   auto eng_entr = ppe.getEntries(engine_prefix);
 
   std::map< std::string, std::string > engine_parameters;

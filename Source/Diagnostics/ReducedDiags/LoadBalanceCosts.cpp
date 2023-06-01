@@ -41,7 +41,7 @@ namespace
     amrex::Long
     countBoxMacroParticles (amrex::MFIter const & mfi, int const lev)
     {
-        int gid = mfi.index();
+        const int gid = mfi.index();
         int tid = mfi.LocalTileIndex();
         auto box_index = std::make_pair(gid, tid);
 
