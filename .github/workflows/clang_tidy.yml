@@ -37,7 +37,7 @@ jobs:
         #_____________________________________
 
         cmake -S . -B build_clang_tidy \
-          -DCMAKE_CXX_CLANG_TIDY="$PWD/clang_tidy_wrapper;--system-headers=0";--config-file=$PWD/.clang-tidy" \
+          -DCMAKE_CXX_CLANG_TIDY="$PWD/clang_tidy_wrapper;--system-headers=0;--config-file=$PWD/.clang-tidy" \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_DIMS="1;2;3;RZ"      \
           -DWarpX_MPI=ON               \
