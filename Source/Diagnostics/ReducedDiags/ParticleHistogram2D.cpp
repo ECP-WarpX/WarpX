@@ -297,6 +297,6 @@ void ParticleHistogram2D::WriteToFile (int step) const
 
     series.flush();
 #else
-    WARPX_ABORT_WITH_MESSAGE("openPMD-api cannot be used!");
+    WARPX_ABORT_WITH_MESSAGE("ParticleHistogram2D: Needs openPMD-api compiled into WarpX, but was not found!");
 #endif
 }
