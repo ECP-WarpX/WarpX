@@ -22,7 +22,7 @@ args = parser.parse_args()
 if args.iter == 'All' :
     for i in it :
         plt.figure()
-        data, info = ts.get_field(field = "data", iteration = i, plot = True)
+        ts.get_field(field = "data", iteration = i, plot = True)
         plt.savefig('Histogram_2D_iteration_' + str(i) + '.pdf')
 else :
     i = int(args.iter)
