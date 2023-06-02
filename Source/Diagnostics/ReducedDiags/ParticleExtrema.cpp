@@ -57,7 +57,7 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
 : ReducedDiags{rd_name}
 {
     // read species name
-    ParmParse pp_rd_name(rd_name);
+    const ParmParse pp_rd_name(rd_name);
     pp_rd_name.get("species",m_species_name);
 
     // get WarpX class object
@@ -306,20 +306,20 @@ void ParticleExtrema::ComputeDiags (int step)
             gmin = ReduceMin( myspc,
             [=] AMREX_GPU_HOST_DEVICE (const PType& p)
             {
-                Real ux = p.rdata(PIdx::ux);
-                Real uy = p.rdata(PIdx::uy);
-                Real uz = p.rdata(PIdx::uz);
-                Real us = ux*ux + uy*uy + uz*uz;
+                const Real ux = p.rdata(PIdx::ux);
+                const Real uy = p.rdata(PIdx::uy);
+                const Real uz = p.rdata(PIdx::uz);
+                const Real us = ux*ux + uy*uy + uz*uz;
                 return std::sqrt(us*inv_c2);
             });
         } else {
             gmin = ReduceMin( myspc,
             [=] AMREX_GPU_HOST_DEVICE (const PType& p)
             {
-                Real ux = p.rdata(PIdx::ux);
-                Real uy = p.rdata(PIdx::uy);
-                Real uz = p.rdata(PIdx::uz);
-                Real us = ux*ux + uy*uy + uz*uz;
+                const Real ux = p.rdata(PIdx::ux);
+                const Real uy = p.rdata(PIdx::uy);
+                const Real uz = p.rdata(PIdx::uz);
+                const Real us = ux*ux + uy*uy + uz*uz;
                 return std::sqrt(1.0_rt + us*inv_c2);
             });
         }
@@ -331,20 +331,20 @@ void ParticleExtrema::ComputeDiags (int step)
             gmax = ReduceMax( myspc,
             [=] AMREX_GPU_HOST_DEVICE (const PType& p)
             {
-                Real ux = p.rdata(PIdx::ux);
-                Real uy = p.rdata(PIdx::uy);
-                Real uz = p.rdata(PIdx::uz);
-                Real us = ux*ux + uy*uy + uz*uz;
+                const Real ux = p.rdata(PIdx::ux);
+                const Real uy = p.rdata(PIdx::uy);
+                const Real uz = p.rdata(PIdx::uz);
+                const Real us = ux*ux + uy*uy + uz*uz;
                 return std::sqrt(us*inv_c2);
             });
         } else {
             gmax = ReduceMax( myspc,
             [=] AMREX_GPU_HOST_DEVICE (const PType& p)
             {
-                Real ux = p.rdata(PIdx::ux);
-                Real uy = p.rdata(PIdx::uy);
-                Real uz = p.rdata(PIdx::uz);
-                Real us = ux*ux + uy*uy + uz*uz;
+                const Real ux = p.rdata(PIdx::ux);
+                const Real uy = p.rdata(PIdx::uy);
+                const Real uz = p.rdata(PIdx::uz);
+                const Real us = ux*ux + uy*uy + uz*uz;
                 return std::sqrt(1.0_rt + us*inv_c2);
             });
         }

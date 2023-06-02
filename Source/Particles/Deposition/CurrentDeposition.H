@@ -490,7 +490,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
                                           relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 0);
@@ -505,7 +505,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
                                           relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 1);
@@ -520,7 +520,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
                                           relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 2);

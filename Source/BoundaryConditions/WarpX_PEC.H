@@ -179,7 +179,7 @@ using namespace amrex;
                 if (isPECBoundary == true) {
                     // grid point ijk_vec is ig number of points pass the
                     // domain boundary in direction, idim
-                    int ig = get_cell_count_to_boundary(
+                    const int ig = get_cell_count_to_boundary(
                         dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
                     if (ig == 0) {
@@ -305,7 +305,7 @@ using namespace amrex;
 
                     // grid point ijk_vec is ig number of points pass the
                     // domain boundary in direction, idim
-                    int ig = get_cell_count_to_boundary(
+                    const int ig = get_cell_count_to_boundary(
                         dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
                     if (ig == 0) {

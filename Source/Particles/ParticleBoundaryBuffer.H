@@ -27,7 +27,7 @@ public:
         static bool initialized = false;
         if (!initialized)
         {
-            amrex::ParmParse pp_particles("particles");
+            const amrex::ParmParse pp_particles("particles");
             pp_particles.queryarr("species_names", m_species_names);
             initialized = true;
         }

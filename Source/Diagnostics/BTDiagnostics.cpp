@@ -1020,7 +1020,7 @@ BTDiagnostics::Flush (int i_buffer)
         file_name = file_name+"/buffer";
     }
     SetSnapshotFullStatus(i_buffer);
-    bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
+    const bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) ? true : false;
     bool const use_pinned_pc = true;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];

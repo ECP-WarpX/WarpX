@@ -46,11 +46,11 @@ namespace profiler {
 
 // `BL_PROFILE_PASTE(SYNC_SCOPE_, __COUNTER__)` and `SYNC_V_##vname` used to make unique names for
 // synchronizeOnDestruct objects, like `SYNC_SCOPE_0` and `SYNC_V_pmain`
-#define ABLASTR_PROFILE(fname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE(fname); ablastr::profiler::SynchronizeOnDestruct BL_PROFILE_PASTE(SYNC_SCOPE_, __COUNTER__){sync}
-#define ABLASTR_PROFILE_VAR(fname, vname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_VAR(fname, vname); ablastr::profiler::SynchronizeOnDestruct SYNC_V_##vname{sync}
-#define ABLASTR_PROFILE_VAR_NS(fname, vname, sync) BL_PROFILE_VAR_NS(fname, vname); ablastr::profiler::SynchronizeOnDestruct SYNC_V_##vname{sync}
+#define ABLASTR_PROFILE(fname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE(fname); const ablastr::profiler::SynchronizeOnDestruct BL_PROFILE_PASTE(SYNC_SCOPE_, __COUNTER__){sync}
+#define ABLASTR_PROFILE_VAR(fname, vname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_VAR(fname, vname); const ablastr::profiler::SynchronizeOnDestruct SYNC_V_##vname{sync}
+#define ABLASTR_PROFILE_VAR_NS(fname, vname, sync) BL_PROFILE_VAR_NS(fname, vname); const ablastr::profiler::SynchronizeOnDestruct SYNC_V_##vname{sync}
 #define ABLASTR_PROFILE_VAR_START(vname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_VAR_START(vname)
 #define ABLASTR_PROFILE_VAR_STOP(vname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_VAR_STOP(vname)
-#define ABLASTR_PROFILE_REGION(rname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_REGION(rname); ablastr::profiler::SynchronizeOnDestruct BL_PROFILE_PASTE(SYNC_R_, __COUNTER__){sync}
+#define ABLASTR_PROFILE_REGION(rname, sync) ablastr::profiler::device_synchronize(sync); BL_PROFILE_REGION(rname); const ablastr::profiler::SynchronizeOnDestruct BL_PROFILE_PASTE(SYNC_R_, __COUNTER__){sync}
 
 #endif // ABLASTR_PROFILERWRAPPER_H_

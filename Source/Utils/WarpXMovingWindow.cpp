@@ -55,7 +55,7 @@ using namespace amrex;
 void
 WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
 {
-    int dir = moving_window_dir;
+    const int dir = moving_window_dir;
     // Continuously inject plasma in new cells (by default only on level 0)
     if (WarpX::warpx_do_continuous_injection and (WarpX::gamma_boost > 1)){
         // In boosted-frame simulations, the plasma has moved since the last
@@ -94,7 +94,7 @@ WarpX::MoveWindow (const int step, bool move_j)
     // Update the continuous position of the moving window,
     // and of the plasma injection
     moving_window_x += (moving_window_v - WarpX::beta_boost * PhysConst::c)/(1 - moving_window_v * WarpX::beta_boost / PhysConst::c) * dt[0];
-    int dir = moving_window_dir;
+    const int dir = moving_window_dir;
 
     // Update warpx.current_injection_position
     // PhysicalParticleContainer uses this injection position
@@ -139,7 +139,7 @@ WarpX::MoveWindow (const int step, bool move_j)
            new_slice_lo[i] = current_slice_lo[i];
            new_slice_hi[i] = current_slice_hi[i];
        }
-       int num_shift_base_slice = static_cast<int> ((moving_window_x -
+       const int num_shift_base_slice = static_cast<int> ((moving_window_x -
                                   current_slice_lo[dir]) / cdx[dir]);
        new_slice_lo[dir] = current_slice_lo[dir] + num_shift_base_slice*cdx[dir];
        new_slice_hi[dir] = current_slice_hi[dir] + num_shift_base_slice*cdx[dir];
@@ -324,12 +324,12 @@ WarpX::MoveWindow (const int step, bool move_j)
         amrex::Real new_injection_position;
         if (moving_window_v >= 0){
             // Forward-moving window
-            amrex::Real dx = geom[lev].CellSize(dir);
+            const amrex::Real dx = geom[lev].CellSize(dir);
             new_injection_position = current_injection_position +
                 std::floor( (geom[lev].ProbHi(dir) - current_injection_position)/dx ) * dx;
         } else {
             // Backward-moving window
-            amrex::Real dx = geom[lev].CellSize(dir);
+            const amrex::Real dx = geom[lev].CellSize(dir);
             new_injection_position = current_injection_position -
                 std::floor( (current_injection_position - geom[lev].ProbLo(dir))/dx) * dx;
         }
@@ -533,7 +533,7 @@ WarpX::ShiftGalileanBoundary ()
     const amrex::Real* current_lo = geom[0].ProbLo();
     const amrex::Real* current_hi = geom[0].ProbHi();
 
-    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
+    const amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
 
 #if defined(WARPX_DIM_3D)
         m_galilean_shift = {

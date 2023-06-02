@@ -499,7 +499,7 @@ WarpX::ReadParameters ()
     }
 
     {
-        ParmParse pp_algo("algo");
+        const ParmParse pp_algo("algo");
         electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
     }
 
@@ -1037,7 +1037,7 @@ WarpX::ReadParameters ()
     }
 
     {
-        ParmParse pp_algo("algo");
+        const ParmParse pp_algo("algo");
 #ifdef WARPX_DIM_RZ
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::CKC,
             "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
@@ -1294,7 +1294,7 @@ WarpX::ReadParameters ()
 
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
-        ParmParse pp_psatd("psatd");
+        const ParmParse pp_psatd("psatd");
         pp_psatd.query("periodic_single_box_fft", fft_periodic_single_box);
 
         std::string nox_str;

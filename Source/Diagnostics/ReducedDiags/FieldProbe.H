@@ -129,7 +129,7 @@ private:
      */
     void normalize(amrex::Real &AMREX_RESTRICT x, amrex::Real &AMREX_RESTRICT y,
                    amrex::Real &AMREX_RESTRICT z){
-        amrex::Real mag = std::sqrt(x*x + y*y + z*z);
+        const amrex::Real mag = std::sqrt(x*x + y*y + z*z);
         x /= mag;
         y /= mag;
         z /= mag;

@@ -110,7 +110,7 @@ void ParseGeometryInput()
 void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
                                 Vector<int>& boost_direction)
 {
-    ParmParse pp_warpx("warpx");
+    const ParmParse pp_warpx("warpx");
     utils::parser::queryWithParser(pp_warpx, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
         beta_boost = std::sqrt(1._rt-1._rt/std::pow(gamma_boost,2._rt));
@@ -153,10 +153,10 @@ void ConvertLabParamsToBoost()
     Vector<Real> slice_lo(AMREX_SPACEDIM);
     Vector<Real> slice_hi(AMREX_SPACEDIM);
 
-    ParmParse pp_geometry("geometry");
-    ParmParse pp_warpx("warpx");
-    ParmParse pp_amr("amr");
-    ParmParse pp_slice("slice");
+    const ParmParse pp_geometry("geometry");
+    const ParmParse pp_warpx("warpx");
+    const ParmParse pp_amr("amr");
+    const ParmParse pp_slice("slice");
 
     utils::parser::getArrWithParser(
         pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
@@ -232,7 +232,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
         // Get box lower and upper physical z bound, and dz
         const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev, 0._rt)[2];
         const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev, 0._rt)[2];
-        amrex::Real dz  = WarpX::CellSize(lev)[2];
+        const amrex::Real dz  = WarpX::CellSize(lev)[2];
         // Get box lower index in the z direction
 #if defined(WARPX_DIM_3D)
         const int lo_ind = bx.loVect()[2];
@@ -243,7 +243,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
 #endif
         // Check if box intersect with [zmin, zmax]
         if ( (zmax>zmin_box && zmin<=zmax_box) ){
-            Array4<Real> arr = mf[mfi].array();
+            const Array4<Real> arr = mf[mfi].array();
             // Set field to 0 between zmin and zmax
             ParallelFor(bx, ncomp,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept{
@@ -285,7 +285,7 @@ void CheckDims ()
 #elif defined(WARPX_DIM_RZ)
     std::string const dims_compiled = "RZ";
 #endif
-    ParmParse pp_geometry("geometry");
+    const ParmParse pp_geometry("geometry");
     std::string dims;
     pp_geometry.get("dims", dims);
     std::string dims_error = "The selected WarpX executable was built as '";
@@ -390,10 +390,10 @@ void ReadBCParams ()
     amrex::Vector<std::string> particle_BC_lo(AMREX_SPACEDIM,"default");
     amrex::Vector<std::string> particle_BC_hi(AMREX_SPACEDIM,"default");
     amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
-    ParmParse pp_geometry("geometry");
-    ParmParse pp_warpx("warpx");
-    ParmParse pp_algo("algo");
-    int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    const armParse pp_geometry("geometry");
+    const ParmParse pp_warpx("warpx");
+    const ParmParse pp_algo("algo");
+    const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_geometry.queryarr("is_periodic", geom_periodicity),
@@ -405,7 +405,7 @@ void ReadBCParams ()
 
     // particle boundary may not be explicitly specified for some applications
     bool particle_boundary_specified = false;
-    ParmParse pp_boundary("boundary");
+    const ParmParse pp_boundary("boundary");
     pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
     pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
     if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM))
@@ -470,7 +470,7 @@ namespace WarpXUtilLoadBalance
     bool doCosts (const amrex::LayoutData<amrex::Real>* costs, const amrex::BoxArray ba,
                   const amrex::DistributionMapping& dm)
     {
-        bool consistent = costs && (dm == costs->DistributionMap()) &&
+        const bool consistent = costs && (dm == costs->DistributionMap()) &&
             (ba.CellEqual(costs->boxArray())) &&
             (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers);
         return consistent;

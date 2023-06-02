@@ -53,7 +53,7 @@ struct NormalizationType {
 ParticleHistogram::ParticleHistogram (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-    ParmParse pp_rd_name(rd_name);
+    const ParmParse pp_rd_name(rd_name);
 
     // read species
     std::string selected_species_name;
@@ -137,7 +137,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             {
                 ofs << m_sep;
                 ofs << "[" << c++ << "]";
-                Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
+                const Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
                 ofs << "bin" + std::to_string(1+i)
                              + "=" + std::to_string(b) + "()";
             }

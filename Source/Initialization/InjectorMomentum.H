@@ -142,7 +142,7 @@ namespace {
                     u = amrex::RandomNormal(approx_u_m, u_th, engine);
                 }
                 // Rejection method
-                amrex::Real xrand = amrex::Random(engine);
+                const amrex::Real xrand = amrex::Random(engine);
                 if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) reject = false;
             }
         }

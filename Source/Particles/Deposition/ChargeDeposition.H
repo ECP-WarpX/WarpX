@@ -386,7 +386,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         for (unsigned int ip_orig = bin_start + threadIdx.x; ip_orig < bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
 
 #if defined(WARPX_USE_GPUCLOCK)
             const auto KernelTimer = ablastr::parallelization::KernelTimer(

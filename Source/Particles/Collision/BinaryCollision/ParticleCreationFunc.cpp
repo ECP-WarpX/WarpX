@@ -19,7 +19,7 @@
 ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
                                             MultiParticleContainer const * const mypc)
     {
-        amrex::ParmParse pp_collision_name(collision_name);
+        const amrex::ParmParse pp_collision_name(collision_name);
 
         m_collision_type = BinaryCollisionUtils::get_collision_type(collision_name, mypc);
 
