@@ -41,7 +41,7 @@ export CEI_TMP="/tmp/cei"
 cmake-easyinstall \
   --prefix=/usr/local                      \
   git+https://github.com/icl-utk-edu/blaspp.git \
-  -Duse_openmp=ON                         \
+  -Duse_openmp=OFF                        \
   -Dbuild_tests=OFF                        \
   -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
   -DCMAKE_VERBOSE_MAKEFILE=ON
