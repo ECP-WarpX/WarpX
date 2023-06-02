@@ -1,7 +1,11 @@
-//
-// Created by juliette on 13/04/23.
-//
-
+```suggestion
+/* Copyright 2023 The WarpX Community
+ *
+ * This file is part of WarpX.
+ *
+ * Authors: Juliette Pech, Axel Huebl
+ * License: BSD-3-Clause-LBNL
+ */
 #include "ParticleHistogram2D.H"
 
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
