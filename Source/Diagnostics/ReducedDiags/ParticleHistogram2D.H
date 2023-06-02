@@ -1,7 +1,8 @@
-/* Copyright 2019-2020 Yinjian Zhao
+/* Copyright 2023 The WarpX Community
  *
  * This file is part of WarpX.
  *
+ * Authors: Juliette Pech, Axel Huebl
  * License: BSD-3-Clause-LBNL
  */
 
