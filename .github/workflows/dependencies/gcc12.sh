@@ -25,6 +25,8 @@ sudo apt-get install -y \
     libfftw3-mpi-dev    \
     libhdf5-openmpi-dev \
     libopenmpi-dev      \
+    libblas-dev         \
+    libgomp1            \
     ninja-build         \
     pkg-config          \
     wget
