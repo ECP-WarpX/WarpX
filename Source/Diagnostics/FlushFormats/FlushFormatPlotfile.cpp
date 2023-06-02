@@ -339,11 +339,9 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (auto& part_diag : particle_diags) {
         WarpXParticleContainer* pc = part_diag.getParticleContainer();
-        auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-        if (isBTD) {
-            PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
-            tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
-        }
+        auto tmp = isBTD ?
+            part_diag.getPinnedParticleContainer()->make_alike<amrex::PinnedArenaAllocator>() :
+            pc->make_alike<amrex::PinnedArenaAllocator>();
 
         Vector<std::string> real_names;
         Vector<std::string> int_names;
