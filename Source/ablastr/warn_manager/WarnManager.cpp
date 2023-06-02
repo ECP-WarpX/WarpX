@@ -178,7 +178,7 @@ void WarnManager::debug_read_warnings_from_input(const amrex::ParmParse& params)
     params.queryarr("test_warnings", warnings);
 
     for (const auto& warn : warnings){
-        amrex::ParmParse pp_warn(warn);
+        const amrex::ParmParse pp_warn(warn);
 
         std::string topic;
         pp_warn.query("topic", topic);

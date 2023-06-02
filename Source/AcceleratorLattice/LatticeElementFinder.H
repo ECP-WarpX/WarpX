@@ -94,7 +94,7 @@ struct LatticeElementFinder
 
         using namespace amrex::literals;
 
-        int nelements = static_cast<int>(zs.size());
+        const auto nelements = static_cast<int>(zs.size());
         amrex::ParticleReal const * zs_arr = zs.data();
         amrex::ParticleReal const * ze_arr = ze.data();
         int * indices_arr = indices.data();
@@ -227,14 +227,14 @@ struct LatticeElementFinderDevice
 
         amrex::ParticleReal Ex_sum = 0._prt;
         amrex::ParticleReal Ey_sum = 0._prt;
-        amrex::ParticleReal Ez_sum = 0._prt;
+        const amrex::ParticleReal Ez_sum = 0._prt;
         amrex::ParticleReal Bx_sum = 0._prt;
         amrex::ParticleReal By_sum = 0._prt;
-        amrex::ParticleReal Bz_sum = 0._prt;
+        const amrex::ParticleReal Bz_sum = 0._prt;
 
         if (d_quad.nelements > 0) {
             if (d_quad_indices_arr[iz] > -1) {
-                int ielement = d_quad_indices_arr[iz];
+                const auto ielement = d_quad_indices_arr[iz];
                 amrex::ParticleReal Ex, Ey, Bx, By;
                 d_quad.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
@@ -246,7 +246,7 @@ struct LatticeElementFinderDevice
 
         if (d_plasmalens.nelements > 0) {
             if (d_plasmalens_indices_arr[iz] > -1) {
-                int ielement = d_plasmalens_indices_arr[iz];
+                const auto ielement = d_plasmalens_indices_arr[iz];
                 amrex::ParticleReal Ex, Ey, Bx, By;
                 d_plasmalens.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;

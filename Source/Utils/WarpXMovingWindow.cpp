@@ -410,7 +410,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 
     amrex::IntVect shiftiv(0);
     shiftiv[dir] = num_shift;
-    amrex::Dim3 shift = shiftiv.dim3();
+    const amrex::Dim3 shift = shiftiv.dim3();
 
     const amrex::RealBox& real_box = geom.ProbDomain();
     const auto dx = geom.CellSizeArray();
@@ -452,23 +452,23 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                 {
                       // Compute x,y,z co-ordinates based on index type of mf
 #if defined(WARPX_DIM_1D_Z)
-                      amrex::Real x = 0.0_rt;
-                      amrex::Real y = 0.0_rt;
-                      amrex::Real fac_z = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
-                      amrex::Real z = i*dx[0] + real_box.lo(0) + fac_z;
+                      const amrex::Real x = 0.0_rt;
+                      const amrex::Real y = 0.0_rt;
+                      const amrex::Real fac_z = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
+                      const amrex::Real z = i*dx[0] + real_box.lo(0) + fac_z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                      amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
-                      amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
-                      amrex::Real y = 0.0;
-                      amrex::Real fac_z = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
-                      amrex::Real z = j*dx[1] + real_box.lo(1) + fac_z;
+                      const amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
+                      const amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
+                      const amrex::Real y = 0.0;
+                      const amrex::Real fac_z = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
+                      const amrex::Real z = j*dx[1] + real_box.lo(1) + fac_z;
 #else
-                      amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
-                      amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
-                      amrex::Real fac_y = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
-                      amrex::Real y = j*dx[1] + real_box.lo(1) + fac_y;
-                      amrex::Real fac_z = (1.0_rt - mf_type[2]) * dx[2]*0.5_rt;
-                      amrex::Real z = k*dx[2] + real_box.lo(2) + fac_z;
+                      const amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
+                      const amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
+                      const amrex::Real fac_y = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
+                      const amrex::Real y = j*dx[1] + real_box.lo(1) + fac_y;
+                      const amrex::Real fac_z = (1.0_rt - mf_type[2]) * dx[2]*0.5_rt;
+                      const amrex::Real z = k*dx[2] + real_box.lo(2) + fac_z;
 #endif
                       srcfab(i,j,k,n) = field_parser(x,y,z);
                 });
@@ -527,7 +527,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 void
 WarpX::ShiftGalileanBoundary ()
 {
-    amrex::Real cur_time = t_new[0];
+    const amrex::Real cur_time = t_new[0];
     amrex::Real new_lo[AMREX_SPACEDIM];
     amrex::Real new_hi[AMREX_SPACEDIM];
     const amrex::Real* current_lo = geom[0].ProbLo();
