@@ -1291,7 +1291,7 @@ BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_pat
 
     const amrex::Box snapshot_Box = snapshot_HeaderImpl.probDomain();
     const amrex::Box buffer_Box = buffer_HeaderImpl.probDomain();
-    const amrex::IntVect box_lo(0);
+    amrex::IntVect box_lo(0);
     amrex::IntVect box_hi(1);
     // Update prob_lo with min of buffer and snapshot
     for (int idim = 0; idim < snapshot_HeaderImpl.spaceDim(); ++idim) {

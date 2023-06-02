@@ -135,7 +135,7 @@ const std::map<std::string, int> ReductionType_algo_to_int = {
 };
 
 int
-GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
+GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
 
     // Read user input ; use "default" if it is not found
     std::string algo = "default";
