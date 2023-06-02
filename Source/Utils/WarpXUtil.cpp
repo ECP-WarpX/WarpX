@@ -154,7 +154,7 @@ void ConvertLabParamsToBoost()
     Vector<Real> slice_hi(AMREX_SPACEDIM);
 
     ParmParse pp_geometry("geometry");
-    ParmParse pp_warpx("warpx");    
+    ParmParse pp_warpx("warpx");
     ParmParse pp_slice("slice");
     const ParmParse pp_amr("amr");
 
