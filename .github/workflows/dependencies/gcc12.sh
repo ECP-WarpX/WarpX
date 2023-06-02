@@ -25,31 +25,6 @@ sudo apt-get install -y \
     libfftw3-mpi-dev    \
     libhdf5-openmpi-dev \
     libopenmpi-dev      \
-    libblas-dev         \
     ninja-build         \
     pkg-config          \
     wget
-
-# cmake-easyinstall
-#
-sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.com/ax3l/cmake-easyinstall/main/cmake-easyinstall
-sudo chmod a+x /usr/local/bin/cmake-easyinstall
-export CEI_SUDO="sudo"
-export CEI_TMP="/tmp/cei"
-
-# BLAS++ & LAPACK++
-cmake-easyinstall \
-  --prefix=/usr/local                      \
-  git+https://github.com/icl-utk-edu/blaspp.git \
-  -Duse_openmp=OFF                        \
-  -Dbuild_tests=OFF                        \
-  -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
-  -DCMAKE_VERBOSE_MAKEFILE=ON
-
-cmake-easyinstall \
-  --prefix=/usr/local                        \
-  git+https://github.com/icl-utk-edu/lapackpp.git \
-  -Duse_cmake_find_lapack=ON                 \
-  -Dbuild_tests=OFF                          \
-  -DCMAKE_CXX_COMPILER_LAUNCHER=$(which ccache) \
-  -DCMAKE_VERBOSE_MAKEFILE=ON
