@@ -27,5 +27,5 @@ if args.iter == 'All' :
 else :
     i = int(args.iter)
     plt.figure()
-    data, info = ts.get_field(field = "data", iteration = i, plot = True)
+    ts.get_field(field = "data", iteration = i, plot = True)
     plt.savefig('Histogram_2D_iteration_' + str(i) + '.pdf')
