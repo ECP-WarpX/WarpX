@@ -103,10 +103,11 @@ void UpdateMomentumPerezElastic (
     if ( L > T_PR(0.0) ) { lnLmd = L; }
     else
     {
-        // Compute b0
+        // Compute b0 according to eq (22) from Perez et al., Phys.Plasmas.19.083104 (2012)
+        // Note: there is a typo in the equation, the last square is incorrect!
+        // See the SMILEI documentation: https://smileipic.github.io/Smilei/Understand/collisions.html
         T_PR const b0 = amrex::Math::abs(q1*q2) * inv_c2 /
                (T_PR(4.0)*MathConst::pi*PhysConst::ep0) * gc/mass_g *
-               ( m1*g1s*m2*g2s/(p1sm*p1sm*inv_c2) + T_PR(1.0) ) *
                ( m1*g1s*m2*g2s/(p1sm*p1sm*inv_c2) + T_PR(1.0) );
 
         // Compute the minimal impact parameter
