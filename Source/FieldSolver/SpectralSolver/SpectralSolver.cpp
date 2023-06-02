@@ -8,7 +8,6 @@
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "SpectralAlgorithms/PsatdAlgorithmComoving.H"
 #include "SpectralAlgorithms/PsatdAlgorithmPml.H"
-#include "SpectralAlgorithms/PsatdAlgorithmGalileanPml.H"
 #include "SpectralAlgorithms/PsatdAlgorithmFirstOrder.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJConstantInTime.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"

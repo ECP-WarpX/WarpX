@@ -3,7 +3,6 @@ CEXE_sources += PsatdAlgorithmFirstOrder.cpp
 CEXE_sources += PsatdAlgorithmJConstantInTime.cpp
 CEXE_sources += PsatdAlgorithmJLinearInTime.cpp
 CEXE_sources += PsatdAlgorithmPml.cpp
-CEXE_sources += PsatdAlgorithmGalileanPml.cpp
 CEXE_sources += PsatdAlgorithmComoving.cpp
 
 ifeq ($(USE_RZ),TRUE)
