@@ -3,7 +3,7 @@
 # Copyright 2023 The WarpX Community
 #
 # License: BSD-3-Clause-LBNL
-# Authors: Axel Huebl, Luca Fedeli
+# Authors: Axel Huebl
 
 set -eu -o pipefail
 
