@@ -1,6 +1,10 @@
-//
-// Created by juliette on 03/05/23.
-//
+/* Copyright 2023 The WarpX Community
+ *
+ * This file is part of WarpX.
+ *
+ * Authors: Juliette Pech, Axel Huebl
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_OPENPMDHELPFUNCTION_H_
 #define WARPX_OPENPMDHELPFUNCTION_H_
 
