@@ -1285,19 +1285,24 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         The mass of the background particle. If not supplied, the default depends
         on the type of scattering process.
 
+    max_background_density: float
+        The maximum background density. When the background_density is an expression, this must also
+        be specified.
+
     ndt: integer, optional
         The collisions will be applied every "ndt" steps. Must be 1 or larger.
     """
 
     def __init__(self, name, species, background_density,
                  background_temperature, scattering_processes,
-                 background_mass=None, ndt=None, **kw):
+                 background_mass=None, max_background_density=None, ndt=None, **kw):
         self.name = name
         self.species = species
         self.background_density = background_density
         self.background_temperature = background_temperature
         self.background_mass = background_mass
         self.scattering_processes = scattering_processes
+        self.max_background_density = max_background_density
         self.ndt = ndt
 
         self.handle_init(kw)
@@ -1315,6 +1320,7 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         else:
             collision.background_temperature = self.background_temperature
         collision.background_mass = self.background_mass
+        collision.max_background_density = self.max_background_density
         collision.ndt = self.ndt
 
         collision.scattering_processes = self.scattering_processes.keys()
