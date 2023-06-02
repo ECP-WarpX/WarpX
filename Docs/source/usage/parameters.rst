@@ -2867,7 +2867,7 @@ Reduced Diagnostics
             :math:`v/c` is the particle velocity normalized by the speed of light.
             `w` represents the weight.
 
-        The output is a ``hist2D`` folder containing a set of openPMD files.
+        The output is a ``<reduced_diags_name>`` folder containing a set of openPMD files.
         An example input file and a loading python script of
         using the histogram2D reduced diagnostics
         are given in ``Examples/Tests/histogram2D/``.

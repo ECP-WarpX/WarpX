@@ -1,4 +1,3 @@
-```suggestion
 /* Copyright 2023 The WarpX Community
  *
  * This file is part of WarpX.
@@ -218,7 +217,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
 
                                        // don't count a particle if it is filtered out
                                        if (do_parser_filter)
-                                           if (!fun_filterparser(t, x, y, z, ux, uy, uz, w))
+                                           if(!static_cast<bool>(fun_filterparser(t, x, y, z, ux, uy, uz, w)))
                                                return;
 
                                        // continue function if particle is not filtered out
@@ -261,7 +260,7 @@ void ParticleHistogram2D::WriteToFile (int step) const
 
     // Create the OpenPMD series
     auto series = io::Series(
-            m_path + "hist2D/openpmd_%06T." + m_openpmd_backend,
+            m_path + m_rd_name + "/openpmd_%06T." + m_openpmd_backend,
             io::Access::APPEND);
     auto i = series.iterations[step + 1];
     // record
