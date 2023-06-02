@@ -42,7 +42,7 @@ namespace
     countBoxMacroParticles (amrex::MFIter const & mfi, int const lev)
     {
         const int gid = mfi.index();
-        int tid = mfi.LocalTileIndex();
+        const int tid = mfi.LocalTileIndex();
         auto box_index = std::make_pair(gid, tid);
 
         auto & warpx = WarpX::GetInstance();

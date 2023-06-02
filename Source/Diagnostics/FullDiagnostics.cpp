@@ -168,7 +168,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
 #ifdef WARPX_DIM_RZ
 
     auto & warpx = WarpX::GetInstance();
-    int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0, 0)->nComp();
+    const int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0, 0)->nComp();
     // Make sure all multifabs have the same number of components
     for (int dim=0; dim<3; dim++){
         AMREX_ALWAYS_ASSERT(
@@ -181,13 +181,13 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
 
     // Species index to loop over species that dump rho per species
     int i = 0;
-    int ncomp = ncomp_multimodefab;
+    const int ncomp = ncomp_multimodefab;
     // This function is called multiple times, for different values of `lev`
     // but the `varnames` need only be updated once.
-    bool update_varnames = (lev==0);
+    const bool update_varnames = (lev==0);
     if (update_varnames) {
         m_varnames.clear();
-        int n_rz = ncomp * m_varnames.size();
+        const int n_rz = ncomp * m_varnames.size();
         m_varnames.reserve(n_rz);
     }
 
@@ -333,7 +333,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     if (!m_dump_rz_modes) return;
 
     auto & warpx = WarpX::GetInstance();
-    int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0, 0)->nComp();
+    const int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0, 0)->nComp();
     // Make sure all multifabs have the same number of components
     for (int dim=0; dim<3; dim++){
         AMREX_ALWAYS_ASSERT(
@@ -354,7 +354,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     }
 
     // If rho is requested, all components will be written out
-    bool rho_requested = utils::algorithms::is_in( m_varnames, "rho" );
+    const bool rho_requested = utils::algorithms::is_in( m_varnames, "rho" );
 
     // First index of m_all_field_functors[lev] where RZ modes are stored
     int icomp = m_all_field_functors[0].size();

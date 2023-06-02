@@ -182,8 +182,8 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     Real owx = 1.0_rt-wx;
 
     const int kg = amrex::coarsen(k,2);
-    const Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    const Real owy = 1.0_rt-wy;
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 
@@ -546,8 +546,8 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
     const Real owx = 1.0_rt-wx;
 
     const int kg = amrex::coarsen(k,2);
-    const Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    const Real owy = 1.0_rt-wy;
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 

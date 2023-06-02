@@ -520,7 +520,7 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     const amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     const int ngrow = 1;
 #ifdef WARPX_DIM_RZ
-    int ncomps = WarpX::ncomps * static_cast<int>(m_cellcenter_varnames.size());
+    const int ncomps = WarpX::ncomps * static_cast<int>(m_cellcenter_varnames.size());
 #else
     const int ncomps = static_cast<int>(m_cellcenter_varnames.size());
 #endif
@@ -602,11 +602,11 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
 {
 #ifdef WARPX_DIM_RZ
     auto & warpx = WarpX::GetInstance();
-    int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0,0)->nComp();
-    int ncomp = ncomp_multimodefab;
+    const int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0,0)->nComp();
+    const int ncomp = ncomp_multimodefab;
 
 
-    bool update_varnames = true;
+    const bool update_varnames = true;
     if (update_varnames) {
         const int n_rz = ncomp * m_varnames_fields.size();
         m_varnames.clear();
@@ -631,7 +631,7 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
 
     // This function may be called multiple times, for different values of `lev`
     // but the `varnames` need only be updated once.
-    bool update_cellcenter_varnames = true;
+    const bool update_cellcenter_varnames = true;
     if (update_cellcenter_varnames) {
         const int n_rz = ncomp * m_cellcenter_varnames.size();
         m_cellcenter_varnames.clear();
@@ -659,8 +659,8 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
 {
 #ifdef WARPX_DIM_RZ
     auto & warpx = WarpX::GetInstance();
-    int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0,0)->nComp();
-    int ncomp = ncomp_multimodefab;
+    const int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0,0)->nComp();
+    const int ncomp = ncomp_multimodefab;
     // Clear any pre-existing vector to release stored data
     // This ensures that when domain is load-balanced, the functors point
     // to the correct field-data pointers
@@ -668,10 +668,10 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     // For back-transformed data, all the components are cell-centered and stored
     // in a single multifab, m_cell_centered_data.
     // Therefore, size of functors at all levels is 1
-    int num_BT_functors = 1;
+    const int num_BT_functors = 1;
     m_all_field_functors[lev].resize(num_BT_functors);
     for (int i = 0; i < num_BT_functors; ++i) {
-        int nvars = static_cast<int>(m_varnames.size());
+        const int nvars = static_cast<int>(m_varnames.size());
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                                        m_cell_centered_data[lev].get(), lev,
                                        nvars, m_num_buffers, m_varnames,

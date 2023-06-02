@@ -735,7 +735,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                 auto const positionComponents = detail::getParticlePositionComponentLabels();
 #if defined(WARPX_DIM_RZ)
                 {
-                   std::shared_ptr<amrex::ParticleReal> z(
+                   const std::shared_ptr<amrex::ParticleReal> z(
                            new amrex::ParticleReal[numParticleOnTile],
                            [](amrex::ParticleReal const *p) { delete[] p; }
                    );
@@ -752,11 +752,11 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
                                                  "openPMD: theta and tile size do not match");
                 {
-                    std::shared_ptr< amrex::ParticleReal > x(
+                    const std::shared_ptr< amrex::ParticleReal > x(
                             new amrex::ParticleReal[numParticleOnTile],
                             [](amrex::ParticleReal const *p){ delete[] p; }
                     );
-                    std::shared_ptr< amrex::ParticleReal > y(
+                    const std::shared_ptr< amrex::ParticleReal > y(
                             new amrex::ParticleReal[numParticleOnTile],
                             [](amrex::ParticleReal const *p){ delete[] p; }
                     );
