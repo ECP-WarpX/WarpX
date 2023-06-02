@@ -81,7 +81,7 @@ jobs:
         ./build/bin/warpx.2d Examples/Physics_applications/laser_acceleration/inputs_2d
 
   build_3D_sp:
-    name: GCC 3D w/ MPI, single precision
+    name: GCC 3D & RZ w/ MPI, single precision
     runs-on: ubuntu-22.04
     if: github.event.pull_request.draft == false
     env:
@@ -101,10 +101,10 @@ jobs:
         path: |
           ~/.ccache
           ~/.cache/ccache
-        key: ccache-openmp-3D-SP-${{ hashFiles('.github/workflows/ubuntu.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        key: ccache-openmp-3D-RZ-SP-${{ hashFiles('.github/workflows/ubuntu.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
         restore-keys: |
-          ccache-openmp-3D-SP-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
-          ccache-openmp-3D-SP-
+          ccache-openmp-3D-RZ-SP-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
+          ccache-openmp-3D-RZ-SP-
     - name: build WarpX
       run: |
         cmake -S . -B build                 \
