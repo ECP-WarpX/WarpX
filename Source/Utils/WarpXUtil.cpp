@@ -153,10 +153,10 @@ void ConvertLabParamsToBoost()
     Vector<Real> slice_lo(AMREX_SPACEDIM);
     Vector<Real> slice_hi(AMREX_SPACEDIM);
 
-    const ParmParse pp_geometry("geometry");
-    const ParmParse pp_warpx("warpx");
+    ParmParse pp_geometry("geometry");
+    ParmParse pp_warpx("warpx");    
+    ParmParse pp_slice("slice");
     const ParmParse pp_amr("amr");
-    const ParmParse pp_slice("slice");
 
     utils::parser::getArrWithParser(
         pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
@@ -390,7 +390,7 @@ void ReadBCParams ()
     amrex::Vector<std::string> particle_BC_lo(AMREX_SPACEDIM,"default");
     amrex::Vector<std::string> particle_BC_hi(AMREX_SPACEDIM,"default");
     amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
-    const armParse pp_geometry("geometry");
+    ParmParse pp_geometry("geometry");
     const ParmParse pp_warpx("warpx");
     const ParmParse pp_algo("algo");
     const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
