@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-stop_time = 40.e-15
+stop_time = 39.e-15
 amr.n_cell = 32 1024
 amr.max_grid_size = 512
 amr.blocking_factor = 32

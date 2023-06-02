@@ -142,7 +142,7 @@ def do_analysis(fname, compname, steps):
 
 def launch_analysis(executable):
     os.system("./" + executable + " inputs.from_RZ_file_test diag1.file_prefix=diags/plotfiles/plt")
-    do_analysis("diags/plotfiles/plt000628/", "comp_unf.pdf", 628)
+    do_analysis("diags/plotfiles/plt000612/", "comp_unf.pdf", 612)
 
 
 def main() :
@@ -174,7 +174,7 @@ def main() :
         assert(False)
 
     # Do the checksum test
-    filename_end = "diags/plotfiles/plt000628/"
+    filename_end = "diags/plotfiles/plt000612/"
     test_name = "LaserInjectionFromRZLASYFile"
     checksumAPI.evaluate_checksum(test_name, filename_end)
     print('Passed')
