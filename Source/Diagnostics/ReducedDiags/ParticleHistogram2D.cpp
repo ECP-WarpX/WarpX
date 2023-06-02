@@ -273,12 +273,12 @@ void ParticleHistogram2D::WriteToFile (int step) const
     auto data = f_mesh[io::RecordComponent::SCALAR];
 
     // meta data
-    f_mesh.setAxisLabels({function_string_ord, function_string_abs}); // ord, abs
-    std::vector< double > const& gridGlobalOffset = {0,0};
+    f_mesh.setAxisLabels({function_string_ord, function_string_abs}); // ordinate, abscissa
+    std::vector< double > const& gridGlobalOffset = {m_bin_min_ord, m_bin_min_abs};
     f_mesh.setGridGlobalOffset(gridGlobalOffset);
     f_mesh.setGridSpacing<amrex::Real>({m_bin_size_ord, m_bin_size_abs});
 
-    data.setPosition<amrex::Real>({0, 0});
+    data.setPosition<amrex::Real>({0.5, 0.5});
 
     auto dataset = io::Dataset(
             io::determineDatatype<double>(),

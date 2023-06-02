@@ -5,6 +5,7 @@
 import argparse
 
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 from openpmd_viewer import OpenPMDTimeSeries
 
 parser = argparse.ArgumentParser(description='Process a 2D histogram name and an integer.')
@@ -22,13 +23,25 @@ print('The available iterations of the simulation are:', it)
 print('The axis of the histogram are (0: ordinate ; 1: abscissa):', info.axes)
 print('The data shape is:', data.shape)
 
+# Add the simulation time to the title once this information
+# is available in the "info" FieldMetaInformation object.
 if args.iter == 'All' :
     for i in it :
         plt.figure()
-        ts.get_field(field = "data", iteration = i, plot = True)
+        data, info = ts.get_field(field = "data", iteration = i, plot = False)
+        plt.imshow(data, aspect="auto", norm=colors.LogNorm(), extent=info.imshow_extent)
+        plt.title(args.hist2D + " (iteration %d)" % i)
+        plt.xlabel(info.axes[1] + ' (m)')
+        plt.ylabel(info.axes[0] + ' (m.s-1)')
+        plt.colorbar()
         plt.savefig('Histogram_2D_' + args.hist2D + '_iteration_' + str(i) + '.pdf')
 else :
     i = int(args.iter)
     plt.figure()
-    ts.get_field(field = "data", iteration = i, plot = True)
+    data, info = ts.get_field(field = "data", iteration = i, plot = False)
+    plt.imshow(data, aspect="auto", norm=colors.LogNorm(), extent=info.imshow_extent)
+    plt.title(args.hist2D + " (iteration %d)" % i)
+    plt.xlabel(info.axes[1] + ' (m)')
+    plt.ylabel(info.axes[0] + ' (m.s-1)')
+    plt.colorbar()
     plt.savefig('Histogram_2D_' + args.hist2D + '_iteration_' + str(i) + '.pdf')
