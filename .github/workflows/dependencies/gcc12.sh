@@ -26,7 +26,6 @@ sudo apt-get install -y \
     libhdf5-openmpi-dev \
     libopenmpi-dev      \
     libblas-dev         \
-    libgomp1            \
     ninja-build         \
     pkg-config          \
     wget

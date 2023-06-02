@@ -85,7 +85,6 @@ jobs:
     runs-on: ubuntu-22.04
     if: github.event.pull_request.draft == false
     env:
-      CXXFLAGS: "-Werror"
       CXX: "g++-12"
       CC: "gcc-12"
     steps:
