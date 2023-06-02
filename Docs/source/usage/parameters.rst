@@ -2815,7 +2815,7 @@ Reduced Diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
 
     * ``ParticleHistogram2D``
-        This type computes a user defined particle histogram in 2D.
+        This type computes a user defined, 2D particle histogram.
 
         * ``<reduced_diags_name>.species`` (`string`)
             A species name must be provided,
