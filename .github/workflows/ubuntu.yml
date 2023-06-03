@@ -109,7 +109,7 @@ jobs:
         cmake -S . -B build                 \
           -GNinja                           \
           -DCMAKE_VERBOSE_MAKEFILE=ON       \
-          -DWarpX_DIMS="RZ;3"                  \
+          -DWarpX_DIMS="RZ;3"               \
           -DWarpX_EB=OFF                    \
           -DWarpX_PSATD=ON                  \
           -DWarpX_PRECISION=SINGLE          \
