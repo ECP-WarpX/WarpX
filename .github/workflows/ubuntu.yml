@@ -118,6 +118,7 @@ jobs:
 
         cmake --build build -j 2
         ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_3d
+        ./build/bin/warpx.3d Examples/Physics_applications/laser_acceleration/inputs_rz
 
   build_gcc_ablastr:
     name: GCC ABLASTR w/o MPI
