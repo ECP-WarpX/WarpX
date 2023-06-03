@@ -8,6 +8,8 @@
 #ifndef DEFAULTINITIALIZATION_H_
 #define DEFAULTINITIALIZATION_H_
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX_GpuContainers.H>
 #include <AMReX_REAL.H>
 
@@ -62,7 +64,7 @@ amrex::ParticleReal initializeRealValue (const InitializationPolicy policy, amre
             return -std::log(amrex::Random(engine));
         }
         default : {
-            amrex::Abort("Initialization Policy not recognized");
+            WARPX_ABORT_WITH_MESSAGE("Initialization Policy not recognized");
             return 1.0;
         }
     }
@@ -75,7 +77,7 @@ int initializeIntValue (const InitializationPolicy policy) noexcept
         case InitializationPolicy::Zero : return 0;
         case InitializationPolicy::One  : return 1;
         default : {
-            amrex::Abort("Initialization Policy not recognized");
+            WARPX_ABORT_WITH_MESSAGE("Initialization Policy not recognized");
             return 1;
         }
     }

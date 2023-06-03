@@ -9,6 +9,7 @@
 #define GET_VELOCITY_H_
 
 #include "VelocityProperties.H"
+#include "Utils/TextMsg.H"
 
 /** Get velocity at a point on the grid
  *
@@ -65,7 +66,7 @@ struct GetVelocity
             }
             default:
             {
-                amrex::Abort("Get initial velocity: unknown type");
+                WARPX_ABORT_WITH_MESSAGE("Get initial velocity: unknown type");
                 return 0.0;
             }
         }

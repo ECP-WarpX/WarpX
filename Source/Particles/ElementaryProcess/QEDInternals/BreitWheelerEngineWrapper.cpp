@@ -6,6 +6,8 @@
  */
 #include "BreitWheelerEngineWrapper.H"
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_GpuDevice.H>
@@ -153,7 +155,7 @@ void BreitWheelerEngine::compute_lookup_tables (
     m_lookup_tables_initialized = true;
 #else
     amrex::ignore_unused(ctrl, bw_minimum_chi_phot);
-    amrex::Abort("WarpX was not compiled with table generation support!");
+    WARPX_ABORT_WITH_MESSAGE("WarpX was not compiled with table generation support!");
 #endif
 }
 

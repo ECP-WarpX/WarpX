@@ -158,7 +158,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 
     //Check if profile exists
     if(laser_profiles_dictionary.count(laser_type_s) == 0 ){
-        amrex::Abort(std::string("Unknown laser type: ").append(laser_type_s));
+        WARPX_ABORT_WITH_MESSAGE(std::string("Unknown laser type: ").append(laser_type_s));
     }
     m_up_laser_profile = laser_profiles_dictionary.at(laser_type_s)();
     //__________

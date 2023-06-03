@@ -18,6 +18,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/ParticleUtils.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
@@ -87,7 +88,7 @@ public:
         : CollisionBase(collision_name)
     {
         if(m_species_names.size() != 2)
-            amrex::Abort("Binary collision " + collision_name + " must have exactly two species.");
+            WARPX_ABORT_WITH_MESSAGE("Binary collision " + collision_name + " must have exactly two species.");
 
         if (m_species_names[0] == m_species_names[1])
             m_isSameSpecies = true;

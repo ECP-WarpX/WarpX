@@ -10,6 +10,7 @@
 #define INJECTOR_DENSITY_H_
 
 #include "CustomDensityProb.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
@@ -105,7 +106,7 @@ struct InjectorDensityPredefined
             return static_cast<amrex::Real>(n);
         }
         default:
-            amrex::Abort("InjectorDensityPredefined: how did we get here?");
+            WARPX_ABORT_WITH_MESSAGE("InjectorDensityPredefined: how did we get here?");
             return amrex::Real(0.0);
         }
     }
@@ -186,7 +187,7 @@ struct InjectorDensity
         }
         default:
         {
-            amrex::Abort("InjectorDensity: unknown type");
+            WARPX_ABORT_WITH_MESSAGE("InjectorDensity: unknown type");
             return 0.0;
         }
         }

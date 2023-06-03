@@ -44,13 +44,13 @@ GetNeigh(const amrex::Array4<T>& arr,
 #elif defined(WARPX_DIM_3D)
         return arr(i + i_n, j, k + j_n);
 #else
-        amrex::Abort("GetNeigh: Only implemented in 2D3V and 3D3V");
+        WARPX_ABORT_WITH_MESSAGE("GetNeigh: Only implemented in 2D3V and 3D3V");
 #endif
     }else if(dim == 2){
         return arr(i + i_n, j + j_n, k);
     }
 
-    amrex::Abort("GetNeigh: dim must be 0, 1 or 2");
+    WARPX_ABORT_WITH_MESSAGE("GetNeigh: dim must be 0, 1 or 2");
 
     return -1;
 }
@@ -87,7 +87,7 @@ SetNeigh(const amrex::Array4<T>& arr, const T val,
 #elif defined(WARPX_DIM_3D)
         arr(i + i_n, j, k + j_n) = val;
 #else
-        amrex::Abort("SetNeigh: Only implemented in 2D3V and 3D3V");
+        WARPX_ABORT_WITH_MESSAGE("SetNeigh: Only implemented in 2D3V and 3D3V");
 #endif
         return;
     }else if(dim == 2){
@@ -95,7 +95,7 @@ SetNeigh(const amrex::Array4<T>& arr, const T val,
         return;
     }
 
-    amrex::Abort("SetNeigh: dim must be 0, 1 or 2");
+    WARPX_ABORT_WITH_MESSAGE("SetNeigh: dim must be 0, 1 or 2");
 
 }
 
@@ -130,14 +130,14 @@ ComputeSStab(const int i, const int j, const int k,
         return 0.5_rt * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                   lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
 #else
-        amrex::Abort("ComputeSStab: Only implemented in 2D3V and 3D3V");
+        WARPX_ABORT_WITH_MESSAGE("ComputeSStab: Only implemented in 2D3V and 3D3V");
 #endif
     }else if(dim == 2){
         return 0.5_rt * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
                                   ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
     }
 
-    amrex::Abort("ComputeSStab: dim must be 0, 1 or 2");
+    WARPX_ABORT_WITH_MESSAGE("ComputeSStab: dim must be 0, 1 or 2");
 
     return -1;
 }

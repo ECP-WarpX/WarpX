@@ -19,6 +19,7 @@
 #include "Pusher/UpdateMomentumVay.H"
 #include "RigidInjectedParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -457,7 +458,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                                Exp, Eyp, Ezp, Bxp,
                                                Byp, Bzp, qp, m, dt);
                 } else {
-                    amrex::Abort("Unknown particle pusher");
+                    WARPX_ABORT_WITH_MESSAGE("Unknown particle pusher");
                 }
             });
 

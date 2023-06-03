@@ -242,12 +242,12 @@ struct InjectorMomentumBoltzmann
         // high for Boltzmann or less than zero
         amrex::Real const theta = temperature(x,y,z);
         if (theta < 0._rt) {
-            amrex::Abort("Negative temperature parameter theta encountered, which is not allowed");
+            WARPX_ABORT_WITH_MESSAGE("Negative temperature parameter theta encountered, which is not allowed");
         }
         // Calculate local velocity and abort if |beta|>=1
         amrex::Real const beta = velocity(x,y,z);
         if (beta <= -1._rt || beta >= 1._rt) {
-            amrex::Abort("beta = v/c magnitude greater than or equal to 1");
+            WARPX_ABORT_WITH_MESSAGE("beta = v/c magnitude greater than or equal to 1");
         }
         // Calculate the value of vave from the local temperature
         amrex::Real const vave = std::sqrt(theta);
@@ -328,12 +328,12 @@ struct InjectorMomentumJuttner
         // Check if temperature is too low to do sampling method. Abort for now,
         // in future should implement an alternate method e.g. inverse transform
         if (theta < 0.1_rt) {
-            amrex::Abort("Temeprature parameter theta is less than minimum 0.1 allowed for Maxwell-Juttner");
+            WARPX_ABORT_WITH_MESSAGE("Temeprature parameter theta is less than minimum 0.1 allowed for Maxwell-Juttner");
         }
         // Calculate local velocity and abort if |beta|>=1
         amrex::Real const beta = velocity(x,y,z);
         if (beta <= -1._rt || beta >= 1._rt) {
-            amrex::Abort("beta = v/c magnitude greater than or equal to 1");
+            WARPX_ABORT_WITH_MESSAGE("beta = v/c magnitude greater than or equal to 1");
         }
         int const dir = velocity.direction();
         x1 = static_cast<amrex::Real>(0._rt);
@@ -586,7 +586,7 @@ struct InjectorMomentum
         }
         default:
         {
-            amrex::Abort("InjectorMomentum: unknown type");
+            WARPX_ABORT_WITH_MESSAGE("InjectorMomentum: unknown type");
             return {0.0,0.0,0.0};
         }
         }
@@ -634,7 +634,7 @@ struct InjectorMomentum
         }
         default:
         {
-            amrex::Abort("InjectorMomentum: unknown type");
+            WARPX_ABORT_WITH_MESSAGE("InjectorMomentum: unknown type");
             return {0.0,0.0,0.0};
         }
         }

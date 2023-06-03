@@ -655,7 +655,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
     {
         if (do_pml && pml[lev]->ok())
          {
-            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+            WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
          }
 
         const amrex::Periodicity& period = Geom(lev).periodicity();
@@ -675,7 +675,7 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
     {
         if (do_pml && pml[lev]->ok())
          {
-            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+            WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
          }
 
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
@@ -709,7 +709,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
     {
         if (do_pml && pml[lev]->ok())
           {
-            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+            WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
           }
         const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
@@ -728,7 +728,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
     {
         if (do_pml && pml[lev]->ok())
           {
-            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+            WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
           }
 
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
