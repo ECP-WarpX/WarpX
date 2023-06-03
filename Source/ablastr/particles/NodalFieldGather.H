@@ -62,12 +62,12 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
     i = static_cast<int>(amrex::Math::floor(x));
     W[0][1] = x - i;
 #   elif (defined WARPX_DIM_RZ)
-    amrex::Real r = (std::sqrt(xp*xp+yp*yp) - plo[0]) * dxi[0];
+    const amrex::Real r = (std::sqrt(xp*xp+yp*yp) - plo[0]) * dxi[0];
     i = static_cast<int>(amrex::Math::floor(r));
     W[0][1] = r - i;
 #   endif
 
-    amrex::Real z = (zp - plo[1]) * dxi[1];
+    const amrex::Real z = (zp - plo[1]) * dxi[1];
     j = static_cast<int>(amrex::Math::floor(z));
     W[1][1] = z - j;
 

@@ -175,7 +175,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         );
     }
 
-    amrex::LPInfo info;
+    const amrex::LPInfo info;
     for (int lev=0; lev<=finest_level; lev++) {
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =

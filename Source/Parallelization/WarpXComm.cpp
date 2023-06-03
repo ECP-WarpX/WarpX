@@ -713,7 +713,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
           }
         const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
-            Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
+            const Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -733,7 +733,7 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
 
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
-            Vector<MultiFab*> mf{Bfield_avg_cp[lev][0].get(),Bfield_avg_cp[lev][1].get(),Bfield_avg_cp[lev][2].get()};
+            const Vector<MultiFab*> mf{Bfield_avg_cp[lev][0].get(),Bfield_avg_cp[lev][1].get(),Bfield_avg_cp[lev][2].get()};
             ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, cperiod);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -994,7 +994,7 @@ void WarpX::SumBoundaryJ (
 {
     amrex::MultiFab& J = *current[lev][idim];
 
-    amrex::IntVect ng = J.nGrowVect();
+    const amrex::IntVect ng = J.nGrowVect();
     amrex::IntVect ng_depos_J = get_ng_depos_J();
 
     if (WarpX::do_current_centering)
@@ -1072,7 +1072,7 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
                         J_fp[lev][idim]->DistributionMap(), J_fp[lev][idim]->nComp(), 0);
             mf.setVal(0.0);
 
-            IntVect ng = J_cp[lev+1][idim]->nGrowVect();
+            const IntVect ng = J_cp[lev+1][idim]->nGrowVect();
 
             if (use_filter && current_buf[lev+1][idim])
             {

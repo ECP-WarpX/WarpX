@@ -82,10 +82,10 @@ guardCellManager::Init (
     // interpolation from coarse grid to fine grid.
     int ngx = (ngx_tmp % 2) ? ngx_tmp+1 : ngx_tmp;  // Always even number
     int ngy = (ngy_tmp % 2) ? ngy_tmp+1 : ngy_tmp;  // Always even number
-    int ngz_nonci = (ngz_tmp % 2) ? ngz_tmp+1 : ngz_tmp;  // Always even number
+    const int ngz_nonci = (ngz_tmp % 2) ? ngz_tmp+1 : ngz_tmp;  // Always even number
     int ngz;
     if (do_fdtd_nci_corr) {
-        int ng = ngz_tmp + nci_corr_stencil;
+        const int ng = ngz_tmp + nci_corr_stencil;
         ngz = (ng % 2) ? ng+1 : ng;
     } else {
         ngz = ngz_nonci;
@@ -104,7 +104,7 @@ guardCellManager::Init (
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
         const int nlevs = ref_ratios.size()+1;
-        int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
+        const int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
 
         ngx = std::max(ngx,max_r);
         ngy = std::max(ngy,max_r);
@@ -199,7 +199,7 @@ guardCellManager::Init (
         int ngFFt_y = (grid_type == GridType::Collocated) ? noy_fft : noy_fft / 2;
         int ngFFt_z = (grid_type == GridType::Collocated || galilean) ? noz_fft : noz_fft / 2;
 
-        ParmParse pp_psatd("psatd");
+        const ParmParse pp_psatd("psatd");
         utils::parser::queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
         utils::parser::queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
         utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);

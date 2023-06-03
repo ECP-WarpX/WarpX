@@ -124,7 +124,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     utils::parser::queryWithParser(pp_species_name, "density_max", density_max);
 
     std::string physical_species_s;
-    bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
+    const bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
     if (species_is_specified){
         const auto physical_species_from_string = species::from_string( physical_species_s );
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
@@ -237,7 +237,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::getWithParser(pp_species_name, "npart", npart);
         pp_species_name.query("do_symmetrize", do_symmetrize);
         pp_species_name.query("symmetrization_order", symmetrization_order);
-        std::set<int> valid_symmetries = {4,8};
+        const std::set<int> valid_symmetries = {4,8};
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
             "Error: Symmetrization only supported to orders 4 or 8 ");
         gaussian_beam = true;
@@ -322,14 +322,14 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             flux_normal_axis = 2;
         }
 #ifdef WARPX_DIM_3D
-        std::string flux_normal_axis_help = "'x', 'y', or 'z'.";
+        const std::string flux_normal_axis_help = "'x', 'y', or 'z'.";
 #else
 #    ifdef WARPX_DIM_RZ
-        std::string flux_normal_axis_help = "'r' or 'z'.";
+        const std::string flux_normal_axis_help = "'r' or 'z'.";
 #    elif WARPX_DIM_XZ
-        std::string flux_normal_axis_help = "'x' or 'z'.";
+        const std::string flux_normal_axis_help = "'x' or 'z'.";
 #    else
-        std::string flux_normal_axis_help = "'z'.";
+        const std::string flux_normal_axis_help = "'z'.";
 #    endif
 #endif
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,

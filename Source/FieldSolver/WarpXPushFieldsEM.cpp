@@ -1412,7 +1412,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         const Real rmin = xyzmin[0];
         const Real rminr = xyzmin[0] + (tb.type(0) == NODE ? 0. : 0.5*dx[0]);
         const int irmin = lo.x;
-        int ishift = (rminr > rmin ? 1 : 0);
+        const int ishift = (rminr > rmin ? 1 : 0);
 
         // Grow the tilebox to include the guard cells, except for the
         // guard cells at negative radius.

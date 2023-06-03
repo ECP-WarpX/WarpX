@@ -344,7 +344,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         {
             costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
             const auto iarr = costs[lev]->IndexArray();
-            for (int i : iarr)
+            for (const auto& i : iarr)
             {
                 (*costs[lev])[i] = 0.0;
                 setLoadBalanceEfficiency(lev, -1);
@@ -401,7 +401,7 @@ WarpX::ResetCosts ()
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         const auto iarr = costs[lev]->IndexArray();
-        for (int i : iarr)
+        for (const auto& i : iarr)
         {
             // Reset costs
             (*costs[lev])[i] = 0.0;

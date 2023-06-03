@@ -180,7 +180,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     FArrayBox NumPartCreation(box, 1);
     // This may be unnecessary because of the Gpu::streamSynchronize() in
     // filterCreateTransformFromFAB called below, but let us keep it for safety.
-    Elixir tmp_eli = NumPartCreation.elixir();
+    const Elixir tmp_eli = NumPartCreation.elixir();
     auto arrNumPartCreation = NumPartCreation.array();
 
     const auto ncells = box.volume();

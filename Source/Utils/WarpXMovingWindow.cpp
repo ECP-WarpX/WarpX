@@ -112,7 +112,7 @@ WarpX::MoveWindow (const int step, bool move_j)
     const amrex::Real* current_lo = geom[0].ProbLo();
     const amrex::Real* current_hi = geom[0].ProbHi();
     const amrex::Real* cdx = geom[0].CellSize();
-    int num_shift_base = static_cast<int>((moving_window_x - current_lo[dir]) / cdx[dir]);
+    const int num_shift_base = static_cast<int>((moving_window_x - current_lo[dir]) / cdx[dir]);
 
     if (num_shift_base == 0) return 0;
 
@@ -512,7 +512,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         for (int i = 0, N=ba.size(); i < N; ++i) {
             bl.push_back(amrex::grow(ba[i], 0, mf.nGrowVect()[0]));
         }
-        amrex::BoxArray rba(std::move(bl));
+        const amrex::BoxArray rba(std::move(bl));
         amrex::MultiFab rmf(rba, dm, mf.nComp(), IntVect(0,mf.nGrowVect()[1]), MFInfo().SetAlloc(false));
 
         for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {

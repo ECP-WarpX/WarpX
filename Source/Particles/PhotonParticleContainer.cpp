@@ -47,7 +47,7 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
                                                   const std::string& name)
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
-    ParmParse pp_species_name(species_name);
+    const ParmParse pp_species_name(species_name);
 
 #ifdef WARPX_QED
         //Find out if Breit Wheeler process is enabled
@@ -165,7 +165,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     enum exteb_flags : int { no_exteb, has_exteb };
     enum qed_flags : int { no_qed, has_qed };
 
-    int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+    const int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
 #ifdef WARPX_QED
     int qed_runtime_flag = (local_has_breit_wheeler) ? has_qed : no_qed;
 #else
