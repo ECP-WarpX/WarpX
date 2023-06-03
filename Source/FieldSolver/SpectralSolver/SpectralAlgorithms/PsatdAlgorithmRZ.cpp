@@ -30,7 +30,6 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     const bool divb_cleaning)
      // Initialize members of base class
      : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
-       m_spectral_index(spectral_index),
        m_dt(dt),
        m_update_with_rho(update_with_rho),
        m_time_averaging(time_averaging),

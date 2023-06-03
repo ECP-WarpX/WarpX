@@ -299,14 +299,19 @@ guardCellManager::Init (
             ng_MovingWindow = ng_alloc_EB;
         }
     } else {
-        // Compute number of cells required for Field Gather
-        int FGcell[4] = {0,1,1,2}; // Index is nox
-        IntVect ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell[nox],FGcell[nox],FGcell[nox]));
+        // Compute number of cells required for Field Gather:
+        // When increasing the shape by order by one, support of the shape
+        // factor grows symmetrically by half a cell on each side. So every
+        // +2 orders, one touches one more cell point.
+        int const FGcell = (nox + 1) / 2;  // integer division
+        IntVect ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell,FGcell,FGcell));
         ng_FieldGather_noNCI = ng_FieldGather_noNCI.min(ng_alloc_EB);
+
         // If NCI filter, add guard cells in the z direction
         IntVect ng_NCIFilter = IntVect::TheZeroVector();
         if (do_fdtd_nci_corr)
             ng_NCIFilter[WARPX_ZINDEX] = NCIGodfreyFilter::m_stencil_width;
+
         // Note: communications of guard cells for bilinear filter are handled
         // separately.
         ng_FieldGather = ng_FieldGather_noNCI + ng_NCIFilter;

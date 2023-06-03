@@ -135,7 +135,29 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     }
 
     //Select laser profile
-    if(laser_profiles_dictionary.count(laser_type_s) == 0){
+
+    //Check if someone uses the obsolete syntax
+    std::vector<std::string> backward_laser_names;
+    ParmParse pp_lasers("lasers");
+    pp_lasers.queryarr("names", backward_laser_names);
+    for(std::string lasersiter : backward_laser_names){
+        ParmParse pp_name(lasersiter);
+        std::string backward_profile;
+        std::stringstream lasers;
+        pp_name.query("profile", backward_profile);
+        if (backward_profile == "from_txye_file") {
+            lasers << "'" << lasersiter << ".profile = " + backward_profile + "'";
+            lasers << " is not supported anymore. ";
+            lasers << "Please use instead: ";
+            lasers << "'" << lasersiter << ".profile = from_file'";
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                !pp_name.query("profile", backward_profile),
+                lasers.str());
+        }
+    }
+
+    //Check if profile exists
+    if(laser_profiles_dictionary.count(laser_type_s) == 0 ){
         amrex::Abort(std::string("Unknown laser type: ").append(laser_type_s));
     }
     m_up_laser_profile = laser_profiles_dictionary.at(laser_type_s)();
