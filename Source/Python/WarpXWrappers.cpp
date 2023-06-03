@@ -44,7 +44,7 @@ namespace
     {
         *ncomps = mf.nComp();
         *num_boxes = mf.local_size();
-        const int shapesize = AMREX_SPACEDIM;
+        int shapesize = AMREX_SPACEDIM;
         *ngrowvect = static_cast<int*>(malloc(sizeof(int)*shapesize));
         for (int j = 0; j < AMREX_SPACEDIM; ++j) {
             (*ngrowvect)[j] = mf.nGrow(j);
@@ -725,7 +725,7 @@ namespace
         return warpx.getistep(lev);
     }
     void warpx_setistep (int lev, int ii) {
-        const WarpX& warpx = WarpX::GetInstance();
+        WarpX& warpx = WarpX::GetInstance();
         warpx.setistep(lev, ii);
     }
     amrex::Real warpx_gett_new (int lev) {
@@ -733,7 +733,7 @@ namespace
         return warpx.gett_new(lev);
     }
     void warpx_sett_new (int lev, amrex::Real time) {
-        const WarpX& warpx = WarpX::GetInstance();
+        WarpX& warpx = WarpX::GetInstance();
         warpx.sett_new(lev, time);
     }
     amrex::Real warpx_getdt (int lev) {
@@ -764,7 +764,7 @@ namespace
     }
 
     void warpx_setPotentialEB (const char * char_potential) {
-        const WarpX& warpx = WarpX::GetInstance();
+        WarpX& warpx = WarpX::GetInstance();
         const std::string potential(char_potential);
         warpx.m_poisson_boundary_handler.setPotentialEB(potential);
     }

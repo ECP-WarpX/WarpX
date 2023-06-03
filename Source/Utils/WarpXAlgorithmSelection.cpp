@@ -184,7 +184,7 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
     if (algo_to_int.count(algo) == 0) {
         // Not a valid key ; print error message
         const std::string pp_search_string = pp_search_key;
-        const std::string error_message = "Invalid string for algo." + pp_search_string
+        std::string error_message = "Invalid string for algo." + pp_search_string
             + ": " + algo + ".\nThe valid values are:\n";
         for ( const auto &valid_pair : algo_to_int ) {
             if (valid_pair.first != "default"){

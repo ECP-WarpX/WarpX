@@ -1850,7 +1850,6 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     pa_user_real_data[ia][ip] = user_real_parserexec_data[ia](pos.x, pos.y, pos.z, u.x, u.y, u.z, t);
                 }
 
-                const Real weight = dens * scale_fac * dt;
 #ifdef WARPX_DIM_RZ
                 // The particle weight is proportional to the user-specified
                 // flux (denoted as `dens` here) and the emission surface within
@@ -1858,16 +1857,20 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // For cylindrical emission (flux_normal_axis==0
                 // or flux_normal_axis==2), the emission surface depends on
                 // the radius ; thus, the calculation is finalized here
+                Real t_weight = dens * scale_fac * dt;
                 if (loc_flux_normal_axis != 1) {
                     if (radially_weighted) {
-                         weight *= 2._rt*MathConst::pi*radial_position;
+                         t_weight *= 2._rt*MathConst::pi*radial_position;
                     } else {
                          // This is not correct since it might shift the particle
                          // out of the local grid
                          ppos.x = std::sqrt(radial_position*rmax);
-                         weight *= dx[0];
+                         t_weight *= dx[0];
                     }
                 }
+                const Real weight = t_weight;
+#else
+                const Real weight = dens * scale_fac * dt;
 #endif
                 pa[PIdx::w ][ip] = weight;
                 pa[PIdx::ux][ip] = pu.x;

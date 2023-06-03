@@ -131,6 +131,8 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     const Complex prefactor = t_prefactor / diffract_factor;
 #elif defined(WARPX_DIM_XZ)
     const Complex prefactor = t_prefactor / amrex::sqrt(diffract_factor);
+#else
+    const Complex prefactor = t_prefactor;
 #endif
 
     // Copy member variables to tmp copies for GPU runs.
