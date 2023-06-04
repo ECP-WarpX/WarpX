@@ -873,6 +873,71 @@ WarpX::SyncCurrent (
         }
     }
 
+    // If there is a single level, we apply the filter on the fp data and
+    // then call SumBoundary that adds data from different boxes. This needs
+    // to be done because a particle near a box boundary may deposit current
+    // at a given (i,j,k) that is on the edge or in the ghost region of that
+    // box while at the same time that (i,j,k) is also in the valid region
+    // of another box. After SumBoundary, the result is as if there is only
+    // a single box on a single process. Also note we need to call
+    // SumBoundary even if there is only a single process, because a process
+    // may have multiple boxes. Furthermore, even if there is only a single
+    // box on a single process, SumBoundary should also be called if there
+    // are periodic boundaries. So we always call SumBounary even if it
+    // might be a no-op in some cases, because the function does not perform
+    // any communication if not necessary.
+    //
+    // When there are multiple levels, we need to send data from fine levels
+    // to coarse levels. In the implementation below, we loop over levels
+    // from the finest to the coarsest. On each level, filtering and
+    // SumBoundary are done as the last two things. So the communication
+    // data on the sender side are always unfiltered and unsummed. The
+    // receivers are responsible for filtering that is dependent on the grid
+    // resolution. On the finest level, we coarsen the unsummed fp data onto
+    // cp grids, which are the coarsened version of the fp grids with the
+    // same DistributionMapping. Then on the level below, We use ParallelAdd
+    // to add the finer level's cp data onto the current level's fp
+    // data. After that, we apply filter and SumBounadry to the finer
+    // level's cp MultiFab. At this time, the finer level's fp and cp data
+    // have all been properly filtered and summed. For the current level, if
+    // there are levels below this, we need to process this level's cp data
+    // just like we have done for the finer level. The iteration continues
+    // until we reache level 0. There are however two additional
+    // complications.
+    //
+    // The first complication is that simply calling ParallelAdd to add the
+    // finer level's cp data to the current level's fp data does not
+    // work. Suppose there are multiple boxes on the current level (or just
+    // a single box with periodic bounaries). A given (i,j,k) can be present
+    // in more than one box. At the time of calling ParallelAdd, the current
+    // level's fp data have not been summed. Because of how ParallelAdd
+    // works, all boxes with that (i,j,k) will receive the data. So there is
+    // a double counting issue of that data existing on multiple boxes. Note
+    // that at this time, the current level's fp data have not been summed
+    // and we will call SumBoundary on the fp data. That would overcount the
+    // finer level's cp data. So we fix this issue by creating a temporary
+    // MultiFab to receive the finer level's cp data. We also create a mask
+    // that can mark only one instance of the data as the owner if there are
+    // overlapping points among boxes. Using the mask, we can add the
+    // temporary MultiFab's data to the fp MultiFab only if the source owns
+    // the data.
+    //
+    // The other complication is there might be a current buffer depending a
+    // runtime parameter. The current buffer data, if they exist, need to be
+    // communicated to the coarser level's fp MultiFab just like the cp
+    // data. A simple approach would be to call another ParallelAdd in
+    // additional the ParallelAdd for the cp data. But we like to minimize
+    // parallel communication. So we add the cp data to the current buffer
+    // MultiFab and use the latter as the source of ParallelAdd
+    // communication to the coarser level. Note that we can do it this way
+    // but not the other way around of adding the current buffer data to the
+    // cp MultiFab because we still need to use the original cp data whereas
+    // the buffer data are no longer needed once they have been sent to the
+    // coarser level. So there are two cases. If there is no current buffer,
+    // the cp MultiFab is the source of communication. If there is a current
+    // buffer, the buffer MultiFab is the source instead. In the
+    // implementation below, we use an alias MultiFab to manage this.
+
     std::unique_ptr<MultiFab> mf_comm; // for communication between levels
     for (int idim = 0; idim < 3; ++idim)
     {
@@ -962,6 +1027,8 @@ WarpX::SyncRho (
 
     if (!charge_fp[0]) return;
     const int ncomp = charge_fp[0]->nComp();
+
+    // See comments in WarpX::SyncCurrent for an explanation of the algorithm.
 
     std::unique_ptr<MultiFab> mf_comm; // for communication between levels
     for (int lev = finest_level; lev >= 0; --lev)
