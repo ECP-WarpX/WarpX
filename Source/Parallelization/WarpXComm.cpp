@@ -909,7 +909,8 @@ WarpX::SyncCurrent (
     // finer level's cp data to the current level's fp data does not
     // work. Suppose there are multiple boxes on the current level (or just
     // a single box with periodic bounaries). A given (i,j,k) can be present
-    // in more than one box. At the time of calling ParallelAdd, the current
+    // in more than one box for nodal data in AMReX.
+    // At the time of calling ParallelAdd, the current
     // level's fp data have not been summed. Because of how ParallelAdd
     // works, all boxes with that (i,j,k) will receive the data. So there is
     // a double counting issue of that data existing on multiple boxes. Note
