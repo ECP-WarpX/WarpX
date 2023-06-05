@@ -1219,9 +1219,12 @@ Laser initialization
       It also accepts the optional parameter ``<laser_name>.delay`` (`float`; in seconds), which allows
       delaying (``delay > 0``) or anticipating (``delay < 0``) the laser by the specified amount of time.
 
-      Details about the usage of the lasy format: A lasy file can be read in 3D cartesian or in RZ geometry. In the cartesian geometry, in the case where WarpX is compiled in 2D (or 1D), the laser antenna
-      will emit the field values that correspond to y=0 in the lasy file (and x=0 in the 1D case).
-      One can generate a lasy file from Python, see an example at ``Examples/Tests/laser_injection_from_file``.
+      Details about the usage of the lasy format: lasy can produce either 3D Cartesian files or RZ files.
+      WarpX can read both types of files independently of the geometry in which it was compiled (e.g. WarpX
+      compiled with ``WarpX_DIMS=RZ`` can read 3D Cartesian lasy files). In the case where WarpX is compiled
+      in 2D (or 1D) Cartesian, the laser antenna will emit the field values that correspond to the slice ``y=0``
+      in the lasy file (and ``x=0`` in the 1D case). One can generate a lasy file from Python, see an example
+      at ``Examples/Tests/laser_injection_from_file``.
 
       Details about the usage of the binary format: The external binary file should provide E(x,y,t) on a rectangular (necessarily uniform)
       grid. The code performs a bi-linear (in 2D) or tri-linear (in 3D) interpolation to set the field
