@@ -913,7 +913,7 @@ WarpX::SyncCurrent (
     // At the time of calling ParallelAdd, the current
     // level's fp data have not been summed. Because of how ParallelAdd
     // works, all boxes with that (i,j,k) will receive the data. So there is
-    // a double counting issue of that data existing on multiple boxes. Note
+    // a double counting issue of those data points existing on multiple boxes. Note
     // that at this time, the current level's fp data have not been summed
     // and we will call SumBoundary on the fp data. That would overcount the
     // finer level's cp data. So we fix this issue by creating a temporary
