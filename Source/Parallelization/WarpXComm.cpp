@@ -897,7 +897,7 @@ WarpX::SyncCurrent (
     // cp grids, which are the coarsened version of the fp grids with the
     // same DistributionMapping. Then on the level below, We use ParallelAdd
     // to add the finer level's cp data onto the current level's fp
-    // data. After that, we apply filter and SumBounadry to the finer
+    // data. After that, we apply filter and SumBoundary to the finer
     // level's cp MultiFab. At this time, the finer level's fp and cp data
     // have all been properly filtered and summed. For the current level, if
     // there are levels below this, we need to process this level's cp data
