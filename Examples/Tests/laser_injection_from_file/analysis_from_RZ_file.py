@@ -11,7 +11,7 @@
 # This file is part of the WarpX automated test suite. It is used to test the
 # injection of a laser pulse from an external lasy file.
 #
-# - Generate an input lasy file with a gaussian laser pulse.
+# - Generate an input lasy file with a Laguerre Gaussian laser pulse.
 # - Run the WarpX simulation for time T, when the pulse is fully injected
 # - Compute the theory for laser envelope at time T
 # - Compare theory and simulation in RZ, for both envelope and central frequency
@@ -42,7 +42,7 @@ um = 1.e-6
 fs = 1.e-15
 c = 299792458
 
-#Parameters of the gaussian beam
+#Parameters of the Laguerre Gaussian beam
 wavelength = 1.*um
 w0 = 12.*um
 tt = 10.*fs
