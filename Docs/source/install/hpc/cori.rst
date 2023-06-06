@@ -262,7 +262,7 @@ The general :ref:`cmake compile-time options and instructions for Python (PICMI)
    # install or update dependencies
    python3 -m pip install -r requirements.txt
 
-   # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
+   # compile parallel PICMI interfaces with openPMD support and 3D, 2D, 1D and RZ
    WARPX_MPI=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall --no-deps -v .
 
 

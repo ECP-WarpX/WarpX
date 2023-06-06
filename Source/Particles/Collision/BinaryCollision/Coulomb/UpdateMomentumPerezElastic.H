@@ -23,7 +23,11 @@
  *        otherwise L will be calculated based on the algorithm.
  *        To see if there are nan or inf updated velocities,
  *        compile with USE_ASSERTION=TRUE.
-*/
+ *
+ * Updates and corrections to the original publication are documented in
+ * https://github.com/ECP-WarpX/WarpX/issues/429
+ * https://github.com/ECP-WarpX/WarpX/files/3799803/main.pdf
+ */
 
 template <typename T_PR, typename T_R>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -103,7 +107,10 @@ void UpdateMomentumPerezElastic (
     if ( L > T_PR(0.0) ) { lnLmd = L; }
     else
     {
-        // Compute b0
+        // Compute b0 according to eq (22) from Perez et al., Phys.Plasmas.19.083104 (2012)
+        // Note: there is a typo in the equation, the last square is incorrect!
+        // See the SMILEI documentation: https://smileipic.github.io/Smilei/Understand/collisions.html
+        // and https://github.com/ECP-WarpX/WarpX/files/3799803/main.pdf from GitHub #429
         T_PR const b0 = amrex::Math::abs(q1*q2) * inv_c2 /
                (T_PR(4.0)*MathConst::pi*PhysConst::ep0) * gc/mass_g *
                ( m1*g1s*m2*g2s/(p1sm*p1sm*inv_c2) + T_PR(1.0) );

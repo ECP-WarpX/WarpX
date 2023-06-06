@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright 2020 Andrew Myers, Axel Huebl, Luca Fedeli
-# Remi Lehe
+# Remi Lehe, Ilian Kara-Mostefa
 #
 # This file is part of WarpX.
 #
@@ -14,10 +14,11 @@
 # - Generate an input binary file with a gaussian laser pulse.
 # - Run the WarpX simulation for time T, when the pulse is fully injected
 # - Compute the theory for laser envelope at time T
-# - Compare theory and simulation, for both envelope and central frequency
+# - Compare theory and simulation in 2D, for both envelope and central frequency
 
 import glob
 import os
+import sys
 
 import matplotlib
 
@@ -27,6 +28,9 @@ import numpy as np
 from scipy.signal import hilbert
 
 import yt ; yt.funcs.mylog.setLevel(50)
+
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 #Maximum acceptable error for this test
 relative_error_threshold = 0.065
@@ -95,24 +99,6 @@ def gauss_env(T,XX,ZZ):
 def write_file(fname, x, y, t, E):
     """ For a given filename fname, space coordinates x and y, time coordinate t
     and field E, write a WarpX-compatible input binary file containing the
-    profile of the laser pulse
-    """
-
-    with open(fname, 'wb') as file:
-        flag_unif = 0
-        file.write(flag_unif.to_bytes(1, byteorder='little'))
-        file.write((len(t)).to_bytes(4, byteorder='little', signed=False))
-        file.write((len(x)).to_bytes(4, byteorder='little', signed=False))
-        file.write((len(y)).to_bytes(4, byteorder='little', signed=False))
-        file.write(t.tobytes())
-        file.write(x.tobytes())
-        file.write(y.tobytes())
-        file.write(E.tobytes())
-
-
-def write_file_unf(fname, x, y, t, E):
-    """ For a given filename fname, space coordinates x and y, time coordinate t
-    and field E, write a WarpX-compatible input binary file containing the
     profile of the laser pulse. This function should be used in the case
     of a uniform spatio-temporal mesh
     """
@@ -137,9 +123,7 @@ def write_file_unf(fname, x, y, t, E):
 def create_gaussian_2d():
    T, X, Y = np.meshgrid(tcoords, xcoords, np.array([0.0]), indexing='ij')
    E_t = gauss(T,X,Y,'2d')
-   write_file("gauss_2d.txye", xcoords, np.array([0.0]), tcoords, E_t)
-   write_file_unf("gauss_2d_unf.txye", xcoords, np.array([0.0]), tcoords, E_t)
-
+   write_file("gauss_2d", xcoords, np.array([0.0]), tcoords, E_t)
 
 def do_analysis(fname, compname, steps):
     ds = yt.load(fname)
@@ -210,11 +194,8 @@ def do_analysis(fname, compname, steps):
 
 def launch_analysis(executable):
     create_gaussian_2d()
-    os.system("./" + executable + " inputs.2d_test_txye diag1.file_prefix=diags/plotfiles/plt")
+    os.system("./" + executable + " inputs.2d_test_binary diag1.file_prefix=diags/plotfiles/plt")
     do_analysis("diags/plotfiles/plt000250/", "comp_unf.pdf", 250)
-    os.system("sed 's/gauss_2d_unf.txye/gauss_2d.txye/g' inputs.2d_test_txye > inputs.2d_test_txye_non_unf")
-    os.system("./" + executable + " inputs.2d_test_txye_non_unf diag1.file_prefix=diags/plotfiles/plt")
-    do_analysis("diags/plotfiles/plt000250/", "comp_non_unf.pdf", 250)
 
 
 def main() :
@@ -223,6 +204,11 @@ def main() :
         launch_analysis(executables[0])
     else :
         assert(False)
+
+    # Do the checksum test
+    filename_end = "diags/plotfiles/plt000250/"
+    test_name = "LaserInjectionFromBINARYFile"
+    checksumAPI.evaluate_checksum(test_name, filename_end)
     print('Passed')
 
 if __name__ == "__main__":

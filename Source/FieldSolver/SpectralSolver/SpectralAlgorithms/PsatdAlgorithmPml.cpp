@@ -39,7 +39,6 @@ PsatdAlgorithmPml::PsatdAlgorithmPml(const SpectralKSpace& spectral_kspace,
                                      const bool dive_cleaning, const bool divb_cleaning)
      // Initialize members of base class
      : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
-       m_spectral_index(spectral_index),
        m_dt(dt),
        m_dive_cleaning(dive_cleaning),
        m_divb_cleaning(divb_cleaning)
