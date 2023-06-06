@@ -526,8 +526,8 @@ WarpX::ReadParameters ()
             else if (str_abort_on_warning_threshold == "low")
                 abort_on_warning_threshold = ablastr::warn_manager::WarnPriority::low;
             else {
-                Abort(Utils::TextMsg::Err(str_abort_on_warning_threshold
-                    +"is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)"));
+                WARPX_ABORT_WITH_MESSAGE(str_abort_on_warning_threshold
+                    +"is not a valid option for warpx.abort_on_warning_threshold (use: low, medium or high)");
             }
             ablastr::warn_manager::GetWMInstance().SetAbortThreshold(abort_on_warning_threshold);
         }
@@ -618,8 +618,8 @@ WarpX::ReadParameters ()
                 unsigned long gpu_seed = (myproc_1 + nprocs) * seed_long;
                 ResetRandomSeed(cpu_seed, gpu_seed);
             } else {
-                Abort(Utils::TextMsg::Err(
-                    "warpx.random_seed must be \"default\", \"random\" or an integer > 0."));
+                WARPX_ABORT_WITH_MESSAGE(
+                    "warpx.random_seed must be \"default\", \"random\" or an integer > 0.");
             }
         }
 
@@ -677,7 +677,7 @@ WarpX::ReadParameters ()
                 moving_window_dir = WARPX_ZINDEX;
             }
             else {
-                amrex::Abort(Utils::TextMsg::Err("Unknown moving_window_dir: "+s));
+                WARPX_ABORT_WITH_MESSAGE("Unknown moving_window_dir: "+s);
             }
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(moving_window_dir) == 0,
@@ -880,13 +880,11 @@ WarpX::ReadParameters ()
         v_particle_pml = v_particle_pml * PhysConst::c;
 
         // Default values of WarpX::do_pml_dive_cleaning and WarpX::do_pml_divb_cleaning:
-        // false for FDTD solver, true for PSATD solver.
-        if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
-        {
-            do_pml_dive_cleaning = false;
-            do_pml_divb_cleaning = false;
-        }
-        else
+        // true for Cartesian PSATD solver, false otherwise
+        do_pml_dive_cleaning = false;
+        do_pml_divb_cleaning = false;
+#ifndef WARPX_DIM_RZ
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         {
             do_pml_dive_cleaning = true;
             do_pml_divb_cleaning = true;
@@ -900,6 +898,7 @@ WarpX::ReadParameters ()
         // (possibly overwritten by users in the input file, see query below)
         // TODO Implement div(B) cleaning in PML with FDTD and remove second if condition
         if (do_divb_cleaning && electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) do_pml_divb_cleaning = true;
+#endif
 
         // Query input parameters to use div(E) and div(B) cleaning in PMLs
         pp_warpx.query("do_pml_dive_cleaning", do_pml_dive_cleaning);
@@ -933,6 +932,8 @@ WarpX::ReadParameters ()
             "PML are not implemented in RZ geometry with FDTD; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( field_boundary_lo[1] != FieldBoundaryType::PML && field_boundary_hi[1] != FieldBoundaryType::PML,
             "PML are not implemented in RZ geometry along z; please set a different boundary condition using boundary.field_lo and boundary.field_hi.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (do_pml_dive_cleaning == false && do_pml_divb_cleaning == false),
+            "do_pml_dive_cleaning and do_pml_divb_cleaning are not implemented in RZ geometry." );
 #endif
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1200,9 +1201,9 @@ WarpX::ReadParameters ()
                 noz = particle_shape;
             }
             else{
-                amrex::Abort(Utils::TextMsg::Err(
+                WARPX_ABORT_WITH_MESSAGE(
                     "algo.particle_shape must be set in the input file:"
-                    " please set algo.particle_shape to 1, 2, or 3"));
+                    " please set algo.particle_shape to 1, 2, or 3");
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
@@ -1855,7 +1856,7 @@ void
 WarpX::MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
                                          const amrex::DistributionMapping& /*dm*/)
 {
-    amrex::Abort(Utils::TextMsg::Err("MakeNewLevelFromCoarse: To be implemented"));
+    WARPX_ABORT_WITH_MESSAGE("MakeNewLevelFromCoarse: To be implemented");
 }
 
 void
@@ -2786,8 +2787,8 @@ WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 #ifdef WARPX_USE_PSATD
         spectral_solver_fp[lev]->ComputeSpectralDivE( lev, Efield_aux[lev], divE );
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "ComputeDivE: PSATD requested but not compiled"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "ComputeDivE: PSATD requested but not compiled");
 #endif
     } else {
         m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
@@ -2893,57 +2894,23 @@ void
 WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                const amrex::IArrayBox &guard_mask, const int ng )
 {
-    bool setnull;
-    const amrex::Dim3 lo = amrex::lbound( tbx );
-    const amrex::Dim3 hi = amrex::ubound( tbx );
-    Array4<int> msk = buffer_mask.array();
-    Array4<int const> gmsk = guard_mask.array();
-#if defined(WARPX_DIM_1D_Z)
-    int k = lo.z;
-    int j = lo.y;
-    for (int i = lo.x; i <= hi.x; ++i) {
-        setnull = false;
-        // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-        for (int ii = i-ng; ii <= i+ng; ++ii) {
-            if ( gmsk(ii,j,k) == 0 ) setnull = true;
-        }
-        if ( setnull ) msk(i,j,k) = 0;
-        else           msk(i,j,k) = 1;
-    }
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    int k = lo.z;
-    for     (int j = lo.y; j <= hi.y; ++j) {
-        for (int i = lo.x; i <= hi.x; ++i) {
-            setnull = false;
-            // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-            for     (int jj = j-ng; jj <= j+ng; ++jj) {
-                for (int ii = i-ng; ii <= i+ng; ++ii) {
-                    if ( gmsk(ii,jj,k) == 0 ) setnull = true;
-                }
-            }
-            if ( setnull ) msk(i,j,k) = 0;
-            else           msk(i,j,k) = 1;
-        }
-    }
-#elif defined(WARPX_DIM_3D)
-    for         (int k = lo.z; k <= hi.z; ++k) {
-        for     (int j = lo.y; j <= hi.y; ++j) {
-            for (int i = lo.x; i <= hi.x; ++i) {
-                setnull = false;
-                // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
-                for         (int kk = k-ng; kk <= k+ng; ++kk) {
-                    for     (int jj = j-ng; jj <= j+ng; ++jj) {
-                        for (int ii = i-ng; ii <= i+ng; ++ii) {
-                            if ( gmsk(ii,jj,kk) == 0 ) setnull = true;
-                        }
+    auto const& msk = buffer_mask.array();
+    auto const& gmsk = guard_mask.const_array();
+    amrex::Dim3 ng3 = amrex::IntVect(ng).dim3();
+    amrex::ParallelFor(tbx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
+    {
+        for         (int kk = k-ng3.z; kk <= k+ng3.z; ++kk) {
+            for     (int jj = j-ng3.y; jj <= j+ng3.y; ++jj) {
+                for (int ii = i-ng3.x; ii <= i+ng3.x; ++ii) {
+                    if ( gmsk(ii,jj,kk) == 0 ) {
+                        msk(i,j,k) = 0;
+                        return;
                     }
                 }
-                if ( setnull ) msk(i,j,k) = 0;
-                else           msk(i,j,k) = 1;
             }
         }
-    }
-#endif
+        msk(i,j,k) = 1;
+    });
 }
 
 amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_order, const short a_grid_type)

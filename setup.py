@@ -24,7 +24,7 @@ class CopyPreBuild(build):
     def run(self):
         # remove existing build directory
         #   by default, this stays around. we want to make sure generated
-        #   files like libwarpx.(2d|3d|rz).(so|pyd) are always only the
+        #   files like libwarpx.(1d|2d|rz|3d).(so|pyd) are always only the
         #   ones we want to package and not ones from an earlier wheel's stage
         c = clean(self.distribution)
         c.all = True
@@ -34,7 +34,7 @@ class CopyPreBuild(build):
         # call superclass
         build.run(self)
 
-        # matches: libwarpx.(2d|3d|rz).(so|pyd)
+        # matches: libwarpx.(1d|2d|rz|3d).(so|pyd)
         re_libprefix = re.compile(r"libwarpx\...\.(?:so|dll)")
         libs_found = []
         for lib_name in os.listdir(PYWARPX_LIB_DIR):
@@ -85,7 +85,7 @@ class CMakeBuild(build_ext):
         if not extdir.endswith(os.path.sep):
             extdir += os.path.sep
 
-        r_dim = re.search(r'warpx_(1|2|3|rz)(?:d*)', ext.name)
+        r_dim = re.search(r'warpx_(1|2|rz|3)(?:d*)', ext.name)
         dims = r_dim.group(1).upper()
 
         cmake_args = [
@@ -206,7 +206,7 @@ WARPX_PARTICLE_PRECISION = env.pop('WARPX_PARTICLE_PRECISION', WARPX_PRECISION)
 WARPX_PSATD = env.pop('WARPX_PSATD', 'OFF')
 WARPX_QED = env.pop('WARPX_QED', 'ON')
 WARPX_QED_TABLE_GEN = env.pop('WARPX_QED_TABLE_GEN', 'OFF')
-WARPX_DIMS = env.pop('WARPX_DIMS', '1;2;3;RZ')
+WARPX_DIMS = env.pop('WARPX_DIMS', '1;2;RZ;3')
 BUILD_PARALLEL = env.pop('BUILD_PARALLEL', '2')
 BUILD_SHARED_LIBS = env.pop('WARPX_BUILD_SHARED_LIBS',
                                    'OFF')
@@ -247,7 +247,7 @@ else:
 
 
 # for CMake
-cxx_modules = []     # values: warpx_1d, warpx_2d, warpx_3d, warpx_rz
+cxx_modules = []     # values: warpx_1d, warpx_2d, warpx_rz, warpx_3d
 cmdclass = {}        # build extensions
 
 # externally pre-built: pick up pre-built WarpX libraries
@@ -272,7 +272,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '23.04',
+    version = '23.06',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',
@@ -295,7 +295,7 @@ setup(
     # CMake: self-built as extension module
     ext_modules=cxx_modules,
     cmdclass=cmdclass,
-    # scripts=['warpx_1d', 'warpx_2d', 'warpx_3d', 'warpx_rz'],
+    # scripts=['warpx_1d', 'warpx_2d', 'warpx_rz', 'warpx_3d'],
     zip_safe=False,
     python_requires='>=3.7',
     # tests_require=['pytest'],

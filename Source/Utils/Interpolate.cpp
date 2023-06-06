@@ -51,14 +51,15 @@ namespace Interpolate
                 if ( F_fp.is_nodal() ){
                     amrex::IntVect refinement_vector{AMREX_D_DECL(r_ratio[0], r_ratio[1], r_ratio[2])};
                     node_bilinear_interp.interp(cfab, 0, ffab, 0, 1,
-                                                finebx, refinement_vector, {}, {}, {}, 0, 0, RunOn::Cpu);
+                                                finebx, refinement_vector, {}, {}, {}, 0, 0, RunOn::Device);
                 } else {
                     amrex::Abort("Unknown field staggering.");
                 }
 
                 // Add temporary array to the returned structure
                 const Box& bx = (*interpolated_F)[mfi].box();
-                (*interpolated_F)[mfi].plus<RunOn::Host>(ffab, bx, bx, 0, 0, 1);
+                (*interpolated_F)[mfi].plus<RunOn::Device>(ffab, bx, bx, 0, 0, 1);
+                amrex::Gpu::streamSynchronize();
             }
         }
         return interpolated_F;

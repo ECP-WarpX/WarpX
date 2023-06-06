@@ -154,4 +154,9 @@ assert abs(np.abs((ux - ux_sim)/ux)) < velocity_tolerance, Exception('error in x
 assert abs(np.abs((uy - uy_sim)/uy)) < velocity_tolerance, Exception('error in y particle velocity')
 
 test_name = os.path.split(os.getcwd())[1]
+# The PICMI and native input versions of `inputs_3d` run the same test, so
+# their results are compared to the same benchmark file.
+if test_name == "Python_plasma_lens":
+    test_name = "Plasma_lens"
+
 checksumAPI.evaluate_checksum(test_name, filename)

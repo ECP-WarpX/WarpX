@@ -86,8 +86,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     } else if ( norm_string == "area_to_unity" ) {
         m_norm = NormalizationType::area_to_unity;
     } else {
-        Abort(Utils::TextMsg::Err(
-            "Unknown ParticleHistogram normalization type."));
+        WARPX_ABORT_WITH_MESSAGE(
+            "Unknown ParticleHistogram normalization type.");
     }
 
     // get MultiParticleContainer class object
@@ -103,8 +103,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     }
     // if m_selected_species_id is not modified
     if ( m_selected_species_id == -1 ){
-        Abort(Utils::TextMsg::Err(
-            "Unknown species for ParticleHistogram reduced diagnostic."));
+        WARPX_ABORT_WITH_MESSAGE(
+            "Unknown species for ParticleHistogram reduced diagnostic.");
     }
 
     // Read optional filter

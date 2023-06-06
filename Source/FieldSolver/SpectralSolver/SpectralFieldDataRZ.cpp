@@ -7,9 +7,13 @@
 #include "SpectralFieldDataRZ.H"
 
 #include "Utils/WarpXUtil.H"
+#include "FieldSolver/SpectralSolver/AnyFFT.H"
 #include "WarpX.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
+
+#include <AMReX_Config.H>
+
 
 using amrex::operator""_rt;
 
@@ -162,21 +166,31 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
         howmany_dims[1].os = 1;
         forward_plan[mfi] =
             // Note that AMReX FAB are Fortran-order.
-            fftw_plan_guru_dft(1, // int rank
+#ifdef AMREX_USE_FLOAT
+            fftwf_plan_guru_dft
+#else
+            fftw_plan_guru_dft
+#endif
+                              (1, // int rank
                                dims,
                                2, // int howmany_rank,
                                howmany_dims,
-                               reinterpret_cast<fftw_complex*>(tempHTransformed[mfi].dataPtr()), // fftw_complex *in
-                               reinterpret_cast<fftw_complex*>(tmpSpectralField[mfi].dataPtr()), // fftw_complex *out
+                               reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr()), // complex *in
+                               reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr()), // complex *out
                                FFTW_FORWARD, // int sign
                                FFTW_ESTIMATE); // unsigned flags
         backward_plan[mfi] =
-            fftw_plan_guru_dft(1, // int rank
+#ifdef AMREX_USE_FLOAT
+            fftwf_plan_guru_dft
+#else
+            fftw_plan_guru_dft
+#endif
+                              (1, // int rank
                                dims,
                                2, // int howmany_rank,
                                howmany_dims,
-                               reinterpret_cast<fftw_complex*>(tmpSpectralField[mfi].dataPtr()), // fftw_complex *in
-                               reinterpret_cast<fftw_complex*>(tempHTransformed[mfi].dataPtr()), // fftw_complex *out
+                               reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr()), // complex *in
+                               reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr()), // complex *out
                                FFTW_BACKWARD, // int sign
                                FFTW_ESTIMATE); // unsigned flags
 #endif
@@ -201,8 +215,13 @@ SpectralFieldDataRZ::~SpectralFieldDataRZ()
             rocfft_plan_destroy(backward_plan[mfi]);
 #else
             // Destroy FFTW plans.
+#  ifdef AMREX_USE_FLOAT
+            fftwf_destroy_plan(forward_plan[mfi]);
+            fftwf_destroy_plan(backward_plan[mfi]);
+#  else
             fftw_destroy_plan(forward_plan[mfi]);
             fftw_destroy_plan(backward_plan[mfi]);
+#  endif
 #endif
         }
     }
@@ -257,7 +276,7 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
         }
     }
 #elif defined(AMREX_USE_HIP)
-    rocfft_execution_info execinfo = NULL;
+    rocfft_execution_info execinfo = nullptr;
     rocfft_status result = rocfft_execution_info_create(&execinfo);
     std::size_t buffersize = 0;
     result = rocfft_plan_get_work_buffer_size(forward_plan[mfi], &buffersize);
@@ -280,7 +299,11 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
     amrex::The_Arena()->free(buffer);
     result = rocfft_execution_info_destroy(execinfo);
 #else
+#  ifdef AMREX_USE_FLOAT
+    fftwf_execute(forward_plan[mfi]);
+#  else
     fftw_execute(forward_plan[mfi]);
+#  endif
 #endif
 
     // Copy the spectral-space field `tmpSpectralField` to the appropriate
@@ -370,7 +393,7 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
         }
     }
 #elif defined(AMREX_USE_HIP)
-    rocfft_execution_info execinfo = NULL;
+    rocfft_execution_info execinfo = nullptr;
     rocfft_status result = rocfft_execution_info_create(&execinfo);
     std::size_t buffersize = 0;
     result = rocfft_plan_get_work_buffer_size(forward_plan[mfi], &buffersize);
@@ -393,7 +416,11 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
     amrex::The_Arena()->free(buffer);
     result = rocfft_execution_info_destroy(execinfo);
 #else
+#  ifdef AMREX_USE_FLOAT
+    fftwf_execute(backward_plan[mfi]);
+#  else
     fftw_execute(backward_plan[mfi]);
+#  endif
 #endif
 
     // Copy the interleaved complex to the split complex.

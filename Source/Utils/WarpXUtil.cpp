@@ -128,7 +128,7 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
             boost_direction[2] = 1;
         }
         else {
-            Abort(Utils::TextMsg::Err("Unknown boost_dir: "+s));
+            WARPX_ABORT_WITH_MESSAGE("Unknown boost_dir: "+s);
         }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( s == "z" || s == "Z" ,
