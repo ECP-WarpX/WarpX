@@ -13,6 +13,7 @@ foreach(D IN LISTS WarpX_DIMS)
         BTDiagnostics.cpp
         BoundaryScrapingDiagnostics.cpp
         BTD_Plotfile_Header_Impl.cpp
+        OpenPMDHelpFunction.cpp
     )
 endforeach()
 

@@ -396,16 +396,17 @@ Additional PML parameters
 * ``warpx.v_particle_pml`` (`float`; default: 1)
     When ``warpx.do_pml_j_damping = 1``, the assumed velocity of the particles to be absorbed in the PML, in units of the speed of light `c`.
 
-* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
+* ``warpx.do_pml_dive_cleaning`` (`bool`)
     Whether to use divergence cleaning for E in the PML region.
     The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
     This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
-    This option is implemented only for the PSATD solver.
+    This option is implemented only for the Cartesian PSATD solver; it is turned on by default in this case.
 
-* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
+* ``warpx.do_pml_divb_cleaning`` (`bool`)
     Whether to use divergence cleaning for B in the PML region.
     The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
     This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+    This option is implemented only for the Cartesian PSATD solver; it is turned on by default in this case.
 
 .. _running-cpp-parameters-eb:
 
@@ -819,6 +820,14 @@ Particle initialization
     * ``constant``: constant momentum profile. This can be controlled with the additional parameters
       ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
       momenta in the x, y and z direction respectively, which are all ``0.`` by default.
+
+    * ``uniform``: uniform probability distribution between a minumum and a maximum value.
+      The x, y and z directions are sampled independently and the final momentum space is a cuboid.
+      The parameters that control the minimum and maximum domain of the distribution
+      are ``<species_name>.u<x,y,z>_min`` and ``<species_name>.u<x,y,z>_max`` in each
+      direction respectively (e.g., ``<species_name>.uz_min = 0.2`` and ``<species_name>.uz_max = 0.4``
+      to control the generation along the ``z`` direction).
+      All the parameters default to ``0``.
 
     * ``gaussian``: gaussian momentum distribution in all 3 directions. This can be controlled with the
       additional arguments for the average momenta along each direction
@@ -2813,6 +2822,64 @@ Reduced Diagnostics
         An example input file and a loading python script of
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
+
+    * ``ParticleHistogram2D``
+        This type computes a user defined, 2D particle histogram.
+
+        * ``<reduced_diags_name>.species`` (`string`)
+            A species name must be provided,
+            such that the diagnostics are done for this species.
+
+        * ``<reduced_diags_name>.histogram_function_abs(t,x,y,z,ux,uy,uz,w)`` (`string`)
+            A histogram function must be provided for the abscissa axis.
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent the particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            `w` represents the weight.
+
+        * ``<reduced_diags_name>.histogram_function_ord(t,x,y,z,ux,uy,uz,w)`` (`string`)
+            A histogram function must be provided for the ordinate axis.
+
+        * ``<reduced_diags_name>.bin_number_abs`` (`int` > 0) and ``<reduced_diags_name>.bin_number_ord`` (`int` > 0)
+            These are the number of bins used for the histogram for the abscissa and ordinate axis respectively.
+
+        * ``<reduced_diags_name>.bin_max_abs`` (`float`) and ``<reduced_diags_name>.bin_max_ord`` (`float`)
+            These are the maximum value of the bins for the abscissa and ordinate axis respectively.
+            Particles with values outside of these ranges are discarded.
+
+        * ``<reduced_diags_name>.bin_min_abs`` (`float`) and ``<reduced_diags_name>.bin_min_ord`` (`float`)
+            These are the minimum value of the bins for the abscissa and ordinate axis respectively.
+            Particles with values outside of these ranges are discarded.
+
+        * ``<reduced_diags_name>.filter_function(t,x,y,z,ux,uy,uz,w)`` (`string`) optional
+            Users can provide an expression returning a boolean for whether a particle is taken
+            into account when calculating the histogram.
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            `w` represents the weight.
+
+        * ``<reduced_diags_name>.value_function(t,x,y,z,ux,uy,uz,w)`` (`string`) optional
+            Users can provide an expression for the weight used to calculate the number of particles
+            per cell associated with the selected abscissa and ordinate functions and/or the filter function.
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            `w` represents the weight.
+
+        The output is a ``<reduced_diags_name>`` folder containing a set of openPMD files.
+        An example input file and a loading python script of
+        using the histogram2D reduced diagnostics
+        are given in ``Examples/Tests/histogram2D/``.
 
     * ``ParticleExtrema``
         This type computes the minimum and maximum values of

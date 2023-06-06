@@ -16,6 +16,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "OpenPMDHelpFunction.H"
 
 #include <ablastr/particles/IndexHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -381,18 +382,6 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
    m_OpenPMDFileType(std::move(openPMDFileType)),
    m_fieldPMLdirections(std::move(fieldPMLdirections))
 {
-  // pick first available backend if default is chosen
-  if( m_OpenPMDFileType == "default" )
-#if openPMD_HAVE_ADIOS2==1
-    m_OpenPMDFileType = "bp";
-#elif openPMD_HAVE_ADIOS1==1
-    m_OpenPMDFileType = "bp";
-#elif openPMD_HAVE_HDF5==1
-    m_OpenPMDFileType = "h5";
-#else
-    m_OpenPMDFileType = "json";
-#endif
-
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
 }
