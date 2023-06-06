@@ -22,7 +22,7 @@ using namespace amrex;
 
 FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 {
-    const ParmParse pp_diag_name(diag_name);
+    ParmParse pp_diag_name(diag_name);
     // Which backend to use (ADIOS, ADIOS2 or HDF5). Default depends on what is available
     std::string openpmd_backend {"default"};
     pp_diag_name.query("openpmd_backend", openpmd_backend);
