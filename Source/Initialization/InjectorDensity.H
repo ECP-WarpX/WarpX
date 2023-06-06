@@ -106,7 +106,7 @@ struct InjectorDensityPredefined
             return static_cast<amrex::Real>(n);
         }
         default:
-            WARPX_ABORT_WITH_MESSAGE("InjectorDensityPredefined: how did we get here?");
+            amrex::Abort("InjectorDensityPredefined: how did we get here?");
             return amrex::Real(0.0);
         }
     }
