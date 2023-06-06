@@ -13,6 +13,7 @@
 #include "GetVelocity.H"
 #include "TemperatureProperties.H"
 #include "VelocityProperties.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
