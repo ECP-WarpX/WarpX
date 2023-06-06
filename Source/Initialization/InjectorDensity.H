@@ -187,7 +187,7 @@ struct InjectorDensity
         }
         default:
         {
-            WARPX_ABORT_WITH_MESSAGE("InjectorDensity: unknown type");
+            amrex::Abort("InjectorDensity: unknown type");
             return 0.0;
         }
         }
