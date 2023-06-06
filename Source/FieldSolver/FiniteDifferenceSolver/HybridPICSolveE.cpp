@@ -306,8 +306,11 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     // Create a temporary multifab to hold the nodal E-field values
     // Note the multifab has 3 values for Ex, Ey and Ez which we can do here
     // since all three components will be calculated on the same grid.
+    // Also note that enE_nodal_mf does not need to have any guard cells since
+    // these values will be interpolated to the Yee mesh which is contained
+    // by the nodal mesh.
     auto const& ba = convert(rhofield->boxArray(), IntVect::TheNodeVector());
-    MultiFab enE_nodal_mf(ba, rhofield->DistributionMap(), 3, rhofield->nGrow());
+    MultiFab enE_nodal_mf(ba, rhofield->DistributionMap(), 3, IntVect::TheZeroVector());
 
     // Loop through the grids, and over the tiles within each grid for the
     // initial, nodal calculation of E
@@ -372,10 +375,6 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
-
-    // fill ghost cells with appropriate values
-    auto & warpx = WarpX::GetInstance();
-    enE_nodal_mf.FillBoundary(warpx.Geom(lev).periodicity());
 
     // Loop through the grids, and over the tiles within each grid again
     // for the Yee grid calculation of the E field
