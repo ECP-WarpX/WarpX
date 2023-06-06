@@ -7,29 +7,6 @@
 #
 # License: BSD-3-Clause-LBNL
 
-# import low-level pybind11 Python module around C++ logic
-found_cxx = {"1d": False, "2d": False, "rz": False, "3d": False}
-try:
-    from . import warpx_pybind_1d as cxx_1d
-    found_cxx["1d"] = True
-except ImportError:
-    pass
-try:
-    from . import warpx_pybind_2d as cxx_2d
-    found_cxx["2d"] = True
-except ImportError:
-    pass
-try:
-    from . import warpx_pybind_rz as cxx_rz
-    found_cxx["rz"] = True
-except ImportError:
-    pass
-try:
-    from . import warpx_pybind_3d as cxx_3d
-    found_cxx["3d"] = True
-except ImportError:
-    pass
-
 import atexit
 import ctypes
 import os
@@ -98,21 +75,25 @@ class LibWarpX():
         else:
             raise Exception('Undefined geometry %d'%_dims)
 
-        if not found_cxx[self.geometry_dim]:
+        try:
+            if self.geometry_dim == "1d":
+                from . import warpx_pybind_1d as cxx_1d
+                self.libwarpx_so = cxx_1d
+                self.dim = 1
+            elif self.geometry_dim == "2d":
+                from . import warpx_pybind_2d as cxx_2d
+                self.libwarpx_so = cxx_2d
+                self.dim = 2
+            elif self.geometry_dim == "rz":
+                from . import warpx_pybind_rz as cxx_rz
+                self.libwarpx_so = cxx_rz
+                self.dim = 2
+            elif self.geometry_dim == "3d":
+                from . import warpx_pybind_3d as cxx_3d
+                self.libwarpx_so = cxx_3d
+                self.dim = 3
+        except ImportError:
             raise Exception(f"Dimensionality '{self.geometry_dim}' was not compiled in this Python install. Please recompile with -DWarpX_DIMS={_dims}")
-
-        if _dims == "1":
-            self.libwarpx_so = cxx_1d
-            self.dim = 1
-        elif _dims == "2":
-            self.libwarpx_so = cxx_2d
-            self.dim = 2
-        elif _dims == "rz":
-            self.libwarpx_so = cxx_rz
-            self.dim = 2
-        elif _dims == "3":
-            self.libwarpx_so = cxx_3d
-            self.dim = 3
 
     def _get_boundary_number(self, boundary):
         '''

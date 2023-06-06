@@ -20,7 +20,7 @@ from .Lasers import lasers
 from .PSATD import psatd
 from .Particles import newspecies, particles
 from .WarpX import warpx
-from ._libwarpx import found_cxx, libwarpx
+from ._libwarpx import libwarpx
 
 # This is a circular import and must happen after the import of libwarpx
 from . import picmi # isort:skip

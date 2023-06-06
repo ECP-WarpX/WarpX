@@ -34,7 +34,13 @@ void init_WarpX(py::module&);
 
 PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     // make sure AMReX types are known
-    py::module::import("amrex");
+#if defined(WARPX_DIM_3D)
+    py::module::import("amrex.space3d");
+#elif defined(WARPX_DIM_1D_Z)
+    py::module::import("amrex.space1d");
+#else
+    py::module::import("amrex.space2d");
+#endif
 
     m.doc() = R"pbdoc(
             warpx_pybind
