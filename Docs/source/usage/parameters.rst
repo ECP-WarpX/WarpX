@@ -821,6 +821,14 @@ Particle initialization
       ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
       momenta in the x, y and z direction respectively, which are all ``0.`` by default.
 
+    * ``uniform``: uniform probability distribution between a minumum and a maximum value.
+      The x, y and z directions are sampled independently and the final momentum space is a cuboid.
+      The parameters that control the minimum and maximum domain of the distribution
+      are ``<species_name>.u<x,y,z>_min`` and ``<species_name>.u<x,y,z>_max`` in each
+      direction respectively (e.g., ``<species_name>.uz_min = 0.2`` and ``<species_name>.uz_max = 0.4``
+      to control the generation along the ``z`` direction).
+      All the parameters default to ``0``.
+
     * ``gaussian``: gaussian momentum distribution in all 3 directions. This can be controlled with the
       additional arguments for the average momenta along each direction
       ``<species_name>.ux_m``, ``<species_name>.uy_m`` and ``<species_name>.uz_m`` as
