@@ -14,7 +14,6 @@ from .Diagnostics import diagnostics, reduced_diagnostics
 from .EB2 import eb2
 from .Geometry import geometry
 from .Interpolation import interpolation
-from .Langmuirwave import langmuirwave
 from .Lasers import lasers
 from .PSATD import psatd
 from .Particles import electrons, newspecies, particles, positrons, protons
