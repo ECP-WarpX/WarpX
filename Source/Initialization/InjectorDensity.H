@@ -10,7 +10,6 @@
 #define INJECTOR_DENSITY_H_
 
 #include "CustomDensityProb.H"
-#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX.H>

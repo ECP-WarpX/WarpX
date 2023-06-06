@@ -10,7 +10,6 @@
 #define GET_TEMPERATURE_H_
 
 #include "TemperatureProperties.H"
-#include "Utils/TextMsg.H"
 
 /**
  * \brief Get temperature at a point on the grid
@@ -64,7 +63,7 @@ struct GetTemperature
             }
             default:
             {
-                WARPX_ABORT_WITH_MESSAGE("Get initial temperature: unknown type");
+                amrex::Abort("Get initial temperature: unknown type");
                 return 0.0;
             }
         }
