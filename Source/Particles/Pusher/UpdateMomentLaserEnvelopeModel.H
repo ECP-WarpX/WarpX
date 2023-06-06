@@ -9,7 +9,7 @@ void UpdateMomentumLaserEnvelopeModel(
     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
     const amrex::ParticleReal Ex, const amrex::ParticleReal Ey, const amrex::ParticleReal Ez,
     const amrex::ParticleReal Bx, const amrex::ParticleReal By, const amrex::ParticleReal Bz,
-    const amrex::ParticleReal q, const amrex::ParticleReal m, const amrex::Real dt )
+    const amrex::ParticleReal q, const amrex::ParticleReal m, const amrex::Real dt, std::complex<double> A_envelope_potential_vector )
 {
     using namespace amrex::literals;
 
@@ -18,38 +18,48 @@ void UpdateMomentumLaserEnvelopeModel(
     const amrex::ParticleReal bconst = 0.5_prt*q*dt/m;
     constexpr amrex::ParticleReal invclight = 1._prt/PhysConst::c;
     constexpr amrex::ParticleReal invclightsq = 1._prt/(PhysConst::c*PhysConst::c);
-    // Compute initial gamma
-    const amrex::ParticleReal inv_gamma = 1._prt/std::sqrt(1._prt + (ux*ux + uy*uy + uz*uz)*invclightsq);
-    // Get tau
-    const amrex::ParticleReal taux = bconst*Bx;
-    const amrex::ParticleReal tauy = bconst*By;
-    const amrex::ParticleReal tauz = bconst*Bz;
-    const amrex::ParticleReal tausq = taux*taux+tauy*tauy+tauz*tauz;
-    // Get U', gamma'^2
-    const amrex::ParticleReal uxpr = ux + econst*Ex + (uy*tauz-uz*tauy)*inv_gamma;
-    const amrex::ParticleReal uypr = uy + econst*Ey + (uz*taux-ux*tauz)*inv_gamma;
-    const amrex::ParticleReal uzpr = uz + econst*Ez + (ux*tauy-uy*taux)*inv_gamma;
-    const amrex::ParticleReal gprsq = (1._prt + (uxpr*uxpr + uypr*uypr + uzpr*uzpr)*invclightsq);
+   // Compute u_minus
+    const amrex::ParticleReal umx = ux + qmt*Ex;
+    const amrex::ParticleReal umy = uy + qmt*Ey;
+    const amrex::ParticleReal umz = uz + qmt*Ez;
+    // Compute gamma squared of u_minus
+    amrex::ParticleReal gamma = 1._prt + (umx*umx + umy*umy + umz*umz)*invclightsq;
+    // Compute beta and betam squared
+    const amrex::ParticleReal betax = qmt*Bx;
+    const amrex::ParticleReal betay = qmt*By;
+    const amrex::ParticleReal betaz = qmt*Bz;
+    const amrex::ParticleReal betam = betax*betax + betay*betay + betaz*betaz;
+    // Compute sigma
+    const amrex::ParticleReal sigma = gamma - betam;
     // Get u*
-    const amrex::ParticleReal ust = (uxpr*taux + uypr*tauy + uzpr*tauz)*invclight;
-    // Get new gamma
-    const amrex::ParticleReal sigma = gprsq-tausq;
-    const amrex::ParticleReal gisq = 2._prt/(sigma + std::sqrt(sigma*sigma + 4._prt*(tausq + ust*ust)) );
-    // Get t, s
-    const amrex::ParticleReal bg = bconst*std::sqrt(gisq);
-    const amrex::ParticleReal tx = bg*Bx;
-    const amrex::ParticleReal ty = bg*By;
-    const amrex::ParticleReal tz = bg*Bz;
-    const amrex::ParticleReal s = 1._prt/(1._prt+tausq*gisq);
-    // Get t.u'
-    const amrex::ParticleReal tu = tx*uxpr + ty*uypr + tz*uzpr;
+    const amrex::ParticleReal ust = (umx*betax + umy*betay + umz*betaz)*invclight;
+    // Get new gamma inversed
+    gamma = 1._prt/std::sqrt(0.5_prt*(sigma + std::sqrt(sigma*sigma + 4._prt*(betam + ust*ust)) ));
+    // Compute t
+    const amrex::ParticleReal tx = gamma*betax;
+    const amrex::ParticleReal ty = gamma*betay;
+    const amrex::ParticleReal tz = gamma*betaz;
+    // Compute s
+    const amrex::ParticleReal s = 1._prt/(1._prt+(tx*tx + ty*ty + tz*tz));
+    // Compute um dot t
+    const amrex::ParticleReal umt = umx*tx + umy*ty + umz*tz;
+    // Compute u_plus
+    const amrex::ParticleReal upx = s*( umx + umt*tx + umy*tz - umz*ty );
+    const amrex::ParticleReal upy = s*( umy + umt*ty + umz*tx - umx*tz );
+    const amrex::ParticleReal upz = s*( umz + umt*tz + umx*ty - umy*tx );
     // Get A dependecies
-    const amrex::ParticleReal pre_A_factor = q*q/(2*gisq*m)
-    
-    // Get new U
-    ux = s*(uxpr+tx*tu+uypr*tz-uzpr*ty);
-    uy = s*(uypr+ty*tu+uzpr*tx-uxpr*tz);
-    uz = s*(uzpr+tz*tu+uxpr*ty-uypr*tx);
+    const amrex::ParticleReal pre_A_factor = q*q/(2._ptr*gisq*m)
+    const amrex::ParticleReal Af_new_x = A_envelope_potential_vector.mean_laser_envelope_model(0).real()
+    const amrex::ParticleReal Af_old_x = A_envelope_potential_vector.mean_laser_envelope_model(0).imag()
+    const amrex::ParticleReal Af_new_y = mean_laser_envelope_model(A_envelope_potential_vector[1].real())
+    const amrex::ParticleReal Af_old_y = mean_laser_envelope_model(A_envelope_potential_vector[1].imag())
+    const amrex::ParticleReal Af_new_z = mean_laser_envelope_model(A_envelope_potential_vector[2].real())
+    const amrex::ParticleReal Af_old_z = mean_laser_envelope_model(A_envelope_potential_vector[2].imag())
+    // Get new u
+    ux = upx + qmt*Ex + upy*tz - upz*ty - pre_A_factor * (Af_new_x - Af_old_x);
+    uy = upy + qmt*Ey + upz*tx - upx*tz - pre_A_factor * (Af_new_y - Af_old_y);
+    uz = upz + qmt*Ez + upx*ty - upy*tx - pre_A_factor * (Af_new_z - Af_old_z);
 }
 
-#endif // WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_VAY_H_
+    
+#endif // WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_LASER_ENVELOPE_MODEL
