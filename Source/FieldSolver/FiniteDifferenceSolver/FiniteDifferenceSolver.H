@@ -140,8 +140,11 @@ class FiniteDifferenceSolver
           * \param[in] Jfield   vector of total current MultiFabs at a given level
           * \param[in] Jifield  vector of ion current density MultiFabs at a given level
           * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
-          * \param[in] rhofield scalar ion chrge density Multifab at a given level
+          * \param[in] rhofield scalar ion charge density Multifab at a given level
           * \param[in] Pefield  scalar electron pressure MultiFab at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
+          * \param[in] lev  level number for the calculation
+          * \param[in] hybrid_pic_model instance of the hybrid-PIC model
           */
         void HybridPICSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
@@ -153,6 +156,15 @@ class FiniteDifferenceSolver
                       int lev, std::unique_ptr<HybridPICModel> const& hybrid_pic_model,
                       DtType a_dt_type );
 
+        /**
+          * \brief Calculation of total current using Ampere's law (without
+          * displacement current): J = (curl x B) / mu0.
+          *
+          * \param[out] Jfield  vector of current MultiFabs at a given level
+          * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
+          * \param[in] lev  level number for the calculation
+          */
         void CalculateCurrentAmpere (
                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
@@ -228,7 +240,7 @@ class FiniteDifferenceSolver
             DtType a_dt_type );
 
         template<typename T_Algo>
-        void CalculateTotalCurrentCylindrical (
+        void CalculateCurrentAmpereCylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
@@ -332,7 +344,7 @@ class FiniteDifferenceSolver
             DtType a_dt_type );
 
         template<typename T_Algo>
-        void CalculateTotalCurrentCartesian (
+        void CalculateCurrentAmpereCartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,

@@ -136,37 +136,6 @@ WarpX::Evolve (int numsteps)
                             *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
             }
-
-            // The hybrid-PIC algorithm uses the charge and current density
-            // from both the current and previous step when updating the
-            // fields, so we deposit the ion charge and current now in the
-            // temp multifab locations.
-            if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
-            {
-                mypc->DepositCharge(rho_fp_temp, 0._rt);
-                mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
-                SyncRho(rho_fp_temp, rho_cp);
-                SyncCurrent(current_fp_temp, current_cp);
-                for (int lev=0; lev <= finest_level; ++lev) {
-                    // SyncCurrent does not include a call to FillBoundary, but it is needed
-                    // for the hybrid-PIC solver since current values are interpolated to
-                    // a nodal grid
-                    current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
-                    current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
-                    current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
-
-                    ApplyRhofieldBoundary(lev, rho_fp_temp[lev].get(), PatchType::fine);
-                    // Set current density at PEC boundaries, if needed.
-                    ApplyJfieldBoundary(
-                        lev, current_fp_temp[lev][0].get(),
-                        current_fp_temp[lev][1].get(),
-                        current_fp_temp[lev][2].get(),
-                        PatchType::fine
-                    );
-                }
-
-            }
-
             is_synchronized = false;
 
         } else {
@@ -190,6 +159,36 @@ WarpX::Evolve (int numsteps)
             }
             UpdateAuxilaryData();
             FillBoundaryAux(guard_cells.ng_UpdateAux);
+        }
+
+        // The hybrid-PIC algorithm uses the charge and current density from
+        // both the current and previous step when updating the fields, so we
+        // deposit the ion charge and current in the temp multifab locations on
+        // the first loop iteration.
+        if (step == step_begin &&
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
+        {
+            mypc->DepositCharge(rho_fp_temp, 0._rt);
+            mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
+            SyncRho(rho_fp_temp, rho_cp);
+            SyncCurrent(current_fp_temp, current_cp);
+            for (int lev=0; lev <= finest_level; ++lev) {
+                // SyncCurrent does not include a call to FillBoundary, but it is needed
+                // for the hybrid-PIC solver since current values are interpolated to
+                // a nodal grid
+                current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
+                current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
+                current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
+
+                ApplyRhofieldBoundary(lev, rho_fp_temp[lev].get(), PatchType::fine);
+                // Set current density at PEC boundaries, if needed.
+                ApplyJfieldBoundary(
+                    lev, current_fp_temp[lev][0].get(),
+                    current_fp_temp[lev][1].get(),
+                    current_fp_temp[lev][2].get(),
+                    PatchType::fine
+                );
+            }
         }
 
         // Run multi-physics modules:

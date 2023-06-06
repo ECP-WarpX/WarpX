@@ -18,6 +18,8 @@ using namespace amrex;
 
 void WarpX::HybridPICEvolveFields ()
 {
+    WARPX_PROFILE("WarpX::HybridPICEvolveFields()");
+
     // The below deposition is hard coded for a single level simulation
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         finest_level == 0,

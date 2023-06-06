@@ -30,15 +30,14 @@ void FiniteDifferenceSolver::CalculateCurrentAmpere (
 {
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
-    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee ||
-        m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
 #ifdef WARPX_DIM_RZ
-        CalculateTotalCurrentCylindrical <CylindricalYeeAlgorithm> (
+        CalculateCurrentAmpereCylindrical <CylindricalYeeAlgorithm> (
             Jfield, Bfield, edge_lengths, lev
         );
 
 #else
-        CalculateTotalCurrentCartesian <CartesianYeeAlgorithm> (
+        CalculateCurrentAmpereCartesian <CartesianYeeAlgorithm> (
             Jfield, Bfield, edge_lengths, lev
         );
 
@@ -58,7 +57,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpere (
 //   */
 #ifdef WARPX_DIM_RZ
 template<typename T_Algo>
-void FiniteDifferenceSolver::CalculateTotalCurrentCylindrical (
+void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
@@ -71,7 +70,7 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCylindrical (
 }
 #else
 template<typename T_Algo>
-void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
+void FiniteDifferenceSolver::CalculateCurrentAmpereCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
@@ -128,6 +127,8 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
         Box const& tjy  = mfi.tilebox(Jfield[1]->ixType().toIntVect());
         Box const& tjz  = mfi.tilebox(Jfield[2]->ixType().toIntVect());
 
+        Real const one_over_mu0 = 1._rt / PhysConst::mu0;
+
         // First calculate the total current using Ampere's law on the
         // same grid as the E-field
         amrex::ParallelFor(tjx, tjy, tjz,
@@ -138,10 +139,10 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
                 // Skip if this cell is fully covered by embedded boundaries
                 if (lx(i, j, k) <= 0) return;
 #endif
-                Jx(i, j, k) = (
+                Jx(i, j, k) = one_over_mu0 * (
                     - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
                     + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k)
-                ) / PhysConst::mu0;
+                );
             },
 
             // Jy calculation
@@ -156,10 +157,10 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
                 if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
 #endif
 #endif
-                Jy(i, j, k) = (
+                Jy(i, j, k) = one_over_mu0 * (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
-                ) / PhysConst::mu0;
+                );
             },
 
             // Jz calculation
@@ -168,10 +169,10 @@ void FiniteDifferenceSolver::CalculateTotalCurrentCartesian (
                 // Skip if this cell is fully covered by embedded boundaries
                 if (lz(i,j,k) <= 0) return;
 #endif
-                Jz(i, j, k) = (
+                Jz(i, j, k) = one_over_mu0 * (
                     - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
                     + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k)
-                ) / PhysConst::mu0;
+                );
             }
         );
 
