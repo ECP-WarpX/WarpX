@@ -343,7 +343,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #endif
         AddRealComp("prev_z");
 #ifdef WARPX_DIM_RZ
-      WARPX_ABORT_WITH_MESSAGE("Saving previous particle positions not yet implemented in RZ");
+      amrex::Abort("Saving previous particle positions not yet implemented in RZ");
 #endif
     }
 
@@ -2574,7 +2574,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                                Exp, Eyp, Ezp, Bxp,
                                                Byp, Bzp, qp, m, dt);
                 } else {
-                    WARPX_ABORT_WITH_MESSAGE("Unknown particle pusher");
+                    amrex::Abort("Unknown particle pusher");
                 }
             });
         }
