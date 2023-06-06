@@ -217,7 +217,7 @@ public:
         amrex::Real t,
         amrex::Real * AMREX_RESTRICT const amplitude) const override final;
 
-    /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format.
+    /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format in 3D Cartesian.
     * This function cannot be private due to restrictions related to
     * the use of extended __device__ lambda
     *
@@ -228,13 +228,34 @@ public:
     * \param t: Current physical time
     * \param amplitude: pointer to array of field amplitude.
     */
-    void internal_fill_amplitude_uniform(
+    void internal_fill_amplitude_uniform_cartesian(
         const int idx_t_left,
         const int np,
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
         amrex::Real * AMREX_RESTRICT const amplitude) const;
+
+    /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format in RZ geometry.
+    * This function cannot be private due to restrictions related to
+    * the use of extended __device__ lambda
+    *
+    * \param idx_t_left index of the last time coordinate < t
+    * \param np: number of laser particles
+    * \param Xp: pointer to first component of positions of laser particles
+    * \param Yp: pointer to second component of positions of laser particles
+    * \param t: Current physical time
+    * \param amplitude: pointer to array of field amplitude.
+    */
+    void internal_fill_amplitude_uniform_cylindrical(
+        const int idx_t_left,
+        const int np,
+        amrex::Real const * AMREX_RESTRICT const Xp,
+        amrex::Real const * AMREX_RESTRICT const Yp,
+        amrex::Real t,
+        amrex::Real * AMREX_RESTRICT const amplitude) const;
+
+
 
     /** \brief Function to fill the amplitude in case of a uniform grid and for the binary format.
     * This function cannot be private due to restrictions related to

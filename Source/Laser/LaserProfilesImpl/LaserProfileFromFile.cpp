@@ -163,7 +163,11 @@ WarpXLaserProfiles::FromFileLaserProfile::fill_amplitude (
         "Something bad has happened with the simulation time");
     }
     if (m_params.file_in_lasy_format){
-        internal_fill_amplitude_uniform(idx_t_left, np, Xp, Yp, t, amplitude);
+        if (m_params.fileGeom=="cartesian"){
+            internal_fill_amplitude_uniform_cartesian(idx_t_left, np, Xp, Yp, t, amplitude);
+        } else {
+            internal_fill_amplitude_uniform_cylindrical(idx_t_left, np, Xp, Yp, t, amplitude);
+        }
     } else{
         internal_fill_amplitude_uniform_binary(idx_t_left, np, Xp, Yp, t, amplitude);
     }
@@ -412,7 +416,7 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk (int t_begin,
 }
 
 void
-WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform (
+WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cartesian (
     const int idx_t_left,
     const int np,
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
@@ -422,168 +426,177 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform (
     // and get pointers to underlying data for GPU.
     const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
     const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
-    // CARTESIAN BLOCK
-    if (m_params.fileGeom=="cartesian") {
-        const auto tmp_x_min = m_params.x_min;
-        const auto tmp_x_max = m_params.x_max;
-        const auto tmp_y_min = m_params.y_min;
-        const auto tmp_y_max = m_params.y_max;
-        const auto tmp_nx = m_params.nx;
-        const auto tmp_ny = m_params.ny;
-        const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
-        const auto tmp_idx_first_time = m_params.first_time_index;
-        const int idx_t_right = idx_t_left+1;
-        const auto t_left = idx_t_left*
-            (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
-            m_params.t_min;
-        const auto t_right = idx_t_right*
-            (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
-            m_params.t_min;
-        // Loop through the macroparticle to calculate the proper amplitude
-        amrex::ParallelFor(
-        np,
-        [=] AMREX_GPU_DEVICE (int i) {
-            //Amplitude is zero if we are out of bounds
-            if (Xp[i] <= tmp_x_min || Xp[i] >= tmp_x_max){
-                amplitude[i] = 0.0_rt;
-                return;
-            }
-            if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
-                amplitude[i] = 0.0_rt;
-                return;
-            }
-            //Find indices and coordinates along x
-            const int temp_idx_x_right = static_cast<int>(
-                std::ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
-            const int idx_x_right =
-                max(min(temp_idx_x_right,tmp_nx-1),static_cast<int>(1));
-            const int idx_x_left = idx_x_right - 1;
-            const auto x_0 =
-                idx_x_left*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
-            const auto x_1 =
-                idx_x_right*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
-            //Find indices and coordinates along y
-            const int temp_idx_y_right = static_cast<int>(
-                std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
-            const int idx_y_right =
-                max(min(temp_idx_y_right,tmp_ny-1),static_cast<int>(1));
-            const int idx_y_left = idx_y_right - 1;
-            const auto y_0 =
-                idx_y_left*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
-            const auto y_1 =
-                idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
-            //Interpolate amplitude
-            const auto idx = [=](int i_interp, int j_interp, int k_interp){
-                return
-                    (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
-                    j_interp*tmp_nx + k_interp;
-            };
-            Complex val = utils::algorithms::trilinear_interp(
-                t_left, t_right,
-                x_0, x_1,
-                y_0, y_1,
-                p_E_lasy_data[idx(idx_t_left, idx_y_left, idx_x_left)],
-                p_E_lasy_data[idx(idx_t_left, idx_y_right, idx_x_left)],
-                p_E_lasy_data[idx(idx_t_left, idx_y_left, idx_x_right)],
-                p_E_lasy_data[idx(idx_t_left, idx_y_right, idx_x_right)],
-                p_E_lasy_data[idx(idx_t_right, idx_y_left, idx_x_left)],
-                p_E_lasy_data[idx(idx_t_right, idx_y_right, idx_x_left)],
-                p_E_lasy_data[idx(idx_t_right, idx_y_left, idx_x_right)],
-                p_E_lasy_data[idx(idx_t_right, idx_y_right, idx_x_right)],
-                t, Xp[i], Yp[i]);
-                // The interpolated amplitude was only the envelope.
-                // Here we add the laser oscillations.
-                amplitude[i] = (val*exp_omega_t).real();
-            }
-        );
-    } else if (m_params.fileGeom=="thetaMode"){ // RZ BLOCK
-        const auto tmp_r_min = m_params.r_min;
-        const auto tmp_r_max = m_params.r_max;
-        const auto tmp_nr = m_params.nr;
-        const auto tmp_time_chunk_size = m_params.time_chunk_size;
-        const auto tmp_n_rz_azimuthal_components = m_params.n_rz_azimuthal_components;
-        const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
-        const auto tmp_idx_first_time = m_params.first_time_index;
-        const int idx_t_right = idx_t_left+1;
-        const auto t_left = idx_t_left*
-            (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
-            m_params.t_min;
-        const auto t_right = idx_t_right*
-            (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
-            m_params.t_min;
+    const auto tmp_x_min = m_params.x_min;
+    const auto tmp_x_max = m_params.x_max;
+    const auto tmp_y_min = m_params.y_min;
+    const auto tmp_y_max = m_params.y_max;
+    const auto tmp_nx = m_params.nx;
+    const auto tmp_ny = m_params.ny;
+    const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
+    const auto tmp_idx_first_time = m_params.first_time_index;
+    const int idx_t_right = idx_t_left+1;
+    const auto t_left = idx_t_left*
+        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+        m_params.t_min;
+    const auto t_right = idx_t_right*
+        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+        m_params.t_min;
+    // Loop through the macroparticle to calculate the proper amplitude
+    amrex::ParallelFor(
+    np,
+    [=] AMREX_GPU_DEVICE (int i) {
+        //Amplitude is zero if we are out of bounds
+        if (Xp[i] <= tmp_x_min || Xp[i] >= tmp_x_max){
+            amplitude[i] = 0.0_rt;
+            return;
+        }
+        if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
+            amplitude[i] = 0.0_rt;
+            return;
+        }
+        //Find indices and coordinates along x
+        const int temp_idx_x_right = static_cast<int>(
+            std::ceil((tmp_nx-1)*(Xp[i]- tmp_x_min)/(tmp_x_max-tmp_x_min)));
+        const int idx_x_right =
+            max(min(temp_idx_x_right,tmp_nx-1),static_cast<int>(1));
+        const int idx_x_left = idx_x_right - 1;
+        const auto x_0 =
+            idx_x_left*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
+        const auto x_1 =
+            idx_x_right*(tmp_x_max-tmp_x_min)/(tmp_nx-1) + tmp_x_min;
+        //Find indices and coordinates along y
+        const int temp_idx_y_right = static_cast<int>(
+            std::ceil((tmp_ny-1)*(Yp[i]- tmp_y_min)/(tmp_y_max-tmp_y_min)));
+        const int idx_y_right =
+            max(min(temp_idx_y_right,tmp_ny-1),static_cast<int>(1));
+        const int idx_y_left = idx_y_right - 1;
+        const auto y_0 =
+            idx_y_left*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
+        const auto y_1 =
+            idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
+        //Interpolate amplitude
+        const auto idx = [=](int i_interp, int j_interp, int k_interp){
+            return
+                (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
+                j_interp*tmp_nx + k_interp;
+        };
+        Complex val = utils::algorithms::trilinear_interp(
+            t_left, t_right,
+            x_0, x_1,
+            y_0, y_1,
+            p_E_lasy_data[idx(idx_t_left, idx_y_left, idx_x_left)],
+            p_E_lasy_data[idx(idx_t_left, idx_y_right, idx_x_left)],
+            p_E_lasy_data[idx(idx_t_left, idx_y_left, idx_x_right)],
+            p_E_lasy_data[idx(idx_t_left, idx_y_right, idx_x_right)],
+            p_E_lasy_data[idx(idx_t_right, idx_y_left, idx_x_left)],
+            p_E_lasy_data[idx(idx_t_right, idx_y_right, idx_x_left)],
+            p_E_lasy_data[idx(idx_t_right, idx_y_left, idx_x_right)],
+            p_E_lasy_data[idx(idx_t_right, idx_y_right, idx_x_right)],
+            t, Xp[i], Yp[i]);
+            // The interpolated amplitude was only the envelope.
+            // Here we add the laser oscillations.
+            amplitude[i] = (val*exp_omega_t).real();
+        }
+    );
+}
 
-        // Loop through the macroparticle to calculate the proper amplitude
-        amrex::ParallelFor(
-        np,
-        [=] AMREX_GPU_DEVICE (int i) {
-            auto Rp_i = std::sqrt(Xp[i] * Xp[i] + Yp[i] * Yp[i]);
-            //Amplitude is zero if we are out of bounds
-            if (Rp_i <= tmp_r_min || Rp_i >= tmp_r_max){
-                amplitude[i] = 0.0_rt;
-                return;
-            }
-            //Find indices and coordinates along x
-            const int temp_idx_r_right = static_cast<int>(
-                std::ceil((tmp_nr-1)*(Rp_i- tmp_r_min)/(tmp_r_max-tmp_r_min)));
-            const int idx_r_right =
-                max(min(temp_idx_r_right,tmp_nr-1),static_cast<int>(1));
-            const int idx_r_left = idx_r_right - 1;
-            const auto r_0 =
-                idx_r_left*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
-            const auto r_1 =
-                idx_r_right*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
+void
+WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylindrical (
+    const int idx_t_left,
+    const int np,
+    Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
+    Real t, Real * AMREX_RESTRICT const amplitude) const
+{
+    // Copy member variables to tmp copies
+    // and get pointers to underlying data for GPU.
+    const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
+    const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
+    const auto tmp_r_min = m_params.r_min;
+    const auto tmp_r_max = m_params.r_max;
+    const auto tmp_nr = m_params.nr;
+    const auto tmp_time_chunk_size = m_params.time_chunk_size;
+    const auto tmp_n_rz_azimuthal_components = m_params.n_rz_azimuthal_components;
+    const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
+    const auto tmp_idx_first_time = m_params.first_time_index;
+    const int idx_t_right = idx_t_left+1;
+    const auto t_left = idx_t_left*
+        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+        m_params.t_min;
+    const auto t_right = idx_t_right*
+        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+        m_params.t_min;
 
-            const auto idx = [=](int im, int i_interp, int j_interp){
-                return
-                     im*tmp_time_chunk_size*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
-                        j_interp;
-            };
-            amrex::Real costheta;
-            amrex::Real sintheta;
-            if (Rp_i > 0.) {
-                costheta = Xp[i]/Rp_i;
-                sintheta = Yp[i]/Rp_i;
-            } else {
-                costheta = 1._rt;
-                sintheta = 0._rt;
-            }
-            Complex val = 0;
-            Complex fact = Complex{costheta, sintheta};
+    // Loop through the macroparticle to calculate the proper amplitude
+    amrex::ParallelFor(
+    np,
+    [=] AMREX_GPU_DEVICE (int i) {
+        auto Rp_i = std::sqrt(Xp[i] * Xp[i] + Yp[i] * Yp[i]);
+        //Amplitude is zero if we are out of bounds
+        if (Rp_i <= tmp_r_min || Rp_i >= tmp_r_max){
+            amplitude[i] = 0.0_rt;
+            return;
+        }
+        //Find indices and coordinates along x
+        const int temp_idx_r_right = static_cast<int>(
+            std::ceil((tmp_nr-1)*(Rp_i- tmp_r_min)/(tmp_r_max-tmp_r_min)));
+        const int idx_r_right =
+            max(min(temp_idx_r_right,tmp_nr-1),static_cast<int>(1));
+        const int idx_r_left = idx_r_right - 1;
+        const auto r_0 =
+            idx_r_left*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
+        const auto r_1 =
+            idx_r_right*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
 
-            // azimuthal mode 0
+        const auto idx = [=](int im, int i_interp, int j_interp){
+            return
+                    im*tmp_time_chunk_size*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
+                    j_interp;
+        };
+        amrex::Real costheta;
+        amrex::Real sintheta;
+        if (Rp_i > 0.) {
+            costheta = Xp[i]/Rp_i;
+            sintheta = Yp[i]/Rp_i;
+        } else {
+            costheta = 1._rt;
+            sintheta = 0._rt;
+        }
+        Complex val = 0;
+        Complex fact = Complex{costheta, sintheta};
+
+        // azimuthal mode 0
+        val += utils::algorithms::bilinear_interp(
+            t_left, t_right,
+            r_0, r_1,
+            p_E_lasy_data[idx(0, idx_t_left, idx_r_left)],
+            p_E_lasy_data[idx(0, idx_t_left, idx_r_right)],
+            p_E_lasy_data[idx(0, idx_t_right, idx_r_left)],
+            p_E_lasy_data[idx(0, idx_t_right, idx_r_right)],
+            t, Rp_i);
+
+        // higher modes
+        for (int m=1 ; m <= tmp_n_rz_azimuthal_components/2; m++) {
             val += utils::algorithms::bilinear_interp(
                 t_left, t_right,
                 r_0, r_1,
-                p_E_lasy_data[idx(0, idx_t_left, idx_r_left)],
-                p_E_lasy_data[idx(0, idx_t_left, idx_r_right)],
-                p_E_lasy_data[idx(0, idx_t_right, idx_r_left)],
-                p_E_lasy_data[idx(0, idx_t_right, idx_r_right)],
-                t, Rp_i);
-
-            // higher modes
-            for (int m=1 ; m <= tmp_n_rz_azimuthal_components/2; m++) {
-                val += utils::algorithms::bilinear_interp(
-                    t_left, t_right,
-                    r_0, r_1,
-                    p_E_lasy_data[idx(2*m-1, idx_t_left, idx_r_left)],
-                    p_E_lasy_data[idx(2*m-1, idx_t_left, idx_r_right)],
-                    p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_left)],
-                    p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_right)],
-                    t, Rp_i)*(fact.real()) +
-                    utils::algorithms::bilinear_interp(
-                    t_left, t_right,
-                    r_0, r_1,
-                    p_E_lasy_data[idx(2*m, idx_t_left, idx_r_left)],
-                    p_E_lasy_data[idx(2*m, idx_t_left, idx_r_right)],
-                    p_E_lasy_data[idx(2*m, idx_t_right, idx_r_left)],
-                    p_E_lasy_data[idx(2*m, idx_t_right, idx_r_right)],
-                    t, Rp_i)*(fact.imag()) ;
-                fact = fact*Complex{costheta, sintheta};
-            }
-            amplitude[i] = (val*exp_omega_t).real();
-            }
-        );
-    }
+                p_E_lasy_data[idx(2*m-1, idx_t_left, idx_r_left)],
+                p_E_lasy_data[idx(2*m-1, idx_t_left, idx_r_right)],
+                p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_left)],
+                p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_right)],
+                t, Rp_i)*(fact.real()) +
+                utils::algorithms::bilinear_interp(
+                t_left, t_right,
+                r_0, r_1,
+                p_E_lasy_data[idx(2*m, idx_t_left, idx_r_left)],
+                p_E_lasy_data[idx(2*m, idx_t_left, idx_r_right)],
+                p_E_lasy_data[idx(2*m, idx_t_right, idx_r_left)],
+                p_E_lasy_data[idx(2*m, idx_t_right, idx_r_right)],
+                t, Rp_i)*(fact.imag()) ;
+            fact = fact*Complex{costheta, sintheta};
+        }
+        amplitude[i] = (val*exp_omega_t).real();
+        }
+    );
 }
 
 void
