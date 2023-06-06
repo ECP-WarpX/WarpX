@@ -125,7 +125,7 @@ WarpXParticleContainer::ReadParameters ()
     static bool initialized = false;
     if (!initialized)
     {
-        ParmParse pp_particles("particles");
+        const ParmParse pp_particles("particles");
         pp_particles.query("do_tiling", do_tiling);
         initialized = true;
     }

@@ -61,7 +61,7 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
 
-    ParmParse pp_species_name(species_name);
+    const ParmParse pp_species_name(species_name);
 
     utils::parser::getWithParser(
         pp_species_name, "zinject_plane", zinject_plane);
@@ -409,7 +409,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             enum exteb_flags : int { no_exteb, has_exteb };
 
-            int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+            const int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
 
             amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
                                {exteb_runtime_flag},

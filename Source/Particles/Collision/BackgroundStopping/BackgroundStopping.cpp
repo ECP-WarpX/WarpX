@@ -24,7 +24,7 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
                                      "Background stopping must have exactly one species.");
 
-    amrex::ParmParse pp_collision_name(collision_name);
+    const amrex::ParmParse pp_collision_name(collision_name);
 
     std::string background_type_str;
     pp_collision_name.get("background_type", background_type_str);

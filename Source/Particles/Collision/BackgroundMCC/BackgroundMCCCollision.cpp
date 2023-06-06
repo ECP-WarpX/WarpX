@@ -27,7 +27,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
                                      "Background MCC must have exactly one species.");
 
-    amrex::ParmParse pp_collision_name(collision_name);
+    const amrex::ParmParse pp_collision_name(collision_name);
 
     amrex::ParticleReal background_density = 0;
     if (utils::parser::queryWithParser(pp_collision_name, "background_density", background_density)) {
@@ -93,7 +93,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     // create a vector of MCCProcess objects from each scattering
     // process name
     for (const auto& scattering_process : scattering_process_names) {
-        std::string kw_cross_section = scattering_process + "_cross_section";
+        const std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
         pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);
 

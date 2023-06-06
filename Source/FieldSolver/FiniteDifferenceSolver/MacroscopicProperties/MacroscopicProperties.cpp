@@ -35,7 +35,7 @@ MacroscopicProperties::MacroscopicProperties ()
 void
 MacroscopicProperties::ReadParameters ()
 {
-    ParmParse pp_macroscopic("macroscopic");
+    const ParmParse pp_macroscopic("macroscopic");
     // Since macroscopic maxwell solve is turned on,
     // user-defined sigma, mu, and epsilon are queried.
     // The vacuum values are used as default for the macroscopic parameters

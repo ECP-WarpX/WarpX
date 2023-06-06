@@ -20,7 +20,7 @@ namespace BinaryCollisionUtils{
     NuclearFusionType get_nuclear_fusion_type (const std::string collision_name,
                                                MultiParticleContainer const * const mypc)
         {
-            amrex::ParmParse pp_collision_name(collision_name);
+            const amrex::ParmParse pp_collision_name(collision_name);
             amrex::Vector<std::string> species_names;
             pp_collision_name.getarr("species", species_names);
             auto& species1 = mypc->GetParticleContainerFromName(species_names[0]);
@@ -107,11 +107,11 @@ namespace BinaryCollisionUtils{
     CollisionType get_collision_type (const std::string collision_name,
                                       MultiParticleContainer const * const mypc)
         {
-            amrex::ParmParse pp_collision_name(collision_name);
+            const amrex::ParmParse pp_collision_name(collision_name);
             std::string type;
             pp_collision_name.get("type", type);
             if (type == "nuclearfusion") {
-                NuclearFusionType fusion_type = get_nuclear_fusion_type(collision_name, mypc);
+                const NuclearFusionType fusion_type = get_nuclear_fusion_type(collision_name, mypc);
                 return nuclear_fusion_type_to_collision_type(fusion_type);
             }
             amrex::Abort(type + " is not a valid type of collision that creates new particles");

@@ -58,7 +58,7 @@ namespace
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for ( amrex::MFIter mfi(mf, false); mfi.isValid(); ++mfi ) {
-            int i = mfi.LocalIndex();
+            const int i = mfi.LocalIndex();
             data[i] = mf[mfi].dataPtr();
             for (int j = 0; j < AMREX_SPACEDIM; ++j) {
                 (*shapes)[shapesize*i+j] = mf[mfi].box().length(j);
@@ -69,7 +69,7 @@ namespace
     }
     int* getMultiFabLoVects (const amrex::MultiFab& mf, int *num_boxes, int **ngrowvect)
     {
-        int shapesize = AMREX_SPACEDIM;
+        const int shapesize = AMREX_SPACEDIM;
         *ngrowvect = static_cast<int*>(malloc(sizeof(int)*shapesize));
         for (int j = 0; j < AMREX_SPACEDIM; ++j) {
             (*ngrowvect)[j] = mf.nGrow(j);
@@ -478,7 +478,7 @@ namespace
         const std::string species_name(char_species_name);
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
 
-        int comp = warpx_getParticleCompIndex(char_species_name, char_comp_name);
+        const int comp = warpx_getParticleCompIndex(char_species_name, char_comp_name);
 
         *num_tiles = myspc.numLocalTilesAtLevel(lev);
         *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
@@ -721,7 +721,7 @@ namespace
     }
 
     int warpx_getistep (int lev) {
-        WarpX& warpx = WarpX::GetInstance();
+        const WarpX& warpx = WarpX::GetInstance();
         return warpx.getistep(lev);
     }
     void warpx_setistep (int lev, int ii) {
@@ -729,7 +729,7 @@ namespace
         warpx.setistep(lev, ii);
     }
     amrex::Real warpx_gett_new (int lev) {
-        WarpX& warpx = WarpX::GetInstance();
+        const WarpX& warpx = WarpX::GetInstance();
         return warpx.gett_new(lev);
     }
     void warpx_sett_new (int lev, amrex::Real time) {
@@ -737,21 +737,21 @@ namespace
         warpx.sett_new(lev, time);
     }
     amrex::Real warpx_getdt (int lev) {
-        WarpX& warpx = WarpX::GetInstance();
+        const WarpX& warpx = WarpX::GetInstance();
         return warpx.getdt(lev);
     }
 
     int warpx_maxStep () {
-        WarpX& warpx = WarpX::GetInstance();
+        const WarpX& warpx = WarpX::GetInstance();
         return warpx.maxStep();
     }
     amrex::Real warpx_stopTime () {
-        WarpX& warpx = WarpX::GetInstance();
+        const WarpX& warpx = WarpX::GetInstance();
         return warpx.stopTime();
     }
 
     int warpx_finestLevel () {
-        WarpX& warpx = WarpX::GetInstance();
+        const WarpX& warpx = WarpX::GetInstance();
         return warpx.finestLevel();
     }
 
