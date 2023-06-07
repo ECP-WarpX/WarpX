@@ -526,7 +526,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylind
         (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
         m_params.t_min;
     const auto current_time_chunk_size = m_params.last_time_index - m_params.first_time_index +1;
-    
+
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
     np,
