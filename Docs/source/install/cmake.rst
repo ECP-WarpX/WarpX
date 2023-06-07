@@ -134,6 +134,7 @@ CMake Option                  Default & Values                               Des
 ``WarpX_pyamrex_repo``        ``https://github.com/AMReX-Codes/pyamrex.git`` Repository URI to pull and build pyAMReX from
 ``WarpX_pyamrex_branch``      *we set and maintain a compatible commit*      Repository branch for ``WarpX_pyamrex_repo``
 ``WarpX_pyamrex_internal``    **ON**/OFF                                     Needs a pre-installed pyAMReX library if set to ``OFF``
+``WarpX_PYTHON_IPO``          **ON**/OFF                                     Build Python w/ interprocedural/link optimization (IPO/LTO)
 ``WarpX_pybind11_src``        *None*                                         Path to pybind11 source directory (preferred if set)
 ``WarpX_pybind11_repo``       ``https://github.com/pybind/pybind11.git``     Repository URI to pull and build pybind11 from
 ``WarpX_pybind11_branch``     *we set and maintain a compatible commit*      Repository branch for ``WarpX_pybind11_repo``
@@ -282,6 +283,7 @@ Environment Variable          Default & Values                             Descr
 ``WARPX_PICSAR_INTERNAL``     **ON**/OFF                                   Needs a pre-installed PICSAR library if set to ``OFF``
 ``WARPX_PYAMREX_SRC``         *None*                                       Absolute path to pyAMReX source directory (preferred if set)
 ``WARPX_PYAMREX_INTERNAL``    **ON**/OFF                                   Needs a pre-installed pyAMReX library if set to ``OFF``
+``WARPX_PYTHON_IPO``          **ON**/OFF                                   Build Python w/ interprocedural/link optimization (IPO/LTO)
 ``WARPX_PYBIND11_SRC``        *None*                                       Absolute path to pybind11 source directory (preferred if set)
 ``WARPX_PYBIND11_INTERNAL``   **ON**/OFF                                   Needs a pre-installed pybind11 library if set to ``OFF``
 ``WARPX_CCACHE_PROGRAM``      First found ``ccache`` executable.           Set to ``NO`` to disable CCache.

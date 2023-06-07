@@ -103,6 +103,7 @@ class CMakeBuild(build_ext):
             '-DWarpX_PRECISION=' + WARPX_PRECISION,
             '-DWarpX_PARTICLE_PRECISION=' + WARPX_PARTICLE_PRECISION,
             '-DWarpX_PSATD:BOOL=' + WARPX_PSATD,
+            '-DWarpX_PYTHON_IPO:BOOL=' + WARPX_PYTHON_IPO,
             '-DWarpX_QED:BOOL=' + WARPX_QED,
             '-DWarpX_QED_TABLE_GEN:BOOL=' + WARPX_QED_TABLE_GEN,
             ## dependency control (developers & package managers)
@@ -199,6 +200,8 @@ with open('./README.md', encoding='utf-8') as f:
 #   Work-around for https://github.com/pypa/setuptools/issues/1712
 # Pick up existing WarpX libraries or...
 PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
+
+WARPX_PYTHON_IPO = os.environ.get("WARPX_PYTHON_IPO", "ON")
 
 env = os.environ.copy()
 # ... build WarpX libraries with CMake

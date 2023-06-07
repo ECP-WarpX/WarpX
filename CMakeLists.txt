@@ -121,6 +121,10 @@ set_default_build_type("Release")
 # Option to enable interprocedural optimization
 # (also know as "link-time optimization" or "whole program optimization")
 option(WarpX_IPO                                "Compile WarpX with interprocedural optimization (will take more time)" OFF)
+option(WarpX_PYTHON_IPO
+    "Compile Python bindings with interprocedural optimization (IPO) / link-time optimization (LTO)"
+    ON
+)
 
 # note: we could skip this if we solely build WarpX_APP, but if we build a
 # shared WarpX library or a third party, like ImpactX, uses ablastr in a
@@ -354,7 +358,10 @@ foreach(D IN LISTS WarpX_DIMS)
     endif()
 
     if(WarpX_PYTHON)
-        target_link_libraries(pyWarpX_${SD} PRIVATE pybind11::module pybind11::lto pybind11::windows_extras)
+        target_link_libraries(pyWarpX_${SD} PRIVATE pybind11::module pybind11::windows_extras)
+        if(WarpX_PYTHON_IPO)
+            target_link_libraries(pyWarpX_${SD} PRIVATE pybind11::lto)
+        endif()
     endif()
 
     if(WarpX_OPENPMD)
