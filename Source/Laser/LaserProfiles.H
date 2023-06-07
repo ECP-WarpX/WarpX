@@ -12,6 +12,8 @@
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
 
 #include <functional>
 #include <limits>
@@ -30,6 +32,7 @@ namespace WarpXLaserProfiles {
  */
 struct CommonLaserParameters
 {
+    std::string laser_name;
     amrex::Real wavelength; //! central wavelength
     amrex::Real e_max;  //! maximum electric field at peak
     amrex::Vector<amrex::Real> p_X;// ! Polarization
@@ -64,7 +67,7 @@ public:
     virtual void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) = 0;
+        CommonLaserParameters& params) = 0;
 
     /** Update Laser Profile
      *
@@ -108,7 +111,7 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters& params) override final;
 
     //No update needed
     void
@@ -150,7 +153,7 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters& params) override final;
 
     //No update needed
     void
@@ -170,6 +173,8 @@ private:
     } m_params;
 
     amrex::Parser m_parser;
+
+    CommonLaserParameters m_common_params;
 };
 
 /**
@@ -185,7 +190,7 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters& params) override final;
 
     /** \brief Reads new field data chunk from file if needed
     *
@@ -304,6 +309,9 @@ private:
      * used by this laser profile
      */
     struct{
+
+        /** Name of the lasy file geometry ("cartesian" for 3D cartesian or "thetaMode" for RZ) */
+        std::string fileGeom;
         /** Name of the binary file containing the data */
         std::string binary_file_name;
         /** Name of the lasy file containing the data */
@@ -314,6 +322,12 @@ private:
          * If DIM=3, ny must be >=2 as well.
          * If DIM=2, ny must be 1 */
         int nt, nx, ny;
+        /** Dimensions of E_lasy_data in RZ */
+        int nr;
+        /** Number of azimuthal components (2 per mode, 1 for mode 0) */
+        int n_rz_azimuthal_components;
+        /** Boolean indicating whether the lasy data is the envelope of the laser (True) or the amplitude (False) */
+        bool isLaserEnvelope;
         /** Start time*/
         amrex::Real t_min;
         /** Stop time*/
@@ -326,6 +340,8 @@ private:
         amrex::Real y_min;
         /** max of y coordinates*/
         amrex::Real y_max;
+        amrex::Real r_min;
+        amrex::Real r_max;
         /** Size of the timestep range to load */
         int time_chunk_size;
         /** Index of the first timestep in memory */
