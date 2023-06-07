@@ -291,7 +291,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 if (spectral_solver_cp[lev] != nullptr) {
                     BoxArray cba = ba;
                     cba.coarsen(refRatio(lev-1));
-                    std::array<Real,3> cdx = CellSize(lev-1);
+                    const std::array<Real,3> cdx = CellSize(lev-1);
 
                     // Get the cell-centered box
                     BoxArray c_realspace_ba = cba;  // Copy box

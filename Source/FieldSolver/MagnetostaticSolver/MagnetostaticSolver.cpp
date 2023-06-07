@@ -284,8 +284,9 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
 #else
         const int dim_start = 0;
 #endif
+        bool ndotA = false;
         for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
-            bool ndotA = (adim == idim);
+            ndotA = (adim == idim);
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             if (idim == 1) ndotA = (adim == 2);

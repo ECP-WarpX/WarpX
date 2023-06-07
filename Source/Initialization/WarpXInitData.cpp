@@ -1346,28 +1346,28 @@ WarpX::ReadExternalFieldFromFile (
                                      "RZ expects axisLabels {r, z}");
 #endif
 
-    auto offset = F.gridGlobalOffset();
-    amrex::Real offset0 = offset[0];
-    amrex::Real offset1 = offset[1];
+    const auto offset = F.gridGlobalOffset();
+    const amrex::Real offset0 = offset[0];
+    const amrex::Real offset1 = offset[1];
 #if defined(WARPX_DIM_3D)
-    amrex::Real offset2 = offset[2];
+    const amrex::Real offset2 = offset[2];
 #endif
-    auto d = F.gridSpacing<long double>();
+    const auto d = F.gridSpacing<long double>();
 
 #if defined(WARPX_DIM_RZ)
-    amrex::Real file_dr = d[0];
-    amrex::Real file_dz = d[1];
+    const amrex::Real file_dr = d[0];
+    const amrex::Real file_dz = d[1];
 #elif defined(WARPX_DIM_3D)
-    amrex::Real file_dx = d[0];
-    amrex::Real file_dy = d[1];
-    amrex::Real file_dz = d[2];
+    const amrex::Real file_dx = d[0];
+    const amrex::Real file_dy = d[1];
+    const amrex::Real file_dz = d[2];
 #endif
 
-    auto FC = F[F_component];
-    auto extent = FC.getExtent();
-    int extent0 = extent[0];
-    int extent1 = extent[1];
-    int extent2 = extent[2];
+    const auto FC = F[F_component];
+    const auto extent = FC.getExtent();
+    const int extent0 = extent[0];
+    const int extent1 = extent[1];
+    const int extent2 = extent[2];
 
     // Determine the chunk data that will be loaded.
     // Now, the full range of data is loaded.

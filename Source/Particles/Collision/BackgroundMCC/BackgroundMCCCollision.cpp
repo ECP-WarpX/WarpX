@@ -354,8 +354,8 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               amrex::ParticleReal x, y, z;
                               GetPosition.AsStored(ip, x, y, z);
 
-                              amrex::ParticleReal n_a = n_a_func(x, y, z, t);
-                              amrex::ParticleReal T_a = T_a_func(x, y, z, t);
+                              const amrex::ParticleReal n_a = n_a_func(x, y, z, t);
+                              const amrex::ParticleReal T_a = T_a_func(x, y, z, t);
 
                               amrex::ParticleReal v_coll, v_coll2, sigma_E, nu_i = 0;
                               double gamma, E_coll;

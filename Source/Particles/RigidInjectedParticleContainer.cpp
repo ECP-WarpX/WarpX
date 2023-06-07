@@ -361,9 +361,9 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             const Dim3 lo = lbound(box);
 
-            bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            int nox = WarpX::nox;
-            int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+            const bool galerkin_interpolation = WarpX::galerkin_interpolation;
+            const int nox = WarpX::nox;
+            const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
             amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
             amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};

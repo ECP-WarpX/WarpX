@@ -59,7 +59,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 {
     using namespace amrex::literals;
 
-    amrex::ParmParse pp_species_name(species_name);
+    const amrex::ParmParse pp_species_name(species_name);
 
 #ifdef AMREX_USE_GPU
     static_assert(std::is_trivially_copyable<InjectorPosition>::value,
@@ -537,7 +537,7 @@ PlasmaInjector::~PlasmaInjector () = default;
 // Depending on injection type at runtime, initialize inj_rho
 // so that inj_rho->getDensity calls
 // InjectorPosition[Constant or Custom or etc.].getDensity.
-void PlasmaInjector::parseDensity (amrex::ParmParse& pp)
+void PlasmaInjector::parseDensity (const amrex::ParmParse& pp)
 {
     // parse density information
     std::string rho_prof_s;
@@ -575,7 +575,7 @@ void PlasmaInjector::parseDensity (amrex::ParmParse& pp)
 // Depending on injection type at runtime, initialize inj_mom
 // so that inj_mom->getMomentum calls
 // InjectorMomentum[Constant or Custom or etc.].getMomentum.
-void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
+void PlasmaInjector::parseMomentum (const amrex::ParmParse& pp)
 {
     using namespace amrex::literals;
 
@@ -657,16 +657,16 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
                                              ux_min, uy_min, uz_min, ux_max, uy_max, uz_max));
     } else if (mom_dist_s == "maxwell_boltzmann"){
         h_mom_temp = std::make_unique<TemperatureProperties>(pp);
-        GetTemperature getTemp(*h_mom_temp.get());
+        const GetTemperature getTemp(*h_mom_temp.get());
         h_mom_vel = std::make_unique<VelocityProperties>(pp);
         GetVelocity getVel(*h_mom_vel.get());
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "maxwell_juttner"){
         h_mom_temp = std::make_unique<TemperatureProperties>(pp);
-        GetTemperature getTemp(*h_mom_temp.get());
+        const GetTemperature getTemp(*h_mom_temp.get());
         h_mom_vel = std::make_unique<VelocityProperties>(pp);
-        GetVelocity getVel(*h_mom_vel.get());
+        const GetVelocity getVel(*h_mom_vel.get());
         // Construct InjectorMomentum with InjectorMomentumJuttner.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "radial_expansion") {

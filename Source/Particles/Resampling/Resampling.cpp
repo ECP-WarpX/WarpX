@@ -13,7 +13,7 @@
 
 Resampling::Resampling (const std::string species_name)
 {
-    amrex::ParmParse pp_species_name(species_name);
+    const amrex::ParmParse pp_species_name(species_name);
     std::string resampling_algorithm_string = "leveling_thinning"; // default resampling algorithm
     pp_species_name.query("resampling_algorithm", resampling_algorithm_string);
 

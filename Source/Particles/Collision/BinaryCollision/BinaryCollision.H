@@ -400,8 +400,8 @@ public:
             const auto soa_2 = ptile_2.getParticleTileData();
             index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
-            amrex::ParticleReal q2 = species_2.getCharge();
-            amrex::ParticleReal m2 = species_2.getMass();
+            const amrex::ParticleReal q2 = species_2.getCharge();
+            const amrex::ParticleReal m2 = species_2.getMass();
             auto get_position_2  = GetParticlePosition(ptile_2, getpos_offset);
             // Needed to access the particle id
             ParticleType * AMREX_RESTRICT

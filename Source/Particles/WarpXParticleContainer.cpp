@@ -462,7 +462,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
         Box box = pti.validbox();
         box.grow(ng_J);
-        amrex::IntVect bin_size = WarpX::shared_tilesize;
+        const amrex::IntVect bin_size = WarpX::shared_tilesize;
 
         //sort particles by bin
         WARPX_PROFILE_VAR_START(blp_sort);
@@ -776,7 +776,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         // Lower corner of tile box physical domain
         // Note that this includes guard cells since it is after tilebox.ngrow
         // Take into account Galilean shift
-        Real dt = warpx.getdt(lev);
+        const Real dt = warpx.getdt(lev);
         const amrex::Real time_shift_delta = (icomp == 0 ? 0.0_rt : dt);
         const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(
                 tilebox, depos_lev, time_shift_delta);
@@ -799,7 +799,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             Box box = pti.validbox();
             box.grow(ng_rho);
-            amrex::IntVect bin_size = WarpX::shared_tilesize;
+            const amrex::IntVect bin_size = WarpX::shared_tilesize;
             int ntiles = numTilesInBox(box, true, bin_size);
 
             bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
@@ -828,7 +828,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             Box box = pti.validbox();
             box.grow(ng_rho);
-            amrex::IntVect bin_size = WarpX::shared_tilesize;
+            const amrex::IntVect bin_size = WarpX::shared_tilesize;
 
             const auto offsets_ptr = bins.offsetsPtr();
             auto tbox_ptr = tboxes.dataPtr();
@@ -1060,7 +1060,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
 
-    bool is_PSATD_RZ = false;
+    const bool is_PSATD_RZ = false;
 #ifdef WARPX_DIM_RZ
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
         is_PSATD_RZ = true;

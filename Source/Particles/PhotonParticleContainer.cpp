@@ -127,7 +127,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 #endif
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
-    int do_copy = (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf) );
+    const int do_copy = (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf) );
 
     const auto GetPosition = GetParticlePosition(pti, offset);
     auto SetPosition = SetParticlePosition(pti, offset);
@@ -139,9 +139,9 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const Dim3 lo = lbound(box);
 
-    bool galerkin_interpolation = WarpX::galerkin_interpolation;
-    int nox = WarpX::nox;
-    int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+    const bool galerkin_interpolation = WarpX::galerkin_interpolation;
+    const int nox = WarpX::nox;
+    const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
     amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
     amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};

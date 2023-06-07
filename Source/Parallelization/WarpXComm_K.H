@@ -92,8 +92,9 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
     const Real owx = 1.0_rt-wx;
 
     const int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
+    Real wy, owy;
+    wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 
@@ -178,12 +179,14 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     };
 
     const int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
+    Real wx, owx;
+    wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    owx = 1.0_rt-wx;
 
     const int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
+    Real wy, owy;
+    wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 
@@ -196,7 +199,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         +      wx * Byc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Byf_zeropad(j-1,0,0) + Byf_zeropad(j,0,0));
+    const Real bf = 0.5_rt*(Byf_zeropad(j-1,0,0) + Byf_zeropad(j,0,0));
     amrex::ignore_unused(owy);
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -216,7 +219,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         +      wx *  wy * Byc(jg-1,kg-1,0);
 
     // interp form fine stagger (cell-centered for By) to fine nodal
-    Real bf = 0.25_rt*(Byf_zeropad(j,k,0) + Byf_zeropad(j-1,k,0) + Byf_zeropad(j,k-1,0) + Byf_zeropad(j-1,k-1,0));
+    const Real bf = 0.25_rt*(Byf_zeropad(j,k,0) + Byf_zeropad(j-1,k,0) + Byf_zeropad(j,k-1,0) + Byf_zeropad(j-1,k-1,0));
 
 #else
 
@@ -270,12 +273,14 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     };
 
     const int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
+    Real wx, owx;
+    wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    owx = 1.0_rt-wx;
 
     const int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
+    Real wy, owy;
+    wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 
@@ -307,7 +312,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         +      wx *  wy * Bzc(jg-1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bzf_zeropad(j-1,k,0) + Bzf_zeropad(j,k,0));
+    const Real bf = 0.5_rt*(Bzf_zeropad(j-1,k,0) + Bzf_zeropad(j,k,0));
 
 #else
 

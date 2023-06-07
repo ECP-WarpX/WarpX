@@ -317,7 +317,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const int threads_per_block = 256;
 
     std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
-    amrex::IntVect bin_size = WarpX::shared_tilesize;
+    const amrex::IntVect bin_size = WarpX::shared_tilesize;
 
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
 
