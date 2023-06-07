@@ -120,7 +120,7 @@ struct IonizationFilterFunc
                                );
 
             // Compute probability of ionization p
-            const amrex::Real w_dtau = (E == 0._rt) ? 0._rt : 1._rt/ ga * m_adk_prefactor[ion_lev] *
+            const amrex::Real w_dtau = (E <= 0._rt) ? 0._rt : 1._rt/ ga * m_adk_prefactor[ion_lev] *
                 std::pow(E, m_adk_power[ion_lev]) *
                 std::exp( m_adk_exp_prefactor[ion_lev]/E );
             const amrex::Real p = 1._rt - std::exp( - w_dtau );
