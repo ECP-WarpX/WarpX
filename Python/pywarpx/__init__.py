@@ -16,7 +16,7 @@ from .Geometry import geometry
 from .Interpolation import interpolation
 from .Lasers import lasers
 from .PSATD import psatd
-from .Particles import electrons, newspecies, particles, positrons, protons
+from .Particles import newspecies, particles
 from .WarpX import warpx
 from ._libwarpx import libwarpx
 
