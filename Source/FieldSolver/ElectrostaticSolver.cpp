@@ -288,7 +288,6 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         sorted_phi.emplace_back(phi[lev].get());
     }
 
-    const std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
 #if defined(AMREX_USE_EB)
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
@@ -322,7 +321,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         post_phi_calculation = ElectrostaticSolver::EBCalcEfromPhiPerLevel(e_field);
     }
 
-    std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory;
+    const std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory;
     amrex::Vector<
         amrex::EBFArrayBoxFactory const *
     > factories;
@@ -331,6 +330,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     }
     eb_farray_box_factory = factories;
 #else
+    const std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
     const std::optional<amrex::Vector<amrex::FArrayBoxFactory const *> > eb_farray_box_factory;
 #endif
 
