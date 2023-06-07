@@ -514,7 +514,6 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylind
     const auto tmp_r_min = m_params.r_min;
     const auto tmp_r_max = m_params.r_max;
     const auto tmp_nr = m_params.nr;
-    const auto tmp_time_chunk_size = m_params.time_chunk_size;
     const auto tmp_n_rz_azimuthal_components = m_params.n_rz_azimuthal_components;
     const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
     const auto tmp_idx_first_time = m_params.first_time_index;
