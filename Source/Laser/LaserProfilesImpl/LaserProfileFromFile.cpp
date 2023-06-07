@@ -525,7 +525,8 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylind
     const auto t_right = idx_t_right*
         (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
         m_params.t_min;
-
+    const auto current_time_chunk_size = m_params.last_time_index - m_params.first_time_index +1;
+    
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
     np,
@@ -549,7 +550,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylind
 
         const auto idx = [=](int im, int i_interp, int j_interp){
             return
-                    im*tmp_time_chunk_size*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
+                    im*current_time_chunk_size*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
                     j_interp;
         };
         amrex::Real costheta;
