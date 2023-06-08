@@ -23,7 +23,7 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
 
         m_collision_type = BinaryCollisionUtils::get_collision_type(collision_name, mypc);
 
-        if (m_collision_type == CollisionType::ProtonBoronFusion)
+        if (m_collision_type == CollisionType::ProtonBoronToAlphasFusion)
             {
                 // Proton-Boron fusion only produces alpha particles
                 m_num_product_species = 1;
@@ -34,6 +34,24 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
                 m_num_products_device.push_back(3);
 #endif
             }
+        else if ((m_collision_type == CollisionType::DeuteriumTritiumToNeutronHeliumFusion)
+              || (m_collision_type == CollisionType::DeuteriumDeuteriumToProtonTritiumFusion)
+              || (m_collision_type == CollisionType::DeuteriumDeuteriumToNeutronHeliumFusion))
+        {
+            m_num_product_species = 2;
+            m_num_products_host.push_back(1);
+            m_num_products_host.push_back(1);
+#ifndef AMREX_USE_GPU
+            // On CPU, the device vector can be filled immediatly
+            m_num_products_device.push_back(1);
+            m_num_products_device.push_back(1);
+#endif
+        }
+        else
+        {
+          amrex::Abort("Unknown collision type in ParticleCreationFunc");
+        }
+
 #ifdef AMREX_USE_GPU
         m_num_products_device.resize(m_num_product_species);
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, m_num_products_host.begin(),

@@ -7,6 +7,7 @@
 #include "MultiReducedDiags.H"
 
 #include "BeamRelevant.H"
+#include "ChargeOnEB.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
 #include "FieldProbe.H"
@@ -17,10 +18,12 @@
 #include "ParticleEnergy.H"
 #include "ParticleExtrema.H"
 #include "ParticleHistogram.H"
+#include "ParticleHistogram2D.H"
 #include "ParticleMomentum.H"
 #include "ParticleNumber.H"
 #include "RhoMaximum.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/TextMsg.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -59,9 +62,11 @@ MultiReducedDiags::MultiReducedDiags ()
             {"LoadBalanceCosts",      [](CS s){return std::make_unique<LoadBalanceCosts>(s);}},
             {"LoadBalanceEfficiency", [](CS s){return std::make_unique<LoadBalanceEfficiency>(s);}},
             {"ParticleHistogram",     [](CS s){return std::make_unique<ParticleHistogram>(s);}},
+            {"ParticleHistogram2D",   [](CS s){return std::make_unique<ParticleHistogram2D>(s);}},
             {"ParticleNumber",        [](CS s){return std::make_unique<ParticleNumber>(s);}},
-            {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}}
-        };
+            {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}},
+            {"ChargeOnEB",  [](CS s){return std::make_unique<ChargeOnEB>(s);}}
+    };
     // loop over all reduced diags and fill m_multi_rd with requested reduced diags
     std::transform(m_rd_names.begin(), m_rd_names.end(), std::back_inserter(m_multi_rd),
         [&](const auto& rd_name){
@@ -71,8 +76,10 @@ MultiReducedDiags::MultiReducedDiags ()
             std::string rd_type;
             pp_rd_name.get("type", rd_type);
 
-            if(reduced_diags_dictionary.count(rd_type) == 0)
-                Abort(rd_type + " is not a valid type for reduced diagnostic " + rd_name);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                reduced_diags_dictionary.count(rd_type) != 0,
+                rd_type + " is not a valid type for reduced diagnostic " + rd_name
+            );
 
             return reduced_diags_dictionary.at(rd_type)(rd_name);
         });
@@ -100,6 +107,8 @@ void MultiReducedDiags::LoadBalance () {
 // call functions to compute diags
 void MultiReducedDiags::ComputeDiags (int step)
 {
+    WARPX_PROFILE("MultiReducedDiags::ComputeDiags()");
+
     // loop over all reduced diags
     for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {

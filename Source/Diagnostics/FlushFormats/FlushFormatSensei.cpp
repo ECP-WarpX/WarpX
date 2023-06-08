@@ -29,23 +29,24 @@ FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
     m_insitu_bridge->setEnabled(true);
     m_insitu_bridge->setConfig(m_insitu_config);
     m_insitu_bridge->setPinMesh(m_insitu_pin_mesh);
-    if (!m_amr_mesh || m_insitu_bridge->initialize())
-    {
-        amrex::ErrorStream() << "FlushFormtSensei::FlushFormatSensei : "
-            "Failed to initialize the in situ bridge." << std::endl;
 
-        amrex::Abort();
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_amr_mesh && !m_insitu_bridge->initialize(),
+        "FlushFormtSensei::FlushFormatSensei : "
+        "Failed to initialize the in situ bridge."
+    );
     m_insitu_bridge->setFrequency(1);
 #endif
 }
 
+#ifdef AMREX_USE_SENSEI_INSITU
 FlushFormatSensei::~FlushFormatSensei ()
 {
-#ifdef AMREX_USE_SENSEI_INSITU
     delete m_insitu_bridge;
-#endif
 }
+#else
+FlushFormatSensei::~FlushFormatSensei () = default;
+#endif
 
 void
 FlushFormatSensei::WriteToFile (
@@ -56,19 +57,28 @@ FlushFormatSensei::WriteToFile (
     const amrex::Vector<ParticleDiag>& particle_diags,
     int nlev, const std::string prefix, int file_min_digits,
     bool plot_raw_fields, bool plot_raw_fields_guards,
-    bool isBTD, int snapshotID,
-    const amrex::Geometry& full_BTD_snapshot, bool isLastBTDFlush) const
+    const bool use_pinned_pc,
+    bool isBTD, int /*snapshotID*/, int /*bufferID*/, int /*numBuffers*/,
+    const amrex::Geometry& /*full_BTD_snapshot*/, bool /*isLastBTDFlush*/,
+    const amrex::Vector<int>& totalParticlesFlushedAlready) const
 {
     amrex::ignore_unused(
         geom, nlev, prefix, file_min_digits,
         plot_raw_fields, plot_raw_fields_guards,
-        isBTD, snapshotID, full_BTD_snapshot,
-        isLastBTDFlush);
+        use_pinned_pc,
+        totalParticlesFlushedAlready);
 
 #ifndef AMREX_USE_SENSEI_INSITU
-    amrex::ignore_unused(varnames, mf, iteration, time, particle_diags);
+    amrex::ignore_unused(varnames, mf, iteration, time, particle_diags,
+                         isBTD);
 #else
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !isBTD,
+        "In-situ visualization is not currently supported for back-transformed diagnostics.");
+
     WARPX_PROFILE("FlushFormatSensei::WriteToFile()");
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+    amrex::Print() << Utils::TextMsg::Info("Writing Sensei file " + filename);
 
     amrex::Vector<amrex::MultiFab> *mf_ptr =
         const_cast<amrex::Vector<amrex::MultiFab>*>(&mf);
@@ -78,13 +88,11 @@ FlushFormatSensei::WriteToFile (
         iteration[0], time, m_amr_mesh,{mf_ptr}, {varnames},
         particles, {}, {}, {{"u",{0,1,2}}}, {});
 
-    if (didUpdate)
-    {
-        amrex::ErrorStream() << "FlushFormatSensei::WriteToFile : "
-            "Failed to update the in situ bridge." << std::endl;
-
-        amrex::Abort();
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !didUpdate,
+        "FlushFormatSensei::WriteToFile : "
+        "Failed to update the in situ bridge."
+    );
 #endif
 }
 
@@ -94,9 +102,9 @@ FlushFormatSensei::WriteParticles (
 {
     amrex::ignore_unused(particle_diags);
 #ifdef AMREX_USE_SENSEI_INSITU
-    amrex::ErrorStream() << "FlushFormatSensei::WriteParticles : "
-        "Not yet implemented." << std::endl;
-
-    amrex::Abort();
+    WARPX_ABORT_WITH_MESSAGE(
+        "FlushFormatSensei::WriteParticles : "
+        "Not yet implemented."
+    );
 #endif
 }

@@ -1,9 +1,10 @@
+import glob
 import os
 import shutil
+
 import numpy as np
-import yt
 import scipy.constants as scc
-import glob
+import yt
 
 """
 This file is part of the suite of scripts to use LibEnsemble on top of WarpX

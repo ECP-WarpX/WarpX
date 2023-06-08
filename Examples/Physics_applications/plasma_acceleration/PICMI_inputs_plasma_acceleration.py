@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+
 from pywarpx import picmi
+
 #from warp import picmi
 
 constants = picmi.constants

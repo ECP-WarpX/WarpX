@@ -1,4 +1,4 @@
-/* Copyright 2021 Tiberius Rheaume, Axel Huebl
+/* Copyright 2021 Elisa Rheaume, Axel Huebl
  *
  * This file is part of WarpX.
  *

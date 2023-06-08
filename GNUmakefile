@@ -8,7 +8,8 @@ DEBUG = FALSE
 WARN_ALL = TRUE
 #WARN_ERROR=TRUE
 
-#DIM     = 2
+#DIM = 1
+#DIM = 2
 DIM = 3
 
 QED	       = TRUE

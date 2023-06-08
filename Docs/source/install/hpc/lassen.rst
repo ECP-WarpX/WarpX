@@ -5,7 +5,11 @@ Lassen (LLNL)
 
 The `Lassen V100 GPU cluster <https://hpc.llnl.gov/hardware/platforms/lassen>`_ is located at LLNL.
 
-If you are new to this system, please see the following resources:
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
 
 * `LLNL user account <https://lc.llnl.gov/lorenz/mylc/mylc.cgi>`_
 * `Lassen user guide <https://hpc.llnl.gov/training/tutorials/using-lcs-sierra-system>`_
@@ -25,50 +29,11 @@ Use the following commands to download the WarpX source code and switch to the c
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
-We use the following modules and environments on the system (``$HOME/warpx.profile``).
+We use the following modules and environments on the system (``$HOME/lassen_warpx.profile``).
 
-.. code-block:: bash
-
-   # please set your project account
-   export proj=<yourProject>
-
-   # required dependencies
-   module load cmake/3.20.2
-   module load gcc/8.3.1
-   module load cuda/11.2.0
-
-   # optional: for PSATD support
-   module load fftw/3.3.8
-
-   # optional: for QED lookup table generation support
-   module load boost/1.70.0
-
-   # optional: for openPMD support
-   # TODO ADIOS2
-   module load hdf5-parallel/1.10.4
-
-   # optional: for PSATD in RZ geometry support
-   # TODO: blaspp lapackpp
-
-   # optional: for Python bindings
-   module load python/3.8.2
-
-   # optional: an alias to request an interactive node for two hours
-   alias getNode="bsub -G $proj -W 2:00 -nnodes 1 -Is /bin/bash"
-
-   # fix system defaults: do not escape $ with a \ on tab completion
-   shopt -s direxpand
-
-   # optimize CUDA compilation for V100
-   export AMREX_CUDA_ARCH=7.0
-
-   # compiler environment hints
-   export CC=$(which gcc)
-   export CXX=$(which g++)
-   export FC=$(which gfortran)
-   export CUDACXX=$(which nvcc)
-   export CUDAHOSTCXX=$(which g++)
-
+.. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen_warpx.profile.example
+   :language: bash
+   :caption: You can copy this file from ``Tools/machines/lassen-llnl/lassen_warpx.profile.example``.
 
 We recommend to store the above lines in a file, such as ``$HOME/lassen_warpx.profile``, and load it into your shell after a login:
 
@@ -76,18 +41,55 @@ We recommend to store the above lines in a file, such as ``$HOME/lassen_warpx.pr
 
    source $HOME/lassen_warpx.profile
 
+And since Lassen does not yet provide a module for them, install ADIOS2, BLAS++ and LAPACK++:
+
+.. code-block:: bash
+
+   # c-blosc (I/O compression)
+   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
+   rm -rf src/c-blosc-lassen-build
+   cmake -S src/c-blosc -B src/c-blosc-lassen-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/c-blosc-1.21.1
+   cmake --build src/c-blosc-lassen-build --target install --parallel 16
+
+   # HDF5
+   git clone -b hdf5-1_14_1-2 https://github.com/HDFGroup/hdf5.git src/hdf5
+   rm -rf src/hdf5-lassen-build
+   cmake -S src/hdf5 -B src/hdf5-lassen-build -DBUILD_TESTING=OFF -DHDF5_ENABLE_PARALLEL=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/hdf5-1.14.1.2
+   cmake --build src/hdf5-lassen-build --target install --parallel 16
+
+   # ADIOS2
+   git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git src/adios2
+   rm -rf src/adios2-lassen-build
+   cmake -S src/adios2 -B src/adios2-lassen-build -DBUILD_TESTING=OFF -DADIOS2_BUILD_EXAMPLES=OFF -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_SST=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/adios2-2.8.3
+   cmake --build src/adios2-lassen-build --target install -j 16
+
+   # BLAS++ (for PSATD+RZ)
+   git clone https://github.com/icl-utk-edu/blaspp.git src/blaspp
+   rm -rf src/blaspp-lassen-build
+   cmake -S src/blaspp -B src/blaspp-lassen-build -Duse_openmp=ON -Dgpu_backend=cuda -Duse_cmake_find_blas=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/blaspp-master
+   cmake --build src/blaspp-lassen-build --target install --parallel 16
+
+   # LAPACK++ (for PSATD+RZ)
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
+   rm -rf src/lapackpp-lassen-build
+   CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-lassen-build -Duse_cmake_find_lapack=ON -DBLA_VENDOR=IBMESSL -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=$HOME/sw/lassen/lapackpp-master -DLAPACK_LIBRARIES=/usr/lib64/liblapack.so
+   cmake --build src/lapackpp-lassen-build --target install --parallel 16
+
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
 .. code-block:: bash
 
    cd $HOME/src/warpx
-   rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_OPENPMD=ON
-   cmake --build build -j 10
+   rm -rf build_lassen
+   cmake -S . -B build_lassen -DWarpX_COMPUTE=CUDA -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PSATD=ON
+   cmake --build build_lassen -j 10
 
-This will build an executable in ``build/bin/``.
 The other :ref:`general compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+WarpX executables for 1D, 2D, RZ and 3D are now in ``build_lassen/bin/`` and :ref:`can be run <running-cpp-lassen>` with the respective :ref:`example inputs files <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``/p/gpfs1/$(whoami)``.
 
 
 .. _running-cpp-lassen:
@@ -104,14 +106,15 @@ The batch script below can be used to run a WarpX simulation on 2 nodes on the s
 Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
 Note that the only option so far is to run with one MPI rank per GPU.
 
-.. literalinclude:: ../../../../Tools/BatchScripts/batch_lassen.sh
+.. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen.bsub
    :language: bash
+   :caption: You can copy this file from ``Tools/machines/lassen-llnl/lassen.bsub``.
 
-To run a simulation, copy the lines above to a file ``batch_lassen.sh`` and run
+To run a simulation, copy the lines above to a file ``lassen.bsub`` and run
 
 .. code-block:: bash
 
-   bsub batch_lassen.sh
+   bsub lassen.bsub
 
 to submit the job.
 
@@ -126,3 +129,20 @@ regime), the following set of parameters provided good performance:
   node)
 
 * **Two `128x128x128` grids per GPU**, or **one `128x128x256` grid per GPU**.
+
+
+.. _building-lassen-issues:
+
+Known System Issues
+-------------------
+
+.. warning::
+
+   Feb 17th, 2022 (INC0278922):
+   The implementation of ``AllGatherv`` in IBM's MPI optimization library "libcollectives" is broken and leads to HDF5 crashes for multi-node runs.
+
+   Our batch script templates above `apply this work-around <https://github.com/ECP-WarpX/WarpX/pull/2874>`__ *before* the call to ``jsrun``, which avoids the broken routines from IBM and trades them for an OpenMPI implementation of collectives:
+
+   .. code-block:: bash
+
+      export OMPI_MCA_coll_ibm_skip_allgatherv=true

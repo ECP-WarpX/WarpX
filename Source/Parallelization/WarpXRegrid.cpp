@@ -1,6 +1,6 @@
 /* Copyright 2019 Andrew Myers, Ann Almgren, Axel Huebl
  * David Grote, Maxence Thevenet, Michael Rowan
- * Remi Lehe, Weiqun Zhang, levinem
+ * Remi Lehe, Weiqun Zhang, levinem, Revathi Jambunathan
  *
  * This file is part of WarpX.
  *
@@ -10,7 +10,9 @@
 
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
+#include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -111,7 +113,7 @@ WarpX::LoadBalance ()
             {
                 pmap.resize(static_cast<std::size_t>(nboxes));
             }
-            ParallelDescriptor::Bcast(&pmap[0], pmap.size(), ParallelDescriptor::IOProcessorNumber());
+            ParallelDescriptor::Bcast(pmap.data(), pmap.size(), ParallelDescriptor::IOProcessorNumber());
 
             if (ParallelDescriptor::MyProc() != ParallelDescriptor::IOProcessorNumber())
             {
@@ -131,6 +133,9 @@ WarpX::LoadBalance ()
         mypc->Redistribute();
         mypc->defineAllParticleTiles();
 
+        // redistribute particle boundary buffer
+        m_particle_boundary_buffer->redistribute();
+
         // diagnostics & reduced diagnostics
         // not yet needed:
         //multi_diags->LoadBalance();
@@ -140,6 +145,18 @@ WarpX::LoadBalance ()
 }
 
 
+template <typename MultiFabType> void
+RemakeMultiFab (std::unique_ptr<MultiFabType>& mf, const DistributionMapping& dm,
+                const bool redistribute)
+{
+    if (mf == nullptr) return;
+    const IntVect& ng = mf->nGrowVect();
+    std::unique_ptr<MultiFabType> pmf;
+    WarpX::AllocInitMultiFab(pmf, mf->boxArray(), dm, mf->nComp(), ng, mf->tags()[0]);
+    if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
+    mf = std::move(pmf);
+}
+
 void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
 {
@@ -147,80 +164,76 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     {
         if (ParallelDescriptor::NProcs() == 1) return;
 
+        // Fine patch
+        for (int idim=0; idim < 3; ++idim)
+        {
+            RemakeMultiFab(Bfield_fp[lev][idim], dm, true);
+            RemakeMultiFab(Efield_fp[lev][idim], dm, true);
+            if (add_external_B_field) {
+                RemakeMultiFab(Bfield_fp_external[lev][idim], dm, true);
+            }
+            if (add_external_E_field) {
+                RemakeMultiFab(Efield_fp_external[lev][idim], dm, true);
+            }
+            RemakeMultiFab(current_fp[lev][idim], dm, false);
+            RemakeMultiFab(current_store[lev][idim], dm, false);
+            if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
+                RemakeMultiFab(current_fp_vay[lev][idim], dm, false);
+            }
+            if (do_current_centering) {
+                RemakeMultiFab(current_fp_nodal[lev][idim], dm, false);
+            }
+            if (fft_do_time_averaging) {
+                RemakeMultiFab(Efield_avg_fp[lev][idim], dm, true);
+                RemakeMultiFab(Bfield_avg_fp[lev][idim], dm, true);
+            }
 #ifdef AMREX_USE_EB
+            if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
+                RemakeMultiFab(m_edge_lengths[lev][idim], dm, false);
+                RemakeMultiFab(m_face_areas[lev][idim], dm, false);
+                if(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
+                    RemakeMultiFab(Venl[lev][idim], dm, false);
+                    RemakeMultiFab(m_flag_info_face[lev][idim], dm, false);
+                    RemakeMultiFab(m_flag_ext_face[lev][idim], dm, false);
+                    RemakeMultiFab(m_area_mod[lev][idim], dm, false);
+                    RemakeMultiFab(ECTRhofield[lev][idim], dm, false);
+                    m_borrowing[lev][idim] = std::make_unique<amrex::LayoutData<FaceInfoBox>>(amrex::convert(ba, Bfield_fp[lev][idim]->ixType().toIntVect()), dm);
+                }
+            }
+#endif
+        }
+
+        RemakeMultiFab(F_fp[lev], dm, true);
+        RemakeMultiFab(rho_fp[lev], dm, false);
+        // phi_fp should be redistributed since we use the solution from
+        // the last step as the initial guess for the next solve
+        RemakeMultiFab(phi_fp[lev], dm, true);
+
+#ifdef AMREX_USE_EB
+        RemakeMultiFab(m_distance_to_eb[lev], dm, false);
+
+        int max_guard = guard_cells.ng_FieldSolver.max();
         m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
-                                                       {1,1,1}, // Not clear how many ghost cells we need yet
+                                                       {max_guard, max_guard, max_guard},
                                                        amrex::EBSupport::full);
-        ComputeEdgeLengths();
-        ComputeFaceAreas();
-        ScaleEdges();
-        ScaleAreas();
-        ComputeDistanceToEB();
+
+        InitializeEBGridData(lev);
 #else
         m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
 #endif
 
-        // Fine patch
-        for (int idim=0; idim < 3; ++idim)
-        {
-            {
-                const IntVect& ng = Bfield_fp[lev][idim]->nGrowVect();
-                auto pmf = std::make_unique<MultiFab>(Bfield_fp[lev][idim]->boxArray(),
-                                                                  dm, Bfield_fp[lev][idim]->nComp(), ng);
-                pmf->Redistribute(*Bfield_fp[lev][idim], 0, 0, Bfield_fp[lev][idim]->nComp(), ng);
-                Bfield_fp[lev][idim] = std::move(pmf);
-            }
-            {
-                const IntVect& ng = Efield_fp[lev][idim]->nGrowVect();
-                auto pmf = std::make_unique<MultiFab>(Efield_fp[lev][idim]->boxArray(),
-                                                      dm, Efield_fp[lev][idim]->nComp(), ng);
-                pmf->Redistribute(*Efield_fp[lev][idim], 0, 0, Efield_fp[lev][idim]->nComp(), ng);
-                Efield_fp[lev][idim] = std::move(pmf);
-            }
-            {
-                const IntVect& ng = current_fp[lev][idim]->nGrowVect();
-                auto pmf = std::make_unique<MultiFab>(current_fp[lev][idim]->boxArray(),
-                                                      dm, current_fp[lev][idim]->nComp(), ng);
-                current_fp[lev][idim] = std::move(pmf);
-            }
-            if (current_store[lev][idim])
-            {
-                const IntVect& ng = current_store[lev][idim]->nGrowVect();
-                auto pmf = std::make_unique<MultiFab>(current_store[lev][idim]->boxArray(),
-                                                      dm, current_store[lev][idim]->nComp(), ng);
-                // no need to redistribute
-                current_store[lev][idim] = std::move(pmf);
-            }
-        }
-
-        if (F_fp[lev] != nullptr) {
-            const IntVect& ng = F_fp[lev]->nGrowVect();
-            auto pmf = std::make_unique<MultiFab>(F_fp[lev]->boxArray(),
-                                                              dm, F_fp[lev]->nComp(), ng);
-            pmf->Redistribute(*F_fp[lev], 0, 0, F_fp[lev]->nComp(), ng);
-            F_fp[lev] = std::move(pmf);
-        }
-
-        if (rho_fp[lev] != nullptr) {
-            const int nc = rho_fp[lev]->nComp();
-            const IntVect& ng = rho_fp[lev]->nGrowVect();
-            auto pmf = std::make_unique<MultiFab>(rho_fp[lev]->boxArray(),
-                                                              dm, nc, ng);
-            rho_fp[lev] = std::move(pmf);
-        }
-
 #ifdef WARPX_USE_PSATD
-        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             if (spectral_solver_fp[lev] != nullptr) {
                 // Get the cell-centered box
                 BoxArray realspace_ba = ba;   // Copy box
                 realspace_ba.enclosedCells(); // Make it cell-centered
-                auto ngE = getngE();
+                auto ngEB = getngEB();
                 auto dx = CellSize(lev);
 
 #   ifdef WARPX_DIM_RZ
                 if ( fft_periodic_single_box == false ) {
-                    realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+                    realspace_ba.grow(1, ngEB[1]); // add guard cells only in z
                 }
                 AllocLevelSpectralSolverRZ(spectral_solver_fp,
                                            lev,
@@ -229,7 +242,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                                            dx);
 #   else
                 if ( fft_periodic_single_box == false ) {
-                    realspace_ba.grow(ngE);   // add guard cells
+                    realspace_ba.grow(ngEB);   // add guard cells
                 }
                 bool const pml_flag_false = false;
                 AllocLevelSpectralSolver(spectral_solver_fp,
@@ -253,20 +266,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         } else {
             for (int idim=0; idim < 3; ++idim)
             {
-                {
-                    const IntVect& ng = Bfield_aux[lev][idim]->nGrowVect();
-                    auto pmf = std::make_unique<MultiFab>(Bfield_aux[lev][idim]->boxArray(),
-                                                                      dm, Bfield_aux[lev][idim]->nComp(), ng);
-                    // pmf->Redistribute(*Bfield_aux[lev][idim], 0, 0, Bfield_aux[lev][idim]->nComp(), ng);
-                    Bfield_aux[lev][idim] = std::move(pmf);
-                }
-                {
-                    const IntVect& ng = Efield_aux[lev][idim]->nGrowVect();
-                    auto pmf = std::make_unique<MultiFab>(Efield_aux[lev][idim]->boxArray(),
-                                                                      dm, Efield_aux[lev][idim]->nComp(), ng);
-                    // pmf->Redistribute(*Efield_aux[lev][idim], 0, 0, Efield_aux[lev][idim]->nComp(), ng);
-                    Efield_aux[lev][idim] = std::move(pmf);
-                }
+                RemakeMultiFab(Bfield_aux[lev][idim], dm, false);
+                RemakeMultiFab(Efield_aux[lev][idim], dm, false);
             }
         }
 
@@ -274,46 +275,19 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (lev > 0) {
             for (int idim=0; idim < 3; ++idim)
             {
-                {
-                    const IntVect& ng = Bfield_cp[lev][idim]->nGrowVect();
-                    auto pmf = std::make_unique<MultiFab>(Bfield_cp[lev][idim]->boxArray(),
-                                                                      dm, Bfield_cp[lev][idim]->nComp(), ng);
-                    pmf->Redistribute(*Bfield_cp[lev][idim], 0, 0, Bfield_cp[lev][idim]->nComp(), ng);
-                    Bfield_cp[lev][idim] = std::move(pmf);
-                }
-                {
-                    const IntVect& ng = Efield_cp[lev][idim]->nGrowVect();
-                    auto pmf = std::make_unique<MultiFab>(Efield_cp[lev][idim]->boxArray(),
-                                                                      dm, Efield_cp[lev][idim]->nComp(), ng);
-                    pmf->Redistribute(*Efield_cp[lev][idim], 0, 0, Efield_cp[lev][idim]->nComp(), ng);
-                    Efield_cp[lev][idim] = std::move(pmf);
-                }
-                {
-                    const IntVect& ng = current_cp[lev][idim]->nGrowVect();
-                    auto pmf = std::make_unique<MultiFab>(current_cp[lev][idim]->boxArray(),
-                                                                       dm, current_cp[lev][idim]->nComp(), ng);
-                    current_cp[lev][idim] = std::move(pmf);
+                RemakeMultiFab(Bfield_cp[lev][idim], dm, true);
+                RemakeMultiFab(Efield_cp[lev][idim], dm, true);
+                RemakeMultiFab(current_cp[lev][idim], dm, false);
+                if (fft_do_time_averaging) {
+                    RemakeMultiFab(Efield_avg_cp[lev][idim], dm, true);
+                    RemakeMultiFab(Bfield_avg_cp[lev][idim], dm, true);
                 }
             }
-
-            if (F_cp[lev] != nullptr) {
-                const IntVect& ng = F_cp[lev]->nGrowVect();
-                auto pmf = std::make_unique<MultiFab>(F_cp[lev]->boxArray(),
-                                                                  dm, F_cp[lev]->nComp(), ng);
-                pmf->Redistribute(*F_cp[lev], 0, 0, F_cp[lev]->nComp(), ng);
-                F_cp[lev] = std::move(pmf);
-            }
-
-            if (rho_cp[lev] != nullptr) {
-                const int nc = rho_cp[lev]->nComp();
-                const IntVect& ng = rho_cp[lev]->nGrowVect();
-                auto pmf  = std::make_unique<MultiFab>(rho_cp[lev]->boxArray(),
-                                                                  dm, nc, ng);
-                rho_cp[lev] = std::move(pmf);
-            }
+            RemakeMultiFab(F_cp[lev], dm, true);
+            RemakeMultiFab(rho_cp[lev], dm, false);
 
 #ifdef WARPX_USE_PSATD
-            if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
                 if (spectral_solver_cp[lev] != nullptr) {
                     BoxArray cba = ba;
                     cba.coarsen(refRatio(lev-1));
@@ -323,17 +297,17 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                     BoxArray c_realspace_ba = cba;  // Copy box
                     c_realspace_ba.enclosedCells(); // Make it cell-centered
 
-                    auto ngE = getngE();
+                    auto ngEB = getngEB();
 
 #   ifdef WARPX_DIM_RZ
-                    c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+                    c_realspace_ba.grow(1, ngEB[1]); // add guard cells only in z
                     AllocLevelSpectralSolverRZ(spectral_solver_cp,
                                                lev,
                                                c_realspace_ba,
                                                dm,
                                                cdx);
 #   else
-                    c_realspace_ba.grow(ngE);
+                    c_realspace_ba.grow(ngEB);
                     bool const pml_flag_false = false;
                     AllocLevelSpectralSolver(spectral_solver_cp,
                                              lev,
@@ -350,65 +324,27 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (lev > 0 && (n_field_gather_buffer > 0 || n_current_deposition_buffer > 0)) {
             for (int idim=0; idim < 3; ++idim)
             {
-                if (Bfield_cax[lev][idim])
-                {
-                    const IntVect& ng = Bfield_cax[lev][idim]->nGrowVect();
-                    auto pmf = std::make_unique<MultiFab>(Bfield_cax[lev][idim]->boxArray(),
-                                                                      dm, Bfield_cax[lev][idim]->nComp(), ng);
-                    // pmf->ParallelCopy(*Bfield_cax[lev][idim], 0, 0, Bfield_cax[lev][idim]->nComp(), ng, ng);
-                    Bfield_cax[lev][idim] = std::move(pmf);
-                }
-                if (Efield_cax[lev][idim])
-                {
-                    const IntVect& ng = Efield_cax[lev][idim]->nGrowVect();
-                    auto pmf = std::make_unique<MultiFab>(Efield_cax[lev][idim]->boxArray(),
-                                                                      dm, Efield_cax[lev][idim]->nComp(), ng);
-                    // pmf->ParallelCopy(*Efield_cax[lev][idim], 0, 0, Efield_cax[lev][idim]->nComp(), ng, ng);
-                    Efield_cax[lev][idim] = std::move(pmf);
-                }
-                if (current_buf[lev][idim])
-                {
-                    const IntVect& ng = current_buf[lev][idim]->nGrowVect();
-                    auto pmf = std::make_unique<MultiFab>(current_buf[lev][idim]->boxArray(),
-                                                                      dm, current_buf[lev][idim]->nComp(), ng);
-                    // pmf->ParallelCopy(*current_buf[lev][idim], 0, 0, current_buf[lev][idim]->nComp(), ng, ng);
-                    current_buf[lev][idim] = std::move(pmf);
-                }
+                RemakeMultiFab(Bfield_cax[lev][idim], dm, false);
+                RemakeMultiFab(Efield_cax[lev][idim], dm, false);
+                RemakeMultiFab(current_buf[lev][idim], dm, false);
             }
-            if (charge_buf[lev])
-            {
-                const IntVect& ng = charge_buf[lev]->nGrowVect();
-                auto pmf = std::make_unique<MultiFab>(charge_buf[lev]->boxArray(),
-                                                                  dm, charge_buf[lev]->nComp(), ng);
-                // pmf->ParallelCopy(*charge_buf[lev][idim], 0, 0, charge_buf[lev]->nComp(), ng, ng);
-                charge_buf[lev] = std::move(pmf);
-            }
-            if (current_buffer_masks[lev])
-            {
-                const IntVect& ng = current_buffer_masks[lev]->nGrowVect();
-                auto pmf = std::make_unique<iMultiFab>(current_buffer_masks[lev]->boxArray(),
-                                                                    dm, current_buffer_masks[lev]->nComp(), ng);
-                // we can avoid this since we immediately re-build the values via BuildBufferMasks()
-                // pmf->Redistribute(*current_buffer_masks[lev], 0, 0, current_buffer_masks[lev]->nComp(), ng);
-                current_buffer_masks[lev] = std::move(pmf);
-            }
-            if (gather_buffer_masks[lev])
-            {
-                const IntVect& ng = gather_buffer_masks[lev]->nGrowVect();
-                auto pmf = std::make_unique<iMultiFab>(gather_buffer_masks[lev]->boxArray(),
-                                                                    dm, gather_buffer_masks[lev]->nComp(), ng);
-                // we can avoid this since we immediately re-build the values via BuildBufferMasks()
-                // pmf->Redistribute(*gather_buffer_masks[lev], 0, 0, gather_buffer_masks[lev]->nComp(), ng);
-                gather_buffer_masks[lev] = std::move(pmf);
-            }
+            RemakeMultiFab(charge_buf[lev], dm, false);
+            // we can avoid redistributing these since we immediately re-build the values via BuildBufferMasks()
+            RemakeMultiFab(current_buffer_masks[lev], dm, false);
+            RemakeMultiFab(gather_buffer_masks[lev], dm, false);
+
             if (current_buffer_masks[lev] || gather_buffer_masks[lev])
                 BuildBufferMasks();
         }
 
+        // Re-initialize the lattice element finder with the new ba and dm.
+        m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
+
         if (costs[lev] != nullptr)
         {
             costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
-            for (int i : costs[lev]->IndexArray())
+            const auto iarr = costs[lev]->IndexArray();
+            for (int i : iarr)
             {
                 (*costs[lev])[i] = 0.0;
                 setLoadBalanceEfficiency(lev, -1);
@@ -449,7 +385,7 @@ WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<am
             }
         }
 
-        //Cell loop
+        // Cell loop
         MultiFab* Ex = Efield_fp[lev][0].get();
         for (MFIter mfi(*Ex, false); mfi.isValid(); ++mfi)
         {
@@ -464,7 +400,8 @@ WarpX::ResetCosts ()
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        for (int i : costs[lev]->IndexArray())
+        const auto iarr = costs[lev]->IndexArray();
+        for (int i : iarr)
         {
             // Reset costs
             (*costs[lev])[i] = 0.0;

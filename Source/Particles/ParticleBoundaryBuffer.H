@@ -7,8 +7,9 @@
 #ifndef PARTICLEBOUNDARYBUFFER_H_
 #define PARTICLEBOUNDARYBUFFER_H_
 
-#include "Particles/ParticleBuffer.H"
 #include "Particles/MultiParticleContainer_fwd.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <vector>
 
@@ -36,13 +37,17 @@ public:
     void gatherParticles (MultiParticleContainer& mypc,
                           const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
+    void redistribute ();
     void clearParticles ();
+    void clearParticles (int const i);
 
     void printNumParticles () const;
 
-    int getNumParticlesInContainer(const std::string species_name, int boundary);
+    int getNumParticlesInContainer(const std::string species_name, int boundary, bool local);
 
-    ParticleBuffer::BufferType<amrex::PinnedArenaAllocator>& getParticleBuffer(const std::string species_name, int boundary);
+    PinnedMemoryParticleContainer& getParticleBuffer(const std::string species_name, int boundary);
+
+    PinnedMemoryParticleContainer* getParticleBufferPointer(const std::string species_name, int boundary);
 
     static constexpr int numBoundaries () {
         return AMREX_SPACEDIM*2
@@ -52,12 +57,20 @@ public:
             ;
     }
 
+    bool isDefinedForAnySpecies (int const ibuffer) {return (m_do_any_boundary[ibuffer] != 0);}
+
+    std::string boundaryName (int const ibuffer) {return m_boundary_names[ibuffer];}
+
 private:
     // over boundary, then number of species
-    std::vector<std::vector<ParticleBuffer::BufferType<amrex::PinnedArenaAllocator> > > m_particle_containers;
+    std::vector<std::vector<PinnedMemoryParticleContainer> > m_particle_containers;
 
     // over boundary, then number of species
     std::vector<std::vector<int> > m_do_boundary_buffer;
+
+    // over boundary
+    std::vector<int> m_do_any_boundary;
+    std::vector<std::string> m_boundary_names;
 
     mutable std::vector<std::string> m_species_names;
 };

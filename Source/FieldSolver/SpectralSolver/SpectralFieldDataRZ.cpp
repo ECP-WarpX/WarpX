@@ -6,7 +6,14 @@
  */
 #include "SpectralFieldDataRZ.H"
 
+#include "Utils/WarpXUtil.H"
+#include "FieldSolver/SpectralSolver/AnyFFT.H"
 #include "WarpX.H"
+
+#include <ablastr/warn_manager/WarnManager.H>
+
+#include <AMReX_Config.H>
+
 
 using amrex::operator""_rt;
 
@@ -26,6 +33,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
                                           int const n_field_required,
                                           int const n_modes)
     : n_rz_azimuthal_modes(n_modes),
+      m_ncomps(2 * n_modes - 1),
       m_n_fields(n_field_required)
 {
     amrex::BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
@@ -86,8 +94,8 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
         result = cufftPlanMany(&forward_plan[mfi], 1, fft_length, inembed, istride, idist,
                                onembed, ostride, odist, cufft_type, batch);
         if (result != CUFFT_SUCCESS) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "cufftPlanMany failed!", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "cufftPlanMany failed!", ablastr::warn_manager::WarnPriority::high);
         }
         // The backward plane is the same as the forward since the direction is passed when executed.
 #elif defined(AMREX_USE_HIP)
@@ -115,8 +123,9 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
                                     grid_size[0], // number of transforms
                                     description);
         if (result != rocfft_status_success) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "rocfft_plan_create failed!\n", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "rocfft_plan_create failed!\n",
+                ablastr::warn_manager::WarnPriority::high);
         }
 
         result = rocfft_plan_create(&(backward_plan[mfi]),
@@ -131,14 +140,16 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
                                     grid_size[0], // number of transforms
                                     description);
         if (result != rocfft_status_success) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "rocfft_plan_create failed!\n", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "rocfft_plan_create failed!\n",
+                ablastr::warn_manager::WarnPriority::high);
         }
 
         result = rocfft_plan_description_destroy(description);
         if (result != rocfft_status_success) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "rocfft_plan_description_destroy failed!\n", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "rocfft_plan_description_destroy failed!\n",
+                ablastr::warn_manager::WarnPriority::high);
         }
 #else
         // Create FFTW plans.
@@ -155,27 +166,37 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
         howmany_dims[1].os = 1;
         forward_plan[mfi] =
             // Note that AMReX FAB are Fortran-order.
-            fftw_plan_guru_dft(1, // int rank
+#ifdef AMREX_USE_FLOAT
+            fftwf_plan_guru_dft
+#else
+            fftw_plan_guru_dft
+#endif
+                              (1, // int rank
                                dims,
                                2, // int howmany_rank,
                                howmany_dims,
-                               reinterpret_cast<fftw_complex*>(tempHTransformed[mfi].dataPtr()), // fftw_complex *in
-                               reinterpret_cast<fftw_complex*>(tmpSpectralField[mfi].dataPtr()), // fftw_complex *out
+                               reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr()), // complex *in
+                               reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr()), // complex *out
                                FFTW_FORWARD, // int sign
                                FFTW_ESTIMATE); // unsigned flags
         backward_plan[mfi] =
-            fftw_plan_guru_dft(1, // int rank
+#ifdef AMREX_USE_FLOAT
+            fftwf_plan_guru_dft
+#else
+            fftw_plan_guru_dft
+#endif
+                              (1, // int rank
                                dims,
                                2, // int howmany_rank,
                                howmany_dims,
-                               reinterpret_cast<fftw_complex*>(tmpSpectralField[mfi].dataPtr()), // fftw_complex *in
-                               reinterpret_cast<fftw_complex*>(tempHTransformed[mfi].dataPtr()), // fftw_complex *out
+                               reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr()), // complex *in
+                               reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr()), // complex *out
                                FFTW_BACKWARD, // int sign
                                FFTW_ESTIMATE); // unsigned flags
 #endif
 
         // Create the Hankel transformer for each box.
-        std::array<amrex::Real,3> xmax = WarpX::UpperCorner(mfi.tilebox(), lev);
+        std::array<amrex::Real,3> xmax = WarpX::UpperCorner(mfi.tilebox(), lev, 0._rt);
         multi_spectral_hankel_transformer[mfi] = SpectralHankelTransformer(grid_size[0], n_rz_azimuthal_modes, xmax[0]);
     }
 }
@@ -194,8 +215,13 @@ SpectralFieldDataRZ::~SpectralFieldDataRZ()
             rocfft_plan_destroy(backward_plan[mfi]);
 #else
             // Destroy FFTW plans.
+#  ifdef AMREX_USE_FLOAT
+            fftwf_destroy_plan(forward_plan[mfi]);
+            fftwf_destroy_plan(backward_plan[mfi]);
+#  else
             fftw_destroy_plan(forward_plan[mfi]);
             fftw_destroy_plan(backward_plan[mfi]);
+#  endif
 #endif
         }
     }
@@ -244,12 +270,13 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
                               reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr(mode)), // Complex *out
                               CUFFT_FORWARD);
         if (result != CUFFT_SUCCESS) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "forward transform using cufftExecZ2Z failed!", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "forward transform using cufftExecZ2Z failed!",
+                ablastr::warn_manager::WarnPriority::high);
         }
     }
 #elif defined(AMREX_USE_HIP)
-    rocfft_execution_info execinfo = NULL;
+    rocfft_execution_info execinfo = nullptr;
     rocfft_status result = rocfft_execution_info_create(&execinfo);
     std::size_t buffersize = 0;
     result = rocfft_plan_get_work_buffer_size(forward_plan[mfi], &buffersize);
@@ -262,8 +289,9 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
         void* out_array[] = {(void*)(tmpSpectralField[mfi].dataPtr(mode))};
         result = rocfft_execute(forward_plan[mfi], in_array, out_array, execinfo);
         if (result != rocfft_status_success) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "forward transform using rocfft_execute failed!", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "forward transform using rocfft_execute failed!",
+                ablastr::warn_manager::WarnPriority::high);
         }
     }
 
@@ -271,7 +299,11 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
     amrex::The_Arena()->free(buffer);
     result = rocfft_execution_info_destroy(execinfo);
 #else
+#  ifdef AMREX_USE_FLOAT
+    fftwf_execute(forward_plan[mfi]);
+#  else
     fftw_execute(forward_plan[mfi]);
+#  endif
 #endif
 
     // Copy the spectral-space field `tmpSpectralField` to the appropriate
@@ -355,12 +387,13 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
                               reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr(mode)), // Complex *out
                               CUFFT_INVERSE);
         if (result != CUFFT_SUCCESS) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "backwardtransform using cufftExecZ2Z failed!", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "backwardtransform using cufftExecZ2Z failed!",
+                ablastr::warn_manager::WarnPriority::high);
         }
     }
 #elif defined(AMREX_USE_HIP)
-    rocfft_execution_info execinfo = NULL;
+    rocfft_execution_info execinfo = nullptr;
     rocfft_status result = rocfft_execution_info_create(&execinfo);
     std::size_t buffersize = 0;
     result = rocfft_plan_get_work_buffer_size(forward_plan[mfi], &buffersize);
@@ -373,8 +406,9 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
         void* out_array[] = {(void*)(tempHTransformed[mfi].dataPtr(mode))};
         result = rocfft_execute(backward_plan[mfi], in_array, out_array, execinfo);
         if (result != rocfft_status_success) {
-            WarpX::GetInstance().RecordWarning("Spectral solver",
-                "forward transform using rocfft_execute failed!", WarnPriority::high);
+            ablastr::warn_manager::WMRecordWarning("Spectral solver",
+                "forward transform using rocfft_execute failed!",
+                ablastr::warn_manager::WarnPriority::high);
         }
     }
 
@@ -382,7 +416,11 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
     amrex::The_Arena()->free(buffer);
     result = rocfft_execution_info_destroy(execinfo);
 #else
+#  ifdef AMREX_USE_FLOAT
+    fftwf_execute(backward_plan[mfi]);
+#  else
     fftw_execute(backward_plan[mfi]);
+#  endif
 #endif
 
     // Copy the interleaved complex to the split complex.
@@ -408,12 +446,11 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
                                        int const i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf.boxArray(), field_mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
     // Only cell centered in r is supported.
     bool const is_nodal_z = field_mf.is_nodal(1);
-
-    int const ncomp = 2*n_rz_azimuthal_modes - 1;
 
     // Create a copy of the input multifab since the shape of field_mf
     // might not be what is needed in transform.
@@ -421,7 +458,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
     // the transformed array does not.
     // Note that the copy will not include the imaginary part of mode 0 as
     // PhysicalToSpectral_Scalar expects.
-    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), field_mf.DistributionMap(), ncomp, 0);
+    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), field_mf.DistributionMap(), m_ncomps, 0);
 
     // This will hold the Hankel transformed data, with the real and imaginary parts split.
     // A full multifab is created so that each GPU stream has its own temp space.
@@ -430,7 +467,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf); mfi.isValid(); ++mfi){
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
         }
@@ -444,14 +481,14 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         if ( !(field_mf[mfi].box().contains(field_mf_copy[mfi].box())) ) {
             // If field_mf[mfi] is smaller than field_mf_copy[mfi], then fill field_mf_copy[mfi] with
             // zeros so that all of it is initialized.
-            field_mf_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, ncomp);
+            field_mf_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, m_ncomps);
             }
-        field_mf_copy[mfi].copy<amrex::RunOn::Device>(field_mf[mfi], i_comp*ncomp, 0, ncomp);
+        field_mf_copy[mfi].copy<amrex::RunOn::Device>(field_mf[mfi], i_comp*m_ncomps, 0, m_ncomps);
         multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Scalar(field_mf_copy[mfi], tempHTransformedSplit[mfi]);
 
         FABZForwardTransform(mfi, realspace_bx, tempHTransformedSplit, field_index, is_nodal_z);
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -469,6 +506,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
                                        amrex::MultiFab const & field_mf_t, int const field_index_t)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf_r.boxArray(), field_mf_r.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
     // Only cell centered in r is supported.
@@ -486,7 +524,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf_r); mfi.isValid(); ++mfi){
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
         }
@@ -502,10 +540,11 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
             }
         field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 0, 0, 1); // Real part of mode 0
         field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 0, 0, 1); // Real part of mode 0
-        field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0
-        field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0
-        field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 1, 2, 2*n_rz_azimuthal_modes-2);
-        field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 1, 2, 2*n_rz_azimuthal_modes-2);
+        field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0 (all zero)
+        field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0 (all zero)
+        const int ncomps_left = 2 * (n_rz_azimuthal_modes - 1);  // mode zero with an additional imaginary part already handled
+        field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 1, 2, ncomps_left);
+        field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 1, 2, ncomps_left);
 
         // Perform the Hankel transform first.
         multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Vector(realspace_bx,
@@ -515,7 +554,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         FABZForwardTransform(mfi, realspace_bx, tempHTransformedSplit_p, field_index_r, is_nodal_z);
         FABZForwardTransform(mfi, realspace_bx, tempHTransformedSplit_m, field_index_t, is_nodal_z);
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -532,23 +571,22 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                                         int const i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf.boxArray(), field_mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
     bool const is_nodal_z = field_mf.is_nodal(1);
-
-    int const ncomp = 2*n_rz_azimuthal_modes - 1;
 
     // A full multifab is created so that each GPU stream has its own temp space.
     amrex::MultiFab tempHTransformedSplit(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
 
     // Create a temporary to hold the inverse Hankel transform field.
     // This allows the final result to have a different shape than the transformed field.
-    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes-1, 0);
+    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), m_ncomps, 0);
 
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf); mfi.isValid(); ++mfi){
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
         }
@@ -581,7 +619,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
         realspace_bx &= realspace_bx_with_guards;
 
-        ParallelFor(realspace_bx, ncomp,
+        ParallelFor(realspace_bx, m_ncomps,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
             int ii = i;
             amrex::Real sign = +1._rt;
@@ -600,7 +638,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
             field_mf_array(i,j,k,ic) = sign*field_mf_copy_array(ii,j,k,icomp);
         });
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -617,6 +655,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                                         amrex::MultiFab& field_mf_t, int const field_index_t)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf_r.boxArray(), field_mf_r.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
     bool const is_nodal_z = field_mf_r.is_nodal(1);
@@ -632,7 +671,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf_r); mfi.isValid(); ++mfi){
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
         }
@@ -670,7 +709,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         // Get the intersection of the two boxes in case the field_mf has fewer z-guard cells
         realspace_bx &= realspace_bx_with_guards;
 
-        ParallelFor(realspace_bx, 2*n_rz_azimuthal_modes-1,
+        ParallelFor(realspace_bx, m_ncomps,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int icomp) noexcept {
             int ii = i;
             amrex::Real sign = +1._rt;
@@ -695,7 +734,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
             }
         });
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -727,10 +766,11 @@ void
 SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, binomialfilter.boxArray(), binomialfilter.DistributionMap());
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
         }
@@ -756,7 +796,7 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index)
             fields_arr(i,j,k,ic) *= filter_r_arr[ir]*filter_z_arr[j];
         });
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -771,10 +811,11 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index1,
                                   int const field_index2, int const field_index3)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, binomialfilter.boxArray(), binomialfilter.DistributionMap());
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
         }
@@ -804,7 +845,7 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index1,
             fields_arr(i,j,k,ic3) *= filter_r_arr[ir]*filter_z_arr[j];
         });
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (do_costs)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;

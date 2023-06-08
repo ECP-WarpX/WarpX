@@ -7,10 +7,11 @@
 
 #include "FieldMomentum.H"
 
-#include "Utils/CoarsenIO.H"
-#include "Utils/IntervalsParser.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -42,7 +43,8 @@ FieldMomentum::FieldMomentum (std::string rd_name)
 {
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
-        amrex::Abort("FieldMomentum reduced diagnostics not implemented in RZ geometry");
+        WARPX_ABORT_WITH_MESSAGE(
+            "FieldMomentum reduced diagnostics not implemented in RZ geometry");
 #endif
 
     // Read number of levels
@@ -161,13 +163,13 @@ void FieldMomentum::ComputeDiags (int step)
             reduce_ops.eval(box, reduce_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) -> amrex::GpuTuple<Real, Real, Real>
                 {
-                    const amrex::Real Ex_cc = CoarsenIO::Interp(Ex_arr, Ex_stag, cc, cr, i, j, k, comp);
-                    const amrex::Real Ey_cc = CoarsenIO::Interp(Ey_arr, Ey_stag, cc, cr, i, j, k, comp);
-                    const amrex::Real Ez_cc = CoarsenIO::Interp(Ez_arr, Ez_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real Ex_cc = ablastr::coarsen::sample::Interp(Ex_arr, Ex_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real Ey_cc = ablastr::coarsen::sample::Interp(Ey_arr, Ey_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real Ez_cc = ablastr::coarsen::sample::Interp(Ez_arr, Ez_stag, cc, cr, i, j, k, comp);
 
-                    const amrex::Real Bx_cc = CoarsenIO::Interp(Bx_arr, Bx_stag, cc, cr, i, j, k, comp);
-                    const amrex::Real By_cc = CoarsenIO::Interp(By_arr, By_stag, cc, cr, i, j, k, comp);
-                    const amrex::Real Bz_cc = CoarsenIO::Interp(Bz_arr, Bz_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real Bx_cc = ablastr::coarsen::sample::Interp(Bx_arr, Bx_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real By_cc = ablastr::coarsen::sample::Interp(By_arr, By_stag, cc, cr, i, j, k, comp);
+                    const amrex::Real Bz_cc = ablastr::coarsen::sample::Interp(Bz_arr, Bz_stag, cc, cr, i, j, k, comp);
 
                     return {Ey_cc * Bz_cc - Ez_cc * By_cc,
                             Ez_cc * Bx_cc - Ex_cc * Bz_cc,
@@ -186,9 +188,11 @@ void FieldMomentum::ComputeDiags (int step)
 
         // Get cell size
         amrex::Geometry const & geom = warpx.Geom(lev);
-#if   (AMREX_SPACEDIM == 2)
+#if   defined(WARPX_DIM_1D_Z)
+        auto dV = geom.CellSize(0);
+#elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         auto dV = geom.CellSize(0) * geom.CellSize(1);
-#elif (AMREX_SPACEDIM == 3)
+#elif defined(WARPX_DIM_3D)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 

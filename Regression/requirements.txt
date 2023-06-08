@@ -1,0 +1,9 @@
+lasy==0.1.1
+matplotlib
+mpi4py
+numpy
+openpmd-api
+openpmd-viewer
+pandas
+scipy
+yt

@@ -17,7 +17,6 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/SpeciesPhysicalProperties.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
@@ -82,17 +81,44 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
         // get WarpXParticleContainer class object
         auto & myspc = mypc.GetParticleContainer(i_s);
 
-        if (myspc.DoQED())
-        {
-            // resize data array for QED species
-            const int num_quantities = 18;
-            m_data.resize(num_quantities,0.0);
-        } else
-        {
-            // resize data array for regular species
-            const int num_quantities = 16;
-            m_data.resize(num_quantities,0.0);
+        auto all_diag_names = std::vector<std::string> {};
+        auto add_diag = [&,c=0] (
+            const std::string& name, const std::string& header) mutable {
+            m_headers_indices[name] = aux_header_index{header, c++};
+            all_diag_names.push_back(name);
+        };
+
+        add_diag("xmin", "xmin(m)");
+        add_diag("xmax", "xmax(m)");
+        add_diag("ymin", "ymin(m)");
+        add_diag("ymax", "ymax(m)");
+        add_diag("zmin", "zmin(m)");
+        add_diag("zmax", "zmax(m)");
+        add_diag("pxmin", "pxmin(kg*m/s)");
+        add_diag("pxmax", "pxmax(kg*m/s)");
+        add_diag("pymin", "pymin(kg*m/s)");
+        add_diag("pymax", "pymax(kg*m/s)");
+        add_diag("pzmin", "pzmin(kg*m/s)");
+        add_diag("pzmax", "pzmax(kg*m/s)");
+        add_diag("gmin", "gmin()");
+        add_diag("gmax", "gmax()");
+
+#if (defined WARPX_DIM_3D)
+        add_diag("wmin", "wmin()");
+        add_diag("wmax", "wmax()");
+#elif (defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ))
+        add_diag("wmin", "wmin(1/m)");
+        add_diag("wmax", "wmax(1/m)");
+#else
+        add_diag("wmin", "wmin(1/m^2)");
+        add_diag("wmax", "wmax(1/m^2)");
+#endif
+        if (myspc.DoQED()){
+            add_diag("chimin", "chimin()");
+            add_diag("chimax", "chimax()");
         }
+
+        m_data.resize(all_diag_names.size());
 
         if (ParallelDescriptor::IOProcessor())
         {
@@ -103,55 +129,14 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
                 ofs.open(m_path + m_rd_name + "." + m_extension,
                     std::ofstream::out | std::ofstream::app);
                 // write header row
-                int c = 0;
+                int off = 0;
                 ofs << "#";
-                ofs << "[" << c++ << "]step()";
+                ofs << "[" << off++ << "]step()";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]time(s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]xmin(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]xmax(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]ymin(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]ymax(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]zmin(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]zmax(m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pxmin(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pxmax(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pymin(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pymax(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pzmin(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]pzmax(kg*m/s)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]gmin()";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]gmax()";
-                ofs << m_sep;
-#if (defined WARPX_DIM_3D)
-                ofs << "[" << c++ << "]wmin()";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]wmax()";
-#else
-                ofs << "[" << c++ << "]wmin(1/m)";
-                ofs << m_sep;
-                ofs << "[" << c++ << "]wmax(1/m)";
-#endif
-                if (myspc.DoQED())
-                {
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]chimin()";
-                    ofs << m_sep;
-                    ofs << "[" << c++ << "]chimax()";
+                ofs << "[" << off++ << "]time(s)";
+                for (const auto& name : all_diag_names){
+                    const auto& el = m_headers_indices[name];
+                    ofs << m_sep << "[" << el.idx + off << "]" << el.header;
                 }
                 ofs << std::endl;
                 // close file
@@ -185,6 +170,8 @@ void ParticleExtrema::ComputeDiags (int step)
     int const index_z = 2;
 #elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
     int const index_z = 1;
+#elif (defined WARPX_DIM_1D_Z)
+    int const index_z = 0;
 #endif
 
     // loop over species
@@ -211,6 +198,8 @@ void ParticleExtrema::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::cos(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMin(xmin);
+#elif (defined WARPX_DIM_1D_Z)
+        Real xmin = 0.0_rt;
 #else
         Real xmin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
@@ -224,6 +213,8 @@ void ParticleExtrema::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::cos(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMax(xmax);
+#elif (defined WARPX_DIM_1D_Z)
+        Real xmax = 0.0_rt;
 #else
         Real xmax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
@@ -237,7 +228,7 @@ void ParticleExtrema::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::sin(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMin(ymin);
-#elif (defined WARPX_DIM_XZ)
+#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
         Real ymin = 0.0_rt;
 #else
         Real ymin = ReduceMin( myspc,
@@ -252,7 +243,7 @@ void ParticleExtrema::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::sin(p.rdata(PIdx::theta)); });
         ParallelDescriptor::ReduceRealMax(ymax);
-#elif (defined WARPX_DIM_XZ)
+#elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
         Real ymax = 0.0_rt;
 #else
         Real ymax = ReduceMax( myspc,
@@ -378,8 +369,6 @@ void ParticleExtrema::ComputeDiags (int step)
         // compute chimin and chimax
         Real chimin_f = 0.0_rt;
         Real chimax_f = 0.0_rt;
-        GetExternalEField get_externalE;
-        GetExternalBField get_externalB;
 
         if (myspc.DoQED())
         {
@@ -393,17 +382,12 @@ void ParticleExtrema::ComputeDiags (int step)
             const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
             const int nox = WarpX::nox;
             const bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            const amrex::IntVect ngE = warpx.getngE();
-            amrex::Vector<amrex::Real> v_galilean = myspc.get_v_galilean();
-            const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
+            const amrex::IntVect ngEB = warpx.getngEB();
 
             // loop over refinement levels
             for (int lev = 0; lev <= level_number; ++lev)
             {
                 // define variables in preparation for field gathering
-                const amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
-                const amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-                const amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
                 const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
                 const GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
                 const MultiFab & Ex = warpx.getEfield(lev,0);
@@ -423,14 +407,12 @@ void ParticleExtrema::ComputeDiags (int step)
                     amrex::ParticleReal* const AMREX_RESTRICT uz = pti.GetAttribs()[PIdx::uz].dataPtr();
                     // declare external fields
                     const int offset = 0;
-                    const auto getExternalE = GetExternalEField(pti, offset);
-                    const auto getExternalB = GetExternalBField(pti, offset);
-
+                    const auto getExternalEB = GetExternalEBField(pti, offset);
                     // define variables in preparation for field gathering
                     amrex::Box box = pti.tilebox();
-                    box.grow(ngE);
+                    box.grow(ngEB);
                     const Dim3 lo = amrex::lbound(box);
-                    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, lev);
+                    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
                     const GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
                     const auto& ex_arr = Ex[pti].array();
                     const auto& ey_arr = Ey[pti].array();
@@ -457,8 +439,7 @@ void ParticleExtrema::ComputeDiags (int step)
                         GetPosition(i, xp, yp, zp);
                         ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
                         ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
-                        getExternalE(i, ex, ey, ez);
-                        getExternalB(i, bx, by, bz);
+                        getExternalEB(i, ex, ey, ez, bx, by, bz);
 
                         // gather E and B
                         doGatherShapeN(xp, yp, zp,
@@ -489,27 +470,32 @@ void ParticleExtrema::ComputeDiags (int step)
             ParallelDescriptor::ReduceRealMax(chimax_f);
         }
 #endif
-        m_data[0]  = xmin;
-        m_data[1]  = xmax;
-        m_data[2]  = ymin;
-        m_data[3]  = ymax;
-        m_data[4]  = zmin;
-        m_data[5]  = zmax;
-        m_data[6]  = uxmin*m;
-        m_data[7]  = uxmax*m;
-        m_data[8]  = uymin*m;
-        m_data[9]  = uymax*m;
-        m_data[10] = uzmin*m;
-        m_data[11] = uzmax*m;
-        m_data[12] = gmin;
-        m_data[13] = gmax;
-        m_data[14] = wmin;
-        m_data[15] = wmax;
+
+        const auto get_idx = [&](const std::string& name){
+            return m_headers_indices.at(name).idx;
+        };
+
+        m_data[get_idx("xmin")]  = xmin;
+        m_data[get_idx("xmax")]  = xmax;
+        m_data[get_idx("ymin")]  = ymin;
+        m_data[get_idx("ymax")]  = ymax;
+        m_data[get_idx("zmin")]  = zmin;
+        m_data[get_idx("zmax")]  = zmax;
+        m_data[get_idx("pxmin")]  = uxmin*m;
+        m_data[get_idx("pxmax")]  = uxmax*m;
+        m_data[get_idx("pymin")]  = uymin*m;
+        m_data[get_idx("pymax")]  = uymax*m;
+        m_data[get_idx("pzmin")] = uzmin*m;
+        m_data[get_idx("pzmax")] = uzmax*m;
+        m_data[get_idx("gmin")] = gmin;
+        m_data[get_idx("gmax")] = gmax;
+        m_data[get_idx("wmin")] = wmin;
+        m_data[get_idx("wmax")] = wmax;
 #if (defined WARPX_QED)
         if (myspc.DoQED())
         {
-            m_data[16] = chimin_f;
-            m_data[17] = chimax_f;
+            m_data[get_idx("chimin")] = chimin_f;
+            m_data[get_idx("chimax")] = chimax_f;
         }
 #endif
     }

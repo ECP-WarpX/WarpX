@@ -7,6 +7,8 @@
 
 #include "AnyFFT.H"
 
+#include "Utils/TextMsg.H"
+
 namespace AnyFFT
 {
 
@@ -16,7 +18,8 @@ namespace AnyFFT
         void assert_rocfft_status (std::string const& name, rocfft_status status)
         {
             if (status != rocfft_status_success) {
-                amrex::Abort(name + " failed! Error: " + rocfftErrorToString(status));
+                WARPX_ABORT_WITH_MESSAGE(
+                    name + " failed! Error: " + rocfftErrorToString(status));
             }
         }
     }
@@ -62,7 +65,7 @@ namespace AnyFFT
 
     void Execute (FFTplan& fft_plan)
     {
-        rocfft_execution_info execinfo = NULL;
+        rocfft_execution_info execinfo = nullptr;
         rocfft_status result = rocfft_execution_info_create(&execinfo);
         assert_rocfft_status("rocfft_execution_info_create", result);
 
@@ -88,7 +91,8 @@ namespace AnyFFT
                                     (void**)&(fft_plan.m_real_array), // out
                                     execinfo);
         } else {
-            amrex::Abort("direction must be AnyFFT::direction::R2C or AnyFFT::direction::C2R");
+            WARPX_ABORT_WITH_MESSAGE(
+                "direction must be AnyFFT::direction::R2C or AnyFFT::direction::C2R");
         }
 
         assert_rocfft_status("rocfft_execute", result);

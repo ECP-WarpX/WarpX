@@ -8,6 +8,9 @@
 
 #include "VelocityProperties.H"
 
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
+
 VelocityProperties::VelocityProperties (amrex::ParmParse& pp) {
     // Set defaults
     std::string vel_dist_s = "constant";
@@ -35,37 +38,32 @@ VelocityProperties::VelocityProperties (amrex::ParmParse& pp) {
         m_dir = 2;
     }
     else {
-        std::stringstream stringstream;
-        stringstream << "Cannot interpret <s_name>.bulk_vel_dir input '" << vel_dir_s <<
-            "'. Please enter +/- x, y, or z with no whitespace between the sign and" <<
-            " other character.";
-        vel_dir_s = stringstream.str();
-        amrex::Abort(vel_dir_s.c_str());
+        WARPX_ABORT_WITH_MESSAGE(
+            "Cannot interpret <s_name>.bulk_vel_dir input '" + vel_dir_s +
+            "'. Please enter +/- x, y, or z with no whitespace between the sign and"+
+            " other character.");
     }
 
     pp.query("beta_distribution_type", vel_dist_s);
     if (vel_dist_s == "constant") {
-        queryWithParser(pp, "beta", m_velocity);
+        utils::parser::queryWithParser(pp, "beta", m_velocity);
         m_type = VelConstantValue;
-        if (m_velocity >= 1 || m_velocity <= -1) {
-            std::stringstream stringstream;
-            stringstream << "Magnitude of velocity beta = " << m_velocity <<
-                " is greater than or equal to 1";
-            amrex::Abort(stringstream.str().c_str());
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_velocity > -1 && m_velocity < 1,
+            "Magnitude of velocity beta = " + std::to_string(m_velocity) +
+            " is greater than or equal to 1"
+        );
     }
     else if (vel_dist_s == "parser") {
         std::string str_beta_function;
-        Store_parserString(pp, "beta_function(x,y,z)", str_beta_function);
+        utils::parser::Store_parserString(pp, "beta_function(x,y,z)", str_beta_function);
         m_ptr_velocity_parser =
-            std::make_unique<amrex::Parser>(makeParser(str_beta_function,{"x","y","z"}));
+            std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_beta_function,{"x","y","z"}));
         m_type = VelParserFunction;
     }
     else {
-        std::stringstream stringstream;
-        std::string string;
-        stringstream << "Velocity distribution type '" << vel_dist_s << "' not recognized." << std::endl;
-        string = stringstream.str();
-        amrex::Abort(string.c_str());
+        WARPX_ABORT_WITH_MESSAGE(
+            "Velocity distribution type '" + vel_dist_s + "' not recognized.");
     }
 }

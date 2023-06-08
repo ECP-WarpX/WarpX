@@ -8,7 +8,8 @@
 #include "WarpX.H"
 
 #ifdef AMREX_USE_EB
-#  include "Utils/WarpXUtil.H"
+#  include "Utils/Parser/ParserUtils.H"
+#  include "Utils/TextMsg.H"
 
 #  include <AMReX.H>
 #  include <AMReX_Array.H>
@@ -59,7 +60,7 @@ namespace {
         AMREX_GPU_HOST_DEVICE inline
         amrex::Real operator() (AMREX_D_DECL(amrex::Real x, amrex::Real y,
                                              amrex::Real z)) const noexcept {
-#if (AMREX_SPACEDIM == 2)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             return m_parser(x,amrex::Real(0.0),y);
 #else
             return m_parser(x,y,z);
@@ -82,15 +83,11 @@ WarpX::InitEB ()
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
 
-#ifdef WARPX_DIM_RZ
-    amrex::Abort("Embedded Boundaries not implemented in RZ geometry");
-#endif
-
     amrex::ParmParse pp_warpx("warpx");
     std::string impf;
     pp_warpx.query("eb_implicit_function", impf);
     if (! impf.empty()) {
-        auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
+        auto eb_if_parser = utils::parser::makeParser(impf, {"x", "y", "z"});
         ParserIF pif(eb_if_parser.compile<3>());
         auto gshop = amrex::EB2::makeShop(pif, eb_if_parser);
          // The last argument of amrex::EB2::Build is the maximum coarsening level
@@ -113,22 +110,33 @@ WarpX::InitEB ()
 #endif
 }
 
-
-void
-WarpX::ComputeEdgeLengths () {
 #ifdef AMREX_USE_EB
+void
+WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                           const amrex::EBFArrayBoxFactory& eb_fact) {
+#ifndef WARPX_DIM_RZ
     BL_PROFILE("ComputeEdgeLengths");
-
-    auto const eb_fact = fieldEBFactory(maxLevel());
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
+#ifdef WARPX_DIM_XZ
+    edge_lengths[1]->setVal(0.);
+#endif
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
+#ifdef WARPX_DIM_XZ
+        for (int idim = 0; idim < 3; ++idim){
+            if(idim == 1) continue;
+#elif defined(WARPX_DIM_3D)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
-            const amrex::Box& box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect(),
-                                                m_edge_lengths[maxLevel()][idim]->nGrowVect() );
+#else
+        WARPX_ABORT_WITH_MESSAGE(
+            "ComputeEdgeLengths: Only implemented in 2D3V and 3D3V");
+#endif
+            amrex::Box box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect(),
+                                         edge_lengths[idim]->nGrowVect());
             amrex::FabType fab_type = flags[mfi].getType(box);
-            auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
+            auto const &edge_lengths_dim = edge_lengths[idim]->array(mfi);
+
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
                 amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
@@ -140,7 +148,16 @@ WarpX::ComputeEdgeLengths () {
                     edge_lengths_dim(i, j, k) = 0.;
                 });
             } else {
+#ifdef WARPX_DIM_XZ
+                int idim_amrex = idim;
+                if(idim == 2) idim_amrex = 1;
+                auto const &edge_cent = edge_centroid[idim_amrex]->const_array(mfi);
+#elif defined(WARPX_DIM_3D)
                 auto const &edge_cent = edge_centroid[idim]->const_array(mfi);
+#else
+                WARPX_ABORT_WITH_MESSAGE(
+                    "ComputeEdgeLengths: Only implemented in 2D3V and 3D3V");
+#endif
                 amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     if (edge_cent(i, j, k) == amrex::Real(-1.0)) {
                         // This edge is all covered
@@ -153,6 +170,7 @@ WarpX::ComputeEdgeLengths () {
                         edge_lengths_dim(i, j, k) = 1 - amrex::Math::abs(amrex::Real(2.0)
                                                                         * edge_cent(i, j, k));
                     }
+
                 });
             }
         }
@@ -162,20 +180,40 @@ WarpX::ComputeEdgeLengths () {
 
 
 void
-WarpX::ComputeFaceAreas () {
-#ifdef AMREX_USE_EB
+WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                         const amrex::EBFArrayBoxFactory& eb_fact) {
+#ifndef WARPX_DIM_RZ
     BL_PROFILE("ComputeFaceAreas");
 
-    auto const eb_fact = fieldEBFactory(maxLevel());
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
+#ifdef WARPX_DIM_XZ
+    //In 2D the volume frac is actually the area frac.
+    auto const &area_frac = eb_fact.getVolFrac();
+#elif defined(WARPX_DIM_3D)
     auto const &area_frac = eb_fact.getAreaFrac();
+#else
+    WARPX_ABORT_WITH_MESSAGE(
+        "ComputeFaceAreas: Only implemented in 2D3V and 3D3V");
+#endif
 
+#ifdef WARPX_DIM_XZ
+    face_areas[0]->setVal(0.);
+    face_areas[2]->setVal(0.);
+#endif
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
+#ifdef WARPX_DIM_XZ
+        // In 2D we change the extrema of the for loop so that we only have the case idim=1
+        for (int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
+#elif defined(WARPX_DIM_3D)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
-                                                m_face_areas[maxLevel()][idim]->nGrowVect() );
+#else
+        WARPX_ABORT_WITH_MESSAGE(
+            "ComputeFaceAreas: Only implemented in 2D3V and 3D3V");
+#endif
+            amrex::Box box = mfi.tilebox(face_areas[idim]->ixType().toIntVect(),
+                                         face_areas[idim]->nGrowVect());
             amrex::FabType fab_type = flags[mfi].getType(box);
-            auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
+            auto const &face_areas_dim = face_areas[idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
                 amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
@@ -187,7 +225,14 @@ WarpX::ComputeFaceAreas () {
                     face_areas_dim(i, j, k) = amrex::Real(0.);
                 });
             } else {
+#ifdef WARPX_DIM_XZ
+                auto const &face = area_frac.const_array(mfi);
+#elif defined(WARPX_DIM_3D)
                 auto const &face = area_frac[idim]->const_array(mfi);
+#else
+                WARPX_ABORT_WITH_MESSAGE(
+                    "ComputeFaceAreas: Only implemented in 2D3V and 3D3V");
+#endif
                 amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     face_areas_dim(i, j, k) = face(i, j, k);
                 });
@@ -199,19 +244,24 @@ WarpX::ComputeFaceAreas () {
 
 
 void
-WarpX::ScaleEdges () {
-#ifdef AMREX_USE_EB
+WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                   const std::array<amrex::Real,3>& cell_size) {
+#ifndef WARPX_DIM_RZ
     BL_PROFILE("ScaleEdges");
 
-    auto const &cell_size = CellSize(maxLevel());
-    auto const eb_fact = fieldEBFactory(maxLevel());
-    auto const &flags = eb_fact.getMultiEBCellFlagFab();
-
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            const amrex::Box& box = mfi.tilebox(m_edge_lengths[maxLevel()][idim]->ixType().toIntVect(),
-                                                m_edge_lengths[maxLevel()][idim]->nGrowVect() );
-            auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
+    for (amrex::MFIter mfi(*edge_lengths[0]); mfi.isValid(); ++mfi) {
+#ifdef WARPX_DIM_XZ
+        for (int idim = 0; idim < 3; ++idim){
+            if(idim == 1) continue;
+#elif defined(WARPX_DIM_3D)
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
+#else
+        WARPX_ABORT_WITH_MESSAGE(
+            "ScaleEdges: Only implemented in 2D3V and 3D3V");
+#endif
+            const amrex::Box& box = mfi.tilebox(edge_lengths[idim]->ixType().toIntVect(),
+                                                edge_lengths[idim]->nGrowVect() );
+            auto const &edge_lengths_dim = edge_lengths[idim]->array(mfi);
             amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 edge_lengths_dim(i, j, k) *= cell_size[idim];
             });
@@ -220,22 +270,29 @@ WarpX::ScaleEdges () {
 #endif
 }
 
-
 void
-WarpX::ScaleAreas() {
-#ifdef AMREX_USE_EB
+WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                  const std::array<amrex::Real,3>& cell_size) {
+#ifndef WARPX_DIM_RZ
     BL_PROFILE("ScaleAreas");
 
-    auto const& cell_size = CellSize(maxLevel());
     amrex::Real full_area;
 
-    auto const eb_fact = fieldEBFactory(maxLevel());
-    auto const &flags = eb_fact.getMultiEBCellFlagFab();
-
-    for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(*face_areas[0]); mfi.isValid(); ++mfi) {
+#ifdef WARPX_DIM_XZ
+        // In 2D we change the extrema of the for loop so that we only have the case idim=1
+        for (int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
+#elif defined(WARPX_DIM_3D)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
-                                                m_face_areas[maxLevel()][idim]->nGrowVect() );
+#else
+        WARPX_ABORT_WITH_MESSAGE(
+            "ScaleAreas: Only implemented in 2D3V and 3D3V");
+#endif
+            const amrex::Box& box = mfi.tilebox(face_areas[idim]->ixType().toIntVect(),
+                                                face_areas[idim]->nGrowVect() );
+#ifdef WARPX_DIM_XZ
+            full_area = cell_size[0]*cell_size[2];
+#elif defined(WARPX_DIM_3D)
             if (idim == 0) {
                 full_area = cell_size[1]*cell_size[2];
             } else if (idim == 1) {
@@ -243,18 +300,16 @@ WarpX::ScaleAreas() {
             } else {
                 full_area = cell_size[0]*cell_size[1];
             }
-            auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
+#else
+            WARPX_ABORT_WITH_MESSAGE(
+                "ScaleAreas: Only implemented in 2D3V and 3D3V");
+#endif
+            auto const &face_areas_dim = face_areas[idim]->array(mfi);
 
             amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 face_areas_dim(i, j, k) *= full_area;
             });
 
-            if(WarpX::maxwell_solver_id==MaxwellSolverAlgo::ECT) {
-                auto const &mod_areas_dim = m_area_mod[maxLevel()][idim]->array(mfi);
-                amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                        mod_areas_dim(i, j, k) = face_areas_dim(i, j, k);
-                });
-            }
         }
     }
 #endif
@@ -263,10 +318,22 @@ WarpX::ScaleAreas() {
 
 void
 WarpX::MarkCells(){
-#ifdef AMREX_USE_EB
+#ifndef WARPX_DIM_RZ
     auto const &cell_size = CellSize(maxLevel());
 
+#ifdef WARPX_DIM_3D
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+#elif defined(WARPX_DIM_XZ)
+    m_flag_info_face[maxLevel()][0]->setVal(0.);
+    m_flag_info_face[maxLevel()][2]->setVal(0.);
+    m_flag_ext_face[maxLevel()][0]->setVal(0.);
+    m_flag_ext_face[maxLevel()][2]->setVal(0.);
+    // In 2D we change the extrema of the for loop so that we only have the case idim=1
+    for (int idim = 1; idim < AMREX_SPACEDIM; ++idim) {
+#else
+    WARPX_ABORT_WITH_MESSAGE(
+        "MarkCells: Only implemented in 2D3V and 3D3V");
+#endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
             //amrex::Box const &box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect());
             const amrex::Box& box = mfi.tilebox(m_face_areas[maxLevel()][idim]->ixType().toIntVect(),
@@ -278,19 +345,30 @@ WarpX::MarkCells(){
             const auto &lx = m_edge_lengths[maxLevel()][0]->array(mfi);
             const auto &ly = m_edge_lengths[maxLevel()][1]->array(mfi);
             const auto &lz = m_edge_lengths[maxLevel()][2]->array(mfi);
+            auto const &mod_areas_dim = m_area_mod[maxLevel()][idim]->array(mfi);
+
             const amrex::Real dx = cell_size[0];
             const amrex::Real dy = cell_size[1];
             const amrex::Real dz = cell_size[2];
 
             amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Minimal area for this cell to be stable
+                mod_areas_dim(i, j, k) = S(i, j, k);
                 double S_stab;
                 if(idim == 0){
                     S_stab = 0.5 * std::max({ly(i, j, k) * dz, ly(i, j, k + 1) * dz,
                                                     lz(i, j, k) * dy, lz(i, j + 1, k) * dy});
                 }else if(idim == 1){
+#ifdef WARPX_DIM_XZ
+                    S_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j + 1, k) * dz,
+                                             lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+#elif defined(WARPX_DIM_3D)
                     S_stab = 0.5 * std::max({lx(i, j, k) * dz, lx(i, j, k + 1) * dz,
                                              lz(i, j, k) * dx, lz(i + 1, j, k) * dx});
+#else
+                    WARPX_ABORT_WITH_MESSAGE(
+                        "MarkCells: Only implemented in 2D3V and 3D3V");
+#endif
                 }else {
                     S_stab = 0.5 * std::max({lx(i, j, k) * dy, lx(i, j + 1, k) * dy,
                                              ly(i, j, k) * dx, ly(i + 1, j, k) * dx});
@@ -324,24 +402,17 @@ WarpX::MarkCells(){
     }
 #endif
 }
-
+#endif
 
 void
 WarpX::ComputeDistanceToEB () {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeDistanceToEB");
-
-    amrex::ParmParse pp_warpx("warpx");
-    std::string impf;
-    pp_warpx.query("eb_implicit_function", impf);
-    if (! impf.empty()) {
-        auto eb_if_parser = makeParser(impf, {"x", "y", "z"});
-        ParserIF pif(eb_if_parser.compile<3>());
-        auto gshop = amrex::EB2::makeShop(pif);
-        amrex::FillImpFunc(*m_distance_to_eb[maxLevel()], gshop, Geom(maxLevel()));
-        m_distance_to_eb[maxLevel()]->negate(m_distance_to_eb[maxLevel()]->nGrow()); // signed distance f = - imp. f.
-    } else {
-        m_distance_to_eb[maxLevel()]->setVal(100.0); // some positive value
+    const amrex::EB2::IndexSpace& eb_is = amrex::EB2::IndexSpace::top();
+    for (int lev=0; lev<=maxLevel(); lev++) {
+        const amrex::EB2::Level& eb_level = eb_is.getLevel(Geom(lev));
+        auto const eb_fact = fieldEBFactory(lev);
+        amrex::FillSignedDistance(*m_distance_to_eb[lev], eb_level, eb_fact, 1);
     }
 #endif
 }

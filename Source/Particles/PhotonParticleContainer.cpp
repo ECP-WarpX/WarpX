@@ -17,6 +17,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePositionPhoton.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 #include <AMReX_Array.H>
@@ -62,7 +63,7 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
         //Check for processes which do not make sense for photons
         bool test_quantum_sync = false;
         pp_species_name.query("do_qed_quantum_sync", test_quantum_sync);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         test_quantum_sync == 0,
         "ERROR: do_qed_quantum_sync can be 1 for species NOT listed in particles.photon_species only!");
         //_________________________________________________________
@@ -86,7 +87,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                  amrex::FArrayBox const * bxfab,
                                  amrex::FArrayBox const * byfab,
                                  amrex::FArrayBox const * bzfab,
-                                 const amrex::IntVect ngE, const int /*e_is_nodal*/,
+                                 const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                                  const long offset,
                                  const long np_to_push,
                                  int lev, int gather_lev,
@@ -106,7 +107,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     }
 
     // Add guard cells to the box.
-    box.grow(ngE);
+    box.grow(ngEB);
 
     auto& attribs = pti.GetAttribs();
 
@@ -125,25 +126,16 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     }
 #endif
 
-    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
-    int do_copy = (WarpX::do_back_transformed_diagnostics &&
-                   do_back_transformed_diagnostics && a_dt_type!=DtType::SecondHalf);
+    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
+    int do_copy = (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf) );
 
     const auto GetPosition = GetParticlePosition(pti, offset);
     auto SetPosition = SetParticlePosition(pti, offset);
 
-    const auto getExternalE = GetExternalEField(pti, offset);
-    const auto getExternalB = GetExternalBField(pti, offset);
+    const auto getExternalEB = GetExternalEBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
-    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
-    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = {
-        m_v_galilean[0]*time_shift,
-        m_v_galilean[1]*time_shift,
-        m_v_galilean[2]*time_shift };
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
+    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
 
     const Dim3 lo = lbound(box);
 
@@ -170,9 +162,22 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
-    amrex::ParallelFor(
-        np_to_push,
-        [=] AMREX_GPU_DEVICE (long i) {
+    enum exteb_flags : int { no_exteb, has_exteb };
+    enum qed_flags : int { no_qed, has_qed };
+
+    int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+#ifdef WARPX_QED
+    int qed_runtime_flag = (local_has_breit_wheeler) ? has_qed : no_qed;
+#else
+    int qed_runtime_flag = no_qed;
+#endif
+
+    amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
+                                CompileTimeOptions<no_qed  ,has_qed>>{},
+                       {exteb_runtime_flag, qed_runtime_flag},
+                       np_to_push,
+                       [=] AMREX_GPU_DEVICE (long i, auto exteb_control,
+                                             auto qed_control) {
             if (do_copy) copyAttribs(i);
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
@@ -188,14 +193,25 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
             }
-            getExternalE(i, Exp, Eyp, Ezp);
-            getExternalB(i, Bxp, Byp, Bzp);
+
+            [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB; // workaround for nvcc
+            if constexpr (exteb_control == has_exteb) {
+                getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            }
 
 #ifdef WARPX_QED
-            if (local_has_breit_wheeler) {
+            [[maybe_unused]] auto& evolve_opt_tmp = evolve_opt;
+            [[maybe_unused]] auto p_optical_depth_BW_tmp = p_optical_depth_BW;
+            [[maybe_unused]] auto ux_tmp = ux; // for nvhpc
+            [[maybe_unused]] auto uy_tmp = uy;
+            [[maybe_unused]] auto uz_tmp = uz;
+            [[maybe_unused]] auto dt_tmp = dt;
+            if constexpr (qed_control == has_qed) {
                 evolve_opt(ux[i], uy[i], uz[i], Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                    dt, p_optical_depth_BW[i]);
+                           dt, p_optical_depth_BW[i]);
             }
+#else
+            amrex::ignore_unused(qed_control);
 #endif
 
             UpdatePositionPhoton( x, y, z, ux[i], uy[i], uz[i], dt );

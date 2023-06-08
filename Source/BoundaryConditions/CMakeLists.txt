@@ -1,7 +1,17 @@
-target_sources(WarpX
-  PRIVATE
-    PML.cpp
-    WarpXEvolvePML.cpp
-    WarpXFieldBoundaries.cpp
-    WarpX_PEC.cpp
-)
+foreach(D IN LISTS WarpX_DIMS)
+    warpx_set_suffix_dims(SD ${D})
+    target_sources(WarpX_${SD}
+      PRIVATE
+        PML.cpp
+        WarpXEvolvePML.cpp
+        WarpXFieldBoundaries.cpp
+        WarpX_PEC.cpp
+    )
+
+    if(D STREQUAL "RZ")
+        target_sources(WarpX_${SD}
+          PRIVATE
+            PML_RZ.cpp
+        )
+    endif()
+endforeach()

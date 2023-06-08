@@ -6,7 +6,7 @@ Users
 .. raw:: html
 
    <style>
-   .rst-content .section>img {
+   .rst-content section>img {
        width: 30px;
        margin-bottom: 0;
        margin-top: 0;
@@ -21,6 +21,7 @@ Please `report installation problems <https://github.com/ECP-WarpX/WarpX/issues/
 
 Choose **one** of the installation methods below to get started:
 
+
 .. only:: html
 
    .. image:: hpc.svg
@@ -29,6 +30,7 @@ HPC Systems
 -----------
 
 If want to use WarpX on a specific high-performance computing (HPC) systems, jump directly to our :ref:`HPC system-specific documentation <install-hpc>`.
+
 
 .. _install-conda:
 
@@ -41,12 +43,34 @@ Using the Conda Package
 
 A package for WarpX is available via the `Conda <https://conda.io>`_ package manager.
 
+.. tip::
+
+   We recommend to configure your conda to use the faster `libmamba` `dependency solver <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`__.
+
+   .. code-block:: bash
+
+      conda update -n base conda
+      conda install -n base conda-libmamba-solver
+      conda config --set solver libmamba
+
 .. code-block:: bash
 
    conda create -n warpx -c conda-forge warpx
    conda activate warpx
 
-Note: the ``warpx`` `conda package <https://anaconda.org/conda-forge/warpx>`__ does not yet provide GPU support.
+.. note::
+
+   The ``warpx`` `conda package <https://anaconda.org/conda-forge/warpx>`__ does not yet provide GPU support.
+
+.. tip::
+
+   A general option to deactivate that conda self-activates its base environment.
+   This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.
+
+   .. code-block:: bash
+
+      conda config --set auto_activate_base false
+
 
 .. _install-spack:
 
@@ -62,11 +86,17 @@ The package ``warpx`` installs executables and the package ``py-warpx`` includes
 
 .. code-block:: bash
 
-   # optional:            -mpi ^warpx dims=2 compute=cuda
+   # optional: activate Spack binary caches
+   spack mirror add rolling https://binaries.spack.io/develop
+   spack buildcache keys --install --trust
+
+   # see `spack info py-warpx` for build options.
+   # optional arguments:  -mpi ^warpx dims=2 compute=cuda
    spack install py-warpx
    spack load py-warpx
 
 See ``spack info warpx`` or ``spack info py-warpx`` and `the official Spack tutorial <https://spack-tutorial.readthedocs.io>`__ for more information.
+
 
 .. _install-pypi:
 
@@ -92,6 +122,7 @@ Given that you have the :ref:`WarpX dependencies <install-dependencies>` install
 In the future, will publish pre-compiled binary packages on `PyPI <https://pypi.org/>`__ for faster installs.
 (Consider using :ref:`conda <install-conda>` in the meantime.)
 
+
 .. _install-brew:
 
 .. only:: html
@@ -104,6 +135,7 @@ Using the Brew Package
 .. note::
 
    Coming soon.
+
 
 .. _install-cmake:
 
@@ -135,6 +167,9 @@ After installing the :ref:`WarpX dependencies <install-dependencies>`, you can a
    # executables for WarpX are now in build/bin/
 
 We document the details in the :ref:`developer installation <install-developers>`.
+
+
+.. _install-users-macos:
 
 Tips for macOS Users
 --------------------

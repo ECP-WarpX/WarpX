@@ -41,7 +41,7 @@ class PlasmaInjector
 
 public:
 
-    PlasmaInjector ();
+    PlasmaInjector () = default;
 
     PlasmaInjector (int ispecies, const std::string& name);
 
@@ -72,16 +72,16 @@ public:
 
     bool add_single_particle = false;
     amrex::Vector<amrex::ParticleReal> single_particle_pos;
-    amrex::Vector<amrex::ParticleReal> single_particle_vel;
+    amrex::Vector<amrex::ParticleReal> single_particle_u;
     amrex::ParticleReal single_particle_weight;
 
     bool add_multiple_particles = false;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_x;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_y;
     amrex::Vector<amrex::ParticleReal> multiple_particles_pos_z;
-    amrex::Vector<amrex::ParticleReal> multiple_particles_vel_x;
-    amrex::Vector<amrex::ParticleReal> multiple_particles_vel_y;
-    amrex::Vector<amrex::ParticleReal> multiple_particles_vel_z;
+    amrex::Vector<amrex::ParticleReal> multiple_particles_ux;
+    amrex::Vector<amrex::ParticleReal> multiple_particles_uy;
+    amrex::Vector<amrex::ParticleReal> multiple_particles_uz;
     amrex::Vector<amrex::ParticleReal> multiple_particles_weight;
 
     bool gaussian_beam = false;
@@ -97,6 +97,7 @@ public:
     amrex::Real q_tot = 0.0;
     long npart;
     int do_symmetrize = 0;
+    int symmetrization_order = 4;
 
     bool external_file = false; //! initialize from an openPMD file
     amrex::Real z_shift = 0.0; //! additional z offset for particle positions
@@ -107,6 +108,11 @@ public:
 
     bool surface_flux = false; // inject from a surface
     amrex::Real surface_flux_pos; // surface location
+    amrex::Real flux_tmin = -1.; // Time after which we start injecting particles
+    amrex::Real flux_tmax = -1.; // Time after which we stop injecting particles
+    // Flux normal axis represents the direction in which to emit particles
+    // When compiled in Cartesian geometry, 0 = x, 1 = y, 2 = z
+    // When compiled in cylindrical geometry, 0 = radial, 1 = azimuthal, 2 = z
     int flux_normal_axis;
     int flux_direction; // -1 for left, +1 for right
 

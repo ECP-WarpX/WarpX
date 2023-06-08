@@ -21,7 +21,7 @@ openPMD-viewer can be installed via ``conda`` or ``pip``:
 
 .. code-block:: bash
 
-    pip install openPMD-viewer openPMD-api
+    python3 -m pip install openPMD-viewer openPMD-api
 
 Usage
 -----

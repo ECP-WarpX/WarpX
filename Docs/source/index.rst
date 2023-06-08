@@ -3,7 +3,7 @@
 WarpX
 -----
 
-WarpX is an advanced **electromagnetic Particle-In-Cell** code.
+WarpX is an advanced, time-based, **electromagnetic & electrostatic Particle-In-Cell** code.
 
 It supports many features including:
 
@@ -14,6 +14,7 @@ It supports many features including:
 For details on the algorithms that WarpX implements, see the :ref:`theory section <theory>`.
 
 WarpX is a *highly-parallel and highly-optimized code*, which can run on GPUs and multi-core CPUs, and includes load balancing capabilities.
+WarpX scales to the world's largest supercomputers and was awarded the `2022 ACM Gordon Bell Prize <https://www.exascaleproject.org/ecp-supported-collaborative-teams-win-the-2022-acm-gordon-bell-prize-and-special-prize/>`__.
 In addition, WarpX is also a *multi-platform code* and runs on Linux, macOS and Windows.
 
 .. _contact:
@@ -35,13 +36,13 @@ We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>
    /* front page: hide chapter titles
     * needed for consistent HTML-PDF-EPUB chapters
     */
-   div#installation.section,
-   div#usage.section,
-   div#theory.section,
-   div#data-analysis.section,
-   div#development.section,
-   div#maintenance.section,
-   div#epilogue.section {
+   section#installation,
+   section#usage,
+   section#theory,
+   section#data-analysis,
+   section#development,
+   section#maintenance,
+   section#epilogue {
        display:none;
    }
    </style>
@@ -51,6 +52,7 @@ We also have a `discussion page <https://github.com/ECP-WarpX/WarpX/discussions>
 
    coc
    acknowledge_us
+   highlights
 
 Installation
 ------------
@@ -73,11 +75,13 @@ Usage
    :hidden:
 
    usage/how_to_run
+   usage/domain_decomposition
    usage/parameters
    usage/python
    usage/examples
    usage/pwfa
    usage/workflows
+   usage/faq
 
 Data Analysis
 -------------
@@ -94,8 +98,8 @@ Data Analysis
    dataanalysis/visit
    dataanalysis/visualpic
    dataanalysis/picviewer
-   dataanalysis/backtransformed_diags
    dataanalysis/reduced_diags
+   dataanalysis/workflows
 
 Theory
 ------
@@ -110,6 +114,7 @@ Theory
    theory/PML
    theory/boosted_frame
    theory/input_output
+   theory/collisions
 
 Development
 -----------
@@ -123,6 +128,7 @@ Development
    developers/developers
    developers/doxygen
    developers/gnumake
+   developers/faq
 .. good to have in the future:
 ..   developers/repostructure
 

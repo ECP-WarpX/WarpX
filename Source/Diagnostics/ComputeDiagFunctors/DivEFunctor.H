@@ -17,8 +17,9 @@ public:
     /** Constructor.
      * \param[in] arr_mf_src source multifabs (3 elements for x y z).
      * \param[in] lev level of multifab.
-     * \param[in] crse_ratio for interpolating field values from simulation MultiFabs
-                  to the output diagnostic MultiFab mf_dst
+     * \param[in] crse_ratio coarsening ratio for interpolation of field values
+     *                       from simulation MultiFabs to the output MultiFab mf_dst
+     * \param[in] convertRZmodes2cartesian if true, all RZ modes are averaged into one component
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, const amrex::IntVect crse_ratio,

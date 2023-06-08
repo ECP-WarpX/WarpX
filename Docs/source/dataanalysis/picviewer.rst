@@ -43,7 +43,7 @@ Required software
 
   ::
 
-    pip install git+https://github.com/yt-project/yt.git --user
+    python3 -m pip install git+https://github.com/yt-project/yt.git --user
 
 * numba
 
@@ -53,7 +53,7 @@ Installation
 
 ::
 
-  pip install picviewer
+  python3 -m pip install picviewer
 
 You need to install yt and PySide separately.
 
@@ -61,7 +61,7 @@ You can install from the source for the latest update,
 
 ::
 
-  pip install git+https://bitbucket.org/ecp_warpx/picviewer/
+  python3 -m pip install git+https://bitbucket.org/ecp_warpx/picviewer/
 
 
 To install manually

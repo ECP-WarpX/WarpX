@@ -1,16 +1,15 @@
+#!/usr/bin/env python3
+#
 # --- Input file for MCC testing. There is already a test of the MCC
 # --- functionality. This tests the PICMI interface for the MCC and
 # --- provides an example of how an external Poisson solver can be
 # --- used for the field solve step.
 
-# _libwarpx requires the geometry be set before importing
-from pywarpx import geometry
-geometry.coord_sys = 0
-geometry.prob_lo = [0, 0]
-
 import numpy as np
-from scipy.sparse import csc_matrix, linalg as sla
-from pywarpx import picmi, callbacks, _libwarpx, fields
+from scipy.sparse import csc_matrix
+from scipy.sparse import linalg as sla
+
+from pywarpx import callbacks, fields, picmi
 
 constants = picmi.constants
 
@@ -23,7 +22,7 @@ D_CA = 0.067 # m
 N_INERT = 9.64e20 # m^-3
 T_INERT = 300.0 # K
 
-FREQ = 13.56e6 # MHz
+FREQ = 13.56e6 # Hz
 
 VOLTAGE = 450.0
 
@@ -92,10 +91,10 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
 
         super(PoissonSolverPseudo1D, self).initialize_inputs()
 
-        self.nx = self.grid.nx
-        self.nz = self.grid.ny
-        self.dx = (self.grid.xmax - self.grid.xmin) / self.nx
-        self.dz = (self.grid.ymax - self.grid.ymin) / self.nz
+        self.nx = self.grid.number_of_cells[0]
+        self.nz = self.grid.number_of_cells[1]
+        self.dx = (self.grid.upper_bound[0] - self.grid.lower_bound[0]) / self.nx
+        self.dz = (self.grid.upper_bound[1] - self.grid.lower_bound[1]) / self.nz
 
         if not np.isclose(self.dx, self.dz):
             raise RuntimeError('Direct solver requires dx = dz.')
@@ -178,7 +177,7 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
         calculating phi from rho."""
         right_voltage = eval(
             self.right_voltage,
-            {'t':_libwarpx.libwarpx.warpx_gett_new(0), 'sin':np.sin, 'pi':np.pi}
+            {'t':sim.extension.gett_new(0), 'sin':np.sin, 'pi':np.pi}
         )
         left_voltage = 0.0
 
@@ -292,6 +291,7 @@ mcc_ions = picmi.MCCCollisions(
 
 grid = picmi.Cartesian2DGrid(
     number_of_cells = [nx, ny],
+    warpx_max_grid_size=128,
     lower_bound = [xmin, ymin],
     upper_bound = [xmax, ymax],
     bc_xmin = 'dirichlet',

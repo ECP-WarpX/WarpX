@@ -7,6 +7,7 @@
 
 import numpy as np
 
+
 class AMReXParticleHeader(object):
     '''
 
@@ -120,8 +121,9 @@ def read_particle_data(fn, ptype="particle0"):
 
 
 if __name__ == "__main__":
-    import pylab as plt
     import glob
+
+    import pylab as plt
 
     x0 = []
     y0 = []

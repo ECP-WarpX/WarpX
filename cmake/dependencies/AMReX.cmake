@@ -55,9 +55,13 @@ macro(find_amrex)
 
         if(WarpX_PRECISION STREQUAL "DOUBLE")
             set(AMReX_PRECISION "DOUBLE" CACHE INTERNAL "")
-            set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
         else()
             set(AMReX_PRECISION "SINGLE" CACHE INTERNAL "")
+        endif()
+
+        if(WarpX_PARTICLE_PRECISION STREQUAL "DOUBLE")
+            set(AMReX_PARTICLES_PRECISION "DOUBLE" CACHE INTERNAL "")
+        else()
             set(AMReX_PARTICLES_PRECISION "SINGLE" CACHE INTERNAL "")
         endif()
 
@@ -65,7 +69,11 @@ macro(find_amrex)
             set(AMReX_SENSEI ON CACHE INTERNAL "")
         endif()
 
-        set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        if(DEFINED AMReX_BUILD_SHARED_LIBS)
+            set(AMReX_INSTALL ${AMReX_BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        else()
+            set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
+        endif()
         set(AMReX_AMRLEVEL OFF CACHE INTERNAL "")
         set(AMReX_ENABLE_TESTS OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN OFF CACHE INTERNAL "")
@@ -75,18 +83,17 @@ macro(find_amrex)
         set(AMReX_PROBINIT OFF CACHE INTERNAL "")
         set(AMReX_TINY_PROFILE ON CACHE BOOL "")
 
-        if(WarpX_COMPUTE STREQUAL CUDA)
-            if(WarpX_ASCENT OR WarpX_SENSEI)
-                set(AMReX_GPU_RDC ON CACHE BOOL "")
-            else()
-                # we don't need RDC and disabling it simplifies the build
-                # complexity and potentially improves code optimization
-                set(AMReX_GPU_RDC OFF CACHE BOOL "")
-            endif()
+        if(WarpX_ASCENT OR WarpX_SENSEI)
+            set(AMReX_GPU_RDC ON CACHE BOOL "")
+        else()
+            # we don't need RDC and disabling it simplifies the build
+            # complexity and potentially improves code optimization
+            set(AMReX_GPU_RDC OFF CACHE BOOL "")
         endif()
 
         # shared libs, i.e. for Python bindings, need relocatable code
-        if(WarpX_LIB)
+        #   openPMD: currently triggers shared libs (TODO)
+        if(WarpX_LIB OR ABLASTR_POSITION_INDEPENDENT_CODE OR BUILD_SHARED_LIBS OR WarpX_OPENPMD)
             set(AMReX_PIC ON CACHE INTERNAL "")
         endif()
 
@@ -98,20 +105,17 @@ macro(find_amrex)
             endif()
         endif()
 
-        if(WarpX_DIMS STREQUAL RZ)
-            set(AMReX_SPACEDIM 2 CACHE INTERNAL "")
-        else()
-            set(AMReX_SPACEDIM ${WarpX_DIMS} CACHE INTERNAL "")
-        endif()
+        # RZ is AMReX 2D
+        set(WarpX_amrex_dim ${WarpX_DIMS})
+        list(TRANSFORM WarpX_amrex_dim REPLACE RZ 2)
+        list(REMOVE_DUPLICATES WarpX_amrex_dim)
+        set(AMReX_SPACEDIM ${WarpX_amrex_dim} CACHE INTERNAL "")
 
         if(WarpX_amrex_src)
             list(APPEND CMAKE_MODULE_PATH "${WarpX_amrex_src}/Tools/CMake")
             if(WarpX_COMPUTE STREQUAL CUDA)
                 enable_language(CUDA)
                 # AMReX 21.06+ supports CUDA_ARCHITECTURES
-                if(CMAKE_VERSION VERSION_LESS 3.20)
-                    include(AMReX_SetupCUDA)
-                endif()
             endif()
             add_subdirectory(${WarpX_amrex_src} _deps/localamrex-build/)
         else()
@@ -128,9 +132,6 @@ macro(find_amrex)
                 if(WarpX_COMPUTE STREQUAL CUDA)
                     enable_language(CUDA)
                     # AMReX 21.06+ supports CUDA_ARCHITECTURES
-                    if(CMAKE_VERSION VERSION_LESS 3.20)
-                        include(AMReX_SetupCUDA)
-                    endif()
                 endif()
                 add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
             endif()
@@ -203,11 +204,14 @@ macro(find_amrex)
         else()
             set(COMPONENT_ASCENT)
         endif()
-        if(WarpX_DIMS STREQUAL RZ)
-            set(COMPONENT_DIM 2D)
-        else()
-            set(COMPONENT_DIM ${WarpX_DIMS}D)
-        endif()
+
+        set(WarpX_amrex_dim ${WarpX_DIMS})  # RZ is AMReX 2D
+        list(TRANSFORM WarpX_amrex_dim REPLACE RZ 2)
+        list(REMOVE_DUPLICATES WarpX_amrex_dim)
+        set(COMPONENT_DIMS)
+        foreach(D IN LISTS WarpX_amrex_dim)
+            set(COMPONENT_DIMS ${COMPONENT_DIMS} ${D}D)
+        endforeach()
         if(WarpX_EB)
             set(COMPONENT_EB EB)
         else()
@@ -223,9 +227,9 @@ macro(find_amrex)
         else()
             set(COMPONENT_SENSEI)
         endif()
-        set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PRECISION})
+        set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
-        find_package(AMReX 21.11 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
+        find_package(AMReX 23.06 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -239,7 +243,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "aca6926e0a85a0fad4087bd47016edad0885252f"
+set(WarpX_amrex_branch "d9bae8ce9e69a962154a9340a0fb8ae9895c1fde"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

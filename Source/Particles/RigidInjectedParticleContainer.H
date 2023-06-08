@@ -87,7 +87,7 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
-                         const amrex::IntVect ngE, const int /*e_is_nodal*/,
+                         const amrex::IntVect ngEB, const int /*e_is_nodal*/,
                          const long offset,
                          const long np_to_push,
                          int lev, int gather_lev,
@@ -109,16 +109,16 @@ public:
 private:
 
     // User input quantities
-    amrex::Real zinject_plane = 0.;
+    amrex::ParticleReal zinject_plane = 0.;
     bool rigid_advance = true; // When true, particles are advance with vzbar before injection
 
-    amrex::Real vzbeam_ave_boosted;
+    amrex::ParticleReal vzbeam_ave_boosted;
 
-    amrex::Vector<amrex::Real> zinject_plane_levels;
+    amrex::Vector<amrex::ParticleReal> zinject_plane_levels;
 
     // Temporary quantites
-    amrex::Real zinject_plane_lev;
-    amrex::Real zinject_plane_lev_previous;
+    amrex::ParticleReal zinject_plane_lev;
+    amrex::ParticleReal zinject_plane_lev_previous;
     bool done_injecting_lev;
 
 };

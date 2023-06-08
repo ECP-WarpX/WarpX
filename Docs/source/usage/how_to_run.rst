@@ -34,6 +34,11 @@ Try it like this:
 
 Hitting the ``<TAB>`` key will suggest available WarpX executables as found in your ``PATH`` `environment variable <https://en.wikipedia.org/wiki/PATH_(variable)>`__.
 
+.. note::
+
+   WarpX needs separate binaries to run in dimensionality of 1D, 2D, 3D, and RZ.
+   We encode the supported dimensionality in the binary file name.
+
 If you :ref:`compiled the code yourself <install-developers>`, the WarpX executable is stored in the source folder under ``build/bin``.
 We also create a symbolic link that is just called ``warpx`` that points to the last executable you built, which can be copied, too.
 Copy the **executable** to this directory:
@@ -87,3 +92,15 @@ On an :ref:`HPC system <install-hpc>`, you would instead submit the :ref:`job sc
    .. code-block:: bash
 
       mpirun -np 4 ./warpx <input_file> max_step=10 warpx.numprocs=1 2 2
+
+5. Outputs
+----------
+
+By default, WarpX will write a status update to the terminal (``stdout``).
+On :ref:`HPC systems <install-hpc>`, we usually store a copy of this in a file called ``outputs.txt``.
+
+We also store by default an exact copy of all explicitly and implicitly used inputs parameters in a file called ``warpx_used_inputs`` (this file name can be changed).
+This is important for reproducibility, since as we wrote in the previous paragraph, the options in the input file can be extended and overwritten from the command line.
+
+:ref:`Further configured diagnostics <running-cpp-parameters-diagnostics>` are explained in the next sections.
+By default, they are written to a subdirectory in ``diags/`` and can use various :ref:`output formats <dataanalysis-formats>`.

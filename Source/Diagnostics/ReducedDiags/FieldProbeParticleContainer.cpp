@@ -1,4 +1,4 @@
-/* Copyright 2021 Tiberius Rheaume, Axel Huebl
+/* Copyright 2021 Elisa Rheaume, Axel Huebl
  *
  * This file is part of WarpX.
  *
@@ -12,7 +12,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/ParticleBoundaries_K.H"
-#include "Utils/CoarsenMR.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -71,7 +71,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
                                             amrex::Vector<amrex::ParticleReal> const & y,
                                             amrex::Vector<amrex::ParticleReal> const & z)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "AddNParticles: only lev=0 is supported yet.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "AddNParticles: only lev=0 is supported yet.");
     AMREX_ALWAYS_ASSERT(x.size() == y.size());
     AMREX_ALWAYS_ASSERT(x.size() == z.size());
 
@@ -91,7 +91,8 @@ FieldProbeParticleContainer::AddNParticles (int lev,
      * (particle_tile).
      */
 
-    using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
+    using PinnedTile = ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                    NArrayReal, NArrayInt,
                                     amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
@@ -101,15 +102,17 @@ FieldProbeParticleContainer::AddNParticles (int lev,
         ParticleType p;
         p.id() = ParticleType::NextID();
         p.cpu() = ParallelDescriptor::MyProc();
-#if (AMREX_SPACEDIM == 3)
+#if defined(WARPX_DIM_3D)
         p.pos(0) = x[i];
         p.pos(1) = y[i];
         p.pos(2) = z[i];
-#elif (AMREX_SPACEDIM == 2)
-        amrex::ignore_unused(y) ;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        amrex::ignore_unused(y);
         p.pos(0) = x[i];
-        p.pos(1) = 0;
-        p.pos(2) = z[i];
+        p.pos(1) = z[i];
+#elif defined(WARPX_DIM_1D_Z)
+        amrex::ignore_unused(x, y);
+        p.pos(0) = z[i];
 #endif
         // write position, cpu id, and particle id to particle
         pinned_tile.push_back(p);

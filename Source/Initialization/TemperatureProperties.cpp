@@ -5,8 +5,12 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
 #include "TemperatureProperties.H"
+
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
+
+#include <ablastr/warn_manager/WarnManager.H>
 
 /*
  * Construct TemperatureProperties based on the passed parameters.
@@ -22,28 +26,31 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
     pp.query("theta_distribution_type", temp_dist_s);
     pp.query("momentum_distribution_type", mom_dist_s);
     if (temp_dist_s == "constant") {
-        if (!queryWithParser(pp, "theta", theta)) {
-            std::string err_str =  "Temperature parameter theta not specified";
-            amrex::Abort(err_str);
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            utils::parser::queryWithParser(pp, "theta", theta),
+            "Temperature parameter theta not specified");
+
         // Do validation on theta value
-        if (theta < 0) {
-            std::stringstream stringstream;
-            stringstream << "Temperature parameter theta = " << theta <<
-                " is less than zero, which is not allowed";
-            amrex::Abort(stringstream.str().c_str());
-        }
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(theta >= 0,
+            "Temperature parameter theta = " + std::to_string(theta) +
+            " is less than zero, which is not allowed");
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            mom_dist_s != "maxwell_juttner" ||
+            theta >= 0.1,
+            "Temperature parameter theta = " +
+            std::to_string(theta) +
+            " is less than minimum 0.1 allowed for Maxwell-Juttner."
+        );
+
+
         if (mom_dist_s == "maxwell_boltzmann" && theta > 0.01) {
-            std::stringstream warnstream;
-            warnstream << " Warning: Maxwell-Boltzmann distribution has errors greater than 1%"
-                << " for temperature parameter theta > 0.01. (theta = " << theta << " given).";
-            amrex::Warning(warnstream.str());
-        }
-        else if (mom_dist_s == "maxwell_juttner" && theta < 0.1) {
-            std::stringstream stringstream;
-            stringstream << "Temperature parameter theta = " << theta <<
-                " is less than minimum 0.1 allowed for Maxwell-Juttner.";
-            amrex::Abort(stringstream.str().c_str());
+            ablastr::warn_manager::WMRecordWarning(
+                "Temperature",
+                std::string{"Maxwell-Boltzmann distribution has errors greater than 1%"} +
+                std::string{" for temperature parameter theta > 0.01. (theta = "} +
+                std::to_string(theta) + " given)");
         }
 
         m_type = TempConstantValue;
@@ -51,9 +58,10 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
     }
     else if (temp_dist_s == "parser") {
         std::string str_theta_function;
-        Store_parserString(pp, "theta_function(x,y,z)", str_theta_function);
+        utils::parser::Store_parserString(pp, "theta_function(x,y,z)", str_theta_function);
         m_ptr_temperature_parser =
-            std::make_unique<amrex::Parser>(makeParser(str_theta_function,{"x","y","z"}));
+            std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_theta_function,{"x","y","z"}));
         m_type = TempParserFunction;
     }
     else {
@@ -61,6 +69,6 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
         std::string string;
         stringstream << "Temperature distribution type '" << temp_dist_s << "' not recognized.";
         string = stringstream.str();
-        amrex::Abort(string.c_str());
+        WARPX_ABORT_WITH_MESSAGE(string.c_str());
     }
 }
