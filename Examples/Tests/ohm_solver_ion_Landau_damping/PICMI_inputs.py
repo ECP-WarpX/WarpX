@@ -176,7 +176,6 @@ class IonLandauDamping(object):
         simulation.max_steps = self.total_steps
         simulation.current_deposition_algo = 'direct'
         simulation.particle_shape = 1
-        simulation.load_balance_intervals = self.total_steps // 20
         simulation.verbose = self.verbose
 
         #######################################################################

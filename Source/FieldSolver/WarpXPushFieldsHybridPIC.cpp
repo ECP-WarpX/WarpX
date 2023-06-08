@@ -49,7 +49,6 @@ void WarpX::HybridPICEvolveFields ()
     // Reference hybrid-PIC multifabs
     auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
     auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
-    auto& current_fp_ampere = m_hybrid_pic_model->current_fp_ampere;
 
     // During the above deposition the charge and current density were updated
     // so that, at this time, we have rho^{n} in rho_fp_temp, rho{n+1} in the

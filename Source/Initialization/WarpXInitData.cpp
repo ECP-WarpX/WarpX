@@ -1310,15 +1310,23 @@ void WarpX::CheckKnownIssues()
             ablastr::warn_manager::WarnPriority::low);
     }
 
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC &&
-        WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
-        ablastr::warn_manager::WMRecordWarning(
-            "Hybrid-PIC",
-            "When using Esirkepov current deposition together with the hybrid-PIC "
-            "algorithm, a segfault will occur if a particle moves over multiple cells "
-            "in a single step, so be careful with your choice of time step.",
-            ablastr::warn_manager::WarnPriority::low);
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov)
+        {
+            ablastr::warn_manager::WMRecordWarning(
+                "Hybrid-PIC",
+                "When using Esirkepov current deposition together with the hybrid-PIC "
+                "algorithm, a segfault will occur if a particle moves over multiple cells "
+                "in a single step, so be careful with your choice of time step.",
+                ablastr::warn_manager::WarnPriority::low);
+        }
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !load_balance_intervals.isActivated(),
+            "The hybrid-PIC algorithm involves multifabs that are not yet "
+            "properly redistributed during load balancing events."
+        );
     }
 }
 

@@ -194,8 +194,6 @@ class HybridPICBeamInstability(object):
         simulation.current_deposition_algo = 'direct'
         simulation.particle_shape = 1
         simulation.verbose = self.verbose
-        if not self.test:
-            simulation.load_balance_intervals = self.total_steps // 10
 
         #######################################################################
         # Field solver and external field                                     #
