@@ -165,6 +165,36 @@ void HybridPICModel::InitData ()
 #endif
 }
 
+void HybridPICModel::CalculateCurrentAmpere (
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths)
+{
+    auto& warpx = WarpX::GetInstance();
+    for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
+    {
+        CalculateCurrentAmpere(Bfield[lev], edge_lengths[lev], lev);
+    }
+}
+
+void HybridPICModel::CalculateCurrentAmpere (
+    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+    const int lev)
+{
+    WARPX_PROFILE("WarpX::CalculateCurrentAmpere()");
+
+    auto& warpx = WarpX::GetInstance();
+    warpx.get_pointer_fdtd_solver_fp(lev)->CalculateCurrentAmpere(
+        current_fp_ampere[lev], Bfield, edge_lengths, lev
+    );
+
+    // we shouldn't apply the boundary condition to J since J = J_i - J_e but
+    // the boundary correction was already applied to J_i and the B-field
+    // boundary ensures that J itself complies with the boundary conditions, right?
+    // ApplyJfieldBoundary(lev, Jfield[0].get(), Jfield[1].get(), Jfield[2].get());
+    for (int i=0; i<3; i++) current_fp_ampere[lev][i]->FillBoundary(warpx.Geom(lev).periodicity());
+}
+
 void HybridPICModel::CalculateElectronPressure(DtType a_dt_type)
 {
     auto& warpx = WarpX::GetInstance();
@@ -176,6 +206,8 @@ void HybridPICModel::CalculateElectronPressure(DtType a_dt_type)
 
 void HybridPICModel::CalculateElectronPressure(const int lev, DtType a_dt_type)
 {
+    WARPX_PROFILE("WarpX::CalculateElectronPressure()");
+
     auto& warpx = WarpX::GetInstance();
     // The full step uses rho^{n+1}, otherwise use the old or averaged
     // charge density.

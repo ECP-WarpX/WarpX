@@ -12,8 +12,10 @@
 
 #include "HybridPICModel_fwd.H"
 
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
 #include <AMReX_Array.H>
@@ -43,6 +45,25 @@ public:
     void ClearLevel (int lev);
 
     void InitData ();
+
+    /**
+     * \brief
+     * Function to calculate the total current based on Ampere's law while
+     * neglecting displacement current (J = curl x B). Used in the Ohm's law
+     * solver (kinetic-fluid hybrid model).
+     *
+     * \param[in] Bfield       Magnetic field from which the current is calculated.
+     * \param[in] edge_lengths Length of cell edges taking embedded boundaries into account
+     */
+    void CalculateCurrentAmpere (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
+    );
+    void CalculateCurrentAmpere (
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        const int lev
+    );
 
     /**
      * \brief

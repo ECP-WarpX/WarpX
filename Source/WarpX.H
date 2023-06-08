@@ -628,24 +628,6 @@ public:
 
     /**
      * \brief
-     * Function to calculate the total current based on Ampere's law while
-     * neglecting displacement current (J = curl x B). Used in the Ohm's law
-     * solver (kinetic-fluid hybrid model).
-     */
-    void CalculateCurrentAmpere ();
-    void CalculateCurrentAmpere (const int lev);
-
-    /**
-     * \brief
-     * Function to calculate the electron pressure at a given timestep type
-     * using the simulation charge density. Used in the Ohm's law solver
-     * (kinetic-fluid hybrid model).
-     */
-    void CalculateElectronPressure (                DtType a_dt_type);
-    void CalculateElectronPressure (const int lev,  DtType a_dt_type);
-
-    /**
-     * \brief
      * This function contains the logic involved in evolving the electric and
      * magnetic fields in the hybrid PIC algorithm.
      */
@@ -1868,6 +1850,9 @@ public:
 #   endif
             get_spectral_solver_fp (int lev) {return *spectral_solver_fp[lev];}
 #endif
+
+public:
+    FiniteDifferenceSolver * get_pointer_fdtd_solver_fp (int lev) { return m_fdtd_solver_fp[lev].get(); }
 
 private:
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
