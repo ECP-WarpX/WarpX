@@ -1,6 +1,6 @@
+import json
 import re
 import sys
-import json
 
 azure_output_filename = sys.argv[1]
 
