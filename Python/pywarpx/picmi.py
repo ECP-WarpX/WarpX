@@ -1281,11 +1281,11 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
     species: species instance
         The species involved in the collision
 
-    background_density: float
-        The density of the background
+    background_density: float or string
+        The density of the background. An string expression as a function of (x, y, z, t) can be used.
 
-    background_temperature: float
-        The temperature of the background
+    background_temperature: float or string
+        The temperature of the background. An string expression as a function of (x, y, z, t) can be used.
 
     scattering_processes: dictionary
         The scattering process to use and any needed information
@@ -1294,19 +1294,24 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         The mass of the background particle. If not supplied, the default depends
         on the type of scattering process.
 
+    max_background_density: float
+        The maximum background density. When the background_density is an expression, this must also
+        be specified.
+
     ndt: integer, optional
         The collisions will be applied every "ndt" steps. Must be 1 or larger.
     """
 
     def __init__(self, name, species, background_density,
                  background_temperature, scattering_processes,
-                 background_mass=None, ndt=None, **kw):
+                 background_mass=None, max_background_density=None, ndt=None, **kw):
         self.name = name
         self.species = species
         self.background_density = background_density
         self.background_temperature = background_temperature
         self.background_mass = background_mass
         self.scattering_processes = scattering_processes
+        self.max_background_density = max_background_density
         self.ndt = ndt
 
         self.handle_init(kw)
@@ -1315,9 +1320,16 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         collision = pywarpx.Collisions.newcollision(self.name)
         collision.type = 'background_mcc'
         collision.species = self.species.name
-        collision.background_density = self.background_density
-        collision.background_temperature = self.background_temperature
+        if isinstance(self.background_density, str):
+            collision.__setattr__('background_density(x,y,z,t)', self.background_density)
+        else:
+            collision.background_density = self.background_density
+        if isinstance(self.background_temperature, str):
+            collision.__setattr__('background_temperature(x,y,z,t)', self.background_temperature)
+        else:
+            collision.background_temperature = self.background_temperature
         collision.background_mass = self.background_mass
+        collision.max_background_density = self.max_background_density
         collision.ndt = self.ndt
 
         collision.scattering_processes = self.scattering_processes.keys()

@@ -256,7 +256,7 @@ To run a simulation, copy the lines above to a file ``perlmutter_gpu.sbatch`` an
 
 .. code-block:: bash
 
-   sbatch perlmutter.sbatch
+   sbatch perlmutter_gpu.sbatch
 
 to submit the job.
 

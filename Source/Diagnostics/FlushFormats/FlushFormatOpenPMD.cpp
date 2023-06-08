@@ -2,6 +2,7 @@
 
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Diagnostics/OpenPMDHelpFunction.H"
 #include "WarpX.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
@@ -24,10 +25,15 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     ParmParse pp_diag_name(diag_name);
     // Which backend to use (ADIOS, ADIOS2 or HDF5). Default depends on what is available
     std::string openpmd_backend {"default"};
+    pp_diag_name.query("openpmd_backend", openpmd_backend);
+    // pick first available backend if default is chosen
+    if( openpmd_backend == "default" )
+        openpmd_backend = WarpXOpenPMDFileType();
+    pp_diag_name.add("openpmd_backend", openpmd_backend);
+
 
     // one file per timestep (or one file for all steps)
     std::string  openpmd_encoding {"f"};
-    pp_diag_name.query("openpmd_backend", openpmd_backend);
     bool encodingDefined = pp_diag_name.query("openpmd_encoding", openpmd_encoding);
 
     openPMD::IterationEncoding encoding = openPMD::IterationEncoding::groupBased;
