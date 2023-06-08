@@ -6,7 +6,7 @@ azure_output_filename = sys.argv[1]
 
 pattern_test_name = 'working on test: (?P<testname>[\w\-]*)'
 pattern_keys_value = 'Plotfile : \[(?P<key1>.*),(?P<key2>.*)\] (?P<value>\w.*)'
-benchmark_path = "benchmarks_json/"
+benchmark_path = "../../Regression/Checksum/benchmarks_json/"
 benchmark_suffix = ".json"
 
 json_file_updated = False
