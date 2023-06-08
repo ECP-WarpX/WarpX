@@ -48,10 +48,10 @@ FieldReduction::FieldReduction (std::string rd_name)
 
     // read reduced function with parser
     std::string parser_string = "";
-    utils::parser::Store_parserString(pp_rd_name,"reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)",
+    utils::parser::Store_parserString(pp_rd_name,"reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz)",
                        parser_string);
     m_parser = std::make_unique<amrex::Parser>(
-        utils::parser::makeParser(parser_string,{"x","y","z","Ex","Ey","Ez","Bx","By","Bz"}));
+        utils::parser::makeParser(parser_string,{"x","y","z","Ex","Ey","Ez","Bx","By","Bz","jx","jy","jz"}));
 
     // Replace all newlines and possible following whitespaces with a single whitespace. This
     // should avoid weird formatting when the string is written in the header of the output file.
