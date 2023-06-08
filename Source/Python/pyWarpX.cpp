@@ -31,6 +31,7 @@ namespace py = pybind11;
 
 // forward declarations of exposed classes
 void init_WarpX(py::module&);
+void init_MultiParticleContainer (py::module& m);
 
 PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     // make sure AMReX types are known
@@ -53,6 +54,7 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     )pbdoc";
 
     // note: order from parent to child classes
+    init_MultiParticleContainer(m);
     init_WarpX(m);
 
     // API runtime version
@@ -112,6 +114,11 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
         "Read the boundary condition parametes and check for consistency");
     m.def("check_gridding_for_RZ_spectral", &CheckGriddingForRZSpectral,
         "Ensure that the grid is setup appropriately with using the RZ spectral solver");
+
+    // Expose the WarpX instance
+    m.def("get_instance", &WarpX::GetInstance,
+        py::return_value_policy::reference,
+        "Return a reference to the WarpX object.");
 
     // Expose the python callback function installation and removal functions
     m.def("add_python_callback", &InstallPythonCallback);
