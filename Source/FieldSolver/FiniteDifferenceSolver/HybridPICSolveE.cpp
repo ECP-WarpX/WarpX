@@ -195,7 +195,7 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    int lev, std::unique_ptr<HybridPICModel> const& hybrid_model,
+    int lev, HybridPICModel const* hybrid_model,
     DtType a_dt_type )
 {
 
@@ -238,7 +238,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    int lev, std::unique_ptr<HybridPICModel> const& hybrid_model,
+    int lev, HybridPICModel const* hybrid_model,
     DtType a_dt_type )
 {
 #ifndef AMREX_USE_EB
@@ -263,7 +263,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    int lev, std::unique_ptr<HybridPICModel> const& hybrid_model,
+    int lev, HybridPICModel const* hybrid_model,
     DtType a_dt_type )
 {
 #ifndef AMREX_USE_EB

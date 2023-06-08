@@ -620,14 +620,6 @@ public:
 
     /**
      * \brief
-     * Function to update the E-field using Ohm's law (hybrid-PIC model).
-     */
-    void HybridPICSolveE (                               DtType dt_type);
-    void HybridPICSolveE (const int lev,                       DtType dt_type);
-    void HybridPICSolveE (const int lev, PatchType patch_type, DtType dt_type);
-
-    /**
-     * \brief
      * This function contains the logic involved in evolving the electric and
      * magnetic fields in the hybrid PIC algorithm.
      */

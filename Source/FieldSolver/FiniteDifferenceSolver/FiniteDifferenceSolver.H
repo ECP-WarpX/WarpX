@@ -153,7 +153,7 @@ class FiniteDifferenceSolver
                       std::unique_ptr<amrex::MultiFab> const& rhofield,
                       std::unique_ptr<amrex::MultiFab> const& Pefield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-                      int lev, std::unique_ptr<HybridPICModel> const& hybrid_pic_model,
+                      int lev, HybridPICModel const* hybrid_pic_model,
                       DtType a_dt_type );
 
         /**
@@ -236,7 +236,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-            int lev, std::unique_ptr<HybridPICModel> const& hybrid_pic_model,
+            int lev, HybridPICModel const* hybrid_pic_model,
             DtType a_dt_type );
 
         template<typename T_Algo>
@@ -340,7 +340,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-            int lev, std::unique_ptr<HybridPICModel> const& hybrid_pic_model,
+            int lev, HybridPICModel const* hybrid_pic_model,
             DtType a_dt_type );
 
         template<typename T_Algo>

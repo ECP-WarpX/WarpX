@@ -87,7 +87,11 @@ void WarpX::HybridPICEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
-        HybridPICSolveE(DtType::FirstHalf);
+        m_hybrid_pic_model->HybridPICSolveE(
+            Efield_fp, current_fp, Bfield_fp, rho_fp, m_edge_lengths,
+            DtType::FirstHalf
+        );
+        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
         EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
@@ -111,7 +115,11 @@ void WarpX::HybridPICEvolveFields ()
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
         m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
-        HybridPICSolveE(DtType::SecondHalf);
+        m_hybrid_pic_model->HybridPICSolveE(
+            Efield_fp, current_fp, Bfield_fp, rho_fp, m_edge_lengths,
+            DtType::SecondHalf
+        );
+        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
         EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
@@ -139,7 +147,11 @@ void WarpX::HybridPICEvolveFields ()
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
-    HybridPICSolveE(DtType::Full);
+    m_hybrid_pic_model->HybridPICSolveE(
+        Efield_fp, current_fp, Bfield_fp, rho_fp, m_edge_lengths,
+        DtType::Full
+    );
+    FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
     // Copy the rho^{n+1} values to rho_fp_temp and the J_i^{n+1/2} values to
     // current_fp_temp since at the next step those values will be needed as
@@ -154,61 +166,4 @@ void WarpX::HybridPICEvolveFields ()
                            0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
         }
     }
-}
-
-void WarpX::HybridPICSolveE (DtType a_dt_type)
-{
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        HybridPICSolveE(lev, a_dt_type);
-    }
-    FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-}
-
-void WarpX::HybridPICSolveE (const int lev, DtType a_dt_type)
-{
-    WARPX_PROFILE("WarpX::HybridPICSolveE()");
-
-    HybridPICSolveE(lev, PatchType::fine, a_dt_type);
-    if (lev > 0)
-    {
-        amrex::Abort(Utils::TextMsg::Err(
-        "HybridPICSolveE: Only one level implemented for hybrid-PIC solver."));
-    }
-}
-
-void WarpX::HybridPICSolveE (const int lev, PatchType patch_type, DtType a_dt_type)
-{
-    // Solve E field in regular cells
-    // The first half step uses t=n quantities, the second half t=n+1/2
-    // quantities and the full step uses t=n+1 quantities
-    if (a_dt_type == DtType::FirstHalf) {
-        m_fdtd_solver_fp[lev]->HybridPICSolveE(
-            Efield_fp[lev], m_hybrid_pic_model->current_fp_ampere[lev],
-            m_hybrid_pic_model->current_fp_temp[lev], Bfield_fp[lev],
-            m_hybrid_pic_model->rho_fp_temp[lev],
-            m_hybrid_pic_model->electron_pressure_fp[lev],
-            m_edge_lengths[lev], lev, m_hybrid_pic_model, a_dt_type
-        );
-    }
-    else if (a_dt_type == DtType::SecondHalf) {
-        m_fdtd_solver_fp[lev]->HybridPICSolveE(
-            Efield_fp[lev], m_hybrid_pic_model->current_fp_ampere[lev],
-            current_fp[lev], Bfield_fp[lev],
-            m_hybrid_pic_model->rho_fp_temp[lev],
-            m_hybrid_pic_model->electron_pressure_fp[lev],
-            m_edge_lengths[lev], lev, m_hybrid_pic_model, a_dt_type
-        );
-    }
-    else {
-        m_fdtd_solver_fp[lev]->HybridPICSolveE(
-            Efield_fp[lev], m_hybrid_pic_model->current_fp_ampere[lev],
-            m_hybrid_pic_model->current_fp_temp[lev], Bfield_fp[lev],
-            rho_fp[lev],
-            m_hybrid_pic_model->electron_pressure_fp[lev],
-            m_edge_lengths[lev], lev, m_hybrid_pic_model, a_dt_type
-        );
-    }
-
-    ApplyEfieldBoundary(lev, patch_type);
 }

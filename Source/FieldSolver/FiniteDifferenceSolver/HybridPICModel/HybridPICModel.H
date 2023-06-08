@@ -67,6 +67,32 @@ public:
 
     /**
      * \brief
+     * Function to update the E-field using Ohm's law (hybrid-PIC model).
+     */
+    void HybridPICSolveE (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        DtType dt_type);
+    void HybridPICSolveE (
+        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+        std::unique_ptr<amrex::MultiFab> const& rhofield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        const int lev, DtType dt_type);
+    void HybridPICSolveE (
+        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+        std::unique_ptr<amrex::MultiFab> const& rhofield,
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        const int lev, PatchType patch_type, DtType dt_type);
+
+    /**
+     * \brief
      * Function to calculate the electron pressure at a given timestep type
      * using the simulation charge density. Used in the Ohm's law solver
      * (kinetic-fluid hybrid model).
