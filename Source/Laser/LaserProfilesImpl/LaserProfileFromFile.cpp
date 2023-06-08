@@ -303,9 +303,9 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_
             "] data chunk from " + m_params.lasy_file_name);
     int data_size;
     if (m_params.fileGeom=="thetaMode") {
-        data_size = m_params.n_rz_azimuthal_components* m_params.(i_last-i_first+1)*m_params.nr;
+        data_size = m_params.n_rz_azimuthal_components*(i_last-i_first+1)*m_params.nr;
     } else {
-        data_size = m_params.(i_last-i_first+1)*m_params.nx*m_params.ny;
+        data_size = (i_last-i_first+1)*m_params.nx*m_params.ny;
     }
     m_params.E_lasy_data.resize(data_size);
     Vector<Complex> h_E_lasy_data(m_params.E_lasy_data.size());
