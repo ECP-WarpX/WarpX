@@ -70,22 +70,37 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
             const std::unique_ptr<PlasmaInjector> plasma_injector
                 = std::make_unique<PlasmaInjector>(pc.getSpeciesId(), species_names.at(i));
 
-            // Get bulk momentum of plasma
-            const amrex::XDim3& u_bulk
-                = plasma_injector->getInjectorMomentum()->getBulkMomentum(0._rt, 0._rt, current_injection_position[i]);
-
-            // Get bulk velocity of plasma
+            // Get bulk momentum and velocity of plasma
+            amrex::XDim3 u_bulk = amrex::XDim3{0._rt, 0._rt, 0._rt};
             amrex::Real v_bulk = 0._rt;
             if (dir == 0)
             {
+                // dir=0 is z in 1D, x in 2D, x in 3D
+#if defined(WARPX_DIM_1D_Z)
+                u_bulk = plasma_injector->getInjectorMomentum()->getBulkMomentum(0._rt, 0._rt, current_injection_position[i]);
+                v_bulk = PhysConst::c * u_bulk.z / std::sqrt(1._rt + u_bulk.z*u_bulk.z);
+#else // 2D, 3D
+                u_bulk = plasma_injector->getInjectorMomentum()->getBulkMomentum(current_injection_position[i], 0._rt, 0._rt);
                 v_bulk = PhysConst::c * u_bulk.x / std::sqrt(1._rt + u_bulk.x*u_bulk.x);
+#endif
             }
             else if (dir == 1)
             {
+                // dir=1 is nothing in 1D, z in 2D, y in 3D
+                // (we do not expect to enter this code block in 1D)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                u_bulk = plasma_injector->getInjectorMomentum()->getBulkMomentum(0._rt, 0._rt, current_injection_position[i]);
+                v_bulk = PhysConst::c * u_bulk.z / std::sqrt(1._rt + u_bulk.z*u_bulk.z);
+#else // 3D
+                u_bulk = plasma_injector->getInjectorMomentum()->getBulkMomentum(0._rt, current_injection_position[i], 0._rt);
                 v_bulk = PhysConst::c * u_bulk.y / std::sqrt(1._rt + u_bulk.y*u_bulk.y);
+#endif
             }
             else if (dir == 2)
             {
+                // dir=2 is nothing in 1D, nothing in 2D, z in 3D
+                // (we do not expect to enter this code block in 1D and 2D)
+                u_bulk = plasma_injector->getInjectorMomentum()->getBulkMomentum(0._rt, 0._rt, current_injection_position[i]);
                 v_bulk = PhysConst::c * u_bulk.z / std::sqrt(1._rt + u_bulk.z*u_bulk.z);
             }
 
@@ -94,23 +109,28 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
             // Note that the bulk velocity v, obtained from getBulkMomentum, is
             // transformed to the boosted frame velocity v' via the formula
             // v' = (v-c*beta)/(1-v*beta/c)
-            current_injection_position[i] +=
-                (v_bulk - PhysConst::c*WarpX::beta_boost)
-                / (1._rt - v_bulk*WarpX::beta_boost/PhysConst::c) *
+            if (WarpX::gamma_boost > 1._rt)
+            {
+                v_bulk = (v_bulk - PhysConst::c*WarpX::beta_boost)
+                         / (1._rt - v_bulk*WarpX::beta_boost/PhysConst::c);
 #if defined(WARPX_DIM_3D)
-            WarpX::boost_direction[dir] * a_dt;
+                v_bulk *= WarpX::boost_direction[dir];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
-            // This needs to be converted in order to index `boost_direction`
-            // which has 3 components, for both 2D and 3D simulations.
-            WarpX::boost_direction[2*dir] * a_dt;
+                // In 2D, dir=0 corresponds to x and dir=1 corresponds to z.
+                // This needs to be converted to access boost_direction,
+                // which has always 3 components.
+                v_bulk *= WarpX::boost_direction[2*dir];
 #elif defined(WARPX_DIM_1D_Z)
-            // In 1D, dir=0 corresponds to z
-            // This needs to be converted in order to index `boost_direction`
-            // which has 3 components, for 1D, 2D, and 3D simulations.
-            WarpX::boost_direction[2] * a_dt;
-            amrex::ignore_unused(dir);
+                // In 1D, dir=0 corresponds to z.
+                // This needs to be converted to access boost_direction,
+                // which has always 3 components.
+                v_bulk *= WarpX::boost_direction[2];
+                amrex::ignore_unused(dir);
 #endif
+            }
+
+            // Update current injection position
+            current_injection_position[i] += v_bulk * a_dt;
         }
     }
 }
