@@ -356,12 +356,7 @@ WarpX::WarpX ()
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
         // Create hybrid-PIC model object if needed
-        m_hybrid_pic_model = std::make_unique<HybridPICModel>();
-
-        electron_pressure_fp.resize(nlevs_max);
-        rho_fp_temp.resize(nlevs_max);
-        current_fp_temp.resize(nlevs_max);
-        current_fp_ampere.resize(nlevs_max);
+        m_hybrid_pic_model = std::make_unique<HybridPICModel>(nlevs_max);
     }
 
     F_cp.resize(nlevs_max);
@@ -1892,11 +1887,6 @@ WarpX::ClearLevel (int lev)
             current_fp_vay[lev][i].reset();
         }
 
-        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
-        {
-            current_fp_temp[lev][i].reset();
-            current_fp_ampere[lev][i].reset();
-        }
         if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
         {
             vector_potential_fp_nodal[lev][i].reset();
@@ -1915,8 +1905,7 @@ WarpX::ClearLevel (int lev)
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
-        electron_pressure_fp[lev].reset();
-        rho_fp_temp[lev].reset();
+        m_hybrid_pic_model->ClearLevel(lev);
     }
 
     charge_buf[lev].reset();
@@ -2199,35 +2188,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     // Allocate extra multifabs needed by the kinetic-fluid hybrid algorithm.
-    // The "electron_pressure_fp" multifab stores the electron pressure calculated
-    // from the specified equation of state.
-    // The "rho_fp_temp" multifab is used to store the ion charge density
-    // interpolated or extrapolated to appropriate timesteps.
-    // The "current_fp_temp" multifab is used to store the ion current density
-    // interpolated or extrapolated to appropriate timesteps.
-    // The "current_fp_ampere" multifab stores the total current calculated as
-    // the curl of B.
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
     {
-        AllocInitMultiFab(electron_pressure_fp[lev], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, tag("electron_pressure_fp"), 0.0_rt);
-
-        AllocInitMultiFab(rho_fp_temp[lev], amrex::convert(ba, rho_nodal_flag),
-            dm, ncomps, ngRho, tag("rho_fp_temp"), 0.0_rt);
-
-        AllocInitMultiFab(current_fp_temp[lev][0], amrex::convert(ba, jx_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_temp[x]"), 0.0_rt);
-        AllocInitMultiFab(current_fp_temp[lev][1], amrex::convert(ba, jy_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_temp[y]"), 0.0_rt);
-        AllocInitMultiFab(current_fp_temp[lev][2], amrex::convert(ba, jz_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_temp[z]"), 0.0_rt);
-
-        AllocInitMultiFab(current_fp_ampere[lev][0], amrex::convert(ba, jx_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_ampere[x]"), 0.0_rt);
-        AllocInitMultiFab(current_fp_ampere[lev][1], amrex::convert(ba, jy_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_ampere[y]"), 0.0_rt);
-        AllocInitMultiFab(current_fp_ampere[lev][2], amrex::convert(ba, jz_nodal_flag),
-            dm, ncomps, ngJ, tag("current_fp_ampere[z]"), 0.0_rt);
+        m_hybrid_pic_model->AllocateLevelMFs(
+            lev, ba, dm, ncomps, ngJ, ngRho, jx_nodal_flag, jy_nodal_flag,
+            jz_nodal_flag, rho_nodal_flag
+        );
     }
 
     if (fft_do_time_averaging)

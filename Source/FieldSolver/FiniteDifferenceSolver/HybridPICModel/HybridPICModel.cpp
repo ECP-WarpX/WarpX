@@ -11,9 +11,10 @@
 
 using namespace amrex;
 
-HybridPICModel::HybridPICModel ()
+HybridPICModel::HybridPICModel ( int nlevs_max )
 {
     ReadParameters();
+    AllocateMFs(nlevs_max);
 }
 
 void HybridPICModel::ReadParameters ()
@@ -41,6 +42,68 @@ void HybridPICModel::ReadParameters ()
 
     // convert electron temperature from eV to J
     m_elec_temp *= PhysConst::q_e;
+}
+
+void HybridPICModel::AllocateMFs (int nlevs_max)
+{
+    electron_pressure_fp.resize(nlevs_max);
+    rho_fp_temp.resize(nlevs_max);
+    current_fp_temp.resize(nlevs_max);
+    current_fp_ampere.resize(nlevs_max);
+}
+
+void HybridPICModel::AllocateLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm,
+                                       const int ncomps, const IntVect& ngJ, const IntVect& ngRho,
+                                       const IntVect& jx_nodal_flag,
+                                       const IntVect& jy_nodal_flag,
+                                       const IntVect& jz_nodal_flag,
+                                       const IntVect& rho_nodal_flag)
+{
+    // set human-readable tag for each MultiFab
+    auto const tag = [lev]( std::string tagname ) {
+        tagname.append("[l=").append(std::to_string(lev)).append("]");
+        return tagname;
+    };
+
+    auto & warpx = WarpX::GetInstance();
+
+    // The "electron_pressure_fp" multifab stores the electron pressure calculated
+    // from the specified equation of state.
+    // The "rho_fp_temp" multifab is used to store the ion charge density
+    // interpolated or extrapolated to appropriate timesteps.
+    // The "current_fp_temp" multifab is used to store the ion current density
+    // interpolated or extrapolated to appropriate timesteps.
+    // The "current_fp_ampere" multifab stores the total current calculated as
+    // the curl of B.
+    warpx.AllocInitMultiFab(electron_pressure_fp[lev], amrex::convert(ba, rho_nodal_flag),
+        dm, ncomps, ngRho, tag("electron_pressure_fp"), 0.0_rt);
+
+    warpx.AllocInitMultiFab(rho_fp_temp[lev], amrex::convert(ba, rho_nodal_flag),
+        dm, ncomps, ngRho, tag("rho_fp_temp"), 0.0_rt);
+
+    warpx.AllocInitMultiFab(current_fp_temp[lev][0], amrex::convert(ba, jx_nodal_flag),
+        dm, ncomps, ngJ, tag("current_fp_temp[x]"), 0.0_rt);
+    warpx.AllocInitMultiFab(current_fp_temp[lev][1], amrex::convert(ba, jy_nodal_flag),
+        dm, ncomps, ngJ, tag("current_fp_temp[y]"), 0.0_rt);
+    warpx.AllocInitMultiFab(current_fp_temp[lev][2], amrex::convert(ba, jz_nodal_flag),
+        dm, ncomps, ngJ, tag("current_fp_temp[z]"), 0.0_rt);
+
+    warpx.AllocInitMultiFab(current_fp_ampere[lev][0], amrex::convert(ba, jx_nodal_flag),
+        dm, ncomps, ngJ, tag("current_fp_ampere[x]"), 0.0_rt);
+    warpx.AllocInitMultiFab(current_fp_ampere[lev][1], amrex::convert(ba, jy_nodal_flag),
+        dm, ncomps, ngJ, tag("current_fp_ampere[y]"), 0.0_rt);
+    warpx.AllocInitMultiFab(current_fp_ampere[lev][2], amrex::convert(ba, jz_nodal_flag),
+        dm, ncomps, ngJ, tag("current_fp_ampere[z]"), 0.0_rt);
+}
+
+void HybridPICModel::ClearLevel (int lev)
+{
+    electron_pressure_fp[lev].reset();
+    rho_fp_temp[lev].reset();
+    for (int i = 0; i < 3; ++i) {
+        current_fp_temp[lev][i].reset();
+        current_fp_ampere[lev][i].reset();
+    }
 }
 
 void HybridPICModel::InitData ()
@@ -102,9 +165,37 @@ void HybridPICModel::InitData ()
 #endif
 }
 
+void HybridPICModel::CalculateElectronPressure(DtType a_dt_type)
+{
+    auto& warpx = WarpX::GetInstance();
+    for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
+    {
+        CalculateElectronPressure(lev, a_dt_type);
+    }
+}
+
+void HybridPICModel::CalculateElectronPressure(const int lev, DtType a_dt_type)
+{
+    auto& warpx = WarpX::GetInstance();
+    // The full step uses rho^{n+1}, otherwise use the old or averaged
+    // charge density.
+    if (a_dt_type == DtType::Full) {
+        FillElectronPressureMF(
+            electron_pressure_fp[lev], warpx.get_pointer_rho_fp(lev)
+        );
+    } else {
+        FillElectronPressureMF(
+            electron_pressure_fp[lev], rho_fp_temp[lev].get()
+        );
+    }
+    warpx.ApplyElectronPressureBoundary(lev, PatchType::fine);
+    electron_pressure_fp[lev]->FillBoundary(warpx.Geom(lev).periodicity());
+}
+
+
 void HybridPICModel::FillElectronPressureMF (
     std::unique_ptr<amrex::MultiFab> const& Pe_field,
-    std::unique_ptr<amrex::MultiFab> const& rho_field )
+    amrex::MultiFab* const& rho_field )
 {
     const auto n0_ref = m_n0_ref;
     const auto elec_temp = m_elec_temp;

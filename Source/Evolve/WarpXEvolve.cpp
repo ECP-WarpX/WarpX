@@ -14,6 +14,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Evolve/WarpXDtType.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
@@ -168,6 +169,8 @@ WarpX::Evolve (int numsteps)
         if (step == step_begin &&
             electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
         {
+            auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
+            auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
             mypc->DepositCharge(rho_fp_temp, 0._rt);
             mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
             SyncRho(rho_fp_temp, rho_cp);

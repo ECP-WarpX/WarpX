@@ -46,6 +46,11 @@ void WarpX::HybridPICEvolveFields ()
     // Get requested number of substeps to use
     int sub_steps = m_hybrid_pic_model->m_substeps / 2;
 
+    // Reference hybrid-PIC multifabs
+    auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
+    auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
+    auto& current_fp_ampere = m_hybrid_pic_model->current_fp_ampere;
+
     // During the above deposition the charge and current density were updated
     // so that, at this time, we have rho^{n} in rho_fp_temp, rho{n+1} in the
     // 0'th index of `rho_fp`, J_i^{n-1/2} in `current_fp_temp` and J_i^{n+1/2}
@@ -76,7 +81,7 @@ void WarpX::HybridPICEvolveFields ()
     }
 
     // Calculate the electron pressure at t=n using rho^n
-    CalculateElectronPressure(DtType::FirstHalf);
+    m_hybrid_pic_model->CalculateElectronPressure(DtType::FirstHalf);
 
     // Push the B field from t=n to t=n+1/2 using the current and density
     // at t=n, while updating the E field along with B using the electron
@@ -102,7 +107,7 @@ void WarpX::HybridPICEvolveFields ()
     }
 
     // Calculate the electron pressure at t=n+1/2
-    CalculateElectronPressure(DtType::SecondHalf);
+    m_hybrid_pic_model->CalculateElectronPressure(DtType::SecondHalf);
 
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
@@ -132,7 +137,7 @@ void WarpX::HybridPICEvolveFields ()
     }
 
     // Calculate the electron pressure at t=n+1
-    CalculateElectronPressure(DtType::Full);
+    m_hybrid_pic_model->CalculateElectronPressure(DtType::Full);
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     CalculateCurrentAmpere();
@@ -166,7 +171,7 @@ void WarpX::CalculateCurrentAmpere (const int lev)
     WARPX_PROFILE("WarpX::CalculateCurrentAmpere()");
 
     m_fdtd_solver_fp[lev]->CalculateCurrentAmpere(
-        current_fp_ampere[lev], Bfield_fp[lev],
+        m_hybrid_pic_model->current_fp_ampere[lev], Bfield_fp[lev],
         m_edge_lengths[lev], lev
     );
 
@@ -174,7 +179,7 @@ void WarpX::CalculateCurrentAmpere (const int lev)
     // the boundary correction was already applied to J_i and the B-field
     // boundary ensures that J itself complies with the boundary conditions, right?
     // ApplyJfieldBoundary(lev, Jfield[0].get(), Jfield[1].get(), Jfield[2].get());
-    for (int i=0; i<3; i++) get_pointer_current_fp_ampere(lev, i)->FillBoundary(Geom(lev).periodicity());
+    for (int i=0; i<3; i++) m_hybrid_pic_model->current_fp_ampere[lev][i]->FillBoundary(Geom(lev).periodicity());
 }
 
 void WarpX::HybridPICSolveE (DtType a_dt_type)
@@ -205,50 +210,31 @@ void WarpX::HybridPICSolveE (const int lev, PatchType patch_type, DtType a_dt_ty
     // quantities and the full step uses t=n+1 quantities
     if (a_dt_type == DtType::FirstHalf) {
         m_fdtd_solver_fp[lev]->HybridPICSolveE(
-            Efield_fp[lev], current_fp_ampere[lev], current_fp_temp[lev],
-            Bfield_fp[lev], rho_fp_temp[lev], electron_pressure_fp[lev],
+            Efield_fp[lev], m_hybrid_pic_model->current_fp_ampere[lev],
+            m_hybrid_pic_model->current_fp_temp[lev], Bfield_fp[lev],
+            m_hybrid_pic_model->rho_fp_temp[lev],
+            m_hybrid_pic_model->electron_pressure_fp[lev],
             m_edge_lengths[lev], lev, m_hybrid_pic_model, a_dt_type
         );
     }
     else if (a_dt_type == DtType::SecondHalf) {
         m_fdtd_solver_fp[lev]->HybridPICSolveE(
-            Efield_fp[lev], current_fp_ampere[lev], current_fp[lev],
-            Bfield_fp[lev], rho_fp_temp[lev], electron_pressure_fp[lev],
+            Efield_fp[lev], m_hybrid_pic_model->current_fp_ampere[lev],
+            current_fp[lev], Bfield_fp[lev],
+            m_hybrid_pic_model->rho_fp_temp[lev],
+            m_hybrid_pic_model->electron_pressure_fp[lev],
             m_edge_lengths[lev], lev, m_hybrid_pic_model, a_dt_type
         );
     }
     else {
         m_fdtd_solver_fp[lev]->HybridPICSolveE(
-            Efield_fp[lev], current_fp_ampere[lev], current_fp_temp[lev],
-            Bfield_fp[lev], rho_fp[lev], electron_pressure_fp[lev],
+            Efield_fp[lev], m_hybrid_pic_model->current_fp_ampere[lev],
+            m_hybrid_pic_model->current_fp_temp[lev], Bfield_fp[lev],
+            rho_fp[lev],
+            m_hybrid_pic_model->electron_pressure_fp[lev],
             m_edge_lengths[lev], lev, m_hybrid_pic_model, a_dt_type
         );
     }
 
     ApplyEfieldBoundary(lev, patch_type);
-}
-
-void WarpX::CalculateElectronPressure(DtType a_dt_type)
-{
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        CalculateElectronPressure(lev, a_dt_type);
-    }
-}
-
-void WarpX::CalculateElectronPressure(const int lev, DtType a_dt_type)
-{
-    // The full step uses rho^{n+1}, otherwise use the old or averaged
-    // charge density.
-    if (a_dt_type == DtType::Full) {
-        m_hybrid_pic_model->FillElectronPressureMF(
-            electron_pressure_fp[lev], rho_fp[lev]
-        );
-    } else {
-        m_hybrid_pic_model->FillElectronPressureMF(
-            electron_pressure_fp[lev], rho_fp_temp[lev]
-        );
-    }
-    ApplyElectronPressureBoundary(lev, PatchType::fine);
-    electron_pressure_fp[lev]->FillBoundary(Geom(lev).periodicity());
 }

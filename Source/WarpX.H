@@ -473,13 +473,11 @@ public:
     amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_current_fp_ampere  (int lev, int direction) const { return current_fp_ampere[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
     amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
     amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const { return vector_potential_fp_nodal[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_electron_pressure_fp  (int lev) const { return electron_pressure_fp[lev].get(); }
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
@@ -1370,12 +1368,8 @@ private:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > G_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
-    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;

@@ -27,11 +27,31 @@
 class HybridPICModel
 {
 public:
-    HybridPICModel (); // constructor
+    HybridPICModel (int nlevs_max); // constructor
+
     /** Read user-defined model parameters. Called in constructor. */
     void ReadParameters ();
 
+    /** Allocate hybrid-PIC specific multifabs. Called in constructor. */
+    void AllocateMFs (int nlevs_max);
+    void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
+                           const int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
+                           const amrex::IntVect& jx_nodal_flag, const amrex::IntVect& jy_nodal_flag,
+                           const amrex::IntVect& jz_nodal_flag, const amrex::IntVect& rho_nodal_flag);
+
+    /** Helper function to clear values from hybrid-PIC specific multifabs. */
+    void ClearLevel (int lev);
+
     void InitData ();
+
+    /**
+     * \brief
+     * Function to calculate the electron pressure at a given timestep type
+     * using the simulation charge density. Used in the Ohm's law solver
+     * (kinetic-fluid hybrid model).
+     */
+    void CalculateElectronPressure (                DtType a_dt_type);
+    void CalculateElectronPressure (const int lev,  DtType a_dt_type);
 
     /**
      * \brief Fill the electron pressure multifab given the kinetic particle
@@ -43,7 +63,36 @@ public:
      */
     void FillElectronPressureMF (
         std::unique_ptr<amrex::MultiFab> const& Pe,
-        std::unique_ptr<amrex::MultiFab> const& rhofield );
+        amrex::MultiFab* const& rhofield );
+
+    // Declare variables to hold hybrid-PIC model parameters
+    /** Number of substeps to take when evolving B */
+    int m_substeps = 100;
+
+    /** Electron temperature in eV */
+    amrex::Real m_elec_temp;
+    /** Reference electron density */
+    amrex::Real m_n0_ref = 1.0;
+    /** Electron pressure scaling exponent */
+    amrex::Real m_gamma = 5.0/3.0;
+
+    /** Plasma density floor - if n < n_floor it will be set to n_floor */
+    amrex::Real m_n_floor = 1.0;
+
+    /** Plasma resistivity */
+    std::string m_eta_expression = "0.0";
+    std::unique_ptr<amrex::Parser> m_resistivity_parser;
+    amrex::ParserExecutor<1> m_eta;
+
+    // Declare multifabs specifically needed for the hybrid-PIC model
+    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
+    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
+
+    // Helper functions to retrieve hybrid-PIC multifabs
+    amrex::MultiFab * get_pointer_current_fp_ampere  (int lev, int direction) const { return current_fp_ampere[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_electron_pressure_fp  (int lev) const { return electron_pressure_fp[lev].get(); }
 
     /** Gpu Vector with index type of the Jx multifab */
     amrex::GpuArray<int, 3> Jx_IndexType;
@@ -63,24 +112,6 @@ public:
     amrex::GpuArray<int, 3> Ey_IndexType;
     /** Gpu Vector with index type of the Ez multifab */
     amrex::GpuArray<int, 3> Ez_IndexType;
-
-    /** Number of substeps to take when evolving B */
-    int m_substeps = 100;
-
-    /** Electron temperature in eV */
-    amrex::Real m_elec_temp;
-    /** Reference electron density */
-    amrex::Real m_n0_ref = 1.0;
-    /** Electron pressure scaling exponent */
-    amrex::Real m_gamma = 5.0/3.0;
-
-    /** Plasma density floor - if n < n_floor it will be set to n_floor */
-    amrex::Real m_n_floor = 1.0;
-
-    /** Plasma resistivity */
-    std::string m_eta_expression = "0.0";
-    std::unique_ptr<amrex::Parser> m_resistivity_parser;
-    amrex::ParserExecutor<1> m_eta;
 };
 
 /**
