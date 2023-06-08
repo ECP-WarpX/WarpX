@@ -101,18 +101,6 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     //Reads the (optional) delay
     utils::parser::queryWithParser(ppl, "delay", m_params.t_delay);
 
-    //Allocate memory for E_lasy_data or E_binary_data Vector
-    int data_size = m_params.time_chunk_size*
-        m_params.nx*m_params.ny;
-    if (m_params.file_in_lasy_format){
-        if (m_params.fileGeom=="thetaMode") {
-            data_size = m_params.n_rz_azimuthal_components*
-            m_params.time_chunk_size*m_params.nr;
-        }
-        m_params.E_lasy_data.resize(data_size);
-    } else{
-        m_params.E_binary_data.resize(data_size);
-    }
     //Read first time chunk
     if (m_params.file_in_lasy_format){
         read_data_t_chunk(0, m_params.time_chunk_size);
@@ -313,8 +301,13 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_
     amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(i_first) + ", " + std::to_string(i_last) +
             "] data chunk from " + m_params.lasy_file_name);
-    if((i_last-i_first+1)*m_params.nx*m_params.ny > static_cast<std::uint64_t>(m_params.E_lasy_data.size()))
-        WARPX_ABORT_WITH_MESSAGE("Data chunk to read from file is too large");
+    int data_size;
+    if (m_params.fileGeom=="thetaMode") {
+        data_size = m_params.n_rz_azimuthal_components* m_params.(i_last-i_first+1)*m_params.nr;
+    } else {
+        data_size = m_params.(i_last-i_first+1)*m_params.nx*m_params.ny;
+    }
+    m_params.E_lasy_data.resize(data_size);
     Vector<Complex> h_E_lasy_data(m_params.E_lasy_data.size());
     if(ParallelDescriptor::IOProcessor()){
         auto series = io::Series(m_params.lasy_file_name, io::Access::READ_ONLY);
@@ -369,8 +362,8 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk (int t_begin,
     //Indices of the first and last timestep to read
     auto i_first = max(0, t_begin);
     auto i_last = min(t_end-1, m_params.nt-1);
-    if(i_last-i_first+1 > static_cast<int>(m_params.E_binary_data.size()))
-        WARPX_ABORT_WITH_MESSAGE("Data chunk to read from file is too large");
+    int data_size = (i_last-i_first+1)*m_params.nx*m_params.ny;        
+    m_params.E_binary_data.resize(data_size);    
     Vector<Real> h_E_binary_data(m_params.E_binary_data.size());
     if(ParallelDescriptor::IOProcessor()){
         //Read data chunk
