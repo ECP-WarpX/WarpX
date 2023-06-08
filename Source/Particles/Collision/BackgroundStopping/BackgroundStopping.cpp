@@ -98,7 +98,7 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(species_mass > 0_prt, "Error: With background stopping, the species mass must be > 0");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(species_charge != 0_prt, "Error: With background stopping, the species charge must be nonzero");
 
-    BackgroundStoppingType background_type = m_background_type;
+    const BackgroundStoppingType background_type = m_background_type;
 
     // Loop over refinement levels
     auto const flvl = species.finestLevel();

@@ -86,7 +86,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     charge = 1.0;
     mass = std::numeric_limits<Real>::max();
 
-    ParmParse pp_laser_name(m_laser_name);
+    const ParmParse pp_laser_name(m_laser_name);
 
     // Parse the type of laser profile and set the corresponding flag `profile`
     std::string laser_type_s;
@@ -140,7 +140,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     std::vector<std::string> backward_laser_names;
     const ParmParse pp_lasers("lasers");
     pp_lasers.queryarr("names", backward_laser_names);
-    for(std::string& lasersiter : backward_laser_names){
+    for(const std::string& lasersiter : backward_laser_names){
         const ParmParse pp_name(lasersiter);
         std::string backward_profile;
         std::stringstream lasers;
@@ -482,7 +482,7 @@ LaserParticleContainer::InitData (int lev)
         }
     }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    BoxArray plane_ba { Box {IntVect(plane_lo[0],0), IntVect(plane_hi[0],0)} };
+    const BoxArray plane_ba { Box {IntVect(plane_lo[0],0), IntVect(plane_hi[0],0)} };
 #else
     const BoxArray plane_ba { Box {IntVect(0), IntVect(0)} };
 #endif
@@ -792,16 +792,16 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
     const auto GetPosition = GetParticlePosition(pti);
 
 #if (AMREX_SPACEDIM >= 2)
-    Real tmp_u_X_0 = m_u_X[0];
-    Real tmp_u_X_2 = m_u_X[2];
-    Real tmp_position_0 = m_position[0];
-    Real tmp_position_2 = m_position[2];
+    const Real tmp_u_X_0 = m_u_X[0];
+    const Real tmp_u_X_2 = m_u_X[2];
+    const Real tmp_position_0 = m_position[0];
+    const Real tmp_position_2 = m_position[2];
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-    Real tmp_u_X_1 = m_u_X[1];
-    Real tmp_u_Y_0 = m_u_Y[0];
-    Real tmp_u_Y_1 = m_u_Y[1];
-    Real tmp_u_Y_2 = m_u_Y[2];
-    Real tmp_position_1 = m_position[1];
+    const Real tmp_u_X_1 = m_u_X[1];
+    const Real tmp_u_Y_0 = m_u_Y[0];
+    const Real tmp_u_Y_1 = m_u_Y[1];
+    const Real tmp_u_Y_2 = m_u_Y[2];
+    const Real tmp_position_1 = m_position[1];
 #endif
 #endif
 

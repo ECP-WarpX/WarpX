@@ -659,7 +659,7 @@ void PlasmaInjector::parseMomentum (const amrex::ParmParse& pp)
         h_mom_temp = std::make_unique<TemperatureProperties>(pp);
         const GetTemperature getTemp(*h_mom_temp.get());
         h_mom_vel = std::make_unique<VelocityProperties>(pp);
-        GetVelocity getVel(*h_mom_vel.get());
+        const GetVelocity getVel(*h_mom_vel.get());
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "maxwell_juttner"){

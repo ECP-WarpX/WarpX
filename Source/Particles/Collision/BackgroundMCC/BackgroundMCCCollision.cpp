@@ -102,7 +102,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         // energy associated with that process
         if (scattering_process.find("excitation") != std::string::npos ||
             scattering_process.find("ionization") != std::string::npos) {
-            std::string kw_energy = scattering_process + "_energy";
+            const std::string kw_energy = scattering_process + "_energy";
             utils::parser::getWithParser(
                 pp_collision_name, kw_energy.c_str(), energy);
         }
@@ -361,7 +361,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               double gamma, E_coll;
                               amrex::ParticleReal ua_x, ua_y, ua_z, vx, vy, vz;
                               amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
-                              amrex::ParticleReal col_select = amrex::Random(engine);
+                              const amrex::ParticleReal col_select = amrex::Random(engine);
 
                               // get velocities of gas particles from a Maxwellian distribution
                               auto const vel_std = sqrt(PhysConst::kb * T_a / M);
@@ -462,8 +462,8 @@ void BackgroundMCCCollision::doBackgroundIonization
 {
     WARPX_PROFILE("BackgroundMCCCollision::doBackgroundIonization()");
 
-    SmartCopyFactory copy_factory_elec(species1, species1);
-    SmartCopyFactory copy_factory_ion(species1, species2);
+    const SmartCopyFactory copy_factory_elec(species1, species1);
+    const SmartCopyFactory copy_factory_ion(species1, species2);
     const auto CopyElec = copy_factory_elec.getSmartCopy();
     const auto CopyIon = copy_factory_ion.getSmartCopy();
 
@@ -473,7 +473,7 @@ void BackgroundMCCCollision::doBackgroundIonization
                                                    m_nu_max_ioniz, m_background_density_func, t
                                                    );
 
-    amrex::ParticleReal sqrt_kb_m = std::sqrt(PhysConst::kb / m_background_mass);
+    const amrex::ParticleReal sqrt_kb_m = std::sqrt(PhysConst::kb / m_background_mass);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

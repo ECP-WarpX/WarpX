@@ -38,9 +38,9 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
 {
     using namespace amrex::literals;
 #if (defined WARPX_DIM_3D)
-    amrex::Real x = (xp - plo[0]) * dxi[0];
-    amrex::Real y = (yp - plo[1]) * dxi[1];
-    amrex::Real z = (zp - plo[2]) * dxi[2];
+    const amrex::Real x = (xp - plo[0]) * dxi[0];
+    const amrex::Real y = (yp - plo[1]) * dxi[1];
+    const amrex::Real z = (zp - plo[2]) * dxi[2];
 
     i = static_cast<int>(amrex::Math::floor(x));
     j = static_cast<int>(amrex::Math::floor(y));
@@ -57,7 +57,7 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
 #   if (defined WARPX_DIM_XZ)
-    amrex::Real x = (xp - plo[0]) * dxi[0];
+    const amrex::Real x = (xp - plo[0]) * dxi[0];
     amrex::ignore_unused(yp);
     i = static_cast<int>(amrex::Math::floor(x));
     W[0][1] = x - i;
@@ -93,8 +93,8 @@ amrex::Real interp_field_nodal (int i, int j, int k,
                                 const amrex::Real W[AMREX_SPACEDIM][2],
                                 amrex::Array4<const amrex::Real> const& scalar_field) noexcept
 {
-    amrex::Real value = 0;
 #if (defined WARPX_DIM_3D)
+    amrex::Real value = 0;
     value += scalar_field(i,   j  , k  ) * W[0][0] * W[1][0] * W[2][0];
     value += scalar_field(i+1, j  , k  ) * W[0][1] * W[1][0] * W[2][0];
     value += scalar_field(i,   j+1, k  ) * W[0][0] * W[1][1] * W[2][0];
@@ -104,11 +104,13 @@ amrex::Real interp_field_nodal (int i, int j, int k,
     value += scalar_field(i  , j+1, k+1) * W[0][0] * W[1][1] * W[2][1];
     value += scalar_field(i+1, j+1, k+1) * W[0][1] * W[1][1] * W[2][1];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    amrex::Real value = 0;
     value += scalar_field(i,   j ,  k) * W[0][0] * W[1][0];
     value += scalar_field(i+1, j ,  k) * W[0][1] * W[1][0];
     value += scalar_field(i,   j+1, k) * W[0][0] * W[1][1];
     value += scalar_field(i+1, j+1, k) * W[0][1] * W[1][1];
 #else
+    const amrex::Real value = 0;
     amrex::ignore_unused(i, j, k, W, scalar_field);
     amrex::Abort("Error: interp_field not yet implemented in 1D");
 #endif

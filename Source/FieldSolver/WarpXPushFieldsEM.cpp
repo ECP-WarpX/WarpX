@@ -440,9 +440,6 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
     {
         const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
 
-        amrex::MultiFab& Jx = *current_fp[lev][0];
-        amrex::MultiFab& Jy = *current_fp[lev][1];
-        amrex::MultiFab& Jz = *current_fp[lev][2];
         amrex::MultiFab const& Dx = *current_fp_vay[lev][0];
         amrex::MultiFab const& Dy = *current_fp_vay[lev][1];
         amrex::MultiFab const& Dz = *current_fp_vay[lev][2];
@@ -456,6 +453,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 #endif
 
         // Subtract average of cumulative sum from Jx
+        amrex::MultiFab& Jx = *current_fp[lev][0];
         for (amrex::MFIter mfi(Jx); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -480,6 +478,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 
 #if defined (WARPX_DIM_3D)
         // Subtract average of cumulative sum from Jy
+        amrex::MultiFab& Jy = *current_fp[lev][1];
         for (amrex::MFIter mfi(Jy); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -504,6 +503,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 #endif
 
         // Subtract average of cumulative sum from Jz
+        amrex::MultiFab& Jz = *current_fp[lev][2];
         for (amrex::MFIter mfi(Jz); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();

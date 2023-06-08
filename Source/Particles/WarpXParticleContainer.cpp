@@ -164,10 +164,10 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         ibegin = 0;
         iend = n;
     } else {
-        int myproc = amrex::ParallelDescriptor::MyProc();
-        int nprocs = amrex::ParallelDescriptor::NProcs();
-        int navg = n/nprocs;
-        int nleft = n - navg * nprocs;
+        const int myproc = amrex::ParallelDescriptor::MyProc();
+        const int nprocs = amrex::ParallelDescriptor::NProcs();
+        const int navg = n/nprocs;
+        const int nleft = n - navg * nprocs;
         if (myproc < nleft) {
             ibegin = myproc*(navg+1);
             iend = ibegin + navg+1;
@@ -187,7 +187,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
 
-    std::size_t np = iend-ibegin;
+    const std::size_t np = iend-ibegin;
 
     // treat weight as a special attr since it will always be specified
     amrex::Vector<amrex::ParticleReal> weight(np);
@@ -336,7 +336,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     if (do_not_deposit) return;
 
     // Number of guard cells for local deposition of J
-    WarpX& warpx = WarpX::GetInstance();
+    const WarpX& warpx = WarpX::GetInstance();
 
     const amrex::IntVect& ng_J = warpx.get_ng_depos_J();
 
@@ -371,7 +371,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for current deposition");
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
-    amrex::ParticleReal q = this->charge;
+    const amrex::ParticleReal q = this->charge;
 
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Sorting", blp_sort);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::FindMaxTilesize",
@@ -472,7 +472,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             auto& aos = ptile.GetArrayOfStructs();
             auto pstruct_ptr = aos().dataPtr();
 
-            int ntiles = numTilesInBox(box, true, bin_size);
+            const int ntiles = numTilesInBox(box, true, bin_size);
 
             bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
                     [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) -> unsigned int
@@ -490,15 +490,15 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             // get tile boxes
         //get the maximum size necessary for shared mem
 #if AMREX_SPACEDIM > 0
-        int sizeX = getMaxTboxAlongDim(box.size()[0], WarpX::shared_tilesize[0]);
+        const int sizeX = getMaxTboxAlongDim(box.size()[0], WarpX::shared_tilesize[0]);
 #endif
 #if AMREX_SPACEDIM > 1
-        int sizeZ = getMaxTboxAlongDim(box.size()[1], WarpX::shared_tilesize[1]);
+        const int sizeZ = getMaxTboxAlongDim(box.size()[1], WarpX::shared_tilesize[1]);
 #endif
 #if AMREX_SPACEDIM > 2
-        int sizeY = getMaxTboxAlongDim(box.size()[2], WarpX::shared_tilesize[2]);
+        const int sizeY = getMaxTboxAlongDim(box.size()[2], WarpX::shared_tilesize[2]);
 #endif
-        amrex::IntVect max_tbox_size( AMREX_D_DECL(sizeX,sizeZ,sizeY) );
+        const amrex::IntVect max_tbox_size( AMREX_D_DECL(sizeX,sizeZ,sizeY) );
         WARPX_PROFILE_VAR_STOP(blp_get_max_tilesize);
 
         // Now pick current deposition algorithm
@@ -633,9 +633,9 @@ WarpXParticleContainer::DepositCurrent (
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
         {
-        int thread_num = omp_get_thread_num();
+        const int thread_num = omp_get_thread_num();
 #else
-        int thread_num = 0;
+        const int thread_num = 0;
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
@@ -696,7 +696,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         if (np_to_depose == 0) return;
 
         // Number of guard cells for local deposition of rho
-        WarpX& warpx = WarpX::GetInstance();
+        const WarpX& warpx = WarpX::GetInstance();
         const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
 
         // Extract deposition order and check that particles shape fits within the guard cells.
@@ -800,7 +800,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
             Box box = pti.validbox();
             box.grow(ng_rho);
             const amrex::IntVect bin_size = WarpX::shared_tilesize;
-            int ntiles = numTilesInBox(box, true, bin_size);
+            const int ntiles = numTilesInBox(box, true, bin_size);
 
             bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
                        [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) -> unsigned int
@@ -910,7 +910,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 #endif
     } else {
 
-        WarpX& warpx = WarpX::GetInstance();
+        const WarpX& warpx = WarpX::GetInstance();
 
         // deposition guards
         //   note: this is smaller than rho->nGrowVect() for PSATD
@@ -983,9 +983,9 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
         {
-        int thread_num = omp_get_thread_num();
+        const int thread_num = omp_get_thread_num();
 #else
-        int thread_num = 0;
+        const int thread_num = 0;
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
@@ -1069,7 +1069,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
         nba.surroundingNodes();
 
     // Number of guard cells for local deposition of rho
-    WarpX& warpx = WarpX::GetInstance();
+    const WarpX& warpx = WarpX::GetInstance();
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
     auto rho = std::make_unique<MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
@@ -1080,9 +1080,9 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     {
 #endif
 #ifdef AMREX_USE_OMP
-        int thread_num = omp_get_thread_num();
+        const int thread_num = omp_get_thread_num();
 #else
-        int thread_num = 0;
+        const int thread_num = 0;
 #endif
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -1151,7 +1151,7 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
 
     amrex::Long np_total = 0;
 
-    amrex::ParticleReal inv_clight_sq = 1.0_prt/PhysConst::c/PhysConst::c;
+    const amrex::ParticleReal inv_clight_sq = 1.0_prt/PhysConst::c/PhysConst::c;
 
     const int nLevels = finestLevel();
 
@@ -1177,7 +1177,7 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
                                    amrex::ParticleReal usq = (uxp[i]*uxp[i] +
                                                               uyp[i]*uyp[i] +
                                                               uzp[i]*uzp[i])*inv_clight_sq;
-                                   amrex::ParticleReal gaminv = 1.0_prt/std::sqrt(1.0_prt + usq);
+                                   const amrex::ParticleReal gaminv = 1.0_prt/std::sqrt(1.0_prt + usq);
                                    return {uxp[i]*gaminv,  uyp[i]*gaminv, uzp[i]*gaminv};
                                });
             }
@@ -1204,8 +1204,8 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
                 np_total += pti.numParticles();
 
                 for (unsigned long i = 0; i < ux.size(); i++) {
-                    amrex::ParticleReal usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_clight_sq;
-                    amrex::ParticleReal gaminv = 1.0_prt/std::sqrt(1.0_prt + usq);
+                    const amrex::ParticleReal usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_clight_sq;
+                    const amrex::ParticleReal gaminv = 1.0_prt/std::sqrt(1.0_prt + usq);
                     vx_total += ux[i]*gaminv;
                     vy_total += uy[i]*gaminv;
                     vz_total += uz[i]*gaminv;

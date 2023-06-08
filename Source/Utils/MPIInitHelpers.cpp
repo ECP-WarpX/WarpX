@@ -42,11 +42,11 @@ namespace utils
     warpx_mpi_init (int argc, char* argv[])
     {
         const int thread_required = warpx_mpi_thread_required();
-        const int thread_provided = -1;
 #ifdef AMREX_USE_MPI
+        int thread_provided = -1;
         MPI_Init_thread(&argc, &argv, thread_required, &thread_provided);
 #else
-        amrex::ignore_unused(argc, argv);
+        const int thread_provided = -1;
 #endif
         return std::make_pair(thread_required, thread_provided);
     }
@@ -65,7 +65,7 @@ namespace utils
     {
 #ifdef AMREX_USE_MPI
         const int thread_required = warpx_mpi_thread_required();
-        const int thread_provided = -1;
+        int thread_provided = -1;
         MPI_Query_thread(&thread_provided);
         auto mtn = amrex::ParallelDescriptor::mpi_level_to_string;
 

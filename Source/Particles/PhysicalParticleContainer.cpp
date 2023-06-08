@@ -587,14 +587,14 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
         auto const npart = ps["position"]["x"].getExtent()[0];
 #if !defined(WARPX_DIM_1D_Z)  // 2D, 3D, and RZ
-        std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
-        std::shared_ptr<ParticleReal> ptr_offset_x = ps["positionOffset"]["x"].loadChunk<ParticleReal>();
+        const std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
+        const std::shared_ptr<ParticleReal> ptr_offset_x = ps["positionOffset"]["x"].loadChunk<ParticleReal>();
         double const position_unit_x = ps["position"]["x"].unitSI();
         double const position_offset_unit_x = ps["positionOffset"]["x"].unitSI();
 #endif
 #if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
-        std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
-        std::shared_ptr<ParticleReal> ptr_offset_y = ps["positionOffset"]["y"].loadChunk<ParticleReal>();
+        const std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
+        const std::shared_ptr<ParticleReal> ptr_offset_y = ps["positionOffset"]["y"].loadChunk<ParticleReal>();
         double const position_unit_y = ps["position"]["y"].unitSI();
         double const position_offset_unit_y = ps["positionOffset"]["y"].unitSI();
 #endif
@@ -1369,7 +1369,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
 
-                Real weight = dens * scale_fac;
+                const Real weight = dens * scale_fac;
 #ifdef WARPX_DIM_RZ
                 if (radially_weighted) {
                     weight *= 2._rt*MathConst::pi*xb;
@@ -1421,7 +1421,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     const Geometry& geom = Geom(0);
     const amrex::RealBox& part_realbox = geom.ProbDomain();
 
-    amrex::Real num_ppc_real = plasma_injector->num_particles_per_cell_real;
+    const amrex::Real num_ppc_real = plasma_injector->num_particles_per_cell_real;
 #ifdef WARPX_DIM_RZ
     Real rmax = std::min(plasma_injector->xmax, geom.ProbDomain().hi(0));
 #endif
@@ -1977,9 +1977,9 @@ PhysicalParticleContainer::Evolve (int lev,
 #endif
     {
 #ifdef AMREX_USE_OMP
-        int thread_num = omp_get_thread_num();
+        const int thread_num = omp_get_thread_num();
 #else
-        int thread_num = 0;
+        const int thread_num = 0;
 #endif
 
         FArrayBox filtered_Ex, filtered_Ey, filtered_Ez;

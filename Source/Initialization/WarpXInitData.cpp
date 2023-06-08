@@ -1314,7 +1314,7 @@ WarpX::ReadExternalFieldFromFile (
     amrex::Geometry const& geom0 = warpx.Geom(0);
     const amrex::RealBox& real_box = geom0.ProbDomain();
     const auto dx = geom0.CellSizeArray();
-    amrex::IntVect nodal_flag = mf->ixType().toIntVect();
+    const amrex::IntVect nodal_flag = mf->ixType().toIntVect();
 
     // Read external field openPMD data
     auto series = openPMD::Series(read_fields_from_path, openPMD::Access::READ_ONLY);
@@ -1363,7 +1363,7 @@ WarpX::ReadExternalFieldFromFile (
     const amrex::Real file_dz = d[2];
 #endif
 
-    const auto FC = F[F_component];
+    auto FC = F[F_component];
     const auto extent = FC.getExtent();
     const int extent0 = extent[0];
     const int extent1 = extent[1];
@@ -1373,15 +1373,15 @@ WarpX::ReadExternalFieldFromFile (
     // Now, the full range of data is loaded.
     // Loading chunk data can speed up the process.
     // Thus, `chunk_offset` and `chunk_extent` should be modified accordingly in another PR.
-    openPMD::Offset chunk_offset = {0,0,0};
-    openPMD::Extent chunk_extent = {extent[0], extent[1], extent[2]};
+    const openPMD::Offset chunk_offset = {0,0,0};
+    const openPMD::Extent chunk_extent = {extent[0], extent[1], extent[2]};
 
     auto FC_chunk_data = FC.loadChunk<double>(chunk_offset,chunk_extent);
     series.flush();
     auto FC_data_host = FC_chunk_data.get();
 
     // Load data to GPU
-    size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
+    const size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
     amrex::Gpu::DeviceVector<double> FC_data_gpu(total_extent);
     auto FC_data = FC_data_gpu.data();
     amrex::Gpu::copy(amrex::Gpu::hostToDevice, FC_data_host, FC_data_host + total_extent, FC_data);
@@ -1389,8 +1389,8 @@ WarpX::ReadExternalFieldFromFile (
     // Loop over boxes
     for (MFIter mfi(*mf, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        amrex::Box box = mfi.growntilebox();
-        amrex::Box tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
+        const amrex::Box box = mfi.growntilebox();
+        const amrex::Box tb = mfi.tilebox(nodal_flag, mf->nGrowVect());
         auto const& mffab = mf->array(mfi);
 
         // Start ParallelFor
@@ -1400,12 +1400,13 @@ WarpX::ReadExternalFieldFromFile (
                 // i,j denote r,z indices in 2D rz; k is just 0
 
                 // ii is used for 2D RZ mode
-                int ii = i;
 #if defined(WARPX_DIM_RZ)
                 // In 2D RZ, i denoting r can be < 0
                 // but mirrored values should be assigned.
                 // Namely, mffab(i) = FC_data[-i] when i<0.
-                if (i<0) {ii = -i;}
+                const int ii = (i<0)?(-i):(i);
+#else
+                const int ii = i;
 #endif
 
                 // Physical coordinates of the grid point
@@ -1457,8 +1458,8 @@ WarpX::ReadExternalFieldFromFile (
                      f00, f01, f10, f11,
                      x0, x1);
 #elif defined(WARPX_DIM_3D)
-                amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
-                double
+                const amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
+                const double
                     f000 = fc_array(iz  , iy  , ix  ),
                     f001 = fc_array(iz+1, iy  , ix  ),
                     f010 = fc_array(iz  , iy+1, ix  ),

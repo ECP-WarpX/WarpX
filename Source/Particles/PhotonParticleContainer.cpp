@@ -143,8 +143,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     const int nox = WarpX::nox;
     const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
-    amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-    amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+    const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+    const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
     amrex::Array4<const amrex::Real> const& ex_arr = exfab->array();
     amrex::Array4<const amrex::Real> const& ey_arr = eyfab->array();
@@ -167,9 +167,9 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
 #ifdef WARPX_QED
-    int qed_runtime_flag = (local_has_breit_wheeler) ? has_qed : no_qed;
+    const int qed_runtime_flag = (local_has_breit_wheeler) ? has_qed : no_qed;
 #else
-    int qed_runtime_flag = no_qed;
+    const int qed_runtime_flag = no_qed;
 #endif
 
     amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
