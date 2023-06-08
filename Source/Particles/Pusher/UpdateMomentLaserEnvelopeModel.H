@@ -49,12 +49,12 @@ void UpdateMomentumLaserEnvelopeModel(
     const amrex::ParticleReal upz = s*( umz + umt*tz + umx*ty - umy*tx );
     // Get A dependecies
     const amrex::ParticleReal pre_A_factor = q*q/(2._ptr*gisq*m)
-    const amrex::ParticleReal Af_new_x = A_envelope_potential_vector.mean_laser_envelope_model(0).real()
-    const amrex::ParticleReal Af_old_x = A_envelope_potential_vector.mean_laser_envelope_model(0).imag()
-    const amrex::ParticleReal Af_new_y = mean_laser_envelope_model(A_envelope_potential_vector[1].real())
-    const amrex::ParticleReal Af_old_y = mean_laser_envelope_model(A_envelope_potential_vector[1].imag())
-    const amrex::ParticleReal Af_new_z = mean_laser_envelope_model(A_envelope_potential_vector[2].real())
-    const amrex::ParticleReal Af_old_z = mean_laser_envelope_model(A_envelope_potential_vector[2].imag())
+    const amrex::ParticleReal Af_new_x = A_envelope_potential_vector[lev][0][0]
+    const amrex::ParticleReal Af_old_x = A_envelope_potential_vector[lev][0][1]
+    const amrex::ParticleReal Af_new_y = A_envelope_potential_vector[lev][1][0]
+    const amrex::ParticleReal Af_old_y = A_envelope_potential_vector[lev][1][1]
+    const amrex::ParticleReal Af_new_z = A_envelope_potential_vector[lev][2][0]
+    const amrex::ParticleReal Af_old_z = A_envelope_potential_vector[lev][2][1]
     // Get new u
     ux = upx + qmt*Ex + upy*tz - upz*ty - pre_A_factor * (Af_new_x - Af_old_x);
     uy = upy + qmt*Ey + upz*tx - upx*tz - pre_A_factor * (Af_new_y - Af_old_y);

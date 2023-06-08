@@ -12,9 +12,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > A_potential_vector;
 };
 
-
-
-
 /**
  * Gaussian laser profile
  */
