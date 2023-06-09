@@ -304,7 +304,6 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         for (auto& inj_pos : warpx.getcurrent_injection_position())
         {
-             amrex::Print(0) << "FFP: inj_pos = " << inj_pos << std::endl;
              HeaderFile << inj_pos << "\n";
         }
 

@@ -213,7 +213,6 @@ WarpX::InitFromCheckpoint ()
         mypc->ReadHeader(is);
         for (auto& inj_pos : current_injection_position)
         {
-             amrex::Print(0) << "WIO: inj_pos = " << inj_pos << std::endl;
              is >> inj_pos;
              GotoNextLine(is);
         }
