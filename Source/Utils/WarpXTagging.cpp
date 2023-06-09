@@ -25,7 +25,7 @@
 using namespace amrex;
 
 void
-WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
+WarpX::ErrorEst (int lev, TagBoxArray& tags, Real time, int /*ngrow*/)
 {
     const auto problo = Geom(lev).ProbLoArray();
     const auto dx = Geom(lev).CellSizeArray();
@@ -46,7 +46,7 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
                                        (j+0.5_rt)*dx[1]+problo[1],
                                        (k+0.5_rt)*dx[2]+problo[2])};
             if (pos > ftlo && pos < fthi) {
-                fab(i,j,k) = TagBox::SET;
+                fab(i,j,k) = (time > Real(0.0)) ? TagBox::CLEAR : TagBox::SET;
             }
         });
     }

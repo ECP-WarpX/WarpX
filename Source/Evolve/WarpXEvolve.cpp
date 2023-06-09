@@ -46,7 +46,6 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
-
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -68,11 +67,10 @@ WarpX::Evolve (int numsteps)
     if (numsteps < 0) {  // Note that the default argument is numsteps = -1
         numsteps_max = max_step;
     } else {
-        numsteps_max = istep[0] + numsteps;
+        numsteps_max = std::min(istep[0]+numsteps, max_step);
     }
 
     bool early_params_checked = false; // check typos in inputs after step 1
-    bool exit_loop_due_to_interrupt_signal = false;
 
     static Real evolve_time = 0;
 
@@ -126,9 +124,9 @@ WarpX::Evolve (int numsteps)
                 // Not called at each iteration, so exchange all guard cells
                 FillBoundaryE(guard_cells.ng_alloc_EB);
                 FillBoundaryB(guard_cells.ng_alloc_EB);
+                UpdateAuxilaryData();
+                FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
-            UpdateAuxilaryData();
-            FillBoundaryAux(guard_cells.ng_UpdateAux);
             // on first step, push p by -0.5*dt
             for (int lev = 0; lev <= finest_level; ++lev)
             {
@@ -155,9 +153,9 @@ WarpX::Evolve (int numsteps)
                 // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
                 if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
                     FillBoundaryAux(guard_cells.ng_UpdateAux);
+                UpdateAuxilaryData();
+                FillBoundaryAux(guard_cells.ng_UpdateAux);
             }
-            UpdateAuxilaryData();
-            FillBoundaryAux(guard_cells.ng_UpdateAux);
         }
 
         // Run multi-physics modules:
@@ -202,9 +200,9 @@ WarpX::Evolve (int numsteps)
         }
         else
         {
-            WARPX_ABORT_WITH_MESSAGE(
+            amrex::Abort(Utils::TextMsg::Err(
                 "do_subcycling = " + std::to_string(do_subcycling)
-                + " is an unsupported do_subcycling type.");
+                + " is an unsupported do_subcycling type."));
         }
 
         // Resample particles
@@ -258,14 +256,6 @@ WarpX::Evolve (int numsteps)
         // We might need to move j because we are going to make a plotfile.
         int num_moved = MoveWindow(step+1, move_j);
 
-        // Update the accelerator lattice element finder if the window has moved,
-        // from either a moving window or a boosted frame
-        if (num_moved != 0 || gamma_boost > 1) {
-            for (int lev = 0; lev <= finest_level; ++lev) {
-                m_accelerator_lattice[lev]->UpdateElementFinder(lev);
-            }
-        }
-
         mypc->ContinuousFluxInjection(cur_time, dt[0]);
 
         mypc->ApplyBoundaryConditions();
@@ -318,13 +308,6 @@ WarpX::Evolve (int numsteps)
             // and so that the fields are at the correct time in the output.
             bool const reset_fields = true;
             ComputeSpaceChargeField( reset_fields );
-            if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
-                // Call Magnetostatic Solver to solve for the vector potential A and compute the
-                // B field.  Time varying A contribution to E field is neglected.
-                // This is currently a lab frame calculation.
-                ComputeMagnetostaticField();
-            }
-            AddExternalFields();
             ExecutePythonCallback("afterEsolve");
         }
 
@@ -369,21 +352,13 @@ WarpX::Evolve (int numsteps)
                       << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n\n";
         }
 
-        exit_loop_due_to_interrupt_signal = SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
-        if (cur_time >= stop_time - 1.e-3*dt[0] || exit_loop_due_to_interrupt_signal) {
+        if (cur_time >= stop_time - 1.e-3*dt[0] || SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK)) {
             break;
         }
 
         // End loop on time steps
     }
-    // This if statement is needed for PICMI, which allows the Evolve routine to be
-    // called multiple times, otherwise diagnostics will be done at every call,
-    // regardless of the diagnostic period parameter provided in the inputs.
-    if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])
-        || exit_loop_due_to_interrupt_signal) {
-        multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
-        if (exit_loop_due_to_interrupt_signal) ExecutePythonCallback("onbreaksignal");
-    }
+    multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
 }
 
 /* /brief Perform one PIC iteration, without subcycling
@@ -399,6 +374,18 @@ WarpX::OneStep_nosub (Real cur_time)
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
     // Deposit charge density rho^{n}
+
+    if(istep[0]+1==end_fine_patch_step){
+        auto& warpx = WarpX::GetInstance();
+        SyncCurrentAndRho();
+        const int coarse_lev = 0;
+        regrid(coarse_lev, cur_time);
+        mypc->Redistribute();
+        warpx.ComputeDt();
+        PrintDtDxDyDz();
+        Print() << Utils::TextMsg::Info(
+                    "Remove the patch");
+    }
 
     ExecutePythonCallback("particlescraper");
     ExecutePythonCallback("beforedeposition");
@@ -458,8 +445,8 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
         FillBoundaryF(guard_cells.ng_FieldSolverF);
         FillBoundaryG(guard_cells.ng_FieldSolverG);
-
         EvolveB(0.5_rt * dt[0], DtType::FirstHalf); // We now have B^{n+1/2}
+
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
         if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
@@ -469,23 +456,22 @@ WarpX::OneStep_nosub (Real cur_time)
             // macroscopic medium
             MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
         } else {
-            WARPX_ABORT_WITH_MESSAGE("Medium for EM is unknown");
+            amrex::Abort(Utils::TextMsg::Err("Medium for EM is unknown"));
         }
-        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
+        FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveB(0.5_rt * dt[0], DtType::SecondHalf); // We now have B^{n+1}
 
         if (do_pml) {
+            FillBoundaryF(guard_cells.ng_alloc_F);
             DampPML();
             NodalSyncPML();
             FillBoundaryE(guard_cells.ng_MovingWindow);
-            FillBoundaryB(guard_cells.ng_MovingWindow);
             FillBoundaryF(guard_cells.ng_MovingWindow);
-            FillBoundaryG(guard_cells.ng_MovingWindow);
+            FillBoundaryB(guard_cells.ng_MovingWindow);
         }
-
         // E and B are up-to-date in the domain, but all guard cells are
         // outdated.
         if (safe_guard_cells)
@@ -507,12 +493,12 @@ void WarpX::SyncCurrentAndRho ()
             {
                 // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
                 SyncCurrent(current_fp_vay, current_cp);
-                SyncRho(rho_fp, rho_cp);
+                SyncRho();
             }
             else
             {
                 SyncCurrent(current_fp, current_cp);
-                SyncRho(rho_fp, rho_cp);
+                SyncRho();
             }
         }
         else // no periodic single box
@@ -524,42 +510,14 @@ void WarpX::SyncCurrentAndRho ()
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
                 SyncCurrent(current_fp, current_cp);
-                SyncRho(rho_fp, rho_cp);
-            }
-
-            if (current_deposition_algo == CurrentDepositionAlgo::Vay)
-            {
-                // TODO This works only without mesh refinement
-                const int lev = 0;
-                if (use_filter) ApplyFilterJ(current_fp_vay, lev);
+                SyncRho();
             }
         }
     }
     else // FDTD
     {
         SyncCurrent(current_fp, current_cp);
-        SyncRho(rho_fp, rho_cp);
-    }
-
-    // Reflect charge and current density over PEC boundaries, if needed.
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        if (rho_fp[lev].get()) {
-            ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
-        }
-        ApplyJfieldBoundary(
-            lev, current_fp[lev][0].get(), current_fp[lev][1].get(),
-            current_fp[lev][2].get(), PatchType::fine
-        );
-        if (lev > 0) {
-            if (rho_cp[lev].get()) {
-                ApplyRhofieldBoundary(lev, rho_cp[lev].get(), PatchType::coarse);
-            }
-            ApplyJfieldBoundary(
-                lev, current_cp[lev][0].get(), current_cp[lev][1].get(),
-                current_cp[lev][2].get(), PatchType::coarse
-            );
-        }
+        SyncRho();
     }
 }
 
@@ -572,9 +530,6 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
         "multi-J algorithm not implemented for FDTD"
     );
-
-    const int rho_mid = spectral_solver_fp[0]->m_spectral_index.rho_mid;
-    const int rho_new = spectral_solver_fp[0]->m_spectral_index.rho_new;
 
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
@@ -592,16 +547,15 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     if (WarpX::fft_do_time_averaging) PSATDEraseAverageFields();
 
     // 3) Deposit rho (in rho_new, since it will be moved during the loop)
-    //    (after checking that pointer to rho_fp on MR level 0 is not null)
-    if (rho_fp[0] && rho_in_time == RhoInTime::Linear)
+    if (WarpX::update_with_rho)
     {
         // Deposit rho at relative time -dt
         // (dt[0] denotes the time step on mesh refinement level 0)
         mypc->DepositCharge(rho_fp, -dt[0]);
         // Filter, exchange boundary, and interpolate across levels
-        SyncRho(rho_fp, rho_cp);
-        // Forward FFT of rho
-        PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_new);
+        SyncRho();
+        // Forward FFT of rho_new
+        PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
     }
 
     // 4) Deposit J at relative time -dt with time step dt
@@ -631,14 +585,17 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     // Loop over multi-J depositions
     for (int i_depose = 0; i_depose < n_loop; i_depose++)
     {
-        // Move J from new to old if J is linear in time
-        if (J_in_time == JInTime::Linear) PSATDMoveJNewToJOld();
+        // Move J deposited previously, from new to old
+        if (J_in_time == JInTime::Linear)
+        {
+            PSATDMoveJNewToJOld();
+        }
 
         const amrex::Real t_depose_current = (J_in_time == JInTime::Linear) ?
             (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5_rt)*sub_dt;
 
-        const amrex::Real t_depose_charge = (rho_in_time == RhoInTime::Linear) ?
-            (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5_rt)*sub_dt;
+        // TODO Update this when rho quadratic in time is implemented
+        const amrex::Real t_depose_charge = (i_depose-n_depose+1)*sub_dt;
 
         // Deposit new J at relative time t_depose_current with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
@@ -654,25 +611,23 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         PSATDForwardTransformJ(current_fp, current_cp);
 
         // Deposit new rho
-        // (after checking that pointer to rho_fp on MR level 0 is not null)
-        if (rho_fp[0])
+        if (WarpX::update_with_rho)
         {
-            // Move rho from new to old if rho is linear in time
-            if (rho_in_time == RhoInTime::Linear) PSATDMoveRhoNewToRhoOld();
+            // Move rho deposited previously, from new to old
+            PSATDMoveRhoNewToRhoOld();
 
             // Deposit rho at relative time t_depose_charge
             mypc->DepositCharge(rho_fp, t_depose_charge);
             // Filter, exchange boundary, and interpolate across levels
-            SyncRho(rho_fp, rho_cp);
-            // Forward FFT of rho
-            const int rho_idx = (rho_in_time == RhoInTime::Linear) ? rho_new : rho_mid;
-            PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_idx);
+            SyncRho();
+            // Forward FFT of rho_new
+            PSATDForwardTransformRho(rho_fp, rho_cp, 0, 1);
         }
 
         if (WarpX::current_correction)
         {
-            WARPX_ABORT_WITH_MESSAGE(
-                "Current correction not implemented for multi-J algorithm.");
+            amrex::Abort(Utils::TextMsg::Err(
+                "Current correction not implemented for multi-J algorithm."));
         }
 
         // Advance E,B,F,G fields in time and update the average fields
@@ -730,8 +685,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     }
 #else
     amrex::ignore_unused(cur_time);
-    WARPX_ABORT_WITH_MESSAGE(
-        "multi-J algorithm not implemented for FDTD");
+    amrex::Abort(Utils::TextMsg::Err(
+        "multi-J algorithm not implemented for FDTD"));
 #endif // WARPX_USE_PSATD
 }
 
@@ -758,11 +713,12 @@ WarpX::OneStep_sub1 (Real curtime)
         "Electrostatic solver cannot be used with sub-cycling."
     );
 
-    // TODO: we could save some charge depositions
+    const int fine_lev = finestLevel();
+    const int coarse_lev = 0;
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
-    const int fine_lev = 1;
-    const int coarse_lev = 0;
+
+    // TODO: we could save some charge depositions
 
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDepose(fine_lev, curtime, DtType::FirstHalf);
@@ -907,6 +863,16 @@ WarpX::OneStep_sub1 (Real curtime)
 
     // Synchronize nodal points at the end of the time step
     if (do_pml) NodalSyncPML();
+
+    if(istep[0]+1==end_fine_patch_step){
+        SyncCurrentAndRho();
+        regrid(coarse_lev, curtime);
+        mypc->Redistribute();
+                Print() << Utils::TextMsg::Info(
+                    "Remove the patch");
+        PrintDtDxDyDz();
+        do_subcycling=0;
+    }
 }
 
 void
@@ -968,7 +934,6 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
     }
     else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
-        // Note that Vay deposition is supported only for PSATD and the code currently aborts otherwise
         current_x = current_fp_vay[lev][0].get();
         current_y = current_fp_vay[lev][1].get();
         current_z = current_fp_vay[lev][2].get();
@@ -989,8 +954,8 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
                  cur_time, dt[lev], a_dt_type, skip_deposition);
-    if (! skip_deposition) {
 #ifdef WARPX_DIM_RZ
+    if (! skip_deposition) {
         // This is called after all particles have deposited their current and charge.
         ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get(), lev);
         if (current_buf[lev][0].get()) {
@@ -1002,15 +967,8 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                 ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
             }
         }
-// #else
-        // I left this comment here as a reminder that currently the
-        // boundary handling for cartesian grids are not matching the RZ handling
-        // (done in the ApplyInverseScalingToChargeDensity function). The
-        // Cartesian grid code had to be moved from here to after the application
-        // of the filter to avoid incorrect results (moved to `SyncCurrentAndRho()`).
-        // Might this be related to issue #1943?
-#endif
     }
+#endif
 }
 
 /* \brief Apply perfect mirror condition inside the box (not at a boundary).
@@ -1019,37 +977,31 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
  * The mirror normal direction has to be parallel to the z axis.
  */
 void
-WarpX::applyMirrors(Real time)
-{
+WarpX::applyMirrors(Real time){
     // Loop over the mirrors
-    for(int i_mirror=0; i_mirror<num_mirrors; ++i_mirror)
-    {
+    for(int i_mirror=0; i_mirror<num_mirrors; ++i_mirror){
         // Get mirror properties (lower and upper z bounds)
-        amrex::Real z_min = mirror_z[i_mirror];
-        amrex::Real z_max_tmp = z_min + mirror_z_width[i_mirror];
-
+        Real z_min = mirror_z[i_mirror];
+        Real z_max_tmp = z_min + mirror_z_width[i_mirror];
         // Boost quantities for boosted frame simulations
-        if (gamma_boost>1)
-        {
+        if (gamma_boost>1){
             z_min = z_min/gamma_boost - PhysConst::c*beta_boost*time;
             z_max_tmp = z_max_tmp/gamma_boost - PhysConst::c*beta_boost*time;
         }
-
         // Loop over levels
-        for(int lev=0; lev<=finest_level; lev++)
-        {
-            // Mirror must contain at least mirror_z_npoints[i_mirror] cells
-            amrex::Real dz = WarpX::CellSize(lev)[2];
-            amrex::Real z_max = std::max(z_max_tmp, z_min+mirror_z_npoints[i_mirror]*dz);
-
+        for(int lev=0; lev<=finest_level; lev++){
+            // Make sure that the mirror contains at least
+            // mirror_z_npoints[i_mirror] cells
+            Real dz = WarpX::CellSize(lev)[2];
+            Real z_max = std::max(z_max_tmp,
+                                  z_min+mirror_z_npoints[i_mirror]*dz);
             // Get fine patch field MultiFabs
-            amrex::MultiFab& Ex = *Efield_fp[lev][0].get();
-            amrex::MultiFab& Ey = *Efield_fp[lev][1].get();
-            amrex::MultiFab& Ez = *Efield_fp[lev][2].get();
-            amrex::MultiFab& Bx = *Bfield_fp[lev][0].get();
-            amrex::MultiFab& By = *Bfield_fp[lev][1].get();
-            amrex::MultiFab& Bz = *Bfield_fp[lev][2].get();
-
+            MultiFab& Ex = *Efield_fp[lev][0].get();
+            MultiFab& Ey = *Efield_fp[lev][1].get();
+            MultiFab& Ez = *Efield_fp[lev][2].get();
+            MultiFab& Bx = *Bfield_fp[lev][0].get();
+            MultiFab& By = *Bfield_fp[lev][1].get();
+            MultiFab& Bz = *Bfield_fp[lev][2].get();
             // Set each field to zero between z_min and z_max
             NullifyMF(Ex, lev, z_min, z_max);
             NullifyMF(Ey, lev, z_min, z_max);
@@ -1057,21 +1009,14 @@ WarpX::applyMirrors(Real time)
             NullifyMF(Bx, lev, z_min, z_max);
             NullifyMF(By, lev, z_min, z_max);
             NullifyMF(Bz, lev, z_min, z_max);
-
-            // If div(E)/div(B) cleaning are used, set F/G field to zero
-            if (F_fp[lev]) NullifyMF(*F_fp[lev].get(), lev, z_min, z_max);
-            if (G_fp[lev]) NullifyMF(*G_fp[lev].get(), lev, z_min, z_max);
-
-            if (lev>0)
-            {
+            if (lev>0){
                 // Get coarse patch field MultiFabs
-                amrex::MultiFab& cEx = *Efield_cp[lev][0].get();
-                amrex::MultiFab& cEy = *Efield_cp[lev][1].get();
-                amrex::MultiFab& cEz = *Efield_cp[lev][2].get();
-                amrex::MultiFab& cBx = *Bfield_cp[lev][0].get();
-                amrex::MultiFab& cBy = *Bfield_cp[lev][1].get();
-                amrex::MultiFab& cBz = *Bfield_cp[lev][2].get();
-
+                MultiFab& cEx = *Efield_cp[lev][0].get();
+                MultiFab& cEy = *Efield_cp[lev][1].get();
+                MultiFab& cEz = *Efield_cp[lev][2].get();
+                MultiFab& cBx = *Bfield_cp[lev][0].get();
+                MultiFab& cBy = *Bfield_cp[lev][1].get();
+                MultiFab& cBz = *Bfield_cp[lev][2].get();
                 // Set each field to zero between z_min and z_max
                 NullifyMF(cEx, lev, z_min, z_max);
                 NullifyMF(cEy, lev, z_min, z_max);
@@ -1079,10 +1024,6 @@ WarpX::applyMirrors(Real time)
                 NullifyMF(cBx, lev, z_min, z_max);
                 NullifyMF(cBy, lev, z_min, z_max);
                 NullifyMF(cBz, lev, z_min, z_max);
-
-                // If div(E)/div(B) cleaning are used, set F/G field to zero
-                if (F_cp[lev]) NullifyMF(*F_cp[lev].get(), lev, z_min, z_max);
-                if (G_cp[lev]) NullifyMF(*G_cp[lev].get(), lev, z_min, z_max);
             }
         }
     }
