@@ -123,8 +123,6 @@ class PsatdAlgorithmJConstantInTime : public SpectralBaseAlgorithm
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
         SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;
 
-        SpectralFieldIndex m_spectral_index;
-
         // Centered modified finite-order k vectors
         KVectorComponent modified_kx_vec_centered;
 #if defined(WARPX_DIM_3D)

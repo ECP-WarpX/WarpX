@@ -120,7 +120,7 @@ Known System Issues
 .. warning::
 
    Sep 2nd, 2022 (OLCFDEV-1079):
-   rocFFT in ROCm 5.1+ tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/library.html#runtime-compilation>`__ in the home area by default.
+   rocFFT in ROCm 5.1-5.3 tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/#runtime-compilation>`__ in the home area by default.
    This does not scale, disable it via:
 
    .. code-block:: bash
@@ -131,6 +131,6 @@ Known System Issues
 
    January, 2023 (OLCFDEV-1284, AMD Ticket: ORNLA-130):
    We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
-   Reported to AMD and fixed for the next release of ROCm.
+   Reported to AMD and fixed for the 5.5 release of ROCm.
 
-   Stay with the ROCm 5.2 module to avoid.
+   Upgrade ROCm or stay with the ROCm 5.2 module to avoid.

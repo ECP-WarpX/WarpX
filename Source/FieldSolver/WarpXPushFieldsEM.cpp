@@ -649,8 +649,8 @@ void
 WarpX::PushPSATD ()
 {
 #ifndef WARPX_USE_PSATD
-    amrex::Abort(Utils::TextMsg::Err(
-        "PushFieldsEM: PSATD solver selected but not built"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "PushFieldsEM: PSATD solver selected but not built");
 #else
 
     const int rho_old = spectral_solver_fp[0]->m_spectral_index.rho_old;

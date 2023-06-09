@@ -16,6 +16,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "OpenPMDHelpFunction.H"
 
 #include <ablastr/particles/IndexHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -381,18 +382,6 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
    m_OpenPMDFileType(std::move(openPMDFileType)),
    m_fieldPMLdirections(std::move(fieldPMLdirections))
 {
-  // pick first available backend if default is chosen
-  if( m_OpenPMDFileType == "default" )
-#if openPMD_HAVE_ADIOS2==1
-    m_OpenPMDFileType = "bp";
-#elif openPMD_HAVE_ADIOS1==1
-    m_OpenPMDFileType = "bp";
-#elif openPMD_HAVE_HDF5==1
-    m_OpenPMDFileType = "h5";
-#else
-    m_OpenPMDFileType = "json";
-#endif
-
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
 }
@@ -504,7 +493,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
 #else
-        amrex::Abort(Utils::TextMsg::Err("openPMD-api not built with MPI support!"));
+        WARPX_ABORT_WITH_MESSAGE("openPMD-api not built with MPI support!");
 #endif
     } else {
         m_Series = std::make_unique<openPMD::Series>(filepath, access, m_OpenPMDoptions);
@@ -537,13 +526,14 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
     PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
-    PinnedMemoryParticleContainer tmp;
-    if (isBTD || use_pinned_pc) {
-        if (!pinned_pc->isDefined()) continue; // Skip to the next particle container
-        tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
-    } else {
-        tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-    }
+    if (isBTD || use_pinned_pc)
+        if (!pinned_pc->isDefined())
+            continue;  // Skip to the next particle container
+
+    PinnedMemoryParticleContainer tmp = (isBTD || use_pinned_pc) ?
+        pinned_pc->make_alike<amrex::PinnedArenaAllocator>() :
+        pc->make_alike<amrex::PinnedArenaAllocator>();
+
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;

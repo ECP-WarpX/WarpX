@@ -32,6 +32,7 @@ Compiling WarpX on Fugaku is more pratical on a compute node. Use the following 
 
 
 Then, load ``cmake`` and ``ninja`` using ``spack``:
+
 .. code-block:: bash
 
    . /vol0004/apps/oss/spack/share/spack/setup-env.sh

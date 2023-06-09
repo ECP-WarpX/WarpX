@@ -61,7 +61,7 @@ void FiniteDifferenceSolver::EvolveG (
     }
     else
     {
-        amrex::Abort(Utils::TextMsg::Err("EvolveG: unknown FDTD algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveG: unknown FDTD algorithm");
     }
 #endif
 }

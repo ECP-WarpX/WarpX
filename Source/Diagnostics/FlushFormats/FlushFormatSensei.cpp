@@ -102,9 +102,9 @@ FlushFormatSensei::WriteParticles (
 {
     amrex::ignore_unused(particle_diags);
 #ifdef AMREX_USE_SENSEI_INSITU
-    amrex::Abort(Utils::TextMsg::Err(
+    WARPX_ABORT_WITH_MESSAGE(
         "FlushFormatSensei::WriteParticles : "
         "Not yet implemented."
-    ));
+    );
 #endif
 }
