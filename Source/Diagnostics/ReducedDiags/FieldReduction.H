@@ -198,9 +198,7 @@ public:
                                                                                reduction_coarsening_ratio, i, j, k, reduction_comp);
 
         return reduction_function_parser(x, y, z, Ex_interp, Ey_interp, Ez_interp,
-
                 Bx_interp, By_interp, Bz_interp,
-
                 jx_interp, jy_interp, jz_interp);
             });
         }
