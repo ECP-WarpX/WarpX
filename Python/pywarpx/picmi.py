@@ -1117,7 +1117,7 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
             ) / constants.c
 
 
-class LoadInitialField(picmistandard.PICMI_LoadInitialField):
+class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
     def initialize_inputs(self):
         pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
         if self.load_E:
