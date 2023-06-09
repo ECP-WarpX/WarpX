@@ -1471,7 +1471,6 @@ WarpX::ReadParameters ()
             "Vay current deposition not implemented for Galilean algorithms"
         );
 
-#   ifndef WARPX_DIM_RZ
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
             update_with_rho = (do_dive_cleaning) ? true : false; // standard PSATD
@@ -1479,7 +1478,6 @@ WarpX::ReadParameters ()
         else {
             update_with_rho = true;  // Galilean PSATD or comoving PSATD
         }
-#   endif
 
         // Overwrite update_with_rho with value set in input file
         pp_psatd.query("update_with_rho", update_with_rho);
