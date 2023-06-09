@@ -211,9 +211,12 @@ WarpX::InitFromCheckpoint ()
         }
 
         mypc->ReadHeader(is);
-        // FIXME
-        //is >> current_injection_position;
-        //GotoNextLine(is);
+        for (auto& inj_pos : current_injection_position)
+        {
+             amrex::Print(0) << "WIO: inj_pos = " << inj_pos << std::endl;
+             is >> inj_pos;
+             GotoNextLine(is);
+        }
 
         int do_moving_window_before_restart;
         is >> do_moving_window_before_restart;
