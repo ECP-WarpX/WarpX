@@ -99,48 +99,56 @@ ele1.injection_style = "none"
 ele1.do_not_push = 1
 ele1.do_qed_quantum_sync = 1
 ele1.qed_quantum_sync_phot_product_species = dummy_phot
+ele1.store_chi_at_creation = 1
 
 ele2.species_type = "electron"
 ele2.injection_style = "none"
 ele2.do_not_push = 1
 ele2.do_qed_quantum_sync = 1
 ele2.qed_quantum_sync_phot_product_species = dummy_phot
+ele2.store_chi_at_creation = 1
 
 ele3.species_type = "electron"
 ele3.injection_style = "none"
 ele3.do_not_push = 1
 ele3.do_qed_quantum_sync = 1
 ele3.qed_quantum_sync_phot_product_species = dummy_phot
+ele3.store_chi_at_creation = 1
 
 ele4.species_type = "electron"
 ele4.injection_style = "none"
 ele4.do_not_push = 1
 ele4.do_qed_quantum_sync = 1
 ele4.qed_quantum_sync_phot_product_species = dummy_phot
+ele4.store_chi_at_creation = 1
 
 pos1.species_type = "positron"
 pos1.injection_style = "none"
 pos1.do_not_push = 1
 pos1.do_qed_quantum_sync = 1
 pos1.qed_quantum_sync_phot_product_species = dummy_phot
+pos1.store_chi_at_creation = 1
 
 pos2.species_type = "positron"
 pos2.injection_style = "none"
 pos2.do_not_push = 1
 pos2.do_qed_quantum_sync = 1
 pos2.qed_quantum_sync_phot_product_species = dummy_phot
+pos2.store_chi_at_creation = 1
 
 pos3.species_type = "positron"
 pos3.injection_style = "none"
 pos3.do_not_push = 1
 pos3.do_qed_quantum_sync = 1
 pos3.qed_quantum_sync_phot_product_species = dummy_phot
+pos3.store_chi_at_creation = 1
 
 pos4.species_type = "positron"
 pos4.injection_style = "none"
 pos4.do_not_push = 1
 pos4.do_qed_quantum_sync = 1
 pos4.qed_quantum_sync_phot_product_species = dummy_phot
+pos4.store_chi_at_creation = 1
 
 dummy_phot.species_type = "photon"
 dummy_phot.injection_style = "none"
@@ -206,14 +214,14 @@ diag1.p2.variables = ux uy uz w opticalDepthBW
 diag1.p3.variables = ux uy uz w opticalDepthBW
 diag1.p4.variables = ux uy uz w opticalDepthBW
 
-diag1.ele1.variables = ux uy uz w opticalDepthQSR
-diag1.ele2.variables = ux uy uz w opticalDepthQSR
-diag1.ele3.variables = ux uy uz w opticalDepthQSR
-diag1.ele4.variables = ux uy uz w opticalDepthQSR
+diag1.ele1.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
+diag1.ele2.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
+diag1.ele3.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
+diag1.ele4.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
 
-diag1.pos1.variables = ux uy uz w opticalDepthQSR
-diag1.pos2.variables = ux uy uz w opticalDepthQSR
-diag1.pos3.variables = ux uy uz w opticalDepthQSR
-diag1.pos4.variables = ux uy uz w opticalDepthQSR
+diag1.pos1.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
+diag1.pos2.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
+diag1.pos3.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
+diag1.pos4.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
 
 diag1.format = plotfile

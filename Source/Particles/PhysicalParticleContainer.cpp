@@ -3001,4 +3001,17 @@ PhysicalParticleContainer::getPairGenerationFilterFunc ()
     return PairGenerationFilterFunc{particle_runtime_comps["opticalDepthBW"]};
 }
 
+void PhysicalParticleContainer::initChiAtCreation (const std::string& attribute_name)
+{
+    const ParmParse pp_species_name(species_name);
+    pp_species_name.query("store_chi_at_creation", m_store_chi_at_creation);
+    if (m_store_chi_at_creation)
+        AddRealComp(attribute_name);
+}
+
+bool PhysicalParticleContainer::store_chi_at_creation () const
+{
+    return m_store_chi_at_creation;
+}
+
 #endif

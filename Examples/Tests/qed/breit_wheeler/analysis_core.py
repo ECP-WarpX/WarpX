@@ -27,6 +27,7 @@ import scipy.stats as st
 # - The energy distribution of the generated particles is in agreement with theory
 # - The optical depths of the product species are correctly initialized (QED effects are
 #   enabled for product species too).
+# - The diagnostic storing the chi parameter at pair creation produces correct results
 #
 # More details on the theoretical formulas used in this script can be found in
 # the Jupyter notebook picsar/src/multi_physics/QED_tests/validation/validation.ipynb
@@ -183,6 +184,11 @@ def check_opt_depths(phot_data, ele_data, pos_data):
         assert( np.abs(scale - 1) < tol_red )
     print("  [OK] optical depth distributions are still exponential")
 
+def check_chi_at_creation(ele_data, pos_data, chi_theory):
+    assert(small_diff(ele_data["chi_at_creation"], chi_theory))
+    assert(small_diff(pos_data["chi_at_creation"], chi_theory))
+    print("  [OK] Stored quantum parameters at pair creation are those expected")
+
 def check_energy_distrib(energy_ele, energy_pos, gamma_phot,
         chi_phot, n_lost, NN, idx, do_plot=False):
     gamma_min = 1.0001
@@ -267,5 +273,7 @@ def check(dt, particle_data):
         check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, NNS[idx], idx)
 
         check_opt_depths(phot_data, ele_data, pos_data)
+
+        check_chi_at_creation(ele_data, pos_data, chi_phot)
 
         print("*************\n")

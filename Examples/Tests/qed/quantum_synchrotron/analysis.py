@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 # - The energy distribution of the generated particles is in agreement with theory
 # - The optical depths of the product species are correctly initialized (QED effects are
 #   enabled for product species too).
+# - The diagnostic storing the chi parameter at photon creation produces correct results
 #
 # More details on the theoretical formulas used in this script can be found in
 # the Jupyter notebook picsar/src/multi_physics/QED_tests/validation/validation.ipynb
@@ -161,10 +162,12 @@ def get_spec(ytdata, specname, is_photon):
 
     if (is_photon):
         opt = ytdata[specname,"particle_opticalDepthBW"].v
+        chi_at_creation = ytdata[specname,"particle_qs_chi_at_creation"].v
+        return {"px" : px, "py" : py, "pz" : pz, "w" : w, "opt" : opt,
+                "chi_at_creation" : chi_at_creation}
     else:
         opt = ytdata[specname,"particle_opticalDepthQSR"].v
-
-    return {"px" : px, "py" : py, "pz" : pz, "w" : w, "opt" : opt}
+        return {"px" : px, "py" : py, "pz" : pz, "w" : w, "opt" : opt}
 
 # Individual tests
 def check_number_of_photons(ytdataset, part_name, phot_name, chi_part, gamma_part, dt, particle_number):
@@ -197,6 +200,10 @@ def check_opt_depths(part_data, phot_data):
         assert( np.abs(loc - 0) < tol_red )
         assert( np.abs(scale - 1) < tol_red )
     print("  [OK] optical depth distributions are still exponential")
+
+def check_chi_at_creation(phot_data, chi_theory):
+    assert(small_diff(phot_data["chi_at_creation"], chi_theory))
+    print("  [OK] Stored quantum parameters at photon creation are those expected")
 
 def check_energy_distrib(gamma_phot, chi_part,
         gamma_part, n_phot, NN, idx, do_plot=False):
@@ -296,6 +303,8 @@ def check():
         check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NNS[idx], idx)
 
         check_opt_depths(part_data_final, phot_data)
+
+        check_chi_at_creation(phot_data, chi_part)
 
         print("*************\n")
 

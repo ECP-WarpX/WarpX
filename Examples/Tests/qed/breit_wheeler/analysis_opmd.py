@@ -52,6 +52,7 @@ def main():
             opt = data_set_end.particles[spec_name]["opticalDepthBW"][io.Mesh_Record_Component.SCALAR][:]
         else:
             opt = data_set_end.particles[spec_name]["opticalDepthQSR"][io.Mesh_Record_Component.SCALAR][:]
+            chi_at_creation = data_set_end.particles[spec_name]["particle_bw_chi_at_creation"][io.Mesh_Record_Component.SCALAR][:]
 
         series.flush()
 
@@ -60,6 +61,9 @@ def main():
         data["pz"] = pz
         data["w"] = w
         data["opt"] = opt
+
+        if not is_photon:
+            data["chi_at_creation"] = chi_at_creation
 
         particle_data[spec_name] = data
 

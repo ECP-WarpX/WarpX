@@ -13,6 +13,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "QEDInternals/BreitWheelerEngineWrapper.H"
+#include "QEDInternals/QedChiFunctions.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -97,6 +98,10 @@ public:
     * @param[in] a_offset offset to apply to the particle indices
     */
     PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
+                                const bool store_chi_at_creation_ele,
+                                const int chi_at_creation_runtime_comp_ele,
+                                const bool store_chi_at_creation_pos,
+                                const int chi_at_creation_runtime_comp_pos,
                                 const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
                                 amrex::FArrayBox const& exfab,
                                 amrex::FArrayBox const& eyfab,
@@ -160,6 +165,18 @@ public:
             p_ux, p_uy, p_uz,
             engine);
 
+        if (m_store_chi_at_creation_ele || m_store_chi_at_creation_pos){
+            constexpr ParticleReal me = PhysConst::m_e;
+            const amrex::Real& chi_at_creation = QedUtils::chi_photon(me*ux, me*uy, me*uz,
+                                                                    ex, ey, ez, bx, by, bz);
+            if (m_store_chi_at_creation_ele) {
+                dst1.m_runtime_rdata[m_chi_at_creation_runtime_comp_ele][i_dst1] = chi_at_creation;
+            }
+            if (m_store_chi_at_creation_pos) {
+                dst2.m_runtime_rdata[m_chi_at_creation_runtime_comp_pos][i_dst2] = chi_at_creation;
+            }
+        }
+
         src.m_aos[i_src].id() = -1; //destroy photon after pair generation
     }
 
@@ -167,6 +184,12 @@ private:
 
     const BreitWheelerGeneratePairs
     m_generate_functor; /*!< A copy of the functor to generate pairs. It contains only pointers to the lookup tables.*/
+
+    bool m_store_chi_at_creation_ele;
+    int m_chi_at_creation_runtime_comp_ele;
+
+    bool m_store_chi_at_creation_pos;
+    int m_chi_at_creation_runtime_comp_pos;
 
     GetParticlePosition m_get_position;
     GetExternalEBField m_get_externalEB;

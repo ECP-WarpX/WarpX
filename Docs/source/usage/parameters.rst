@@ -1105,6 +1105,11 @@ Particle initialization
     (the name of an existing positron species must be provided).
     **This feature requires to compile with QED=TRUE**
 
+* ``<species>.store_chi_at_creation`` (`0` or `1`) optional (default `0`)
+    For species which are product of Quantum synchrotron or Breit-Wheeler processes, enable this parameter to store the quantum chi parameter of the parent particle at the time of product particle creation.
+    The value is stored as an extra runtime real attribute of the product particle.
+    This feature requires to compile with QED=TRUE.
+
 * ``<species>.do_resampling`` (`0` or `1`) optional (default `0`)
     If `1` resampling is performed for this species. This means that the number of macroparticles
     will be reduced at specific timesteps while preserving the distribution function as much as

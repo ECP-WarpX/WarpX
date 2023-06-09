@@ -19,6 +19,10 @@
 
 PairGenerationTransformFunc::
 PairGenerationTransformFunc (BreitWheelerGeneratePairs const generate_functor,
+                             const bool store_chi_at_creation_ele,
+                             const int chi_at_creation_runtime_comp_ele,
+                             const bool store_chi_at_creation_pos,
+                             const int chi_at_creation_runtime_comp_pos,
                              const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
                              amrex::FArrayBox const& exfab,
                              amrex::FArrayBox const& eyfab,
@@ -27,7 +31,11 @@ PairGenerationTransformFunc (BreitWheelerGeneratePairs const generate_functor,
                              amrex::FArrayBox const& byfab,
                              amrex::FArrayBox const& bzfab,
                              int a_offset)
-: m_generate_functor(generate_functor)
+: m_generate_functor{generate_functor},
+  m_store_chi_at_creation_ele{store_chi_at_creation_ele},
+  m_chi_at_creation_runtime_comp_ele{chi_at_creation_runtime_comp_ele},
+  m_store_chi_at_creation_pos{store_chi_at_creation_pos},
+  m_chi_at_creation_runtime_comp_pos{chi_at_creation_runtime_comp_pos}
 {
 
     using namespace amrex::literals;

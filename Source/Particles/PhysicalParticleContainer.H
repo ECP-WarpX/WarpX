@@ -343,6 +343,23 @@ public:
         (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
     //__________
 
+    /** For particles which are products of a QED process, checks if storing the quantum chi
+     *  parameter of the parent species at the time of creation is requested in the input file.
+     *  If so, initialize a corresponding runtime attribute.
+     */
+    void initChiAtCreation (const std::string& attribute_name) override;
+
+    /**
+     * Tells whether the quantum chi parameter of the parent particle at the time the particle is
+     * created is stored
+     * @return true if it is stored
+     */
+    bool store_chi_at_creation () const override;
+
+    // Whether to store the quantum chi parameter of the parent particle at the time the particle
+    // is created
+    bool m_store_chi_at_creation = false;
+
     PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
 
     PairGenerationFilterFunc getPairGenerationFilterFunc ();
