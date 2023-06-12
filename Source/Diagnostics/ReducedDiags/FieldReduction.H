@@ -60,6 +60,12 @@ public:
      */
     virtual void ComputeDiags(int step) override final;
 
+    /**
+     * This function queries deprecated input parameters and aborts
+     * the run if one of them is specified.
+     */
+    void BackwardCompatibility();
+
 private:
     /// Parser to read expression to be reduced from the input file.
     /// 12 elements are x, y, z, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz

@@ -44,6 +44,8 @@ FieldReduction::FieldReduction (std::string rd_name)
     // resize data array
     m_data.resize(noutputs, 0.0_rt);
 
+    BackwardCompatibility();
+
     amrex::ParmParse pp_rd_name(rd_name);
 
     // read reduced function with parser
@@ -84,6 +86,18 @@ FieldReduction::FieldReduction (std::string rd_name)
     }
 }
 // end constructor
+
+void FieldReduction::BackwardCompatibility ()
+{
+    amrex::ParmParse pp_rd_name(m_rd_name);
+    std::vector<std::string> backward_strings;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_rd_name.queryarr("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)", backward_strings),
+        "<reduced_diag_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) is no longer a valid option. "
+        "Please use the renamed option <reduced_diag_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz) instead."
+    );
+}
+
 
 // function that does an arbitrary reduction of the electromagnetic fields
 void FieldReduction::ComputeDiags (int step)
