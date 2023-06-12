@@ -1,6 +1,9 @@
-target_sources(WarpX
-  PRIVATE
-    WarpXEvolve.cpp
-    WarpXEvolveImplicitPicard.cpp
-    WarpXComputeDt.cpp
-)
+foreach(D IN LISTS WarpX_DIMS)
+    warpx_set_suffix_dims(SD ${D})
+    target_sources(WarpX_${SD}
+      PRIVATE
+        WarpXEvolve.cpp
+        WarpXEvolveImplicitPicard.cpp
+        WarpXComputeDt.cpp
+    )
+endforeach()

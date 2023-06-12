@@ -8,8 +8,8 @@
 
 #include "IntervalsParser.H"
 
+#include "ablastr/utils/text/StringUtils.H"
 #include "ParserUtils.H"
-#include "Utils/Strings/StringUtils.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX_Utility.H>
@@ -18,11 +18,10 @@
 
 utils::parser::SliceParser::SliceParser (const std::string& instr, const bool isBTD)
 {
-    namespace utils_str = utils::strings;
-
     m_isBTD = isBTD;
     // split string and trim whitespaces
-    auto insplit = utils_str::split<std::vector<std::string>>(instr, m_separator, true);
+    auto insplit = ablastr::utils::text::split_string<std::vector<std::string>>(
+        instr, m_separator, true);
 
     if(insplit.size() == 1){ // no colon in input string. The input is the period.
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_isBTD, "must specify interval stop for BTD");
@@ -92,12 +91,11 @@ int utils::parser::SliceParser::numContained () const {
 utils::parser::IntervalsParser::IntervalsParser (
     const std::vector<std::string>& instr_vec)
 {
-    namespace utils_str = utils::strings;
-
     std::string inconcatenated;
     for (const auto& instr_element : instr_vec) inconcatenated +=instr_element;
 
-    auto insplit = utils_str::split<std::vector<std::string>>(inconcatenated, m_separator);
+    auto insplit = ablastr::utils::text::split_string<std::vector<std::string>>(
+        inconcatenated, m_separator);
 
     for(const auto& inslc : insplit)
     {
@@ -159,7 +157,8 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
     std::string inconcatenated;
     for (const auto& instr_element : instr_vec) inconcatenated +=instr_element;
 
-    auto const insplit = utils::strings::split<std::vector<std::string>>(inconcatenated, std::string(1,m_separator));
+    auto const insplit = ablastr::utils::text::split_string<std::vector<std::string>>(
+        inconcatenated, std::string(1,m_separator));
 
     // parse the Intervals string into Slices and store each slice in m_slices,
     // in order of increasing Slice start value

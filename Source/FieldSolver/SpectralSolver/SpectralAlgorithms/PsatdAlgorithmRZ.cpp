@@ -30,7 +30,6 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     const bool divb_cleaning)
      // Initialize members of base class
      : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
-       m_spectral_index(spectral_index),
        m_dt(dt),
        m_update_with_rho(update_with_rho),
        m_time_averaging(time_averaging),
@@ -58,20 +57,20 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
 
     if (time_averaging && J_in_time != JInTime::Linear)
     {
-        amrex::Abort(Utils::TextMsg::Err(
-            "RZ PSATD: psatd.do_time_averaging=1 implemented only with psatd.J_in_time=linear"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "RZ PSATD: psatd.do_time_averaging=1 implemented only with psatd.J_in_time=linear");
     }
 
     if (dive_cleaning && J_in_time != JInTime::Linear)
     {
-        amrex::Abort(Utils::TextMsg::Err(
-            "RZ PSATD: warpx.do_dive_cleaning=1 implemented only with psatd.J_in_time=linear"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "RZ PSATD: warpx.do_dive_cleaning=1 implemented only with psatd.J_in_time=linear");
     }
 
     if (divb_cleaning && J_in_time != JInTime::Linear)
     {
-        amrex::Abort(Utils::TextMsg::Err(
-            "RZ PSATD: warpx.do_divb_cleaning=1 implemented only with psatd.J_in_time=linear"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "RZ PSATD: warpx.do_divb_cleaning=1 implemented only with psatd.J_in_time=linear");
     }
 }
 
@@ -491,6 +490,6 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 void
 PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented in RZ geometry"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented in RZ geometry");
 }

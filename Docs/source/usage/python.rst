@@ -162,6 +162,10 @@ MCCCollisions
 """""""""""""
 .. autoclass:: pywarpx.picmi.MCCCollisions
 
+FieldIonization
+"""""""""""""""
+.. autoclass:: pywarpx.picmi.FieldIonization
+
 Lasers
 ^^^^^^
 

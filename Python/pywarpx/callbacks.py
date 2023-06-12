@@ -32,6 +32,9 @@ Functions can be called at the following times:
  - beforestep <installbeforestep>: before the time step
  - afterstep <installafterstep>: after the time step
  - afterdiagnostics <installafterdiagnostics>: after diagnostic output
+ - oncheckpointsignal <installoncheckpointsignal>: on a checkpoint signal
+ - onbreaksignal <installonbreaksignal>: on a break signal. These callbacks will be the last ones executed
+                                             before the simulation ends.
  - particlescraper <installparticlescraper>: just after the particle boundary conditions are applied
                                              but before lost particles are processed
  - particleloader <installparticleloader>: at the time that the standard particle loader is called
@@ -269,6 +272,7 @@ _afterstep = CallbackFunctions('afterstep')
 _afterdiagnostics = CallbackFunctions('afterdiagnostics')
 _afterrestart = CallbackFunctions('afterrestart',lcallonce=1)
 _oncheckpointsignal = CallbackFunctions('oncheckpointsignal')
+_onbreaksignal = CallbackFunctions('onbreaksignal')
 _particleinjection = CallbackFunctions('particleinjection')
 _appliedfields = CallbackFunctions('appliedfields')
 
@@ -289,6 +293,8 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
               _beforestep,_afterstep,
               _afterdiagnostics,
               _afterrestart,
+              _oncheckpointsignal,
+              _onbreaksignal,
               _particleinjection,
               _appliedfields]:
         for fname, time in c.timers.items():
@@ -553,6 +559,20 @@ def uninstalloncheckpointsignal(f):
 def isinstalledoncheckpointsignal(f):
     "Checks if the function is called on checkpoint signal"
     return _oncheckpointsignal.isinstalledfuncinlist(f)
+
+# ----------------------------------------------------------------------------
+def onbreaksignal(f):
+    installonbreaksignal(f)
+    return f
+def installonbreaksignal(f):
+    "Adds a function to the list of functions called on a break signal"
+    _onbreaksignal.installfuncinlist(f)
+def uninstallonbreaksignal(f):
+    "Removes the function from the list of functions called on a break signal"
+    _onbreaksignal.uninstallfuncinlist(f)
+def isinstalledonbreaksignal(f):
+    "Checks if the function is called on a break signal"
+    return _onbreaksignal.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfromparticleinjection(f):

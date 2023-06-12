@@ -214,9 +214,9 @@ WarpX::EvolveExplicit (int numsteps)
         }
         else
         {
-            amrex::Abort(Utils::TextMsg::Err(
+            WARPX_ABORT_WITH_MESSAGE(
                 "do_subcycling = " + std::to_string(do_subcycling)
-                + " is an unsupported do_subcycling type."));
+                + " is an unsupported do_subcycling type.");
         }
 
         // Resample particles
@@ -336,6 +336,7 @@ WarpX::EvolveExplicit (int numsteps)
                 // This is currently a lab frame calculation.
                 ComputeMagnetostaticField();
             }
+            AddExternalFields();
             ExecutePythonCallback("afterEsolve");
         }
 
@@ -393,6 +394,7 @@ WarpX::EvolveExplicit (int numsteps)
     if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])
         || exit_loop_due_to_interrupt_signal) {
         multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
+        if (exit_loop_due_to_interrupt_signal) ExecutePythonCallback("onbreaksignal");
     }
 }
 
@@ -479,7 +481,7 @@ WarpX::OneStep_nosub (Real cur_time)
             // macroscopic medium
             MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
         } else {
-            amrex::Abort(Utils::TextMsg::Err("Medium for EM is unknown"));
+            WARPX_ABORT_WITH_MESSAGE("Medium for EM is unknown");
         }
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
@@ -681,8 +683,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 
         if (WarpX::current_correction)
         {
-            amrex::Abort(Utils::TextMsg::Err(
-                "Current correction not implemented for multi-J algorithm."));
+            WARPX_ABORT_WITH_MESSAGE(
+                "Current correction not implemented for multi-J algorithm.");
         }
 
         // Advance E,B,F,G fields in time and update the average fields
@@ -740,8 +742,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     }
 #else
     amrex::ignore_unused(cur_time);
-    amrex::Abort(Utils::TextMsg::Err(
-        "multi-J algorithm not implemented for FDTD"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "multi-J algorithm not implemented for FDTD");
 #endif // WARPX_USE_PSATD
 }
 

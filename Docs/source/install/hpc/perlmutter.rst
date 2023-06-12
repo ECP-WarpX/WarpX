@@ -256,7 +256,7 @@ To run a simulation, copy the lines above to a file ``perlmutter_gpu.sbatch`` an
 
 .. code-block:: bash
 
-   sbatch perlmutter.sbatch
+   sbatch perlmutter_gpu.sbatch
 
 to submit the job.
 
@@ -288,5 +288,6 @@ For post-processing, most users use Python via NERSC's `Jupyter service <https:/
 Please follow the same process as for :ref:`NERSC Cori post-processing <post-processing-cori>`.
 **Important:** The *environment + Jupyter kernel* must separate from the one you create for Cori.
 
-The Perlmutter ``$PSCRATCH`` filesystem is currently not yet available on Jupyter.
-Thus, store or copy your data to Cori's ``$SCRATCH`` or use the Community FileSystem (CFS) for now.
+The Perlmutter ``$PSCRATCH`` filesystem is only available on *Perlmutter* Jupyter nodes.
+Likewise, Cori's ``$SCRATCH`` filesystem is only available on *Cori* Jupyter nodes.
+You can use the Community FileSystem (CFS) from everywhere.
