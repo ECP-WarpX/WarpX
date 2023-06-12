@@ -14,6 +14,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Evolve/WarpXDtType.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
@@ -137,6 +138,7 @@ WarpX::Evolve (int numsteps)
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
             }
             is_synchronized = false;
+
         } else {
             if (electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
                 // Beyond one step, we have E^{n} and B^{n}.
@@ -160,6 +162,38 @@ WarpX::Evolve (int numsteps)
             FillBoundaryAux(guard_cells.ng_UpdateAux);
         }
 
+        // The hybrid-PIC algorithm uses the charge and current density from
+        // both the current and previous step when updating the fields, so we
+        // deposit the ion charge and current in the temp multifab locations on
+        // the first loop iteration.
+        if (step == step_begin &&
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
+        {
+            auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
+            auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
+            mypc->DepositCharge(rho_fp_temp, 0._rt);
+            mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
+            SyncRho(rho_fp_temp, rho_cp);
+            SyncCurrent(current_fp_temp, current_cp);
+            for (int lev=0; lev <= finest_level; ++lev) {
+                // SyncCurrent does not include a call to FillBoundary, but it is needed
+                // for the hybrid-PIC solver since current values are interpolated to
+                // a nodal grid
+                current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
+                current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
+                current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
+
+                ApplyRhofieldBoundary(lev, rho_fp_temp[lev].get(), PatchType::fine);
+                // Set current density at PEC boundaries, if needed.
+                ApplyJfieldBoundary(
+                    lev, current_fp_temp[lev][0].get(),
+                    current_fp_temp[lev][1].get(),
+                    current_fp_temp[lev][2].get(),
+                    PatchType::fine
+                );
+            }
+        }
+
         // Run multi-physics modules:
         // ionization, Coulomb collisions, QED
         doFieldIonization();
@@ -175,9 +209,10 @@ WarpX::Evolve (int numsteps)
         // gather fields, push particles, deposit sources, update fields
 
         ExecutePythonCallback("particleinjection");
-        // Electrostatic case: only gather fields and push particles,
-        // deposition and calculation of fields done further below
-        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None)
+        // Electrostatic or hybrid-PIC case: only gather fields and push
+        // particles, deposition and calculation of fields done further below
+        if ( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+             electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )
         {
             const bool skip_deposition = true;
             PushParticlesandDepose(cur_time, skip_deposition);
@@ -278,10 +313,12 @@ WarpX::Evolve (int numsteps)
         m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
 
         // Non-Maxwell solver: particles can move by an arbitrary number of cells
-        if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None )
+        if( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )
         {
             mypc->Redistribute();
-        } else
+        }
+        else
         {
             // Electromagnetic solver: due to CFL condition, particles can
             // only move by one or two cells per time step
@@ -308,23 +345,35 @@ WarpX::Evolve (int numsteps)
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
-        if( electrostatic_solver_id != ElectrostaticSolverAlgo::None ) {
+        // Field solve step for electrostatic or hybrid-PIC solvers
+        if( electrostatic_solver_id != ElectrostaticSolverAlgo::None ||
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )
+        {
             ExecutePythonCallback("beforeEsolve");
-            // Electrostatic solver:
-            // For each species: deposit charge and add the associated space-charge
-            // E and B field to the grid ; this is done at the end of the PIC
-            // loop (i.e. immediately after a `Redistribute` and before particle
-            // positions are next pushed) so that the particles do not deposit out of bounds
-            // and so that the fields are at the correct time in the output.
-            bool const reset_fields = true;
-            ComputeSpaceChargeField( reset_fields );
-            if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
-                // Call Magnetostatic Solver to solve for the vector potential A and compute the
-                // B field.  Time varying A contribution to E field is neglected.
-                // This is currently a lab frame calculation.
-                ComputeMagnetostaticField();
+
+            if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
+                // Electrostatic solver:
+                // For each species: deposit charge and add the associated space-charge
+                // E and B field to the grid ; this is done at the end of the PIC
+                // loop (i.e. immediately after a `Redistribute` and before particle
+                // positions are next pushed) so that the particles do not deposit out of bounds
+                // and so that the fields are at the correct time in the output.
+                bool const reset_fields = true;
+                ComputeSpaceChargeField( reset_fields );
+                if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
+                    // Call Magnetostatic Solver to solve for the vector potential A and compute the
+                    // B field.  Time varying A contribution to E field is neglected.
+                    // This is currently a lab frame calculation.
+                    ComputeMagnetostaticField();
+                }
+                AddExternalFields();
+            } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+                // Hybrid-PIC case:
+                // The particles are now at p^{n+1/2} and x^{n+1}. The fields
+                // are updated according to the hybrid-PIC scheme (Ohm's law
+                // and Ampere's law).
+                HybridPICEvolveFields();
             }
-            AddExternalFields();
             ExecutePythonCallback("afterEsolve");
         }
 
@@ -409,6 +458,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
     // Synchronize J and rho:
     // filter (if used), exchange guard cells, interpolate across MR levels
+    // and apply boundary conditions
     SyncCurrentAndRho();
 
     // At this point, J is up-to-date inside the domain, and E and B are

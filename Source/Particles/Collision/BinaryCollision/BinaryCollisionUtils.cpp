@@ -63,7 +63,7 @@ namespace BinaryCollisionUtils{
                   ||(product_species1.AmIA<PhysicalSpecies::hydrogen1>() && product_species2.AmIA<PhysicalSpecies::hydrogen3>())){
                     return NuclearFusionType::DeuteriumDeuteriumToProtonTritium;
                 } else {
-                    amrex::Abort("ERROR: Product species of deuterium-deuterium fusion must be of type helium3 and neutron, or tritium and proton");
+                    WARPX_ABORT_WITH_MESSAGE("ERROR: Product species of deuterium-deuterium fusion must be of type helium3 and neutron, or tritium and proton");
                 }
             }
             else if ((species1.AmIA<PhysicalSpecies::hydrogen2>() && species2.AmIA<PhysicalSpecies::helium3>())
@@ -97,7 +97,7 @@ namespace BinaryCollisionUtils{
                     "ERROR: Product species of proton-boron fusion must be of type alpha");
                 return NuclearFusionType::ProtonBoronToAlphas;
             }
-            amrex::Abort("Binary nuclear fusion not implemented between species " +
+            WARPX_ABORT_WITH_MESSAGE("Binary nuclear fusion not implemented between species " +
                          species_names[0] + " of type " + species1.getSpeciesTypeName() +
                          " and species " + species_names[1] + " of type " +
                          species2.getSpeciesTypeName());
@@ -114,7 +114,7 @@ namespace BinaryCollisionUtils{
                 const NuclearFusionType fusion_type = get_nuclear_fusion_type(collision_name, mypc);
                 return nuclear_fusion_type_to_collision_type(fusion_type);
             }
-            amrex::Abort(type + " is not a valid type of collision that creates new particles");
+            WARPX_ABORT_WITH_MESSAGE(type + " is not a valid type of collision that creates new particles");
             return CollisionType::Undefined;
         }
 
@@ -130,7 +130,7 @@ namespace BinaryCollisionUtils{
                 return CollisionType::DeuteriumHeliumToProtonHeliumFusion;
             if (fusion_type == NuclearFusionType::ProtonBoronToAlphas)
                 return CollisionType::ProtonBoronToAlphasFusion;
-            amrex::Abort("Invalid nuclear fusion type");
+            WARPX_ABORT_WITH_MESSAGE("Invalid nuclear fusion type");
             return CollisionType::Undefined;
         }
 }

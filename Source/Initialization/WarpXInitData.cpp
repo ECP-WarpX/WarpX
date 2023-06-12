@@ -17,6 +17,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
@@ -237,6 +238,9 @@ WarpX::PrintMainPICparameters ()
     else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT){
       amrex::Print() << "Maxwell Solver:       | ECT \n";
     }
+    else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){
+      amrex::Print() << "Maxwell Solver:       | Hybrid-PIC (Ohm's law) \n";
+    }
   #ifdef WARPX_USE_PSATD
     // Print PSATD solver's configuration
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
@@ -416,6 +420,10 @@ WarpX::InitData ()
 
     if (WarpX::em_solver_medium==1) {
         m_macroscopic_properties->InitData();
+    }
+
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+        m_hybrid_pic_model->InitData();
     }
 
     if (ParallelDescriptor::IOProcessor()) {
@@ -1294,13 +1302,32 @@ void WarpX::CheckKnownIssues()
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD &&
         (std::any_of(do_pml_Lo[0].begin(),do_pml_Lo[0].end(),[](const auto& ee){return ee;}) ||
         std::any_of(do_pml_Hi[0].begin(),do_pml_Hi[0].end(),[](const auto& ee){return ee;})) )
+    {
+        ablastr::warn_manager::WMRecordWarning(
+            "PML",
+            "Using PSATD together with PML may lead to instabilities if the plasma touches the PML region. "
+            "It is recommended to leave enough empty space between the plasma boundary and the PML region.",
+            ablastr::warn_manager::WarnPriority::low);
+    }
+
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
+    {
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov)
         {
             ablastr::warn_manager::WMRecordWarning(
-                "PML",
-                "Using PSATD together with PML may lead to instabilities if the plasma touches the PML region. "
-                "It is recommended to leave enough empty space between the plasma boundary and the PML region.",
+                "Hybrid-PIC",
+                "When using Esirkepov current deposition together with the hybrid-PIC "
+                "algorithm, a segfault will occur if a particle moves over multiple cells "
+                "in a single step, so be careful with your choice of time step.",
                 ablastr::warn_manager::WarnPriority::low);
         }
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !load_balance_intervals.isActivated(),
+            "The hybrid-PIC algorithm involves multifabs that are not yet "
+            "properly redistributed during load balancing events."
+        );
+    }
 }
 
 #if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z) && !defined(WARPX_DIM_XZ)

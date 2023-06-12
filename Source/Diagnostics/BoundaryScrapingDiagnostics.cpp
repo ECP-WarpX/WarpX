@@ -10,6 +10,7 @@
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 #include "Particles/ParticleBoundaryBuffer.H"
+#include "Utils/TextMsg.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -46,7 +47,7 @@ BoundaryScrapingDiagnostics::ReadParameters ()
 
     // Do a few checks
 #ifndef WARPX_USE_OPENPMD
-    amrex::Abort("You need to compile WarpX with openPMD support, in order to use BoundaryScrapingDiagnostic: -DWarpX_OPENPMD=ON");
+    WARPX_ABORT_WITH_MESSAGE("You need to compile WarpX with openPMD support, in order to use BoundaryScrapingDiagnostic: -DWarpX_OPENPMD=ON");
 #endif
 
     // Check that the output format is openPMD

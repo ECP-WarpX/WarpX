@@ -58,7 +58,7 @@ CollisionHandler::CollisionHandler(MultiParticleContainer const * const mypc)
                                                                         collision_names[i], mypc);
         }
         else{
-            amrex::Abort("Unknown collision type.");
+            WARPX_ABORT_WITH_MESSAGE("Unknown collision type.");
         }
 
     }

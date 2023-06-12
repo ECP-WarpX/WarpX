@@ -1833,11 +1833,11 @@ Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Di
 
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
-       coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
-     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`)
-     - ``ect``: Enlarged cell technique (conformal finite difference solver. See Xiao and Liu,
-                IEEE Antennas and Propagation Society International Symposium (2005),
-                <https://ieeexplore.ieee.org/document/1551259>)
+       coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`_).
+     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`).
+     - ``ect``: Enlarged cell technique (conformal finite difference solver. See `Xiao and Liu, IEEE Antennas and Propagation Society International Symposium (2005) <https://ieeexplore.ieee.org/document/1551259>`_).
+     - ``hybrid``: The E-field will be solved using Ohm's law and a kinetic-fluid hybrid model (see :ref:`theory <theory-kinetic-fluid-hybrid-model>`).
+     - ``none``: No field solve will be performed.
 
      If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
 
@@ -2012,6 +2012,37 @@ Maxwell solver: macroscopic media
     To initialize a constant conductivity, permittivity, and permeability of the
     computational medium, respectively. The default values are the corresponding values
     in vacuum.
+
+.. _running-cpp-parameters-hybrid-model:
+
+Maxwell solver: kinetic-fluid hybrid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``hybrid_pic_model.elec_temp`` (`float`)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the electron temperature, in eV, used to calculate
+     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+
+* ``hybrid_pic_model.n0_ref`` (`float`)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}`, used to calculate
+     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+
+* ``hybrid_pic_model.gamma`` (`float`) optional (default ``5/3``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the exponent used to calculate
+     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+
+* ``hybrid_pic_model.plasma_resistivity(rho)`` (`float` or `str`) optional (default ``0``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
+
+* ``hybrid_pic_model.n_floor`` (`float`) optional (default ``1``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma density floor, in :math:`m^{-3}`, which is useful since the generalized Ohm's law used to calculate the E-field includes a :math:`1/n` term.
+
+* ``hybrid_pic_model.substeps`` (`int`) optional (default ``100``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the number of sub-steps to take during the B-field update.
+
+.. note::
+
+    Based on results from :cite:t:`param-Stanier2020` it is recommended to use
+    linear particles when using the hybrid-PIC model.
 
 Grid types (collocated, staggered, hybrid)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3158,3 +3189,6 @@ When developing, testing and :ref:`debugging WarpX <debugging_warpx>`, the follo
 * ``ablastr.fillboundary_always_sync`` (`0` or `1`) optional (default `0`)
     Run all ``FillBoundary`` operations on ``MultiFab`` to force-synchronize shared nodal points.
     This slightly increases communication cost and can help to spot missing ``nodal_sync`` flags in these operations.
+
+.. bibliography::
+    :keyprefix: param-

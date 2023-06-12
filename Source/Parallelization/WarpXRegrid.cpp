@@ -14,6 +14,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
@@ -355,7 +356,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
     } else
     {
-        amrex::Abort("RemakeLevel: to be implemented");
+        WARPX_ABORT_WITH_MESSAGE("RemakeLevel: to be implemented");
     }
 
     // Re-initialize diagnostic functors that stores pointers to the user-requested fields at level, lev.

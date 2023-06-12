@@ -7,12 +7,13 @@
 #ifndef ABLASTR_NODALFIELDGATHER_H_
 #define ABLASTR_NODALFIELDGATHER_H_
 
+#include "ablastr/utils/TextMsg.H"
+
 #include <AMReX_Array.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_Math.H>
 #include <AMReX_REAL.H>
-
 
 namespace ablastr::particles
 {
@@ -77,7 +78,7 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
     k = 0;
 #else
     amrex::ignore_unused(xp, yp, zp, plo, dxi, i, j, k, W);
-    amrex::Abort("Error: compute_weights not yet implemented in 1D");
+    ABLASTR_ABORT_WITH_MESSAGE("Error: compute_weights not yet implemented in 1D");
 #endif
 }
 
@@ -112,7 +113,7 @@ amrex::Real interp_field_nodal (int i, int j, int k,
 #else
     const amrex::Real value = 0;
     amrex::ignore_unused(i, j, k, W, scalar_field);
-    amrex::Abort("Error: interp_field not yet implemented in 1D");
+    ABLASTR_ABORT_WITH_MESSAGE("Error: interp_field not yet implemented in 1D");
 #endif
     return value;
 }

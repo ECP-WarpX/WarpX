@@ -1,6 +1,8 @@
 #include "Interpolate.H"
 #include "Interpolate_K.H"
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX.H>
 #include <AMReX_Array4.H>
 #include <AMReX_BCRec.H>
@@ -53,7 +55,7 @@ namespace Interpolate
                     node_bilinear_interp.interp(cfab, 0, ffab, 0, 1,
                                                 finebx, refinement_vector, {}, {}, {}, 0, 0, RunOn::Device);
                 } else {
-                    amrex::Abort("Unknown field staggering.");
+                    WARPX_ABORT_WITH_MESSAGE("Unknown field staggering.");
                 }
 
                 // Add temporary array to the returned structure

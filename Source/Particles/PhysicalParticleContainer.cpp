@@ -375,13 +375,13 @@ PhysicalParticleContainer::BackwardCompatibility ()
     const ParmParse pp_species_name(species_name);
     std::vector<std::string> backward_strings;
     if (pp_species_name.queryarr("plot_vars", backward_strings)){
-        amrex::Abort("<species>.plot_vars is not supported anymore. "
+        WARPX_ABORT_WITH_MESSAGE("<species>.plot_vars is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
     }
 
     int backward_int;
     if (pp_species_name.query("plot_species", backward_int)){
-        amrex::Abort("<species>.plot_species is not supported anymore. "
+        WARPX_ABORT_WITH_MESSAGE("<species>.plot_species is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
     }
 }

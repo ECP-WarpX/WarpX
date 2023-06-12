@@ -837,7 +837,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     default : {
                         std::string msg = "WarpX openPMD ADIOS2 work-around has unknown dtype: ";
                         msg += datatypeToString(dtype);
-                        amrex::Abort(msg);
+                        WARPX_ABORT_WITH_MESSAGE(msg);
                         break;
                     }
                 }

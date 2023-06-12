@@ -6,6 +6,8 @@
  */
 #include "QuantumSyncEngineWrapper.H"
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_GpuDevice.H>
@@ -152,7 +154,7 @@ void QuantumSynchrotronEngine::compute_lookup_tables (
     m_lookup_tables_initialized = true;
 #else
     amrex::ignore_unused(ctrl, qs_minimum_chi_part);
-    amrex::Abort("WarpX was not compiled with table generation support!");
+    WARPX_ABORT_WITH_MESSAGE("WarpX was not compiled with table generation support!");
 #endif
 }
 

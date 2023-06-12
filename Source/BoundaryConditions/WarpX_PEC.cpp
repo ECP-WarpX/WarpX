@@ -512,3 +512,80 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
         });
     }
 }
+
+void
+PEC::ApplyPECtoElectronPressure (amrex::MultiFab* Pefield, const int lev,
+                                 PatchType patch_type)
+{
+    auto& warpx = WarpX::GetInstance();
+
+    amrex::Box domain_box = warpx.Geom(lev).Domain();
+    if (patch_type == PatchType::coarse) {
+        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        domain_box.coarsen(ref_ratio);
+    }
+    domain_box.convert(Pefield->ixType());
+
+    amrex::IntVect domain_lo = domain_box.smallEnd();
+    amrex::IntVect domain_hi = domain_box.bigEnd();
+
+    amrex::IntVect Pe_nodal = Pefield->ixType().toIntVect();
+    amrex::IntVect ng_fieldgather = Pefield->nGrowVect();
+
+    // Create a copy of the domain which will be extended to include guard
+    // cells for boundaries that are NOT PEC
+    amrex::Box grown_domain_box = domain_box;
+
+    amrex::GpuArray<GpuArray<bool,2>, AMREX_SPACEDIM> is_pec;
+    amrex::GpuArray<GpuArray<int,2>, AMREX_SPACEDIM> mirrorfac;
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        is_pec[idim][0] = WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC;
+        is_pec[idim][1] = WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC;
+        if (!is_pec[idim][0]) grown_domain_box.growLo(idim, ng_fieldgather[idim]);
+        if (!is_pec[idim][1]) grown_domain_box.growHi(idim, ng_fieldgather[idim]);
+
+        mirrorfac[idim][0] = 2*domain_lo[idim] - (1 - Pe_nodal[idim]);
+        mirrorfac[idim][1] = 2*domain_hi[idim] + (1 - Pe_nodal[idim]);
+    }
+    const int nComp = Pefield->nComp();
+
+#ifdef WARPX_DIM_RZ
+    if (is_pec[0][1]) {
+        ablastr::warn_manager::WMRecordWarning(
+          "PEC",
+          "PEC boundary handling is not yet properly implemented for r_max so it is skipped in PEC::ApplyPECtoPefield",
+          ablastr::warn_manager::WarnPriority::medium);
+          is_pec[0][1] = false;
+    }
+#endif
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*Pefield); mfi.isValid(); ++mfi) {
+
+        // Get the multifab box including ghost cells
+        Box const& fabbox = mfi.fabbox();
+
+        // If grown_domain_box contains fabbox it means there are no PEC
+        // boundaries to handle so continue to next box
+        if (grown_domain_box.contains(fabbox)) continue;
+
+        // Extract field data
+        auto const& Pe_array = Pefield->array(mfi);
+
+        // Loop over valid cells (i.e. cells inside the domain)
+        amrex::ParallelFor(mfi.validbox(), nComp,
+        [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
+#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+            amrex::ignore_unused(k);
+#elif (defined WARPX_DIM_1D_Z)
+            amrex::ignore_unused(j,k);
+#endif
+            // Store the array index
+            amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+
+            PEC::SetNeumannOnPEC(n, iv, Pe_array, mirrorfac, is_pec, fabbox);
+        });
+    }
+}

@@ -33,6 +33,7 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "SpeciesPhysicalProperties.H"
 #include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
@@ -1033,7 +1034,7 @@ void MultiParticleContainer::InitQuantumSync ()
 
     pp_qed_qs.query("lookup_table_mode", lookup_table_mode);
     if(lookup_table_mode.empty()){
-        amrex::Abort("Quantum Synchrotron table mode should be provided");
+        WARPX_ABORT_WITH_MESSAGE("Quantum Synchrotron table mode should be provided");
     }
 
     if(lookup_table_mode == "generate"){
@@ -1041,7 +1042,7 @@ void MultiParticleContainer::InitQuantumSync ()
             "A new Quantum Synchrotron table will be generated.",
             ablastr::warn_manager::WarnPriority::low);
 #ifndef WARPX_QED_TABLE_GEN
-        amrex::Error("Error: Compile with QED_TABLE_GEN=TRUE to enable table generation!\n");
+        WARPX_ABORT_WITH_MESSAGE("Error: Compile with QED_TABLE_GEN=TRUE to enable table generation!\n");
 #else
         QuantumSyncGenerateTable();
 #endif
@@ -1053,7 +1054,7 @@ void MultiParticleContainer::InitQuantumSync ()
             "The Quantum Synchrotron table will be read from the file: " + load_table_name,
             ablastr::warn_manager::WarnPriority::low);
         if(load_table_name.empty()){
-            amrex::Abort("Quantum Synchrotron table name should be provided");
+            WARPX_ABORT_WITH_MESSAGE("Quantum Synchrotron table name should be provided");
         }
         Vector<char> table_data;
         ParallelDescriptor::ReadAndBcastFile(load_table_name, table_data);
@@ -1069,12 +1070,12 @@ void MultiParticleContainer::InitQuantumSync ()
         m_shr_p_qs_engine->init_builtin_tables(qs_minimum_chi_part);
     }
     else{
-        amrex::Abort("Unknown Quantum Synchrotron table mode");
+        WARPX_ABORT_WITH_MESSAGE("Unknown Quantum Synchrotron table mode");
     }
 
-    if(!m_shr_p_qs_engine->are_lookup_tables_initialized()){
-        amrex::Abort("Table initialization has failed!");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_shr_p_qs_engine->are_lookup_tables_initialized(),
+        "Table initialization has failed!");
 }
 
 void MultiParticleContainer::InitBreitWheeler ()
@@ -1087,11 +1088,11 @@ void MultiParticleContainer::InitBreitWheeler ()
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real bw_minimum_chi_part;
     if(!utils::parser::queryWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part))
-        amrex::Abort("qed_bw.chi_min should be provided!");
+        WARPX_ABORT_WITH_MESSAGE("qed_bw.chi_min should be provided!");
 
     pp_qed_bw.query("lookup_table_mode", lookup_table_mode);
     if(lookup_table_mode.empty()){
-        amrex::Abort("Breit Wheeler table mode should be provided");
+        WARPX_ABORT_WITH_MESSAGE("Breit Wheeler table mode should be provided");
     }
 
     if(lookup_table_mode == "generate"){
@@ -1111,7 +1112,7 @@ void MultiParticleContainer::InitBreitWheeler ()
             "The Breit Wheeler table will be read from the file:" + load_table_name,
             ablastr::warn_manager::WarnPriority::low);
         if(load_table_name.empty()){
-            amrex::Abort("Breit Wheeler table name should be provided");
+            WARPX_ABORT_WITH_MESSAGE("Breit Wheeler table name should be provided");
         }
         Vector<char> table_data;
         ParallelDescriptor::ReadAndBcastFile(load_table_name, table_data);
@@ -1127,12 +1128,12 @@ void MultiParticleContainer::InitBreitWheeler ()
         m_shr_p_bw_engine->init_builtin_tables(bw_minimum_chi_part);
     }
     else{
-        amrex::Abort("Unknown Breit Wheeler table mode");
+        WARPX_ABORT_WITH_MESSAGE("Unknown Breit Wheeler table mode");
     }
 
-    if(!m_shr_p_bw_engine->are_lookup_tables_initialized()){
-        amrex::Abort("Table initialization has failed!");
-    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_shr_p_bw_engine->are_lookup_tables_initialized(),
+        "Table initialization has failed!");
 }
 
 void
@@ -1141,8 +1142,9 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
     const ParmParse pp_qed_qs("qed_qs");
     std::string table_name;
     pp_qed_qs.query("save_table_in", table_name);
-    if(table_name.empty())
-        amrex::Abort("qed_qs.save_table_in should be provided!");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !table_name.empty(),
+        "qed_qs.save_table_in should be provided!");
 
     // qs_minimum_chi_part is the minimum chi parameter to be
     // considered for Synchrotron emission. If a lepton has chi < chi_min,
@@ -1230,8 +1232,9 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     const ParmParse pp_qed_bw("qed_bw");
     std::string table_name;
     pp_qed_bw.query("save_table_in", table_name);
-    if(table_name.empty())
-        amrex::Abort("qed_bw.save_table_in should be provided!");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !table_name.empty(),
+        "qed_bw.save_table_in should be provided!");
 
     // bw_minimum_chi_phot is the minimum chi parameter to be
     // considered for pair production. If a photon has chi < chi_min,
@@ -1328,10 +1331,10 @@ MultiParticleContainer::doQEDSchwinger ()
         "ERROR: Schwinger process not implemented with mesh refinement");
 
 #ifdef WARPX_DIM_RZ
-    amrex::Abort("Schwinger process not implemented in rz geometry");
+    WARPX_ABORT_WITH_MESSAGE("Schwinger process not implemented in rz geometry");
 #endif
 #ifdef WARPX_DIM_1D_Z
-    amrex::Abort("Schwinger process not implemented in 1D geometry");
+    WARPX_ABORT_WITH_MESSAGE("Schwinger process not implemented in 1D geometry");
 #endif
 
 // Get cell volume. In 2D the transverse size is
