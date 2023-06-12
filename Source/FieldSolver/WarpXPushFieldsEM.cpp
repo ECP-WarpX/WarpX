@@ -448,12 +448,13 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
         amrex::ignore_unused(Dy);
 #endif
 
+    amrex::MultiFab& Jx = *current_fp[lev][0];
+
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-
         // Subtract average of cumulative sum from Jx
-        amrex::MultiFab& Jx = *current_fp[lev][0];
         for (amrex::MFIter mfi(Jx); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
