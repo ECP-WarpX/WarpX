@@ -197,9 +197,9 @@ public:
                 const amrex::Real jz_interp = ablastr::coarsen::sample::Interp(arrjz, jztype, cellCenteredtype,
                                                                                reduction_coarsening_ratio, i, j, k, reduction_comp);
 
-        return reduction_function_parser(x, y, z, Ex_interp, Ey_interp, Ez_interp,
-                Bx_interp, By_interp, Bz_interp,
-                jx_interp, jy_interp, jz_interp);
+                return reduction_function_parser(x, y, z, Ex_interp, Ey_interp, Ez_interp,
+                        Bx_interp, By_interp, Bz_interp,
+                        jx_interp, jy_interp, jz_interp);
             });
         }
 
