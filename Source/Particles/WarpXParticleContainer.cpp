@@ -92,9 +92,10 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 
     // Initialize temporary local arrays for charge/current deposition
 #ifdef AMREX_USE_OMP
+    int num_threads = 1;
 #pragma omp parallel
 #pragma omp single
-    const int num_threads = omp_get_num_threads();
+    num_threads = omp_get_num_threads();
 #else
     const int num_threads = 1;
 #endif
