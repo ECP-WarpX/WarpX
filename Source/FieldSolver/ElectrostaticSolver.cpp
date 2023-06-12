@@ -547,12 +547,12 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                     [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                         Ez_arr(i,j,k) +=
                             +(beta_z*beta_z-1)*0.5_rt*inv_dz*( phi_arr(i+1,j,k)-phi_arr(i-1,j,k) );
-                    }                    
+                    }
                 );
 #endif
             }
             else{
-                // Staggered solver 
+                // Staggered solver
 #if defined(WARPX_DIM_3D)
                 amrex::ParallelFor( tbx, tby, tbz,
                     [=] AMREX_GPU_DEVICE (int i, int j, int k) {
@@ -674,7 +674,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 
             // Calculate the magnetic field
             // Use discretized derivative that matches the staggering of the grid.
-            // Nodal solver 
+            // Nodal solver
             if ((bx_type == IntVect::TheNodeVector()) && (by_type == IntVect::TheNodeVector()) && (bz_type == IntVect::TheNodeVector())){
 #if defined(WARPX_DIM_3D)
                 amrex::ParallelFor( tbx, tby, tbz,
@@ -686,7 +686,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                     [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                         By_arr(i,j,k) += inv_c * (
                             -beta_z*inv_dx*0.5_rt*(phi_arr(i+1,j,k)-phi_arr(i-1,j,k))
-                            +beta_x*inv_dz*0.5_rt*(phi_arr(i,j,k+1)-phi_arr(i,j,k-1)) );                     
+                            +beta_x*inv_dz*0.5_rt*(phi_arr(i,j,k+1)-phi_arr(i,j,k-1)) );
                     },
                     [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                         Bz_arr(i,j,k) += inv_c * (
@@ -724,7 +724,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                 ignore_unused(beta_z,tbz,Bz_arr);
 #endif
             }
-           // Staggered solver  
+           // Staggered solver
             else{
 #if defined(WARPX_DIM_3D)
                 amrex::ParallelFor( tbx, tby, tbz,
