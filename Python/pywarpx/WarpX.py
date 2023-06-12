@@ -20,7 +20,6 @@ from .EB2 import eb2
 from .Geometry import geometry
 from .HybridPICModel import hybridpicmodel
 from .Interpolation import interpolation
-from .Langmuirwave import langmuirwave
 from .Lasers import lasers, lasers_list
 from .PSATD import psatd
 from .Particles import particles, particles_list
@@ -47,7 +46,6 @@ class WarpX(Bucket):
         argv += hybridpicmodel.attrlist()
         argv += boundary.attrlist()
         argv += algo.attrlist()
-        argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
         argv += psatd.attrlist()
         argv += eb2.attrlist()
