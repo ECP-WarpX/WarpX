@@ -1406,8 +1406,9 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 #endif
     {
 #if defined(WARPX_USE_GPUCLOCK)
-        KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+        const auto KernelTimer = ablastr::parallelization::KernelTimer(
+            cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+            cost_real);
 #endif
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         const int bin_id = blockIdx.x;
