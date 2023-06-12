@@ -1369,7 +1369,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
 
-                const Real weight = dens * scale_fac;
+                Real weight = dens;
+                weight *= scale_fac;
+
 #ifdef WARPX_DIM_RZ
                 if (radially_weighted) {
                     weight *= 2._rt*MathConst::pi*xb;

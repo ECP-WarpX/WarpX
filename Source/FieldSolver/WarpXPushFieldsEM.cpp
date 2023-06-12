@@ -445,7 +445,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
         amrex::MultiFab const& Dz = *current_fp_vay[lev][2];
 
 #if defined (WARPX_DIM_XZ)
-        amrex::ignore_unused(Jy, Dy);
+        amrex::ignore_unused(Dy);
 #endif
 
 #ifdef AMREX_USE_OMP

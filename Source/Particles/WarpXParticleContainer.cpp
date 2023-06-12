@@ -1060,10 +1060,11 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
 
-    const bool is_PSATD_RZ = false;
 #ifdef WARPX_DIM_RZ
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
-        is_PSATD_RZ = true;
+    const bool is_PSATD_RZ =
+        (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD);
+#else
+    const bool is_PSATD_RZ = false;
 #endif
     if( !is_PSATD_RZ )
         nba.surroundingNodes();

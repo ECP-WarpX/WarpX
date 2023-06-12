@@ -813,11 +813,15 @@ void warpx_interp (const int j,
     {
 #if defined(WARPX_DIM_3D)
     const amrex::Real cl = (interp_l)? scl[ll] : 1.0_rt;
+#else
+    const amrex::Real cl = 1.0_rt;
 #endif
         for (int kk = 0; kk <= nk; kk++)
         {
 #if (AMREX_SPACEDIM >= 2)
             const amrex::Real ck = (interp_k)? sck[kk] : 1.0_rt;
+#else
+            const amrex::Real ck = 1.0_rt;
 #endif
             for (int jj = 0; jj <= nj; jj++)
             {
