@@ -120,7 +120,8 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT const amplitude
+        bool laser_modulated) const override final;
 
 private:
     struct {
