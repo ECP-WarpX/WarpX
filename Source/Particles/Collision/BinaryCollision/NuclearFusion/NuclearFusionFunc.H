@@ -59,7 +59,7 @@ public:
         using namespace amrex::literals;
 
 #ifdef AMREX_SINGLE_PRECISION_PARTICLES
-        amrex::Abort("Nuclear fusion module does not currently work with single precision");
+        WARPX_ABORT_WITH_MESSAGE("Nuclear fusion module does not currently work with single precision");
 #endif
 
         m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);

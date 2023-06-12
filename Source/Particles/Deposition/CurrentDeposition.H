@@ -12,6 +12,7 @@
 #include "ablastr/parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #ifdef WARPX_DIM_RZ
@@ -541,7 +542,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     // using HIP/CUDA, and those things are checked prior
     //don't use any args
     ignore_unused( GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
-    amrex::Abort("Shared memory only implemented for HIP/CUDA");
+    WARPX_ABORT_WITH_MESSAGE("Shared memory only implemented for HIP/CUDA");
 #endif
 }
 
@@ -974,14 +975,14 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
         np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
-    amrex::Abort("Vay deposition not implemented in RZ geometry");
+    WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in RZ geometry");
 #endif
 
 #if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
         np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
-    amrex::Abort("Vay deposition not implemented in cartesian 1D geometry");
+    WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in cartesian 1D geometry");
 #endif
 
 #if !defined(AMREX_USE_GPU)

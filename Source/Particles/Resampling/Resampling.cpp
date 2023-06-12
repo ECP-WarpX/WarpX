@@ -7,6 +7,7 @@
 #include "Resampling.H"
 
 #include "LevelingThinning.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -22,7 +23,7 @@ Resampling::Resampling (const std::string species_name)
         m_resampling_algorithm = std::make_unique<LevelingThinning>(species_name);
     }
     else
-    { amrex::Abort("Unknown resampling algorithm."); }
+    { WARPX_ABORT_WITH_MESSAGE("Unknown resampling algorithm."); }
 
     m_resampling_trigger = ResamplingTrigger(species_name);
 }

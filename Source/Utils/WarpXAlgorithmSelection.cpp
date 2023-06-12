@@ -8,6 +8,7 @@
  */
 #include "WarpX.H"
 #include "WarpXAlgorithmSelection.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX.H>
 
@@ -177,7 +178,7 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = ReductionType_algo_to_int;
     } else {
         std::string pp_search_string = pp_search_key;
-        amrex::Abort("Unknown algorithm type: " + pp_search_string);
+        WARPX_ABORT_WITH_MESSAGE("Unknown algorithm type: " + pp_search_string);
     }
 
     // Check if the user-input is a valid key for the dictionary
@@ -191,7 +192,7 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
                 error_message += " - " + valid_pair.first + "\n";
             }
         }
-        amrex::Abort(error_message);
+        WARPX_ABORT_WITH_MESSAGE(error_message);
     }
 
     // If the input is a valid key, return the value
@@ -209,7 +210,7 @@ GetFieldBCTypeInteger( std::string BCType ){
                 error_message += " - " + valid_pair.first + "\n";
             }
         }
-        amrex::Abort(error_message);
+        WARPX_ABORT_WITH_MESSAGE(error_message);
     }
     // return FieldBCType_algo_to_int[BCType]; // This operator cannot be used for a const map
     return FieldBCType_algo_to_int.at(BCType);
@@ -226,7 +227,7 @@ GetParticleBCTypeInteger( std::string BCType ){
                 error_message += " - " + valid_pair.first + "\n";
             }
         }
-        amrex::Abort(error_message);
+        WARPX_ABORT_WITH_MESSAGE(error_message);
     }
     // return ParticleBCType_algo_to_enum[BCType]; // This operator cannot be used for a const map
     return ParticleBCType_algo_to_enum.at(BCType);

@@ -284,7 +284,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         jp = j;
                         kp = k + vec(1);
 #else
-                        amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+                        WARPX_ABORT_WITH_MESSAGE("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
                     }else{
                         ip = i + vec(0);
@@ -316,7 +316,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         jp = j;
                         kp = k + vec(1);
 #else
-                        amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+                        WARPX_ABORT_WITH_MESSAGE("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
                     }else{
                         ip = i + vec(0);

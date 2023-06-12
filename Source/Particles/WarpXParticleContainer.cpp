@@ -445,7 +445,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if (WarpX::grid_type == GridType::Collocated) {
-          amrex::Abort("The Esirkepov algorithm cannot be used with a collocated grid.");
+          WARPX_ABORT_WITH_MESSAGE("The Esirkepov algorithm cannot be used with a collocated grid.");
         }
     }
 
@@ -503,10 +503,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
         // Now pick current deposition algorithm
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-            amrex::Abort("Cannot do shared memory deposition with Esirkepov algorithm");
+            WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Esirkepov algorithm");
         }
         else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
-            amrex::Abort("Cannot do shared memory deposition with Vay algorithm");
+            WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Vay algorithm");
         }
         else {
             WARPX_PROFILE_VAR_START(direct_current_dep_kernel);
