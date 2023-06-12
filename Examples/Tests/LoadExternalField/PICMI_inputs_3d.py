@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# --- Input file for loading initial field from openPMD file.from pywarpx 
+# --- Input file for loading initial field from openPMD file.from pywarpx
 
 import picmi
 
