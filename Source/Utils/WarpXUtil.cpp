@@ -14,6 +14,8 @@
 #include "WarpXProfilerWrapper.H"
 #include "WarpXUtil.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -395,13 +397,15 @@ void ReadBCParams ()
     const ParmParse pp_algo("algo");
     const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !pp_geometry.queryarr("is_periodic", geom_periodicity),
-        "geometry.is_periodic is not supported. Please use `boundary.field_lo`,"
-        " `boundary.field_hi` to specifiy field boundary conditions and"
-        " 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle"
-        " boundary conditions."
-    );
+    if (pp_geometry.queryarr("is_periodic", geom_periodicity))
+    {
+        std::string const warnMsg =
+            "geometry.is_periodic is only used internally. Please use `boundary.field_lo`,"
+            " `boundary.field_hi` to specifiy field boundary conditions and"
+            " 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle"
+            " boundary conditions.";
+        ablastr::warn_manager::WMRecordWarning("Input", warnMsg);
+    }
 
     // particle boundary may not be explicitly specified for some applications
     bool particle_boundary_specified = false;

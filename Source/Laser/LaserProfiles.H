@@ -12,6 +12,8 @@
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_Box.H>
+#include <AMReX_FArrayBox.H>
 
 #include <functional>
 #include <limits>
@@ -215,7 +217,7 @@ public:
         amrex::Real t,
         amrex::Real * AMREX_RESTRICT const amplitude) const override final;
 
-    /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format.
+    /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format in 3D Cartesian.
     * This function cannot be private due to restrictions related to
     * the use of extended __device__ lambda
     *
@@ -226,13 +228,34 @@ public:
     * \param t: Current physical time
     * \param amplitude: pointer to array of field amplitude.
     */
-    void internal_fill_amplitude_uniform(
+    void internal_fill_amplitude_uniform_cartesian(
         const int idx_t_left,
         const int np,
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
         amrex::Real * AMREX_RESTRICT const amplitude) const;
+
+    /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format in RZ geometry.
+    * This function cannot be private due to restrictions related to
+    * the use of extended __device__ lambda
+    *
+    * \param idx_t_left index of the last time coordinate < t
+    * \param np: number of laser particles
+    * \param Xp: pointer to first component of positions of laser particles
+    * \param Yp: pointer to second component of positions of laser particles
+    * \param t: Current physical time
+    * \param amplitude: pointer to array of field amplitude.
+    */
+    void internal_fill_amplitude_uniform_cylindrical(
+        const int idx_t_left,
+        const int np,
+        amrex::Real const * AMREX_RESTRICT const Xp,
+        amrex::Real const * AMREX_RESTRICT const Yp,
+        amrex::Real t,
+        amrex::Real * AMREX_RESTRICT const amplitude) const;
+
+
 
     /** \brief Function to fill the amplitude in case of a uniform grid and for the binary format.
     * This function cannot be private due to restrictions related to
@@ -304,6 +327,9 @@ private:
      * used by this laser profile
      */
     struct{
+
+        /** Name of the lasy file geometry ("cartesian" for 3D cartesian or "thetaMode" for RZ) */
+        std::string fileGeom;
         /** Name of the binary file containing the data */
         std::string binary_file_name;
         /** Name of the lasy file containing the data */
@@ -314,6 +340,10 @@ private:
          * If DIM=3, ny must be >=2 as well.
          * If DIM=2, ny must be 1 */
         int nt, nx, ny;
+        /** Dimensions of E_lasy_data in RZ */
+        int nr;
+        /** Number of azimuthal components (2 per mode, 1 for mode 0) */
+        int n_rz_azimuthal_components;
         /** Start time*/
         amrex::Real t_min;
         /** Stop time*/
@@ -326,6 +356,8 @@ private:
         amrex::Real y_min;
         /** max of y coordinates*/
         amrex::Real y_max;
+        amrex::Real r_min;
+        amrex::Real r_max;
         /** Size of the timestep range to load */
         int time_chunk_size;
         /** Index of the first timestep in memory */

@@ -863,6 +863,8 @@ WarpX::SyncCurrent (
     // If warpx.do_current_centering = 1, center currents from nodal grid to staggered grid
     if (WarpX::do_current_centering)
     {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level <= 1,
+                                         "warpx.do_current_centering=1 not supported with more than one fine levels");
         for (int lev = 0; lev <= finest_level; lev++)
         {
             WarpX::UpdateCurrentNodalToStag(*J_fp[lev][0], *current_fp_nodal[lev][0]);
@@ -871,33 +873,144 @@ WarpX::SyncCurrent (
         }
     }
 
-    // Restrict fine patch current onto the coarse patch, before
-    // summing the guard cells of the fine patch
-    for (int lev = 1; lev <= finest_level; ++lev)
+    // If there is a single level, we apply the filter on the fp data and
+    // then call SumBoundary that adds data from different boxes. This needs
+    // to be done because a particle near a box boundary may deposit current
+    // at a given (i,j,k) that is on the edge or in the ghost region of that
+    // box while at the same time that (i,j,k) is also in the valid region
+    // of another box. After SumBoundary, the result is as if there is only
+    // a single box on a single process. Also note we need to call
+    // SumBoundary even if there is only a single process, because a process
+    // may have multiple boxes. Furthermore, even if there is only a single
+    // box on a single process, SumBoundary should also be called if there
+    // are periodic boundaries. So we always call SumBounary even if it
+    // might be a no-op in some cases, because the function does not perform
+    // any communication if not necessary.
+    //
+    // When there are multiple levels, we need to send data from fine levels
+    // to coarse levels. In the implementation below, we loop over levels
+    // from the finest to the coarsest. On each level, filtering and
+    // SumBoundary are done as the last two things. So the communication
+    // data on the sender side are always unfiltered and unsummed. The
+    // receivers are responsible for filtering that is dependent on the grid
+    // resolution. On the finest level, we coarsen the unsummed fp data onto
+    // cp grids, which are the coarsened version of the fp grids with the
+    // same DistributionMapping. Then on the level below, We use ParallelAdd
+    // to add the finer level's cp data onto the current level's fp
+    // data. After that, we apply filter and SumBoundary to the finer
+    // level's cp MultiFab. At this time, the finer level's fp and cp data
+    // have all been properly filtered and summed. For the current level, if
+    // there are levels below this, we need to process this level's cp data
+    // just like we have done for the finer level. The iteration continues
+    // until we reache level 0. There are however two additional
+    // complications.
+    //
+    // The first complication is that simply calling ParallelAdd to add the
+    // finer level's cp data to the current level's fp data does not
+    // work. Suppose there are multiple boxes on the current level (or just
+    // a single box with periodic bounaries). A given (i,j,k) can be present
+    // in more than one box for nodal data in AMReX.
+    // At the time of calling ParallelAdd, the current
+    // level's fp data have not been summed. Because of how ParallelAdd
+    // works, all boxes with that (i,j,k) will receive the data. So there is
+    // a double counting issue of those data points existing on multiple boxes. Note
+    // that at this time, the current level's fp data have not been summed
+    // and we will call SumBoundary on the fp data. That would overcount the
+    // finer level's cp data. So we fix this issue by creating a temporary
+    // MultiFab to receive the finer level's cp data. We also create a mask
+    // that can mark only one instance of the data as the owner if there are
+    // overlapping points among boxes. Using the mask, we can add the
+    // temporary MultiFab's data to the fp MultiFab only if the source owns
+    // the data.
+    //
+    // The other complication is there might be a current buffer depending a
+    // runtime parameter. The current buffer data, if they exist, need to be
+    // communicated to the coarser level's fp MultiFab just like the cp
+    // data. A simple approach would be to call another ParallelAdd in
+    // additional the ParallelAdd for the cp data. But we like to minimize
+    // parallel communication. So we add the cp data to the current buffer
+    // MultiFab and use the latter as the source of ParallelAdd
+    // communication to the coarser level. Note that we can do it this way
+    // but not the other way around of adding the current buffer data to the
+    // cp MultiFab because we still need to use the original cp data whereas
+    // the buffer data are no longer needed once they have been sent to the
+    // coarser level. So there are two cases. If there is no current buffer,
+    // the cp MultiFab is the source of communication. If there is a current
+    // buffer, the buffer MultiFab is the source instead. In the
+    // implementation below, we use an alias MultiFab to manage this.
+
+    std::unique_ptr<MultiFab> mf_comm; // for communication between levels
+    for (int idim = 0; idim < 3; ++idim)
     {
-        J_cp[lev][0]->setVal(0.0);
-        J_cp[lev][1]->setVal(0.0);
-        J_cp[lev][2]->setVal(0.0);
+        for (int lev = finest_level; lev >= 0; --lev)
+        {
+            const int ncomp = J_fp[lev][idim]->nComp();
+            auto const& period = Geom(lev).periodicity();
 
-        const IntVect& refinement_ratio = refRatio(lev-1);
+            if (lev < finest_level)
+            {
+                // On a coarse level, the data in mf_comm comes from the
+                // coarse patch of the fine level. They are unfiltered and uncommunicated.
+                // We need to add it to the fine patch of the current level.
+                MultiFab fine_lev_cp(J_fp[lev][idim]->boxArray(),
+                                     J_fp[lev][idim]->DistributionMap(),
+                                     ncomp, 0);
+                fine_lev_cp.setVal(0.0);
+                fine_lev_cp.ParallelAdd(*mf_comm, 0, 0, ncomp, mf_comm->nGrowVect(),
+                                        IntVect(0), period);
+                // We now need to create a mask to fix the double counting.
+                auto owner_mask = amrex::OwnerMask(fine_lev_cp, period);
+                auto const& mma = owner_mask->const_arrays();
+                auto const& sma = fine_lev_cp.const_arrays();
+                auto const& dma = J_fp[lev][idim]->arrays();
+                amrex::ParallelFor(fine_lev_cp, IntVect(0), ncomp,
+                [=] AMREX_GPU_DEVICE (int bno, int i, int j, int k, int n)
+                {
+                    if (mma[bno](i,j,k) && sma[bno](i,j,k,n) != 0.0_rt) {
+                        dma[bno](i,j,k,n) += sma[bno](i,j,k,n);
+                    }
+                });
+                // Now it's safe to apply filter and sumboundary on J_cp
+                if (use_filter)
+                {
+                    ApplyFilterJ(J_cp, lev+1, idim);
+                }
+                SumBoundaryJ(J_cp, lev+1, idim, period);
+            }
 
-        std::array<const MultiFab*,3> fine { J_fp[lev][0].get(),
-                                             J_fp[lev][1].get(),
-                                             J_fp[lev][2].get() };
-        std::array<      MultiFab*,3> crse { J_cp[lev][0].get(),
-                                             J_cp[lev][1].get(),
-                                             J_cp[lev][2].get() };
-        ablastr::coarsen::average::Coarsen(*crse[0], *fine[0], refinement_ratio );
-        ablastr::coarsen::average::Coarsen(*crse[1], *fine[1], refinement_ratio );
-        ablastr::coarsen::average::Coarsen(*crse[2], *fine[2], refinement_ratio );
-    }
+            if (lev > 0)
+            {
+                // On a fine level, we need to coarsen the current onto the
+                // coarse level. This needs to be done before filtering because
+                // filtering depends on the level. This is also done before any
+                // same-level communication because it's easier this way to
+                // avoid double counting.
+                J_cp[lev][idim]->setVal(0.0);
+                ablastr::coarsen::average::Coarsen(*J_cp[lev][idim],
+                                                   *J_fp[lev][idim],
+                                                   refRatio(lev-1));
+                if (current_buf[lev][idim])
+                {
+                    IntVect const& ng = J_cp[lev][idim]->nGrowVect();
+                    AMREX_ASSERT(ng.allLE(current_buf[lev][idim]->nGrowVect()));
+                    MultiFab::Add(*current_buf[lev][idim], *J_cp[lev][idim],
+                                  0, 0, ncomp, ng);
+                    mf_comm = std::make_unique<MultiFab>
+                        (*current_buf[lev][idim], amrex::make_alias, 0, ncomp);
+                }
+                else
+                {
+                    mf_comm = std::make_unique<MultiFab>
+                        (*J_cp[lev][idim], amrex::make_alias, 0, ncomp);
+                }
+            }
 
-    // For each level
-    // - apply filter to the coarse patch/buffer of `lev+1` and fine patch of `lev` (same resolution)
-    // - add the coarse patch/buffer of `lev+1` into the fine patch of `lev`
-    // - sum guard cells of the coarse patch of `lev+1` and fine patch of `lev`
-    for (int lev=0; lev <= finest_level; ++lev) {
-        AddCurrentFromFineLevelandSumBoundary(J_fp, J_cp, lev);
+            if (use_filter)
+            {
+                ApplyFilterJ(J_fp, lev, idim);
+            }
+            SumBoundaryJ(J_fp, lev, idim, period);
+        }
     }
 }
 
@@ -916,21 +1029,67 @@ WarpX::SyncRho (
     if (!charge_fp[0]) return;
     const int ncomp = charge_fp[0]->nComp();
 
-    // Restrict fine patch onto the coarse patch,
-    // before summing the guard cells of the fine patch
-    for (int lev = 1; lev <= finest_level; ++lev)
-    {
-        charge_cp[lev]->setVal(0.0);
-        const IntVect& refinement_ratio = refRatio(lev-1);
-        ablastr::coarsen::average::Coarsen(*charge_cp[lev], *charge_fp[lev], refinement_ratio );
-    }
+    // See comments in WarpX::SyncCurrent for an explanation of the algorithm.
 
-    // For each level
-    // - apply filter to the coarse patch/buffer of `lev+1` and fine patch of `lev` (same resolution)
-    // - add the coarse patch/buffer of `lev+1` into the fine patch of `lev`
-    // - sum guard cells of the coarse patch of `lev+1` and fine patch of `lev`
-    for (int lev=0; lev <= finest_level; ++lev) {
-        AddRhoFromFineLevelandSumBoundary(charge_fp, charge_cp, lev, 0, ncomp);
+    std::unique_ptr<MultiFab> mf_comm; // for communication between levels
+    for (int lev = finest_level; lev >= 0; --lev)
+    {
+        if (lev < finest_level)
+        {
+            auto const& period = Geom(lev).periodicity();
+
+            // On a coarse level, the data in mf_comm comes from the
+            // coarse patch of the fine level. They are unfiltered and uncommunicated.
+            // We need to add it to the fine patch of the current level.
+            MultiFab fine_lev_cp(charge_fp[lev]->boxArray(),
+                                 charge_fp[lev]->DistributionMap(),
+                                 ncomp, 0);
+            fine_lev_cp.setVal(0.0);
+            fine_lev_cp.ParallelAdd(*mf_comm, 0, 0, ncomp, mf_comm->nGrowVect(),
+                                    IntVect(0), period);
+            // We now need to create a mask to fix the double counting.
+            auto owner_mask = amrex::OwnerMask(fine_lev_cp, period);
+            auto const& mma = owner_mask->const_arrays();
+            auto const& sma = fine_lev_cp.const_arrays();
+            auto const& dma = charge_fp[lev]->arrays();
+            amrex::ParallelFor(fine_lev_cp, IntVect(0), ncomp,
+            [=] AMREX_GPU_DEVICE (int bno, int i, int j, int k, int n)
+            {
+                if (mma[bno](i,j,k) && sma[bno](i,j,k,n) != 0.0_rt) {
+                    dma[bno](i,j,k,n) += sma[bno](i,j,k,n);
+                }
+            });
+            // Now it's safe to apply filter and sumboundary on charge_cp
+            ApplyFilterandSumBoundaryRho(lev+1, lev, *charge_cp[lev+1], 0, ncomp);
+        }
+
+        if (lev > 0)
+        {
+            // On a fine level, we need to coarsen the data onto the coarse
+            // level. This needs to be done before filtering because
+            // filtering depends on the level. This is also done before any
+            // same-level communication because it's easier this way to
+            // avoid double counting.
+            charge_cp[lev]->setVal(0.0);
+            ablastr::coarsen::average::Coarsen(*charge_cp[lev],
+                                               *charge_fp[lev],
+                                               refRatio(lev-1));
+            if (charge_buf[lev])
+            {
+                IntVect const& ng = charge_cp[lev]->nGrowVect();
+                AMREX_ASSERT(ng.allLE(charge_buf[lev]->nGrowVect()));
+                MultiFab::Add(*charge_buf[lev], *charge_cp[lev], 0, 0, ncomp, ng);
+                mf_comm = std::make_unique<MultiFab>
+                    (*charge_buf[lev], amrex::make_alias, 0, ncomp);
+            }
+            else
+            {
+                mf_comm = std::make_unique<MultiFab>
+                    (*charge_cp[lev], amrex::make_alias, 0, ncomp);
+            }
+        }
+
+        ApplyFilterandSumBoundaryRho(lev, lev, *charge_fp[lev], 0, ncomp);
     }
 }
 
