@@ -724,14 +724,10 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                 auto const positionComponents = detail::getParticlePositionComponentLabels();
 #if defined(WARPX_DIM_RZ)
                 {
-                   std::shared_ptr<amrex::ParticleReal> z(
-                           new amrex::ParticleReal[numParticleOnTile],
-                           [](amrex::ParticleReal const *p) { delete[] p; }
-                   );
+                   auto z = currSpecies["position"]["z"].storeChunk<amrex::ParticleReal>({offset}, {numParticleOnTile64});
+                   auto zBuffer = z.currentBuffer();
                    for (auto i = 0; i < numParticleOnTile; i++)
-                       z.get()[i] = aos[i].pos(1);  // {0: "r", 1: "z"}
-                   std::string const positionComponent = "z";
-                   currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTile64});
+                       zBuffer[i] = aos[i].pos(1);  // {0: "r", 1: "z"}
                 }
 
                 //   reconstruct x and y from polar coordinates r, theta
@@ -741,47 +737,39 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
                                                  "openPMD: theta and tile size do not match");
                 {
-                    std::shared_ptr< amrex::ParticleReal > x(
-                            new amrex::ParticleReal[numParticleOnTile],
-                            [](amrex::ParticleReal const *p){ delete[] p; }
-                    );
-                    std::shared_ptr< amrex::ParticleReal > y(
-                            new amrex::ParticleReal[numParticleOnTile],
-                            [](amrex::ParticleReal const *p){ delete[] p; }
-                    );
+                    auto x = currSpecies["position"]["x"].storeChunk<amrex::ParticleReal>({offset}, {numParticleOnTile64});
+                    auto y = currSpecies["position"]["y"].storeChunk<amrex::ParticleReal>({offset}, {numParticleOnTile64});
+                    auto xBuffer = x.currentBuffer();
+                    auto yBuffer = y.currentBuffer();
                     for (auto i=0; i<numParticleOnTile; i++) {
                         auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
-                        x.get()[i] = r * std::cos(theta[i]);
-                        y.get()[i] = r * std::sin(theta[i]);
+                        xBuffer[i] = r * std::cos(theta[i]);
+                        yBuffer[i] = r * std::sin(theta[i]);
                     }
-                    currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
-                    currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
                 }
 #else
                 for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
-                    std::shared_ptr<amrex::ParticleReal> curr(
-                            new amrex::ParticleReal[numParticleOnTile],
-                            [](amrex::ParticleReal const *p) { delete[] p; }
-                    );
-                    for (auto i = 0; i < numParticleOnTile; i++) {
-                        curr.get()[i] = aos[i].pos(currDim);
-                    }
+                    // std::shared_ptr<amrex::ParticleReal> curr(
+                    //         new amrex::ParticleReal[numParticleOnTile],
+                    //         [](amrex::ParticleReal const *p) { delete[] p; }
+                    // );
                     std::string const positionComponent = positionComponents[currDim];
-                    currSpecies["position"][positionComponent].storeChunk(curr, {offset},
+                    auto curr = currSpecies["position"][positionComponent].storeChunk<amrex::ParticleReal>({offset},
                                                                           {numParticleOnTile64});
+                    auto currBuffer = curr.currentBuffer();
+                    for (auto i = 0; i < numParticleOnTile; i++) {
+                        currBuffer[i] = aos[i].pos(currDim);
+                    }
                 }
 #endif
 
                 // save particle ID after converting it to a globally unique ID
-                std::shared_ptr<uint64_t> ids(
-                        new uint64_t[numParticleOnTile],
-                        [](uint64_t const *p) { delete[] p; }
-                );
-                for (auto i = 0; i < numParticleOnTile; i++) {
-                    ids.get()[i] = ablastr::particles::localIDtoGlobal(aos[i].id(), aos[i].cpu());
-                }
                 auto const scalar = openPMD::RecordComponent::SCALAR;
-                currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
+                auto ids = currSpecies["id"][scalar].storeChunk<uint64_t>({offset}, {numParticleOnTile64});
+                auto idsBuffer = ids.currentBuffer();
+                for (auto i = 0; i < numParticleOnTile; i++) {
+                    idsBuffer[i] = ablastr::particles::localIDtoGlobal(aos[i].id(), aos[i].cpu());
+                }
 
             }
             //  save "extra" particle properties in AoS and SoA
@@ -951,16 +939,13 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
           auto currRecord = currSpecies[record_name];
           auto currRecordComp = currRecord[component_name];
 
-          std::shared_ptr< amrex::ParticleReal > d(
-              new amrex::ParticleReal[numParticleOnTile],
-              [](amrex::ParticleReal const *p){ delete[] p; }
-          );
-
-          for( auto kk=0; kk<numParticleOnTile; kk++ )
-               d.get()[kk] = aos[kk].rdata(idx);
-
-          currRecordComp.storeChunk(d,
+          auto d = currRecordComp.storeChunk<amrex::ParticleReal>(
                {offset}, {numParticleOnTile64});
+
+          auto dBuffer = d.currentBuffer();
+          for( auto kk=0; kk<numParticleOnTile; kk++ )
+               dBuffer[kk] = aos[kk].rdata(idx);
+
       }
     }
   }
