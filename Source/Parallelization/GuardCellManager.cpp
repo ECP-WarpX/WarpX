@@ -133,8 +133,11 @@ guardCellManager::Init (
 
     // Electromagnetic simulations: account for change in particle positions within half a time step
     // for current deposition and within one time step for charge deposition (since rho is needed
-    // both at the beginning and at the end of the PIC iteration)
-    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None)
+    // both at the beginning and at the end of the PIC iteration).
+    // For the hybrid-PIC solver, the same number of guard cells are used as for
+    // the electrostatic solver.
+    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::None &&
+        electromagnetic_solver_id != ElectromagneticSolverAlgo::HybridPIC)
     {
         for (int i = 0; i < AMREX_SPACEDIM; i++)
         {
@@ -251,7 +254,8 @@ guardCellManager::Init (
     }
 #ifdef WARPX_DIM_RZ
     else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
-             electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee) {
+             electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+             electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
         ng_FieldSolver  = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverF = CylindricalYeeAlgorithm::GetMaxGuardCell();
         ng_FieldSolverG = CylindricalYeeAlgorithm::GetMaxGuardCell();
@@ -264,7 +268,8 @@ guardCellManager::Init (
             ng_FieldSolverG = CartesianNodalAlgorithm::GetMaxGuardCell();
         } else if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
                    electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-                   electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+                   electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT ||
+                   electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ) {
             ng_FieldSolver  = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverF = CartesianYeeAlgorithm::GetMaxGuardCell();
             ng_FieldSolverG = CartesianYeeAlgorithm::GetMaxGuardCell();

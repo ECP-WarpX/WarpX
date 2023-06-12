@@ -18,6 +18,7 @@ from .Constants import my_constants
 from .Diagnostics import diagnostics, reduced_diagnostics
 from .EB2 import eb2
 from .Geometry import geometry
+from .HybridPICModel import hybridpicmodel
 from .Interpolation import interpolation
 from .Langmuirwave import langmuirwave
 from .Lasers import lasers, lasers_list
@@ -43,6 +44,7 @@ class WarpX(Bucket):
         argv += amr.attrlist()
         argv += amrex.attrlist()
         argv += geometry.attrlist()
+        argv += hybridpicmodel.attrlist()
         argv += boundary.attrlist()
         argv += algo.attrlist()
         argv += langmuirwave.attrlist()

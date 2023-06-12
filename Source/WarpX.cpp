@@ -17,6 +17,7 @@
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #   ifdef WARPX_DIM_RZ
@@ -350,6 +351,12 @@ WarpX::WarpX ()
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
     {
         current_fp_vay.resize(nlevs_max);
+    }
+
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
+    {
+        // Create hybrid-PIC model object if needed
+        m_hybrid_pic_model = std::make_unique<HybridPICModel>(nlevs_max);
     }
 
     F_cp.resize(nlevs_max);
@@ -741,7 +748,6 @@ WarpX::ReadParameters ()
         pp_boundary.query("potential_hi_z", m_poisson_boundary_handler.potential_zhi_str);
         pp_warpx.query("eb_potential(x,y,z,t)", m_poisson_boundary_handler.potential_eb_str);
         m_poisson_boundary_handler.buildParsers();
-
 #ifdef WARPX_DIM_RZ
         pp_boundary.query("verboncoeur_axis_correction", verboncoeur_axis_correction);
 #endif
@@ -1898,6 +1904,11 @@ WarpX::ClearLevel (int lev)
         current_buf[lev][i].reset();
     }
 
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
+    {
+        m_hybrid_pic_model->ClearLevel(lev);
+    }
+
     charge_buf[lev].reset();
 
     current_buffer_masks[lev].reset();
@@ -2177,6 +2188,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             dm, ncomps, ngEB, tag("vector_potential_grad_buf_b_stag[z]"), 0.0_rt);
     }
 
+    // Allocate extra multifabs needed by the kinetic-fluid hybrid algorithm.
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
+    {
+        m_hybrid_pic_model->AllocateLevelMFs(
+            lev, ba, dm, ncomps, ngJ, ngRho, jx_nodal_flag, jy_nodal_flag,
+            jz_nodal_flag, rho_nodal_flag
+        );
+    }
+
     if (fft_do_time_averaging)
     {
         AllocInitMultiFab(Bfield_avg_fp[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, tag("Bfield_avg_fp[x]"));
@@ -2234,8 +2254,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 #endif
 
-    bool deposit_charge = do_dive_cleaning || (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame  ||
-                                               electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic);
+    bool deposit_charge = do_dive_cleaning ||
+                          (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
+                          (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) ||
+                          (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC);
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
     }
