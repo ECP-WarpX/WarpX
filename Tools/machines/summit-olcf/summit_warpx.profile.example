@@ -22,13 +22,13 @@ export LD_LIBRARY_PATH=$HOME/sw/summit/lapackpp-master/lib64:$LD_LIBRARY_PATH
 module load boost/1.76.0
 
 # optional: for openPMD support
-module load adios2/2.7.1
-module load hdf5/1.10.7
+module load adios2/2.8.1
+module load hdf5/1.12.2
 
 # optional: for openPMD support (GNUmake only)
 #module load ums
 #module load ums-aph114
-#module load openpmd-api/0.14.2
+#module load openpmd-api/0.15.1
 
 # often unstable at runtime with dependencies
 module unload darshan-runtime

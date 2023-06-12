@@ -84,7 +84,7 @@ void FiniteDifferenceSolver::EvolveE (
 
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("EvolveE: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveE: Unknown algorithm");
     }
 
 }

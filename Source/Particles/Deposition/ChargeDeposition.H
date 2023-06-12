@@ -8,8 +8,8 @@
 #ifndef CHARGEDEPOSITION_H_
 #define CHARGEDEPOSITION_H_
 
-#include "Parallelization/KernelTimer.H"
 #include "Particles/Deposition/SharedDepositionUtils.H"
+#include "ablastr/parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -99,8 +99,9 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
 #if defined(WARPX_USE_GPUCLOCK)
-            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                    == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
             // --- Get particle quantities
             amrex::Real wq = q*wp[ip]*invvol;
@@ -203,7 +204,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
         }
         );
 #if defined(WARPX_USE_GPUCLOCK)
-    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+    if (cost && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         amrex::Gpu::streamSynchronize();
         *cost += *cost_real;
         amrex::The_Managed_Arena()->free(cost_real);
@@ -321,7 +322,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
-                                      "Tile size too big for GPU shared memory charge deposition");
+                                     "Tile size too big for GPU shared memory charge deposition");
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
@@ -388,8 +389,9 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             unsigned int ip = permutation[ip_orig];
 
 #if defined(WARPX_USE_GPUCLOCK)
-            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
             // --- Get particle quantities
             amrex::Real wq = q*wp[ip]*invvol;

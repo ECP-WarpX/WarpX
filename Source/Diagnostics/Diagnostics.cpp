@@ -376,6 +376,11 @@ Diagnostics::InitDataAfterRestart ()
 void
 Diagnostics::InitData ()
 {
+    auto& warpx = WarpX::GetInstance();
+
+    // Get current finest level available
+    const int finest_level = warpx.finestLevel();
+
     // initialize member variables and arrays in base class::Diagnostics
     InitBaseData();
     // initialize member variables and arrays specific to each derived class
@@ -386,7 +391,7 @@ Diagnostics::InitData ()
         // This includes full diagnostics and BTD as well as cell-center functors for BTD.
         // Note that the cell-centered data for BTD is computed for all levels and hence
         // the corresponding functor is also initialized for all the levels
-        for (int lev = 0; lev < nmax_lev; ++lev) {
+        for (int lev = 0; lev <= finest_level; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
             InitializeFieldFunctors(lev);
         }
@@ -482,19 +487,19 @@ Diagnostics::InitBaseData ()
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
             m_diag_name);
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "To use SENSEI in situ, compile with USE_SENSEI=TRUE"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "To use SENSEI in situ, compile with USE_SENSEI=TRUE");
 #endif
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
         m_flush_format = std::make_unique<FlushFormatOpenPMD>(m_diag_name);
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "To use openpmd output format, need to compile with USE_OPENPMD=TRUE"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "To use openpmd output format, need to compile with USE_OPENPMD=TRUE");
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err(
-            "unknown output format"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "unknown output format");
     }
 
     // allocate vector of buffers then allocate vector of levels for each buffer

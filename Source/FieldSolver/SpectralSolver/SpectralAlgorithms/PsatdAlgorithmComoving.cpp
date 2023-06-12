@@ -13,6 +13,7 @@
 #include <AMReX_GpuComplex.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>
 
@@ -32,7 +33,6 @@ PsatdAlgorithmComoving::PsatdAlgorithmComoving (const SpectralKSpace& spectral_k
                                                 const bool update_with_rho)
      // Members initialization
      : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
-       m_spectral_index(spectral_index),
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
        // the infinite order option, the argument grid_type=GridType::Staggered is then irrelevant)
        kx_vec(spectral_kspace.getModifiedKComponent(dm, 0, -1, GridType::Staggered)),
@@ -198,21 +198,21 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
         {
             // Calculate norm of finite-order k vector
             const amrex::Real knorm_mod = std::sqrt(
-                std::pow(kx_mod[i], 2) +
+                amrex::Math::powi<2>(kx_mod[i]) +
 #if defined(WARPX_DIM_3D)
-                std::pow(ky_mod[j], 2) +
-                std::pow(kz_mod[k], 2));
+                amrex::Math::powi<2>(ky_mod[j]) +
+                amrex::Math::powi<2>(kz_mod[k]));
 #else
-                std::pow(kz_mod[j], 2));
+                amrex::Math::powi<2>(kz_mod[j]));
 #endif
             // Calculate norm of infinite-order k vector
             const amrex::Real knorm = std::sqrt(
-                std::pow(kx[i], 2) +
+                amrex::Math::powi<2>(kx[i]) +
 #if defined(WARPX_DIM_3D)
-                std::pow(ky[j], 2) +
-                std::pow(kz[k], 2));
+                amrex::Math::powi<2>(ky[j]) +
+                amrex::Math::powi<2>(kz[k]));
 #else
-                std::pow(kz[j], 2));
+                amrex::Math::powi<2>(kz[j]));
 #endif
             // Physical constants c, c**2, and epsilon_0, and imaginary unit
             constexpr amrex::Real c   = PhysConst::c;
@@ -501,8 +501,8 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
 void
 PsatdAlgorithmComoving::VayDeposition (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented for comoving PSATD"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented for comoving PSATD");
 }
 
 #endif // WARPX_USE_PSATD

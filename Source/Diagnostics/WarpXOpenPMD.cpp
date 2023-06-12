@@ -16,6 +16,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "OpenPMDHelpFunction.H"
 
 #include <ablastr/particles/IndexHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -55,41 +56,6 @@
 namespace detail
 {
 #ifdef WARPX_USE_OPENPMD
-#   ifdef _WIN32
-    /** Replace all occurrences of a string
-     *
-     * Same as openPMD::auxiliary::replace_all (not public in <=0.14.2)
-     *
-     * @param[in] s input string
-     * @param[in] target string to be replaced
-     * @param[in] replacement string to be replaced with
-     * @return modified value of s
-     */
-    inline std::string
-    replace_all(std::string s,
-                std::string const& target,
-                std::string const& replacement)
-    {
-        std::string::size_type pos = 0;
-        auto tsize = target.size();
-        assert(tsize > 0);
-        auto rsize = replacement.size();
-        while (true)
-        {
-            pos = s.find(target, pos);
-            if (pos == std::string::npos)
-                break;
-            s.replace(pos, tsize, replacement);
-            // Allow replacing recursively, but only if
-            // the next replaced substring overlaps with
-            // some parts of the original word.
-            // This avoids loops.
-            pos += rsize - std::min(tsize - 1, rsize);
-        }
-        s.shrink_to_fit();
-        return s;
-    }
-#   endif
 
     /** \brief Convert a snake_case string to a camelCase one.
      *
@@ -416,18 +382,6 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
    m_OpenPMDFileType(std::move(openPMDFileType)),
    m_fieldPMLdirections(std::move(fieldPMLdirections))
 {
-  // pick first available backend if default is chosen
-  if( m_OpenPMDFileType == "default" )
-#if openPMD_HAVE_ADIOS2==1
-    m_OpenPMDFileType = "bp";
-#elif openPMD_HAVE_ADIOS1==1
-    m_OpenPMDFileType = "bp";
-#elif openPMD_HAVE_HDF5==1
-    m_OpenPMDFileType = "h5";
-#else
-    m_OpenPMDFileType = "json";
-#endif
-
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
 }
@@ -447,7 +401,7 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
   filepath.append("/");
   // transform paths for Windows
 #ifdef _WIN32
-  filepath = detail::replace_all(filepath, "/", "\\");
+  filepath = openPMD::auxiliary::replace_all(filepath, "/", "\\");
 #endif
 
   std::string filename = "openpmd";
@@ -539,7 +493,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
 #else
-        amrex::Abort(Utils::TextMsg::Err("openPMD-api not built with MPI support!"));
+        WARPX_ABORT_WITH_MESSAGE("openPMD-api not built with MPI support!");
 #endif
     } else {
         m_Series = std::make_unique<openPMD::Series>(filepath, access, m_OpenPMDoptions);
@@ -572,13 +526,14 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
     PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
-    PinnedMemoryParticleContainer tmp;
-    if (isBTD || use_pinned_pc) {
-        if (!pinned_pc->isDefined()) continue; // Skip to the next particle container
-        tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
-    } else {
-        tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-    }
+    if (isBTD || use_pinned_pc)
+        if (!pinned_pc->isDefined())
+            continue;  // Skip to the next particle container
+
+    PinnedMemoryParticleContainer tmp = (isBTD || use_pinned_pc) ?
+        pinned_pc->make_alike<amrex::PinnedArenaAllocator>() :
+        pc->make_alike<amrex::PinnedArenaAllocator>();
+
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
@@ -1022,8 +977,8 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     for (auto idx=0; idx<real_counter; idx++) {
       auto ii = ParticleIter::ContainerType::NStructReal + idx;  // jump over extra AoS names
       if (write_real_comp[ii]) {
-        getComponentRecord(real_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetRealData(idx)),
-          {offset}, {numParticleOnTile64});
+        getComponentRecord(real_comp_names[ii]).storeChunkRaw(
+          soa.GetRealData(idx).data(), {offset}, {numParticleOnTile64});
       }
     }
   }
@@ -1033,8 +988,8 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     for (auto idx=0; idx<int_counter; idx++) {
       auto ii = ParticleIter::ContainerType::NStructInt + idx;  // jump over extra AoS names
       if (write_int_comp[ii]) {
-        getComponentRecord(int_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetIntData(idx)),
-          {offset}, {numParticleOnTile64});
+        getComponentRecord(int_comp_names[ii]).storeChunkRaw(
+          soa.GetIntData(idx).data(), {offset}, {numParticleOnTile64});
       }
     }
   }
@@ -1487,8 +1442,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 #endif
                 {
                     amrex::Real const *local_data = fab.dataPtr(icomp);
-                    mesh_comp.storeChunk(openPMD::shareRaw(local_data),
-                                         chunk_offset, chunk_size);
+                    mesh_comp.storeChunkRaw(
+                        local_data, chunk_offset, chunk_size);
                 }
             }
         } // icomp store loop

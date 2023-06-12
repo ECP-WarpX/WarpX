@@ -12,6 +12,7 @@ Abbreviations
 * **2FA:** `Two-factor-authentication <https://en.wikipedia.org/wiki/Multi-factor_authentication>`__
 * **ABLASTR:** Accelerated BLAST Recipes, the library inside WarpX to share functionality with other BLAST codes
 * **ALCF:** `Argonne Leadership Computing Facility <https://www.alcf.anl.gov/>`__, a supercomputing center located near Chicago, IL (USA)
+* **ALS:** `Advance Light Source <https://als.lbl.gov/>`__, a U.S. Department of Energy scientific user facility at Lawrence Berkeley National Laboratory
 * **BLAST:** `Beam, Plasma & Accelerator Simulation Toolkit <https://blast.lbl.gov>`__
 * **AMR:** adaptive mesh-refinement
 * **BC:** boundary condition (of a simulation)
@@ -28,10 +29,11 @@ Abbreviations
 * **ES:** electrostatic, e.g. ES PIC
 * **FDTD:** `Finite-difference time-domain or Yee's method <https://en.wikipedia.org/wiki/Finite-difference_time-domain_method>`__, a class of grid-based finite-difference field solvers
 * **GPU:** originally graphics processing unit, now used for fast `general purpose computing (GPGPU) <https://en.wikipedia.org/wiki/Graphics_processing_unit#Stream_processing_and_general_purpose_GPUs_(GPGPU)>`__; also called (hardware) accelerator
+* **IO:** input/output, usually files and/or data
 * **IPO:** `interprocedural optimization <https://en.wikipedia.org/wiki/Interprocedural_optimization>`__, a collection of compiler optimization techniques that analyze the whole code to avoid duplicate calculations and optimize performance
 * **LDRD:** Laboratory Directed Research and Development, a :ref:`funding program in U.S. DOE laboratories <funding>` that kick-started ABLASTR development
 * **LPA:** laser-plasma acceleration, historically used for laser-electron acceleration
-* **LPI:** laser-plasma interaction
+* **LPI:** laser-plasma interaction (often for laser-solid physics) *or* laser-plasma instability (often in fusion physics), depending on context
 * **LTO:** `link-time optimization <https://en.wikipedia.org/wiki/Interprocedural_optimization#WPO_and_LTO>`__, program optimizations for file-by-file compilation that optimize object files before linking them together to an executable
 * **LWFA:** laser-wakefield acceleration (of electrons/leptons)
 * **MR:** mesh-refinement

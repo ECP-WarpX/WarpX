@@ -8,8 +8,8 @@
 #ifndef CURRENTDEPOSITION_H_
 #define CURRENTDEPOSITION_H_
 
-#include "Parallelization/KernelTimer.H"
 #include "Particles/Deposition/SharedDepositionUtils.H"
+#include "ablastr/parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -126,8 +126,9 @@ void doDepositionShapeN (const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
 #if defined(WARPX_USE_GPUCLOCK)
-            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
 
             // --- Get particle quantities
@@ -340,7 +341,8 @@ void doDepositionShapeN (const GetParticlePosition& GetPosition,
  * \tparam depos_order deposition order
  * \param GetPosition  A functor for returning the particle position.
  * \param wp           Pointer to array of particle weights.
- * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.  * \param ion_lev      Pointer to array of particle ionization level. This is
+ * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
+ * \param ion_lev      Pointer to array of particle ionization level. This is
                          required to have the charge of each macroparticle
                          since q is a scalar. For non-ionizable species,
                          ion_lev is a null pointer.
@@ -402,7 +404,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     // Loop over particles and deposit into jx_fab, jy_fab and jz_fab
 #if defined(WARPX_USE_GPUCLOCK)
     amrex::Real* cost_real = nullptr;
-    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+    if (cost && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         cost_real = (amrex::Real *) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
         *cost_real = 0._rt;
     }
@@ -412,7 +414,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const auto domain = geom.Domain();
 
     amrex::Box sample_tbox(IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
-    sample_tbox.grow((depos_order+1) / 2);
+    sample_tbox.grow(depos_order);
 
     amrex::Box sample_tbox_x = convert(sample_tbox, jx_type);
     amrex::Box sample_tbox_y = convert(sample_tbox, jy_type);
@@ -425,7 +427,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const auto offsets_ptr = a_bins.offsetsPtr();
 
     const std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
-    //amrex::Print() << "current deposition shared mem request " << shared_mem_bytes << "\n";
     const amrex::IntVect bin_size = WarpX::shared_tilesize;
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
@@ -437,8 +438,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
             [=] AMREX_GPU_DEVICE () noexcept {
 #if defined(WARPX_USE_GPUCLOCK)
-        KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+        const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
         const int bin_id = blockIdx.x;
         const unsigned int bin_start = offsets_ptr[bin_id];
@@ -465,7 +467,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             getTileIndex(iv, box, true, bin_size, buffer_box);
         }
 
-        buffer_box.grow((depos_order+1)/2);
+        buffer_box.grow(depos_order);
         Box tbox_x = convert(buffer_box, jx_type);
         Box tbox_y = convert(buffer_box, jy_type);
         Box tbox_z = convert(buffer_box, jz_type);
@@ -528,7 +530,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         addLocalToGlobal(tbox_z, jz_arr, jz_buff);
     });
 #if defined(WARPX_USE_GPUCLOCK)
-    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+    if (cost && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         amrex::Gpu::streamSynchronize();
         *cost += *cost_real;
         amrex::The_Managed_Arena()->free(cost_real);
@@ -650,8 +652,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long const ip) {
 #if defined(WARPX_USE_GPUCLOCK)
-            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
 
             // --- Get particle quantities
@@ -1045,8 +1048,9 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)
     {
 #if defined(WARPX_USE_GPUCLOCK)
-        KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                             == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+        const auto KernelTimer = ablastr::parallelization::KernelTimer(
+            cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+            cost_real);
 #endif
 
         // Inverse of Lorentz factor gamma

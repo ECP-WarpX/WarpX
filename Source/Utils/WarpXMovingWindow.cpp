@@ -233,12 +233,23 @@ WarpX::MoveWindow (const int step, bool move_j)
             }
         }
 
-        // Shift scalar field F with div(E) cleaning
+        // Shift scalar field F with div(E) cleaning in valid domain
         // TODO: shift F from pml_rz for RZ geometry with PSATD, once implemented
-        if (do_dive_cleaning)
+        if (F_fp[lev])
         {
             // Fine grid
             shiftMF(*F_fp[lev], geom[lev], num_shift, dir, lev, do_update_cost);
+            if (lev > 0)
+            {
+                // Coarse grid
+                shiftMF(*F_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
+            }
+        }
+
+        // Shift scalar field F with div(E) cleaning in pml region
+        if (do_pml_dive_cleaning)
+        {
+            // Fine grid
             if (do_pml && pml[lev]->ok())
             {
                 amrex::MultiFab* pml_F = pml[lev]->GetF_fp();
@@ -247,7 +258,6 @@ WarpX::MoveWindow (const int step, bool move_j)
             if (lev > 0)
             {
                 // Coarse grid
-                shiftMF(*F_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
                 if (do_pml && pml[lev]->ok())
                 {
                     amrex::MultiFab* pml_F = pml[lev]->GetF_cp();
@@ -256,12 +266,23 @@ WarpX::MoveWindow (const int step, bool move_j)
             }
         }
 
-        // Shift scalar field G with div(B) cleaning
+        // Shift scalar field G with div(B) cleaning in valid domain
         // TODO: shift G from pml_rz for RZ geometry with PSATD, once implemented
-        if (do_divb_cleaning)
+        if (G_fp[lev])
         {
             // Fine grid
             shiftMF(*G_fp[lev], geom[lev], num_shift, dir, lev, do_update_cost);
+            if (lev > 0)
+            {
+                // Coarse grid
+                shiftMF(*G_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
+            }
+        }
+
+        // Shift scalar field G with div(B) cleaning in pml region
+        if (do_pml_divb_cleaning)
+        {
+            // Fine grid
             if (do_pml && pml[lev]->ok())
             {
                 amrex::MultiFab* pml_G = pml[lev]->GetG_fp();
@@ -270,7 +291,6 @@ WarpX::MoveWindow (const int step, bool move_j)
             if (lev > 0)
             {
                 // Coarse grid
-                shiftMF(*G_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
                 if (do_pml && pml[lev]->ok())
                 {
                     amrex::MultiFab* pml_G = pml[lev]->GetG_cp();

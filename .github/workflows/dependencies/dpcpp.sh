@@ -24,8 +24,10 @@ sudo apt-get update
 df -h
 # Install and reduce disk space
 # https://github.com/ECP-WarpX/WarpX/pull/1566#issuecomment-790934878
-tries=0
-while [[ ${tries} -lt 5 ]]
+
+# try apt install up to five times, to avoid connection splits
+status=1
+for itry in {1..5}
 do
     sudo apt-get install -y --no-install-recommends \
         build-essential \
@@ -35,10 +37,10 @@ do
         g++ gfortran    \
         libopenmpi-dev  \
         openmpi-bin     \
-        && { sudo apt-get clean; tries=6; }     \
-        || { sleep 10; tries=$(( tries + 1 )); }
+        && { sudo apt-get clean; status=0; break; }  \
+        || { sleep 10; }
 done
-if [[ ${tries} -eq 5 ]]; then exit 1; fi
+if [[ ${status} -ne 0 ]]; then exit 1; fi
 
 du -sh /opt/intel/oneapi/
 du -sh /opt/intel/oneapi/*/*

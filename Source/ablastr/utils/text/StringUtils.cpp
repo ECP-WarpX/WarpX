@@ -10,7 +10,8 @@
 
 #include <sstream>
 
-std::vector<std::string> automatic_text_wrap(
+std::vector<std::string>
+ablastr::utils::text::automatic_text_wrap(
     const std::string& text, const int max_line_length){
 
     auto ss_text = std::stringstream{text};
@@ -38,7 +39,8 @@ std::vector<std::string> automatic_text_wrap(
                 }
                 else{
                     wrapped_text_lines.push_back(ss_line_out.str());
-                    ss_line_out = std::stringstream{word};
+                    ss_line_out.str("");
+                    ss_line_out << word;
                     counter = wlen;
                 }
             }

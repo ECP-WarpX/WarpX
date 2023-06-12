@@ -1,0 +1,6 @@
+Checks: '-*,
+    cppcoreguidelines-avoid-goto,
+    modernize-use-nullptr
+    '
+
+HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'
