@@ -324,7 +324,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         post_phi_calculation = ElectrostaticSolver::EBCalcEfromPhiPerLevel(e_field);
     }
 
-    const std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory;
+    std::optional<amrex::Vector<amrex::EBFArrayBoxFactory const *> > eb_farray_box_factory;
     amrex::Vector<
         amrex::EBFArrayBoxFactory const *
     > factories;
