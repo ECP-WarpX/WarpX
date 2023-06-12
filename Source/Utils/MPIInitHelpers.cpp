@@ -46,6 +46,7 @@ namespace utils
         int thread_provided = -1;
         MPI_Init_thread(&argc, &argv, thread_required, &thread_provided);
 #else
+        amrex::ignore_unused(argc, argv);
         const int thread_provided = -1;
 #endif
         return std::make_pair(thread_required, thread_provided);
