@@ -289,6 +289,9 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     }
 
 #if defined(AMREX_USE_EB)
+
+    std::optional<ElectrostaticSolver::EBCalcEfromPhiPerLevel> post_phi_calculation;
+
     // EB: use AMReX to directly calculate the electric field since with EB's the
     // simple finite difference scheme in WarpX::computeE sometimes fails
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||

@@ -139,7 +139,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
         );
     }
 
-    amrex::LPInfo info;
+    const amrex::LPInfo info;
 
     // Loop over dimensions of A to solve each component individually
     for (int lev=0; lev<=finest_level; lev++) {

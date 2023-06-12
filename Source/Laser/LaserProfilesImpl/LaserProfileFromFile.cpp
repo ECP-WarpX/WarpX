@@ -362,7 +362,7 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk (int t_begin,
     //Indices of the first and last timestep to read
     auto i_first = max(0, t_begin);
     auto i_last = min(t_end-1, m_params.nt-1);
-    int data_size = (i_last-i_first+1)*m_params.nx*m_params.ny;
+    const int data_size = (i_last-i_first+1)*m_params.nx*m_params.ny;
     m_params.E_binary_data.resize(data_size);
     Vector<Real> h_E_binary_data(m_params.E_binary_data.size());
     if(ParallelDescriptor::IOProcessor()){

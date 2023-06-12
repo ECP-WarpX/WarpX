@@ -91,12 +91,14 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     ReadParameters();
 
     // Initialize temporary local arrays for charge/current deposition
-    int num_threads = 1;
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
 #pragma omp single
-    num_threads = omp_get_num_threads();
+    const int num_threads = omp_get_num_threads();
+#else
+    const int num_threads = 1;
 #endif
+
     local_rho.resize(num_threads);
     local_jx.resize(num_threads);
     local_jy.resize(num_threads);
