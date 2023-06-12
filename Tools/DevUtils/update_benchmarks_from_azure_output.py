@@ -1,50 +1,65 @@
+# Copyright 2023 Neil Zaim
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
 import re
 import sys
 import json
 
+'''
+This Python script updates the Azure benchmarks automatically using a raw Azure output textfile
+that is given as the first and only argument of the script.
+
+In the Azure output, we read the lines contained between
+"New file for Test_Name:"
+and the next occurence of
+"'----------------'"
+And use these lines to update the benchmarks
+'''
+
 azure_output_filename = sys.argv[1]
 
-pattern_test_name = 'working on test: (?P<testname>[\w\-]*)'
-pattern_keys_value = 'Plotfile : \[(?P<key1>.*),(?P<key2>.*)\] (?P<value>\w.*)'
+pattern_test_name = 'New file for (?P<testname>[\w\-]*)'
+closing_string = '----------------'
 benchmark_path = "../../Regression/Checksum/benchmarks_json/"
 benchmark_suffix = ".json"
 
-json_file_updated = False
+first_line_read = False
 current_test = ""
-
-def dump_json_data(json_filepath, json_data):
-    with open(json_filepath, "w") as f_json:
-        json.dump(json_data, f_json, indent=2)
 
 with open(azure_output_filename, "r") as f:
     for line in f:
-        # Here we search lines that read, for example,
-        # "working on test: bilinear_filter"
-        # and we set current_test = "bilinear_filter"
-        match_test_name = re.search(pattern_test_name, line)
-        if match_test_name:
-            # If needed, update json file
-            if json_file_updated:
-                dump_json_data(json_filepath, json_data)
-            current_test = match_test_name.group('testname')
-            json_file_updated = False
 
-        # Here we search lines that read, for example,
-        # "Plotfile : [lev=0,jx] 1.012345678901234e+16"
-        # and we update the corresponding json data with the new value
-        match_keys_value = re.search(pattern_keys_value, line)
-        if match_keys_value:
-            # If not already done, read the json file and store it in json_data
-            if not json_file_updated:
+        if current_test == "":
+            # Here we search lines that read, for example,
+            # "New file for LaserAcceleration_BTD"
+            # and we set current_test = "LaserAcceleration_BTD"
+            match_test_name = re.search(pattern_test_name, line)
+            if match_test_name:
+                current_test = match_test_name.group('testname')
+                new_file_string = ""
+
+        else:
+            # We add each line to the new file string until we find the line containing
+            # "----------------"
+            # which indicates that we have read the new file entirely
+
+            if not closing_string in line:
+                if not first_line_read:
+                    # Raw Azure output comes with a prefix at the beginning of each line that we do
+                    # not need here. The first line that we will read is the prefix followed by the
+                    # "{" character, so we determine how long the prefix is by finding the last
+                    # occurence of the "{" character in this line.
+                    azure_indent = line.rfind('{')
+                    first_line_read = True
+                new_file_string += line[azure_indent:]
+
+            else:
+                # We have read the new file entirely. Dump it in the json file.
+                new_file_json = json.loads(new_file_string)
                 json_filepath = benchmark_path+current_test+benchmark_suffix
-                with open(json_filepath, "r") as f_json:
-                    json_data = json.load(f_json)
-            key1 = match_keys_value.group('key1') # "lev=0" in the example
-            key2 = match_keys_value.group('key2') # "jx" in the example
-            value = float(match_keys_value.group('value')) # "1.012345678901234e+16" in the example
-            json_data[key1][key2] = value
-            json_file_updated = True
-
-# If needed, update json file for the last test
-if json_file_updated:
-    dump_json_data(json_filepath, json_data)
+                with open(json_filepath, "w") as f_json:
+                    json.dump(new_file_json, f_json, indent=2)
+                current_test = ""
