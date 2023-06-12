@@ -4,9 +4,9 @@
 #
 # License: BSD-3-Clause-LBNL
 
+import json
 import re
 import sys
-import json
 
 '''
 This Python script updates the Azure benchmarks automatically using a raw Azure output textfile
