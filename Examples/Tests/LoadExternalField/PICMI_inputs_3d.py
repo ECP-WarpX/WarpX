@@ -53,7 +53,7 @@ ion_dist = picmi.ParticleListDistribution(
 
 ions = picmi.Species(
         particle_type='H',
-        name='ion', charge='q_e',mass="m_p",
+        name='proton', charge='q_e',mass="m_p",
         warpx_do_not_deposit=1,
         initial_distribution=ion_dist
         )
