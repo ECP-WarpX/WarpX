@@ -74,7 +74,6 @@ initial_field = picmi.LoadInitialField(
 grid = picmi.Cartesian3DGrid(
         number_of_cells=[nx, ny, nz],
         warpx_max_grid_size=max_grid_size,
-        warpx_blocking_factor=max_grid_size,
         lower_bound=[xmin, ymin, zmin],
         upper_bound=[xmax, ymax, zmax],
         lower_boundary_conditions=['dirichlet', 'dirichlet', 'dirichlet'],
