@@ -41,14 +41,16 @@ Optional dependencies include:
   - `lasy <https://lasydoc.readthedocs.io>`__
   - see our ``requirements.txt`` file for compatible versions
 
+If you are on a high-performance computing (HPC) system, then :ref:`please see our separate HPC documentation <install-hpc>`.
 
-Install
--------
-
+For all other systems, we recommend to use a **package dependency manager**:
 Pick *one* of the installation methods below to install all dependencies for WarpX development in a consistent manner.
 
+
 Conda (Linux/macOS/Windows)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
+
+`Conda <https://conda.io>`__/`Mamba <https://mamba.readthedocs.io>`__ are cross-compatible, user-level package managers.
 
 .. tip::
 
@@ -60,6 +62,13 @@ Conda (Linux/macOS/Windows)
       conda install -n base conda-libmamba-solver
       conda config --set solver libmamba
 
+   We recommend to deactivate that conda self-activates its ``base`` environment.
+   This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.
+
+   .. code-block:: bash
+
+      conda config --set auto_activate_base false
+
 .. tab-set::
 
    .. tab-item:: With MPI (only Linux/macOS)
@@ -67,7 +76,7 @@ Conda (Linux/macOS/Windows)
       .. code-block:: bash
 
          conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
-         source activate warpx-cpu-mpich-dev
+         conda activate warpx-cpu-mpich-dev
 
          # compile WarpX with -DWarpX_MPI=ON
          # for pip, use: export WARPX_MPI=ON
@@ -77,23 +86,17 @@ Conda (Linux/macOS/Windows)
       .. code-block:: bash
 
          conda create -n warpx-cpu-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
-         source activate warpx-cpu-dev
+         conda activate warpx-cpu-dev
 
          # compile WarpX with -DWarpX_MPI=OFF
          # for pip, use: export WARPX_MPI=OFF
 
-.. tip::
 
-   A general option to deactivate that conda self-activates its base environment.
-   This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.
+Spack (Linux/macOS)
+-------------------
 
-   .. code-block:: bash
-
-      conda config --set auto_activate_base false
-
-
-Spack (macOS/Linux)
-^^^^^^^^^^^^^^^^^^^
+`Spack <https://spack.readthedocs.io>`__ is a user-level package manager.
+It is primarily written for Linux, with slightly less support for macOS, and future support for Windows.
 
 First, download a `WarpX Spack desktop development environment <https://github.com/ECP-WarpX/WarpX/blob/development/Tools/machines/desktop>`__ of your choice.
 For most desktop developments, pick the OpenMP environment for CPUs unless you have a supported GPU.
@@ -144,7 +147,9 @@ For ``pip``, use ``export WARPX_MPI=ON``.
 
 
 Brew (macOS/Linux)
-^^^^^^^^^^^^^^^^^^
+------------------
+
+`Homebrew (Brew) <https://brew.sh>`__ is a user-level package manager primarily for `Apple macOS <https://en.wikipedia.org/wiki/MacOS>`__, but also supports Linux.
 
 .. code-block:: bash
 
@@ -181,8 +186,10 @@ Compile WarpX with ``-DWarpX_MPI=ON``.
 For ``pip``, use ``export WARPX_MPI=ON``.
 
 
-Apt (Debian/Ubuntu)
-^^^^^^^^^^^^^^^^^^^
+APT (Debian/Ubuntu Linux)
+-------------------------
+
+The `Advanced Package Tool (APT) <https://en.wikipedia.org/wiki/APT_(software)>`__ is a system-level package manager on Debian-based Linux distributions, including Ubuntu.
 
 .. tab-set::
 
