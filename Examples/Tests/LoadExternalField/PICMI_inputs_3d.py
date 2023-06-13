@@ -107,7 +107,7 @@ sim = picmi.Simulation(
         warpx_serialize_initial_conditions=False,
         warpx_grid_type='collocated',
         warpx_do_dynamic_scheduling=False,
-        warpx_use_filter=use_filter
+        warpx_use_filter=use_filter,
         time_step_size=dt,
         particle_shape=particle_shape
         )
