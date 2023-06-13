@@ -493,25 +493,25 @@ WarpX::ReadParameters ()
     CheckDims();
 
     {
-        ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
+        const ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         utils::parser::queryWithParser(pp, "max_step", max_step);
         utils::parser::queryWithParser(pp, "stop_time", stop_time);
         pp.query("authors", authors);
     }
 
     {
-        ParmParse pp_amr("amr");
+        const ParmParse pp_amr("amr");
 
         pp_amr.query("restart", restart_chkfile);
     }
 
     {
-        ParmParse pp_algo("algo");
+        const ParmParse pp_algo("algo");
         electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
     }
 
     {
-        ParmParse pp_warpx("warpx");
+        const ParmParse pp_warpx("warpx");
 
         //"Synthetic" warning messages may be injected in the Warning Manager via
         // inputfile for debug&testing purposes.
@@ -569,7 +569,7 @@ WarpX::ReadParameters ()
 
 #if defined(__linux__) || defined(__APPLE__)
         for (const std::string &str : signals_in) {
-            int sig = SignalHandling::parseSignalNameToNumber(str);
+            const int sig = SignalHandling::parseSignalNameToNumber(str);
             SignalHandling::signal_conf_requests[SignalHandling::SIGNAL_REQUESTS_BREAK][sig] = true;
         }
         signals_in.clear();
@@ -580,12 +580,12 @@ WarpX::ReadParameters ()
 
         bool have_checkpoint_diagnostic = false;
 
-        ParmParse pp("diagnostics");
+        const ParmParse pp("diagnostics");
         std::vector<std::string> diags_names;
         pp.queryarr("diags_names", diags_names);
 
         for (const auto &diag : diags_names) {
-            ParmParse dd(diag);
+            const ParmParse dd(diag);
             std::string format;
             dd.query("format", format);
             if (format == "checkpoint") {
@@ -597,7 +597,7 @@ WarpX::ReadParameters ()
         pp_warpx.queryarr("checkpoint_signals", signals_in);
 #if defined(__linux__) || defined(__APPLE__)
         for (const std::string &str : signals_in) {
-            int sig = SignalHandling::parseSignalNameToNumber(str);
+            const int sig = SignalHandling::parseSignalNameToNumber(str);
             SignalHandling::signal_conf_requests[SignalHandling::SIGNAL_REQUESTS_CHECKPOINT][sig] = true;
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(have_checkpoint_diagnostic,
                                              "Signal handling was requested to checkpoint, but no checkpoint diagnostic is configured");
@@ -611,18 +611,18 @@ WarpX::ReadParameters ()
         std::string random_seed = "default";
         pp_warpx.query("random_seed", random_seed);
         if ( random_seed != "default" ) {
-            unsigned long myproc_1 = ParallelDescriptor::MyProc() + 1;
+            const unsigned long myproc_1 = ParallelDescriptor::MyProc() + 1;
             if ( random_seed == "random" ) {
                 std::random_device rd;
                 std::uniform_int_distribution<int> dist(2, INT_MAX);
-                unsigned long cpu_seed = myproc_1 * dist(rd);
-                unsigned long gpu_seed = myproc_1 * dist(rd);
+                const unsigned long cpu_seed = myproc_1 * dist(rd);
+                const unsigned long gpu_seed = myproc_1 * dist(rd);
                 ResetRandomSeed(cpu_seed, gpu_seed);
             } else if ( std::stoi(random_seed) > 0 ) {
-                unsigned long nprocs = ParallelDescriptor::NProcs();
-                unsigned long seed_long = std::stoul(random_seed);
-                unsigned long cpu_seed = myproc_1 * seed_long;
-                unsigned long gpu_seed = (myproc_1 + nprocs) * seed_long;
+                const unsigned long nprocs = ParallelDescriptor::NProcs();
+                const unsigned long seed_long = std::stoul(random_seed);
+                const unsigned long cpu_seed = myproc_1 * seed_long;
+                const unsigned long gpu_seed = (myproc_1 + nprocs) * seed_long;
                 ResetRandomSeed(cpu_seed, gpu_seed);
             } else {
                 WARPX_ABORT_WITH_MESSAGE(
@@ -739,7 +739,7 @@ WarpX::ReadParameters ()
             pp_warpx.query("self_fields_verbosity", self_fields_verbosity);
         }
         // Parse the input file for domain boundary potentials
-        ParmParse pp_boundary("boundary");
+        const ParmParse pp_boundary("boundary");
         pp_boundary.query("potential_lo_x", m_poisson_boundary_handler.potential_xlo_str);
         pp_boundary.query("potential_hi_x", m_poisson_boundary_handler.potential_xhi_str);
         pp_boundary.query("potential_lo_y", m_poisson_boundary_handler.potential_ylo_str);
@@ -826,7 +826,7 @@ WarpX::ReadParameters ()
 
         // initialize the shared tilesize
         Vector<int> vect_shared_tilesize(AMREX_SPACEDIM, 1);
-        bool shared_tilesize_is_specified = utils::parser::queryArrWithParser(pp_warpx, "shared_tilesize",
+        const bool shared_tilesize_is_specified = utils::parser::queryArrWithParser(pp_warpx, "shared_tilesize",
                                                             vect_shared_tilesize, 0, AMREX_SPACEDIM);
         if (shared_tilesize_is_specified){
             for (int i=0; i<AMREX_SPACEDIM; i++)
@@ -1044,7 +1044,7 @@ WarpX::ReadParameters ()
     }
 
     {
-        ParmParse pp_algo("algo");
+        const ParmParse pp_algo("algo");
 #ifdef WARPX_DIM_RZ
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( electromagnetic_solver_id != ElectromagneticSolverAlgo::CKC,
             "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
@@ -1171,11 +1171,11 @@ WarpX::ReadParameters ()
 
         // Parse algo.particle_shape and check that input is acceptable
         // (do this only if there is at least one particle or laser species)
-        ParmParse pp_particles("particles");
+        const ParmParse pp_particles("particles");
         std::vector<std::string> species_names;
         pp_particles.queryarr("species_names", species_names);
 
-        ParmParse pp_lasers("lasers");
+        const ParmParse pp_lasers("lasers");
         std::vector<std::string> lasers_names;
         pp_lasers.queryarr("names", lasers_names);
 
@@ -1228,12 +1228,12 @@ WarpX::ReadParameters ()
 #endif
         }
 
-        amrex::ParmParse pp_warpx("warpx");
+        const amrex::ParmParse pp_warpx("warpx");
         pp_warpx.queryarr("sort_intervals", sort_intervals_string_vec);
         sort_intervals = utils::parser::IntervalsParser(sort_intervals_string_vec);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
-        bool sort_bin_size_is_specified =
+        const bool sort_bin_size_is_specified =
             utils::parser::queryArrWithParser(
                 pp_warpx, "sort_bin_size",
                 vect_sort_bin_size, 0, AMREX_SPACEDIM);
@@ -1244,7 +1244,7 @@ WarpX::ReadParameters ()
 
         pp_warpx.query("sort_particles_for_deposition",sort_particles_for_deposition);
         Vector<int> vect_sort_idx_type(AMREX_SPACEDIM,0);
-        bool sort_idx_type_is_specified =
+        const bool sort_idx_type_is_specified =
             utils::parser::queryArrWithParser(
                 pp_warpx, "sort_idx_type",
                 vect_sort_idx_type, 0, AMREX_SPACEDIM);
@@ -1256,13 +1256,13 @@ WarpX::ReadParameters ()
     }
 
     {
-        ParmParse pp_interpolation("interpolation");
+        const ParmParse pp_interpolation("interpolation");
 
         pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
     }
 
     {
-        ParmParse pp_warpx("warpx");
+        const ParmParse pp_warpx("warpx");
 
         // If warpx.grid_type=staggered or warpx.grid_type=hybrid,
         // and algo.field_gathering=momentum-conserving, the fields are solved
@@ -1301,7 +1301,7 @@ WarpX::ReadParameters ()
 
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
-        ParmParse pp_psatd("psatd");
+        const ParmParse pp_psatd("psatd");
         pp_psatd.query("periodic_single_box_fft", fft_periodic_single_box);
 
         std::string nox_str;
@@ -1400,7 +1400,7 @@ WarpX::ReadParameters ()
         }
 
         // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
-        amrex::ParmParse pp_warpx("warpx");
+        const amrex::ParmParse pp_warpx("warpx");
         const bool boosted_frame = pp_warpx.query("gamma_boost", gamma_boost);
 
         // Check whether the default Galilean velocity should be used
@@ -1578,7 +1578,7 @@ WarpX::ReadParameters ()
 
     // for slice generation //
     {
-        ParmParse pp_slice("slice");
+        const ParmParse pp_slice("slice");
         amrex::Vector<Real> slice_lo(AMREX_SPACEDIM);
         amrex::Vector<Real> slice_hi(AMREX_SPACEDIM);
         Vector<int> slice_crse_ratio(AMREX_SPACEDIM);
@@ -1616,7 +1616,7 @@ WarpX::BackwardCompatibility ()
     std::string backward_str;
     amrex::Real backward_Real;
 
-    ParmParse pp_amr("amr");
+    const ParmParse pp_amr("amr");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_amr.query("plot_int", backward_int),
         "amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
@@ -1631,7 +1631,7 @@ WarpX::BackwardCompatibility ()
         "Please use the new syntax for diagnostics, see documentation."
     );
 
-    ParmParse pp_warpx("warpx");
+    const ParmParse pp_warpx("warpx");
     std::vector<std::string> backward_strings;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_warpx.queryarr("fields_to_plot", backward_strings),
@@ -1759,7 +1759,7 @@ WarpX::BackwardCompatibility ()
         "Please use the new syntax for back-transformed diagnostics, see documentation."
     );
 
-    ParmParse pp_slice("slice");
+    const ParmParse pp_slice("slice");
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_slice.query("num_slice_snapshots_lab", backward_int),
@@ -1779,7 +1779,7 @@ WarpX::BackwardCompatibility ()
         "Please use the new syntax for back-transformed diagnostics, see documentation."
     );
 
-    ParmParse pp_interpolation("interpolation");
+    const ParmParse pp_interpolation("interpolation");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_interpolation.query("nox", backward_int) &&
         !pp_interpolation.query("noy", backward_int) &&
@@ -1788,14 +1788,14 @@ WarpX::BackwardCompatibility ()
         " Please use the new syntax algo.particle_shape instead"
     );
 
-    ParmParse pp_algo("algo");
+    const ParmParse pp_algo("algo");
     int backward_mw_solver;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_algo.query("maxwell_fdtd_solver", backward_mw_solver),
         "algo.maxwell_fdtd_solver is not supported anymore. "
         "Please use the renamed option algo.maxwell_solver");
 
-    ParmParse pp_particles("particles");
+    const ParmParse pp_particles("particles");
     int nspecies;
     if (pp_particles.query("nspecies", nspecies)){
         ablastr::warn_manager::WMRecordWarning("Species",
@@ -1805,8 +1805,8 @@ WarpX::BackwardCompatibility ()
 
     std::vector<std::string> backward_sp_names;
     pp_particles.queryarr("species_names", backward_sp_names);
-    for(std::string speciesiter : backward_sp_names){
-        ParmParse pp_species(speciesiter);
+    for(const std::string& speciesiter : backward_sp_names){
+        const ParmParse pp_species(speciesiter);
         std::vector<amrex::Real> backward_vel;
         std::stringstream ssspecies;
 
@@ -1831,7 +1831,7 @@ WarpX::BackwardCompatibility ()
             ssspecies.str());
     }
 
-    ParmParse pp_collisions("collisions");
+    const ParmParse pp_collisions("collisions");
     int ncollisions;
     if (pp_collisions.query("ncollisions", ncollisions)){
         ablastr::warn_manager::WMRecordWarning("Collisions",
@@ -1839,7 +1839,7 @@ WarpX::BackwardCompatibility ()
             ablastr::warn_manager::WarnPriority::low);
     }
 
-    ParmParse pp_lasers("lasers");
+    const ParmParse pp_lasers("lasers");
     int nlasers;
     if (pp_lasers.query("nlasers", nlasers)){
         ablastr::warn_manager::WMRecordWarning("Laser",
@@ -1936,14 +1936,14 @@ WarpX::ClearLevel (int lev)
 void
 WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
-    bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
+    const bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
 #if   defined(WARPX_DIM_1D_Z)
-    amrex::RealVect dx(WarpX::CellSize(lev)[2]);
+    const amrex::RealVect dx(WarpX::CellSize(lev)[2]);
 #elif   defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
+    const amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
 #elif defined(WARPX_DIM_3D)
-    amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
+    const amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
 #endif
 
     // Initialize filter before guard cells manager
@@ -2123,7 +2123,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     //
     // The fine patch
     //
-    std::array<Real,3> dx = CellSize(lev);
+    const std::array<Real,3> dx = CellSize(lev);
 
     AllocInitMultiFab(Bfield_fp[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp[x]"));
     AllocInitMultiFab(Bfield_fp[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps, ngEB, tag("Bfield_fp[y]"));
@@ -2271,7 +2271,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
     {
-        IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
+        const IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
         AllocInitMultiFab(phi_fp[lev], amrex::convert(ba, phi_nodal_flag), dm, ncomps, ngPhi, tag("phi_fp"), 0.0_rt);
     }
 
@@ -2401,7 +2401,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         BoxArray cba = ba;
         cba.coarsen(refRatio(lev-1));
-        std::array<Real,3> cdx = CellSize(lev-1);
+        const std::array<Real,3> cdx = CellSize(lev-1);
 
         // Create the MultiFabs for B
         AllocInitMultiFab(Bfield_cp[lev][0], amrex::convert(cba, Bx_nodal_flag), dm, ncomps, ngEB, tag("Bfield_cp[x]"));
@@ -2567,7 +2567,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
                                         const amrex::DistributionMapping& dm,
                                         const std::array<Real,3>& dx)
 {
-    RealVect dx_vect(dx[0], dx[2]);
+    const RealVect dx_vect(dx[0], dx[2]);
 
     amrex::Real solver_dt = dt[lev];
     if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
@@ -2615,11 +2615,11 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
                                       const bool pml_flag)
 {
 #if defined(WARPX_DIM_3D)
-    RealVect dx_vect(dx[0], dx[1], dx[2]);
+    const RealVect dx_vect(dx[0], dx[1], dx[2]);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    RealVect dx_vect(dx[0], dx[2]);
+    const RealVect dx_vect(dx[0], dx[2]);
 #elif defined(WARPX_DIM_1D_Z)
-    RealVect dx_vect(dx[2]);
+    const RealVect dx_vect(dx[2]);
 #endif
 
     amrex::Real solver_dt = dt[lev];
@@ -2676,12 +2676,12 @@ std::array<Real,3>
 WarpX::LowerCorner(const Box& bx, const int lev, const amrex::Real time_shift_delta)
 {
     auto & warpx = GetInstance();
-    RealBox grid_box = getRealBox( bx, lev );
+    const RealBox grid_box = getRealBox( bx, lev );
 
     const Real* xyzmin = grid_box.lo();
 
-    amrex::Real cur_time = warpx.gett_new(lev);
-    amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
+    const amrex::Real cur_time = warpx.gett_new(lev);
+    const amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
     amrex::Array<amrex::Real,3> galilean_shift = { warpx.m_v_galilean[0]*time_shift,
                                                    warpx.m_v_galilean[1]*time_shift,
                                                    warpx.m_v_galilean[2]*time_shift };
@@ -2705,8 +2705,8 @@ WarpX::UpperCorner(const Box& bx, const int lev, const amrex::Real time_shift_de
 
     const Real* xyzmax = grid_box.hi();
 
-    amrex::Real cur_time = warpx.gett_new(lev);
-    amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
+    const amrex::Real cur_time = warpx.gett_new(lev);
+    const amrex::Real time_shift = (cur_time + time_shift_delta - warpx.time_of_last_gal_shift);
     amrex::Array<amrex::Real,3> galilean_shift = { warpx.m_v_galilean[0]*time_shift,
                                                    warpx.m_v_galilean[1]*time_shift,
                                                    warpx.m_v_galilean[2]*time_shift };
@@ -2736,7 +2736,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
         "ComputeDivB not implemented with warpx.grid_type=Collocated.");
 
-    Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
+    const Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
 #ifdef WARPX_DIM_RZ
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
@@ -2773,7 +2773,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
         "ComputeDivB not implemented with warpx.grid_type=collocated.");
 
-    Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
+    const Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
 #ifdef WARPX_DIM_RZ
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
@@ -2784,7 +2784,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
 #endif
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        Box bx = mfi.growntilebox(ngrow);
+        const Box bx = mfi.growntilebox(ngrow);
         amrex::Array4<const amrex::Real> const& Bxfab = B[0]->array(mfi);
         amrex::Array4<const amrex::Real> const& Byfab = B[1]->array(mfi);
         amrex::Array4<const amrex::Real> const& Bzfab = B[2]->array(mfi);
@@ -2878,7 +2878,7 @@ WarpX::BuildBufferMasks ()
     {
         for (int ipass = 0; ipass < 2; ++ipass)
         {
-            int ngbuffer = (ipass == 0) ? n_current_deposition_buffer : n_field_gather_buffer;
+            const int ngbuffer = (ipass == 0) ? n_current_deposition_buffer : n_field_gather_buffer;
             iMultiFab* bmasks = (ipass == 0) ? current_buffer_masks[lev].get() : gather_buffer_masks[lev].get();
             if (bmasks)
             {
@@ -2918,7 +2918,7 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
 {
     auto const& msk = buffer_mask.array();
     auto const& gmsk = guard_mask.const_array();
-    amrex::Dim3 ng3 = amrex::IntVect(ng).dim3();
+    const amrex::Dim3 ng3 = amrex::IntVect(ng).dim3();
     amrex::ParallelFor(tbx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
     {
         for         (int kk = k-ng3.z; kk <= k+ng3.z; ++kk) {

@@ -31,7 +31,7 @@ struct TemperatureProperties
      *
      * \param[in] pp: Reference to the parameter parser object for the species being initialized
      */
-    TemperatureProperties (amrex::ParmParse& pp);
+    TemperatureProperties (const amrex::ParmParse& pp);
 
     /* Type of temperature initialization */
     TemperatureInitType m_type;

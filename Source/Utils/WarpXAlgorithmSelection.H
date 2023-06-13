@@ -163,7 +163,7 @@ struct ReductionType {
 };
 
 int
-GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
+GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key );
 
 /** Select BC Type for fields, if field=true
  *  else select BCType for particles.

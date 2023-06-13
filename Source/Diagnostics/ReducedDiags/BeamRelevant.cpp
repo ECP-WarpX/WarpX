@@ -35,7 +35,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
 : ReducedDiags{rd_name}
 {
     // read beam name
-    ParmParse pp_rd_name(rd_name);
+    const ParmParse pp_rd_name(rd_name);
     pp_rd_name.get("species",m_beam_name);
 
     // resize data array
@@ -247,14 +247,14 @@ void BeamRelevant::ComputeDiags (int step)
         amrex::ParallelAllReduce::Sum
         ( values_per_rank_1st.data(), values_per_rank_1st.size(), ParallelDescriptor::Communicator());
 
-        ParticleReal w_sum   = values_per_rank_1st.at(0);
-        ParticleReal x_mean  = values_per_rank_1st.at(1) /= w_sum;
-        ParticleReal y_mean  = values_per_rank_1st.at(2) /= w_sum;
-        ParticleReal z_mean  = values_per_rank_1st.at(3) /= w_sum;
-        ParticleReal ux_mean = values_per_rank_1st.at(4) /= w_sum;
-        ParticleReal uy_mean = values_per_rank_1st.at(5) /= w_sum;
-        ParticleReal uz_mean = values_per_rank_1st.at(6) /= w_sum;
-        ParticleReal gm_mean = values_per_rank_1st.at(7) /= w_sum;
+        const ParticleReal w_sum   = values_per_rank_1st.at(0);
+        const ParticleReal x_mean  = values_per_rank_1st.at(1) /= w_sum;
+        const ParticleReal y_mean  = values_per_rank_1st.at(2) /= w_sum;
+        const ParticleReal z_mean  = values_per_rank_1st.at(3) /= w_sum;
+        const ParticleReal ux_mean = values_per_rank_1st.at(4) /= w_sum;
+        const ParticleReal uy_mean = values_per_rank_1st.at(5) /= w_sum;
+        const ParticleReal uz_mean = values_per_rank_1st.at(6) /= w_sum;
+        const ParticleReal gm_mean = values_per_rank_1st.at(7) /= w_sum;
 
         if (w_sum < std::numeric_limits<Real>::min() )
         {
@@ -342,17 +342,17 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum
         ( values_per_rank_2nd.data(), values_per_rank_2nd.size(), ParallelDescriptor::IOProcessorNumber());
 
-        ParticleReal x_ms   = values_per_rank_2nd.at(0) /= w_sum;
-        ParticleReal y_ms   = values_per_rank_2nd.at(1) /= w_sum;
-        ParticleReal z_ms   = values_per_rank_2nd.at(2) /= w_sum;
-        ParticleReal ux_ms  = values_per_rank_2nd.at(3) /= w_sum;
-        ParticleReal uy_ms  = values_per_rank_2nd.at(4) /= w_sum;
-        ParticleReal uz_ms  = values_per_rank_2nd.at(5) /= w_sum;
-        ParticleReal gm_ms  = values_per_rank_2nd.at(6) /= w_sum;
-        ParticleReal xux    = values_per_rank_2nd.at(7) /= w_sum;
-        ParticleReal yuy    = values_per_rank_2nd.at(8) /= w_sum;
-        ParticleReal zuz    = values_per_rank_2nd.at(9) /= w_sum;
-        ParticleReal charge = values_per_rank_2nd.at(10);
+        const ParticleReal x_ms   = values_per_rank_2nd.at(0) /= w_sum;
+        const ParticleReal y_ms   = values_per_rank_2nd.at(1) /= w_sum;
+        const ParticleReal z_ms   = values_per_rank_2nd.at(2) /= w_sum;
+        const ParticleReal ux_ms  = values_per_rank_2nd.at(3) /= w_sum;
+        const ParticleReal uy_ms  = values_per_rank_2nd.at(4) /= w_sum;
+        const ParticleReal uz_ms  = values_per_rank_2nd.at(5) /= w_sum;
+        const ParticleReal gm_ms  = values_per_rank_2nd.at(6) /= w_sum;
+        const ParticleReal xux    = values_per_rank_2nd.at(7) /= w_sum;
+        const ParticleReal yuy    = values_per_rank_2nd.at(8) /= w_sum;
+        const ParticleReal zuz    = values_per_rank_2nd.at(9) /= w_sum;
+        const ParticleReal charge = values_per_rank_2nd.at(10);
 
         // save data
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)

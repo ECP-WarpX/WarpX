@@ -137,7 +137,7 @@ const std::map<std::string, int> ReductionType_algo_to_int = {
 };
 
 int
-GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
+GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
 
     // Read user input ; use "default" if it is not found
     std::string algo = "default";
@@ -178,14 +178,14 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
     } else if (0 == std::strcmp(pp_search_key, "reduction_type")) {
         algo_to_int = ReductionType_algo_to_int;
     } else {
-        std::string pp_search_string = pp_search_key;
+        std::string const pp_search_string = pp_search_key;
         WARPX_ABORT_WITH_MESSAGE("Unknown algorithm type: " + pp_search_string);
     }
 
     // Check if the user-input is a valid key for the dictionary
     if (algo_to_int.count(algo) == 0) {
         // Not a valid key ; print error message
-        std::string pp_search_string = pp_search_key;
+        const std::string pp_search_string = pp_search_key;
         std::string error_message = "Invalid string for algo." + pp_search_string
             + ": " + algo + ".\nThe valid values are:\n";
         for ( const auto &valid_pair : algo_to_int ) {

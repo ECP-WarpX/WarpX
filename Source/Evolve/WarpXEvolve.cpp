@@ -81,7 +81,7 @@ WarpX::Evolve (int numsteps)
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         WARPX_PROFILE("WarpX::Evolve::step");
-        Real evolve_time_beg_step = amrex::second();
+        const Real evolve_time_beg_step = amrex::second();
 
         CheckSignals();
 
@@ -111,7 +111,7 @@ WarpX::Evolve (int numsteps)
                     // (Giving more importance to most recent costs; only needed
                     // for timers update, heuristic load balance considers the
                     // instantaneous costs)
-                    for (int i : cost->IndexArray())
+                    for (const auto& i : cost->IndexArray())
                     {
                         (*cost)[i] *= (1._rt - 2._rt/load_balance_intervals.localPeriod(step+1));
                     }
@@ -288,10 +288,10 @@ WarpX::Evolve (int numsteps)
         }
         multi_diags->FilterComputePackFlush( step, false, true );
 
-        bool move_j = is_synchronized;
+        const bool move_j = is_synchronized;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
-        int num_moved = MoveWindow(step+1, move_j);
+        const int num_moved = MoveWindow(step+1, move_j);
 
         // Update the accelerator lattice element finder if the window has moved,
         // from either a moving window or a boosted frame
@@ -405,7 +405,7 @@ WarpX::Evolve (int numsteps)
         }
 
         // create ending time stamp for calculating elapsed time each iteration
-        Real evolve_time_end_step = amrex::second();
+        const Real evolve_time_end_step = amrex::second();
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
         HandleSignals();
@@ -1089,8 +1089,8 @@ WarpX::applyMirrors(Real time)
         for(int lev=0; lev<=finest_level; lev++)
         {
             // Mirror must contain at least mirror_z_npoints[i_mirror] cells
-            amrex::Real dz = WarpX::CellSize(lev)[2];
-            amrex::Real z_max = std::max(z_max_tmp, z_min+mirror_z_npoints[i_mirror]*dz);
+            const amrex::Real dz = WarpX::CellSize(lev)[2];
+            const amrex::Real z_max = std::max(z_max_tmp, z_min+mirror_z_npoints[i_mirror]*dz);
 
             // Get fine patch field MultiFabs
             amrex::MultiFab& Ex = *Efield_fp[lev][0].get();

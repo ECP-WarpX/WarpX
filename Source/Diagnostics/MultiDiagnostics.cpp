@@ -53,7 +53,7 @@ MultiDiagnostics::InitializeFieldFunctors ( int lev )
 void
 MultiDiagnostics::ReadParameters ()
 {
-    ParmParse pp_diagnostics("diagnostics");
+    const ParmParse pp_diagnostics("diagnostics");
 
     int enable_diags = 1;
     pp_diagnostics.query("enable", enable_diags);
@@ -64,7 +64,7 @@ MultiDiagnostics::ReadParameters ()
 
     diags_types.resize( ndiags );
     for (int i=0; i<ndiags; i++){
-        ParmParse pp_diag_name(diags_names[i]);
+        const ParmParse pp_diag_name(diags_names[i]);
         std::string diag_type_str;
         pp_diag_name.get("diag_type", diag_type_str);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

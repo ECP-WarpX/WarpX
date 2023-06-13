@@ -491,7 +491,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
                                           relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 0);
@@ -506,7 +506,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
                                           relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 1);
@@ -521,7 +521,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
                                           relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 2);
@@ -767,8 +767,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             // --- Compute shape factors
             // Compute shape factors for position as they are now and at old positions
             // [ijk]_new: leftmost grid point that the particle touches
-            Compute_shape_factor< depos_order > compute_shape_factor;
-            Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
+            const Compute_shape_factor< depos_order > compute_shape_factor;
+            const Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
 
 #if !defined(WARPX_DIM_1D_Z)
             const int i_new = compute_shape_factor(sx_new+1, x_new);

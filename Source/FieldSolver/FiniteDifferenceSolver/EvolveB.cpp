@@ -177,7 +177,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         if (Gfield)
         {
             // Extract field data for this grid/tile
-            Array4<Real> G = Gfield->array(mfi);
+            const Array4<Real> G = Gfield->array(mfi);
 
             // Loop over cells and update G
             amrex::ParallelFor(tbx, tby, tbz,
