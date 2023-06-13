@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
-# --- Input file for loading initial field from openPMD file.from pywarpx
+# --- Input file for loading initial field from openPMD file.
 
-import picmi
+from pywarpx import picmi
 
 constants = picmi.constants
 
@@ -45,75 +45,74 @@ particle_shape = 1
 #################################
 
 ion_dist = picmi.ParticleListDistribution(
-            x=0.0, y=0.2, z=2.5,
-                ux=9.5e-05*constants.c, uy=0.0*constants.c, uz=1.34e-4*constants.c,
-                    weight=1.0
-                    )
+        x=0.0, y=0.2, z=2.5,
+        ux=9.5e-05*constants.c, uy=0.0*constants.c, uz=1.34e-4*constants.c,
+        weight=1.0
+        )
 
 ions = picmi.Species(
-            particle_type='H',
-                name='ion', charge='q_e',
-                    mass="m_p",
-                        warpx_do_not_deposit=1,
-                            initial_distribution=ion_dist
-                            )
+        particle_type='H',
+        name='ion', charge='q_e',mass="m_p",
+        warpx_do_not_deposit=1,
+        initial_distribution=ion_dist
+        )
 
 #################################
 ######## INITIAL FIELD ##########
 #################################
 
 initial_field = picmi.LoadInitialField(
-            read_fields_from_path="../../../../openPMD-example-datasets/example-femm-3d.h5",
-                load_E=False
-                )
+        read_fields_from_path="../../../../openPMD-example-datasets/example-femm-3d.h5",
+        load_E=False
+        )
 
 #################################
 ###### GRID AND SOLVER ##########
 #################################
 
 grid = picmi.Cartesian3DGrid(
-            number_of_cells=[nx, ny, nz],
-                warpx_max_grid_size=max_grid_size,
-                    warpx_blocking_factor=max_grid_size,
-                        lower_bound=[xmin, ymin, zmin],
-                            upper_bound=[xmax, ymax, zmin],
-                                lower_boundary_conditions=['dirichlet', 'dirichlet', 'dirichlet'],
-                                    upper_boundary_conditions=['dirichlet', 'dirichlet', 'dirichlet'],
-                                    )
-solver = picmi.ElectrostaticSolver(grid=grid, )
+        number_of_cells=[nx, ny, nz],
+        warpx_max_grid_size=max_grid_size,
+        warpx_blocking_factor=max_grid_size,
+        lower_bound=[xmin, ymin, zmin],
+        upper_bound=[xmax, ymax, zmin],
+        lower_boundary_conditions=['dirichlet', 'dirichlet', 'dirichlet'],
+        upper_boundary_conditions=['dirichlet', 'dirichlet', 'dirichlet'],
+        )
+solver = picmi.ElectrostaticSolver(grid=grid)
 
 #################################
 ######### DIAGNOSTICS ###########
 #################################
 
 field_diag = picmi.FieldDiagnostic(
-            name='diag1',
-                grid=grid,
-                    period=300,
-                        write_dir='.',
-                            warpx_file_prefix='Python_FieldLoading_plt'
-                            )
+        name='diag1',
+        grid=grid,
+        period=300,
+        write_dir='.',
+        warpx_file_prefix='Python_FieldLoading_plt'
+        )
 
 #################################
 ####### SIMULATION SETUP ########
 #################################
 
 sim = picmi.Simulation(
-            solver=solver,
-                max_steps=max_steps,
-                    verbose=verbose,
-                        warpx_serialize_initial_conditions=False,
-                            warpx_grid_type='collocated',
-                                warpx_do_dynamic_scheduling=False,
-                                    time_step_size=dt
-                                    )
+        solver=solver,
+        max_steps=max_steps,
+        verbose=verbose,
+        warpx_serialize_initial_conditions=False,
+        warpx_grid_type='collocated',
+        warpx_do_dynamic_scheduling=False,
+        time_step_size=dt
+        )
 
 sim.add_species(
-            ions,
-                layout=picmi.PseudoRandomLayout(
-                            n_macroparticles_per_cell=number_per_cell, grid=grid
-                                )
-                )
+        ions,
+        layout=picmi.PseudoRandomLayout(
+            n_macroparticles_per_cell=number_per_cell, grid=grid
+            )
+        )
 
 sim.add_diagnostic(field_diag)
 
