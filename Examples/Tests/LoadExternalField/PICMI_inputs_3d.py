@@ -32,6 +32,7 @@ number_per_cell = 200
 #################################
 ############ NUMERICS ###########
 #################################
+
 verbose = 1
 dt = 4.4e-7
 warpx_use_filter = 0
@@ -43,15 +44,6 @@ particle_shape = 1
 ############ PLASMA #############
 #################################
 
-# ion_dist = picmi.UniformDistribution(
-#     density=plasma_density,
-#     rms_velocity=[ion_rms_velocity]*3,
-# )
-
-#######
-# ??? #
-#######
-#If this is an issue, we can just try to put brackets around them
 ion_dist = picmi.ParticleListDistribution(
             x=0.0, y=0.2, z=2.5,
                 ux=9.5e-05*constants.c, uy=0.0*constants.c, uz=1.34e-4*constants.c,
