@@ -13,7 +13,6 @@ constants = picmi.constants
 max_steps = 300
 
 max_grid_size = 40
-max_level = 0
 nx = max_grid_size
 ny = max_grid_size
 nz = max_grid_size
@@ -25,8 +24,6 @@ ymax = xmax
 zmin = 0
 zmax = 5
 
-plasma_density = 1e21
-ion_rms_velocity = 0.006256118919701*constants.c
 number_per_cell = 200
 
 #################################
@@ -35,7 +32,7 @@ number_per_cell = 200
 
 verbose = 1
 dt = 4.4e-7
-warpx_use_filter = 0
+use_filter = 0
 
 # Order of particle shape factors
 particle_shape = 1
@@ -79,9 +76,11 @@ grid = picmi.Cartesian3DGrid(
         warpx_max_grid_size=max_grid_size,
         warpx_blocking_factor=max_grid_size,
         lower_bound=[xmin, ymin, zmin],
-        upper_bound=[xmax, ymax, zmin],
+        upper_bound=[xmax, ymax, zmax],
         lower_boundary_conditions=['dirichlet', 'dirichlet', 'dirichlet'],
         upper_boundary_conditions=['dirichlet', 'dirichlet', 'dirichlet'],
+        lower_boundary_conditions_particles=['absorbing', 'absorbing', 'absorbing'],
+        upper_boundary_conditions_particles=['absorbing', 'absorbing', 'absorbing']
         )
 solver = picmi.ElectrostaticSolver(grid=grid)
 
@@ -108,7 +107,9 @@ sim = picmi.Simulation(
         warpx_serialize_initial_conditions=False,
         warpx_grid_type='collocated',
         warpx_do_dynamic_scheduling=False,
-        time_step_size=dt
+        warpx_use_filter=use_filter
+        time_step_size=dt,
+        particle_shape=particle_shape
         )
 
 sim.add_species(
