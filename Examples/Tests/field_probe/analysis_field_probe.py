@@ -24,7 +24,7 @@ filename = "diags/reducedfiles/FP_line.txt"
 
 # Open data file
 df = pd.read_csv(filename, sep=' ')
-df.columns = df.columns.str.replace('#','')
+df.columns = df.columns.str.replace('#', '', n=1)
 df = df.sort_values(by=['[2]part_x_lev0(m)'])
 
 # Select position and Intensity of timestep 500
