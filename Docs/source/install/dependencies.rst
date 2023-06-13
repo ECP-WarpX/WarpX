@@ -60,29 +60,27 @@ Conda (Linux/macOS/Windows)
       conda install -n base conda-libmamba-solver
       conda config --set solver libmamba
 
-With MPI (only Linux/macOS):
+.. tab-set::
 
-.. code-block:: bash
+   .. tab-item:: With MPI (only Linux/macOS)
 
-   conda create -n warpx-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
-   source activate warpx-dev
+      .. code-block:: bash
 
-Without MPI:
+         conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
+         source activate warpx-cpu-mpich-dev
 
-.. code-block:: bash
+         # compile WarpX with -DWarpX_MPI=ON
+         # for pip, use: export WARPX_MPI=ON
 
-   conda create -n warpx-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
-   source activate warpx-dev
+   .. tab-item:: Without MPI
 
-   # compile WarpX with -DWarpX_MPI=OFF
+      .. code-block:: bash
 
-For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you also need to set:
+         conda create -n warpx-cpu-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
+         source activate warpx-cpu-dev
 
-.. code-block:: bash
-
-   export FFTW_HOME=${CONDA_PREFIX}
-   export BLASPP_HOME=${CONDA_PREFIX}
-   export LAPACKPP_HOME=${CONDA_PREFIX}
+         # compile WarpX with -DWarpX_MPI=OFF
+         # for pip, use: export WARPX_MPI=OFF
 
 .. tip::
 
@@ -141,13 +139,8 @@ In new terminal sessions, re-activate the environment with
 again.
 Replace ``openmp`` with the equivalent you chose.
 
-For legacy ``GNUmake`` builds, after each ``source activate warpx-openmp-dev``, you also need to set:
-
-.. code-block:: bash
-
-   export FFTW_HOME=${SPACK_ENV}/.spack-env/view
-   export BLASPP_HOME=${SPACK_ENV}/.spack-env/view
-   export LAPACKPP_HOME=${SPACK_ENV}/.spack-env/view
+Compile WarpX with ``-DWarpX_MPI=ON``.
+For ``pip``, use ``export WARPX_MPI=ON``.
 
 
 Brew (macOS/Linux)
@@ -184,17 +177,43 @@ If you also want to compile with PSATD in RZ, you need to manually install BLAS+
    cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/lapackpp.git \
        -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
 
+Compile WarpX with ``-DWarpX_MPI=ON``.
+For ``pip``, use ``export WARPX_MPI=ON``.
+
 
 Apt (Debian/Ubuntu)
 ^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: bash
+.. tab-set::
 
-   sudo apt update
-   sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-pandas python3-pip python3-scipy python3-venv
+   .. tab-item:: With MPI (only Linux/macOS)
 
-   # optional:
-   # for CUDA, either install
-   #   https://developer.nvidia.com/cuda-downloads (preferred)
-   # or, if your Debian/Ubuntu is new enough, use the packages
-   #   sudo apt install nvidia-cuda-dev libcub-dev
+      .. code-block:: bash
+
+         sudo apt update
+         sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-pandas python3-pip python3-scipy python3-venv
+
+         # optional:
+         # for CUDA, either install
+         #   https://developer.nvidia.com/cuda-downloads (preferred)
+         # or, if your Debian/Ubuntu is new enough, use the packages
+         #   sudo apt install nvidia-cuda-dev libcub-dev
+
+         # compile WarpX with -DWarpX_MPI=ON
+         # for pip, use: export WARPX_MPI=ON
+
+   .. tab-item:: Without MPI
+
+      .. code-block:: bash
+
+         sudo apt update
+         sudo apt install build-essential ccache cmake g++ git libfftw3-dev libfftw3-dev libhdf5-dev pkg-config python3 python3-matplotlib python3-numpy python3-pandas python3-pip python3-scipy python3-venv
+
+         # optional:
+         # for CUDA, either install
+         #   https://developer.nvidia.com/cuda-downloads (preferred)
+         # or, if your Debian/Ubuntu is new enough, use the packages
+         #   sudo apt install nvidia-cuda-dev libcub-dev
+
+         # compile WarpX with -DWarpX_MPI=OFF
+         # for pip, use: export WARPX_MPI=OFF
