@@ -68,7 +68,7 @@ Since this will automatically change the JSON file stored on the repo, make a se
 Reset a benchmark from the Azure pipeline output on Github
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Alternately, the benchmarks can be reset using the output of the Azure continuous intergration (CI) tests on Github. The output can be accessed by following the steps below:
+Alternatively, the benchmarks can be reset using the output of the Azure continuous intergration (CI) tests on Github. The output can be accessed by following the steps below:
 
 * On the Github page of the Pull Request, find (one of) the pipeline(s) failing due to benchmarks that need to be updated and click on "Details".
 

@@ -14,7 +14,7 @@ that is given as the first and only argument of the script.
 
 In the Azure output, we read the lines contained between
 "New file for Test_Name:"
-and the next occurence of
+and the next occurrence of
 "'----------------'"
 And use these lines to update the benchmarks
 '''
