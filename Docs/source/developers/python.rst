@@ -23,7 +23,7 @@ There are exceptions, such as ``constants`` and ``diagnostics`` where extra proc
 
 There can also be instances created as needed.
 For example, for the particle species, an instance is created for each species listed in ``particles.species_names``.
-This gives a place to hold the parameters for the species, for instance ``electrons.mass``.
+This gives a place to hold the parameters for the species, e.g., ``electrons.mass``.
 
 The instances are then used to generate the input parameters.
 Each instance can generate a list of strings, one for each attribute.
