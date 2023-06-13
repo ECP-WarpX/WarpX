@@ -298,11 +298,11 @@ void Filter::DoFilter (const Box& tbx,
             for     (int iy=0; iy < slen.y; ++iy){
                 for (int ix=0; ix < slen.x; ++ix){
 #if defined(WARPX_DIM_3D)
-                    Real sss = sx[ix]*sy[iy]*sz[iz];
+                    const Real sss = sx[ix]*sy[iy]*sz[iz];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                    Real sss = sx[ix]*sz[iy];
+                    const Real sss = sx[ix]*sz[iy];
 #else
-                    Real sss = sz[ix];
+                    const Real sss = sz[ix];
 #endif
                     // 3 nested loop on 3D array
                     for         (int k = lo.z; k <= hi.z; ++k) {

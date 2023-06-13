@@ -35,7 +35,7 @@ MacroscopicProperties::MacroscopicProperties ()
 void
 MacroscopicProperties::ReadParameters ()
 {
-    ParmParse pp_macroscopic("macroscopic");
+    const ParmParse pp_macroscopic("macroscopic");
     // Since macroscopic maxwell solve is turned on,
     // user-defined sigma, mu, and epsilon are queried.
     // The vacuum values are used as default for the macroscopic parameters
@@ -126,9 +126,9 @@ MacroscopicProperties::InitData ()
     auto & warpx = WarpX::GetInstance();
 
     // Get BoxArray and DistributionMap of warpx instance.
-    int lev = 0;
-    amrex::BoxArray ba = warpx.boxArray(lev);
-    amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
+    const int lev = 0;
+    const amrex::BoxArray ba = warpx.boxArray(lev);
+    const amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     const amrex::IntVect ng_EB_alloc = warpx.getngEB();
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
@@ -209,7 +209,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     WarpX& warpx = WarpX::GetInstance();
     const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = warpx.Geom(lev).CellSizeArray();
     const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
-    amrex::IntVect iv = macro_mf->ixType().toIntVect();
+    const amrex::IntVect iv = macro_mf->ixType().toIntVect();
     for ( amrex::MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
 

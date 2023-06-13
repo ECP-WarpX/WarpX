@@ -35,7 +35,7 @@ FieldReduction::FieldReduction (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    amrex::ParmParse pp_amr("amr");
+    const amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nLevel == 0,
         "FieldReduction reduced diagnostics does not work with mesh refinement.");
@@ -46,7 +46,7 @@ FieldReduction::FieldReduction (std::string rd_name)
 
     BackwardCompatibility();
 
-    amrex::ParmParse pp_rd_name(rd_name);
+    const amrex::ParmParse pp_rd_name(rd_name);
 
     // read reduced function with parser
     std::string parser_string = "";

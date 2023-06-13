@@ -69,7 +69,7 @@ namespace detail
     snakeToCamel (const std::string& snake_string)
     {
         std::string camelString = snake_string;
-        int n = camelString.length();
+        const int n = camelString.length();
         for (int x = 0; x < n; x++)
         {
             if (x == 0)
@@ -203,7 +203,7 @@ namespace detail
         std::string component_name = openPMD::RecordComponent::SCALAR;
 
         // we use "_" as separator in names to group vector records
-        std::size_t startComp = fullName.find_last_of("_");
+        const std::size_t startComp = fullName.find_last_of("_");
         if( startComp != std::string::npos ) {  // non-scalar
             record_name = fullName.substr(0, startComp);
             component_name = fullName.substr(startComp + 1u);
@@ -409,7 +409,7 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
   // OpenPMD supports timestepped names
   //
   if (m_Encoding == openPMD::IterationEncoding::fileBased) {
-      std::string fileSuffix = std::string("_%0") + std::to_string(m_file_min_digits) + std::string("T");
+      const std::string fileSuffix = std::string("_%0") + std::to_string(m_file_min_digits) + std::string("T");
       filename = filename.append(fileSuffix);
   }
   filename.append(".").append(m_OpenPMDFileType);
@@ -724,7 +724,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                 auto const positionComponents = detail::getParticlePositionComponentLabels();
 #if defined(WARPX_DIM_RZ)
                 {
-                   std::shared_ptr<amrex::ParticleReal> z(
+                   const std::shared_ptr<amrex::ParticleReal> z(
                            new amrex::ParticleReal[numParticleOnTile],
                            [](amrex::ParticleReal const *p) { delete[] p; }
                    );
@@ -741,11 +741,11 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
                                                  "openPMD: theta and tile size do not match");
                 {
-                    std::shared_ptr< amrex::ParticleReal > x(
+                    const std::shared_ptr< amrex::ParticleReal > x(
                             new amrex::ParticleReal[numParticleOnTile],
                             [](amrex::ParticleReal const *p){ delete[] p; }
                     );
-                    std::shared_ptr< amrex::ParticleReal > y(
+                    const std::shared_ptr< amrex::ParticleReal > y(
                             new amrex::ParticleReal[numParticleOnTile],
                             [](amrex::ParticleReal const *p){ delete[] p; }
                     );
@@ -759,7 +759,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                 }
 #else
                 for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
-                    std::shared_ptr<amrex::ParticleReal> curr(
+                    const std::shared_ptr<amrex::ParticleReal> curr(
                             new amrex::ParticleReal[numParticleOnTile],
                             [](amrex::ParticleReal const *p) { delete[] p; }
                     );
@@ -773,7 +773,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 #endif
 
                 // save particle ID after converting it to a globally unique ID
-                std::shared_ptr<uint64_t> ids(
+                const std::shared_ptr<uint64_t> ids(
                         new uint64_t[numParticleOnTile],
                         [](uint64_t const *p) { delete[] p; }
                 );
@@ -837,7 +837,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     default : {
                         std::string msg = "WarpX openPMD ADIOS2 work-around has unknown dtype: ";
                         msg += datatypeToString(dtype);
-                        amrex::Abort(msg);
+                        WARPX_ABORT_WITH_MESSAGE(msg);
                         break;
                     }
                 }
@@ -951,7 +951,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
           auto currRecord = currSpecies[record_name];
           auto currRecordComp = currRecord[component_name];
 
-          std::shared_ptr< amrex::ParticleReal > d(
+          const std::shared_ptr< amrex::ParticleReal > d(
               new amrex::ParticleReal[numParticleOnTile],
               [](amrex::ParticleReal const *p){ delete[] p; }
           );
@@ -1213,7 +1213,7 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     }
 #endif
     // - AxisLabels
-    std::vector<std::string> axis_labels = detail::getFieldAxisLabels(var_in_theta_mode);
+    const std::vector<std::string> axis_labels = detail::getFieldAxisLabels(var_in_theta_mode);
 
     // Prepare the type of dataset that will be written
     openPMD::Datatype const datatype = openPMD::determineDatatype<amrex::Real>();
@@ -1287,7 +1287,7 @@ GetFieldNameModeInt (const std::string& varname)
     // in either case, there is a -1 in mode_index
     int mode_index = -1;
 
-    std::regex e_real_imag("(.*)_([0-9]*)_(real|imag)");
+    const std::regex e_real_imag("(.*)_([0-9]*)_(real|imag)");
     std::smatch sm;
     std::regex_match(varname, sm, e_real_imag, std::regex_constants::match_default);
 
@@ -1295,7 +1295,7 @@ GetFieldNameModeInt (const std::string& varname)
         return std::make_tuple(varname, mode_index);
     } else {
         // sm = [varname, field_name, mode, real_imag]
-        int mode = std::stoi(sm[2]);
+        const int mode = std::stoi(sm[2]);
         if (mode == 0) {
             mode_index = 0;
         } else {
@@ -1366,7 +1366,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
             std::string const & varname = varnames[icomp];
 
             auto [varname_no_mode, mode_index] = GetFieldNameModeInt(varname);
-            bool var_in_theta_mode = mode_index != -1; // thetaMode or reconstructed Cartesian 2D slice
+            const bool var_in_theta_mode = mode_index != -1; // thetaMode or reconstructed Cartesian 2D slice
             std::string field_name = varname_no_mode;
             std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
             // assume fields are scalar unless they match the following match of known vector fields
@@ -1401,7 +1401,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
             std::string const & varname = varnames[icomp];
 
             auto [varname_no_mode, mode_index] = GetFieldNameModeInt(varname);
-            [[maybe_unused]] bool var_in_theta_mode = mode_index != -1;
+            [[maybe_unused]] const bool var_in_theta_mode = mode_index != -1;
 
             std::string field_name(varname_no_mode);
             std::string comp_name = openPMD::MeshRecordComponent::SCALAR;

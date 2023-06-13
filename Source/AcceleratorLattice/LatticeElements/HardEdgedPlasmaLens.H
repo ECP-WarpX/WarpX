@@ -105,8 +105,8 @@ struct HardEdgedPlasmaLensDevice
         // spends inside the hard edged element.
         amrex::ParticleReal const frac = hard_edged_fraction(z, zpvdt, d_zs_arr[ielement], d_ze_arr[ielement]);
 
-        amrex::ParticleReal dEdx = frac*d_dEdx_arr[ielement];
-        amrex::ParticleReal dBdx = frac*d_dBdx_arr[ielement];
+        const amrex::ParticleReal dEdx = frac*d_dEdx_arr[ielement];
+        const amrex::ParticleReal dBdx = frac*d_dBdx_arr[ielement];
 
         Ex = +x*dEdx;
         Ey = +y*dEdx;
