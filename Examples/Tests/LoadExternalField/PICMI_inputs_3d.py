@@ -92,7 +92,7 @@ field_diag = picmi.FieldDiagnostic(
         grid=grid,
         period=300,
         write_dir='.',
-        warpx_file_prefix='Python_FieldLoading_plt'
+        warpx_file_prefix='Python_LoadExternalField3D_plt'
         )
 
 #################################
