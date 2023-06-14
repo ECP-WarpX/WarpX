@@ -54,7 +54,7 @@ Conda (Linux/macOS/Windows)
 
 .. tip::
 
-   We recommend to configure your conda to use the faster `libmamba` `dependency solver <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`__.
+   We recommend to configure your conda to use the faster ``libmamba`` `dependency solver <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`__.
 
    .. code-block:: bash
 
@@ -90,6 +90,22 @@ Conda (Linux/macOS/Windows)
 
          # compile WarpX with -DWarpX_MPI=OFF
          # for pip, use: export WARPX_MPI=OFF
+
+For OpenMP support, you will further need:
+
+.. tab-set::
+
+   .. tab-item:: Linux
+
+      .. code-block:: bash
+
+         conda install -c conda-forge libgomp
+
+   .. tab-item:: macOS or Windows
+
+      .. code-block:: bash
+
+         conda install -c conda-forge llvm-openmp
 
 
 Spack (Linux/macOS)
