@@ -35,3 +35,16 @@ extent = [ds.domain_left_edge[ds.dimensionality-1], ds.domain_right_edge[ds.dime
 plt.figure()
 plt.imshow(Ey, extent=extent, aspect='auto')
 plt.savefig("Ey_visualization.png")
+
+#Plot A potential vector:
+diag_name = 'diag' 
+iteration = 0
+plotfile = './diags/diag1000200'
+field = 'A'
+ds = yt.load( plotfile ) 
+
+all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+A = all_data_level_0['boxlib', field].v.squeeze()
+Dx = ds.domain_width/ds.domain_dimensions
+extent = [ds.domain_left_edge[ds.dimensionality-1], ds.domain_right_edge[ds.dimensionality-1],
+          ds.domain_left_edge[0], ds.domain_right_edge[0] ]

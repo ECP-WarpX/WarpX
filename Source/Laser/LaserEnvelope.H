@@ -11,4 +11,3 @@ class LaserEnvelope {
 private:
     amrex::Vector< amrex::FabArray< amrex::BaseFab <Complex> > > A_laser_envelope;
 };
-

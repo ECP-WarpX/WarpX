@@ -33,7 +33,8 @@ struct CommonLaserParameters
     amrex::Real wavelength; //! central wavelength
     amrex::Real e_max;  //! maximum electric field at peak
     amrex::Vector<amrex::Real> p_X;// ! Polarization
-    amrex::Vector<amrex::Real> nvec; //! Normal of the plane of the antenna
+    amrex::Vector<amrex::Real> nvec;
+    bool laser_envelope; //! Normal of the plane of the antenna
 };
 
 
@@ -93,7 +94,8 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const = 0;
+        amrex::Real * AMREX_RESTRICT const amplitude,
+        bool laser_envelope) const = 0;
 
     virtual ~ILaserProfile(){}
 };
@@ -120,8 +122,8 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude
-        bool laser_modulated) const override final;
+        amrex::Real * AMREX_RESTRICT const amplitude,
+        bool laser_envelope) const override final;
 
 private:
     struct {
@@ -163,7 +165,7 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT const amplitude, bool laser_envelope) const override final;
 
 private:
     struct{
@@ -214,7 +216,7 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT const amplitude, bool laser_envelope) const override final;
 
     /** \brief Function to fill the amplitude in case of a uniform grid.
     * This function cannot be private due to restrictions related to

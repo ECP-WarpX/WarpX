@@ -98,7 +98,7 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
 void
 WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
-    Real t, Real * AMREX_RESTRICT const amplitude) const
+    Real t, Real * AMREX_RESTRICT const amplitude, bool laser_envelope) const
 {
     Complex I(0,1);
     // Calculate a few factors which are independent of the macroparticle
