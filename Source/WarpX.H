@@ -23,6 +23,9 @@
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
+#include "Fluids/MultiFluidContainer_fwd.H"
+#include "Fluids/WarpXFluidContainer_fwd.H"
+
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -1348,6 +1351,9 @@ private:
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
     std::unique_ptr<MultiDiagnostics> multi_diags;
+
+    // Fluid container
+    std::unique_ptr<MultiFluidContainer> myfl;
 
     //
     // Fields: First array for level, second for direction

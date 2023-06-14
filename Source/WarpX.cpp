@@ -30,6 +30,8 @@
 #include "FieldSolver/WarpX_FDTD.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/TextMsg.H"
@@ -303,6 +305,9 @@ WarpX::WarpX ()
 
     // Particle Boundary Buffer (i.e., scraped particles on boundary)
     m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
+
+    // Fluid Container
+    myfl = std::make_unique<MultiFluidContainer>(this);
 
     // Diagnostics
     multi_diags = std::make_unique<MultiDiagnostics>();
