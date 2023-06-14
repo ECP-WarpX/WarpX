@@ -32,13 +32,14 @@ Use `Globus <https://www.globus.org>`__ to transfer data between them if needed.
 Preparation
 -----------
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Use the following commands to download the WarpX source code:
 
 .. code-block:: bash
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
-We use the software modules and environments on the system, stored in the file ``$HOME/frontier_warpx.profile``.
+We use system software modules, add environment hints and further dependencies via the file ``$HOME/frontier_warpx.profile``.
+Create it now:
 
 .. code-block:: bash
 
@@ -54,13 +55,15 @@ Enter the edit mode by typing ``i`` and edit line 2 to read:
 
 Exit the ``vi`` editor with ``Esc`` and then type ``:wq`` (write & quit).
 
-Now, and *after every future login to Frontier*, activate the environment settings in this file:
+.. important::
 
-.. code-block:: bash
+   Now, and as the first step on future logins to Frontier, activate these environment settings:
 
-   source $HOME/frontier_warpx.profile
+   .. code-block:: bash
 
-Finally, since Frontier does not yet provide a module for some of our dependencies, install them once:
+      source $HOME/frontier_warpx.profile
+
+Finally, since Frontier does not yet provide software modules for some of our dependencies, install them once:
 
 .. code-block:: bash
 
@@ -72,34 +75,23 @@ Finally, since Frontier does not yet provide a module for some of our dependenci
 Compilation
 -----------
 
-Change directory via ``cd`` into ``$HOME/src/warpx`` and use the following commands to compile:
+Use the following :ref:`cmake commands <building-cmake>` to compile:
 
 .. code-block:: bash
 
    cd $HOME/src/warpx
    rm -rf build_frontier
 
-   cmake -S . -B build_frontier -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake -S . -B build_frontier -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_frontier -j 16
-
-The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+   cmake --build build_frontier -j 16 --target pip_install
 
 **That's it!**
-A 3D WarpX executable is now in ``build_frontier/bin/`` and :ref:`can be run <running-cpp-frontier>` with a :ref:`3D example inputs file <usage-examples>`.
-Most people execute the binary directly or copy it out to a location in ``$PROJWORK/$proj/``.
+The WarpX application executables are now in ``$HOME/src/warpx/build_frontier/bin/`` and we installed the ``pywarpx`` Python module.
 
-If you want to run WarpX as a Python (PICMI) script, do the :ref:`following additional installation steps <building-cmake-python>`:
-
-.. code-block:: bash
-
-   # PICMI build
-   cd $HOME/src/warpx
-
-   # compile parallel PICMI interfaces in 3D, 2D, 1D and RZ
-   WARPX_COMPUTE=HIP WARPX_MPI=ON WARPX_PSATD=ON BUILD_PARALLEL=16 python3 -m pip install -v .
-
-**You are all set!**
-You can now :ref:`run <running-cpp-frontier>` WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (see our :ref:`example PICMI input scripts <usage-examples>`.).
+Now, you can :ref:`submit Frontier compute jobs <running-cpp-frontier>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
+Or, you can use the WarpX executables to submit Frontier jobs (:ref:`example inputs <usage-examples>`).
+For executables, you can reference their location in your :ref:`job script <running-cpp-frontier>` or copy them to a location in ``$PROJWORK/$proj/``.
 
 
 .. _building-frontier-update:
@@ -107,7 +99,7 @@ You can now :ref:`run <running-cpp-frontier>` WarpX :ref:`Python (PICMI) scripts
 Update WarpX & Dependencies
 ---------------------------
 
-If you already installed WarpX in the past and want to update it, start by getting the latest source code
+If you already installed WarpX in the past and want to update it, start by getting the latest source code:
 
 .. code-block:: bash
 
@@ -120,37 +112,18 @@ If you already installed WarpX in the past and want to update it, start by getti
    git fetch
    git pull
 
-   # read the output of this command - does it look ok?
+   # read the output of these commands - do they look ok?
    git status
+   git log     # press q to exit
 
-Remove the old Python install
+Remove the old Python install:
 
 .. code-block:: bash
 
    python3 -m pip uninstall -y pywarpx
 
-And, if needed, execute the dependency install scripts above again.
-As a last step, clean the build directory ``rm -rf cd $HOME/src/warpx/build_frontier`` and rebuild WarpX.
-
-
-.. _building-frontier-install-dev:
-
-Developer Workflow
-------------------
-
-Our Python bindings install all geometries of WarpX at once, which can take a while to compile.
-If you are *developing*, you can do a quick PICMI install of a *single geometry* (see: :ref:`WarpX_DIMS <building-cmake-options>`) using:
-
-.. code-block:: bash
-
-   cd $HOME/src/warpx
-   rm -rf build_frontier
-
-   # find dependencies & configure
-   cmake -S . -B build_frontier -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_LIB=ON -DWarpX_DIMS=RZ
-
-   # build and then call "python3 -m pip install ..."
-   cmake --build build_frontier --target pip_install -j 16
+And, if needed, :ref:`update the frontier_warpx.profile file and execute the dependency install scripts <building-frontier-preparation>` above again.
+As a last step, clean the build directory ``rm -rf $HOME/src/warpx/build_frontier`` and rebuild WarpX.
 
 
 .. _running-cpp-frontier:
