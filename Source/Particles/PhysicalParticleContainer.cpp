@@ -926,7 +926,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
     InjectorDensity*  inj_rho = plasma_injector->getInjectorDensity();
-    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
+    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentumDevice();
     Real gamma_boost = WarpX::gamma_boost;
     Real beta_boost = WarpX::beta_boost;
     Real t = WarpX::GetInstance().gett_new(lev);
@@ -1474,7 +1474,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
     InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
     InjectorDensity*  inj_rho = plasma_injector->getInjectorDensity();
-    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
+    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentumDevice();
     const amrex::Real density_min = plasma_injector->density_min;
     const amrex::Real density_max = plasma_injector->density_max;
     constexpr int level_zero = 0;
