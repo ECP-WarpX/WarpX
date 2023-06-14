@@ -50,12 +50,11 @@ algo.particle_shape = 1
 warpx.cfl = 1.0
 
 # Particles
-particles.species_names = electrons positrons
+fluids.species_names = electrons positrons
 
 electrons.charge = -q_e
 electrons.mass = m_e
 electrons.injection_style = "NUniformPerCell"
-electrons.num_particles_per_cell_each_dim = 1 1 1
 electrons.xmin = -20.e-6
 electrons.xmax =  20.e-6
 electrons.ymin = -20.e-6
@@ -73,7 +72,6 @@ electrons.momentum_function_uz(x,y,z) = "epsilon * k/kp * cos(k*x) * cos(k*y) * 
 positrons.charge = q_e
 positrons.mass = m_e
 positrons.injection_style = "NUniformPerCell"
-positrons.num_particles_per_cell_each_dim = 1 1 1
 positrons.xmin = -20.e-6
 positrons.xmax =  20.e-6
 positrons.ymin = -20.e-6
@@ -95,3 +93,4 @@ diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell rho
 diag1.electrons.variables = w ux
 diag1.positrons.variables = uz
+diag1.format = openpmd
