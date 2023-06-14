@@ -12,6 +12,7 @@
 
 #include "Evolve/WarpXDtType.H"
 #include "Initialization/PlasmaInjector.H"
+#include "MultiFluidContainer.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
@@ -44,13 +45,14 @@ class WarpXFluidContainer
 public:
     friend MultiFluidContainer;
 
-    WarpXFluidContainer (amrex::AmrCore* amr_core, int ispecies);
+    WarpXFluidContainer (amrex::AmrCore* amr_core, int ispecies, const std::string& name);
     ~WarpXFluidContainer() {}
 
     void AllocData () {}
 
     void InitData () {}
 
+    void ReadParameters ();
     /**
      * Evolve is the central WarpXFluidContainer function that advances
      * fluids for a time dt (typically one timestep).

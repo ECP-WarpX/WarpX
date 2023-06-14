@@ -8,8 +8,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_FluidContainer_H_
-#define WARPX_FluidContainer_H_
+#ifndef WARPX_MultiFluidContainer_H_
+#define WARPX_MultiFluidContainer_H_
+
+#include "WarpXFluidContainer_fwd.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
@@ -79,7 +81,7 @@ public:
     /// This evolves all the fluids by one PIC time step, including current deposition, the
     /// field solve, and pushing the fluids, for all the species in the MultiFluidContainer.
     ///
-    void Evolve (int lev,
+    /*  void Evolve (int lev,
                  const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                  const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
                  amrex::MultiFab& jx,  amrex::MultiFab& jy, amrex::MultiFab& jz,
@@ -87,7 +89,7 @@ public:
                  amrex::MultiFab* rho, amrex::MultiFab* crho,
                  const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
                  const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false);
+                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false); */
 
     int nSpecies() const {return species_names.size();}
 
@@ -105,4 +107,4 @@ private:
     void ReadParameters ();
 
 };
-#endif /*WARPX_FluidContainer_H_*/
+#endif /*WARPX_MultiFluidContainer_H_*/
