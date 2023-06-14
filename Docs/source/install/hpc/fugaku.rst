@@ -48,6 +48,7 @@ Then, load ``cmake`` and ``ninja`` using ``spack``:
 At this point we need to download and compile the libraries required for OpenPMD support:
 
 .. code-block:: bash
+
    export CC=$(which mpifcc)
    export CXX=$(which mpiFCC)
    export CFLAGS="-O3 -Nclang -Nlibomp -Klib -g -DNDEBUG"
