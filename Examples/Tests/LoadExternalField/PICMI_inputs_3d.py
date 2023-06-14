@@ -111,6 +111,8 @@ sim = picmi.Simulation(
         particle_shape=particle_shape
         )
 
+sim.add_applied_field(initial_field)
+
 sim.add_species(
         ions,
         layout=picmi.PseudoRandomLayout(
