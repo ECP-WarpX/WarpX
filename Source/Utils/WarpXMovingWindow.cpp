@@ -77,10 +77,10 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
             {
                 // dir=0 is z in 1D, x in 2D, x in 3D
 #if defined(WARPX_DIM_1D_Z)
-                u_bulk = plasma_injector->getInjectorMomentumHost().getBulkMomentum(0._rt, 0._rt, current_injection_position[i]);
+                u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(0._rt, 0._rt, current_injection_position[i]);
                 v_bulk = PhysConst::c * u_bulk.z / std::sqrt(1._rt + u_bulk.z*u_bulk.z);
 #else // 2D, 3D
-                u_bulk = plasma_injector->getInjectorMomentumHost().getBulkMomentum(current_injection_position[i], 0._rt, 0._rt);
+                u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(current_injection_position[i], 0._rt, 0._rt);
                 v_bulk = PhysConst::c * u_bulk.x / std::sqrt(1._rt + u_bulk.x*u_bulk.x);
 #endif
             }
@@ -89,10 +89,10 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
                 // dir=1 is nothing in 1D, z in 2D, y in 3D
                 // (we do not expect to enter this code block in 1D)
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                u_bulk = plasma_injector->getInjectorMomentumHost().getBulkMomentum(0._rt, 0._rt, current_injection_position[i]);
+                u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(0._rt, 0._rt, current_injection_position[i]);
                 v_bulk = PhysConst::c * u_bulk.z / std::sqrt(1._rt + u_bulk.z*u_bulk.z);
 #else // 3D
-                u_bulk = plasma_injector->getInjectorMomentumHost().getBulkMomentum(0._rt, current_injection_position[i], 0._rt);
+                u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(0._rt, current_injection_position[i], 0._rt);
                 v_bulk = PhysConst::c * u_bulk.y / std::sqrt(1._rt + u_bulk.y*u_bulk.y);
 #endif
             }
@@ -100,7 +100,7 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
             {
                 // dir=2 is nothing in 1D, nothing in 2D, z in 3D
                 // (we do not expect to enter this code block in 1D and 2D)
-                u_bulk = plasma_injector->getInjectorMomentumHost().getBulkMomentum(0._rt, 0._rt, current_injection_position[i]);
+                u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(0._rt, 0._rt, current_injection_position[i]);
                 v_bulk = PhysConst::c * u_bulk.z / std::sqrt(1._rt + u_bulk.z*u_bulk.z);
             }
 

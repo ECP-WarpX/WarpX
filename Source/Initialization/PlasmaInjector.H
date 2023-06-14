@@ -133,7 +133,7 @@ public:
     InjectorDensity*  getInjectorDensity ();
 
     InjectorMomentum* getInjectorMomentumDevice ();
-    InjectorMomentum& getInjectorMomentumHost ();
+    InjectorMomentum* getInjectorMomentumHost ();
 
 protected:
 

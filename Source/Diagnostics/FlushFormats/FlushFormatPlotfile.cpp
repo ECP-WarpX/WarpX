@@ -302,7 +302,7 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         warpx.GetPartContainer().WriteHeader(HeaderFile);
 
-        for (auto& inj_pos : warpx.getcurrent_injection_position())
+        for (auto const& inj_pos : warpx.getcurrent_injection_position())
         {
              HeaderFile << inj_pos << "\n";
         }

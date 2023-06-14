@@ -743,8 +743,8 @@ PlasmaInjector::getInjectorMomentumDevice ()
     return d_inj_mom;
 }
 
-InjectorMomentum&
+InjectorMomentum*
 PlasmaInjector::getInjectorMomentumHost ()
 {
-    return *h_inj_mom;
+    return h_inj_mom.get();
 }
