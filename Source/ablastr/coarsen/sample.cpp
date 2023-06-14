@@ -114,7 +114,7 @@ namespace ablastr::coarsen::sample
         const amrex::IntVect crse_ratio
     )
     {
-        amrex::IntVect ngrowvect(ngrow);
+        const amrex::IntVect ngrowvect(ngrow);
         Coarsen(mf_dst,
                 mf_src,
                 dcomp,

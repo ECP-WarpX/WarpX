@@ -133,7 +133,7 @@ Known System Issues
 .. warning::
 
    Sep 2nd, 2022 (OLCFDEV-1079):
-   rocFFT in ROCm 5.1+ tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/library.html#runtime-compilation>`__ in the home area by default.
+   rocFFT in ROCm 5.1-5.3 tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/#runtime-compilation>`__ in the home area by default.
    This does not scale, disable it via:
 
    .. code-block:: bash

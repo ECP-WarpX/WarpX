@@ -17,7 +17,7 @@
  * If temperature is a constant, store value. If a parser, make and
  * store the parser function
  */
-TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
+TemperatureProperties::TemperatureProperties (const amrex::ParmParse& pp) {
     // Set defaults
     amrex::Real theta;
     std::string temp_dist_s = "constant";

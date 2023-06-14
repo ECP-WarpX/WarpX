@@ -7,6 +7,8 @@
 #ifndef SHAPEFACTORS_H_
 #define SHAPEFACTORS_H_
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX.H>
 #include <AMReX_GpuQualifiers.H>
 
@@ -63,7 +65,7 @@ struct Compute_shape_factor
             return j-1;
         }
         else{
-            amrex::Abort("Unknown particle shape selected in Compute_shape_factor");
+            WARPX_ABORT_WITH_MESSAGE("Unknown particle shape selected in Compute_shape_factor");
             amrex::ignore_unused(sx, xmid);
         }
         return 0;
@@ -117,7 +119,7 @@ struct Compute_shifted_shape_factor
             return i - 1;
         }
         else{
-            amrex::Abort("Unknown particle shape selected in Compute_shifted_shape_factor");
+            WARPX_ABORT_WITH_MESSAGE("Unknown particle shape selected in Compute_shifted_shape_factor");
             amrex::ignore_unused(sx, x_old, i_new);
         }
         return 0;

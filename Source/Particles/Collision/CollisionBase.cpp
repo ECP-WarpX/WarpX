@@ -14,7 +14,7 @@ CollisionBase::CollisionBase (std::string collision_name)
 {
 
     // read collision species
-    amrex::ParmParse pp_collision_name(collision_name);
+    const amrex::ParmParse pp_collision_name(collision_name);
     pp_collision_name.getarr("species", m_species_names);
 
     // number of time steps between collisions

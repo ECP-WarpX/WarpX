@@ -6,7 +6,7 @@ Dependencies
 WarpX depends on the following popular third party software.
 Please see installation instructions below.
 
-- a mature `C++17 <https://en.wikipedia.org/wiki/C%2B%2B17>`__ compiler, e.g., GCC 8, Clang 7, NVCC 11.0, MSVC 19.15 or newer
+- a mature `C++17 <https://en.wikipedia.org/wiki/C%2B%2B17>`__ compiler, e.g., GCC 8.4+, Clang 7, NVCC 11.0, MSVC 19.15 or newer
 - `CMake 3.20.0+ <https://cmake.org>`__
 - `Git 2.18+ <https://git-scm.com>`__
 - `AMReX <https://amrex-codes.github.io>`__: we automatically download and compile a copy of AMReX
@@ -41,18 +41,20 @@ Optional dependencies include:
   - `lasy <https://lasydoc.readthedocs.io>`__
   - see our ``requirements.txt`` file for compatible versions
 
+If you are on a high-performance computing (HPC) system, then :ref:`please see our separate HPC documentation <install-hpc>`.
 
-Install
--------
-
+For all other systems, we recommend to use a **package dependency manager**:
 Pick *one* of the installation methods below to install all dependencies for WarpX development in a consistent manner.
 
+
 Conda (Linux/macOS/Windows)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
+
+`Conda <https://conda.io>`__/`Mamba <https://mamba.readthedocs.io>`__ are cross-compatible, user-level package managers.
 
 .. tip::
 
-   We recommend to configure your conda to use the faster `libmamba` `dependency solver <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`__.
+   We recommend to configure your conda to use the faster ``libmamba`` `dependency solver <https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community>`__.
 
    .. code-block:: bash
 
@@ -60,42 +62,57 @@ Conda (Linux/macOS/Windows)
       conda install -n base conda-libmamba-solver
       conda config --set solver libmamba
 
-With MPI (only Linux/macOS):
-
-.. code-block:: bash
-
-   conda create -n warpx-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
-   source activate warpx-dev
-
-Without MPI:
-
-.. code-block:: bash
-
-   conda create -n warpx-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
-   source activate warpx-dev
-
-   # compile WarpX with -DWarpX_MPI=OFF
-
-For legacy ``GNUmake`` builds, after each ``source activate warpx-dev``, you also need to set:
-
-.. code-block:: bash
-
-   export FFTW_HOME=${CONDA_PREFIX}
-   export BLASPP_HOME=${CONDA_PREFIX}
-   export LAPACKPP_HOME=${CONDA_PREFIX}
-
-.. tip::
-
-   A general option to deactivate that conda self-activates its base environment.
+   We recommend to deactivate that conda self-activates its ``base`` environment.
    This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.
 
    .. code-block:: bash
 
       conda config --set auto_activate_base false
 
+.. tab-set::
 
-Spack (macOS/Linux)
-^^^^^^^^^^^^^^^^^^^
+   .. tab-item:: With MPI (only Linux/macOS)
+
+      .. code-block:: bash
+
+         conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
+         conda activate warpx-cpu-mpich-dev
+
+         # compile WarpX with -DWarpX_MPI=ON
+         # for pip, use: export WARPX_MPI=ON
+
+   .. tab-item:: Without MPI
+
+      .. code-block:: bash
+
+         conda create -n warpx-cpu-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp openpmd-api python numpy pandas scipy yt fftw pkg-config matplotlib mamba ninja pip virtualenv
+         conda activate warpx-cpu-dev
+
+         # compile WarpX with -DWarpX_MPI=OFF
+         # for pip, use: export WARPX_MPI=OFF
+
+For OpenMP support, you will further need:
+
+.. tab-set::
+
+   .. tab-item:: Linux
+
+      .. code-block:: bash
+
+         conda install -c conda-forge libgomp
+
+   .. tab-item:: macOS or Windows
+
+      .. code-block:: bash
+
+         conda install -c conda-forge llvm-openmp
+
+
+Spack (Linux/macOS)
+-------------------
+
+`Spack <https://spack.readthedocs.io>`__ is a user-level package manager.
+It is primarily written for Linux, with slightly less support for macOS, and future support for Windows.
 
 First, download a `WarpX Spack desktop development environment <https://github.com/ECP-WarpX/WarpX/blob/development/Tools/machines/desktop>`__ of your choice.
 For most desktop developments, pick the OpenMP environment for CPUs unless you have a supported GPU.
@@ -141,17 +158,14 @@ In new terminal sessions, re-activate the environment with
 again.
 Replace ``openmp`` with the equivalent you chose.
 
-For legacy ``GNUmake`` builds, after each ``source activate warpx-openmp-dev``, you also need to set:
-
-.. code-block:: bash
-
-   export FFTW_HOME=${SPACK_ENV}/.spack-env/view
-   export BLASPP_HOME=${SPACK_ENV}/.spack-env/view
-   export LAPACKPP_HOME=${SPACK_ENV}/.spack-env/view
+Compile WarpX with ``-DWarpX_MPI=ON``.
+For ``pip``, use ``export WARPX_MPI=ON``.
 
 
 Brew (macOS/Linux)
-^^^^^^^^^^^^^^^^^^
+------------------
+
+`Homebrew (Brew) <https://brew.sh>`__ is a user-level package manager primarily for `Apple macOS <https://en.wikipedia.org/wiki/MacOS>`__, but also supports Linux.
 
 .. code-block:: bash
 
@@ -184,17 +198,45 @@ If you also want to compile with PSATD in RZ, you need to manually install BLAS+
    cmake-easyinstall --prefix=/usr/local git+https://github.com/icl-utk-edu/lapackpp.git \
        -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
 
+Compile WarpX with ``-DWarpX_MPI=ON``.
+For ``pip``, use ``export WARPX_MPI=ON``.
 
-Apt (Debian/Ubuntu)
-^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: bash
+APT (Debian/Ubuntu Linux)
+-------------------------
 
-   sudo apt update
-   sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-pandas python3-pip python3-scipy python3-venv
+The `Advanced Package Tool (APT) <https://en.wikipedia.org/wiki/APT_(software)>`__ is a system-level package manager on Debian-based Linux distributions, including Ubuntu.
 
-   # optional:
-   # for CUDA, either install
-   #   https://developer.nvidia.com/cuda-downloads (preferred)
-   # or, if your Debian/Ubuntu is new enough, use the packages
-   #   sudo apt install nvidia-cuda-dev libcub-dev
+.. tab-set::
+
+   .. tab-item:: With MPI (only Linux/macOS)
+
+      .. code-block:: bash
+
+         sudo apt update
+         sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-pandas python3-pip python3-scipy python3-venv
+
+         # optional:
+         # for CUDA, either install
+         #   https://developer.nvidia.com/cuda-downloads (preferred)
+         # or, if your Debian/Ubuntu is new enough, use the packages
+         #   sudo apt install nvidia-cuda-dev libcub-dev
+
+         # compile WarpX with -DWarpX_MPI=ON
+         # for pip, use: export WARPX_MPI=ON
+
+   .. tab-item:: Without MPI
+
+      .. code-block:: bash
+
+         sudo apt update
+         sudo apt install build-essential ccache cmake g++ git libfftw3-dev libfftw3-dev libhdf5-dev pkg-config python3 python3-matplotlib python3-numpy python3-pandas python3-pip python3-scipy python3-venv
+
+         # optional:
+         # for CUDA, either install
+         #   https://developer.nvidia.com/cuda-downloads (preferred)
+         # or, if your Debian/Ubuntu is new enough, use the packages
+         #   sudo apt install nvidia-cuda-dev libcub-dev
+
+         # compile WarpX with -DWarpX_MPI=OFF
+         # for pip, use: export WARPX_MPI=OFF

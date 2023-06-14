@@ -18,6 +18,7 @@
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
 #include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
 #include "Particles/MultiParticleContainer_fwd.H"
@@ -98,6 +99,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
+    HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
@@ -616,6 +618,13 @@ public:
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
+    /**
+     * \brief
+     * This function contains the logic involved in evolving the electric and
+     * magnetic fields in the hybrid PIC algorithm.
+     */
+    void HybridPICEvolveFields ();
+
     /** apply QED correction on electric field
      *
      * \param dt vector of time steps (for all levels)
@@ -702,6 +711,16 @@ public:
 
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
+
+    /**
+     * \brief When the Ohm's law solver is used, the electron pressure values
+     * on PEC boundaries are set to enforce a zero derivative Neumann condition,
+     * otherwise the E_perp values have large spikes (that grows as 1/dx). This
+     * has to be done since the E-field is algebraically calculated instead of
+     * evolved which means the 1/dx growth is not avoided by multiplication
+     * with dt as happens in the B-field evolve.
+     */
+    void ApplyElectronPressureBoundary (const int lev, PatchType patch_type);
 
     void DampPML ();
     void DampPML (const int lev);
@@ -790,7 +809,8 @@ public:
 
     /**
      * \brief Synchronize J and rho:
-     * filter (if used), exchange guard cells, interpolate across MR levels.
+     * filter (if used), exchange guard cells, interpolate across MR levels
+     * and apply boundary conditions.
      * Contains separate calls to WarpX::SyncCurrent and WarpX::SyncRho.
      */
     void SyncCurrentAndRho ();
@@ -1442,6 +1462,9 @@ private:
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
 
+    // Hybrid PIC algorithm parameters
+    std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
+
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
      * for getting steps at which load balancing is performed */
@@ -1819,6 +1842,9 @@ public:
 #   endif
             get_spectral_solver_fp (int lev) {return *spectral_solver_fp[lev];}
 #endif
+
+public:
+    FiniteDifferenceSolver * get_pointer_fdtd_solver_fp (int lev) { return m_fdtd_solver_fp[lev].get(); }
 
 private:
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;

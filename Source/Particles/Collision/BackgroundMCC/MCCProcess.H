@@ -85,8 +85,8 @@ public:
                 using amrex::Math::ceil;
                 // calculate index of bounding energy pairs
                 amrex::ParticleReal temp = (E_coll - m_energy_lo) / m_dE;
-                int idx_1 = static_cast<int>(floor(temp));
-                int idx_2 = static_cast<int>(ceil(temp));
+                const int idx_1 = static_cast<int>(floor(temp));
+                const int idx_2 = static_cast<int>(ceil(temp));
 
                 // linearly interpolate to the given energy value
                 temp -= idx_1;

@@ -172,6 +172,8 @@ extern "C" {
   amrex::Real** warpx_getCurrentDensityCP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
   amrex::Real** warpx_getCurrentDensityFP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
 
+  amrex::Real** warpx_getCurrentDensityFP_Ampere (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
+
   amrex::Real** warpx_getVectorPotentialFP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
 
   int* warpx_getEfieldLoVects (int lev, int direction, int *return_size, int **ngrowvect);

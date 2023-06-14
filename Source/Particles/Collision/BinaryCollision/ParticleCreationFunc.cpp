@@ -9,6 +9,7 @@
 
 #include "BinaryCollisionUtils.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX_GpuContainers.H>
 #include <AMReX_ParmParse.H>
@@ -19,7 +20,7 @@
 ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
                                             MultiParticleContainer const * const mypc)
     {
-        amrex::ParmParse pp_collision_name(collision_name);
+        const amrex::ParmParse pp_collision_name(collision_name);
 
         m_collision_type = BinaryCollisionUtils::get_collision_type(collision_name, mypc);
 
@@ -49,7 +50,7 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
         }
         else
         {
-          amrex::Abort("Unknown collision type in ParticleCreationFunc");
+          WARPX_ABORT_WITH_MESSAGE("Unknown collision type in ParticleCreationFunc");
         }
 
 #ifdef AMREX_USE_GPU

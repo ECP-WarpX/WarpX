@@ -61,7 +61,7 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
 
-    ParmParse pp_species_name(species_name);
+    const ParmParse pp_species_name(species_name);
 
     utils::parser::getWithParser(
         pp_species_name, "zinject_plane", zinject_plane);
@@ -361,12 +361,12 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             const Dim3 lo = lbound(box);
 
-            bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            int nox = WarpX::nox;
-            int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+            const bool galerkin_interpolation = WarpX::galerkin_interpolation;
+            const int nox = WarpX::nox;
+            const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
-            amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-            amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+            const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+            const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
             amrex::Array4<const amrex::Real> const& ex_arr = exfab.array();
             amrex::Array4<const amrex::Real> const& ey_arr = eyfab.array();
@@ -409,7 +409,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             enum exteb_flags : int { no_exteb, has_exteb };
 
-            int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+            const int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
 
             amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
                                {exteb_runtime_flag},

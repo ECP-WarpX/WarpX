@@ -119,7 +119,7 @@ namespace utils::parser
     {
         // call amrex::ParmParse::query, check if the user specified str.
         std::string tmp_str;
-        int is_specified = a_pp.query(str, tmp_str);
+        const int is_specified = a_pp.query(str, tmp_str);
         if (is_specified)
         {
             // If so, create a parser object and apply it to the value provided by the user.
@@ -146,7 +146,7 @@ namespace utils::parser
     {
         // call amrex::ParmParse::query, check if the user specified str.
         std::vector<std::string> tmp_str_arr;
-        int is_specified = a_pp.queryarr(str, tmp_str_arr);
+        const int is_specified = a_pp.queryarr(str, tmp_str_arr);
         if (is_specified)
         {
             // If so, create parser objects and apply them to the values provided by the user.
@@ -188,7 +188,7 @@ namespace utils::parser
     {
         // call amrex::ParmParse::query, check if the user specified str.
         std::vector<std::string> tmp_str_arr;
-        int is_specified = a_pp.queryarr(str, tmp_str_arr, start_ix, num_val);
+        const int is_specified = a_pp.queryarr(str, tmp_str_arr, start_ix, num_val);
         if (is_specified)
         {
             // If so, create parser objects and apply them to the values provided by the user.
