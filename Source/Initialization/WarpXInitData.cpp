@@ -505,9 +505,6 @@ WarpX::InitFromScratch ()
     mypc->AllocData();
     mypc->InitData();
 
-    myfl->AllocData();
-    myfl->InitData();
-
     InitPML();
 }
 

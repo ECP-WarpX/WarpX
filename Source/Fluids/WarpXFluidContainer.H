@@ -45,10 +45,10 @@ class WarpXFluidContainer
 public:
     friend MultiFluidContainer;
 
-    WarpXFluidContainer (amrex::AmrCore* amr_core, int ispecies, const std::string& name);
+    WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name);
     ~WarpXFluidContainer() {}
 
-    void AllocData () {}
+    void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);
 
     void InitData () {}
 

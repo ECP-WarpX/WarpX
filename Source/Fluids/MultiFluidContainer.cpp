@@ -51,7 +51,7 @@
 
 using namespace amrex;
 
-MultiFluidContainer::MultiFluidContainer (AmrCore* amr_core)
+MultiFluidContainer::MultiFluidContainer (int nlevs_max)
 {
     ReadParameters();
 
@@ -59,7 +59,7 @@ MultiFluidContainer::MultiFluidContainer (AmrCore* amr_core)
 
     allcontainers.resize(nspecies);
     for (int i = 0; i < nspecies; ++i) {
-        allcontainers[i] = std::make_unique<WarpXFluidContainer>(amr_core, i, species_names[i]);
+        allcontainers[i] = std::make_unique<WarpXFluidContainer>(nlevs_max, i, species_names[i]);
     }
 }
 
@@ -88,10 +88,10 @@ MultiFluidContainer::GetFluidContainerFromName (const std::string& name) const
 }
 
 void
-MultiFluidContainer::AllocData ()
+MultiFluidContainer::AllocateLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
     for (auto& pc : allcontainers) {
-        pc->AllocData();
+        pc->AllocateLevelMFs(lev, ba, dm);
     }
 }
 

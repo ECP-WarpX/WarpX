@@ -58,7 +58,7 @@
 
 using namespace amrex;
 
-WarpXFluidContainer::WarpXFluidContainer (AmrCore* amr_core, int ispecies, const std::string& name)
+WarpXFluidContainer::WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name)
 {
     species_id = ispecies;
     species_name = name;
@@ -69,6 +69,10 @@ WarpXFluidContainer::WarpXFluidContainer (AmrCore* amr_core, int ispecies, const
     mass = plasma_injector->getMass();
 
     ReadParameters();
+
+    // Resize the list of MultiFabs for the right number of levels
+    N.resize(nlevs_max);
+    NU.resize(nlevs_max);
 }
 
 void
@@ -83,4 +87,29 @@ WarpXFluidContainer::ReadParameters ()
         pp_species_name.query("do_not_push", do_not_push);
         initialized = true;
     }
+}
+
+void
+WarpXFluidContainer::AllocateLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm)
+{
+    int ncomps = 1;
+    amrex::IntVect nguards = {2, 2, 2};
+
+    auto & warpx = WarpX::GetInstance();
+
+    // set human-readable tag for each MultiFab
+    auto const tag = [lev]( std::string tagname ) {
+        tagname.append("[l=").append(std::to_string(lev)).append("]");
+        return tagname;
+    };
+
+    warpx.AllocInitMultiFab(N[lev], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
+        dm, ncomps, nguards, tag("fluid density"), 0.0_rt);
+
+    warpx.AllocInitMultiFab(NU[lev][0], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
+        dm, ncomps, nguards, tag("fluid momentum density [x]"), 0.0_rt);
+    warpx.AllocInitMultiFab(NU[lev][1], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
+        dm, ncomps, nguards, tag("fluid momentum density [y]"), 0.0_rt);
+    warpx.AllocInitMultiFab(NU[lev][2], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
+        dm, ncomps, nguards, tag("fluid momentum density [z]"), 0.0_rt);
 }

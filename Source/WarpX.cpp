@@ -307,7 +307,7 @@ WarpX::WarpX ()
     m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
 
     // Fluid Container
-    myfl = std::make_unique<MultiFluidContainer>(this);
+    myfl = std::make_unique<MultiFluidContainer>(nlevs_max);
 
     // Diagnostics
     multi_diags = std::make_unique<MultiDiagnostics>();
@@ -2208,6 +2208,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             jz_nodal_flag, rho_nodal_flag
         );
     }
+
+    // Allocate extra multifabs needed for fluids
+    myfl->AllocateLevelMFs(lev, ba, dm);
 
     if (fft_do_time_averaging)
     {

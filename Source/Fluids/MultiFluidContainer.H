@@ -54,7 +54,7 @@ class MultiFluidContainer
 
 public:
 
-    MultiFluidContainer (amrex::AmrCore* amr_core);
+    MultiFluidContainer (int nlevs_max);
 
     ~MultiFluidContainer() {}
 
@@ -73,7 +73,7 @@ public:
     }
 #endif
 
-    void AllocData ();
+    void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);
 
     void InitData ();
 
