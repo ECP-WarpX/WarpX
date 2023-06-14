@@ -134,3 +134,20 @@ Known System Issues
    Reported to AMD and fixed for the 5.5 release of ROCm.
 
    Upgrade ROCm or stay with the ROCm 5.2 module to avoid.
+
+.. warning::
+
+   Checkpoints and I/O at scale seem to be slow with the current file system configuration.
+   Please test checkpointing and I/O with short ``#SBATCH -q debug`` runs before running the full simulation.
+   Execute ``lfs getstripe -d <dir>`` to show the default progressive file layout.
+   Consider using ``lfs setstripe`` to change the `striping <https://wiki.lustre.org/Configuring_Lustre_File_Striping>`_ for new files **before** you submit the run.
+
+   .. code-block:: bash
+
+      mkdir /lustre/orion/proj-shared/<your-project>/<path/to/new/sim/dir>
+      cd <new/sim/dir/above>
+      # create your diagnostics directory first
+      mkdir diags
+      # change striping for new files before you submit the simulation
+      #   this is an example, striping 10 MB blocks onto 32 nodes
+      lfs setstripe -S 10M -c 32 diags
