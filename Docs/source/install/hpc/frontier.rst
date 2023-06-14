@@ -45,6 +45,14 @@ Create it now:
 
    cp $HOME/src/warpx/Tools/machines/frontier-olcf/frontier_warpx.profile.example $HOME/frontier_warpx.profile
 
+.. dropdown:: Script Details
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
+
+   .. literalinclude:: ../../../../Tools/machines/frontier-olcf/frontier_warpx.profile.example
+      :language: bash
+
 Edit the 2nd line of this script, which sets the ``export proj=""`` variable.
 For example, if you are member of the project ``aph114``, then run ``vi $HOME/frontier_warpx.profile``.
 Enter the edit mode by typing ``i`` and edit line 2 to read:
@@ -68,6 +76,14 @@ Finally, since Frontier does not yet provide software modules for some of our de
 .. code-block:: bash
 
    bash $HOME/src/warpx/Tools/machines/frontier-olcf/install_dependencies.sh
+
+.. dropdown:: Script Details
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
+
+   .. literalinclude:: ../../../../Tools/machines/frontier-olcf/install_dependencies.sh
+      :language: bash
 
 
 .. _building-frontier-compilation:
@@ -146,7 +162,7 @@ Or in non-interactive runs:
 
 .. literalinclude:: ../../../../Tools/machines/frontier-olcf/submit.sh
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/frontier-olcf/submit.sh``.
+   :caption: You can copy this file from ``$HOME/src/warpx/Tools/machines/frontier-olcf/submit.sh``.
 
 
 .. _post-processing-frontier:
