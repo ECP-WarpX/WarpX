@@ -90,7 +90,7 @@ python3 -m pip install --upgrade openpmd-api
 python3 -m pip install --upgrade matplotlib
 python3 -m pip install --upgrade yt
 # install or update WarpX dependencies such as picmistandard
-python3 -m pip install --upgrade -r requirements.txt
+python3 -m pip install --upgrade -r $HOME/src/warpx/requirements.txt
 # optional: for libEnsemble
 python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 # optional: for optimas (based on libEnsemble & ax->botorch->gpytorch->pytorch)
