@@ -28,7 +28,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
     BackwardCompatibility();
 
-    ParmParse pp_rd_name(m_rd_name);
+    const ParmParse pp_rd_name(m_rd_name);
 
     // read path
     pp_rd_name.query("path", m_path);
@@ -38,7 +38,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
     // check if it is a restart run
     std::string restart_chkfile = "";
-    ParmParse pp_amr("amr");
+    const ParmParse pp_amr("amr");
     pp_amr.query("restart", restart_chkfile);
     m_IsNotRestart = restart_chkfile.empty();
 
@@ -83,7 +83,7 @@ void ReducedDiags::LoadBalance ()
 
 void ReducedDiags::BackwardCompatibility ()
 {
-    amrex::ParmParse pp_rd_name(m_rd_name);
+    const amrex::ParmParse pp_rd_name(m_rd_name);
     std::vector<std::string> backward_strings;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_rd_name.queryarr("frequency", backward_strings),

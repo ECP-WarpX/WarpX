@@ -172,13 +172,13 @@ std::optional<WarnPriority> WarnManager::GetAbortThreshold() const
     return m_abort_on_warning_threshold;
 }
 
-void WarnManager::debug_read_warnings_from_input(amrex::ParmParse& params)
+void WarnManager::debug_read_warnings_from_input(const amrex::ParmParse& params)
 {
     std::vector<std::string> warnings;
     params.queryarr("test_warnings", warnings);
 
     for (const auto& warn : warnings){
-        amrex::ParmParse pp_warn(warn);
+        const amrex::ParmParse pp_warn(warn);
 
         std::string topic;
         pp_warn.query("topic", topic);

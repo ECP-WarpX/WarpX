@@ -51,7 +51,7 @@ FieldMaximum::FieldMaximum (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    ParmParse pp_amr("amr");
+    const ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
