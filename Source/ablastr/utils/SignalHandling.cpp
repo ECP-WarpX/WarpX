@@ -35,7 +35,7 @@ SignalHandling::parseSignalNameToNumber (const std::string &str)
     amrex::IParser signals_parser(str);
 
 #if defined(__linux__) || defined(__APPLE__)
-    struct {
+    const struct {
         const char* abbrev;
         const int value;
     } signals_to_parse[] = {
@@ -104,7 +104,7 @@ SignalHandling::parseSignalNameToNumber (const std::string &str)
 
     auto spf = signals_parser.compileHost<0>();
 
-    int sig = spf();
+    const int sig = spf();
     ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(sig < NUM_SIGNALS,
                                        "Parsed signal value is outside the supported range of [1, 31]");
 
@@ -133,7 +133,7 @@ SignalHandling::InitSignalHandling ()
             } else {
                 sa.sa_handler = SIG_IGN;
             }
-            int result = sigaction(signal_number, &sa, nullptr);
+            const int result = sigaction(signal_number, &sa, nullptr);
             ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(result == 0,
                                                "Failed to install signal handler for a configured signal");
         }
@@ -159,7 +159,7 @@ SignalHandling::CheckSignals ()
             // unset the flag without risking loss of a signal - if a
             // signal arrives after this, it will be handled the next
             // time this function is called.
-            bool signal_received = signal_received_flags[signal_number].exchange(false);
+            const bool signal_received = signal_received_flags[signal_number].exchange(false);
 
             if (signal_received) {
                 for (int signal_request = 0; signal_request < SIGNAL_REQUESTS_SIZE; ++signal_request) {
@@ -195,7 +195,7 @@ SignalHandling::WaitSignals ()
 bool
 SignalHandling::TestAndResetActionRequestFlag (int action_to_test)
 {
-    bool retval = signal_actions_requested[action_to_test];
+    const bool retval = signal_actions_requested[action_to_test];
     signal_actions_requested[action_to_test] = false;
     return retval;
 }

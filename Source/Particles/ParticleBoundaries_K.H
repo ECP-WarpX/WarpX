@@ -134,7 +134,7 @@ namespace ApplyParticleBoundaries {
             // Reflect only ur
             // Note that y is theta
             amrex::Real ur = ux*std::cos(y) + uy*std::sin(y);
-            amrex::Real ut = -ux*std::sin(y) + uy*std::cos(y);
+            const amrex::Real ut = -ux*std::sin(y) + uy*std::cos(y);
             ur = -ur;
             ux = ur*std::cos(y) - ut*std::sin(y);
             uy = ur*std::sin(y) + ut*std::cos(y);

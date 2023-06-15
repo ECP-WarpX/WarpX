@@ -47,7 +47,7 @@ ChargeOnEB::ChargeOnEB (std::string rd_name)
 
     // Read optional weighting
     std::string buf;
-    amrex::ParmParse pp_rd_name(rd_name);
+    const amrex::ParmParse pp_rd_name(rd_name);
     m_do_parser_weighting = pp_rd_name.query("weighting_function(x,y,z)", buf);
     if (m_do_parser_weighting) {
         std::string weighting_string = "";
