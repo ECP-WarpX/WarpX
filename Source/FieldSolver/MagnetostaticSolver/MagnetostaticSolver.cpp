@@ -106,7 +106,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     }
 #endif
 
-    SyncCurrent(current_fp, current_cp); // Apply filter, perform MPI exchange, interpolate across levels
+    SyncCurrent(current_fp, current_cp, current_buf); // Apply filter, perform MPI exchange, interpolate across levels
 
     // set the boundary and current density potentials
     setVectorPotentialBC(vector_potential_fp_nodal);

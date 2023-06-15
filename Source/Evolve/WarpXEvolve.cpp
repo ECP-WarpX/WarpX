@@ -173,8 +173,8 @@ WarpX::Evolve (int numsteps)
             auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
             mypc->DepositCharge(rho_fp_temp, 0._rt);
             mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
-            SyncRho(rho_fp_temp, rho_cp);
-            SyncCurrent(current_fp_temp, current_cp);
+            SyncRho(rho_fp_temp, rho_cp, charge_buf);
+            SyncCurrent(current_fp_temp, current_cp, current_buf);
             for (int lev=0; lev <= finest_level; ++lev) {
                 // SyncCurrent does not include a call to FillBoundary, but it is needed
                 // for the hybrid-PIC solver since current values are interpolated to
@@ -556,13 +556,13 @@ void WarpX::SyncCurrentAndRho ()
             if (current_deposition_algo == CurrentDepositionAlgo::Vay)
             {
                 // TODO Replace current_cp with current_cp_vay once Vay deposition is implemented with MR
-                SyncCurrent(current_fp_vay, current_cp);
-                SyncRho(rho_fp, rho_cp);
+                SyncCurrent(current_fp_vay, current_cp, current_buf);
+                SyncRho(rho_fp, rho_cp, charge_buf);
             }
             else
             {
-                SyncCurrent(current_fp, current_cp);
-                SyncRho(rho_fp, rho_cp);
+                SyncCurrent(current_fp, current_cp, current_buf);
+                SyncRho(rho_fp, rho_cp, charge_buf);
             }
         }
         else // no periodic single box
@@ -573,8 +573,8 @@ void WarpX::SyncCurrentAndRho ()
             if (current_correction == false &&
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
-                SyncCurrent(current_fp, current_cp);
-                SyncRho(rho_fp, rho_cp);
+                SyncCurrent(current_fp, current_cp, current_buf);
+                SyncRho(rho_fp, rho_cp, charge_buf);
             }
 
             if (current_deposition_algo == CurrentDepositionAlgo::Vay)
@@ -587,8 +587,8 @@ void WarpX::SyncCurrentAndRho ()
     }
     else // FDTD
     {
-        SyncCurrent(current_fp, current_cp);
-        SyncRho(rho_fp, rho_cp);
+        SyncCurrent(current_fp, current_cp, current_buf);
+        SyncRho(rho_fp, rho_cp, charge_buf);
     }
 
     // Reflect charge and current density over PEC boundaries, if needed.
@@ -649,7 +649,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // (dt[0] denotes the time step on mesh refinement level 0)
         mypc->DepositCharge(rho_fp, -dt[0]);
         // Filter, exchange boundary, and interpolate across levels
-        SyncRho(rho_fp, rho_cp);
+        SyncRho(rho_fp, rho_cp, charge_buf);
         // Forward FFT of rho
         PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_new);
     }
@@ -665,7 +665,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
         // into 'current_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
-        SyncCurrent(current_fp, current_cp);
+        SyncCurrent(current_fp, current_cp, current_buf);
         // Forward FFT of J
         PSATDForwardTransformJ(current_fp, current_cp);
     }
@@ -699,7 +699,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
         // into 'current_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
-        SyncCurrent(current_fp, current_cp);
+        SyncCurrent(current_fp, current_cp, current_buf);
         // Forward FFT of J
         PSATDForwardTransformJ(current_fp, current_cp);
 
@@ -713,7 +713,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Deposit rho at relative time t_depose_charge
             mypc->DepositCharge(rho_fp, t_depose_charge);
             // Filter, exchange boundary, and interpolate across levels
-            SyncRho(rho_fp, rho_cp);
+            SyncRho(rho_fp, rho_cp, charge_buf);
             // Forward FFT of rho
             const int rho_idx = (rho_in_time == RhoInTime::Linear) ? rho_new : rho_mid;
             PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_idx);
@@ -848,8 +848,8 @@ WarpX::OneStep_sub1 (Real curtime)
     // by only half a coarse step (first half)
     PushParticlesandDepose(coarse_lev, curtime, DtType::Full);
     StoreCurrent(coarse_lev);
-    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev);
-    AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, 0, ncomps);
+    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, current_buf, coarse_lev);
+    AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, charge_buf, coarse_lev, 0, ncomps);
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
     EvolveF(fine_lev, PatchType::coarse, dt[fine_lev], DtType::FirstHalf);
@@ -907,8 +907,8 @@ WarpX::OneStep_sub1 (Real curtime)
     // v) Push the fields on the coarse patch and mother grid
     // by only half a coarse step (second half)
     RestoreCurrent(coarse_lev);
-    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, coarse_lev);
-    AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, coarse_lev, ncomps, ncomps);
+    AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, current_buf, coarse_lev);
+    AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, charge_buf, coarse_lev, ncomps, ncomps);
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev]);
     FillBoundaryE(fine_lev, PatchType::coarse, guard_cells.ng_FieldSolver,

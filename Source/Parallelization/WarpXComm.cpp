@@ -856,7 +856,8 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 void
 WarpX::SyncCurrent (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer)
 {
     WARPX_PROFILE("WarpX::SyncCurrent()");
 
@@ -989,14 +990,14 @@ WarpX::SyncCurrent (
                 ablastr::coarsen::average::Coarsen(*J_cp[lev][idim],
                                                    *J_fp[lev][idim],
                                                    refRatio(lev-1));
-                if (current_buf[lev][idim])
+                if (J_buffer[lev][idim])
                 {
                     IntVect const& ng = J_cp[lev][idim]->nGrowVect();
-                    AMREX_ASSERT(ng.allLE(current_buf[lev][idim]->nGrowVect()));
-                    MultiFab::Add(*current_buf[lev][idim], *J_cp[lev][idim],
+                    AMREX_ASSERT(ng.allLE(J_buffer[lev][idim]->nGrowVect()));
+                    MultiFab::Add(*J_buffer[lev][idim], *J_cp[lev][idim],
                                   0, 0, ncomp, ng);
                     mf_comm = std::make_unique<MultiFab>
-                        (*current_buf[lev][idim], amrex::make_alias, 0, ncomp);
+                        (*J_buffer[lev][idim], amrex::make_alias, 0, ncomp);
                 }
                 else
                 {
@@ -1016,13 +1017,14 @@ WarpX::SyncCurrent (
 
 void
 WarpX::SyncRho () {
-    SyncRho(rho_fp, rho_cp);
+    SyncRho(rho_fp, rho_cp, charge_buf);
 }
 
 void
 WarpX::SyncRho (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp)
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer)
 {
     WARPX_PROFILE("WarpX::SyncRho()");
 
@@ -1074,13 +1076,13 @@ WarpX::SyncRho (
             ablastr::coarsen::average::Coarsen(*charge_cp[lev],
                                                *charge_fp[lev],
                                                refRatio(lev-1));
-            if (charge_buf[lev])
+            if (charge_buffer[lev])
             {
                 IntVect const& ng = charge_cp[lev]->nGrowVect();
-                AMREX_ASSERT(ng.allLE(charge_buf[lev]->nGrowVect()));
-                MultiFab::Add(*charge_buf[lev], *charge_cp[lev], 0, 0, ncomp, ng);
+                AMREX_ASSERT(ng.allLE(charge_buffer[lev]->nGrowVect()));
+                MultiFab::Add(*charge_buffer[lev], *charge_cp[lev], 0, 0, ncomp, ng);
                 mf_comm = std::make_unique<MultiFab>
-                    (*charge_buf[lev], amrex::make_alias, 0, ncomp);
+                    (*charge_buffer[lev], amrex::make_alias, 0, ncomp);
             }
             else
             {
@@ -1210,6 +1212,7 @@ void WarpX::SumBoundaryJ (
 void WarpX::AddCurrentFromFineLevelandSumBoundary (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+    const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer,
     const int lev)
 {
     const amrex::Periodicity& period = Geom(lev).periodicity();
@@ -1233,18 +1236,18 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
 
             const IntVect ng = J_cp[lev+1][idim]->nGrowVect();
 
-            if (use_filter && current_buf[lev+1][idim])
+            if (use_filter && J_buffer[lev+1][idim])
             {
                 ApplyFilterJ(J_cp, lev+1, idim);
-                ApplyFilterJ(current_buf, lev+1, idim);
+                ApplyFilterJ(J_buffer, lev+1, idim);
 
                 MultiFab::Add(
-                    *current_buf[lev+1][idim], *J_cp[lev+1][idim],
-                    0, 0, current_buf[lev+1][idim]->nComp(), ng);
+                    *J_buffer[lev+1][idim], *J_cp[lev+1][idim],
+                    0, 0, J_buffer[lev+1][idim]->nComp(), ng);
 
                 ablastr::utils::communication::ParallelAdd(
-                    mf, *current_buf[lev+1][idim], 0, 0,
-                    current_buf[lev+1][idim]->nComp(),
+                    mf, *J_buffer[lev+1][idim], 0, 0,
+                    J_buffer[lev+1][idim]->nComp(),
                     ng, amrex::IntVect(0),
                     do_single_precision_comms, period);
             }
@@ -1258,15 +1261,15 @@ void WarpX::AddCurrentFromFineLevelandSumBoundary (
                     ng, amrex::IntVect(0),
                     do_single_precision_comms, period);
             }
-            else if (current_buf[lev+1][idim]) // but no filter
+            else if (J_buffer[lev+1][idim]) // but no filter
             {
                 MultiFab::Add(
-                    *current_buf[lev+1][idim], *J_cp[lev+1][idim],
-                    0, 0, current_buf[lev+1][idim]->nComp(), ng);
+                    *J_buffer[lev+1][idim], *J_cp[lev+1][idim],
+                    0, 0, J_buffer[lev+1][idim]->nComp(), ng);
 
                 ablastr::utils::communication::ParallelAdd(
-                    mf, *current_buf[lev+1][idim], 0, 0,
-                    current_buf[lev+1][idim]->nComp(),
+                    mf, *J_buffer[lev+1][idim], 0, 0,
+                    J_buffer[lev+1][idim]->nComp(),
                     ng, amrex::IntVect(0),
                     do_single_precision_comms, period);
             }
@@ -1345,6 +1348,7 @@ void WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab
 void WarpX::AddRhoFromFineLevelandSumBoundary (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
     const int lev,
     const int icomp,
     const int ncomp)
@@ -1362,7 +1366,7 @@ void WarpX::AddRhoFromFineLevelandSumBoundary (
         mf.setVal(0.0);
         IntVect ng = charge_cp[lev+1]->nGrowVect();
         IntVect ng_depos_rho = get_ng_depos_rho();
-        if (use_filter && charge_buf[lev+1])
+        if (use_filter && charge_buffer[lev+1])
         {
             // coarse patch of fine level
             ng += bilinear_filter.stencil_length_each_dir-1;
@@ -1373,9 +1377,9 @@ void WarpX::AddRhoFromFineLevelandSumBoundary (
             bilinear_filter.ApplyStencil(rhofc, *charge_cp[lev+1], lev+1, icomp, 0, ncomp);
 
             // buffer patch of fine level
-            MultiFab rhofb(charge_buf[lev+1]->boxArray(),
-                           charge_buf[lev+1]->DistributionMap(), ncomp, ng);
-            bilinear_filter.ApplyStencil(rhofb, *charge_buf[lev+1], lev+1, icomp, 0, ncomp);
+            MultiFab rhofb(charge_buffer[lev+1]->boxArray(),
+                           charge_buffer[lev+1]->DistributionMap(), ncomp, ng);
+            bilinear_filter.ApplyStencil(rhofb, *charge_buffer[lev+1], lev+1, icomp, 0, ncomp);
 
             MultiFab::Add(rhofb, rhofc, 0, 0, ncomp, ng);
 
@@ -1395,16 +1399,16 @@ void WarpX::AddRhoFromFineLevelandSumBoundary (
                                                        WarpX::do_single_precision_comms, period);
             WarpXSumGuardCells( *charge_cp[lev+1], rf, period, ng_depos_rho, icomp, ncomp );
         }
-        else if (charge_buf[lev+1]) // but no filter
+        else if (charge_buffer[lev+1]) // but no filter
         {
             ng_depos_rho.min(ng);
-            MultiFab::Add(*charge_buf[lev+1],
+            MultiFab::Add(*charge_buffer[lev+1],
                           *charge_cp[lev+1], icomp, icomp, ncomp,
                            charge_cp[lev+1]->nGrowVect());
 
-            ablastr::utils::communication::ParallelAdd(mf, *charge_buf[lev + 1], icomp, 0,
+            ablastr::utils::communication::ParallelAdd(mf, *charge_buffer[lev + 1], icomp, 0,
                                                        ncomp,
-                                                       charge_buf[lev + 1]->nGrowVect(),
+                                                       charge_buffer[lev + 1]->nGrowVect(),
                                                        IntVect::TheZeroVector(), WarpX::do_single_precision_comms,
                                                        period);
             WarpXSumGuardCells(*(charge_cp[lev+1]), period, ng_depos_rho, icomp, ncomp);
