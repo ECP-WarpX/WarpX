@@ -393,7 +393,7 @@ void PhysicalParticleContainer::InitData ()
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame (
-    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz)
+    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz, ParticleReal t_lab)
 {
     // Map the particles from the lab frame to the boosted frame.
     // This boosts the particle to the lab frame and calculates
@@ -402,8 +402,6 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
 
     // For now, start with the assumption that this will only happen
     // at the start of the simulation.
-    const ParticleReal t_lab = 0._prt;
-
     const ParticleReal uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
 
     // tpr is the particle's time in the boosted frame
@@ -434,8 +432,10 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
         x = xpr - tpr*vxpr;
         y = ypr - tpr*vypr;
     }
-
-    z = zpr - tpr*vzpr;
+    constexpr int lev = 0;
+    const amrex::Real t0 = WarpX::GetInstance().gett_new(lev);
+    //amrex::Print() << Utils::TextMsg::Info("getInstance_time = " + std::to_string(t0* std::pow(10.0, 15)));
+    z = zpr - (tpr-t0)*vzpr;
 
 }
 
@@ -582,6 +582,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
         // assumption asserts: see PlasmaInjector
         openPMD::Iteration it = series->iterations.begin()->second;
+        double const t_lab = it.time<double>() * it.timeUnitSI();
         std::string const ps_name = it.particles.begin()->first;
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
@@ -649,7 +650,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                 CheckAndAddParticle(x, y, z, ux, uy, uz, weight,
                                     particle_x,  particle_y,  particle_z,
                                     particle_ux, particle_uy, particle_uz,
-                                    particle_w);
+                                    particle_w, t_lab);
             }
         }
         auto const np = particle_z.size();
@@ -795,10 +796,11 @@ PhysicalParticleContainer::CheckAndAddParticle (
     Gpu::HostVector<ParticleReal>& particle_ux,
     Gpu::HostVector<ParticleReal>& particle_uy,
     Gpu::HostVector<ParticleReal>& particle_uz,
-    Gpu::HostVector<ParticleReal>& particle_w)
+    Gpu::HostVector<ParticleReal>& particle_w,
+    ParticleReal t_lab)
 {
     if (WarpX::gamma_boost > 1.) {
-        MapParticletoBoostedFrame(x, y, z, ux, uy, uz);
+        MapParticletoBoostedFrame(x, y, z, ux, uy, uz, t_lab);
     }
     particle_x.push_back(x);
     particle_y.push_back(y);
