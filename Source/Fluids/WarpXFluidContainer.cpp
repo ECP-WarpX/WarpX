@@ -47,7 +47,7 @@ void
 WarpXFluidContainer::AllocateLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
     int ncomps = 1;
-    amrex::IntVect nguards = {2, 2, 2};
+    amrex::IntVect nguards = {AMREX_D_DECL(2, 2, 2)};
 
     auto & warpx = WarpX::GetInstance();
 
