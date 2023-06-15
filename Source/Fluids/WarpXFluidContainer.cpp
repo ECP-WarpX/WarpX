@@ -8,53 +8,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpXFluidContainer.H"
-
-#include "Utils/TextMsg.H"
-#include "Utils/WarpXConst.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
-
-#include <ablastr/coarsen/average.H>
-#include <ablastr/utils/Communication.H>
-
-#include <AMReX.H>
-#include <AMReX_AmrCore.H>
-#include <AMReX_AmrParGDB.H>
-#include <AMReX_BLassert.H>
-#include <AMReX_Box.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_Config.H>
-#include <AMReX_Dim3.H>
-#include <AMReX_Extension.H>
-#include <AMReX_FabArray.H>
-#include <AMReX_Geometry.H>
-#include <AMReX_GpuAllocators.H>
-#include <AMReX_GpuAtomic.H>
-#include <AMReX_GpuControl.H>
-#include <AMReX_GpuDevice.H>
-#include <AMReX_GpuLaunch.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_IndexType.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_LayoutData.H>
-#include <AMReX_MFIter.H>
-#include <AMReX_MultiFab.H>
-#include <AMReX_PODVector.H>
-#include <AMReX_ParGDB.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_ParallelReduce.H>
-#include <AMReX_ParmParse.H>
-#include <AMReX_Random.H>
-#include <AMReX_TinyProfiler.H>
-#include <AMReX_Utility.H>
-
-
-#ifdef AMREX_USE_OMP
-#   include <omp.h>
-#endif
-
-#include <algorithm>
-#include <cmath>
 
 using namespace amrex;
 

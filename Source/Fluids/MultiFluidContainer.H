@@ -14,27 +14,10 @@
 #include "WarpXFluidContainer_fwd.H"
 #include "Evolve/WarpXDtType.H"
 
-#include <AMReX_BLassert.H>
-#include <AMReX_Box.H>
-#include <AMReX_Config.H>
-#include <AMReX_GpuControl.H>
-#include <AMReX_INT.H>
-#include <AMReX_MFIter.H>
-#include <AMReX_REAL.H>
-#include <AMReX_RealBox.H>
+#include<AMReX_MultiFab.H>
 #include <AMReX_Vector.H>
 
-#include <AMReX_BaseFwd.H>
-#include <AMReX_AmrCoreFwd.H>
-
-#include <algorithm>
-#include <array>
-#include <iosfwd>
-#include <iterator>
-#include <limits>
-#include <memory>
 #include <string>
-#include <vector>
 
 /**
  * The class MultiFluidContainer holds multiple instances of the
