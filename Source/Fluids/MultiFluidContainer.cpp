@@ -103,7 +103,7 @@ MultiFluidContainer::InitData ()
     }
 }
 
-/*
+
 void
 MultiFluidContainer::Evolve (int lev,
                             const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
@@ -120,4 +120,3 @@ MultiFluidContainer::Evolve (int lev,
                    rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition);
     }
 }
-*/
