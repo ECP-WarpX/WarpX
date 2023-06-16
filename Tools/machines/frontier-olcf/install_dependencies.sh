@@ -15,7 +15,7 @@ set -eu -o pipefail
 # Check: ######################################################################
 #
 #   Was perlmutter_gpu_warpx.profile sourced and configured correctly?
-if [ -z "${proj}" ]; then echo "WARNING: The 'proj' variable is not yet set in your frontier_warpx.profile file! Please edit its line 2 to continue!"; return; fi
+if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in your frontier_warpx.profile file! Please edit its line 2 to continue!"; exit 1; fi
 
 
 # Check $proj variable is correct and has a corresponding CFS directory #######
@@ -47,6 +47,7 @@ if [ -d $HOME/src/blaspp ]
 then
   cd $HOME/src/blaspp
   git fetch
+  git checkout master
   git pull
   cd -
 else
@@ -61,6 +62,7 @@ if [ -d $HOME/src/lapackpp ]
 then
   cd $HOME/src/lapackpp
   git fetch
+  git checkout master
   git pull
   cd -
 else
@@ -76,9 +78,9 @@ cmake --build $HOME/src/lapackpp-frontier-gpu-build --target install --parallel 
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade virtualenv
 python3 -m pip cache purge
-rm -rf ${HOME}/sw/frontier/gpu/venvs/warpx
-python3 -m venv ${HOME}/sw/frontier/gpu/venvs/warpx
-source ${HOME}/sw/frontier/gpu/venvs/warpx/bin/activate
+rm -rf ${HOME}/sw/frontier/gpu/venvs/warpx-frontier
+python3 -m venv ${HOME}/sw/frontier/gpu/venvs/warpx-frontier
+source ${HOME}/sw/frontier/gpu/venvs/warpx-frontier/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade wheel
 python3 -m pip install --upgrade cython
