@@ -1,10 +1,12 @@
 .. _development-python:
 
-Handling PICMI input files
-==========================
+Processing PICMI Input Options
+==============================
 
-There are two levels in the handling of the input files. The first is the Python level API that mirrors the input parameters and the
-second is the translation from the PICMI input to the input parameters. The two levels are described below.
+The input parameters in a WarpX PICMI file are processed in two layers.
+The first layer is the Python level API, which mirrors the :ref:`C++ application input structure <running-cpp-parameters>`; the second is the translation from the PICMI input to the equivalent :ref:`app (AMReX) input file parameters <running-cpp-parameters>`.
+
+The two layers are described below.
 
 Input parameters
 ----------------
