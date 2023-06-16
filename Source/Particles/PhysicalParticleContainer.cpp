@@ -434,7 +434,6 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
     }
     constexpr int lev = 0;
     const amrex::Real t0 = WarpX::GetInstance().gett_new(lev);
-    //amrex::Print() << Utils::TextMsg::Info("getInstance_time = " + std::to_string(t0* std::pow(10.0, 15)));
     z = zpr - (tpr-t0)*vzpr;
 
 }
