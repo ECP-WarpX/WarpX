@@ -16,7 +16,7 @@ If you are new to this system, **please see the following resources**:
 * `Summit user guide <https://docs.olcf.ornl.gov/systems/summit_user_guide.html>`_
 * Batch system: `LSF <https://docs.olcf.ornl.gov/systems/summit_user_guide.html#running-jobs>`_
 * `Jupyter service <https://jupyter.olcf.ornl.gov>`__
-* `Production directories <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
+* `Filesystems <https://docs.olcf.ornl.gov/data/index.html#data-storage-and-transfers>`_:
 
   * ``$HOME``: per-user directory, use only for inputs, source and scripts; backed up; mounted as read-only on compute nodes, that means you cannot run in it (50 GB quota)
   * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days, GPFS (recommended)
