@@ -9,7 +9,8 @@
  */
 #include "WarpXFluidContainer.H"
 #include "WarpX.H"
-
+#include <ablastr/utils/Communication.H>
+using namespace ablastr::utils::communication;
 using namespace amrex;
 
 WarpXFluidContainer::WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name)
@@ -109,4 +110,12 @@ WarpXFluidContainer::InitData(int lev)
 
         });
     }
+
+    // Fill guard cells
+    const amrex::Periodicity& period = geom.periodicity();
+    FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*N[lev], NU[0][lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*N[lev], NU[1][lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*N[lev], NU[2][lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
+
 }
