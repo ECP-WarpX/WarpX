@@ -104,7 +104,7 @@ Finally, since Summit does not yet provide software modules for some of our depe
       .. literalinclude:: ../../../../Tools/machines/summit-olcf/install_gpu_ml.sh
          :language: bash
 
-   For `optimas dependencies <https://github.com/optimas-org/optimas>`__ (incl. scikit-learn), plan another >2hrs build time:
+   For `optimas dependencies <https://github.com/optimas-org/optimas>`__ (incl. scikit-learn), plan another hour of build time:
 
    .. code-block:: bash
 
