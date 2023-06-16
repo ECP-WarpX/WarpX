@@ -2211,6 +2211,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     // Allocate extra multifabs needed for fluids
     myfl->AllocateLevelMFs(lev, ba, dm);
+    myfl->InitData(lev);
 
     if (fft_do_time_averaging)
     {

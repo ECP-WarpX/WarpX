@@ -67,3 +67,46 @@ WarpXFluidContainer::AllocateLevelMFs (int lev, const BoxArray& ba, const Distri
     warpx.AllocInitMultiFab(NU[lev][2], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
         dm, ncomps, nguards, tag("fluid momentum density [z]"), 0.0_rt);
 }
+
+void
+WarpXFluidContainer::InitData(int lev)
+{
+    // Extract objects that give the initial density and momentum
+    InjectorDensity*  inj_rho = plasma_injector->getInjectorDensity();
+    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
+
+    // Extract grid geometry properties
+    WarpX& warpx = WarpX::GetInstance();
+    const amrex::Geometry& geom = warpx.Geom(lev);
+    const auto dx = geom.CellSizeArray();
+    const auto problo = geom.ProbLoArray();
+
+    // Loop through cells and initialize their value
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+
+        amrex::Box const& tile_box  = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Array4<Real> const& N_arr = N[lev]->array(mfi);
+        amrex::Array4<Real> const& NUx_arr = NU[lev][0]->array(mfi);
+        amrex::Array4<Real> const& NUy_arr = NU[lev][1]->array(mfi);
+        amrex::Array4<Real> const& NUz_arr = NU[lev][2]->array(mfi);
+
+        amrex::ParallelFor(tile_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+        {
+            amrex::Real x = problo[0] + dx[0]*i;
+            amrex::Real y = problo[1] + dx[1]*i;
+            amrex::Real z = problo[2] + dx[2]*i;
+
+            amrex::Real n = inj_rho->getDensity(x,y,z);
+            auto u = inj_mom->getBulkMomentum(x,y,z);
+
+            N_arr(i,j,k) = n;
+            NUx_arr(i,j,k) = n*u.x;
+            NUy_arr(i,j,k) = n*u.y;
+            NUz_arr(i,j,k) = n*u.z;
+
+        });
+    }
+}

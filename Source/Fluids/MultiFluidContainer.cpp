@@ -62,10 +62,10 @@ MultiFluidContainer::AllocateLevelMFs (int lev, const BoxArray& ba, const Distri
 }
 
 void
-MultiFluidContainer::InitData ()
+MultiFluidContainer::InitData (int lev)
 {
     for (auto& pc : allcontainers) {
-        pc->InitData();
+        pc->InitData(lev);
     }
 }
 

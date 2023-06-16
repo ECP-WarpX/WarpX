@@ -59,7 +59,7 @@ public:
 
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);
 
-    void InitData ();
+    void InitData (int lev);
 
     ///
     /// This evolves all the fluids by one PIC time step, including current deposition, the
