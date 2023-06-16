@@ -53,8 +53,7 @@ python3 -m pip uninstall -qqq -y torch 2>/dev/null || true
 # optional: for libEnsemble - WIP: issues with nlopt
 # python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
-# optional: for optimas (based on libEnsemble & ax->botorch->gpytorch->pytorch)
-#   pytorch
+# optional: for pytorch
 if [ -d /ccs/proj/${proj}/${USER}/src/pytorch ]
 then
   cd /ccs/proj/${proj}/${USER}/src/pytorch
@@ -76,5 +75,8 @@ USE_CUDA=1 BLAS=OpenBLAS MAX_JOBS=64 ATEN_AVX512_256=OFF BUILD_TEST=0 python3 se
 #   (optional) If using torch.compile with inductor/triton, install the matching version of triton
 #make triton
 cd -
-#  optimas dependencies
-python3 -m pip install -r $HOME/src/warpx/Tools/optimas/requirements.txt
+
+# optional: optimas dependencies (based on libEnsemble & ax->botorch->gpytorch->pytorch)
+#   commented because scikit-learn et al. compile > 2 hrs
+#   please run manually on a login node if needed
+#python3 -m pip install -r $HOME/src/warpx/Tools/optimas/requirements.txt
