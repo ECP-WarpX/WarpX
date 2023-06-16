@@ -1,7 +1,8 @@
 Checks: '-*,
     cppcoreguidelines-avoid-goto,
     misc-const-correctness,
-    modernize-use-nullptr
+    modernize-use-nullptr,
+    readability-non-const-parameter
     '
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'
