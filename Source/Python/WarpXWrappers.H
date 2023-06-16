@@ -138,7 +138,8 @@ extern "C" {
   void warpx_SyncRho ();
   void warpx_SyncCurrent (
       const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-      const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+      const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+      const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer);
   void warpx_UpdateAuxilaryData ();
   void warpx_PushParticlesandDepose (amrex::Real cur_time);
 
