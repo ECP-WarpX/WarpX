@@ -21,7 +21,7 @@ LatticeElementFinder::InitElementFinder (int const lev, amrex::MFIter const& a_m
 
     // The lattice is assumed to extend in the z-direction
     // Get the number of nodes where indices will be setup
-    amrex::Box box = a_mfi.tilebox();
+    const amrex::Box box = a_mfi.tilebox();
     m_nz = box.size()[WARPX_ZINDEX];
 
     m_dz = WarpX::CellSize(lev)[2];
@@ -59,7 +59,7 @@ LatticeElementFinder::UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
     // Update the location of the index grid.
     // Note that the current box is used since the box may have been updated since
     // the initialization in InitElementFinder.
-    amrex::Box box = a_mfi.tilebox();
+    const amrex::Box box = a_mfi.tilebox();
     m_zmin = WarpX::LowerCorner(box, lev, 0._rt)[2];
     m_time = warpx.gett_new(lev);
 

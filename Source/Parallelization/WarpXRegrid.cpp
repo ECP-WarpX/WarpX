@@ -14,6 +14,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
@@ -291,7 +292,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
                 if (spectral_solver_cp[lev] != nullptr) {
                     BoxArray cba = ba;
                     cba.coarsen(refRatio(lev-1));
-                    std::array<Real,3> cdx = CellSize(lev-1);
+                    const std::array<Real,3> cdx = CellSize(lev-1);
 
                     // Get the cell-centered box
                     BoxArray c_realspace_ba = cba;  // Copy box
@@ -344,7 +345,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         {
             costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
             const auto iarr = costs[lev]->IndexArray();
-            for (int i : iarr)
+            for (const auto& i : iarr)
             {
                 (*costs[lev])[i] = 0.0;
                 setLoadBalanceEfficiency(lev, -1);
@@ -355,7 +356,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
     } else
     {
-        amrex::Abort("RemakeLevel: to be implemented");
+        WARPX_ABORT_WITH_MESSAGE("RemakeLevel: to be implemented");
     }
 
     // Re-initialize diagnostic functors that stores pointers to the user-requested fields at level, lev.
@@ -401,7 +402,7 @@ WarpX::ResetCosts ()
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         const auto iarr = costs[lev]->IndexArray();
-        for (int i : iarr)
+        for (const auto& i : iarr)
         {
             // Reset costs
             (*costs[lev])[i] = 0.0;

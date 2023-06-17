@@ -42,7 +42,7 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
         const auto& fab = tags.array(mfi);
         ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
-            RealVect pos {AMREX_D_DECL((i+0.5_rt)*dx[0]+problo[0],
+            const RealVect pos {AMREX_D_DECL((i+0.5_rt)*dx[0]+problo[0],
                                        (j+0.5_rt)*dx[1]+problo[1],
                                        (k+0.5_rt)*dx[2]+problo[2])};
             if (pos > ftlo && pos < fthi) {

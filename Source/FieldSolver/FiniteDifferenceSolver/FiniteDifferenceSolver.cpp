@@ -45,7 +45,8 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
     m_dr = cell_size[0];
     m_nmodes = WarpX::GetInstance().n_rz_azimuthal_modes;
     m_rmin = WarpX::GetInstance().Geom(0).ProbLo(0);
-    if (fdtd_algo == ElectromagneticSolverAlgo::Yee) {
+    if (fdtd_algo == ElectromagneticSolverAlgo::Yee ||
+        fdtd_algo == ElectromagneticSolverAlgo::HybridPIC ) {
         CylindricalYeeAlgorithm::InitializeStencilCoefficients( cell_size,
             m_h_stencil_coefs_r, m_h_stencil_coefs_z );
         m_stencil_coefs_r.resize(m_h_stencil_coefs_r.size());
@@ -67,7 +68,9 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
         CartesianNodalAlgorithm::InitializeStencilCoefficients( cell_size,
             m_h_stencil_coefs_x, m_h_stencil_coefs_y, m_h_stencil_coefs_z );
 
-    } else if (fdtd_algo == ElectromagneticSolverAlgo::Yee || fdtd_algo == ElectromagneticSolverAlgo::ECT) {
+    } else if (fdtd_algo == ElectromagneticSolverAlgo::Yee ||
+               fdtd_algo == ElectromagneticSolverAlgo::ECT ||
+               fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
 
         CartesianYeeAlgorithm::InitializeStencilCoefficients( cell_size,
             m_h_stencil_coefs_x, m_h_stencil_coefs_y, m_h_stencil_coefs_z );

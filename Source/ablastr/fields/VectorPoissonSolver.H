@@ -129,7 +129,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_comp_J);
 
-    bool always_use_bnorm = (max_comp_J > 0);
+    const bool always_use_bnorm = (max_comp_J > 0);
     if (!always_use_bnorm) {
         if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
         ablastr::warn_manager::WMRecordWarning(
@@ -139,7 +139,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
         );
     }
 
-    amrex::LPInfo info;
+    const amrex::LPInfo info;
 
     // Loop over dimensions of A to solve each component individually
     for (int lev=0; lev<=finest_level; lev++) {

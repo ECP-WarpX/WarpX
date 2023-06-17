@@ -125,9 +125,11 @@ Known System Issues
 
    January, 2023:
    We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
-   Reported to AMD and fixed for the 5.5 release of ROCm.
 
-   Upgrade ROCm or stay with the ROCm 5.2 module to avoid.
+   June, 2023:
+   Although a fix was planned for ROCm 5.5, we still see the same issue in this release and continue to exchange with AMD and HPE on the issue.
+
+   Stay with the ROCm 5.2 module to avoid a 2x slowdown.
 
 .. warning::
 

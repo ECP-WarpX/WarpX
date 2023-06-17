@@ -65,8 +65,8 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     // Parse the lasy or binary file
     ppl.query("lasy_file_name", m_params.lasy_file_name);
     ppl.query("binary_file_name", m_params.binary_file_name);
-    std::string lasy_file_name = m_params.lasy_file_name;
-    std::string binary_file_name = m_params.binary_file_name;
+    const std::string lasy_file_name = m_params.lasy_file_name;
+    const std::string binary_file_name = m_params.binary_file_name;
     m_params.file_in_lasy_format = false;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE (
         lasy_file_name.empty() != binary_file_name.empty(),
@@ -316,7 +316,7 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_
         auto E_laser = E[io::RecordComponent::SCALAR];
         openPMD:: Extent full_extent = E_laser.getExtent();
         if (m_params.fileGeom=="thetaMode") {
-            openPMD::Extent read_extent = { full_extent[0], (i_last - i_first + 1), full_extent[2]};
+            const openPMD::Extent read_extent = { full_extent[0], (i_last - i_first + 1), full_extent[2]};
             auto r_data = E_laser.loadChunk< std::complex<double> >(io::Offset{ 0, i_first,  0}, read_extent);
             const int read_size = (i_last - i_first + 1)*m_params.nr;
             series.flush();
@@ -328,7 +328,7 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_
                 }
             }
         } else{
-            openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
+            const openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
             auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{i_first, 0, 0}, read_extent);
             const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
             series.flush();
@@ -362,7 +362,7 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk (int t_begin,
     //Indices of the first and last timestep to read
     auto i_first = max(0, t_begin);
     auto i_last = min(t_end-1, m_params.nt-1);
-    int data_size = (i_last-i_first+1)*m_params.nx*m_params.ny;
+    const int data_size = (i_last-i_first+1)*m_params.nx*m_params.ny;
     m_params.E_binary_data.resize(data_size);
     Vector<Real> h_E_binary_data(m_params.E_binary_data.size());
     if(ParallelDescriptor::IOProcessor()){
@@ -473,7 +473,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cartes
                 (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
                 j_interp*tmp_nx + k_interp;
         };
-        Complex val = utils::algorithms::trilinear_interp(
+        const Complex val = utils::algorithms::trilinear_interp(
             t_left, t_right,
             x_0, x_1,
             y_0, y_1,

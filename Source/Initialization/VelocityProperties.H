@@ -34,7 +34,7 @@ struct VelocityProperties
      *
      * \param[in] pp: Reference to the parameter parser object for the species being initialized
      */
-    VelocityProperties (amrex::ParmParse& pp);
+    VelocityProperties (const amrex::ParmParse& pp);
 
     /* Type of velocity initialization */
     VelocityInitType m_type;
