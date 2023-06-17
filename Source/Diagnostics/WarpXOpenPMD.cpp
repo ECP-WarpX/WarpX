@@ -203,7 +203,7 @@ namespace detail
         std::string component_name = openPMD::RecordComponent::SCALAR;
 
         // we use "_" as separator in names to group vector records
-        const std::size_t startComp = fullName.find_last_of("_");
+        const std::size_t startComp = fullName.find_last_of('_');
         if( startComp != std::string::npos ) {  // non-scalar
             record_name = fullName.substr(0, startComp);
             component_name = fullName.substr(startComp + 1u);
@@ -766,7 +766,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     for (auto i = 0; i < numParticleOnTile; i++) {
                         curr.get()[i] = aos[i].pos(currDim);
                     }
-                    std::string const positionComponent = positionComponents[currDim];
+                    std::string const& positionComponent = positionComponents[currDim];
                     currSpecies["position"][positionComponent].storeChunk(curr, {offset},
                                                                           {numParticleOnTile64});
                 }
