@@ -203,7 +203,7 @@ namespace detail
         std::string component_name = openPMD::RecordComponent::SCALAR;
 
         // we use "_" as separator in names to group vector records
-        const std::size_t startComp = fullName.find_last_of("_");
+        const std::size_t startComp = fullName.find_last_of('_');
         if( startComp != std::string::npos ) {  // non-scalar
             record_name = fullName.substr(0, startComp);
             component_name = fullName.substr(startComp + 1u);
