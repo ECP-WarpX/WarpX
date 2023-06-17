@@ -50,7 +50,7 @@ namespace ElectrostaticSolver {
          *
          * \param [in] potential The string value of the potential
          */
-        void setPotentialEB(const std::string potential) {
+        void setPotentialEB(const std::string& potential) {
             potential_eb_str = potential;
             buildParsersEB();
         }
@@ -101,7 +101,7 @@ namespace ElectrostaticSolver {
 
       public:
         EBCalcEfromPhiPerLevel(amrex::Vector<amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM> > e_field)
-                : m_e_field(e_field) {}
+                : m_e_field{e_field} {}
 
         void operator()(amrex::MLMG & mlmg, int const lev) {
             using namespace amrex::literals;

@@ -335,7 +335,7 @@ struct InjectorMomentumBoltzmann
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
         const amrex::Real beta = velocity(x,y,z);
         int const dir = velocity.direction();
-        const amrex::Real gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
+        const amrex::Real gamma = static_cast<amrex::Real>(1._rt/std::sqrt(1._rt-beta*beta));
         u[dir] = gamma*beta;
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
@@ -436,7 +436,7 @@ struct InjectorMomentumJuttner
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
         amrex::Real const beta = velocity(x,y,z);
         int const dir = velocity.direction();
-        amrex::Real const gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
+        amrex::Real const gamma = static_cast<amrex::Real>(1._rt/std::sqrt(1._rt-beta*beta));
         u[dir] = gamma*beta;
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
