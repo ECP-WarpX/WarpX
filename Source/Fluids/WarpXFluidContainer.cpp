@@ -96,9 +96,19 @@ WarpXFluidContainer::InitData(int lev)
 
         amrex::ParallelFor(tile_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
-            amrex::Real x = problo[0] + dx[0]*i;
-            amrex::Real y = problo[1] + dx[1]*i;
-            amrex::Real z = problo[2] + dx[2]*i;
+    #if defined(WARPX_DIM_3D)
+            amrex::Real x = problo[0] + i*dx[0];
+            amrex::Real y = problo[1] + j*dx[1];
+            amrex::Real z = problo[2] + k*dx[2];
+    #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            amrex::Real x = lo_corner[0] + i*dx[0];
+            amrex::Real y = 0.0_rt;
+            amrex::Real z = lo_corner[1] + j*dx[1];
+    #else
+            amrex::Real x = 0.0_rt;
+            amrex::Real y = 0.0_rt;
+            amrex::Real z = lo_corner[0] + i*dx[0];
+    #endif
 
             amrex::Real n = inj_rho->getDensity(x,y,z);
             auto u = inj_mom->getBulkMomentum(x,y,z);
