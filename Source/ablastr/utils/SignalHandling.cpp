@@ -87,7 +87,7 @@ SignalHandling::parseSignalNameToNumber (const std::string &str)
     };
 
     for (const auto& sp : signals_to_parse) {
-        std::string name_upper = "SIG" + sp.abbrev;
+        std::string name_upper = "SIG" + std::string(sp.abbrev);
         std::string name_lower = name_upper;
         std::transform(name_upper.begin(), name_upper.end(), name_lower.begin(),
             [](const char& c){return std::tolower(c);});
