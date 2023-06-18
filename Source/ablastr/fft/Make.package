@@ -5,9 +5,9 @@ ifeq ($(USE_PSATD),TRUE)
     CEXE_sources += WrapRocFFT.cpp
   else
     CEXE_sources += WrapFFTW.cpp
-  else
-    CEXE_sources += WrapNoFFT.cpp
-endif
+  endif
+else
+  CEXE_sources += WrapNoFFT.cpp
 endif
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/ablastr/fft
