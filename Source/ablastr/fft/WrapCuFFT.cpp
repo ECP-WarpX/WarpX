@@ -55,11 +55,8 @@ namespace ablastr::anyfft
             }
         }
 
-        if ( result != CUFFT_SUCCESS ) {
-            amrex::Print() << Utils::TextMsg::Err(
-                    "cufftplan failed! Error: "
-                    + cufftErrorToString(result));
-        }
+        ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(result == CUFFT_SUCCESS,
+            "cufftplan failed! Error: " + cufftErrorToString(result));
 
         // Store meta-data in fft_plan
         fft_plan.m_real_array = real_array;

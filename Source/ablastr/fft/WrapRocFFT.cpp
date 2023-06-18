@@ -23,13 +23,12 @@ namespace ablastr::anyfft
 
     std::string rocfftErrorToString (const rocfft_status err);
 
-    namespace {
-        void assert_rocfft_status (std::string const& name, rocfft_status status)
+    namespace
+    {
+        void assert_rocfft_status (std::string const& name, rocfft_status const& status)
         {
-            if (status != rocfft_status_success) {
-                ABLASTR_ABORT_WITH_MESSAGE(
-                    name + " failed! Error: " + rocfftErrorToString(status));
-            }
+            ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(status == rocfft_status_success,
+                name + " failed! Error: " + rocfftErrorToString(status));
         }
     }
 
