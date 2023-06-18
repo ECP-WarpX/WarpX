@@ -40,12 +40,12 @@ namespace ablastr::anyfft
     /** This function is a wrapper around rocff_setup().
      *  It is a no-op in case rocfft is not used.
     */
-    void setup(){};
+    void setup(){}
 
     /** This function is a wrapper around rocff_cleanup().
      *  It is a no-op in case rocfft is not used.
     */
-    void cleanup(){};
+    void cleanup(){}
 
 #else
 
