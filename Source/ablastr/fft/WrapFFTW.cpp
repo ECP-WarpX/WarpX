@@ -1,22 +1,25 @@
-/* Copyright 2019-2021
+/* Copyright 2019-2023
  *
- * This file is part of WarpX.
+ * This file is part of ABLASTR.
  *
  * License: BSD-3-Clause-LBNL
  */
 
 #include "AnyFFT.H"
 
-#include "Utils/TextMsg.H"
+#include "ablastr/utils/TextMsg.H"
 
 #include <AMReX.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
 
-#include <fftw3.h>
-
-namespace AnyFFT
+namespace ablastr::anyfft
 {
+
+    void setup(){/*nothing to do*/}
+
+    void cleanup(){/*nothing to do*/}
+
 #ifdef AMREX_USE_FLOAT
     const auto VendorCreatePlanR2C3D = fftwf_plan_dft_r2c_3d;
     const auto VendorCreatePlanC2R3D = fftwf_plan_dft_c2r_3d;
@@ -54,7 +57,7 @@ namespace AnyFFT
                 fft_plan.m_plan = VendorCreatePlanR2C2D(
                     real_size[1], real_size[0], real_array, complex_array, FFTW_ESTIMATE);
             } else {
-                WARPX_ABORT_WITH_MESSAGE(
+                ABLASTR_ABORT_WITH_MESSAGE(
                     "only dim=2 and dim=3 have been implemented");
             }
         } else if (dir == direction::C2R){
@@ -65,7 +68,7 @@ namespace AnyFFT
                 fft_plan.m_plan = VendorCreatePlanC2R2D(
                     real_size[1], real_size[0], complex_array, real_array, FFTW_ESTIMATE);
             } else {
-                WARPX_ABORT_WITH_MESSAGE(
+                ABLASTR_ABORT_WITH_MESSAGE(
                     "only dim=2 and dim=3 have been implemented. Should be easy to add dim=1.");
             }
         }

@@ -9,7 +9,7 @@
 #define WARPX_COMPLEX_H_
 
 #ifdef WARPX_USE_PSATD
-#  include "FieldSolver/SpectralSolver/AnyFFT.H"
+#  include <ablastr/fft/AnyFFT.H>
 #endif
 
 #include <AMReX_Gpu.H>
@@ -22,7 +22,7 @@
 using Complex = amrex::GpuComplex<amrex::Real>;
 
 #ifdef WARPX_USE_PSATD
-static_assert(sizeof(Complex) == sizeof(AnyFFT::Complex),
+static_assert(sizeof(Complex) == sizeof(ablastr::anyfft::Complex),
     "The complex type in WarpX and the FFT library do not match.");
 #endif
 

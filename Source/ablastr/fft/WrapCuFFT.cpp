@@ -1,16 +1,20 @@
-/* Copyright 2019-2020
+/* Copyright 2019-2023
  *
- * This file is part of WarpX.
+ * This file is part of ABLASTR.
  *
  * License: BSD-3-Clause-LBNL
  */
 
 #include "AnyFFT.H"
 
-#include "Utils/TextMsg.H"
+#include "ablastr/utils/TextMsg.H"
 
-namespace AnyFFT
+namespace ablastr::anyfft
 {
+
+    void setup(){/*nothing to do*/}
+
+    void cleanup(){/*nothing to do*/}
 
 #ifdef AMREX_USE_FLOAT
     cufftType VendorR2C = CUFFT_R2C;
@@ -37,7 +41,7 @@ namespace AnyFFT
                 result = cufftPlan2d(
                     &(fft_plan.m_plan), real_size[1], real_size[0], VendorR2C);
             } else {
-                WARPX_ABORT_WITH_MESSAGE("only dim=2 and dim=3 have been implemented");
+                ABLASTR_ABORT_WITH_MESSAGE("only dim=2 and dim=3 have been implemented");
             }
         } else {
             if (dim == 3) {
@@ -47,7 +51,7 @@ namespace AnyFFT
                 result = cufftPlan2d(
                     &(fft_plan.m_plan), real_size[1], real_size[0], VendorC2R);
             } else {
-                WARPX_ABORT_WITH_MESSAGE("only dim=2 and dim=3 have been implemented");
+                ABLASTR_ABORT_WITH_MESSAGE("only dim=2 and dim=3 have been implemented");
             }
         }
 
@@ -89,11 +93,11 @@ namespace AnyFFT
             result = cufftExecZ2D(fft_plan.m_plan, fft_plan.m_complex_array, fft_plan.m_real_array);
 #endif
         } else {
-            WARPX_ABORT_WITH_MESSAGE(
-                "direction must be AnyFFT::direction::R2C or AnyFFT::direction::C2R");
+            ABLASTR_ABORT_WITH_MESSAGE(
+                "direction must be FFTplan::direction::R2C or FFTplan::direction::C2R");
         }
         if ( result != CUFFT_SUCCESS ) {
-            WARPX_ABORT_WITH_MESSAGE(
+            ABLASTR_ABORT_WITH_MESSAGE(
                 "forward transform using cufftExec failed ! Error: "
                 +cufftErrorToString(result));
         }

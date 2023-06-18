@@ -1,27 +1,30 @@
-/* Copyright 2019-2020
+/* Copyright 2019-2023
  *
- * This file is part of WarpX.
+ * This file is part of ABLASTR.
  *
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef ANYFFT_H_
-#define ANYFFT_H_
+#ifndef ABLASTR_ANYFFT_H_
+#define ABLASTR_ANYFFT_H_
 
-#include <AMReX_Config.H>
-#include <AMReX_LayoutData.H>
+#ifdef WARPX_USE_PSATD
+#   include <AMReX_Config.H>
+#   include <AMReX_LayoutData.H>
 
-#if defined(AMREX_USE_CUDA)
-#  include <cufft.h>
-#elif defined(AMREX_USE_HIP)
-#  if __has_include(<rocfft/rocfft.h>)  // ROCm 5.3+
-#    include <rocfft/rocfft.h>
-#  else
-#    include <rocfft.h>
-#  endif
-#else
-#  include <fftw3.h>
+#   if defined(AMREX_USE_CUDA)
+#       include <cufft.h>
+#   elif defined(AMREX_USE_HIP)
+#       if __has_include(<rocfft/rocfft.h>)  // ROCm 5.3+
+#           include <rocfft/rocfft.h>
+#       else
+#           include <rocfft.h>
+#       endif
+#   else
+#       include <fftw3.h>
+#   endif
 #endif
+
 
 /**
  * Wrapper around FFT libraries. The header file defines the API and the base types
@@ -29,45 +32,70 @@
  * done in different cpp files. This wrapper only depends on the underlying FFT library
  * AND on AMReX (There is no dependence on WarpX).
  */
-namespace AnyFFT
+namespace ablastr::anyfft
 {
+
+#ifndef WARPX_USE_PSATD
+
+    /** This function is a wrapper around rocff_setup().
+     *  It is a no-op in case rocfft is not used.
+    */
+    void setup(){};
+
+    /** This function is a wrapper around rocff_cleanup().
+     *  It is a no-op in case rocfft is not used.
+    */
+    void cleanup(){};
+
+#else
+
+    /** This function is a wrapper around rocff_setup().
+     *  It is a no-op in case rocfft is not used.
+    */
+    void setup();
+
+    /** This function is a wrapper around rocff_cleanup().
+     *  It is a no-op in case rocfft is not used.
+    */
+    void cleanup();
+
     // First, define library-dependent types (complex, FFT plan)
 
     /** Complex type for FFT, depends on FFT library */
-#if defined(AMREX_USE_CUDA)
-#  ifdef AMREX_USE_FLOAT
-    using Complex = cuComplex;
-#  else
-    using Complex = cuDoubleComplex;
-#  endif
-#elif defined(AMREX_USE_HIP)
-#  ifdef AMREX_USE_FLOAT
-    using Complex = float2;
-#  else
-    using Complex = double2;
-#  endif
-#else
-#  ifdef AMREX_USE_FLOAT
-    using Complex = fftwf_complex;
-#  else
-    using Complex = fftw_complex;
-#  endif
-#endif
+#   if defined(AMREX_USE_CUDA)
+#       ifdef AMREX_USE_FLOAT
+            using Complex = cuComplex;
+#       else
+            using Complex = cuDoubleComplex;
+#       endif
+#   elif defined(AMREX_USE_HIP)
+#       ifdef AMREX_USE_FLOAT
+            using Complex = float2;
+#       else
+            using Complex = double2;
+#       endif
+#   else
+#       ifdef AMREX_USE_FLOAT
+            using Complex = fftwf_complex;
+#       else
+            using Complex = fftw_complex;
+#       endif
+#   endif
 
     /** Library-dependent FFT plans type, which holds one fft plan per box
      * (plans are only initialized for the boxes that are owned by the local MPI rank).
      */
-#if defined(AMREX_USE_CUDA)
-    using VendorFFTPlan = cufftHandle;
-#elif defined(AMREX_USE_HIP)
-    using VendorFFTPlan = rocfft_plan;
-#else
-#  ifdef AMREX_USE_FLOAT
-    using VendorFFTPlan = fftwf_plan;
-#  else
-    using VendorFFTPlan = fftw_plan;
-#  endif
-#endif
+#   if defined(AMREX_USE_CUDA)
+        using VendorFFTPlan = cufftHandle;
+#   elif defined(AMREX_USE_HIP)
+        using VendorFFTPlan = rocfft_plan;
+#   else
+#       ifdef AMREX_USE_FLOAT
+            using VendorFFTPlan = fftwf_plan;
+#       else
+            using VendorFFTPlan = fftw_plan;
+#       endif
+#   endif
 
     // Second, define library-independent API
 
@@ -108,6 +136,9 @@ namespace AnyFFT
      * \param[out] fft_plan plan for which the FFT is performed
      */
     void Execute(FFTplan& fft_plan);
+
+#endif
+
 }
 
-#endif // ANYFFT_H_
+#endif // ABLASTR_ANYFFT_H_

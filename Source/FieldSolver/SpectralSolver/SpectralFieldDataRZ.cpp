@@ -7,9 +7,9 @@
 #include "SpectralFieldDataRZ.H"
 
 #include "Utils/WarpXUtil.H"
-#include "FieldSolver/SpectralSolver/AnyFFT.H"
 #include "WarpX.H"
 
+#include <ablastr/fft/AnyFFT.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Config.H>
@@ -175,8 +175,10 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
                                dims,
                                2, // int howmany_rank,
                                howmany_dims,
-                               reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr()), // complex *in
-                               reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr()), // complex *out
+                               reinterpret_cast<
+                                ablastr::anyfft::Complex*>(tempHTransformed[mfi].dataPtr()), // complex *in
+                               reinterpret_cast<
+                                ablastr::anyfft::Complex*>(tmpSpectralField[mfi].dataPtr()), // complex *out
                                FFTW_FORWARD, // int sign
                                FFTW_ESTIMATE); // unsigned flags
         backward_plan[mfi] =
@@ -189,8 +191,10 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
                                dims,
                                2, // int howmany_rank,
                                howmany_dims,
-                               reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr()), // complex *in
-                               reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr()), // complex *out
+                               reinterpret_cast<
+                                ablastr::anyfft::Complex*>(tmpSpectralField[mfi].dataPtr()), // complex *in
+                               reinterpret_cast<
+                                ablastr::anyfft::Complex*>(tempHTransformed[mfi].dataPtr()), // complex *out
                                FFTW_BACKWARD, // int sign
                                FFTW_ESTIMATE); // unsigned flags
 #endif
@@ -266,8 +270,10 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
 #  else
         result = cufftExecZ2Z(forward_plan[mfi],
 #  endif
-                              reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr(mode)), // Complex *in
-                              reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr(mode)), // Complex *out
+                              reinterpret_cast<
+                                ablastr::anyfft::Complex*>(tempHTransformed[mfi].dataPtr(mode)), // Complex *in
+                              reinterpret_cast<
+                                ablastr::anyfft::Complex*>(tmpSpectralField[mfi].dataPtr(mode)), // Complex *out
                               CUFFT_FORWARD);
         if (result != CUFFT_SUCCESS) {
             ablastr::warn_manager::WMRecordWarning("Spectral solver",
@@ -383,8 +389,10 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
 #  else
         result = cufftExecZ2Z(forward_plan[mfi],
 #  endif
-                              reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr(mode)), // Complex *in
-                              reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr(mode)), // Complex *out
+                              reinterpret_cast<
+                                ablastr::anyfft::Complex*>(tmpSpectralField[mfi].dataPtr(mode)), // Complex *in
+                              reinterpret_cast<
+                                ablastr::anyfft::Complex*>(tempHTransformed[mfi].dataPtr(mode)), // Complex *out
                               CUFFT_INVERSE);
         if (result != CUFFT_SUCCESS) {
             ablastr::warn_manager::WMRecordWarning("Spectral solver",

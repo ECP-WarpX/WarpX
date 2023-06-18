@@ -11,21 +11,21 @@
 #include "Initialization/WarpXAMReXInit.H"
 #include "Utils/MPIInitHelpers.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "Utils/WarpXrocfftUtil.H"
 #include "Utils/WarpXUtil.H"
 
+#include <ablastr/fft/AnyFFT.H>
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/utils/timer/Timer.H>
 
 #include <AMReX_Print.H>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     utils::warpx_mpi_init(argc, argv);
 
     warpx_amrex_init(argc, argv);
 
-    utils::rocfft::setup();
+    ablastr::anyfft::setup();
 
     ParseGeometryInput();
 
@@ -48,21 +48,22 @@ int main(int argc, char* argv[])
 
         warpx.Evolve();
 
-        //Print warning messages at the end of the simulation
+        // Print warning messages at the end of the simulation
         ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 
         timer.record_stop_time();
-        if (warpx.Verbose()) {
+        if (warpx.Verbose())
+        {
             amrex::Print() << "Total Time                     : "
-                    << timer.get_global_duration() << '\n';
+                           << timer.get_global_duration() << '\n';
         }
 
         WARPX_PROFILE_VAR_STOP(pmain);
     }
 
-    utils::rocfft::cleanup();
+    ablastr::anyfft::cleanup();
 
     amrex::Finalize();
 
-    utils::warpx_mpi_finalize ();
+    utils::warpx_mpi_finalize();
 }

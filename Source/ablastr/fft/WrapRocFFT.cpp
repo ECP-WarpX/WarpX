@@ -1,16 +1,25 @@
-/* Copyright 2019-2020
+/* Copyright 2019-2023
  *
- * This file is part of WarpX.
+ * This file is part of ABLASTR.
  *
  * License: BSD-3-Clause-LBNL
  */
 
 #include "AnyFFT.H"
 
-#include "Utils/TextMsg.H"
+#include "ablastr/utils/TextMsg.H"
 
-namespace AnyFFT
+namespace ablastr::anyfft
 {
+    void setup()
+    {
+        rocfft_setup();
+    }
+
+    void cleanup()
+    {
+        rocfft_cleanup();
+    }
 
     std::string rocfftErrorToString (const rocfft_status err);
 
@@ -18,7 +27,7 @@ namespace AnyFFT
         void assert_rocfft_status (std::string const& name, rocfft_status status)
         {
             if (status != rocfft_status_success) {
-                WARPX_ABORT_WITH_MESSAGE(
+                ABLASTR_ABORT_WITH_MESSAGE(
                     name + " failed! Error: " + rocfftErrorToString(status));
             }
         }
@@ -91,8 +100,8 @@ namespace AnyFFT
                                     (void**)&(fft_plan.m_real_array), // out
                                     execinfo);
         } else {
-            WARPX_ABORT_WITH_MESSAGE(
-                "direction must be AnyFFT::direction::R2C or AnyFFT::direction::C2R");
+            ABLASTR_ABORT_WITH_MESSAGE(
+                "direction must be FFTplan::direction::R2C or FFTplan::direction::C2R");
         }
 
         assert_rocfft_status("rocfft_execute", result);

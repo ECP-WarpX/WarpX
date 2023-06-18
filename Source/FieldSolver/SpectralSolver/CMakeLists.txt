@@ -7,14 +7,6 @@ foreach(D IN LISTS WarpX_DIMS)
         SpectralSolver.cpp
     )
 
-    if(WarpX_COMPUTE STREQUAL CUDA)
-        target_sources(ablastr_${SD} PRIVATE WrapCuFFT.cpp)
-    elseif(WarpX_COMPUTE STREQUAL HIP)
-        target_sources(ablastr_${SD} PRIVATE WrapRocFFT.cpp)
-    else()
-        target_sources(ablastr_${SD} PRIVATE WrapFFTW.cpp)
-    endif()
-
     if(D STREQUAL "RZ")
         target_sources(WarpX_${SD}
           PRIVATE
