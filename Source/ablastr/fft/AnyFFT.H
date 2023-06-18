@@ -35,20 +35,6 @@
 namespace ablastr::anyfft
 {
 
-#ifndef WARPX_USE_PSATD
-
-    /** This function is a wrapper around rocff_setup().
-     *  It is a no-op in case rocfft is not used.
-    */
-    void setup(){}
-
-    /** This function is a wrapper around rocff_cleanup().
-     *  It is a no-op in case rocfft is not used.
-    */
-    void cleanup(){}
-
-#else
-
     /** This function is a wrapper around rocff_setup().
      *  It is a no-op in case rocfft is not used.
     */
@@ -58,6 +44,8 @@ namespace ablastr::anyfft
      *  It is a no-op in case rocfft is not used.
     */
     void cleanup();
+
+#ifdef WARPX_USE_PSATD
 
     // First, define library-dependent types (complex, FFT plan)
 
