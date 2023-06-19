@@ -88,8 +88,6 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
 
     private:
 
-        SpectralFieldIndex m_spectral_index;
-
         // Other member variables
         amrex::Real m_dt;
         bool m_div_cleaning;

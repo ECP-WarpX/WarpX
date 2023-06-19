@@ -24,7 +24,7 @@ struct InjectorDensityCustom
     InjectorDensityCustom (std::string const& species_name)
     {
         // Read parameters for custom density profile from file
-        amrex::ParmParse pp_species_name(species_name);
+        const amrex::ParmParse pp_species_name(species_name);
         std::vector<amrex::Real> v;
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
                                          "Too many parameters for InjectorDensityCustom");

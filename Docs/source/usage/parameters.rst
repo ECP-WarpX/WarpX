@@ -28,6 +28,8 @@ Overall simulation parameters
     ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
     when the first criterion is hit.
 
+    Note: in boosted-frame simulations, ``stop_time`` refers to the time in the boosted frame.
+
 * ``warpx.used_inputs_file`` (`string`; default: ``warpx_used_inputs``)
     Name of a file that WarpX writes to archive the used inputs.
     The context of this file will contain an exact copy of all explicitly and implicitly used inputs parameters, including those :ref:`extended and overwritten from the command line <usage_run>`.
@@ -36,13 +38,9 @@ Overall simulation parameters
     The Lorentz factor of the boosted frame in which the simulation is run.
     (The corresponding Lorentz transformation is assumed to be along ``warpx.boost_direction``.)
 
-    When using this parameter, some of the input parameters are automatically
-    converted to the boosted frame. (See the corresponding documentation of each
-    input parameters.)
-
-    .. note::
-
-        For now, only the laser parameters will be converted.
+    When using this parameter, the input parameters are interpreted as in the
+    lab-frame and automatically converted to the boosted frame.
+    (See the corresponding documentation of each input parameters for exceptions.)
 
 * ``warpx.boost_direction`` (string: ``x``, ``y`` or ``z``)
     The direction of the Lorentz-transform for boosted-frame simulations
@@ -161,7 +159,13 @@ Overall simulation parameters
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
     This will cause severe performance drops.
     Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
-    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
+
+* ``amrex.the_arena_is_managed``  (``0`` or ``1``; default is ``0`` for false)
+    When running on GPUs, device memory that is accessed from the host will automatically be transferred with managed memory.
+    This is useful for convenience during development, but has sometimes severe performance and memory footprint implications if relied on (and sometimes vendor bugs).
+    For all regular WarpX operations, we therefore do explicit memory transfers without the need for managed memory and thus changed the AMReX default to false.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
 
 Signal Handling
 ^^^^^^^^^^^^^^^
@@ -337,7 +341,7 @@ Domain Boundary Conditions
 
     * ``damped``: This is the recommended option in the moving direction when using the spectral solver with moving window (currently only supported along z). This boundary condition applies a damping factor to the electric and magnetic fields in the outer half of the guard cells, using a sine squared profile. As the spectral solver is by nature periodic, the damping prevents fields from wrapping around to the other end of the domain when the periodicity is not desired. This boundary condition is only valid when using the spectral solver.
 
-    * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. For the electromagnetic solve, at PEC, the tangential electric field and the normal magnetic field are set to 0. This boundary can be used to model a dielectric or metallic surface. In the guard-cell region, the tangential electric field is set equal and opposite to the respective field component in the mirror location across the PEC boundary, and the normal electric field is set equal to the field component in the mirror location in the domain across the PEC boundary. Similarly, the tangential (and normal) magnetic field components are set equal (and opposite) to the respective magnetic field components in the mirror locations across the PEC boundary. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
+    * ``pec``: This option can be used to set a Perfect Electric Conductor at the simulation boundary. Please see the :ref:`PEC theory section <theory-bc-pec>` for more details. Note that PEC boundary is invalid at `r=0` for the RZ solver. Please use ``none`` option. This boundary condition does not work with the spectral solver.
       If an electrostatic field solve is used the boundary potentials can also be set through ``boundary.potential_lo_x/y/z`` and ``boundary.potential_hi_x/y/z`` (default `0`).
 
     * ``none``: No boundary condition is applied to the fields with the electromagnetic solver. This option must be used for the RZ-solver at `r=0`.
@@ -357,6 +361,11 @@ Domain Boundary Conditions
 * ``boundary.reflect_all_velocities`` (`bool`) optional (default `false`)
     For a reflecting boundary condition, this flags whether the sign of only the normal velocity is changed or all velocities.
 
+* ``boundary.verboncoeur_axis_correction`` (`bool`) optional (default `true`)
+    Whether to apply the Verboncoeur correction on the charge and current density on axis when using RZ.
+    For nodal values (rho and Jz), the cell volume for values on axis is calculated as :math:`\pi*\Delta r^2/4`.
+    In `Verboncoeur JCP 174, 421-427 (2001) <https://doi.org/10.1006/jcph.2001.6923>`__, it is shown that using
+    :math:`\pi*\Delta r^2/3` instead will give a uniform density if the particle density is uniform.
 
 Additional PML parameters
 -------------------------
@@ -387,16 +396,17 @@ Additional PML parameters
 * ``warpx.v_particle_pml`` (`float`; default: 1)
     When ``warpx.do_pml_j_damping = 1``, the assumed velocity of the particles to be absorbed in the PML, in units of the speed of light `c`.
 
-* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
+* ``warpx.do_pml_dive_cleaning`` (`bool`)
     Whether to use divergence cleaning for E in the PML region.
     The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
     This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
-    This option is implemented only for the PSATD solver.
+    This option is implemented only for the Cartesian PSATD solver; it is turned on by default in this case.
 
-* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
+* ``warpx.do_pml_divb_cleaning`` (`bool`)
     Whether to use divergence cleaning for B in the PML region.
     The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
     This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+    This option is implemented only for the Cartesian PSATD solver; it is turned on by default in this case.
 
 .. _running-cpp-parameters-eb:
 
@@ -492,7 +502,7 @@ Distribution across MPI ranks and parallelization
 
     .. math::
 
-            c = n_{\text{particle}} \cdot w_{\text{particle}} + n_{\text{cell}} \cdot w_{\text{cell}},
+       c = n_{\text{particle}} \cdot w_{\text{particle}} + n_{\text{cell}} \cdot w_{\text{cell}},
 
     where
     :math:`n_{\text{particle}}` is the number of particles on the box,
@@ -802,10 +812,6 @@ Particle initialization
     Whether particle's weight is varied with their radius. This only applies to cylindrical geometry.
     The only valid value is true.
 
-    * ``predefined``: use one of WarpX predefined plasma profiles. It requires additional
-      arguments ``<species_name>.predefined_profile_name`` and
-      ``<species_name>.predefined_profile_params`` (see below).
-
 * ``<species_name>.momentum_distribution_type`` (`string`)
     Distribution of the normalized momentum (`u=p/mc`) for this species. The options are:
 
@@ -814,6 +820,14 @@ Particle initialization
     * ``constant``: constant momentum profile. This can be controlled with the additional parameters
       ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
       momenta in the x, y and z direction respectively, which are all ``0.`` by default.
+
+    * ``uniform``: uniform probability distribution between a minumum and a maximum value.
+      The x, y and z directions are sampled independently and the final momentum space is a cuboid.
+      The parameters that control the minimum and maximum domain of the distribution
+      are ``<species_name>.u<x,y,z>_min`` and ``<species_name>.u<x,y,z>_max`` in each
+      direction respectively (e.g., ``<species_name>.uz_min = 0.2`` and ``<species_name>.uz_max = 0.4``
+      to control the generation along the ``z`` direction).
+      All the parameters default to ``0``.
 
     * ``gaussian``: gaussian momentum distribution in all 3 directions. This can be controlled with the
       additional arguments for the average momenta along each direction
@@ -879,7 +893,7 @@ Particle initialization
     * ``radial_expansion``: momentum depends on the radial coordinate linearly. This
       can be controlled with additional parameter ``u_over_r`` which is the slope (``0.`` by default).
 
-    * ``parse_momentum_function``: the momentum is given by a function in the input
+    * ``parse_momentum_function``: the momentum :math:`u = (u_{x},u_{y},u_{z})=(\gamma v_{x}/c,\gamma v_{y}/c,\gamma v_{z}/c)` is given by a function in the input
       file. It requires additional arguments ``<species_name>.momentum_function_ux(x,y,z)``,
       ``<species_name>.momentum_function_uy(x,y,z)`` and ``<species_name>.momentum_function_uz(x,y,z)``,
       which gives the distribution of each component of the momentum as a function of space.
@@ -976,7 +990,7 @@ Particle initialization
     * ``<species_name>.attribute.<int_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
     ``t`` represents the physical time in seconds during the simulation.
     ``x``, ``y``, ``z`` represent particle positions in the unit of meter.
-    ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+    ``ux``, ``uy``, ``uz`` represent the particle momenta in the unit of
     :math:`\gamma v/c`, where
     :math:`\gamma` is the Lorentz factor,
     :math:`v/c` is the particle velocity normalized by the speed of light.
@@ -996,7 +1010,7 @@ Particle initialization
    * ``<species_name>.attribute.<real_attrib_name>(x,y,z,ux,uy,uz,t)`` (`string`)
      ``t`` represents the physical time in seconds during the simulation.
      ``x``, ``y``, ``z`` represent particle positions in the unit of meter.
-     ``ux``, ``uy``, ``uz`` represent the particle velocities in the unit of
+     ``ux``, ``uy``, ``uz`` represent the particle momenta in the unit of
      :math:`\gamma v/c`, where
      :math:`\gamma` is the Lorentz factor,
      :math:`v/c` is the particle velocity normalized by the speed of light.
@@ -1192,8 +1206,6 @@ Laser initialization
     implemented are:
 
     - ``"Gaussian"``: The transverse and longitudinal profiles are Gaussian.
-    - ``"Harris"``: The transverse profile is Gaussian, but the longitudinal profile
-      is given by the Harris function (see ``<laser_name>.profile_duration`` for more details)
     - ``"parse_field_function"``: the laser electric field is given by a function in the
       input file. It requires additional argument ``<laser_name>.field_function(X,Y,t)``, which
       is a mathematical expression , e.g.
@@ -1205,40 +1217,39 @@ Laser initialization
       none of the parameters below are used when ``<laser_name>.parse_field_function=1``. Even
       though ``<laser_name>.wavelength`` and ``<laser_name>.e_max`` should be included in the laser
       function, they still have to be specified as they are used for numerical purposes.
-    - ``"from_txye_file"``: the electric field of the laser is read from an external binary file
-      whose format is explained below. It requires to provide the name of the binary file
-      setting the additional parameter ``<laser_name>.txye_file_name`` (`string`). It accepts an
-      optional parameter ``<laser_name>.time_chunk_size`` (`int`). This allows to read only
-      time_chunk_size timesteps from the binary file. New timesteps are read as soon as they are needed.
-      The default value is automatically set to the number of timesteps contained in the binary file
+    - ``"from_file"``: the electric field of the laser is read from an external file. Currently both
+      the `lasy <https://lasydoc.readthedocs.io/en/latest/>`_ format as well as a custom binary format are supported. It requires to provide
+      the name of the file to load setting the additional parameter ``<laser_name>.binary_file_name`` or ``<laser_name>.lasy_file_name`` (`string`).
+      It accepts an optional parameter ``<laser_name>.time_chunk_size`` (`int`), supported for both lasy and binary files;
+      this allows to read only time_chunk_size timesteps from the file. New timesteps are read as soon as they are needed.
+
+      The default value is automatically set to the number of timesteps contained in the file
       (i.e. only one read is performed at the beginning of the simulation).
       It also accepts the optional parameter ``<laser_name>.delay`` (`float`; in seconds), which allows
       delaying (``delay > 0``) or anticipating (``delay < 0``) the laser by the specified amount of time.
-      The external binary file should provide E(x,y,t) on a rectangular (but non necessarily uniform)
+
+      Details about the usage of the lasy format: lasy can produce either 3D Cartesian files or RZ files.
+      WarpX can read both types of files independently of the geometry in which it was compiled (e.g. WarpX
+      compiled with ``WarpX_DIMS=RZ`` can read 3D Cartesian lasy files). In the case where WarpX is compiled
+      in 2D (or 1D) Cartesian, the laser antenna will emit the field values that correspond to the slice ``y=0``
+      in the lasy file (and ``x=0`` in the 1D case). One can generate a lasy file from Python, see an example
+      at ``Examples/Tests/laser_injection_from_file``.
+
+      Details about the usage of the binary format: The external binary file should provide E(x,y,t) on a rectangular (necessarily uniform)
       grid. The code performs a bi-linear (in 2D) or tri-linear (in 3D) interpolation to set the field
       values. x,y,t are meant to be in S.I. units, while the field value is meant to be multiplied by
       ``<laser_name>.e_max`` (i.e. in most cases the maximum of abs(E(x,y,t)) should be 1,
       so that the maximum field intensity can be set straightforwardly with ``<laser_name>.e_max``).
       The binary file has to respect the following format:
-
-        * flag to indicate if the grid is uniform or not (1 byte, 0 means non-uniform, !=0 means uniform)
-
-        * np, number of timesteps (uint32_t, must be >=2)
-
+        * flag to indicate the grid is uniform(1 byte, 0 means non-uniform, !=0 means uniform) - only uniform is supported
+        * nt, number of timesteps (uint32_t, must be >=2)
         * nx, number of points along x (uint32_t, must be >=2)
-
         * ny, number of points along y (uint32_t, must be 1 for 2D simulations and >=2 for 3D simulations)
-
-        * timesteps (double[2] if grid is uniform, double[np] otherwise)
-
-        * x_coords (double[2] if grid is uniform, double[nx] otherwise)
-
-        * y_coords (double[1] if 2D, double[2] if 3D & uniform grid, double[ny] if 3D & non uniform grid)
-
+        * timesteps (double[2]=[t_min,t_max])
+        * x_coords (double[2]=[x_min,x_max])
+        * y_coords (double[1] in 2D, double[2]=[y_min,y_max] in 3D)
         * field_data (double[nt * nx * ny], with nt being the slowest coordinate).
-
-      A file at this format can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file``
-
+      A binary file can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file``
 
 * ``<laser_name>.profile_t_peak`` (`float`; in seconds)
     The time at which the laser reaches its peak intensity, at the position
@@ -1249,21 +1260,13 @@ Laser initialization
     to automatically perform the conversion to the boosted frame.
 
 * ``<laser_name>.profile_duration`` (`float` ; in seconds)
-    The duration of the laser pulse, defined as :math:`\tau` below:
-
-    - For the ``"gaussian"`` profile:
+    The duration of the laser pulse for the ``"gaussian"`` profile, defined as :math:`\tau` below:
 
     .. math::
 
         E(\boldsymbol{x},t) \propto \exp\left( -\frac{(t-t_{peak})^2}{\tau^2} \right)
 
     Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.174`.
-
-    - For the ``"harris"`` profile:
-
-    .. math::
-
-        E(\boldsymbol{x},t) \propto \frac{1}{32}\left[10 - 15 \cos\left(\frac{2\pi t}{\tau}\right) + 6 \cos\left(\frac{4\pi t}{\tau}\right) - \cos\left(\frac{6\pi t}{\tau}\right) \right]\Theta(\tau - t)
 
     When running a **boosted-frame simulation**, provide the value of
     ``<laser_name>.profile_duration`` in the laboratory frame, and use ``warpx.gamma_boost``
@@ -1375,6 +1378,14 @@ Grid initialization
     Note that the current implementation of the parser for external B-field
     does not work with RZ and the code will abort with an error message.
 
+    If ``B_ext_grid_init_style`` is set to be ``read_from_file``, an additional parameter,
+    indicating the path of an openPMD data file,
+    ``warpx.read_fields_from_path`` must be specified,
+    from which external B field data can be loaded into WarpX.
+    One can refer to input files in ``Examples/Tests/LoadExternalField`` for more information.
+    Regarding how to prepare the openPMD data file, one can refer to
+    the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
+
 * ``warpx.E_ext_grid_init_style`` (string) optional (default is "default")
     This parameter determines the type of initialization for the external
     electric field. The "default" style initializes the
@@ -1399,6 +1410,17 @@ Grid initialization
     and the value of `y` is set to zero.
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
+
+    If ``E_ext_grid_init_style`` is set to be ``read_from_file``, an additional parameter,
+    indicating the path of an openPMD data file,
+    ``warpx.read_fields_from_path`` must be specified,
+    from which external E field data can be loaded into WarpX.
+    One can refer to input files in ``Examples/Tests/LoadExternalField`` for more information.
+    Regarding how to prepare the openPMD data file, one can refer to
+    the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
+    Note that if both `B_ext_grid_init_style` and `E_ext_grid_init_style` are set to
+    `read_from_file`, the openPMD file specified by `warpx.read_fields_from_path`
+    should contain both B and E external fields data.
 
 * ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
     required when ``warpx.E_ext_grid_init_style="constant"``
@@ -1476,6 +1498,9 @@ Note that elements of the same type cannot overlap each other.
     A list of names (one name per lattice element), in the order that they
     appear in the lattice.
 
+* ``lattice.reverse`` (``boolean``) optional (default: ``false``)
+    Reverse the list of elements in the lattice.
+
 * ``<element_name>.type`` (``string``)
     Indicates the element type for this lattice element. This should be one of:
 
@@ -1511,6 +1536,15 @@ Note that elements of the same type cannot overlap each other.
 
             * ``<element_name>.dBdx`` (``float``, in Tesla/meter) optional (default: 0.) the magnetic field gradient
               The field applied to the particles will be `Bx = dBdx*y` and `By = -dBdx*x`.
+
+        * ``line`` a sub-lattice (line) of elements to append to the lattice.
+
+            * ``<element_name>.elements`` (``list of strings``) optional (default: no elements)
+              A list of names (one name per lattice element), in the order that they appear in the lattice.
+
+            * ``<element_name>.reverse`` (``boolean``) optional (default: ``false``)
+              Reverse the list of elements in the line before appending to the lattice.
+
 
 .. _running-cpp-parameters-collision:
 
@@ -1799,11 +1833,11 @@ Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Di
 
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
-       coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
-     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`)
-     - ``ect``: Enlarged cell technique (conformal finite difference solver. See Xiao and Liu,
-                IEEE Antennas and Propagation Society International Symposium (2005),
-                <https://ieeexplore.ieee.org/document/1551259>)
+       coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`_).
+     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`).
+     - ``ect``: Enlarged cell technique (conformal finite difference solver. See `Xiao and Liu, IEEE Antennas and Propagation Society International Symposium (2005) <https://ieeexplore.ieee.org/document/1551259>`_).
+     - ``hybrid``: The E-field will be solved using Ohm's law and a kinetic-fluid hybrid model (see :ref:`theory <theory-kinetic-fluid-hybrid-model>`).
+     - ``none``: No field solve will be performed.
 
      If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
 
@@ -1979,6 +2013,37 @@ Maxwell solver: macroscopic media
     computational medium, respectively. The default values are the corresponding values
     in vacuum.
 
+.. _running-cpp-parameters-hybrid-model:
+
+Maxwell solver: kinetic-fluid hybrid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``hybrid_pic_model.elec_temp`` (`float`)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the electron temperature, in eV, used to calculate
+     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+
+* ``hybrid_pic_model.n0_ref`` (`float`)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}`, used to calculate
+     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+
+* ``hybrid_pic_model.gamma`` (`float`) optional (default ``5/3``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the exponent used to calculate
+     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+
+* ``hybrid_pic_model.plasma_resistivity(rho)`` (`float` or `str`) optional (default ``0``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
+
+* ``hybrid_pic_model.n_floor`` (`float`) optional (default ``1``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma density floor, in :math:`m^{-3}`, which is useful since the generalized Ohm's law used to calculate the E-field includes a :math:`1/n` term.
+
+* ``hybrid_pic_model.substeps`` (`int`) optional (default ``100``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the number of sub-steps to take during the B-field update.
+
+.. note::
+
+    Based on results from :cite:t:`param-Stanier2020` it is recommended to use
+    linear particles when using the hybrid-PIC model.
+
 Grid types (collocated, staggered, hybrid)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -2093,6 +2158,45 @@ Additional parameters
      If ``sort_intervals`` is activated and ``sort_particles_for_deposition`` is ``false``, particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
+* ``warpx.do_shared_mem_charge_deposition`` (`bool`) optional (default `false`)
+     If activated, charge deposition will allocate and use small
+     temporary buffers on which to accumulate deposited charge values
+     from particles. On GPUs these buffers will reside in ``__shared__``
+     memory, which is faster than the usual ``__global__``
+     memory. Performance impact will depend on the relative overhead
+     of assigning the particles to bins small enough to fit in the
+     space available for the temporary buffers.
+
+* ``warpx.do_shared_mem_current_deposition`` (`bool`) optional (default `false`)
+     If activated, current deposition will allocate and use small
+     temporary buffers on which to accumulate deposited current values
+     from particles. On GPUs these buffers will reside in ``__shared__``
+     memory, which is faster than the usual ``__global__``
+     memory. Performance impact will depend on the relative overhead
+     of assigning the particles to bins small enough to fit in the
+     space available for the temporary buffers. Performance is mostly improved
+     when there is lots of contention between particles writing to the same cell
+     (e.g. for high particles per cell). This feature is only available for CUDA
+     and HIP, and is only recommended for 3D or 2D.
+
+* ``warpx.shared_tilesize`` (list of `int`) optional (default `6 6 8` in 3D; `14 14` in 2D; `1s` otherwise)
+     Used to tune performance when ``do_shared_mem_current_deposition`` or
+     ``do_shared_mem_charge_depostion`` is enabled. ``shared_tilesize`` is the
+     size of the temporary buffer allocated in shared memory for a threadblock.
+     A larger tilesize requires more shared memory, but gives more work to each
+     threadblock, which can lead to higher occupancy, and allows for more
+     buffered writes to ``__shared__`` instead of ``__global__``. The defaults
+     in 2D and 3D
+     are chosen from experimentation, but can be improved upon for specific
+     problems. The other defaults are not optimized and should always be fine
+     tuned for the problem.
+
+* ``warpx.shared_mem_current_tpb`` (`int`) optional (default `128`)
+     Used to tune performance when ``do_shared_mem_current_deposition`` is
+     enabled. ``shared_mem_current_tpb`` controls the number of threads per
+     block (tpb), i.e. the number of threads operating on a shared buffer.
+
+
 .. _running-cpp-parameters-diagnostics:
 
 Diagnostics and output
@@ -2138,7 +2242,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     changed using the parameter ``<diag_name>.dump_last_timestep`` described below.
 
 * ``<diag_name>.dump_last_timestep`` (`bool` optional, default `1`)
-    If this is `1`, the last timestep is dumped regardless of ``<diag_name>.period``.
+    If this is `1`, the last timestep is dumped regardless of ``<diag_name>.intervals``.
 
 * ``<diag_name>.diag_type`` (`string`)
     Type of diagnostics. ``Full``, ``BackTransformed``, and ``BoundaryScraping``
@@ -2175,18 +2279,18 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
 
 * ``<diag_name>.openpmd_encoding`` (optional, ``v`` (variable based), ``f`` (file based) or ``g`` (group based) ) only read if ``<diag_name>.format = openpmd``.
-     openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.14.0/usage/concepts.html#iteration-and-series>`__.
+     openPMD `file output encoding <https://openpmd-api.readthedocs.io/en/0.15.1/usage/concepts.html#iteration-and-series>`__.
      File based: one file per timestep (slower), group/variable based: one file for all steps (faster)).
-     ``variable based`` is an `experimental feature with ADIOS2 <https://openpmd-api.readthedocs.io/en/0.14.0/backends/adios2.html#experimental-new-adios2-schema>`__ and not supported for back-transformed diagnostics.
+     ``variable based`` is an `experimental feature with ADIOS2 <https://openpmd-api.readthedocs.io/en/0.15.1/backends/adios2.html#experimental-new-adios2-schema>`__ and not supported for back-transformed diagnostics.
      Default: ``f`` (full diagnostics)
 
 * ``<diag_name>.adios2_operator.type`` (``zfp``, ``blosc``) optional,
-    `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 I/O operator type <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
 * ``<diag_name>.adios2_operator.parameters.*`` optional,
-    `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 I/O operator parameters <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
-    A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
+    A typical example for `ADIOS2 output using lossless compression <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ with ``blosc`` using the ``zstd`` compressor and 6 CPU treads per MPI Rank (e.g. for a `GPU run with spare CPU resources <https://arxiv.org/abs/1706.00522>`__):
 
     .. code-block:: text
 
@@ -2205,11 +2309,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
         <diag_name>.adios2_operator.parameters.precision = 3
 
 * ``<diag_name>.adios2_engine.type`` (``bp4``, ``sst``, ``ssc``, ``dataman``) optional,
-    `ADIOS2 Engine type <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 Engine type <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
     See full list of engines at `ADIOS2 readthedocs <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
 
 * ``<diag_name>.adios2_engine.parameters.*`` optional,
-    `ADIOS2 Engine parameters <https://openpmd-api.readthedocs.io/en/0.14.0/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    `ADIOS2 Engine parameters <https://openpmd-api.readthedocs.io/en/0.15.1/details/backendconfig.html#adios2>`__ for `openPMD <https://www.openPMD.org>`_ data dumps.
 
     An example for parameters for the BP engine are setting the number of writers (``NumAggregators``), transparently redirecting data to burst buffers etc.
     A detailed list of engine-specific parameters are available at the official `ADIOS2 documentation <https://adios2.readthedocs.io/en/latest/engines/engines.html>`__
@@ -2257,7 +2361,8 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
    where :math:`w_i` is the particle weight, :math:`f()` is the parser function, and :math:`(x_i,y_i,z_i)` are particle positions in units of a meter. The sums are over all particles of type ``<species>`` in a cell (ignoring the particle shape factor) that satisfy ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)``.
    When ``<diag_name>.particle_fields.<field_name>.do_average`` is `0`, the division by the sum over particle weights is not done.
-   In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-velocity. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity, and :math:`c` is the speed of light.
+   In 1D or 2D, the particle coordinates will follow the WarpX convention. :math:`(u_{x,i},u_{y,i},u_{z,i})` are components of the particle four-momentum. :math:`u = \gamma v/c`, :math:`\gamma` is the Lorentz factor, :math:`v` is the particle velocity and :math:`c` is the speed of light.
+   For photons, we use the standardized momentum :math:`u = p/(m_{e}c)`, where :math:`p` is the momentum of the photon and :math:`m_{e}` the mass of an electron.
 
 * ``<diag_name>.particle_fields.<field_name>.filter(x,y,z,ux,uy,uz)`` (parser `string`, optional)
     Parser function returning a boolean for whether to include a particle in the diagnostic.
@@ -2322,12 +2427,12 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Users can provide an expression returning a boolean for whether a particle is dumped.
     `t` represents the physical time in seconds during the simulation.
     `x, y, z` represent particle positions in the unit of meter.
-    `ux, uy, uz` represent particle velocities in the unit of
+    `ux, uy, uz` represent particle momenta in the unit of
     :math:`\gamma v/c`, where
     :math:`\gamma` is the Lorentz factor,
     :math:`v/c` is the particle velocity normalized by the speed of light.
     E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
-    positions `x` greater than `0`, and those having velocity `uz` less than 10,
+    positions `x` greater than `0`, and those having momentum `uz` less than 10,
     will be dumped.
 
 * ``amrex.async_out`` (`0` or `1`) optional (default `0`)
@@ -2372,7 +2477,7 @@ BackTransformed Diagnostics
 
 * ``<diag_name>.dt_snapshots_lab`` (`float`, in seconds)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
-    The time interval inbetween the lab-frame snapshots (where this
+    The time interval in between the lab-frame snapshots (where this
     time interval is expressed in the laboratory frame).
 
 * ``<diag_name>.dz_snapshots_lab`` (`float`, in meters)
@@ -2643,11 +2748,15 @@ Reduced Diagnostics
         :math:`\epsilon_z = \dfrac{1}{mc} \sqrt{\delta_z^2 \delta_{pz}^2 -
         \Big\langle (z-\langle z \rangle) (p_z-\langle p_z \rangle) \Big\rangle^2}`.
 
-        [19], [20]: beta function for the transverse directions (m)
+        [19], [20]: Twiss alpha for the transverse directions
+        :math:`\alpha_x = - \Big\langle (x-\langle x \rangle) (p_x-\langle p_x \rangle) \Big\rangle \Big/ \epsilon_x`,
+        :math:`\alpha_y = - \Big\langle (y-\langle y \rangle) (p_y-\langle p_y \rangle) \Big\rangle \Big/ \epsilon_y`.
+
+        [21], [22]: beta function for the transverse directions (m)
         :math:`\beta_x = \dfrac{{\delta_x}^2}{\epsilon_x}`,
         :math:`\beta_y = \dfrac{{\delta_y}^2}{\epsilon_y}`.
 
-        [21]: The charge of the beam (C).
+        [23]: The charge of the beam (C).
 
         For 2D-XZ,
         :math:`\langle y \rangle`,
@@ -2687,13 +2796,13 @@ Reduced Diagnostics
             A histogram function must be provided.
             `t` represents the physical time in seconds during the simulation.
             `x, y, z` represent particle positions in the unit of meter.
-            `ux, uy, uz` represent the particle velocities in the unit of
+            `ux, uy, uz` represent the particle momenta in the unit of
             :math:`\gamma v/c`, where
             :math:`\gamma` is the Lorentz factor,
             :math:`v/c` is the particle velocity normalized by the speed of light.
             E.g.
             ``x`` produces the position (density) distribution in `x`.
-            ``ux`` produces the velocity distribution in `x`,
+            ``ux`` produces the momentum distribution in `x`,
             ``sqrt(ux*ux+uy*uy+uz*uz)`` produces the speed distribution.
             The default value of the histogram without normalization is
             :math:`f = \sum\limits_{i=1}^N w_i`, where
@@ -2736,12 +2845,12 @@ Reduced Diagnostics
             into account when calculating the histogram.
             `t` represents the physical time in seconds during the simulation.
             `x, y, z` represent particle positions in the unit of meter.
-            `ux, uy, uz` represent particle velocities in the unit of
+            `ux, uy, uz` represent particle momenta in the unit of
             :math:`\gamma v/c`, where
             :math:`\gamma` is the Lorentz factor,
             :math:`v/c` is the particle velocity normalized by the speed of light.
             E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
-            positions `x` greater than `0`, and those having velocity `uz` less than 10,
+            positions `x` greater than `0`, and those having momentum `uz` less than 10,
             will be taken into account when calculating the histogram.
 
         The output columns are
@@ -2749,6 +2858,64 @@ Reduced Diagnostics
         An example input file and a loading python script of
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
+
+    * ``ParticleHistogram2D``
+        This type computes a user defined, 2D particle histogram.
+
+        * ``<reduced_diags_name>.species`` (`string`)
+            A species name must be provided,
+            such that the diagnostics are done for this species.
+
+        * ``<reduced_diags_name>.histogram_function_abs(t,x,y,z,ux,uy,uz,w)`` (`string`)
+            A histogram function must be provided for the abscissa axis.
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent the particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            `w` represents the weight.
+
+        * ``<reduced_diags_name>.histogram_function_ord(t,x,y,z,ux,uy,uz,w)`` (`string`)
+            A histogram function must be provided for the ordinate axis.
+
+        * ``<reduced_diags_name>.bin_number_abs`` (`int` > 0) and ``<reduced_diags_name>.bin_number_ord`` (`int` > 0)
+            These are the number of bins used for the histogram for the abscissa and ordinate axis respectively.
+
+        * ``<reduced_diags_name>.bin_max_abs`` (`float`) and ``<reduced_diags_name>.bin_max_ord`` (`float`)
+            These are the maximum value of the bins for the abscissa and ordinate axis respectively.
+            Particles with values outside of these ranges are discarded.
+
+        * ``<reduced_diags_name>.bin_min_abs`` (`float`) and ``<reduced_diags_name>.bin_min_ord`` (`float`)
+            These are the minimum value of the bins for the abscissa and ordinate axis respectively.
+            Particles with values outside of these ranges are discarded.
+
+        * ``<reduced_diags_name>.filter_function(t,x,y,z,ux,uy,uz,w)`` (`string`) optional
+            Users can provide an expression returning a boolean for whether a particle is taken
+            into account when calculating the histogram.
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            `w` represents the weight.
+
+        * ``<reduced_diags_name>.value_function(t,x,y,z,ux,uy,uz,w)`` (`string`) optional
+            Users can provide an expression for the weight used to calculate the number of particles
+            per cell associated with the selected abscissa and ordinate functions and/or the filter function.
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            `w` represents the weight.
+
+        The output is a ``<reduced_diags_name>`` folder containing a set of openPMD files.
+        An example input file and a loading python script of
+        using the histogram2D reduced diagnostics
+        are given in ``Examples/Tests/histogram2D/``.
 
     * ``ParticleExtrema``
         This type computes the minimum and maximum values of
@@ -2770,25 +2937,26 @@ Reduced Diagnostics
         so the time of the diagnostic may be long
         depending on the simulation size.
 
-* ``ChargeOnEB``
-    This type computes the total surface charge on the embedded boundary
-    (in Coulombs), by using the formula
+    * ``ChargeOnEB``
+        This type computes the total surface charge on the embedded boundary
+        (in Coulombs), by using the formula
 
-    .. math::
+        .. math::
 
-        Q_{tot} = \epsilon_0 \iint dS \cdot E
+            Q_{tot} = \epsilon_0 \iint dS \cdot E
 
-    where the integral is performed over the surface of the embedded boundary.
+        where the integral is performed over the surface of the embedded boundary.
 
-    When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
-    computed integral is weighted:
-    .. math::
+        When providing ``<reduced_diags_name>.weighting_function(x,y,z)``, the
+        computed integral is weighted:
 
-        Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
+        .. math::
 
-    In particular, by choosing a weighting function which returns either
-    1 or 0, it is possible to compute the charge on only some part of the
-    embedded boundary.
+            Q = \epsilon_0 \iint dS \cdot E \times weighting(x, y, z)
+
+        In particular, by choosing a weighting function which returns either
+        1 or 0, it is possible to compute the charge on only some part of the
+        embedded boundary.
 
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
@@ -3025,3 +3193,6 @@ When developing, testing and :ref:`debugging WarpX <debugging_warpx>`, the follo
 * ``ablastr.fillboundary_always_sync`` (`0` or `1`) optional (default `0`)
     Run all ``FillBoundary`` operations on ``MultiFab`` to force-synchronize shared nodal points.
     This slightly increases communication cost and can help to spot missing ``nodal_sync`` flags in these operations.
+
+.. bibliography::
+    :keyprefix: param-

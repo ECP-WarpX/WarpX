@@ -50,8 +50,8 @@ public:
      * \brief Method to initialize runtime attributes. Does nothing for LaserParticleContainer.
      */
     virtual void DefaultInitializeRuntimeAttributes (
-                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                            NArrayInt,amrex::PinnedArenaAllocator>& /*pinned_tile*/,
+                        amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                            NArrayReal, NArrayInt, amrex::PinnedArenaAllocator>& /*pinned_tile*/,
                         const int /*n_external_attr_real*/,
                         const int /*n_external_attr_int*/,
                         const amrex::RandomEngine& /*engine*/) override final {}

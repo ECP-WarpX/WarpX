@@ -72,7 +72,7 @@ void FiniteDifferenceSolver::EvolveF (
 
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("EvolveF: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveF: Unknown algorithm");
     }
 
 }

@@ -118,8 +118,8 @@ Priority abl_msg_logger::StringToPriority(const std::string& priority_string)
     else if (priority_string == "low")
         return Priority::low;
     else
-        amrex::Abort(abl_utils::TextMsg::Err(
-            "Priority string '" + priority_string + "' not recognized"));
+        ABLASTR_ABORT_WITH_MESSAGE(
+            "Priority string '" + priority_string + "' not recognized");
 
     //this silences a "non-void function does not return a value in all control paths" warning
     return Priority::low;
@@ -469,7 +469,7 @@ void Logger::swap_with_io_rank(
             auto package_size = static_cast<int>(package.size());
             amrex::ParallelDescriptor::Send(&package_size, 1, m_io_rank, 0);
             amrex::ParallelDescriptor::Send(package, m_io_rank, 1);
-            int list_size = static_cast<int>(msgs_with_counter_and_ranks.size());
+            const auto list_size = static_cast<int>(msgs_with_counter_and_ranks.size());
             amrex::ParallelDescriptor::Send(&list_size, 1, m_io_rank, 2);
         }
         else if (m_rank == m_io_rank){

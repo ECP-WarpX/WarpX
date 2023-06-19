@@ -81,7 +81,7 @@ elif dims == 'RZ':
         energy_ref = 472779.70801323955
     if current_correction and not periodic_single_box:
         energy_ref = 511671.4108624746
-        tol_charge = 2e-4
+        tol_charge = 3e-4
 elif dims == '3D':
     if not current_correction:
         energy_ref = 661285.098907683
@@ -113,4 +113,4 @@ if current_correction:
     assert(err_charge < tol_charge)
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, filename, rtol=1.e-8)

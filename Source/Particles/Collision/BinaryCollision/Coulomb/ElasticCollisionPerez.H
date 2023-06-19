@@ -54,8 +54,8 @@ void ElasticCollisionPerez (
     amrex::RandomEngine const& engine,
     bool const isSameSpecies)
 {
-    int NI1 = I1e - I1s;
-    int NI2 = I2e - I2s;
+    const int NI1 = I1e - I1s;
+    const int NI2 = I2e - I2s;
 
     T_PR * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
     T_PR * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];

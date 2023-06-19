@@ -897,6 +897,27 @@ def JzFPPMLWrapper(level=0, include_ghosts=False):
                             get_nodal_flag=libwarpx.get_Jz_nodal_flag,
                             level=level, include_ghosts=include_ghosts)
 
+def JxFPAmpereWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=0,
+                            get_lovects=libwarpx.get_mesh_current_density_fp_lovects,
+                            get_fabs=libwarpx.get_mesh_current_density_fp_ampere,
+                            get_nodal_flag=libwarpx.get_Jx_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def JyFPAmpereWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=1,
+                            get_lovects=libwarpx.get_mesh_current_density_fp_lovects,
+                            get_fabs=libwarpx.get_mesh_current_density_fp_ampere,
+                            get_nodal_flag=libwarpx.get_Jy_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
+def JzFPAmpereWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=2,
+                            get_lovects=libwarpx.get_mesh_current_density_fp_lovects,
+                            get_fabs=libwarpx.get_mesh_current_density_fp_ampere,
+                            get_nodal_flag=libwarpx.get_Jz_nodal_flag,
+                            level=level, include_ghosts=include_ghosts)
+
 def FFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=None,
                             get_lovects=libwarpx.get_mesh_F_fp_lovects_pml,

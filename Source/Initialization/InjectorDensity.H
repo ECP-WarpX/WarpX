@@ -77,15 +77,15 @@ struct InjectorDensityPredefined
             // From testing, it seems that (for at least some setups), it is only
             // necessary to case n0 as double to get good agreement between single
             // and double precision, but just in case, all are cast as double.
-            double z_start   = p[0];
-            double ramp_up   = p[1];
-            double plateau   = p[2];
-            double ramp_down = p[3];
-            double rc        = p[4];
-            double n0        = p[5];
-            double n;
-            double kp = PhysConst::q_e/PhysConst::c
+            const double z_start   = p[0];
+            const double ramp_up   = p[1];
+            const double plateau   = p[2];
+            const double ramp_down = p[3];
+            const double rc        = p[4];
+            const double n0        = p[5];
+            const double kp = PhysConst::q_e/PhysConst::c
                 *std::sqrt( n0/(PhysConst::m_e*PhysConst::ep0) );
+            double n;
 
             // Longitudinal profile, normalized to 1
             if        ((z-z_start)>=0               and

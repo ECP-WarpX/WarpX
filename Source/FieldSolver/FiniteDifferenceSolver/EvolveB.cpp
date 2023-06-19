@@ -69,6 +69,9 @@ void FiniteDifferenceSolver::EvolveB (
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
         ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
+        ignore_unused(Gfield, face_areas);
+        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 #else
     if(m_grid_type == GridType::Collocated || m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
         amrex::ignore_unused(face_areas);
@@ -79,6 +82,10 @@ void FiniteDifferenceSolver::EvolveB (
         EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 
     } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
+
+        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
+
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
 
         EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 
@@ -93,7 +100,7 @@ void FiniteDifferenceSolver::EvolveB (
 #endif
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("EvolveB: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveB: Unknown algorithm");
     }
 }
 
@@ -170,7 +177,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         if (Gfield)
         {
             // Extract field data for this grid/tile
-            Array4<Real> G = Gfield->array(mfi);
+            const Array4<Real> G = Gfield->array(mfi);
 
             // Loop over cells and update G
             amrex::ParallelFor(tbx, tby, tbz,
@@ -212,8 +219,8 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
 #ifdef AMREX_USE_EB
 
 #if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
-    amrex::Abort(Utils::TextMsg::Err(
-        "EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
 
     amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
@@ -284,7 +291,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         jp = j;
                         kp = k + vec(1);
 #else
-                        amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+                        WARPX_ABORT_WITH_MESSAGE("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
                     }else{
                         ip = i + vec(0);
@@ -316,7 +323,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
                         jp = j;
                         kp = k + vec(1);
 #else
-                        amrex::Abort("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
+                        WARPX_ABORT_WITH_MESSAGE("EvolveBCartesianECT: Embedded Boundaries are only implemented in 2D3V and 3D3V");
 #endif
                     }else{
                         ip = i + vec(0);

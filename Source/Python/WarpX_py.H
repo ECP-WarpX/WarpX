@@ -20,9 +20,10 @@
  * The keys of the map describe at what point in the simulation the python
  * functions will be called. Currently supported keys (callback points) are
  * afterinit, beforecollisions, aftercollisions, beforeEsolve, poissonsolver,
- * afterEsolve, beforedeposition, afterdeposition, particlescraper,
+ * afterEsolve, beforeInitEsolve, afterInitEsolve,
+ * beforedeposition, afterdeposition, particlescraper,
  * particleloader, beforestep, afterstep, afterdiagnostics, afterrestart,
- * oncheckpointsignal, particleinjection and appliedfields.
+ * oncheckpointsignal, onbreaksignal, particleinjection and appliedfields.
 */
 extern std::map< std::string, WARPX_CALLBACK_PY_FUNC_0 > warpx_callback_py_map;
 
