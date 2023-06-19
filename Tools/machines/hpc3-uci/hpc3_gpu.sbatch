@@ -17,8 +17,8 @@
 #SBATCH --ntasks-per-node=4
 #SBATCH --gres=gpu:V100:4
 #SBATCH --cpus-per-task=10
-#SBATCH --mail-type=begin,end
-#SBATCH --mail-user=<your-email>@uci.edu
+#S BATCH --mail-type=begin,end
+#S BATCH --mail-user=<your-email>@uci.edu
 #SBATCH -o WarpX.o%j
 #SBATCH -e WarpX.e%j
 
@@ -26,5 +26,10 @@
 EXE=./warpx.rz
 INPUTS=inputs_rz
 
-srun ${EXE} ${INPUTS} \
+# OpenMP threads
+export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
+
+# run
+mpirun -np ${SLURM_NTASKS}  \
+  ${EXE} ${INPUTS}          \
   > output.txt
