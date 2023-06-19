@@ -12,7 +12,7 @@ Introduction
 If you are new to this system, **please see the following resources**:
 
 * `HPC3 user guide <https://rcic.uci.edu/hpc3/index.html>`__
-* Batch system: `Slurm <https://rcic.uci.edu/hpc3/slurm.html>`__
+* Batch system: `Slurm <https://rcic.uci.edu/hpc3/slurm.html>`__ (`notes <https://rcic.uci.edu/hpc3/examples.html#_submit_different_job_types>`__)
 * `Jupyter service <https://rcic.uci.edu/hpc3/examples.html#jupyterhub-portal>`__
 * `Filesystems <https://rcic.uci.edu/storage/beegfs-howtos.html>`__:
 
