@@ -13,7 +13,7 @@ If you are new to this system, **please see the following resources**:
 
 * `HPC3 user guide <https://rcic.uci.edu/hpc3/index.html>`__
 * Batch system: `Slurm <https://rcic.uci.edu/hpc3/slurm.html>`__
-* Jupyter service: not clear if publicly available
+* `Jupyter service <https://rcic.uci.edu/hpc3/examples.html#jupyterhub-portal>`__
 * `Filesystems <https://rcic.uci.edu/storage/beegfs-howtos.html>`__:
 
   * ``$HOME``: per-user directory, use only for inputs, source and scripts; backed up (40GB)
@@ -165,7 +165,7 @@ to submit the job.
 Post-Processing
 ---------------
 
-.. note::
+UCI provides a pre-configured `Jupyter service <https://rcic.uci.edu/hpc3/examples.html#jupyterhub-portal>`__ that can be used for data-analysis.
 
-   We usually document how to use a HPC system's `Jupyter service <https://jupyter.org>`__ here, but have not found documentation for such as service at UCI yet.
-   Please feel free to reach out to the HPC3 system support and add to this documentation if such a service exists.
+We recommend to install at least the following ``pip`` packages for running Python3 Jupyter notebooks on WarpX data analysis:
+``h5py ipympl ipywidgets matplotlib numpy openpmd-viewer openpmd-api pandas scipy yt``
