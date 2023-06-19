@@ -26,19 +26,20 @@ HPC Systems
 
    hpc/adastra
    hpc/cori
-   hpc/perlmutter
-   hpc/summit
-   hpc/spock
    hpc/crusher
    hpc/frontier
    hpc/fugaku
+   hpc/hpc3
    hpc/juwels
    hpc/lassen
-   hpc/quartz
    hpc/lawrencium
-   hpc/ookami
-   hpc/lxplus
    hpc/lumi
+   hpc/lxplus
+   hpc/ookami
+   hpc/perlmutter
+   hpc/quartz
+   hpc/summit
+   hpc/spock
    hpc/taurus
 
 .. tip::
