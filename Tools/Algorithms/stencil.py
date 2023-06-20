@@ -10,7 +10,9 @@ using IPython). The user can modify the input parameters set in the main
 function at the end of the file.
 """
 
+import argparse
 import os
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -313,26 +315,18 @@ def plot_stencil(cells, stencil_nodal, stencil_stagg, label, path, name):
         fig_name += '_' + name
     fig.savefig(fig_name + '.png', dpi=150)
 
-def run_main(dx, dy, dz, dt, nox, noy, noz, gamma=1., galilean=False, path='.', name=''):
+def run_main(dx_boosted, dt, psatd_order, gamma=1., galilean=False, path='.', name=''):
     """
     Main function.
 
     Parameters
     ----------
-    dx : float
-        Cell size along x.
-    dy : float
-        Cell size along y.
-    dz : float
-        Cell size along z.
+    dx : numpy.ndarray (float)
+        Cell size along each direction.
     dt : float
         Time step.
-    nox : int
-        Spectral order along x.
-    noy : int
-        Spectral order along y.
-    noz : int
-        Spectral order along z.
+    psatd_order : numpy.ndarray (int)
+        Spectral order along each direction.
     gamma : float, optional (default = 1.)
         Lorentz factor.
     galilean : bool, optional (default = False)
@@ -342,6 +336,16 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma=1., galilean=False, path='.', 
     name : str, optional (default = '')
         Common label for figure names.
     """
+    # TODO Extend for all dimensions
+    dx = dx_boosted[0]
+    dy = dx_boosted[1]
+    dz = dx_boosted[-1]
+
+    # TODO Extend for all dimensions
+    nox = psatd_order[0]
+    noy = psatd_order[1]
+    noz = psatd_order[-1]
+
     # Galilean velocity (default = 0.)
     v_gal = 0.
     if galilean:
@@ -429,29 +433,77 @@ def run_main(dx, dy, dz, dt, nox, noy, noz, gamma=1., galilean=False, path='.', 
 
 if __name__ == '__main__':
 
-    # --
-    # User can modify these input parameters
-    # --
-    # Cell size
-    dx = 1e-06
-    dy = 1e-06
-    dz = 2e-06
-    # Time step
-    dt = 1e-14
-    # Spectral order
-    nox = 8
-    noy = 8
-    noz = 16
-    # Lorentz boost
-    gamma = 30.
+    # Parse path to input file from command line
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--path')
+    args = parser.parse_args()
+    path = args.path
+
+    # Open input file
+    input_file = open(path, 'r').read()
+
+    # TODO Extend for RZ
+    dims = re.findall(r'geometry\.dims\s*=\s*(\d*)', input_file)
+    if dims:
+        dims = int(dims[0][0])
+
+    # regex for single number and multiple numbers (depending on dimensions)
+    sn_regex = r'\s*(-*\d*\.*\d*e*-*\d*)'
+    mn_regex = ''
+    for _ in range(dims):
+        mn_regex += sn_regex
+
+    p_n_cell = re.findall(r'amr\.n\_cell\s*=' + mn_regex, input_file)
+    p_prob_lo = re.findall(r'geometry\.prob\_lo\s*=' + mn_regex, input_file)
+    p_prob_hi = re.findall(r'geometry\.prob\_hi\s*=' + mn_regex, input_file)
+
+    # Notation considering x as vector of coordinates (x,y,z)
+    nx = np.zeros(dims)
+    xmin = np.zeros(dims)
+    xmax = np.zeros(dims)
+    for i in range(dims):
+        nx[i] = int(p_n_cell[0][i])
+        xmin[i] = float(p_prob_lo[0][i])
+        xmax[i] = float(p_prob_hi[0][i])
+
+    # Cell size in the lab frame and boosted frame (boost along z)
+    ## lab frame
+    dx = (xmax-xmin) / nx
+    ## boosted frame
+    gamma = 1.
+    p_gamma = re.findall(r'warpx\.gamma\_boost\s*=' + sn_regex, input_file)
+    if p_gamma:
+        gamma = float(p_gamma[0])
+    beta = np.sqrt(1. - 1./gamma**2)
+    dx_boosted = np.copy(dx)
+    dx_boosted[-1] = (1. + beta) * gamma * dx[-1]
+
+    # Time step for pseudo-spectral scheme
+    cfl = 0.999
+    p_cfl = re.findall(r'warpx\.cfl\s*=' + sn_regex, input_file)
+    if cfl:
+        cfl = float(p_cfl[0])
+    dt = cfl * np.min(dx_boosted) / c
+
+    # Pseudo-spectral order
+    psatd_order = np.full(shape=dims, fill_value=16)
+    p_nox = re.findall(r'psatd\.nox\s*=' + sn_regex, input_file)
+    p_noy = re.findall(r'psatd\.noy\s*=' + sn_regex, input_file)
+    p_noz = re.findall(r'psatd\.noz\s*=' + sn_regex, input_file)
+    if p_nox:
+        psatd_order[0] = int(p_nox[0])
+    if p_noy:
+        psatd_order[1] = int(p_noy[0])
+    if p_noz:
+        psatd_order[2] = int(p_noz[0])
+
     # Galilean flag
-    galilean = True
-    # Output path
-    path = '.'
-    # Output name tag (can be empty: '')
-    name = 'test'
-    # --
+    # TODO Extend for alternative syntax psatd.v_galilean
+    galilean = False
+    p_galilean = re.findall(r'psatd\.use\_default\_v\_galilean\s*=\s*(\d)', input_file)
+    if p_galilean:
+        galilean = True if int(p_galilean[0]) == 1 else False
 
     # Run main function (some arguments are optional,
     # see definition of run_main function for help)
-    run_main(dx, dy, dz, dt, nox, noy, noz, gamma, galilean, path, name)
+    run_main(dx_boosted, dt, psatd_order, gamma, galilean)
