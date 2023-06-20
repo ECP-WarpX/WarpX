@@ -3,7 +3,7 @@
 HPC3 (UCI)
 ==========
 
-The `HPC3 supercomputer <https://rcic.uci.edu/hpc3/index.html/>`_ is located at University of California, Irvine.
+The `HPC3 supercomputer <https://rcic.uci.edu/hpc3/index.html>`_ is located at University of California, Irvine.
 
 
 Introduction
