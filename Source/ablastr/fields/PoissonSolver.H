@@ -7,8 +7,7 @@
 #ifndef ABLASTR_POISSON_SOLVER_H
 #define ABLASTR_POISSON_SOLVER_H
 
-#include "Utils/WarpXConst.H"
-
+#include <ablastr/constant.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -166,7 +165,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
 
-    bool always_use_bnorm = (max_norm_b > 0);
+    const bool always_use_bnorm = (max_norm_b > 0);
     if (!always_use_bnorm) {
         if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
         ablastr::warn_manager::WMRecordWarning(
@@ -196,9 +195,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                               geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
         int max_semicoarsening_level = 0;
         int semicoarsening_direction = -1;
-        int min_dir = std::distance(dx_scaled.begin(),
+        const int min_dir = std::distance(dx_scaled.begin(),
                                     std::min_element(dx_scaled.begin(),dx_scaled.end()));
-        int max_dir = std::distance(dx_scaled.begin(),
+        const int max_dir = std::distance(dx_scaled.begin(),
                                     std::max_element(dx_scaled.begin(),dx_scaled.end()));
         if (dx_scaled[max_dir] > dx_scaled[min_dir]) {
             semicoarsening_direction = max_dir;

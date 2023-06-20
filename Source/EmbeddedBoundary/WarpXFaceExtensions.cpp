@@ -155,8 +155,8 @@ WarpX::CountExtFaces() {
 #elif defined(WARPX_DIM_3D)
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "CountExtFaces: Only implemented in 2D3V and 3D3V"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "CountExtFaces: Only implemented in 2D3V and 3D3V");
 #endif
         amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
         amrex::ReduceData<int> reduce_data(reduce_ops);
@@ -263,7 +263,7 @@ WarpX::InitBorrowing() {
         borrowing_x.inds_pointer.resize(box);
         borrowing_x.size.resize(box);
         borrowing_x.size.setVal<amrex::RunOn::Device>(0);
-        amrex::Long ncells = box.numPts();
+        const amrex::Long ncells = box.numPts();
         // inds, neigh_faces and area are extended to their largest possible size here, but they are
         // resized to a much smaller size later on, based on the actual number of neighboring
         // intruded faces for each unstable face.
@@ -279,7 +279,7 @@ WarpX::InitBorrowing() {
         borrowing_y.inds_pointer.resize(box);
         borrowing_y.size.resize(box);
         borrowing_y.size.setVal<amrex::RunOn::Device>(0);
-        amrex::Long ncells = box.numPts();
+        const amrex::Long ncells = box.numPts();
         borrowing_y.inds.resize(8*ncells);
         borrowing_y.neigh_faces.resize(8*ncells);
         borrowing_y.area.resize(8*ncells);
@@ -292,7 +292,7 @@ WarpX::InitBorrowing() {
         borrowing_z.inds_pointer.resize(box);
         borrowing_z.size.resize(box);
         borrowing_z.size.setVal<amrex::RunOn::Device>(0);
-        amrex::Long ncells = box.numPts();
+        const amrex::Long ncells = box.numPts();
         borrowing_z.inds.resize(8*ncells);
         borrowing_z.neigh_faces.resize(8*ncells);
         borrowing_z.area.resize(8*ncells);
@@ -420,8 +420,8 @@ WarpX::ComputeOneWayExtensions() {
 #elif defined(WARPX_DIM_3D)
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "ComputeOneWayExtensions: Only implemented in 2D3V and 3D3V");
 #endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 
@@ -542,8 +542,8 @@ WarpX::ComputeEightWaysExtensions() {
 #elif defined(WARPX_DIM_3D)
         for(int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 #else
-        amrex::Abort(Utils::TextMsg::Err(
-            "ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "ComputeEightWaysExtensions: Only implemented in 2D3V and 3D3V");
 #endif
         for (amrex::MFIter mfi(*Bfield_fp[maxLevel()][idim]); mfi.isValid(); ++mfi) {
 

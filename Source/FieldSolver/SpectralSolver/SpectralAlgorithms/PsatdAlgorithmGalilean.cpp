@@ -45,7 +45,6 @@ PsatdAlgorithmGalilean::PsatdAlgorithmGalilean(
     const bool divb_cleaning)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
-    m_spectral_index(spectral_index),
     // Initialize the centered finite-order modified k vectors:
     // these are computed always with the assumption of centered grids
     // (argument grid_type=GridType::Collocated), for both collocated and staggered grids
@@ -118,14 +117,14 @@ PsatdAlgorithmGalilean::pushSpectralFields (SpectralFieldData& f) const
         const amrex::Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = f.fields[mfi].array();
+        const amrex::Array4<Complex> fields = f.fields[mfi].array();
 
         // These coefficients are always allocated
-        amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
-        amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
-        amrex::Array4<const Complex> X1_arr = X1_coef[mfi].array();
-        amrex::Array4<const Complex> X2_arr = X2_coef[mfi].array();
-        amrex::Array4<const Complex> X3_arr = X3_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
+        const amrex::Array4<const Complex> X1_arr = X1_coef[mfi].array();
+        const amrex::Array4<const Complex> X2_arr = X2_coef[mfi].array();
+        const amrex::Array4<const Complex> X3_arr = X3_coef[mfi].array();
 
         amrex::Array4<const Complex> X4_arr = X4_coef[mfi].array();
         amrex::Array4<const Complex> T2_arr = T2_coef[mfi].array();
@@ -324,21 +323,21 @@ void PsatdAlgorithmGalilean::InitializeSpectralCoefficients (
         const amrex::Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
 
         // Coefficients always allocated
-        amrex::Array4<amrex::Real> C = C_coef[mfi].array();
-        amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
-        amrex::Array4<Complex> X1 = X1_coef[mfi].array();
-        amrex::Array4<Complex> X2 = X2_coef[mfi].array();
-        amrex::Array4<Complex> X3 = X3_coef[mfi].array();
+        const amrex::Array4<amrex::Real> C = C_coef[mfi].array();
+        const amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
+        const amrex::Array4<Complex> X1 = X1_coef[mfi].array();
+        const amrex::Array4<Complex> X2 = X2_coef[mfi].array();
+        const amrex::Array4<Complex> X3 = X3_coef[mfi].array();
 
         amrex::Array4<Complex> X4 = X4_coef[mfi].array();
         amrex::Array4<Complex> T2 = T2_coef[mfi].array();
 
         // Extract Galilean velocity
-        amrex::Real vg_x = m_v_galilean[0];
+        const amrex::Real vg_x = m_v_galilean[0];
 #if defined(WARPX_DIM_3D)
-        amrex::Real vg_y = m_v_galilean[1];
+        const amrex::Real vg_y = m_v_galilean[1];
 #endif
-        amrex::Real vg_z = m_v_galilean[2];
+        const amrex::Real vg_z = m_v_galilean[2];
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -481,19 +480,19 @@ void PsatdAlgorithmGalilean::InitializeSpectralCoefficientsAveraging (
         const amrex::Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
 
         // Coefficients allocated only with averaged Galilean PSATD
-        amrex::Array4<Complex> Psi1 = Psi1_coef[mfi].array();
-        amrex::Array4<Complex> Psi2 = Psi2_coef[mfi].array();
-        amrex::Array4<Complex> Y1 = Y1_coef[mfi].array();
-        amrex::Array4<Complex> Y3 = Y3_coef[mfi].array();
-        amrex::Array4<Complex> Y2 = Y2_coef[mfi].array();
-        amrex::Array4<Complex> Y4 = Y4_coef[mfi].array();
+        const amrex::Array4<Complex> Psi1 = Psi1_coef[mfi].array();
+        const amrex::Array4<Complex> Psi2 = Psi2_coef[mfi].array();
+        const amrex::Array4<Complex> Y1 = Y1_coef[mfi].array();
+        const amrex::Array4<Complex> Y3 = Y3_coef[mfi].array();
+        const amrex::Array4<Complex> Y2 = Y2_coef[mfi].array();
+        const amrex::Array4<Complex> Y4 = Y4_coef[mfi].array();
 
         // Extract Galilean velocity
-        amrex::Real vg_x = m_v_galilean[0];
+        const amrex::Real vg_x = m_v_galilean[0];
 #if defined(WARPX_DIM_3D)
-        amrex::Real vg_y = m_v_galilean[1];
+        const amrex::Real vg_y = m_v_galilean[1];
 #endif
-        amrex::Real vg_z = m_v_galilean[2];
+        const amrex::Real vg_z = m_v_galilean[2];
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -662,7 +661,7 @@ void PsatdAlgorithmGalilean::CurrentCorrection (SpectralFieldData& field_data)
         const amrex::Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+        const amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
@@ -751,9 +750,63 @@ void PsatdAlgorithmGalilean::CurrentCorrection (SpectralFieldData& field_data)
 void
 PsatdAlgorithmGalilean::VayDeposition (SpectralFieldData& field_data)
 {
-    amrex::ignore_unused(field_data);
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented for Galilean PSATD algorithms"));
+    // Profiling
+    BL_PROFILE("PsatdAlgorithmJConstantInTime::VayDeposition()");
+
+    const SpectralFieldIndex& Idx = m_spectral_index;
+
+    // Loop over boxes
+    for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi)
+    {
+        const amrex::Box& bx = field_data.fields[mfi].box();
+
+        // Extract arrays for the fields to be updated
+        const amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+
+        // Extract pointers for the modified k vectors
+        const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+#if defined(WARPX_DIM_3D)
+        const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+#endif
+        const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+
+        // Loop over indices within one box
+        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            // Shortcuts for the values of D
+            const Complex Dx = fields(i,j,k,Idx.Jx_mid);
+#if defined(WARPX_DIM_3D)
+            const Complex Dy = fields(i,j,k,Idx.Jy_mid);
+#endif
+            const Complex Dz = fields(i,j,k,Idx.Jz_mid);
+
+            // Imaginary unit
+            constexpr Complex I = Complex{0._rt, 1._rt};
+
+            // Modified k vector values
+            const amrex::Real kx_mod = modified_kx_arr[i];
+#if defined(WARPX_DIM_3D)
+            const amrex::Real ky_mod = modified_ky_arr[j];
+            const amrex::Real kz_mod = modified_kz_arr[k];
+#else
+            const amrex::Real kz_mod = modified_kz_arr[j];
+#endif
+
+            // Compute Jx
+            if (kx_mod != 0._rt) fields(i,j,k,Idx.Jx_mid) = I * Dx / kx_mod;
+            else                 fields(i,j,k,Idx.Jx_mid) = 0._rt;
+
+#if defined(WARPX_DIM_3D)
+            // Compute Jy
+            if (ky_mod != 0._rt) fields(i,j,k,Idx.Jy_mid) = I * Dy / ky_mod;
+            else                 fields(i,j,k,Idx.Jy_mid) = 0._rt;
+#endif
+
+            // Compute Jz
+            if (kz_mod != 0._rt) fields(i,j,k,Idx.Jz_mid) = I * Dz / kz_mod;
+            else                 fields(i,j,k,Idx.Jz_mid) = 0._rt;
+        });
+    }
 }
 
 #endif // WARPX_USE_PSATD

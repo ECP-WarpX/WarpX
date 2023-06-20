@@ -32,6 +32,7 @@ Compiling WarpX on Fugaku is more pratical on a compute node. Use the following 
 
 
 Then, load ``cmake`` and ``ninja`` using ``spack``:
+
 .. code-block:: bash
 
    . /vol0004/apps/oss/spack/share/spack/setup-env.sh
@@ -47,6 +48,7 @@ Then, load ``cmake`` and ``ninja`` using ``spack``:
 At this point we need to download and compile the libraries required for OpenPMD support:
 
 .. code-block:: bash
+
    export CC=$(which mpifcc)
    export CXX=$(which mpiFCC)
    export CFLAGS="-O3 -Nclang -Nlibomp -Klib -g -DNDEBUG"

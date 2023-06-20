@@ -59,7 +59,7 @@ FieldProbe::FieldProbe (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    amrex::ParmParse pp_amr("amr");
+    const amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
@@ -79,7 +79,7 @@ FieldProbe::FieldProbe (std::string rd_name)
      *     Define resolution to determine number of particles
      *     Define whether ot not to integrate fields
      */
-    amrex::ParmParse pp_rd_name(rd_name);
+    const amrex::ParmParse pp_rd_name(rd_name);
     std::string m_probe_geometry_str = "Point";
     pp_rd_name.query("probe_geometry", m_probe_geometry_str);
 
@@ -115,8 +115,8 @@ FieldProbe::FieldProbe (std::string rd_name)
     else if (m_probe_geometry_str == "Plane")
     {
 #if defined(WARPX_DIM_1D_Z)
-        amrex::Abort(Utils::TextMsg::Err(
-            "ERROR: Plane probe should be used in a 2D or 3D simulation only"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "Plane probe should be used in a 2D or 3D simulation only");
 #endif
         m_probe_geometry = DetectorGeometry::Plane;
 #if defined(WARPX_DIM_3D)
@@ -135,10 +135,10 @@ FieldProbe::FieldProbe (std::string rd_name)
     }
     else
     {
-        amrex::Abort(Utils::TextMsg::Err(
-            "ERROR: Invalid probe geometry '" + m_probe_geometry_str
+        WARPX_ABORT_WITH_MESSAGE(
+            "Invalid probe geometry '" + m_probe_geometry_str
             + "'. Valid geometries are Point, Line or Plane."
-        ));
+        );
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
     pp_rd_name.query("raw_fields", raw_fields);
@@ -252,7 +252,7 @@ void FieldProbe::InitData ()
             zpos.reserve(m_resolution);
 
             // Final - initial / steps. Array contains dx, dy, dz
-            amrex::Real DetLineStepSize[3]{
+            const amrex::Real DetLineStepSize[3]{
                     (x1_probe - x_probe) / (m_resolution - 1),
                     (y1_probe - y_probe) / (m_resolution - 1),
                     (z1_probe - z_probe) / (m_resolution - 1)};
@@ -275,7 +275,7 @@ void FieldProbe::InitData ()
             normalize(target_up_x, target_up_y, target_up_z);
 
             // create vector orthonormal to input vectors
-            amrex::Real orthotarget[3]{
+            const amrex::Real orthotarget[3]{
                 target_normal_y * target_up_z - target_normal_z * target_up_y,
                 target_normal_z * target_up_x - target_normal_x * target_up_z,
                 target_normal_x * target_up_y - target_normal_y * target_up_x};
@@ -286,25 +286,25 @@ void FieldProbe::InitData ()
                 orthotarget[1] - target_up_y,
                 orthotarget[2] - target_up_z};
             normalize(direction[0], direction[1], direction[2]);
-            amrex::Real uppercorner[3]{
+            const amrex::Real uppercorner[3]{
                 x_probe - (direction[0] * detector_radius),
                 y_probe - (direction[1] * detector_radius),
                 z_probe - (direction[2] * detector_radius)};
-            amrex::Real lowercorner[3]{
+            const amrex::Real lowercorner[3]{
                 uppercorner[0] - (target_up_x * std::sqrt(2_rt) * detector_radius),
                 uppercorner[1] - (target_up_y * std::sqrt(2_rt) * detector_radius),
                 uppercorner[2] - (target_up_z * std::sqrt(2_rt) * detector_radius)};
-            amrex::Real loweropposite[3]{
+            const amrex::Real loweropposite[3]{
                 x_probe + (direction[0] * detector_radius),
                 y_probe + (direction[1] * detector_radius),
                 z_probe + (direction[2] * detector_radius)};
 
             // create array containing point-to-point step size
-            amrex::Real SideStepSize[3]{
+            const amrex::Real SideStepSize[3]{
                 (loweropposite[0] - lowercorner[0]) / (m_resolution - 1),
                 (loweropposite[1] - lowercorner[1]) / (m_resolution - 1),
                 (loweropposite[2] - lowercorner[2]) / (m_resolution - 1)};
-            amrex::Real UpStepSize[3]{
+            const amrex::Real UpStepSize[3]{
                 (uppercorner[0] - lowercorner[0]) / (m_resolution - 1),
                 (uppercorner[1] - lowercorner[1]) / (m_resolution - 1),
                 (uppercorner[2] - lowercorner[2]) / (m_resolution - 1)};
@@ -389,7 +389,7 @@ void FieldProbe::ComputeDiags (int step)
             step <= warpx.end_moving_window_step;
         if (update_particles_moving_window)
         {
-            int step_diff = step - m_last_compute_step;
+            const int step_diff = step - m_last_compute_step;
             move_dist = dt*warpx.moving_window_v*step_diff;
         }
 
@@ -538,7 +538,7 @@ void FieldProbe::ComputeDiags (int step)
 
                     //Calculate the Poynting Vector S
                     amrex::ParticleReal const sraw[3]{
-                        Exp * Bzp - Ezp * Byp,
+                        Eyp * Bzp - Ezp * Byp,
                         Ezp * Bxp - Exp * Bzp,
                         Exp * Byp - Eyp * Bxp
                     };
@@ -608,7 +608,7 @@ void FieldProbe::ComputeDiags (int step)
         if (m_intervals.contains(step+1))
         {
             // returns total number of mpi notes into mpisize
-            int mpisize = ParallelDescriptor::NProcs();
+            const int mpisize = ParallelDescriptor::NProcs();
 
             // allocates data space for length_array. Will contain size of m_data from each processor
             amrex::Vector<int> length_vector;
@@ -673,7 +673,7 @@ void FieldProbe::WriteToFile (int step) const
     // sorted location
     for (int i = 0; i < m_valid_particles; i++)
     {
-        int idx = m_data_out[i*noutputs] - first_id;
+        const int idx = m_data_out[i*noutputs] - first_id;
         for (int k = 0; k < noutputs; k++)
         {
             sorted_data[idx * noutputs + k] = m_data_out[i * noutputs + k];

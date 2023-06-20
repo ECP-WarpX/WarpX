@@ -200,6 +200,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_getCurrentDensityCPLoVects_PML.restype = _LP_c_int
         self.libwarpx_so.warpx_getCurrentDensityFP_PML.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getCurrentDensityFPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getCurrentDensityFP_Ampere.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getChargeDensityCP.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getChargeDensityFP.restype = _LP_LP_c_real
@@ -1710,6 +1711,37 @@ class LibWarpX():
             return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensityFP_PML, level, direction, include_ghosts)
         except ValueError:
             raise Exception('PML not initialized')
+
+    def get_mesh_current_density_fp_ampere(self, level, direction, include_ghosts=True):
+        '''
+
+        This returns a list of numpy arrays containing the mesh current density
+        data on each grid for this process calculated from the curl of B. This
+        quantity is calculated in the kinetic-fluid hybrid model to get the
+        electron current. This function returns the current density on the fine
+        patch for the given level.
+
+        The data for the numpy arrays are not copied, but share the underlying
+        memory buffer with WarpX. The numpy arrays are fully writeable.
+
+        Parameters
+        ----------
+
+            level          : the AMR level to get the data for
+            direction      : the component of the data you want
+            include_ghosts : whether to include ghost zones or not
+
+        Returns
+        -------
+
+            A List of numpy arrays.
+
+        '''
+
+        try:
+            return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensityFP_Ampere, level, direction, include_ghosts)
+        except ValueError:
+            raise Exception('Current multifab not allocated.')
 
     def get_mesh_charge_density_cp(self, level, include_ghosts=True):
         '''

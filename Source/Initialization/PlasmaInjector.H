@@ -162,8 +162,8 @@ protected:
     std::unique_ptr<TemperatureProperties> h_mom_temp;
     std::unique_ptr<VelocityProperties> h_mom_vel;
 
-    void parseDensity (amrex::ParmParse& pp);
-    void parseMomentum (amrex::ParmParse& pp);
+    void parseDensity (const amrex::ParmParse& pp);
+    void parseMomentum (const amrex::ParmParse& pp);
 };
 
 #endif

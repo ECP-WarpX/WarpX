@@ -262,14 +262,6 @@ class Species(picmistandard.PICMI_Species):
             self.species.rigid_advance = 1
             self.species.zinject_plane = injection_plane_position
 
-        for interaction in self.interactions:
-            assert interaction[0] == 'ionization'
-            assert interaction[1] == 'ADK', 'WarpX only has ADK ionization model implemented'
-            self.species.do_field_ionization=1
-            self.species.physical_element=self.particle_type
-            self.species.ionization_product_species = interaction[2].name
-            self.species.ionization_initial_level = self.charge_state
-            self.species.charge = 'q_e'
 
 picmistandard.PICMI_MultiSpecies.Species_class = Species
 class MultiSpecies(picmistandard.PICMI_MultiSpecies):
@@ -897,6 +889,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         else:
             pywarpx.amr.max_level = 0
 
+
 class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     """
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
@@ -1005,6 +998,63 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_pml_in_domain = self.do_pml_in_domain
         pywarpx.warpx.pml_has_particles = self.pml_has_particles
         pywarpx.warpx.do_pml_j_damping = self.do_pml_j_damping
+
+
+class HybridPICSolver(picmistandard.base._ClassWithInit):
+    """
+    Hybrid-PIC solver based on Ohm's law.
+    See `Theory Section <https://warpx.readthedocs.io/en/latest/theory/kinetic_fluid_hybrid_model.html>`_ for more information.
+
+    Parameters
+    ----------
+    Te: float
+        Electron temperature in eV.
+
+    n0: float
+        Reference plasma density in m^-3.
+
+    gamma: float, default=3/2
+        Exponent in calculation of electron pressure.
+
+    n_floor: float, optional
+        Minimum density used in Ohm's law calculation.
+
+    plasma_resistivity: float or str
+        Value or expression to use for the plasma resistivity.
+
+    substeps: int, default=100
+        Number of substeps to take when updating the B-field.
+    """
+    def __init__(self, grid, Te=None, n0=None, gamma=None,
+                 n_floor=None, plasma_resistivity=None, substeps=None, **kw):
+        self.grid = grid
+        self.method = "hybrid"
+
+        self.Te = Te
+        self.n0 = n0
+        self.gamma = gamma
+        self.n_floor = n_floor
+        self.plasma_resistivity = plasma_resistivity
+
+        self.substeps = substeps
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+
+        self.grid.initialize_inputs()
+
+        pywarpx.algo.maxwell_solver = self.method
+
+        pywarpx.hybridpicmodel.elec_temp = self.Te
+        pywarpx.hybridpicmodel.n0_ref = self.n0
+        pywarpx.hybridpicmodel.gamma = self.gamma
+        pywarpx.hybridpicmodel.n_floor = self.n_floor
+        pywarpx.hybridpicmodel.__setattr__(
+            'plasma_resistivity(rho)', self.plasma_resistivity
+        )
+        pywarpx.hybridpicmodel.substeps = self.substeps
+
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     """
@@ -1125,6 +1175,15 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
             ) / constants.c
 
 
+class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
+    def initialize_inputs(self):
+        pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
+        if self.load_E:
+            pywarpx.warpx.E_ext_grid_init_style = 'read_from_file'
+        if self.load_B:
+            pywarpx.warpx.B_ext_grid_init_style = 'read_from_file'
+
+
 class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
     def init(self, kw):
         self.mangle_dict = None
@@ -1216,6 +1275,19 @@ class Mirror(picmistandard.PICMI_Mirror):
         pywarpx.warpx.mirror_z_npoints.append(self.number_of_cells)
 
 
+class FieldIonization(picmistandard.PICMI_FieldIonization):
+    """
+    WarpX only has ADK ionization model implemented.
+    """
+    def initialize_inputs(self):
+        assert self.model == 'ADK', 'WarpX only has ADK ionization model implemented'
+        self.ionized_species.species.do_field_ionization = 1
+        self.ionized_species.species.physical_element = self.ionized_species.particle_type
+        self.ionized_species.species.ionization_product_species = self.product_species.name
+        self.ionized_species.species.ionization_initial_level = self.ionized_species.charge_state
+        self.ionized_species.species.charge = 'q_e'
+
+
 class CoulombCollisions(picmistandard.base._ClassWithInit):
     """
     Custom class to handle setup of binary Coulmb collisions in WarpX. If
@@ -1267,11 +1339,11 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
     species: species instance
         The species involved in the collision
 
-    background_density: float
-        The density of the background
+    background_density: float or string
+        The density of the background. An string expression as a function of (x, y, z, t) can be used.
 
-    background_temperature: float
-        The temperature of the background
+    background_temperature: float or string
+        The temperature of the background. An string expression as a function of (x, y, z, t) can be used.
 
     scattering_processes: dictionary
         The scattering process to use and any needed information
@@ -1280,19 +1352,24 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         The mass of the background particle. If not supplied, the default depends
         on the type of scattering process.
 
+    max_background_density: float
+        The maximum background density. When the background_density is an expression, this must also
+        be specified.
+
     ndt: integer, optional
         The collisions will be applied every "ndt" steps. Must be 1 or larger.
     """
 
     def __init__(self, name, species, background_density,
                  background_temperature, scattering_processes,
-                 background_mass=None, ndt=None, **kw):
+                 background_mass=None, max_background_density=None, ndt=None, **kw):
         self.name = name
         self.species = species
         self.background_density = background_density
         self.background_temperature = background_temperature
         self.background_mass = background_mass
         self.scattering_processes = scattering_processes
+        self.max_background_density = max_background_density
         self.ndt = ndt
 
         self.handle_init(kw)
@@ -1301,9 +1378,16 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
         collision = pywarpx.Collisions.newcollision(self.name)
         collision.type = 'background_mcc'
         collision.species = self.species.name
-        collision.background_density = self.background_density
-        collision.background_temperature = self.background_temperature
+        if isinstance(self.background_density, str):
+            collision.__setattr__('background_density(x,y,z,t)', self.background_density)
+        else:
+            collision.background_density = self.background_density
+        if isinstance(self.background_temperature, str):
+            collision.__setattr__('background_temperature(x,y,z,t)', self.background_temperature)
+        else:
+            collision.background_temperature = self.background_temperature
         collision.background_mass = self.background_mass
+        collision.max_background_density = self.max_background_density
         collision.ndt = self.ndt
 
         collision.scattering_processes = self.scattering_processes.keys()
@@ -1718,6 +1802,10 @@ class Simulation(picmistandard.PICMI_Simulation):
                                               self.initialize_self_fields[i],
                                               self.injection_plane_positions[i],
                                               self.injection_plane_normal_vectors[i])
+
+        for interaction in self.interactions:
+            assert(isinstance(interaction, FieldIonization))
+            interaction.initialize_inputs()
 
         if self.collisions is not None:
             pywarpx.collisions.collision_names = []

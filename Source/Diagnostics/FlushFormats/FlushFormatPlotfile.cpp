@@ -84,7 +84,7 @@ FlushFormatPlotfile::WriteToFile (
     }
 
     Vector<std::string> rfs;
-    VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
+    const VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
     if (plot_raw_fields) rfs.emplace_back("raw_fields");
     amrex::WriteMultiLevelPlotfile(filename, nlev,
@@ -120,7 +120,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
         std::ofstream jobInfoFile;
         std::string FullPathJobInfoFile = dir;
 
-        std::string PrettyLine = std::string(78, '=') + "\n";
+        const std::string PrettyLine = std::string(78, '=') + "\n";
 //        std::string OtherLine = std::string(78, '-') + "\n";
 //        std::string SkipSpace = std::string(8, ' ') + "\n";
 
@@ -241,7 +241,7 @@ FlushFormatPlotfile::WriteWarpXHeader(
         VisMF::IO_Buffer io_buffer(VisMF::IO_Buffer_Size);
         std::ofstream HeaderFile;
         HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
-        std::string HeaderFileName(name + "/WarpXHeader");
+        const std::string HeaderFileName(name + "/WarpXHeader");
         HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
                                                 std::ofstream::trunc |
                                                 std::ofstream::binary);
@@ -339,11 +339,9 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (auto& part_diag : particle_diags) {
         WarpXParticleContainer* pc = part_diag.getParticleContainer();
-        auto tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-        if (isBTD) {
-            PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
-            tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
-        }
+        auto tmp = isBTD ?
+            part_diag.getPinnedParticleContainer()->make_alike<amrex::PinnedArenaAllocator>() :
+            pc->make_alike<amrex::PinnedArenaAllocator>();
 
         Vector<std::string> real_names;
         Vector<std::string> int_names;
@@ -426,7 +424,7 @@ WriteRawMF ( const MultiFab& F, const DistributionMapping& dm,
              const std::string& field_name,
              const int lev, const bool plot_guards )
 {
-    std::string prefix = amrex::MultiFabFileFullPrefix(lev,
+    const std::string prefix = amrex::MultiFabFileFullPrefix(lev,
                             filename, level_prefix, field_name);
     if (plot_guards) {
         // Dump original MultiFab F
@@ -452,7 +450,7 @@ WriteZeroRawMF( const MultiFab& F, const DistributionMapping& dm,
                 const std::string& field_name,
                 const int lev, const IntVect ng )
 {
-    std::string prefix = amrex::MultiFabFileFullPrefix(lev,
+    const std::string prefix = amrex::MultiFabFileFullPrefix(lev,
                             filename, level_prefix, field_name);
 
     MultiFab tmpF(F.boxArray(), dm, F.nComp(), ng);
@@ -489,7 +487,7 @@ WriteCoarseVector( const std::string field_name,
         WriteZeroRawMF( *Fz_fp, dm, filename, level_prefix, field_name+"z_cp", lev, ng );
     } else {
         // Interpolate coarse data onto fine grid
-        amrex::IntVect r_ratio = WarpX::GetInstance().refRatio(lev-1);
+        const amrex::IntVect r_ratio = WarpX::GetInstance().refRatio(lev-1);
         const Real* dx = WarpX::GetInstance().Geom(lev-1).CellSize();
         auto F = Interpolate::getInterpolatedVector( Fx_cp, Fy_cp, Fz_cp, Fx_fp, Fy_fp, Fz_fp,
                                     dm, r_ratio, dx, ng );
@@ -524,7 +522,7 @@ WriteCoarseScalar( const std::string field_name,
         WriteZeroRawMF( *F_fp, dm, filename, level_prefix, field_name+"_cp", lev, ng );
     } else {
         // Create an alias to the component `icomp` of F_cp
-        MultiFab F_comp(*F_cp, amrex::make_alias, icomp, 1);
+        const MultiFab F_comp(*F_cp, amrex::make_alias, icomp, 1);
         // Interpolate coarse data onto fine grid
         const amrex::IntVect r_ratio = WarpX::GetInstance().refRatio(lev-1);
         const Real* dx = WarpX::GetInstance().Geom(lev-1).CellSize();
@@ -574,7 +572,7 @@ FlushFormatPlotfile::WriteAllRawFields(
         {
             // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
             // If nComp > 1, this is the upper half of the list of components.
-            MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, warpx.getrho_fp(lev).nComp()/2, warpx.getrho_fp(lev).nComp()/2);
+            const MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, warpx.getrho_fp(lev).nComp()/2, warpx.getrho_fp(lev).nComp()/2);
             WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
         if (warpx.get_pointer_phi_fp(lev) != nullptr) {

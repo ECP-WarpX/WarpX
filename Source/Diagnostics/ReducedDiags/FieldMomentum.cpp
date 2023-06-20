@@ -43,13 +43,13 @@ FieldMomentum::FieldMomentum (std::string rd_name)
 {
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
-        amrex::Abort(Utils::TextMsg::Err(
-            "FieldMomentum reduced diagnostics not implemented in RZ geometry"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "FieldMomentum reduced diagnostics not implemented in RZ geometry");
 #endif
 
     // Read number of levels
     int nLevel = 0;
-    amrex::ParmParse pp_amr("amr");
+    const amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 

@@ -74,8 +74,8 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
 #ifdef AMREX_USE_EB
 
 #if !(defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
-    amrex::Abort(Utils::TextMsg::Err(
-        "EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ");
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
@@ -131,7 +131,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
                 Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
                     Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
 #else
-                amrex::Abort("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ");
+                WARPX_ABORT_WITH_MESSAGE("EvolveRhoCartesianECT: Embedded Boundaries are only implemented in 3D and XZ");
 #endif
             },
 
