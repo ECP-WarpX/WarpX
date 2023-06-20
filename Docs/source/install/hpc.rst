@@ -46,8 +46,8 @@ This section documents quick-start guides for a selection of supercomputers that
    hpc/ookami
    hpc/perlmutter
    hpc/quartz
-   hpc/summit
    hpc/spock
+   hpc/summit
    hpc/taurus
 
 .. tip::
