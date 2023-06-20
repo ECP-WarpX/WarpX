@@ -370,6 +370,7 @@ public:
      * \param[in] dm The DistributionMapping describing the MultiFab
      * \param[in] ncomp The number of components in the MultiFab
      * \param[in] ngrow The number of guard cells in the MultiFab
+     * \param[in] level The refinement level
      * \param[in] name The name of the MultiFab to use in the map
      * \param[in] initial_value The optional initial value
      */
@@ -379,6 +380,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
+        const int level,
         const std::string& name,
         std::optional<const amrex::Real> initial_value = {});
 
@@ -393,6 +395,7 @@ public:
      * \param[in] dm The DistributionMapping describing the iMultiFab
      * \param[in] ncomp The number of components in the iMultiFab
      * \param[in] ngrow The number of guard cells in the iMultiFab
+     * \param[in] level The refinement level
      * \param[in] name The name of the iMultiFab to use in the map
      * \param[in] initial_value The optional initial value
      */
@@ -402,6 +405,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
+        const int level,
         const std::string& name,
         std::optional<const int> initial_value = {});
 
@@ -412,6 +416,7 @@ public:
      * \param[in] mf_to_alias The MultiFab to alias
      * \param[in] scomp The starting component to be aliased
      * \param[in] ncomp The number of components to alias
+     * \param[in] level The refinement level
      * \param[in] name The name of the MultiFab to use in the map
      * \param[in] initial_value optional initial value for MultiFab
      */
@@ -420,6 +425,7 @@ public:
         const amrex::MultiFab& mf_to_alias,
         const int scomp,
         const int ncomp,
+        const int level,
         const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
