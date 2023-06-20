@@ -1,6 +1,7 @@
 #include "WarpX.H"
 #include "BoundaryConditions/PML.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Evolve/WarpXDtType.H"
 #include "WarpX_PEC.H"
 
@@ -88,4 +89,18 @@ void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
                                  PatchType patch_type)
 {
     if (PEC::isAnyBoundaryPEC()) PEC::ApplyPECtoJfield(Jx, Jy, Jz, lev, patch_type);
+}
+
+void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type)
+{
+    if (PEC::isAnyBoundaryPEC()) {
+        if (patch_type == PatchType::fine) {
+            PEC::ApplyPECtoElectronPressure(
+                m_hybrid_pic_model->get_pointer_electron_pressure_fp(lev), lev, patch_type
+            );
+        } else {
+            amrex::Abort(Utils::TextMsg::Err(
+            "ApplyElectronPressureBoundary: Only one level implemented for hybrid solver."));
+        }
+    }
 }

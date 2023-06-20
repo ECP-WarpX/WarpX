@@ -14,6 +14,8 @@
 #include "WarpXProfilerWrapper.H"
 #include "WarpXUtil.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -73,8 +75,8 @@ void ParseGeometryInput()
     AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
 
 #ifdef WARPX_DIM_RZ
-    ParmParse pp_algo("algo");
-    int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    const ParmParse pp_algo("algo");
+    const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
     if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(prob_lo[0] == 0.,
@@ -110,7 +112,7 @@ void ParseGeometryInput()
 void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
                                 Vector<int>& boost_direction)
 {
-    ParmParse pp_warpx("warpx");
+    const ParmParse pp_warpx("warpx");
     utils::parser::queryWithParser(pp_warpx, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
         beta_boost = std::sqrt(1._rt-1._rt/std::pow(gamma_boost,2._rt));
@@ -155,8 +157,8 @@ void ConvertLabParamsToBoost()
 
     ParmParse pp_geometry("geometry");
     ParmParse pp_warpx("warpx");
-    ParmParse pp_amr("amr");
     ParmParse pp_slice("slice");
+    const ParmParse pp_amr("amr");
 
     utils::parser::getArrWithParser(
         pp_geometry, "prob_lo", prob_lo, 0, AMREX_SPACEDIM);
@@ -232,7 +234,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
         // Get box lower and upper physical z bound, and dz
         const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev, 0._rt)[2];
         const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev, 0._rt)[2];
-        amrex::Real dz  = WarpX::CellSize(lev)[2];
+        const amrex::Real dz  = WarpX::CellSize(lev)[2];
         // Get box lower index in the z direction
 #if defined(WARPX_DIM_3D)
         const int lo_ind = bx.loVect()[2];
@@ -243,7 +245,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
 #endif
         // Check if box intersect with [zmin, zmax]
         if ( (zmax>zmin_box && zmin<=zmax_box) ){
-            Array4<Real> arr = mf[mfi].array();
+            const Array4<Real> arr = mf[mfi].array();
             // Set field to 0 between zmin and zmax
             ParallelFor(bx, ncomp,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept{
@@ -285,7 +287,7 @@ void CheckDims ()
 #elif defined(WARPX_DIM_RZ)
     std::string const dims_compiled = "RZ";
 #endif
-    ParmParse pp_geometry("geometry");
+    const ParmParse pp_geometry("geometry");
     std::string dims;
     pp_geometry.get("dims", dims);
     std::string dims_error = "The selected WarpX executable was built as '";
@@ -301,8 +303,8 @@ void CheckGriddingForRZSpectral ()
     // Ensure that geometry.dims is set properly.
     CheckDims();
 
-    ParmParse pp_algo("algo");
-    int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    const ParmParse pp_algo("algo");
+    const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
 
     // only check for PSATD in RZ
     if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
@@ -345,7 +347,7 @@ void CheckGriddingForRZSpectral ()
     // more blocks than processors.
     // The factor of 8 is there to make some room for higher order
     // shape factors and filtering.
-    int nprocs = ParallelDescriptor::NProcs();
+    const int nprocs = ParallelDescriptor::NProcs();
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] >= 8*nprocs,
                                      "With RZ spectral, there must be at least eight z-cells per processor so that there can be at least one block per processor.");
 
@@ -391,21 +393,23 @@ void ReadBCParams ()
     amrex::Vector<std::string> particle_BC_hi(AMREX_SPACEDIM,"default");
     amrex::Vector<int> geom_periodicity(AMREX_SPACEDIM,0);
     ParmParse pp_geometry("geometry");
-    ParmParse pp_warpx("warpx");
-    ParmParse pp_algo("algo");
-    int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+    const ParmParse pp_warpx("warpx");
+    const ParmParse pp_algo("algo");
+    const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !pp_geometry.queryarr("is_periodic", geom_periodicity),
-        "geometry.is_periodic is not supported. Please use `boundary.field_lo`,"
-        " `boundary.field_hi` to specifiy field boundary conditions and"
-        " 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle"
-        " boundary conditions."
-    );
+    if (pp_geometry.queryarr("is_periodic", geom_periodicity))
+    {
+        std::string const warnMsg =
+            "geometry.is_periodic is only used internally. Please use `boundary.field_lo`,"
+            " `boundary.field_hi` to specifiy field boundary conditions and"
+            " 'boundary.particle_lo', 'boundary.particle_hi'  to specify particle"
+            " boundary conditions.";
+        ablastr::warn_manager::WMRecordWarning("Input", warnMsg);
+    }
 
     // particle boundary may not be explicitly specified for some applications
     bool particle_boundary_specified = false;
-    ParmParse pp_boundary("boundary");
+    const ParmParse pp_boundary("boundary");
     pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
     pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
     if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM))
@@ -470,7 +474,7 @@ namespace WarpXUtilLoadBalance
     bool doCosts (const amrex::LayoutData<amrex::Real>* costs, const amrex::BoxArray ba,
                   const amrex::DistributionMapping& dm)
     {
-        bool consistent = costs && (dm == costs->DistributionMap()) &&
+        const bool consistent = costs && (dm == costs->DistributionMap()) &&
             (ba.CellEqual(costs->boxArray())) &&
             (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers);
         return consistent;

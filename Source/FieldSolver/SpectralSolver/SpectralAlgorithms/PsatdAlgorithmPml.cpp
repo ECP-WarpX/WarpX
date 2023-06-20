@@ -90,12 +90,12 @@ void PsatdAlgorithmPml::pushSpectralFields(SpectralFieldData& f) const
         const amrex::Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = f.fields[mfi].array();
+        const amrex::Array4<Complex> fields = f.fields[mfi].array();
 
         // Extract arrays for the coefficients
-        amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
-        amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
-        amrex::Array4<const amrex::Real> inv_k2_arr = inv_k2_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> inv_k2_arr = inv_k2_coef[mfi].array();
 
         amrex::Array4<const Complex> T2_arr;
         if (is_galilean)
@@ -400,9 +400,9 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
         const amrex::Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
 
         // Extract arrays for the coefficients
-        amrex::Array4<amrex::Real> C = C_coef[mfi].array();
-        amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
-        amrex::Array4<amrex::Real> inv_k2 = inv_k2_coef[mfi].array();
+        const amrex::Array4<amrex::Real> C = C_coef[mfi].array();
+        const amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
+        const amrex::Array4<amrex::Real> inv_k2 = inv_k2_coef[mfi].array();
 
         amrex::Array4<Complex> T2;
         if (is_galilean)

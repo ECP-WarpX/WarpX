@@ -1,0 +1,54 @@
+name: 🧹 clang-tidy
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.head_ref }}-clangtidy
+  cancel-in-progress: true
+
+jobs:
+  run_clang_tidy:
+    name: clang-tidy
+    runs-on: ubuntu-22.04
+    if: github.event.pull_request.draft == false
+    steps:
+    - uses: actions/checkout@v3
+    - name: install dependencies
+      run: |
+        .github/workflows/dependencies/clang14.sh
+    - name: build WarpX using clang-tidy
+      run: |
+
+
+        export CXX=$(which clang++)
+        export CC=$(which clang)
+
+        # The following wrapper ensures that only source files
+        # in WarpX/Source/* are actually processed by clang-tidy
+        #_______________________________
+        cat > clang_tidy_wrapper << EOF
+        #!/bin/bash
+        REGEX="[a-z_A-Z0-9\/]*WarpX\/Source[a-z_A-Z0-9\/]+.cpp"
+        if [[ \$4 =~ \$REGEX ]];then
+          clang-tidy \$@
+        fi
+        EOF
+        chmod +x clang_tidy_wrapper
+        #_____________________________________
+
+        cmake -S . -B build_clang_tidy \
+          -DCMAKE_CXX_CLANG_TIDY="$PWD/clang_tidy_wrapper;--system-headers=0;--config-file=$PWD/.clang-tidy" \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_DIMS="1;2;3;RZ"      \
+          -DWarpX_MPI=ON               \
+          -DWarpX_COMPUTE=OMP          \
+          -DWarpX_PSATD=ON             \
+          -DWarpX_QED=ON               \
+          -DWarpX_QED_TABLE_GEN=ON     \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_PRECISION=SINGLE
+
+        cmake --build build_clang_tidy -j 2 2> build_clang_tidy/clang-tidy.log
+
+        cat build_clang_tidy/clang-tidy.log
+        if [[ $(wc -m <build_clang_tidy/clang-tidy.log) -gt 1 ]]; then exit 1; fi

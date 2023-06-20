@@ -96,7 +96,7 @@ amrex::Parser utils::parser::makeParser (
     // system of units or some form of quasi-physical behavior in the
     // simulation. Thus, this needs to override any built-in
     // constants.
-    amrex::ParmParse pp_my_constants("my_constants");
+    const amrex::ParmParse pp_my_constants("my_constants");
 
     // Physical / Numerical Constants available to parsed expressions
     static std::map<std::string, amrex::Real> warpx_constants =

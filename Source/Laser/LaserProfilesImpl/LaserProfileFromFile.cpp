@@ -40,7 +40,6 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <vector>
 #include <iostream>
 #include <memory>
 
@@ -66,8 +65,8 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     // Parse the lasy or binary file
     ppl.query("lasy_file_name", m_params.lasy_file_name);
     ppl.query("binary_file_name", m_params.binary_file_name);
-    std::string lasy_file_name = m_params.lasy_file_name;
-    std::string binary_file_name = m_params.binary_file_name;
+    const std::string lasy_file_name = m_params.lasy_file_name;
+    const std::string binary_file_name = m_params.binary_file_name;
     m_params.file_in_lasy_format = false;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE (
         lasy_file_name.empty() != binary_file_name.empty(),
@@ -102,14 +101,6 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
     //Reads the (optional) delay
     utils::parser::queryWithParser(ppl, "delay", m_params.t_delay);
 
-    //Allocate memory for E_lasy_data or E_binary_data Vector
-    const int data_size = m_params.time_chunk_size*
-            m_params.nx*m_params.ny;
-    if (m_params.file_in_lasy_format){
-        m_params.E_lasy_data.resize(data_size);
-    } else{
-        m_params.E_binary_data.resize(data_size);
-    }
     //Read first time chunk
     if (m_params.file_in_lasy_format){
         read_data_t_chunk(0, m_params.time_chunk_size);
@@ -123,7 +114,6 @@ WarpXLaserProfiles::FromFileLaserProfile::init (
 void
 WarpXLaserProfiles::FromFileLaserProfile::update (amrex::Real t)
 {
-
     t += m_params.t_min - m_params.t_delay;
     if(t >= m_params.t_max)
         return;
@@ -161,7 +151,11 @@ WarpXLaserProfiles::FromFileLaserProfile::fill_amplitude (
         "Something bad has happened with the simulation time");
     }
     if (m_params.file_in_lasy_format){
-        internal_fill_amplitude_uniform(idx_t_left, np, Xp, Yp, t, amplitude);
+        if (m_params.fileGeom=="cartesian"){
+            internal_fill_amplitude_uniform_cartesian(idx_t_left, np, Xp, Yp, t, amplitude);
+        } else {
+            internal_fill_amplitude_uniform_cylindrical(idx_t_left, np, Xp, Yp, t, amplitude);
+        }
     } else{
         internal_fill_amplitude_uniform_binary(idx_t_left, np, Xp, Yp, t, amplitude);
     }
@@ -178,32 +172,46 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(E.getAttribute("dataOrder").get<std::string>() == "C",
                                          "Reading from files with non-C dataOrder is not implemented");
-        auto axisLabels = E.getAttribute("axisLabels").get<std::vector<std::string>>();
-        auto fileGeom = E.getAttribute("geometry").get<std::string>();
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "WarpX can only read laser files with cartesian 3D geometry.");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "t" && axisLabels[1] == "y" && axisLabels[2] == "x",
-                                         "WarpX expects laser files with axisLabels {t, y, x}.");
 
+        m_params.fileGeom = E.getAttribute("geometry").get<std::string>();
         auto E_laser = E[io::RecordComponent::SCALAR];
         auto extent = E_laser.getExtent();
-        //Dimensions of lasy file datas: {t,y,x}
-        m_params.nt = extent[0];
-        m_params.ny = extent[1];
-        m_params.nx = extent[2];
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nt > 1, "nt in lasy file must be >=2");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nx > 1, "nx in lasy file must be >=2");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.ny > 1, "ny in lasy file must be >=2 in 3D");
         // Extract grid offset and grid spacing
         std::vector<double> offset = E.gridGlobalOffset();
         std::vector<double> position = E_laser.position<double>();
         std::vector<double> spacing = E.gridSpacing<double>();
-        // Calculate the min and max of the grid
-        m_params.t_min = offset[0] + position[0]*spacing[0];
-        m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
-        m_params.y_min = offset[1] + position[1]*spacing[1];
-        m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[1];
-        m_params.x_min = offset[2] + position[2]*spacing[2];
-        m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
+        if (m_params.fileGeom=="thetaMode") {
+            //Dimensions of lasy file data: {m,t,r}
+            amrex::Print() << Utils::TextMsg::Info( "Found lasy file in RZ geometry" );
+            m_params.n_rz_azimuthal_components = extent[0];
+            m_params.nt = extent[1];
+            m_params.nr = extent[2];
+            if(m_params.nt <= 1) WARPX_ABORT_WITH_MESSAGE("nt in lasy file must be >=2");
+            if(m_params.nr <= 1) WARPX_ABORT_WITH_MESSAGE("nr in lasy file must be >=2");
+            // Calculate the min and max of the grid
+            m_params.t_min = offset[0] + position[0]*spacing[0];
+            m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
+            m_params.r_min = offset[1] + position[1]*spacing[1];
+            m_params.r_max = m_params.r_min + (m_params.nr-1)*spacing[1];
+        } else if (m_params.fileGeom=="cartesian"){
+            //Dimensions of lasy file data: {t,y,x}
+            amrex::Print() << Utils::TextMsg::Info( "Found lasy file in 3D cartesian geometry");
+            m_params.nt = extent[0];
+            m_params.ny = extent[1];
+            m_params.nx = extent[2];
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nt > 1, "nt in lasy file must be >=2");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nx > 1, "nx in lasy file must be >=2");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.ny > 1, "ny in lasy file must be >=2 in 3D");
+            // Calculate the min and max of the grid
+            m_params.t_min = offset[0] + position[0]*spacing[0];
+            m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
+            m_params.y_min = offset[1] + position[1]*spacing[1];
+            m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[1];
+            m_params.x_min = offset[2] + position[2]*spacing[2];
+            m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
+        } else{
+            WARPX_ABORT_WITH_MESSAGE("The lasy file's geometry has to be in either RZ or 3D cartesian coordinates");
+        }
     }
 #else
     amrex::ignore_unused(lasy_file_name);
@@ -211,7 +219,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
 }
 
 void
-WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file(std::string binary_file_name)
+WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file (std::string binary_file_name)
 {
     if(ParallelDescriptor::IOProcessor()){
         std::ifstream inp(binary_file_name, std::ios::binary);
@@ -221,6 +229,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file(std::string binary_f
         char flag;
         inp.read(&flag, 1);
         if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read grid type from binary file");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flag, "Binary files with non uniform grid are no longer supported");
         //Grid points along t, x and y
         inp.read(reinterpret_cast<char*>(&m_params.nt), sizeof(uint32_t));
         inp.read(reinterpret_cast<char*>(&m_params.nx), sizeof(uint32_t));
@@ -259,6 +268,17 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file(std::string binary_f
         m_params.y_max = static_cast<amrex::Real>(dbuf_y[1]);
 #endif
     }
+
+    //Broadcast parameters
+    ParallelDescriptor::Bcast(&m_params.nt, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.nx, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.ny, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.t_min, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.t_max, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.x_min, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.x_max, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.y_min, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.y_max, 1, ParallelDescriptor::IOProcessorNumber());
 }
 
 std::pair<int,int>
@@ -272,7 +292,7 @@ WarpXLaserProfiles::FromFileLaserProfile::find_left_right_time_indices(amrex::Re
 }
 
 void
-WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_end)
+WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_end)
 {
 #ifdef WARPX_USE_OPENPMD
     //Indices of the first and last timestep to read
@@ -281,8 +301,13 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
     amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(i_first) + ", " + std::to_string(i_last) +
             "] data chunk from " + m_params.lasy_file_name);
-    if((i_last-i_first+1)*m_params.nx*m_params.ny > static_cast<std::uint64_t>(m_params.E_lasy_data.size()))
-        WARPX_ABORT_WITH_MESSAGE("Data chunk to read from file is too large");
+    int data_size;
+    if (m_params.fileGeom=="thetaMode") {
+        data_size = m_params.n_rz_azimuthal_components*(i_last-i_first+1)*m_params.nr;
+    } else {
+        data_size = (i_last-i_first+1)*m_params.nx*m_params.ny;
+    }
+    m_params.E_lasy_data.resize(data_size);
     Vector<Complex> h_E_lasy_data(m_params.E_lasy_data.size());
     if(ParallelDescriptor::IOProcessor()){
         auto series = io::Series(m_params.lasy_file_name, io::Access::READ_ONLY);
@@ -290,12 +315,28 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
         auto E = i.meshes["laserEnvelope"];
         auto E_laser = E[io::RecordComponent::SCALAR];
         openPMD:: Extent full_extent = E_laser.getExtent();
-        openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
-        auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{i_first, 0, 0}, read_extent);
-        const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
-        series.flush();
-        for (int j=0; j<read_size; j++) {
-            h_E_lasy_data[j] = Complex{ x_data.get()[j].real(), x_data.get()[j].imag() };
+        if (m_params.fileGeom=="thetaMode") {
+            const openPMD::Extent read_extent = { full_extent[0], (i_last - i_first + 1), full_extent[2]};
+            auto r_data = E_laser.loadChunk< std::complex<double> >(io::Offset{ 0, i_first,  0}, read_extent);
+            const int read_size = (i_last - i_first + 1)*m_params.nr;
+            series.flush();
+            for (int m=0; m<m_params.n_rz_azimuthal_components; m++){
+                for (int j=0; j<read_size; j++) {
+                    h_E_lasy_data[j+m*read_size] = Complex{
+                        static_cast<amrex::Real>(r_data.get()[j+m*read_size].real()),
+                        static_cast<amrex::Real>(r_data.get()[j+m*read_size].imag())};
+                }
+            }
+        } else{
+            const openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
+            auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{i_first, 0, 0}, read_extent);
+            const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
+            series.flush();
+            for (int j=0; j<read_size; j++) {
+                h_E_lasy_data[j] = Complex{
+                    static_cast<amrex::Real>(x_data.get()[j].real()),
+                    static_cast<amrex::Real>(x_data.get()[j].imag())};
+            }
         }
     }
     //Broadcast E_lasy_data
@@ -312,7 +353,7 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk(int t_begin, int t_e
 }
 
 void
-WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk(int t_begin, int t_end)
+WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk (int t_begin, int t_end)
 {
     amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(t_begin) + ", " + std::to_string(t_end) +
@@ -321,8 +362,8 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk(int t_begin, 
     //Indices of the first and last timestep to read
     auto i_first = max(0, t_begin);
     auto i_last = min(t_end-1, m_params.nt-1);
-    if(i_last-i_first+1 > static_cast<int>(m_params.E_binary_data.size()))
-        WARPX_ABORT_WITH_MESSAGE("Data chunk to read from file is too large");
+    const int data_size = (i_last-i_first+1)*m_params.nx*m_params.ny;
+    m_params.E_binary_data.resize(data_size);
     Vector<Real> h_E_binary_data(m_params.E_binary_data.size());
     if(ParallelDescriptor::IOProcessor()){
         //Read data chunk
@@ -368,7 +409,7 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk(int t_begin, 
 }
 
 void
-WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
+WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cartesian (
     const int idx_t_left,
     const int np,
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
@@ -426,14 +467,13 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
             idx_y_left*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
         const auto y_1 =
             idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
-
         //Interpolate amplitude
         const auto idx = [=](int i_interp, int j_interp, int k_interp){
             return
                 (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
                 j_interp*tmp_nx + k_interp;
         };
-        Complex val = utils::algorithms::trilinear_interp(
+        const Complex val = utils::algorithms::trilinear_interp(
             t_left, t_right,
             x_0, x_1,
             y_0, y_1,
@@ -454,7 +494,106 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform(
 }
 
 void
-WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_binary(
+WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylindrical (
+    const int idx_t_left,
+    const int np,
+    Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
+    Real t, Real * AMREX_RESTRICT const amplitude) const
+{
+    // Copy member variables to tmp copies
+    // and get pointers to underlying data for GPU.
+    const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
+    const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
+    const auto tmp_r_min = m_params.r_min;
+    const auto tmp_r_max = m_params.r_max;
+    const auto tmp_nr = m_params.nr;
+    const auto tmp_n_rz_azimuthal_components = m_params.n_rz_azimuthal_components;
+    const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
+    const auto tmp_idx_first_time = m_params.first_time_index;
+    const int idx_t_right = idx_t_left+1;
+    const auto t_left = idx_t_left*
+        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+        m_params.t_min;
+    const auto t_right = idx_t_right*
+        (m_params.t_max-m_params.t_min)/(m_params.nt-1) +
+        m_params.t_min;
+    const auto current_time_chunk_size = m_params.last_time_index - m_params.first_time_index +1;
+
+    // Loop through the macroparticle to calculate the proper amplitude
+    amrex::ParallelFor(
+    np,
+    [=] AMREX_GPU_DEVICE (int i) {
+        auto Rp_i = std::sqrt(Xp[i] * Xp[i] + Yp[i] * Yp[i]);
+        //Amplitude is zero if we are out of bounds
+        if (Rp_i <= tmp_r_min || Rp_i >= tmp_r_max){
+            amplitude[i] = 0.0_rt;
+            return;
+        }
+        //Find indices and coordinates along x
+        const int temp_idx_r_right = static_cast<int>(
+            std::ceil((tmp_nr-1)*(Rp_i- tmp_r_min)/(tmp_r_max-tmp_r_min)));
+        const int idx_r_right =
+            max(min(temp_idx_r_right,tmp_nr-1),static_cast<int>(1));
+        const int idx_r_left = idx_r_right - 1;
+        const auto r_0 =
+            idx_r_left*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
+        const auto r_1 =
+            idx_r_right*(tmp_r_max-tmp_r_min)/(tmp_nr-1) + tmp_r_min;
+
+        const auto idx = [=](int im, int i_interp, int j_interp){
+            return
+                    im*current_time_chunk_size*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
+                    j_interp;
+        };
+        amrex::Real costheta;
+        amrex::Real sintheta;
+        if (Rp_i > 0.) {
+            costheta = Xp[i]/Rp_i;
+            sintheta = Yp[i]/Rp_i;
+        } else {
+            costheta = 1._rt;
+            sintheta = 0._rt;
+        }
+        Complex val = 0;
+        Complex fact = Complex{costheta, sintheta};
+
+        // azimuthal mode 0
+        val += utils::algorithms::bilinear_interp(
+            t_left, t_right,
+            r_0, r_1,
+            p_E_lasy_data[idx(0, idx_t_left, idx_r_left)],
+            p_E_lasy_data[idx(0, idx_t_left, idx_r_right)],
+            p_E_lasy_data[idx(0, idx_t_right, idx_r_left)],
+            p_E_lasy_data[idx(0, idx_t_right, idx_r_right)],
+            t, Rp_i);
+
+        // higher modes
+        for (int m=1 ; m <= tmp_n_rz_azimuthal_components/2; m++) {
+            val += utils::algorithms::bilinear_interp(
+                t_left, t_right,
+                r_0, r_1,
+                p_E_lasy_data[idx(2*m-1, idx_t_left, idx_r_left)],
+                p_E_lasy_data[idx(2*m-1, idx_t_left, idx_r_right)],
+                p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_left)],
+                p_E_lasy_data[idx(2*m-1, idx_t_right, idx_r_right)],
+                t, Rp_i)*(fact.real()) +
+                utils::algorithms::bilinear_interp(
+                t_left, t_right,
+                r_0, r_1,
+                p_E_lasy_data[idx(2*m, idx_t_left, idx_r_left)],
+                p_E_lasy_data[idx(2*m, idx_t_left, idx_r_right)],
+                p_E_lasy_data[idx(2*m, idx_t_right, idx_r_left)],
+                p_E_lasy_data[idx(2*m, idx_t_right, idx_r_right)],
+                t, Rp_i)*(fact.imag()) ;
+            fact = fact*Complex{costheta, sintheta};
+        }
+        amplitude[i] = (val*exp_omega_t).real();
+        }
+    );
+}
+
+void
+WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_binary (
     const int idx_t_left,
     const int np,
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,

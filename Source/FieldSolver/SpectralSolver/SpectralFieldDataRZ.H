@@ -11,6 +11,7 @@
 #include "SpectralFieldData.H"
 #include "SpectralHankelTransform/SpectralHankelTransformer.H"
 #include "SpectralKSpaceRZ.H"
+#include "FieldSolver/SpectralSolver/AnyFFT.H"
 
 #include <AMReX_MultiFab.H>
 
@@ -25,13 +26,8 @@ class SpectralFieldDataRZ
         // Define the FFTplans type, which holds one fft plan per box
         // (plans are only initialized for the boxes that are owned by
         // the local MPI rank)
-#if defined(AMREX_USE_CUDA)
-        using FFTplans = amrex::LayoutData<cufftHandle>;
-#elif defined(AMREX_USE_HIP)
-        using FFTplans = amrex::LayoutData<rocfft_plan>;
-#else
-        using FFTplans = amrex::LayoutData<fftw_plan>;
-#endif
+        using FFTplans = amrex::LayoutData<AnyFFT::VendorFFTPlan>;
+
         // Similarly, define the Hankel transformers and filter for each box.
         using MultiSpectralHankelTransformer = amrex::LayoutData<SpectralHankelTransformer>;
 
