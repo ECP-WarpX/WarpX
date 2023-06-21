@@ -16,7 +16,7 @@ module load boost/1.78.0/gcc.11.2.0
 
 # optional: for openPMD and PSATD+RZ support
 module load OpenBLAS/0.3.21
-module load hdf5/1.14.0/gcc.11.2.0-openmpi.4.1.2
+module load hdf5/1.13.1/gcc.11.2.0-openmpi.4.1.2
 export CMAKE_PREFIX_PATH=${HOME}/sw/hpc3/gpu/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=${HOME}/sw/hpc3/gpu/adios2-2.8.3:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=${HOME}/sw/hpc3/gpu/blaspp-master:$CMAKE_PREFIX_PATH
@@ -45,6 +45,11 @@ alias getNode="salloc -N 1 -t 0:30:00 --gres=gpu:V100:1 -p free-gpu"
 # an alias to run a command on a batch node for up to 30min
 #   usage: runNode <command>
 alias runNode="srun -N 1 -t 0:30:00 --gres=gpu:V100:1 -p free-gpu"
+
+# Slurm is not well configured to properly address GPU visibility
+# per MPI rank. Thus, we define the node layouts here.
+export GPUS_PER_SOCKET=2
+export GPUS_PER_NODE=4
 
 # optimize CUDA compilation for V100
 export AMREX_CUDA_ARCH=7.0
