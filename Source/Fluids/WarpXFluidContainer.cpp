@@ -129,3 +129,36 @@ WarpXFluidContainer::InitData(int lev)
     FillBoundary(*N[lev], NU[2][lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
 
 }
+
+void
+WarpXFluidContainer::Evolve (int lev,
+    const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
+    const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
+    amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz,
+    amrex::MultiFab* cjx, amrex::MultiFab* cjy, amrex::MultiFab* cjz,
+    amrex::MultiFab* rho, amrex::MultiFab* crho,
+    const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
+    const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
+    amrex::Real t, amrex::Real dt, DtType a_dt_type, bool skip_deposition)
+{
+    // Gather E&B fields to each node
+    // TODO
+
+    // Update N and NU at each node
+    // TODO
+
+    // Deposit J to the simulation mesh
+    if(! skip_deposition) {
+        DepositCurrent(lev, jx, jy, jz);
+    }
+}
+
+void
+WarpXFluidContainer::DepositCurrent (int lev,
+    amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz)
+{
+    // Loop over grid
+    // Loop over cells (ParallelFor)
+    // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
+    // Calculate J from fluid and add it to jx/jy/jz
+}
