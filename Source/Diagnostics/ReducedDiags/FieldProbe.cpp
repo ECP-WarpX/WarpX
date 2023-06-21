@@ -631,9 +631,6 @@ void FieldProbe::ComputeDiags (int step)
             amrex::Vector<int> displs_vector;
             if (amrex::ParallelDescriptor::IOProcessor()) {
                 displs_vector.resize(mpisize, 0);
-                if (mpisize > 0) {
-                    displs_vector[0] = 0;
-                }
                 total_data_size += length_vector[0];
                 for (int i=1; i<mpisize; i++) {
                     displs_vector[i] = (displs_vector[i-1] + length_vector[i-1]);
