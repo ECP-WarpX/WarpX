@@ -9,7 +9,7 @@ boundary.field_lo = pml pml
 # diag
 diag1.diag_type = Full
 diag1.intervals = 50
-diag1.fields_to_plot = Ex Ey Ez A
+diag1.fields_to_plot = Ex Ey Ez A_laser_envelope
 # diagnostics
 diagnostics.diags_names = diag1
 # geometry
