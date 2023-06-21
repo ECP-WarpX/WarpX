@@ -19,11 +19,11 @@ If you are new to this system, **please see the following resources**:
 * `Filesystems <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#data-and-storage>`_:
 
   * ``$HOME``: per-user directory, use only for inputs, source and scripts; backed up; mounted as read-only on compute nodes, that means you cannot run in it (50 GB quota)
-  * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days (recommended)
-  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days (usually smaller quota, 50TB default quota)
-  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days (50TB default quota)
+  * ``$PROJWORK/$proj/``: shared with all members of a project, purged every 90 days, Lustre (recommended)
+  * ``$MEMBERWORK/$proj/``: single user, purged every 90 days, Lustre (usually smaller quota, 50TB default quota)
+  * ``$WORLDWORK/$proj/``: shared with all users, purged every 90 days, Lustre (50TB default quota)
 
-Note: the Orion lustre filesystem on Frontier and the older Alpine GPFS filesystem on Summit are not mounted on each others machines.
+Note: the Orion Lustre filesystem on Frontier and the older Alpine GPFS filesystem on Summit are not mounted on each others machines.
 Use `Globus <https://www.globus.org>`__ to transfer data between them if needed.
 
 
@@ -132,13 +132,12 @@ If you already installed WarpX in the past and want to update it, start by getti
    git status
    git log     # press q to exit
 
-Remove the old Python install:
+And, if needed,
 
-.. code-block:: bash
+- :ref:`update the frontier_warpx.profile file <building-frontier-preparation>`,
+- log out and into the system, activate the now updated environment profile as usual,
+- :ref:`execute the dependency install scripts <building-frontier-preparation>`.
 
-   python3 -m pip uninstall -y pywarpx
-
-And, if needed, :ref:`update the frontier_warpx.profile file and execute the dependency install scripts <building-frontier-preparation>` above again.
 As a last step, clean the build directory ``rm -rf $HOME/src/warpx/build_frontier`` and rebuild WarpX.
 
 
