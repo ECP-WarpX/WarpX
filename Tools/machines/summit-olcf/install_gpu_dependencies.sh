@@ -60,16 +60,22 @@ if [ -d $HOME/src/blaspp ]
 then
   cd $HOME/src/blaspp
   git fetch
-  git checkout main
+  git checkout master
   git pull
   cd -
 else
   git clone https://github.com/icl-utk-edu/blaspp.git $HOME/src/blaspp
 fi
+
+sleep 5
+build_dir=$(mktemp -d)
 rm -rf $HOME/src/blaspp-summit-build
-cmake -S $HOME/src/blaspp -B $HOME/src/blaspp-summit-build -Duse_openmp=ON -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
-cmake --build $HOME/src/blaspp-summit-build --target install --parallel 10
+rm -rf ${build_dir}/blaspp-summit-build
+cmake -S $HOME/src/blaspp -B ${build_dir}/blaspp-summit-build -Duse_openmp=ON -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
+cmake --build ${build_dir}/blaspp-summit-build --target install --parallel 10
+sleep 5
 rm -rf $HOME/src/blaspp-summit-build
+rm -rf ${build_dir}/blaspp-summit-build
 
 # LAPACK++ (for PSATD+RZ)
 if [ -d $HOME/src/lapackpp ]
@@ -82,10 +88,14 @@ then
 else
   git clone https://github.com/icl-utk-edu/lapackpp.git $HOME/src/lapackpp
 fi
+sleep 5
 rm -rf $HOME/src/lapackpp-summit-build
-cmake -S $HOME/src/lapackpp -B $HOME/src/lapackpp-summit-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
-cmake --build $HOME/src/lapackpp-summit-build --target install --parallel 10
+rm -rf ${build_dir}/lapackpp-summit-build
+cmake -S $HOME/src/lapackpp -B ${build_dir}/lapackpp-summit-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
+cmake --build ${build_dir}/lapackpp-summit-build --target install --parallel 10
+sleep 5
 rm -rf $HOME/src/lapackpp-summit-build
+rm -rf ${build_dir}/lapackpp-summit-build
 
 
 # Python ######################################################################
@@ -94,7 +104,7 @@ python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade virtualenv
 python3 -m pip cache purge
 rm -rf ${SW_DIR}/venvs/warpx-summit
-python3 -m venv ${SW_DIR}/gpu/venvs/warpx-summit
+python3 -m venv ${SW_DIR}/venvs/warpx-summit
 source ${SW_DIR}/venvs/warpx-summit/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade wheel
