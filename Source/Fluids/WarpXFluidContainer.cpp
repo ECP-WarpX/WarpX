@@ -101,13 +101,13 @@ WarpXFluidContainer::InitData(int lev)
             amrex::Real y = problo[1] + j*dx[1];
             amrex::Real z = problo[2] + k*dx[2];
     #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            amrex::Real x = lo_corner[0] + i*dx[0];
+            amrex::Real x = problo[0] + i*dx[0];
             amrex::Real y = 0.0_rt;
-            amrex::Real z = lo_corner[1] + j*dx[1];
+            amrex::Real z = problo[1] + j*dx[1];
     #else
             amrex::Real x = 0.0_rt;
             amrex::Real y = 0.0_rt;
-            amrex::Real z = lo_corner[0] + i*dx[0];
+            amrex::Real z = problo[0] + i*dx[0];
     #endif
 
             amrex::Real n = inj_rho->getDensity(x,y,z);
