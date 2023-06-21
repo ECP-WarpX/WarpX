@@ -630,8 +630,7 @@ void FieldProbe::ComputeDiags (int step)
             long total_data_size = 0;
             amrex::Vector<int> displs_vector;
             if (amrex::ParallelDescriptor::IOProcessor()) {
-                displs_vector.resize(mpisize, 0);
-                displs_vector[0] = 0;
+                displs_vector.assign(mpisize, 0);
                 total_data_size += length_vector[0];
                 for (int i=1; i<mpisize; i++) {
                     displs_vector[i] = (displs_vector[i-1] + length_vector[i-1]);
@@ -658,11 +657,11 @@ void FieldProbe::WriteToFile (int step) const
     if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) return;
 
     // loop over num valid particles to find the lowest particle ID for later sorting
-    long int first_id = m_data_out[0];
-    for (int i = 0; i < m_valid_particles; i++)
+    long int first_id = static_cast<long int>(m_data_out[0]);
+    for (long int i = 0; i < m_valid_particles; i++)
     {
         if (m_data_out[i*noutputs] < first_id)
-            first_id = m_data_out[i*noutputs];
+            first_id = static_cast<long int>(m_data_out[i*noutputs]);
     }
 
     // Create a new array to store probe data ordered by id, which will be printed to file.
@@ -671,10 +670,10 @@ void FieldProbe::WriteToFile (int step) const
 
     // loop over num valid particles and write data into the appropriately
     // sorted location
-    for (int i = 0; i < m_valid_particles; i++)
+    for (long int i = 0; i < m_valid_particles; i++)
     {
-        const int idx = m_data_out[i*noutputs] - first_id;
-        for (int k = 0; k < noutputs; k++)
+        const long int idx = static_cast<long int>(m_data_out[i*noutputs]) - first_id;
+        for (long int k = 0; k < noutputs; k++)
         {
             sorted_data[idx * noutputs + k] = m_data_out[i * noutputs + k];
         }
@@ -685,7 +684,7 @@ void FieldProbe::WriteToFile (int step) const
                         std::ofstream::out | std::ofstream::app};
 
     // loop over num valid particles and write
-    for (int i = 0; i < m_valid_particles; i++)
+    for (long int i = 0; i < m_valid_particles; i++)
     {
         ofs << std::fixed << std::defaultfloat;
         ofs << step + 1;
