@@ -60,4 +60,3 @@ LaserEnvelope::LaserEnvelope(AmrCore* amr_core, int ispecies, const std::string&
             jz_nodal_flag, rho_nodal_flag
         );
 }
-

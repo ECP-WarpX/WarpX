@@ -718,7 +718,7 @@ WarpX::ReadParameters ()
                                              "External field reading is not implemented for more than one level");
             add_external_E_field = true;
         }
-        
+
         electrostatic_solver_id = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
         // if an electrostatic solver is used, set the Maxwell solver to None
         if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
