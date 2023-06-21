@@ -123,11 +123,14 @@ public:
     static std::string B_ext_grid_s;
     //! Initialization type for external electric field on the grid
     static std::string E_ext_grid_s;
+    //! Initialization type for external A field on the grid
+    static std::string A_ext_grid_s;
 
     //! Whether to apply the effect of an externally-defined electric field
     static bool add_external_E_field;
     //! Whether to apply the effect of an externally-defined magnetic field
     static bool add_external_B_field;
+
 
     //! String storing parser function to initialize x-component of the magnetic field on the grid
     static std::string str_Bx_ext_grid_function;
@@ -471,6 +474,7 @@ public:
 
     amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_Afield_fp  (int lev, int direction) const { return Afield_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
@@ -502,6 +506,7 @@ public:
 
     const amrex::MultiFab& getcurrent_fp (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield_fp  (int lev, int direction) {return *Efield_fp[lev][direction];}
+    const amrex::MultiFab& getAfield_fp  (int lev, int direction) {return *Afield_fp[lev][direction];}
     const amrex::MultiFab& getBfield_fp  (int lev, int direction) {return *Bfield_fp[lev][direction];}
     const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
     const amrex::MultiFab& getphi_fp (int lev) {return *phi_fp[lev];}
@@ -1353,6 +1358,7 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Afield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
@@ -1366,6 +1372,7 @@ private:
     // Same as Bfield_fp/Efield_fp for reading external field data
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_external;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp_external;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Afield_fp_external;
 
     //! EB: Lengths of the mesh edges
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_edge_lengths;
