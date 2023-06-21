@@ -24,3 +24,4 @@ public:
     amrex::Real m_profile_waist;
     amrex::Real m_wavelength;
     };
+

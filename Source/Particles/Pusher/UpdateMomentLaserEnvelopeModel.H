@@ -61,5 +61,5 @@ void UpdateMomentumLaserEnvelopeModel(
     uz = upz + qmt*Ez + upx*ty - upy*tx - pre_A_factor * (Af_new_z - Af_old_z);
 }
 
-    
+
 #endif // WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_LASER_ENVELOPE_MODEL
