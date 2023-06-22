@@ -68,14 +68,11 @@ else
 fi
 
 sleep 5
-build_dir=$(mktemp -d)
-rm -rf $HOME/src/blaspp-summit-build
-rm -rf ${build_dir}/blaspp-summit-build
+# to circumvent flakiness in the file system, we create our own temp directory:
+build_dir=$(mktemp -d) 
 cmake -S $HOME/src/blaspp -B ${build_dir}/blaspp-summit-build -Duse_openmp=ON -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
 cmake --build ${build_dir}/blaspp-summit-build --target install --parallel 10
 sleep 5
-rm -rf $HOME/src/blaspp-summit-build
-rm -rf ${build_dir}/blaspp-summit-build
 
 # LAPACK++ (for PSATD+RZ)
 if [ -d $HOME/src/lapackpp ]
@@ -89,13 +86,11 @@ else
   git clone https://github.com/icl-utk-edu/lapackpp.git $HOME/src/lapackpp
 fi
 sleep 5
-rm -rf $HOME/src/lapackpp-summit-build
-rm -rf ${build_dir}/lapackpp-summit-build
 cmake -S $HOME/src/lapackpp -B ${build_dir}/lapackpp-summit-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
 cmake --build ${build_dir}/lapackpp-summit-build --target install --parallel 10
 sleep 5
-rm -rf $HOME/src/lapackpp-summit-build
-rm -rf ${build_dir}/lapackpp-summit-build
+
+rm -rf ${build_dir}
 
 
 # Python ######################################################################
