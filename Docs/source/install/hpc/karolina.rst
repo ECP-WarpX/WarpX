@@ -162,8 +162,9 @@ Running
 
    .. tab-item:: A100 (40GB) GPUs
 
-      The batch script below can be used to run a WarpX simulation on multiple nodes (change ``-N`` accordingly) on the supercomputer Karolina at IT4I.
-      This partition as up to `72 nodes <https://docs.it4i.cz/karolina/hardware-overview/>`__ with 8x A100 (40GB) GPUs each.
+      The batch script below can be used to run a WarpX simulation on multiple GPU nodes (change ``#PBS -l select=`` accordingly) on the supercomputer Karolina at IT4I.
+      This partition as up to `72 nodes <https://docs.it4i.cz/karolina/hardware-overview/>`__.
+      Every node has 8x A100 (40GB) GPUs and 2x AMD EPYC 7763, 64-core, 2.45 GHz processors.
 
       Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<proj>`` could be ``plasma``.
       Note that we run one MPI rank per GPU.

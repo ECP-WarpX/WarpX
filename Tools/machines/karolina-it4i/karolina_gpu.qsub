@@ -1,1 +1,40 @@
-# TODO
+#!/bin/bash -l
+
+# Copyright 2023 The WarpX Community
+#
+# This file is part of WarpX.
+#
+# Authors: Axel Huebl, Andrei Berceanu
+# License: BSD-3-Clause-LBNL
+
+#PBS -q qgpu
+#PBS -N WarpX
+# use all eight GPUs per node
+#PBS -l select=1:ncpus=128:ngpus=8:mpiprocs=8,walltime=00:30:00
+#PBS -o WarpX.o$PBS_JOBID
+#PBS -e WarpX.e$PBS_JOBID
+#PBS -A <proj>
+
+# Define the WarpX output directory
+SCRATCHDIR=/scratch/project/${PBS_ACCOUNT,,}/${USER}/WarpX
+
+# Change to the local scratch directory, exit on failure
+cd /lscratch/${PBS_JOBID} || exit
+
+# executable & inputs file or python interpreter & PICMI script here
+EXE=./warpx.rz
+INPUTS=inputs_rz
+
+# OpenMP threads
+export OMP_NUM_THREADS=$(($PBS_NCPUS / $PBS_NP))
+
+# run
+mpirun -np ${PBS_NP}  \
+  ${EXE} ${INPUTS}          \
+  > output.txt
+
+# Move the output
+mv output.txt $SCRATCHDIR
+
+# Exit the script
+exit
