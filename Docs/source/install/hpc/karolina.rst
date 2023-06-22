@@ -75,6 +75,7 @@ On Karolina, you can run either on GPU nodes with fast A100 GPUs (recommended) o
       .. code-block:: bash
 
          bash $HOME/src/warpx/Tools/machines/karolina-it4i/install_gpu_dependencies.sh
+         source $HOME/sw/karolina/gpu/venvs/warpx-gpu/bin/activate
 
       .. dropdown:: Script Details
          :color: light
