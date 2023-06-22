@@ -88,6 +88,11 @@ Scientific works in particle and beam modeling.
    `preprint <https://www.ipac23.org/preproc/pdf/WEPA101.pdf>`__,
    `DOI:10.18429/JACoW-IPAC-23-WEPA101 <https://doi.org/10.18429/JACoW-IPAC-23-WEPA101>`__
 
+#. Tan W H, Piot P, Myers A, Zhang W, Rheaume T, Jambunathan R, Huebl A, Lehe R, Vay J-L.
+   **Simulation studies of drive-beam instability in a dielectric wakefield accelerator**.
+   13th International Particle Accelerator Conference (IPAC'22), MOPOMS012, 2022.
+   `DOI:10.18429/JACoW-IPAC2022-MOPOMS012 <https://doi.org/10.18429/JACoW-IPAC2022-MOPOMS012>`__
+
 
 High Energy Astrophysical Plasma Physics
 ****************************************
