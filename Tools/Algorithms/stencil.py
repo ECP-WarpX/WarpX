@@ -13,7 +13,6 @@ $ run stencil.py --path path_to_input_file
 
 import argparse
 import os
-import re
 
 import matplotlib.pyplot as plt
 import numpy as np
