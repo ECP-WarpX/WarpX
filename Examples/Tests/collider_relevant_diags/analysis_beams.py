@@ -1,19 +1,18 @@
-import os 
-import sys 
 import re
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.constants import m_e, c, hbar, e 
-import openpmd_api as io
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from matplotlib.colors import LogNorm, Normalize
-from matplotlib import use, cm
+
+from matplotlib import cm, use
 import matplotlib.colors
+from matplotlib.colors import LogNorm, Normalize
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import numpy as np
+import openpmd_api as io
+from scipy.constants import c, e, hbar, m_e
 
 E_crit = m_e**2*c**3/(e*hbar)
 B_crit = m_e**2*c**2/(e*hbar)
 
-# extract numbers from a string 
+# extract numbers from a string
 def find_num_in_line(line):
     items = re.findall('-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?', line)
     fitems = [float(it) for it in items]
@@ -22,7 +21,7 @@ def find_num_in_line(line):
     else:
         return fitems
 
-# get input parameters from warpx_used_inputs 
+# get input parameters from warpx_used_inputs
 with open('./warpx_used_inputs', 'rt') as f:
     lines = f.readlines()
     for line in lines:
@@ -37,40 +36,40 @@ with open('./warpx_used_inputs', 'rt') as f:
         if 'my_constants.Ly' in line:
             Ly = find_num_in_line(line)
         if 'my_constants.Lz' in line:
-            Lz = find_num_in_line(line)                        
+            Lz = find_num_in_line(line)
         if 'beam_e.density' in line:
-            n1 = find_num_in_line(line)   
+            n1 = find_num_in_line(line)
         if 'beam_p.density' in line:
-            n2 = find_num_in_line(line)   
+            n2 = find_num_in_line(line)
         if 'beam_e.ux' in line:
-            u1x = find_num_in_line(line) 
+            u1x = find_num_in_line(line)
         if 'beam_e.uy' in line:
-            u1y = find_num_in_line(line) 
+            u1y = find_num_in_line(line)
         if 'beam_e.uz' in line:
-            u1z = find_num_in_line(line) 
+            u1z = find_num_in_line(line)
         if 'beam_p.ux' in line:
-            u2x = find_num_in_line(line) 
+            u2x = find_num_in_line(line)
         if 'beam_p.uy' in line:
-            u2y = find_num_in_line(line) 
+            u2y = find_num_in_line(line)
         if 'beam_p.uz' in line:
-            u2z = find_num_in_line(line) 
+            u2z = find_num_in_line(line)
         if 'beam_e.num_particles_per_cell_each_dim' in line:
-            aux1, aux2, aux3 = find_num_in_line(line)      
+            aux1, aux2, aux3 = find_num_in_line(line)
             Ne = aux1*aux2*aux3
         if 'beam_p.num_particles_per_cell_each_dim' in line:
-            aux1, aux2, aux3 = find_num_in_line(line)      
+            aux1, aux2, aux3 = find_num_in_line(line)
             Np = aux1*aux2*aux3
         if 'particles.E_external_particle' in line:
-            Ex, Ey, Ez = find_num_in_line(line)      
+            Ex, Ey, Ez = find_num_in_line(line)
         if 'particles.B_external_particle' in line:
-            Bx, By, Bz = find_num_in_line(line)      
-            
+            Bx, By, Bz = find_num_in_line(line)
+
 dV = Lx/nx * Ly/ny * Lz/nz
 xmin = -0.5*Lx
-ymin = -0.5*Ly 
+ymin = -0.5*Ly
 zmin = -0.5*Lz
 xmax = 0.5*Lx
-ymax = 0.5*Ly 
+ymax = 0.5*Ly
 midx = 0.5*(xmax - xmin)
 midy = 0.5*(ymax - ymin)
 
@@ -80,17 +79,17 @@ def chi(ux, uy, uz, Ex=Ex, Ey=Ey, Ez=Ez, Bx=Bx, By=By, Bz=Bz):
     vx = ux / gamma * c
     vy = uy / gamma * c
     vz = uz / gamma * c
-    tmp1x = Ex + vy*Bz - vz*By 
+    tmp1x = Ex + vy*Bz - vz*By
     tmp1y = Ey - vx*Bz + vz*Bx
     tmp1z = Ez + vx*By - vy*Bx
     tmp2 = (Ex*vx + Ey*vy + Ez*vz)/c
-    
+
     chi = gamma/E_crit*np.sqrt(tmp1x**2+tmp1y**2+tmp1z**2 - tmp2**2)
-    return chi 
+    return chi
 
 
 def luminosity():
-    series = io.Series("diags/diag1/openpmd_%T.bp",io.Access.read_only) 
+    series = io.Series("diags/diag1/openpmd_%T.bp",io.Access.read_only)
     iterations = np.asarray(series.iterations)
     lumi = []
     for n,ts in enumerate(iterations):
@@ -113,15 +112,15 @@ def luminosity():
 
 
 def disruption():
-    series = io.Series("diags/diag1/openpmd_%T.bp",io.Access.read_only) 
+    series = io.Series("diags/diag1/openpmd_%T.bp",io.Access.read_only)
     iterations = np.asarray(series.iterations)
     XY1_AVE, XY1_STD, XY2_AVE, XY2_STD = [], [], [], []
     for n,ts in enumerate(iterations):
         it = series.iterations[ts]
-        
+
         y1 = it.particles["beam_e"]["position"]["y"].load_chunk()
         y2 = it.particles["beam_p"]["position"]["y"].load_chunk()
-        
+
         x1 = it.particles["beam_e"]["position"]["x"].load_chunk()
         x2 = it.particles["beam_p"]["position"]["x"].load_chunk()
 
@@ -129,26 +128,26 @@ def disruption():
         w2 = it.particles["beam_p"]["weighting"][io.Mesh_Record_Component.SCALAR].load_chunk()
 
         series.flush()
-        
+
         xy1 = np.sqrt((x1-midx)**2+(y1-midy)**2)
         xy2 = np.sqrt((x2-midx)**2+(y2-midy)**2)
-        
-        
+
+
         xy1_ave = np.average(xy1, weights=w1)
         xy2_ave = np.average(xy2, weights=w2)
 
-        xy1_std = np.sqrt(np.average((xy1-xy1_ave)**2, weights=w1)) 
+        xy1_std = np.sqrt(np.average((xy1-xy1_ave)**2, weights=w1))
         xy2_std = np.sqrt(np.average((xy2-xy2_ave)**2, weights=w2))
-                
+
         XY1_AVE.append(xy1_ave)
         XY1_STD.append(xy1_std)
-        
+
         XY2_AVE.append(xy2_ave)
         XY2_STD.append(xy2_std)
-        
-    return np.asarray([XY1_AVE, XY1_STD, XY2_AVE, XY2_STD]) 
 
-    
+    return np.asarray([XY1_AVE, XY1_STD, XY2_AVE, XY2_STD])
+
+
 
 print('chi of electrons ----------------------------------------')
 print('theory:', chi(u1x, u1y, u1z))
@@ -209,9 +208,3 @@ print('ColliderRelevant diag ele = ',  np.loadtxt(CollDiagFname)[:,12])
 print('disruption')
 print('from PIC data', disruption()[1]/disruption()[0])
 print('ColliderRelevant diag ele = ',  np.loadtxt(CollDiagFname)[:,12]/np.loadtxt(CollDiagFname)[:,11])
-
-
-
-
-
-

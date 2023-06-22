@@ -60,7 +60,7 @@ using namespace amrex;
 ColliderRelevant::ColliderRelevant (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-    // read colliding species names - must be 2 
+    // read colliding species names - must be 2
     ParmParse pp_rd_name(rd_name);
     pp_rd_name.getarr("species", m_beam_name);
 
@@ -71,7 +71,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
 
     // get WarpX class object
     auto & warpx = WarpX::GetInstance();
-    
+
     // get MultiParticleContainer class object
     const auto & mypc =  warpx.GetPartContainer();
 
@@ -91,8 +91,8 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         auto const &myspc = mypc.GetParticleContainer(i_s);
 
         auto is_photon = myspc.AmIA<PhysicalSpecies::photon>();
-        
-        // photon number density is not available yet 
+
+        // photon number density is not available yet
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !is_photon,
             "Collider-relevant diagnostic does not work for colliding photons yet"
@@ -123,17 +123,17 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
 
         // get WarpXParticleContainer class object
         auto const &myspc = mypc.GetParticleContainer(i_s);
-        
+
         if (myspc.DoQED()){
-            amrex::Print(0) << "STO FACENDO HEADER  " << species_names[i_s] << "\n"; 
+            amrex::Print(0) << "STO FACENDO HEADER  " << species_names[i_s] << "\n";
             add_diag("chimin_"+species_names[i_s], "chimin_"+species_names[i_s]+"()");
             add_diag("chiave_"+species_names[i_s], "chiave_"+species_names[i_s]+"()");
             add_diag("chimax_"+species_names[i_s], "chimax_"+species_names[i_s]+"()");
-        }        
+        }
 #if defined(WARPX_DIM_3D)
         add_diag("xy_ave_"+species_names[i_s], "xy_ave_"+species_names[i_s]+"(m)");
         add_diag("xy_std_"+species_names[i_s], "xy_std_"+species_names[i_s]+"(m)");
-#endif            
+#endif
         m_data.resize(all_diag_names.size());
     }
     if (ParallelDescriptor::IOProcessor())
@@ -142,7 +142,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         {
             // open file
             std::ofstream ofs;
-            ofs.open(m_path + m_rd_name + "." + m_extension, 
+            ofs.open(m_path + m_rd_name + "." + m_extension,
                 std::ofstream::out | std::ofstream::app);
             // write header row
             int off = 0;
@@ -182,17 +182,17 @@ void ColliderRelevant::ComputeDiags (int step)
     auto & warpx = WarpX::GetInstance();
 
     // get cell size
-    amrex::Geometry const & geom = warpx.Geom(0); 
+    amrex::Geometry const & geom = warpx.Geom(0);
 #if defined(WARPX_DIM_1D_Z)
         auto dV = geom.CellSize(0);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined(WARPX_DIM_3D)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-        Real xmin = geom.ProbLo(0); 
-        Real ymin = geom.ProbLo(1); 
-        Real xmax = geom.ProbHi(0); 
-        Real ymax = geom.ProbHi(1); 
+        Real xmin = geom.ProbLo(0);
+        Real ymin = geom.ProbLo(1);
+        Real xmax = geom.ProbHi(0);
+        Real ymax = geom.ProbHi(1);
         Real midx = 0.5_rt * (xmax - xmin);
         Real midy = 0.5_rt * (ymax - ymin);
 #endif
@@ -203,7 +203,7 @@ void ColliderRelevant::ComputeDiags (int step)
 
     std::unique_ptr<amrex::MultiFab> n1;
     std::unique_ptr<amrex::MultiFab> n2;
-    
+
     // loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
@@ -225,12 +225,12 @@ void ColliderRelevant::ComputeDiags (int step)
 
         if (species_names[i_s] == m_beam_name[0]){
             n1 = myspc.GetChargeDensity(0);
-            n1->mult(1./q); 
+            n1->mult(1./q);
         }
         if (species_names[i_s] == m_beam_name[1]){
             n2 = myspc.GetChargeDensity(0);
-            n2->mult(1./q); 
-        }        
+            n2->mult(1./q);
+        }
 
         // wtot
         Real wtot = ReduceSum( myspc,
@@ -239,20 +239,20 @@ void ColliderRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum(wtot);
 
 #if defined(WARPX_DIM_3D)
-        // xy_ave 
+        // xy_ave
         Real xy_ave = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        { 
+        {
             const amrex::Real w  = p.rdata(PIdx::w);
             const amrex::Real xy = std::sqrt((p.pos(0)-midx)*(p.pos(0)-midx) + (p.pos(1)-midy)*(p.pos(1)-midy));
             return w*xy; });
         ParallelDescriptor::ReduceRealSum(xy_ave);
         xy_ave = xy_ave / wtot;
 
-        // xy_std 
+        // xy_std
         Real xy_std = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        { 
+        {
             const amrex::Real w  = p.rdata(PIdx::w);
             const amrex::Real xy = std::sqrt((p.pos(0)-midx)*(p.pos(0)-midx) + (p.pos(1)-midy)*(p.pos(1)-midy));
             const amrex::Real tmp = (xy - xy_ave)*(xy - xy_ave)*w;
@@ -272,7 +272,7 @@ void ColliderRelevant::ComputeDiags (int step)
         // compute chimin, chiave and chimax
         Real chimin_f = 0.0_rt;
         Real chimax_f = 0.0_rt;
-        Real chiave_f = 0.0_rt; 
+        Real chiave_f = 0.0_rt;
         if (myspc.DoQED())
         {
             // declare chi arrays
@@ -371,21 +371,21 @@ void ColliderRelevant::ComputeDiags (int step)
                     chimin[lev] = get<0>(reduce_data.value());
                     chimax[lev] = get<1>(reduce_data.value());
                     chiave[lev] = get<2>(reduce_data.value());
-                    //amrex::AllPrint() << "CHIAVE_F " <<  chiave[lev]<< "   \n"; 
+                    //amrex::AllPrint() << "CHIAVE_F " <<  chiave[lev]<< "   \n";
                 }
                 chimin_f = *std::min_element(chimin.begin(), chimin.end());
                 chimax_f = *std::max_element(chimax.begin(), chimax.end());
                 chiave_f = std::accumulate(chiave.begin(), chiave.end(), 0.0);
-                //amrex::AllPrint() << "CHIAVE_F " << chiave_f<< " " << chiave[0] <<  "   \n"; 
+                //amrex::AllPrint() << "CHIAVE_F " << chiave_f<< " " << chiave[0] <<  "   \n";
 
             }
             ParallelDescriptor::ReduceRealMin(chimin_f);
             ParallelDescriptor::ReduceRealMax(chimax_f);
             ParallelDescriptor::ReduceRealSum(chiave_f);
 
-            //amrex::AllPrint() << "IDX " << get_idx("chimin_"+species_names[i_s])<<  " \n"; 
-            //amrex::AllPrint() << "mdata size " << m_data.size()  <<  " \n"; 
-            //amrex::AllPrint() << "mdata1 " << m_data[1]  <<  " \n"; 
+            //amrex::AllPrint() << "IDX " << get_idx("chimin_"+species_names[i_s])<<  " \n";
+            //amrex::AllPrint() << "mdata size " << m_data.size()  <<  " \n";
+            //amrex::AllPrint() << "mdata1 " << m_data[1]  <<  " \n";
 
             m_data[get_idx("chimin_"+species_names[i_s])] = chimin_f;
             m_data[get_idx("chiave_"+species_names[i_s])] = chiave_f/wtot;
@@ -393,8 +393,8 @@ void ColliderRelevant::ComputeDiags (int step)
         }
 #endif
     } // end loop over species
-    
-    // make density MultiFabs from nodal to cell centered 
+
+    // make density MultiFabs from nodal to cell centered
     amrex::BoxArray ba = warpx.boxArray(0);
     amrex::DistributionMapping dmap = warpx.DistributionMap(0);
     constexpr int ncomp = 1;
@@ -404,14 +404,14 @@ void ColliderRelevant::ComputeDiags (int step)
     ablastr::coarsen::sample::Coarsen(mf_dst1, *n1, 0, 0, ncomp, ngrow);
     ablastr::coarsen::sample::Coarsen(mf_dst2, *n2, 0, 0, ncomp, ngrow);
 
-    auto const n1_dot_n2 = amrex::MultiFab::Dot( mf_dst1, 0, mf_dst2, 0, 1, 0);    
+    auto const n1_dot_n2 = amrex::MultiFab::Dot( mf_dst1, 0, mf_dst2, 0, 1, 0);
     // (1 - cos phi ) = 2
-    auto const lumi = 2. * PhysConst::c * n1_dot_n2 * dV; 
+    auto const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
 
-    //auto const n1_sq = amrex::MultiFab::Dot( *n1, 0, *n1, 0, 1, 0); 
-    //auto const n2_sq = amrex::MultiFab::Dot( *n2, 0, *n2, 0, 1, 0);    
-    //amrex::AllPrint() << "AAAA " <<   lumi << "  " << n1_dot_n2 <<"  " << n1_sq << " " << n2_sq <<  " \n";  
-    //amrex::AllPrint() << "AAAA " <<  n1_sq <<  " \n";  
+    //auto const n1_sq = amrex::MultiFab::Dot( *n1, 0, *n1, 0, 1, 0);
+    //auto const n2_sq = amrex::MultiFab::Dot( *n2, 0, *n2, 0, 1, 0);
+    //amrex::AllPrint() << "AAAA " <<   lumi << "  " << n1_dot_n2 <<"  " << n1_sq << " " << n2_sq <<  " \n";
+    //amrex::AllPrint() << "AAAA " <<  n1_sq <<  " \n";
 
     m_data[get_idx("lumi")] = lumi;
 }
