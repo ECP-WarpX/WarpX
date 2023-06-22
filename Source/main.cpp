@@ -9,7 +9,6 @@
 #include "WarpX.H"
 
 #include "Initialization/WarpXAMReXInit.H"
-#include "Utils/MPIInitHelpers.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXrocfftUtil.H"
 #include "Utils/WarpXUtil.H"
