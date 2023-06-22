@@ -53,9 +53,15 @@ Prior WarpX references
 
 If your project uses a specific algorithm or component, please consider citing the respective publications in addition.
 
+- Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L and Huebl A.
+  **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
+  14th International Particle Accelerator Conference (IPAC'23), WEPA101, *in print*, 2023.
+  `preprint <https://www.ipac23.org/preproc/pdf/WEPA101.pdf>`__,
+  `DOI:10.18429/JACoW-IPAC-23-WEPA101 <https://doi.org/10.18429/JACoW-IPAC-23-WEPA101>`__
+
 - Huebl A, Lehe R, Zoni E, Shapoval O, Sandberg R T, Garten M, Formenti A, Jambunathan R, Kumar P, Gott K, Myers A, Zhang W, Almgren A, Mitchell C E, Qiang J, Sinn A, Diederichs S, Thevenet M, Grote D, Fedeli L, Clark T, Zaim N, Vincenti H, Vay JL.
   **From Compact Plasma Particle Sources to Advanced Accelerators with Modeling at Exascale**.
-  Proceedings of the 20th Advanced Accelerator Concepts Workshop (AAC'22), *submitted* 2023.
+  Proceedings of the 20th Advanced Accelerator Concepts Workshop (AAC'22), *in print*, 2023.
   `arXiv:2303.12873 <https://arxiv.org/abs/2303.12873>`__
 
 - Huebl A, Lehe R, Mitchell C E, Qiang J, Ryne R D, Sandberg R T, Vay JL.

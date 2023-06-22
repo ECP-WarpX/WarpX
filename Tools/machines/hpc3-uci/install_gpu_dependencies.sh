@@ -4,7 +4,7 @@
 #
 # This file is part of WarpX.
 #
-# Author: Axel Huebl
+# Authors: Axel Huebl, Victor Flores
 # License: BSD-3-Clause-LBNL
 
 # Exit on first error encountered #############################################
@@ -14,24 +14,24 @@ set -eu -o pipefail
 
 # Check: ######################################################################
 #
-#   Was perlmutter_gpu_warpx.profile sourced and configured correctly?
-if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in your perlmutter_gpu_warpx.profile file! Please edit its line 2 to continue!"; exit 1; fi
+#   Was hpc3_gpu_warpx.profile sourced and configured correctly?
+if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in your hpc3_gpu_warpx.profile file! Please edit its line 2 to continue!"; exit 1; fi
 
 
-# Check $proj variable is correct and has a corresponding CFS directory #######
+# Check $proj variable is correct and has a corresponding project directory ####
 #
-if [ ! -d "${CFS}/${proj%_g}/" ]
-then
-    echo "WARNING: The directory ${CFS}/${proj%_g}/ does not exist!"
-    echo "Is the \$proj environment variable of value \"$proj\" correctly set? "
-    echo "Please edit line 2 of your perlmutter_gpu_warpx.profile file to continue!"
-    exit
+#if [ ! -d "/dfsX/${proj}/" ]
+#then
+#    echo "WARNING: The directory /dfsX/${proj}/ does not exist!"
+#    echo "Is the \$proj environment variable of value \"$proj\" correctly set? "
+#    echo "Please edit line 2 of your hpc3_gpu_warpx.profile file to continue!"
+##    exit
 fi
 
 
 # Remove old dependencies #####################################################
 #
-SW_DIR="${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu"
+SW_DIR="${HOME}/sw/hpc3/gpu"
 rm -rf ${SW_DIR}
 mkdir -p ${SW_DIR}
 
@@ -86,7 +86,7 @@ else
   git clone https://github.com/icl-utk-edu/blaspp.git $HOME/src/blaspp
 fi
 rm -rf $HOME/src/blaspp-pm-gpu-build
-CXX=$(which CC) cmake -S $HOME/src/blaspp -B $HOME/src/blaspp-pm-gpu-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
+cmake -S $HOME/src/blaspp -B $HOME/src/blaspp-pm-gpu-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
 cmake --build $HOME/src/blaspp-pm-gpu-build --target install --parallel 16
 rm -rf $HOME/src/blaspp-pm-gpu-build
 
@@ -102,7 +102,7 @@ else
   git clone https://github.com/icl-utk-edu/lapackpp.git $HOME/src/lapackpp
 fi
 rm -rf $HOME/src/lapackpp-pm-gpu-build
-CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S $HOME/src/lapackpp -B $HOME/src/lapackpp-pm-gpu-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
+CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S $HOME/src/lapackpp -B $HOME/src/lapackpp-pm-gpu-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
 cmake --build $HOME/src/lapackpp-pm-gpu-build --target install --parallel 16
 rm -rf $HOME/src/lapackpp-pm-gpu-build
 
@@ -112,16 +112,16 @@ rm -rf $HOME/src/lapackpp-pm-gpu-build
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade virtualenv
 python3 -m pip cache purge
-rm -rf ${SW_DIR}/venvs/warpx
-python3 -m venv ${SW_DIR}/venvs/warpx
-source ${SW_DIR}/venvs/warpx/bin/activate
+rm -rf ${SW_DIR}/venvs/warpx-gpu
+python3 -m venv ${SW_DIR}/venvs/warpx-gpu
+source ${SW_DIR}/venvs/warpx-gpu/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade wheel
 python3 -m pip install --upgrade cython
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas
 python3 -m pip install --upgrade scipy
-MPICC="cc -target-accel=nvidia80 -shared" python3 -m pip install --upgrade mpi4py --no-cache-dir --no-build-isolation --no-binary mpi4py
+python3 -m pip install --upgrade mpi4py --no-cache-dir --no-build-isolation --no-binary mpi4py
 python3 -m pip install --upgrade openpmd-api
 python3 -m pip install --upgrade matplotlib
 python3 -m pip install --upgrade yt
