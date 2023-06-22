@@ -123,9 +123,9 @@ void WarpXFluidContainer::InitData(int lev)
     // Fill guard cells
     const amrex::Periodicity &period = geom.periodicity();
     FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*N[lev], NU[0][lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*N[lev], NU[1][lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*N[lev], NU[2][lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 void WarpXFluidContainer::Evolve(int lev,
