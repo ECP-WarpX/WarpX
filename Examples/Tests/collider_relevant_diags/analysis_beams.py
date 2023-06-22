@@ -69,8 +69,11 @@ dV = Lx/nx * Ly/ny * Lz/nz
 xmin = -0.5*Lx
 ymin = -0.5*Ly 
 zmin = -0.5*Lz
+xmax = 0.5*Lx
+ymax = 0.5*Ly 
+midx = 0.5*(xmax - xmin)
+midy = 0.5*(ymax - ymin)
 
-    
 def chi(ux, uy, uz, Ex=Ex, Ey=Ey, Ez=Ez, Bx=Bx, By=By, Bz=Bz):
     #print(ux, uy, uz, Ex, Ey, Ez, Bx, By, Bz)
     gamma = np.sqrt(1.+ux**2+uy**2+uz**2)
@@ -127,8 +130,8 @@ def disruption():
 
         series.flush()
         
-        xy1 = np.sqrt((x1-xmin)**2+(y1-ymin)**2)
-        xy2 = np.sqrt((x2-xmin)**2+(y2-ymin)**2)
+        xy1 = np.sqrt((x1-midx)**2+(y1-midy)**2)
+        xy2 = np.sqrt((x2-midx)**2+(y2-midy)**2)
         
         
         xy1_ave = np.average(xy1, weights=w1)

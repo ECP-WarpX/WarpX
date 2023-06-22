@@ -191,6 +191,10 @@ void ColliderRelevant::ComputeDiags (int step)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
         Real xmin = geom.ProbLo(0); 
         Real ymin = geom.ProbLo(1); 
+        Real xmax = geom.ProbHi(0); 
+        Real ymax = geom.ProbHi(1); 
+        Real midx = 0.5_rt * (xmax - xmin);
+        Real midy = 0.5_rt * (ymax - ymin);
 #endif
 
     const auto get_idx = [&](const std::string& name){
@@ -240,7 +244,7 @@ void ColliderRelevant::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { 
             const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real xy = std::sqrt((p.pos(0)-xmin)*(p.pos(0)-xmin) + (p.pos(1)-ymin)*(p.pos(1)-ymin));
+            const amrex::Real xy = std::sqrt((p.pos(0)-midx)*(p.pos(0)-midx) + (p.pos(1)-midy)*(p.pos(1)-midy));
             return w*xy; });
         ParallelDescriptor::ReduceRealSum(xy_ave);
         xy_ave = xy_ave / wtot;
@@ -250,7 +254,7 @@ void ColliderRelevant::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { 
             const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real xy = std::sqrt((p.pos(0)-xmin)*(p.pos(0)-xmin) + (p.pos(1)-ymin)*(p.pos(1)-ymin));
+            const amrex::Real xy = std::sqrt((p.pos(0)-midx)*(p.pos(0)-midx) + (p.pos(1)-midy)*(p.pos(1)-midy));
             const amrex::Real tmp = (xy - xy_ave)*(xy - xy_ave)*w;
             return tmp; });
         ParallelDescriptor::ReduceRealSum(xy_std);
