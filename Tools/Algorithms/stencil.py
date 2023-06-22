@@ -467,72 +467,66 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--path')
     args = parser.parse_args()
-    path = args.path
+    input_file = args.path
 
-    # Open input file
-    input_file = open(path, 'r').read()
+    # Parse input file
+    input_dict = dict()
+    for line in open(input_file):
+        sline = line.split('=')
+        # skip lines that are commented out or blank
+        skip_line = sline[0].startswith('#') or sline[0].startswith('\n')
+        if not skip_line:
+            key = sline[0].strip()
+            val = sline[1].split()
+            input_dict[key] = val
+            # The value corresponding to a given key of input_dict is a list
+            # of strings, from which we remove any leftover comments
+            for w in input_dict[key]:
+                if w.startswith('#'):
+                    val_index = input_dict[key].index(w)
+                    input_dict[key] = input_dict[key][:val_index]
 
     # TODO Handle RZ
-    dims = re.findall(r'geometry\.dims\s*=\s*(\d*)', input_file)
-    if dims:
-        dims = int(dims[0][0])
-
-    # regex for single number and multiple numbers (depending on dimensions)
-    sn_regex = r'\s*(-*\d*\.*\d*e*-*\d*)'
-    mn_regex = ''
-    for _ in range(dims):
-        mn_regex += sn_regex
-
-    p_n_cell = re.findall(r'amr\.n\_cell\s*=' + mn_regex, input_file)
-    p_prob_lo = re.findall(r'geometry\.prob\_lo\s*=' + mn_regex, input_file)
-    p_prob_hi = re.findall(r'geometry\.prob\_hi\s*=' + mn_regex, input_file)
+    dims = int(input_dict['geometry.dims'][0])
 
     # Notation considering x as vector of coordinates (x,y,z)
-    nx = np.zeros(dims)
-    xmin = np.zeros(dims)
-    xmax = np.zeros(dims)
-    for i in range(dims):
-        nx[i] = int(p_n_cell[0][i])
-        xmin[i] = float(p_prob_lo[0][i])
-        xmax[i] = float(p_prob_hi[0][i])
+    nx = np.array([int(w) for w in input_dict['amr.n_cell']])
+    xmin = np.array([float(w) for w in input_dict['geometry.prob_lo']])
+    xmax = np.array([float(w) for w in input_dict['geometry.prob_hi']])
 
     # Cell size in the lab frame and boosted frame (boost along z)
     ## lab frame
     dx = (xmax-xmin) / nx
     ## boosted frame
     gamma = 1.
-    p_gamma = re.findall(r'warpx\.gamma\_boost\s*=' + sn_regex, input_file)
-    if p_gamma:
-        gamma = float(p_gamma[0])
+    if 'warpx.gamma_boost' in input_dict:
+        gamma = float(input_dict['warpx.gamma_boost'][0])
     beta = np.sqrt(1. - 1./gamma**2)
     dx_boosted = np.copy(dx)
     dx_boosted[-1] = (1. + beta) * gamma * dx[-1]
 
     # Time step for pseudo-spectral scheme
     cfl = 0.999
-    p_cfl = re.findall(r'warpx\.cfl\s*=' + sn_regex, input_file)
-    if cfl:
-        cfl = float(p_cfl[0])
+    if 'warpx.cfl' in input_dict:
+        cfl = float(input_dict['warpx.cfl'][0])
     dt = cfl * np.min(dx_boosted) / c
 
     # Pseudo-spectral order
     psatd_order = np.full(shape=dims, fill_value=16)
-    p_nox = re.findall(r'psatd\.nox\s*=' + sn_regex, input_file)
-    p_noy = re.findall(r'psatd\.noy\s*=' + sn_regex, input_file)
-    p_noz = re.findall(r'psatd\.noz\s*=' + sn_regex, input_file)
-    if p_nox:
-        psatd_order[0] = int(p_nox[0])
-    if p_noy:
-        psatd_order[1] = int(p_noy[0])
-    if p_noz:
-        psatd_order[2] = int(p_noz[0])
+    if 'psatd.nox' in input_dict:
+        psatd_order[0] = int(input_dict['psatd.nox'][0])
+    if 'psatd.noy' in input_dict:
+        psatd_order[1] = int(input_dict['psatd.noy'][0])
+    if 'psatd.noz' in input_dict:
+        psatd_order[-1] = int(input_dict['psatd.noz'][0])
 
     # Galilean flag
     # TODO Extend for alternative syntax psatd.v_galilean
     galilean = False
-    p_galilean = re.findall(r'psatd\.use\_default\_v\_galilean\s*=\s*(\d)', input_file)
-    if p_galilean:
-        galilean = True if int(p_galilean[0]) == 1 else False
+    if 'psatd.use_default_v_galilean' in input_dict:
+        galilean = bool(input_dict['psatd.use_default_v_galilean'][0])
+    if 'psatd.v_galilean' in input_dict:
+        galilean = bool(input_dict['psatd.v_galilean'][-1])
 
     # Run main function (some arguments are optional,
     # see definition of run_main function for help)
