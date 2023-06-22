@@ -155,8 +155,28 @@ void WarpXFluidContainer::DepositCurrent(int lev,
                                          amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz)
 {
 
-    const amrex::ParticleReal inv_clight_sq = 1.0_prt / PhysConst::c / PhysConst::c;
-    charge = plasma_injector->getCharge();
+    // Temporary nodal currents
+    amrex::MultiFab tmp_jx_fluid(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_jy_fluid(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_jz_fluid(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+
+    const amrex::Real inv_clight_sq = 1.0_prt / PhysConst::c / PhysConst::c;
+    const amrex::Real q = getCharge();
+
+    // Prepare interpolation of current components to cell center
+    // The arrays below store the index type (staggering) of each MultiFab, with the third
+    // component set to zero in the two-dimensional case.
+    auto j_Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto jx_CC_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto jy_CC_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto jz_CC_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    for (int i = 0; i < AMREX_SPACEDIM; ++i)
+    {
+        j_Nodal_type[i] = tmp_jx_fluid.ixType()[i];
+        jx_CC_type[i] = jx.ixType()[i];
+        jy_CC_type[i] = jy.ixType()[i];
+        jz_CC_type[i] = jz.ixType()[i];
+    }
 
 // Loop over grid
 #ifdef AMREX_USE_OMP
@@ -171,6 +191,20 @@ void WarpXFluidContainer::DepositCurrent(int lev,
         amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
         amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
 
+        amrex::Array4<amrex::Real> tmp_jx_fluid_arr = tmp_jx_fluid.array(mfi);
+        amrex::Array4<amrex::Real> tmp_jy_fluid_arr = tmp_jy_fluid.array(mfi);
+        amrex::Array4<amrex::Real> tmp_jz_fluid_arr = tmp_jz_fluid.array(mfi);
+
+        // Loop over cells (ParallelFor)
+        amrex::ParallelFor(tile_box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+                           {
+
+                               // Calculate J from fluid and add it to jx/jy/jz
+                               auto gamma = std::sqrt(N_arr(i, j, k) * N_arr(i, j, k) + (NUx_arr(i, j, k) * NUx_arr(i, j, k) + NUy_arr(i, j, k) * NUy_arr(i, j, k) + NUz_arr(i, j, k) * NUz_arr(i, j, k)) * inv_clight_sq) / N_arr(i, j, k);
+                               tmp_jx_fluid_arr(i, j, k) += q * (NUx_arr(i, j, k) / gamma);
+                               tmp_jy_fluid_arr(i, j, k) += q * (NUy_arr(i, j, k) / gamma);
+                               tmp_jz_fluid_arr(i, j, k) += q * (NUz_arr(i, j, k) / gamma); });
+
         amrex::Array4<amrex::Real> jx_arr = jx.array(mfi);
         amrex::Array4<amrex::Real> jy_arr = jy.array(mfi);
         amrex::Array4<amrex::Real> jz_arr = jz.array(mfi);
@@ -180,15 +214,13 @@ void WarpXFluidContainer::DepositCurrent(int lev,
                            {
                                // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
                                amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
-                               auto N_CC = ablastr::coarsen::sample::Interp(N_arr, sf, sf, sf, i, j, k, 1);
-                               auto NUx_CC = ablastr::coarsen::sample::Interp(NUx_arr, sf, sf, sf, i, j, k, 1);
-                               auto NUy_CC = ablastr::coarsen::sample::Interp(NUy_arr, sf, sf, sf, i, j, k, 1);
-                               auto NUz_CC = ablastr::coarsen::sample::Interp(NUz_arr, sf, sf, sf, i, j, k, 1);
+                               auto jx_CC = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr, j_Nodal_type, jx_CC_type, sf, i, j, k, 1);
+                               auto jy_CC = ablastr::coarsen::sample::Interp(tmp_jy_fluid_arr, j_Nodal_type, jy_CC_type, sf, i, j, k, 1);
+                               auto jz_CC = ablastr::coarsen::sample::Interp(tmp_jz_fluid_arr, j_Nodal_type, jz_CC_type, sf, i, j, k, 1);
 
                                // Calculate J from fluid and add it to jx/jy/jz
-                               auto gamma = std::sqrt(N_CC * N_CC + (NUx_CC * NUx_CC + NUy_CC * NUy_CC + NUz_CC * NUz_CC)*inv_clight_sq) / N_CC;
-                               jx_arr(i, j, k) += charge * (NUx_CC / gamma);
-                               jy_arr(i, j, k) += charge * (NUy_CC / gamma);
-                               jz_arr(i, j, k) += charge * (NUz_CC / gamma); });
+                               jx_arr(i, j, k) += jx_CC;
+                               jy_arr(i, j, k) += jy_CC;
+                               jz_arr(i, j, k) += jz_CC; });
     }
 }
