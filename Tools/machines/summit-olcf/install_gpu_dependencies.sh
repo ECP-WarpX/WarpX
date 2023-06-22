@@ -69,7 +69,7 @@ fi
 
 sleep 5
 # to circumvent flakiness in the file system, we create our own temp directory:
-build_dir=$(mktemp -d) 
+build_dir=$(mktemp -d)
 cmake -S $HOME/src/blaspp -B ${build_dir}/blaspp-summit-build -Duse_openmp=ON -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
 cmake --build ${build_dir}/blaspp-summit-build --target install --parallel 10
 sleep 5
