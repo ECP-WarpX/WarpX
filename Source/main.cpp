@@ -14,14 +14,15 @@
 #include "Utils/WarpXrocfftUtil.H"
 #include "Utils/WarpXUtil.H"
 
-#include <ablastr/warn_manager/WarnManager.H>
+#include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/timer/Timer.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Print.H>
 
 int main(int argc, char* argv[])
 {
-    utils::warpx_mpi_init(argc, argv);
+    ablastr::parallelization::mpi_init(argc, argv);
 
     warpx_amrex_init(argc, argv);
 
@@ -64,5 +65,5 @@ int main(int argc, char* argv[])
 
     amrex::Finalize();
 
-    utils::warpx_mpi_finalize ();
+    ablastr::parallelization::warpx_mpi_finalize ();
 }
