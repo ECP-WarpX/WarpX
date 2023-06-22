@@ -72,6 +72,7 @@ Finally, since HPC3 does not yet provide software modules for some of our depend
 .. code-block:: bash
 
    bash $HOME/src/warpx/Tools/machines/hpc3-uci/install_gpu_dependencies.sh
+   source $HOME/sw/hpc3/gpu/venvs/warpx-gpu/bin/activate
 
 .. dropdown:: Script Details
    :color: light
