@@ -106,7 +106,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
          cd $HOME/src/warpx
          rm -rf build_gpu
 
-         cmake -S . -B build_gpu -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
+         cmake -S . -B build_gpu -DWarpX_COMPUTE=CUDA -DGPUS_PER_SOCKET=${GPUS_PER_SOCKET} -DGPUS_PER_NODE=${GPUS_PER_NODE} -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_gpu -j 16
          cmake --build build_gpu -j 16 --target pip_install
 
