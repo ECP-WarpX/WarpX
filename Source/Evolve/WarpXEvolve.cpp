@@ -162,37 +162,11 @@ WarpX::Evolve (int numsteps)
             FillBoundaryAux(guard_cells.ng_UpdateAux);
         }
 
-        // The hybrid-PIC algorithm uses the charge and current density from
-        // both the current and previous step when updating the fields, so we
-        // deposit the ion charge and current in the temp multifab locations on
-        // the first loop iteration.
+        // If needed, deposit the initial ion charge and current densities that
+        // will be used to update the E-field in Ohm's law.
         if (step == step_begin &&
-            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
-        {
-            auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
-            auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
-            mypc->DepositCharge(rho_fp_temp, 0._rt);
-            mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
-            SyncRho(rho_fp_temp, rho_cp, charge_buf);
-            SyncCurrent(current_fp_temp, current_cp, current_buf);
-            for (int lev=0; lev <= finest_level; ++lev) {
-                // SyncCurrent does not include a call to FillBoundary, but it is needed
-                // for the hybrid-PIC solver since current values are interpolated to
-                // a nodal grid
-                current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
-                current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
-                current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
-
-                ApplyRhofieldBoundary(lev, rho_fp_temp[lev].get(), PatchType::fine);
-                // Set current density at PEC boundaries, if needed.
-                ApplyJfieldBoundary(
-                    lev, current_fp_temp[lev][0].get(),
-                    current_fp_temp[lev][1].get(),
-                    current_fp_temp[lev][2].get(),
-                    PatchType::fine
-                );
-            }
-        }
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC
+        ) HybridPICDepositInitialRhoAndJ();
 
         // Run multi-physics modules:
         // ionization, Coulomb collisions, QED
