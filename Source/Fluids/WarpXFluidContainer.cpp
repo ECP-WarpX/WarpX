@@ -186,6 +186,10 @@ void WarpXFluidContainer::DepositCurrent(int lev,
     {
 
         amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Box const &tile_box_cc_x = mfi.tilebox(jx.ixType().toIntVect());
+        amrex::Box const &tile_box_cc_y = mfi.tilebox(jy.ixType().toIntVect());
+        amrex::Box const &tile_box_cc_z = mfi.tilebox(jz.ixType().toIntVect());
+
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
         amrex::Array4<Real> const &NUx_arr = NU[lev][0]->array(mfi);
         amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
@@ -201,26 +205,43 @@ void WarpXFluidContainer::DepositCurrent(int lev,
 
                                // Calculate J from fluid and add it to jx/jy/jz
                                auto gamma = std::sqrt(N_arr(i, j, k) * N_arr(i, j, k) + (NUx_arr(i, j, k) * NUx_arr(i, j, k) + NUy_arr(i, j, k) * NUy_arr(i, j, k) + NUz_arr(i, j, k) * NUz_arr(i, j, k)) * inv_clight_sq) / N_arr(i, j, k);
-                               tmp_jx_fluid_arr(i, j, k) += q * (NUx_arr(i, j, k) / gamma);
-                               tmp_jy_fluid_arr(i, j, k) += q * (NUy_arr(i, j, k) / gamma);
-                               tmp_jz_fluid_arr(i, j, k) += q * (NUz_arr(i, j, k) / gamma); });
+                               tmp_jx_fluid_arr(i, j, k) = q * (NUx_arr(i, j, k) / gamma);
+                               tmp_jy_fluid_arr(i, j, k) = q * (NUy_arr(i, j, k) / gamma);
+                               tmp_jz_fluid_arr(i, j, k) = q * (NUz_arr(i, j, k) / gamma); });
 
         amrex::Array4<amrex::Real> jx_arr = jx.array(mfi);
         amrex::Array4<amrex::Real> jy_arr = jy.array(mfi);
         amrex::Array4<amrex::Real> jz_arr = jz.array(mfi);
 
         // Loop over cells (ParallelFor)
-        amrex::ParallelFor(tile_box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-                           {
+        amrex::ParallelFor(
+            tile_box_cc_x, tile_box_cc_y, tile_box_cc_z, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
                                // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
                                amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
                                auto jx_CC = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr, j_Nodal_type, jx_CC_type, sf, i, j, k, 1);
-                               auto jy_CC = ablastr::coarsen::sample::Interp(tmp_jy_fluid_arr, j_Nodal_type, jy_CC_type, sf, i, j, k, 1);
-                               auto jz_CC = ablastr::coarsen::sample::Interp(tmp_jz_fluid_arr, j_Nodal_type, jz_CC_type, sf, i, j, k, 1);
+                        
+                                // Calculate J from fluid and add it to jx
+                               jx_arr(i, j, k) += jx_CC; },
 
-                               // Calculate J from fluid and add it to jx/jy/jz
-                               jx_arr(i, j, k) += jx_CC;
-                               jy_arr(i, j, k) += jy_CC;
-                               jz_arr(i, j, k) += jz_CC; });
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+                // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
+                amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
+                auto jy_CC = ablastr::coarsen::sample::Interp(tmp_jy_fluid_arr, j_Nodal_type, jy_CC_type, sf, i, j, k, 1);
+
+                jy_arr(i, j, k) += jy_CC;
+            },
+
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+                // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
+                amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
+                auto jz_CC = ablastr::coarsen::sample::Interp(tmp_jz_fluid_arr, j_Nodal_type, jz_CC_type, sf, i, j, k, 1);
+
+                jz_arr(i, j, k) += jz_CC;
+            }
+
+        );
     }
 }
