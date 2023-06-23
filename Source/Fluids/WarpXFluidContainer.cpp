@@ -219,7 +219,7 @@ void WarpXFluidContainer::DepositCurrent(int lev,
             {
                                // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
                                amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
-                               auto jx_CC = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr, j_Nodal_type, jx_CC_type, sf, i, j, k, 1);
+                               auto jx_CC = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr, j_Nodal_type, jx_CC_type, sf, i, j, k, 0);
 
                                 // Calculate J from fluid and add it to jx
                                jx_arr(i, j, k) += jx_CC; },
@@ -228,7 +228,7 @@ void WarpXFluidContainer::DepositCurrent(int lev,
             {
                 // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
                 amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
-                auto jy_CC = ablastr::coarsen::sample::Interp(tmp_jy_fluid_arr, j_Nodal_type, jy_CC_type, sf, i, j, k, 1);
+                auto jy_CC = ablastr::coarsen::sample::Interp(tmp_jy_fluid_arr, j_Nodal_type, jy_CC_type, sf, i, j, k, 0);
 
                 jy_arr(i, j, k) += jy_CC;
             },
@@ -237,7 +237,7 @@ void WarpXFluidContainer::DepositCurrent(int lev,
             {
                 // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
                 amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
-                auto jz_CC = ablastr::coarsen::sample::Interp(tmp_jz_fluid_arr, j_Nodal_type, jz_CC_type, sf, i, j, k, 1);
+                auto jz_CC = ablastr::coarsen::sample::Interp(tmp_jz_fluid_arr, j_Nodal_type, jz_CC_type, sf, i, j, k, 0);
 
                 jz_arr(i, j, k) += jz_CC;
             }
