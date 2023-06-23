@@ -46,11 +46,6 @@ alias getNode="salloc -N 1 -t 0:30:00 --gres=gpu:V100:1 -p free-gpu"
 #   usage: runNode <command>
 alias runNode="srun -N 1 -t 0:30:00 --gres=gpu:V100:1 -p free-gpu"
 
-# Slurm is not well configured to properly address GPU visibility
-# per MPI rank. Thus, we define the node layouts here.
-export GPUS_PER_SOCKET=2
-export GPUS_PER_NODE=4
-
 # optimize CUDA compilation for V100
 export AMREX_CUDA_ARCH=7.0
 
