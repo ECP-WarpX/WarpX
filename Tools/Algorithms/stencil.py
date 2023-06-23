@@ -13,12 +13,11 @@ $ run stencil.py --path path_to_input_file
 
 import argparse
 import os
+from parser import parse_input
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.constants import c
-
-from parser import parse_input
 
 plt.style.use('tableau-colorblind10')
 plt.rcParams.update({'font.size': 14})
