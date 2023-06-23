@@ -186,14 +186,12 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
 
     return stencils
 
-def compute_all(dims, dx_boosted, dt, psatd_order, v_gal, nx=None):
+def compute_all(dx_boosted, dt, psatd_order, v_gal, nx=None):
     """
     Compute nodal and staggered stencils along all directions.
 
     Parameters
     ----------
-    dims : int
-        Number of dimensions.
     dx_boosted : np.ndarray (float)
         Cell size along each direction.
     dt : float
@@ -210,52 +208,42 @@ def compute_all(dims, dx_boosted, dt, psatd_order, v_gal, nx=None):
     (stencil_nodal, stencil_stagg) : tuple
         Nodal and staggered stencils along all directions.
     """
+    # Number of dimensions
+    dims = len(dx_boosted)
+
     # Default value for nx
     if nx is None:
         nx = np.full(shape=dims, fill_value=256)
 
-    # k vectors
-    kx_arr = 2*np.pi*np.fft.fftfreq(nx[0], dx_boosted[0])
-    if dims == 3:
-        ky_arr = 2*np.pi*np.fft.fftfreq(nx[1], dx_boosted[1])
-    if dims > 1:
-        kz_arr = 2*np.pi*np.fft.fftfreq(nx[-1], dx_boosted[-1])
-
-    # Centered modified k vectors
-    kx_arr_c = modified_k(kx_arr, dx_boosted[0], psatd_order[0], False) if psatd_order[0] != 'inf' else kx_arr
-    if dims == 3:
-        ky_arr_c = modified_k(ky_arr, dx_boosted[1], psatd_order[1], False) if psatd_order[1] != 'inf' else ky_arr
-    if dims > 1:
-        kz_arr_c = modified_k(kz_arr, dx_boosted[-1], psatd_order[-1], False) if psatd_order[-1] != 'inf' else kz_arr
-
-    # Staggered modified k vectors
-    kx_arr_s = modified_k(kx_arr, dx_boosted[0], psatd_order[0], True) if psatd_order[0] != 'inf' else kx_arr
-    if dims == 3:
-        ky_arr_s = modified_k(ky_arr, dx_boosted[1], psatd_order[1], True) if psatd_order[1] != 'inf' else ky_arr
-    if dims > 1:
-        kz_arr_s = modified_k(kz_arr, dx_boosted[-1], psatd_order[-1], True) if psatd_order[-1] != 'inf' else kz_arr
+    # k vectors and modified k vectors
+    k_arr   = []
+    k_arr_c = []
+    k_arr_s = []
+    for i in range(dims):
+        k_arr.append(2*np.pi*np.fft.fftfreq(nx[i], dx_boosted[i]))
+        if psatd_order[i] != 'inf':
+            k_arr_c.append(modified_k(k_arr[i], dx_boosted[i], psatd_order[i], False))
+            k_arr_s.append(modified_k(k_arr[i], dx_boosted[i], psatd_order[i], True))
+        else:
+            k_arr_c.append(k_arr[i])
+            k_arr_s.append(k_arr[i])
 
     # Mesh in k space
-    if dims == 1:
-        kx_c = np.meshgrid(kx_arr_c)
-        kx_s = np.meshgrid(kx_arr_s)
-        kk_c = np.sqrt(kx_c**2)
-        kk_s = np.sqrt(kx_s**2)
-    elif dims == 2:
-        kx_c, kz_c = np.meshgrid(kx_arr_c, kz_arr_c)
-        kx_s, kz_s = np.meshgrid(kx_arr_s, kz_arr_s)
-        kk_c = np.sqrt(kx_c**2 + kz_c**2)
-        kk_s = np.sqrt(kx_s**2 + kz_s**2)
-    elif dims == 3:
-        kx_c, ky_c, kz_c = np.meshgrid(kx_arr_c, ky_arr_c, kz_arr_c)
-        kx_s, ky_s, kz_s = np.meshgrid(kx_arr_s, ky_arr_s, kz_arr_s)
-        kk_c = np.sqrt(kx_c**2 + ky_c**2 + kz_c**2)
-        kk_s = np.sqrt(kx_s**2 + ky_s**2 + kz_s**2)
+    k_c = np.meshgrid(*k_arr_c)
+    k_s = np.meshgrid(*k_arr_s)
+    kk_c = 0.
+    kk_s = 0.
+    for k in k_c:
+        kk_c += k**2
+    for k in k_s:
+        kk_s += k**2
+    kk_c = np.sqrt(kk_c)
+    kk_s = np.sqrt(kk_s)
 
     # Frequencies
     om_c = c*kk_c
     om_s = c*kk_s
-    w_c = v_gal*kz_c
+    w_c = v_gal*k_c[-1]
 
     # Spectral coefficient
     coeff_nodal = func_cosine(om_c, w_c, dt)
@@ -388,7 +376,7 @@ def run_main(dims, dx_boosted, dt, psatd_order, gamma=1., galilean=False, path='
     print(f'- gamma = {gamma}')
     print(f'- v_gal = {v_gal}')
 
-    stencils = compute_all(dims, dx_boosted, dt, psatd_order, v_gal)
+    stencils = compute_all(dx_boosted, dt, psatd_order, v_gal)
 
     # Maximum number of cells
     ncx = 65
