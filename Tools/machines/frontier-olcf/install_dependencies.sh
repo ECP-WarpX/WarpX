@@ -15,7 +15,7 @@ set -eu -o pipefail
 # Check: ######################################################################
 #
 #   Was perlmutter_gpu_warpx.profile sourced and configured correctly?
-if [ -z "${proj}" ]; then echo "WARNING: The 'proj' variable is not yet set in your frontier_warpx.profile file! Please edit its line 2 to continue!"; return; fi
+if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in your frontier_warpx.profile file! Please edit its line 2 to continue!"; exit 1; fi
 
 
 # Check $proj variable is correct and has a corresponding CFS directory #######
@@ -31,7 +31,9 @@ fi
 
 # Remove old dependencies #####################################################
 #
-rm -rf ${HOME}/sw/frontier/gpu
+SW_DIR="${HOME}/sw/frontier/gpu"
+rm -rf ${SW_DIR}
+mkdir -p ${SW_DIR}
 
 # remove common user mistakes in python, located in .local instead of a venv
 python3 -m pip uninstall -qq -y pywarpx
@@ -47,28 +49,32 @@ if [ -d $HOME/src/blaspp ]
 then
   cd $HOME/src/blaspp
   git fetch
+  git checkout master
   git pull
   cd -
 else
   git clone https://github.com/icl-utk-edu/blaspp.git $HOME/src/blaspp
 fi
 rm -rf $HOME/src/blaspp-frontier-gpu-build
-CXX=$(which CC) cmake -S $HOME/src/blaspp -B $HOME/src/blaspp-frontier-gpu-build -Duse_openmp=OFF -Dgpu_backend=hip -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${HOME}/sw/frontier/gpu/blaspp-master
+CXX=$(which CC) cmake -S $HOME/src/blaspp -B $HOME/src/blaspp-frontier-gpu-build -Duse_openmp=OFF -Dgpu_backend=hip -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
 cmake --build $HOME/src/blaspp-frontier-gpu-build --target install --parallel 16
+rm -rf $HOME/src/blaspp-frontier-gpu-build
 
 # LAPACK++ (for PSATD+RZ)
 if [ -d $HOME/src/lapackpp ]
 then
   cd $HOME/src/lapackpp
   git fetch
+  git checkout master
   git pull
   cd -
 else
   git clone https://github.com/icl-utk-edu/lapackpp.git $HOME/src/lapackpp
 fi
 rm -rf $HOME/src/lapackpp-frontier-gpu-build
-CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S $HOME/src/lapackpp -B $HOME/src/lapackpp-frontier-gpu-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${HOME}/sw/frontier/gpu/lapackpp-master
+CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S $HOME/src/lapackpp -B $HOME/src/lapackpp-frontier-gpu-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
 cmake --build $HOME/src/lapackpp-frontier-gpu-build --target install --parallel 16
+rm -rf $HOME/src/lapackpp-frontier-gpu-build
 
 
 # Python ######################################################################
@@ -76,9 +82,9 @@ cmake --build $HOME/src/lapackpp-frontier-gpu-build --target install --parallel 
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade virtualenv
 python3 -m pip cache purge
-rm -rf ${HOME}/sw/frontier/gpu/venvs/warpx
-python3 -m venv ${HOME}/sw/frontier/gpu/venvs/warpx
-source ${HOME}/sw/frontier/gpu/venvs/warpx/bin/activate
+rm -rf ${SW_DIR}/venvs/warpx-frontier
+python3 -m venv ${SW_DIR}/venvs/warpx-frontier
+source ${SW_DIR}/venvs/warpx-frontier/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade wheel
 python3 -m pip install --upgrade cython

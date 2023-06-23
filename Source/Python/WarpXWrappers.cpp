@@ -710,9 +710,10 @@ namespace
     }
     void warpx_SyncCurrent (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp) {
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer) {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.SyncCurrent(J_fp, J_cp);
+        warpx.SyncCurrent(J_fp, J_cp, J_buffer);
     }
     void warpx_UpdateAuxilaryData () {
         WarpX& warpx = WarpX::GetInstance();

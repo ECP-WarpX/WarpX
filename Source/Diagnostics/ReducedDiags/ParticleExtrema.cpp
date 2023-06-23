@@ -122,7 +122,7 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
 
         if (ParallelDescriptor::IOProcessor())
         {
-            if ( m_IsNotRestart )
+            if ( m_write_header )
             {
                 // open file
                 std::ofstream ofs;

@@ -3,7 +3,7 @@ export proj=""  # change me!
 
 # remembers the location of this script
 export MY_PROFILE=$(cd $(dirname $BASH_SOURCE) && pwd)"/"$(basename $BASH_SOURCE)
-if [ -z "${proj}" ]; then echo "WARNING: The 'proj' variable is not yet set in your $MY_PROFILE file! Please edit its line 2 to continue!"; return; fi
+if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in your $MY_PROFILE file! Please edit its line 2 to continue!"; return; fi
 
 # required dependencies
 module load cmake/3.23.2
@@ -35,9 +35,9 @@ module load hdf5/1.14.0
 # optional: for Python bindings or libEnsemble
 module load cray-python/3.9.13.1
 
-if [ -d "${HOME}/sw/frontier/gpu/venvs/warpx" ]
+if [ -d "${HOME}/sw/frontier/gpu/venvs/warpx-frontier" ]
 then
-  source ${HOME}/sw/frontier/gpu/venvs/warpx/bin/activate
+  source ${HOME}/sw/frontier/gpu/venvs/warpx-frontier/bin/activate
 fi
 
 # fix system defaults: do not escape $ with a \ on tab completion

@@ -724,8 +724,8 @@ WarpX::PushPSATD ()
             PSATDBackwardTransformJ(current_fp, current_cp);
 
             // Synchronize J and rho
-            SyncCurrent(current_fp, current_cp);
-            SyncRho(rho_fp, rho_cp);
+            SyncCurrent(current_fp, current_cp, current_buf);
+            SyncRho(rho_fp, rho_cp, charge_buf);
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
@@ -746,7 +746,7 @@ WarpX::PushPSATD ()
             // TODO This works only without mesh refinement
             const int lev = 0;
             SumBoundaryJ(current_fp, lev, Geom(lev).periodicity());
-            SyncRho(rho_fp, rho_cp);
+            SyncRho(rho_fp, rho_cp, charge_buf);
         }
 
         // FFT of J and rho (if used)
