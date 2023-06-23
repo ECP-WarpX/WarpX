@@ -57,18 +57,20 @@ void
 WarpX::EvolveImplicitPicardInit (const int lev)
 {
 
-    // Add space to save the positions and velocities at the start of the time steps
-    for (auto const& pc : *mypc) {
+    if (lev == 0) {
+        // Add space to save the positions and velocities at the start of the time steps
+        for (auto const& pc : *mypc) {
 #if (AMREX_SPACEDIM >= 2)
-        pc->AddRealComp("x_n");
+            pc->AddRealComp("x_n");
 #endif
 #if defined(WARPX_DIM_3D)
-        pc->AddRealComp("y_n");
+            pc->AddRealComp("y_n");
 #endif
-        pc->AddRealComp("z_n");
-        pc->AddRealComp("ux_n");
-        pc->AddRealComp("uy_n");
-        pc->AddRealComp("uz_n");
+            pc->AddRealComp("z_n");
+            pc->AddRealComp("ux_n");
+            pc->AddRealComp("uy_n");
+            pc->AddRealComp("uz_n");
+        }
     }
 
     // Initialize MultiFabs to hold the E and B fields at the start of the time steps
