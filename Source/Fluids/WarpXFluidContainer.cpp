@@ -220,7 +220,7 @@ void WarpXFluidContainer::DepositCurrent(int lev,
                                // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
                                amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
                                auto jx_CC = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr, j_Nodal_type, jx_CC_type, sf, i, j, k, 1);
-                        
+
                                 // Calculate J from fluid and add it to jx
                                jx_arr(i, j, k) += jx_CC; },
 
