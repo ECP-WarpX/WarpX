@@ -38,17 +38,26 @@ GetNeigh(const amrex::Array4<T>& arr,
 
     if(dim == 0){
         return arr(i, j + i_n, k + j_n);
-    }else if(dim == 1){
+    }
 #ifdef WARPX_DIM_XZ
-        return arr(i + i_n, j + j_n, k);
-#elif defined(WARPX_DIM_3D)
-        return arr(i + i_n, j, k + j_n);
-#else
-        amrex::Abort("GetNeigh: Only implemented in 2D3V and 3D3V");
-#endif
-    }else if(dim == 2){
+    else if(dim == 1 || (dim == 2)){
         return arr(i + i_n, j + j_n, k);
     }
+#elif defined(WARPX_DIM_3D)
+    else if(dim == 1){
+        return arr(i + i_n, j, k + j_n);
+    }
+    else if(dim == 2){
+        return arr(i + i_n, j + j_n, k);
+    }
+#else
+    else if(dim == 1){
+        amrex::Abort("GetNeigh: Only implemented in 2D3V and 3D3V");
+    }
+    else if(dim == 2){
+        return arr(i + i_n, j + j_n, k);
+    }
+#endif
 
     amrex::Abort("GetNeigh: dim must be 0, 1 or 2");
 
@@ -81,22 +90,32 @@ SetNeigh(const amrex::Array4<T>& arr, const T val,
     if(dim == 0){
         arr(i, j + i_n, k + j_n) = val;
         return;
-    }else if(dim == 1){
+    }
 #ifdef WARPX_DIM_XZ
-        arr(i + i_n, j + j_n, k) = val;
-#elif defined(WARPX_DIM_3D)
-        arr(i + i_n, j, k + j_n) = val;
-#else
-        amrex::Abort("SetNeigh: Only implemented in 2D3V and 3D3V");
-#endif
-        return;
-    }else if(dim == 2){
+    else if(dim == 1 || (dim == 2)){
         arr(i + i_n, j + j_n, k) = val;
         return;
     }
+#elif defined(WARPX_DIM_3D)
+    else if(dim == 1){
+        arr(i + i_n, j, k + j_n) = val;
+        return;
+    }
+    else if(dim == 2){
+        arr(i + i_n, j + j_n, k) = val;
+        return;
+    }
+#else
+    else if(dim == 1){
+        amrex::Abort("SetNeigh: Only implemented in 2D3V and 3D3V");
+    }
+    else if(dim == 2){
+        arr(i + i_n, j + j_n, k) = val;
+        return;
+    }
+#endif
 
     amrex::Abort("SetNeigh: dim must be 0, 1 or 2");
-
 }
 
 

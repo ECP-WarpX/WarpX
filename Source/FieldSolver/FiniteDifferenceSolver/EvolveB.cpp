@@ -81,11 +81,8 @@ void FiniteDifferenceSolver::EvolveB (
 
         EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 
-    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
-
-        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
-
-    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
+    } else if ((m_fdtd_algo == ElectromagneticSolverAlgo::Yee) ||
+               (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC)) {
 
         EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 
