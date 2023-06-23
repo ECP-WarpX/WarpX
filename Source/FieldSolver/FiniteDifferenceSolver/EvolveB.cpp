@@ -66,12 +66,11 @@ void FiniteDifferenceSolver::EvolveB (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
+    if ((m_fdtd_algo == ElectromagneticSolverAlgo::Yee)||
+        (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC)){
         ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
-    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
-        ignore_unused(Gfield, face_areas);
-        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
+    }
 #else
     if(m_grid_type == GridType::Collocated || m_fdtd_algo != ElectromagneticSolverAlgo::ECT){
         amrex::ignore_unused(face_areas);
