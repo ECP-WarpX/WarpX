@@ -18,6 +18,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.constants import c
 
+from parser import parse_input
+
 plt.style.use('tableau-colorblind10')
 plt.rcParams.update({'font.size': 14})
 
@@ -457,21 +459,7 @@ if __name__ == '__main__':
     input_file = args.path
 
     # Parse input file
-    input_dict = dict()
-    for line in open(input_file):
-        sline = line.split('=')
-        # skip lines that are commented out or blank
-        skip_line = sline[0].startswith('#') or sline[0].startswith('\n')
-        if not skip_line:
-            key = sline[0].strip()
-            val = sline[1].split()
-            input_dict[key] = val
-            # The value corresponding to a given key of input_dict is a list
-            # of strings, from which we remove any leftover comments
-            for w in input_dict[key]:
-                if w.startswith('#'):
-                    val_index = input_dict[key].index(w)
-                    input_dict[key] = input_dict[key][:val_index]
+    input_dict = parse_input(input_file)
 
     # TODO Handle RZ
     dims = int(input_dict['geometry.dims'][0])
