@@ -125,7 +125,7 @@ struct ParserFilter
             }
 
             // ux, uy, uz are now in beta*gamma
-            return m_function_partparser(m_t,x,y,z,ux,uy,uz);
+            return (m_function_partparser(m_t,x,y,z,ux,uy,uz) != 0.0_rt);
         }
     }
 private:
