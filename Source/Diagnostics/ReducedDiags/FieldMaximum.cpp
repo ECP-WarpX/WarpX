@@ -51,7 +51,7 @@ FieldMaximum::FieldMaximum (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    ParmParse pp_amr("amr");
+    const ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
@@ -61,7 +61,7 @@ FieldMaximum::FieldMaximum (std::string rd_name)
 
     if (ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};

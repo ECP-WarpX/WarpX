@@ -59,7 +59,7 @@ FieldProbe::FieldProbe (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    amrex::ParmParse pp_amr("amr");
+    const amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
@@ -79,7 +79,7 @@ FieldProbe::FieldProbe (std::string rd_name)
      *     Define resolution to determine number of particles
      *     Define whether ot not to integrate fields
      */
-    amrex::ParmParse pp_rd_name(rd_name);
+    const amrex::ParmParse pp_rd_name(rd_name);
     std::string m_probe_geometry_str = "Point";
     pp_rd_name.query("probe_geometry", m_probe_geometry_str);
 
@@ -157,7 +157,7 @@ FieldProbe::FieldProbe (std::string rd_name)
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");
     if (ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -252,7 +252,7 @@ void FieldProbe::InitData ()
             zpos.reserve(m_resolution);
 
             // Final - initial / steps. Array contains dx, dy, dz
-            amrex::Real DetLineStepSize[3]{
+            const amrex::Real DetLineStepSize[3]{
                     (x1_probe - x_probe) / (m_resolution - 1),
                     (y1_probe - y_probe) / (m_resolution - 1),
                     (z1_probe - z_probe) / (m_resolution - 1)};
@@ -275,7 +275,7 @@ void FieldProbe::InitData ()
             normalize(target_up_x, target_up_y, target_up_z);
 
             // create vector orthonormal to input vectors
-            amrex::Real orthotarget[3]{
+            const amrex::Real orthotarget[3]{
                 target_normal_y * target_up_z - target_normal_z * target_up_y,
                 target_normal_z * target_up_x - target_normal_x * target_up_z,
                 target_normal_x * target_up_y - target_normal_y * target_up_x};
@@ -286,25 +286,25 @@ void FieldProbe::InitData ()
                 orthotarget[1] - target_up_y,
                 orthotarget[2] - target_up_z};
             normalize(direction[0], direction[1], direction[2]);
-            amrex::Real uppercorner[3]{
+            const amrex::Real uppercorner[3]{
                 x_probe - (direction[0] * detector_radius),
                 y_probe - (direction[1] * detector_radius),
                 z_probe - (direction[2] * detector_radius)};
-            amrex::Real lowercorner[3]{
+            const amrex::Real lowercorner[3]{
                 uppercorner[0] - (target_up_x * std::sqrt(2_rt) * detector_radius),
                 uppercorner[1] - (target_up_y * std::sqrt(2_rt) * detector_radius),
                 uppercorner[2] - (target_up_z * std::sqrt(2_rt) * detector_radius)};
-            amrex::Real loweropposite[3]{
+            const amrex::Real loweropposite[3]{
                 x_probe + (direction[0] * detector_radius),
                 y_probe + (direction[1] * detector_radius),
                 z_probe + (direction[2] * detector_radius)};
 
             // create array containing point-to-point step size
-            amrex::Real SideStepSize[3]{
+            const amrex::Real SideStepSize[3]{
                 (loweropposite[0] - lowercorner[0]) / (m_resolution - 1),
                 (loweropposite[1] - lowercorner[1]) / (m_resolution - 1),
                 (loweropposite[2] - lowercorner[2]) / (m_resolution - 1)};
-            amrex::Real UpStepSize[3]{
+            const amrex::Real UpStepSize[3]{
                 (uppercorner[0] - lowercorner[0]) / (m_resolution - 1),
                 (uppercorner[1] - lowercorner[1]) / (m_resolution - 1),
                 (uppercorner[2] - lowercorner[2]) / (m_resolution - 1)};
@@ -389,7 +389,7 @@ void FieldProbe::ComputeDiags (int step)
             step <= warpx.end_moving_window_step;
         if (update_particles_moving_window)
         {
-            int step_diff = step - m_last_compute_step;
+            const int step_diff = step - m_last_compute_step;
             move_dist = dt*warpx.moving_window_v*step_diff;
         }
 
@@ -608,7 +608,7 @@ void FieldProbe::ComputeDiags (int step)
         if (m_intervals.contains(step+1))
         {
             // returns total number of mpi notes into mpisize
-            int mpisize = ParallelDescriptor::NProcs();
+            const int mpisize = ParallelDescriptor::NProcs();
 
             // allocates data space for length_array. Will contain size of m_data from each processor
             amrex::Vector<int> length_vector;
@@ -630,8 +630,7 @@ void FieldProbe::ComputeDiags (int step)
             long total_data_size = 0;
             amrex::Vector<int> displs_vector;
             if (amrex::ParallelDescriptor::IOProcessor()) {
-                displs_vector.resize(mpisize, 0);
-                displs_vector[0] = 0;
+                displs_vector.assign(mpisize, 0);
                 total_data_size += length_vector[0];
                 for (int i=1; i<mpisize; i++) {
                     displs_vector[i] = (displs_vector[i-1] + length_vector[i-1]);
@@ -658,11 +657,11 @@ void FieldProbe::WriteToFile (int step) const
     if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) return;
 
     // loop over num valid particles to find the lowest particle ID for later sorting
-    long int first_id = m_data_out[0];
-    for (int i = 0; i < m_valid_particles; i++)
+    long int first_id = static_cast<long int>(m_data_out[0]);
+    for (long int i = 0; i < m_valid_particles; i++)
     {
         if (m_data_out[i*noutputs] < first_id)
-            first_id = m_data_out[i*noutputs];
+            first_id = static_cast<long int>(m_data_out[i*noutputs]);
     }
 
     // Create a new array to store probe data ordered by id, which will be printed to file.
@@ -671,10 +670,10 @@ void FieldProbe::WriteToFile (int step) const
 
     // loop over num valid particles and write data into the appropriately
     // sorted location
-    for (int i = 0; i < m_valid_particles; i++)
+    for (long int i = 0; i < m_valid_particles; i++)
     {
-        int idx = m_data_out[i*noutputs] - first_id;
-        for (int k = 0; k < noutputs; k++)
+        const long int idx = static_cast<long int>(m_data_out[i*noutputs]) - first_id;
+        for (long int k = 0; k < noutputs; k++)
         {
             sorted_data[idx * noutputs + k] = m_data_out[i * noutputs + k];
         }
@@ -685,7 +684,7 @@ void FieldProbe::WriteToFile (int step) const
                         std::ofstream::out | std::ofstream::app};
 
     // loop over num valid particles and write
-    for (int i = 0; i < m_valid_particles; i++)
+    for (long int i = 0; i < m_valid_particles; i++)
     {
         ofs << std::fixed << std::defaultfloat;
         ofs << step + 1;

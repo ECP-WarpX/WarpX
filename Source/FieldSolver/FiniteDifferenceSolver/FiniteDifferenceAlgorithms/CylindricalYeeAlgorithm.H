@@ -58,7 +58,7 @@ struct CylindricalYeeAlgorithm {
           // Use a realistic extrapolation
           multimode_alpha = (n_rz_azimuthal_modes - 1._rt)*(n_rz_azimuthal_modes - 1._rt) - 0.4_rt;
         }
-        amrex::Real delta_t = 1._rt / ( std::sqrt(
+        const amrex::Real delta_t = 1._rt / ( std::sqrt(
                                      (1._rt + multimode_alpha) / (dx[0]*dx[0])
                                     + 1._rt / (dx[1]*dx[1])
                               ) * PhysConst::c );

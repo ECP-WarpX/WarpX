@@ -60,7 +60,8 @@ struct ElectromagneticSolverAlgo {
         Yee = 1,
         CKC = 2,
         PSATD = 3,
-        ECT = 4
+        ECT = 4,
+        HybridPIC = 5
     };
 };
 
@@ -172,7 +173,7 @@ struct ReductionType {
 };
 
 int
-GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
+GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key );
 
 /** Select BC Type for fields, if field=true
  *  else select BCType for particles.

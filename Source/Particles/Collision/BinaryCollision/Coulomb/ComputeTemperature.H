@@ -20,7 +20,7 @@ T_R ComputeTemperature (
 
     T_R constexpr inv_c2 = T_R(1.0) / ( PhysConst::c * PhysConst::c );
 
-    int N = Ie - Is;
+    const int N = Ie - Is;
     if ( N == 0 ) { return T_R(0.0); }
 
     T_R vx = T_R(0.0);    T_R vy = T_R(0.0);

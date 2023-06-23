@@ -13,8 +13,8 @@
 #include "GetVelocity.H"
 #include "TemperatureProperties.H"
 #include "VelocityProperties.H"
-#include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Config.H>
@@ -112,8 +112,8 @@ namespace {
             // and then use the rejection method to correct it
             // ( stop rejecting with probability exp(-u_m/(2*u_th**3)*(u-u_th)**2) )
             // Note that this is the method that is used in the common case u_m=0
-            amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - u_m/u_th );
-            amrex::Real reject_prefactor = (u_m/u_th)/(2._rt*u_th*u_th); // To save computation
+            const amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - u_m/u_th );
+            const amrex::Real reject_prefactor = (u_m/u_th)/(2._rt*u_th*u_th); // To save computation
             bool reject = true;
             while (reject) {
                 // Generates u according to u*exp(-u**2/(2*approx_u_th**2),
@@ -133,8 +133,8 @@ namespace {
             // Note that in the common case `u_m = 0`, this rejection method
             // is not used, and the above rejection method is used instead.
             bool reject = true;
-            amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
-            amrex::Real inv_um = 1._rt/u_m; // To save computation
+            const amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
+            const amrex::Real inv_um = 1._rt/u_m; // To save computation
             while (reject) {
                 // Approximate distribution: normal distribution, where we only retain positive u
                 u = -1._rt;
@@ -142,7 +142,7 @@ namespace {
                     u = amrex::RandomNormal(approx_u_m, u_th, engine);
                 }
                 // Rejection method
-                amrex::Real xrand = amrex::Random(engine);
+                const amrex::Real xrand = amrex::Random(engine);
                 if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) reject = false;
             }
         }

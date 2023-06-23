@@ -158,7 +158,6 @@ using namespace amrex;
         // Loop over all the dimensions
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Loop over sides, iside = 0 (lo), iside = 1 (hi)
-            // Loop over sides, iside = 0 (lo), iside = 1 (hi)
             for (int iside = 0; iside < 2; ++iside) {
                 const bool isPECBoundary = ( (iside == 0)
                                         ? is_boundary_PEC(fbndry_lo, idim)
@@ -179,7 +178,7 @@ using namespace amrex;
                 if (isPECBoundary == true) {
                     // grid point ijk_vec is ig number of points pass the
                     // domain boundary in direction, idim
-                    int ig = get_cell_count_to_boundary(
+                    const int ig = get_cell_count_to_boundary(
                         dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
                     if (ig == 0) {
@@ -205,6 +204,7 @@ using namespace amrex;
             Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
         }
     }
+
 
     /**
      * \brief Sets the magnetic field value normal to the PEC boundary to zero. The
@@ -305,7 +305,7 @@ using namespace amrex;
 
                     // grid point ijk_vec is ig number of points pass the
                     // domain boundary in direction, idim
-                    int ig = get_cell_count_to_boundary(
+                    const int ig = get_cell_count_to_boundary(
                         dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
                     if (ig == 0) {
@@ -412,6 +412,54 @@ using namespace amrex;
     }
 
 
+    /**
+     * \brief This function sets the given field value on a PEC boundary
+     *        to enforce a Neumann boundary condition (zero derivative) in the
+     *        normal direction.
+     *
+     * \param[in] n            index of the MultiFab component being updated
+     * \param[in] ijk_vec      indices along the x(i), y(j), z(k) of the rho Array4
+     * \param[in out] field    field data to be updated
+     * \param[in] mirrorfac    mirror cell is given by mirrorfac - ijk_vec
+     * \param[in] psign        Whether the field value should be flipped across the boundary
+     * \param[in] is_pec       Whether the given boundary is PEC
+     * \param[in] tangent_to_bndy    Whether a given direction is perpendicular to the boundary
+     * \param[in] fabbox       multifab box including ghost cells
+     */
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void SetNeumannOnPEC (const int n,
+                          const amrex::IntVect & ijk_vec,
+                          amrex::Array4<amrex::Real> const& field,
+                          amrex::GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM> const& mirrorfac,
+                          amrex::GpuArray<GpuArray<bool, 2>, AMREX_SPACEDIM> const& is_pec,
+                          amrex::Box const& fabbox )
+    {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
+        {
+            for (int iside = 0; iside < 2; ++iside)
+            {
+                if (!is_pec[idim][iside]) continue;
+
+                // Get the mirror guard cell index
+                amrex::IntVect iv_mirror = ijk_vec;
+                iv_mirror[idim] = mirrorfac[idim][iside] - ijk_vec[idim];
+
+                // On the PEC boundary the field value is set equal to the
+                // first value in the domain (nodal fields)
+                if (ijk_vec == iv_mirror) {
+                    iv_mirror[idim] += (iside == 0) ? 1 : -1;
+                    if (fabbox.contains(iv_mirror)) field(ijk_vec, n) = field(iv_mirror, n);
+                }
+                // otherwise set the mirror guard cell equal to the internal cell value
+                else if (fabbox.contains(iv_mirror))
+                {
+                    field(iv_mirror, n) = field(ijk_vec, n);
+                }
+            }
+        }
+    }
+
+
     /** Returns 1 if any domain boundary is set to PEC, else returns 0.*/
     bool isAnyBoundaryPEC();
     /**
@@ -462,6 +510,15 @@ using namespace amrex;
     void ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
                           amrex::MultiFab* Jz, const int lev,
                           PatchType patch_type);
-}
 
+    /**
+     * \brief Apply the PEC boundary to the electron pressure field.
+     *
+     * \param[in,out] Pefield    Multifab containing the electron pressure
+     * \param[in]     lev        level of the Multifab
+     * \param[in]     patch_type coarse or fine
+     */
+    void ApplyPECtoElectronPressure (amrex::MultiFab* Pefield,
+                                     const int lev, PatchType patch_type);
+}
 #endif // WarpX_PEC_KERNELS_H_

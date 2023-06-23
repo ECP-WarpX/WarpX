@@ -124,14 +124,14 @@ Then we build WarpX:
 
 .. code-block:: bash
 
-    cmake -S . -B build
+    cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3"
     cmake --build build -j 6
 
 Or if we need to compile with CUDA:
 
 .. code-block:: bash
 
-    cmake -S . -B build -DWarpX_COMPUTE=CUDA
+    cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_DIMS="1;2;RZ;3"
     cmake --build build -j 6
 
 **That's it!**
@@ -154,7 +154,7 @@ Then we compile WarpX as in the previous section (with or without CUDA) adding `
 
 .. code-block:: bash
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_LIB=ON
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_DIMS="1;2;RZ;3" -DWarpX_LIB=ON
    cmake --build build --target pip_install -j 6
 
 This builds WarpX for 3D geometry.

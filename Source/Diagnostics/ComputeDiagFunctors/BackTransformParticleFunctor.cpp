@@ -86,8 +86,8 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
     for (int lev = 0; lev < nlevs; ++lev) {
-        amrex::Real t_boost = warpx.gett_new(0);
-        amrex::Real dt = warpx.getdt(0);
+        const amrex::Real t_boost = warpx.gett_new(0);
+        const amrex::Real dt = warpx.getdt(0);
 
         for (WarpXParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
             auto ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
