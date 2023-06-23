@@ -2259,7 +2259,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
         (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) ||
         (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) ) {
-        rho_ncomps = n_comps;
+        rho_ncomps = ncomps;
     }
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         if (do_dive_cleaning || update_with_rho || current_correction) {
@@ -2433,9 +2433,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(current_cp[lev][1], amrex::convert(cba, jy_nodal_flag), dm, ncomps, ngJ, tag("current_cp[y]"), 0.0_rt);
         AllocInitMultiFab(current_cp[lev][2], amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, tag("current_cp[z]"), 0.0_rt);
 
-        if (deposit_charge) {
-            // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
-            const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
+        if (rho_ncomps > 0) {
             AllocInitMultiFab(rho_cp[lev], amrex::convert(cba, rho_nodal_flag), dm, rho_ncomps, ngRho, tag("rho_cp"), 0.0_rt);
         }
 
