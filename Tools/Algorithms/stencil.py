@@ -13,7 +13,7 @@ $ run stencil.py --path path_to_input_file
 
 import argparse
 import os
-from parser import parse_input
+from input_file_parser import parse_input_file
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -232,14 +232,8 @@ def compute_all(dx_boosted, dt, psatd_order, v_gal, nx=None):
     # Mesh in k space
     k_c = np.meshgrid(*k_arr_c)
     k_s = np.meshgrid(*k_arr_s)
-    kk_c = 0.
-    kk_s = 0.
-    for k in k_c:
-        kk_c += k**2
-    for k in k_s:
-        kk_s += k**2
-    kk_c = np.sqrt(kk_c)
-    kk_s = np.sqrt(kk_s)
+    kk_c = np.sqrt(sum(k**2 for k in k_c))
+    kk_s = np.sqrt(sum(k**2 for k in k_s))
 
     # Frequencies
     om_c = c*kk_c
@@ -377,9 +371,7 @@ def run_main(dims, dx_boosted, dt, psatd_order, gamma=1., galilean=False, path='
     stencils = compute_all(dx_boosted, dt, psatd_order, v_gal)
 
     # Maximum number of cells
-    nc = []
-    for i in range(dims):
-        nc.append(65)
+    nc = dims*[65]
 
     # Arrays of stencils
     for i, s in enumerate(stencils):
@@ -387,12 +379,11 @@ def run_main(dims, dx_boosted, dt, psatd_order, gamma=1., galilean=False, path='
         s['stagg'] = s['stagg'][:nc[i]]
 
     # Axis labels
-    if dims == 1:
-        label = ['x']
-    elif dims == 2:
-        label = ['x', 'z']
-    elif dims == 3:
-        label = ['x', 'y', 'z']
+    label = ['x']
+    if dims == 3:
+        label.append('y')
+    if dims > 1:
+        label.append('z')
 
     # Plot stencils
     for i, s in enumerate(stencils):
@@ -435,12 +426,12 @@ if __name__ == '__main__':
 
     # Parse path to input file from command line
     parser = argparse.ArgumentParser()
-    parser.add_argument('--path')
+    parser.add_argument('--input_file', help='path to input file to be parsed')
     args = parser.parse_args()
-    input_file = args.path
+    input_file = args.input_file
 
     # Parse input file
-    input_dict = parse_input(input_file)
+    input_dict = parse_input_file(input_file)
 
     # TODO Handle RZ
     dims = int(input_dict['geometry.dims'][0])
