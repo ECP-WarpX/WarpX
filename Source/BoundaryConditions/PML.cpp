@@ -268,7 +268,7 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
                 corners.push_back(kv.first);
             }
 #elif defined(WARPX_DIM_3D)
-            else if ((amrex::grow(grid_box, jdim, ncell[jdim]).intersects(box))
+            else if ((amrex::grow(grid_box, jdim, ncell[jdim]).intersects(box)) ||
                 amrex::grow(grid_box, kdim, ncell[kdim]).intersects(box))
             {
                 side_faces.push_back(kv.first);
