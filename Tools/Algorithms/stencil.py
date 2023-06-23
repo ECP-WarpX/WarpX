@@ -468,7 +468,6 @@ if __name__ == '__main__':
         psatd_order[-1] = int(input_dict['psatd.noz'][0])
 
     # Galilean flag
-    # TODO Extend for alternative syntax psatd.v_galilean
     galilean = False
     if 'psatd.use_default_v_galilean' in input_dict:
         galilean = bool(input_dict['psatd.use_default_v_galilean'][0])
