@@ -77,6 +77,7 @@ Finally, since Summit does not yet provide software modules for some of our depe
 .. code-block:: bash
 
    bash $HOME/src/warpx/Tools/machines/summit-olcf/install_gpu_dependencies.sh
+   source /ccs/proj/$proj/${USER}/sw/summit/gpu/venvs/warpx-summit/bin/activate
 
 .. dropdown:: Script Details
    :color: light
