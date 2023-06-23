@@ -133,12 +133,12 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
     coeff_stagg : numpy.ndarray
         Leading spectral staggered coefficient of the general PSATD equations.
     axis : int
-        Axis or direction (must be 0, 1, or 2).
+        Axis or direction (must be 0, 1, 2 or -1).
 
     Returns
     -------
-    (stencil_avg_nodal, stencil_avg_stagg) : tuple
-        Nodal and staggered stencils along a given direction.
+    stencils : dictionary
+        Dictionary of nodal and staggered stencils along a given direction.
     """
     # Inverse FFTs of the spectral coefficient along the chosen axis
     stencil_nodal = np.fft.ifft(coeff_nodal, axis=axis)
@@ -206,8 +206,8 @@ def compute_all(dx_boosted, dt, psatd_order, v_gal, nx=None):
 
     Returns
     -------
-    (stencil_nodal, stencil_stagg) : tuple
-        Nodal and staggered stencils along all directions.
+    stencils : list
+        List of nodal and staggered stencils along all directions.
     """
     # Number of dimensions
     dims = len(dx_boosted)
@@ -251,12 +251,9 @@ def compute_all(dx_boosted, dt, psatd_order, v_gal, nx=None):
     coeff_stagg = func_cosine(om_s, w_c, dt)
 
     # Stencils
-    stencils = dict()
-    stencils['x'] = compute_stencils(coeff_nodal, coeff_stagg, axis=0)
-    if dims == 3:
-        stencils['y'] = compute_stencils(coeff_nodal, coeff_stagg, axis=1)
-    if dims > 1:
-        stencils['z'] = compute_stencils(coeff_nodal, coeff_stagg, axis=-1)
+    stencils = []
+    for i in range(dims):
+        stencils.append(compute_stencils(coeff_nodal, coeff_stagg, axis=i))
 
     return stencils
 
@@ -275,8 +272,8 @@ def compute_guard_cells(errmin, errmax, stencil):
 
     Returns
     -------
-    guard_cells : numpy.int64
-        Number of cells.
+    guard_cells : tuple
+        Min and max number of cells.
     """
     diff = stencil - errmin
     v = next(d for d in diff if d < 0)
@@ -380,48 +377,39 @@ def run_main(dims, dx_boosted, dt, psatd_order, gamma=1., galilean=False, path='
     stencils = compute_all(dx_boosted, dt, psatd_order, v_gal)
 
     # Maximum number of cells
-    ncx = 65
-    if dims == 3:
-        ncy = 65
-    if dims > 1:
-        ncz = 65
-
-    # Array of cell numbers
-    cx = np.arange(ncx)
-    if dims == 3:
-        cy = np.arange(ncy)
-    if dims > 1:
-        cz = np.arange(ncz)
+    nc = []
+    for i in range(dims):
+        nc.append(65)
 
     # Arrays of stencils
-    stencils['x']['nodal'] = stencils['x']['nodal'][:ncx]
-    stencils['x']['stagg'] = stencils['x']['stagg'][:ncx]
-    if dims == 3:
-        stencils['y']['nodal'] = stencils['y']['nodal'][:ncy]
-        stencils['y']['stagg'] = stencils['y']['stagg'][:ncy]
-    if dims > 1:
-        stencils['z']['nodal'] = stencils['z']['nodal'][:ncz]
-        stencils['z']['stagg'] = stencils['z']['stagg'][:ncz]
+    for i, s in enumerate(stencils):
+        s['nodal'] = s['nodal'][:nc[i]]
+        s['stagg'] = s['stagg'][:nc[i]]
+
+    # Axis labels
+    if dims == 1:
+        label = ['x']
+    elif dims == 2:
+        label = ['x', 'z']
+    elif dims == 3:
+        label = ['x', 'y', 'z']
 
     # Plot stencils
-    plot_stencil(cx, stencils['x']['nodal'], stencils['x']['stagg'], 'x', path, name)
-    if dims == 3:
-        plot_stencil(cy, stencils['y']['nodal'], stencils['y']['stagg'], 'y', path, name)
-    if dims > 1:
-        plot_stencil(cz, stencils['z']['nodal'], stencils['z']['stagg'], 'z', path, name)
+    for i, s in enumerate(stencils):
+        plot_stencil(np.arange(nc[i]), s['nodal'], s['stagg'], label[i], path, name)
 
     # Compute min and max numbers of guard cells
-    gcmin_x_nodal, gcmax_x_nodal = compute_guard_cells(sp, dp, stencils['x']['nodal'])
-    if dims == 3:
-        gcmin_y_nodal, gcmax_y_nodal = compute_guard_cells(sp, dp, stencils['y']['nodal'])
-    if dims > 1:
-        gcmin_z_nodal, gcmax_z_nodal = compute_guard_cells(sp, dp, stencils['z']['nodal'])
-    #
-    gcmin_x_stagg, gcmax_x_stagg = compute_guard_cells(sp, dp, stencils['x']['stagg'])
-    if dims == 3:
-        gcmin_y_stagg, gcmax_y_stagg = compute_guard_cells(sp, dp, stencils['y']['stagg'])
-    if dims > 1:
-        gcmin_z_stagg, gcmax_z_stagg = compute_guard_cells(sp, dp, stencils['z']['stagg'])
+    gcmin_nodal = []
+    gcmax_nodal = []
+    gcmin_stagg = []
+    gcmax_stagg = []
+    for s in stencils:
+        gcmin, gcmax = compute_guard_cells(sp, dp, s['nodal'])
+        gcmin_nodal.append(gcmin)
+        gcmax_nodal.append(gcmax)
+        gcmin, gcmax = compute_guard_cells(sp, dp, s['stagg'])
+        gcmin_stagg.append(gcmin)
+        gcmax_stagg.append(gcmax)
 
     fig_path = os.path.abspath(path)
     print(f'\nFigures saved in {fig_path}/.')
@@ -434,17 +422,11 @@ def run_main(dims, dx_boosted, dt, psatd_order, gamma=1., galilean=False, path='
         + '\nFor each stencil the region of accuracy between single and double precision'
         + '\nis shaded to help you identify a suitable number of ghost cells.')
     print('\nFor a nodal simulation, choose:')
-    print(f'- between {gcmin_x_nodal} and {gcmax_x_nodal} ghost cells along x')
-    if dims == 3:
-        print(f'- between {gcmin_y_nodal} and {gcmax_y_nodal} ghost cells along y')
-    if dims > 1:
-        print(f'- between {gcmin_z_nodal} and {gcmax_z_nodal} ghost cells along z')
+    for i in range(dims):
+        print(f'- between {gcmin_nodal[i]} and {gcmax_nodal[i]} ghost cells along {label[i]}')
     print('\nFor a staggered or hybrid simulation, choose:')
-    print(f'- between {gcmin_x_stagg} and {gcmax_x_stagg} ghost cells along x')
-    if dims == 3:
-        print(f'- between {gcmin_y_stagg} and {gcmax_y_stagg} ghost cells along y')
-    if dims > 1:
-        print(f'- between {gcmin_z_stagg} and {gcmax_z_stagg} ghost cells along z')
+    for i in range(dims):
+        print(f'- between {gcmin_stagg[i]} and {gcmax_stagg[i]} ghost cells along {label[i]}')
     print()
 
     return
