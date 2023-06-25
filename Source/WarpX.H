@@ -619,11 +619,20 @@ public:
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
     /**
-     * \brief
+     * \brief Hybrid-PIC field evolve function.
      * This function contains the logic involved in evolving the electric and
      * magnetic fields in the hybrid PIC algorithm.
      */
     void HybridPICEvolveFields ();
+
+    /**
+     * \brief Hybrid-PIC initial deposition function.
+     * The hybrid-PIC algorithm uses the charge and current density from both
+     * the current and previous step when updating the fields. This function
+     * deposits the initial ion charge and current (before the first particle
+     * push), to be used in the ``HybridPICEvolveFields()`` function.
+     */
+    void HybridPICDepositInitialRhoAndJ ();
 
     /** apply QED correction on electric field
      *
