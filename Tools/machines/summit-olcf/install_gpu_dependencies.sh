@@ -69,6 +69,7 @@ fi
 rm -rf $HOME/src/blaspp-summit-build
 cmake -S $HOME/src/blaspp -B $HOME/src/blaspp-summit-build -Duse_openmp=ON -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
 cmake --build $HOME/src/blaspp-summit-build --target install --parallel 10
+rm -rf $HOME/src/blaspp-summit-build
 
 # LAPACK++ (for PSATD+RZ)
 if [ -d $HOME/src/lapackpp ]
@@ -84,6 +85,7 @@ fi
 rm -rf $HOME/src/lapackpp-summit-build
 cmake -S $HOME/src/lapackpp -B $HOME/src/lapackpp-summit-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
 cmake --build $HOME/src/lapackpp-summit-build --target install --parallel 10
+rm -rf $HOME/src/lapackpp-summit-build
 
 
 # Python ######################################################################

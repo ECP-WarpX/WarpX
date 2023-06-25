@@ -74,6 +74,7 @@ wget -q -O - https://github.com/pytorch/pytorch/pull/98511.patch | git apply
 USE_CUDA=1 BLAS=OpenBLAS MAX_JOBS=64 ATEN_AVX512_256=OFF BUILD_TEST=0 python3 setup.py develop
 #   (optional) If using torch.compile with inductor/triton, install the matching version of triton
 #make triton
+rm -rf build
 cd -
 
 # optional: optimas dependencies (based on libEnsemble & ax->botorch->gpytorch->pytorch)

@@ -18,6 +18,7 @@ picmistandard==0.25.0
 pygments
 recommonmark
 sphinx>=5.3
+sphinx-copybutton
 sphinx-design
 sphinx_rtd_theme>=1.1.1
 sphinxcontrib-bibtex
