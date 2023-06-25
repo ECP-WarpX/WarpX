@@ -65,9 +65,5 @@ int main(int argc, char *argv[])
 
     amrex::Finalize();
 
-<<<<<<< HEAD
-    utils::warpx_mpi_finalize();
-=======
     ablastr::parallelization::mpi_finalize ();
->>>>>>> upstream/development
 }
