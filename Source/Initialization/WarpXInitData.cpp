@@ -1327,6 +1327,15 @@ void WarpX::CheckKnownIssues()
             "The hybrid-PIC algorithm involves multifabs that are not yet "
             "properly redistributed during load balancing events."
         );
+
+        const bool external_particle_field_used = (
+            mypc->m_B_ext_particle_s != "none" || mypc->m_E_ext_particle_s != "none"
+        );
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !external_particle_field_used,
+            "The hybrid-PIC algorithm does not work with external fields "
+            "applied directly to particles."
+        );
     }
 }
 

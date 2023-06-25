@@ -76,6 +76,7 @@ Finally, since Frontier does not yet provide software modules for some of our de
 .. code-block:: bash
 
    bash $HOME/src/warpx/Tools/machines/frontier-olcf/install_dependencies.sh
+   source $HOME/sw/frontier/gpu/venvs/warpx-frontier/bin/activate
 
 .. dropdown:: Script Details
    :color: light

@@ -198,12 +198,6 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     int lev, HybridPICModel const* hybrid_model,
     DtType a_dt_type )
 {
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::grid_type == GridType::Staggered,
-        "Ohm's law E-solve only works with a staggered (Yee) grid.");
-
-
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
     if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
