@@ -2255,11 +2255,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #endif
 
     int rho_ncomps = 0;
-    if( do_dive_cleaning ||
-        (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
+    if( (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
         (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) ||
         (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) ) {
         rho_ncomps = ncomps;
+    }
+    if (do_dive_cleaning) {
+        rho_ncomps = 2*ncomps;
     }
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         if (do_dive_cleaning || update_with_rho || current_correction) {
