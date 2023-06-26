@@ -140,7 +140,7 @@ bool WarpX::do_shared_mem_charge_deposition = false;
 bool WarpX::do_shared_mem_current_deposition = false;
 #if defined(WARPX_DIM_3D)
 amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(6,6,8));
-#elif defined(WARPX_DIM_2D)
+#elif (AMREX_SPACEDIM == 2)
 amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(14,14));
 #else
 //Have not experimented with good tilesize here because expect use case to be low
