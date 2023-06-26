@@ -1477,8 +1477,6 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
     InjectorFlux*  inj_flux = plasma_injector->getInjectorFlux();
     InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
-    const amrex::Real density_min = plasma_injector->density_min;
-    const amrex::Real density_max = plasma_injector->density_max;
     constexpr int level_zero = 0;
     const amrex::Real t = WarpX::GetInstance().gett_new(level_zero);
 
@@ -1794,7 +1792,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 #ifdef WARPX_DIM_RZ
                 // Conversion from cylindrical to Cartesian coordinates
                 // Replace the x and y, setting an angle theta.
-                // These x and y are used to get the momentum and density
+                // These x and y are used to get the momentum and flux
                 Real theta;
                 if (nmodes == 1 && rz_random_theta) {
                     // With only 1 mode, the angle doesn't matter so
@@ -1822,13 +1820,11 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
 #endif
                 Real flux = inj_flux->getFlux(ppos.x, ppos.y, ppos.z, t);
-                // Remove particle if flux below threshold
-                if ( flux < density_min ){
+                // Remove particle if flux is negative or 0
+                if ( flux <=0 ){
                     p.id() = -1;
                     continue;
                 }
-                // Cut density if above threshold
-                flux = amrex::min(flux, density_max);
 
                 if (loc_do_field_ionization) {
                     p_ion_level[ip] = loc_ionization_initial_level;
