@@ -221,14 +221,14 @@ void HybridPICModel::HybridPICSolveE (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-    DtType a_dt_type)
+    const bool include_resistivity_term)
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
         HybridPICSolveE(
             Efield[lev], Jfield[lev], Bfield[lev], rhofield[lev],
-            edge_lengths[lev], lev, a_dt_type
+            edge_lengths[lev], lev, include_resistivity_term
         );
     }
 }
@@ -239,13 +239,13 @@ void HybridPICModel::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-    const int lev, DtType a_dt_type)
+    const int lev, const bool include_resistivity_term)
 {
     WARPX_PROFILE("WarpX::HybridPICSolveE()");
 
     HybridPICSolveE(
         Efield, Jfield, Bfield, rhofield, edge_lengths, lev,
-        PatchType::fine, a_dt_type
+        PatchType::fine, include_resistivity_term
     );
     if (lev > 0)
     {
@@ -260,41 +260,17 @@ void HybridPICModel::HybridPICSolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-    const int lev, PatchType patch_type, DtType a_dt_type)
+    const int lev, PatchType patch_type,
+    const bool include_resistivity_term)
 {
     auto& warpx = WarpX::GetInstance();
 
     // Solve E field in regular cells
-    // The first half step uses t=n quantities, the second half t=n+1/2
-    // quantities and the full step uses t=n+1 quantities
-    if (a_dt_type == DtType::FirstHalf) {
-        warpx.get_pointer_fdtd_solver_fp(lev)->HybridPICSolveE(
-            Efield, current_fp_ampere[lev],
-            current_fp_temp[lev], Bfield,
-            rho_fp_temp[lev],
-            electron_pressure_fp[lev],
-            edge_lengths, lev, this, a_dt_type
-        );
-    }
-    else if (a_dt_type == DtType::SecondHalf) {
-        warpx.get_pointer_fdtd_solver_fp(lev)->HybridPICSolveE(
-            Efield, current_fp_ampere[lev],
-            Jfield, Bfield,
-            rho_fp_temp[lev],
-            electron_pressure_fp[lev],
-            edge_lengths, lev, this, a_dt_type
-        );
-    }
-    else {
-        warpx.get_pointer_fdtd_solver_fp(lev)->HybridPICSolveE(
-            Efield, current_fp_ampere[lev],
-            current_fp_temp[lev], Bfield,
-            rhofield,
-            electron_pressure_fp[lev],
-            edge_lengths, lev, this, a_dt_type
-        );
-    }
-
+    warpx.get_pointer_fdtd_solver_fp(lev)->HybridPICSolveE(
+        Efield, current_fp_ampere[lev], Jfield, Bfield, rhofield,
+        electron_pressure_fp[lev],
+        edge_lengths, lev, this, include_resistivity_term
+    );
     warpx.ApplyEfieldBoundary(lev, patch_type);
 }
 
@@ -326,7 +302,6 @@ void HybridPICModel::CalculateElectronPressure(const int lev, DtType a_dt_type)
     warpx.ApplyElectronPressureBoundary(lev, PatchType::fine);
     electron_pressure_fp[lev]->FillBoundary(warpx.Geom(lev).periodicity());
 }
-
 
 void HybridPICModel::FillElectronPressureMF (
     std::unique_ptr<amrex::MultiFab> const& Pe_field,
