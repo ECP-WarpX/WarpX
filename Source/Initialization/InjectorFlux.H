@@ -79,7 +79,17 @@ struct InjectorFlux
     void operator= (InjectorFlux const&) = delete;
     void operator= (InjectorFlux &&) = delete;
 
-    void clear ();
+    void clear ()
+    {
+        switch (type)
+        {
+        case Type::constant:
+        case Type::parser:
+        {
+            break;
+        }
+        }
+    }
 
     // call getFlux from the object stored in the union
     // (the union is called Object, and the instance is called object).
