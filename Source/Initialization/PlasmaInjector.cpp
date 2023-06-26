@@ -536,7 +536,7 @@ PlasmaInjector::~PlasmaInjector () = default;
 
 // Depending on injection type at runtime, initialize inj_rho
 // so that inj_rho->getDensity calls
-// InjectorPosition[Constant or Custom or etc.].getDensity.
+// InjectorPosition[Constant or Predefined or etc.].getDensity.
 void PlasmaInjector::parseDensity (const amrex::ParmParse& pp)
 {
     // parse density information
@@ -548,9 +548,6 @@ void PlasmaInjector::parseDensity (const amrex::ParmParse& pp)
         utils::parser::getWithParser(pp, "density", density);
         // Construct InjectorDensity with InjectorDensityConstant.
         h_inj_rho.reset(new InjectorDensity((InjectorDensityConstant*)nullptr, density));
-    } else if (rho_prof_s == "custom") {
-        // Construct InjectorDensity with InjectorDensityCustom.
-        h_inj_rho.reset(new InjectorDensity((InjectorDensityCustom*)nullptr, species_name));
     } else if (rho_prof_s == "predefined") {
         // Construct InjectorDensity with InjectorDensityPredefined.
         h_inj_rho.reset(new InjectorDensity((InjectorDensityPredefined*)nullptr,species_name));
@@ -574,7 +571,7 @@ void PlasmaInjector::parseDensity (const amrex::ParmParse& pp)
 
 // Depending on injection type at runtime, initialize inj_mom
 // so that inj_mom->getMomentum calls
-// InjectorMomentum[Constant or Custom or etc.].getMomentum.
+// InjectorMomentum[Constant or Gaussian or etc.].getMomentum.
 void PlasmaInjector::parseMomentum (const amrex::ParmParse& pp)
 {
     using namespace amrex::literals;
@@ -601,9 +598,6 @@ void PlasmaInjector::parseMomentum (const amrex::ParmParse& pp)
         utils::parser::queryWithParser(pp, "uz", uz);
         // Construct InjectorMomentum with InjectorMomentumConstant.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumConstant*)nullptr, ux, uy, uz));
-    } else if (mom_dist_s == "custom") {
-        // Construct InjectorMomentum with InjectorMomentumCustom.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumCustom*)nullptr, species_name));
     } else if (mom_dist_s == "gaussian") {
         amrex::Real ux_m = 0._rt;
         amrex::Real uy_m = 0._rt;
