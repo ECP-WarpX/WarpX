@@ -98,9 +98,9 @@ void WarpXFluidContainer::InitData(int lev)
         amrex::ParallelFor(tile_box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
                            {
 #if defined(WARPX_DIM_3D)
-                               amrex::Real x = problo[0] + i * dx[0];
-                               amrex::Real y = problo[1] + j * dx[1];
-                               amrex::Real z = problo[2] + k * dx[2];
+                amrex::Real x = problo[0] + i * dx[0];
+                amrex::Real y = problo[1] + j * dx[1];
+                amrex::Real z = problo[2] + k * dx[2];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::Real x = problo[0] + i * dx[0];
                 amrex::Real y = 0.0_rt;
@@ -111,13 +111,13 @@ void WarpXFluidContainer::InitData(int lev)
                 amrex::Real z = problo[0] + i * dx[0];
 #endif
 
-                               amrex::Real n = inj_rho->getDensity(x, y, z);
-                               auto u = inj_mom->getBulkMomentum(x, y, z);
+                amrex::Real n = inj_rho->getDensity(x, y, z);
+                auto u = inj_mom->getBulkMomentum(x, y, z);
 
-                               N_arr(i, j, k) = n;
-                               NUx_arr(i, j, k) = n * u.x;
-                               NUy_arr(i, j, k) = n * u.y;
-                               NUz_arr(i, j, k) = n * u.z; });
+                N_arr(i, j, k) = n;
+                NUx_arr(i, j, k) = n * u.x;
+                NUy_arr(i, j, k) = n * u.y;
+                NUz_arr(i, j, k) = n * u.z; });
     }
 
     // Fill guard cells
@@ -203,11 +203,11 @@ void WarpXFluidContainer::DepositCurrent(int lev,
         amrex::ParallelFor(tile_box, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
                            {
 
-                               // Calculate J from fluid and add it to jx/jy/jz
-                               auto gamma = std::sqrt(N_arr(i, j, k) * N_arr(i, j, k) + (NUx_arr(i, j, k) * NUx_arr(i, j, k) + NUy_arr(i, j, k) * NUy_arr(i, j, k) + NUz_arr(i, j, k) * NUz_arr(i, j, k)) * inv_clight_sq) / N_arr(i, j, k);
-                               tmp_jx_fluid_arr(i, j, k) = q * (NUx_arr(i, j, k) / gamma);
-                               tmp_jy_fluid_arr(i, j, k) = q * (NUy_arr(i, j, k) / gamma);
-                               tmp_jz_fluid_arr(i, j, k) = q * (NUz_arr(i, j, k) / gamma); });
+                // Calculate J from fluid and add it to jx/jy/jz
+                auto gamma = std::sqrt(N_arr(i, j, k) * N_arr(i, j, k) + (NUx_arr(i, j, k) * NUx_arr(i, j, k) + NUy_arr(i, j, k) * NUy_arr(i, j, k) + NUz_arr(i, j, k) * NUz_arr(i, j, k)) * inv_clight_sq) / N_arr(i, j, k);
+                tmp_jx_fluid_arr(i, j, k) = q * (NUx_arr(i, j, k) / gamma);
+                tmp_jy_fluid_arr(i, j, k) = q * (NUy_arr(i, j, k) / gamma);
+                tmp_jz_fluid_arr(i, j, k) = q * (NUz_arr(i, j, k) / gamma); });
 
         amrex::Array4<amrex::Real> jx_arr = jx.array(mfi);
         amrex::Array4<amrex::Real> jy_arr = jy.array(mfi);
@@ -217,12 +217,12 @@ void WarpXFluidContainer::DepositCurrent(int lev,
         amrex::ParallelFor(
             tile_box_cc_x, tile_box_cc_y, tile_box_cc_z, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                               // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
-                               amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
-                               auto jx_CC = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr, j_Nodal_type, jx_CC_type, sf, i, j, k, 0);
+                // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
+                amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
+                auto jx_CC = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr, j_Nodal_type, jx_CC_type, sf, i, j, k, 0);
 
-                                // Calculate J from fluid and add it to jx
-                               jx_arr(i, j, k) += jx_CC; },
+                // Calculate J from fluid and add it to jx
+                jx_arr(i, j, k) += jx_CC; },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
