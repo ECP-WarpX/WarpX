@@ -13,10 +13,11 @@ and compares the temporal evolution of energy with the associated theoretical gr
 Further analysis enables the experimental growth rate to be calculated using linear regression.
 """
 
-from openpmd_viewer import OpenPMDTimeSeries
+import math
+
 import matplotlib.pyplot as plt
 import numpy as np
-import math
+from openpmd_viewer import OpenPMDTimeSeries
 import scipy
 from sklearn.linear_model import LinearRegression
 
