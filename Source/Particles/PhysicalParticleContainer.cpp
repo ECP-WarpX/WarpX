@@ -1475,7 +1475,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     }
 
     InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
-    InjectorDensity*  inj_rho = plasma_injector->getInjectorDensity();
+    InjectorFlux*  inj_flux = plasma_injector->getInjectorFlux();
     InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
     const amrex::Real density_min = plasma_injector->density_min;
     const amrex::Real density_max = plasma_injector->density_max;
@@ -1821,14 +1821,14 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     pu.y = sin_theta*ur + cos_theta*ut;
                 }
 #endif
-                Real dens = inj_rho->getDensity(ppos.x, ppos.y, ppos.z);
-                // Remove particle if density below threshold
-                if ( dens < density_min ){
+                Real flux = inj_flux->getFlux(ppos.x, ppos.y, ppos.z, t);
+                // Remove particle if flux below threshold
+                if ( flux < density_min ){
                     p.id() = -1;
                     continue;
                 }
                 // Cut density if above threshold
-                dens = amrex::min(dens, density_max);
+                flux = amrex::min(flux, density_max);
 
                 if (loc_do_field_ionization) {
                     p_ion_level[ip] = loc_ionization_initial_level;
@@ -1854,12 +1854,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
 #ifdef WARPX_DIM_RZ
                 // The particle weight is proportional to the user-specified
-                // flux (denoted as `dens` here) and the emission surface within
+                // flux and the emission surface within
                 // one cell (captured partially by `scale_fac`).
                 // For cylindrical emission (flux_normal_axis==0
                 // or flux_normal_axis==2), the emission surface depends on
                 // the radius ; thus, the calculation is finalized here
-                Real t_weight = dens * scale_fac * dt;
+                Real t_weight = flux * scale_fac * dt;
                 if (loc_flux_normal_axis != 1) {
                     if (radially_weighted) {
                          t_weight *= 2._rt*MathConst::pi*radial_position;
@@ -1872,7 +1872,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
                 const Real weight = t_weight;
 #else
-                const Real weight = dens * scale_fac * dt;
+                const Real weight = flux * scale_fac * dt;
 #endif
                 pa[PIdx::w ][ip] = weight;
                 pa[PIdx::ux][ip] = pu.x;
