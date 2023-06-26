@@ -242,5 +242,12 @@ The input file for this example and corresponding analysis can be found at:
 * :download:`Magnetic reconnection input <../../../Examples/Tests/ohm_solver_magnetic_reconnection/PICMI_inputs.py>`
 * :download:`Analysis script <../../../Examples/Tests/ohm_solver_magnetic_reconnection/analysis.py>`
 
+Electron Weibel instability
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Weibel instability is a plasma instability present in homogeneous electromagnetic plasmas
+which possess an anisotropy in momentum space. Here, two counter-current electron beams are superimposed.
+The instability causes exponential growth of electromagnetic fields in the plasma.
+
 .. bibliography::
     :keyprefix: ex-
