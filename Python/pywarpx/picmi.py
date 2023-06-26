@@ -401,10 +401,10 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
         self.set_mangle_dict()
         self.set_species_attributes(species, layout)
 
-        species.profile = "constant"
-        species.density = self.flux
+        species.flux_profile = "constant"
+        species.flux = self.flux
         if density_scale is not None:
-            species.density *= density_scale
+            species.flux *= density_scale
         species.flux_normal_axis = self.flux_normal_axis
         species.surface_flux_pos = self.surface_flux_position
         species.flux_direction = self.flux_direction
