@@ -681,7 +681,7 @@ WarpX::ReadParameters ()
                 moving_window_dir = 1;
             }
 #endif
-#if defined(WARPX_DIM_2D) || defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
             else if (s == "x" || s == "X") {
                 moving_window_dir = 0;
             }
