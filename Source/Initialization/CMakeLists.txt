@@ -4,6 +4,7 @@ foreach(D IN LISTS WarpX_DIMS)
       PRIVATE
         WarpXAMReXInit.cpp
         InjectorDensity.cpp
+        InjectorFlux.cpp
         InjectorMomentum.cpp
         PlasmaInjector.cpp
         WarpXInitData.cpp
