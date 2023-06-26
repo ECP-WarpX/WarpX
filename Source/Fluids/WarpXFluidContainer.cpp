@@ -183,7 +183,7 @@ void WarpXFluidContainer::DepositCurrent(
         jz_CC_type[i] = jz.ixType()[i];
     }
 
-// Loop over grid
+// Calculate j at the nodes
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -215,7 +215,7 @@ void WarpXFluidContainer::DepositCurrent(
 
     }
 
-// Loop over grid
+// Interpolate j from the nodes to the simulation mesh (typically Yee mesh)
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -233,31 +233,28 @@ void WarpXFluidContainer::DepositCurrent(
         amrex::Array4<amrex::Real> tmp_jy_fluid_arr = tmp_jy_fluid.array(mfi);
         amrex::Array4<amrex::Real> tmp_jz_fluid_arr = tmp_jz_fluid.array(mfi);
 
+        // When using the `Interp` function, one needs to specify whether coarsening is desired.
+        // Here, we do not perform any coarsening.
+        amrex::GpuArray<int, 3U> coarsening_ratio = {AMREX_D_DECL(1, 1, 1)};
+
         // Loop over cells (ParallelFor)
         amrex::ParallelFor( tile_box_cc_x, tile_box_cc_y, tile_box_cc_z,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
-                amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
-                auto jx_CC = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr, j_Nodal_type, jx_CC_type, sf, i, j, k, 0);
-
-                // Calculate J from fluid and add it to jx
+                amrex::Real jx_CC = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr,
+                    j_Nodal_type, jx_CC_type, coarsening_ratio, i, j, k, 0);
                 jx_arr(i, j, k) += jx_CC;
             },
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
-                amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
-                auto jy_CC = ablastr::coarsen::sample::Interp(tmp_jy_fluid_arr, j_Nodal_type, jy_CC_type, sf, i, j, k, 0);
-
+                amrex::Real jy_CC = ablastr::coarsen::sample::Interp(tmp_jy_fluid_arr,
+                    j_Nodal_type, jy_CC_type, coarsening_ratio, i, j, k, 0);
                 jy_arr(i, j, k) += jy_CC;
             },
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                // Interpolate N/NU from nodes to the simulation mesh (typically Yee mesh)
-                amrex::GpuArray<int, 3U> sf = {AMREX_D_DECL(1, 1, 1)};
-                auto jz_CC = ablastr::coarsen::sample::Interp(tmp_jz_fluid_arr, j_Nodal_type, jz_CC_type, sf, i, j, k, 0);
-
+                amrex::Real jz_CC = ablastr::coarsen::sample::Interp(tmp_jz_fluid_arr,
+                    j_Nodal_type, jz_CC_type, coarsening_ratio, i, j, k, 0);
                 jz_arr(i, j, k) += jz_CC;
             }
         );
