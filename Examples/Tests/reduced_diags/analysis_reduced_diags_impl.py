@@ -227,7 +227,7 @@ def do_analysis(single_precision = False):
     FR_Mindata = np.genfromtxt('./diags/reducedfiles/FR_Min.txt')  # Field Reduction using minimum
     FR_Integraldata = np.genfromtxt('./diags/reducedfiles/FR_Integral.txt')  # Field Reduction using integral
     Edotjdata = np.genfromtxt('./diags/reducedfiles/Edotj.txt') # E dot j maximum
-    
+
     # First index "1" points to the values written at the last time step
     values_rd['field energy'] = EFdata[1][2]
     values_rd['field energy in quarter of simulation domain'] = FR_Integraldata[1][2]
