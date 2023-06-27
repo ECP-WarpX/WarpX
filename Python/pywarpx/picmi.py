@@ -2478,7 +2478,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         self.reduction_type = kw.pop("reduction_type")
         reduced_function = kw.pop("reduced_function")
 
-        self.__setattr__("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)", reduced_function)
+        self.__setattr__("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz)", reduced_function)
 
         # Check the reduced function expression for constants
         for k in list(kw.keys()):
