@@ -48,8 +48,8 @@ fi
 
 # PBS is not well configured to properly address GPU visibility
 # per MPI rank. Thus, we define the node layouts here.
-export GPUS_PER_SOCKET=2
-export GPUS_PER_NODE=4
+export GPUS_PER_SOCKET=4
+export GPUS_PER_NODE=8
 
 # optimize CUDA compilation for A100
 export AMREX_CUDA_ARCH=8.0
