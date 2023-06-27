@@ -45,4 +45,5 @@ LaserEnvelope::LaserEnvelope(AmrCore* amr_core, int ispecies, const std::string&
         e_max_is_specified ^ a0_is_specified,
         "Exactly one of e_max or a0 must be specified for the laser.\n"
         );
-}
+        return; // Disable laser if amplitude is 0
+    }
