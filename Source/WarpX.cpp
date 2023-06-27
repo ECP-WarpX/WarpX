@@ -288,12 +288,12 @@ WarpX::WarpX ()
         // Storing injection position for all species, regardless of whether
         // they are continuously injected, since it makes looping over the
         // elements of current_injection_position easier elsewhere in the code.
-        if (moving_window_v >= 0._rt)
+        if (moving_window_v > 0._rt)
         {
             // Inject particles continuously from the right end of the box
             inj_pos = geom[0].ProbHi(moving_window_dir);
         }
-        else
+        else if (moving_window_v < 0._rt)
         {
             // Inject particles continuously from the left end of the box
             inj_pos = geom[0].ProbLo(moving_window_dir);

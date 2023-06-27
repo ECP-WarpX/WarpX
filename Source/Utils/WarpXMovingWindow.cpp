@@ -383,22 +383,28 @@ WarpX::MoveWindow (const int step, bool move_j)
             // for correct particle spacing)
             amrex::RealBox particleBox = geom[lev].ProbDomain();
             amrex::Real new_injection_position;
-            if (moving_window_v >= 0){
+            if (moving_window_v > 0._rt)
+            {
                 // Forward-moving window
                 const amrex::Real dx = geom[lev].CellSize(dir);
                 new_injection_position = current_injection_position[i] +
                     std::floor( (geom[lev].ProbHi(dir) - current_injection_position[i])/dx ) * dx;
-            } else {
+            }
+            else if (moving_window_v < 0._rt)
+            {
                 // Backward-moving window
                 const amrex::Real dx = geom[lev].CellSize(dir);
                 new_injection_position = current_injection_position[i] -
                     std::floor( (current_injection_position[i] - geom[lev].ProbLo(dir))/dx) * dx;
             }
             // Modify the corresponding bounds of the particleBox
-            if (moving_window_v >= 0) {
+            if (moving_window_v > 0._rt)
+            {
                 particleBox.setLo( dir, current_injection_position[i] );
                 particleBox.setHi( dir, new_injection_position );
-            } else {
+            }
+            else if (moving_window_v < 0._rt)
+            {
                 particleBox.setLo( dir, new_injection_position );
                 particleBox.setHi( dir, current_injection_position[i] );
             }
