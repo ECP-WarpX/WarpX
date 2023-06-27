@@ -296,24 +296,27 @@ BTDiagnostics::ReadParameters ()
 bool
 BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
-    // timestep < 0, i.e., at initialization time when step == -1
-    if (step < 0 )
-        return false;
-    // Do not call dump if the snapshot is already full and the files are closed.
-    else if (m_snapshot_full[i_buffer] == 1)
-        return false;
-    // If buffer for this lab snapshot is full then dump it and continue to collect
-    // slices afterwards; or
-    // If last z-slice in the lab-frame snapshot is filled, call dump to
-    // write the buffer and close the file.
-    else if (buffer_full(i_buffer) || m_lastValidZSlice[i_buffer] == 1)
-        return true;
-    // forced: at the end of the simulation
-    // empty: either lab snapshot was already fully written and buffer was reset
-    //        to zero size or that lab snapshot was not even started to be
-    //        backtransformed yet
-    else if (force_flush && !buffer_empty(i_buffer))
-        return true;
+
+    // Do not call dump if timestep < 0, i.e., at initialization time when step == -1
+    // or if the snapshot is already full and the files are closed.
+    if (step >= 0 && (m_snapshot_full[i_buffer] != 1)){
+
+        // If buffer for this lab snapshot is full then dump it and continue to collect
+        // slices afterwards
+        const auto is_buffer_full = buffer_full(i_buffer);
+        // or
+        // If last z-slice in the lab-frame snapshot is filled, call dump to
+        // write the buffer and close the file.
+        const auto last_z_slice_filled = (m_lastValidZSlice[i_buffer] == 1);
+        // or
+        // Do a forced dump at the end of the simulation, unless lab snapshot
+        // was already fully written and buffer was reset to zero size or that
+        // lab snapshot was not even started to be backtransformed yet
+        const auto do_forced_flush = (force_flush && !buffer_empty(i_buffer));
+
+        return is_buffer_full || last_z_slice_filled || do_forced_flush;
+    }
+
     return false;
 }
 
@@ -326,13 +329,7 @@ BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
     // force_flush is set to true, because we dont need to redundantly re-compute
     // buffers when force_flush = true. We only need to dump the buffers when
     // force_flush=true. Note that the BTD computation is performed every timestep (step>=0)
-    if (step < 0 ) {
-        return false;
-    } else if (force_flush) {
-        return false;
-    } else {
-        return true;
-    }
+    return ( (step >=0 ) && (!force_flush) );
 }
 
 void
