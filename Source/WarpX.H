@@ -23,6 +23,7 @@
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
+#include "Laser/LaserEnvelope.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -39,7 +40,6 @@
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Laser/LaserEnvelope.H"
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
 #include <AMReX_Array.H>
@@ -157,6 +157,11 @@ public:
     std::unique_ptr<amrex::Parser> Eyfield_parser;
     //! User-defined parser to initialize z-component of the electric field on the grid
     std::unique_ptr<amrex::Parser> Ezfield_parser;
+
+
+    
+    
+
 
     // Algorithms
     //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay)
@@ -482,7 +487,7 @@ public:
     amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
     amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const { return vector_potential_fp_nodal[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_laser_envelope_vector_potential_fp  (int lev, int direction) const { return Laser_Envelope_Solver.A_laser_envelope[lev].get(); }
+    //amrex::MultiFab * get_pointer_laser_envelope_vector_potential_fp  (int lev, int direction) const { return Laser_Envelope_Solver.A_laser_envelope[lev].get(); }//
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
@@ -1367,7 +1372,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_e_stag;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_grad_buf_b_stag;
-    LaserEnvelope Laser_Envelope_Solver;
 
     // Same as Bfield_fp/Efield_fp for reading external field data
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_external;
@@ -1478,6 +1482,9 @@ private:
 
     // Hybrid PIC algorithm parameters
     std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
+
+    // Laser Envelope Model parameters
+    std::unique_ptr<LaserEnvelope> m_laser_envelope_model;
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file

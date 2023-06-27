@@ -134,7 +134,7 @@ void
 WarpXLaserProfiles::FromFileLaserProfile::fill_amplitude (
     const int np,
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
-    Real t, Real * AMREX_RESTRICT const amplitude) const
+    Real t, Real * AMREX_RESTRICT const amplitude, bool laser_envelope) const
 {
     t += m_params.t_min - m_params.t_delay;
     //Amplitude is 0 if time is out of range

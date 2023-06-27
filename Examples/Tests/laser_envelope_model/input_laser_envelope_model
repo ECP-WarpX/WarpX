@@ -9,7 +9,7 @@ boundary.field_lo = pml pml
 # diag
 diag1.diag_type = Full
 diag1.intervals = 50
-diag1.fields_to_plot = Ex Ey Ez A_laser_envelope
+diag1.fields_to_plot = Ex Ey Ez #A_laser_envelope
 # diagnostics
 diagnostics.diags_names = diag1
 # geometry
@@ -28,7 +28,7 @@ laser.profile_t_peak = 30e-15 # not sure how to set this
 laser.profile_waist = 15e-6 # w_0
 laser.wavelength = 0.8e-6 # lambda_0
 # lasers
-lasers.names = laser
+laser_envelopes.names = laser
 # max_step
 max_step = 1000
 # warpx
