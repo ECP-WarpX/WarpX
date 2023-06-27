@@ -29,8 +29,9 @@ INPUTS=inputs_rz
 export OMP_NUM_THREADS=$(($PBS_NCPUS / $PBS_NP))
 
 # run
-mpirun -np ${PBS_NP}  \
-  ${EXE} ${INPUTS}          \
+mpirun -np ${PBS_NP} bash -c "
+    export CUDA_VISIBLE_DEVICES=\${MPI_LOCALRANKID};
+    ${EXE} ${INPUTS}" \
   > output.txt
 
 # Move the output
