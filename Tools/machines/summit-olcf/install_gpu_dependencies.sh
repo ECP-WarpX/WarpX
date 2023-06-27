@@ -55,21 +55,22 @@ python3 -m pip uninstall -qqq -y mpi4py 2>/dev/null || true
 # General extra dependencies ##################################################
 #
 
+# tmpfs build directory: avoids issues often seen with $HOME and is faster
+build_dir=$(mktemp -d)
+
 # BLAS++ (for PSATD+RZ)
 if [ -d $HOME/src/blaspp ]
 then
   cd $HOME/src/blaspp
   git fetch
-  git checkout main
+  git checkout master
   git pull
   cd -
 else
   git clone https://github.com/icl-utk-edu/blaspp.git $HOME/src/blaspp
 fi
-rm -rf $HOME/src/blaspp-summit-build
-cmake -S $HOME/src/blaspp -B $HOME/src/blaspp-summit-build -Duse_openmp=ON -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
-cmake --build $HOME/src/blaspp-summit-build --target install --parallel 10
-rm -rf $HOME/src/blaspp-summit-build
+cmake -S $HOME/src/blaspp -B ${build_dir}/blaspp-summit-build -Duse_openmp=ON -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
+cmake --build ${build_dir}/blaspp-summit-build --target install --parallel 10
 
 # LAPACK++ (for PSATD+RZ)
 if [ -d $HOME/src/lapackpp ]
@@ -82,10 +83,11 @@ then
 else
   git clone https://github.com/icl-utk-edu/lapackpp.git $HOME/src/lapackpp
 fi
-rm -rf $HOME/src/lapackpp-summit-build
-cmake -S $HOME/src/lapackpp -B $HOME/src/lapackpp-summit-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
-cmake --build $HOME/src/lapackpp-summit-build --target install --parallel 10
-rm -rf $HOME/src/lapackpp-summit-build
+cmake -S $HOME/src/lapackpp -B ${build_dir}/lapackpp-summit-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
+cmake --build ${build_dir}/lapackpp-summit-build --target install --parallel 10
+
+# remove build temporary directory
+rm -rf ${build_dir}
 
 
 # Python ######################################################################
@@ -94,14 +96,14 @@ python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade virtualenv
 python3 -m pip cache purge
 rm -rf ${SW_DIR}/venvs/warpx-summit
-python3 -m venv ${SW_DIR}/gpu/venvs/warpx-summit
+python3 -m venv ${SW_DIR}/venvs/warpx-summit
 source ${SW_DIR}/venvs/warpx-summit/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade wheel
 python3 -m pip install --upgrade cython
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas
-python3 -m pip install --upgrade scipy
+python3 -m pip install --upgrade scipy==1.8.1
 python3 -m pip install --upgrade mpi4py --no-cache-dir --no-build-isolation --no-binary mpi4py
 python3 -m pip install --upgrade openpmd-api
 python3 -m pip install --upgrade matplotlib==3.2.2  # does not try to build freetype itself
