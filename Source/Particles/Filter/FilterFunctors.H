@@ -123,8 +123,10 @@ struct ParserFilter
                 uy /= m_mass;
                 uz /= m_mass;
             }
-
             // ux, uy, uz are now in beta*gamma
+
+            // This is actually a binary true/false (1/0) check,
+            // but the parser returns floating point types
             return (m_function_partparser(m_t,x,y,z,ux,uy,uz) != 0.0_rt);
         }
     }

@@ -303,15 +303,15 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 
         // If buffer for this lab snapshot is full then dump it and continue to collect
         // slices afterwards
+        const auto is_buffer_full = buffer_full(i_buffer);
         // or
         // If last z-slice in the lab-frame snapshot is filled, call dump to
         // write the buffer and close the file.
+        const auto last_z_slice_filled = (m_lastValidZSlice[i_buffer] == 1);
         // or
         // Do a forced dump at the end of the simulation, unless lab snapshot
         // was already fully written and buffer was reset to zero size or that
         // lab snapshot was not even started to be backtransformed yet
-        const auto is_buffer_full = buffer_full(i_buffer);
-        const auto last_z_slice_filled = (m_lastValidZSlice[i_buffer] == 1);
         const auto do_forced_flush = (force_flush && !buffer_empty(i_buffer));
 
         return is_buffer_full || last_z_slice_filled || do_forced_flush;
