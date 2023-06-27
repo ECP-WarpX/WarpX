@@ -1,4 +1,8 @@
 Checks: '-*,
+    bugprone-argument-comment,
+    bugprone-assert-side-effect,	
+    bugprone-bad-signal-to-kill-thread,
+    bugprone-bool-pointer-implicit-conversion,
     cppcoreguidelines-avoid-goto,
     misc-const-correctness,
     modernize-avoid-bind,
