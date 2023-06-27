@@ -83,7 +83,6 @@ then
 else
   git clone https://github.com/icl-utk-edu/lapackpp.git $HOME/src/lapackpp
 fi
-build_dir=$(mktemp -d)
 cmake -S $HOME/src/lapackpp -B ${build_dir}/lapackpp-summit-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
 cmake --build ${build_dir}/lapackpp-summit-build --target install --parallel 10
 
