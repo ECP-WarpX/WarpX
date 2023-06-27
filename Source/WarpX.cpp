@@ -672,17 +672,21 @@ WarpX::ReadParameters ()
                 pp_warpx, "end_moving_window_step", end_moving_window_step);
             std::string s;
             pp_warpx.get("moving_window_dir", s);
-            if (s == "x" || s == "X") {
-                moving_window_dir = 0;
+
+            if (s == "z" || s == "Z") {
+                moving_window_dir = WARPX_ZINDEX;
             }
 #if defined(WARPX_DIM_3D)
             else if (s == "y" || s == "Y") {
                 moving_window_dir = 1;
             }
 #endif
-            else if (s == "z" || s == "Z") {
-                moving_window_dir = WARPX_ZINDEX;
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
+            else if (s == "x" || s == "X") {
+                moving_window_dir = 0;
             }
+#endif
+
             else {
                 WARPX_ABORT_WITH_MESSAGE("Unknown moving_window_dir: "+s);
             }

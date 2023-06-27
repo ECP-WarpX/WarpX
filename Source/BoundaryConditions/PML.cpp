@@ -258,23 +258,23 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
             {
                 direct_faces.push_back(kv.first);
             }
-#if (AMREX_SPACEDIM >= 2)
+#if (AMREX_SPACEDIM == 2)
             else if (amrex::grow(grid_box, jdim, ncell[jdim]).intersects(box))
             {
                 side_faces.push_back(kv.first);
             }
-#if defined(WARPX_DIM_3D)
-            else if (amrex::grow(grid_box, kdim, ncell[kdim]).intersects(box))
+            else
+            {
+                corners.push_back(kv.first);
+            }
+#elif defined(WARPX_DIM_3D)
+            else if ((amrex::grow(grid_box, jdim, ncell[jdim]).intersects(box)) ||
+                amrex::grow(grid_box, kdim, ncell[kdim]).intersects(box))
             {
                 side_faces.push_back(kv.first);
             }
-            else if (amrex::grow(amrex::grow(grid_box,idim,ncell[idim]),
-                                 jdim,ncell[jdim]).intersects(box))
-            {
-                direct_side_edges.push_back(kv.first);
-            }
-            else if (amrex::grow(amrex::grow(grid_box,idim,ncell[idim]),
-                                 kdim,ncell[kdim]).intersects(box))
+            else if (amrex::grow(amrex::grow(grid_box,idim,ncell[idim]),jdim,ncell[jdim]).intersects(box) ||
+                     amrex::grow(amrex::grow(grid_box,idim,ncell[idim]),kdim,ncell[kdim]).intersects(box) )
             {
                 direct_side_edges.push_back(kv.first);
             }
@@ -283,7 +283,6 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
             {
                 side_side_edges.push_back(kv.first);
             }
-#endif
             else
             {
                 corners.push_back(kv.first);
