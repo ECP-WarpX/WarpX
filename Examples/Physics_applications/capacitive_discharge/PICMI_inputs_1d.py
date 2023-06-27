@@ -97,7 +97,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         """Function run on every step to perform the required steps to solve
         Poisson's equation."""
         # get rho from WarpX
-        self.rho_data = fields.RhoFPWrapper(0, False)[...][:,0]
+        self.rho_data = fields.RhoFPWrapper(0, False)[...]
         # run superLU solver to get phi
         self.solve()
         # write phi to WarpX
