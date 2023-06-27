@@ -159,8 +159,8 @@ public:
     std::unique_ptr<amrex::Parser> Ezfield_parser;
 
 
-    
-    
+
+
 
 
     // Algorithms
