@@ -12,6 +12,9 @@
 
 #include <memory>
 
+namespace warpx::initialization
+{
+
 namespace {
     /** Overwrite defaults in AMReX Inputs
      *
@@ -57,13 +60,15 @@ namespace {
 }
 
 amrex::AMReX*
-warpx_amrex_init (int& argc, char**& argv, bool const build_parm_parse, MPI_Comm const mpi_comm)
+amrex_init (int& argc, char**& argv, bool const build_parm_parse, MPI_Comm const mpi_comm)
 {
     return amrex::Initialize(
         argc,
         argv,
         build_parm_parse,
         mpi_comm,
-        overwrite_amrex_parser_defaults
+        ::overwrite_amrex_parser_defaults
     );
+}
+
 }
