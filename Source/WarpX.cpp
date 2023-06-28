@@ -3089,8 +3089,8 @@ WarpX::isAnyBoundaryPML()
 std::string
 TagWithLevelSuffix (std::string name, int const level)
 {
-    // Add the suffix "[l=level]"
-    name.append("[l=").append(std::to_string(level)).append("]");
+    // Add the suffix "[level=level]"
+    name.append("[level=").append(std::to_string(level)).append("]");
     return name;
 }
 
