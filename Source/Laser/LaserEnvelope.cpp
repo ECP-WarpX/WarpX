@@ -23,7 +23,6 @@ LaserEnvelope::LaserEnvelope(AmrCore* amr_core, int ispecies, const std::string&
     : m_laser_name{name}
 {
     const ParmParse pp_laser_name(m_laser_name);
-
     // Parse the type of laser profile and set the corresponding flag `profile`
     std::string laser_type_s;
     pp_laser_name.get("profile", laser_type_s);
@@ -46,4 +45,9 @@ LaserEnvelope::LaserEnvelope(AmrCore* amr_core, int ispecies, const std::string&
         "Exactly one of e_max or a0 must be specified for the laser.\n"
         );
         return; // Disable laser if amplitude is 0
+    
+    amrex::Print() << "The wavelength of the laser is " << m_wavelength << " nm\n";
+    amrex::Print() << "The profile waist of the laser is " << m_profile_waist << " s\n";
+    amrex::Print() << "The profile peak of the laser is " << m_profile_t_peak << " s\n";
+    amrex::Print() << "We are considering the laser " << m_laser_name << " \n";
     }
