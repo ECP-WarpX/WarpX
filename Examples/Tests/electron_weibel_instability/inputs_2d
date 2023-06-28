@@ -2,7 +2,7 @@
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 1000000
-stop_time = 1.5e-11
+stop_time = 1.0e-11
 amr.n_cell = 192 512      # 2 is the transverse domain, most likely 4 will be better for quasi-1D
 amr.max_grid_size_x = 64
 amr.max_grid_size_y = 512

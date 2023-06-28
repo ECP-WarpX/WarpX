@@ -14,12 +14,12 @@ Further analysis enables the experimental growth rate to be calculated using lin
 """
 
 import math
-
 import matplotlib.pyplot as plt
 import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
-import scipy
 from sklearn.linear_model import LinearRegression
+import matplotlib.animation as animation
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 ts = OpenPMDTimeSeries('diags/diag1')
 
@@ -90,13 +90,7 @@ gamma = beta * w_p
 
 # Optimization of the t_0
 a0 = 2*gamma
-# b0 : the starting estimate for the roots of func(b) = 0
-b0 = a0*1e-13
-
-def func(i):
-    return ((ln(Y) - (a0*X + i))**2).sum()
-b0_opt = scipy.optimize.fsolve(func, b0)
-# Other option : b0_opt = np.mean(ln(Y) - a0*X)
+b0_opt = np.mean(ln(Y) - a0*X)
 t_0 = - b0_opt / a0
 
 def f(t):
@@ -135,3 +129,32 @@ plt.xlim(0,4e-12)
 plt.ylim(0,1e8)
 plt.legend()
 plt.savefig('Comparison.png')
+
+# Animation
+plt.rcParams["figure.autolayout"] = True
+
+fig = plt.figure()
+
+ax = fig.add_subplot(111)
+div = make_axes_locatable(ax)
+cax = div.append_axes('right', '10%', '10%')
+data, info = ts.get_field(field='rho_electrons_1', iteration=0, plot=False)
+im = ax.imshow(data)
+cb = fig.colorbar(im, cax=cax)
+tx = ax.set_title('Iteration 0', pad = 20)
+ax.set(xlabel='x', ylabel='z')
+
+iterations = ts.iterations
+time = ts.t
+
+def animate(i):
+    iter = iterations[i]
+    cax.cla()
+    data, info = ts.get_field(field='rho_electrons_1', iteration=iter, plot=False)
+    im = ax.imshow(data, origin = 'lower')
+    fig.colorbar(im, cax=cax)
+    tx.set_text('Rho_electrons_1 \n Iteration {} - Time {:.2e} s'.format(iter, time[i]))
+
+ani = animation.FuncAnimation(fig, animate, frames = len(iterations), interval = 100)
+ani.save('Two_streams_1e-2eV.gif')
+
