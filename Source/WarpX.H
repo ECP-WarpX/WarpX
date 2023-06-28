@@ -124,14 +124,11 @@ public:
     static std::string B_ext_grid_s;
     //! Initialization type for external electric field on the grid
     static std::string E_ext_grid_s;
-    //! Initialization type for external A field on the grid
-    static std::string A_ext_grid_s;
 
     //! Whether to apply the effect of an externally-defined electric field
     static bool add_external_E_field;
     //! Whether to apply the effect of an externally-defined magnetic field
     static bool add_external_B_field;
-
 
     //! String storing parser function to initialize x-component of the magnetic field on the grid
     static std::string str_Bx_ext_grid_function;
