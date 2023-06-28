@@ -24,10 +24,5 @@ void InjectorMomentum::clear ()
     {
         break;
     }
-    case Type::custom:
-    {
-        object.custom.clear();
-        break;
-    }
     }
 }

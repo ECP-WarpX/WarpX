@@ -985,7 +985,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in cartesian 1D geometry");
 #endif
 
-#if !defined(AMREX_USE_GPU)
+#if !defined(WARPX_USE_GPUCLOCK)
     amrex::ignore_unused(cost, load_balance_costs_update_algo);
 #endif
 

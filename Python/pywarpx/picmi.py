@@ -401,10 +401,10 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
         self.set_mangle_dict()
         self.set_species_attributes(species, layout)
 
-        species.profile = "constant"
-        species.density = self.flux
+        species.flux_profile = "constant"
+        species.flux = self.flux
         if density_scale is not None:
-            species.density *= density_scale
+            species.flux *= density_scale
         species.flux_normal_axis = self.flux_normal_axis
         species.surface_flux_pos = self.surface_flux_position
         species.flux_direction = self.flux_direction
@@ -1173,6 +1173,15 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
                 (self.position[1] - laser.centroid_position[1])**2 +
                 (self.position[2] - laser.centroid_position[2])**2
             ) / constants.c
+
+
+class LoadInitialField(picmistandard.PICMI_LoadGriddedField):
+    def initialize_inputs(self):
+        pywarpx.warpx.read_fields_from_path = self.read_fields_from_path
+        if self.load_E:
+            pywarpx.warpx.E_ext_grid_init_style = 'read_from_file'
+        if self.load_B:
+            pywarpx.warpx.B_ext_grid_init_style = 'read_from_file'
 
 
 class AnalyticInitialField(picmistandard.PICMI_AnalyticAppliedField):
@@ -2469,7 +2478,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         self.reduction_type = kw.pop("reduction_type")
         reduced_function = kw.pop("reduced_function")
 
-        self.__setattr__("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)", reduced_function)
+        self.__setattr__("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz)", reduced_function)
 
         # Check the reduced function expression for constants
         for k in list(kw.keys()):

@@ -725,8 +725,8 @@ Particle initialization
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :ref:`the install section <install-developers>`.
 
     * ``NFluxPerCell``: Continuously inject a flux of macroparticles from a planar surface.
-      The density specified by the density profile is interpreted to have the units of #/m^2/s.
       This requires the additional parameters:
+      ``<species_name>.flux_profile`` (see the description of this parameter further below)
       ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
       ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r`, `t`, or `z` for RZ. When `flux_normal_axis` is `r` or `t`, the `x` and `y` components of the user-specified momentum distribution are interpreted as the `r` and `t` components respectively)
       ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
@@ -801,6 +801,16 @@ Particle initialization
       mathematical expression for the density of the species, e.g.
       ``electrons.density_function(x,y,z) = "n0+n0*x**2*1.e12"`` where ``n0`` is a
       user-defined constant, see above. WARNING: where ``density_function(x,y,z)`` is close to zero, particles will still be injected between ``xmin`` and ``xmax`` etc., with a null weight. This is undesirable because it results in useless computing. To avoid this, see option ``density_min`` below.
+
+* ``<species_name>.flux_profile`` (`string`)
+    Defines the expression of the flux, when using ``<species_name>.injection_style=NFluxPerCell``
+
+    * ``constant``: Constant flux. This requires the additional parameter ``<species_name>.flux``.
+      i.e., the injection flux in :math:`m^{-2}.s^{-1}`.
+
+    * ``parse_flux_function``: the flux is given by a function in the input file.
+      It requires the additional argument ``<species_name>.flux_function(x,y,z,t)``, which is a
+      mathematical expression for the flux of the species.
 
 * ``<species_name>.density_min`` (`float`) optional (default `0.`)
     Minimum plasma density. No particle is injected where the density is below this value.
@@ -1766,8 +1776,9 @@ Particle push, charge and current deposition, field gathering
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
-    is ``esirkepov`` for FDTD maxwell solvers and ``direct`` for standard or
-    Galilean PSATD solver (that is, with ``algo.maxwell_solver = psatd``).
+    is ``esirkepov`` for FDTD maxwell solvers but ``direct`` for standard or
+    Galilean PSATD solver (i.e. with ``algo.maxwell_solver = psatd``) and
+    for the hybrid-PIC solver (i.e. with ``algo.maxwell_solver = hybrid``).
     Note that ``vay`` is only available for ``algo.maxwell_solver = psatd``.
 
     1. ``direct``
@@ -2674,9 +2685,9 @@ Reduced Diagnostics
         are computed.
 
     * ``FieldReduction``
-        This type computes an arbitrary reduction of the positions and the electromagnetic fields.
+        This type computes an arbitrary reduction of the positions, the current density, and the electromagnetic fields.
 
-        * ``<reduced_diags_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)`` (`string`)
+        * ``<reduced_diags_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz)`` (`string`)
             An analytic function to be reduced must be provided, using the math parser.
 
         * ``<reduced_diags_name>.reduction_type`` (`string`)
@@ -2748,11 +2759,15 @@ Reduced Diagnostics
         :math:`\epsilon_z = \dfrac{1}{mc} \sqrt{\delta_z^2 \delta_{pz}^2 -
         \Big\langle (z-\langle z \rangle) (p_z-\langle p_z \rangle) \Big\rangle^2}`.
 
-        [19], [20]: beta function for the transverse directions (m)
+        [19], [20]: Twiss alpha for the transverse directions
+        :math:`\alpha_x = - \Big\langle (x-\langle x \rangle) (p_x-\langle p_x \rangle) \Big\rangle \Big/ \epsilon_x`,
+        :math:`\alpha_y = - \Big\langle (y-\langle y \rangle) (p_y-\langle p_y \rangle) \Big\rangle \Big/ \epsilon_y`.
+
+        [21], [22]: beta function for the transverse directions (m)
         :math:`\beta_x = \dfrac{{\delta_x}^2}{\epsilon_x}`,
         :math:`\beta_y = \dfrac{{\delta_y}^2}{\epsilon_y}`.
 
-        [21]: The charge of the beam (C).
+        [23]: The charge of the beam (C).
 
         For 2D-XZ,
         :math:`\langle y \rangle`,

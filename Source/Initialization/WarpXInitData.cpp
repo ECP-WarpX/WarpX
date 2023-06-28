@@ -23,7 +23,6 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Algorithms/LinearInterpolation.H"
 #include "Utils/Logo/GetLogo.H"
-#include "Utils/MPIInitHelpers.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -32,6 +31,7 @@
 #include "Utils/WarpXUtil.H"
 #include "Python/WarpX_py.H"
 
+#include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/UsedInputsFile.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -377,7 +377,7 @@ void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
-    utils::warpx_check_mpi_thread_level();
+    ablastr::parallelization::check_mpi_thread_level();
 
 #ifdef WARPX_QED
     Print() << "PICSAR (" << WarpX::PicsarVersion() << ")\n";
@@ -1326,6 +1326,15 @@ void WarpX::CheckKnownIssues()
             !load_balance_intervals.isActivated(),
             "The hybrid-PIC algorithm involves multifabs that are not yet "
             "properly redistributed during load balancing events."
+        );
+
+        const bool external_particle_field_used = (
+            mypc->m_B_ext_particle_s != "none" || mypc->m_E_ext_particle_s != "none"
+        );
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !external_particle_field_used,
+            "The hybrid-PIC algorithm does not work with external fields "
+            "applied directly to particles."
         );
     }
 }

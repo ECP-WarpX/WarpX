@@ -7,7 +7,6 @@
  */
 #include "InjectorDensity.H"
 
-#include "Initialization/CustomDensityProb.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
@@ -26,11 +25,6 @@ void InjectorDensity::clear ()
     {
     case Type::parser:
     {
-        break;
-    }
-    case Type::custom:
-    {
-        object.custom.clear();
         break;
     }
     case Type::predefined:

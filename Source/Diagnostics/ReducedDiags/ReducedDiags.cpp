@@ -40,19 +40,21 @@ ReducedDiags::ReducedDiags (std::string rd_name)
     std::string restart_chkfile = "";
     const ParmParse pp_amr("amr");
     pp_amr.query("restart", restart_chkfile);
-    m_IsNotRestart = restart_chkfile.empty();
+    bool IsNotRestart = restart_chkfile.empty();
 
     if (ParallelDescriptor::IOProcessor())
     {
         // create folder
         constexpr int permission_flag_rwxrxrx = 0755;
-        if (!UtilCreateDirectory(m_path, permission_flag_rwxrxrx))
-        { CreateDirectoryFailed(m_path); }
+        if (!amrex::UtilCreateDirectory(m_path, permission_flag_rwxrxrx))
+        { amrex::CreateDirectoryFailed(m_path); }
 
         // replace / create output file
-        if ( m_IsNotRestart ) // not a restart
+        std::string rd_full_file_name = m_path + m_rd_name + "." + m_extension;
+        m_write_header = IsNotRestart || !amrex::FileExists(rd_full_file_name); // not a restart or file doesn't exist
+        if (m_write_header)
         {
-            std::ofstream ofs{m_path+m_rd_name+"."+m_extension, std::ios::trunc};
+            std::ofstream ofs{rd_full_file_name, std::ios::trunc};
             ofs.close();
         }
     }

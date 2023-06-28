@@ -382,7 +382,7 @@ WarpX::MoveWindow (const int step, bool move_j)
             // (only injects particles in an integer number of cells,
             // for correct particle spacing)
             amrex::RealBox particleBox = geom[lev].ProbDomain();
-            amrex::Real new_injection_position;
+            amrex::Real new_injection_position = current_injection_position[i];
             if (moving_window_v > 0._rt)
             {
                 // Forward-moving window

@@ -619,11 +619,20 @@ public:
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
     /**
-     * \brief
+     * \brief Hybrid-PIC field evolve function.
      * This function contains the logic involved in evolving the electric and
      * magnetic fields in the hybrid PIC algorithm.
      */
     void HybridPICEvolveFields ();
+
+    /**
+     * \brief Hybrid-PIC initial deposition function.
+     * The hybrid-PIC algorithm uses the charge and current density from both
+     * the current and previous step when updating the fields. This function
+     * deposits the initial ion charge and current (before the first particle
+     * push), to be used in the ``HybridPICEvolveFields()`` function.
+     */
+    void HybridPICDepositInitialRhoAndJ ();
 
     /** apply QED correction on electric field
      *
@@ -825,16 +834,19 @@ public:
      *
      * \param[in,out] J_fp reference to fine-patch current \c MultiFab (all MR levels)
      * \param[in,out] J_cp reference to coarse-patch current \c MultiFab (all MR levels)
+     * \param[in,out] J_buffer reference to buffer current \c MultiFab (all MR levels)
      */
     void SyncCurrent (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer);
 
     void SyncRho ();
 
     void SyncRho (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp);
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer);
 
     amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
     int getnsubsteps (int lev) const {return nsubsteps[lev];}
@@ -1157,6 +1169,7 @@ private:
     void AddCurrentFromFineLevelandSumBoundary (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer,
         const int lev);
     void StoreCurrent (const int lev);
     void RestoreCurrent (const int lev);
@@ -1196,6 +1209,7 @@ private:
     void AddRhoFromFineLevelandSumBoundary (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
         const int lev,
         const int icomp,
         const int ncomp);
