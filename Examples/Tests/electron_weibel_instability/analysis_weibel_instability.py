@@ -14,12 +14,13 @@ Further analysis enables the experimental growth rate to be calculated using lin
 """
 
 import math
+
+import matplotlib.animation as animation
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
 from sklearn.linear_model import LinearRegression
-import matplotlib.animation as animation
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 ts = OpenPMDTimeSeries('diags/diag1')
 
@@ -157,4 +158,3 @@ def animate(i):
 
 ani = animation.FuncAnimation(fig, animate, frames = len(iterations), interval = 100)
 ani.save('Two_streams_1e-2eV.gif')
-
