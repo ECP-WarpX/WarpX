@@ -301,10 +301,7 @@ namespace detail
     getUnitDimension ( std::string const & record_name )
     {
 
-        if( record_name == "position" ) return {
-            {openPMD::UnitDimension::L,  1.}
-        };
-        else if( record_name == "positionOffset" ) return {
+        if( (record_name == "position") || (record_name == "positionOffset") ) return {
             {openPMD::UnitDimension::L,  1.}
         };
         else if( record_name == "momentum" ) return {

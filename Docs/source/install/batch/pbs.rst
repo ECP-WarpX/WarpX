@@ -1,7 +1,7 @@
 Job Submission
 ''''''''''''''
 
-* ``qsub your_job_script.pbs``
+* ``qsub your_job_script.qsub``
 
 
 Job Control

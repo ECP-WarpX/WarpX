@@ -1,6 +1,8 @@
 Checks: '-*,
+    bugprone-branch-clone,
     cppcoreguidelines-avoid-goto,
     misc-const-correctness,
+    modernize-avoid-bind,
     modernize-use-nullptr,
     performance-faster-string-find,
     performance-for-range-copy,
