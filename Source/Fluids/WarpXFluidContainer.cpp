@@ -241,7 +241,7 @@ void WarpXFluidContainer::GatherAndPush (
                     Bz_CC_type, Nodal_type, coarsening_ratio, i, j, k, 0);
 
                 tmp_Ex_Nodal_arr(i, j, k) += Ex_Nodal;
-                tmp_Ey_Nodal_arr(i, j, k) += Ey_Nodal;  
+                tmp_Ey_Nodal_arr(i, j, k) += Ey_Nodal;
                 tmp_Ez_Nodal_arr(i, j, k) += Ez_Nodal;
                 tmp_Bx_Nodal_arr(i, j, k) += Bx_Nodal;
                 tmp_By_Nodal_arr(i, j, k) += By_Nodal;
@@ -287,16 +287,16 @@ void WarpXFluidContainer::GatherAndPush (
                 auto tmp_Uy = (NUy_arr(i, j, k) / N_arr(i,j,k));
                 auto tmp_Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
 
-                // Push the fluid elements momentum 
+                // Push the fluid elements momentum
                 UpdateMomentumHigueraCary(tmp_Ux, tmp_Uy, tmp_Uz,
-                    tmp_Ex_Nodal_arr(i, j, k), tmp_Ey_Nodal_arr(i, j, k), tmp_Ez_Nodal_arr(i, j, k), 
+                    tmp_Ex_Nodal_arr(i, j, k), tmp_Ey_Nodal_arr(i, j, k), tmp_Ez_Nodal_arr(i, j, k),
                     tmp_Bx_Nodal_arr(i, j, k), tmp_By_Nodal_arr(i, j, k), tmp_Bz_Nodal_arr(i, j, k), q, m, dt );
 
                 // Calculate NU
                 NUx_arr(i,j,k) = N_arr(i,j,k)*tmp_Ux;
                 NUy_arr(i,j,k) = N_arr(i,j,k)*tmp_Uy;
                 NUz_arr(i,j,k) = N_arr(i,j,k)*tmp_Uz;
-                
+
             }
         );
     }
