@@ -36,7 +36,7 @@ FieldEnergy::FieldEnergy (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    ParmParse pp_amr("amr");
+    const ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
@@ -46,7 +46,7 @@ FieldEnergy::FieldEnergy (std::string rd_name)
 
     if (ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -158,8 +158,11 @@ void FieldEnergy::ComputeDiags (int step)
 amrex::Real
 FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
 {
-    const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
-    const amrex::Real dr = dx[0];
+    // get a reference to WarpX instance
+    auto & warpx = WarpX::GetInstance();
+
+    Geometry const & geom = warpx.Geom(lev);
+    const amrex::Real dr = geom.CellSize(0);
 
     amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
     amrex::ReduceData<amrex::Real> reduce_data(reduce_ops);
@@ -173,30 +176,45 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
 
         amrex::Array4<const amrex::Real> const& field_arr = field.array(mfi);
 
-        amrex::Box tilebox = mfi.tilebox();
+        const amrex::Box tilebox = mfi.tilebox();
         amrex::Box tb = convert(tilebox, field.ixType().toIntVect());
 
         // Lower corner of tile box physical domain
-        const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
+        const std::array<amrex::Real, 3>& xyzmin = warpx.LowerCorner(tilebox, lev, 0._rt);
         const Dim3 lo = lbound(tilebox);
-        const Real rmin = xyzmin[0] + (tb.ixType().nodeCentered(0) ? 0. : 0.5*dx[0]);
+        const Dim3 hi = ubound(tilebox);
+        const Real rmin = xyzmin[0] + (tb.ixType().nodeCentered(0) ? 0._rt : 0.5_rt*dr);
         const int irmin = lo.x;
+        const int irmax = hi.x;
 
         int const ncomp = field.nComp();
 
-        const amrex::Box & box = enclosedCells(mfi.nodaltilebox());
-        reduce_ops.eval(box, ncomp, reduce_data,
+        for (int idir=0 ; idir < AMREX_SPACEDIM ; idir++) {
+            if (warpx.field_boundary_hi[idir] == FieldBoundaryType::Periodic) {
+                // For periodic boundaries, do not include the data in the nodes
+                // on the upper edge of the domain
+                tb.enclosedCells(idir);
+            }
+        }
+
+        reduce_ops.eval(tb, ncomp, reduce_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) -> ReduceTuple
             {
                 const amrex::Real r = rmin + (i - irmin)*dr;
+                amrex::Real volume_factor = r;
+                if (r == 0._rt) {
+                    volume_factor = dr/8._rt;
+                } else if (rmin == 0._rt && i == irmax) {
+                    volume_factor = r/2._rt - dr/8._rt;
+                }
                 const amrex::Real theta_integral = (n == 0 ? 2._rt : 1._rt);
-                return theta_integral*field_arr(i,j,k,n)*field_arr(i,j,k,n)*r;
+                return theta_integral*field_arr(i,j,k,n)*field_arr(i,j,k,n)*volume_factor;
             });
 
     }
 
-    amrex::Real field_sum = amrex::get<0>(reduce_data.value());
-    amrex::Real result = MathConst::pi*field_sum;
+    const amrex::Real field_sum = amrex::get<0>(reduce_data.value());
+    const amrex::Real result = MathConst::pi*field_sum;
     return result;
 }
 // end Real FieldEnergy::ComputeNorm2RZ

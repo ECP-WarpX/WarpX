@@ -94,7 +94,7 @@ RigidInjectedParticleContainer::WriteHeader (std::ostream& os) const
     PhysicalParticleContainer::WriteHeader( os );
 
     // Write quantities that are specific to the rigid-injected species
-    int nlevs = zinject_plane_levels.size();
+    const int nlevs = zinject_plane_levels.size();
     os << nlevs << "\n";
     for (int i = 0; i < nlevs; ++i)
     {
@@ -126,11 +126,11 @@ MultiParticleContainer::Restart (const std::string& dir)
     // we don't need to read back the laser particle charge/mass
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
         WarpXParticleContainer* pc = allcontainers.at(i).get();
-        std::string header_fn = dir + "/" + species_names[i] + "/Header";
+        const std::string header_fn = dir + "/" + species_names[i] + "/Header";
 
         Vector<char> fileCharPtr;
         ParallelDescriptor::ReadAndBcastFile(header_fn, fileCharPtr);
-        std::string fileCharPtrString(fileCharPtr.dataPtr());
+        const std::string fileCharPtrString(fileCharPtr.dataPtr());
         std::istringstream is(fileCharPtrString, std::istringstream::in);
         is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 

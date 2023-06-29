@@ -7,13 +7,11 @@
 #ifndef ABLASTR_VECTOR_POISSON_SOLVER_H
 #define ABLASTR_VECTOR_POISSON_SOLVER_H
 
-#include "Utils/WarpXConst.H"
-#include "Utils/Parser/ParserUtils.H"
-
+#include <ablastr/constant.H>
+#include <ablastr/fields/PoissonSolver.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
-#include <ablastr/fields/PoissonSolver.H>
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
@@ -123,13 +121,13 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
     amrex::Real max_comp_J = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
         for (int adim=0; adim<3; adim++) {
-            curr[lev][adim]->mult(-1._rt*PhysConst::mu0); // Unscaled below
+            curr[lev][adim]->mult(-1._rt*ablastr::constant::SI::mu0); // Unscaled below
             max_comp_J = amrex::max(max_comp_J, curr[lev][adim]->norm0());
         }
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_comp_J);
 
-    bool always_use_bnorm = (max_comp_J > 0);
+    const bool always_use_bnorm = (max_comp_J > 0);
     if (!always_use_bnorm) {
         if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
         ablastr::warn_manager::WMRecordWarning(
@@ -139,7 +137,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
         );
     }
 
-    amrex::LPInfo info;
+    const amrex::LPInfo info;
 
     // Loop over dimensions of A to solve each component individually
     for (int lev=0; lev<=finest_level; lev++) {
@@ -248,7 +246,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
             }
 
             // Unscale current
-            curr[lev][adim]->mult(-1._rt/PhysConst::mu0);
+            curr[lev][adim]->mult(-1._rt/ablastr::constant::SI::mu0);
         } // Loop over adim
         // Run additional operations, such as calculation of the B fields for embedded boundaries
         if constexpr (!std::is_same<T_PostACalculationFunctor, std::nullopt_t>::value)

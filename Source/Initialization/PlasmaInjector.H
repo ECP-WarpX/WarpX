@@ -10,6 +10,7 @@
 #define PLASMA_INJECTOR_H_
 
 #include "InjectorDensity.H"
+#include "InjectorFlux.H"
 #include "InjectorMomentum.H"
 #include "TemperatureProperties.H"
 #include "VelocityProperties.H"
@@ -119,6 +120,7 @@ public:
     bool radially_weighted = true;
 
     std::string str_density_function;
+    std::string str_flux_function;
     std::string str_momentum_function_ux;
     std::string str_momentum_function_uy;
     std::string str_momentum_function_uz;
@@ -131,6 +133,7 @@ public:
 
     InjectorPosition* getInjectorPosition ();
     InjectorDensity*  getInjectorDensity ();
+    InjectorFlux*  getInjectorFlux ();
     InjectorMomentum* getInjectorMomentum ();
 
 protected:
@@ -140,6 +143,7 @@ protected:
     PhysicalSpecies physical_species = PhysicalSpecies::unspecified;
 
     amrex::Real density;
+    amrex::Real flux;
 
     int species_id;
     std::string species_name;
@@ -150,6 +154,10 @@ protected:
     std::unique_ptr<InjectorDensity,InjectorDensityDeleter> h_inj_rho;
     InjectorDensity* d_inj_rho = nullptr;
     std::unique_ptr<amrex::Parser> density_parser;
+
+    std::unique_ptr<InjectorFlux,InjectorFluxDeleter> h_inj_flux;
+    InjectorFlux* d_inj_flux = nullptr;
+    std::unique_ptr<amrex::Parser> flux_parser;
 
     std::unique_ptr<InjectorMomentum,InjectorMomentumDeleter> h_inj_mom;
     InjectorMomentum* d_inj_mom = nullptr;
@@ -162,8 +170,9 @@ protected:
     std::unique_ptr<TemperatureProperties> h_mom_temp;
     std::unique_ptr<VelocityProperties> h_mom_vel;
 
-    void parseDensity (amrex::ParmParse& pp);
-    void parseMomentum (amrex::ParmParse& pp);
+    void parseDensity (const amrex::ParmParse& pp);
+    void parseFlux (const amrex::ParmParse& pp);
+    void parseMomentum (const amrex::ParmParse& pp);
 };
 
 #endif

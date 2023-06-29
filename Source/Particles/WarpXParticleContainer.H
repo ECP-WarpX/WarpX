@@ -25,6 +25,7 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
+#include <AMReX_GpuAllocators.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_INT.H>
 #include <AMReX_ParIter.H>
@@ -144,8 +145,9 @@ public:
      * class.
      */
     virtual void DefaultInitializeRuntimeAttributes (
-                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                            NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                        amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                            NArrayReal, NArrayInt,
+                                            amrex::PinnedArenaAllocator>& pinned_tile,
                         const int n_external_attr_real,
                         const int n_external_attr_int,
                         const amrex::RandomEngine& engine) = 0;
@@ -205,12 +207,12 @@ public:
                                RealVector const & wp,
                                const int * const ion_lev,
                                amrex::MultiFab* rho,
-                               int icomp,
+                               const int icomp,
                                const long offset,
                                const long np_to_depose,
-                               int thread_num,
-                               int lev,
-                               int depos_lev);
+                               const int thread_num,
+                               const int lev,
+                               const int depos_lev);
 
     virtual void DepositCurrent (WarpXParIter& pti,
                                 RealVector const & wp,

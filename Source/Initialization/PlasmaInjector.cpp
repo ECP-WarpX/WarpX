@@ -50,7 +50,7 @@ namespace {
         std::string string;
         stringstream << var << " string '" << name << "' not recognized.";
         string = stringstream.str();
-        amrex::Abort(Utils::TextMsg::Err(string.c_str()));
+        WARPX_ABORT_WITH_MESSAGE(string.c_str());
     }
 }
 
@@ -59,7 +59,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 {
     using namespace amrex::literals;
 
-    amrex::ParmParse pp_species_name(species_name);
+    const amrex::ParmParse pp_species_name(species_name);
 
 #ifdef AMREX_USE_GPU
     static_assert(std::is_trivially_copyable<InjectorPosition>::value,
@@ -124,7 +124,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     utils::parser::queryWithParser(pp_species_name, "density_max", density_max);
 
     std::string physical_species_s;
-    bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
+    const bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
     if (species_is_specified){
         const auto physical_species_from_string = species::from_string( physical_species_s );
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
@@ -237,7 +237,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         utils::parser::getWithParser(pp_species_name, "npart", npart);
         pp_species_name.query("do_symmetrize", do_symmetrize);
         pp_species_name.query("symmetrization_order", symmetrization_order);
-        std::set<int> valid_symmetries = {4,8};
+        const std::set<int> valid_symmetries = {4,8};
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
             "Error: Symmetrization only supported to orders 4 or 8 ");
         gaussian_beam = true;
@@ -322,14 +322,14 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             flux_normal_axis = 2;
         }
 #ifdef WARPX_DIM_3D
-        std::string flux_normal_axis_help = "'x', 'y', or 'z'.";
+        const std::string flux_normal_axis_help = "'x', 'y', or 'z'.";
 #else
 #    ifdef WARPX_DIM_RZ
-        std::string flux_normal_axis_help = "'r' or 'z'.";
+        const std::string flux_normal_axis_help = "'r' or 'z'.";
 #    elif WARPX_DIM_XZ
-        std::string flux_normal_axis_help = "'x' or 'z'.";
+        const std::string flux_normal_axis_help = "'x' or 'z'.";
 #    else
-        std::string flux_normal_axis_help = "'z'.";
+        const std::string flux_normal_axis_help = "'z'.";
 #    endif
 #endif
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
@@ -342,7 +342,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             (InjectorPositionRandomPlane*)nullptr,
             xmin, xmax, ymin, ymax, zmin, zmax,
             flux_normal_axis);
-        parseDensity(pp_species_name);
+        parseFlux(pp_species_name);
         parseMomentum(pp_species_name);
     } else if (injection_style == "nuniformpercell") {
         // Note that for RZ, three numbers are expected, r, theta, and z.
@@ -388,9 +388,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseMomentum(pp_species_name);
     } else if (injection_style == "external_file") {
 #ifndef WARPX_USE_OPENPMD
-        amrex::Abort(Utils::TextMsg::Err(
+        WARPX_ABORT_WITH_MESSAGE(
             "WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
-            " to read the external openPMD file with species data"));
+            " to read the external openPMD file with species data");
 #endif
         external_file = true;
         std::string str_injection_file;
@@ -475,9 +475,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             amrex::ParallelDescriptor::Bcast(&mass, 1,
                 amrex::ParallelDescriptor::IOProcessorNumber());
 #else
-        amrex::Abort(Utils::TextMsg::Err(
+        WARPX_ABORT_WITH_MESSAGE(
             "Plasma injection via external_file requires openPMD support: "
-            "Add USE_OPENPMD=TRUE when compiling WarpX."));
+            "Add USE_OPENPMD=TRUE when compiling WarpX.");
 #endif  // WARPX_USE_OPENPMD
 
     } else {
@@ -501,6 +501,16 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         amrex::Gpu::htod_memcpy_async(d_inj_rho, h_inj_rho.get(), sizeof(InjectorDensity));
 #else
         d_inj_rho = h_inj_rho.get();
+#endif
+    }
+
+    if (h_inj_flux) {
+#ifdef AMREX_USE_GPU
+        d_inj_flux = static_cast<InjectorFlux*>
+            (amrex::The_Arena()->alloc(sizeof(InjectorFlux)));
+        amrex::Gpu::htod_memcpy_async(d_inj_flux, h_inj_flux.get(), sizeof(InjectorFlux));
+#else
+        d_inj_flux = h_inj_flux.get();
 #endif
     }
 
@@ -536,8 +546,8 @@ PlasmaInjector::~PlasmaInjector () = default;
 
 // Depending on injection type at runtime, initialize inj_rho
 // so that inj_rho->getDensity calls
-// InjectorPosition[Constant or Custom or etc.].getDensity.
-void PlasmaInjector::parseDensity (amrex::ParmParse& pp)
+// InjectorPosition[Constant or Predefined or etc.].getDensity.
+void PlasmaInjector::parseDensity (const amrex::ParmParse& pp)
 {
     // parse density information
     std::string rho_prof_s;
@@ -548,9 +558,6 @@ void PlasmaInjector::parseDensity (amrex::ParmParse& pp)
         utils::parser::getWithParser(pp, "density", density);
         // Construct InjectorDensity with InjectorDensityConstant.
         h_inj_rho.reset(new InjectorDensity((InjectorDensityConstant*)nullptr, density));
-    } else if (rho_prof_s == "custom") {
-        // Construct InjectorDensity with InjectorDensityCustom.
-        h_inj_rho.reset(new InjectorDensity((InjectorDensityCustom*)nullptr, species_name));
     } else if (rho_prof_s == "predefined") {
         // Construct InjectorDensity with InjectorDensityPredefined.
         h_inj_rho.reset(new InjectorDensity((InjectorDensityPredefined*)nullptr,species_name));
@@ -572,10 +579,37 @@ void PlasmaInjector::parseDensity (amrex::ParmParse& pp)
     }
 }
 
+// Depending on injection type at runtime, initialize inj_flux
+// so that inj_flux->getFlux calls
+// InjectorFlux[Constant or Parser or etc.].getFlux.
+void PlasmaInjector::parseFlux (const amrex::ParmParse& pp)
+{
+    // parse flux information
+    std::string flux_prof_s;
+    pp.get("flux_profile", flux_prof_s);
+    std::transform(flux_prof_s.begin(), flux_prof_s.end(),
+                   flux_prof_s.begin(), ::tolower);
+    if (flux_prof_s == "constant") {
+        utils::parser::getWithParser(pp, "flux", flux);
+        // Construct InjectorFlux with InjectorFluxConstant.
+        h_inj_flux.reset(new InjectorFlux((InjectorFluxConstant*)nullptr, flux));
+    } else if (flux_prof_s == "parse_flux_function") {
+        utils::parser::Store_parserString(
+            pp, "flux_function(x,y,z,t)", str_flux_function);
+        // Construct InjectorFlux with InjectorFluxParser.
+        flux_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_flux_function,{"x","y","z","t"}));
+        h_inj_flux.reset(new InjectorFlux((InjectorFluxParser*)nullptr,
+            flux_parser->compile<4>()));
+    } else {
+        StringParseAbortMessage("Flux profile type", flux_prof_s);
+    }
+}
+
 // Depending on injection type at runtime, initialize inj_mom
 // so that inj_mom->getMomentum calls
-// InjectorMomentum[Constant or Custom or etc.].getMomentum.
-void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
+// InjectorMomentum[Constant or Gaussian or etc.].getMomentum.
+void PlasmaInjector::parseMomentum (const amrex::ParmParse& pp)
 {
     using namespace amrex::literals;
 
@@ -601,9 +635,6 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
         utils::parser::queryWithParser(pp, "uz", uz);
         // Construct InjectorMomentum with InjectorMomentumConstant.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumConstant*)nullptr, ux, uy, uz));
-    } else if (mom_dist_s == "custom") {
-        // Construct InjectorMomentum with InjectorMomentumCustom.
-        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumCustom*)nullptr, species_name));
     } else if (mom_dist_s == "gaussian") {
         amrex::Real ux_m = 0._rt;
         amrex::Real uy_m = 0._rt;
@@ -639,18 +670,34 @@ void PlasmaInjector::parseMomentum (amrex::ParmParse& pp)
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussianFlux*)nullptr,
                                              ux_m, uy_m, uz_m, ux_th, uy_th, uz_th,
                                              flux_normal_axis, flux_direction));
+    } else if (mom_dist_s == "uniform") {
+        amrex::Real ux_min = 0._rt;
+        amrex::Real uy_min = 0._rt;
+        amrex::Real uz_min = 0._rt;
+        amrex::Real ux_max = 0._rt;
+        amrex::Real uy_max = 0._rt;
+        amrex::Real uz_max = 0._rt;
+        utils::parser::queryWithParser(pp, "ux_min", ux_min);
+        utils::parser::queryWithParser(pp, "uy_min", uy_min);
+        utils::parser::queryWithParser(pp, "uz_min", uz_min);
+        utils::parser::queryWithParser(pp, "ux_max", ux_max);
+        utils::parser::queryWithParser(pp, "uy_max", uy_max);
+        utils::parser::queryWithParser(pp, "uz_max", uz_max);
+        // Construct InjectorMomentum with InjectorMomentumUniform.
+        h_inj_mom.reset(new InjectorMomentum((InjectorMomentumUniform*)nullptr,
+                                             ux_min, uy_min, uz_min, ux_max, uy_max, uz_max));
     } else if (mom_dist_s == "maxwell_boltzmann"){
         h_mom_temp = std::make_unique<TemperatureProperties>(pp);
-        GetTemperature getTemp(*h_mom_temp.get());
+        const GetTemperature getTemp(*h_mom_temp.get());
         h_mom_vel = std::make_unique<VelocityProperties>(pp);
-        GetVelocity getVel(*h_mom_vel.get());
+        const GetVelocity getVel(*h_mom_vel.get());
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "maxwell_juttner"){
         h_mom_temp = std::make_unique<TemperatureProperties>(pp);
-        GetTemperature getTemp(*h_mom_temp.get());
+        const GetTemperature getTemp(*h_mom_temp.get());
         h_mom_vel = std::make_unique<VelocityProperties>(pp);
-        GetVelocity getVel(*h_mom_vel.get());
+        const GetVelocity getVel(*h_mom_vel.get());
         // Construct InjectorMomentum with InjectorMomentumJuttner.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "radial_expansion") {
@@ -719,6 +766,12 @@ InjectorDensity*
 PlasmaInjector::getInjectorDensity ()
 {
     return d_inj_rho;
+}
+
+InjectorFlux*
+PlasmaInjector::getInjectorFlux ()
+{
+    return d_inj_flux;
 }
 
 InjectorMomentum*

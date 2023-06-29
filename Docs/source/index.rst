@@ -99,6 +99,7 @@ Data Analysis
    dataanalysis/visualpic
    dataanalysis/picviewer
    dataanalysis/reduced_diags
+   dataanalysis/workflows
 
 Theory
 ------
@@ -114,6 +115,7 @@ Theory
    theory/boosted_frame
    theory/input_output
    theory/collisions
+   theory/kinetic_fluid_hybrid_model
 
 Development
 -----------

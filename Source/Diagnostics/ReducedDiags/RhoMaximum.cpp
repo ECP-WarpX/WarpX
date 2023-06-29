@@ -40,7 +40,7 @@ RhoMaximum::RhoMaximum (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    amrex::ParmParse pp_amr("amr");
+    const amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
     m_rho_functors.resize(nLevel);
@@ -90,7 +90,7 @@ RhoMaximum::RhoMaximum (std::string rd_name)
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -141,8 +141,8 @@ void RhoMaximum::ComputeDiags (int step)
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // Declare a temporary MultiFAB to store the charge densities.
-        amrex::BoxArray ba = warpx.boxArray(lev);
-        amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
+        const amrex::BoxArray ba = warpx.boxArray(lev);
+        const amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
         constexpr int ncomp = 1;
         constexpr int ngrow = 0;
         amrex::MultiFab mf_temp(ba, dmap, ncomp, ngrow);

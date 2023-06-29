@@ -27,7 +27,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
                                      "Background MCC must have exactly one species.");
 
-    amrex::ParmParse pp_collision_name(collision_name);
+    const amrex::ParmParse pp_collision_name(collision_name);
 
     amrex::ParticleReal background_density = 0;
     if (utils::parser::queryWithParser(pp_collision_name, "background_density", background_density)) {
@@ -93,7 +93,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
     // create a vector of MCCProcess objects from each scattering
     // process name
     for (const auto& scattering_process : scattering_process_names) {
-        std::string kw_cross_section = scattering_process + "_cross_section";
+        const std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
         pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);
 
@@ -102,7 +102,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
         // energy associated with that process
         if (scattering_process.find("excitation") != std::string::npos ||
             scattering_process.find("ionization") != std::string::npos) {
-            std::string kw_energy = scattering_process + "_energy";
+            const std::string kw_energy = scattering_process + "_energy";
             utils::parser::getWithParser(
                 pp_collision_name, kw_energy.c_str(), energy);
         }
@@ -354,14 +354,14 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               amrex::ParticleReal x, y, z;
                               GetPosition.AsStored(ip, x, y, z);
 
-                              amrex::ParticleReal n_a = n_a_func(x, y, z, t);
-                              amrex::ParticleReal T_a = T_a_func(x, y, z, t);
+                              const amrex::ParticleReal n_a = n_a_func(x, y, z, t);
+                              const amrex::ParticleReal T_a = T_a_func(x, y, z, t);
 
                               amrex::ParticleReal v_coll, v_coll2, sigma_E, nu_i = 0;
                               double gamma, E_coll;
                               amrex::ParticleReal ua_x, ua_y, ua_z, vx, vy, vz;
                               amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
-                              amrex::ParticleReal col_select = amrex::Random(engine);
+                              const amrex::ParticleReal col_select = amrex::Random(engine);
 
                               // get velocities of gas particles from a Maxwellian distribution
                               auto const vel_std = sqrt(PhysConst::kb * T_a / M);
@@ -462,8 +462,8 @@ void BackgroundMCCCollision::doBackgroundIonization
 {
     WARPX_PROFILE("BackgroundMCCCollision::doBackgroundIonization()");
 
-    SmartCopyFactory copy_factory_elec(species1, species1);
-    SmartCopyFactory copy_factory_ion(species1, species2);
+    const SmartCopyFactory copy_factory_elec(species1, species1);
+    const SmartCopyFactory copy_factory_ion(species1, species2);
     const auto CopyElec = copy_factory_elec.getSmartCopy();
     const auto CopyIon = copy_factory_ion.getSmartCopy();
 
@@ -473,7 +473,7 @@ void BackgroundMCCCollision::doBackgroundIonization
                                                    m_nu_max_ioniz, m_background_density_func, t
                                                    );
 
-    amrex::ParticleReal sqrt_kb_m = std::sqrt(PhysConst::kb / m_background_mass);
+    const amrex::ParticleReal sqrt_kb_m = std::sqrt(PhysConst::kb / m_background_mass);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

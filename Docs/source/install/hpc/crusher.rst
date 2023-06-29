@@ -68,7 +68,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON
+   cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON
    cmake --build build -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -133,7 +133,7 @@ Known System Issues
 .. warning::
 
    Sep 2nd, 2022 (OLCFDEV-1079):
-   rocFFT in ROCm 5.1+ tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/library.html#runtime-compilation>`__ in the home area by default.
+   rocFFT in ROCm 5.1-5.3 tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/#runtime-compilation>`__ in the home area by default.
    This does not scale, disable it via:
 
    .. code-block:: bash
@@ -144,6 +144,6 @@ Known System Issues
 
    January, 2023 (OLCFDEV-1284, AMD Ticket: ORNLA-130):
    We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
-   Reported to AMD and investigating.
+   Reported to AMD and fixed for the 5.5 release of ROCm.
 
-   Stay with the ROCm 5.2 module to avoid.
+   Upgrade ROCm or stay with the ROCm 5.2 module to avoid.

@@ -18,6 +18,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/ParticleUtils.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
@@ -87,7 +88,7 @@ public:
         : CollisionBase(collision_name)
     {
         if(m_species_names.size() != 2)
-            amrex::Abort("Binary collision " + collision_name + " must have exactly two species.");
+            WARPX_ABORT_WITH_MESSAGE("Binary collision " + collision_name + " must have exactly two species.");
 
         if (m_species_names[0] == m_species_names[1])
             m_isSameSpecies = true;
@@ -96,7 +97,7 @@ public:
 
         m_binary_collision_functor = CollisionFunctorType(collision_name, mypc, m_isSameSpecies);
 
-        amrex::ParmParse pp_collision_name(collision_name);
+        const amrex::ParmParse pp_collision_name(collision_name);
         pp_collision_name.queryarr("product_species", m_product_species);
         m_have_product_species = m_product_species.size() > 0;
         m_copy_transform_functor = CopyTransformFunctorType(collision_name, mypc);
@@ -250,8 +251,8 @@ public:
             const auto soa_1 = ptile_1.getParticleTileData();
             index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
-            amrex::ParticleReal q1 = species_1.getCharge();
-            amrex::ParticleReal m1 = species_1.getMass();
+            const amrex::ParticleReal q1 = species_1.getCharge();
+            const amrex::ParticleReal m1 = species_1.getMass();
             auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
             // Needed to access the particle id
             ParticleType * AMREX_RESTRICT
@@ -340,7 +341,7 @@ public:
                     ShuffleFisherYates(
                         indices_1, cell_start_1, cell_half_1, engine );
 #if defined WARPX_DIM_RZ
-                    int ri = (i_cell - i_cell%nz) / nz;
+                    const int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
                     // Call the function in order to perform collisions
@@ -390,8 +391,8 @@ public:
             const auto soa_1 = ptile_1.getParticleTileData();
             index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
-            amrex::ParticleReal q1 = species_1.getCharge();
-            amrex::ParticleReal m1 = species_1.getMass();
+            const amrex::ParticleReal q1 = species_1.getCharge();
+            const amrex::ParticleReal m1 = species_1.getMass();
             auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
             // Needed to access the particle id
             ParticleType * AMREX_RESTRICT
@@ -400,8 +401,8 @@ public:
             const auto soa_2 = ptile_2.getParticleTileData();
             index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
             index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
-            amrex::ParticleReal q2 = species_2.getCharge();
-            amrex::ParticleReal m2 = species_2.getMass();
+            const amrex::ParticleReal q2 = species_2.getCharge();
+            const amrex::ParticleReal m2 = species_2.getMass();
             auto get_position_2  = GetParticlePosition(ptile_2, getpos_offset);
             // Needed to access the particle id
             ParticleType * AMREX_RESTRICT
@@ -501,7 +502,7 @@ public:
                     ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
                     ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
 #if defined WARPX_DIM_RZ
-                    int ri = (i_cell - i_cell%nz) / nz;
+                    const int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
                     // Call the function in order to perform collisions

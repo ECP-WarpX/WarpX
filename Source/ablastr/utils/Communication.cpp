@@ -72,9 +72,9 @@ void FillBoundary (amrex::MultiFab &mf,
 
     // allow developers to always enforce nodal sync, independent of the
     // nodal_sync argument
-    bool do_nodal_sync_arg = nodal_sync.value_or(false);
+    const bool do_nodal_sync_arg = nodal_sync.value_or(false);
 
-    amrex::ParmParse pp_ablastr("ablastr");
+    const amrex::ParmParse pp_ablastr("ablastr");
     bool do_nodal_sync_input = false;
     pp_ablastr.query("fillboundary_always_sync", do_nodal_sync_input);
 
