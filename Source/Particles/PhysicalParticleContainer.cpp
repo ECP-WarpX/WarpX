@@ -427,13 +427,13 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
         uz = -uz;
     }
 
-    // Move the particles to where they will be at t = 0 in the boosted frame
-    if (boost_adjust_transverse_positions) {
-        x = xpr - tpr*vxpr;
-        y = ypr - tpr*vypr;
-    }
+    //Move the particles to where they will be at t = t0, the current simulation time in the boosted frame
     constexpr int lev = 0;
     const amrex::Real t0 = WarpX::GetInstance().gett_new(lev);
+    if (boost_adjust_transverse_positions) {
+        x = xpr - (tpr-t0)*vxpr;
+        y = ypr - (tpr-t0)*vypr;
+    }
     z = zpr - (tpr-t0)*vzpr;
 
 }
