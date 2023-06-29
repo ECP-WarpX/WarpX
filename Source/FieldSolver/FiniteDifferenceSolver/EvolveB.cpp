@@ -66,10 +66,8 @@ void FiniteDifferenceSolver::EvolveB (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
-        ignore_unused(Gfield, face_areas);
-        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
-    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
+    if ((m_fdtd_algo == ElectromagneticSolverAlgo::Yee)||
+        (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC)){
         ignore_unused(Gfield, face_areas);
         EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 #else
@@ -81,11 +79,8 @@ void FiniteDifferenceSolver::EvolveB (
 
         EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 
-    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
-
-        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
-
-    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
+    } else if ((m_fdtd_algo == ElectromagneticSolverAlgo::Yee) ||
+               (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC)) {
 
         EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, Gfield, lev, dt );
 

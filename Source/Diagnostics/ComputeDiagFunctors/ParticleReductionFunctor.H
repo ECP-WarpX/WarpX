@@ -4,7 +4,6 @@
 #include "ComputeDiagFunctor.H"
 
 #include <AMReX_Parser.H>
-
 #include <AMReX_BaseFwd.H>
 
 #include <memory>

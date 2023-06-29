@@ -59,7 +59,7 @@ const std::map<std::string, int> current_deposition_algo_to_int = {
     {"esirkepov", CurrentDepositionAlgo::Esirkepov },
     {"direct",    CurrentDepositionAlgo::Direct },
     {"vay",       CurrentDepositionAlgo::Vay },
-    {"default",   CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD below
+    {"default",   CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD and Hybrid-PIC below
 };
 
 const std::map<std::string, int> charge_deposition_algo_to_int = {
@@ -157,7 +157,8 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = particle_pusher_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "current_deposition")) {
         algo_to_int = current_deposition_algo_to_int;
-        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ||
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
             algo_to_int["default"] = CurrentDepositionAlgo::Direct;
     } else if (0 == std::strcmp(pp_search_key, "charge_deposition")) {
         algo_to_int = charge_deposition_algo_to_int;
