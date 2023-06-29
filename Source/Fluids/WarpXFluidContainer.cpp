@@ -8,6 +8,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "ablastr/coarsen/sample.H"
+#include "Particles/Pusher/UpdateMomentumHigueraCary.H"
 
 #include "WarpXFluidContainer.H"
 #include "WarpX.H"
@@ -131,6 +132,7 @@ void WarpXFluidContainer::InitData(int lev)
     FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
+
 void WarpXFluidContainer::Evolve(
     int lev,
     const amrex::MultiFab &Ex, const amrex::MultiFab &Ey, const amrex::MultiFab &Ez,
@@ -142,17 +144,28 @@ void WarpXFluidContainer::Evolve(
     const amrex::MultiFab *cBx, const amrex::MultiFab *cBy, const amrex::MultiFab *cBz,
     amrex::Real t, amrex::Real dt, DtType a_dt_type, bool skip_deposition)
 {
-    // Gather E&B fields to each node
-    // TODO
-
-    // Update N and NU at each node
-    // TODO
+    GatherAndPush(lev, Ex, Ey, Ez, Bx, By, Bz);
 
     // Deposit J to the simulation mesh
     if (!skip_deposition)
     {
         DepositCurrent(lev, jx, jy, jz);
     }
+}
+
+
+void WarpXFluidContainer::GatherAndPush (
+    int lev,
+    const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
+    const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz)
+{
+    // MFIter loop
+    //    ParallelFor loop (over nodes)
+    //        - Interpolate E and B to the nodal grid
+    //          (store the values in local variables of type `amrex::Real`,
+    //           similar to `jy_CC` in `DepositCurrent)
+    //        - Use these values to update `U`
+    //          by calling UpdateMomentumHigueraCary
 }
 
 void WarpXFluidContainer::DepositCurrent(

@@ -51,6 +51,10 @@ public:
         const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false);
 
+    void GatherAndPush (int lev,
+        const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
+        const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
+
     void DepositCurrent (int lev,
         amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz);
 
