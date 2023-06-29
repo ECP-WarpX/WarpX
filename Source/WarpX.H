@@ -862,7 +862,6 @@ public:
     amrex::Real getdt (int lev) const {return dt[lev];}
     int getdo_moving_window() const {return do_moving_window;}
     amrex::Real getmoving_window_x() const {return moving_window_x;}
-    amrex::Vector<amrex::Real> const& getcurrent_injection_position () const {return current_injection_position;}
     bool getis_synchronized() const {return is_synchronized;}
 
     int maxStep () const {return max_step;}
@@ -1464,7 +1463,6 @@ private:
     amrex::Real v_particle_pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
-    amrex::Vector<amrex::Real> current_injection_position;
 
     // Plasma injection parameters
     int warpx_do_continuous_injection = 0;
