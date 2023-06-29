@@ -316,6 +316,9 @@ public:
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
 
+    //! Current injection position
+    amrex::Real m_current_injection_position;
+
     // split along diagonals (0) or axes (1)
     int split_type = 0;
 
