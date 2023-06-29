@@ -165,14 +165,6 @@ void WarpXFluidContainer::GatherAndPush (
     const amrex::Real m = getMass();
     const Real dt = warpx.getdt(lev);
 
-    // Temporary nodal Fields
-    amrex::MultiFab tmp_Ex_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Ey_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Ez_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Bx_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_By_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Bz_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-
    // Prepare interpolation of current components to cell center
     // The arrays below store the index type (staggering) of each MultiFab, with the third
     // component set to zero in the two-dimensional case.
@@ -194,6 +186,7 @@ void WarpXFluidContainer::GatherAndPush (
         Bz_CC_type[i] = Bz.ixType()[i];
     }
 
+
     // MFIter loop
     //    ParallelFor loop (over nodes)
 #ifdef AMREX_USE_OMP
@@ -204,12 +197,10 @@ void WarpXFluidContainer::GatherAndPush (
 
         amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
 
-        amrex::Array4<amrex::Real> tmp_Ex_Nodal_arr = tmp_Ex_Nodal.array(mfi);
-        amrex::Array4<amrex::Real> tmp_Ey_Nodal_arr = tmp_Ey_Nodal.array(mfi);
-        amrex::Array4<amrex::Real> tmp_Ez_Nodal_arr = tmp_Ez_Nodal.array(mfi);
-        amrex::Array4<amrex::Real> tmp_Bx_Nodal_arr = tmp_Bx_Nodal.array(mfi);
-        amrex::Array4<amrex::Real> tmp_By_Nodal_arr = tmp_By_Nodal.array(mfi);
-        amrex::Array4<amrex::Real> tmp_Bz_Nodal_arr = tmp_Bz_Nodal.array(mfi);
+        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
+        amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
+        amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
+        amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
 
         amrex::Array4<const amrex::Real> const& Ex_arr = Ex.array(mfi);
         amrex::Array4<const amrex::Real> const& Ey_arr = Ey.array(mfi);
@@ -221,7 +212,7 @@ void WarpXFluidContainer::GatherAndPush (
         // Here, we do not perform any coarsening.
         amrex::GpuArray<int, 3U> coarsening_ratio = {AMREX_D_DECL(1, 1, 1)};
 
-  // Loop over cells (ParallelFor)
+        // Loop over cells (ParallelFor)
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
@@ -240,47 +231,6 @@ void WarpXFluidContainer::GatherAndPush (
                 amrex::Real Bz_Nodal = ablastr::coarsen::sample::Interp(Bz_arr,
                     Bz_CC_type, Nodal_type, coarsening_ratio, i, j, k, 0);
 
-                tmp_Ex_Nodal_arr(i, j, k) += Ex_Nodal;
-                tmp_Ey_Nodal_arr(i, j, k) += Ey_Nodal;
-                tmp_Ez_Nodal_arr(i, j, k) += Ez_Nodal;
-                tmp_Bx_Nodal_arr(i, j, k) += Bx_Nodal;
-                tmp_By_Nodal_arr(i, j, k) += By_Nodal;
-                tmp_Bz_Nodal_arr(i, j, k) += Bz_Nodal;
-
-            }
-        );
-    }
-
-
-    // MFIter loop
-    //    ParallelFor loop (over nodes)
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-
-        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
-
-        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
-        amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
-        amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
-        amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
-
-        amrex::Array4<amrex::Real> tmp_Ex_Nodal_arr = tmp_Ex_Nodal.array(mfi);
-        amrex::Array4<amrex::Real> tmp_Ey_Nodal_arr = tmp_Ey_Nodal.array(mfi);
-        amrex::Array4<amrex::Real> tmp_Ez_Nodal_arr = tmp_Ez_Nodal.array(mfi);
-        amrex::Array4<amrex::Real> tmp_Bx_Nodal_arr = tmp_Bx_Nodal.array(mfi);
-        amrex::Array4<amrex::Real> tmp_By_Nodal_arr = tmp_By_Nodal.array(mfi);
-        amrex::Array4<amrex::Real> tmp_Bz_Nodal_arr = tmp_Bz_Nodal.array(mfi);
-
-        // Here, we do not perform any coarsening.
-        amrex::GpuArray<int, 3U> coarsening_ratio = {AMREX_D_DECL(1, 1, 1)};
-
-        // Loop over cells (ParallelFor)
-        amrex::ParallelFor(tile_box,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-            {
 
                 // Calculate J from fluid and add it to jx/jy/jz
                 auto tmp_Ux = (NUx_arr(i, j, k) / N_arr(i,j,k));
@@ -289,8 +239,8 @@ void WarpXFluidContainer::GatherAndPush (
 
                 // Push the fluid elements momentum
                 UpdateMomentumHigueraCary(tmp_Ux, tmp_Uy, tmp_Uz,
-                    tmp_Ex_Nodal_arr(i, j, k), tmp_Ey_Nodal_arr(i, j, k), tmp_Ez_Nodal_arr(i, j, k),
-                    tmp_Bx_Nodal_arr(i, j, k), tmp_By_Nodal_arr(i, j, k), tmp_Bz_Nodal_arr(i, j, k), q, m, dt );
+                    Ex_Nodal, Ey_Nodal, Ez_Nodal, 
+                    Bx_Nodal, By_Nodal, Bz_Nodal, q, m, dt );
 
                 // Calculate NU
                 NUx_arr(i,j,k) = N_arr(i,j,k)*tmp_Ux;
