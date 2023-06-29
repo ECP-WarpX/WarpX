@@ -183,6 +183,14 @@ void WarpXFluidContainer::DepositCurrent(
         jz_CC_type[i] = jz.ixType()[i];
     }
 
+    // We now need to create a mask to fix the double counting.
+    WarpX &warpx = WarpX::GetInstance();
+    const amrex::Geometry &geom = warpx.Geom(lev);
+    const amrex::Periodicity &period = geom.periodicity();
+    auto const &owner_mask_x = amrex::OwnerMask(jx, period);
+    auto const &owner_mask_y = amrex::OwnerMask(jy, period);
+    auto const &owner_mask_z = amrex::OwnerMask(jz, period);
+
 // Calculate j at the nodes
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -233,6 +241,10 @@ void WarpXFluidContainer::DepositCurrent(
         amrex::Array4<amrex::Real> tmp_jy_fluid_arr = tmp_jy_fluid.array(mfi);
         amrex::Array4<amrex::Real> tmp_jz_fluid_arr = tmp_jz_fluid.array(mfi);
 
+        auto owner_mask_x_arr = owner_mask_x->array(mfi);
+        auto owner_mask_y_arr = owner_mask_y->array(mfi);
+        auto owner_mask_z_arr = owner_mask_z->array(mfi);
+
         // When using the `Interp` function, one needs to specify whether coarsening is desired.
         // Here, we do not perform any coarsening.
         amrex::GpuArray<int, 3U> coarsening_ratio = {AMREX_D_DECL(1, 1, 1)};
@@ -243,19 +255,19 @@ void WarpXFluidContainer::DepositCurrent(
             {
                 amrex::Real jx_CC = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr,
                     j_Nodal_type, jx_CC_type, coarsening_ratio, i, j, k, 0);
-                jx_arr(i, j, k) += jx_CC;
+                if ( owner_mask_x_arr(i,j,k) ) jx_arr(i, j, k) += jx_CC;
             },
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
                 amrex::Real jy_CC = ablastr::coarsen::sample::Interp(tmp_jy_fluid_arr,
                     j_Nodal_type, jy_CC_type, coarsening_ratio, i, j, k, 0);
-                jy_arr(i, j, k) += jy_CC;
+                if ( owner_mask_y_arr(i,j,k) ) jy_arr(i, j, k) += jy_CC;
             },
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
                 amrex::Real jz_CC = ablastr::coarsen::sample::Interp(tmp_jz_fluid_arr,
                     j_Nodal_type, jz_CC_type, coarsening_ratio, i, j, k, 0);
-                jz_arr(i, j, k) += jz_CC;
+                if ( owner_mask_z_arr(i,j,k) ) jz_arr(i, j, k) += jz_CC;
             }
         );
     }
