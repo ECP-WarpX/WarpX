@@ -521,7 +521,7 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
 #else
     const int ncomps = static_cast<int>(m_cellcenter_varnames.size());
 #endif
-    WarpX::AllocInitMultiFab(m_cell_centered_data[lev], ba, dmap, ncomps, amrex::IntVect(ngrow), "cellcentered_BTD",0._rt);
+    WarpX::AllocInitMultiFab(m_cell_centered_data[lev], ba, dmap, ncomps, amrex::IntVect(ngrow), lev, "cellcentered_BTD", 0._rt);
 
 }
 
