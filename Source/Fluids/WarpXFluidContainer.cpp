@@ -82,6 +82,7 @@ void WarpXFluidContainer::InitData(int lev)
     const amrex::Geometry &geom = warpx.Geom(lev);
     const auto dx = geom.CellSizeArray();
     const auto problo = geom.ProbLoArray();
+    const amrex::Real clight = PhysConst::c;
 
     // Loop through cells and initialize their value
 #ifdef AMREX_USE_OMP
@@ -117,9 +118,9 @@ void WarpXFluidContainer::InitData(int lev)
                 auto u = inj_mom->getBulkMomentum(x, y, z);
 
                 N_arr(i, j, k) = n;
-                NUx_arr(i, j, k) = n * u.x;
-                NUy_arr(i, j, k) = n * u.y;
-                NUz_arr(i, j, k) = n * u.z;
+                NUx_arr(i, j, k) = n * u.x * clight;
+                NUy_arr(i, j, k) = n * u.y * clight;
+                NUz_arr(i, j, k) = n * u.z * clight;
             }
         );
     }
@@ -250,16 +251,6 @@ void WarpXFluidContainer::GatherAndPush (
             }
         );
     }
-
-
-
-
-    //        - Interpolate E and B to the nodal grid
-    //          (store the values in local variables of type `amrex::Real`,
-    //           similar to `jy_CC` in `DepositCurrent)
-    //        - Use these values to update `U`
-    //          by calling UpdateMomentumHigueraCary
-
 }
 
 void WarpXFluidContainer::DepositCurrent(
