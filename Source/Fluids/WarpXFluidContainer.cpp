@@ -159,13 +159,157 @@ void WarpXFluidContainer::GatherAndPush (
     const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
     const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz)
 {
+
+    WarpX &warpx = WarpX::GetInstance();
+    const amrex::Real q = getCharge();
+    const amrex::Real m = getMass();
+    const Real dt = warpx.getdt(lev);
+
+    // Temporary nodal Fields
+    amrex::MultiFab tmp_Ex_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_Ey_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_Ez_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_Bx_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_By_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_Bz_Nodal(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+
+   // Prepare interpolation of current components to cell center
+    // The arrays below store the index type (staggering) of each MultiFab, with the third
+    // component set to zero in the two-dimensional case.
+    auto Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Ex_CC_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Ey_CC_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Ez_CC_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Bx_CC_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto By_CC_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Bz_CC_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    for (int i = 0; i < AMREX_SPACEDIM; ++i)
+    {
+        Nodal_type[i] = N[lev]->ixType()[i];
+        Ex_CC_type[i] = Ex.ixType()[i];
+        Ey_CC_type[i] = Ey.ixType()[i];
+        Ez_CC_type[i] = Ez.ixType()[i];
+        Bx_CC_type[i] = Bx.ixType()[i];
+        By_CC_type[i] = By.ixType()[i];
+        Bz_CC_type[i] = Bz.ixType()[i];
+    }
+
     // MFIter loop
     //    ParallelFor loop (over nodes)
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+
+        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+
+        amrex::Array4<amrex::Real> tmp_Ex_Nodal_arr = tmp_Ex_Nodal.array(mfi);
+        amrex::Array4<amrex::Real> tmp_Ey_Nodal_arr = tmp_Ey_Nodal.array(mfi);
+        amrex::Array4<amrex::Real> tmp_Ez_Nodal_arr = tmp_Ez_Nodal.array(mfi);
+        amrex::Array4<amrex::Real> tmp_Bx_Nodal_arr = tmp_Bx_Nodal.array(mfi);
+        amrex::Array4<amrex::Real> tmp_By_Nodal_arr = tmp_By_Nodal.array(mfi);
+        amrex::Array4<amrex::Real> tmp_Bz_Nodal_arr = tmp_Bz_Nodal.array(mfi);
+
+        amrex::Array4<const amrex::Real> const& Ex_arr = Ex.array(mfi);
+        amrex::Array4<const amrex::Real> const& Ey_arr = Ey.array(mfi);
+        amrex::Array4<const amrex::Real> const& Ez_arr = Ez.array(mfi);
+        amrex::Array4<const amrex::Real> const& Bx_arr = Bx.array(mfi);
+        amrex::Array4<const amrex::Real> const& By_arr = By.array(mfi);
+        amrex::Array4<const amrex::Real> const& Bz_arr = Bz.array(mfi);
+
+        // Here, we do not perform any coarsening.
+        amrex::GpuArray<int, 3U> coarsening_ratio = {AMREX_D_DECL(1, 1, 1)};
+
+  // Loop over cells (ParallelFor)
+        amrex::ParallelFor(tile_box,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+
+                // Interpolate fields from CC to Nodal points
+                amrex::Real Ex_Nodal = ablastr::coarsen::sample::Interp(Ex_arr,
+                    Ex_CC_type, Nodal_type, coarsening_ratio, i, j, k, 0);
+                amrex::Real Ey_Nodal = ablastr::coarsen::sample::Interp(Ey_arr,
+                    Ey_CC_type, Nodal_type, coarsening_ratio, i, j, k, 0);
+                amrex::Real Ez_Nodal = ablastr::coarsen::sample::Interp(Ez_arr,
+                    Ez_CC_type, Nodal_type, coarsening_ratio, i, j, k, 0);
+                amrex::Real Bx_Nodal = ablastr::coarsen::sample::Interp(Bx_arr,
+                    Bx_CC_type, Nodal_type, coarsening_ratio, i, j, k, 0);
+                amrex::Real By_Nodal = ablastr::coarsen::sample::Interp(By_arr,
+                    By_CC_type, Nodal_type, coarsening_ratio, i, j, k, 0);
+                amrex::Real Bz_Nodal = ablastr::coarsen::sample::Interp(Bz_arr,
+                    Bz_CC_type, Nodal_type, coarsening_ratio, i, j, k, 0);
+
+                tmp_Ex_Nodal_arr(i, j, k) += Ex_Nodal;
+                tmp_Ey_Nodal_arr(i, j, k) += Ey_Nodal;  
+                tmp_Ez_Nodal_arr(i, j, k) += Ez_Nodal;
+                tmp_Bx_Nodal_arr(i, j, k) += Bx_Nodal;
+                tmp_By_Nodal_arr(i, j, k) += By_Nodal;
+                tmp_Bz_Nodal_arr(i, j, k) += Bz_Nodal;
+
+            }
+        );
+    }
+
+
+    // MFIter loop
+    //    ParallelFor loop (over nodes)
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+
+        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+
+        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
+        amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
+        amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
+        amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
+
+        amrex::Array4<amrex::Real> tmp_Ex_Nodal_arr = tmp_Ex_Nodal.array(mfi);
+        amrex::Array4<amrex::Real> tmp_Ey_Nodal_arr = tmp_Ey_Nodal.array(mfi);
+        amrex::Array4<amrex::Real> tmp_Ez_Nodal_arr = tmp_Ez_Nodal.array(mfi);
+        amrex::Array4<amrex::Real> tmp_Bx_Nodal_arr = tmp_Bx_Nodal.array(mfi);
+        amrex::Array4<amrex::Real> tmp_By_Nodal_arr = tmp_By_Nodal.array(mfi);
+        amrex::Array4<amrex::Real> tmp_Bz_Nodal_arr = tmp_Bz_Nodal.array(mfi);
+
+        // Here, we do not perform any coarsening.
+        amrex::GpuArray<int, 3U> coarsening_ratio = {AMREX_D_DECL(1, 1, 1)};
+
+        // Loop over cells (ParallelFor)
+        amrex::ParallelFor(tile_box,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+
+                // Calculate J from fluid and add it to jx/jy/jz
+                auto tmp_Ux = (NUx_arr(i, j, k) / N_arr(i,j,k));
+                auto tmp_Uy = (NUy_arr(i, j, k) / N_arr(i,j,k));
+                auto tmp_Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
+
+                // Push the fluid elements momentum 
+                UpdateMomentumHigueraCary(tmp_Ux, tmp_Uy, tmp_Uz,
+                    tmp_Ex_Nodal_arr(i, j, k), tmp_Ey_Nodal_arr(i, j, k), tmp_Ez_Nodal_arr(i, j, k), 
+                    tmp_Bx_Nodal_arr(i, j, k), tmp_By_Nodal_arr(i, j, k), tmp_Bz_Nodal_arr(i, j, k), q, m, dt );
+
+                // Calculate NU
+                NUx_arr(i,j,k) = N_arr(i,j,k)*tmp_Ux;
+                NUy_arr(i,j,k) = N_arr(i,j,k)*tmp_Uy;
+                NUz_arr(i,j,k) = N_arr(i,j,k)*tmp_Uz;
+                
+            }
+        );
+    }
+
+
+
+
     //        - Interpolate E and B to the nodal grid
     //          (store the values in local variables of type `amrex::Real`,
     //           similar to `jy_CC` in `DepositCurrent)
     //        - Use these values to update `U`
     //          by calling UpdateMomentumHigueraCary
+
 }
 
 void WarpXFluidContainer::DepositCurrent(
@@ -233,7 +377,6 @@ void WarpXFluidContainer::DepositCurrent(
                 tmp_jz_fluid_arr(i, j, k) = q * (NUz_arr(i, j, k) / gamma);
             }
         );
-
     }
 
 // Interpolate j from the nodes to the simulation mesh (typically Yee mesh)
