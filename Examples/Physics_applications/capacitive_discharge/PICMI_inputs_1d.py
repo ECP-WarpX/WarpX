@@ -338,7 +338,7 @@ class CapacitiveDischargeExample(object):
         # deposit the ion density in rho_fp
         self.sim.extension.depositChargeDensity('he_ions', 0)
 
-        rho_data = self.rho_wrapper[...][:,0]
+        rho_data = self.rho_wrapper[...]
         self.ion_density_array += rho_data / constants.q_e / self.diag_steps
 
     def run_sim(self):
