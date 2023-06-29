@@ -6,9 +6,9 @@ measure is not larger than the error threshold).
 Reference: https://doi.org/10.1016/j.cpc.2022.108457
 
 How to run the script:
-$ python stencil.py --path path_to_input_file
+$ python stencil.py --input_file path_to_input_file
 or, using IPython,
-$ run stencil.py --path path_to_input_file
+$ run stencil.py --input_file path_to_input_file
 """
 
 import argparse
@@ -133,7 +133,7 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
     coeff_stagg : numpy.ndarray
         Leading spectral staggered coefficient of the general PSATD equations.
     axis : int
-        Axis or direction (must be 0, 1, 2 or -1).
+        Axis or direction (must be 0, 1, 2 or -1 (the z axis for both 2D and 3D)).
 
     Returns
     -------
@@ -150,36 +150,25 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
         stencil_avg_stagg = stencil_stagg
     elif dims == 2:
         if axis == 0:
-              # Averaged over kz
+              # Average over kz
               stencil_avg_nodal  = np.sum(stencil_nodal, axis=-1)
               stencil_avg_nodal /= stencil_nodal.shape[-1]
               stencil_avg_stagg  = np.sum(stencil_stagg, axis=-1)
               stencil_avg_stagg /= stencil_stagg.shape[-1]
         elif axis == 1 or axis == -1:
-              # Averaged over kx
+              # Average over kx
               stencil_avg_nodal  = np.sum(stencil_nodal, axis=0)
               stencil_avg_nodal /= stencil_nodal.shape[0]
               stencil_avg_stagg  = np.sum(stencil_stagg, axis=0)
               stencil_avg_stagg /= stencil_stagg.shape[0]
     elif dims == 3:
-        if axis == 0:
-              # Averaged over ky and kz
-              stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis=-1), axis=1)
-              stencil_avg_nodal /= (stencil_nodal.shape[-1]*stencil_nodal.shape[1])
-              stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis=-1), axis=1)
-              stencil_avg_stagg /= (stencil_stagg.shape[-1]*stencil_stagg.shape[1])
-        elif axis == 1:
-              # Averaged over kx and kz
-              stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis=-1), axis=0)
-              stencil_avg_nodal /= (stencil_nodal.shape[-1]*stencil_nodal.shape[0])
-              stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis=-1), axis=0)
-              stencil_avg_stagg /= (stencil_stagg.shape[-1]*stencil_stagg.shape[0])
-        elif axis == 2 or axis == -1:
-              # Averaged over kx and ky
-              stencil_avg_nodal  = np.sum(np.sum(stencil_nodal, axis=1), axis=0)
-              stencil_avg_nodal /= (stencil_nodal.shape[1]*stencil_nodal.shape[0])
-              stencil_avg_stagg  = np.sum(np.sum(stencil_stagg, axis=1), axis=0)
-              stencil_avg_stagg /= (stencil_stagg.shape[1]*stencil_stagg.shape[0])
+        # Average over the other two directions
+        i1 = (axis + 1) % 3
+        i2 = (axis + 2) % 3
+        stencil_avg_nodal = (stencil_nodal.sum(axis=(i1,i2)) /
+                            (stencil_nodal.shape[i1]*stencil_nodal.shape[i2]))
+        stencil_avg_stagg = (stencil_stagg.sum(axis=(i1,i2)) /
+                            (stencil_stagg.shape[i1]*stencil_stagg.shape[i2]))
 
     stencils = dict()
     stencils['nodal'] = abs(stencil_avg_nodal)
