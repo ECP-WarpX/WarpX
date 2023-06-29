@@ -239,7 +239,7 @@ void WarpXFluidContainer::GatherAndPush (
 
                 // Push the fluid elements momentum
                 UpdateMomentumHigueraCary(tmp_Ux, tmp_Uy, tmp_Uz,
-                    Ex_Nodal, Ey_Nodal, Ez_Nodal, 
+                    Ex_Nodal, Ey_Nodal, Ez_Nodal,
                     Bx_Nodal, By_Nodal, Bz_Nodal, q, m, dt );
 
                 // Calculate NU
