@@ -61,14 +61,13 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
     const int n_species = mypc->nSpecies();
     for (int i=0; i<n_species; i++)
     {
-        const WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
-        const std::vector<std::string>& species_names = mypc->GetSpeciesNames();
+        WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
 
         // Continuously inject plasma in new cells (by default only on level 0)
         if (pc.doContinuousInjection())
         {
-            const std::unique_ptr<PlasmaInjector> plasma_injector
-                = std::make_unique<PlasmaInjector>(pc.getSpeciesId(), species_names.at(i));
+            PlasmaInjector* plasma_injector = pc.GetPlasmaInjector();
+            if (plasma_injector == nullptr) return;
 
             // Get bulk momentum and velocity of plasma
             amrex::XDim3 u_bulk = amrex::XDim3{0._rt, 0._rt, 0._rt};

@@ -2922,6 +2922,11 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 ion_atomic_number);
 }
 
+PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector ()
+{
+    return plasma_injector.get();
+}
+
 void PhysicalParticleContainer::resample (const int timestep)
 {
     // In heavily load imbalanced simulations, MPI processes with few particles will spend most of

@@ -13,6 +13,7 @@
 #include "WarpXParticleContainer_fwd.H"
 
 #include "Evolve/WarpXDtType.H"
+#include "Initialization/PlasmaInjector.H"
 #include "Particles/ParticleBoundaries.H"
 #include "SpeciesPhysicalProperties.H"
 
@@ -120,6 +121,12 @@ public:
     virtual void InitData () = 0;
 
     virtual void InitIonizationModule () {}
+
+    /*
+     * \brief Virtual function that returns a pointer to the plasma injector,
+     *        for derived classes that define one (PhysicalParticleContainer).
+     */
+    virtual PlasmaInjector* GetPlasmaInjector () { return nullptr; }
 
     /**
      * Evolve is the central WarpXParticleContainer function that advances
