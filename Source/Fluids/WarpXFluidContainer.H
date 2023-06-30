@@ -1,7 +1,4 @@
-/* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote
- * Jean-Luc Vay, Junmin Gu, Luca Fedeli
- * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
- * Weiqun Zhang, Yinjian Zhao
+/* Copyright 2023 Grant Johnson, Remi Lehe
  *
  * This file is part of WarpX.
  *
@@ -22,7 +19,12 @@
 using namespace amrex::literals;
 
 /**
- * TODO
+ * WarpXFluidContainer is the base polymorphic class from which all concrete
+ * fluid container classes derive.
+ *
+ * WarpXFluidContainer contains the main functions for initialization,
+ * interaction with the grid (field gather and current deposition), fluid
+ * source and push.
  */
 class WarpXFluidContainer
 {
@@ -38,8 +40,7 @@ public:
 
     void ReadParameters ();
     /**
-     * Evolve is the central WarpXFluidContainer function that advances
-     * fluids for a time dt (typically one timestep).
+     * Evolve updates a single timestep (dt) of the cold relativistic fluid eqautions
      */
     void Evolve (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
@@ -51,10 +52,37 @@ public:
         const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false);
 
+    /**
+     * GatherAndPush introduces the lorentz term in the cold relativistic fluid 
+     * equations for a single timestep (dt) using Higuera and Cary Push
+     */
+    /**
+     * \brief Lorentz Momentum Source 
+     *
+     * \param[in] lev refinement level 
+     * \param[in] Ex Yee electric field (x)
+     * \param[in] Ey Yee electric field (y)
+     * \param[in] Ez Yee electric field (z)
+     * \param[in] Bx Yee magnetic field (x)
+     * \param[in] By Yee magnetic field (y)
+     * \param[in] Bz Yee magnetic field (z)
+     */
     void GatherAndPush (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
         const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
+    /**
+     * DepositCurrent interpolates the fluid current density comps. onto the Yee grid and
+     * sums the contributions to the particle current density
+     */
+    /**
+     * \brief Deposit fluid current density.
+     *
+     * \param[in] lev refinement level 
+     * \param[in,out] jx current density MultiFab x comp.
+     * \param[in,out] jy current density MultiFab y comp.
+     * \param[in,out] jz current density MultiFab z comp.
+     */
     void DepositCurrent (int lev,
         amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz);
 

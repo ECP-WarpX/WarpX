@@ -85,23 +85,6 @@ def get_theoretical_field( field, t ):
 # Read the file
 ds = yt.load(fn)
 
-# Check that the particle selective output worked:
-#species = 'electrons'
-#print('ds.field_list', ds.field_list)
-#for field in ['particle_weight',
-#              'particle_momentum_x']:
-#    print('assert that this is in ds.field_list', (species, field))
-#    assert (species, field) in ds.field_list
-#for field in ['particle_momentum_y',
-#              'particle_momentum_z']:
-#    print('assert that this is NOT in ds.field_list', (species, field))
-#    assert (species, field) not in ds.field_list
-#species = 'positrons'
-#for field in ['particle_momentum_x',
-#              'particle_momentum_y']:
-#    print('assert that this is NOT in ds.field_list', (species, field))
-#    assert (species, field) not in ds.field_list
-
 t0 = ds.current_time.to_value()
 data = ds.covering_grid(level = 0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
 edge = np.array([(ds.domain_left_edge[2]).item(), (ds.domain_right_edge[2]).item(), \
@@ -194,5 +177,5 @@ test_name = os.path.split(os.getcwd())[1]
 
 if re.search( 'single_precision', fn ):
     checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)
-#else:
-    #checksumAPI.evaluate_checksum(test_name, fn)
+else:
+    checksumAPI.evaluate_checksum(test_name, fn)
