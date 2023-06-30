@@ -67,7 +67,7 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
         if (pc.doContinuousInjection())
         {
             PlasmaInjector* plasma_injector = pc.GetPlasmaInjector();
-            if (plasma_injector == nullptr) return;
+            if (plasma_injector == nullptr) continue;
 
             // Get bulk momentum and velocity of plasma
             amrex::XDim3 u_bulk = amrex::XDim3{0._rt, 0._rt, 0._rt};
