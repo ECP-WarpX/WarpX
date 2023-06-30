@@ -1126,6 +1126,9 @@ amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
 
     const int nLevels = finestLevel();
 
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
     for (int lev = 0; lev <= nLevels; ++lev) {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
