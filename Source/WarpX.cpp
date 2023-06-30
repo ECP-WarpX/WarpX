@@ -2252,17 +2252,23 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 #endif
 
-    bool deposit_charge = do_dive_cleaning ||
-                          (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
-                          (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) ||
-                          (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC);
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
-        deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
+    int rho_ncomps = 0;
+    if( (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
+        (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) ||
+        (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) ) {
+        rho_ncomps = ncomps;
     }
-    if (deposit_charge)
+    if (do_dive_cleaning) {
+        rho_ncomps = 2*ncomps;
+    }
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+        if (do_dive_cleaning || update_with_rho || current_correction) {
+            // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
+            rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
+        }
+    }
+    if (rho_ncomps > 0)
     {
-        // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
-        const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
         AllocInitMultiFab(rho_fp[lev], amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, lev, "rho_fp", 0.0_rt);
     }
 
@@ -2427,9 +2433,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(current_cp[lev][1], amrex::convert(cba, jy_nodal_flag), dm, ncomps, ngJ, lev, "current_cp[y]", 0.0_rt);
         AllocInitMultiFab(current_cp[lev][2], amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, lev, "current_cp[z]", 0.0_rt);
 
-        if (deposit_charge) {
-            // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
-            const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
+        if (rho_ncomps > 0) {
             AllocInitMultiFab(rho_cp[lev], amrex::convert(cba, rho_nodal_flag), dm, rho_ncomps, ngRho, lev, "rho_cp", 0.0_rt);
         }
 
