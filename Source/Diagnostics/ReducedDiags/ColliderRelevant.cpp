@@ -125,7 +125,6 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         auto const &myspc = mypc.GetParticleContainer(i_s);
 
         if (myspc.DoQED()){
-            amrex::Print(0) << "STO FACENDO HEADER  " << species_names[i_s] << "\n";
             add_diag("chimin_"+species_names[i_s], "chimin_"+species_names[i_s]+"()");
             add_diag("chiave_"+species_names[i_s], "chiave_"+species_names[i_s]+"()");
             add_diag("chimax_"+species_names[i_s], "chimax_"+species_names[i_s]+"()");
@@ -399,11 +398,10 @@ void ColliderRelevant::ComputeDiags (int step)
     amrex::DistributionMapping dmap = warpx.DistributionMap(0);
     constexpr int ncomp = 1;
     constexpr int ngrow = 0;
-    amrex::MultiFab mf_dst1(ba.convert(IntVect{0,0,0}), dmap, ncomp, ngrow);
-    amrex::MultiFab mf_dst2(ba.convert(IntVect{0,0,0}), dmap, ncomp, ngrow);
+    amrex::MultiFab mf_dst1(ba.convert(amrex::IntVect::TheCellVector()), dmap, ncomp, ngrow);
+    amrex::MultiFab mf_dst2(ba.convert(amrex::IntVect::TheCellVector()), dmap, ncomp, ngrow);
     ablastr::coarsen::sample::Coarsen(mf_dst1, *n1, 0, 0, ncomp, ngrow);
     ablastr::coarsen::sample::Coarsen(mf_dst2, *n2, 0, 0, ncomp, ngrow);
-
     auto const n1_dot_n2 = amrex::MultiFab::Dot( mf_dst1, 0, mf_dst2, 0, 1, 0);
     // (1 - cos phi ) = 2
     auto const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
