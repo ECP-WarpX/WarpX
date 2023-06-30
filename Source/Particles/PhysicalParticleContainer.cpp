@@ -926,7 +926,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
     InjectorDensity*  inj_rho = plasma_injector->getInjectorDensity();
-    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
+    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentumDevice();
     const Real gamma_boost = WarpX::gamma_boost;
     const Real beta_boost = WarpX::beta_boost;
     const Real t = WarpX::GetInstance().gett_new(lev);
@@ -1476,7 +1476,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
     InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
     InjectorFlux*  inj_flux = plasma_injector->getInjectorFlux();
-    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
+    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentumDevice();
     constexpr int level_zero = 0;
     const amrex::Real t = WarpX::GetInstance().gett_new(level_zero);
 
@@ -2920,6 +2920,11 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 adk_power.dataPtr(),
                                 particle_icomps["ionizationLevel"],
                                 ion_atomic_number);
+}
+
+PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector ()
+{
+    return plasma_injector.get();
 }
 
 void PhysicalParticleContainer::resample (const int timestep)

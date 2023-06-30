@@ -302,7 +302,12 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         warpx.GetPartContainer().WriteHeader(HeaderFile);
 
-        HeaderFile << warpx.getcurrent_injection_position() << "\n";
+        MultiParticleContainer& mypc = warpx.GetPartContainer();
+        const int n_species = mypc.nSpecies();
+        for (int i=0; i<n_species; i++)
+        {
+             HeaderFile << mypc.GetParticleContainer(i).m_current_injection_position << "\n";
+        }
 
         HeaderFile << warpx.getdo_moving_window() << "\n";
 
