@@ -335,7 +335,7 @@ void WarpXFluidContainer::DepositCurrent(
         // Here, we do not perform any coarsening.
         amrex::GpuArray<int, 3U> coarsening_ratio = {AMREX_D_DECL(1, 1, 1)};
 
-        // Interpolate fluid current and deposit it 
+        // Interpolate fluid current and deposit it
         // ( mask double counting )
         amrex::ParallelFor( tile_box_x, tile_box_y, tile_box_z,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept

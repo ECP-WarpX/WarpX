@@ -53,13 +53,13 @@ public:
         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false);
 
     /**
-     * GatherAndPush introduces the lorentz term in the cold relativistic fluid 
+     * GatherAndPush introduces the lorentz term in the cold relativistic fluid
      * equations for a single timestep (dt) using Higuera and Cary Push
      */
     /**
-     * \brief Lorentz Momentum Source 
+     * \brief Lorentz Momentum Source
      *
-     * \param[in] lev refinement level 
+     * \param[in] lev refinement level
      * \param[in] Ex Yee electric field (x)
      * \param[in] Ey Yee electric field (y)
      * \param[in] Ez Yee electric field (z)
@@ -78,7 +78,7 @@ public:
     /**
      * \brief Deposit fluid current density.
      *
-     * \param[in] lev refinement level 
+     * \param[in] lev refinement level
      * \param[in,out] jx current density MultiFab x comp.
      * \param[in,out] jy current density MultiFab y comp.
      * \param[in,out] jz current density MultiFab z comp.
