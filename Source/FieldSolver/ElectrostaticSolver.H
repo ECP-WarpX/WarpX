@@ -37,8 +37,7 @@ namespace ElectrostaticSolver {
 
         amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM> lobc, hibc;
         bool bcs_set = false;
-        constexpr auto array_size = static_cast<std::size_t>(AMREX_SPACEDIM * 2);
-        std::array<bool, array_size> dirichlet_flag;
+        std::array<bool, static_cast<std::size_t>(AMREX_SPACEDIM * 2)> dirichlet_flag;
         bool has_non_periodic = false;
         bool phi_EB_only_t = true;
 

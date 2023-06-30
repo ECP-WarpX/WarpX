@@ -22,8 +22,7 @@ namespace MagnetostaticSolver {
     public:
         amrex::Array<amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM>, 3> lobc, hibc;
         bool bcs_set = false;
-        constexpr auto array_size = static_cast<std::size_t>(AMREX_SPACEDIM * 2);
-        std::array<std::array<bool, array_size>, 3> dirichlet_flag;
+        std::array<std::array<bool, static_cast<std::size_t>(AMREX_SPACEDIM * 2)>, 3> dirichlet_flag;
         bool has_non_periodic = false;
 
         void defineVectorPotentialBCs ();
