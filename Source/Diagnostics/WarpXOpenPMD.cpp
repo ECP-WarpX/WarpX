@@ -1122,8 +1122,9 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
       auto const period = full_geom.periodicity(); // TODO double-check: is this the proper global bound or of some level?
       std::vector<std::string> fieldBoundary(6, "reflecting");
       std::vector<std::string> particleBoundary(6, "absorbing");
-      fieldBoundary.resize(AMREX_SPACEDIM * 2);
-      particleBoundary.resize(AMREX_SPACEDIM * 2);
+      constexpr auto new_size = static_cast<std::size_t>(AMREX_SPACEDIM * 2);
+      fieldBoundary.resize(new_size);
+      particleBoundary.resize(new_size);
 
       for (auto i = 0u; i < fieldBoundary.size() / 2u; ++i)
           if (m_fieldPMLdirections.at(i))
