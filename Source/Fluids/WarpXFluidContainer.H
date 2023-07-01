@@ -53,7 +53,19 @@ public:
         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false);
 
     /**
-     * GatherAndPush introduces the lorentz term in the cold relativistic fluid
+     * AdvectivePush_Muscl takes a single timestep (dt) of the cold relativistic fluid equations
+     * using a Muscl-Handcock scheme
+     */
+    /**
+     * \brief Advective term, cold-rel. fluids
+     *
+     * \param[in] lev refinement level 
+     */
+    void AdvectivePush_Muscl (int lev);
+
+
+    /**
+     * GatherAndPush introduces the lorentz term in the cold relativistic fluid 
      * equations for a single timestep (dt) using Higuera and Cary Push
      */
     /**
@@ -85,6 +97,15 @@ public:
      */
     void DepositCurrent (int lev,
         amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz);
+
+    /**
+     * Muscl-Handcock Helper Functions
+    */
+    double flux (double Qm, double Qp, double Vm, double Vp);
+    double ave (double a, double b);
+    double minmod (double a, double b);
+    double maxmod (double a, double b);
+
 
     //amrex::Real getCharge () {return charge;}
     amrex::Real getCharge () const {return charge;}
