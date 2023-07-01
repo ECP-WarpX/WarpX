@@ -116,7 +116,17 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
 
    .. tab-item:: CPU Nodes
 
-      CPU usage is documentation is TODO.
+      .. code-block:: bash
+
+         cd $HOME/src/warpx
+         rm -rf build_cpu
+
+         cmake -S . -B build_cpu -DWarpX_COMPUTE=OMP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
+         cmake --build build_cpu -j 12
+         cmake --build build_cpu -j 12 --target pip_install
+
+      **That's it!**
+      The WarpX application executables are now in ``$HOME/src/warpx/build_cpu/bin/`` and we installed the ``pywarpx`` Python module.
 
 Now, you can :ref:`submit Karolina compute jobs <running-cpp-karolina>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
 Or, you can use the WarpX executables to submit Karolina jobs (:ref:`example inputs <usage-examples>`).
