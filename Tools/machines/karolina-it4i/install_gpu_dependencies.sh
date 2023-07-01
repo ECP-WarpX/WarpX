@@ -75,7 +75,7 @@ else
 fi
 rm -rf $HOME/src/adios2-gpu-build
 cmake -S $HOME/src/adios2 -B $HOME/src/adios2-gpu-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_HDF5=OFF -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-2.8.3
-cmake --build $HOME/src/adios2-gpu-build --target install -j 16
+cmake --build $HOME/src/adios2-gpu-build --target install --parallel 12
 rm -rf $HOME/src/adios2-gpu-build
 
 # BLAS++ (for PSATD+RZ)
@@ -91,7 +91,7 @@ else
 fi
 rm -rf $HOME/src/blaspp-gpu-build
 cmake -S $HOME/src/blaspp -B $HOME/src/blaspp-gpu-build -Duse_openmp=OFF -Dgpu_backend=cuda -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
-cmake --build $HOME/src/blaspp-gpu-build --target install --parallel 16
+cmake --build $HOME/src/blaspp-gpu-build --target install --parallel 12
 rm -rf $HOME/src/blaspp-gpu-build
 
 # LAPACK++ (for PSATD+RZ)
@@ -107,7 +107,7 @@ else
 fi
 rm -rf $HOME/src/lapackpp-gpu-build
 CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S $HOME/src/lapackpp -B $HOME/src/lapackpp-gpu-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
-cmake --build $HOME/src/lapackpp-gpu-build --target install --parallel 16
+cmake --build $HOME/src/lapackpp-gpu-build --target install --parallel 12
 rm -rf $HOME/src/lapackpp-gpu-build
 
 
