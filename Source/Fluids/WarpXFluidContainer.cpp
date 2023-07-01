@@ -161,7 +161,7 @@ void WarpXFluidContainer::Evolve(
 void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 {
 
-    // Grab the grid spacing 
+    // Grab the grid spacing
     WarpX &warpx = WarpX::GetInstance();
     const Real dt = warpx.getdt(lev);
     const amrex::Geometry &geom = warpx.Geom(lev);
@@ -259,7 +259,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Array4<amrex::Real> Q_plus3_z = tmp_Q_plus3_z.array(mfi);
         amrex::Array4<amrex::Real> Q_plus4_z = tmp_Q_plus4_z.array(mfi);
 
-        
+
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
@@ -282,7 +282,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 #if defined(WARPX_DIM_3D)
 
                 // Compute the Flux-Jacobian Elements in x
-                auto A11x = ((Ux*(Uz*Uz)+Ux*(Uy*Uy)+(Ux*Ux*Ux))*gamma)/a; 
+                auto A11x = ((Ux*(Uz*Uz)+Ux*(Uy*Uy)+(Ux*Ux*Ux))*gamma)/a;
                 auto A12x = (((Uz*Uz)+(Uy*Uy)+1.0)*gamma)/a;
                 auto A13x = -(Ux*Uy)/(gamma*gamma*gamma);
                 auto A14x = -(Ux*Uz)/(gamma*gamma*gamma);
@@ -304,7 +304,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
                 // Compute the Flux-Jacobian Elements in y
-                auto A11y = ((Uy*(Uz*Uz)+(Uy*Uy*Uy)+(Ux*Ux)*Uy)*gamma)/a; 
+                auto A11y = ((Uy*(Uz*Uz)+(Uy*Uy*Uy)+(Ux*Ux)*Uy)*gamma)/a;
                 auto A12y = -(Ux*Uy)/(gamma*gamma*gamma);
                 auto A13y = (((Uz*Uz)+(Ux*Ux)+1.0)*gamma)/a;
                 auto A14y = -(Uy*Uz)/(gamma*gamma*gamma);
@@ -326,7 +326,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
                 // Compute the Flux-Jacobian Elements in z
-                auto A11z = (((Uz*Uz*Uz)+((Uy*Uy)+(Ux*Ux))*Uz)*gamma)/a; 
+                auto A11z = (((Uz*Uz*Uz)+((Uy*Uy)+(Ux*Ux))*Uz)*gamma)/a;
                 auto A12z = -(Ux*Uz)/(gamma*gamma*gamma);
                 auto A13z = -(Uy*Uz)/(gamma*gamma*gamma);
                 auto A14z = (((Uy*Uy)+(Ux*Ux)+1.0)*gamma)/a;
@@ -464,7 +464,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Array4<amrex::Real> const &Q_plus2_z = tmp_Q_plus2_z.array(mfi);
         amrex::Array4<amrex::Real> const &Q_plus3_z = tmp_Q_plus3_z.array(mfi);
         amrex::Array4<amrex::Real> const &Q_plus4_z = tmp_Q_plus4_z.array(mfi);
-        
+
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
@@ -473,7 +473,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 #if defined(WARPX_DIM_3D)
 
 
-                // compute the fluxes: 
+                // compute the fluxes:
                 auto F1_minusx = flux(Q_minus1_x(i-1,j,k),Q_plus1_x(i,j,k),  Vx(i-1,j,k),Vx(i,j,k));
                 auto F1_plusx =  flux(Q_minus1_x(i,j,k),  Q_plus1_x(i+1,j,k),Vx(i,j,k),  Vx(i+1,j,k));
                 auto F2_minusx = flux(Q_minus2_x(i-1,j,k),Q_plus2_x(i,j,k),  Vx(i-1,j,k),Vx(i,j,k));

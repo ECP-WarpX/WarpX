@@ -59,13 +59,13 @@ public:
     /**
      * \brief Advective term, cold-rel. fluids
      *
-     * \param[in] lev refinement level 
+     * \param[in] lev refinement level
      */
     void AdvectivePush_Muscl (int lev);
 
 
     /**
-     * GatherAndPush introduces the lorentz term in the cold relativistic fluid 
+     * GatherAndPush introduces the lorentz term in the cold relativistic fluid
      * equations for a single timestep (dt) using Higuera and Cary Push
      */
     /**
