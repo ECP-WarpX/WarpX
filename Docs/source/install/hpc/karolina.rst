@@ -130,7 +130,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
 
 Now, you can :ref:`submit Karolina compute jobs <running-cpp-karolina>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
 Or, you can use the WarpX executables to submit Karolina jobs (:ref:`example inputs <usage-examples>`).
-For executables, you can reference their location in your :ref:`job script <running-cpp-karolina>` or copy them to a location in ``$PSCRATCH``.
+For executables, you can reference their location in your :ref:`job script <running-cpp-karolina>` or copy them to a location in ``/scatch/``.
 
 
 .. _building-karolina-update:
