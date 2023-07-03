@@ -167,12 +167,13 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const amrex::Geometry &geom = warpx.Geom(lev);
     const auto dx = geom.CellSizeArray();
     const amrex::Real clight = PhysConst::c;
+    const amrex::Periodicity &period = geom.periodicity();
     auto cx = (dt/dx[0]);
     auto cy = (dt/dx[1]);
     auto cz = (dt/dx[2]);
-    auto cx_half = 0.5*(dt/dx[0])*clight;
-    auto cy_half = 0.5*(dt/dx[1])*clight;
-    auto cz_half = 0.5*(dt/dx[2])*clight;
+    auto cx_half = 0.5*(dt/dx[0]);
+    auto cy_half = 0.5*(dt/dx[1]);
+    auto cz_half = 0.5*(dt/dx[2]);
 
 
     /** Todo */
@@ -186,35 +187,35 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     // - Update N, NU
 
     // Temporary velocities
-    amrex::MultiFab tmp_Vx(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Vy(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Vz(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_Vx(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Vy(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Vz(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
 
     // Temporary Half-step values
-    amrex::MultiFab tmp_Q_minus1_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus2_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus3_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus4_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus1_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus2_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus3_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus4_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus1_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus2_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus3_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus4_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus1_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus2_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus3_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus4_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus1_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus2_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus3_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_minus4_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus1_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus2_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus3_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
-    amrex::MultiFab tmp_Q_plus4_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
+    amrex::MultiFab tmp_Q_minus1_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus2_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus3_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus4_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus1_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus2_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus3_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus4_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus1_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus2_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus3_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus4_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus1_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus2_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus3_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus4_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus1_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus2_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus3_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_minus4_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus1_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus2_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus3_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
+    amrex::MultiFab tmp_Q_plus4_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
 
     // Advection push
     #ifdef AMREX_USE_OMP
@@ -266,12 +267,13 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                 // - Grab local Uz Uy Ux gamma
                 // Isolate U from NU
-                auto Ux = (NUx_arr(i, j, k) / N_arr(i,j,k))/clight;
-                auto Uy = (NUy_arr(i, j, k) / N_arr(i,j,k))/clight;
-                auto Uz = (NUz_arr(i, j, k) / N_arr(i,j,k))/clight;
-                auto gamma = sqrt(1.0 + Ux*Ux + Uy*Uy + Uz*Uz );
-                double a = (Uz*Uz*Uz*Uz)+(2.0*(Uy*Uy)+2.0*(Ux*Ux)+2.0)*(Uz*Uz)+(Uy*Uy*Uy*Uy)+
-                    (2.0*(Ux*Ux)+2.0)*(Uy*Uy)+(Ux*Ux*Ux*Ux)+2.0*(Ux*Ux)+1.0;
+                auto Ux = (NUx_arr(i, j, k) / N_arr(i,j,k));
+                auto Uy = (NUy_arr(i, j, k) / N_arr(i,j,k));
+                auto Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
+                auto gamma = sqrt(1.0 + (Ux*Ux + Uy*Uy + Uz*Uz)/(clight*clight) );
+                auto a = (clight*clight*clight*clight)+(2.0*(Uz*Uz)+2.0*(Uy*Uy)+
+                2.0*(Ux*Ux))*(clight*clight)+(Uz*Uz*Uz*Uz)+(2.0*(Uy*Uy)+2.0*(Ux*Ux))
+                *(Uz*Uz)+(Uy*Uy*Uy*Uy)+2.0*(Ux*Ux)*(Uy*Uy)+(Ux*Ux*Ux*Ux);
 
                 // Compute Vx Vy Vz
                 Vx(i,j,k) = Ux/gamma;
@@ -282,87 +284,87 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 #if defined(WARPX_DIM_3D)
 
                 // Compute the Flux-Jacobian Elements in x
-                auto A11x = ((Ux*(Uz*Uz)+Ux*(Uy*Uy)+(Ux*Ux*Ux))*gamma)/a;
-                auto A12x = (((Uz*Uz)+(Uy*Uy)+1.0)*gamma)/a;
-                auto A13x = -(Ux*Uy)/(gamma*gamma*gamma);
-                auto A14x = -(Ux*Uz)/(gamma*gamma*gamma);
+                auto A11x = ((Ux*(Uz*Uz)+Ux*(Uy*Uy)+(Ux*Ux*Ux))*(clight*clight)*gamma)/a; 
+                auto A12x = (((clight*clight*clight*clight)+((Uz*Uz)+(Uy*Uy))*(clight*clight))*gamma)/a;
+                auto A13x = -(Ux*Uy)/((clight*clight)*(gamma*gamma*gamma));
+                auto A14x = -(Ux*Uz)/((clight*clight)*(gamma*gamma*gamma));
 
                 auto A21x = -(Ux*Ux)/(gamma*gamma*gamma);
-                auto A22x = ((2.0*Ux*(Uz*Uz)+2.0*Ux*(Uy*Uy)+(Ux*Ux*Ux)+2.0*Ux)*gamma)/a;
-                auto A23x = -((Ux*Ux)*Uy)/(gamma*gamma*gamma);
-                auto A24x = -((Ux*Ux)*Uz)/(gamma*gamma*gamma);
+                auto A22x = ((2.0*Ux*(clight*clight*clight*clight)+(2.0*Ux*(Uz*Uz)+2.0*Ux*(Uy*Uy)+(Ux*Ux*Ux))*(clight*clight))*gamma)/a;
+                auto A23x = -((Ux*Ux)*Uy)/((clight*clight)*(gamma*gamma*gamma));
+                auto A24x = -((Ux*Ux)*Uz)/((clight*clight)*(gamma*gamma*gamma));
 
                 auto A31x = -(Ux*Uy)/(gamma*gamma*gamma);
-                auto A32x = ((Uy*(Uz*Uz)+(Uy*Uy*Uy)+Uy)*gamma)/a;
-                auto A33x = ((Ux*(Uz*Uz)+(Ux*Ux*Ux)+Ux)*gamma)/a;
-                auto A34x = -(Ux*Uy*Uz)/(gamma*gamma*gamma);
+                auto A32x = ((Uy*(clight*clight*clight*clight)+(Uy*(Uz*Uz)+(Uy*Uy*Uy))*(clight*clight))*gamma)/a;
+                auto A33x = ((Ux*(clight*clight*clight*clight)+(Ux*(Uz*Uz)+(Ux*Ux*Ux))*(clight*clight))*gamma)/a;
+                auto A34x = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
 
                 auto A41x = -(Ux*Uz)/(gamma*gamma*gamma);
-                auto A42x = (((Uz*Uz*Uz)+((Uy*Uy)+1.0)*Uz)*gamma)/a;
-                auto A43x = -(Ux*Uy*Uz)/(gamma*gamma*gamma);
-                auto A44x = ((Ux*(Uy*Uy)+(Ux*Ux*Ux)+Ux)*gamma)/a;
+                auto A42x = ((Uz*(clight*clight*clight*clight)+((Uz*Uz*Uz)+(Uy*Uy)*Uz)*(clight*clight))*gamma)/a;
+                auto A43x = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A44x = ((Ux*(clight*clight*clight*clight)+(Ux*(Uy*Uy)+(Ux*Ux*Ux))*(clight*clight))*gamma)/a;
 
 
                 // Compute the Flux-Jacobian Elements in y
-                auto A11y = ((Uy*(Uz*Uz)+(Uy*Uy*Uy)+(Ux*Ux)*Uy)*gamma)/a;
-                auto A12y = -(Ux*Uy)/(gamma*gamma*gamma);
-                auto A13y = (((Uz*Uz)+(Ux*Ux)+1.0)*gamma)/a;
-                auto A14y = -(Uy*Uz)/(gamma*gamma*gamma);
+                auto A11y = ((Uy*(Uz*Uz)+(Uy*Uy*Uy)+(Ux*Ux)*Uy)*(clight*clight)*gamma)/a;
+                auto A12y = -(Ux*Uy)/((clight*clight)*(gamma*gamma*gamma));
+                auto A13y = (((clight*clight*clight*clight)+((Uz*Uz)+(Ux*Ux))*(clight*clight))*gamma)/a;
+                auto A14y = -(Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
 
                 auto A21y = -(Ux*Uy)/(gamma*gamma*gamma);
-                auto A22y = ((Uy*(Uz*Uz)+(Uy*Uy*Uy)+Uy)*gamma)/a;
-                auto A23y = ((Ux*(Uz*Uz)+(Ux*Ux*Ux)+Ux)*gamma)/a;
-                auto A24y = -(Ux*Uy*Uz)/(gamma*gamma*gamma);
+                auto A22y = ((Uy*(clight*clight*clight*clight)+(Uy*(Uz*Uz)+(Uy*Uy*Uy))*(clight*clight))*gamma)/a;
+                auto A23y = ((Ux*(clight*clight*clight*clight)+(Ux*(Uz*Uz)+(Ux*Ux*Ux))*(clight*clight))*gamma)/a;
+                auto A24y = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
 
                 auto A31y = -(Uy*Uy)/(gamma*gamma*gamma);
-                auto A32y = -(Ux*(Uy*Uy))/(gamma*gamma*gamma);
-                auto A33y = ((2.0*Uy*(Uz*Uz)+(Uy*Uy*Uy)+(2.0*(Ux*Ux)+2.0)*Uy)*gamma)/a;
-                auto A34y = -((Uy*Uy)*Uz)/(gamma*gamma*gamma);
+                auto A32y = -(Ux*(Uy*Uy))/((clight*clight)*(gamma*gamma*gamma));
+                auto A33y = ((2.0*Uy*(clight*clight*clight*clight)+(2.0*Uy*(Uz*Uz)+(Uy*Uy*Uy)+2.0*(Ux*Ux)*Uy)*(clight*clight))*gamma)/a;
+                auto A34y = -((Uy*Uy)*Uz)/((clight*clight)*(gamma*gamma*gamma));
 
                 auto A41y = -(Uy*Uz)/(gamma*gamma*gamma);
-                auto A42y = -(Ux*Uy*Uz)/(gamma*gamma*gamma);
-                auto A43y = (((Uz*Uz*Uz)+((Ux*Ux)+1.0)*Uz)*gamma)/a;
-                auto A44y = (((Uy*Uy*Uy)+((Ux*Ux)+1.0)*Uy)*gamma)/a;
+                auto A42y = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A43y = ((Uz*(clight*clight*clight*clight)+((Uz*Uz*Uz)+(Ux*Ux)*Uz)*(clight*clight))*gamma)/a;
+                auto A44y = ((Uy*(clight*clight*clight*clight)+((Uy*Uy*Uy)+(Ux*Ux)*Uy)*(clight*clight))*gamma)/a;
 
 
                 // Compute the Flux-Jacobian Elements in z
-                auto A11z = (((Uz*Uz*Uz)+((Uy*Uy)+(Ux*Ux))*Uz)*gamma)/a;
-                auto A12z = -(Ux*Uz)/(gamma*gamma*gamma);
-                auto A13z = -(Uy*Uz)/(gamma*gamma*gamma);
-                auto A14z = (((Uy*Uy)+(Ux*Ux)+1.0)*gamma)/a;
+                auto A11z = (((Uz*Uz*Uz)+((Uy*Uy)+(Ux*Ux))*Uz)*(clight*clight)*gamma)/a;
+                auto A12z = -(Ux*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A13z = -(Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A14z = (((clight*clight*clight*clight)+((Uy*Uy)+(Ux*Ux))*(clight*clight))*gamma)/a;
 
                 auto A21z = -(Ux*Uz)/(gamma*gamma*gamma);
-                auto A22z = (((Uz*Uz*Uz)+((Uy*Uy)+1.0)*Uz)*gamma)/a;
-                auto A23z = -(Ux*Uy*Uz)/(gamma*gamma*gamma);
-                auto A24z = ((Ux*(Uy*Uy)+(Ux*Ux*Ux)+Ux)*gamma)/a;
+                auto A22z = ((Uz*(clight*clight*clight*clight)+((Uz*Uz*Uz)+(Uy*Uy)*Uz)*(clight*clight))*gamma)/a;
+                auto A23z = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A24z = ((Ux*(clight*clight*clight*clight)+(Ux*(Uy*Uy)+(Ux*Ux*Ux))*(clight*clight))*gamma)/a;
 
                 auto A31z = -(Uy*Uz)/(gamma*gamma*gamma);
-                auto A32z = -(Ux*Uy*Uz)/(gamma*gamma*gamma);
-                auto A33z = (((Uz*Uz*Uz)+((Ux*Ux)+1.0)*Uz)*gamma)/a;
-                auto A34z = (((Uy*Uy*Uy)+((Ux*Ux)+1.0)*Uy)*gamma)/a;
+                auto A32z = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A33z = ((Uz*(clight*clight*clight*clight)+((Uz*Uz*Uz)+(Ux*Ux)*Uz)*(clight*clight))*gamma)/a;
+                auto A34z = ((Uy*(clight*clight*clight*clight)+((Uy*Uy*Uy)+(Ux*Ux)*Uy)*(clight*clight))*gamma)/a;
 
                 auto A41z = -(Uz*Uz)/(gamma*gamma*gamma);
-                auto A42z = -(Ux*(Uz*Uz))/(gamma*gamma*gamma);
-                auto A43z = -(Uy*(Uz*Uz))/(gamma*gamma*gamma);
-                auto A44z = (((Uz*Uz*Uz)+(2.0*(Uy*Uy)+2.0*(Ux*Ux)+2.0)*Uz)*gamma)/a;
+                auto A42z = -(Ux*(Uz*Uz))/((clight*clight)*(gamma*gamma*gamma));
+                auto A43z = -(Uy*(Uz*Uz))/((clight*clight)*(gamma*gamma*gamma));
+                auto A44z = ((2.0*Uz*(clight*clight*clight*clight)+((Uz*Uz*Uz)+(2.0*(Uy*Uy)+2.0*(Ux*Ux))*Uz)*(clight*clight))*gamma)/a;
 
                 // Compute the cell slopes x
                 auto dQ1x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
-                auto dQ2x = ave( NUx_arr(i,j,k) - NUx_arr(i-1,j,k) , NUx_arr(i+1,j,k) - NUx_arr(i,j,k) )/clight;
-                auto dQ3x = ave( NUy_arr(i,j,k) - NUy_arr(i-1,j,k) , NUy_arr(i+1,j,k) - NUy_arr(i,j,k) )/clight;
-                auto dQ4x = ave( NUz_arr(i,j,k) - NUz_arr(i-1,j,k) , NUz_arr(i+1,j,k) - NUz_arr(i,j,k) )/clight;
+                auto dQ2x = ave( NUx_arr(i,j,k) - NUx_arr(i-1,j,k) , NUx_arr(i+1,j,k) - NUx_arr(i,j,k) );
+                auto dQ3x = ave( NUy_arr(i,j,k) - NUy_arr(i-1,j,k) , NUy_arr(i+1,j,k) - NUy_arr(i,j,k) );
+                auto dQ4x = ave( NUz_arr(i,j,k) - NUz_arr(i-1,j,k) , NUz_arr(i+1,j,k) - NUz_arr(i,j,k) );
 
                 // Compute the cell slopes y
                 auto dQ1y = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , N_arr(i,j+1,k) - N_arr(i,j,k) );
-                auto dQ2y = ave( NUx_arr(i,j,k) - NUx_arr(i,j-1,k) , NUx_arr(i,j+1,k) - NUx_arr(i,j,k) )/clight;
-                auto dQ3y = ave( NUy_arr(i,j,k) - NUy_arr(i,j-1,k) , NUy_arr(i,j+1,k) - NUy_arr(i,j,k) )/clight;
-                auto dQ4y = ave( NUz_arr(i,j,k) - NUz_arr(i,j-1,k) , NUz_arr(i,j+1,k) - NUz_arr(i,j,k) )/clight;
+                auto dQ2y = ave( NUx_arr(i,j,k) - NUx_arr(i,j-1,k) , NUx_arr(i,j+1,k) - NUx_arr(i,j,k) );
+                auto dQ3y = ave( NUy_arr(i,j,k) - NUy_arr(i,j-1,k) , NUy_arr(i,j+1,k) - NUy_arr(i,j,k) );
+                auto dQ4y = ave( NUz_arr(i,j,k) - NUz_arr(i,j-1,k) , NUz_arr(i,j+1,k) - NUz_arr(i,j,k) );
 
                 // Compute the cell slopes z
                 auto dQ1z = ave( N_arr(i,j,k) - N_arr(i,j,k-1) , N_arr(i,j,k+1) - N_arr(i,j,k) );
-                auto dQ2z = ave( NUx_arr(i,j,k) - NUx_arr(i,j,k-1) , NUx_arr(i,j,k+1) - NUx_arr(i,j,k) )/clight;
-                auto dQ3z = ave( NUy_arr(i,j,k) - NUy_arr(i,j,k-1) , NUy_arr(i,j,k+1) - NUy_arr(i,j,k) )/clight;
-                auto dQ4z = ave( NUz_arr(i,j,k) - NUz_arr(i,j,k-1) , NUz_arr(i,j,k+1) - NUz_arr(i,j,k) )/clight;
+                auto dQ2z = ave( NUx_arr(i,j,k) - NUx_arr(i,j,k-1) , NUx_arr(i,j,k+1) - NUx_arr(i,j,k) );
+                auto dQ3z = ave( NUy_arr(i,j,k) - NUy_arr(i,j,k-1) , NUy_arr(i,j,k+1) - NUy_arr(i,j,k) );
+                auto dQ4z = ave( NUz_arr(i,j,k) - NUz_arr(i,j,k-1) , NUz_arr(i,j,k+1) - NUz_arr(i,j,k) );
 
                 // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
                 auto AdQ1x = A11x*dQ1x + A12x*dQ2x + A13x*dQ3x + A14x*dQ4x;
@@ -378,9 +380,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 auto AdQ3z = A31z*dQ1z + A32z*dQ2z + A33z*dQ3z + A34z*dQ4z;
                 auto AdQ4z = A41z*dQ1z + A42z*dQ2z + A43z*dQ3z + A44z*dQ4z;
                 auto Q_tilde1 = N_arr(i,j,k)          - cx_half*AdQ1x - cy_half*AdQ1y - cz_half*AdQ1z;
-                auto Q_tilde2 = NUx_arr(i,j,k)/clight - cx_half*AdQ2x - cy_half*AdQ2y - cz_half*AdQ2z;
-                auto Q_tilde3 = NUy_arr(i,j,k)/clight - cx_half*AdQ3x - cy_half*AdQ3y - cz_half*AdQ3z;
-                auto Q_tilde4 = NUz_arr(i,j,k)/clight - cx_half*AdQ4x - cy_half*AdQ4y - cz_half*AdQ4z;
+                auto Q_tilde2 = NUx_arr(i,j,k) - cx_half*AdQ2x - cy_half*AdQ2y - cz_half*AdQ2z;
+                auto Q_tilde3 = NUy_arr(i,j,k) - cx_half*AdQ3x - cy_half*AdQ3y - cz_half*AdQ3z;
+                auto Q_tilde4 = NUz_arr(i,j,k) - cx_half*AdQ4x - cy_half*AdQ4y - cz_half*AdQ4z;
 
                 // Predict Q at the cell edges (x)
                 Q_minus1_x(i,j,k) = Q_tilde1 + dQ1x/2.0;
@@ -421,6 +423,36 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             }
         );
     }
+
+    FillBoundary(tmp_Vx, tmp_Vx.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Vy, tmp_Vy.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Vx, tmp_Vz.nGrowVect(), WarpX::do_single_precision_comms, period);
+
+    FillBoundary(tmp_Q_minus1_x, tmp_Q_minus1_x.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_minus2_x, tmp_Q_minus2_x.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_minus3_x, tmp_Q_minus3_x.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_minus4_x, tmp_Q_minus4_x.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus1_x, tmp_Q_plus1_x.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus2_x, tmp_Q_plus2_x.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus3_x, tmp_Q_plus3_x.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus4_x, tmp_Q_plus4_x.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_minus1_y, tmp_Q_minus1_y.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_minus2_y, tmp_Q_minus2_y.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_minus3_y, tmp_Q_minus3_y.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_minus4_y, tmp_Q_minus4_y.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus1_y, tmp_Q_plus1_y.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus2_y, tmp_Q_plus2_y.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus3_y, tmp_Q_plus3_y.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus4_y, tmp_Q_plus4_y.nGrowVect(), WarpX::do_single_precision_comms, period);  
+    FillBoundary(tmp_Q_minus1_z, tmp_Q_minus1_z.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_minus2_z, tmp_Q_minus2_z.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_minus3_z, tmp_Q_minus3_z.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_minus4_z, tmp_Q_minus4_z.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus1_z, tmp_Q_plus1_z.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus2_z, tmp_Q_plus2_z.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus3_z, tmp_Q_plus3_z.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Q_plus4_z, tmp_Q_plus4_z.nGrowVect(), WarpX::do_single_precision_comms, period);
+
 
         // Advection push
     #ifdef AMREX_USE_OMP
@@ -503,18 +535,18 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
                 // Update Q from tn -> tn + dt
-                N_arr(i,j,k) = N_arr(i,j,k) - cx*(F1_plusx - F1_minusx)*clight
-                                            - cy*(F1_plusy - F1_minusy)*clight
-                                            - cz*(F1_plusz - F1_minusz)*clight;
-                NUx_arr(i,j,k) = NUx_arr(i,j,k) - cx*(F2_plusx - F2_minusx)*clight*clight
-                                                - cy*(F2_plusy - F2_minusy)*clight*clight
-                                                - cz*(F2_plusz - F2_minusz)*clight*clight;
-                NUy_arr(i,j,k) = NUy_arr(i,j,k) - cx*(F3_plusx - F3_minusx)*clight*clight
-                                                - cy*(F3_plusy - F3_minusy)*clight*clight
-                                                - cz*(F3_plusz - F3_minusz)*clight*clight;
-                NUz_arr(i,j,k) = NUz_arr(i,j,k) - cx*(F4_plusx - F4_minusx)*clight*clight
-                                                - cy*(F4_plusy - F4_minusy)*clight*clight
-                                                - cz*(F4_plusz - F4_minusz)*clight*clight;
+                N_arr(i,j,k) = N_arr(i,j,k) - cx*(F1_plusx - F1_minusx)
+                                            - cy*(F1_plusy - F1_minusy)
+                                            - cz*(F1_plusz - F1_minusz);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - cx*(F2_plusx - F2_minusx)
+                                                - cy*(F2_plusy - F2_minusy)
+                                                - cz*(F2_plusz - F2_minusz);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - cx*(F3_plusx - F3_minusx)
+                                                - cy*(F3_plusy - F3_minusy)
+                                                - cz*(F3_plusz - F3_minusz);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - cx*(F4_plusx - F4_minusx)
+                                                - cy*(F4_plusy - F4_minusy)
+                                                - cz*(F4_plusz - F4_minusz);
 
                 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
@@ -524,17 +556,23 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             }
         );
     }
+
+    // Fill guard cells
+    FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 // Local helper functions for MUSCL-Handcock
 // Rusanov Flux
-double WarpXFluidContainer::flux (double Qm, double Qp, double Vm, double Vp)
+amrex::Real WarpXFluidContainer::flux (amrex::Real Qm, amrex::Real Qp, amrex::Real Vm, amrex::Real Vp)
 {
     auto c = std::max( std::abs(Vm) , std::abs(Vp) );
     return 0.5*(Vm*Qm + Vp*Qp) - (0.5*c)*(Qp - Qm);
 }
 // ave_minmod
-double WarpXFluidContainer::ave (double a, double b)
+amrex::Real WarpXFluidContainer::ave (amrex::Real a, amrex::Real b)
 {
     if (a*b > 0.0)
         return minmod( maxmod(a,b), minmod(2.0*a,2.0*b));
@@ -542,7 +580,7 @@ double WarpXFluidContainer::ave (double a, double b)
         return 0.0;
 }
 // mindmod
-double WarpXFluidContainer::minmod (double a, double b)
+amrex::Real WarpXFluidContainer::minmod (amrex::Real a, amrex::Real b)
 {
     if (a > 0.0 && b > 0.0)
         return std::min(a, b);
@@ -552,11 +590,11 @@ double WarpXFluidContainer::minmod (double a, double b)
         return 0.0;
 }
 //maxmod
-double WarpXFluidContainer::maxmod (double a, double b)
+amrex::Real WarpXFluidContainer::maxmod (amrex::Real a, amrex::Real b)
 {
-    if (a > 0 && b > 0)
+    if (a > 0.0 && b > 0.0)
         return std::max(a, b);
-    else if (a < 0 && b < 0)
+    else if (a < 0.0 && b < 0.0)
         return std::min(a, b);
     else
         return 0.0;
@@ -655,6 +693,13 @@ void WarpXFluidContainer::GatherAndPush (
             }
         );
     }
+
+    // Fill guard cells
+    const amrex::Geometry &geom = warpx.Geom(lev);
+    const amrex::Periodicity &period = geom.periodicity();
+    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 void WarpXFluidContainer::DepositCurrent(
