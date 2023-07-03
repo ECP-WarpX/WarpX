@@ -101,10 +101,10 @@ public:
     /**
      * Muscl-Handcock Helper Functions
     */
-    double flux (double Qm, double Qp, double Vm, double Vp);
-    double ave (double a, double b);
-    double minmod (double a, double b);
-    double maxmod (double a, double b);
+    amrex::Real flux (amrex::Real Qm, amrex::Real Qp, amrex::Real Vm, amrex::Real Vp);
+    amrex::Real ave (amrex::Real a, amrex::Real b);
+    amrex::Real minmod (amrex::Real a, amrex::Real b);
+    amrex::Real maxmod (amrex::Real a, amrex::Real b);
 
 
     //amrex::Real getCharge () {return charge;}
