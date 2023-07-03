@@ -284,7 +284,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 #if defined(WARPX_DIM_3D)
 
                 // Compute the Flux-Jacobian Elements in x
-                auto A11x = ((Ux*(Uz*Uz)+Ux*(Uy*Uy)+(Ux*Ux*Ux))*(clight*clight)*gamma)/a; 
+                auto A11x = ((Ux*(Uz*Uz)+Ux*(Uy*Uy)+(Ux*Ux*Ux))*(clight*clight)*gamma)/a;
                 auto A12x = (((clight*clight*clight*clight)+((Uz*Uz)+(Uy*Uy))*(clight*clight))*gamma)/a;
                 auto A13x = -(Ux*Uy)/((clight*clight)*(gamma*gamma*gamma));
                 auto A14x = -(Ux*Uz)/((clight*clight)*(gamma*gamma*gamma));
@@ -443,7 +443,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     FillBoundary(tmp_Q_plus1_y, tmp_Q_plus1_y.nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(tmp_Q_plus2_y, tmp_Q_plus2_y.nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(tmp_Q_plus3_y, tmp_Q_plus3_y.nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(tmp_Q_plus4_y, tmp_Q_plus4_y.nGrowVect(), WarpX::do_single_precision_comms, period);  
+    FillBoundary(tmp_Q_plus4_y, tmp_Q_plus4_y.nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(tmp_Q_minus1_z, tmp_Q_minus1_z.nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(tmp_Q_minus2_z, tmp_Q_minus2_z.nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(tmp_Q_minus3_z, tmp_Q_minus3_z.nGrowVect(), WarpX::do_single_precision_comms, period);
