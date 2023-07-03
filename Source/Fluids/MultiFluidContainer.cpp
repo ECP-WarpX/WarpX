@@ -70,6 +70,14 @@ MultiFluidContainer::InitData (int lev)
 }
 
 
+void 
+MultiFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho)
+{
+    for (auto& pc : allcontainers) {
+        pc->DepositCharge(lev,rho);
+    }
+}
+
 void
 MultiFluidContainer::Evolve (int lev,
                             const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,

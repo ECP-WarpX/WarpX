@@ -7,6 +7,8 @@
     #include "Utils/WarpXAlgorithmSelection.H"
 #endif
 #include "Particles/MultiParticleContainer.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
@@ -44,6 +46,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     if (m_species_index == -1) {
         auto& mypc = warpx.GetPartContainer();
         rho = mypc.GetChargeDensity(m_lev, true);
+        warpx.myfl->DepositCharge(m_lev,*rho);
     }
     // Dump rho per species
     else {

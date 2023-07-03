@@ -99,6 +99,17 @@ public:
         amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz);
 
     /**
+     * DepositCharge deposits density onto rho
+     */
+    /**
+     * \brief Deposit fluid charge density.
+     *
+     * \param[in] lev refinement level
+     * \param[in,out] rho charge density MultiFab.
+     */
+    void DepositCharge (int lev, amrex::MultiFab &rho);
+
+    /**
      * Muscl-Handcock Helper Functions
     */
     amrex::Real flux (amrex::Real Qm, amrex::Real Qp, amrex::Real Vm, amrex::Real Vp);

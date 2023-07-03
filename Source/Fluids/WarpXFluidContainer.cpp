@@ -702,6 +702,41 @@ void WarpXFluidContainer::GatherAndPush (
     FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
+void WarpXFluidContainer::DepositCharge(int lev, amrex::MultiFab &rho)
+{
+
+    WarpX &warpx = WarpX::GetInstance();
+    const amrex::Geometry &geom = warpx.Geom(lev);
+    const amrex::Periodicity &period = geom.periodicity();
+    const amrex::Real q = getCharge();
+    auto const &owner_mask_rho = amrex::OwnerMask(rho, period);
+
+    // Assertion, make sure rho is at the same location as N
+    AMREX_ALWAYS_ASSERT(rho.ixType().nodeCentered());
+
+    // Loop over and deposit charge density
+    #ifdef AMREX_USE_OMP
+    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+    #endif
+    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+
+        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
+        amrex::Array4<amrex::Real> rho_arr = rho.array(mfi);
+        auto owner_mask_rho_arr = owner_mask_rho->array(mfi);
+
+        // Deposit Rho
+        amrex::ParallelFor(tile_box,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+                if ( owner_mask_rho_arr(i,j,k) ) rho_arr(i,j,k) += q*N_arr(i,j,k);
+            }
+        );
+    }
+}
+
+
 void WarpXFluidContainer::DepositCurrent(
     int lev,
     amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz)

@@ -1352,8 +1352,11 @@ private:
     std::unique_ptr<MultiParticleContainer> mypc;
     std::unique_ptr<MultiDiagnostics> multi_diags;
 
+public:
     // Fluid container
     std::unique_ptr<MultiFluidContainer> myfl;
+
+private:
 
     //
     // Fields: First array for level, second for direction

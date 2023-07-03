@@ -79,6 +79,8 @@ public:
 
     std::vector<std::string> GetSpeciesNames() const { return species_names; }
 
+    void DepositCharge (int lev, amrex::MultiFab &rho);
+
 protected:
 
     std::vector<std::string> species_names;
@@ -89,6 +91,7 @@ private:
     amrex::Vector<std::unique_ptr<WarpXFluidContainer>> allcontainers;
 
     void ReadParameters ();
+
 
 };
 #endif /*WARPX_MultiFluidContainer_H_*/
