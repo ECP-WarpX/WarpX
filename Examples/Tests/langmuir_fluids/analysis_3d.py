@@ -58,8 +58,9 @@ kz = 2.*np.pi*n_osc_z/(hi[2]-lo[2])
 # Plasma frequency
 wp = np.sqrt((n*e**2)/(m_e*epsilon_0))
 
-k = {'Ex':kx, 'Ey':ky, 'Ez':kz}
-cos = {'Ex': (0,1,1), 'Ey':(1,0,1), 'Ez':(1,1,0)}
+k = {'Ex':kx, 'Ey':ky, 'Ez':kz, 'Jx':kx, 'Jy':ky, 'Jz':kz}
+cos = {'Ex': (0,1,1), 'Ey':(1,0,1), 'Ez':(1,1,0),'Jx': (0,1,1), 'Jy':(1,0,1), 'Jz':(1,1,0)}
+cos_rho = {'rho': (1,1,1)}
 
 def get_contribution( is_cos, k, idim ):
     du = (hi[idim]-lo[idim])/Ncell[idim]
@@ -82,8 +83,35 @@ def get_theoretical_field( field, t ):
 
     return( E )
 
+def get_theoretical_J_field( field, t ):
+    amplitude = - epsilon_0 * wp * epsilon * (m_e*c**2*k[field])/e * np.cos(wp*t)
+    cos_flag = cos[field]
+    x_contribution = get_contribution( cos_flag, kx, 0 )
+    y_contribution = get_contribution( cos_flag, ky, 1 )
+    z_contribution = get_contribution( cos_flag, kz, 2 )
+
+    J = amplitude * x_contribution[:, np.newaxis, np.newaxis] \
+                  * y_contribution[np.newaxis, :, np.newaxis] \
+                  * z_contribution[np.newaxis, np.newaxis, :]
+
+    return( J )
+
+def get_theoretical_rho_field( field, t ):
+    amplitude = epsilon_0 * epsilon * (m_e*c**2*(kx*kx+ky*ky+kz*kz))/e * np.sin(wp*t)
+    cos_flag = cos_rho[field]
+    x_contribution = get_contribution( cos_flag, kx, 0 )
+    y_contribution = get_contribution( cos_flag, ky, 1 )
+    z_contribution = get_contribution( cos_flag, kz, 2 )
+
+    rho = amplitude * x_contribution[:, np.newaxis, np.newaxis] \
+                  * y_contribution[np.newaxis, :, np.newaxis] \
+                  * z_contribution[np.newaxis, np.newaxis, :]
+
+    return( rho )
+
 # Read the file
 ds = yt.load(fn)
+
 
 t0 = ds.current_time.to_value()
 data = ds.covering_grid(level = 0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
@@ -98,7 +126,30 @@ for field in ['Ex', 'Ey', 'Ez']:
     max_error = abs(E_sim-E_th).max()/abs(E_th).max()
     print('%s: Max error: %.2e' %(field,max_error))
     error_rel = max( error_rel, max_error )
+    print("error_rel    : " + str(error_rel))
+    
+    
+# Check the validity of the currents
+error_rel = 0
+for field in ['Jx', 'Jy', 'Jz']:
+    J_sim = data[('mesh',field)].to_ndarray()
+    J_th = get_theoretical_J_field(field, t0)
+    max_error = abs(J_sim-J_th).max()/abs(J_th).max()
+    print('%s: Max error: %.2e' %(field,max_error))
+    error_rel = max( error_rel, max_error )
+    print("error_rel    : " + str(error_rel))
+    
+# Check the validity of the charge
+error_rel = 0
+for field in ['rho']:
+    rho_sim = data[('boxlib',field)].to_ndarray()
+    rho_th = get_theoretical_rho_field(field, t0)
+    max_error = abs(rho_sim-rho_th).max()/abs(rho_th).max()
+    print('%s: Max error: %.2e' %(field,max_error))
+    error_rel = max( error_rel, max_error )
+    print("error_rel    : " + str(error_rel))
 
+    
 # Plot the last field from the loop (Ez at iteration 40)
 fig, (ax1, ax2) = plt.subplots(1, 2, dpi = 100)
 # First plot (slice at y=0)
@@ -127,7 +178,6 @@ fig.savefig('Langmuir_fluid_multi_analysis.png', dpi = 200)
 
 tolerance_rel = 5e-2
 
-print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
