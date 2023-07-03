@@ -70,7 +70,7 @@ MultiFluidContainer::InitData (int lev)
 }
 
 
-void 
+void
 MultiFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho)
 {
     for (auto& pc : allcontainers) {
