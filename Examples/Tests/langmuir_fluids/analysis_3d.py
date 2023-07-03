@@ -127,8 +127,8 @@ for field in ['Ex', 'Ey', 'Ez']:
     print('%s: Max error: %.2e' %(field,max_error))
     error_rel = max( error_rel, max_error )
     print("error_rel    : " + str(error_rel))
-    
-    
+
+
 # Check the validity of the currents
 error_rel = 0
 for field in ['Jx', 'Jy', 'Jz']:
@@ -138,7 +138,7 @@ for field in ['Jx', 'Jy', 'Jz']:
     print('%s: Max error: %.2e' %(field,max_error))
     error_rel = max( error_rel, max_error )
     print("error_rel    : " + str(error_rel))
-    
+
 # Check the validity of the charge
 error_rel = 0
 for field in ['rho']:
@@ -149,7 +149,7 @@ for field in ['rho']:
     error_rel = max( error_rel, max_error )
     print("error_rel    : " + str(error_rel))
 
-    
+
 # Plot the last field from the loop (Ez at iteration 40)
 fig, (ax1, ax2) = plt.subplots(1, 2, dpi = 100)
 # First plot (slice at y=0)
