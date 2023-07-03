@@ -426,7 +426,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
     FillBoundary(tmp_Vx, tmp_Vx.nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(tmp_Vy, tmp_Vy.nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(tmp_Vx, tmp_Vz.nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(tmp_Vz, tmp_Vz.nGrowVect(), WarpX::do_single_precision_comms, period);
 
     FillBoundary(tmp_Q_minus1_x, tmp_Q_minus1_x.nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(tmp_Q_minus2_x, tmp_Q_minus2_x.nGrowVect(), WarpX::do_single_precision_comms, period);
