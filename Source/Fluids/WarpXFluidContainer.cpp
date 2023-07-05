@@ -49,7 +49,7 @@ void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const Di
     int ncomps = 1;
     amrex::IntVect nguards = {AMREX_D_DECL(2, 2, 2)};
 
-    auto &warpx = WarpX::GetInstance();
+    WarpX &warpx = WarpX::GetInstance();
 
     // set human-readable tag for each MultiFab
     auto const tag = [lev](std::string tagname)
