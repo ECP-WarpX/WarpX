@@ -67,6 +67,11 @@ public:
 
     virtual void InitIonizationModule () override;
 
+    /*
+     * \brief Returns a pointer to the plasma injector.
+     */
+    virtual PlasmaInjector* GetPlasmaInjector () override;
+
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that
      * advances plasma particles for a time dt (typically one timestep).

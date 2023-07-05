@@ -14,6 +14,7 @@
 
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
+#include "Initialization/PlasmaInjector.H"
 #include "Particles/ParticleBoundaries.H"
 #include "SpeciesPhysicalProperties.H"
 
@@ -121,6 +122,12 @@ public:
     virtual void InitData () = 0;
 
     virtual void InitIonizationModule () {}
+
+    /*
+     * \brief Virtual function that returns a pointer to the plasma injector,
+     *        for derived classes that define one (PhysicalParticleContainer).
+     */
+    virtual PlasmaInjector* GetPlasmaInjector () { return nullptr; }
 
     /**
      * Evolve is the central WarpXParticleContainer function that advances
@@ -244,9 +251,12 @@ public:
     virtual void ContinuousInjection(const amrex::RealBox& /*injection_box*/) {}
     // Update optional sub-class-specific injection location.
     virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
+    bool doContinuousInjection() const {return do_continuous_injection;}
 
     // Inject a continuous flux of particles from a defined plane
     virtual void ContinuousFluxInjection(amrex::Real /*t*/, amrex::Real /*dt*/) {}
+
+    int getSpeciesId() const {return species_id;}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.
@@ -308,6 +318,9 @@ public:
     amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
+
+    //! Current injection position
+    amrex::Real m_current_injection_position;
 
     // split along diagonals (0) or axes (1)
     int split_type = 0;

@@ -88,8 +88,8 @@ void WarpX::HybridPICEvolveFields ()
     {
         m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
         m_hybrid_pic_model->HybridPICSolveE(
-            Efield_fp, current_fp, Bfield_fp, rho_fp, m_edge_lengths,
-            DtType::FirstHalf
+            Efield_fp, current_fp_temp, Bfield_fp, rho_fp_temp, m_edge_lengths,
+            true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
         EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
@@ -116,8 +116,8 @@ void WarpX::HybridPICEvolveFields ()
     {
         m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
         m_hybrid_pic_model->HybridPICSolveE(
-            Efield_fp, current_fp, Bfield_fp, rho_fp, m_edge_lengths,
-            DtType::SecondHalf
+            Efield_fp, current_fp, Bfield_fp, rho_fp_temp, m_edge_lengths,
+            true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
         EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
@@ -148,8 +148,8 @@ void WarpX::HybridPICEvolveFields ()
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
     m_hybrid_pic_model->HybridPICSolveE(
-        Efield_fp, current_fp, Bfield_fp, rho_fp, m_edge_lengths,
-        DtType::Full
+        Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths,
+        false
     );
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
@@ -165,5 +165,32 @@ void WarpX::HybridPICEvolveFields ()
             MultiFab::Copy(*current_fp_temp[lev][idim], *current_fp[lev][idim],
                            0, 0, 1, current_fp_temp[lev][idim]->nGrowVect());
         }
+    }
+}
+
+void WarpX::HybridPICDepositInitialRhoAndJ ()
+{
+    auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
+    auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
+    mypc->DepositCharge(rho_fp_temp, 0._rt);
+    mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
+    SyncRho(rho_fp_temp, rho_cp, charge_buf);
+    SyncCurrent(current_fp_temp, current_cp, current_buf);
+    for (int lev=0; lev <= finest_level; ++lev) {
+        // SyncCurrent does not include a call to FillBoundary, but it is needed
+        // for the hybrid-PIC solver since current values are interpolated to
+        // a nodal grid
+        current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
+        current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
+        current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
+
+        ApplyRhofieldBoundary(lev, rho_fp_temp[lev].get(), PatchType::fine);
+        // Set current density at PEC boundaries, if needed.
+        ApplyJfieldBoundary(
+            lev, current_fp_temp[lev][0].get(),
+            current_fp_temp[lev][1].get(),
+            current_fp_temp[lev][2].get(),
+            PatchType::fine
+        );
     }
 }

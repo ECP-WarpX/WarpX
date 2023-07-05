@@ -4,6 +4,7 @@
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "WarpX.H"
 
 #include <ablastr/coarsen/sample.H>

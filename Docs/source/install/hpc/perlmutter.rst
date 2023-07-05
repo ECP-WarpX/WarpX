@@ -76,6 +76,7 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
       .. code-block:: bash
 
          bash $HOME/src/warpx/Tools/machines/perlmutter-nersc/install_gpu_dependencies.sh
+         source ${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/venvs/warpx/bin/activate
 
       .. dropdown:: Script Details
          :color: light
@@ -125,6 +126,7 @@ On Perlmutter, you can run either on GPU nodes with fast A100 GPUs (recommended)
       .. code-block:: bash
 
          bash $HOME/src/warpx/Tools/machines/perlmutter-nersc/install_cpu_dependencies.sh
+         source ${CFS}/${proj}/${USER}/sw/perlmutter/cpu/venvs/warpx/bin/activate
 
       .. dropdown:: Script Details
          :color: light
