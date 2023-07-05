@@ -129,7 +129,7 @@ diag1.write_species = 1
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho_beam_e rho_beam_p rho
 diag1.species = pho beam_e beam_p
 diag1.format = openpmd
-diag1.openpmd_backend = bp
+diag1.openpmd_backend = h5
 diag1.dump_last_timestep = 1
 
 # REDUCED

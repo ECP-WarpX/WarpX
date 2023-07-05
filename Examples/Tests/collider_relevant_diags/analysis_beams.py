@@ -87,7 +87,6 @@ def chi(ux, uy, uz, Ex=Ex, Ey=Ey, Ez=Ez, Bx=Bx, By=By, Bz=Bz):
     chi = gamma/E_crit*np.sqrt(tmp1x**2+tmp1y**2+tmp1z**2 - tmp2**2)
     return chi
 
-
 def luminosity():
     series = io.Series("diags/diag1/openpmd_%T.bp",io.Access.read_only)
     iterations = np.asarray(series.iterations)
@@ -109,7 +108,6 @@ def luminosity():
         #print('llllllllllllllllllllll ', l, np.sum(n1*n2), np.sum(n1*n1),np.sum(n2*n2))
         lumi.append(l)
     return lumi
-
 
 def disruption():
     series = io.Series("diags/diag1/openpmd_%T.bp",io.Access.read_only)
@@ -147,8 +145,6 @@ def disruption():
 
     return np.asarray([XY1_AVE, XY1_STD, XY2_AVE, XY2_STD])
 
-
-
 print('chi of electrons ----------------------------------------')
 print('theory:', chi(u1x, u1y, u1z))
 
@@ -172,12 +168,8 @@ fname='diags/reducedfiles/ColliderRelevant_beam_e_beam_p.txt'
 chiave = np.loadtxt(fname)[:,9]
 print('chiave ColliderRelevant diag = ', chiave)
 
-
-
-
 print('-------------------------')
 print('luminosity')
-
 
 print('from PIC data', luminosity())
 
@@ -185,25 +177,17 @@ CollDiagFname='diags/reducedfiles/ColliderRelevant_beam_e_beam_p.txt'
 lum = np.loadtxt(CollDiagFname)[:,2]
 print('ColliderRelevant diag = ', lum)
 
-
 print('theory from input', 2.*n1*n2*Lx*Ly*Lz*c)
-
-
-
-
 
 print('-------------------------')
 print('xy1 ave')
 print('from PIC data', disruption()[0])
 print('ColliderRelevant diag ele = ',  np.loadtxt(CollDiagFname)[:,11])
 
-
 print('-------------------------')
 print('xy1 std')
 print('from PIC data', disruption()[1])
 print('ColliderRelevant diag ele = ',  np.loadtxt(CollDiagFname)[:,12])
-
-
 
 print('disruption')
 print('from PIC data', disruption()[1]/disruption()[0])
