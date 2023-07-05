@@ -212,12 +212,7 @@ void ColliderRelevant::ComputeDiags (int step)
         // get WarpXParticleContainer class object
         auto &myspc = mypc.GetParticleContainer(i_s);
 
-        // get mass and charge
-        auto m = myspc.getMass();
-        auto is_photon = myspc.AmIA<PhysicalSpecies::photon>();
-        if ( is_photon ) {
-            m = PhysConst::m_e;
-        }
+        // get charge
         ParticleReal const q = myspc.getCharge();
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
@@ -267,6 +262,13 @@ void ColliderRelevant::ComputeDiags (int step)
 #if (defined WARPX_QED)
         // get number of level (int)
         const auto level_number = WarpX::GetInstance().finestLevel();
+
+        // get mass
+        amrex::Real m = myspc.getMass();
+        auto is_photon = myspc.AmIA<PhysicalSpecies::photon>();
+        if (is_photon) {
+            m = PhysConst::m_e;
+        }
 
         // compute chimin, chiave and chimax
         Real chimin_f = 0.0_rt;
