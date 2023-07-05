@@ -1,8 +1,4 @@
-/* Copyright 2019-2020 Andrew Myers, Ann Almgren, Axel Huebl
- * David Grote, Jean-Luc Vay, Junmin Gu
- * Luca Fedeli, Mathieu Lobet, Maxence Thevenet
- * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
- * Yinjian Zhao
+/* Copyright 2023 Grant Johnson, Remi Lehe
  *
  * This file is part of WarpX.
  *
