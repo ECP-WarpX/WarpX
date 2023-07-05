@@ -8,7 +8,6 @@
 #define WARPX_MultiFluidContainer_H_
 
 #include "WarpXFluidContainer_fwd.H"
-#include "Evolve/WarpXDtType.H"
 
 #include<AMReX_MultiFab.H>
 #include <AMReX_Vector.H>
