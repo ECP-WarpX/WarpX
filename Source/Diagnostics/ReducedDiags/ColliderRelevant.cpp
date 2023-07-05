@@ -264,7 +264,7 @@ void ColliderRelevant::ComputeDiags (int step)
         const auto level_number = WarpX::GetInstance().finestLevel();
 
         // get mass
-        amrex::Real m = myspc.getMass();
+        amrex::ParticleReal m = myspc.getMass();
         auto is_photon = myspc.AmIA<PhysicalSpecies::photon>();
         if (is_photon) {
             m = PhysConst::m_e;
