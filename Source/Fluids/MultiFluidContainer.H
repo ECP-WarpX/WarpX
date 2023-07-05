@@ -6,6 +6,7 @@
  */
 #ifndef WARPX_MultiFluidContainer_H_
 #define WARPX_MultiFluidContainer_H_
+#include "Evolve/WarpXDtType.H"
 
 #include "WarpXFluidContainer_fwd.H"
 
