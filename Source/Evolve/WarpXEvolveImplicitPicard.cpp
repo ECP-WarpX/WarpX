@@ -221,8 +221,8 @@ WarpX::EvolveImplicitPicard (int numsteps)
 
             // Updates Efield_fp so it holds the new E at n+1/2
             EvolveE(0.5_rt*dt[0]);
-            // nodel_sync must be true to avoid instability
-            FillBoundaryE(guard_cells.ng_alloc_EB, true);
+            // WarpX::sync_nodal_points is used to avoid instability
+            FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
 
             if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
                 // Save the B at n+1/2 from the previous iteration so that the change
@@ -239,8 +239,8 @@ WarpX::EvolveImplicitPicard (int numsteps)
 
             // This updates Bfield_fp so it holds the new B at n+1/2
             EvolveB(0.5_rt*dt[0], DtType::Full);
-            // nodel_sync must be true to avoid instability
-            FillBoundaryB(guard_cells.ng_alloc_EB, true);
+            // WarpX::sync_nodal_points is used to avoid instability
+            FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
 
             // The B field update needs
             if (num_mirrors>0){
@@ -291,9 +291,9 @@ WarpX::EvolveImplicitPicard (int numsteps)
         // Advance fields to step n+1
         FinishImplicitFieldUpdate(Efield_fp, Efield_n);
         FinishImplicitFieldUpdate(Bfield_fp, Bfield_n);
-        // nodel_sync must be true to avoid instability
-        FillBoundaryE(guard_cells.ng_alloc_EB, true);
-        FillBoundaryB(guard_cells.ng_alloc_EB, true);
+        // WarpX::sync_nodal_points is used to avoid instability
+        FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+        FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
 
         // Run multi-physics modules:
         // ionization, Coulomb collisions, QED
