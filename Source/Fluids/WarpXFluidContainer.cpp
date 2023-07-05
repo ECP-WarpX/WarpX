@@ -7,6 +7,7 @@
 #include "ablastr/coarsen/sample.H"
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
 
+#include "MusclHancockUtils.H"
 #include "WarpXFluidContainer.H"
 #include "WarpX.H"
 #include <ablastr/utils/Communication.H>
@@ -533,7 +534,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 auto F4_minusz = flux(Q_minus4_z(i,j,k-1),Q_plus4_z(i,j,k),  Vz(i,j,k-1),Vz(i,j,k));
                 auto F4_plusz =  flux(Q_minus4_z(i,j,k),  Q_plus4_z(i,j,k+1),Vz(i,j,k),  Vz(i,j,k+1));
 
-
                 // Update Q from tn -> tn + dt
                 N_arr(i,j,k) = N_arr(i,j,k) - cx*(F1_plusx - F1_minusx)
                                             - cy*(F1_plusy - F1_minusy)
@@ -563,43 +563,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
-
-// Local helper functions for MUSCL-Handcock
-// Rusanov Flux
-amrex::Real WarpXFluidContainer::flux (amrex::Real Qm, amrex::Real Qp, amrex::Real Vm, amrex::Real Vp)
-{
-    auto c = std::max( std::abs(Vm) , std::abs(Vp) );
-    return 0.5*(Vm*Qm + Vp*Qp) - (0.5*c)*(Qp - Qm);
-}
-// ave_minmod
-amrex::Real WarpXFluidContainer::ave (amrex::Real a, amrex::Real b)
-{
-    if (a*b > 0.0)
-        return minmod( maxmod(a,b), minmod(2.0*a,2.0*b));
-    else
-        return 0.0;
-}
-// mindmod
-amrex::Real WarpXFluidContainer::minmod (amrex::Real a, amrex::Real b)
-{
-    if (a > 0.0 && b > 0.0)
-        return std::min(a, b);
-    else if (a < 0.0 && b < 0.0)
-        return std::max(a, b);
-    else
-        return 0.0;
-}
-//maxmod
-amrex::Real WarpXFluidContainer::maxmod (amrex::Real a, amrex::Real b)
-{
-    if (a > 0.0 && b > 0.0)
-        return std::max(a, b);
-    else if (a < 0.0 && b < 0.0)
-        return std::min(a, b);
-    else
-        return 0.0;
-}
-
 
 // Momentum source from fields
 void WarpXFluidContainer::GatherAndPush (

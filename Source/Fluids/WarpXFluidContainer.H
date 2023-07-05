@@ -109,15 +109,6 @@ public:
      */
     void DepositCharge (int lev, amrex::MultiFab &rho);
 
-    /**
-     * Muscl-Handcock Helper Functions
-    */
-    amrex::Real flux (amrex::Real Qm, amrex::Real Qp, amrex::Real Vm, amrex::Real Vp);
-    amrex::Real ave (amrex::Real a, amrex::Real b);
-    amrex::Real minmod (amrex::Real a, amrex::Real b);
-    amrex::Real maxmod (amrex::Real a, amrex::Real b);
-
-
     //amrex::Real getCharge () {return charge;}
     amrex::Real getCharge () const {return charge;}
     //amrex::Real getMass () {return mass;}
