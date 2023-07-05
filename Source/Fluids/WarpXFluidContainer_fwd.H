@@ -1,4 +1,4 @@
-/* Copyright 2021 Luca Fedeli, Axel Huebl
+/* Copyright 2023 Grant Johnson, Remi Lehe
  *
  * This file is part of WarpX.
  *
