@@ -193,12 +193,13 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     amrex::MultiFab tmp_Vz(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
 
     // Temporary Half-step values
-    amrex::MultiFab tmp_Q_minus_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_Q_plus_x(N[lev]->boxArray(), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_Q_minus_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_Q_plus_y(N[lev]->boxArray(), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_Q_minus_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 4, 1);
-    amrex::MultiFab tmp_Q_plus_z(N[lev]->boxArray(), N[lev]->DistributionMap(), 4, 1);
+    amrex::BoxArray ba = N[lev]->boxArray();
+    amrex::MultiFab tmp_Q_minus_x( amrex::convert(ba, IntVect(0,1,1)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_plus_x( amrex::convert(ba, IntVect(0,1,1)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_minus_y( amrex::convert(ba, IntVect(1,0,1)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_plus_y( amrex::convert(ba, IntVect(1,0,1)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_minus_z( amrex::convert(ba, IntVect(1,1,0)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_plus_z( amrex::convert(ba, IntVect(1,1,0)), N[lev]->DistributionMap(), 4, 1);
 
     // Advection push
     #ifdef AMREX_USE_OMP
@@ -352,30 +353,30 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 Q_minus_x(i,j,k,1) = Q_tilde1 + dQ1x/2.0;
                 Q_minus_x(i,j,k,2) = Q_tilde2 + dQ2x/2.0;
                 Q_minus_x(i,j,k,3) = Q_tilde3 + dQ3x/2.0;
-                Q_plus_x(i,j,k,0) = Q_tilde0 - dQ0x/2.0;
-                Q_plus_x(i,j,k,1) = Q_tilde1 - dQ1x/2.0;
-                Q_plus_x(i,j,k,2) = Q_tilde2 - dQ2x/2.0;
-                Q_plus_x(i,j,k,3) = Q_tilde3 - dQ3x/2.0;
+                Q_plus_x(i-1,j,k,0) = Q_tilde0 - dQ0x/2.0;
+                Q_plus_x(i-1,j,k,1) = Q_tilde1 - dQ1x/2.0;
+                Q_plus_x(i-1,j,k,2) = Q_tilde2 - dQ2x/2.0;
+                Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
 
                 // Predict Q at the cell edges (y)
                 Q_minus_y(i,j,k,0) = Q_tilde0 + dQ0y/2.0;
                 Q_minus_y(i,j,k,1) = Q_tilde1 + dQ1y/2.0;
                 Q_minus_y(i,j,k,2) = Q_tilde2 + dQ2y/2.0;
                 Q_minus_y(i,j,k,3) = Q_tilde3 + dQ3y/2.0;
-                Q_plus_y(i,j,k,0) = Q_tilde0 - dQ0y/2.0;
-                Q_plus_y(i,j,k,1) = Q_tilde1 - dQ1y/2.0;
-                Q_plus_y(i,j,k,2) = Q_tilde2 - dQ2y/2.0;
-                Q_plus_y(i,j,k,3) = Q_tilde3 - dQ3y/2.0;
+                Q_plus_y(i,j-1,k,0) = Q_tilde0 - dQ0y/2.0;
+                Q_plus_y(i,j-1,k,1) = Q_tilde1 - dQ1y/2.0;
+                Q_plus_y(i,j-1,k,2) = Q_tilde2 - dQ2y/2.0;
+                Q_plus_y(i,j-1,k,3) = Q_tilde3 - dQ3y/2.0;
 
                 // Predict Q at the cell edges (z)
                 Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
                 Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
                 Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
                 Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
-                Q_plus_z(i,j,k,0) = Q_tilde0 - dQ0z/2.0;
-                Q_plus_z(i,j,k,1) = Q_tilde1 - dQ1z/2.0;
-                Q_plus_z(i,j,k,2) = Q_tilde2 - dQ2z/2.0;
-                Q_plus_z(i,j,k,3) = Q_tilde3 - dQ3z/2.0;
+                Q_plus_z(i,j,k-1,0) = Q_tilde0 - dQ0z/2.0;
+                Q_plus_z(i,j,k-1,1) = Q_tilde1 - dQ1z/2.0;
+                Q_plus_z(i,j,k-1,2) = Q_tilde2 - dQ2z/2.0;
+                Q_plus_z(i,j,k-1,3) = Q_tilde3 - dQ3z/2.0;
 
 
                 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -433,32 +434,32 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
                 // compute the fluxes:
-                auto F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i,j,k,0),  Vx(i-1,j,k),Vx(i,j,k));
-                auto F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i+1,j,k,0),Vx(i,j,k),  Vx(i+1,j,k));
-                auto F1_minusx = flux(Q_minus_x(i-1,j,k,1),Q_plus_x(i,j,k,1),  Vx(i-1,j,k),Vx(i,j,k));
-                auto F1_plusx =  flux(Q_minus_x(i,j,k,1),  Q_plus_x(i+1,j,k,1),Vx(i,j,k),  Vx(i+1,j,k));
-                auto F2_minusx = flux(Q_minus_x(i-1,j,k,2),Q_plus_x(i,j,k,2),  Vx(i-1,j,k),Vx(i,j,k));
-                auto F2_plusx =  flux(Q_minus_x(i,j,k,2),  Q_plus_x(i+1,j,k,2),Vx(i,j,k),  Vx(i+1,j,k));
-                auto F3_minusx = flux(Q_minus_x(i-1,j,k,3),Q_plus_x(i,j,k,3),  Vx(i-1,j,k),Vx(i,j,k));
-                auto F3_plusx =  flux(Q_minus_x(i,j,k,3),  Q_plus_x(i+1,j,k,3),Vx(i,j,k),  Vx(i+1,j,k));
+                auto F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx(i-1,j,k),Vx(i,j,k));
+                auto F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),Vx(i,j,k),  Vx(i+1,j,k));
+                auto F1_minusx = flux(Q_minus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,1),  Vx(i-1,j,k),Vx(i,j,k));
+                auto F1_plusx =  flux(Q_minus_x(i,j,k,1),  Q_plus_x(i,j,k,1),Vx(i,j,k),  Vx(i+1,j,k));
+                auto F2_minusx = flux(Q_minus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,2),  Vx(i-1,j,k),Vx(i,j,k));
+                auto F2_plusx =  flux(Q_minus_x(i,j,k,2),  Q_plus_x(i,j,k,2),Vx(i,j,k),  Vx(i+1,j,k));
+                auto F3_minusx = flux(Q_minus_x(i-1,j,k,3),Q_plus_x(i-1,j,k,3),  Vx(i-1,j,k),Vx(i,j,k));
+                auto F3_plusx =  flux(Q_minus_x(i,j,k,3),  Q_plus_x(i,j,k,3),Vx(i,j,k),  Vx(i+1,j,k));
 
-                auto F0_minusy = flux(Q_minus_y(i,j-1,k,0),Q_plus_y(i,j,k,0),  Vy(i,j-1,k),Vy(i,j,k));
-                auto F0_plusy =  flux(Q_minus_y(i,j,k,0),  Q_plus_y(i,j+1,k,0),Vy(i,j,k),  Vy(i,j+1,k));
-                auto F1_minusy = flux(Q_minus_y(i,j-1,k,1),Q_plus_y(i,j,k,1),  Vy(i,j-1,k),Vy(i,j,k));
-                auto F1_plusy =  flux(Q_minus_y(i,j,k,1),  Q_plus_y(i,j+1,k,1),Vy(i,j,k),  Vy(i,j+1,k));
-                auto F2_minusy = flux(Q_minus_y(i,j-1,k,2),Q_plus_y(i,j,k,2),  Vy(i,j-1,k),Vy(i,j,k));
-                auto F2_plusy =  flux(Q_minus_y(i,j,k,2),  Q_plus_y(i,j+1,k,2),Vy(i,j,k),  Vy(i,j+1,k));
-                auto F3_minusy = flux(Q_minus_y(i,j-1,k,3),Q_plus_y(i,j,k,3),  Vy(i,j-1,k),Vy(i,j,k));
-                auto F3_plusy =  flux(Q_minus_y(i,j,k,3),  Q_plus_y(i,j+1,k,3),Vy(i,j,k),  Vy(i,j+1,k));
+                auto F0_minusy = flux(Q_minus_y(i,j-1,k,0),Q_plus_y(i,j-1,k,0),  Vy(i,j-1,k),Vy(i,j,k));
+                auto F0_plusy =  flux(Q_minus_y(i,j,k,0),  Q_plus_y(i,j,k,0),Vy(i,j,k),  Vy(i,j+1,k));
+                auto F1_minusy = flux(Q_minus_y(i,j-1,k,1),Q_plus_y(i,j-1,k,1),  Vy(i,j-1,k),Vy(i,j,k));
+                auto F1_plusy =  flux(Q_minus_y(i,j,k,1),  Q_plus_y(i,j,k,1),Vy(i,j,k),  Vy(i,j+1,k));
+                auto F2_minusy = flux(Q_minus_y(i,j-1,k,2),Q_plus_y(i,j-1,k,2),  Vy(i,j-1,k),Vy(i,j,k));
+                auto F2_plusy =  flux(Q_minus_y(i,j,k,2),  Q_plus_y(i,j,k,2),Vy(i,j,k),  Vy(i,j+1,k));
+                auto F3_minusy = flux(Q_minus_y(i,j-1,k,3),Q_plus_y(i,j-1,k,3),  Vy(i,j-1,k),Vy(i,j,k));
+                auto F3_plusy =  flux(Q_minus_y(i,j,k,3),  Q_plus_y(i,j,k,3),Vy(i,j,k),  Vy(i,j+1,k));
 
-                auto F0_minusz = flux(Q_minus_z(i,j,k-1,0),Q_plus_z(i,j,k,0),  Vz(i,j,k-1),Vz(i,j,k));
-                auto F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k+1,0),Vz(i,j,k),  Vz(i,j,k+1));
-                auto F1_minusz = flux(Q_minus_z(i,j,k-1,1),Q_plus_z(i,j,k,1),  Vz(i,j,k-1),Vz(i,j,k));
-                auto F1_plusz =  flux(Q_minus_z(i,j,k,1),  Q_plus_z(i,j,k+1,1),Vz(i,j,k),  Vz(i,j,k+1));
-                auto F2_minusz = flux(Q_minus_z(i,j,k-1,2),Q_plus_z(i,j,k,2),  Vz(i,j,k-1),Vz(i,j,k));
-                auto F2_plusz =  flux(Q_minus_z(i,j,k,2),  Q_plus_z(i,j,k+1,2),Vz(i,j,k),  Vz(i,j,k+1));
-                auto F3_minusz = flux(Q_minus_z(i,j,k-1,3),Q_plus_z(i,j,k,3),  Vz(i,j,k-1),Vz(i,j,k));
-                auto F3_plusz =  flux(Q_minus_z(i,j,k,3),  Q_plus_z(i,j,k+1,3),Vz(i,j,k),  Vz(i,j,k+1));
+                auto F0_minusz = flux(Q_minus_z(i,j,k-1,0),Q_plus_z(i,j,k-1,0),  Vz(i,j,k-1),Vz(i,j,k));
+                auto F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),Vz(i,j,k),  Vz(i,j,k+1));
+                auto F1_minusz = flux(Q_minus_z(i,j,k-1,1),Q_plus_z(i,j,k-1,1),  Vz(i,j,k-1),Vz(i,j,k));
+                auto F1_plusz =  flux(Q_minus_z(i,j,k,1),  Q_plus_z(i,j,k,1),Vz(i,j,k),  Vz(i,j,k+1));
+                auto F2_minusz = flux(Q_minus_z(i,j,k-1,2),Q_plus_z(i,j,k-1,2),  Vz(i,j,k-1),Vz(i,j,k));
+                auto F2_plusz =  flux(Q_minus_z(i,j,k,2),  Q_plus_z(i,j,k,2),Vz(i,j,k),  Vz(i,j,k+1));
+                auto F3_minusz = flux(Q_minus_z(i,j,k-1,3),Q_plus_z(i,j,k-1,3),  Vz(i,j,k-1),Vz(i,j,k));
+                auto F3_plusz =  flux(Q_minus_z(i,j,k,3),  Q_plus_z(i,j,k,3),Vz(i,j,k),  Vz(i,j,k+1));
 
                 // Update Q from tn -> tn + dt
                 N_arr(i,j,k) = N_arr(i,j,k) - cx*(F0_plusx - F0_minusx)
