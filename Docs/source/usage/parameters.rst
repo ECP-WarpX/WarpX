@@ -79,7 +79,13 @@ Overall simulation parameters
 
 * ``algo.evolve_scheme`` (`string`) optional (default `explicit`)
     Specifies the evolve scheme used by WarpX.
-    Currently, only explicit evolution is implemented.
+
+    * ``explicit``: Use an explicit solver, such as the standard FDTD or PSATD
+
+    * ``implicit_picard``: Use an energy conserving implicit solver that uses a Picard iteration to solve the system.
+      Note that this method is for demonstration only. It is inefficient and does not work well when
+      :math:`\omega_{pe} \delta t` is close to or greater than one.
+
 
 * ``warpx.do_electrostatic`` (`string`) optional (default `none`)
     Specifies the electrostatic mode. When turned on, instead of updating
