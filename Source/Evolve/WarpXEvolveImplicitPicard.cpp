@@ -206,11 +206,13 @@ WarpX::EvolveImplicitPicard (int numsteps)
 
             SyncCurrentAndRho();
 
-            // Save the E at n+1/2 from the previous iteration so that the change
-            // in this iteration can be calculated
-            amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, 1, 0);
-            amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, 1, 0);
-            amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, 1, 0);
+            if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
+                // Save the E at n+1/2 from the previous iteration so that the change
+                // in this iteration can be calculated
+                amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, 1, 0);
+                amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, 1, 0);
+                amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, 1, 0);
+            }
 
             // Copy Efield_n into Efield_fp since EvolveE updates Efield_fp in place
             amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, 1, Efield_n[0][0]->nGrowVect());
@@ -222,11 +224,13 @@ WarpX::EvolveImplicitPicard (int numsteps)
             // nodel_sync must be true to avoid instability
             FillBoundaryE(guard_cells.ng_alloc_EB, true);
 
-            // Save the B at n+1/2 from the previous iteration so that the change
-            // in this iteration can be calculated
-            amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, 1, 0);
-            amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, 1, 0);
-            amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, 1, 0);
+            if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
+                // Save the B at n+1/2 from the previous iteration so that the change
+                // in this iteration can be calculated
+                amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, 1, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, 1, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, 1, 0);
+            }
 
             // Copy Bfield_n into Bfield_fp since EvolveB updates Bfield_fp in place
             amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bfield_n[0][0], 0, 0, 1, Bfield_n[0][0]->nGrowVect());
@@ -245,31 +249,33 @@ WarpX::EvolveImplicitPicard (int numsteps)
                 // B : guard cells are NOT up-to-date from the mirrors
             }
 
-            // Calculate the change in E and B from this iteration
-            // deltaE = abs(Enew - Eold)/max(abs(Enew))
-            Efield_save[0][0]->minus(*Efield_fp[0][0], 0, 1, 0);
-            Efield_save[0][1]->minus(*Efield_fp[0][1], 0, 1, 0);
-            Efield_save[0][2]->minus(*Efield_fp[0][2], 0, 1, 0);
-            amrex::Real maxE0 = std::max(1._rt, Efield_fp[0][0]->norm0(0, 0));
-            amrex::Real maxE1 = std::max(1._rt, Efield_fp[0][1]->norm0(0, 0));
-            amrex::Real maxE2 = std::max(1._rt, Efield_fp[0][2]->norm0(0, 0));
-            amrex::Real deltaE0 = Efield_save[0][0]->norm0(0, 0)/maxE0;
-            amrex::Real deltaE1 = Efield_save[0][1]->norm0(0, 0)/maxE1;
-            amrex::Real deltaE2 = Efield_save[0][2]->norm0(0, 0)/maxE2;
-            /* amrex::Print() << "deltaE " << iteration_count << " " << deltaE0 << " " << deltaE1 << " " << deltaE2 << "\n"; */
-            deltaE = std::max(std::max(deltaE0, deltaE1), deltaE2);
-            Bfield_save[0][0]->minus(*Bfield_fp[0][0], 0, 1, 0);
-            Bfield_save[0][1]->minus(*Bfield_fp[0][1], 0, 1, 0);
-            Bfield_save[0][2]->minus(*Bfield_fp[0][2], 0, 1, 0);
-            amrex::Real maxB0 = std::max(1._rt, Bfield_fp[0][0]->norm0(0, 0));
-            amrex::Real maxB1 = std::max(1._rt, Bfield_fp[0][1]->norm0(0, 0));
-            amrex::Real maxB2 = std::max(1._rt, Bfield_fp[0][2]->norm0(0, 0));
-            amrex::Real deltaB0 = Bfield_save[0][0]->norm0(0, 0)/maxB0;
-            amrex::Real deltaB1 = Bfield_save[0][1]->norm0(0, 0)/maxB1;
-            amrex::Real deltaB2 = Bfield_save[0][2]->norm0(0, 0)/maxB2;
-            /* amrex::Print() << "deltaB " << iteration_count << " " << deltaB0 << " " << deltaB1 << " " << deltaB2 << "\n"; */
-            deltaB = std::max(std::max(deltaB0, deltaB1), deltaB2);
-            amrex::Print() << "Max delta " << iteration_count << " " << deltaE << " " << deltaB << "\n";
+            if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
+                // Calculate the change in E and B from this iteration
+                // deltaE = abs(Enew - Eold)/max(abs(Enew))
+                Efield_save[0][0]->minus(*Efield_fp[0][0], 0, 1, 0);
+                Efield_save[0][1]->minus(*Efield_fp[0][1], 0, 1, 0);
+                Efield_save[0][2]->minus(*Efield_fp[0][2], 0, 1, 0);
+                amrex::Real maxE0 = std::max(1._rt, Efield_fp[0][0]->norm0(0, 0));
+                amrex::Real maxE1 = std::max(1._rt, Efield_fp[0][1]->norm0(0, 0));
+                amrex::Real maxE2 = std::max(1._rt, Efield_fp[0][2]->norm0(0, 0));
+                amrex::Real deltaE0 = Efield_save[0][0]->norm0(0, 0)/maxE0;
+                amrex::Real deltaE1 = Efield_save[0][1]->norm0(0, 0)/maxE1;
+                amrex::Real deltaE2 = Efield_save[0][2]->norm0(0, 0)/maxE2;
+                /* amrex::Print() << "deltaE " << iteration_count << " " << deltaE0 << " " << deltaE1 << " " << deltaE2 << "\n"; */
+                deltaE = std::max(std::max(deltaE0, deltaE1), deltaE2);
+                Bfield_save[0][0]->minus(*Bfield_fp[0][0], 0, 1, 0);
+                Bfield_save[0][1]->minus(*Bfield_fp[0][1], 0, 1, 0);
+                Bfield_save[0][2]->minus(*Bfield_fp[0][2], 0, 1, 0);
+                amrex::Real maxB0 = std::max(1._rt, Bfield_fp[0][0]->norm0(0, 0));
+                amrex::Real maxB1 = std::max(1._rt, Bfield_fp[0][1]->norm0(0, 0));
+                amrex::Real maxB2 = std::max(1._rt, Bfield_fp[0][2]->norm0(0, 0));
+                amrex::Real deltaB0 = Bfield_save[0][0]->norm0(0, 0)/maxB0;
+                amrex::Real deltaB1 = Bfield_save[0][1]->norm0(0, 0)/maxB1;
+                amrex::Real deltaB2 = Bfield_save[0][2]->norm0(0, 0)/maxB2;
+                /* amrex::Print() << "deltaB " << iteration_count << " " << deltaB0 << " " << deltaB1 << " " << deltaB2 << "\n"; */
+                deltaB = std::max(std::max(deltaB0, deltaB1), deltaB2);
+                amrex::Print() << "Max delta " << iteration_count << " " << deltaE << " " << deltaB << "\n";
+            }
 
             // Now, the particle positions and velocities and the Efield_fp and Bfield_fp hold
             // the new values at n+1/2
