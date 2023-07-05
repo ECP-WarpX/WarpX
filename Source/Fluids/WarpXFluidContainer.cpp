@@ -349,6 +349,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 auto Q_tilde3 = NUz_arr(i,j,k) - cx_half*AdQ3x - cy_half*AdQ3y - cz_half*AdQ3z;
 
                 // Predict Q at the cell edges (x)
+                // (note that _plus is shifted due to grid location)
                 Q_minus_x(i,j,k,0) = Q_tilde0 + dQ0x/2.0;
                 Q_minus_x(i,j,k,1) = Q_tilde1 + dQ1x/2.0;
                 Q_minus_x(i,j,k,2) = Q_tilde2 + dQ2x/2.0;
@@ -434,6 +435,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
                 // compute the fluxes:
+                // (note that _plus is shifted due to grid location)
                 auto F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx(i-1,j,k),Vx(i,j,k));
                 auto F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),Vx(i,j,k),  Vx(i+1,j,k));
                 auto F1_minusx = flux(Q_minus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,1),  Vx(i-1,j,k),Vx(i,j,k));
