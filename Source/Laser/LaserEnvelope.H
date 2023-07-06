@@ -62,5 +62,4 @@ public:
     amrex::Real m_profile_t_peak;
     amrex::Real m_profile_waist;
     amrex::Real m_wavelength;
-    LaserEnvelope(const std::string& laser_name);
 };
