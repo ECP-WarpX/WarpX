@@ -84,7 +84,9 @@ def get_theoretical_field( field, t ):
     return( E )
 
 def get_theoretical_J_field( field, t ):
-    amplitude = - epsilon_0 * wp * epsilon * (m_e*c**2*k[field])/e * np.cos(wp*t)
+    # wpdt/2 accounts for the Yee halfstep offset of the current
+    dt = 1.203645751e-15
+    amplitude = - epsilon_0 * wp * epsilon * (m_e*c**2*k[field])/e * np.cos(wp*t-wp*dt/2)
     cos_flag = cos[field]
     x_contribution = get_contribution( cos_flag, kx, 0 )
     y_contribution = get_contribution( cos_flag, ky, 1 )
@@ -130,7 +132,6 @@ for field in ['Ex', 'Ey', 'Ez']:
 
 
 # Check the validity of the currents
-error_rel = 0
 for field in ['Jx', 'Jy', 'Jz']:
     J_sim = data[('mesh',field)].to_ndarray()
     J_th = get_theoretical_J_field(field, t0)
@@ -140,7 +141,6 @@ for field in ['Jx', 'Jy', 'Jz']:
     print("error_rel    : " + str(error_rel))
 
 # Check the validity of the charge
-error_rel = 0
 for field in ['rho']:
     rho_sim = data[('boxlib',field)].to_ndarray()
     rho_th = get_theoretical_rho_field(field, t0)
