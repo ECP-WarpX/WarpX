@@ -59,21 +59,21 @@ void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const Di
     };
 
     warpx.AllocInitMultiFab(N[lev], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
-                            dm, ncomps, nguards, tag("fluid density"), 0.0_rt);
+                            dm, ncomps, nguards, lev, tag("fluid density"), 0.0_rt);
 
     warpx.AllocInitMultiFab(NU[lev][0], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
-                            dm, ncomps, nguards, tag("fluid momentum density [x]"), 0.0_rt);
+                            dm, ncomps, nguards, lev, tag("fluid momentum density [x]"), 0.0_rt);
     warpx.AllocInitMultiFab(NU[lev][1], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
-                            dm, ncomps, nguards, tag("fluid momentum density [y]"), 0.0_rt);
+                            dm, ncomps, nguards, lev, tag("fluid momentum density [y]"), 0.0_rt);
     warpx.AllocInitMultiFab(NU[lev][2], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
-                            dm, ncomps, nguards, tag("fluid momentum density [z]"), 0.0_rt);
+                            dm, ncomps, nguards, lev, tag("fluid momentum density [z]"), 0.0_rt);
 }
 
 void WarpXFluidContainer::InitData(int lev)
 {
     // Extract objects that give the initial density and momentum
     InjectorDensity *inj_rho = plasma_injector->getInjectorDensity();
-    InjectorMomentum *inj_mom = plasma_injector->getInjectorMomentum();
+    InjectorMomentum *inj_mom = plasma_injector->getInjectorMomentumDevice();
 
     // Extract grid geometry properties
     WarpX &warpx = WarpX::GetInstance();
