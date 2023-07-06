@@ -63,7 +63,7 @@ WarpX::EvolveImplicitPicardInit (const int lev)
 #if (AMREX_SPACEDIM >= 2)
             pc->AddRealComp("x_n");
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             pc->AddRealComp("y_n");
 #endif
             pc->AddRealComp("z_n");
@@ -165,28 +165,22 @@ WarpX::EvolveImplicitPicard (int numsteps)
         // Particles have p^{n} and x^{n}.
 
         // E and B are up-to-date inside the domain only
-        FillBoundaryE(guard_cells.ng_alloc_EB);
-        FillBoundaryB(guard_cells.ng_alloc_EB);
+        /* FillBoundaryE(guard_cells.ng_alloc_EB); */
+        /* FillBoundaryB(guard_cells.ng_alloc_EB); */
 
-        // Note that these would likely never be needed since the aux is only
-        // a separate MF when doing momentum conserving which would not be
-        // done in the implicit version.
-        /* UpdateAuxilaryData(); */
-        /* FillBoundaryAux(guard_cells.ng_UpdateAux); */
-
-        // Save the values at the start of the time step
-        // copy particle data to x_n etc.
+        // Save the values at the start of the time step,
+        // copying particle data to x_n etc.
         for (auto const& pc : *mypc) {
             SaveParticlesAtStepStart (*pc, 0);
         }
 
         // Save the fields at the start of the step
-        amrex::MultiFab::Copy(*Efield_n[0][0], *Efield_fp[0][0], 0, 0, 1, Efield_fp[0][0]->nGrowVect());
-        amrex::MultiFab::Copy(*Efield_n[0][1], *Efield_fp[0][1], 0, 0, 1, Efield_fp[0][1]->nGrowVect());
-        amrex::MultiFab::Copy(*Efield_n[0][2], *Efield_fp[0][2], 0, 0, 1, Efield_fp[0][2]->nGrowVect());
-        amrex::MultiFab::Copy(*Bfield_n[0][0], *Bfield_fp[0][0], 0, 0, 1, Bfield_fp[0][0]->nGrowVect());
-        amrex::MultiFab::Copy(*Bfield_n[0][1], *Bfield_fp[0][1], 0, 0, 1, Bfield_fp[0][1]->nGrowVect());
-        amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, 1, Bfield_fp[0][2]->nGrowVect());
+        amrex::MultiFab::Copy(*Efield_n[0][0], *Efield_fp[0][0], 0, 0, ncomps, Efield_fp[0][0]->nGrowVect());
+        amrex::MultiFab::Copy(*Efield_n[0][1], *Efield_fp[0][1], 0, 0, ncomps, Efield_fp[0][1]->nGrowVect());
+        amrex::MultiFab::Copy(*Efield_n[0][2], *Efield_fp[0][2], 0, 0, ncomps, Efield_fp[0][2]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfield_n[0][0], *Bfield_fp[0][0], 0, 0, ncomps, Bfield_fp[0][0]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfield_n[0][1], *Bfield_fp[0][1], 0, 0, ncomps, Bfield_fp[0][1]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, ncomps, Bfield_fp[0][2]->nGrowVect());
 
         // Start the iterations
         amrex::Real deltaE = 1._rt;
@@ -209,38 +203,40 @@ WarpX::EvolveImplicitPicard (int numsteps)
             if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
                 // Save the E at n+1/2 from the previous iteration so that the change
                 // in this iteration can be calculated
-                amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, 1, 0);
-                amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, 1, 0);
-                amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, 1, 0);
+                amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, ncomps, 0);
+                amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, ncomps, 0);
+                amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, ncomps, 0);
             }
 
             // Copy Efield_n into Efield_fp since EvolveE updates Efield_fp in place
-            amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, 1, Efield_n[0][0]->nGrowVect());
-            amrex::MultiFab::Copy(*Efield_fp[0][1], *Efield_n[0][1], 0, 0, 1, Efield_n[0][1]->nGrowVect());
-            amrex::MultiFab::Copy(*Efield_fp[0][2], *Efield_n[0][2], 0, 0, 1, Efield_n[0][2]->nGrowVect());
+            amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, ncomps, Efield_n[0][0]->nGrowVect());
+            amrex::MultiFab::Copy(*Efield_fp[0][1], *Efield_n[0][1], 0, 0, ncomps, Efield_n[0][1]->nGrowVect());
+            amrex::MultiFab::Copy(*Efield_fp[0][2], *Efield_n[0][2], 0, 0, ncomps, Efield_n[0][2]->nGrowVect());
 
             // Updates Efield_fp so it holds the new E at n+1/2
             EvolveE(0.5_rt*dt[0]);
             // WarpX::sync_nodal_points is used to avoid instability
             FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+            ApplyEfieldBoundary(0, PatchType::fine);
 
             if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
                 // Save the B at n+1/2 from the previous iteration so that the change
                 // in this iteration can be calculated
-                amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, 1, 0);
-                amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, 1, 0);
-                amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, 1, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, ncomps, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, ncomps, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, ncomps, 0);
             }
 
             // Copy Bfield_n into Bfield_fp since EvolveB updates Bfield_fp in place
-            amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bfield_n[0][0], 0, 0, 1, Bfield_n[0][0]->nGrowVect());
-            amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bfield_n[0][1], 0, 0, 1, Bfield_n[0][1]->nGrowVect());
-            amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bfield_n[0][2], 0, 0, 1, Bfield_n[0][2]->nGrowVect());
+            amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bfield_n[0][0], 0, 0, ncomps, Bfield_n[0][0]->nGrowVect());
+            amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bfield_n[0][1], 0, 0, ncomps, Bfield_n[0][1]->nGrowVect());
+            amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bfield_n[0][2], 0, 0, ncomps, Bfield_n[0][2]->nGrowVect());
 
             // This updates Bfield_fp so it holds the new B at n+1/2
             EvolveB(0.5_rt*dt[0], DtType::Full);
             // WarpX::sync_nodal_points is used to avoid instability
             FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+            ApplyBfieldBoundary(0, PatchType::fine, DtType::Full);
 
             // The B field update needs
             if (num_mirrors>0){
@@ -252,9 +248,9 @@ WarpX::EvolveImplicitPicard (int numsteps)
             if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
                 // Calculate the change in E and B from this iteration
                 // deltaE = abs(Enew - Eold)/max(abs(Enew))
-                Efield_save[0][0]->minus(*Efield_fp[0][0], 0, 1, 0);
-                Efield_save[0][1]->minus(*Efield_fp[0][1], 0, 1, 0);
-                Efield_save[0][2]->minus(*Efield_fp[0][2], 0, 1, 0);
+                Efield_save[0][0]->minus(*Efield_fp[0][0], 0, ncomps, 0);
+                Efield_save[0][1]->minus(*Efield_fp[0][1], 0, ncomps, 0);
+                Efield_save[0][2]->minus(*Efield_fp[0][2], 0, ncomps, 0);
                 amrex::Real maxE0 = std::max(1._rt, Efield_fp[0][0]->norm0(0, 0));
                 amrex::Real maxE1 = std::max(1._rt, Efield_fp[0][1]->norm0(0, 0));
                 amrex::Real maxE2 = std::max(1._rt, Efield_fp[0][2]->norm0(0, 0));
@@ -263,9 +259,9 @@ WarpX::EvolveImplicitPicard (int numsteps)
                 amrex::Real deltaE2 = Efield_save[0][2]->norm0(0, 0)/maxE2;
                 /* amrex::Print() << "deltaE " << iteration_count << " " << deltaE0 << " " << deltaE1 << " " << deltaE2 << "\n"; */
                 deltaE = std::max(std::max(deltaE0, deltaE1), deltaE2);
-                Bfield_save[0][0]->minus(*Bfield_fp[0][0], 0, 1, 0);
-                Bfield_save[0][1]->minus(*Bfield_fp[0][1], 0, 1, 0);
-                Bfield_save[0][2]->minus(*Bfield_fp[0][2], 0, 1, 0);
+                Bfield_save[0][0]->minus(*Bfield_fp[0][0], 0, ncomps, 0);
+                Bfield_save[0][1]->minus(*Bfield_fp[0][1], 0, ncomps, 0);
+                Bfield_save[0][2]->minus(*Bfield_fp[0][2], 0, ncomps, 0);
                 amrex::Real maxB0 = std::max(1._rt, Bfield_fp[0][0]->norm0(0, 0));
                 amrex::Real maxB1 = std::max(1._rt, Bfield_fp[0][1]->norm0(0, 0));
                 amrex::Real maxB2 = std::max(1._rt, Bfield_fp[0][2]->norm0(0, 0));
@@ -424,7 +420,7 @@ WarpX::SaveParticlesAtStepStart (WarpXParticleContainer& pc, const int lev)
 #if (AMREX_SPACEDIM >= 2)
         ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
         ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
 #endif
         ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
@@ -437,12 +433,12 @@ WarpX::SaveParticlesAtStepStart (WarpXParticleContainer& pc, const int lev)
         amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
         {
             amrex::ParticleReal xp, yp, zp;
-            getPosition.AsStored(ip, xp, yp, zp);
+            getPosition(ip, xp, yp, zp);
 
 #if (AMREX_SPACEDIM >= 2)
             x_n[ip] = xp;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             y_n[ip] = yp;
 #endif
             z_n[ip] = zp;
@@ -460,6 +456,8 @@ WarpX::SaveParticlesAtStepStart (WarpXParticleContainer& pc, const int lev)
 void
 WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, const int lev)
 {
+
+    const Real dx = Geom(lev).CellSize(0);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
@@ -481,7 +479,7 @@ WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, const int lev)
 #if (AMREX_SPACEDIM >= 2)
         ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
         ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
 #endif
         ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
@@ -499,7 +497,7 @@ WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, const int lev)
 #if (AMREX_SPACEDIM >= 2)
             xp = 2._rt*xp - x_n[ip];
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             yp = 2._rt*yp - y_n[ip];
 #endif
             zp = 2._rt*zp - z_n[ip];
@@ -525,33 +523,37 @@ WarpX::FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-        for ( MFIter mfi(*Field_fp[lev][0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
+       for ( amrex::MFIter mfi(*Field_fp[lev][0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
 
-            Array4<Real> const& Fx = Field_fp[lev][0]->array(mfi);
-            Array4<Real> const& Fy = Field_fp[lev][1]->array(mfi);
-            Array4<Real> const& Fz = Field_fp[lev][2]->array(mfi);
+            amrex::Array4<amrex::Real> const& Fx = Field_fp[lev][0]->array(mfi);
+            amrex::Array4<amrex::Real> const& Fy = Field_fp[lev][1]->array(mfi);
+            amrex::Array4<amrex::Real> const& Fz = Field_fp[lev][2]->array(mfi);
 
-            Array4<Real> const& Fx_n = Field_n[lev][0]->array(mfi);
-            Array4<Real> const& Fy_n = Field_n[lev][1]->array(mfi);
-            Array4<Real> const& Fz_n = Field_n[lev][2]->array(mfi);
+            amrex::Array4<amrex::Real> const& Fx_n = Field_n[lev][0]->array(mfi);
+            amrex::Array4<amrex::Real> const& Fy_n = Field_n[lev][1]->array(mfi);
+            amrex::Array4<amrex::Real> const& Fz_n = Field_n[lev][2]->array(mfi);
 
-            Box const& tbx = mfi.tilebox(Field_fp[lev][0]->ixType().toIntVect());
-            Box const& tby = mfi.tilebox(Field_fp[lev][1]->ixType().toIntVect());
-            Box const& tbz = mfi.tilebox(Field_fp[lev][2]->ixType().toIntVect());
+            amrex::Box tbx = mfi.tilebox(Field_fp[lev][0]->ixType().toIntVect());
+            amrex::Box tby = mfi.tilebox(Field_fp[lev][1]->ixType().toIntVect());
+            amrex::Box tbz = mfi.tilebox(Field_fp[lev][2]->ixType().toIntVect());
 
-            amrex::ParallelFor(tbx, tby, tbz,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            /* tbx.grow(Field_fp[lev][0]->nGrowVect()); */
+            /* tby.grow(Field_fp[lev][1]->nGrowVect()); */
+            /* tbz.grow(Field_fp[lev][2]->nGrowVect()); */
+
+            amrex::ParallelFor(
+            tbx, ncomps, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
             {
-                Fx(i,j,k) = 2._rt*Fx(i,j,k) - Fx_n(i,j,k);
+                Fx(i,j,k,n) = 2._rt*Fx(i,j,k,n) - Fx_n(i,j,k,n);
             },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            tby, ncomps, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
             {
-                Fy(i,j,k) = 2._rt*Fy(i,j,k) - Fy_n(i,j,k);
+                Fy(i,j,k,n) = 2._rt*Fy(i,j,k,n) - Fy_n(i,j,k,n);
             },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            tbz, ncomps, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
             {
-                Fz(i,j,k) = 2._rt*Fz(i,j,k) - Fz_n(i,j,k);
+                Fz(i,j,k,n) = 2._rt*Fz(i,j,k,n) - Fz_n(i,j,k,n);
             });
         }
     }

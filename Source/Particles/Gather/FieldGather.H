@@ -493,22 +493,23 @@ void doGatherShapeNImplicit (
 #if !defined(WARPX_DIM_1D_Z)
     ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
     ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
 #endif
     ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
 
     // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
-    Real const xp_new = xp_np1;
-    Real const yp_new = yp_np1;
-    Real const xp_mid = xp_nph;
-    Real const yp_mid = yp_nph;
-    Real const xp_old = xp_n;
-    Real const yp_old = yp_n;
-    Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
-    Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
-    Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
+    amrex::Real const xp_new = xp_np1;
+    amrex::Real const yp_new = yp_np1;
+    amrex::Real const xp_mid = xp_nph;
+    amrex::Real const yp_mid = yp_nph;
+    amrex::Real const xp_old = xp_n;
+    amrex::Real const yp_old = yp_n;
+    amrex::Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
+    amrex::Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
+    /* amrex::Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid); */
+    amrex::Real const rp_mid = (rp_new + rp_old)/2._rt;
     Real costheta_new, sintheta_new;
     if (rp_new > 0._rt) {
         costheta_new = xp_new/rp_new;
@@ -744,16 +745,6 @@ void doGatherShapeNImplicit (
             amrex::Real sdxiov = ((x_new - x_old) == 0. ? 1. : sdxi/(x_new - x_old));
             Exp += Ex_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 0)*sdxiov*sdzk;
             Bzp += Bz_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 0)*sdxiov*sdzk;
-#if defined(WARPX_DIM_RZ)
-            Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
-            for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-                // The factor 2 comes from the normalization of the modes
-                const Complex djr_cmplx = 2._rt *sdxi*xy_mid;
-                amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1), djr_cmplx.real());
-                amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode), djr_cmplx.imag());
-                xy_mid = xy_mid*xy_mid0;
-            }
-#endif
         }
     }
     for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
@@ -762,24 +753,6 @@ void doGatherShapeNImplicit (
                 one_third*(sx_E_new[i]*sz_E_new[k] + sx_E_old[i]*sz_E_old[k])
                +one_sixth*(sx_E_new[i]*sz_E_old[k] + sx_E_old[i]*sz_E_new[k]));
             Eyp += Ey_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 0)*sdyj;
-#if defined(WARPX_DIM_RZ)
-            Complex xy_new = xy_new0;
-            Complex xy_mid = xy_mid0;
-            Complex xy_old = xy_old0;
-            // Throughout the following loop, xy_ takes the value e^{i m theta_}
-            for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-                // The factor 2 comes from the normalization of the modes
-                // The minus sign comes from the different convention with respect to Davidson et al.
-                const Complex djt_cmplx = -2._rt * I*(i_E_new-1 + i + xmin*dxi)*wq*invdtdx/(amrex::Real)imode
-                                          *(Complex(sx_E_new[i]*sz_E_new[k], 0._rt)*(xy_new - xy_mid)
-                                          + Complex(sx_E_old[i]*sz_E_old[k], 0._rt)*(xy_mid - xy_old));
-                amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1), djt_cmplx.real());
-                amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode), djt_cmplx.imag());
-                xy_new = xy_new*xy_new0;
-                xy_mid = xy_mid*xy_mid0;
-                xy_old = xy_old*xy_old0;
-            }
-#endif
         }
     }
     for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
@@ -790,16 +763,6 @@ void doGatherShapeNImplicit (
             amrex::Real sdzkov = ((z_new - z_old) == 0. ? 1. : sdzk/(z_new - z_old));
             Ezp += Ez_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 0)*sdzkov*sdxi;
             Bxp += Bx_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 0)*sdzkov*sdxi;
-#if defined(WARPX_DIM_RZ)
-            Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
-            for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-                // The factor 2 comes from the normalization of the modes
-                const Complex djz_cmplx = 2._rt * sdzk * xy_mid;
-                amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1), djz_cmplx.real());
-                amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode), djz_cmplx.imag());
-                xy_mid = xy_mid*xy_mid0;
-            }
-#endif
         }
     }
     for (int k=dkl_By; k<=depos_order+1-dku_By; k++) {
@@ -810,12 +773,81 @@ void doGatherShapeNImplicit (
             Byp += By_arr(lo.x+i_By_new-1+i, lo.y+k_By_new-1+k, 0, 0)*sdyj;
         }
     }
+
+#ifdef WARPX_DIM_RZ
+    Complex xy_mid = xy_mid0;
+
+    for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+
+        // Gather field on particle Exp from field on grid ex_arr
+        // Gather field on particle Bzp from field on grid bz_arr
+        for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
+            amrex::Real sdzk = 0.5_rt*(sz_E_new[k] + sz_E_old[k]);
+            amrex::Real sdxi = 0._rt;
+            for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
+                sdxi += (sx_E_old[i] - sx_E_new[i]);
+                amrex::Real sdxiov = ((x_new - x_old) == 0. ? 1. : sdxi/(x_new - x_old));
+                const amrex::Real dEx = (+ Ex_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1)*xy_mid.real()
+                                         - Ex_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode)*xy_mid.imag());
+                const amrex::Real dBz = (+ Bz_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1)*xy_mid.real()
+                                         - Bz_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode)*xy_mid.imag());
+                Exp += dEx*sdxiov*sdzk;
+                Bzp += dBz*sdxiov*sdzk;
+            }
+        }
+        // Gather field on particle Eyp from field on grid ey_arr
+        for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
+            for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
+                Real const sdyj = (
+                    one_third*(sx_E_new[i]*sz_E_new[k] + sx_E_old[i]*sz_E_old[k])
+                   +one_sixth*(sx_E_new[i]*sz_E_old[k] + sx_E_old[i]*sz_E_new[k]));
+                const amrex::Real dEy = (+ Ey_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1)*xy_mid.real()
+                                         - Ey_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode)*xy_mid.imag());
+                Eyp += dEy*sdyj;
+            }
+        }
+        // Gather field on particle Ezp from field on grid ez_arr
+        // Gather field on particle Bxp from field on grid bx_arr
+        for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
+            amrex::Real sdxi = 0.5_rt*(sx_E_new[i] + sx_E_old[i]);
+            amrex::Real sdzk = 0._rt;
+            for (int k=dkl_E; k<=depos_order+1-dku_E; k++) {
+                sdzk += (sz_E_old[k] - sz_E_new[k]);
+                amrex::Real sdzkov = ((z_new - z_old) == 0. ? 1. : sdzk/(z_new - z_old));
+                const amrex::Real dEz = (+ Ez_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1)*xy_mid.real()
+                                         - Ez_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode)*xy_mid.imag());
+                const amrex::Real dBx = (+ Bx_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1)*xy_mid.real()
+                                         - Bx_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode)*xy_mid.imag());
+                Ezp += dEz*sdzkov*sdxi;
+                Bxp += dBx*sdzkov*sdxi;
+            }
+        }
+        // Gather field on particle Byp from field on grid by_arr
+        for (int k=dkl_By; k<=depos_order+1-dku_By; k++) {
+            for (int i=dil_By; i<=depos_order+1-diu_By; i++) {
+                Real const sdyj = (
+                    one_third*(sx_By_new[i]*sz_By_new[k] + sx_By_old[i]*sz_By_old[k])
+                   +one_sixth*(sx_By_new[i]*sz_By_old[k] + sx_By_old[i]*sz_By_new[k]));
+                const amrex::Real dBy = (+ By_arr(lo.x+i_By_new-1+i, lo.y+k_By_new-1+k, 0, 2*imode-1)*xy_mid.real()
+                                         - By_arr(lo.x+i_By_new-1+i, lo.y+k_By_new-1+k, 0, 2*imode)*xy_mid.imag());
+                Byp += dBy*sdyj;
+            }
+        }
+        xy_mid = xy_mid*xy_mid0;
+    }
+
+    // Convert Exp and Eyp (which are actually Er and Etheta) to Ex and Ey
+    const amrex::Real Exp_save = Exp;
+    Exp = costheta_mid*Exp - sintheta_mid*Eyp;
+    Eyp = costheta_mid*Eyp + sintheta_mid*Exp_save;
+    const amrex::Real Bxp_save = Bxp;
+    Bxp = costheta_mid*Bxp - sintheta_mid*Byp;
+    Byp = costheta_mid*Byp + sintheta_mid*Bxp_save;
+
+#endif
+
 #elif defined(WARPX_DIM_1D_Z)
 
-    for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
-        amrex::Real const sdxi = 0.5_rt*(sz_E_old[k] + sz_E_new[k]);
-        Exp += Ex_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdxi;
-    }
     for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
         amrex::Real const sdzk = 0.5_rt*(sz_E_old[k] + sz_E_new[k]);
         Exp += Ex_arr(lo.x+k_E_new-1+k, 0, 0, 0)*sdzk;

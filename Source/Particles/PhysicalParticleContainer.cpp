@@ -2944,7 +2944,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 #if (AMREX_SPACEDIM >= 2)
     ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
     ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
 #endif
     ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
@@ -3013,7 +3013,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
         amrex::ParticleReal xp = 0._rt;
         amrex::ParticleReal xp_n = 0._rt;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
         amrex::ParticleReal yp = y_n[ip];
         amrex::ParticleReal yp_n = y_n[ip];
 #else
@@ -3032,10 +3032,10 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
         if(!t_do_not_gather){
             // first gather E and B to the particle positions
             doGatherShapeNImplicit(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                           ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                           ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                           dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                           nox, galerkin_interpolation);
+                                   ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                   ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                                   nox, galerkin_interpolation);
         }
 
         // Externally applied E and B-field in Cartesian co-ordinates

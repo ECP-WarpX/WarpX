@@ -760,6 +760,11 @@ public:
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
+#ifdef WARPX_DIM_RZ
+    // Applies the boundary conditions that are specific to the axis when in RZ.
+    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev);
+#endif
+
     /**
      * \brief When the Ohm's law solver is used, the electron pressure values
      * on PEC boundaries are set to enforce a zero derivative Neumann condition,
