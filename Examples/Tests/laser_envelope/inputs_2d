@@ -1,21 +1,27 @@
 # algo
 algo.particle_shape = 3
+
 # amr
 amr.max_level = 0
 amr.n_cell = 256 1024
+
 # boundary
 boundary.field_hi = pml pml
 boundary.field_lo = pml pml
-# diag
+
+# diag1
 diag1.diag_type = Full
 diag1.intervals = 50
 diag1.fields_to_plot = Ex Ey Ez #A_laser_envelope
+
 # diagnostics
 diagnostics.diags_names = diag1
+
 # geometry
 geometry.dims = 2
 geometry.prob_hi =  100e-6  30e-6
 geometry.prob_lo = -100e-6 -30e-6
+
 # laser
 laser.direction = 0. 0. 1.
 laser.e_max = 4e12 # a_0=1
@@ -27,10 +33,13 @@ laser.profile = Gaussian
 laser.profile_t_peak = 30e-15 # not sure how to set this
 laser.profile_waist = 15e-6 # w_0
 laser.wavelength = 0.8e-6 # lambda_0
-# lasers
+
+# laser_envelopes
 laser_envelopes.names = laser
+
 # max_step
 max_step = 1000
+
 # warpx
 warpx.cfl = 0.7
 warpx.do_dynamic_scheduling = 0
