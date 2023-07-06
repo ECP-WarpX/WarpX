@@ -3002,7 +3002,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
                                 CompileTimeOptions<no_qed  ,has_qed>>{},
                        {exteb_runtime_flag, qed_runtime_flag},
                        np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                                         [[maybe_unused]] auto qed_control)
+                                                         auto qed_control)
     {
         // Position advance starts from the position at the start of the step
         // but uses the most recent velocity.
@@ -3039,9 +3039,9 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
         }
 
         // Externally applied E and B-field in Cartesian co-ordinates
-        auto const& externeb_fn = getExternalEB; // Have to do this for nvcc
+        [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
         if constexpr (exteb_control == has_exteb) {
-            externeb_fn(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
         }
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
@@ -3083,16 +3083,18 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 #endif
 
 #ifdef WARPX_QED
-        auto foo_local_has_quantum_sync = local_has_quantum_sync;
-        auto foo_podq = p_optical_depth_QSR;
-        auto& evolve_opt_fn = evolve_opt; // have to do all these for nvcc
+        [[maybe_unused]] auto foo_local_has_quantum_sync = local_has_quantum_sync;
+        [[maybe_unused]] auto foo_podq = p_optical_depth_QSR;
+        [[maybe_unused]] auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
         if constexpr (qed_control == has_qed) {
-            if (foo_local_has_quantum_sync) {
-                evolve_opt_fn(ux[ip], uy[ip], uz[ip],
-                              Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                              dt, foo_podq[ip]);
+            if (local_has_quantum_sync) {
+                evolve_opt(ux[ip], uy[ip], uz[ip],
+                           Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                           dt, foo_podq[ip]);
             }
         }
+#else
+            amrex::ignore_unused(qed_control);
 #endif
 
         // Take average to get the time centered value
