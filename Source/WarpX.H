@@ -1481,7 +1481,7 @@ private:
     std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
 
     // Laser Envelope Model parameters
-    m_laser_envelope_model = std::unique_ptr<LaserEnvelope>(amr_core, ispecies, name);
+   std::unique_ptr<LaserEnvelope> m_laser_envelope_model;
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file

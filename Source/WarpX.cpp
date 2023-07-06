@@ -266,6 +266,8 @@ WarpX::WarpX ()
 
     const int nlevs_max = maxLevel() + 1;
 
+    m_laser_envelope_model = std::make_unique<LaserEnvelope>(nlevs_max);
+
     istep.resize(nlevs_max, 0);
     nsubsteps.resize(nlevs_max, 1);
 #if 0
@@ -2200,6 +2202,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             jz_nodal_flag, rho_nodal_flag
         );
     }
+
+    // const amrex::IntVect& ngA = ngEB;
+    // const amrex::IntVect& A_nodal_flag = rho_nodal_flag;
+    // call m_laser_envelope->AllocateLevelMFs(...)
 
     if (fft_do_time_averaging)
     {

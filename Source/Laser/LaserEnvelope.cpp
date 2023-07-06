@@ -8,21 +8,21 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
-
 using namespace amrex;
 using namespace WarpXLaserProfiles;
 
-void LaserEnvelope::AllocateLaserEnvelope (int lev, const BoxArray& ba, const DistributionMapping& dm, const IntVect& ngA, const bool aux_is_nodal)
-{
-    //A_nodal_flag = IntVect::TheNodeVector();
-    //A_ncomps = ptr.2
-    //AllocInitMultiFab(rho_fp[lev], amrex::convert(ba, A_nodal_flag), dm, A_ncomps, ngA, tag("A_fp"), 0.0_rt);
+LaserEnvelope::LaserEnvelope (const int nlevs_max){
+    ReadParameters();
+    AllocateMFs(nlevs_max);
 }
 
-LaserEnvelope::LaserEnvelope(AmrCore* amr_core, int ispecies, const std::string& name)
-    : m_laser_name{name}
+void LaserEnvelope::ReadParameters ()
 {
-    const ParmParse pp_laser_name(m_laser_name);
+    const ParmParse pp_laser_envelopes("laser_envelopes");
+    std::string laser_name;
+    pp_laser_envelopes.query("names", laser_name);
+
+    const ParmParse pp_laser_name(laser_name);
     // Parse the type of laser profile and set the corresponding flag `profile`
     std::string laser_type_s;
     pp_laser_name.get("profile", laser_type_s);
@@ -44,10 +44,33 @@ LaserEnvelope::LaserEnvelope(AmrCore* amr_core, int ispecies, const std::string&
         e_max_is_specified ^ a0_is_specified,
         "Exactly one of e_max or a0 must be specified for the laser.\n"
         );
-        return; // Disable laser if amplitude is 0
 
     amrex::Print() << "The wavelength of the laser is " << m_wavelength << " nm\n";
     amrex::Print() << "The profile waist of the laser is " << m_profile_waist << " s\n";
     amrex::Print() << "The profile peak of the laser is " << m_profile_t_peak << " s\n";
-    amrex::Print() << "We are considering the laser " << m_laser_name << " \n";
-    }
+    amrex::Print() << "We are considering the laser " << laser_name << " \n";
+}
+
+void LaserEnvelope::AllocateMFs (const int nlevs_max)
+{
+    A_laser_envelope.resize(nlevs_max);
+}
+
+void LaserEnvelope::AllocateLevelMFs (
+    const int lev,
+    const amrex::BoxArray& ba,
+    const amrex::DistributionMapping& dm,
+    const int ncomps,
+    const amrex::IntVect& ngA,
+    const amrex::IntVect& A_nodal_flag)
+{
+    auto & warpx = WarpX::GetInstance();
+
+    warpx.AllocInitMultiFab(A_laser_envelope[lev], amrex::convert(ba, A_nodal_flag),
+        dm, ncomps, ngA, "A_laser_envelope", 0.0_rt);
+}
+
+void LaserEnvelope::ClearLevel (const int lev)
+{
+    A_laser_envelope[lev].reset();
+}

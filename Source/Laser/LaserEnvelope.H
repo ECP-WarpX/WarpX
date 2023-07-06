@@ -10,11 +10,48 @@
 #include <Utils/WarpX_Complex.H>
 #include <AMReX_AmrCore.H>
 
-class LaserEnvelope {
+class LaserEnvelope
+{
 public:
-    LaserEnvelope(amrex::AmrCore* amr_core, int ispecies, const std::string& name);
-    amrex::Vector< amrex::FabArray< amrex::BaseFab <Complex> > > A_laser_envelope;
-    void AllocateLaserEnvelope (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm, const amrex::IntVect& ngA, const bool aux_is_nodal);
+
+    /**
+     * \brief Constructor
+     */
+    LaserEnvelope(const int nlevs_max);
+
+    /**
+     * TODO
+     */
+    void ReadParameters();
+
+    /**
+     * TODO
+     */
+    void AllocateMFs (const int nlevs_max);
+
+    /**
+     * TODO
+     */
+    void AllocateLevelMFs (
+        const int lev,
+        const amrex::BoxArray& ba,
+        const amrex::DistributionMapping& dm,
+        const int ncomps,
+        const amrex::IntVect& ngA,
+        const amrex::IntVect& A_nodal_flag);
+
+    /**
+     * TODO
+     */
+    void ClearLevel (const int lev);
+
+    /**
+     * TODO
+     */
+    void InitData ();
+
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>> A_laser_envelope;
+
     amrex::Real m_direction;
     amrex::Real m_e_max;
     amrex::Real m_polarization;
@@ -25,5 +62,5 @@ public:
     amrex::Real m_profile_t_peak;
     amrex::Real m_profile_waist;
     amrex::Real m_wavelength;
-    const std::string& m_laser_name;
-    };
+    LaserEnvelope(const std::string& laser_name);
+};
