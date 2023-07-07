@@ -1262,9 +1262,13 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
 
 #if !defined(WARPX_DIM_1D_Z)
             ParticleReal const xp_np1 = 2._prt*xp_nph - xp_n[ip];
+#else
+            ignore_unused(xp_n);
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             ParticleReal const yp_np1 = 2._prt*yp_nph - yp_n[ip];
+#else
+            ignore_unused(yp_n);
 #endif
             ParticleReal const zp_np1 = 2._prt*zp_nph - zp_n[ip];
 
