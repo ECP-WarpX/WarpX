@@ -457,8 +457,6 @@ void
 WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, const int lev)
 {
 
-    const Real dx = Geom(lev).CellSize(0);
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif

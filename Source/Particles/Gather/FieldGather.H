@@ -481,10 +481,6 @@ void doGatherShapeNImplicit (
     Real const dzi = 1.0_rt / dx[2];
     Real const zmin = xyzmin[2];
 
-#if defined(WARPX_DIM_RZ)
-    Complex const I = Complex{0._rt, 1._rt};
-#endif
-
 #if !defined(WARPX_DIM_1D_Z)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
     Real constexpr one_sixth = 1.0_rt / 6.0_rt;
@@ -510,14 +506,6 @@ void doGatherShapeNImplicit (
     amrex::Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
     /* amrex::Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid); */
     amrex::Real const rp_mid = (rp_new + rp_old)/2._rt;
-    Real costheta_new, sintheta_new;
-    if (rp_new > 0._rt) {
-        costheta_new = xp_new/rp_new;
-        sintheta_new = yp_new/rp_new;
-    } else {
-        costheta_new = 1._rt;
-        sintheta_new = 0._rt;
-    }
     amrex::Real costheta_mid, sintheta_mid;
     if (rp_mid > 0._rt) {
         costheta_mid = xp_mid/rp_mid;
@@ -526,17 +514,7 @@ void doGatherShapeNImplicit (
         costheta_mid = 1._rt;
         sintheta_mid = 0._rt;
     }
-    amrex::Real costheta_old, sintheta_old;
-    if (rp_old > 0._rt) {
-        costheta_old = xp_old/rp_old;
-        sintheta_old = yp_old/rp_old;
-    } else {
-        costheta_old = 1._rt;
-        sintheta_old = 0._rt;
-    }
-    const Complex xy_new0 = Complex{costheta_new, sintheta_new};
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
-    const Complex xy_old0 = Complex{costheta_old, sintheta_old};
     // Keep these double to avoid bug in single precision
     double const x_new = (rp_new - xmin)*dxi;
     double const x_old = (rp_old - xmin)*dxi;
@@ -610,12 +588,12 @@ void doGatherShapeNImplicit (
     const int k_E_old = compute_shifted_shape_factor(sz_E_old, z_old, k_E_new);
 
 #if defined(WARPX_DIM_3D)
-    const int i_B_new = compute_shape_factor(sx_B_new+1, x_new + 0.5_rt);
-    const int i_B_old = compute_shifted_shape_factor(sx_B_old, x_old + 0.5_rt, i_B_new);
-    const int j_B_new = compute_shape_factor(sy_B_new+1, y_new + 0.5_rt);
-    const int j_B_old = compute_shifted_shape_factor(sy_B_old, y_old + 0.5_rt, j_B_new);
-    const int k_B_new = compute_shape_factor(sz_B_new+1, z_new + 0.5_rt);
-    const int k_B_old = compute_shifted_shape_factor(sz_B_old, z_old + 0.5_rt, k_B_new);
+    const int i_B_new = compute_shape_factor(sx_B_new+1, x_new - 0.5_rt);
+    const int i_B_old = compute_shifted_shape_factor(sx_B_old, x_old - 0.5_rt, i_B_new);
+    const int j_B_new = compute_shape_factor(sy_B_new+1, y_new - 0.5_rt);
+    const int j_B_old = compute_shifted_shape_factor(sy_B_old, y_old - 0.5_rt, j_B_new);
+    const int k_B_new = compute_shape_factor(sz_B_new+1, z_new - 0.5_rt);
+    const int k_B_old = compute_shifted_shape_factor(sz_B_old, z_old - 0.5_rt, k_B_new);
 #endif
 
     // computes min/max positions of current contributions
