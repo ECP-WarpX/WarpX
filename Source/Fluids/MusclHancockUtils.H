@@ -55,9 +55,9 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void Q_step(int i, int j, int k,
     amrex::Real cx_half, amrex::Real cy_half, amrex::Real cz_half,
     amrex::Real Ux, amrex::Real Uy, amrex::Real Uz, amrex::Real a,
-    amrex::Real clight, amrex::Real gamma, amrex::Array4<amrex::Real> const &N_arr, 
+    amrex::Real clight, amrex::Real gamma, amrex::Array4<amrex::Real> const &N_arr,
     amrex::Array4<amrex::Real> const &NUx_arr, amrex::Array4<amrex::Real> const &NUy_arr,
-    amrex::Array4<amrex::Real> const &NUz_arr, 
+    amrex::Array4<amrex::Real> const &NUz_arr,
     amrex::Real Q_minus_x[], amrex::Real Q_minus_y[], amrex::Real Q_minus_z[],
     amrex::Real Q_plus_x[], amrex::Real Q_plus_y[], amrex::Real Q_plus_z[])
 {

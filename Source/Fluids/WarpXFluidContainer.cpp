@@ -259,28 +259,28 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                 // Grab Q's required
                 Q_step(i, j, k, cx_half, cy_half, cz_half, Ux, Uy, Uz, a,
-                clight, gamma, N_arr,  NUx_arr, NUy_arr, NUz_arr, 
+                clight, gamma, N_arr,  NUx_arr, NUy_arr, NUz_arr,
                 Q_minus_x, Q_minus_y, Q_minus_z, Q_plus_x, Q_plus_y, Q_plus_z);
 
                 Q_step(i-1, j, k, cx_half, cy_half, cz_half, Ux_Lx, Uy_Lx, Uz_Lx, a_Lx,
-                clight, gamma_Lx, N_arr,  NUx_arr, NUy_arr, NUz_arr, 
+                clight, gamma_Lx, N_arr,  NUx_arr, NUy_arr, NUz_arr,
                 Q_minus_xL, tmp_unused, tmp_unused, tmp_unused, tmp_unused, tmp_unused);
                 Q_step(i+1, j, k, cx_half, cy_half, cz_half, Ux_Rx, Uy_Rx, Uz_Rx, a_Rx,
-                clight, gamma_Rx, N_arr,  NUx_arr, NUy_arr, NUz_arr, 
+                clight, gamma_Rx, N_arr,  NUx_arr, NUy_arr, NUz_arr,
                 tmp_unused, tmp_unused, tmp_unused, Q_plus_xR, tmp_unused, tmp_unused);
 
                 Q_step(i, j-1, k, cx_half, cy_half, cz_half, Ux_Ly, Uy_Ly, Uz_Ly, a_Ly,
-                clight, gamma_Ly, N_arr,  NUx_arr, NUy_arr, NUz_arr, 
+                clight, gamma_Ly, N_arr,  NUx_arr, NUy_arr, NUz_arr,
                 tmp_unused, Q_minus_yL, tmp_unused, tmp_unused, tmp_unused, tmp_unused);
                 Q_step(i, j+1, k, cx_half, cy_half, cz_half, Ux_Ry, Uy_Ry, Uz_Ry, a_Ry,
-                clight, gamma_Ry, N_arr,  NUx_arr, NUy_arr, NUz_arr, 
+                clight, gamma_Ry, N_arr,  NUx_arr, NUy_arr, NUz_arr,
                 tmp_unused, tmp_unused, tmp_unused, tmp_unused, Q_plus_yR, tmp_unused);
 
                 Q_step(i, j, k-1, cx_half, cy_half, cz_half, Ux_Lz, Uy_Lz, Uz_Lz, a_Lz,
-                clight, gamma_Lz, N_arr,  NUx_arr, NUy_arr, NUz_arr, 
+                clight, gamma_Lz, N_arr,  NUx_arr, NUy_arr, NUz_arr,
                 tmp_unused, tmp_unused, Q_minus_zL, tmp_unused, tmp_unused, tmp_unused);
                 Q_step(i, j, k+1, cx_half, cy_half, cz_half, Ux_Rz, Uy_Rz, Uz_Rz, a_Rz,
-                clight, gamma_Rz, N_arr,  NUx_arr, NUy_arr, NUz_arr, 
+                clight, gamma_Rz, N_arr,  NUx_arr, NUy_arr, NUz_arr,
                 tmp_unused, tmp_unused, tmp_unused, tmp_unused, tmp_unused, Q_plus_zR);
 
                 // Compute Vx Vy Vz (R is right (+1), L is left (-1))
