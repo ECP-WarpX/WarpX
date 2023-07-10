@@ -6,6 +6,7 @@
  */
 #include "ablastr/coarsen/sample.H"
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include "MusclHancockUtils.H"
 #include "WarpXFluidContainer.H"
@@ -71,6 +72,8 @@ void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const Di
 
 void WarpXFluidContainer::InitData(int lev)
 {
+    WARPX_PROFILE("WarpXFluidContainer::InitData");
+
     // Extract objects that give the initial density and momentum
     InjectorDensity *inj_rho = plasma_injector->getInjectorDensity();
     InjectorMomentum *inj_mom = plasma_injector->getInjectorMomentumDevice();
@@ -161,6 +164,7 @@ void WarpXFluidContainer::Evolve(
 // Muscl Advection Update
 void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 {
+    WARPX_PROFILE("WarpXFluidContainer::AdvectivePush_Muscl");
 
     // Grab the grid spacing
     WarpX &warpx = WarpX::GetInstance();
@@ -358,6 +362,7 @@ void WarpXFluidContainer::GatherAndPush (
     const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
     const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz)
 {
+    WARPX_PROFILE("WarpXFluidContainer::GatherAndPush");
 
     WarpX &warpx = WarpX::GetInstance();
     const amrex::Real q = getCharge();
@@ -455,6 +460,7 @@ void WarpXFluidContainer::GatherAndPush (
 
 void WarpXFluidContainer::DepositCharge(int lev, amrex::MultiFab &rho)
 {
+    WARPX_PROFILE("WarpXFluidContainer::DepositCharge");
 
     WarpX &warpx = WarpX::GetInstance();
     const amrex::Geometry &geom = warpx.Geom(lev);
@@ -492,6 +498,7 @@ void WarpXFluidContainer::DepositCurrent(
     int lev,
     amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz)
 {
+    WARPX_PROFILE("WarpXFluidContainer::DepositCurrent");
 
     // Temporary nodal currents
     amrex::MultiFab tmp_jx_fluid(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 0);
