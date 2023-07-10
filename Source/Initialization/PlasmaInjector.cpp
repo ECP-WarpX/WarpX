@@ -342,7 +342,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             (InjectorPositionRandomPlane*)nullptr,
             xmin, xmax, ymin, ymax, zmin, zmax,
             flux_normal_axis);
-        parseDensity(pp_species_name);
+        parseFlux(pp_species_name);
         parseMomentum(pp_species_name);
     } else if (injection_style == "nuniformpercell") {
         // Note that for RZ, three numbers are expected, r, theta, and z.
@@ -504,6 +504,16 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #endif
     }
 
+    if (h_inj_flux) {
+#ifdef AMREX_USE_GPU
+        d_inj_flux = static_cast<InjectorFlux*>
+            (amrex::The_Arena()->alloc(sizeof(InjectorFlux)));
+        amrex::Gpu::htod_memcpy_async(d_inj_flux, h_inj_flux.get(), sizeof(InjectorFlux));
+#else
+        d_inj_flux = h_inj_flux.get();
+#endif
+    }
+
     if (h_inj_mom) {
 #ifdef AMREX_USE_GPU
         d_inj_mom = static_cast<InjectorMomentum*>
@@ -566,6 +576,33 @@ void PlasmaInjector::parseDensity (const amrex::ParmParse& pp)
         if (injection_style != "external_file") {
             StringParseAbortMessage("Density profile type", rho_prof_s);
         }
+    }
+}
+
+// Depending on injection type at runtime, initialize inj_flux
+// so that inj_flux->getFlux calls
+// InjectorFlux[Constant or Parser or etc.].getFlux.
+void PlasmaInjector::parseFlux (const amrex::ParmParse& pp)
+{
+    // parse flux information
+    std::string flux_prof_s;
+    pp.get("flux_profile", flux_prof_s);
+    std::transform(flux_prof_s.begin(), flux_prof_s.end(),
+                   flux_prof_s.begin(), ::tolower);
+    if (flux_prof_s == "constant") {
+        utils::parser::getWithParser(pp, "flux", flux);
+        // Construct InjectorFlux with InjectorFluxConstant.
+        h_inj_flux.reset(new InjectorFlux((InjectorFluxConstant*)nullptr, flux));
+    } else if (flux_prof_s == "parse_flux_function") {
+        utils::parser::Store_parserString(
+            pp, "flux_function(x,y,z,t)", str_flux_function);
+        // Construct InjectorFlux with InjectorFluxParser.
+        flux_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_flux_function,{"x","y","z","t"}));
+        h_inj_flux.reset(new InjectorFlux((InjectorFluxParser*)nullptr,
+            flux_parser->compile<4>()));
+    } else {
+        StringParseAbortMessage("Flux profile type", flux_prof_s);
     }
 }
 
@@ -731,8 +768,20 @@ PlasmaInjector::getInjectorDensity ()
     return d_inj_rho;
 }
 
+InjectorFlux*
+PlasmaInjector::getInjectorFlux ()
+{
+    return d_inj_flux;
+}
+
 InjectorMomentum*
-PlasmaInjector::getInjectorMomentum ()
+PlasmaInjector::getInjectorMomentumDevice ()
 {
     return d_inj_mom;
+}
+
+InjectorMomentum*
+PlasmaInjector::getInjectorMomentumHost ()
+{
+    return h_inj_mom.get();
 }

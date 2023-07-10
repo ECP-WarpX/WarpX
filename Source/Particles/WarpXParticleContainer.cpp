@@ -1125,22 +1125,26 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
 
     amrex::ParticleReal total_charge = 0.0;
+    ReduceOps<ReduceOpSum> reduce_op;
+    ReduceData<ParticleReal> reduce_data(reduce_op);
 
     const int nLevels = finestLevel();
-    for (int lev = 0; lev <= nLevels; ++lev)
-    {
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel reduction(+:total_charge)
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
+    for (int lev = 0; lev <= nLevels; ++lev) {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            auto& wp = pti.GetAttribs(PIdx::w);
-            for (const auto& ww : wp) {
-                total_charge += ww;
-            }
+            const auto wp = pti.GetAttribs(PIdx::w).data();
+
+            reduce_op.eval(pti.numParticles(), reduce_data,
+                            [=] AMREX_GPU_DEVICE (int ip)
+                            { return wp[ip]; });
         }
     }
+
+    total_charge = get<0>(reduce_data.value());
 
     if (local == false) ParallelDescriptor::ReduceRealSum(total_charge);
     total_charge *= this->charge;
