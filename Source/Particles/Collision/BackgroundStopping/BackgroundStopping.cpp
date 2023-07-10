@@ -24,7 +24,7 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
                                      "Background stopping must have exactly one species.");
 
-    amrex::ParmParse pp_collision_name(collision_name);
+    const amrex::ParmParse pp_collision_name(collision_name);
 
     std::string background_type_str;
     pp_collision_name.get("background_type", background_type_str);
@@ -98,7 +98,7 @@ BackgroundStopping::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiPar
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(species_mass > 0_prt, "Error: With background stopping, the species mass must be > 0");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(species_charge != 0_prt, "Error: With background stopping, the species charge must be nonzero");
 
-    BackgroundStoppingType background_type = m_background_type;
+    const BackgroundStoppingType background_type = m_background_type;
 
     // Loop over refinement levels
     auto const flvl = species.finestLevel();

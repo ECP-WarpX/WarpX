@@ -63,7 +63,7 @@ And since Adastra does not yet provide a module for them, install c-blosc and AD
    # ADIOS2
    git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git src/adios2
    rm -rf src/adios2-pm-build
-   cmake -S src/adios2 -B src/adios2-pm-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/adastra/gpu//adios2-2.8.3
+   cmake -S src/adios2 -B src/adios2-pm-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/adastra/gpu/adios2-2.8.3
    cmake --build src/adios2-pm-build --target install -j 16
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
@@ -73,7 +73,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=HIP
+   cmake -S . -B build -DWarpX_DIMS="1;2;3" -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON
    cmake --build build -j 32
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -130,7 +130,7 @@ Known System Issues
 .. warning::
 
    Sep 2nd, 2022:
-   rocFFT in ROCm 5.1+ tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/library.html#runtime-compilation>`__ in the home area by default.
+   rocFFT in ROCm 5.1-5.3 tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/#runtime-compilation>`__ in the home area by default.
    This does not scale, disable it via:
 
    .. code-block:: bash

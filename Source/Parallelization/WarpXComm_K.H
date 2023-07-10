@@ -53,9 +53,9 @@ void warpx_interp (int j, int k, int l,
 
     // Interpolate from coarse grid to fine grid using 2 points
     // with weights depending on the distance, for both nodal and cell-centered grids
-    amrex::Real hj = (sj == 0) ? 0.5_rt : 0._rt;
-    amrex::Real hk = (sk == 0) ? 0.5_rt : 0._rt;
-    amrex::Real hl = (sl == 0) ? 0.5_rt : 0._rt;
+    const amrex::Real hj = (sj == 0) ? 0.5_rt : 0._rt;
+    const amrex::Real hk = (sk == 0) ? 0.5_rt : 0._rt;
+    const amrex::Real hl = (sl == 0) ? 0.5_rt : 0._rt;
 
     amrex::Real res = 0.0_rt;
 
@@ -87,54 +87,56 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
         return Bxf.contains(jj,kk,ll) ? Bxf(jj,kk,ll) : 0.0_rt;
     };
 
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
+    const int jg = amrex::coarsen(j,2);
+    const Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    const Real owx = 1.0_rt-wx;
 
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
+    const int kg = amrex::coarsen(k,2);
+    Real wy = 0.0_rt;
+    Real owy = 0.0_rt;
+    wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
-    Real bg = owx * Bxg(jg  ,0,0)
+    const Real bg = owx * Bxg(jg  ,0,0)
         +      wx * Bxg(jg+1,0,0);
 
     // interp from coarse staggered to fine nodal
-    Real bc = owx * Bxc(jg  ,0,0)
+    const Real bc = owx * Bxc(jg  ,0,0)
         +      wx * Bxc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bxf_zeropad(j-1,0,0) + Bxf_zeropad(j,0,0));
+    const Real bf = 0.5_rt*(Bxf_zeropad(j-1,0,0) + Bxf_zeropad(j,0,0));
     amrex::ignore_unused(owy);
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * Bxg(jg  ,kg  ,0)
+    const Real bg = owx * owy * Bxg(jg  ,kg  ,0)
         +     owx *  wy * Bxg(jg  ,kg+1,0)
         +      wx * owy * Bxg(jg+1,kg  ,0)
         +      wx *  wy * Bxg(jg+1,kg+1,0);
 
     // interp from coarse staggered to fine nodal
     wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    Real bc = owx * owy * Bxc(jg  ,kg  ,0)
+    const Real bc = owx * owy * Bxc(jg  ,kg  ,0)
         +     owx *  wy * Bxc(jg  ,kg-1,0)
         +      wx * owy * Bxc(jg+1,kg  ,0)
         +      wx *  wy * Bxc(jg+1,kg-1,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bxf_zeropad(j,k-1,0) + Bxf_zeropad(j,k,0));
+    const Real bf = 0.5_rt*(Bxf_zeropad(j,k-1,0) + Bxf_zeropad(j,k,0));
 
 #else
 
-    int lg = amrex::coarsen(l,2);
+    const int lg = amrex::coarsen(l,2);
     Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
     Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * owz * Bxg(jg  ,kg  ,lg  )
+    const Real bg = owx * owy * owz * Bxg(jg  ,kg  ,lg  )
         +      wx * owy * owz * Bxg(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Bxg(jg  ,kg+1,lg  )
         +      wx *  wy * owz * Bxg(jg+1,kg+1,lg  )
@@ -146,7 +148,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
     // interp from coarse staggered to fine nodal
     wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
     wz = 0.5_rt-wz;  owz = 1.0_rt-wz;
-    Real bc = owx * owy * owz * Bxc(jg  ,kg  ,lg  )
+    const Real bc = owx * owy * owz * Bxc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Bxc(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Bxc(jg  ,kg-1,lg  )
         +      wx *  wy * owz * Bxc(jg+1,kg-1,lg  )
@@ -156,7 +158,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
         +      wx *  wy *  wz * Bxc(jg+1,kg-1,lg-1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Bxf_zeropad(j,k-1,l-1) + Bxf_zeropad(j,k,l-1) + Bxf_zeropad(j,k-1,l) + Bxf_zeropad(j,k,l));
+    const Real bf = 0.25_rt*(Bxf_zeropad(j,k-1,l-1) + Bxf_zeropad(j,k,l-1) + Bxf_zeropad(j,k-1,l) + Bxf_zeropad(j,k,l));
 #endif
 
     Bxa(j,k,l) = bg + (bf-bc);
@@ -177,32 +179,35 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         return Byf.contains(jj,kk,ll) ? Byf(jj,kk,ll) : 0.0_rt;
     };
 
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
+    const int jg = amrex::coarsen(j,2);
+    Real wx, owx;
+    wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    owx = 1.0_rt-wx;
 
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
+    const int kg = amrex::coarsen(k,2);
+    Real wy = 0.0_rt;
+    Real owy = 0.0_rt;
+    wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
-    Real bg = owx * Byg(jg  ,0,0)
+    const Real bg = owx * Byg(jg  ,0,0)
         +      wx * Byg(jg+1,0,0);
 
     // interp from coarse staggered to fine nodal
-    Real bc = owx * Byc(jg  ,0,0)
+    const Real bc = owx * Byc(jg  ,0,0)
         +      wx * Byc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Byf_zeropad(j-1,0,0) + Byf_zeropad(j,0,0));
+    const Real bf = 0.5_rt*(Byf_zeropad(j-1,0,0) + Byf_zeropad(j,0,0));
     amrex::ignore_unused(owy);
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * Byg(jg  ,kg  ,0)
+    const Real bg = owx * owy * Byg(jg  ,kg  ,0)
         +     owx *  wy * Byg(jg  ,kg+1,0)
         +      wx * owy * Byg(jg+1,kg  ,0)
         +      wx *  wy * Byg(jg+1,kg+1,0);
@@ -210,22 +215,22 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     // interp from coarse stagged (cell-centered for By) to fine nodal
     wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
     wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    Real bc = owx * owy * Byc(jg  ,kg  ,0)
+    const Real bc = owx * owy * Byc(jg  ,kg  ,0)
         +     owx *  wy * Byc(jg  ,kg-1,0)
         +      wx * owy * Byc(jg-1,kg  ,0)
         +      wx *  wy * Byc(jg-1,kg-1,0);
 
     // interp form fine stagger (cell-centered for By) to fine nodal
-    Real bf = 0.25_rt*(Byf_zeropad(j,k,0) + Byf_zeropad(j-1,k,0) + Byf_zeropad(j,k-1,0) + Byf_zeropad(j-1,k-1,0));
+    const Real bf = 0.25_rt*(Byf_zeropad(j,k,0) + Byf_zeropad(j-1,k,0) + Byf_zeropad(j,k-1,0) + Byf_zeropad(j-1,k-1,0));
 
 #else
 
-    int lg = amrex::coarsen(l,2);
+    const int lg = amrex::coarsen(l,2);
     Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
     Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * owz * Byg(jg  ,kg  ,lg  )
+    const Real bg = owx * owy * owz * Byg(jg  ,kg  ,lg  )
         +      wx * owy * owz * Byg(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Byg(jg  ,kg+1,lg  )
         +      wx *  wy * owz * Byg(jg+1,kg+1,lg  )
@@ -237,7 +242,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     // interp from coarse staggered to fine nodal
     wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
     wz = 0.5_rt-wz;  owz = 1.0_rt-wz;
-    Real bc = owx * owy * owz * Byc(jg  ,kg  ,lg  )
+    const Real bc = owx * owy * owz * Byc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Byc(jg-1,kg  ,lg  )
         +     owx *  wy * owz * Byc(jg  ,kg+1,lg  )
         +      wx *  wy * owz * Byc(jg-1,kg+1,lg  )
@@ -247,7 +252,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         +      wx *  wy *  wz * Byc(jg-1,kg+1,lg-1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Byf_zeropad(j-1,k,l-1) + Byf_zeropad(j,k,l-1) + Byf_zeropad(j-1,k,l) + Byf_zeropad(j,k,l));
+    const Real bf = 0.25_rt*(Byf_zeropad(j-1,k,l-1) + Byf_zeropad(j,k,l-1) + Byf_zeropad(j-1,k,l) + Byf_zeropad(j,k,l));
 
 #endif
 
@@ -269,54 +274,57 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         return Bzf.contains(jj,kk,ll) ? Bzf(jj,kk,ll) : 0.0_rt;
     };
 
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
+    const int jg = amrex::coarsen(j,2);
+    Real wx, owx;
+    wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    owx = 1.0_rt-wx;
 
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
+    const int kg = amrex::coarsen(k,2);
+    Real wy = 0.0_rt;
+    Real owy = 0.0_rt;
+    wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
-    Real bg = owx * Bzg(jg  ,0,0)
+    const Real bg = owx * Bzg(jg  ,0,0)
         +      wx * Bzg(jg+1,0,0);
 
     // interp from coarse staggered to fine nodal
-    Real bc = owx * Bzc(jg  ,0,0)
+    const Real bc = owx * Bzc(jg  ,0,0)
         +      wx * Bzc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real bf =  Bzf_zeropad(j,0,0);
+    const Real bf =  Bzf_zeropad(j,0,0);
     amrex::ignore_unused(owy);
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * Bzg(jg  ,kg  ,0)
+    const Real bg = owx * owy * Bzg(jg  ,kg  ,0)
         +     owx *  wy * Bzg(jg  ,kg+1,0)
         +      wx * owy * Bzg(jg+1,kg  ,0)
         +      wx *  wy * Bzg(jg+1,kg+1,0);
 
     // interp from coarse staggered to fine nodal
     wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
-    Real bc = owx * owy * Bzc(jg  ,kg  ,0)
+    const Real bc = owx * owy * Bzc(jg  ,kg  ,0)
         +     owx *  wy * Bzc(jg  ,kg+1,0)
         +      wx * owy * Bzc(jg-1,kg  ,0)
         +      wx *  wy * Bzc(jg-1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bzf_zeropad(j-1,k,0) + Bzf_zeropad(j,k,0));
+    const Real bf = 0.5_rt*(Bzf_zeropad(j-1,k,0) + Bzf_zeropad(j,k,0));
 
 #else
 
-    int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
-    Real owz = 1.0_rt-wz;
+    const int lg = amrex::coarsen(l,2);
+    const Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
+    const Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * owz * Bzg(jg  ,kg  ,lg  )
+    const Real bg = owx * owy * owz * Bzg(jg  ,kg  ,lg  )
         +      wx * owy * owz * Bzg(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Bzg(jg  ,kg+1,lg  )
         +      wx *  wy * owz * Bzg(jg+1,kg+1,lg  )
@@ -328,7 +336,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     // interp from coarse staggered to fine nodal
     wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
     wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    Real bc = owx * owy * owz * Bzc(jg  ,kg  ,lg  )
+    const Real bc = owx * owy * owz * Bzc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Bzc(jg-1,kg  ,lg  )
         +     owx *  wy * owz * Bzc(jg  ,kg-1,lg  )
         +      wx *  wy * owz * Bzc(jg-1,kg-1,lg  )
@@ -338,7 +346,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         +      wx *  wy *  wz * Bzc(jg-1,kg-1,lg+1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Bzf_zeropad(j-1,k-1,l) + Bzf_zeropad(j,k-1,l) + Bzf_zeropad(j-1,k,l) + Bzf_zeropad(j,k,l));
+    const Real bf = 0.25_rt*(Bzf_zeropad(j-1,k-1,l) + Bzf_zeropad(j,k-1,l) + Bzf_zeropad(j-1,k,l) + Bzf_zeropad(j,k,l));
 
 #endif
 
@@ -360,54 +368,57 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
         return Exf.contains(jj,kk,ll) ? Exf(jj,kk,ll) : 0.0_rt;
     };
 
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
+    const int jg = amrex::coarsen(j,2);
+    Real wx, owx;
+    wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    owx = 1.0_rt-wx;
 
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
+    const int kg = amrex::coarsen(k,2);
+    Real wy = 0.0_rt;
+    Real owy =0.0_rt;
+    wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
-    Real eg = owx * Exg(jg  ,0,0)
+    const Real eg = owx * Exg(jg  ,0,0)
         +      wx * Exg(jg+1,0,0);
 
     // interp from coarse staggered to fine nodal
-    Real ec = owx * Exc(jg  ,0,0)
+    const Real ec = owx * Exc(jg  ,0,0)
         +      wx * Exc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = Exf_zeropad(j,0,0);
+    const Real ef = Exf_zeropad(j,0,0);
     amrex::ignore_unused(owy);
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * Exg(jg  ,kg  ,0)
+    const Real eg = owx * owy * Exg(jg  ,kg  ,0)
         +     owx *  wy * Exg(jg  ,kg+1,0)
         +      wx * owy * Exg(jg+1,kg  ,0)
         +      wx *  wy * Exg(jg+1,kg+1,0);
 
     // interp from coarse staggered to fine nodal
     wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
-    Real ec = owx * owy * Exc(jg  ,kg  ,0)
+    const Real ec = owx * owy * Exc(jg  ,kg  ,0)
         +     owx *  wy * Exc(jg  ,kg+1,0)
         +      wx * owy * Exc(jg-1,kg  ,0)
         +      wx *  wy * Exc(jg-1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Exf_zeropad(j-1,k,0) + Exf_zeropad(j,k,0));
+    const Real ef = 0.5_rt*(Exf_zeropad(j-1,k,0) + Exf_zeropad(j,k,0));
 
 #else
 
-    int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0 : 0.5;
-    Real owz = 1.0_rt-wz;
+    const int lg = amrex::coarsen(l,2);
+    const Real wz = (l == lg*2) ? 0.0 : 0.5;
+    const Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * owz * Exg(jg  ,kg  ,lg  )
+    const Real eg = owx * owy * owz * Exg(jg  ,kg  ,lg  )
         +      wx * owy * owz * Exg(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Exg(jg  ,kg+1,lg  )
         +      wx *  wy * owz * Exg(jg+1,kg+1,lg  )
@@ -418,7 +429,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
 
     // interp from coarse staggered to fine nodal
     wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
-    Real ec = owx * owy * owz * Exc(jg  ,kg  ,lg  )
+    const Real ec = owx * owy * owz * Exc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Exc(jg-1,kg  ,lg  )
         +     owx *  wy * owz * Exc(jg  ,kg+1,lg  )
         +      wx *  wy * owz * Exc(jg-1,kg+1,lg  )
@@ -428,7 +439,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
         +      wx *  wy *  wz * Exc(jg-1,kg+1,lg+1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Exf_zeropad(j-1,k,l) + Exf_zeropad(j,k,l));
+    const Real ef = 0.5_rt*(Exf_zeropad(j-1,k,l) + Exf_zeropad(j,k,l));
 
 #endif
 
@@ -450,55 +461,55 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
         return Eyf.contains(jj,kk,ll) ? Eyf(jj,kk,ll) : 0.0_rt;
     };
 
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
+    const int jg = amrex::coarsen(j,2);
+    const Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    const Real owx = 1.0_rt-wx;
 
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
-
-
+    const int kg = amrex::coarsen(k,2);
+    Real wy = 0.0_rt;
+    Real owy = 0.0_rt;
+    wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
-    Real eg = owx * Eyg(jg  ,0,0)
+    const Real eg = owx * Eyg(jg  ,0,0)
         +      wx * Eyg(jg+1,0,0);
 
     // interp from coarse staggered to fine nodal
-    Real ec = owx * Eyc(jg  ,0,0)
+    const Real ec = owx * Eyc(jg  ,0,0)
         +      wx * Eyc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = Eyf_zeropad(j,0,0);
+    const Real ef = Eyf_zeropad(j,0,0);
     amrex::ignore_unused(owy);
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * Eyg(jg  ,kg  ,0)
+    const Real eg = owx * owy * Eyg(jg  ,kg  ,0)
         +     owx *  wy * Eyg(jg  ,kg+1,0)
         +      wx * owy * Eyg(jg+1,kg  ,0)
         +      wx *  wy * Eyg(jg+1,kg+1,0);
 
     // interp from coarse staggered to fine nodal (Eyc is actually nodal)
-    Real ec = owx * owy * Eyc(jg  ,kg  ,0)
+   const Real ec = owx * owy * Eyc(jg  ,kg  ,0)
         +     owx *  wy * Eyc(jg  ,kg+1,0)
         +      wx * owy * Eyc(jg+1,kg  ,0)
         +      wx *  wy * Eyc(jg+1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = Eyf_zeropad(j,k,0);
+    const Real ef = Eyf_zeropad(j,k,0);
 
 #else
 
-    int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0 : 0.5;
-    Real owz = 1.0_rt-wz;
+    const int lg = amrex::coarsen(l,2);
+    const Real wz = (l == lg*2) ? 0.0 : 0.5;
+    const Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * owz * Eyg(jg  ,kg  ,lg  )
+    const Real eg = owx * owy * owz * Eyg(jg  ,kg  ,lg  )
         +      wx * owy * owz * Eyg(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Eyg(jg  ,kg+1,lg  )
         +      wx *  wy * owz * Eyg(jg+1,kg+1,lg  )
@@ -509,7 +520,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
 
     // interp from coarse staggered to fine nodal
     wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    Real ec = owx * owy * owz * Eyc(jg  ,kg  ,lg  )
+    const Real ec = owx * owy * owz * Eyc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Eyc(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Eyc(jg  ,kg-1,lg  )
         +      wx *  wy * owz * Eyc(jg+1,kg-1,lg  )
@@ -519,7 +530,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
         +      wx *  wy *  wz * Eyc(jg+1,kg-1,lg+1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Eyf_zeropad(j,k-1,l) + Eyf_zeropad(j,k,l));
+    const Real ef = 0.5_rt*(Eyf_zeropad(j,k-1,l) + Eyf_zeropad(j,k,l));
 
 #endif
 
@@ -541,54 +552,56 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
         return Ezf.contains(jj,kk,ll) ? Ezf(jj,kk,ll) : 0.0_rt;
     };
 
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
+    const int jg = amrex::coarsen(j,2);
+    const Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    const Real owx = 1.0_rt-wx;
 
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
+    const int kg = amrex::coarsen(k,2);
+    Real wy = 0.0_rt;
+    Real owy = 0.0_rt;
+    wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    owy = 1.0_rt-wy;
 
 #if defined(WARPX_DIM_1D_Z)
 
     // interp from coarse nodal to fine nodal
-    Real eg = owx * Ezg(jg  ,0,0)
+    const Real eg = owx * Ezg(jg  ,0,0)
         +      wx * Ezg(jg+1,0,0);
 
     // interp from coarse staggered to fine nodal
-    Real ec = owx * Ezc(jg  ,0,0)
+    const Real ec = owx * Ezc(jg  ,0,0)
         +      wx * Ezc(jg+1,0,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Ezf_zeropad(j-1,0,0) + Ezf_zeropad(j,0,0));
+    const Real ef = 0.5_rt*(Ezf_zeropad(j-1,0,0) + Ezf_zeropad(j,0,0));
     amrex::ignore_unused(owy);
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * Ezg(jg  ,kg  ,0)
+    const Real eg = owx * owy * Ezg(jg  ,kg  ,0)
         +     owx *  wy * Ezg(jg  ,kg+1,0)
         +      wx * owy * Ezg(jg+1,kg  ,0)
         +      wx *  wy * Ezg(jg+1,kg+1,0);
 
     // interp from coarse stagged to fine nodal
     wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    Real ec = owx * owy * Ezc(jg  ,kg  ,0)
+    const Real ec = owx * owy * Ezc(jg  ,kg  ,0)
         +     owx *  wy * Ezc(jg  ,kg-1,0)
         +      wx * owy * Ezc(jg+1,kg  ,0)
         +      wx *  wy * Ezc(jg+1,kg-1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Ezf_zeropad(j,k-1,0) + Ezf_zeropad(j,k,0));
+    const Real ef = 0.5_rt*(Ezf_zeropad(j,k-1,0) + Ezf_zeropad(j,k,0));
 
 #else
 
-    int lg = amrex::coarsen(l,2);
+    const int lg = amrex::coarsen(l,2);
     Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
     Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * owz * Ezg(jg  ,kg  ,lg  )
+    const Real eg = owx * owy * owz * Ezg(jg  ,kg  ,lg  )
         +      wx * owy * owz * Ezg(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Ezg(jg  ,kg+1,lg  )
         +      wx *  wy * owz * Ezg(jg+1,kg+1,lg  )
@@ -599,7 +612,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
 
     // interp from coarse staggered to fine nodal
     wz = 0.5_rt-wz;  owz = 1.0_rt-wz;
-    Real ec = owx * owy * owz * Ezc(jg  ,kg  ,lg  )
+    const Real ec = owx * owy * owz * Ezc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Ezc(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Ezc(jg  ,kg+1,lg  )
         +      wx *  wy * owz * Ezc(jg+1,kg+1,lg  )
@@ -609,7 +622,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
         +      wx *  wy *  wz * Ezc(jg+1,kg+1,lg-1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Ezf_zeropad(j,k,l-1) + Ezf_zeropad(j,k,l));
+    const Real ef = 0.5_rt*(Ezf_zeropad(j,k,l-1) + Ezf_zeropad(j,k,l));
 
 #endif
 
@@ -785,10 +798,6 @@ void warpx_interp (const int j,
 
     amrex::Real res = 0.0_rt;
 
-    amrex::Real cj = 1.0_rt;
-    amrex::Real ck = 1.0_rt;
-    amrex::Real cl = 1.0_rt;
-
 #if defined(WARPX_DIM_1D_Z)
     amrex::Real const* scj = stencil_coeffs_z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -803,16 +812,20 @@ void warpx_interp (const int j,
     for (int ll = 0; ll <= nl; ll++)
     {
 #if defined(WARPX_DIM_3D)
-        if (interp_l) cl = scl[ll];
+    const amrex::Real cl = (interp_l)? scl[ll] : 1.0_rt;
+#else
+    const amrex::Real cl = 1.0_rt;
 #endif
         for (int kk = 0; kk <= nk; kk++)
         {
 #if (AMREX_SPACEDIM >= 2)
-            if (interp_k) ck = sck[kk];
+            const amrex::Real ck = (interp_k)? sck[kk] : 1.0_rt;
+#else
+            const amrex::Real ck = 1.0_rt;
 #endif
             for (int jj = 0; jj <= nj; jj++)
             {
-                if (interp_j) cj = scj[jj];
+                const amrex::Real cj =  (interp_j)? scj[jj] : 1.0_rt;
 
                 res += cj * ck * cl * src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
             }

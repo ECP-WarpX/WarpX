@@ -49,7 +49,7 @@ Diagnostics::BaseReadParameters ()
 {
     auto & warpx = WarpX::GetInstance();
 
-    amrex::ParmParse pp_diag_name(m_diag_name);
+    const amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
     utils::parser::queryWithParser(
@@ -57,12 +57,12 @@ Diagnostics::BaseReadParameters ()
     pp_diag_name.query("format", m_format);
     pp_diag_name.query("dump_last_timestep", m_dump_last_timestep);
 
-    amrex::ParmParse pp_geometry("geometry");
+    const amrex::ParmParse pp_geometry("geometry");
     std::string dims;
     pp_geometry.get("dims", dims);
 
     // Query list of grid fields to write to output
-    bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames_fields);
+    const bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames_fields);
     if (!varnames_specified){
         if( dims == "RZ" ) {
             m_varnames_fields = {"Er", "Et", "Ez", "Br", "Bt", "Bz", "jr", "jt", "jz"};
@@ -126,7 +126,7 @@ Diagnostics::BaseReadParameters ()
     std::string parser_str;
     std::string filter_parser_str = "";
     bool do_parser_filter;
-    amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
+    const amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
         bool do_average = true;
         pp_diag_pfield.query((var + ".do_average").c_str(), do_average);
@@ -224,7 +224,7 @@ Diagnostics::BaseReadParameters ()
        if (warpx.boost_direction[ dim_map[warpx.moving_window_dir] ] == 1) {
            // Convert user-defined lo and hi for diagnostics to account for boosted-frame
            // simulations with moving window
-           amrex::Real convert_factor = 1._rt/(warpx.gamma_boost * (1._rt - warpx.beta_boost) );
+           const amrex::Real convert_factor = 1._rt/(warpx.gamma_boost * (1._rt - warpx.beta_boost) );
            // Assuming that the window travels with speed c
            m_lo[warpx.moving_window_dir] *= convert_factor;
            m_hi[warpx.moving_window_dir] *= convert_factor;
@@ -325,7 +325,7 @@ Diagnostics::InitDataAfterRestart ()
         }
     }
 
-    amrex::ParmParse pp_diag_name(m_diag_name);
+    const amrex::ParmParse pp_diag_name(m_diag_name);
     // default for writing species output is 1
     int write_species = 1;
     pp_diag_name.query("write_species", write_species);
@@ -404,7 +404,7 @@ Diagnostics::InitData ()
         }
     }
 
-    amrex::ParmParse pp_diag_name(m_diag_name);
+    const amrex::ParmParse pp_diag_name(m_diag_name);
     // default for writing species output is 1
     int write_species = 1;
     pp_diag_name.query("write_species", write_species);
@@ -468,8 +468,8 @@ Diagnostics::InitBaseData ()
     // For restart, move the m_lo and m_hi of the diag consistent with the
     // current moving_window location
     if (warpx.do_moving_window) {
-        int moving_dir = warpx.moving_window_dir;
-        int shift_num_base = static_cast<int>((warpx.getmoving_window_x() - m_lo[moving_dir]) / warpx.Geom(0).CellSize(moving_dir) );
+        const int moving_dir = warpx.moving_window_dir;
+        const int shift_num_base = static_cast<int>((warpx.getmoving_window_x() - m_lo[moving_dir]) / warpx.Geom(0).CellSize(moving_dir) );
         m_lo[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
         m_hi[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
     }
