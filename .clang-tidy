@@ -1,5 +1,6 @@
 Checks: '-*,
     bugprone-branch-clone,
+    -bugprone-easily-swappable-parameters,
     cppcoreguidelines-avoid-goto,
     misc-const-correctness,
     modernize-avoid-bind,
