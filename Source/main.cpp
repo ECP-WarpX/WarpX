@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 {
     ablastr::parallelization::mpi_init(argc, argv);
 
-    warpx_amrex_init(argc, argv);
+    warpx::initialization::amrex_init(argc, argv);
 
     utils::rocfft::setup();
 

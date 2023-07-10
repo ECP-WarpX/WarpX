@@ -70,38 +70,28 @@ WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
             if (plasma_injector == nullptr) continue;
 
             // Get bulk momentum and velocity of plasma
-            amrex::XDim3 u_bulk = amrex::XDim3{0._rt, 0._rt, 0._rt};
-            amrex::Real v_bulk = 0._rt;
-            if (dir == 0)
-            {
-                // dir=0 is z in 1D, x in 2D, x in 3D
+            // 1D: dir=0 is z
+            // 2D: dir=0 is x, dir=1 is z
+            // 3D: dir=0 is x, dir=1 is y, dir=2 is z
+            amrex::Vector<amrex::Real> current_injection_position = {0._rt, 0._rt, 0._rt};
 #if defined(WARPX_DIM_1D_Z)
-                u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(0._rt, 0._rt, pc.m_current_injection_position);
-                v_bulk = PhysConst::c * u_bulk.z / std::sqrt(1._rt + u_bulk.z*u_bulk.z);
-#else // 2D, 3D
-                u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(pc.m_current_injection_position, 0._rt, 0._rt);
-                v_bulk = PhysConst::c * u_bulk.x / std::sqrt(1._rt + u_bulk.x*u_bulk.x);
-#endif
-            }
-            else if (dir == 1)
-            {
-                // dir=1 is nothing in 1D, z in 2D, y in 3D
-                // (we do not expect to enter this code block in 1D)
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(0._rt, 0._rt, pc.m_current_injection_position);
-                v_bulk = PhysConst::c * u_bulk.z / std::sqrt(1._rt + u_bulk.z*u_bulk.z);
+            current_injection_position[2] = pc.m_current_injection_position;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            current_injection_position[dir*2] = pc.m_current_injection_position;
 #else // 3D
-                u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(0._rt, pc.m_current_injection_position, 0._rt);
-                v_bulk = PhysConst::c * u_bulk.y / std::sqrt(1._rt + u_bulk.y*u_bulk.y);
+            current_injection_position[dir] = pc.m_current_injection_position;
 #endif
-            }
-            else if (dir == 2)
-            {
-                // dir=2 is nothing in 1D, nothing in 2D, z in 3D
-                // (we do not expect to enter this code block in 1D and 2D)
-                u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(0._rt, 0._rt, pc.m_current_injection_position);
-                v_bulk = PhysConst::c * u_bulk.z / std::sqrt(1._rt + u_bulk.z*u_bulk.z);
-            }
+            amrex::XDim3 u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(current_injection_position[0],
+                                                                                              current_injection_position[1],
+                                                                                              current_injection_position[2]);
+#if defined(WARPX_DIM_1D_Z)
+            amrex::Vector<amrex::Real> u_bulk_vec = {u_bulk.z};
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            amrex::Vector<amrex::Real> u_bulk_vec = {u_bulk.x, u_bulk.z};
+#else // 3D
+            amrex::Vector<amrex::Real> u_bulk_vec = {u_bulk.x, u_bulk.y, u_bulk.z};
+#endif
+            amrex::Real v_bulk = PhysConst::c * u_bulk_vec[dir] / std::sqrt(1._rt + u_bulk_vec[dir]*u_bulk_vec[dir]);
 
             // In boosted-frame simulations, the plasma has moved since the last
             // call to this function, and injection position needs to be updated.
