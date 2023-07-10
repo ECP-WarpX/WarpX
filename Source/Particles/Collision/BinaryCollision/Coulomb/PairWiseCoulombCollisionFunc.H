@@ -48,7 +48,7 @@ public:
                                   const bool isSameSpecies)
     {
         using namespace amrex::literals;
-        amrex::ParmParse pp_collision_name(collision_name);
+        const amrex::ParmParse pp_collision_name(collision_name);
         // default Coulomb log, if < 0, will be computed automatically
         m_CoulombLog = -1.0_prt;
         utils::parser::queryWithParser(

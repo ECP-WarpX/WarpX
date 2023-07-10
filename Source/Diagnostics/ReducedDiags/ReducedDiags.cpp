@@ -28,7 +28,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
     BackwardCompatibility();
 
-    ParmParse pp_rd_name(m_rd_name);
+    const ParmParse pp_rd_name(m_rd_name);
 
     // read path
     pp_rd_name.query("path", m_path);
@@ -38,21 +38,23 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
     // check if it is a restart run
     std::string restart_chkfile = "";
-    ParmParse pp_amr("amr");
+    const ParmParse pp_amr("amr");
     pp_amr.query("restart", restart_chkfile);
-    m_IsNotRestart = restart_chkfile.empty();
+    bool IsNotRestart = restart_chkfile.empty();
 
     if (ParallelDescriptor::IOProcessor())
     {
         // create folder
         constexpr int permission_flag_rwxrxrx = 0755;
-        if (!UtilCreateDirectory(m_path, permission_flag_rwxrxrx))
-        { CreateDirectoryFailed(m_path); }
+        if (!amrex::UtilCreateDirectory(m_path, permission_flag_rwxrxrx))
+        { amrex::CreateDirectoryFailed(m_path); }
 
         // replace / create output file
-        if ( m_IsNotRestart ) // not a restart
+        std::string rd_full_file_name = m_path + m_rd_name + "." + m_extension;
+        m_write_header = IsNotRestart || !amrex::FileExists(rd_full_file_name); // not a restart or file doesn't exist
+        if (m_write_header)
         {
-            std::ofstream ofs{m_path+m_rd_name+"."+m_extension, std::ios::trunc};
+            std::ofstream ofs{rd_full_file_name, std::ios::trunc};
             ofs.close();
         }
     }
@@ -83,7 +85,7 @@ void ReducedDiags::LoadBalance ()
 
 void ReducedDiags::BackwardCompatibility ()
 {
-    amrex::ParmParse pp_rd_name(m_rd_name);
+    const amrex::ParmParse pp_rd_name(m_rd_name);
     std::vector<std::string> backward_strings;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_rd_name.queryarr("frequency", backward_strings),

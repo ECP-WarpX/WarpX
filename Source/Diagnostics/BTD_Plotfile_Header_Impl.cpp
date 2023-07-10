@@ -215,7 +215,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     is >> m_ngrow;
     // can also call readBoxArray(m_ba, is, True);
     int in_hash;
-    int bl_ignore_max = 100000;
+    const int bl_ignore_max = 100000;
     is.ignore(bl_ignore_max,'(') >> m_ba_size >> in_hash;
     m_ba.resize(m_ba_size);
     for (int ibox = 0; ibox < m_ba.size(); ++ibox) {
@@ -501,7 +501,7 @@ BTDParticleDataHeaderImpl::ReadHeader ()
 
 
     int in_hash;
-    int bl_ignore_max = 100000;
+    const int bl_ignore_max = 100000;
 
     is.ignore(bl_ignore_max,'(') >> m_ba_size >> in_hash;
     m_ba.resize(m_ba_size);

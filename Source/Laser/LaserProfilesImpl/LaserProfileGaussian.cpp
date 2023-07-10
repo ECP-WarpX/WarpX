@@ -100,7 +100,7 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {
-    Complex I(0,1);
+    const Complex I(0,1);
     // Calculate a few factors which are independent of the macroparticle
     const Real k0 = 2._rt*MathConst::pi/m_common_params.wavelength;
     const Real inv_tau2 = 1._rt /(m_params.duration * m_params.duration);
@@ -121,16 +121,18 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
         + 2._rt*I*(m_params.phi2-m_params.beta*m_params.beta*k0*m_params.focal_distance)*inv_tau2;
 
     // Amplitude and monochromatic oscillations
-    Complex prefactor =
+    const Complex t_prefactor =
         m_common_params.e_max * amrex::exp( I * oscillation_phase );
 
     // Because diffract_factor is a complex, the code below takes into
     // account the impact of the dimensionality on both the Gouy phase
     // and the amplitude of the laser
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))
-    prefactor = prefactor / diffract_factor;
+    const Complex prefactor = t_prefactor / diffract_factor;
 #elif defined(WARPX_DIM_XZ)
-    prefactor = prefactor / amrex::sqrt(diffract_factor);
+    const Complex prefactor = t_prefactor / amrex::sqrt(diffract_factor);
+#else
+    const Complex prefactor = t_prefactor;
 #endif
 
     // Copy member variables to tmp copies for GPU runs.

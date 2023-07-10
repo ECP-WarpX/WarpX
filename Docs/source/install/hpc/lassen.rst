@@ -82,7 +82,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
 
    rm -rf build_lassen
-   cmake -S . -B build_lassen -DWarpX_COMPUTE=CUDA -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PSATD=ON
+   cmake -S . -B build_lassen -DWarpX_COMPUTE=CUDA -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON
    cmake --build build_lassen -j 10
 
 The other :ref:`general compile-time options <building-cmake>` apply as usual.

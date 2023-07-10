@@ -70,13 +70,13 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=HIP
+   cmake -S . -B build -DWarpX_DIMS="1;2;3" -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON
    cmake --build build -j 16
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-lumi>` with a :ref:`3D example inputs file <usage-examples>`.
+WarpX executables are now in ``build/bin/`` and :ref:`can be run <running-cpp-lumi>` with matching :ref:`example inputs files <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``/scratch/<project>``.
 
 
@@ -125,14 +125,16 @@ Known System Issues
 
    January, 2023:
    We discovered a regression in AMD ROCm, leading to 2x slower current deposition (and other slowdowns) in ROCm 5.3 and 5.4.
-   Reported to AMD and fixed for the 5.5 release of ROCm.
 
-   Upgrade ROCm or stay with the ROCm 5.2 module to avoid.
+   June, 2023:
+   Although a fix was planned for ROCm 5.5, we still see the same issue in this release and continue to exchange with AMD and HPE on the issue.
+
+   Stay with the ROCm 5.2 module to avoid a 2x slowdown.
 
 .. warning::
 
    May 2023:
-   rocFFT in ROCm 5.1+ tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/library.html#runtime-compilation>`__ in the home area by default.
+   rocFFT in ROCm 5.1-5.3 tries to `write to a cache <https://rocfft.readthedocs.io/en/latest/#runtime-compilation>`__ in the home area by default.
    This does not scale, disable it via:
 
    .. code-block:: bash

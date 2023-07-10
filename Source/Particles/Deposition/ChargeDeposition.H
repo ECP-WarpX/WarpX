@@ -317,7 +317,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const int threads_per_block = 256;
 
     std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
-    amrex::IntVect bin_size = WarpX::shared_tilesize;
+    const amrex::IntVect bin_size = WarpX::shared_tilesize;
 
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
 
@@ -386,7 +386,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         for (unsigned int ip_orig = bin_start + threadIdx.x; ip_orig < bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            unsigned int ip = permutation[ip_orig];
+            const unsigned int ip = permutation[ip_orig];
 
 #if defined(WARPX_USE_GPUCLOCK)
             const auto KernelTimer = ablastr::parallelization::KernelTimer(

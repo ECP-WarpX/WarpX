@@ -34,7 +34,7 @@ namespace {
         // to generate grids. Nonetheless, AMReX has asserts in place that validate that the
         // number of cells is a multiple of blocking factor. We set the blocking factor to 1 so those
         // AMReX asserts will always pass.
-        amrex::ParmParse pp_warpx("warpx");
+        const amrex::ParmParse pp_warpx("warpx");
         if (pp_warpx.contains("numprocs"))
         {
             amrex::ParmParse pp_amr("amr");
@@ -56,14 +56,20 @@ namespace {
     }
 }
 
-amrex::AMReX*
-warpx_amrex_init (int& argc, char**& argv, bool const build_parm_parse, MPI_Comm const mpi_comm)
+
+namespace warpx::initialization
 {
-    return amrex::Initialize(
-        argc,
-        argv,
-        build_parm_parse,
-        mpi_comm,
-        overwrite_amrex_parser_defaults
-    );
+
+    amrex::AMReX*
+    amrex_init (int& argc, char**& argv, bool const build_parm_parse, MPI_Comm const mpi_comm)
+    {
+        return amrex::Initialize(
+            argc,
+            argv,
+            build_parm_parse,
+            mpi_comm,
+            ::overwrite_amrex_parser_defaults
+        );
+    }
+
 }

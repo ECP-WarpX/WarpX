@@ -26,8 +26,8 @@
 AMREX_FORCE_INLINE
 int getMaxTboxAlongDim (int nCells, int tilesize){
     int maxTilesize = 0;
-    int nTiles = nCells / tilesize;
-    int remainder = nCells % tilesize;
+    const int nTiles = nCells / tilesize;
+    const int remainder = nCells % tilesize;
     maxTilesize = tilesize + int(std::ceil((amrex::Real) remainder / nTiles));
     return maxTilesize;
 }

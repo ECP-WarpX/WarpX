@@ -1,6 +1,6 @@
 #add_subdirectory(fields)
 add_subdirectory(coarsen)
-#add_subdirectory(parallelization)
+add_subdirectory(parallelization)
 #add_subdirectory(particles)
 #add_subdirectory(profiler)
 add_subdirectory(utils)

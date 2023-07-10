@@ -97,7 +97,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         """Function run on every step to perform the required steps to solve
         Poisson's equation."""
         # get rho from WarpX
-        self.rho_data = fields.RhoFPWrapper(0, False)[...][:,0]
+        self.rho_data = fields.RhoFPWrapper(0, False)[...]
         # run superLU solver to get phi
         self.solve()
         # write phi to WarpX
@@ -338,7 +338,7 @@ class CapacitiveDischargeExample(object):
         # deposit the ion density in rho_fp
         self.sim.extension.depositChargeDensity('he_ions', 0)
 
-        rho_data = self.rho_wrapper[...][:,0]
+        rho_data = self.rho_wrapper[...]
         self.ion_density_array += rho_data / constants.q_e / self.diag_steps
 
     def run_sim(self):

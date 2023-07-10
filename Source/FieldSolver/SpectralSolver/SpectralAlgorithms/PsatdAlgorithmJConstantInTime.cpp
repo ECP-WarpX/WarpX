@@ -129,14 +129,14 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
         const amrex::Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = f.fields[mfi].array();
+        const amrex::Array4<Complex> fields = f.fields[mfi].array();
 
         // These coefficients are always allocated
-        amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
-        amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
-        amrex::Array4<const Complex> X1_arr = X1_coef[mfi].array();
-        amrex::Array4<const Complex> X2_arr = X2_coef[mfi].array();
-        amrex::Array4<const Complex> X3_arr = X3_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
+        const amrex::Array4<const Complex> X1_arr = X1_coef[mfi].array();
+        const amrex::Array4<const Complex> X2_arr = X2_coef[mfi].array();
+        const amrex::Array4<const Complex> X3_arr = X3_coef[mfi].array();
 
         amrex::Array4<const Complex> X4_arr;
         amrex::Array4<const Complex> T2_arr;
@@ -379,11 +379,11 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
         const amrex::Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
 
         // Coefficients always allocated
-        amrex::Array4<amrex::Real> C = C_coef[mfi].array();
-        amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
-        amrex::Array4<Complex> X1 = X1_coef[mfi].array();
-        amrex::Array4<Complex> X2 = X2_coef[mfi].array();
-        amrex::Array4<Complex> X3 = X3_coef[mfi].array();
+        const amrex::Array4<amrex::Real> C = C_coef[mfi].array();
+        const amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
+        const amrex::Array4<Complex> X1 = X1_coef[mfi].array();
+        const amrex::Array4<Complex> X2 = X2_coef[mfi].array();
+        const amrex::Array4<Complex> X3 = X3_coef[mfi].array();
 
         amrex::Array4<Complex> X4;
         amrex::Array4<Complex> T2;
@@ -394,11 +394,11 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
         }
 
         // Extract Galilean velocity
-        amrex::Real vg_x = m_v_galilean[0];
+        const amrex::Real vg_x = m_v_galilean[0];
 #if defined(WARPX_DIM_3D)
-        amrex::Real vg_y = m_v_galilean[1];
+        const amrex::Real vg_y = m_v_galilean[1];
 #endif
-        amrex::Real vg_z = m_v_galilean[2];
+        const amrex::Real vg_z = m_v_galilean[2];
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -547,19 +547,19 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
         const amrex::Real* kz_c = modified_kz_vec_centered[mfi].dataPtr();
 
         // Coefficients allocated only with averaged Galilean PSATD
-        amrex::Array4<Complex> Psi1 = Psi1_coef[mfi].array();
-        amrex::Array4<Complex> Psi2 = Psi2_coef[mfi].array();
-        amrex::Array4<Complex> Y1 = Y1_coef[mfi].array();
-        amrex::Array4<Complex> Y3 = Y3_coef[mfi].array();
-        amrex::Array4<Complex> Y2 = Y2_coef[mfi].array();
-        amrex::Array4<Complex> Y4 = Y4_coef[mfi].array();
+        const amrex::Array4<Complex> Psi1 = Psi1_coef[mfi].array();
+        const amrex::Array4<Complex> Psi2 = Psi2_coef[mfi].array();
+        const amrex::Array4<Complex> Y1 = Y1_coef[mfi].array();
+        const amrex::Array4<Complex> Y3 = Y3_coef[mfi].array();
+        const amrex::Array4<Complex> Y2 = Y2_coef[mfi].array();
+        const amrex::Array4<Complex> Y4 = Y4_coef[mfi].array();
 
         // Extract Galilean velocity
-        amrex::Real vg_x = m_v_galilean[0];
+        const amrex::Real vg_x = m_v_galilean[0];
 #if defined(WARPX_DIM_3D)
-        amrex::Real vg_y = m_v_galilean[1];
+        const amrex::Real vg_y = m_v_galilean[1];
 #endif
-        amrex::Real vg_z = m_v_galilean[2];
+        const amrex::Real vg_z = m_v_galilean[2];
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -728,7 +728,7 @@ void PsatdAlgorithmJConstantInTime::CurrentCorrection (SpectralFieldData& field_
         const amrex::Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+        const amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
@@ -828,7 +828,7 @@ PsatdAlgorithmJConstantInTime::VayDeposition (SpectralFieldData& field_data)
         const amrex::Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+        const amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the modified k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();

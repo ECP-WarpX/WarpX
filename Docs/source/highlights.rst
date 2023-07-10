@@ -14,6 +14,12 @@ Plasma-Based Acceleration
 
 Scientific works in laser-plasma and beam-plasma acceleration.
 
+#. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L, Huebl A.
+   **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
+   14th International Particle Accelerator Conference (IPAC'23), WEPA101, *in print*, 2023.
+   `preprint <https://www.ipac23.org/preproc/pdf/WEPA101.pdf>`__,
+   `DOI:10.18429/JACoW-IPAC-23-WEPA101 <https://doi.org/10.18429/JACoW-IPAC-23-WEPA101>`__
+
 #. Wang J, Zeng M, Li D, Wang X, Gao J.
    **High quality beam produced by tightly focused laser driven wakefield accelerators**.
    arXiv pre-print, 2023.
@@ -76,6 +82,18 @@ Particle Accelerator & Beam Physics
 
 Scientific works in particle and beam modeling.
 
+#. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L, Huebl A.
+   **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
+   14th International Particle Accelerator Conference (IPAC'23), WEPA101, *in print*, 2023.
+   `preprint <https://www.ipac23.org/preproc/pdf/WEPA101.pdf>`__,
+   `DOI:10.18429/JACoW-IPAC-23-WEPA101 <https://doi.org/10.18429/JACoW-IPAC-23-WEPA101>`__
+
+#. Tan W H, Piot P, Myers A, Zhang W, Rheaume T, Jambunathan R, Huebl A, Lehe R, Vay J-L.
+   **Simulation studies of drive-beam instability in a dielectric wakefield accelerator**.
+   13th International Particle Accelerator Conference (IPAC'22), MOPOMS012, 2022.
+   `DOI:10.18429/JACoW-IPAC2022-MOPOMS012 <https://doi.org/10.18429/JACoW-IPAC2022-MOPOMS012>`__
+
+
 High Energy Astrophysical Plasma Physics
 ****************************************
 
@@ -85,6 +103,7 @@ Scientific works in astrophysical plasma modeling.
    **Particle-in-Cell simulations of relativistic magnetic reconnection with advanced Maxwell solver algorithms**.
    arXiv pre-print, 2023.
    `DOI:10.48550/arXiv.2304.10566 <https://doi.org/10.48550/arXiv.2304.10566>`__
+
 
 Microelectronics
 ****************
