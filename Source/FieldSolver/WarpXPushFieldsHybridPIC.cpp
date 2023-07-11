@@ -92,8 +92,11 @@ void WarpX::HybridPICEvolveFields ()
             true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
+        ApplyEfieldBoundary(guard_cells.ng_FieldSolver);
+        EvolveB(0.5 / sub_steps * dt[0]);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+        ApplyBfieldBoundary(guard_cells.ng_FieldSolver, DtType::FirstHalf);
+
     }
 
     // Average rho^{n} and rho^{n+1} to get rho^{n+1/2} in rho_fp_temp
@@ -120,8 +123,10 @@ void WarpX::HybridPICEvolveFields ()
             true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
+        ApplyEfieldBoundary(guard_cells.ng_FieldSolver);
+        EvolveB(0.5 / sub_steps * dt[0]);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+        ApplyBfieldBoundary(guard_cells.ng_FieldSolver, DtType::SecondHalf);
     }
 
     // Extrapolate the ion current density to t=n+1 using
@@ -152,6 +157,7 @@ void WarpX::HybridPICEvolveFields ()
         false
     );
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
+    ApplyEfieldBoundary(guard_cells.ng_FieldSolver);
 
     // Copy the rho^{n+1} values to rho_fp_temp and the J_i^{n+1/2} values to
     // current_fp_temp since at the next step those values will be needed as
