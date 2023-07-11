@@ -204,8 +204,8 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Box const &tile_box_ungrown = mfi.tilebox(N[lev]->ixType().toIntVect());
         amrex::Box box = mfi.validbox();
         box.grow(1);
- 
-        // Loop over a box with one extra gridpoint to avoid needing to communicate 
+
+        // Loop over a box with one extra gridpoint to avoid needing to communicate
         // the temporary arrays
         amrex::Box const tile_box = mfi.growntilebox(1);
 
