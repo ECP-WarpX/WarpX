@@ -180,17 +180,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     auto cy_half = 0.5*(dt/dx[1]);
     auto cz_half = 0.5*(dt/dx[2]);
 
-
-    /** Todo */
-    // - Grab local Uz Uy Ux gamma
-    // - Compute the Flux Jacobian (A = dF/dQ) in each direction
-    // - Compute the cell slopes
-        // - ave function required ( minmod )
-    // - Predict Q at dt/2
-    // - Predict Q at cell edges using the cell slopes
-    // - Update Q at t + dt
-    // - Update N, NU
-
     // Temporary velocities
     amrex::MultiFab tmp_Vx(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
     amrex::MultiFab tmp_Vy(N[lev]->boxArray(), N[lev]->DistributionMap(), 1, 1);
@@ -211,7 +200,20 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        // Grow the entire domain
+        amrex::Box const &tile_box_ungrown = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Box box = mfi.validbox();
+        box.grow(1);
+ 
+        // Loop over a box with one extra gridpoint to avoid needing to communicate 
+        // the temporary arrays
+        amrex::Box const tile_box = mfi.growntilebox(1);
+
+        // Only select tiles within the grown grid
+        amrex::Box const tile_box_x = amrex::convert( box, tmp_Q_minus_x.ixType() );
+        amrex::Box const tile_box_y = amrex::convert( box, tmp_Q_minus_y.ixType() );
+        amrex::Box const tile_box_z = amrex::convert( box, tmp_Q_minus_z.ixType() );
+
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
         amrex::Array4<Real> const &NUx_arr = NU[lev][0]->array(mfi);
         amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
@@ -230,7 +232,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Array4<amrex::Real> Q_minus_z = tmp_Q_minus_z.array(mfi);
         amrex::Array4<amrex::Real> Q_plus_z = tmp_Q_plus_z.array(mfi);
 
-
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
@@ -241,7 +242,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 auto Uy = (NUy_arr(i, j, k) / N_arr(i,j,k));
                 auto Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
                 auto gamma = sqrt(1.0 + (Ux*Ux + Uy*Uy + Uz*Uz)/(clight*clight) );
-                auto a = amrex::Math::powi<4>( clight * gamma );
+                auto a = amrex::Math::powi<2>( clight * gamma ) * gamma;
 
                 // Compute Vx Vy Vz
                 Vx(i,j,k) = Ux/gamma;
@@ -252,69 +253,69 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 #if defined(WARPX_DIM_3D)
 
                 // Compute the Flux-Jacobian Elements in x
-                auto A00x = ((Ux*(Uz*Uz)+Ux*(Uy*Uy)+(Ux*Ux*Ux))*(clight*clight)*gamma)/a;
-                auto A01x = (((clight*clight*clight*clight)+((Uz*Uz)+(Uy*Uy))*(clight*clight))*gamma)/a;
-                auto A02x = -(Ux*Uy)/((clight*clight)*(gamma*gamma*gamma));
-                auto A03x = -(Ux*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A00x = (Ux*(Uz*Uz)+Ux*(Uy*Uy)+(Ux*Ux*Ux))/a;
+                auto A01x = ((clight*clight)+(Uz*Uz)+(Uy*Uy))/a;
+                auto A02x = -(Ux*Uy)/a;
+                auto A03x = -(Ux*Uz)/a;
 
                 auto A10x = -(Ux*Ux)/(gamma*gamma*gamma);
-                auto A11x = ((2.0*Ux*(clight*clight*clight*clight)+(2.0*Ux*(Uz*Uz)+2.0*Ux*(Uy*Uy)+(Ux*Ux*Ux))*(clight*clight))*gamma)/a;
-                auto A12x = -((Ux*Ux)*Uy)/((clight*clight)*(gamma*gamma*gamma));
-                auto A13x = -((Ux*Ux)*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A11x = (2.0*Ux*(clight*clight)+2.0*Ux*(Uz*Uz)+2.0*Ux*(Uy*Uy)+(Ux*Ux*Ux))/a;
+                auto A12x = -((Ux*Ux)*Uy)/a;
+                auto A13x = -((Ux*Ux)*Uz)/a;
 
                 auto A20x = -(Ux*Uy)/(gamma*gamma*gamma);
-                auto A21x = ((Uy*(clight*clight*clight*clight)+(Uy*(Uz*Uz)+(Uy*Uy*Uy))*(clight*clight))*gamma)/a;
-                auto A22x = ((Ux*(clight*clight*clight*clight)+(Ux*(Uz*Uz)+(Ux*Ux*Ux))*(clight*clight))*gamma)/a;
-                auto A23x = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A21x = (Uy*(clight*clight)+Uy*(Uz*Uz)+(Uy*Uy*Uy))/a;
+                auto A22x = (Ux*(clight*clight)+Ux*(Uz*Uz)+(Ux*Ux*Ux))/a;
+                auto A23x = -(Ux*Uy*Uz)/a;
 
                 auto A30x = -(Ux*Uz)/(gamma*gamma*gamma);
-                auto A31x = ((Uz*(clight*clight*clight*clight)+((Uz*Uz*Uz)+(Uy*Uy)*Uz)*(clight*clight))*gamma)/a;
-                auto A32x = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
-                auto A33x = ((Ux*(clight*clight*clight*clight)+(Ux*(Uy*Uy)+(Ux*Ux*Ux))*(clight*clight))*gamma)/a;
+                auto A31x = (Uz*(clight*clight)+(Uz*Uz*Uz)+(Uy*Uy)*Uz)/a;
+                auto A32x = -(Ux*Uy*Uz)/a;
+                auto A33x = (Ux*(clight*clight)+Ux*(Uy*Uy)+(Ux*Ux*Ux))/a;
 
 
                 // Compute the Flux-Jacobian Elements in y
-                auto A00y = ((Uy*(Uz*Uz)+(Uy*Uy*Uy)+(Ux*Ux)*Uy)*(clight*clight)*gamma)/a;
-                auto A01y = -(Ux*Uy)/((clight*clight)*(gamma*gamma*gamma));
-                auto A02y = (((clight*clight*clight*clight)+((Uz*Uz)+(Ux*Ux))*(clight*clight))*gamma)/a;
-                auto A03y = -(Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A00y = (Uy*(Uz*Uz)+(Uy*Uy*Uy)+(Ux*Ux)*Uy)/a;
+                auto A01y = -(Ux*Uy)/a;
+                auto A02y = ((clight*clight)+(Uz*Uz)+(Ux*Ux))/a;
+                auto A03y = -(Uy*Uz)/a;
 
                 auto A10y = -(Ux*Uy)/(gamma*gamma*gamma);
-                auto A11y = ((Uy*(clight*clight*clight*clight)+(Uy*(Uz*Uz)+(Uy*Uy*Uy))*(clight*clight))*gamma)/a;
-                auto A12y = ((Ux*(clight*clight*clight*clight)+(Ux*(Uz*Uz)+(Ux*Ux*Ux))*(clight*clight))*gamma)/a;
-                auto A13y = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A11y = (Uy*(clight*clight)+Uy*(Uz*Uz)+(Uy*Uy*Uy))/a;
+                auto A12y = (Ux*(clight*clight)+Ux*(Uz*Uz)+(Ux*Ux*Ux))/a;
+                auto A13y = -(Ux*Uy*Uz)/a;
 
                 auto A20y = -(Uy*Uy)/(gamma*gamma*gamma);
-                auto A21y = -(Ux*(Uy*Uy))/((clight*clight)*(gamma*gamma*gamma));
-                auto A22y = ((2.0*Uy*(clight*clight*clight*clight)+(2.0*Uy*(Uz*Uz)+(Uy*Uy*Uy)+2.0*(Ux*Ux)*Uy)*(clight*clight))*gamma)/a;
-                auto A23y = -((Uy*Uy)*Uz)/((clight*clight)*(gamma*gamma*gamma));
+                auto A21y = -(Ux*(Uy*Uy))/a;
+                auto A22y = (2.0*Uy*(clight*clight)+2.0*Uy*(Uz*Uz)+(Uy*Uy*Uy)+2.0*(Ux*Ux)*Uy)/a;
+                auto A23y = -((Uy*Uy)*Uz)/a;
 
                 auto A30y = -(Uy*Uz)/(gamma*gamma*gamma);
-                auto A31y = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
-                auto A32y = ((Uz*(clight*clight*clight*clight)+((Uz*Uz*Uz)+(Ux*Ux)*Uz)*(clight*clight))*gamma)/a;
-                auto A33y = ((Uy*(clight*clight*clight*clight)+((Uy*Uy*Uy)+(Ux*Ux)*Uy)*(clight*clight))*gamma)/a;
+                auto A31y = -(Ux*Uy*Uz)/a;
+                auto A32y = (Uz*(clight*clight)+(Uz*Uz*Uz)+(Ux*Ux)*Uz)/a;
+                auto A33y = (Uy*(clight*clight)+(Uy*Uy*Uy)+(Ux*Ux)*Uy)/a;
 
 
                 // Compute the Flux-Jacobian Elements in z
-                auto A00z = (((Uz*Uz*Uz)+((Uy*Uy)+(Ux*Ux))*Uz)*(clight*clight)*gamma)/a;
-                auto A01z = -(Ux*Uz)/((clight*clight)*(gamma*gamma*gamma));
-                auto A02z = -(Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
-                auto A03z = (((clight*clight*clight*clight)+((Uy*Uy)+(Ux*Ux))*(clight*clight))*gamma)/a;
+                auto A00z = ((Uz*Uz*Uz)+((Uy*Uy)+(Ux*Ux))*Uz)/a;
+                auto A01z = -(Ux*Uz)/a;
+                auto A02z = -(Uy*Uz)/a;
+                auto A03z = ((clight*clight)+(Uy*Uy)+(Ux*Ux))/a;
 
                 auto A10z = -(Ux*Uz)/(gamma*gamma*gamma);
-                auto A11z = ((Uz*(clight*clight*clight*clight)+((Uz*Uz*Uz)+(Uy*Uy)*Uz)*(clight*clight))*gamma)/a;
-                auto A12z = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
-                auto A13z = ((Ux*(clight*clight*clight*clight)+(Ux*(Uy*Uy)+(Ux*Ux*Ux))*(clight*clight))*gamma)/a;
+                auto A11z = (Uz*(clight*clight)+(Uz*Uz*Uz)+(Uy*Uy)*Uz)/a;
+                auto A12z = -(Ux*Uy*Uz)/a;
+                auto A13z = (Ux*(clight*clight)+Ux*(Uy*Uy)+(Ux*Ux*Ux))/a;
 
                 auto A20z = -(Uy*Uz)/(gamma*gamma*gamma);
-                auto A21z = -(Ux*Uy*Uz)/((clight*clight)*(gamma*gamma*gamma));
-                auto A22z = ((Uz*(clight*clight*clight*clight)+((Uz*Uz*Uz)+(Ux*Ux)*Uz)*(clight*clight))*gamma)/a;
-                auto A23z = ((Uy*(clight*clight*clight*clight)+((Uy*Uy*Uy)+(Ux*Ux)*Uy)*(clight*clight))*gamma)/a;
+                auto A21z = -(Ux*Uy*Uz)/a;
+                auto A22z = (Uz*(clight*clight)+(Uz*Uz*Uz)+(Ux*Ux)*Uz)/a;
+                auto A23z = (Uy*(clight*clight)+(Uy*Uy*Uy)+(Ux*Ux)*Uy)/a;
 
                 auto A30z = -(Uz*Uz)/(gamma*gamma*gamma);
-                auto A31z = -(Ux*(Uz*Uz))/((clight*clight)*(gamma*gamma*gamma));
-                auto A32z = -(Uy*(Uz*Uz))/((clight*clight)*(gamma*gamma*gamma));
-                auto A33z = ((2.0*Uz*(clight*clight*clight*clight)+((Uz*Uz*Uz)+(2.0*(Uy*Uy)+2.0*(Ux*Ux))*Uz)*(clight*clight))*gamma)/a;
+                auto A31z = -(Ux*(Uz*Uz))/a;
+                auto A32z = -(Uy*(Uz*Uz))/a;
+                auto A33z = (2.0*Uz*(clight*clight)+(Uz*Uz*Uz)+(2.0*(Uy*Uy)+2.0*(Ux*Ux))*Uz)/a;
 
                 // Compute the cell slopes x
                 auto dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
@@ -347,41 +348,52 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 auto AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
                 auto AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
                 auto AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
-                auto Q_tilde0 = N_arr(i,j,k)          - cx_half*AdQ0x - cy_half*AdQ0y - cz_half*AdQ0z;
+                auto Q_tilde0 = N_arr(i,j,k)   - cx_half*AdQ0x - cy_half*AdQ0y - cz_half*AdQ0z;
                 auto Q_tilde1 = NUx_arr(i,j,k) - cx_half*AdQ1x - cy_half*AdQ1y - cz_half*AdQ1z;
                 auto Q_tilde2 = NUy_arr(i,j,k) - cx_half*AdQ2x - cy_half*AdQ2y - cz_half*AdQ2z;
                 auto Q_tilde3 = NUz_arr(i,j,k) - cx_half*AdQ3x - cy_half*AdQ3y - cz_half*AdQ3z;
 
                 // Predict Q at the cell edges (x)
                 // (note that _plus is shifted due to grid location)
-                Q_minus_x(i,j,k,0) = Q_tilde0 + dQ0x/2.0;
-                Q_minus_x(i,j,k,1) = Q_tilde1 + dQ1x/2.0;
-                Q_minus_x(i,j,k,2) = Q_tilde2 + dQ2x/2.0;
-                Q_minus_x(i,j,k,3) = Q_tilde3 + dQ3x/2.0;
-                Q_plus_x(i-1,j,k,0) = Q_tilde0 - dQ0x/2.0;
-                Q_plus_x(i-1,j,k,1) = Q_tilde1 - dQ1x/2.0;
-                Q_plus_x(i-1,j,k,2) = Q_tilde2 - dQ2x/2.0;
-                Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
+                if ( tile_box_x.contains(i,j,k) ) {
+                    Q_minus_x(i,j,k,0) = Q_tilde0 + dQ0x/2.0;
+                    Q_minus_x(i,j,k,1) = Q_tilde1 + dQ1x/2.0;
+                    Q_minus_x(i,j,k,2) = Q_tilde2 + dQ2x/2.0;
+                    Q_minus_x(i,j,k,3) = Q_tilde3 + dQ3x/2.0;
+                }
+                if ( tile_box_x.contains(i-1,j,k) ) {
+                    Q_plus_x(i-1,j,k,0) = Q_tilde0 - dQ0x/2.0;
+                    Q_plus_x(i-1,j,k,1) = Q_tilde1 - dQ1x/2.0;
+                    Q_plus_x(i-1,j,k,2) = Q_tilde2 - dQ2x/2.0;
+                    Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
+                }
 
                 // Predict Q at the cell edges (y)
-                Q_minus_y(i,j,k,0) = Q_tilde0 + dQ0y/2.0;
-                Q_minus_y(i,j,k,1) = Q_tilde1 + dQ1y/2.0;
-                Q_minus_y(i,j,k,2) = Q_tilde2 + dQ2y/2.0;
-                Q_minus_y(i,j,k,3) = Q_tilde3 + dQ3y/2.0;
-                Q_plus_y(i,j-1,k,0) = Q_tilde0 - dQ0y/2.0;
-                Q_plus_y(i,j-1,k,1) = Q_tilde1 - dQ1y/2.0;
-                Q_plus_y(i,j-1,k,2) = Q_tilde2 - dQ2y/2.0;
-                Q_plus_y(i,j-1,k,3) = Q_tilde3 - dQ3y/2.0;
-
+                if ( tile_box_y.contains(i,j,k) ) {
+                    Q_minus_y(i,j,k,0) = Q_tilde0 + dQ0y/2.0;
+                    Q_minus_y(i,j,k,1) = Q_tilde1 + dQ1y/2.0;
+                    Q_minus_y(i,j,k,2) = Q_tilde2 + dQ2y/2.0;
+                    Q_minus_y(i,j,k,3) = Q_tilde3 + dQ3y/2.0;
+                }
+                if ( tile_box_y.contains(i,j-1,k) ) {
+                    Q_plus_y(i,j-1,k,0) = Q_tilde0 - dQ0y/2.0;
+                    Q_plus_y(i,j-1,k,1) = Q_tilde1 - dQ1y/2.0;
+                    Q_plus_y(i,j-1,k,2) = Q_tilde2 - dQ2y/2.0;
+                    Q_plus_y(i,j-1,k,3) = Q_tilde3 - dQ3y/2.0;
+                }
+                if ( tile_box_z.contains(i,j,k) ) {
                 // Predict Q at the cell edges (z)
-                Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
-                Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
-                Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
-                Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
-                Q_plus_z(i,j,k-1,0) = Q_tilde0 - dQ0z/2.0;
-                Q_plus_z(i,j,k-1,1) = Q_tilde1 - dQ1z/2.0;
-                Q_plus_z(i,j,k-1,2) = Q_tilde2 - dQ2z/2.0;
-                Q_plus_z(i,j,k-1,3) = Q_tilde3 - dQ3z/2.0;
+                    Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
+                    Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
+                    Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
+                    Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
+                }
+                if ( tile_box_z.contains(i,j,k-1) ) {
+                    Q_plus_z(i,j,k-1,0) = Q_tilde0 - dQ0z/2.0;
+                    Q_plus_z(i,j,k-1,1) = Q_tilde1 - dQ1z/2.0;
+                    Q_plus_z(i,j,k-1,2) = Q_tilde2 - dQ2z/2.0;
+                    Q_plus_z(i,j,k-1,3) = Q_tilde3 - dQ3z/2.0;
+                }
 
 
                 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -393,19 +405,19 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         );
     }
 
-    FillBoundary(tmp_Vx, tmp_Vx.nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(tmp_Vy, tmp_Vy.nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(tmp_Vz, tmp_Vz.nGrowVect(), WarpX::do_single_precision_comms, period);
+    // FillBoundary(tmp_Vx, tmp_Vx.nGrowVect(), WarpX::do_single_precision_comms, period);
+    // FillBoundary(tmp_Vy, tmp_Vy.nGrowVect(), WarpX::do_single_precision_comms, period);
+    // FillBoundary(tmp_Vz, tmp_Vz.nGrowVect(), WarpX::do_single_precision_comms, period);
 
-    FillBoundary(tmp_Q_minus_x, tmp_Q_minus_x.nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(tmp_Q_plus_x, tmp_Q_plus_x.nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(tmp_Q_minus_y, tmp_Q_minus_y.nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(tmp_Q_plus_y, tmp_Q_plus_y.nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(tmp_Q_minus_z, tmp_Q_minus_z.nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(tmp_Q_plus_z, tmp_Q_plus_z.nGrowVect(), WarpX::do_single_precision_comms, period);
+    // FillBoundary(tmp_Q_minus_x, tmp_Q_minus_x.nGrowVect(), WarpX::do_single_precision_comms, period);
+    // FillBoundary(tmp_Q_plus_x, tmp_Q_plus_x.nGrowVect(), WarpX::do_single_precision_comms, period);
+    // FillBoundary(tmp_Q_minus_y, tmp_Q_minus_y.nGrowVect(), WarpX::do_single_precision_comms, period);
+    // FillBoundary(tmp_Q_plus_y, tmp_Q_plus_y.nGrowVect(), WarpX::do_single_precision_comms, period);
+    // FillBoundary(tmp_Q_minus_z, tmp_Q_minus_z.nGrowVect(), WarpX::do_single_precision_comms, period);
+    // FillBoundary(tmp_Q_plus_z, tmp_Q_plus_z.nGrowVect(), WarpX::do_single_precision_comms, period);
 
 
-        // Advection push
+    // Advection push
     #ifdef AMREX_USE_OMP
     #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
     #endif
