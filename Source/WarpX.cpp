@@ -279,16 +279,25 @@ WarpX::WarpX ()
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
-    // Particle Container
+    // Loop over species and set current injection position per species
     mypc = std::make_unique<MultiParticleContainer>(this);
-    warpx_do_continuous_injection = mypc->doContinuousInjection();
-    if (warpx_do_continuous_injection){
-        if (moving_window_v >= 0){
+    const int n_species = mypc->nSpecies();
+    for (int i=0; i<n_species; i++)
+    {
+        WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
+
+        // Storing injection position for all species, regardless of whether
+        // they are continuously injected, since it makes looping over the
+        // elements of current_injection_position easier elsewhere in the code.
+        if (moving_window_v > 0._rt)
+        {
             // Inject particles continuously from the right end of the box
-            current_injection_position = geom[0].ProbHi(moving_window_dir);
-        } else {
+            pc.m_current_injection_position = geom[0].ProbHi(moving_window_dir);
+        }
+        else if (moving_window_v < 0._rt)
+        {
             // Inject particles continuously from the left end of the box
-            current_injection_position = geom[0].ProbLo(moving_window_dir);
+            pc.m_current_injection_position = geom[0].ProbLo(moving_window_dir);
         }
     }
 

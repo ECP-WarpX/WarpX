@@ -56,25 +56,71 @@ void
 WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
 {
     const int dir = moving_window_dir;
-    // Continuously inject plasma in new cells (by default only on level 0)
-    if (WarpX::warpx_do_continuous_injection and (WarpX::gamma_boost > 1)){
-        // In boosted-frame simulations, the plasma has moved since the last
-        // call to this function, and injection position needs to be updated
-        current_injection_position -= WarpX::beta_boost *
-#if defined(WARPX_DIM_3D)
-            WarpX::boost_direction[dir] * PhysConst::c * a_dt;
+
+    // Loop over species
+    const int n_species = mypc->nSpecies();
+    for (int i=0; i<n_species; i++)
+    {
+        WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
+
+        // Continuously inject plasma in new cells (by default only on level 0)
+        if (pc.doContinuousInjection())
+        {
+            PlasmaInjector* plasma_injector = pc.GetPlasmaInjector();
+            if (plasma_injector == nullptr) continue;
+
+            // Get bulk momentum and velocity of plasma
+            // 1D: dir=0 is z
+            // 2D: dir=0 is x, dir=1 is z
+            // 3D: dir=0 is x, dir=1 is y, dir=2 is z
+            amrex::Vector<amrex::Real> current_injection_position = {0._rt, 0._rt, 0._rt};
+#if defined(WARPX_DIM_1D_Z)
+            current_injection_position[2] = pc.m_current_injection_position;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
-            // This needs to be converted in order to index `boost_direction`
-            // which has 3 components, for both 2D and 3D simulations.
-            WarpX::boost_direction[2*dir] * PhysConst::c * a_dt;
-#elif defined(WARPX_DIM_1D_Z)
-            // In 1D, dir=0 corresponds to z
-            // This needs to be converted in order to index `boost_direction`
-            // which has 3 components, for 1D, 2D, and 3D simulations.
-            WarpX::boost_direction[2] * PhysConst::c * a_dt;
-            amrex::ignore_unused(dir);
+            current_injection_position[dir*2] = pc.m_current_injection_position;
+#else // 3D
+            current_injection_position[dir] = pc.m_current_injection_position;
 #endif
+            amrex::XDim3 u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(current_injection_position[0],
+                                                                                              current_injection_position[1],
+                                                                                              current_injection_position[2]);
+#if defined(WARPX_DIM_1D_Z)
+            amrex::Vector<amrex::Real> u_bulk_vec = {u_bulk.z};
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            amrex::Vector<amrex::Real> u_bulk_vec = {u_bulk.x, u_bulk.z};
+#else // 3D
+            amrex::Vector<amrex::Real> u_bulk_vec = {u_bulk.x, u_bulk.y, u_bulk.z};
+#endif
+            amrex::Real v_bulk = PhysConst::c * u_bulk_vec[dir] / std::sqrt(1._rt + u_bulk_vec[dir]*u_bulk_vec[dir]);
+
+            // In boosted-frame simulations, the plasma has moved since the last
+            // call to this function, and injection position needs to be updated.
+            // Note that the bulk velocity v, obtained from getBulkMomentum, is
+            // transformed to the boosted frame velocity v' via the formula
+            // v' = (v-c*beta)/(1-v*beta/c)
+            if (WarpX::gamma_boost > 1._rt)
+            {
+                v_bulk = (v_bulk - PhysConst::c*WarpX::beta_boost)
+                         / (1._rt - v_bulk*WarpX::beta_boost/PhysConst::c);
+#if defined(WARPX_DIM_3D)
+                v_bulk *= WarpX::boost_direction[dir];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                // In 2D, dir=0 corresponds to x and dir=1 corresponds to z.
+                // This needs to be converted to access boost_direction,
+                // which has always 3 components.
+                v_bulk *= WarpX::boost_direction[2*dir];
+#elif defined(WARPX_DIM_1D_Z)
+                // In 1D, dir=0 corresponds to z.
+                // This needs to be converted to access boost_direction,
+                // which has always 3 components.
+                v_bulk *= WarpX::boost_direction[2];
+                amrex::ignore_unused(dir);
+#endif
+            }
+
+            // Update current injection position
+            pc.m_current_injection_position += v_bulk * a_dt;
+        }
     }
 }
 
@@ -96,15 +142,13 @@ WarpX::MoveWindow (const int step, bool move_j)
     moving_window_x += (moving_window_v - WarpX::beta_boost * PhysConst::c)/(1 - moving_window_v * WarpX::beta_boost / PhysConst::c) * dt[0];
     const int dir = moving_window_dir;
 
-    // Update warpx.current_injection_position
+    // Update warpx.current_injection_position,
     // PhysicalParticleContainer uses this injection position
     UpdatePlasmaInjectionPosition( dt[0] );
-    if (WarpX::warpx_do_continuous_injection){
-        // Update injection position for WarpXParticleContainer in mypc.
-        // Nothing to do for PhysicalParticleContainers
-        // For LaserParticleContainer, need to update the antenna position.
-        mypc->UpdateContinuousInjectionPosition( dt[0] );
-    }
+    // Update injection position for WarpXParticleContainer in mypc,
+    // nothing to do for PhysicalParticleContainer,
+    // need to update the antenna position for LaserParticleContainer.
+    mypc->UpdateContinuousInjectionPosition( dt[0] );
 
     // compute the number of cells to shift on the base level
     amrex::Real new_lo[AMREX_SPACEDIM];
@@ -312,41 +356,54 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
     }
 
-    // Continuously inject plasma in new cells (by default only on level 0)
-    if (WarpX::warpx_do_continuous_injection) {
+    // Loop over species
+    const int n_species = mypc->nSpecies();
+    for (int i=0; i<n_species; i++)
+    {
+        WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
 
-        const int lev = 0;
+        // Continuously inject plasma in new cells (by default only on level 0)
+        if (pc.doContinuousInjection())
+        {
+            const int lev = 0;
 
-        // particleBox encloses the cells where we generate particles
-        // (only injects particles in an integer number of cells,
-        // for correct particle spacing)
-        amrex::RealBox particleBox = geom[lev].ProbDomain();
-        amrex::Real new_injection_position;
-        if (moving_window_v >= 0){
-            // Forward-moving window
-            const amrex::Real dx = geom[lev].CellSize(dir);
-            new_injection_position = current_injection_position +
-                std::floor( (geom[lev].ProbHi(dir) - current_injection_position)/dx ) * dx;
-        } else {
-            // Backward-moving window
-            const amrex::Real dx = geom[lev].CellSize(dir);
-            new_injection_position = current_injection_position -
-                std::floor( (current_injection_position - geom[lev].ProbLo(dir))/dx) * dx;
-        }
-        // Modify the corresponding bounds of the particleBox
-        if (moving_window_v >= 0) {
-            particleBox.setLo( dir, current_injection_position );
-            particleBox.setHi( dir, new_injection_position );
-        } else {
-            particleBox.setLo( dir, new_injection_position );
-            particleBox.setHi( dir, current_injection_position );
-        }
+            // particleBox encloses the cells where we generate particles
+            // (only injects particles in an integer number of cells,
+            // for correct particle spacing)
+            amrex::RealBox particleBox = geom[lev].ProbDomain();
+            amrex::Real new_injection_position = pc.m_current_injection_position;
+            if (moving_window_v > 0._rt)
+            {
+                // Forward-moving window
+                const amrex::Real dx = geom[lev].CellSize(dir);
+                new_injection_position = pc.m_current_injection_position +
+                    std::floor( (geom[lev].ProbHi(dir) - pc.m_current_injection_position)/dx ) * dx;
+            }
+            else if (moving_window_v < 0._rt)
+            {
+                // Backward-moving window
+                const amrex::Real dx = geom[lev].CellSize(dir);
+                new_injection_position = pc.m_current_injection_position -
+                    std::floor( (pc.m_current_injection_position - geom[lev].ProbLo(dir))/dx) * dx;
+            }
+            // Modify the corresponding bounds of the particleBox
+            if (moving_window_v > 0._rt)
+            {
+                particleBox.setLo( dir, pc.m_current_injection_position );
+                particleBox.setHi( dir, new_injection_position );
+            }
+            else if (moving_window_v < 0._rt)
+            {
+                particleBox.setLo( dir, new_injection_position );
+                particleBox.setHi( dir, pc.m_current_injection_position );
+            }
 
-        if (particleBox.ok() and (current_injection_position != new_injection_position)){
-            // Performs continuous injection of all WarpXParticleContainer
-            // in mypc.
-            mypc->ContinuousInjection(particleBox);
-            current_injection_position = new_injection_position;
+            if (particleBox.ok() and (pc.m_current_injection_position != new_injection_position)){
+                // Performs continuous injection of all WarpXParticleContainer
+                // in mypc.
+                pc.ContinuousInjection(particleBox);
+                pc.m_current_injection_position = new_injection_position;
+            }
         }
     }
 

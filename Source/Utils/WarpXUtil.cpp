@@ -322,14 +322,15 @@ void CheckGriddingForRZSpectral ()
     Vector<int> max_grid_size_x(max_level+1);
 
     // Set the radial block size to be the power of 2 greater than or equal to
-    // the number of grid cells. The blocking_factor must be a power of 2
-    // and the max_grid_size should be a multiple of the blocking_factor.
+    // the number of grid cells. The blocking factor must be a power of 2
+    // and the max_grid_size must be a multiple of the blocking_factor unless
+    // it is less than the blocking factor.
     int k = 1;
     while (k < n_cell[0]) {
         k *= 2;
     }
     blocking_factor_x[0] = k;
-    max_grid_size_x[0] = k;
+    max_grid_size_x[0] = n_cell[0];
 
     for (int lev=1 ; lev <= max_level ; lev++) {
         // For this to be correct, this needs to read in any user specified refinement ratios.

@@ -51,12 +51,6 @@ FieldProbe::FieldProbe (std::string rd_name)
 : ReducedDiags{rd_name}, m_probe(&WarpX::GetInstance())
 {
 
-    // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-        "FieldProbe reduced diagnostics does not work for RZ coordinate.");
-#endif
-
     // read number of levels
     int nLevel = 0;
     const amrex::ParmParse pp_amr("amr");
