@@ -265,7 +265,6 @@ void HybridPICModel::HybridPICSolveE (
         electron_pressure_fp[lev],
         edge_lengths, lev, this, include_resistivity_term
     );
-    warpx.ApplyEfieldBoundary(lev, patch_type);
 }
 
 void HybridPICModel::CalculateElectronPressure(DtType a_dt_type)
