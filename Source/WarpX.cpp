@@ -279,16 +279,25 @@ WarpX::WarpX ()
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
-    // Particle Container
+    // Loop over species and set current injection position per species
     mypc = std::make_unique<MultiParticleContainer>(this);
-    warpx_do_continuous_injection = mypc->doContinuousInjection();
-    if (warpx_do_continuous_injection){
-        if (moving_window_v >= 0){
+    const int n_species = mypc->nSpecies();
+    for (int i=0; i<n_species; i++)
+    {
+        WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
+
+        // Storing injection position for all species, regardless of whether
+        // they are continuously injected, since it makes looping over the
+        // elements of current_injection_position easier elsewhere in the code.
+        if (moving_window_v > 0._rt)
+        {
             // Inject particles continuously from the right end of the box
-            current_injection_position = geom[0].ProbHi(moving_window_dir);
-        } else {
+            pc.m_current_injection_position = geom[0].ProbHi(moving_window_dir);
+        }
+        else if (moving_window_v < 0._rt)
+        {
             // Inject particles continuously from the left end of the box
-            current_injection_position = geom[0].ProbLo(moving_window_dir);
+            pc.m_current_injection_position = geom[0].ProbLo(moving_window_dir);
         }
     }
 
@@ -2252,17 +2261,23 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 #endif
 
-    bool deposit_charge = do_dive_cleaning ||
-                          (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
-                          (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) ||
-                          (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC);
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
-        deposit_charge = do_dive_cleaning || update_with_rho || current_correction;
+    int rho_ncomps = 0;
+    if( (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) ||
+        (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) ||
+        (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) ) {
+        rho_ncomps = ncomps;
     }
-    if (deposit_charge)
+    if (do_dive_cleaning) {
+        rho_ncomps = 2*ncomps;
+    }
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+        if (do_dive_cleaning || update_with_rho || current_correction) {
+            // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
+            rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
+        }
+    }
+    if (rho_ncomps > 0)
     {
-        // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
-        const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
         AllocInitMultiFab(rho_fp[lev], amrex::convert(ba, rho_nodal_flag), dm, rho_ncomps, ngRho, lev, "rho_fp", 0.0_rt);
     }
 
@@ -2427,9 +2442,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(current_cp[lev][1], amrex::convert(cba, jy_nodal_flag), dm, ncomps, ngJ, lev, "current_cp[y]", 0.0_rt);
         AllocInitMultiFab(current_cp[lev][2], amrex::convert(cba, jz_nodal_flag), dm, ncomps, ngJ, lev, "current_cp[z]", 0.0_rt);
 
-        if (deposit_charge) {
-            // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
-            const int rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
+        if (rho_ncomps > 0) {
             AllocInitMultiFab(rho_cp[lev], amrex::convert(cba, rho_nodal_flag), dm, rho_ncomps, ngRho, lev, "rho_cp", 0.0_rt);
         }
 
