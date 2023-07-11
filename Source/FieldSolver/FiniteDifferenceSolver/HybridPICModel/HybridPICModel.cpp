@@ -237,26 +237,6 @@ void HybridPICModel::HybridPICSolveE (
 {
     WARPX_PROFILE("WarpX::HybridPICSolveE()");
 
-    HybridPICSolveE(
-        Efield, Jfield, Bfield, rhofield, edge_lengths, lev,
-        PatchType::fine, include_resistivity_term
-    );
-    if (lev > 0)
-    {
-        amrex::Abort(Utils::TextMsg::Err(
-        "HybridPICSolveE: Only one level implemented for hybrid-PIC solver."));
-    }
-}
-
-void HybridPICModel::HybridPICSolveE (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> & Efield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-    std::unique_ptr<amrex::MultiFab> const& rhofield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-    const int lev, PatchType patch_type,
-    const bool include_resistivity_term)
-{
     auto& warpx = WarpX::GetInstance();
 
     // Solve E field in regular cells
@@ -265,6 +245,11 @@ void HybridPICModel::HybridPICSolveE (
         electron_pressure_fp[lev],
         edge_lengths, lev, this, include_resistivity_term
     );
+    if (lev > 0)
+    {
+        amrex::Abort(Utils::TextMsg::Err(
+        "HybridPICSolveE: Only one level implemented for hybrid-PIC solver."));
+    }
 }
 
 void HybridPICModel::CalculateElectronPressure(DtType a_dt_type)
