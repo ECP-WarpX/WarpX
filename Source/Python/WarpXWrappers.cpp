@@ -150,12 +150,12 @@ namespace
 
     void amrex_init (int argc, char* argv[])
     {
-        warpx_amrex_init(argc, argv);
+        warpx::initialization::amrex_init(argc, argv);
     }
 
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm)
     {
-        warpx_amrex_init(argc, argv, true, mpicomm);
+        warpx::initialization::amrex_init(argc, argv, true, mpicomm);
     }
 
     void amrex_finalize (int /*finalize_mpi*/)

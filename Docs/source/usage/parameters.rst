@@ -2659,7 +2659,8 @@ Reduced Diagnostics
         to file. The electromagnetic field components are interpolated to the measurement point
         by default, but can they be saved as non-averaged by setting
         ``<reduced_diags_name>.raw_fields = true``, in which case the raw fields for the cell
-        containing the measurement point are saved.
+        containing the measurement point are saved. In RZ geometry, this only saves the
+        0'th azimuthal mode component of the fields.
         The interpolation order can be set by specifying ``<reduced_diags_name>.interp_order``,
         otherwise it is set to ``1``.
         Integrated electric and magnetic field components can instead be obtained by specifying
