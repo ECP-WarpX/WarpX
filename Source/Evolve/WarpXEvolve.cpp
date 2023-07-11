@@ -502,7 +502,7 @@ WarpX::OneStep_nosub (Real cur_time)
             WARPX_ABORT_WITH_MESSAGE("Medium for EM is unknown");
         }
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        ApplyEfieldBoundary(guard_cells.ng_FieldGather);
+        ApplyEfieldBoundary(guard_cells.ng_FieldSolver);
 
         EvolveF(0.5_rt * dt[0], DtType::SecondHalf);
         EvolveG(0.5_rt * dt[0], DtType::SecondHalf);
@@ -834,7 +834,7 @@ WarpX::OneStep_sub1 (Real curtime)
     }
 
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldGather);
-    ApplyBfieldBoundary(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver, DtType::SecondHalf);
+    ApplyBfieldBoundary(fine_lev, PatchType::fine, guard_cells.ng_FieldGather, DtType::SecondHalf);
 
     // ii) Push particles on the coarse patch and mother grid.
     // Push the fields on the coarse patch and mother grid
