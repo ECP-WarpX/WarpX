@@ -393,7 +393,7 @@ void PhysicalParticleContainer::InitData ()
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame (
-    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz)
+    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz, ParticleReal t_lab)
 {
     // Map the particles from the lab frame to the boosted frame.
     // This boosts the particle to the lab frame and calculates
@@ -402,8 +402,6 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
 
     // For now, start with the assumption that this will only happen
     // at the start of the simulation.
-    const ParticleReal t_lab = 0._prt;
-
     const ParticleReal uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
 
     // tpr is the particle's time in the boosted frame
@@ -429,13 +427,14 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
         uz = -uz;
     }
 
-    // Move the particles to where they will be at t = 0 in the boosted frame
+    //Move the particles to where they will be at t = t0, the current simulation time in the boosted frame
+    constexpr int lev = 0;
+    const amrex::Real t0 = WarpX::GetInstance().gett_new(lev);
     if (boost_adjust_transverse_positions) {
-        x = xpr - tpr*vxpr;
-        y = ypr - tpr*vypr;
+        x = xpr - (tpr-t0)*vxpr;
+        y = ypr - (tpr-t0)*vypr;
     }
-
-    z = zpr - tpr*vzpr;
+    z = zpr - (tpr-t0)*vzpr;
 
 }
 
@@ -582,6 +581,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
         // assumption asserts: see PlasmaInjector
         openPMD::Iteration it = series->iterations.begin()->second;
+        double const t_lab = it.time<double>() * it.timeUnitSI();
         std::string const ps_name = it.particles.begin()->first;
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
@@ -649,7 +649,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                 CheckAndAddParticle(x, y, z, ux, uy, uz, weight,
                                     particle_x,  particle_y,  particle_z,
                                     particle_ux, particle_uy, particle_uz,
-                                    particle_w);
+                                    particle_w, t_lab);
             }
         }
         auto const np = particle_z.size();
@@ -795,10 +795,11 @@ PhysicalParticleContainer::CheckAndAddParticle (
     Gpu::HostVector<ParticleReal>& particle_ux,
     Gpu::HostVector<ParticleReal>& particle_uy,
     Gpu::HostVector<ParticleReal>& particle_uz,
-    Gpu::HostVector<ParticleReal>& particle_w)
+    Gpu::HostVector<ParticleReal>& particle_w,
+    ParticleReal t_lab)
 {
     if (WarpX::gamma_boost > 1.) {
-        MapParticletoBoostedFrame(x, y, z, ux, uy, uz);
+        MapParticletoBoostedFrame(x, y, z, ux, uy, uz, t_lab);
     }
     particle_x.push_back(x);
     particle_y.push_back(y);
@@ -926,7 +927,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
     InjectorDensity*  inj_rho = plasma_injector->getInjectorDensity();
-    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
+    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentumDevice();
     const Real gamma_boost = WarpX::gamma_boost;
     const Real beta_boost = WarpX::beta_boost;
     const Real t = WarpX::GetInstance().gett_new(lev);
@@ -1475,10 +1476,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
     }
 
     InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
-    InjectorDensity*  inj_rho = plasma_injector->getInjectorDensity();
-    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentum();
-    const amrex::Real density_min = plasma_injector->density_min;
-    const amrex::Real density_max = plasma_injector->density_max;
+    InjectorFlux*  inj_flux = plasma_injector->getInjectorFlux();
+    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentumDevice();
     constexpr int level_zero = 0;
     const amrex::Real t = WarpX::GetInstance().gett_new(level_zero);
 
@@ -1794,7 +1793,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 #ifdef WARPX_DIM_RZ
                 // Conversion from cylindrical to Cartesian coordinates
                 // Replace the x and y, setting an angle theta.
-                // These x and y are used to get the momentum and density
+                // These x and y are used to get the momentum and flux
                 Real theta;
                 if (nmodes == 1 && rz_random_theta) {
                     // With only 1 mode, the angle doesn't matter so
@@ -1821,14 +1820,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     pu.y = sin_theta*ur + cos_theta*ut;
                 }
 #endif
-                Real dens = inj_rho->getDensity(ppos.x, ppos.y, ppos.z);
-                // Remove particle if density below threshold
-                if ( dens < density_min ){
+                Real flux = inj_flux->getFlux(ppos.x, ppos.y, ppos.z, t);
+                // Remove particle if flux is negative or 0
+                if ( flux <=0 ){
                     p.id() = -1;
                     continue;
                 }
-                // Cut density if above threshold
-                dens = amrex::min(dens, density_max);
 
                 if (loc_do_field_ionization) {
                     p_ion_level[ip] = loc_ionization_initial_level;
@@ -1854,12 +1851,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
 #ifdef WARPX_DIM_RZ
                 // The particle weight is proportional to the user-specified
-                // flux (denoted as `dens` here) and the emission surface within
+                // flux and the emission surface within
                 // one cell (captured partially by `scale_fac`).
                 // For cylindrical emission (flux_normal_axis==0
                 // or flux_normal_axis==2), the emission surface depends on
                 // the radius ; thus, the calculation is finalized here
-                Real t_weight = dens * scale_fac * dt;
+                Real t_weight = flux * scale_fac * dt;
                 if (loc_flux_normal_axis != 1) {
                     if (radially_weighted) {
                          t_weight *= 2._rt*MathConst::pi*radial_position;
@@ -1872,7 +1869,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 }
                 const Real weight = t_weight;
 #else
-                const Real weight = dens * scale_fac * dt;
+                const Real weight = flux * scale_fac * dt;
 #endif
                 pa[PIdx::w ][ip] = weight;
                 pa[PIdx::ux][ip] = pu.x;
@@ -2924,6 +2921,11 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 adk_power.dataPtr(),
                                 particle_icomps["ionizationLevel"],
                                 ion_atomic_number);
+}
+
+PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector ()
+{
+    return plasma_injector.get();
 }
 
 void PhysicalParticleContainer::resample (const int timestep)

@@ -103,7 +103,7 @@ python3 -m pip install --upgrade wheel
 python3 -m pip install --upgrade cython
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas
-python3 -m pip install --upgrade scipy==1.8.1
+python3 -m pip install --upgrade -Ccompile-args="-j10" scipy
 python3 -m pip install --upgrade mpi4py --no-cache-dir --no-build-isolation --no-binary mpi4py
 python3 -m pip install --upgrade openpmd-api
 python3 -m pip install --upgrade matplotlib==3.2.2  # does not try to build freetype itself

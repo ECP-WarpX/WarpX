@@ -242,5 +242,12 @@ The input file for this example and corresponding analysis can be found at:
 * :download:`Magnetic reconnection input <../../../Examples/Tests/ohm_solver_magnetic_reconnection/PICMI_inputs.py>`
 * :download:`Analysis script <../../../Examples/Tests/ohm_solver_magnetic_reconnection/analysis.py>`
 
+Many Further Examples, Demos and Tests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+WarpX runs over 200 integration tests on a variety of modeling cases, which validate and demonstrate its functionality.
+Please see the `Examples/Tests/ <https://github.com/ECP-WarpX/WarpX/tree/development/Examples/Tests>`__ directory for many more examples.
+
+
 .. bibliography::
     :keyprefix: ex-
