@@ -613,7 +613,9 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
     }
     if (!local) {
         const Geometry& gm = allcontainers[0]->Geom(lev);
-        ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity());
+        ablastr::utils::communication::SumBoundary(
+            *rho, 0, rho->nComp(), rho->nGrowVect(), amrex::IntVect(0),
+            WarpX::do_single_precision_comms, gm.periodicity());
     }
 
     return rho;
