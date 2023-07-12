@@ -18,6 +18,7 @@ foreach(D IN LISTS WarpX_DIMS)
             # pybind11
             WarpX.cpp
             MultiParticleContainer.cpp
+            WarpXParticleContainer.cpp
         )
     endif()
 endforeach()

@@ -30,7 +30,8 @@ namespace py = pybind11;
 
 
 // forward declarations of exposed classes
-void init_MultiParticleContainer (py::module& m);
+void init_WarpXParticleContainer (py::module&);
+void init_MultiParticleContainer (py::module&);
 void init_WarpX(py::module&);
 
 PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
@@ -54,6 +55,7 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     )pbdoc";
 
     // note: order from parent to child classes
+    init_WarpXParticleContainer(m);
     init_MultiParticleContainer(m);
     init_WarpX(m);
 

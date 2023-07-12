@@ -6,10 +6,18 @@
 #include "pyWarpX.H"
 
 #include <Particles/MultiParticleContainer.H>
+#include <Particles/WarpXParticleContainer.H>
 
 namespace py = pybind11;
 
 void init_MultiParticleContainer (py::module& m)
 {
     py::class_<MultiParticleContainer> mpc(m, "MultiParticleContainer");
+    mpc
+        .def("get_particle_container_from_name",
+            &MultiParticleContainer::GetParticleContainerFromName,
+            py::arg("name"),
+            py::return_value_policy::reference_internal
+        )
+    ;
 }

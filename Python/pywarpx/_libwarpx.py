@@ -784,10 +784,8 @@ class LibWarpX():
         '''
         warpx = self.libwarpx_so.get_instance()
         mpc = warpx.multi_particle_container()
-        self.libwarpx_so.warpx_addRealComp(
-            ctypes.c_char_p(species_name.encode('utf-8')),
-            ctypes.c_char_p(pid_name.encode('utf-8')), comm
-        )
+        pc = mpc.get_particle_container_from_name(species_name)
+        pc.add_real_comp(pid_name, comm)
 
     def get_species_charge_sum(self, species_name, local=False):
         '''
