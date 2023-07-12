@@ -377,8 +377,6 @@ void FieldProbe::ComputeDiags (int step)
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
-        const amrex::Geometry& gm = warpx.Geom(lev);
-        const auto prob_lo = gm.ProbLo();
         amrex::Real const dt = WarpX::GetInstance().getdt(lev);
         // Calculates particle movement in moving window sims
         amrex::Real move_dist = 0.0;
