@@ -2984,6 +2984,9 @@ Reduced Diagnostics
     The separator between row values in the output file.
     The default separator is a whitespace.
 
+* ``<reduced_diags_name>.precision`` (`integer`) optional (default `14`)
+    The precision used when writing out the data to the text files.
+
 Lookup tables and other settings for QED modules
 ------------------------------------------------
 
