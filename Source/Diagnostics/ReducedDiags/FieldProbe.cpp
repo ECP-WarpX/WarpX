@@ -141,8 +141,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     bool raw_fields;
     const bool raw_fields_specified = pp_rd_name.query("raw_fields", raw_fields);
     if (raw_fields_specified) {
-        WARPX_ABORT_WITH_MESSAGE("The field probe raw_fields options is obsolete. " +
-                                 "To get the equivalent, set interp_order = 0");
+        WARPX_ABORT_WITH_MESSAGE("The field probe raw_fields options is obsolete. To get the equivalent, set interp_order = 0");
     }
 
     if (WarpX::gamma_boost > 1.0_rt)
