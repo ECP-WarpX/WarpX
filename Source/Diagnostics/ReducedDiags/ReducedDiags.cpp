@@ -9,6 +9,7 @@
 
 #include "WarpX.H"
 #include "Utils/Parser/IntervalsParser.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX.H>
@@ -68,7 +69,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
     pp_rd_name.query("separator", m_sep);
 
     // precision of data in the output file
-    pp_rd_name.query("precision", m_precision);
+    utils::parser::queryWithParser(pp_rd_name, "precision", m_precision);
 }
 // end constructor
 
