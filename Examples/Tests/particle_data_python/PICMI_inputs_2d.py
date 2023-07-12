@@ -130,7 +130,7 @@ def add_particles():
         w=w, newPid=newPid, unique_particles=args.unique
     )
 
-callbacks.installbeforestep(add_particles)
+sim.extension.libwarpx_so.add_python_callback( "installbeforestep", add_particles )
 
 ##########################
 # simulation run

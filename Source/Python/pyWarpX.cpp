@@ -122,6 +122,10 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
         py::return_value_policy::reference,
         "Return a reference to the WarpX object.");
 
+    // Expose functions to get the processor number
+    m.def("getNProcs", [](){amrex::ParallelDescriptor::NProcs();} );
+    m.def("getMyProc", [](){amrex::ParallelDescriptor::MyProc();} );
+
     // Expose the python callback function installation and removal functions
     m.def("add_python_callback", &InstallPythonCallback);
     m.def("remove_python_callback", &ClearPythonCallback);

@@ -147,7 +147,7 @@ class LibWarpX():
         Get the number of processors
 
         '''
-        return self.libwarpx_so.warpx_getNProcs()
+        return self.libwarpx_so.getNProcs()
 
     def getMyProc(self):
         '''
@@ -155,7 +155,7 @@ class LibWarpX():
         Get the number of the processor
 
         '''
-        return self.libwarpx_so.warpx_getMyProc()
+        return self.libwarpx_so.getMyProc()
 
     def get_nattr(self):
         '''

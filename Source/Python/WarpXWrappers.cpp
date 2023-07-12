@@ -482,14 +482,6 @@
         return warpx.finestLevel();
     }
 
-    int warpx_getMyProc () {
-        return amrex::ParallelDescriptor::MyProc();
-    }
-
-    int warpx_getNProcs () {
-        return amrex::ParallelDescriptor::NProcs();
-    }
-
     void warpx_setPotentialEB (const char * char_potential) {
         WarpX& warpx = WarpX::GetInstance();
         const std::string potential(char_potential);
