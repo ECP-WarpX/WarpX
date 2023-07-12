@@ -280,7 +280,7 @@ private:
       */
     amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
-        amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
+        const amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
         return current_z_boost;
     }
     /** Compute and return z-position in the lab-frame at the current timestep
@@ -289,7 +289,7 @@ private:
       */
     amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
-        amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
+        const amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
         return current_z_lab;
     }
     /** Compute and return cell-size in z-dimension in the lab-frame at level, lev

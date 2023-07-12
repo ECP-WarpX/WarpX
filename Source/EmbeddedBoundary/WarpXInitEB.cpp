@@ -83,7 +83,7 @@ WarpX::InitEB ()
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
 
-    amrex::ParmParse pp_warpx("warpx");
+    const amrex::ParmParse pp_warpx("warpx");
     std::string impf;
     pp_warpx.query("eb_implicit_function", impf);
     if (! impf.empty()) {

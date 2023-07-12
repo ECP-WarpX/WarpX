@@ -46,7 +46,7 @@ class HankelTransform
                                     amrex::FArrayBox      & F, int const F_icomp);
 
     private:
-        // Even though nk == nr always, use a seperate variable for clarity.
+        // Even though nk == nr always, use a separate variable for clarity.
         int m_nr, m_nk;
 
         RealVector m_kr;

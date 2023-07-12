@@ -47,7 +47,7 @@ ChargeOnEB::ChargeOnEB (std::string rd_name)
 
     // Read optional weighting
     std::string buf;
-    amrex::ParmParse pp_rd_name(rd_name);
+    const amrex::ParmParse pp_rd_name(rd_name);
     m_do_parser_weighting = pp_rd_name.query("weighting_function(x,y,z)", buf);
     if (m_do_parser_weighting) {
         std::string weighting_string = "";
@@ -59,7 +59,7 @@ ChargeOnEB::ChargeOnEB (std::string rd_name)
 
     if (ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};

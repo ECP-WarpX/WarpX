@@ -48,7 +48,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build
+   cmake -S . -B build -DWarpX_DIMS="1;2;3" -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON
    cmake --build build -j 6
 
 The other :ref:`general compile-time options <building-cmake>` apply as usual.

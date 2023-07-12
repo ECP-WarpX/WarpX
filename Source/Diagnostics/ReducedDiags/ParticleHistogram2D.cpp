@@ -242,7 +242,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
     m_h_data_2D.copy(d_data_2D);
 
     // reduced sum over mpi ranks
-    int size = static_cast<int> (d_data_2D.size());
+    const int size = static_cast<int> (d_data_2D.size());
     ParallelDescriptor::ReduceRealSum
             (h_table_data.p, size, ParallelDescriptor::IOProcessorNumber());
 
@@ -299,6 +299,7 @@ void ParticleHistogram2D::WriteToFile (int step) const
 
     series.flush();
 #else
+    amrex::ignore_unused(step);
     WARPX_ABORT_WITH_MESSAGE("ParticleHistogram2D: Needs openPMD-api compiled into WarpX, but was not found!");
 #endif
 }

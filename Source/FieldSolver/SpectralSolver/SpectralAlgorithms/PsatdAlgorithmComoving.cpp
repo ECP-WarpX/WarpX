@@ -75,15 +75,15 @@ PsatdAlgorithmComoving::pushSpectralFields (SpectralFieldData& f) const
         const amrex::Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = f.fields[mfi].array();
+        const amrex::Array4<Complex> fields = f.fields[mfi].array();
 
         // Extract arrays for the coefficients
-        amrex::Array4<const amrex::Real> C_arr    = C_coef   [mfi].array();
-        amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
-        amrex::Array4<const Complex>     X1_arr   = X1_coef  [mfi].array();
-        amrex::Array4<const Complex>     X2_arr   = X2_coef  [mfi].array();
-        amrex::Array4<const Complex>     X3_arr   = X3_coef  [mfi].array();
-        amrex::Array4<const Complex>     X4_arr   = X4_coef  [mfi].array();
+        const amrex::Array4<const amrex::Real> C_arr    = C_coef   [mfi].array();
+        const amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
+        const amrex::Array4<const Complex>     X1_arr   = X1_coef  [mfi].array();
+        const amrex::Array4<const Complex>     X2_arr   = X2_coef  [mfi].array();
+        const amrex::Array4<const Complex>     X3_arr   = X3_coef  [mfi].array();
+        const amrex::Array4<const Complex>     X4_arr   = X4_coef  [mfi].array();
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
@@ -178,13 +178,13 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
         const amrex::Real* kz     = kz_vec[mfi].dataPtr();
 
         // Extract arrays for the coefficients
-        amrex::Array4<amrex::Real> C    = C_coef     [mfi].array();
-        amrex::Array4<amrex::Real> S_ck = S_ck_coef  [mfi].array();
-        amrex::Array4<Complex>     X1   = X1_coef    [mfi].array();
-        amrex::Array4<Complex>     X2   = X2_coef    [mfi].array();
-        amrex::Array4<Complex>     X3   = X3_coef    [mfi].array();
-        amrex::Array4<Complex>     X4   = X4_coef    [mfi].array();
-        amrex::Array4<Complex>     T2   = Theta2_coef[mfi].array();
+        const amrex::Array4<amrex::Real> C    = C_coef     [mfi].array();
+        const amrex::Array4<amrex::Real> S_ck = S_ck_coef  [mfi].array();
+        const amrex::Array4<Complex>     X1   = X1_coef    [mfi].array();
+        const amrex::Array4<Complex>     X2   = X2_coef    [mfi].array();
+        const amrex::Array4<Complex>     X3   = X3_coef    [mfi].array();
+        const amrex::Array4<Complex>     X4   = X4_coef    [mfi].array();
+        const amrex::Array4<Complex>     T2   = Theta2_coef[mfi].array();
 
         // Store comoving velocity
         const amrex::Real vx = m_v_comoving[0];
@@ -254,7 +254,7 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
 
                 if ( (nu != om_mod/om) && (nu != -om_mod/om) && (nu != 0.) ) {
 
-                    Complex x1 = om2 / (om2_mod - nu * nu * om2)
+                    const Complex x1 = om2 / (om2_mod - nu * nu * om2)
                         * (theta_star - theta * C(i,j,k) + I * nu * om * theta * S_ck(i,j,k));
 
                     // X1 multiplies i*(k \times J) in the update equation for B
@@ -424,7 +424,7 @@ void PsatdAlgorithmComoving::CurrentCorrection (SpectralFieldData& field_data)
         const amrex::Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+        const amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();

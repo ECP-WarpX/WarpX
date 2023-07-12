@@ -31,27 +31,27 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
     auto& warpx = WarpX::GetInstance();
     amrex::Box domain_box = warpx.Geom(lev).Domain();
     if (patch_type == PatchType::coarse) {
-        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
         domain_box.coarsen(ref_ratio);
     }
-    amrex::IntVect domain_lo = domain_box.smallEnd();
-    amrex::IntVect domain_hi = domain_box.bigEnd();
+    const amrex::IntVect domain_lo = domain_box.smallEnd();
+    const amrex::IntVect domain_hi = domain_box.bigEnd();
     amrex::GpuArray<int, 3> fbndry_lo;
     amrex::GpuArray<int, 3> fbndry_hi;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
         fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
     }
-    amrex::IntVect Ex_nodal = Efield[0]->ixType().toIntVect();
-    amrex::IntVect Ey_nodal = Efield[1]->ixType().toIntVect();
-    amrex::IntVect Ez_nodal = Efield[2]->ixType().toIntVect();
-    amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
+    const amrex::IntVect Ex_nodal = Efield[0]->ixType().toIntVect();
+    const amrex::IntVect Ey_nodal = Efield[1]->ixType().toIntVect();
+    const amrex::IntVect Ez_nodal = Efield[2]->ixType().toIntVect();
+    const amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
     // For each Efield multifab, apply PEC boundary condition to ncomponents
     // If not split E-field, the PEC is applied to the regular Efield used in Maxwell's eq.
     // If split_pml_field is true, then PEC is applied to all the split field components of the tangential field.
-    int nComp_x = Efield[0]->nComp();
-    int nComp_y = Efield[1]->nComp();
-    int nComp_z = Efield[2]->nComp();
+    const int nComp_x = Efield[0]->nComp();
+    const int nComp_y = Efield[1]->nComp();
+    const int nComp_z = Efield[2]->nComp();
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -84,7 +84,7 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
 #if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
 #endif
-                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 PEC::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
                                            Ex, Ex_nodal, fbndry_lo, fbndry_hi);
@@ -97,7 +97,7 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
 #if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
 #endif
-                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 PEC::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
                                            Ey, Ey_nodal, fbndry_lo, fbndry_hi);
@@ -110,7 +110,7 @@ PEC::ApplyPECtoEfield (std::array<amrex::MultiFab*, 3> Efield, const int lev,
 #if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
 #endif
-                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 PEC::SetEfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
                                            Ez, Ez_nodal, fbndry_lo, fbndry_hi);
@@ -127,21 +127,21 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
     auto& warpx = WarpX::GetInstance();
     amrex::Box domain_box = warpx.Geom(lev).Domain();
     if (patch_type == PatchType::coarse) {
-        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
         domain_box.coarsen(ref_ratio);
     }
-    amrex::IntVect domain_lo = domain_box.smallEnd();
-    amrex::IntVect domain_hi = domain_box.bigEnd();
+    const amrex::IntVect domain_lo = domain_box.smallEnd();
+    const amrex::IntVect domain_hi = domain_box.bigEnd();
     amrex::GpuArray<int, 3> fbndry_lo;
     amrex::GpuArray<int, 3> fbndry_hi;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         fbndry_lo[idim] = WarpX::field_boundary_lo[idim];
         fbndry_hi[idim] = WarpX::field_boundary_hi[idim];
     }
-    amrex::IntVect Bx_nodal = Bfield[0]->ixType().toIntVect();
-    amrex::IntVect By_nodal = Bfield[1]->ixType().toIntVect();
-    amrex::IntVect Bz_nodal = Bfield[2]->ixType().toIntVect();
-    amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
+    const amrex::IntVect Bx_nodal = Bfield[0]->ixType().toIntVect();
+    const amrex::IntVect By_nodal = Bfield[1]->ixType().toIntVect();
+    const amrex::IntVect Bz_nodal = Bfield[2]->ixType().toIntVect();
+    const amrex::IntVect ng_fieldgather = warpx.get_ng_fieldgather();
     const int nComp_x = Bfield[0]->nComp();
     const int nComp_y = Bfield[1]->nComp();
     const int nComp_z = Bfield[2]->nComp();
@@ -175,7 +175,7 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
 #if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
 #endif
-                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 0;
                 PEC::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
                                      Bx, Bx_nodal, fbndry_lo, fbndry_hi);
@@ -188,7 +188,7 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
 #if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
 #endif
-                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 1;
                 PEC::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
                                      By, By_nodal, fbndry_lo, fbndry_hi);
@@ -201,7 +201,7 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
 #if (defined WARPX_DIM_1D_Z)
                 amrex::ignore_unused(j,k);
 #endif
-                amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+                const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
                 const int icomp = 2;
                 PEC::SetBfieldOnPEC(icomp, domain_lo, domain_hi, iv, n,
                                      Bz, Bz_nodal, fbndry_lo, fbndry_hi);
@@ -228,7 +228,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
 
     amrex::Box domain_box = warpx.Geom(lev).Domain();
     if (patch_type == PatchType::coarse) {
-        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
         domain_box.coarsen(ref_ratio);
     }
     domain_box.convert(rho->ixType());
@@ -300,7 +300,7 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index
-            amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+            const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             PEC::SetRhoOrJfieldFromPEC(
                 n, iv, rho_array, mirrorfac, psign, is_pec,
@@ -320,7 +320,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
 
     amrex::Box domain_box = warpx.Geom(lev).Domain();
     if (patch_type == PatchType::coarse) {
-        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
         domain_box.coarsen(ref_ratio);
     }
 
@@ -433,7 +433,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index
-            amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+            const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             PEC::SetRhoOrJfieldFromPEC(
                 n, iv, Jx_array, mirrorfac[0], psign[0], is_pec,
@@ -468,7 +468,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index
-            amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+            const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             PEC::SetRhoOrJfieldFromPEC(
                 n, iv, Jy_array, mirrorfac[1], psign[1], is_pec,
@@ -503,7 +503,7 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index
-            amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+            const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             PEC::SetRhoOrJfieldFromPEC(
                 n, iv, Jz_array, mirrorfac[2], psign[2], is_pec,

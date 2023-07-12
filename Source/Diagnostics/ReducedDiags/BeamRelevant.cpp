@@ -35,7 +35,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
 : ReducedDiags{rd_name}
 {
     // read beam name
-    ParmParse pp_rd_name(rd_name);
+    const ParmParse pp_rd_name(rd_name);
     pp_rd_name.get("species",m_beam_name);
 
     // resize data array
@@ -47,9 +47,10 @@ BeamRelevant::BeamRelevant (std::string rd_name)
     // 10,11,12: rms px,py,pz
     //       13: rms gamma
     // 14,15,16: emittance x,y,z
-    //    17,18: beta-function x,y
-    //       19: charge
-    m_data.resize(20, 0.0_rt);
+    //    17,18: Twiss-alpha x,y
+    //    19,20: beta-function x,y
+    //       21: charge
+    m_data.resize(22, 0.0_rt);
 #elif (defined WARPX_DIM_XZ)
     //     0, 1: mean x,z
     //  2, 3, 4: mean px,py,pz
@@ -58,9 +59,10 @@ BeamRelevant::BeamRelevant (std::string rd_name)
     //  8, 9,10: rms px,py,pz
     //       11: rms gamma
     //    12,13: emittance x,z
-    //       14: beta-function x
-    //       15: charge
-    m_data.resize(16, 0.0_rt);
+    //       14: Twiss-alpha x
+    //       15: beta-function x
+    //       16: charge
+    m_data.resize(17, 0.0_rt);
 #elif (defined WARPX_DIM_1D_Z)
     //       0 : mean z
     //   1,2,3 : mean px,py,pz
@@ -75,7 +77,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
 
     if (ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -102,6 +104,8 @@ BeamRelevant::BeamRelevant (std::string rd_name)
             ofs << "[" << c++ << "]emittance_x(m)";   ofs << m_sep;
             ofs << "[" << c++ << "]emittance_y(m)";   ofs << m_sep;
             ofs << "[" << c++ << "]emittance_z(m)";   ofs << m_sep;
+            ofs << "[" << c++ << "]alpha_x()";        ofs << m_sep;
+            ofs << "[" << c++ << "]alpha_y()";        ofs << m_sep;
             ofs << "[" << c++ << "]beta_x(m)";        ofs << m_sep;
             ofs << "[" << c++ << "]beta_y(m)";        ofs << m_sep;
             ofs << "[" << c++ << "]charge(C)";        ofs << std::endl;
@@ -124,6 +128,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
             ofs << "[" << c++ << "]gamma_rms()";      ofs << m_sep;
             ofs << "[" << c++ << "]emittance_x(m)";   ofs << m_sep;
             ofs << "[" << c++ << "]emittance_z(m)";   ofs << m_sep;
+            ofs << "[" << c++ << "]alpha_x()";        ofs << m_sep;
             ofs << "[" << c++ << "]beta_x(m)";        ofs << m_sep;
             ofs << "[" << c++ << "]charge(C)";        ofs << std::endl;
 #elif (defined WARPX_DIM_1D_Z)
@@ -247,14 +252,14 @@ void BeamRelevant::ComputeDiags (int step)
         amrex::ParallelAllReduce::Sum
         ( values_per_rank_1st.data(), values_per_rank_1st.size(), ParallelDescriptor::Communicator());
 
-        ParticleReal w_sum   = values_per_rank_1st.at(0);
-        ParticleReal x_mean  = values_per_rank_1st.at(1) /= w_sum;
-        ParticleReal y_mean  = values_per_rank_1st.at(2) /= w_sum;
-        ParticleReal z_mean  = values_per_rank_1st.at(3) /= w_sum;
-        ParticleReal ux_mean = values_per_rank_1st.at(4) /= w_sum;
-        ParticleReal uy_mean = values_per_rank_1st.at(5) /= w_sum;
-        ParticleReal uz_mean = values_per_rank_1st.at(6) /= w_sum;
-        ParticleReal gm_mean = values_per_rank_1st.at(7) /= w_sum;
+        const ParticleReal w_sum   = values_per_rank_1st.at(0);
+        const ParticleReal x_mean  = values_per_rank_1st.at(1) /= w_sum;
+        const ParticleReal y_mean  = values_per_rank_1st.at(2) /= w_sum;
+        const ParticleReal z_mean  = values_per_rank_1st.at(3) /= w_sum;
+        const ParticleReal ux_mean = values_per_rank_1st.at(4) /= w_sum;
+        const ParticleReal uy_mean = values_per_rank_1st.at(5) /= w_sum;
+        const ParticleReal uz_mean = values_per_rank_1st.at(6) /= w_sum;
+        const ParticleReal gm_mean = values_per_rank_1st.at(7) /= w_sum;
 
         if (w_sum < std::numeric_limits<Real>::min() )
         {
@@ -342,17 +347,17 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum
         ( values_per_rank_2nd.data(), values_per_rank_2nd.size(), ParallelDescriptor::IOProcessorNumber());
 
-        ParticleReal x_ms   = values_per_rank_2nd.at(0) /= w_sum;
-        ParticleReal y_ms   = values_per_rank_2nd.at(1) /= w_sum;
-        ParticleReal z_ms   = values_per_rank_2nd.at(2) /= w_sum;
-        ParticleReal ux_ms  = values_per_rank_2nd.at(3) /= w_sum;
-        ParticleReal uy_ms  = values_per_rank_2nd.at(4) /= w_sum;
-        ParticleReal uz_ms  = values_per_rank_2nd.at(5) /= w_sum;
-        ParticleReal gm_ms  = values_per_rank_2nd.at(6) /= w_sum;
-        ParticleReal xux    = values_per_rank_2nd.at(7) /= w_sum;
-        ParticleReal yuy    = values_per_rank_2nd.at(8) /= w_sum;
-        ParticleReal zuz    = values_per_rank_2nd.at(9) /= w_sum;
-        ParticleReal charge = values_per_rank_2nd.at(10);
+        const ParticleReal x_ms   = values_per_rank_2nd.at(0) /= w_sum;
+        const ParticleReal y_ms   = values_per_rank_2nd.at(1) /= w_sum;
+        const ParticleReal z_ms   = values_per_rank_2nd.at(2) /= w_sum;
+        const ParticleReal ux_ms  = values_per_rank_2nd.at(3) /= w_sum;
+        const ParticleReal uy_ms  = values_per_rank_2nd.at(4) /= w_sum;
+        const ParticleReal uz_ms  = values_per_rank_2nd.at(5) /= w_sum;
+        const ParticleReal gm_ms  = values_per_rank_2nd.at(6) /= w_sum;
+        const ParticleReal xux    = values_per_rank_2nd.at(7) /= w_sum;
+        const ParticleReal yuy    = values_per_rank_2nd.at(8) /= w_sum;
+        const ParticleReal zuz    = values_per_rank_2nd.at(9) /= w_sum;
+        const ParticleReal charge = values_per_rank_2nd.at(10);
 
         // save data
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
@@ -373,9 +378,11 @@ void BeamRelevant::ComputeDiags (int step)
         m_data[14] = std::sqrt(x_ms*ux_ms-xux*xux) / PhysConst::c;
         m_data[15] = std::sqrt(y_ms*uy_ms-yuy*yuy) / PhysConst::c;
         m_data[16] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
-        m_data[17] = (PhysConst::c * x_ms) / std::sqrt(x_ms*ux_ms-xux*xux);
-        m_data[18] = (PhysConst::c * y_ms) / std::sqrt(y_ms*uy_ms-yuy*yuy);
-        m_data[19] = charge;
+        m_data[17] = - (PhysConst::c * xux) / std::sqrt(x_ms*ux_ms-xux*xux);
+        m_data[18] = - (PhysConst::c * yuy) / std::sqrt(y_ms*uy_ms-yuy*yuy);
+        m_data[19] = (PhysConst::c * x_ms) / std::sqrt(x_ms*ux_ms-xux*xux);
+        m_data[20] = (PhysConst::c * y_ms) / std::sqrt(y_ms*uy_ms-yuy*yuy);
+        m_data[21] = charge;
 #elif (defined WARPX_DIM_XZ)
         m_data[0]  = x_mean;
         m_data[1]  = z_mean;
@@ -391,8 +398,9 @@ void BeamRelevant::ComputeDiags (int step)
         m_data[11] = std::sqrt(gm_ms);
         m_data[12] = std::sqrt(x_ms*ux_ms-xux*xux) / PhysConst::c;
         m_data[13] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
-        m_data[14] = (PhysConst::c * x_ms) / std::sqrt(x_ms*ux_ms-xux*xux);
-        m_data[15] = charge;
+        m_data[14] = - (PhysConst::c * xux) / std::sqrt(x_ms*ux_ms-xux*xux);
+        m_data[15] = (PhysConst::c * x_ms) / std::sqrt(x_ms*ux_ms-xux*xux);
+        m_data[16] = charge;
         amrex::ignore_unused(y_mean, y_ms, yuy);
 #elif (defined WARPX_DIM_1D_Z)
         m_data[0]  = z_mean;
@@ -403,8 +411,8 @@ void BeamRelevant::ComputeDiags (int step)
         m_data[5]  = std::sqrt(z_ms);
         m_data[6]  = std::sqrt(ux_ms) * m;
         m_data[7]  = std::sqrt(uy_ms) * m;
-        m_data[8] = std::sqrt(uz_ms) * m;
-        m_data[9] = std::sqrt(gm_ms);
+        m_data[8]  = std::sqrt(uz_ms) * m;
+        m_data[9]  = std::sqrt(gm_ms);
         m_data[10] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
         m_data[11] = charge;
         amrex::ignore_unused(x_mean, x_ms, xux, y_mean, y_ms, yuy);

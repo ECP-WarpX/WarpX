@@ -145,6 +145,7 @@ class FiniteDifferenceSolver
           * \param[in] edge_lengths length of edges along embedded boundaries
           * \param[in] lev  level number for the calculation
           * \param[in] hybrid_pic_model instance of the hybrid-PIC model
+          * \param[in] include_resistivity_term boolean flag for whether to include resistivity
           */
         void HybridPICSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
@@ -154,7 +155,7 @@ class FiniteDifferenceSolver
                       std::unique_ptr<amrex::MultiFab> const& Pefield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
                       int lev, HybridPICModel const* hybrid_pic_model,
-                      DtType a_dt_type );
+                      const bool include_resistivity_term );
 
         /**
           * \brief Calculation of total current using Ampere's law (without
@@ -237,7 +238,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, HybridPICModel const* hybrid_pic_model,
-            DtType a_dt_type );
+            const bool include_resistivity_term );
 
         template<typename T_Algo>
         void CalculateCurrentAmpereCylindrical (
@@ -341,7 +342,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, HybridPICModel const* hybrid_pic_model,
-            DtType a_dt_type );
+            const bool include_resistivity_term );
 
         template<typename T_Algo>
         void CalculateCurrentAmpereCartesian (

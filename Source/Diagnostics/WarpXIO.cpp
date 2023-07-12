@@ -70,7 +70,7 @@ WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, in
 
     Vector<char> fileCharPtr;
     ParallelDescriptor::ReadAndBcastFile(DMFileName, fileCharPtr);
-    std::string fileCharPtrString(fileCharPtr.dataPtr());
+    const std::string fileCharPtrString(fileCharPtr.dataPtr());
     std::istringstream DMFile(fileCharPtrString, std::istringstream::in);
     if ( ! DMFile.good()) amrex::FileOpenFailed(DMFileName);
     DMFile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
@@ -100,13 +100,13 @@ WarpX::InitFromCheckpoint ()
 
     // Header
     {
-        std::string File(restart_chkfile + "/WarpXHeader");
+        const std::string File(restart_chkfile + "/WarpXHeader");
 
-        VisMF::IO_Buffer io_buffer(VisMF::GetIOBufferSize());
+        const VisMF::IO_Buffer io_buffer(VisMF::GetIOBufferSize());
 
         Vector<char> fileCharPtr;
         ParallelDescriptor::ReadAndBcastFile(File, fileCharPtr);
-        std::string fileCharPtrString(fileCharPtr.dataPtr());
+        const std::string fileCharPtrString(fileCharPtr.dataPtr());
         std::istringstream is(fileCharPtrString, std::istringstream::in);
         is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
@@ -204,15 +204,19 @@ WarpX::InitFromCheckpoint ()
             BoxArray ba;
             ba.readFrom(is);
             GotoNextLine(is);
-            DistributionMapping dm = GetRestartDMap(restart_chkfile, ba, lev);
+            const DistributionMapping dm = GetRestartDMap(restart_chkfile, ba, lev);
             SetBoxArray(lev, ba);
             SetDistributionMap(lev, dm);
             AllocLevelData(lev, ba, dm);
         }
 
         mypc->ReadHeader(is);
-        is >> current_injection_position;
-        GotoNextLine(is);
+        const int n_species = mypc->nSpecies();
+        for (int i=0; i<n_species; i++)
+        {
+             is >> mypc->GetParticleContainer(i).m_current_injection_position;
+             GotoNextLine(is);
+        }
 
         int do_moving_window_before_restart;
         is >> do_moving_window_before_restart;

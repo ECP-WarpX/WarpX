@@ -18,7 +18,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     auto& warpx = WarpX::GetInstance();
     auto& mypc = warpx.GetPartContainer();
 
-    int lev = a_pti.GetLevel();
+    const int lev = a_pti.GetLevel();
 
     AcceleratorLattice const & accelerator_lattice = warpx.get_accelerator_lattice(lev);
     if (accelerator_lattice.m_lattice_defined) {

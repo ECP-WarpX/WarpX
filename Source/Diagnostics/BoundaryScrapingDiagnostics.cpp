@@ -51,7 +51,7 @@ BoundaryScrapingDiagnostics::ReadParameters ()
 #endif
 
     // Check that the output format is openPMD
-    std::string error_string = std::string("You need to set `")
+    const std::string error_string = std::string("You need to set `")
         .append(m_diag_name)
         .append(".format=openpmd` for the BoundaryScrapingDiagnostic.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -59,7 +59,7 @@ BoundaryScrapingDiagnostics::ReadParameters ()
         error_string);
 
     // Check for the optional intervals parameter
-    amrex::ParmParse pp_diag_name(m_diag_name);
+    const amrex::ParmParse pp_diag_name(m_diag_name);
     std::vector<std::string> intervals_string_vec = {"0"};
     pp_diag_name.queryarr("intervals", intervals_string_vec);
     m_intervals = utils::parser::IntervalsParser(intervals_string_vec);
@@ -154,7 +154,7 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
     const amrex::Geometry& geom = warpx.Geom(0); // For compatibility with `WriteToFile` ; not used
 
     // The data for each boundary is written out to a separate directory with the boundary name
-    std::string file_prefix = m_file_prefix + "/particles_at_" + particle_buffer.boundaryName(i_buffer);
+    const std::string file_prefix = m_file_prefix + "/particles_at_" + particle_buffer.boundaryName(i_buffer);
 
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
