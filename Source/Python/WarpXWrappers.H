@@ -97,9 +97,6 @@ extern "C" {
     int warpx_getParticleCompIndex(
         const char* char_species_name, const char* char_comp_name);
 
-    void warpx_addRealComp(
-        const char* char_species_name, const char* char_comp_name, bool comm);
-
     amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local);
 
     int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary, bool local);

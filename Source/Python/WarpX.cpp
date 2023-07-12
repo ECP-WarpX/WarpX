@@ -4,6 +4,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "pyWarpX.H"
+#include "Particles/MultiParticleContainer.H"
 
 #include <WarpX.H>
 
@@ -64,6 +65,9 @@ void init_WarpX (py::module& m)
             py::arg("multifab_name"),
             py::return_value_policy::reference_internal,
             "Return MultiFabs by name, e.g., 'Efield_aux[x][l=0]', 'Efield_cp[x][l=0]', ..."
+        )
+        .def("multi_particle_container", &WarpX::GetPartContainer,
+            py::return_value_policy::reference_internal
         )
     ;
 

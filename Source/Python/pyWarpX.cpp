@@ -30,8 +30,8 @@ namespace py = pybind11;
 
 
 // forward declarations of exposed classes
-void init_WarpX(py::module&);
 void init_MultiParticleContainer (py::module& m);
+void init_WarpX(py::module&);
 
 PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     // make sure AMReX types are known
