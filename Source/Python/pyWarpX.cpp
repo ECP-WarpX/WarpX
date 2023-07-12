@@ -101,7 +101,7 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
 
             const bool build_parm_parse = (cargs.size() > 1);
             // TODO: handle version with MPI
-            return warpx_amrex_init(argc, tmp, build_parm_parse);
+            return warpx::initialization::amrex_init(argc, tmp, build_parm_parse);
         }, py::return_value_policy::reference,
         "Initialize AMReX library");
     m.def("amrex_finalize", [] () {amrex::Finalize();},
