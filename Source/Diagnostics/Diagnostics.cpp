@@ -189,7 +189,7 @@ Diagnostics::BaseReadParameters ()
     // Generate names of averaged particle fields and append to m_varnames
     for (const auto& fname : m_pfield_varnames) {
         for (const auto& sname : m_pfield_species) {
-            m_varnames.push_back(fname.append('_').append(sname));
+            m_varnames.push_back(fname.append("_").append(sname));
         }
     }
 
