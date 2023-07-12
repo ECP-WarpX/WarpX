@@ -460,18 +460,6 @@ void FieldProbe::ComputeDiags (int step)
             }
             if( ProbeInDomain() )
             {
-                const auto cell_size = gm.CellSizeArray();
-                const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
-#if defined(WARPX_DIM_1D_Z)
-                const int j_probe = 0;
-                const int k_probe = 0;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
-                const int k_probe = 0;
-#elif defined(WARPX_DIM_3D)
-                const int j_probe = static_cast<int>(amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]));
-                const int k_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]));
-#endif
                 const auto &arrEx = Ex[pti].array();
                 const auto &arrEy = Ey[pti].array();
                 const auto &arrEz = Ez[pti].array();
