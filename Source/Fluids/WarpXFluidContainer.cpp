@@ -237,7 +237,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 auto Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
                 auto Uz_sq = Uz*Uz; auto Uy_sq = Uy*Uy; auto Ux_sq = Ux*Ux;
                 auto Uz_cubed = Uz_sq*Uz; auto Uy_cubed = Uy_sq*Uy; auto Ux_cubed = Ux_sq*Ux;
-                auto c_sq = clight*clight; 
+                auto c_sq = clight*clight;
                 auto gamma = sqrt(1.0 + (Ux_sq + Uy_sq + Uz_sq)/(c_sq) );
                 auto gamma_cubed = gamma*gamma*gamma;
                 auto a = c_sq*gamma_cubed;
