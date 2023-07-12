@@ -136,8 +136,8 @@ Diagnostics::BaseReadParameters ()
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             parser_str != "",
-            "Input error: cannot find parser string for " + var + " in file. "
-            + m_diag_name + ".particle_fields." + var + "(x,y,z,ux,uy,uz) is required"
+            std::string("Input error: cannot find parser string for ").append(var).append(" in file. ").append(
+                m_diag_name).append(".particle_fields.").append(var).append("(x,y,z,ux,uy,uz) is required");
         );
 
         m_pfield_strings.push_back(parser_str);
@@ -189,7 +189,7 @@ Diagnostics::BaseReadParameters ()
     // Generate names of averaged particle fields and append to m_varnames
     for (const auto& fname : m_pfield_varnames) {
         for (const auto& sname : m_pfield_species) {
-            m_varnames.push_back(fname + '_' + sname);
+            m_varnames.push_back(fname.append('_').append(sname));
         }
     }
 
