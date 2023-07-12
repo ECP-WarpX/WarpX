@@ -45,12 +45,7 @@ public:
     void Evolve (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
         const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-        amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz,
-        amrex::MultiFab* cjx, amrex::MultiFab* cjy, amrex::MultiFab* cjz,
-        amrex::MultiFab* rho, amrex::MultiFab* crho,
-        const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
-        const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-        amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false);
+        amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz, bool skip_deposition=false);
 
     /**
      * AdvectivePush_Muscl takes a single timestep (dt) of the cold relativistic fluid equations

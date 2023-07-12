@@ -32,15 +32,6 @@ import checksumAPI
 # this will be the name of the plot file
 fn = sys.argv[1]
 
-# Parse test name and check if current correction (psatd.current_correction=1) is applied
-current_correction = True if re.search( 'current_correction', fn ) else False
-
-# Parse test name and check if Vay current deposition (algo.current_deposition=vay) is used
-vay_deposition = True if re.search( 'Vay_deposition', fn ) else False
-
-# Parse test name and check if div(E)/div(B) cleaning (warpx.do_div<e,b>_cleaning=1) is used
-div_cleaning = True if re.search('div_cleaning', fn) else False
-
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
 epsilon = 0.01
 n = 4.e24
@@ -181,47 +172,6 @@ tolerance_rel = 5e-2
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
-
-# Check relative L-infinity spatial norm of rho/epsilon_0 - div(E)
-# with current correction (and periodic single box option) or with Vay current deposition
-if current_correction:
-    tolerance = 1e-9
-elif vay_deposition:
-    tolerance = 1e-3
-if current_correction or vay_deposition:
-    rho  = data[('boxlib','rho')].to_ndarray()
-    divE = data[('boxlib','divE')].to_ndarray()
-    error_rel = np.amax( np.abs( divE - rho/epsilon_0 ) ) / np.amax( np.abs( rho/epsilon_0 ) )
-    print("Check charge conservation:")
-    print("error_rel = {}".format(error_rel))
-    print("tolerance = {}".format(tolerance))
-    assert( error_rel < tolerance )
-
-if div_cleaning:
-    ds_old = yt.load('Langmuir_multi_psatd_div_cleaning_plt000038')
-    ds_mid = yt.load('Langmuir_multi_psatd_div_cleaning_plt000039')
-    ds_new = yt.load(fn) # this is the last plotfile
-
-    ad_old = ds_old.covering_grid(level = 0, left_edge = ds_old.domain_left_edge, dims = ds_old.domain_dimensions)
-    ad_mid = ds_mid.covering_grid(level = 0, left_edge = ds_mid.domain_left_edge, dims = ds_mid.domain_dimensions)
-    ad_new = ds_new.covering_grid(level = 0, left_edge = ds_new.domain_left_edge, dims = ds_new.domain_dimensions)
-
-    rho   = ad_mid['rho'].v.squeeze()
-    divE  = ad_mid['divE'].v.squeeze()
-    F_old = ad_old['F'].v.squeeze()
-    F_new = ad_new['F'].v.squeeze()
-
-    # Check max norm of error on dF/dt = div(E) - rho/epsilon_0
-    # (the time interval between the old and new data is 2*dt)
-    dt = 1.203645751e-15
-    x = F_new - F_old
-    y = (divE - rho/epsilon_0) * 2 * dt
-    error_rel = np.amax(np.abs(x - y)) / np.amax(np.abs(y))
-    tolerance = 1e-2
-    print("Check div(E) cleaning:")
-    print("error_rel = {}".format(error_rel))
-    print("tolerance = {}".format(tolerance))
-    assert(error_rel < tolerance)
 
 test_name = os.path.split(os.getcwd())[1]
 

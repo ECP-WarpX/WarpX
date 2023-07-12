@@ -78,15 +78,9 @@ void
 MultiFluidContainer::Evolve (int lev,
                             const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                             const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                            MultiFab& jx, MultiFab& jy, MultiFab& jz,
-                            MultiFab* cjx,  MultiFab* cjy, MultiFab* cjz,
-                            MultiFab* rho, MultiFab* crho,
-                            const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
-                            const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                            Real t, Real dt, DtType a_dt_type, bool skip_deposition)
+                            MultiFab& jx, MultiFab& jy, MultiFab& jz, bool skip_deposition)
 {
     for (auto& pc : allcontainers) {
-        pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
-                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition);
+        pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, skip_deposition);
     }
 }
