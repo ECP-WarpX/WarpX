@@ -66,6 +66,9 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
     // read separator
     pp_rd_name.query("separator", m_sep);
+
+    // precision of data in the output file
+    pp_rd_name.query("precision", m_precision);
 }
 // end constructor
 
@@ -107,7 +110,7 @@ void ReducedDiags::WriteToFile (int step) const
     ofs << m_sep;
 
     // set precision
-    ofs << std::fixed << std::setprecision(14) << std::scientific;
+    ofs << std::fixed << std::setprecision(m_precision) << std::scientific;
 
     // write time
     ofs << WarpX::GetInstance().gett_new(0);
