@@ -20,5 +20,14 @@ void init_WarpXParticleContainer (py::module& m)
             [](WarpXParticleContainer& pc, const std::string& name, bool const comm) { pc.AddRealComp(name, comm); },
             py::arg("name"), py::arg("comm")
         )
-    ;
+        .def("add_n_particles",
+            &WarpXParticleContainer::AddNParticles,
+            py::arg("lev"), py::arg("n"),
+            py::arg("x"), py::arg("y"), py::arg("z"),
+            py::arg("ux"), py::arg("uy"), py::arg("uz"),
+            py::arg("nattr_real"), py::arg("attr_real"),
+            py::arg("nattr_int"), py::arg("attr_int"),
+            py::arg("uniqueparticles"), py::arg("id")
+        )
+        ;
 }

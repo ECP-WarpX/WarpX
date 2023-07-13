@@ -54,20 +54,6 @@ extern "C" {
 
     void warpx_evolve (int numsteps);  // -1 means the inputs parameter will be used.
 
-    void warpx_addNParticles(const char* char_species_name,
-                             int lenx,
-                             amrex::ParticleReal const * x,
-                             amrex::ParticleReal const * y,
-                             amrex::ParticleReal const * z,
-                             amrex::ParticleReal const * vx,
-                             amrex::ParticleReal const * vy,
-                             amrex::ParticleReal const * vz,
-                             const int nattr_real,
-                             amrex::ParticleReal const * attr_real,
-                             const int nattr_int,
-                             int const * attr_int,
-                             int uniqueparticles);
-
     void warpx_ConvertLabParamsToBoost();
 
     void warpx_ReadBCParams();

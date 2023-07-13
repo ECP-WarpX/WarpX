@@ -130,22 +130,6 @@
         warpx.Evolve(numsteps);
     }
 
-    void warpx_addNParticles(
-        const char* char_species_name, int lenx, amrex::ParticleReal const * x,
-        amrex::ParticleReal const * y, amrex::ParticleReal const * z,
-        amrex::ParticleReal const * vx, amrex::ParticleReal const * vy,
-        amrex::ParticleReal const * vz, const int nattr_real,
-        amrex::ParticleReal const * attr_real, const int nattr_int,
-        int const * attr_int, int uniqueparticles)
-    {
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
-        const std::string species_name(char_species_name);
-        auto & myspc = mypc.GetParticleContainerFromName(species_name);
-        const int lev = 0;
-        myspc.AddNParticles(lev, lenx, x, y, z, vx, vy, vz, nattr_real, attr_real,
-                            nattr_int, attr_int, uniqueparticles);
-    }
-
     void warpx_ConvertLabParamsToBoost()
     {
       ConvertLabParamsToBoost();

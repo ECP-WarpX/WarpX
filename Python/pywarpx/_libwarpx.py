@@ -467,10 +467,11 @@ class LibWarpX():
         uy = uy.astype(self._numpy_particlereal_dtype, copy=False)
         uz = uz.astype(self._numpy_particlereal_dtype, copy=False)
 
-        self.libwarpx_so.warpx_addNParticles(
-            ctypes.c_char_p(species_name.encode('utf-8')), x.size,
-            x, y, z, ux, uy, uz, nattr, attr, nattr_int, attr_int, unique_particles
-        )
+        warpx = self.libwarpx_so.get_instance()
+        mpc = warpx.multi_particle_container()
+        pc = mpc.get_particle_container_from_name(species_name)
+        pc.add_n_particles(0, x.size, x, y, z, ux, uy, uz,
+            nattr, attr, nattr_int, attr_int, unique_particles)
 
     def get_particle_count(self, species_name, local=False):
         '''
