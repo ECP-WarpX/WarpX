@@ -230,7 +230,7 @@ void ColliderRelevant::ComputeDiags (int step)
         Real wtot = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.rdata(PIdx::w); });
-        ParallelDescriptor::ReduceRealSum(wtot);
+        ParallelDescriptor::ReduceRealSum(wtot, ParallelDescriptor::IOProcessorNumber());
 
 #if defined(WARPX_DIM_3D)
         // xy_ave
@@ -274,6 +274,7 @@ void ColliderRelevant::ComputeDiags (int step)
         Real chimin_f = 0.0_rt;
         Real chimax_f = 0.0_rt;
         Real chiave_f = 0.0_rt;
+
         if (myspc.DoQED())
         {
             // declare chi arrays
@@ -282,7 +283,7 @@ void ColliderRelevant::ComputeDiags (int step)
             chimax.resize(level_number+1,0.0_rt);
             chiave.resize(level_number+1,0.0_rt);
 
-            // define variables in preparation for field gathering
+            // define variables in preparation for field gatheeduce_data.value()ring
             const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
             const int nox = WarpX::nox;
             const bool galerkin_interpolation = WarpX::galerkin_interpolation;
@@ -339,8 +340,6 @@ void ColliderRelevant::ComputeDiags (int step)
                     reduce_op.eval(pti.numParticles(), reduce_data,
                     [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                     {
-                        //const Real w  = p.rdata(PIdx::w);
-
                         // get external fields
                         ParticleReal xp, yp, zp;
                         GetPosition(i, xp, yp, zp);
@@ -358,7 +357,7 @@ void ColliderRelevant::ComputeDiags (int step)
                             n_rz_azimuthal_modes, nox, galerkin_interpolation);
                         // compute chi
                         Real chi = 0.0_rt;
-                        Real chi_dot_w = 0.0_rt;
+                        
                         if ( is_photon ) {
                             chi = QedUtils::chi_photon(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
@@ -366,27 +365,39 @@ void ColliderRelevant::ComputeDiags (int step)
                             chi = QedUtils::chi_ele_pos(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
                         }
-                        chi_dot_w = chi*w[i];
-                        return {chi, chi, chi_dot_w};
+                        amrex::AllPrint() << "CHI DOT W " << chi << " " << w[i] << " " << chi*w[i] <<  "   \n";
+                        return {chi, chi, chi*w[i]};
                     });
-                    chimin[lev] = get<0>(reduce_data.value());
-                    chimax[lev] = get<1>(reduce_data.value());
-                    chiave[lev] = get<2>(reduce_data.value());
-                    //amrex::AllPrint() << "CHIAVE_F " <<  chiave[lev]<< "   \n";
+                    
+                    auto hv = reduce_data.value();
+
+                    chimin[lev] = get<0>(hv);
+                    chimax[lev] = get<1>(hv);
+                    chiave[lev] = get<2>(hv);
+
+                    amrex::AllPrint() << "CHIMININSIDE " << chimin[0] <<  "   \n";
+                    amrex::AllPrint() << "CHIMAXINSIDE " << chimax[0] <<  "   \n";
+                    amrex::AllPrint() << "CHIAVEINSIDE " << chiave[0] <<  "   \n";
+
                 }
                 chimin_f = *std::min_element(chimin.begin(), chimin.end());
                 chimax_f = *std::max_element(chimax.begin(), chimax.end());
-                chiave_f = std::accumulate(chiave.begin(), chiave.end(), 0.0);
-                //amrex::AllPrint() << "CHIAVE_F " << chiave_f<< " " << chiave[0] <<  "   \n";
-
+                chiave_f = chiave[0]; // FIXME mesh refinement 
+                //chiave_f = std::accumulate(chiave.begin(), chiave.end(), 0.0);
+                //amrex::AllPrint() << "ACCUMULATE " << chiave_f  << " -- ZERO" << chiave[0] << " \n";
             }
             ParallelDescriptor::ReduceRealMin(chimin_f);
             ParallelDescriptor::ReduceRealMax(chimax_f);
-            ParallelDescriptor::ReduceRealSum(chiave_f);
+            ParallelDescriptor::ReduceRealSum(chiave_f, ParallelDescriptor::IOProcessorNumber());
 
             //amrex::AllPrint() << "IDX " << get_idx("chimin_"+species_names[i_s])<<  " \n";
             //amrex::AllPrint() << "mdata size " << m_data.size()  <<  " \n";
             //amrex::AllPrint() << "mdata1 " << m_data[1]  <<  " \n";
+
+            amrex::AllPrint() << "CHIMIN_F " << chimin_f <<  "   \n";
+            amrex::AllPrint() << "CHIAVE_F " << chiave_f << "    " << chiave_f/wtot << "   \n";
+            amrex::AllPrint() << "CHIMAX_F " << chimax_f <<  "   \n";
+            amrex::AllPrint() << "WTOT " << wtot <<  "   \n";
 
             m_data[get_idx("chimin_"+species_names[i_s])] = chimin_f;
             m_data[get_idx("chiave_"+species_names[i_s])] = chiave_f/wtot;
