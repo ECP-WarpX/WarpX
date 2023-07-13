@@ -43,9 +43,6 @@ algo.current_deposition = esirkepov
 algo.field_gathering = energy-conserving
 warpx.use_filter = 0
 
-# Order of particle shape factors
-algo.particle_shape = 1
-
 # CFL
 warpx.cfl = 1.0
 
