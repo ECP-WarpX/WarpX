@@ -191,7 +191,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::MultiFab tmp_Q_plus_y( amrex::convert(ba, IntVect(1,0,1)), N[lev]->DistributionMap(), 4, 1);
         amrex::MultiFab tmp_Q_minus_z( amrex::convert(ba, IntVect(1,1,0)), N[lev]->DistributionMap(), 4, 1);
         amrex::MultiFab tmp_Q_plus_z( amrex::convert(ba, IntVect(1,1,0)), N[lev]->DistributionMap(), 4, 1);
-    #elif defined(WARPX_DIM_XZ) 
+    #elif defined(WARPX_DIM_XZ)
         amrex::MultiFab tmp_Q_minus_x( amrex::convert(ba, IntVect(0,1)), N[lev]->DistributionMap(), 4, 1);
         amrex::MultiFab tmp_Q_plus_x( amrex::convert(ba, IntVect(0,1)), N[lev]->DistributionMap(), 4, 1);
         amrex::MultiFab tmp_Q_minus_z( amrex::convert(ba, IntVect(1,0)), N[lev]->DistributionMap(), 4, 1);
@@ -238,7 +238,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             amrex::Array4<amrex::Real> Q_plus_y = tmp_Q_plus_y.array(mfi);
             amrex::Array4<amrex::Real> Q_minus_z = tmp_Q_minus_z.array(mfi);
             amrex::Array4<amrex::Real> Q_plus_z = tmp_Q_plus_z.array(mfi);
-        #elif defined(WARPX_DIM_XZ) 
+        #elif defined(WARPX_DIM_XZ)
             amrex::Box const box_x = amrex::convert( box, tmp_Q_minus_x.ixType() );
             amrex::Box const box_z = amrex::convert( box, tmp_Q_minus_z.ixType() );
             amrex::Array4<amrex::Real> Q_minus_x = tmp_Q_minus_x.array(mfi);
@@ -419,7 +419,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 }
 
 
-                #elif defined(WARPX_DIM_XZ) 
+                #elif defined(WARPX_DIM_XZ)
                                // Compute the Flux-Jacobian Elements in x
                 auto A00x = (Ux*(Uz_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
                 auto A01x = ((c_sq)+(Uz_sq)+(Uy_sq))/a;
@@ -515,7 +515,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     Q_plus_z(i,j-1,k,2) = Q_tilde2 - dQ2z/2.0;
                     Q_plus_z(i,j-1,k,3) = Q_tilde3 - dQ3z/2.0;
                 }
-                
+
 
                 #elif defined(WARPX_DIM_RZ)
                 amrex::Real r = problo[0] + i * dx[0];
@@ -550,7 +550,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             amrex::Array4<amrex::Real> const &Q_plus_y = tmp_Q_plus_y.array(mfi);
             amrex::Array4<amrex::Real> const &Q_minus_z = tmp_Q_minus_z.array(mfi);
             amrex::Array4<amrex::Real> const &Q_plus_z = tmp_Q_plus_z.array(mfi);
-        #elif defined(WARPX_DIM_XZ) 
+        #elif defined(WARPX_DIM_XZ)
             amrex::Array4<amrex::Real> const &Q_minus_x = tmp_Q_minus_x.array(mfi);
             amrex::Array4<amrex::Real> const &Q_plus_x = tmp_Q_plus_x.array(mfi);
             amrex::Array4<amrex::Real> const &Q_minus_z = tmp_Q_minus_z.array(mfi);
@@ -614,7 +614,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                                                 - cz*(F3_plusz - F3_minusz);
 
                 #elif defined(WARPX_DIM_XZ)
-                
+
                  // compute the fluxes:
                 // (note that _plus is shifted due to grid location)
                 auto F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx(i-1,j,k),Vx(i,j,k));
