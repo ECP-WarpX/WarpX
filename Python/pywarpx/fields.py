@@ -354,7 +354,7 @@ class _MultiFABWrapper(object):
             raise Exception('Too many indices given')
 
         # Expand the indices to length 3
-        ii = self._get_indices(index, None)
+        ii = self._get_indices(index, slice(None))
         ic = index[-1]
 
         ixmin, iymin, izmin = self._get_min_indices()
