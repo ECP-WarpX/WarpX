@@ -310,12 +310,7 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
         #species.zmax
 
         # --- Note that WarpX takes gamma*beta as input
-        if np.any(np.not_equal(self.velocity_divergence, 0.)):
-            species.momentum_distribution_type = "radial_expansion"
-            species.u_over_r = self.velocity_divergence[0]/constants.c
-            #species.u_over_y = self.velocity_divergence[1]/constants.c
-            #species.u_over_z = self.velocity_divergence[2]/constants.c
-        elif np.any(np.not_equal(self.rms_velocity, 0.)):
+        if np.any(np.not_equal(self.rms_velocity, 0.)):
             species.momentum_distribution_type = "gaussian"
             species.ux_m = self.centroid_velocity[0]/constants.c
             species.uy_m = self.centroid_velocity[1]/constants.c
