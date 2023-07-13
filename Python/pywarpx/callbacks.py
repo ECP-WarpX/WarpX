@@ -332,7 +332,7 @@ def installbeforeInitEsolve(f):
 
 # ----------------------------------------------------------------------------
 def callfromafterInitEsolve(f):
-    installafterInitEsolve('afterInitEsolve', f)
+    installcallback('afterInitEsolve', f)
     return f
 def installafterInitEsolve(f):
     installcallback('afterInitEsolve', f)
@@ -440,7 +440,7 @@ def onbreaksignal(f):
     installcallback('onbreaksignal', f)
     return f
 def installonbreaksignal(f):
-    _onbreaksignal.installfuncinlist(f)
+    installcallback('onbreaksignal', f)
 
 # ----------------------------------------------------------------------------
 def callfromparticleinjection(f):

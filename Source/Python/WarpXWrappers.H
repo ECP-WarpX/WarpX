@@ -140,9 +140,7 @@ extern "C" {
   void warpx_UpdateAuxilaryData ();
   void warpx_PushParticlesandDepose (amrex::Real cur_time);
 
-  int warpx_getistep (int lev);
   void warpx_setistep (int lev, int ii);
-  amrex::Real warpx_gett_new (int lev);
   void warpx_sett_new (int lev, amrex::Real time);
   amrex::Real warpx_getdt (int lev);
 

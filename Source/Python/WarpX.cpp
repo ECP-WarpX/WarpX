@@ -69,6 +69,20 @@ void init_WarpX (py::module& m)
         .def("multi_particle_container", &WarpX::GetPartContainer,
             py::return_value_policy::reference_internal
         )
+
+        // Expose functions to get the current simulation step and time
+        .def("getistep",
+            [](WarpX const & wx, int lev){
+                return wx.getistep(lev);
+            },
+            py::arg("lev")
+        )
+        .def("gett_new",
+            [](WarpX const & wx, int lev){
+                return wx.gett_new(lev);
+            },
+            py::arg("lev")
+        )
     ;
 
     py::class_<warpx::Config>(m, "Config")

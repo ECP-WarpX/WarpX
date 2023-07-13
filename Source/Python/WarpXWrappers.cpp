@@ -447,17 +447,9 @@
         warpx.PushParticlesandDepose(cur_time);
     }
 
-    int warpx_getistep (int lev) {
-        const WarpX& warpx = WarpX::GetInstance();
-        return warpx.getistep(lev);
-    }
     void warpx_setistep (int lev, int ii) {
         WarpX& warpx = WarpX::GetInstance();
         warpx.setistep(lev, ii);
-    }
-    amrex::Real warpx_gett_new (int lev) {
-        const WarpX& warpx = WarpX::GetInstance();
-        return warpx.gett_new(lev);
     }
     void warpx_sett_new (int lev, amrex::Real time) {
         WarpX& warpx = WarpX::GetInstance();
