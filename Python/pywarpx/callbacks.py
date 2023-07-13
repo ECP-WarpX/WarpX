@@ -325,117 +325,126 @@ def printcallbacktimers(tmin=1.,lminmax=False,ff=None):
 
 # ----------------------------------------------------------------------------
 def callfrombeforeInitEsolve(f):
-    installbeforeInitEsolve(f)
+    installcallback('beforeInitEsolve', f)
     return f
 def installbeforeInitEsolve(f):
-    "Adds a function to the list of functions called before the initial E solve"
-    _beforeInitEsolve.installfuncinlist(f)
-def uninstallbeforeInitEsolve(f):
-    "Removes the function from the list of functions called before the initial E solve"
-    _beforeInitEsolve.uninstallfuncinlist(f)
-def isinstalledbeforeInitEsolve(f):
-    "Checks if the function is called before the initial E solve"
-    return _beforeInitEsolve.isinstalledfuncinlist(f)
+    installcallback('beforeInitEsolve', f)
 
 # ----------------------------------------------------------------------------
 def callfromafterInitEsolve(f):
-    installafterInitEsolve(f)
+    installafterInitEsolve('afterInitEsolve', f)
     return f
 def installafterInitEsolve(f):
-    "Adds a function to the list of functions called after the initial E solve"
-    _afterInitEsolve.installfuncinlist(f)
-def uninstallafterInitEsolve(f):
-    "Removes the function from the list of functions called after the initial E solve"
-    _afterInitEsolve.uninstallfuncinlist(f)
-def isinstalledafterInitEsolve(f):
-    "Checks if the function is called after the initial E solve"
-    return _afterInitEsolve.isinstalledfuncinlist(f)
+    installcallback('afterInitEsolve', f)
 
 # ----------------------------------------------------------------------------
 def callfromafterinit(f):
     installcallback('afterinit', f)
     return f
+def installafterinit(f):
+    installcallback('afterinit', f)
 
 # ----------------------------------------------------------------------------
 def callfrombeforecollisions(f):
     installcallback('beforecollisions', f)
     return f
+def installbeforecollisions(f):
+    installcallback('beforecollisions', f)
 
 # ----------------------------------------------------------------------------
 def callfromaftercollisions(f):
     installcallback('aftercollisions', f)
     return f
+def installaftercollisions(f):
+    installcallback('aftercollisions', f)
 
 # ----------------------------------------------------------------------------
 def callfrombeforeEsolve(f):
     installcallback('beforeEsolve', f)
     return f
+def installbeforeEsolve(f):
+    installcallback('beforeEsolve', f)
 
 # ----------------------------------------------------------------------------
 def callfrompoissonsolver(f):
     installcallback('poissonsolver', f)
     return f
+def installpoissonsolver(f):
+    installcallback('poissonsolver', f)
 
 # ----------------------------------------------------------------------------
 def callfromafterEsolve(f):
     installcallback('afterEsolve', f)
     return f
+def installafterEsolve(f):
+    installcallback('afterEsolve', f)
 
 # ----------------------------------------------------------------------------
 def callfrombeforedeposition(f):
     installcallback('beforedeposition', f)
     return f
+def installbeforedeposition(f):
+    installcallback('beforedeposition', f)
 
 # ----------------------------------------------------------------------------
 def callfromafterdeposition(f):
     installcallback('afterdeposition', f)
     return f
+def installafterdeposition(f):
+    installcallback('afterdeposition', f)
 
 # ----------------------------------------------------------------------------
 def callfromparticlescraper(f):
     installcallback('particlescraper', f)
     return f
+def installparticlescraper(f):
+    installcallback('particlescraper', f)
 
 # ----------------------------------------------------------------------------
 def callfromparticleloader(f):
     installcallback('particleloader', f)
     return f
+def installparticleloader(f):
+    installcallback('particleloader', f)
 
 # ----------------------------------------------------------------------------
 def callfrombeforestep(f):
     installcallback('beforestep', f)
     return f
+def installbeforestep(f):
+    installcallback('beforestep', f)
 
 # ----------------------------------------------------------------------------
 def callfromafterstep(f):
     installcallback('afterstep', f)
     return f
+def installafterstep(f):
+    installcallback('afterstep', f)
 
 # ----------------------------------------------------------------------------
 def callfromafterdiagnostics(f):
     installcallback('afterdiagnostics', f)
     return f
+def installafterdiagnostics(f):
+    installcallback('afterdiagnostics', f)
 
 # ----------------------------------------------------------------------------
 def oncheckpointsignal(f):
     installcallback('oncheckpointsignal', f)
     return f
+def installoncheckpointsignal(f):
+    installcallback('oncheckpointsignal', f)
 
 # ----------------------------------------------------------------------------
 def onbreaksignal(f):
-    installonbreaksignal(f)
+    installcallback('onbreaksignal', f)
     return f
 def installonbreaksignal(f):
-    "Adds a function to the list of functions called on a break signal"
     _onbreaksignal.installfuncinlist(f)
-def uninstallonbreaksignal(f):
-    "Removes the function from the list of functions called on a break signal"
-    _onbreaksignal.uninstallfuncinlist(f)
-def isinstalledonbreaksignal(f):
-    "Checks if the function is called on a break signal"
-    return _onbreaksignal.isinstalledfuncinlist(f)
 
 # ----------------------------------------------------------------------------
 def callfromparticleinjection(f):
     installcallback('particleinjection', f)
     return f
+def installparticleinjection(f):
+    installcallback('particleinjection', f)
