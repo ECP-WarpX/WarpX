@@ -357,7 +357,7 @@ void ColliderRelevant::ComputeDiags (int step)
                             n_rz_azimuthal_modes, nox, galerkin_interpolation);
                         // compute chi
                         Real chi = 0.0_rt;
-                        
+
                         if ( is_photon ) {
                             chi = QedUtils::chi_photon(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
@@ -368,7 +368,7 @@ void ColliderRelevant::ComputeDiags (int step)
                         amrex::AllPrint() << "CHI DOT W " << chi << " " << w[i] << " " << chi*w[i] <<  "   \n";
                         return {chi, chi, chi*w[i]};
                     });
-                    
+
                     auto hv = reduce_data.value();
 
                     chimin[lev] = get<0>(hv);
@@ -382,7 +382,7 @@ void ColliderRelevant::ComputeDiags (int step)
                 }
                 chimin_f = *std::min_element(chimin.begin(), chimin.end());
                 chimax_f = *std::max_element(chimax.begin(), chimax.end());
-                chiave_f = chiave[0]; // FIXME mesh refinement 
+                chiave_f = chiave[0]; // FIXME mesh refinement
                 //chiave_f = std::accumulate(chiave.begin(), chiave.end(), 0.0);
                 //amrex::AllPrint() << "ACCUMULATE " << chiave_f  << " -- ZERO" << chiave[0] << " \n";
             }
