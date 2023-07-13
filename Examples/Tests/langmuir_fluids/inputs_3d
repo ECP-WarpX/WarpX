@@ -46,7 +46,7 @@ warpx.use_filter = 0
 # CFL
 warpx.cfl = 1.0
 
-# Particles
+# Fluids
 fluids.species_names = electrons positrons
 
 electrons.charge = -q_e
