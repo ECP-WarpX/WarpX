@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 23.05)
+project(WarpX VERSION 23.06)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -171,6 +171,7 @@ endif()
 
 # Targets #####################################################################
 #
+set(_ALL_TARGETS)
 foreach(D IN LISTS WarpX_DIMS)
     warpx_set_suffix_dims(SD ${D})
     # collect all objects for compilation
@@ -179,7 +180,7 @@ foreach(D IN LISTS WarpX_DIMS)
 
     # ABLASTR library
     set(_BUILDINFO_SRC ablastr_${SD})
-    set(_ALL_TARGETS WarpX_${SD} ablastr_${SD})
+    list(APPEND _ALL_TARGETS WarpX_${SD} ablastr_${SD})
     add_library(WarpX::ablastr_${SD} ALIAS ablastr_${SD})
 
     # executable application
@@ -256,23 +257,14 @@ add_subdirectory(Source/Particles)
 add_subdirectory(Source/Python)
 add_subdirectory(Source/Utils)
 
+# Interprocedural optimization
+if(WarpX_IPO)
+    enable_IPO("${_ALL_TARGETS}")
+endif()
+
+# link dependencies
 foreach(D IN LISTS WarpX_DIMS)
     warpx_set_suffix_dims(SD ${D})
-    # C++ properties: at least a C++17 capable compiler is needed
-    foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-        target_compile_features(${warpx_tgt} PUBLIC cxx_std_17)
-    endforeach()
-    set_target_properties(${_ALL_TARGETS} PROPERTIES
-        CXX_EXTENSIONS OFF
-        CXX_STANDARD_REQUIRED ON
-    )
-
-    # Interprocedural optimization
-    if(WarpX_IPO)
-        enable_IPO("${_ALL_TARGETS}")
-    endif()
-
-    # link dependencies
     if(D STREQUAL "RZ")
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::amrex_2d)
     else()
@@ -305,20 +297,33 @@ foreach(D IN LISTS WarpX_DIMS)
         endif()
         target_link_libraries(ablastr_${SD} PUBLIC PXRMP_QED::PXRMP_QED)
     endif()
+endforeach()
 
+# C++ properties: at least a C++17 capable compiler is needed
+if(WarpX_COMPUTE STREQUAL CUDA)
     # AMReX helper function: propagate CUDA specific target & source properties
-    if(WarpX_COMPUTE STREQUAL CUDA)
-        foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-            setup_target_for_cuda_compilation(${warpx_tgt})
-        endforeach()
-        foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-            target_compile_features(${warpx_tgt} PUBLIC cuda_std_17)
-        endforeach()
-        set_target_properties(${_ALL_TARGETS} PROPERTIES
-            CUDA_EXTENSIONS OFF
-            CUDA_STANDARD_REQUIRED ON
-        )
-    endif()
+    foreach(warpx_tgt IN LISTS _ALL_TARGETS)
+        setup_target_for_cuda_compilation(${warpx_tgt})
+    endforeach()
+    foreach(warpx_tgt IN LISTS _ALL_TARGETS)
+        target_compile_features(${warpx_tgt} PUBLIC cuda_std_17)
+    endforeach()
+    set_target_properties(${_ALL_TARGETS} PROPERTIES
+        CUDA_EXTENSIONS OFF
+        CUDA_STANDARD_REQUIRED ON
+    )
+else()
+    foreach(warpx_tgt IN LISTS _ALL_TARGETS)
+        target_compile_features(${warpx_tgt} PUBLIC cxx_std_17)
+    endforeach()
+    set_target_properties(${_ALL_TARGETS} PROPERTIES
+        CXX_EXTENSIONS OFF
+        CXX_STANDARD_REQUIRED ON
+    )
+endif()
+
+foreach(D IN LISTS WarpX_DIMS)
+    warpx_set_suffix_dims(SD ${D})
 
     # avoid building all object files if we are only used as ABLASTR library
     if(NOT WarpX_APP AND NOT WarpX_LIB)

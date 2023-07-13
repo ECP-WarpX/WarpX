@@ -50,12 +50,12 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
     if ( m_perform_backtransform[i_buffer] == 1) {
         auto& warpx = WarpX::GetInstance();
         auto geom = warpx.Geom(m_lev);
-        amrex::Real gamma_boost = warpx.gamma_boost;
-        int moving_window_dir = warpx.moving_window_dir;
-        amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
+        const amrex::Real gamma_boost = warpx.gamma_boost;
+        const int moving_window_dir = warpx.moving_window_dir;
+        const amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
         const bool interpolate = true;
         std::unique_ptr< amrex::MultiFab > slice = nullptr;
-        int scomp = 0;
+        const int scomp = 0;
         // Generate slice of the cell-centered multifab containing boosted-frame field-data
         // at current z-boost location for the ith buffer
         slice = amrex::get_slice_data(moving_window_dir,
@@ -69,9 +69,9 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         LorentzTransformZ( *slice, gamma_boost, beta_boost);
 
         // Create a 2D box for the slice in the boosted frame
-        amrex::Real dx = geom.CellSize(moving_window_dir);
+        const amrex::Real dx = geom.CellSize(moving_window_dir);
         // index corresponding to z_boost location in the boost-frame
-        int i_boost = static_cast<int> ( ( m_current_z_boost[i_buffer]
+        const int i_boost = static_cast<int> ( ( m_current_z_boost[i_buffer]
                                             - geom.ProbLo(moving_window_dir) ) / dx );
         // z-Slice at i_boost with x,y indices same as buffer_box
         amrex::Box slice_box = m_buffer_box[i_buffer];
@@ -112,8 +112,8 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         for (amrex::MFIter mfi(tmp, TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             const Box& tbx = mfi.tilebox();
-            amrex::Array4<amrex::Real> src_arr = tmp[mfi].array();
-            amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
+            const amrex::Array4<amrex::Real> src_arr = tmp[mfi].array();
+            const amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
 #ifdef WARPX_DIM_RZ
             const int n_rz_comp = WarpX::ncomps;
 #endif
@@ -224,9 +224,9 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
 #endif
     for (amrex::MFIter mfi(data, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
         const amrex::Box& tbx = mfi.tilebox();
-        amrex::Array4< amrex::Real > arr = data[mfi].array();
-        amrex::Real clight = PhysConst::c;
-        amrex::Real inv_clight = 1.0_rt/clight;
+        const amrex::Array4< amrex::Real > arr = data[mfi].array();
+        const amrex::Real clight = PhysConst::c;
+        const amrex::Real inv_clight = 1.0_rt/clight;
 #ifdef WARPX_DIM_RZ
         const int n_rcomps = WarpX::ncomps;
         amrex::ParallelFor( tbx,

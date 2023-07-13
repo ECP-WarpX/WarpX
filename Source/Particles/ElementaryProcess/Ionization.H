@@ -106,13 +106,13 @@ struct IonizationFilterFunc
 
             // Compute electric field amplitude in the particle's frame of
             // reference (particularly important when in boosted frame).
-            amrex::ParticleReal ux = ptd.m_rdata[PIdx::ux][i];
-            amrex::ParticleReal uy = ptd.m_rdata[PIdx::uy][i];
-            amrex::ParticleReal uz = ptd.m_rdata[PIdx::uz][i];
+            const amrex::ParticleReal ux = ptd.m_rdata[PIdx::ux][i];
+            const amrex::ParticleReal uy = ptd.m_rdata[PIdx::uy][i];
+            const amrex::ParticleReal uz = ptd.m_rdata[PIdx::uz][i];
 
-            amrex::Real ga = static_cast<amrex::Real>(
+            const amrex::Real ga = static_cast<amrex::Real>(
                 std::sqrt(1. + (ux*ux + uy*uy + uz*uz) * c2_inv));
-            amrex::Real E = std::sqrt(
+            const amrex::Real E = std::sqrt(
                                - ( ux*ex + uy*ey + uz*ez ) * ( ux*ex + uy*ey + uz*ez ) * c2_inv
                                + ( ga   *ex + uy*bz - uz*by ) * ( ga   *ex + uy*bz - uz*by )
                                + ( ga   *ey + uz*bx - ux*bz ) * ( ga   *ey + uz*bx - ux*bz )
@@ -120,12 +120,12 @@ struct IonizationFilterFunc
                                );
 
             // Compute probability of ionization p
-            amrex::Real w_dtau = (E == 0._rt) ? 0._rt : 1._rt/ ga * m_adk_prefactor[ion_lev] *
+            const amrex::Real w_dtau = (E <= 0._rt) ? 0._rt : 1._rt/ ga * m_adk_prefactor[ion_lev] *
                 std::pow(E, m_adk_power[ion_lev]) *
                 std::exp( m_adk_exp_prefactor[ion_lev]/E );
-            amrex::Real p = 1._rt - std::exp( - w_dtau );
+            const amrex::Real p = 1._rt - std::exp( - w_dtau );
 
-            amrex::Real random_draw = amrex::Random(engine);
+            const amrex::Real random_draw = amrex::Random(engine);
             if (random_draw < p)
             {
                 return true;

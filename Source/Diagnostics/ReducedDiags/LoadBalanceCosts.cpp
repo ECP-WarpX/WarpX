@@ -41,8 +41,8 @@ namespace
     amrex::Long
     countBoxMacroParticles (amrex::MFIter const & mfi, int const lev)
     {
-        int gid = mfi.index();
-        int tid = mfi.LocalTileIndex();
+        const int gid = mfi.index();
+        const int tid = mfi.LocalTileIndex();
         auto box_index = std::make_pair(gid, tid);
 
         auto & warpx = WarpX::GetInstance();
@@ -216,7 +216,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
     if (ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber())
     {
 #ifdef AMREX_USE_MPI
-        std::string m_data_stdstring_recvbuf(m_data_string_recvbuf.begin(), m_data_string_recvbuf.end());
+        const std::string m_data_stdstring_recvbuf(m_data_string_recvbuf.begin(), m_data_string_recvbuf.end());
         m_data_string = amrex::Tokenize(m_data_stdstring_recvbuf, " ");
 #endif
     }
@@ -265,7 +265,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
         if ((i - m_nDataFields + 1)%m_nDataFields == 0)
         {
             // at the end of current group of m_nDatafields, output the string data (hostname)
-            int ind_rank = i - m_nDataFields + 2; // index for the rank corresponding to current box
+            const int ind_rank = i - m_nDataFields + 2; // index for the rank corresponding to current box
 
             // m_data --> rank --> hostname
             ofs << m_sep << m_data_string[static_cast<long unsigned int>(m_data[ind_rank])];
@@ -288,14 +288,14 @@ void LoadBalanceCosts::WriteToFile (int step) const
     if (m_intervals.nextContains(step+1) > warpx.maxStep())
     {
         // open tmp file to copy data
-        std::string fileTmpName = m_path + m_rd_name + ".tmp." + m_extension;
+        const std::string fileTmpName = m_path + m_rd_name + ".tmp." + m_extension;
         std::ofstream ofstmp(fileTmpName, std::ofstream::out);
 
         // write header row
         // for each box on each level we saved 9(10) data fields:
         //   [cost, proc, lev, i_low, j_low, k_low, num_cells, num_macro_particles(, gpu_ID_box), hostname]
         // nDataFieldsToWrite = below accounts for the Real data fields (m_nDataFields), then 1 string output to write
-        int nDataFieldsToWrite = m_nDataFields + 1;
+        const int nDataFieldsToWrite = m_nDataFields + 1;
 
         int c = 0;
         ofstmp << "#";
@@ -331,7 +331,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
         ofstmp << std::endl;
 
         // open the data-containing file
-        std::string fileDataName = m_path + m_rd_name + "." + m_extension;
+        const std::string fileDataName = m_path + m_rd_name + "." + m_extension;
         std::ifstream ifs(fileDataName, std::ifstream::in);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ifs, "Failed to load balance file");
         ifs.exceptions(std::ios_base::badbit); // | std::ios_base::failbit

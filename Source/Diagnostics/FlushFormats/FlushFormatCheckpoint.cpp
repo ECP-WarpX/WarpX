@@ -45,7 +45,7 @@ FlushFormatCheckpoint::WriteToFile (
 
     auto & warpx = WarpX::GetInstance();
 
-    VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
+    const VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
 
     const std::string& checkpointname = amrex::Concatenate(prefix, iteration[0], file_min_digits);
@@ -177,8 +177,6 @@ FlushFormatCheckpoint::CheckpointParticles (
 
         Vector<std::string> real_names;
         Vector<std::string> int_names;
-        Vector<int> int_flags;
-        Vector<int> real_flags;
 
         real_names.push_back("weight");
 

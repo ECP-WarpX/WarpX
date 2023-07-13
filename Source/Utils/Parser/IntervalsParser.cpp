@@ -99,7 +99,7 @@ utils::parser::IntervalsParser::IntervalsParser (
 
     for(const auto& inslc : insplit)
     {
-        SliceParser temp_slice(inslc);
+        const SliceParser temp_slice(inslc);
         m_slices.push_back(temp_slice);
         if ((temp_slice.getPeriod() > 0) &&
                (temp_slice.getStop() >= temp_slice.getStart())) m_activated = true;
@@ -164,8 +164,8 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
     // in order of increasing Slice start value
     for(const auto& inslc : insplit)
     {
-        bool isBTD = true;
-        SliceParser temp_slice(inslc, isBTD);
+        const bool isBTD = true;
+        const SliceParser temp_slice(inslc, isBTD);
         if (m_slices.size() > 0)
         {
             // find the last index i_slice where

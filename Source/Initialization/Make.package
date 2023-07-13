@@ -2,7 +2,6 @@ CEXE_sources += WarpXAMReXInit.cpp
 CEXE_sources += WarpXInitData.cpp
 CEXE_sources += PlasmaInjector.cpp
 CEXE_sources += InjectorDensity.cpp
-CEXE_sources += InjectorMomentum.cpp
 CEXE_sources += TemperatureProperties.cpp
 CEXE_sources += GetTemperature.cpp
 CEXE_sources += VelocityProperties.cpp

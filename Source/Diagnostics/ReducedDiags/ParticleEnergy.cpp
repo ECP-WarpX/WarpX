@@ -54,7 +54,7 @@ ParticleEnergy::ParticleEnergy (std::string rd_name)
 
     if (ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -111,7 +111,7 @@ void ParticleEnergy::ComputeDiags (int step)
         const auto & myspc = mypc.GetParticleContainer(i_s);
 
         // Get mass (used only for particles other than photons, see below)
-        amrex::Real m = myspc.getMass();
+        const amrex::Real m = myspc.getMass();
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 

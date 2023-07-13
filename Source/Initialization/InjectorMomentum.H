@@ -8,13 +8,12 @@
 #ifndef INJECTOR_MOMENTUM_H_
 #define INJECTOR_MOMENTUM_H_
 
-#include "CustomMomentumProb.H"
 #include "GetTemperature.H"
 #include "GetVelocity.H"
 #include "TemperatureProperties.H"
 #include "VelocityProperties.H"
-#include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX.H>
 #include <AMReX_Config.H>
@@ -112,8 +111,8 @@ namespace {
             // and then use the rejection method to correct it
             // ( stop rejecting with probability exp(-u_m/(2*u_th**3)*(u-u_th)**2) )
             // Note that this is the method that is used in the common case u_m=0
-            amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - u_m/u_th );
-            amrex::Real reject_prefactor = (u_m/u_th)/(2._rt*u_th*u_th); // To save computation
+            const amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - u_m/u_th );
+            const amrex::Real reject_prefactor = (u_m/u_th)/(2._rt*u_th*u_th); // To save computation
             bool reject = true;
             while (reject) {
                 // Generates u according to u*exp(-u**2/(2*approx_u_th**2),
@@ -133,8 +132,8 @@ namespace {
             // Note that in the common case `u_m = 0`, this rejection method
             // is not used, and the above rejection method is used instead.
             bool reject = true;
-            amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
-            amrex::Real inv_um = 1._rt/u_m; // To save computation
+            const amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
+            const amrex::Real inv_um = 1._rt/u_m; // To save computation
             while (reject) {
                 // Approximate distribution: normal distribution, where we only retain positive u
                 u = -1._rt;
@@ -142,7 +141,7 @@ namespace {
                     u = amrex::RandomNormal(approx_u_m, u_th, engine);
                 }
                 // Rejection method
-                amrex::Real xrand = amrex::Random(engine);
+                const amrex::Real xrand = amrex::Random(engine);
                 if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) reject = false;
             }
         }
@@ -218,6 +217,49 @@ private:
     amrex::Real m_ux_th, m_uy_th, m_uz_th;
     int m_flux_normal_axis;
     int m_flux_direction;
+};
+
+
+// struct whose getMomentum returns momentum for 1 particle, from random
+// uniform distribution u_min < u < u_max
+struct InjectorMomentumUniform
+{
+    InjectorMomentumUniform (amrex::Real a_ux_min, amrex::Real a_uy_min,
+                              amrex::Real a_uz_min, amrex::Real a_ux_max,
+                              amrex::Real a_uy_max, amrex::Real a_uz_max) noexcept
+        : m_ux_min(a_ux_min), m_uy_min(a_uy_min), m_uz_min(a_uz_min),
+          m_ux_max(a_ux_max), m_uy_max(a_uy_max), m_uz_max(a_uz_max)
+        {
+            m_Dux = m_ux_max - m_ux_min;
+            m_Duy = m_uy_max - m_uy_min;
+            m_Duz = m_uz_max - m_uz_min;
+            m_ux_h = 0.5 * (m_ux_max + m_ux_min);
+            m_uy_h = 0.5 * (m_uy_max + m_uy_min);
+            m_uz_h = 0.5 * (m_uz_max + m_uz_min);
+        }
+
+    AMREX_GPU_HOST_DEVICE
+    amrex::XDim3
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+                 amrex::RandomEngine const& engine) const noexcept
+    {
+        return amrex::XDim3{m_ux_min + amrex::Random(engine) * m_Dux,
+                            m_uy_min + amrex::Random(engine) * m_Duy,
+                            m_uz_min + amrex::Random(engine) * m_Duz};
+    }
+
+    AMREX_GPU_HOST_DEVICE
+    amrex::XDim3
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
+    {
+        return amrex::XDim3{m_ux_h, m_uy_h, m_uz_h};
+    }
+
+private:
+    amrex::Real m_ux_min, m_uy_min, m_uz_min;
+    amrex::Real m_ux_max, m_uy_max, m_uz_max;
+    amrex::Real m_ux_h, m_uy_h, m_uz_h;
+    amrex::Real m_Dux, m_Duy, m_Duz;
 };
 
 // struct whose getMomentum returns momentum for 1 particle with relativistic
@@ -474,6 +516,14 @@ struct InjectorMomentum
           object(t,a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th,a_flux_normal_axis,a_flux_direction)
     { }
 
+    // This constructor stores a InjectorMomentumUniform in union object.
+    InjectorMomentum (InjectorMomentumUniform* t,
+                      amrex::Real a_ux_min, amrex::Real a_uy_min, amrex::Real a_uz_min,
+                      amrex::Real a_ux_max, amrex::Real a_uy_max, amrex::Real a_uz_max)
+        : type(Type::uniform),
+          object(t,a_ux_min,a_uy_min,a_uz_min,a_ux_max,a_uy_max,a_uz_max)
+    { }
+
     InjectorMomentum (InjectorMomentumBoltzmann* t,
                        GetTemperature const& temperature, GetVelocity const& velocity)
          : type(Type::boltzmann),
@@ -487,21 +537,12 @@ struct InjectorMomentum
            object(t, temperature, velocity)
     { }
 
-    // This constructor stores a InjectorMomentumCustom in union object.
-    InjectorMomentum (InjectorMomentumCustom* t,
-                      std::string const& a_species_name)
-        : type(Type::custom),
-          object(t, a_species_name)
-    { }
-
     // Explicitly prevent the compiler from generating copy constructors
     // and copy assignment operators.
     InjectorMomentum (InjectorMomentum const&) = delete;
     InjectorMomentum (InjectorMomentum&&) = delete;
     void operator= (InjectorMomentum const&) = delete;
     void operator= (InjectorMomentum &&) = delete;
-
-    void clear ();
 
     // call getMomentum from the object stored in the union
     // (the union is called Object, and the instance is called object).
@@ -524,6 +565,10 @@ struct InjectorMomentum
         {
             return object.gaussianflux.getMomentum(x,y,z,engine);
         }
+        case Type::uniform:
+        {
+            return object.uniform.getMomentum(x,y,z,engine);
+        }
         case Type::boltzmann:
         {
             return object.boltzmann.getMomentum(x,y,z,engine);
@@ -535,10 +580,6 @@ struct InjectorMomentum
         case Type::constant:
         {
             return object.constant.getMomentum(x,y,z,engine);
-        }
-        case Type::custom:
-        {
-            return object.custom.getMomentum(x,y,z,engine);
         }
         default:
         {
@@ -568,6 +609,10 @@ struct InjectorMomentum
         {
             return object.gaussianflux.getBulkMomentum(x,y,z);
         }
+        case Type::uniform:
+        {
+            return object.uniform.getBulkMomentum(x,y,z);
+        }
         case Type::boltzmann:
         {
             return object.boltzmann.getBulkMomentum(x,y,z);
@@ -580,10 +625,6 @@ struct InjectorMomentum
         {
             return object.constant.getBulkMomentum(x,y,z);
         }
-        case Type::custom:
-        {
-            return object.custom.getBulkMomentum(x,y,z);
-        }
         default:
         {
             amrex::Abort("InjectorMomentum: unknown type");
@@ -592,20 +633,17 @@ struct InjectorMomentum
         }
     }
 
-    enum struct Type { constant, custom, gaussian, gaussianflux, boltzmann, juttner, parser};
+    enum struct Type { constant, gaussian, gaussianflux, uniform, boltzmann, juttner, parser };
     Type type;
 
 private:
 
     // An instance of union Object constructs and stores any one of
-    // the objects declared (constant or custom or gaussian or parser).
+    // the objects declared (constant or gaussian or parser).
     union Object {
         Object (InjectorMomentumConstant*,
                 amrex::Real a_ux, amrex::Real a_uy, amrex::Real a_uz) noexcept
             : constant(a_ux,a_uy,a_uz) {}
-        Object (InjectorMomentumCustom*,
-                std::string const& a_species_name) noexcept
-            : custom(a_species_name) {}
         Object (InjectorMomentumGaussian*,
                 amrex::Real a_ux_m, amrex::Real a_uy_m,
                 amrex::Real a_uz_m, amrex::Real a_ux_th,
@@ -617,6 +655,11 @@ private:
                 amrex::Real a_uy_th, amrex::Real a_uz_th,
                 int a_flux_normal_axis, int a_flux_direction) noexcept
             : gaussianflux(a_ux_m,a_uy_m,a_uz_m,a_ux_th,a_uy_th,a_uz_th,a_flux_normal_axis,a_flux_direction) {}
+        Object (InjectorMomentumUniform*,
+                amrex::Real a_ux_min, amrex::Real a_uy_min,
+                amrex::Real a_uz_min, amrex::Real a_ux_max,
+                amrex::Real a_uy_max, amrex::Real a_uz_max) noexcept
+            : uniform(a_ux_min,a_uy_min,a_uz_min,a_ux_max,a_uy_max,a_uz_max) {}
         Object (InjectorMomentumBoltzmann*,
                 GetTemperature const& t, GetVelocity const& b) noexcept
             : boltzmann(t,b) {}
@@ -629,9 +672,9 @@ private:
                 amrex::ParserExecutor<3> const& a_uz_parser) noexcept
             : parser(a_ux_parser, a_uy_parser, a_uz_parser) {}
         InjectorMomentumConstant constant;
-        InjectorMomentumCustom   custom;
         InjectorMomentumGaussian gaussian;
         InjectorMomentumGaussianFlux gaussianflux;
+        InjectorMomentumUniform uniform;
         InjectorMomentumBoltzmann boltzmann;
         InjectorMomentumJuttner juttner;
         InjectorMomentumParser   parser;
@@ -643,10 +686,7 @@ private:
 // must be trivial.  So we have to rely on a custom deleter for unique_ptr.
 struct InjectorMomentumDeleter {
     void operator () (InjectorMomentum* p) const {
-        if (p) {
-            p->clear();
-            delete p;
-        }
+        if (p) delete p;
     }
 };
 
