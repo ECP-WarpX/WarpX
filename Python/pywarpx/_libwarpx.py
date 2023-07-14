@@ -232,7 +232,8 @@ class LibWarpX():
             The refinement level to reference
         '''
 
-        return self.libwarpx_so.warpx_getistep(level)
+        warpx = libwarpx.libwarpx_so.get_instance()
+        return warpx.getistep(level)
 
     def gett_new(self, level=0):
         '''
@@ -246,7 +247,8 @@ class LibWarpX():
             The refinement level to reference
         '''
 
-        return self.libwarpx_so.warpx_gett_new(level)
+        warpx = libwarpx.libwarpx_so.get_instance()
+        return warpx.gett_new(level)
 
     def evolve(self, num_steps=-1):
         '''
