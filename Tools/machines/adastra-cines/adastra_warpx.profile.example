@@ -8,7 +8,10 @@ module load amd-mixed/5.2.3
 module load CPE-23.02-cce-15.0.1-GPU-softs
 
 # optional: for PSATD in RZ geometry support
-module load cray-libsci_acc/22.12.2.1
+export CMAKE_PREFIX_PATH=${HOME}/sw/adastra/gpu/blaspp-master:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=${HOME}/sw/adastra/gpu/lapackpp-master:$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH=${HOME}/sw/adastra/gpu/blaspp-master/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${HOME}/sw/adastra/gpu/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
 # optional: for QED lookup table generation support
 module load boost/1.81.0-mpi-python3

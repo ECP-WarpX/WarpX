@@ -33,6 +33,38 @@ python3 -m pip uninstall -qqq -y mpi4py 2>/dev/null || true
 # General extra dependencies ##################################################
 #
 
+# BLAS++ (for PSATD+RZ)
+if [ -d $HOME/src/blaspp ]
+then
+  cd $HOME/src/blaspp
+  git fetch
+  git checkout master
+  git pull
+  cd -
+else
+  git clone https://github.com/icl-utk-edu/blaspp.git $HOME/src/blaspp
+fi
+rm -rf $HOME/src/blaspp-adastra-gpu-build
+CXX=$(which CC) cmake -S $HOME/src/blaspp -B $HOME/src/blaspp-adastra-gpu-build -Duse_openmp=OFF -Dgpu_backend=hip -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
+cmake --build $HOME/src/blaspp-adastra-gpu-build --target install --parallel 16
+rm -rf $HOME/src/blaspp-adastra-gpu-build
+
+# LAPACK++ (for PSATD+RZ)
+if [ -d $HOME/src/lapackpp ]
+then
+  cd $HOME/src/lapackpp
+  git fetch
+  git checkout master
+  git pull
+  cd -
+else
+  git clone https://github.com/icl-utk-edu/lapackpp.git $HOME/src/lapackpp
+fi
+rm -rf $HOME/src/lapackpp-adastra-gpu-build
+CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S $HOME/src/lapackpp -B $HOME/src/lapackpp-adastra-gpu-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
+cmake --build $HOME/src/lapackpp-adastra-gpu-build --target install --parallel 16
+rm -rf $HOME/src/lapackpp-adastra-gpu-build
+
 # c-blosc (I/O compression, for OpenPMD)
 if [ -d $HOME/src/c-blosc ]
 then
