@@ -70,7 +70,7 @@ if [ -d $HOME/src/c-blosc ]
 then
   cd $HOME/src/c-blosc
   git fetch
-  git checkout master
+  git checkout v1.21.1
   git pull
   cd -
 else
