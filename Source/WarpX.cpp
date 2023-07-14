@@ -252,6 +252,15 @@ WarpX::WarpX ()
 {
     m_instance = this;
 
+    ParseGeometryInput();
+
+    ConvertLabParamsToBoost();
+    ReadBCParams();
+
+#ifdef WARPX_DIM_RZ
+    CheckGriddingForRZSpectral();
+#endif
+
     ReadParameters();
 
     BackwardCompatibility();
@@ -498,8 +507,6 @@ WarpX::~WarpX ()
 void
 WarpX::ReadParameters ()
 {
-    // Ensure that geometry.dims is set properly.
-    CheckDims();
 
     {
         const ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.

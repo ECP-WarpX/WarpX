@@ -300,8 +300,6 @@ void CheckDims ()
 void CheckGriddingForRZSpectral ()
 {
 #ifdef WARPX_DIM_RZ
-    // Ensure that geometry.dims is set properly.
-    CheckDims();
 
     const ParmParse pp_algo("algo");
     const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
