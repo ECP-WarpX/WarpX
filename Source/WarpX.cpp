@@ -960,6 +960,8 @@ WarpX::ReadParameters ()
             "J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)"
         );
 
+        pp_warpx.query("synchronize_velocity_for_diagnostics", synchronize_velocity_for_diagnostics);
+
         {
             // Parameters below control all plotfile diagnostics
             bool plotfile_min_max = true;

@@ -83,6 +83,9 @@ public:
      */
     virtual void WriteToFile (int step) const;
 
+    /** Check if diag should be done */
+    bool DoDiags(int step) { return m_intervals.contains(step+1); }
+
     /**
      * This function queries deprecated input parameters and aborts
      * the run if one of them is specified.

@@ -53,6 +53,9 @@ public:
      *  @param[in] step current iteration time */
     void WriteToFile (int step);
 
+    /** Check if any diagnostics will be done */
+    bool DoDiags(int step);
+
 };
 
 #endif
