@@ -10,13 +10,11 @@
 #include "ablastr/utils/TextMsg.H"
 #include "ablastr/utils/Serialization.H"
 
-#ifdef AMREX_USE_MPI
-#   include <AMReX_ParallelDescriptor.H>
-#endif
-#include <AMReX_Print.H>
+#include <AMReX_ParallelDescriptor.H>
 
-#include <iostream>
-#include <sstream>
+#include <algorithm>
+#include <array>
+#include <memory>
 #include <numeric>
 
 namespace abl_msg_logger = ablastr::utils::msg_logger;

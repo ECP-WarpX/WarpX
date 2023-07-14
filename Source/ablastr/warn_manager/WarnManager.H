@@ -10,7 +10,7 @@
 
 #include "ablastr/utils/msg_logger/MsgLogger_fwd.H"
 
-#include <AMReX_ParmParse.H>
+#include <AMReX_BaseFwd.H>
 
 #include <memory>
 #include <optional>
