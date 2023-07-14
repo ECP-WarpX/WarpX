@@ -10,9 +10,7 @@
 #include "ablastr/utils/TextMsg.H"
 #include "ablastr/utils/Serialization.H"
 
-#ifdef AMREX_USE_MPI
-#   include <AMReX_ParallelDescriptor.H>
-#endif
+#include <AMReX_ParallelDescriptor.H>
 
 #include <algorithm>
 #include <array>
@@ -211,19 +209,11 @@ MsgWithCounterAndRanks::deserialize (std::vector<char>::const_iterator&& it)
     return MsgWithCounterAndRanks::deserialize(it);
 }
 
-#ifdef AMREX_USE_MPI
-    Logger::Logger() :
-        m_rank{amrex::ParallelDescriptor::MyProc()},
-        m_num_procs{amrex::ParallelDescriptor::NProcs()},
-        m_io_rank{amrex::ParallelDescriptor::IOProcessorNumber()}
-    {}
-#else
-    Logger::Logger() :
-        m_rank{0},
-        m_num_procs{0},
-        m_io_rank{0}
-    {}
-#endif
+Logger::Logger() :
+    m_rank{amrex::ParallelDescriptor::MyProc()},
+    m_num_procs{amrex::ParallelDescriptor::NProcs()},
+    m_io_rank{amrex::ParallelDescriptor::IOProcessorNumber()}
+{}
 
 void Logger::record_msg(Msg msg)
 {
