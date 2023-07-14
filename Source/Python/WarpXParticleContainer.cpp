@@ -51,5 +51,6 @@ void init_WarpXParticleContainer (py::module& m)
             py::arg("offset"), py::arg("np_to_depose"),
             py::arg("thread_num"), py::arg("lev"), py::arg("depos_lev")
         )
+        .def("num_real_comps", &WarpXParticleContainer::NumRealComps)
         ;
 }

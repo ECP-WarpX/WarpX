@@ -32,8 +32,6 @@ extern "C" {
 
     int warpx_nComps();
 
-    int warpx_nCompsSpecies(const char* char_species_name);
-
     int warpx_SpaceDim();
 
     void amrex_init (int argc, char* argv[]);

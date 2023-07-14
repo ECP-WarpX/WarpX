@@ -176,9 +176,10 @@ class LibWarpX():
         species_name: str
             Name of the species
         '''
-
-        return self.libwarpx_so.warpx_nCompsSpecies(
-            ctypes.c_char_p(species_name.encode('utf-8')))
+        warpx = self.libwarpx_so.get_instance()
+        mpc = warpx.multi_particle_container()
+        pc = mpc.get_particle_container_from_name(species_name)
+        return pc.num_real_comps()
 
     def amrex_init(self, argv, mpi_comm=None):
         if mpi_comm is None or MPI is None:
@@ -421,24 +422,22 @@ class LibWarpX():
         # --- Broadcast scalars into appropriate length arrays
         # --- If the parameter was not supplied, use the default value
         if lenx == 1:
-            x = np.full(maxlen, (x or 0.), self._numpy_particlereal_dtype)
+            x = np.full(maxlen, (x or 0.))
         if leny == 1:
-            y = np.full(maxlen, (y or 0.), self._numpy_particlereal_dtype)
+            y = np.full(maxlen, (y or 0.))
         if lenz == 1:
-            z = np.full(maxlen, (z or 0.), self._numpy_particlereal_dtype)
+            z = np.full(maxlen, (z or 0.))
         if lenux == 1:
-            ux = np.full(maxlen, (ux or 0.), self._numpy_particlereal_dtype)
+            ux = np.full(maxlen, (ux or 0.))
         if lenuy == 1:
-            uy = np.full(maxlen, (uy or 0.), self._numpy_particlereal_dtype)
+            uy = np.full(maxlen, (uy or 0.))
         if lenuz == 1:
-            uz = np.full(maxlen, (uz or 0.), self._numpy_particlereal_dtype)
+            uz = np.full(maxlen, (uz or 0.))
         if lenw == 1:
-            w = np.full(maxlen, (w or 0.), self._numpy_particlereal_dtype)
+            w = np.full(maxlen, (w or 0.))
         for key, val in kwargs.items():
             if np.size(val) == 1:
-                kwargs[key] = np.full(
-                    maxlen, val, self._numpy_particlereal_dtype
-                )
+                kwargs[key] = np.full(maxlen, val)
 
         # --- The number of built in attributes
         # --- The three velocities
@@ -449,7 +448,7 @@ class LibWarpX():
 
         # --- The number of extra attributes (including the weight)
         nattr = self.get_nattr_species(species_name) - built_in_attrs
-        attr = np.zeros((maxlen, nattr), self._numpy_particlereal_dtype)
+        attr = np.zeros((maxlen, nattr))
         attr[:,0] = w
 
         # --- Note that the velocities are handled separately and not included in attr
@@ -460,14 +459,14 @@ class LibWarpX():
         nattr_int = 0
         attr_int = np.empty([0], ctypes.c_int)
 
-        # Iff x/y/z/ux/uy/uz are not numpy arrays of the correct dtype, new
-        # array copies are made with the correct dtype
-        x = x.astype(self._numpy_particlereal_dtype, copy=False)
-        y = y.astype(self._numpy_particlereal_dtype, copy=False)
-        z = z.astype(self._numpy_particlereal_dtype, copy=False)
-        ux = ux.astype(self._numpy_particlereal_dtype, copy=False)
-        uy = uy.astype(self._numpy_particlereal_dtype, copy=False)
-        uz = uz.astype(self._numpy_particlereal_dtype, copy=False)
+        # TODO: expose ParticleReal through pyAMReX
+        # and cast arrays to the correct types, before calling add_n_particles
+        # x = x.astype(self._numpy_particlereal_dtype, copy=False)
+        # y = y.astype(self._numpy_particlereal_dtype, copy=False)
+        # z = z.astype(self._numpy_particlereal_dtype, copy=False)
+        # ux = ux.astype(self._numpy_particlereal_dtype, copy=False)
+        # uy = uy.astype(self._numpy_particlereal_dtype, copy=False)
+        # uz = uz.astype(self._numpy_particlereal_dtype, copy=False)
 
         warpx = self.libwarpx_so.get_instance()
         mpc = warpx.multi_particle_container()
@@ -763,6 +762,9 @@ class LibWarpX():
         int
             Integer corresponding to the index of the requested attribute
         '''
+        warpx = self.libwarpx_so.get_instance()
+        mpc = warpx.multi_particle_container()
+        pc = mpc.get_particle_container_from_name(species_name)
 
         return self.libwarpx_so.warpx_getParticleCompIndex(
             ctypes.c_char_p(species_name.encode('utf-8')),
