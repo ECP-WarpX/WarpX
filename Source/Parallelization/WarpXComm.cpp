@@ -1024,7 +1024,8 @@ void
 WarpX::SyncRho (
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
     const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer)
+    const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
+    const int bottom_level)
 {
     WARPX_PROFILE("WarpX::SyncRho()");
 
@@ -1034,7 +1035,7 @@ WarpX::SyncRho (
     // See comments in WarpX::SyncCurrent for an explanation of the algorithm.
 
     std::unique_ptr<MultiFab> mf_comm; // for communication between levels
-    for (int lev = finest_level; lev >= 0; --lev)
+    for (int lev = finest_level; lev >= bottom_level; --lev)
     {
         if (lev < finest_level)
         {
@@ -1065,7 +1066,7 @@ WarpX::SyncRho (
             ApplyFilterandSumBoundaryRho(lev+1, lev, *charge_cp[lev+1], 0, ncomp);
         }
 
-        if (lev > 0)
+        if (lev > bottom_level)
         {
             // On a fine level, we need to coarsen the data onto the coarse
             // level. This needs to be done before filtering because

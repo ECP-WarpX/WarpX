@@ -43,7 +43,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     rho_fp.resize(nlevs_max);
     rho_buf.resize(nlevs_max);
     const int ng_rho = warpx.get_ng_depos_rho().max();
-    for (int lev=0; lev<=warpx.maxLevel(); lev++) {
+    for (int lev=m_lev; lev<=warpx.maxLevel(); lev++) {
         // Allocate rho_fp
         const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
         amrex::BoxArray nba = warpx.boxArray(lev);
@@ -51,7 +51,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
         rho_fp[lev] = std::make_unique<amrex::MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
         rho_fp[lev]->setVal(0.0);
         // Allocate rho_cp
-        if (lev>0) {
+        if (lev>m_lev) {
             nba.coarsen(warpx.refRatio(lev-1));
             rho_cp[lev] = std::make_unique<amrex::MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
         }
@@ -78,7 +78,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
 
     // Handle parallel transfers of guard cells,
     // summation between levels, and filtering
-    warpx.SyncRho(rho_fp, rho_cp, rho_buf);
+    warpx.SyncRho(rho_fp, rho_cp, rho_buf, m_lev);
 
     // Select the correct level
     std::unique_ptr<amrex::MultiFab>& rho = rho_fp[m_lev];
