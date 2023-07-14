@@ -232,7 +232,7 @@ class LibWarpX():
             The refinement level to reference
         '''
 
-        warpx = libwarpx.libwarpx_so.get_instance()
+        warpx = self.libwarpx_so.get_instance()
         return warpx.getistep(level)
 
     def gett_new(self, level=0):
@@ -247,7 +247,7 @@ class LibWarpX():
             The refinement level to reference
         '''
 
-        warpx = libwarpx.libwarpx_so.get_instance()
+        warpx = self.libwarpx_so.get_instance()
         return warpx.gett_new(level)
 
     def evolve(self, num_steps=-1):
@@ -965,15 +965,36 @@ class LibWarpX():
         sync_rho       : bool
             If True, perform MPI exchange and properly set boundary cells for rho_fp.
         '''
+        warpx = self.libwarpx_so.get_instance()
+        mypc = warpx.multi_particle_container()
+        myspc = mypc.get_particle_container_from_name(species_name)
+
+        rho_fp = warpx.multifab(f'rho_fp[level={level}]')
+
+        if rho_fp is None:
+            raise RuntimeWarning("Multifab `rho_fp` is not allocated.")
+            # ablastr::warn_manager::WMRecordWarning(
+            #     "WarpXWrappers", "rho_fp is not allocated",
+            #     ablastr::warn_manager::WarnPriority::low
+            # );
+            return
 
         if clear_rho:
             from . import fields
             fields.RhoFPWrapper(level, True)[...] = 0.0
-        self.libwarpx_so.warpx_depositChargeDensity(
-            ctypes.c_char_p(species_name.encode('utf-8')), level
-        )
-        if sync_rho:
-            self.libwarpx_so.warpx_SyncRho()
+
+        for pti in self.libwarpx_so.WarpXParIter(myspc, level):
+            print(pti.num_particles)
+            # TODO: Implement the bindings for the remaining logic here
+            # wp = pti.GetAttribs(PIdx::w);
+            # # Do this unconditionally, ignoring myspc.do_not_deposit, to support diagnostic uses
+            # myspc.deposit_charge(pti, wp, nullptr, rho_fp, 0, 0, np, 0, lev, lev);
+
+        # if self.geometry_dim == 'rz':
+        #     warpx.apply_inverse_volume_scaling_to_charge_density(rho_fp, lev);
+
+        # if sync_rho:
+        #     warpx.sync_rho()
 
     def set_potential_EB(self, potential):
         """

@@ -101,16 +101,6 @@ extern "C" {
 
     void warpx_clearParticleBoundaryBuffer ();
 
-    /**
-     * \brief This function is used to deposit a given species' charge density
-     * in the rho_fp multifab which can then be accessed from python via
-     * pywarpx.fields.RhoFPWrapper()
-     *
-     * @param[in] species_name specifying the name of the species to deposit
-     * @param[in] lev mesh refinement level
-     */
-    void warpx_depositChargeDensity (const char* species_name, int lev);
-
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);
 
@@ -118,7 +108,6 @@ extern "C" {
   void warpx_EvolveB (amrex::Real dt, DtType a_dt_type);
   void warpx_FillBoundaryE ();
   void warpx_FillBoundaryB ();
-  void warpx_SyncRho ();
   void warpx_SyncCurrent (
       const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
       const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
