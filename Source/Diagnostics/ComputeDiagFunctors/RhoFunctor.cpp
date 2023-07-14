@@ -65,14 +65,14 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     if (m_species_index == -1) {
         auto& mypc = warpx.GetPartContainer();
         for (int lev=m_lev; lev<=warpx.finestLevel(); lev++) {
-            rho_fp[lev] = mypc.GetChargeDensity(m_lev, true);
+            rho_fp[lev] = mypc.GetChargeDensity(lev, true);
         }
     }
     // Dump rho per species
     else {
         auto& mypc = warpx.GetPartContainer().GetParticleContainer(m_species_index);
         for (int lev=m_lev; lev<=warpx.finestLevel(); lev++) {
-            rho_fp[lev] = mypc.GetChargeDensity(m_lev, true);
+            rho_fp[lev] = mypc.GetChargeDensity(lev, true);
         }
     }
 
