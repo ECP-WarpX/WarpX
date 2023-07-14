@@ -68,11 +68,8 @@ rm -rf $HOME/src/lapackpp-adastra-gpu-build
 # c-blosc (I/O compression, for OpenPMD)
 if [ -d $HOME/src/c-blosc ]
 then
-  cd $HOME/src/c-blosc
-  git fetch
-  git checkout v1.21.1
-  git pull
-  cd -
+  # git repository is already there
+  :
 else
   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git $HOME/src/c-blosc
 fi
@@ -84,11 +81,8 @@ rm -rf $HOME/src/c-blosc-ad-build
 # ADIOS2 v. 2.8.3 (for OpenPMD)
 if [ -d $HOME/src/adios2 ]
 then
-  cd $HOME/src/adios2
-  git fetch
-  git checkout v2.8.3
-  git pull
-  cd -
+  # git repository is already there
+  :
 else
   git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git $HOME/src/adios2
 fi
