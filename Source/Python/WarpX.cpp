@@ -70,17 +70,19 @@ void init_WarpX (py::module& m)
             py::return_value_policy::reference_internal
         )
 
+        // Expose functions used to sync the charge density multifab
+        // accross tiles and apply appropriate boundary conditions
+        .def("sync_rho",
+            [](WarpX& wx){ wx.SyncRho(); }
+        )
+
         // Expose functions to get the current simulation step and time
         .def("getistep",
-            [](WarpX const & wx, int lev){
-                return wx.getistep(lev);
-            },
+            [](WarpX const & wx, int lev){ return wx.getistep(lev); },
             py::arg("lev")
         )
         .def("gett_new",
-            [](WarpX const & wx, int lev){
-                return wx.gett_new(lev);
-            },
+            [](WarpX const & wx, int lev){ return wx.gett_new(lev); },
             py::arg("lev")
         )
     ;

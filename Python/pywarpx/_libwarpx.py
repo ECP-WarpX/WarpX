@@ -983,6 +983,21 @@ class LibWarpX():
         if clear_rho:
             rho_fp.set_val(0.0)
 
+        self._deposit_charge(warpx, rho_fp, species_name, level)
+
+        # TODO: Implement the bindings for the remaining logic here
+        # if self.geometry_dim == 'rz':
+        #     warpx.apply_inverse_volume_scaling_to_charge_density(rho_fp, lev);
+
+        if sync_rho:
+            warpx.sync_rho()
+
+    def _deposit_charge(self, warpx, rho_fp, species_name, level):
+        '''Helper function called from depositChargeDensity to ensure that
+        `pti` goes out of scope before calling `sync_rho`.
+        The deposition is done unconditionally, ignoring myspc.do_not_deposit,
+        to support diagnostic uses.
+        '''
         mypc = warpx.multi_particle_container()
         myspc = mypc.get_particle_container_from_name(species_name)
 
@@ -994,13 +1009,6 @@ class LibWarpX():
             pti, weight_array, -1, rho_fp, 0, 0, pti.num_particles,
             0, level, level
         )
-
-        # TODO: Implement the bindings for the remaining logic here
-        # if self.geometry_dim == 'rz':
-        #     warpx.apply_inverse_volume_scaling_to_charge_density(rho_fp, lev);
-
-        # if sync_rho:
-        #     warpx.sync_rho()
 
     def set_potential_EB(self, potential):
         """
