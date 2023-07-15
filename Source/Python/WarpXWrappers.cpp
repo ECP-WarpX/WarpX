@@ -156,14 +156,6 @@
         return dx[dir];
     }
 
-    long warpx_getNumParticles(const char* char_species_name, const bool local) {
-        const auto & mypc = WarpX::GetInstance().GetPartContainer();
-        const std::string species_name(char_species_name);
-        auto & myspc = mypc.GetParticleContainerFromName(species_name);
-        // the first argument below is to only count valid particles
-        return myspc.TotalNumberOfParticles(true, local);
-    }
-
     amrex::ParticleReal** warpx_getParticleStructs(
             const char* char_species_name, int lev,
             int* num_tiles, int** particles_per_tile) {

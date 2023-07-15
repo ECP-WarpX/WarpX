@@ -495,9 +495,10 @@ class LibWarpX():
             An integer count of the number of particles
         '''
 
-        return self.libwarpx_so.warpx_getNumParticles(
-            ctypes.c_char_p(species_name.encode('utf-8')), local
-        )
+        warpx = self.libwarpx_so.get_instance()
+        mypc = warpx.multi_particle_container()
+        myspc = mypc.get_particle_container_from_name(species_name)
+        return myspc.total_number_of_particles(True, local)
 
     def get_particle_structs(self, species_name, level):
         '''
@@ -968,30 +969,33 @@ class LibWarpX():
             If True, perform MPI exchange and properly set boundary cells for rho_fp.
         '''
         warpx = self.libwarpx_so.get_instance()
-        mypc = warpx.multi_particle_container()
-        myspc = mypc.get_particle_container_from_name(species_name)
 
         rho_fp = warpx.multifab(f'rho_fp[level={level}]')
 
         if rho_fp is None:
-            raise RuntimeWarning("Multifab `rho_fp` is not allocated.")
+            raise RuntimeError("Multifab `rho_fp` is not allocated.")
             # ablastr::warn_manager::WMRecordWarning(
             #     "WarpXWrappers", "rho_fp is not allocated",
             #     ablastr::warn_manager::WarnPriority::low
             # );
-            return
+            # return
 
         if clear_rho:
-            from . import fields
-            fields.RhoFPWrapper(level, True)[...] = 0.0
+            rho_fp.set_val(0.0)
 
-        for pti in self.libwarpx_so.WarpXParIter(myspc, level):
-            print(pti.num_particles)
-            # TODO: Implement the bindings for the remaining logic here
-            # wp = pti.GetAttribs(PIdx::w);
-            # # Do this unconditionally, ignoring myspc.do_not_deposit, to support diagnostic uses
-            # myspc.deposit_charge(pti, wp, nullptr, rho_fp, 0, 0, np, 0, lev, lev);
+        mypc = warpx.multi_particle_container()
+        myspc = mypc.get_particle_container_from_name(species_name)
 
+        pti = self.libwarpx_so.WarpXParIter(myspc, level)
+        # TODO: Expose the PIdx struct so that the weight index is not
+        # hardcoded i.e. PIdx::w == 0
+        weight_array = pti.soa().GetRealData()[0] # [PIdx::w]
+        myspc.deposit_charge(
+            pti, weight_array, -1, rho_fp, 0, 0, pti.num_particles,
+            0, level, level
+        )
+
+        # TODO: Implement the bindings for the remaining logic here
         # if self.geometry_dim == 'rz':
         #     warpx.apply_inverse_volume_scaling_to_charge_density(rho_fp, lev);
 

@@ -9,13 +9,18 @@
 
 namespace py = pybind11;
 
+
 void init_WarpXParIter (py::module& m)
 {
-    py::class_<WarpXParIter, amrex::ParIter<0,0,PIdx::nattribs>
-    > wpi (m, "WarpXParIter");
-    wpi
-        .def(py::init<WarpXParticleContainer&, int>())
-        ;
+    py::class_<
+        WarpXParIter, amrex::ParIter<0,0,PIdx::nattribs>
+    >(m, "WarpXParIter")
+        .def(py::init<amrex::ParIter<0,0,PIdx::nattribs>::ContainerType&, int>(),
+            py::arg("particle_container"), py::arg("level"))
+        .def(py::init<amrex::ParIter<0,0,PIdx::nattribs>::ContainerType&, int, amrex::MFItInfo&>(),
+            py::arg("particle_container"), py::arg("level"),
+            py::arg("info"))
+    ;
 }
 
 void init_WarpXParticleContainer (py::module& m)
@@ -38,19 +43,43 @@ void init_WarpXParticleContainer (py::module& m)
             py::arg("nattr_int"), py::arg("attr_int"),
             py::arg("uniqueparticles"), py::arg("id")
         )
-        .def("deposit_charge",
-            static_cast<void (WarpXParticleContainer::*)(
-                WarpXParIter&,
-                amrex::Gpu::DeviceVector<amrex::Real> const &,
-                const int * const, amrex::MultiFab*,
-                const int, const long, const long,
-                const int, const int, const int
-            )>(&WarpXParticleContainer::DepositCharge),
-            py::arg("pti"), py::arg("wp"), py::arg("ion_lev"),
-            py::arg("rho"), py::arg("icomp"),
-            py::arg("offset"), py::arg("np_to_depose"),
-            py::arg("thread_num"), py::arg("lev"), py::arg("depos_lev")
-        )
         .def("num_real_comps", &WarpXParticleContainer::NumRealComps)
-        ;
+        .def("total_number_of_particles",
+            &WarpXParticleContainer::TotalNumberOfParticles,
+            py::arg("valid_particles_only"), py::arg("local")
+        )
+        // .def("deposit_charge",
+        //     static_cast<void (WarpXParticleContainer::*)(
+        //         WarpXParIter&,
+        //         amrex::Gpu::DeviceVector<amrex::Real> const &,
+        //         const int * const, amrex::MultiFab*,
+        //         const int, const long, const long,
+        //         const int, const int, const int
+        //     )>(&WarpXParticleContainer::DepositCharge),
+        //     py::arg("pti"), py::arg("wp"), py::arg("ion_lev"),
+        //     py::arg("rho"), py::arg("icomp"),
+        //     py::arg("offset"), py::arg("np_to_depose"),
+        //     py::arg("thread_num"), py::arg("lev"), py::arg("depos_lev")
+        // )
+        .def("deposit_charge",
+            [](WarpXParticleContainer& pc, WarpXParIter& pti,
+            amrex::Gpu::DeviceVector<amrex::Real> const & wp,
+            const int * const ion_lev,
+            amrex::MultiFab* rho,
+            const int icomp, const long offset, const long np_to_depose,
+            const int thread_num, const int lev, const int depos_lev)
+            {
+                if (*ion_lev == -1)
+                    pc.DepositCharge(
+                        pti, wp, nullptr, rho, icomp, offset, np_to_depose,
+                        thread_num, lev, depos_lev
+                    );
+                else
+                    pc.DepositCharge(
+                        pti, wp, ion_lev, rho, icomp, offset, np_to_depose,
+                        thread_num, lev, depos_lev
+                    );
+            }
+        )
+    ;
 }

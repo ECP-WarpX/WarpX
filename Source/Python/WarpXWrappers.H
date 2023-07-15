@@ -64,8 +64,6 @@ extern "C" {
 
     amrex::Real warpx_getCellSize(int dir, int lev);
 
-    long warpx_getNumParticles(const char* char_species_name, const bool local);
-
     void warpx_convert_id_to_long (amrex::Long* ids, const WarpXParticleContainer::ParticleType* pstructs, int size);
 
     void warpx_convert_cpu_to_int (int* cpus, const WarpXParticleContainer::ParticleType* pstructs, int size);
