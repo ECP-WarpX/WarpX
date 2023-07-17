@@ -266,8 +266,6 @@ WarpX::WarpX ()
 
     const int nlevs_max = maxLevel() + 1;
 
-    m_laser_envelope_model = std::make_unique<LaserEnvelope>(nlevs_max);
-
     istep.resize(nlevs_max, 0);
     nsubsteps.resize(nlevs_max, 1);
 #if 0
@@ -369,6 +367,8 @@ WarpX::WarpX ()
         // Create hybrid-PIC model object if needed
         m_hybrid_pic_model = std::make_unique<HybridPICModel>(nlevs_max);
     }
+
+    m_laser_envelope = std::make_unique<LaserEnvelope>(nlevs_max);
 
     F_cp.resize(nlevs_max);
     G_cp.resize(nlevs_max);
@@ -1924,6 +1924,8 @@ WarpX::ClearLevel (int lev)
         m_hybrid_pic_model->ClearLevel(lev);
     }
 
+    m_laser_envelope->ClearLevel(lev);
+
     charge_buf[lev].reset();
 
     current_buffer_masks[lev].reset();
@@ -2206,9 +2208,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         );
     }
 
-    // const amrex::IntVect& ngA = ngEB;
-    // const amrex::IntVect& A_nodal_flag = rho_nodal_flag;
-    // call m_laser_envelope->AllocateLevelMFs(...)
+    const amrex::IntVect& ngA = ngEB;
+    const amrex::IntVect& A_nodal_flag = rho_nodal_flag;
+    const int ncomps_A = 2;
+    m_laser_envelope->AllocateLevelMFs(lev, ba, dm, ncomps_A, ngA, A_nodal_flag);
 
     if (fft_do_time_averaging)
     {
