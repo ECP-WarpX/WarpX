@@ -67,7 +67,7 @@ void LaserEnvelope::AllocateLevelMFs (
     auto & warpx = WarpX::GetInstance();
 
     warpx.AllocInitMultiFab(A_laser_envelope[lev], amrex::convert(ba, A_nodal_flag),
-        dm, ncomps, ngA, "A_laser_envelope", 0.0_rt);
+        dm, ncomps, ngA, lev, "A_laser_envelope", 0.0_rt);
 }
 
 void LaserEnvelope::ClearLevel (const int lev)
