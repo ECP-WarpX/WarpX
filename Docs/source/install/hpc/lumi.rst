@@ -22,7 +22,7 @@ If you are new to this system, **please see the following resources**:
   * ``/scratch/$proj``: temporary storage, main storage to be used for disk I/O needs when running simulations on LUMI, purged every 90 days (50TB default quota)
 
 
-.. _building-adastra-preparation:
+.. _building-lumi-preparation:
 
 Preparation
 -----------
@@ -33,7 +33,7 @@ Use the following commands to download the WarpX source code:
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
-We use system software modules, add environment hints and further dependencies via the file ``$HOME/adastra_warpx.profile``.
+We use system software modules, add environment hints and further dependencies via the file ``$HOME/lumi_warpx.profile``.
 Create it now:
 
 .. code-block:: bash
