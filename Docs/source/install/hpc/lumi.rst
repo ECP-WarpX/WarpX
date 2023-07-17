@@ -60,59 +60,37 @@ LUMI login nodes).
 
       source $HOME/lumi_warpx.profile
 
-
-Installation
-------------
-
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Finally, since LUMI does not yet provide software modules for some of our dependencies, install them once:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   bash $HOME/src/warpx/Tools/machines/lumi-csc/install_dependencies.sh
+   source $HOME/sw/lumi/gpu/venvs/warpx-lumi/bin/activate
 
-We use the following modules and environments on the system (``$HOME/lumi_warpx.profile``).
+.. dropdown:: Script Details
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
 
-.. literalinclude:: ../../../../Tools/machines/lumi-csc/lumi_warpx.profile.example
-   :language: bash
-   :caption: You can copy this file from ``Tools/machines/lumi-csc/lumi_warpx.profile.example``.
+   .. literalinclude:: ../../../../Tools/machines/lumi-csc/install_dependencies.sh
+      :language: bash
 
 
-We recommend to store the above lines in a file, such as ``$HOME/lumi_warpx.profile``, and load it into your shell after a login:
+.. _building-lumi-compilation:
 
-.. code-block:: bash
+Compilation
+-----------
 
-   source $HOME/lumi_warpx.profile
-
-And since LUMI does not yet provide a module for them, install c-blosc and ADIOS2:
-
-.. code-block:: bash
-
-   export CMAKE_PREFIX_PATH=${HOME}/sw/lumi/gpu/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=${HOME}/sw/lumi/gpu/adios2-2.8.3:$CMAKE_PREFIX_PATH
-
-   # c-blosc (I/O compression)
-   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
-   rm -rf src/c-blosc-build
-   cmake -S src/c-blosc -B src/c-blosc-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/lumi/gpu/c-blosc-1.21.1
-   cmake --build src/c-blosc-build --target install --parallel 16
-
-   # ADIOS2
-   git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git src/adios2
-   rm -rf src/adios2-build
-   cmake -S src/adios2 -B src/adios2-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/lumi/gpu//adios2-2.8.3
-   cmake --build src/adios2-build --target install -j 16
-
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+Use the following :ref:`cmake commands <building-cmake>` to compile:
 
 .. code-block:: bash
 
    cd $HOME/src/warpx
-   rm -rf build
+   rm -rf build_adastra
 
-   cmake -S . -B build -DWarpX_DIMS="1;2;3" -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON
-   cmake --build build -j 16
-
-The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+   cmake -S . -B build_adastra -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build_adastra -j 16
+   cmake --build build_adastra -j 16 --target pip_install
 
 **That's it!**
 WarpX executables are now in ``build/bin/`` and :ref:`can be run <running-cpp-lumi>` with matching :ref:`example inputs files <usage-examples>`.

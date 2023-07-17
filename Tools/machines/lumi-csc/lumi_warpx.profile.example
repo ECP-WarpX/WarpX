@@ -6,6 +6,9 @@ module load LUMI/23.03  partition/G
 module load rocm/5.2.3  # waiting for 5.5 for next bump
 module load buildtools/23.03
 
+# optional: just an additional text editor
+module load nano
+
 # optional: for PSATD in RZ geometry support
 export CMAKE_PREFIX_PATH=${HOME}/sw/lumi/gpu/blaspp-master:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=${HOME}/sw/lumi/gpu/lapackpp-master:$CMAKE_PREFIX_PATH
