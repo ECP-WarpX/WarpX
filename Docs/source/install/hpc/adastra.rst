@@ -58,7 +58,7 @@ Adastra login nodes).
 
 .. important::
 
-   Now, and as the first step on future logins to Frontier, activate these environment settings:
+   Now, and as the first step on future logins to Adastra, activate these environment settings:
 
    .. code-block:: bash
 
@@ -97,14 +97,14 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
    cmake --build build_adastra -j 16 --target pip_install
 
 **That's it!**
-The WarpX application executables are now in ``$HOME/src/warpx/build_frontier/bin/`` and we installed the ``pywarpx`` Python module.
+The WarpX application executables are now in ``$HOME/src/warpx/build_adastra/bin/`` and we installed the ``pywarpx`` Python module.
 
 Now, you can :ref:`submit Adstra compute jobs <running-cpp-adastra>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
 Or, you can use the WarpX executables to submit Adastra jobs (:ref:`example inputs <usage-examples>`).
 For executables, you can reference their location in your :ref:`job script <running-cpp-adastra>` .
 
 
-.. _building-frontier-update:
+.. _building-adastra-update:
 
 Update WarpX & Dependencies
 ---------------------------
