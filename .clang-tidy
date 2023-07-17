@@ -9,6 +9,10 @@ Checks: '-*,
     modernize-use-nullptr,
     performance-faster-string-find,
     performance-for-range-copy,
+    performance-implicit-conversion-in-loop,
+    performance-inefficient-algorithm,
+    performance-inefficient-string-concatenation,
+    performance-inefficient-vector-operation,
     readability-non-const-parameter
     '
 

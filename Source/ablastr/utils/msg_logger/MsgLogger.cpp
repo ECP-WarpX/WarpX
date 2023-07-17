@@ -353,6 +353,7 @@ Logger::compute_msgs_with_counter_and_ranks(
     std::vector<MsgWithCounterAndRanks> msgs_with_counter_and_ranks;
 
     // Put messages of the gather rank in msgs_with_counter_and_ranks
+    msgs_with_counter_and_ranks.reserve(my_msg_map.size());
     for (const auto& el : my_msg_map)
     {
         msgs_with_counter_and_ranks.emplace_back(
