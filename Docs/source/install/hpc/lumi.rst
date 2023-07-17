@@ -86,15 +86,46 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
 .. code-block:: bash
 
    cd $HOME/src/warpx
-   rm -rf build_adastra
+   rm -rf build_lumi
 
-   cmake -S . -B build_adastra -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
-   cmake --build build_adastra -j 16
-   cmake --build build_adastra -j 16 --target pip_install
+   cmake -S . -B build_lumi -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build_lumi -j 16
+   cmake --build build_lumi -j 16 --target pip_install
 
 **That's it!**
-WarpX executables are now in ``build/bin/`` and :ref:`can be run <running-cpp-lumi>` with matching :ref:`example inputs files <usage-examples>`.
+WarpX executables are now in ``build_lumi/bin/`` and :ref:`can be run <running-cpp-lumi>` with matching :ref:`example inputs files <usage-examples>`.
 Most people execute the binary directly or copy it out to a location in ``/scratch/<project>``.
+
+
+.. _building-lumi-update:
+
+Update WarpX & Dependencies
+---------------------------
+
+If you already installed WarpX in the past and want to update it, start by getting the latest source code:
+
+.. code-block:: bash
+
+   cd $HOME/src/warpx
+
+   # read the output of this command - does it look ok?
+   git status
+
+   # get the latest WarpX source code
+   git fetch
+   git pull
+
+   # read the output of these commands - do they look ok?
+   git status
+   git log     # press q to exit
+
+And, if needed,
+
+- :ref:`update the lumi_warpx.profile file <building-lumi-preparation>`,
+- log out and into the system, activate the now updated environment profile as usual,
+- :ref:`execute the dependency install scripts <building-lumi-preparation>`.
+
+As a last step, clean the build directory ``rm -rf $HOME/src/warpx/build_lumi`` and rebuild WarpX.
 
 
 .. _running-cpp-lumi:
@@ -113,6 +144,7 @@ In non-interactive runs:
    :language: bash
    :caption: You can copy this file from ``Tools/machines/lumi-csc/submit.sh``.
 
+
 .. _post-processing-lumi:
 
 Post-Processing
@@ -121,6 +153,9 @@ Post-Processing
 .. note::
 
    TODO: Document any Jupyter or data services.
+
+
+.. _known-lumi-issues:
 
 Known System Issues
 -------------------
