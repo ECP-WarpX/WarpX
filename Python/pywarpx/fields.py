@@ -93,6 +93,19 @@ class _MultiFABWrapper(object):
         "The iteration is over the MultiFab"
         return self.mf.__iter__()
 
+    @property
+    def shape(self):
+        """Returns the shape of the global array
+        """
+        min_box = self.mf.box_array().minimal_box()
+        shape = list(min_box.size)
+        ix_type = self.mf.box_array().ix_type()
+        for i in range(self.dim):
+            if ix_type.cell_centered(i):
+                shape[i] -= 1
+        shape.append(self.mf.nComp)
+        return tuple(shape)
+
     def mesh(self, direction):
         """Returns the mesh along the specified direction with the appropriate centering.
 
@@ -146,8 +159,8 @@ class _MultiFABWrapper(object):
 
         Parameters
         ----------
-        ii: slice or integer
-            Input index, either a slice object or an integer
+        ii: None, slice, integer
+            Input index, either None, a slice object, or an integer
 
         imin: integer
             The global lowest index value in the specified direction
@@ -165,7 +178,10 @@ class _MultiFABWrapper(object):
         unless they are None, then the lower or upper bound is used.
         An assertion checks if the indices are within the bounds.
         """
-        if isinstance(ii, slice):
+        if ii is None:
+            iistart = imin
+            iistop = imax + overlap
+        elif isinstance(ii, slice):
             if ii.start is None:
                 iistart = imin
             else:
@@ -193,9 +209,9 @@ class _MultiFABWrapper(object):
             The value used to fill in the extra dimensions added
         """
         if self.dim == 1:
-            return missing, missing, index[0]
+            return index[0], missing, missing
         elif self.dim == 2:
-            return index[0], missing, index[1]
+            return index[0], index[1], missing
         elif self.dim == 3:
             return index[0], index[1], index[2]
 
@@ -248,7 +264,11 @@ class _MultiFABWrapper(object):
                 block_slices.append(slice(i1[i] - ilo[i], i2[i] - ilo[i]))
                 global_slices.append(slice(i1[i] - starts[i], i2[i] - starts[i]))
 
+            if ic is None:
+                ic = slice(None)
+
             block_slices.append(ic)
+            global_slices.append(ic)
 
             return tuple(block_slices), tuple(global_slices)
         else:
@@ -268,6 +288,9 @@ class _MultiFABWrapper(object):
         """
         if index == Ellipsis:
             index = self.dim*[slice(None)]
+        elif isinstance(index, slice):
+            # If only one slice passed in, it was not wrapped in a list
+            index = [index]
 
         if len(index) < self.dim+1:
             # Add extra dims to index, including for the component.
@@ -279,7 +302,7 @@ class _MultiFABWrapper(object):
             raise Exception('Too many indices given')
 
         # Expand the indices to length 3
-        ii = self._get_indices(index, slice(None))
+        ii = self._get_indices(index, None)
         ic = index[-1]
 
         ixmin, iymin, izmin = self._get_min_indices()
@@ -343,6 +366,9 @@ class _MultiFABWrapper(object):
         """
         if index == Ellipsis:
             index = tuple(self.dim*[slice(None)])
+        elif isinstance(index, slice):
+            # If only one slice passed in, it was not wrapped in a list
+            index = [index]
 
         if len(index) < self.dim+1:
             # Add extra dims to index, including for the component.
@@ -354,7 +380,7 @@ class _MultiFABWrapper(object):
             raise Exception('Too many indices given')
 
         # Expand the indices to length 3
-        ii = self._get_indices(index, slice(None))
+        ii = self._get_indices(index, None)
         ic = index[-1]
 
         ixmin, iymin, izmin = self._get_min_indices()
@@ -376,7 +402,7 @@ class _MultiFABWrapper(object):
             if not isinstance(ii[0], slice): global_shape[0:0] = [1]
             if not isinstance(ii[1], slice): global_shape[1:1] = [1]
             if not isinstance(ii[2], slice): global_shape[2:2] = [1]
-            if not isinstance(ic   , slice): global_shape[3:3] = [1]
+            if not isinstance(ic   , slice) or len(global_shape) < 4: global_shape[3:3] = [1]
             value3d.shape = global_shape
 
         starts = [ixstart, iystart, izstart]
