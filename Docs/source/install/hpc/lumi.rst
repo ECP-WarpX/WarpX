@@ -22,6 +22,45 @@ If you are new to this system, **please see the following resources**:
   * ``/scratch/$proj``: temporary storage, main storage to be used for disk I/O needs when running simulations on LUMI, purged every 90 days (50TB default quota)
 
 
+.. _building-adastra-preparation:
+
+Preparation
+-----------
+
+Use the following commands to download the WarpX source code:
+
+.. code-block:: bash
+
+   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+
+We use system software modules, add environment hints and further dependencies via the file ``$HOME/adastra_warpx.profile``.
+Create it now:
+
+.. code-block:: bash
+
+   cp $HOME/src/warpx/Tools/machines/lumi-csc/lumi_warpx.profile.example $HOME/lumi_warpx.profile
+
+.. dropdown:: Script Details
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
+
+   .. literalinclude:: ../../../../Tools/machines/lumi-csc/lumi_warpx.profile.example
+      :language: bash
+
+Edit the 2nd line of this script, which sets the ``export proj=""`` variable using a text editor
+such as ``nano``, ``emacs``, or ``vim`` (all available by default on
+LUMI login nodes).
+
+.. important::
+
+   Now, and as the first step on future logins to LUMI, activate these environment settings:
+
+   .. code-block:: bash
+
+      source $HOME/lumi_warpx.profile
+
+
 Installation
 ------------
 
