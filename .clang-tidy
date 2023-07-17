@@ -1,5 +1,8 @@
 Checks: '-*,
-    bugprone-branch-clone,
+    bugprone-*
+    -bugprone-easily-swappable-parameters,
+    -bugprone-implicit-widening-of-multiplication-result,
+    -bugprone-misplaced-widening-cast,
     cppcoreguidelines-avoid-goto,
     misc-const-correctness,
     modernize-avoid-bind,

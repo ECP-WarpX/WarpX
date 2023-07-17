@@ -53,7 +53,7 @@ tensor and :math:`\vec{\eta}` is the resistivity tensor. An expression for the e
 
     .. math::
 
-        \vec{E} = -\frac{1}{en_e}\left( \vec{J}_e\times\vec{B} + \nabla\cdot\vec{P}_e \right)+en_e\vec{\eta}\cdot\vec{J}.
+        \vec{E} = -\frac{1}{en_e}\left( \vec{J}_e\times\vec{B} + \nabla\cdot\vec{P}_e \right)+\vec{\eta}\cdot\vec{J}.
 
 Lastly, if an electron temperature is given from which the electron pressure can
 be calculated, the model is fully constrained and can be evolved given initial

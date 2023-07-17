@@ -19,13 +19,20 @@
  * This enumerated struct is used to index the field probe particle
  * values that are being stored as SoA data. Nattribs
  * is enumerated to give the number of attributes stored.
+ * The strange insertion of `theta` below is due to the use of
+ * GetParticlePosition for the field probe locations, which reads the probe
+ * theta value from PIdx::theta = 4.
  */
 struct FieldProbePIdx
 {
     enum
     {
         Ex = 0, Ey, Ez,
-        Bx, By, Bz,
+        Bx,
+#ifdef WARPX_DIM_RZ
+        theta,      ///< RZ needs all three position components
+#endif
+        By, Bz,
         S, //!< the Poynting vector
         nattribs
     };

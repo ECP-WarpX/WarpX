@@ -39,6 +39,7 @@ This section documents quick-start guides for a selection of supercomputers that
    hpc/fugaku
    hpc/hpc3
    hpc/juwels
+   hpc/karolina
    hpc/lassen
    hpc/lawrencium
    hpc/lumi

@@ -6,11 +6,22 @@ module load LUMI/23.03  partition/G
 module load rocm/5.2.3  # waiting for 5.5 for next bump
 module load buildtools/23.03
 
+# optional: just an additional text editor
+module load nano
+
+# optional: for PSATD in RZ geometry support
+export CMAKE_PREFIX_PATH=${HOME}/sw/lumi/gpu/blaspp-master:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=${HOME}/sw/lumi/gpu/lapackpp-master:$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH=${HOME}/sw/lumi/gpu/blaspp-master/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${HOME}/sw/lumi/gpu/lapackpp-master/lib64:$LD_LIBRARY_PATH
+
 # optional: for QED lookup table generation support
 module load Boost/1.81.0-cpeCray-23.03
 
 # optional: for openPMD support
 module load cray-hdf5/1.12.2.3
+export CMAKE_PREFIX_PATH=${HOME}/sw/lumi/gpu/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=${HOME}/sw/lumi/gpu/adios2-2.8.3:$CMAKE_PREFIX_PATH
 
 # optional: for Python bindings or libEnsemble
 module load cray-python/3.9.13.1
