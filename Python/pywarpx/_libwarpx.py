@@ -525,22 +525,14 @@ class LibWarpX():
             The requested particle struct data
         '''
 
-        particles_per_tile = _LP_c_int()
-        num_tiles = ctypes.c_int(0)
-        data = self.libwarpx_so.warpx_getParticleStructs(
-            ctypes.c_char_p(species_name.encode('utf-8')), level,
-            ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
-        )
+        warpx = self.libwarpx_so.get_instance()
+        mypc = warpx.multi_particle_container()
+        myspc = mypc.get_particle_container_from_name(species_name)
 
         particle_data = []
-        for i in range(num_tiles.value):
-            if particles_per_tile[i] == 0:
-                continue
-            arr = self._array1d_from_pointer(data[i], self._p_dtype, particles_per_tile[i])
-            particle_data.append(arr)
-
-        _libc.free(particles_per_tile)
-        _libc.free(data)
+        for pti in self.libwarpx_so.WarpXParIter(myspc, level):
+            aos_arr = np.array(pti.aos(), copy=False)
+            particle_data.append(aos_arr)
         return particle_data
 
     def get_particle_arrays(self, species_name, comp_name, level):

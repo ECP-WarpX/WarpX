@@ -101,7 +101,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         # run superLU solver to get phi
         self.solve()
         # write phi to WarpX
-        fields.PhiFPWrapper(0, True)[...] = self.phi
+        fields.PhiFPWrapper(0, True)[...] = self.phi[:]
 
     def solve(self):
         """The solution step. Includes getting the boundary potentials and
