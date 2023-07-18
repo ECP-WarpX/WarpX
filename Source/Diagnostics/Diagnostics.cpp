@@ -72,6 +72,31 @@ Diagnostics::BaseReadParameters ()
         }
     }
 
+    // default for writing field output is 1
+    int write_fields = 1;
+    pp.query("write_fields", write_fields);
+    if (write_fields == 0) {
+        if (m_format == "checkpoint") {
+            ablastr::warn_manager::WMRecordWarning(
+                "Diagnostics",
+                "For checkpoint format, write_fields flag must be 1. Overwriting."
+            );
+            pp.add("write_fields", 1);
+        }
+        else if (m_format == "plotfile") {
+            ablastr::warn_manager::WMRecordWarning(
+                "Diagnostics",
+                "Plotfiles do not yet support write_fields = 0. Overwriting. As a work-around, consider selecting only one field in fields_to_plot and coarsening it."
+            );
+            pp.add("write_fields", 1);
+        }
+        else {
+            // if user-defined value for write_fields == 0, then clear field vector
+            m_varnames.clear();
+            varnames_specified = false;
+        }
+    }
+
     // Sanity check if user requests to plot phi
     if (utils::algorithms::is_in(m_varnames_fields, "phi")){
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -337,15 +362,20 @@ Diagnostics::InitDataAfterRestart ()
         InitializeParticleFunctors();
     }
    if (write_species == 0) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            m_format != "checkpoint",
-            "For checkpoint format, write_species flag must be 1."
-        );
-        // if user-defined value for write_species == 0, then clear species vector
-        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
-            m_output_species.at(i_buffer).clear();
+        if (m_format == "checkpoint") {
+            ablastr::warn_manager::WMRecordWarning(
+                "Diagnostics",
+                "For checkpoint format, write_species flag must be 1. Overwriting."
+            );
+            pp_diag_name.add("write_species", 1);
         }
-        m_output_species_names.clear();
+        else {
+            // if user-defined value for write_species == 0, then clear species vector
+            for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
+                m_output_species.at(i_buffer).clear();
+            }
+            m_output_species_names.clear();
+        }
     } else {
         amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
         if ( utils::parser::queryArrWithParser(
@@ -417,15 +447,20 @@ Diagnostics::InitData ()
     }
 
     if (write_species == 0) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            m_format != "checkpoint",
-            "For checkpoint format, write_species flag must be 1."
-        );
-        // if user-defined value for write_species == 0, then clear species vector
-        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
-            m_output_species.at(i_buffer).clear();
+        if (m_format == "checkpoint") {
+            ablastr::warn_manager::WMRecordWarning(
+                "Diagnostics",
+                "For checkpoint format, write_species flag must be 1. Overwriting."
+            );
+            pp_diag_name.add("write_species", 1);
         }
-        m_output_species_names.clear();
+        else {
+            // if user-defined value for write_species == 0, then clear species vector
+            for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer ) {
+                m_output_species.at(i_buffer).clear();
+            }
+            m_output_species_names.clear();
+        }
     } else {
         amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
         if ( utils::parser::queryArrWithParser(
