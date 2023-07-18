@@ -1,3 +1,5 @@
+#include "LaserEnvelope.H"
+
 #include "Evolve/WarpXDtType.H"
 #include "Laser/LaserProfiles.H"
 #include "Particles/Pusher/GetAndSetPosition.H"

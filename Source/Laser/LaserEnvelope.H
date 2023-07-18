@@ -3,6 +3,9 @@
 #include <complex>
 #include <vector>
 
+#include "LaserEnvelope_fwd.H"
+#include "WarpX.H"
+
 #include <AMReX.H>
 #include <iostream>
 #include <vector>
