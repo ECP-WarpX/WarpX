@@ -3116,6 +3116,9 @@ The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.
     Name of the checkpoint file to restart from. Returns an error if the folder does not exist
     or if it is not properly formatted.
 
+* ``warpx.write_diagonstics_on_restart`` (`bool`) optional (default `false`)
+    When `true`, write the diagnostics after restart at the time of the restart.
+
 Intervals parser
 ----------------
 

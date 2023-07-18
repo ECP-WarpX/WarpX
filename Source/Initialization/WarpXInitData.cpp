@@ -453,7 +453,9 @@ WarpX::InitData ()
         // looks at field values will see the composite of the field
         // solution and any external field
         AddExternalFields();
+    }
 
+    if (restart_chkfile.empty() || write_diagonstics_on_restart) {
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush( -1 );
 

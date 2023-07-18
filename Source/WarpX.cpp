@@ -603,6 +603,8 @@ WarpX::ReadParameters ()
             }
         }
 
+        pp_warpx.query("write_diagonstics_on_restart", write_diagonstics_on_restart);
+
         pp_warpx.queryarr("checkpoint_signals", signals_in);
 #if defined(__linux__) || defined(__APPLE__)
         for (const std::string &str : signals_in) {
