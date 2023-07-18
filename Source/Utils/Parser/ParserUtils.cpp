@@ -43,7 +43,8 @@ namespace {
         // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits
         // This accepts x = 2**31-1 but rejects 2**31.
         using namespace amrex::literals;
-        constexpr amrex::Real max_range = (2.0_rt*static_cast<amrex::Real>(std::numeric_limits<int_type>::max()/2+1));
+        constexpr int_type half_max_plus_one = std::numeric_limits<int_type>::max()/2+1;
+        constexpr amrex::Real max_range = (2.0_rt*static_cast<amrex::Real>(half_max_plus_one));
         if (x < max_range) {
             if (std::ceil(x) >= std::numeric_limits<int_type>::min()) {
                 result = static_cast<int_type>(x);

@@ -2665,14 +2665,11 @@ Reduced Diagnostics
         the value of the Poynting Vector :math:`|S|` of the electromagnetic fields,
         at mesh refinement levels from  0 to :math:`n`, at point (:math:`x`, :math:`y`, :math:`z`).
 
-        Note: the norms are always interpolated to the measurement point before they are written
-        to file. The electromagnetic field components are interpolated to the measurement point
-        by default, but can they be saved as non-averaged by setting
-        ``<reduced_diags_name>.raw_fields = true``, in which case the raw fields for the cell
-        containing the measurement point are saved. In RZ geometry, this only saves the
-        0'th azimuthal mode component of the fields.
+        The fields are always interpolated to the measurement point.
         The interpolation order can be set by specifying ``<reduced_diags_name>.interp_order``,
-        otherwise it is set to ``1``.
+        defaulting to ``1``.
+        In RZ geometry, this only saves the
+        0'th azimuthal mode component of the fields.
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
         In a *moving window* simulation, the FieldProbe can be set to follow the moving frame by specifying ``<reduced_diags_name>.do_moving_window_FP = 1`` (default 0).
@@ -2993,6 +2990,9 @@ Reduced Diagnostics
 * ``<reduced_diags_name>.separator`` (`string`) optional (default a `whitespace`)
     The separator between row values in the output file.
     The default separator is a whitespace.
+
+* ``<reduced_diags_name>.precision`` (`integer`) optional (default `14`)
+    The precision used when writing out the data to the text files.
 
 Lookup tables and other settings for QED modules
 ------------------------------------------------

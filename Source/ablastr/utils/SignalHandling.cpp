@@ -8,11 +8,11 @@
 #include "SignalHandling.H"
 #include "TextMsg.H"
 
-#include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_IParser.H>
 
 #include <cctype>
+#include <stdexcept>
 
 // For sigaction() et al.
 #if defined(__linux__) || defined(__APPLE__)
@@ -95,10 +95,10 @@ SignalHandling::parseSignalNameToNumber (const std::string &str)
 
         signals_parser.setConstant(name_upper, sp.value);
         signals_parser.setConstant(name_lower, sp.value);
-        name_upper = "SIG" + name_upper;
-        name_lower = "sig" + name_lower;
-        signals_parser.setConstant(name_upper, sp.value);
-        signals_parser.setConstant(name_lower, sp.value);
+        const auto sig_name_upper = "SIG" + name_upper;
+        const auto sig_name_lower = "sig" + name_lower;
+        signals_parser.setConstant(sig_name_upper, sp.value);
+        signals_parser.setConstant(sig_name_lower, sp.value);
     }
 #endif // #if defined(__linux__) || defined(__APPLE__)
 
