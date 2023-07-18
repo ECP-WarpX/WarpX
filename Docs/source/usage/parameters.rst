@@ -2515,13 +2515,13 @@ BackTransformed Diagnostics
 * ``<diag_name>.do_back_transformed_fields`` (`0` or `1`) optional (default `1`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``
     Whether to back transform the fields or not.
-    Note that for ``BackTransformed`` diagnostics, atleast one of the options
+    Note that for ``BackTransformed`` diagnostics, at least one of the options
     ``<diag_name>.do_back_transformed_fields`` or ``<diag_name>.do_back_transformed_particles`` must be 1.
 
 * ``<diag_name>.do_back_transformed_particles`` (`0` or `1`) optional (default `1`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``
     Whether to back transform the particle data or not.
-    Note that for ``BackTransformed`` diagnostics, atleast one of the options
+    Note that for ``BackTransformed`` diagnostics, at least one of the options
     ``<diag_name>.do_back_transformed_fields`` or ``<diag_name>.do_back_transformed_particles`` must be 1.
     If ``diag_name.write_species = 0``, then ``<diag_name>.do_back_transformed_particles`` will be set
     to 0 in the simulation and particles will not be backtransformed.
