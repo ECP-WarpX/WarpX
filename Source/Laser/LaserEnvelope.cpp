@@ -22,7 +22,7 @@ void LaserEnvelope::ReadParameters ()
     pp_laser_envelopes.query("names", laser_name);
 
     const ParmParse pp_laser_name(laser_name);
-  
+
     // Parse the type of laser profile and set the corresponding flag `profile`
     std::string laser_type_s;
     pp_laser_name.get("profile", laser_type_s);
@@ -61,7 +61,7 @@ void LaserEnvelope::ReadParameters ()
         utils::parser::queryWithParser(pp_laser_name, "phi2", m_phi2);
         utils::parser::queryWithParser(pp_laser_name, "phi0", m_phi0);
     }
- 
+
     amrex::Print() << "The wavelength of the laser is " << m_wavelength << " nm\n";
     amrex::Print() << "The profile waist of the laser is " << m_waist << " s\n";
     amrex::Print() << "The profile peak of the laser is " << m_t_peak << " s\n";
@@ -90,7 +90,7 @@ void LaserEnvelope::AllocateLevelMFs (
 void LaserEnvelope::ClearLevel (const int lev)
 {
     A_laser_envelope[lev].reset();
-} 
+}
 
 Complex LaserEnvelope::FillAmplitude (const amrex::Real x, const amrex::Real y, const amrex::Real z)
 {
@@ -150,7 +150,7 @@ Complex LaserEnvelope::FillAmplitude (const amrex::Real x, const amrex::Real y, 
     const Complex exp_argument = - (x*x + y*y) * inv_complex_waist_2;
     // stcfactor + transverse envelope
     amplitude = ( stcfactor  * amrex::exp( exp_argument )).real();
- 
+
     return amplitude;
 }
 
@@ -191,7 +191,7 @@ void LaserEnvelope::InitData (const int lev)
             A_laser_envelope_arr(i,j,k,0) = FillAmplitude(x, y, z).real();
             A_laser_envelope_arr(i,j,k,1) = FillAmplitude(x, y, z).imag();
 
-            //w_z = 
+            //w_z =
             //Lz = std
             //a_T(i, j, k) = std::exp(-(std::pow(x, 2)+ std::pow(y, 2))/std::pow(w_z,2));
             //a_L(i, j, k) = a_0/(1+std::pow(z,2)) * std::exp(-std::pow((z-zf),2)/std::pow(Lz, 2))
