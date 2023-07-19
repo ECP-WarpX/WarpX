@@ -51,18 +51,30 @@ public:
     /**
      * TODO
      */
-    void InitData ();
+    Complex FillAmplitude (const amrex::Real x, const amrex::Real y, const amrex::Real z);
+
+    /**
+     * TODO
+     */
+    void InitData (const int lev);
 
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> A_laser_envelope;
 
     amrex::Real m_direction;
     amrex::Real m_e_max;
+    amrex::Real m_wavelength;
     amrex::Real m_polarization;
     amrex::Real m_position;
     amrex::Real m_profile_duration;
-    amrex::Real m_profile_focal_distance;
     amrex::Real m_profile;
-    amrex::Real m_profile_t_peak;
-    amrex::Real m_profile_waist;
-    amrex::Real m_wavelength;
+    amrex::Real m_waist;
+    amrex::Real m_duration;
+    amrex::Real m_t_peak;
+    amrex::Real m_z_peak;
+    amrex::Real m_theta_stc;
+    amrex::Real m_focal_distance;
+    amrex::Real m_zeta;
+    amrex::Real m_beta;
+    amrex::Real m_phi2;
+    amrex::Real m_phi0;
 };
