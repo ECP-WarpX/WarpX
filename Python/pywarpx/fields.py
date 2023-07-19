@@ -395,10 +395,12 @@ class _MultiFABWrapper(object):
         if isinstance(value, np.ndarray):
             # Expand the shape of the input array to match the shape of the global array
             # (it needs to be 4-D).
+            # This converts value to an array if needed, and the [...] grabs a view so
+            # that the shape change below doesn't affect value.
+            value3d = np.array(value)[...]
+            global_shape = list(value3d.shape)
             # The shape of 1 is added for the extra dimensions and when index is an integer
             # (in which case the dimension was not in the input array).
-            value3d = np.array(value, copy=False)
-            global_shape = list(value3d.shape)
             if not isinstance(ii[0], slice): global_shape[0:0] = [1]
             if not isinstance(ii[1], slice): global_shape[1:1] = [1]
             if not isinstance(ii[2], slice): global_shape[2:2] = [1]
