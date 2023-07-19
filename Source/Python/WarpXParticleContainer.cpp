@@ -44,42 +44,26 @@ void init_WarpXParticleContainer (py::module& m)
             py::arg("uniqueparticles"), py::arg("id")
         )
         .def("num_real_comps", &WarpXParticleContainer::NumRealComps)
+        .def("num_local_tiles_at_level",
+            &WarpXParticleContainer::numLocalTilesAtLevel,
+            py::arg("level")
+        )
         .def("total_number_of_particles",
             &WarpXParticleContainer::TotalNumberOfParticles,
             py::arg("valid_particles_only"), py::arg("local")
         )
-        // .def("deposit_charge",
-        //     static_cast<void (WarpXParticleContainer::*)(
-        //         WarpXParIter&,
-        //         amrex::Gpu::DeviceVector<amrex::Real> const &,
-        //         const int * const, amrex::MultiFab*,
-        //         const int, const long, const long,
-        //         const int, const int, const int
-        //     )>(&WarpXParticleContainer::DepositCharge),
-        //     py::arg("pti"), py::arg("wp"), py::arg("ion_lev"),
-        //     py::arg("rho"), py::arg("icomp"),
-        //     py::arg("offset"), py::arg("np_to_depose"),
-        //     py::arg("thread_num"), py::arg("lev"), py::arg("depos_lev")
-        // )
         .def("deposit_charge",
-            [](WarpXParticleContainer& pc, WarpXParIter& pti,
-            amrex::Gpu::DeviceVector<amrex::Real> const & wp,
-            const int * const ion_lev,
-            amrex::MultiFab* rho,
-            const int icomp, const long offset, const long np_to_depose,
-            const int thread_num, const int lev, const int depos_lev)
+            [](WarpXParticleContainer& pc,
+            amrex::MultiFab* rho, const int lev)
             {
-                if (*ion_lev == -1)
-                    pc.DepositCharge(
-                        pti, wp, nullptr, rho, icomp, offset, np_to_depose,
-                        thread_num, lev, depos_lev
-                    );
-                else
-                    pc.DepositCharge(
-                        pti, wp, ion_lev, rho, icomp, offset, np_to_depose,
-                        thread_num, lev, depos_lev
-                    );
-            }
+                for (WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
+                {
+                    const long np = pti.numParticles();
+                    auto& wp = pti.GetAttribs(PIdx::w);
+                    pc.DepositCharge(pti, wp, nullptr, rho, 0, 0, np, 0, lev, lev);
+                }
+            },
+            py::arg("rho"), py::arg("lev")
         )
     ;
 }
