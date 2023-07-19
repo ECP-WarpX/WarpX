@@ -56,8 +56,8 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     )pbdoc";
 
     // note: order from parent to child classes
-    init_WarpXParIter(m);
     init_WarpXParticleContainer(m);
+    init_WarpXParIter(m);
     init_MultiParticleContainer(m);
     init_WarpX(m);
 
