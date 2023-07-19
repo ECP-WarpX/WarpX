@@ -3,10 +3,10 @@
  * Authors: Axel Huebl, Remi Lehe
  * License: BSD-3-Clause-LBNL
  */
-#include "pyWarpX.H"
 
 #include <Particles/MultiParticleContainer.H>
 #include <Particles/WarpXParticleContainer.H>
+#include <Python/pyWarpX.H>
 
 namespace py = pybind11;
 
