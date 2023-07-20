@@ -202,8 +202,8 @@ class LibWarpX():
             self.libwarpx_so.check_gridding_for_RZ_spectral()
         self.warpx = self.libwarpx_so.get_instance()
         self.warpx.initialize_data()
-        self.libwarpx_so.execute_python_callback("afterinit");
-        self.libwarpx_so.execute_python_callback("particleloader");
+        self.libwarpx_so.execute_python_callback("afterinit")
+        self.libwarpx_so.execute_python_callback("particleloader")
 
         #self.libwarpx_so.warpx_init()
 
