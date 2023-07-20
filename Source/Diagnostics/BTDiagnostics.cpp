@@ -1174,10 +1174,10 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             const std::string snapshot_job_info_path = snapshot_path + "/warpx_job_info";
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 std::rename(buffer_WarpXHeader_path.c_str(), snapshot_WarpXHeader_path.c_str()) == 0,
-                "Renaming " + buffer_WarpXHeader_path + " to " + snapshot_WarpXHeader_path + " has failed");
+                std::string("Renaming ").append(buffer_WarpXHeader_path).append(" to ").append(snapshot_WarpXHeader_path).append(" has failed"));
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 std::rename(buffer_job_info_path.c_str(), snapshot_job_info_path.c_str()) == 0,
-                "Renaming " + buffer_job_info_path + " to " + snapshot_job_info_path + " has failed");
+                std::string("Renaming ").append(buffer_job_info_path).append(" to ").append(snapshot_job_info_path).append(" has failed"));
         }
 
         if (m_do_back_transformed_fields == true) {
@@ -1203,17 +1203,17 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             if (m_buffer_flush_counter[i_snapshot] == 0 || m_first_flush_after_restart[i_snapshot] == 1) {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str()) == 0,
-                    "Renaming " + recent_Header_filename + " to " + snapshot_Header_filename + " has failed");
+                    std::string("Renaming ").append(recent_Header_filename).append(" to ").append(snapshot_Header_filename).append(" has failed"));
                 Buffer_FabHeader.SetFabName(0, Buffer_FabHeader.fodPrefix(0),
                                             new_snapshotFabFilename,
                                             Buffer_FabHeader.FabHead(0));
                 Buffer_FabHeader.WriteMultiFabHeader();
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_Buffer_FabHeaderFilename.c_str(), snapshot_FabHeaderFilename.c_str()) == 0,
-                    "Renaming " + recent_Buffer_FabHeaderFilename + " to " + snapshot_FabHeaderFilename + " has failed");
+                    std::string("Renaming ").append(recent_Buffer_FabHeaderFilename).append(" to ").append(snapshot_FabHeaderFilename).append(" has failed"));
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_Buffer_FabFilename.c_str(), snapshot_FabFilename.c_str()) == 0,
-                    "Renaming " + recent_Buffer_FabFilename + " to " + snapshot_FabFilename + " has failed");
+                    std::string("Renaming ").append(recent_Buffer_FabFilename).append(" to ").append(snapshot_FabFilename).append(" has failed"));
             } else {
                 // Interleave Header file
                 InterleaveBufferAndSnapshotHeader(recent_Header_filename,
@@ -1223,7 +1223,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                                          new_snapshotFabFilename);
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_Buffer_FabFilename.c_str(), snapshot_FabFilename.c_str()) == 0,
-                    "Renaming " + recent_Buffer_FabFilename + " to " + snapshot_FabFilename + " has failed");
+                    std::string("Renaming ").append(recent_Buffer_FabFilename).append(" to ").append(snapshot_FabFilename).append(" has failed"));
             }
         }
         for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
@@ -1258,28 +1258,30 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                 // copy Header file for the species
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_species_Header.c_str(), snapshot_species_Header.c_str()) == 0,
-                    "Renaming " + recent_species_Header + " to " + snapshot_species_Header + " has failed");
+                    std::string("Renaming ").append(recent_species_Header).append(" to ").append(snapshot_species_Header).append(" has failed"));
                 if (BufferSpeciesHeader.m_total_particles == 0) continue;
                 // if finite number of particles in the output, copy ParticleHdr and Data file
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str()) == 0,
-                    "Renaming " + recent_ParticleHdrFilename + " to " + snapshot_ParticleHdrFilename + " has failed");
+                    std::string("Renaming ").append(recent_ParticleHdrFilename).append(" to ").append(snapshot_ParticleHdrFilename).append(" has failed"));
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str()) == 0,
-                    "Renaming " + recent_ParticleDataFilename + " to " + snapshot_ParticleDataFilename + " has failed");
+                    std::string("Renaming ").append(recent_ParticleDataFilename).append(" to ").append(snapshot_ParticleDataFilename).append(" has failed"));
             } else {
                 InterleaveSpeciesHeader(recent_species_Header,snapshot_species_Header,
                                         m_output_species_names[i], m_buffer_flush_counter[i_snapshot]);
                 if (BufferSpeciesHeader.m_total_particles == 0) continue;
                 if (m_totalParticles_flushed_already[i_snapshot][i]==0) {
-                    std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str()) == 0,
+                    std::string("Renaming ").append(recent_ParticleHdrFilename).append(" to ").append(snapshot_ParticleHdrFilename).append(" has failed"));
                 } else {
                     InterleaveParticleDataHeader(recent_ParticleHdrFilename,
                                                  snapshot_ParticleHdrFilename);
                 }
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str()) == 0,
-                    "Renaming " + recent_ParticleDataFilename + " to " + snapshot_ParticleDataFilename + " has failed");
+                    std::string("Renaming ").append(recent_ParticleDataFilename).append(" to ").append(snapshot_ParticleDataFilename).append(" has failed"));
             }
         }
         // Destroying the recently flushed buffer directory since it is already merged.
