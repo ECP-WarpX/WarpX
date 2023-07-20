@@ -8,11 +8,11 @@
 #include "SignalHandling.H"
 #include "TextMsg.H"
 
-#include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_IParser.H>
 
 #include <cctype>
+#include <stdexcept>
 
 // For sigaction() et al.
 #if defined(__linux__) || defined(__APPLE__)

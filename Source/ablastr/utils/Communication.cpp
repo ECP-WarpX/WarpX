@@ -6,14 +6,20 @@
  */
 #include "Communication.H"
 
-#include <AMReX.H>
 #include <AMReX_BaseFab.H>
 #include <AMReX_BLProfiler.H>
 #include <AMReX_IntVect.H>
 #include <AMReX_FabArray.H>
+#include <AMReX_FabArrayUtility.H>
+#include <AMReX_FabFactory.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_iMultiFab.H>
+#include <AMReX_IndexType.H>
 #include <AMReX_ParmParse.H>
+
+#include <algorithm>
+#include <memory>
+#include <vector>
 
 
 namespace ablastr::utils::communication

@@ -8,7 +8,7 @@
 #ifndef ABLASTR_MSG_LOGGER_H_
 #define ABLASTR_MSG_LOGGER_H_
 
-#include <AMReX.H>
+#include <AMReX_Config.H>
 
 #include <cstdint>
 #include <map>
