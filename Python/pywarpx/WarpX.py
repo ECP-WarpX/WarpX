@@ -25,6 +25,8 @@ from .PSATD import psatd
 from .Particles import particles, particles_list
 from ._libwarpx import libwarpx
 
+import sys
+
 
 class WarpX(Bucket):
     """
@@ -91,7 +93,9 @@ class WarpX(Bucket):
         return argv
 
     def init(self, mpi_comm=None, **kw):
-        argv = ['warpx'] + self.create_argv_list(**kw)
+        # note: argv[0] needs to be an absolute path so it works with AMReX backtraces
+        # https://github.com/AMReX-Codes/amrex/issues/3435
+        argv = [sys.executable] + sys.argv + self.create_argv_list(**kw)
         libwarpx.initialize(argv, mpi_comm=mpi_comm)
 
     def evolve(self, nsteps=-1):
