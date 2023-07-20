@@ -63,6 +63,8 @@ namespace warpx::initialization
     amrex::AMReX*
     amrex_init (int& argc, char**& argv, bool const build_parm_parse, MPI_Comm const mpi_comm)
     {
+        amrex::ParmParse::setMultiLineSupport(false);
+
         return amrex::Initialize(
             argc,
             argv,
