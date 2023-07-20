@@ -529,27 +529,9 @@ public:
 
     static amrex::LayoutData<amrex::Real>* getCosts (int lev);
 
-    void setLoadBalanceEfficiency (const int lev, const amrex::Real efficiency)
-    {
-        if (m_instance)
-        {
-            m_instance->load_balance_efficiency[lev] = efficiency;
-        } else
-        {
-            return;
-        }
-    }
+    void setLoadBalanceEfficiency (const int lev, const amrex::Real efficiency);
 
-    amrex::Real getLoadBalanceEfficiency (const int lev)
-    {
-        if (m_instance)
-        {
-            return m_instance->load_balance_efficiency[lev];
-        } else
-        {
-            return -1;
-        }
-    }
+    amrex::Real getLoadBalanceEfficiency (const int lev);
 
     static amrex::IntVect filter_npass_each_dir;
     BilinearFilter bilinear_filter;
