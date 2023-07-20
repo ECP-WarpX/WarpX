@@ -6,6 +6,7 @@
 # License: BSD-3-Clause-LBNL
 
 import re
+import sys
 
 from . import Particles
 from .Algo import algo
@@ -24,8 +25,6 @@ from .Lasers import lasers, lasers_list
 from .PSATD import psatd
 from .Particles import particles, particles_list
 from ._libwarpx import libwarpx
-
-import sys
 
 
 class WarpX(Bucket):
