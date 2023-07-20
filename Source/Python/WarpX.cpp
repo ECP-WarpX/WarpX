@@ -5,6 +5,7 @@
  */
 #include "pyWarpX.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Particles/ParticleBoundaryBuffer.H"
 
 #include <WarpX.H>
 
@@ -66,7 +67,12 @@ void init_WarpX (py::module& m)
             py::return_value_policy::reference_internal,
             "Return MultiFabs by name, e.g., 'Efield_aux[x][l=0]', 'Efield_cp[x][l=0]', ..."
         )
-        .def("multi_particle_container", &WarpX::GetPartContainer,
+        .def("multi_particle_container",
+            [](WarpX& wx){ return &wx.GetPartContainer(); },
+            py::return_value_policy::reference_internal
+        )
+        .def("get_particle_boundary_buffer",
+            [](WarpX& wx){ return &wx.GetParticleBoundaryBuffer(); },
             py::return_value_policy::reference_internal
         )
 

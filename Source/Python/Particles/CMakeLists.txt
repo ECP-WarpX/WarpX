@@ -8,6 +8,7 @@ foreach(D IN LISTS WarpX_DIMS)
         target_sources(pyWarpX_${SD}
           PRIVATE
             # pybind11
+            ParticleBoundaryBuffer.cpp
             MultiParticleContainer.cpp
             WarpXParticleContainer.cpp
         )

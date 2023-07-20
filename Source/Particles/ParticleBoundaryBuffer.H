@@ -21,6 +21,18 @@ class ParticleBoundaryBuffer
 public:
     ParticleBoundaryBuffer ();
 
+    ~ParticleBoundaryBuffer() {}
+
+    /** Copy constructor for ParticleBoundaryBuffer */
+    ParticleBoundaryBuffer ( const ParticleBoundaryBuffer &) = delete;
+    /** Copy operator for ParticleBoundaryBuffer */
+    ParticleBoundaryBuffer& operator= ( const ParticleBoundaryBuffer & ) = delete;
+
+    /** Move constructor for NamedComponentParticleContainer */
+    ParticleBoundaryBuffer ( ParticleBoundaryBuffer && ) = default;
+    /** Move operator for NamedComponentParticleContainer */
+    ParticleBoundaryBuffer& operator= ( ParticleBoundaryBuffer && ) = default;
+
     int numSpecies() const { return getSpeciesNames().size(); }
 
     const std::vector<std::string>& getSpeciesNames() const {

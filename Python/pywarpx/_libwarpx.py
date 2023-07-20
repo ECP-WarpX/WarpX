@@ -200,7 +200,7 @@ class LibWarpX():
         self.libwarpx_so.read_BC_params()
         if self.geometry_dim == 'rz':
             self.libwarpx_so.check_gridding_for_RZ_spectral()
-        self.warpx = self.libwarpx_so.WarpX()
+        self.warpx = self.libwarpx_so.get_instance()
         self.warpx.initialize_data()
         self.libwarpx_so.execute_python_callback("afterinit");
         self.libwarpx_so.execute_python_callback("particleloader");
@@ -233,8 +233,7 @@ class LibWarpX():
             The refinement level to reference
         '''
 
-        warpx = self.libwarpx_so.get_instance()
-        return warpx.getistep(level)
+        return self.warpx.getistep(level)
 
     def gett_new(self, level=0):
         '''
@@ -248,8 +247,7 @@ class LibWarpX():
             The refinement level to reference
         '''
 
-        warpx = self.libwarpx_so.get_instance()
-        return warpx.gett_new(level)
+        return self.warpx.gett_new(level)
 
     def evolve(self, num_steps=-1):
         '''
@@ -468,8 +466,7 @@ class LibWarpX():
         # uy = uy.astype(self._numpy_particlereal_dtype, copy=False)
         # uz = uz.astype(self._numpy_particlereal_dtype, copy=False)
 
-        warpx = self.libwarpx_so.get_instance()
-        mpc = warpx.multi_particle_container()
+        mpc = self.warpx.multi_particle_container()
         pc = mpc.get_particle_container_from_name(species_name)
         pc.add_n_particles(0, x.size, x, y, z, ux, uy, uz,
             nattr, attr, nattr_int, attr_int, unique_particles)
@@ -495,8 +492,7 @@ class LibWarpX():
             An integer count of the number of particles
         '''
 
-        warpx = self.libwarpx_so.get_instance()
-        mypc = warpx.multi_particle_container()
+        mypc = self.warpx.multi_particle_container()
         myspc = mypc.get_particle_container_from_name(species_name)
         return myspc.total_number_of_particles(True, local)
 
@@ -525,8 +521,7 @@ class LibWarpX():
             The requested particle struct data
         '''
 
-        warpx = self.libwarpx_so.get_instance()
-        mypc = warpx.multi_particle_container()
+        mypc = self.warpx.multi_particle_container()
         myspc = mypc.get_particle_container_from_name(species_name)
 
         particle_data = []
@@ -755,8 +750,8 @@ class LibWarpX():
         int
             Integer corresponding to the index of the requested attribute
         '''
-        warpx = self.libwarpx_so.get_instance()
-        mpc = warpx.multi_particle_container()
+
+        mpc = self.warpx.multi_particle_container()
         pc = mpc.get_particle_container_from_name(species_name)
 
         return self.libwarpx_so.warpx_getParticleCompIndex(
@@ -780,8 +775,8 @@ class LibWarpX():
         comm           : bool
             Should the component be communicated
         '''
-        warpx = self.libwarpx_so.get_instance()
-        mpc = warpx.multi_particle_container()
+
+        mpc = self.warpx.multi_particle_container()
         pc = mpc.get_particle_container_from_name(species_name)
         pc.add_real_comp(pid_name, comm)
 
@@ -823,9 +818,10 @@ class LibWarpX():
             processor's buffer
         '''
 
-        return self.libwarpx_so.warpx_getParticleBoundaryBufferSize(
-            ctypes.c_char_p(species_name.encode('utf-8')),
-            self._get_boundary_number(boundary), local
+        particle_buffer = self.warpx.get_particle_boundary_buffer()
+        return particle_buffer.get_num_particles_in_container(
+            species_name, self._get_boundary_number(boundary),
+            local=local
         )
 
     def get_particle_boundary_buffer_structs(self, species_name, boundary, level):
