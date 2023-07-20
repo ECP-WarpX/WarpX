@@ -48,7 +48,8 @@ void WarpXFluidContainer::ReadParameters()
 void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const DistributionMapping &dm)
 {
     int ncomps = 1;
-    amrex::IntVect nguards = {AMREX_D_DECL(2, 2, 2)};
+    //const amrex::IntVect nguards = {AMREX_D_DECL(2, 2, 2)};
+    const amrex::IntVect nguards(AMREX_D_DECL(2, 2, 2));
 
     WarpX &warpx = WarpX::GetInstance();
 
@@ -199,7 +200,8 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     #elif defined(WARPX_DIM_RZ)
 
     #else
-
+        amrex::MultiFab tmp_Q_minus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
+        amrex::MultiFab tmp_Q_plus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
     #endif
 
     // Advection push
@@ -248,7 +250,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         #elif defined(WARPX_DIM_RZ)
 
         #else
-
+            amrex::Box const box_z = amrex::convert( box, tmp_Q_minus_z.ixType() );
+            amrex::Array4<amrex::Real> Q_minus_z = tmp_Q_minus_z.array(mfi);
+            amrex::Array4<amrex::Real> Q_plus_z = tmp_Q_plus_z.array(mfi);
         #endif
 
         amrex::ParallelFor(tile_box,
@@ -522,6 +526,64 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                 #else
 
+                // Compute the Flux-Jacobian Elements in z
+                auto A00z = ((Uz_cubed)+((Uy_sq)+(Ux_sq))*Uz)/a;
+                auto A01z = -(Ux*Uz)/a;
+                auto A02z = -(Uy*Uz)/a;
+                auto A03z = ((c_sq)+(Uy_sq)+(Ux_sq))/a;
+
+                auto A10z = -(Ux*Uz)/(gamma_cubed);
+                auto A11z = (Uz*(c_sq)+(Uz_cubed)+(Uy_sq)*Uz)/a;
+                auto A12z = -(Ux*Uy*Uz)/a;
+                auto A13z = (Ux*(c_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
+
+                auto A20z = -(Uy*Uz)/(gamma_cubed);
+                auto A21z = -(Ux*Uy*Uz)/a;
+                auto A22z = (Uz*(c_sq)+(Uz_cubed)+(Ux_sq)*Uz)/a;
+                auto A23z = (Uy*(c_sq)+(Uy_cubed)+(Ux_sq)*Uy)/a;
+
+                auto A30z = -(Uz_sq)/(gamma_cubed);
+                auto A31z = -(Ux*(Uz_sq))/a;
+                auto A32z = -(Uy*(Uz_sq))/a;
+                auto A33z = (2.0*Uz*(c_sq)+(Uz_cubed)+(2.0*(Uy_sq)+2.0*(Ux_sq))*Uz)/a;
+
+                // Compute the cell slopes x
+                auto dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
+                auto dQ1x = ave( NUx_arr(i,j,k) - NUx_arr(i-1,j,k) , NUx_arr(i+1,j,k) - NUx_arr(i,j,k) );
+                auto dQ2x = ave( NUy_arr(i,j,k) - NUy_arr(i-1,j,k) , NUy_arr(i+1,j,k) - NUy_arr(i,j,k) );
+                auto dQ3x = ave( NUz_arr(i,j,k) - NUz_arr(i-1,j,k) , NUz_arr(i+1,j,k) - NUz_arr(i,j,k) );
+
+                // Compute the cell slopes z
+                auto dQ0z = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , N_arr(i,j+1,k) - N_arr(i,j,k) );
+                auto dQ1z = ave( NUx_arr(i,j,k) - NUx_arr(i,j-1,k) , NUx_arr(i,j+1,k) - NUx_arr(i,j,k) );
+                auto dQ2z = ave( NUy_arr(i,j,k) - NUy_arr(i,j-1,k) , NUy_arr(i,j+1,k) - NUy_arr(i,j,k) );
+                auto dQ3z = ave( NUz_arr(i,j,k) - NUz_arr(i,j-1,k) , NUz_arr(i,j+1,k) - NUz_arr(i,j,k) );
+
+                // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
+                auto AdQ0z = A00z*dQ0z + A01z*dQ1z + A02z*dQ2z + A03z*dQ3z;
+                auto AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
+                auto AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
+                auto AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
+                auto Q_tilde0 = N_arr(i,j,k)   - cz_half*AdQ0z;
+                auto Q_tilde1 = NUx_arr(i,j,k) - cz_half*AdQ1z;
+                auto Q_tilde2 = NUy_arr(i,j,k) - cz_half*AdQ2z;
+                auto Q_tilde3 = NUz_arr(i,j,k) - cz_half*AdQ3z;
+
+                // Predict Q at the cell edges (x)
+                // (note that _plus is shifted due to grid location)
+                if ( box_z.contains(i,j,k) ) {
+                // Predict Q at the cell edges (z)
+                    Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
+                    Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
+                    Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
+                    Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
+                }
+                if ( box_z.contains(i-1,j,k) ) {
+                    Q_plus_z(i-1,j,k,0) = Q_tilde0 - dQ0z/2.0;
+                    Q_plus_z(i-1,j,k,1) = Q_tilde1 - dQ1z/2.0;
+                    Q_plus_z(i-1,j,k,2) = Q_tilde2 - dQ2z/2.0;
+                    Q_plus_z(i-1,j,k,3) = Q_tilde3 - dQ3z/2.0;
+                }
                 #endif
             }
         );
@@ -558,7 +620,8 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         #elif defined(WARPX_DIM_RZ)
 
         #else
-
+            amrex::Array4<amrex::Real> const &Q_minus_z = tmp_Q_minus_z.array(mfi);
+            amrex::Array4<amrex::Real> const &Q_plus_z = tmp_Q_plus_z.array(mfi);
         #endif
 
 
@@ -648,7 +711,21 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 #elif defined(WARPX_DIM_RZ)
 
                 #else
+                    // compute the fluxes:
+                    auto F0_minusz = flux(Q_minus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,0),  Vz(i-1,j,k),Vz(i,j,k));
+                    auto F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),Vz(i,j,k),  Vz(i+1,j,k));
+                    auto F1_minusz = flux(Q_minus_z(i-1,j,k,1),Q_plus_z(i-1,j,k,1),  Vz(i-1,j,k),Vz(i,j,k));
+                    auto F1_plusz =  flux(Q_minus_z(i,j,k,1),  Q_plus_z(i,j,k,1),Vz(i,j,k),  Vz(i+1,j,k));
+                    auto F2_minusz = flux(Q_minus_z(i-1,j,k,2),Q_plus_z(i-1,j,k,2),  Vz(i-1,j,k),Vz(i,j,k));
+                    auto F2_plusz =  flux(Q_minus_z(i,j,k,2),  Q_plus_z(i,j,k,2),Vz(i,j,k),  Vz(i+1,j,k));
+                    auto F3_minusz = flux(Q_minus_z(i-1,j,k,3),Q_plus_z(i-1,j,k,3),  Vz(i-1,j,k),Vz(i,j,k));
+                    auto F3_plusz =  flux(Q_minus_z(i,j,k,3),  Q_plus_z(i,j,k,3),Vz(i,j,k),  Vz(i+1,j,k));
 
+                    // Update Q from tn -> tn + dt
+                    N_arr(i,j,k) = N_arr(i,j,k) - cz*(F0_plusz - F0_minusz);
+                    NUx_arr(i,j,k) = NUx_arr(i,j,k) - cz*(F1_plusz - F1_minusz);
+                    NUy_arr(i,j,k) = NUy_arr(i,j,k) - cz*(F2_plusz - F2_minusz);
+                    NUz_arr(i,j,k) = NUz_arr(i,j,k) - cz*(F3_plusz - F3_minusz);
                 #endif
             }
         );

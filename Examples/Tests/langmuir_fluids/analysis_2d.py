@@ -105,7 +105,7 @@ ax2.set_ylabel(r'$x$')
 ax2.set_title(r'$E_z$ (theory)')
 # Save figure
 fig.tight_layout()
-fig.savefig('Langmuir_multi_2d_analysis.png', dpi = 200)
+fig.savefig('Langmuir_fluid_multi_2d_analysis.png', dpi = 200)
 
 tolerance_rel = 0.05
 
