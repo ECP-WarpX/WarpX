@@ -549,6 +549,13 @@ if(WarpX_PYTHON)
     set(PYINSTALLOPTIONS "" CACHE STRING
         "Additional parameters to pass to `pip install`")
 
+    # ensure all targets are built before we package them in a wheel
+    set(pyWarpX_INSTALL_TARGET_NAMES)
+    foreach(D IN LISTS WarpX_DIMS)
+        warpx_set_suffix_dims(SD ${D})
+        list(APPEND pyWarpX_INSTALL_TARGET_NAMES pyWarpX_${SD})
+    endforeach()
+
     # add a prefix to custom targets so we do not collide if used as a subproject
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
         set(_WarpX_CUSTOM_TARGET_PREFIX_DEFAULT "")
@@ -567,7 +574,7 @@ if(WarpX_PYTHON)
         WORKING_DIRECTORY
             ${WarpX_BINARY_DIR}
         DEPENDS
-            pyWarpX_${WarpX_DIMS_LAST}
+            ${pyWarpX_INSTALL_TARGET_NAMES}
     )
 
     # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
