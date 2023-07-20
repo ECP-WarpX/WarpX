@@ -6,6 +6,7 @@
 #include "pyWarpX.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
+#include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <WarpX.H>
 

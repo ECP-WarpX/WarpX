@@ -10,16 +10,50 @@
 
 namespace py = pybind11;
 
+namespace warpx {
+    class BoundaryBufferParIter
+        : public amrex::ParIter<0,0,PIdx::nattribs,0,amrex::PinnedArenaAllocator>
+    {
+    public:
+        using amrex::ParIter<0,0,PIdx::nattribs,0,amrex::PinnedArenaAllocator>::ParIter;
+
+        BoundaryBufferParIter(ContainerType& pc, int level) :
+            amrex::ParIter<0,0,PIdx::nattribs,0,amrex::PinnedArenaAllocator>(pc, level) {}
+    };
+}
+
+void init_BoundaryBufferParIter (py::module& m)
+{
+    py::class_<
+        warpx::BoundaryBufferParIter,
+        amrex::ParIter<0,0,PIdx::nattribs,0,amrex::PinnedArenaAllocator>
+    >(m, "BoundaryBufferParIter")
+        .def(py::init<amrex::ParIter<0,0,PIdx::nattribs,0,amrex::PinnedArenaAllocator>::ContainerType&, int>(),
+            py::arg("particle_container"), py::arg("level")
+        )
+    ;
+}
 
 void init_ParticleBoundaryBuffer (py::module& m)
 {
     py::class_<ParticleBoundaryBuffer>(m, "ParticleBoundaryBuffer")
         .def(py::init<>())
+        .def("clear_particles",
+            [](ParticleBoundaryBuffer& pbb) { pbb.clearParticles(); }
+        )
+        .def("get_particle_container",
+            [](ParticleBoundaryBuffer& pbb,
+            const std::string species_name, int boundary) {
+                return &pbb.getParticleBuffer(species_name, boundary);
+            },
+            py::arg("species_name"), py::arg("boundary"),
+            py::return_value_policy::reference_internal
+        )
         .def("get_num_particles_in_container",
-            [](ParticleBoundaryBuffer& pbc,
+            [](ParticleBoundaryBuffer& pbb,
             const std::string species_name, int boundary, bool local)
             {
-                return pbc.getNumParticlesInContainer(species_name, boundary, local);
+                return pbb.getNumParticlesInContainer(species_name, boundary, local);
             },
             py::arg("species_name"), py::arg("boundary"), py::arg("local")=true
         )
