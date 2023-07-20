@@ -75,9 +75,6 @@ class _MultiFABWrapper(object):
         self.level = level
         self.include_ghosts = include_ghosts
 
-        warpx = libwarpx.libwarpx_so.get_instance()
-        # All MultiFab names have the level suffix
-        self.mf = warpx.multifab(f'{self.mf_name}[level={level}]')
         self.dim = libwarpx.dim
 
         # The overlaps list is one along the axes where the grid boundaries overlap the neighboring grid,
@@ -94,15 +91,18 @@ class _MultiFABWrapper(object):
         return self.mf.__iter__()
 
     @property
+    def mf(self):
+        # Always fetch this anew in case the C++ MultiFab is recreated
+        warpx = libwarpx.libwarpx_so.get_instance()
+        # All MultiFab names have the level suffix
+        return warpx.multifab(f'{self.mf_name}[level={self.level}]')
+
+    @property
     def shape(self):
         """Returns the shape of the global array
         """
         min_box = self.mf.box_array().minimal_box()
-        shape = list(min_box.size)
-        ix_type = self.mf.box_array().ix_type()
-        for i in range(self.dim):
-            if ix_type.cell_centered(i):
-                shape[i] -= 1
+        shape = list(min_box.size - min_box.small_end)
         shape.append(self.mf.nComp)
         return tuple(shape)
 
@@ -154,7 +154,7 @@ class _MultiFABWrapper(object):
         lo = warpx.Geom(self.level).ProbLo(idir)
         return lo + np.arange(ilo,ihi+1)*dd + shift
 
-    def _find_start_stop(self, ii, imin, imax, overlap, d):
+    def _find_start_stop(self, ii, imin, imax, d):
         """Given the input index, calculate the start and stop range of the indices.
 
         Parameters
@@ -168,9 +168,6 @@ class _MultiFABWrapper(object):
         imax: integer
             The global highest index value in the specified direction
 
-        overlap: integer
-            Amount neighboring domains overlap
-
         d: integer
             The dimension number, 1, 2, 3, or 4 (4 being the components)
 
@@ -180,21 +177,21 @@ class _MultiFABWrapper(object):
         """
         if ii is None:
             iistart = imin
-            iistop = imax + overlap
+            iistop = imax
         elif isinstance(ii, slice):
             if ii.start is None:
                 iistart = imin
             else:
                 iistart = ii.start
             if ii.stop is None:
-                iistop = imax + overlap
+                iistop = imax
             else:
                 iistop = ii.stop
         else:
             iistart = ii
             iistop = ii + 1
-        assert imin <= iistart <= imax + overlap, Exception(f'Dimension {d} lower index is out of bounds')
-        assert imin <= iistop <= imax + overlap, Exception(f'Dimension {d} upper index is out of bounds')
+        assert imin <= iistart <= imax, Exception(f'Dimension {d} lower index is out of bounds')
+        assert imin <= iistop <= imax, Exception(f'Dimension {d} upper index is out of bounds')
         return iistart, iistop
 
     def _get_indices(self, index, missing):
@@ -216,14 +213,17 @@ class _MultiFABWrapper(object):
             return index[0], index[1], index[2]
 
     def _get_min_indices(self):
-        "Returns the minimum indices, expanded to length 3"
+        """Returns the minimum indices, expanded to length 3"""
         min_box = self.mf.box_array().minimal_box()
         return self._get_indices(min_box.small_end, 0)
 
     def _get_max_indices(self):
-        "Returns the maximum indices, expanded to length 3"
+        """Returns the maximum indices, expanded to length 3.
+        This is the index appropriate for the upper bound of a slice
+        and so includes the +1.
+        """
         min_box = self.mf.box_array().minimal_box()
-        return self._get_indices(min_box.big_end, 1)
+        return self._get_indices(min_box.size - min_box.small_end, 1)
 
     def _get_intersect_slice(self, box, starts, stops, ic):
         """Return the slices where the block intersects with the global slice.
@@ -252,7 +252,7 @@ class _MultiFABWrapper(object):
             The slice of the intersection relative to the global array where the data from individual block will go
         """
         ilo = self._get_indices(box.small_end, 0)
-        ihi = self._get_indices(box.big_end, 1)
+        ihi = self._get_indices(box.size + box.small_end, 1)
         i1 = np.maximum(starts, ilo)
         i2 = np.minimum(stops, ihi)
 
@@ -309,10 +309,10 @@ class _MultiFABWrapper(object):
         ixmax, iymax, izmax = self._get_max_indices()
 
         # Setup the size of the array to be returned
-        ixstart, ixstop = self._find_start_stop(ii[0], ixmin, ixmax, self.overlaps[0], 1)
-        iystart, iystop = self._find_start_stop(ii[1], iymin, iymax, self.overlaps[1], 2)
-        izstart, izstop = self._find_start_stop(ii[2], izmin, izmax, self.overlaps[2], 3)
-        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp(), 0, 4)
+        ixstart, ixstop = self._find_start_stop(ii[0], ixmin, ixmax, 1)
+        iystart, iystop = self._find_start_stop(ii[1], iymin, iymax, 2)
+        izstart, izstop = self._find_start_stop(ii[2], izmin, izmax, 3)
+        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp(), 4)
 
         # Gather the data to be included in a list to be sent to other processes
         starts = [ixstart, iystart, izstart]
@@ -340,12 +340,19 @@ class _MultiFABWrapper(object):
                         max(0, iystop - iystart),
                         max(0, izstop - izstart),
                         max(0, icstop - icstart))
-        result_global = np.zeros(result_shape, dtype=all_datalist[0][0][1].dtype)
 
         # Now, copy the data into the result array
+        result_global = None
         for datalist in all_datalist:
             for global_slices, f_arr in datalist:
+                if result_global is None:
+                    # Delay allocation to here so that the type can be obtained
+                    result_global = np.zeros(result_shape, dtype=f_arr.dtype)
                 result_global[global_slices] = f_arr
+
+        if result_global is None:
+            # Something went wrong with the index and no data was found. Return an empty array.
+            result_global = np.zeros(0)
 
         # Remove dimensions of length 1, and if all dimensions
         # are removed, return a scalar (that's what the [()] does)
@@ -387,10 +394,10 @@ class _MultiFABWrapper(object):
         ixmax, iymax, izmax = self._get_max_indices()
 
         # Setup the size of the global array to be set
-        ixstart, ixstop = self._find_start_stop(ii[0], ixmin, ixmax, self.overlaps[0], 1)
-        iystart, iystop = self._find_start_stop(ii[1], iymin, iymax, self.overlaps[1], 2)
-        izstart, izstop = self._find_start_stop(ii[2], izmin, izmax, self.overlaps[2], 3)
-        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp(), 0, 4)
+        ixstart, ixstop = self._find_start_stop(ii[0], ixmin, ixmax, 1)
+        iystart, iystop = self._find_start_stop(ii[1], iymin, iymax, 2)
+        izstart, izstop = self._find_start_stop(ii[2], izmin, izmax, 3)
+        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp(), 4)
 
         if isinstance(value, np.ndarray):
             # Expand the shape of the input array to match the shape of the global array
