@@ -468,10 +468,10 @@ void ParticleExtrema::ComputeDiags (int step)
                         }
                         return {chi,chi};
                     });
-                    auto val = reduce_data.value();
-                    chimin[lev] = get<0>(val);
-                    chimax[lev] = get<1>(val);
                 }
+                auto val = reduce_data.value();
+                chimin[lev] = get<0>(val);
+                chimax[lev] = get<1>(val);
                 chimin_f = *std::min_element(chimin.begin(), chimin.end());
                 chimax_f = *std::max_element(chimax.begin(), chimax.end());
             }
