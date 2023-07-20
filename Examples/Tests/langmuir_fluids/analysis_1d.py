@@ -12,7 +12,6 @@
 # The electric field in the simulation is given (in theory) by:
 # $$ E_z = \epsilon \,\frac{m_e c^2 k_z}{q_e}\sin(k_z z)\sin( \omega_p t)$$
 import os
-import re
 import sys
 
 import matplotlib
