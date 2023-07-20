@@ -135,9 +135,14 @@ FieldProbe::FieldProbe (std::string rd_name)
         );
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
-    pp_rd_name.query("raw_fields", raw_fields);
     utils::parser::queryWithParser(pp_rd_name, "interp_order", interp_order);
     pp_rd_name.query("do_moving_window_FP", do_moving_window_FP);
+
+    bool raw_fields;
+    const bool raw_fields_specified = pp_rd_name.query("raw_fields", raw_fields);
+    if (raw_fields_specified) {
+        WARPX_ABORT_WITH_MESSAGE("The field probe raw_fields options is obsolete. To get the equivalent, set interp_order = 0");
+    }
 
     if (WarpX::gamma_boost > 1.0_rt)
     {
@@ -372,8 +377,6 @@ void FieldProbe::ComputeDiags (int step)
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
-        const amrex::Geometry& gm = warpx.Geom(lev);
-        const auto prob_lo = gm.ProbLo();
         amrex::Real const dt = WarpX::GetInstance().getdt(lev);
         // Calculates particle movement in moving window sims
         amrex::Real move_dist = 0.0;
@@ -455,18 +458,6 @@ void FieldProbe::ComputeDiags (int step)
             }
             if( ProbeInDomain() )
             {
-                const auto cell_size = gm.CellSizeArray();
-                const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
-#if defined(WARPX_DIM_1D_Z)
-                const int j_probe = 0;
-                const int k_probe = 0;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
-                const int k_probe = 0;
-#elif defined(WARPX_DIM_3D)
-                const int j_probe = static_cast<int>(amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]));
-                const int k_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]));
-#endif
                 const auto &arrEx = Ex[pti].array();
                 const auto &arrEy = Ey[pti].array();
                 const auto &arrEz = Ez[pti].array();
@@ -501,7 +492,6 @@ void FieldProbe::ComputeDiags (int step)
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
                 const int temp_modes = WarpX::n_rz_azimuthal_modes;
                 const int temp_interp_order = interp_order;
-                const bool temp_raw_fields = raw_fields;
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
 
                 // Interpolating to the probe positions for each particle
@@ -514,17 +504,7 @@ void FieldProbe::ComputeDiags (int step)
                     amrex::ParticleReal Bxp = 0._prt, Byp = 0._prt, Bzp = 0._prt;
 
                     // first gather E and B to the particle positions
-                    if (temp_raw_fields)
-                    {
-                        Exp = arrEx(i_probe, j_probe, k_probe);
-                        Eyp = arrEy(i_probe, j_probe, k_probe);
-                        Ezp = arrEz(i_probe, j_probe, k_probe);
-                        Bxp = arrBx(i_probe, j_probe, k_probe);
-                        Byp = arrBy(i_probe, j_probe, k_probe);
-                        Bzp = arrBz(i_probe, j_probe, k_probe);
-                    }
-                    else
-                        doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                    doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
                                    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
                                    dx_arr, xyzmin_arr, lo, temp_modes,
