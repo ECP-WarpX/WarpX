@@ -3,8 +3,9 @@
 # --- Input file to test the particle scraper and the Python wrappers
 # --- to access the buffer of scraped particles.
 
-from pywarpx import particle_containers, picmi
 import numpy as np
+
+from pywarpx import particle_containers, picmi
 
 ##########################
 # numerics parameters
