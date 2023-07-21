@@ -1017,7 +1017,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         // Exchange guard cells
         if (local == false) {
             ablastr::utils::communication::SumBoundary(
-                *rho[lev], 0, rho[lev]->nComp(), rho[lev]->nGrowVect(), amrex::IntVect(0),
+                *rho[lev], 0, rho[lev]->nComp(), rho[lev]->nGrowVect(), rho[lev]->nGrowVect(),
                 WarpX::do_single_precision_comms, m_gdb->Geom(lev).periodicity());
         }
 
@@ -1112,7 +1112,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 
     if (local == false) {
         ablastr::utils::communication::SumBoundary(
-            *rho, 0, rho->nComp(), rho->nGrowVect(), amrex::IntVect(0),
+            *rho, 0, rho->nComp(), rho->nGrowVect(), rho->nGrowVect(),
             WarpX::do_single_precision_comms, gm.periodicity());
     }
 
