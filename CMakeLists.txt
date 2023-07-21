@@ -232,6 +232,9 @@ foreach(D IN LISTS WarpX_DIMS)
             POSITION_INDEPENDENT_CODE ON
             WINDOWS_EXPORT_ALL_SYMBOLS ON
         )
+    endif()
+
+    if(WarpX_PYTHON OR WarpX_LIB)
         set(ABLASTR_POSITION_INDEPENDENT_CODE ON CACHE BOOL
             "Build ABLASTR with position independent code" FORCE)
     endif()

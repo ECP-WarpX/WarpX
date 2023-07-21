@@ -95,6 +95,12 @@ macro(find_amrex)
         #   openPMD: currently triggers shared libs (TODO)
         if(WarpX_PYTHON OR (WarpX_LIB AND BUILD_SHARED_LIBS) OR ABLASTR_POSITION_INDEPENDENT_CODE OR WarpX_OPENPMD)
             set(AMReX_PIC ON CACHE INTERNAL "")
+
+            # WE NEED AMReX AS SHARED LIB, OTHERWISE WE CANNOT SHARE ITS GLOBALS
+            # BETWEEN MULTIPLE PYTHON MODULES
+            # TODO this is likely an export/symbol hiding issue that we could
+            #      alleviate later on
+            set(AMReX_BUILD_SHARED_LIBS ON CACHE BOOL "Build AMReX shared library" FORCE)
         endif()
 
         # IPO/LTO
