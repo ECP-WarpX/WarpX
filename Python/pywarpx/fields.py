@@ -526,6 +526,23 @@ class _MultiFABWrapper(object):
                 else:
                     mf_arr[block_slices] = value
 
+    def min(self, *args):
+        return self.mf.min(*args)
+
+    def max(self, *args):
+        return self.mf.max(*args)
+
+    def sum(self, *args):
+        return self.mf.sum(*args)
+
+    def min_index(self, *args):
+        return self.mf.minIndex(*args)
+
+    def max_index(self, *args):
+        return self.mf.maxIndex(*args)
+
+    def norm0(self, *args):
+        return self.mf.norm0(*args)
 
 def ExWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(mf_name=f'Efield_aux[x]', level=level, include_ghosts=include_ghosts)
