@@ -232,7 +232,7 @@ bool WarpX::do_device_synchronize = false;
 
 std::unique_ptr<WarpX> WarpX::m_instance = nullptr;
 
-[[nodiscard]] std::unique_ptr<WarpX> WarpX::MakeWarpX ()
+void WarpX::MakeWarpX ()
 {
     ParseGeometryInput();
 
@@ -243,14 +243,14 @@ std::unique_ptr<WarpX> WarpX::m_instance = nullptr;
     CheckGriddingForRZSpectral();
 #endif
 
-  return std::make_unique<WarpX>();
+    m_instance = std::make_unique<WarpX>();
 }
 
 WarpX&
 WarpX::GetInstance ()
 {
     if (!m_instance) {
-        m_instance = MakeWarpX();
+        WARPX_ABORT_WITH_MESSAGE("WarpX object is not instantiated. Please call MakeWarpX()");
     }
     return *m_instance;
 }
@@ -314,12 +314,6 @@ WarpX::WarpX ()
 
     // Particle Boundary Buffer (i.e., scraped particles on boundary)
     m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
-
-    // Diagnostics
-    multi_diags = std::make_unique<MultiDiagnostics>();
-
-    /** create object for reduced diagnostics */
-    reduced_diags = std::make_unique<MultiReducedDiags>();
 
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);

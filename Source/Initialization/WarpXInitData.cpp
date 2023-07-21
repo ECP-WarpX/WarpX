@@ -387,6 +387,12 @@ WarpX::InitData ()
 
     Print() << utils::logo::get_logo();
 
+    // Diagnostics
+    multi_diags = std::make_unique<MultiDiagnostics>();
+
+    /** create object for reduced diagnostics */
+    reduced_diags = std::make_unique<MultiReducedDiags>();
+
     // WarpX::computeMaxStepBoostAccelerator
     // needs to start from the initial zmin_domain_boost,
     // even if restarting from a checkpoint file

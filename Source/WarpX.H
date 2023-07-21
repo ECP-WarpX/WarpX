@@ -90,6 +90,12 @@ public:
      */
     WarpX ();
 
+    /**
+     * \brief
+     * This method creates a new instance of the WarpX class.
+     */
+    static void MakeWarpX ();
+
     static WarpX& GetInstance ();
 
     static void ResetInstance ();
@@ -1089,12 +1095,6 @@ public:
     const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}
 
 protected:
-
-    /**
-     * \brief
-     * This method creates a new instance of the WarpX class.
-     */
-    [[nodiscard]] static std::unique_ptr<WarpX> MakeWarpX ();
 
     /**
      * \brief

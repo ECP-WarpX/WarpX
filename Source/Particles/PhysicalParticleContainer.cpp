@@ -236,7 +236,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 {
     BackwardCompatibility();
 
-    plasma_injector = std::make_unique<PlasmaInjector>(species_id, species_name);
+    plasma_injector = std::make_unique<PlasmaInjector>(species_id, species_name, amr_core->Geom(0));
     physical_species = plasma_injector->getPhysicalSpecies();
     charge = plasma_injector->getCharge();
     mass = plasma_injector->getMass();

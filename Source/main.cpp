@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
         auto timer = ablastr::utils::timer::Timer{};
         timer.record_start_time();
 
+        WarpX::MakeWarpX();
         auto& warpx = WarpX::GetInstance();
 
         warpx.InitData();
