@@ -3,7 +3,7 @@
 # --- Input file to test the particle scraper and the Python wrappers
 # --- to access the buffer of scraped particles.
 
-from pywarpx import picmi
+from pywarpx import particle_containers, picmi
 
 ##########################
 # numerics parameters
@@ -118,11 +118,13 @@ from mpi4py import MPI as mpi
 
 my_id = sim.extension.getMyProc()
 
-n = sim.extension.get_particle_boundary_buffer_size("electrons", 'eb')
+particle_buffer = particle_containers.ParticleBoundaryBufferWrapper()
+
+n = particle_buffer.get_particle_boundary_buffer_size("electrons", 'eb')
 print(f"Number of electrons in buffer (proc #{my_id}): {n}")
 assert n == 612
 
-scraped_steps = sim.extension.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0)
+scraped_steps = particle_buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0)
 for arr in scraped_steps:
     assert all(arr > 40)
 
