@@ -61,4 +61,3 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
   include("/home/luca/Projects/WarpX/build_clang_tidy/Source/Diagnostics/ReducedDiags/cmake_install.cmake")
 endif()
-
