@@ -44,6 +44,11 @@ FCPPMLWrapper, GCPPMLWrapper
 import numpy as np
 
 try:
+    import cupy as cp
+except ImportError:
+    cp = None
+
+try:
     from mpi4py import MPI as mpi
     comm_world = mpi.COMM_WORLD
     npes = comm_world.Get_size()
@@ -402,8 +407,15 @@ class _MultiFABWrapper(object):
                 # the three dimensions plus the components, even when
                 # self.dim < 3. The transpose is taken since the thing
                 # returned by self.mf.array(mfi) is in C ordering.
-                mf_arr = np.array(self.mf.array(mfi), copy=False).T
-                datalist.append((global_slices, mf_arr[block_slices]))
+                device_arr4 = self.mf.array(mfi)
+                if cp is not None:
+                    device_arr = cp.array(device_arr4, copy=False).T
+                    # Copy the data from the device to the host
+                    slice_arr = cp.asnumpy(device_arr[block_slices])
+                else:
+                    device_arr = np.array(device_arr4, copy=False).T
+                    slice_arr = device_arr[block_slices]
+                datalist.append((global_slices, slice_arr))
 
         # Gather the data from all processors
         if npes == 1:
@@ -501,9 +513,16 @@ class _MultiFABWrapper(object):
             box = mfi.tilebox()
             block_slices, global_slices = self._get_intersect_slice(box, starts, stops, ic)
             if global_slices is not None:
-                mf_arr = np.array(self.mf.array(mfi), copy=False).T
+                if cp is not None:
+                    mf_arr = cp.array(self.mf.array(mfi), copy=False).T
+                else:
+                    mf_arr = np.array(self.mf.array(mfi), copy=False).T
                 if isinstance(value, np.ndarray):
-                    mf_arr[block_slices] = value3d[global_slices]
+                    slice_value = value3d[global_slices]
+                    if cp is not None:
+                        # Copy data from host to device
+                        slice_value = cp.asarray(value3d[global_slices])
+                    mf_arr[block_slices] = slice_value
                 else:
                     mf_arr[block_slices] = value
 
