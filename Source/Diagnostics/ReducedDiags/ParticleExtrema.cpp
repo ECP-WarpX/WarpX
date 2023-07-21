@@ -403,6 +403,11 @@ void ParticleExtrema::ComputeDiags (int step)
                 const MultiFab & By = warpx.getBfield(lev,1);
                 const MultiFab & Bz = warpx.getBfield(lev,2);
 
+                // declare reduce_op
+                ReduceOps<ReduceOpMin, ReduceOpMax> reduce_op;
+                ReduceData<Real, Real> reduce_data(reduce_op);
+                using ReduceTuple = typename decltype(reduce_data)::Type;
+
                 // Loop over boxes
                 for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
                 {
@@ -433,10 +438,7 @@ void ParticleExtrema::ComputeDiags (int step)
                     const IndexType by_type = By[pti].box().ixType();
                     const IndexType bz_type = Bz[pti].box().ixType();
 
-                    // declare reduce_op
-                    ReduceOps<ReduceOpMin, ReduceOpMax> reduce_op;
-                    ReduceData<Real, Real> reduce_data(reduce_op);
-                    using ReduceTuple = typename decltype(reduce_data)::Type;
+                    // evaluate reduce_op
                     reduce_op.eval(pti.numParticles(), reduce_data,
                     [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                     {
@@ -466,14 +468,15 @@ void ParticleExtrema::ComputeDiags (int step)
                         }
                         return {chi,chi};
                     });
-                    chimin[lev] = get<0>(reduce_data.value());
-                    chimax[lev] = get<1>(reduce_data.value());
                 }
-                chimin_f = *std::min_element(chimin.begin(), chimin.end());
-                chimax_f = *std::max_element(chimax.begin(), chimax.end());
+                auto val = reduce_data.value();
+                chimin[lev] = get<0>(val);
+                chimax[lev] = get<1>(val);
             }
-            ParallelDescriptor::ReduceRealMin(chimin_f);
-            ParallelDescriptor::ReduceRealMax(chimax_f);
+            chimin_f = *std::min_element(chimin.begin(), chimin.end());
+            chimax_f = *std::max_element(chimax.begin(), chimax.end());
+            ParallelDescriptor::ReduceRealMin(chimin_f, ParallelDescriptor::IOProcessorNumber());
+            ParallelDescriptor::ReduceRealMax(chimax_f, ParallelDescriptor::IOProcessorNumber());
         }
 #endif
 
