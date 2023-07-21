@@ -162,7 +162,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nattr_int <= NumIntComps(),
                                      "Too many integer attributes specified");
 
-    int ibegin, iend;
+    int ibegin = 0, iend = 0;
     if (uniqueparticles) {
         ibegin = 0;
         iend = n;
@@ -1094,7 +1094,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
 
-            int* AMREX_RESTRICT ion_lev;
+            int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization){
                 ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
             } else {

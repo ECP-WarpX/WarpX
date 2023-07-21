@@ -45,7 +45,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
             utils::parser::makeParser(background_density_str, {"x", "y", "z", "t"});
     }
 
-    amrex::ParticleReal background_temperature;
+    amrex::ParticleReal background_temperature = 0.0_rt;
     if (utils::parser::queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             (background_temperature >= 0), "The background temperature must be positive."
@@ -165,7 +165,7 @@ amrex::ParticleReal
 BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processes)
 {
     using namespace amrex::literals;
-    amrex::ParticleReal nu, nu_max = 0.0;
+    amrex::ParticleReal nu = 0.0_rt, nu_max = 0.0_rt;
     amrex::ParticleReal E_start = 1e-4_prt;
     amrex::ParticleReal E_end = 5000._prt;
     amrex::ParticleReal E_step = 0.2_prt;

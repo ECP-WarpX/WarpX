@@ -154,8 +154,8 @@ void doDepositionShapeN (const GetParticlePosition& GetPosition,
             const amrex::Real xpmid = xp + relative_time*vx;
             const amrex::Real ypmid = yp + relative_time*vy;
             const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
-            amrex::Real costheta;
-            amrex::Real sintheta;
+            amrex::Real costheta = 0.0_rt;
+            amrex::Real sintheta = 0.0_rt;
             if (rpmid > 0._rt) {
                 costheta = xpmid/rpmid;
                 sintheta = ypmid/rpmid;

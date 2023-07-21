@@ -192,7 +192,7 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
     {
         const int start = temp_slice.getStart();
         const int period = temp_slice.getPeriod();
-        int btd_iter_ind;
+        int btd_iter_ind = 0;
         // for Slice temp_slice in m_slices,
         // determine the index in m_btd_iterations where temp_slice's starting value goes
         //

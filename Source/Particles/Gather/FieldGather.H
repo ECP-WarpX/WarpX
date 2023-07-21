@@ -290,8 +290,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 
 #ifdef WARPX_DIM_RZ
 
-    amrex::Real costheta;
-    amrex::Real sintheta;
+    amrex::Real costheta = 0.0_rt;
+    amrex::Real sintheta = 0.0_rt;
     if (rp > 0.) {
         costheta = xp/rp;
         sintheta = yp/rp;
