@@ -9,7 +9,6 @@
 import numpy as np
 
 from ._libwarpx import libwarpx
-from .picmi import constants
 
 
 class ParticleContainerWrapper(object):
@@ -169,30 +168,6 @@ class ParticleContainerWrapper(object):
         return self.particle_container.total_number_of_particles(True, local)
     nps = property(get_particle_count)
 
-    def get_particle_comp_index(self, pid_name):
-        '''
-        Get the component index for a given particle attribute. This is useful
-        to get the correct ordering of attributes when adding new particles using
-        `add_particles()`.
-
-        Parameters
-        ----------
-
-        pid_name       : str
-            Name of the component for which the index will be returned
-
-        Returns
-        -------
-
-        int
-            Integer corresponding to the index of the requested attribute
-        '''
-        raise NotImplementedError()
-        return self.libwarpx_so.warpx_getParticleCompIndex(
-            ctypes.c_char_p(species_name.encode('utf-8')),
-            ctypes.c_char_p(pid_name.encode('utf-8'))
-        )
-
     def add_real_comp(self, pid_name, comm=True):
         '''
         Add a real component to the particle data array.
@@ -258,32 +233,13 @@ class ParticleContainerWrapper(object):
         List of numpy arrays
             The requested particle array data
         '''
-        raise NotImplementedError()
-        particles_per_tile = _LP_c_int()
-        num_tiles = ctypes.c_int(0)
-        data = self.libwarpx_so.warpx_getParticleArrays(
-            ctypes.c_char_p(species_name.encode('utf-8')),
-            ctypes.c_char_p(comp_name.encode('utf-8')),
-            level, ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
-        )
+        comp_idx = self.particle_container.get_comp_index(comp_name)
 
-        particle_data = []
-        for i in range(num_tiles.value):
-            if particles_per_tile[i] == 0:
-                continue
-            if not data[i]:
-                raise Exception(f'get_particle_arrays: data[i] for i={i} was not initialized')
-            arr = np.ctypeslib.as_array(data[i], (particles_per_tile[i],))
-            try:
-                # This fails on some versions of numpy
-                arr.setflags(write=1)
-            except ValueError:
-                pass
-            particle_data.append(arr)
-
-        _libc.free(particles_per_tile)
-        _libc.free(data)
-        return particle_data
+        data_array = []
+        for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
+            soa = pti.soa()
+            data_array.append(soa.GetRealData()[comp_idx])
+        return data_array
 
     def get_particle_id(self, level=0):
         '''
@@ -591,49 +547,12 @@ class ParticleBoundaryBufferWrapper(object):
                 soa = pti.soa()
                 data_array.append(soa.GetIntData()[comp_idx])
         else:
-            sim_part_container_wrapper = ParticleContainerWrapper(species_name)
+            mypc = libwarpx.warpx.multi_particle_container()
+            sim_part_container_wrapper = mypc.get_particle_container_from_name(species_name)
             comp_idx = sim_part_container_wrapper.get_comp_index(comp_name)
             data_array.append(soa.GetRealData()[comp_idx])
 
         return data_array
-
-
-
-
-
-        particles_per_tile = _LP_c_int()
-        num_tiles = ctypes.c_int(0)
-        if comp_name == 'step_scraped':
-            data = self.libwarpx_so.warpx_getParticleBoundaryBufferScrapedSteps(
-                ctypes.c_char_p(species_name.encode('utf-8')),
-                self._get_boundary_number(boundary), level,
-                ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
-            )
-        else:
-            data = self.libwarpx_so.warpx_getParticleBoundaryBuffer(
-                ctypes.c_char_p(species_name.encode('utf-8')),
-                self._get_boundary_number(boundary), level,
-                ctypes.byref(num_tiles), ctypes.byref(particles_per_tile),
-                ctypes.c_char_p(comp_name.encode('utf-8'))
-            )
-
-        particle_data = []
-        for i in range(num_tiles.value):
-            if particles_per_tile[i] == 0:
-                continue
-            if not data[i]:
-                raise Exception(f'get_particle_arrays: data[i] for i={i} was not initialized')
-            arr = np.ctypeslib.as_array(data[i], (particles_per_tile[i],))
-            try:
-                # This fails on some versions of numpy
-                arr.setflags(write=1)
-            except ValueError:
-                pass
-            particle_data.append(arr)
-
-        _libc.free(particles_per_tile)
-        _libc.free(data)
-        return particle_data
 
     def clear_buffer(self):
         '''

@@ -329,9 +329,7 @@ class LibWarpX():
         sync_rho       : bool
             If True, perform MPI exchange and properly set boundary cells for rho_fp.
         '''
-        warpx = self.libwarpx_so.get_instance()
-
-        rho_fp = warpx.multifab(f'rho_fp[level={level}]')
+        rho_fp = self.warpx.multifab(f'rho_fp[level={level}]')
 
         if rho_fp is None:
             raise RuntimeError("Multifab `rho_fp` is not allocated.")
@@ -345,15 +343,15 @@ class LibWarpX():
             rho_fp.set_val(0.0)
 
         # deposit the charge density from the desired species
-        mypc = warpx.multi_particle_container()
+        mypc = self.warpx.multi_particle_container()
         myspc = mypc.get_particle_container_from_name(species_name)
         myspc.deposit_charge(rho_fp, level)
 
         if self.geometry_dim == 'rz':
-            warpx.apply_inverse_volume_scaling_to_charge_density(rho_fp, level)
+            self.warpx.apply_inverse_volume_scaling_to_charge_density(rho_fp, level)
 
         if sync_rho:
-            warpx.sync_rho()
+            self.warpx.sync_rho()
 
     def set_potential_EB(self, potential):
         """
@@ -365,7 +363,7 @@ class LibWarpX():
         potential : str
             The expression string
         """
-        self.libwarpx_so.warpx_setPotentialEB(ctypes.c_char_p(potential.encode('utf-8')))
+        self.warpx.set_potential_on_eb(potential)
 
 
 libwarpx = LibWarpX()

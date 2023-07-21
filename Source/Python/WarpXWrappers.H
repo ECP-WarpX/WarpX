@@ -72,30 +72,15 @@ extern "C" {
         const char* char_species_name, int lev, int* num_tiles,
         int** particles_per_tile);
 
-    amrex::ParticleReal** warpx_getParticleArrays(
-        const char* char_species_name, const char* char_comp_name, int lev,
-        int* num_tiles, int** particles_per_tile);
-
-    int warpx_getParticleCompIndex(
-        const char* char_species_name, const char* char_comp_name);
-
     amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local);
-
-    int warpx_getParticleBoundaryBufferSize(const char* species_name, int boundary, bool local);
 
     int** warpx_getParticleBoundaryBufferScrapedSteps(
         const char* species_name, int boundary, int lev,
         int* num_tiles, int** particles_per_tile);
 
-    amrex::ParticleReal** warpx_getParticleBoundaryBuffer(
-        const char* species_name, int boundary, int lev,
-        int* num_tiles, int** particles_per_tile, const char* comp_name);
-
     amrex::ParticleReal** warpx_getParticleBoundaryBufferStructs(
             const char* species_name, int boundary, int lev,
             int* num_tiles, int** particles_per_tile);
-
-    void warpx_clearParticleBoundaryBuffer ();
 
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);

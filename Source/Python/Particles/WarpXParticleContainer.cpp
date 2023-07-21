@@ -44,6 +44,14 @@ void init_WarpXParticleContainer (py::module& m)
             py::arg("uniqueparticles"), py::arg("id")
         )
         .def("num_real_comps", &WarpXParticleContainer::NumRealComps)
+        .def("get_comp_index",
+            [](WarpXParticleContainer& pc, std::string comp_name)
+            {
+                auto particle_comps = pc.getParticleComps();
+                return particle_comps.at(comp_name);
+            },
+            py::arg("comp_name")
+        )
         .def("num_local_tiles_at_level",
             &WarpXParticleContainer::numLocalTilesAtLevel,
             py::arg("level")
