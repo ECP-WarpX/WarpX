@@ -13,6 +13,9 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
     - name: CCache Cache
       uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
@@ -38,7 +41,7 @@ jobs:
         cmake --build build --config Debug --parallel 2
         if(!$?) { Exit $LASTEXITCODE }
 
-        C:/hostedtoolcache/windows/Python/3.11.3/x64/python3.exe -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install --upgrade pip setuptools wheel
         if(!$?) { Exit $LASTEXITCODE }
         cmake --build build --config Debug --target pip_install
         if(!$?) { Exit $LASTEXITCODE }
@@ -53,6 +56,10 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    - uses: seanmiddleditch/gha-setup-ninja@master
     - name: CCache Cache
       uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
@@ -65,7 +72,6 @@ jobs:
         restore-keys: |
           ccache-windows-winclang-${{ hashFiles('.github/workflows/windows.yml') }}-
           ccache-windows-winclang-
-    - uses: seanmiddleditch/gha-setup-ninja@master
     - name: Build & Install
       shell: cmd
       run: |
@@ -85,10 +91,10 @@ jobs:
         cmake --build build --config Release --parallel 2
         if errorlevel 1 exit 1
 
-        C:/hostedtoolcache/windows/Python/3.11.3/x64/python3.exe -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install --upgrade pip setuptools wheel
         if errorlevel 1 exit 1
         cmake --build build --config Release --target pip_install
         if errorlevel 1 exit 1
 
-        C:/hostedtoolcache/windows/Python/3.11.3/x64/python3.exe Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
+        python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
         if errorlevel 1 exit 1

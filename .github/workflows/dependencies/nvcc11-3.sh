@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2020-2022 The WarpX Community
+# Copyright 2020-2023 The WarpX Community
 #
 # License: BSD-3-Clause-LBNL
 # Authors: Axel Huebl
@@ -26,30 +26,27 @@ sudo apt-get install -y \
     pkg-config          \
     wget
 
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
-sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
-echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" \
-    | sudo tee /etc/apt/sources.list.d/cuda.list
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring_1.0-1_all.deb
 
 sudo apt-get update
 sudo apt-get install -y          \
-    cuda-command-line-tools-11-0 \
-    cuda-compiler-11-0           \
-    cuda-cupti-dev-11-0          \
-    cuda-minimal-build-11-0      \
-    cuda-nvml-dev-11-0           \
-    cuda-nvtx-11-0               \
-    libcufft-dev-11-0            \
-    libcurand-dev-11-0
-sudo ln -s cuda-11.0 /usr/local/cuda
+    cuda-command-line-tools-11-3 \
+    cuda-compiler-11-3           \
+    cuda-cupti-dev-11-3          \
+    cuda-minimal-build-11-3      \
+    cuda-nvml-dev-11-3           \
+    cuda-nvtx-11-3               \
+    libcufft-dev-11-3            \
+    libcurand-dev-11-3
+sudo ln -s cuda-11.3 /usr/local/cuda
 
 # if we run out of temporary storage in CI:
-#du -sh /usr/local/cuda-11.0
+#du -sh /usr/local/cuda-11.3
 #echo "+++ REDUCING CUDA Toolkit install size +++"
-#sudo rm -rf /usr/local/cuda-11.0/targets/x86_64-linux/lib/libcu{fft,pti,rand}_static.a
-#sudo rm -rf /usr/local/cuda-11.0/targets/x86_64-linux/lib/libnvperf_host_static.a
-#du -sh /usr/local/cuda-11.0/
+#sudo rm -rf /usr/local/cuda-11.3/targets/x86_64-linux/lib/libcu{fft,pti,rand}_static.a
+#sudo rm -rf /usr/local/cuda-11.3/targets/x86_64-linux/lib/libnvperf_host_static.a
+#du -sh /usr/local/cuda-11.3/
 #df -h
 
 # cmake-easyinstall
