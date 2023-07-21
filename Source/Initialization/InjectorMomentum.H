@@ -364,7 +364,7 @@ struct InjectorMomentumJuttner
         using namespace amrex::literals;
         // Sobol method for sampling MJ Speeds,
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
-        amrex::Real x1, x2, gamma;
+        amrex::Real x1 = 0.0_rt, x2 = 0.0_rt, gamma = 0.0_rt;
         amrex::Real u [3];
         amrex::Real const theta = temperature(x,y,z);
         // Check if temperature is too low to do sampling method. Abort for now,

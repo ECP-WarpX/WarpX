@@ -165,7 +165,7 @@ void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter
         [=] AMREX_GPU_HOST_DEVICE (long ip)
         {
 
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
             GetPosition.AsStored(ip, x, y, z);
             amrex::ParticleReal const n_e = n_e_func(x, y, z, t);
             amrex::ParticleReal const T_e = T_e_func(x, y, z, t)*PhysConst::kb;
@@ -240,7 +240,7 @@ void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti
         [=] AMREX_GPU_HOST_DEVICE (long ip)
         {
 
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
             GetPosition.AsStored(ip, x, y, z);
             amrex::ParticleReal const n_i = n_i_func(x, y, z, t);
             amrex::ParticleReal const T_i = T_i_func(x, y, z, t)*PhysConst::kb;

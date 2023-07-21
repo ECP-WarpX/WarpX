@@ -312,7 +312,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 auto predicate = [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip)
                 /* NVCC 11.3.109 chokes in C++17 on this: noexcept */
                   {
-                    amrex::ParticleReal xp, yp, zp;
+                    amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                     getPosition(ip, xp, yp, zp);
 
                     amrex::Real phi_value  = ablastr::particles::doGatherScalarFieldNodal(

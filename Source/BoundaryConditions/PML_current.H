@@ -23,7 +23,7 @@ void push_ex_pml_current (int j, int k, int l,
                           amrex::Real mu_c2_dt)
 {
 #if defined(WARPX_DIM_3D)
-    amrex::Real alpha_xy, alpha_xz;
+    amrex::Real alpha_xy = 0.0_rt, alpha_xz = 0.0_rt;
     if (sigjy[k-ylo]+sigjz[l-zlo] == 0){
         alpha_xy = 0.5;
         alpha_xz = 0.5;
@@ -50,7 +50,7 @@ void push_ey_pml_current (int j, int k, int l,
                           amrex::Real mu_c2_dt)
 {
 #if defined(WARPX_DIM_3D)
-    amrex::Real alpha_yx, alpha_yz;
+    amrex::Real alpha_yx = 0.0_rt, alpha_yz = 0.0_rt;
     if (sigjx[j-xlo]+sigjz[l-zlo] == 0){
         alpha_yx = 0.5;
         alpha_yz = 0.5;
@@ -78,7 +78,7 @@ void push_ez_pml_current (int j, int k, int l,
                           amrex::Real mu_c2_dt)
 {
 #if defined(WARPX_DIM_3D)
-    amrex::Real alpha_zx, alpha_zy;
+    amrex::Real alpha_zx = 0.0_rt, alpha_zy = 0.0_rt;
     if (sigjx[j-xlo]+sigjy[k-ylo]==0){
         alpha_zx = 0.5;
         alpha_zy = 0.5;

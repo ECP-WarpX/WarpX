@@ -104,8 +104,8 @@ namespace ablastr::coarsen::average
         int const crx = cr[0];
         int const cry = cr[1];
         int const crz = cr[2];
-        int ii, jj, kk;
-        amrex::Real wx, wy, wz;
+        int ii = 0, jj = 0, kk = 0;
+        amrex::Real wx = 0.0_rt, wy = 0.0_rt, wz = 0.0_rt;
 
         // Add neutral elements (=0) beyond guard cells in source array (fine)
         auto const arr_src_safe = [arr_src]

@@ -88,7 +88,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
                                      Ex, Ey, Ez, Bx,
                                      By, Bz, qp, m, dt);
             }
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
             GetPosition(i, x, y, z);
             UpdatePosition(x, y, z, ux, uy, uz, dt );
             SetPosition(i, x, y, z);
@@ -99,7 +99,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
             UpdateMomentumBorisWithRadiationReaction(ux, uy, uz,
                                                      Ex, Ey, Ez, Bx,
                                                      By, Bz, qp, m, dt);
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
             GetPosition(i, x, y, z);
             UpdatePosition(x, y, z, ux, uy, uz, dt );
             SetPosition(i, x, y, z);
@@ -108,7 +108,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
         UpdateMomentumBoris( ux, uy, uz,
                              Ex, Ey, Ez, Bx,
                              By, Bz, qp, m, dt);
-        amrex::ParticleReal x, y, z;
+        amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
         GetPosition(i, x, y, z);
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);
@@ -116,7 +116,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
         UpdateMomentumVay( ux, uy, uz,
                            Ex, Ey, Ez, Bx,
                            By, Bz, qp, m, dt);
-        amrex::ParticleReal x, y, z;
+        amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
         GetPosition(i, x, y, z);
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);
@@ -124,7 +124,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
         UpdateMomentumHigueraCary( ux, uy, uz,
                                    Ex, Ey, Ez, Bx,
                                    By, Bz, qp, m, dt);
-        amrex::ParticleReal x, y, z;
+        amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
         GetPosition(i, x, y, z);
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);

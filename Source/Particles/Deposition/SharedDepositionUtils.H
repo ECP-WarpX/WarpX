@@ -120,7 +120,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
         wq *= ion_lev[ip];
     }
 
-    amrex::ParticleReal xp, yp, zp;
+    amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
     GetPosition(ip, xp, yp, zp);
 
     const amrex::Real vx = uxp[ip]*gaminv;

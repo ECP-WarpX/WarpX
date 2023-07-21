@@ -733,7 +733,7 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                 if (particle_comps.find(m_user_real_attribs[ia]) != particle_comps.end() &&
                     particle_comps[m_user_real_attribs[ia]] == j)
                 {
-                    amrex::ParticleReal xp, yp, zp;
+                    amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                     const amrex::ParserExecutor<7> user_real_attrib_parserexec =
                                              m_user_real_attrib_parser[ia]->compile<7>();
                     for (int i = 0; i < np; ++i) {
@@ -767,7 +767,7 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                 if (particle_icomps.find(m_user_int_attribs[ia]) != particle_icomps.end() &&
                     particle_icomps[m_user_int_attribs[ia]] == j)
                 {
-                    amrex::ParticleReal xp, yp, zp;
+                    amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                     const amrex::ParserExecutor<7> user_int_attrib_parserexec =
                                              m_user_int_attrib_parser[ia]->compile<7>();
                     for (int i = 0; i < np; ++i) {
@@ -2530,7 +2530,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                {exteb_runtime_flag},
                                np, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control)
             {
-                amrex::ParticleReal xp, yp, zp;
+                amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                 getPosition(ip, xp, yp, zp);
 
                 amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
@@ -2756,7 +2756,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
                                                          auto qed_control)
     {
-        amrex::ParticleReal xp, yp, zp;
+        amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
         getPosition(ip, xp, yp, zp);
 
         if (save_previous_position) {

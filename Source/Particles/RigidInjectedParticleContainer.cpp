@@ -224,7 +224,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
 
         amrex::ParallelFor( np_to_push,
                             [=] AMREX_GPU_DEVICE (long i) {
-                                amrex::ParticleReal xp, yp, zp;
+                                amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                                 GetPosition(i, xp, yp, zp);
                                 xp_save_ptr[i] = xp;
                                 yp_save_ptr[i] = yp;
@@ -264,7 +264,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
         constexpr amrex::ParticleReal inv_csq = 1._prt/(PhysConst::c*PhysConst::c);
         amrex::ParallelFor( np_to_push,
                             [=] AMREX_GPU_DEVICE (long i) {
-                                amrex::ParticleReal xp, yp, zp;
+                                amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                                 GetPosition(i, xp, yp, zp);
                                 if (zp <= z_plane_lev) {
                                     ux[i] = ux_save[i];
@@ -423,7 +423,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 uy_save[ip] = uypp[ip];
                 uz_save[ip] = uzpp[ip];
 
-                amrex::ParticleReal xp, yp, zp;
+                amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                 getPosition(ip, xp, yp, zp);
 
                 amrex::ParticleReal Exp = 0._prt, Eyp = 0._prt, Ezp = 0._prt;

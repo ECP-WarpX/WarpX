@@ -122,7 +122,7 @@ struct LatticeElementFinder
                 for (int ie = 0 ; ie < nelements ; ie++) {
                     // Find the mid points between element ie and the ones before and after it.
                     // The first and last element need special handling.
-                    amrex::ParticleReal zcenter_left, zcenter_right;
+                    amrex::ParticleReal zcenter_left = 0.0_prt, zcenter_right = 0.0_prt;
                     if (ie == 0) {
                         zcenter_left = std::numeric_limits<amrex::ParticleReal>::lowest();
                     } else {
@@ -206,7 +206,7 @@ struct LatticeElementFinderDevice
 
         using namespace amrex::literals;
 
-        amrex::ParticleReal x, y, z;
+        amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
         m_get_position(i, x, y, z);
 
         // Find location of partice in the indices grid
@@ -235,7 +235,7 @@ struct LatticeElementFinderDevice
         if (d_quad.nelements > 0) {
             if (d_quad_indices_arr[iz] > -1) {
                 const auto ielement = d_quad_indices_arr[iz];
-                amrex::ParticleReal Ex, Ey, Bx, By;
+                amrex::ParticleReal Ex = 0.0_prt, Ey = 0.0_prt, Bx = 0.0_prt, By = 0.0_prt;
                 d_quad.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
                 Ey_sum += Ey;
@@ -247,7 +247,7 @@ struct LatticeElementFinderDevice
         if (d_plasmalens.nelements > 0) {
             if (d_plasmalens_indices_arr[iz] > -1) {
                 const auto ielement = d_plasmalens_indices_arr[iz];
-                amrex::ParticleReal Ex, Ey, Bx, By;
+                amrex::ParticleReal Ex = 0.0_prt, Ey = 0.0_prt, Bx = 0.0_prt, By = 0.0_prt;
                 d_plasmalens.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
                 Ey_sum += Ey;

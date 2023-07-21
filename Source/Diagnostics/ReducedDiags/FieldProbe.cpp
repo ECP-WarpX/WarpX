@@ -440,7 +440,7 @@ void FieldProbe::ComputeDiags (int step)
                 const auto temp_warpx_moving_window = warpx.moving_window_dir;
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
-                    amrex::ParticleReal xp, yp, zp;
+                    amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                     getPosition(ip, xp, yp, zp);
                     if (temp_warpx_moving_window == 0)
                     {
@@ -497,7 +497,7 @@ void FieldProbe::ComputeDiags (int step)
                 // Interpolating to the probe positions for each particle
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
-                    amrex::ParticleReal xp, yp, zp;
+                    amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                     getPosition(ip, xp, yp, zp);
 
                     amrex::ParticleReal Exp = 0._prt, Eyp = 0._prt, Ezp = 0._prt;
@@ -553,7 +553,7 @@ void FieldProbe::ComputeDiags (int step)
                     amrex::Real* dvp = dv.data();
                     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (long ip)
                     {
-                        amrex::ParticleReal xp, yp, zp;
+                        amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                         getPosition(ip, xp, yp, zp);
                         long idx = ip*noutputs;
                         dvp[idx++] = m_structs[ip].id();

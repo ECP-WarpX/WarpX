@@ -164,7 +164,7 @@ doGatherVectorFieldNodal (const amrex::ParticleReal xp,
                           amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& lo) noexcept
 {
     // first find the weight of surrounding nodes to use during interpolation
-    int ii, jj, kk;
+    int ii = 0, jj = 0, kk = 0;
     amrex::Real W[AMREX_SPACEDIM][2];
     compute_weights_nodal(xp, yp, zp, lo, dxi, ii, jj, kk, W);
 

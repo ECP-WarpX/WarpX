@@ -207,7 +207,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
                 amrex::ParallelFor(np,
                                    [=] AMREX_GPU_DEVICE(int i)
                                    {
-                                       amrex::ParticleReal x, y, z;
+                                       amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
                                        GetPosition(i, x, y, z);
                                        auto const w  = (amrex::Real)d_w[i];
                                        auto const ux = d_ux[i] / PhysConst::c;

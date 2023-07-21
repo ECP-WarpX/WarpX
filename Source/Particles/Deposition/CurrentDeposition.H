@@ -141,7 +141,7 @@ void doDepositionShapeN (const GetParticlePosition& GetPosition,
                 wq *= ion_lev[ip];
             }
 
-            amrex::ParticleReal xp, yp, zp;
+            amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
             GetPosition(ip, xp, yp, zp);
 
             const amrex::Real vx  = uxp[ip]*gaminv;
@@ -1063,7 +1063,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         if (do_ionization) wq *= ion_lev[ip];
 
         // Current particle positions (in physical units)
-        amrex::ParticleReal xp, yp, zp;
+        amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
         GetPosition(ip, xp, yp, zp);
 
         // Particle velocities

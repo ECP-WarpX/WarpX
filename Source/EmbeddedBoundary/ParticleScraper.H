@@ -175,7 +175,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 // skip particles that are already flagged for removal
                 if (particles[ip].id() < 0) return;
 
-                amrex::ParticleReal xp, yp, zp;
+                amrex::ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                 getPosition(ip, xp, yp, zp);
 
                 int i, j, k;

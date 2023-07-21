@@ -161,7 +161,7 @@ namespace ParticleUtils {
                              const amrex::ParticleReal vp,
                              amrex::RandomEngine const& engine )
     {
-        amrex::ParticleReal x, y, z;
+        amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
         // generate random unit vector for the new velocity direction
         getRandomVector(x, y, z, engine);
 

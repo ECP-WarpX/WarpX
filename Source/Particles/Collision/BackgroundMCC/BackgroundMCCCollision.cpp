@@ -351,7 +351,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               // determine if this particle should collide
                               if (amrex::Random(engine) > total_collision_prob) return;
 
-                              amrex::ParticleReal x, y, z;
+                              amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
                               GetPosition.AsStored(ip, x, y, z);
 
                               const amrex::ParticleReal n_a = n_a_func(x, y, z, t);

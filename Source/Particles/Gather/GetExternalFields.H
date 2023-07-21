@@ -100,7 +100,7 @@ struct GetExternalEBField
         }
         else if (m_Etype == ExternalFieldInitType::Parser)
         {
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
             m_get_position(i, x, y, z);
             amrex::Real lab_time = m_time;
             if (m_gamma_boost > 1._prt) {
@@ -120,7 +120,7 @@ struct GetExternalEBField
         }
         else if (m_Btype == ExternalFieldInitType::Parser)
         {
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
             m_get_position(i, x, y, z);
             amrex::Real lab_time = m_time;
             if (m_gamma_boost > 1._prt) {
@@ -135,7 +135,7 @@ struct GetExternalEBField
         if (m_Etype == RepeatedPlasmaLens ||
             m_Btype == RepeatedPlasmaLens)
         {
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
             m_get_position(i, x, y, z);
 
             const amrex::ParticleReal uxp = m_ux[i];

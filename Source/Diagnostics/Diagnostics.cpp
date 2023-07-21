@@ -125,7 +125,7 @@ Diagnostics::BaseReadParameters ()
     // Get parser strings for particle fields and generate map of parsers
     std::string parser_str;
     std::string filter_parser_str = "";
-    bool do_parser_filter;
+    bool do_parser_filter = false;
     const amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
         bool do_average = true;
@@ -158,7 +158,7 @@ Diagnostics::BaseReadParameters ()
     }
 
     // Check that species names specified in m_pfield_species are valid
-    bool p_species_name_is_wrong;
+    bool p_species_name_is_wrong = false;
     // Loop over all species specified above
     for (const auto& species : m_pfield_species) {
         // Boolean used to check if species name was misspelled
@@ -251,7 +251,7 @@ Diagnostics::BaseReadParameters ()
 
     // Auxiliary variables
     std::string species;
-    bool species_name_is_wrong;
+    bool species_name_is_wrong = false;
     // Loop over all fields stored in m_varnames
     for (const auto& var : m_varnames) {
         // Check if m_varnames contains a string of the form rho_<species_name>

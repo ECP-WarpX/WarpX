@@ -84,7 +84,7 @@ namespace ablastr::coarsen::sample
         const int imin = idx_min[0];
         const int jmin = idx_min[1];
         const int kmin = idx_min[2];
-        int  ii, jj, kk;
+        int  ii = 0, jj = 0, kk = 0;
         amrex::Real const wx = 1.0_rt / static_cast<amrex::Real>(numx);
         amrex::Real const wy = 1.0_rt / static_cast<amrex::Real>(numy);
         amrex::Real const wz = 1.0_rt / static_cast<amrex::Real>(numz);
