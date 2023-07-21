@@ -141,7 +141,7 @@ namespace
     }
 
     struct PDim3 {
-        ParticleReal x = 0.0_rt, y = 0.0_rt, z = 0.0_rt;
+        ParticleReal x = 0.0_prt, y = 0.0_prt, z = 0.0_prt;
 
         AMREX_GPU_HOST_DEVICE
         PDim3(const PDim3&) = default;
