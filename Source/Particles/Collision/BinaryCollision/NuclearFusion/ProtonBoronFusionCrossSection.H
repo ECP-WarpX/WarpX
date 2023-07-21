@@ -54,7 +54,7 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionNevins (const amrex::ParticleRe
     // Compute astrophysical factor, in MeV barn, using the fits
     constexpr auto E_lim1 = 400._prt; // Limits between the different fit regions
     constexpr auto E_lim2 = 642._prt;
-    amrex::ParticleReal astrophysical_factor;
+    amrex::ParticleReal astrophysical_factor = 0.0_rt;
     if (E_keV < E_lim1)
     {
         constexpr auto C0 = 197._prt;

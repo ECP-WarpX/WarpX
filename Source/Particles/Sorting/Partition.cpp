@@ -94,7 +94,7 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
         // No need to do anything if there are no particles in the larger buffer
         nfine_current = nfine_gather = np;
     } else {
-        int n_buf;
+        int n_buf = 0;
         if (bmasks == gather_masks) {
             nfine_gather = n_fine;
             bmasks = current_masks;

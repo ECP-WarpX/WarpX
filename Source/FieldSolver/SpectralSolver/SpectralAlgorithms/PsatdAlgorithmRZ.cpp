@@ -161,12 +161,12 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             Complex const rho_old = fields(i,j,k,rho_old_m);
             Complex const rho_new = fields(i,j,k,rho_new_m);
 
-            int Ep_avg_m;
-            int Em_avg_m;
-            int Ez_avg_m;
-            int Bp_avg_m;
-            int Bm_avg_m;
-            int Bz_avg_m;
+            int Ep_avg_m = 0;
+            int Em_avg_m = 0;
+            int Ez_avg_m = 0;
+            int Bp_avg_m = 0;
+            int Bm_avg_m = 0;
+            int Bz_avg_m = 0;
             if (time_averaging)
             {
                 Ep_avg_m = Idx.Ex_avg + Idx.n_fields*mode;
@@ -224,7 +224,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                         - S_ck*I*(kr*Ep_old + kr*Em_old)
                         + X1*I*(kr*Jp + kr*Jm);
 
-            int F_m;
+            int F_m = 0;
             Complex F_old;
             if (dive_cleaning)
             {
@@ -232,7 +232,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                 F_old = fields(i,j,k,F_m);
             }
 
-            int G_m;
+            int G_m = 0;
             Complex G_old;
             if (divb_cleaning)
             {

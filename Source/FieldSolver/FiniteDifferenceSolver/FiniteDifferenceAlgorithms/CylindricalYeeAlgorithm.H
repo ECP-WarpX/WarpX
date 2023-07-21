@@ -50,7 +50,7 @@ struct CylindricalYeeAlgorithm {
         // semi-analytically by R. Lehe, and resulted in the following
         // coefficients.
         std::array< amrex::Real, 6 > const multimode_coeffs = {{ 0.2105_rt, 1.0_rt, 3.5234_rt, 8.5104_rt, 15.5059_rt, 24.5037_rt }};
-        amrex::Real multimode_alpha;
+        amrex::Real multimode_alpha = 0.0_rt;
         if (n_rz_azimuthal_modes < 7) {
           // Use the table of the coefficients
           multimode_alpha = multimode_coeffs[n_rz_azimuthal_modes-1];

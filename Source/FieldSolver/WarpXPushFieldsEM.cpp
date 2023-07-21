@@ -1435,7 +1435,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             // to the cells above the axis.
             // Rho is located on the boundary
             if (rmin == 0. && 1-ishift <= i && i <= ngRho[0]-ishift) {
-                int imode;
+                int imode = 0;
                 if (icomp == 0 || icomp == ncomp/2) {
                     imode = 0;
                 }

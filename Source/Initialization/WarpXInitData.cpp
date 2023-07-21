@@ -636,13 +636,9 @@ WarpX::computeMaxStepBoostAccelerator() {
     const Real interaction_time_boost = (len_plasma_boost-zmin_domain_boost_step_0)/
         (moving_window_v-v_plasma_boost);
     // Divide by dt, and update value of max_step.
-    int computed_max_step;
-    if (do_subcycling){
-        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
-    } else {
-        computed_max_step =
-            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
-    }
+    const int computed_max_step = (do_subcycling)?
+        static_cast<int>(interaction_time_boost/dt[0]):
+        static_cast<int>(interaction_time_boost/dt[maxLevel()]);
     max_step = computed_max_step;
     Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
            <<max_step<<std::endl;
@@ -658,7 +654,7 @@ WarpX::InitNCICorrector ()
         {
             const Geometry& gm = Geom(lev);
             const Real* dx = gm.CellSize();
-            amrex::Real dz, cdtodz;
+            amrex::Real dz = 0.0_rt, cdtodz = 0.0_rt;
 #if defined(WARPX_DIM_3D)
                 dz = dx[2];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -1448,7 +1444,7 @@ WarpX::ReadExternalFieldFromFile (
                 // Physical coordinates of the grid point
                 // 0,1,2 denote x,y,z in 3D xyz.
                 // 0,1 denote r,z in 2D rz.
-                amrex::Real x0, x1;
+                amrex::Real x0 = 0.0_rt, x1 = 0.0_rt;
                 if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
                      { x0 = real_box.lo(0) + ii*dx[0]; }
                 else { x0 = real_box.lo(0) + ii*dx[0] + 0.5*dx[0]; }
@@ -1466,7 +1462,7 @@ WarpX::ReadExternalFieldFromFile (
                 amrex::Real const xx1 = offset1 + iz * file_dz;
 
 #elif defined(WARPX_DIM_3D)
-                amrex::Real x2;
+                amrex::Real x2 = 0.0_rt;
                 if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
                      { x2 = real_box.lo(2) + k*dx[2]; }
                 else { x2 = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }

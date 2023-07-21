@@ -110,7 +110,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         m_wavelength > 0, "The laser wavelength must be >0.");
     const bool e_max_is_specified =
         utils::parser::queryWithParser(pp_laser_name, "e_max", m_e_max);
-    Real a0;
+    Real a0 = 0.0_rt;
     const bool a0_is_specified =
         utils::parser::queryWithParser(pp_laser_name, "a0", a0);
     if (a0_is_specified){
@@ -376,7 +376,7 @@ LaserParticleContainer::InitData (int lev)
 
     // spacing of laser particles in the laser plane.
     // has to be done after geometry is set up.
-    Real S_X, S_Y;
+    Real S_X = 0.0_rt, S_Y = 0.0_rt;
     ComputeSpacing(lev, S_X, S_Y);
     ComputeWeightMobility(S_X, S_Y);
 
@@ -703,7 +703,7 @@ LaserParticleContainer::PostRestart ()
 {
     if (!m_enabled) return;
 
-    Real Sx, Sy;
+    Real Sx = 0.0_rt, Sy = 0.0_rt;
     const int lev = finestLevel();
     ComputeSpacing(lev, Sx, Sy);
     ComputeWeightMobility(Sx, Sy);

@@ -117,12 +117,12 @@ namespace {
 
         // Compute momentum of first product in the center of mass frame, assuming isotropic
         // distribution
-        amrex::ParticleReal px_star, py_star, pz_star;
+        amrex::ParticleReal px_star = 0.0_prt, py_star = 0.0_prt, pz_star = 0.0_prt;
         ParticleUtils::RandomizeVelocity(px_star, py_star, pz_star, std::sqrt(p_star_f_sq),
                                          engine);
 
         // Next step is to convert momenta to lab frame
-        amrex::ParticleReal p1x_out, p1y_out, p1z_out;
+        amrex::ParticleReal p1x_out = 0.0_rt, p1y_out = 0.0_rt, p1z_out = 0.0_rt;
         // Preliminary calculation: compute center of mass velocity vc
         const amrex::ParticleReal mass_g = m1_in * g1_in + m2_in * g2_in;
         const amrex::ParticleReal vcx    = (p1x_in+p2x_in) / mass_g;

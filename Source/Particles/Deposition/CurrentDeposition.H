@@ -154,8 +154,8 @@ void doDepositionShapeN (const GetParticlePosition& GetPosition,
             const amrex::Real xpmid = xp + relative_time*vx;
             const amrex::Real ypmid = yp + relative_time*vy;
             const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
-            amrex::Real costheta;
-            amrex::Real sintheta;
+            amrex::Real costheta = 0.0_rt;
+            amrex::Real sintheta = 0.0_rt;
             if (rpmid > 0._rt) {
                 costheta = xpmid/rpmid;
                 sintheta = ypmid/rpmid;
@@ -691,7 +691,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
             Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
             Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
-            Real costheta_new, sintheta_new;
+            Real costheta_new = 0.0_rt, sintheta_new = 0.0_rt;
             if (rp_new > 0._rt) {
                 costheta_new = xp_new/rp_new;
                 sintheta_new = yp_new/rp_new;
@@ -699,7 +699,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 costheta_new = 1._rt;
                 sintheta_new = 0._rt;
             }
-            amrex::Real costheta_mid, sintheta_mid;
+            amrex::Real costheta_mid = 0.0_rt, sintheta_mid = 0.0_rt;
             if (rp_mid > 0._rt) {
                 costheta_mid = xp_mid/rp_mid;
                 sintheta_mid = yp_mid/rp_mid;
@@ -707,7 +707,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 costheta_mid = 1._rt;
                 sintheta_mid = 0._rt;
             }
-            amrex::Real costheta_old, sintheta_old;
+            amrex::Real costheta_old = 0.0_rt, sintheta_old = 0.0_rt;
             if (rp_old > 0._rt) {
                 costheta_old = xp_old/rp_old;
                 sintheta_old = yp_old/rp_old;
