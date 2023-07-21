@@ -293,6 +293,10 @@ def isinstalled(name, f):
     "Checks if the function is called by this callback"
     return callback_instances[name].isinstalledfuncinlist(f)
 
+def clear_all():
+    for key, val in callback_instances.items():
+        val.clearlist()
+
 #=============================================================================
 
 def printcallbacktimers(tmin=1.,lminmax=False,ff=None):

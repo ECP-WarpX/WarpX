@@ -175,6 +175,9 @@ class LibWarpX():
             #self.libwarpx_so.warpx_finalize()
             self.libwarpx_so.amrex_finalize()
 
+            from pywarpx import callbacks
+            callbacks.clear_all()
+
     def getistep(self, level=0):
         '''
         Get the current time step number for the specified level
@@ -215,7 +218,7 @@ class LibWarpX():
             The number of steps to take
         '''
 
-        self.warpx.evolve(num_steps);
+        self.warpx.evolve(num_steps)
 
     def getProbLo(self, direction):
         '''

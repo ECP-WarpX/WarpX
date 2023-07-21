@@ -72,7 +72,6 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         self.decompose_matrix()
 
         callbacks.installpoissonsolver(self._run_solve)
-        callbacks.installafterstep(self._get_rho_ions)
 
     def decompose_matrix(self):
         """Function to build the superLU object used to solve the linear
@@ -347,6 +346,7 @@ class CapacitiveDischargeExample(object):
         self.sim.step(self.max_steps - self.diag_steps)
 
         self.rho_wrapper = fields.RhoFPWrapper(0, False)
+        callbacks.installafterstep(self._get_rho_ions)
 
         self.sim.step(self.diag_steps)
 
