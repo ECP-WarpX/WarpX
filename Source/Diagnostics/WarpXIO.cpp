@@ -75,7 +75,7 @@ WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, in
     if ( ! DMFile.good()) amrex::FileOpenFailed(DMFileName);
     DMFile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
-    int nprocs_in_checkpoint;
+    int nprocs_in_checkpoint = 0;
     DMFile >> nprocs_in_checkpoint;
     if (nprocs_in_checkpoint != ParallelDescriptor::NProcs()) {
         return amrex::DistributionMapping{ba, ParallelDescriptor::NProcs()};
@@ -114,7 +114,7 @@ WarpX::InitFromCheckpoint ()
 
         std::getline(is, line);
 
-        int nlevs;
+        int nlevs = 0;
         is >> nlevs;
         GotoNextLine(is);
         finest_level = nlevs-1;
@@ -169,7 +169,7 @@ WarpX::InitFromCheckpoint ()
             }
         }
 
-        amrex::Real moving_window_x_checkpoint;
+        amrex::Real moving_window_x_checkpoint = 0.0_rt;
         is >> moving_window_x_checkpoint;
         GotoNextLine(is);
 
@@ -218,7 +218,7 @@ WarpX::InitFromCheckpoint ()
              GotoNextLine(is);
         }
 
-        int do_moving_window_before_restart;
+        int do_moving_window_before_restart = 0;
         is >> do_moving_window_before_restart;
         GotoNextLine(is);
 
@@ -239,33 +239,33 @@ WarpX::InitFromCheckpoint ()
                 if (diag.getnumbuffers() > 0) {
                     diag.InitDataBeforeRestart();
                     for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
-                        amrex::Real tlab;
+                        amrex::Real tlab = 0.0_rt;
                         is >> tlab;
                         diag.settlab(i_buffer, tlab);
-                        int kindex_hi;
+                        int kindex_hi = 0;
                         is >> kindex_hi;
                         diag.set_buffer_k_index_hi(i_buffer, kindex_hi);
 
                         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                            amrex::Real snapshot_lo;
+                            amrex::Real snapshot_lo = 0.0_rt;
                             is >> snapshot_lo;
                             diag.setSnapshotDomainLo(i_buffer, idim, snapshot_lo);
                         }
                         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                            amrex::Real snapshot_hi;
+                            amrex::Real snapshot_hi = 0.0_rt;
                             is >> snapshot_hi;
                             diag.setSnapshotDomainHi(i_buffer, idim, snapshot_hi);
                         }
 
-                        int flush_counter;
+                        int flush_counter = 0;
                         is >> flush_counter;
                         diag.set_flush_counter(i_buffer, flush_counter);
 
-                        int last_valid_Zslice;
+                        int last_valid_Zslice = 0;
                         is >> last_valid_Zslice;
                         diag.set_last_valid_Zslice(i_buffer, last_valid_Zslice);
 
-                        int snapshot_full_flag;
+                        int snapshot_full_flag = 0;
                         is >> snapshot_full_flag;
                         diag.set_snapshot_full(i_buffer, snapshot_full_flag);
 

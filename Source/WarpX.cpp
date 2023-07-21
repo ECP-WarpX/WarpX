@@ -855,7 +855,7 @@ WarpX::ReadParameters ()
         utils::parser::queryWithParser(
             pp_warpx, "n_current_deposition_buffer", n_current_deposition_buffer);
 
-        amrex::Real quantum_xi_tmp;
+        amrex::Real quantum_xi_tmp = 0.0_rt;
         const auto quantum_xi_is_specified =
             utils::parser::queryWithParser(pp_warpx, "quantum_xi", quantum_xi_tmp);
         if (quantum_xi_is_specified) {
@@ -1206,7 +1206,7 @@ WarpX::ReadParameters ()
 #endif
 
         std::vector<std::string> sort_intervals_string_vec = {"-1"};
-        int particle_shape;
+        int particle_shape = 0;
         if (!species_names.empty() || !lasers_names.empty()) {
             if (utils::parser::queryWithParser(pp_algo, "particle_shape", particle_shape)){
 
@@ -1624,10 +1624,10 @@ void
 WarpX::BackwardCompatibility ()
 {
     // Auxiliary variables
-    int backward_int;
-    bool backward_bool;
+    int backward_int = 0;
+    bool backward_bool = false;
     std::string backward_str;
-    amrex::Real backward_Real;
+    amrex::Real backward_Real = 0.0_rt;
 
     const ParmParse pp_amr("amr");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1802,14 +1802,14 @@ WarpX::BackwardCompatibility ()
     );
 
     const ParmParse pp_algo("algo");
-    int backward_mw_solver;
+    int backward_mw_solver = 0;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !pp_algo.query("maxwell_fdtd_solver", backward_mw_solver),
         "algo.maxwell_fdtd_solver is not supported anymore. "
         "Please use the renamed option algo.maxwell_solver");
 
     const ParmParse pp_particles("particles");
-    int nspecies;
+    int nspecies = 0;
     if (pp_particles.query("nspecies", nspecies)){
         ablastr::warn_manager::WMRecordWarning("Species",
             "particles.nspecies is ignored. Just use particles.species_names please.",
@@ -1845,7 +1845,7 @@ WarpX::BackwardCompatibility ()
     }
 
     const ParmParse pp_collisions("collisions");
-    int ncollisions;
+    int ncollisions = 0;
     if (pp_collisions.query("ncollisions", ncollisions)){
         ablastr::warn_manager::WMRecordWarning("Collisions",
             "collisions.ncollisions is ignored. Just use particles.collision_names please.",
@@ -1853,7 +1853,7 @@ WarpX::BackwardCompatibility ()
     }
 
     const ParmParse pp_lasers("lasers");
-    int nlasers;
+    int nlasers = 0;
     if (pp_lasers.query("nlasers", nlasers)){
         ablastr::warn_manager::WMRecordWarning("Laser",
             "lasers.nlasers is ignored. Just use lasers.names please.",

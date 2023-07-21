@@ -193,7 +193,7 @@ void ConvertLabParamsToBoost()
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         if (boost_direction[dim_map[idim]]) {
-            amrex::Real convert_factor;
+            amrex::Real convert_factor = 0.0_rt;
             // Assume that the window travels with speed +c
             convert_factor = 1._rt/( gamma_boost * ( 1 - beta_boost ) );
             prob_lo[idim] *= convert_factor;

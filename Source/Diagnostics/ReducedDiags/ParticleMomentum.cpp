@@ -128,7 +128,7 @@ void ParticleMomentum::ComputeDiags (int step)
     const int nSpecies = mypc.nSpecies();
 
     // Some useful offsets to fill m_data below
-    int offset_total_species, offset_mean_species, offset_mean_all;
+    int offset_total_species = 0, offset_mean_species = 0, offset_mean_all = 0;
 
     amrex::Real Wtot = 0.0_rt;
 

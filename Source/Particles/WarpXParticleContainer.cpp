@@ -1312,7 +1312,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             // Loop over the particles and update their position
             amrex::ParallelFor( pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i) {
-                                    ParticleReal x, y, z;
+                                    ParticleReal x = 0.0_rt, y = 0.0_rt, z = 0.0_rt;
                                     GetPosition(i, x, y, z);
                                     UpdatePosition(x, y, z, ux[i], uy[i], uz[i], dt);
                                     SetPosition(i, x, y, z);
@@ -1417,7 +1417,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                     // skip particles that are already flagged for removal
                     if (p.id() < 0) return;
 
-                    ParticleReal x, y, z;
+                    ParticleReal x = 0.0_rt, y = 0.0_rt, z = 0.0_rt;
                     GetPosition.AsStored(i, x, y, z);
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
 

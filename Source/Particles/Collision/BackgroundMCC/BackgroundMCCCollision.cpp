@@ -357,10 +357,10 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               const amrex::ParticleReal n_a = n_a_func(x, y, z, t);
                               const amrex::ParticleReal T_a = T_a_func(x, y, z, t);
 
-                              amrex::ParticleReal v_coll, v_coll2, sigma_E, nu_i = 0;
-                              double gamma, E_coll;
-                              amrex::ParticleReal ua_x, ua_y, ua_z, vx, vy, vz;
-                              amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
+                              amrex::ParticleReal v_coll = 0.0_prt, v_coll2 = 0.0_prt, sigma_E = 0.0_prt, nu_i = 0.0_prt;
+                              double gamma = 0.0, E_coll = 0.0;
+                              amrex::ParticleReal ua_x = 0.0_prt, ua_y = 0.0_prt, ua_z = 0.0_prt, vx = 0.0_prt, vy = 0.0_prt, vz = 0.0_prt;
+                              amrex::ParticleReal uCOM_x = 0.0_prt, uCOM_y = 0.0_prt, uCOM_z = 0.0_prt;
                               const amrex::ParticleReal col_select = amrex::Random(engine);
 
                               // get velocities of gas particles from a Maxwellian distribution

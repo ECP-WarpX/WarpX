@@ -235,7 +235,7 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
                 for (int mode_comp = 0; mode_comp < n_rcomps; ++mode_comp) {
                     // Back-transform the transverse electric and magnetic fields.
                     // Note that the z-components, Ez, Bz, are not changed by the transform.
-                    amrex::Real e_lab, b_lab, j_lab, rho_lab;
+                    amrex::Real e_lab = 0.0_rt, b_lab = 0.0_rt, j_lab = 0.0_rt, rho_lab = 0.0_rt;
 
                     // Transform Er_boost & Bt_boost to lab-frame for corresponding mode (mode_comp)
                     e_lab = gamma_boost * ( arr(i, j, k, n_rcomps*0 + mode_comp)
@@ -274,7 +274,7 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
             {
                 // Back-transform the transverse electric and magnetic fields.
                 // Note that the z-components, Ez, Bz, are not changed by the transform.
-                amrex::Real e_lab, b_lab, j_lab, rho_lab;
+                amrex::Real e_lab = 0.0_rt, b_lab = 0.0_rt, j_lab = 0.0_rt, rho_lab = 0.0_rt;
                 // Transform Ex_boost (ncomp=0) & By_boost (ncomp=4) to lab-frame
                 e_lab = gamma_boost * ( arr(i, j, k, 0)
                                         + beta_boost * clight * arr(i, j, k, 4) );

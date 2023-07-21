@@ -913,7 +913,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        amrex::Real cellsize;
+        amrex::Real cellsize = 0.0_rt;
         if (idim < WARPX_ZINDEX) {
             cellsize = warpx.Geom(lev).CellSize(idim);
         } else {

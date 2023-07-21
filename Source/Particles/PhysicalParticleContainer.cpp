@@ -141,7 +141,7 @@ namespace
     }
 
     struct PDim3 {
-        ParticleReal x, y, z;
+        ParticleReal x = 0.0_rt, y = 0.0_rt, z = 0.0_rt;
 
         AMREX_GPU_HOST_DEVICE
         PDim3(const PDim3&) = default;
@@ -379,7 +379,7 @@ PhysicalParticleContainer::BackwardCompatibility ()
                      "Please use the new syntax for diagnostics, see documentation.");
     }
 
-    int backward_int;
+    int backward_int = 0;
     if (pp_species_name.query("plot_species", backward_int)){
         WARPX_ABORT_WITH_MESSAGE("<species>.plot_species is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
@@ -2308,7 +2308,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
         auto& uzp = attribs[PIdx::uz];
         const long np = pti.numParticles();
         for(int i=0; i<np; i++){
-            ParticleReal xp, yp, zp;
+            ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
             GetPosition(i, xp, yp, zp);
             auto& p = particles[i];
             if (p.id() == DoSplitParticleID){

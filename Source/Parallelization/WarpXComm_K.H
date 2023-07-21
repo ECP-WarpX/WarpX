@@ -47,9 +47,9 @@ void warpx_interp (int j, int k, int l,
     const int kc = (sk == 0) ? amrex::coarsen(k - rk/2, rk) : amrex::coarsen(k, rk);
     const int lc = (sl == 0) ? amrex::coarsen(l - rl/2, rl) : amrex::coarsen(l, rl);
 
-    amrex::Real wj;
-    amrex::Real wk;
-    amrex::Real wl;
+    amrex::Real wj = 0.0_rt;
+    amrex::Real wk = 0.0_rt;
+    amrex::Real wl = 0.0_rt;
 
     // Interpolate from coarse grid to fine grid using 2 points
     // with weights depending on the distance, for both nodal and cell-centered grids
@@ -180,7 +180,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     };
 
     const int jg = amrex::coarsen(j,2);
-    Real wx, owx;
+    Real wx = 0.0_rt, owx = 0.0_rt;
     wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     owx = 1.0_rt-wx;
 
@@ -275,7 +275,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     };
 
     const int jg = amrex::coarsen(j,2);
-    Real wx, owx;
+    Real wx = 0.0_rt, owx = 0.0_rt;
     wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     owx = 1.0_rt-wx;
 
@@ -369,7 +369,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
     };
 
     const int jg = amrex::coarsen(j,2);
-    Real wx, owx;
+    Real wx = 0.0_rt, owx = 0.0_rt;
     wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     owx = 1.0_rt-wx;
 

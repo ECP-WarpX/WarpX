@@ -36,7 +36,7 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false, "background_type must be either electrons or ions");
     }
 
-    amrex::ParticleReal background_density;
+    amrex::ParticleReal background_density = 0.0_rt;
     std::string background_density_str;
     if (utils::parser::queryWithParser(pp_collision_name, "background_density", background_density)) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(background_density > 0_prt,
@@ -51,7 +51,7 @@ BackgroundStopping::BackgroundStopping (std::string const collision_name)
                  "For background stopping, the background density must be specified.");
     }
 
-    amrex::ParticleReal background_temperature;
+    amrex::ParticleReal background_temperature = 0.0_rt;
     std::string background_temperature_str;
     if (utils::parser::queryWithParser(pp_collision_name, "background_temperature", background_temperature)) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(background_temperature > 0_prt,

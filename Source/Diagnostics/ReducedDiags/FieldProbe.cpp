@@ -138,7 +138,7 @@ FieldProbe::FieldProbe (std::string rd_name)
     utils::parser::queryWithParser(pp_rd_name, "interp_order", interp_order);
     pp_rd_name.query("do_moving_window_FP", do_moving_window_FP);
 
-    bool raw_fields;
+    bool raw_fields = false;
     const bool raw_fields_specified = pp_rd_name.query("raw_fields", raw_fields);
     if (raw_fields_specified) {
         WARPX_ABORT_WITH_MESSAGE("The field probe raw_fields options is obsolete. To get the equivalent, set interp_order = 0");

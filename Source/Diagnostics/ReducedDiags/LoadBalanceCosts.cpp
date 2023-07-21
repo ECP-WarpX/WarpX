@@ -167,7 +167,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
 
     // get the MPI host name and number of characters
     char hostname[MPI_MAX_PROCESSOR_NAME];
-    int length;
+    int length = 0;
 
     BL_MPI_REQUIRE( MPI_Get_processor_name( hostname, &length ) );
 

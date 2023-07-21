@@ -65,7 +65,7 @@ WarpX::Evolve (int numsteps)
 
     Real cur_time = t_new[0];
 
-    int numsteps_max;
+    int numsteps_max = 0;
     if (numsteps < 0) {  // Note that the default argument is numsteps = -1
         numsteps_max = max_step;
     } else {

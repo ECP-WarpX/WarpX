@@ -130,7 +130,7 @@ RigidInjectedParticleContainer::RemapParticles()
                     const ParticleReal gamma_boost = WarpX::gamma_boost;
                     amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long i)
                     {
-                        ParticleReal xp, yp, zp;
+                        ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                         GetPosition(i, xp, yp, zp);
 
                         const ParticleReal gammapr = std::sqrt(1._prt + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])*csqi);
@@ -471,7 +471,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const ParticleReal zz = zinject_plane_levels[lev];
             amrex::ParallelFor( pti.numParticles(), [=] AMREX_GPU_DEVICE (long i)
             {
-                ParticleReal xp, yp, zp;
+                ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                 getPosition(i, xp, yp, zp);
                 if (zp <= zz) {
                     uxpp[i] = ux_save[i];

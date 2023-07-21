@@ -452,7 +452,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         // These boxes define the index space for the shared memory buffers
         amrex::Box buffer_box;
         {
-            ParticleReal xp, yp, zp;
+            ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
             GetPosition(permutation[bin_start], xp, yp, zp);
 #if defined(WARPX_DIM_3D)
             IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
@@ -669,7 +669,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 wq *= ion_lev[ip];
             }
 
-            ParticleReal xp, yp, zp;
+            ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
             GetPosition(ip, xp, yp, zp);
 
 #if !defined(WARPX_DIM_1D_Z)

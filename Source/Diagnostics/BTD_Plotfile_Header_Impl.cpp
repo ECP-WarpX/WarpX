@@ -214,7 +214,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     is >> m_ncomp;
     is >> m_ngrow;
     // can also call readBoxArray(m_ba, is, True);
-    int in_hash;
+    int in_hash = 0;
     const int bl_ignore_max = 100000;
     is.ignore(bl_ignore_max,'(') >> m_ba_size >> in_hash;
     m_ba.resize(m_ba_size);
@@ -233,7 +233,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
         is >> m_FabOnDiskPrefix[ifab] >> m_fabname[ifab] >> m_fabhead[ifab];
     }
     WarpX::GotoNextLine(is);
-    char ch;
+    char ch = 0;
     is >> in_hash >> ch >> in_hash;
     m_minval.resize(m_ba.size());
     for (int ifab = 0; ifab < m_ba.size(); ++ifab) {
@@ -500,7 +500,7 @@ BTDParticleDataHeaderImpl::ReadHeader ()
     is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
 
-    int in_hash;
+    int in_hash = 0;
     const int bl_ignore_max = 100000;
 
     is.ignore(bl_ignore_max,'(') >> m_ba_size >> in_hash;

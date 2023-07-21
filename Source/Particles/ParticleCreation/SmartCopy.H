@@ -66,9 +66,9 @@ struct SmartCopy
         // copy the shared real components
         for (int j = 0; j < m_num_copy_real; ++j)
         {
-            int src_comp, dst_comp;
-            amrex::ParticleReal* AMREX_RESTRICT dst_data;
-            const amrex::ParticleReal* AMREX_RESTRICT src_data;
+            int src_comp = 0, dst_comp = 0;
+            amrex::ParticleReal* AMREX_RESTRICT dst_data = nullptr;
+            const amrex::ParticleReal* AMREX_RESTRICT src_data = nullptr;
 
             if (m_src_comps_r[j] < SrcData::NAR)
             {
@@ -102,9 +102,9 @@ struct SmartCopy
         // copy the shared int components
         for (int j = 0; j < m_num_copy_int; ++j)
         {
-            int src_comp, dst_comp;
-            int* AMREX_RESTRICT dst_data;
-            int* AMREX_RESTRICT src_data;
+            int src_comp = 0, dst_comp = 0;
+            int* AMREX_RESTRICT dst_data = nullptr;
+            int* AMREX_RESTRICT src_data = nullptr;
 
             // note, in WarpX we only have runtime int data
             static_assert(SrcData::NAI == 0 && DstData::NAI == 0,

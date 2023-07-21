@@ -226,7 +226,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file (std::string binary_
         if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to open binary file");
         inp.exceptions(std::ios_base::failbit | std::ios_base::badbit);
         //Uniform grid flag
-        char flag;
+        char flag = 0;
         inp.read(&flag, 1);
         if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read grid type from binary file");
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flag, "Binary files with non uniform grid are no longer supported");

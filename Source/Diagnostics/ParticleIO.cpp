@@ -70,7 +70,7 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
     PhysicalParticleContainer::ReadHeader( is );
 
     // Read quantities that are specific to rigid-injected species
-    int nlevs;
+    int nlevs = 0;
     is >> nlevs;
     WarpX::GotoNextLine(is);
 
@@ -78,7 +78,7 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
 
     for (int i = 0; i < nlevs; ++i)
     {
-        amrex::Real zinject_plane_tmp;
+        amrex::Real zinject_plane_tmp = 0.0_rt;
         is >> zinject_plane_tmp;
         zinject_plane_levels.push_back(zinject_plane_tmp);
         WarpX::GotoNextLine(is);
@@ -139,7 +139,7 @@ MultiParticleContainer::Restart (const std::string& dir)
         std::getline(is, line); // Version
         std::getline(is, line); // SpaceDim
 
-        int nr;
+        int nr = 0;
         is >> nr;
 
         std::vector<std::string> real_comp_names;
@@ -173,7 +173,7 @@ MultiParticleContainer::Restart (const std::string& dir)
             }
         }
 
-        int ni;
+        int ni = 0;
         is >> ni;
 
         std::vector<std::string> int_comp_names;

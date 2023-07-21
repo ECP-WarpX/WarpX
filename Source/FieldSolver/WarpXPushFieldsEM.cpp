@@ -274,7 +274,7 @@ void WarpX::PSATDForwardTransformJ (
     const bool apply_kspace_filter)
 {
     SpectralFieldIndex Idx;
-    int idx_jx, idx_jy, idx_jz;
+    int idx_jx = 0, idx_jy = 0, idx_jz = 0;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -334,7 +334,7 @@ void WarpX::PSATDBackwardTransformJ (
     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp)
 {
     SpectralFieldIndex Idx;
-    int idx_jx, idx_jy, idx_jz;
+    int idx_jx = 0, idx_jy = 0, idx_jz = 0;
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {

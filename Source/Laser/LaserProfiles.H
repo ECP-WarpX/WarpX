@@ -341,7 +341,7 @@ private:
          * If DIM=2, ny must be 1 */
         int nt, nx, ny;
         /** Dimensions of E_lasy_data in RZ */
-        int nr;
+        int nr = 0;
         /** Number of azimuthal components (2 per mode, 1 for mode 0) */
         int n_rz_azimuthal_components;
         /** Start time*/

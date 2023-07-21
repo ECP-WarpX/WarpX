@@ -452,7 +452,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
             }
 
             // Auxiliary variable
-            amrex::Real tmp;
+            amrex::Real tmp = 0.0_rt;
             if (om_s != 0.)
             {
                 tmp = (1._rt - C(i,j,k)) / (ep0 * om2_s);
@@ -607,7 +607,7 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
             const amrex::Real C3 = std::cos(1.5_rt * om_s * dt);
 
             // S1_om, S3_om
-            amrex::Real S1_om, S3_om;
+            amrex::Real S1_om = 0.0_rt, S3_om = 0.0_rt;
             if (om_s != 0.)
             {
                 S1_om = std::sin(0.5_rt * om_s * dt) / om_s;

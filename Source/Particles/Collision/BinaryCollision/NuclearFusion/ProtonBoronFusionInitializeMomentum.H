@@ -113,11 +113,11 @@ namespace {
         const amrex::ParticleReal p_Bestar = m_alpha*PhysConst::c*std::sqrt(gamma_Bestar_sq_minus_one);
 
         // Compute momentum of second alpha in Beryllium rest frame, assuming isotropic distribution
-        amrex::ParticleReal px_Bestar, py_Bestar, pz_Bestar;
+        amrex::ParticleReal px_Bestar = 0.0_prt, py_Bestar = 0.0_prt, pz_Bestar = 0.0_prt;
         ParticleUtils::RandomizeVelocity(px_Bestar, py_Bestar, pz_Bestar, p_Bestar, engine);
 
         // Next step is to convert momentum of second alpha to lab frame
-        amrex::ParticleReal px_alpha2, py_alpha2, pz_alpha2;
+        amrex::ParticleReal px_alpha2 = 0.0_prt, py_alpha2 = 0.0_prt, pz_alpha2 = 0.0_prt;
         // Preliminary calculation: compute Beryllium velocity v_Be
         const amrex::ParticleReal p_Be_sq   = px_Be*px_Be + py_Be*py_Be + pz_Be*pz_Be;
         const amrex::ParticleReal g_Be      = std::sqrt(1._prt + p_Be_sq / (mBe_sq*c_sq));

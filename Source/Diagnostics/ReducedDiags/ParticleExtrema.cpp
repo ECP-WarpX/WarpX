@@ -441,7 +441,7 @@ void ParticleExtrema::ComputeDiags (int step)
                     [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                     {
                         // get external fields
-                        ParticleReal xp, yp, zp;
+                        ParticleReal xp = 0.0_prt, yp = 0.0_prt, zp = 0.0_prt;
                         GetPosition(i, xp, yp, zp);
                         ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
                         ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
