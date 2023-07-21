@@ -116,7 +116,7 @@ amrex::Parser utils::parser::makeParser (
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         // Always parsing in double precision avoids potential overflows that may occur when parsing
         // user's expressions because of the limited range of exponentials in single precision
-        double v = 0.0;
+        double v;
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             recursive_symbols.count(*it)==0,

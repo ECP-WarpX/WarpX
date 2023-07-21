@@ -83,7 +83,7 @@ guardCellManager::Init (
     int ngx = (ngx_tmp % 2) ? ngx_tmp+1 : ngx_tmp;  // Always even number
     int ngy = (ngy_tmp % 2) ? ngy_tmp+1 : ngy_tmp;  // Always even number
     const int ngz_nonci = (ngz_tmp % 2) ? ngz_tmp+1 : ngz_tmp;  // Always even number
-    int ngz = 0;
+    int ngz;
     if (do_fdtd_nci_corr) {
         const int ng = ngz_tmp + nci_corr_stencil;
         ngz = (ng % 2) ? ng+1 : ng;

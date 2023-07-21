@@ -1020,7 +1020,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                int r = 0;
+                int r;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
                     r = AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2]);
                 } else {
@@ -1266,7 +1266,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 pos.y = xb*std::sin(theta);
 #endif
 
-                Real dens = 0.0_rt;
+                Real dens;
                 XDim3 u;
                 if (gamma_boost == 1._rt) {
                     // Lab-frame simulation
@@ -1598,7 +1598,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                int r = 0;
+                int r;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
                     r = AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2]);
                 } else {
@@ -2047,7 +2047,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             if (rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
-                int* AMREX_RESTRICT ion_lev = nullptr;
+                int* AMREX_RESTRICT ion_lev;
                 if (do_field_ionization){
                     ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
                 } else {
@@ -2120,7 +2120,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     // Deposit at t_{n+1/2}
                     const amrex::Real relative_time = -0.5_rt * dt;
 
-                    int* AMREX_RESTRICT ion_lev = nullptr;
+                    int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){
                         ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
                     } else {
@@ -2145,7 +2145,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
                 // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
                 if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
-                    int* AMREX_RESTRICT ion_lev = nullptr;
+                    int* AMREX_RESTRICT ion_lev;
                     if (do_field_ionization){
                         ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
                     } else {
@@ -2266,7 +2266,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
     RealVector psplit_x, psplit_y, psplit_z, psplit_w;
     RealVector psplit_ux, psplit_uy, psplit_uz;
     long np_split_to_add = 0;
-    long np_split = 0;
+    long np_split;
     if(split_type==0)
     {
         #if defined(WARPX_DIM_3D)

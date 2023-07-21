@@ -117,7 +117,7 @@ namespace {
 
         // Compute momentum of first product in the center of mass frame, assuming isotropic
         // distribution
-        amrex::ParticleReal px_star = 0.0_prt, py_star = 0.0_prt, pz_star = 0.0_prt;
+        amrex::ParticleReal px_star, py_star, pz_star;
         ParticleUtils::RandomizeVelocity(px_star, py_star, pz_star, std::sqrt(p_star_f_sq),
                                          engine);
 

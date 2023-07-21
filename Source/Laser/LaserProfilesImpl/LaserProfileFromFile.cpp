@@ -301,7 +301,7 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_
     amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(i_first) + ", " + std::to_string(i_last) +
             "] data chunk from " + m_params.lasy_file_name);
-    int data_size = 0;
+    int data_size;
     if (m_params.fileGeom=="thetaMode") {
         data_size = m_params.n_rz_azimuthal_components*(i_last-i_first+1)*m_params.nr;
     } else {
@@ -545,8 +545,8 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylind
                     im*current_time_chunk_size*tmp_nr+(i_interp-tmp_idx_first_time)*tmp_nr+
                     j_interp;
         };
-        amrex::Real costheta = 0.0_rt;
-        amrex::Real sintheta = 0.0_rt;
+        amrex::Real costheta;
+        amrex::Real sintheta;
         if (Rp_i > 0.) {
             costheta = Xp[i]/Rp_i;
             sintheta = Yp[i]/Rp_i;

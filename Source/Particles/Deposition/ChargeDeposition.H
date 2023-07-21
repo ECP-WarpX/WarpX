@@ -119,8 +119,8 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
             // Get particle position in grid coordinates
 #if defined(WARPX_DIM_RZ)
             const amrex::Real rp = std::sqrt(xp*xp + yp*yp);
-            amrex::Real costheta = 0.0_rt;
-            amrex::Real sintheta = 0.0_rt;
+            amrex::Real costheta;
+            amrex::Real sintheta;
             if (rp > 0.) {
                 costheta = xp/rp;
                 sintheta = yp/rp;
@@ -409,8 +409,8 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             // Get particle position in grid coordinates
 #if defined(WARPX_DIM_RZ)
             const amrex::Real rp = std::sqrt(xp*xp + yp*yp);
-            amrex::Real costheta = 0.0_rt;
-            amrex::Real sintheta = 0.0_rt;
+            amrex::Real costheta;
+            amrex::Real sintheta;
             if (rp > 0.) {
                 costheta = xp/rp;
                 sintheta = yp/rp;

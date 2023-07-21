@@ -1012,7 +1012,7 @@ void MultiParticleContainer::InitQuantumSync ()
     const ParmParse pp_qed_qs("qed_qs");
 
     //If specified, use a user-defined energy threshold for photon creation
-    ParticleReal temp = 0.0_prt;
+    ParticleReal temp;
     constexpr auto mec2 = PhysConst::c * PhysConst::c * PhysConst::m_e;
     if(utils::parser::queryWithParser(
         pp_qed_qs, "photon_creation_energy_threshold", temp)){
@@ -1028,7 +1028,7 @@ void MultiParticleContainer::InitQuantumSync ()
     // qs_minimum_chi_part is the minimum chi parameter to be
     // considered for Synchrotron emission. If a lepton has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
-    amrex::Real qs_minimum_chi_part = 0.0_rt;
+    amrex::Real qs_minimum_chi_part;
     utils::parser::getWithParser(pp_qed_qs, "chi_min", qs_minimum_chi_part);
 
 
@@ -1086,7 +1086,7 @@ void MultiParticleContainer::InitBreitWheeler ()
     // bw_minimum_chi_phot is the minimum chi parameter to be
     // considered for pair production. If a photon has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
-    amrex::Real bw_minimum_chi_part = 0.0_rt;
+    amrex::Real bw_minimum_chi_part;
     if(!utils::parser::queryWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part))
         WARPX_ABORT_WITH_MESSAGE("qed_bw.chi_min should be provided!");
 
@@ -1149,7 +1149,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
     // qs_minimum_chi_part is the minimum chi parameter to be
     // considered for Synchrotron emission. If a lepton has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
-    amrex::Real qs_minimum_chi_part = 0.0_rt;
+    amrex::Real qs_minimum_chi_part;
     utils::parser::getWithParser(pp_qed_qs, "chi_min", qs_minimum_chi_part);
 
     if(ParallelDescriptor::IOProcessor()){
@@ -1239,7 +1239,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     // bw_minimum_chi_phot is the minimum chi parameter to be
     // considered for pair production. If a photon has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
-    amrex::Real bw_minimum_chi_part = 0.0_rt;
+    amrex::Real bw_minimum_chi_part;
     utils::parser::getWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part);
 
     if(ParallelDescriptor::IOProcessor()){
