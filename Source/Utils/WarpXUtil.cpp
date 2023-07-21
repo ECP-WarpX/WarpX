@@ -310,7 +310,7 @@ void CheckGriddingForRZSpectral ()
     if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
         return;
 
-    int max_level;
+    int max_level = 0;
     Vector<int> n_cell(AMREX_SPACEDIM, -1);
 
     ParmParse pp_amr("amr");

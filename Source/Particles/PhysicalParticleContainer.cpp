@@ -1250,14 +1250,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #ifdef WARPX_DIM_RZ
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
-                Real theta;
-                if (nmodes == 1 && rz_random_theta) {
-                    // With only 1 mode, the angle doesn't matter so
-                    // choose it randomly.
-                    theta = 2._rt*MathConst::pi*amrex::Random(engine);
-                } else {
-                    theta = 2._rt*MathConst::pi*r.y + theta_offset;
-                }
+                // With only 1 mode, the angle doesn't matter so
+                // choose it randomly.
+                const Real theta = (nmodes == 1 && rz_random_theta)?
+                    (2._rt*MathConst::pi*amrex::Random(engine)):
+                    (2._rt*MathConst::pi*r.y + theta_offset);
                 pos.x = xb*std::cos(theta);
                 pos.y = xb*std::sin(theta);
 #endif
@@ -1790,14 +1787,11 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Conversion from cylindrical to Cartesian coordinates
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and flux
-                Real theta;
-                if (nmodes == 1 && rz_random_theta) {
-                    // With only 1 mode, the angle doesn't matter so
-                    // choose it randomly.
-                    theta = 2._prt*MathConst::pi*amrex::Random(engine);
-                } else {
-                    theta = 2._prt*MathConst::pi*r.y;
-                }
+                // With only 1 mode, the angle doesn't matter so
+                // choose it randomly.
+                const Real theta = (nmodes == 1 && rz_random_theta)?
+                    (2._prt*MathConst::pi*amrex::Random(engine)):
+                    (2._prt*MathConst::pi*r.y);
                 Real const cos_theta = std::cos(theta);
                 Real const sin_theta = std::sin(theta);
                 // Rotate the position
