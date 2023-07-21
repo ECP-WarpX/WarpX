@@ -407,7 +407,7 @@ void ParticleExtrema::ComputeDiags (int step)
                 ReduceOps<ReduceOpMin, ReduceOpMax> reduce_op;
                 ReduceData<Real, Real> reduce_data(reduce_op);
                 using ReduceTuple = typename decltype(reduce_data)::Type;
-                
+
                 // Loop over boxes
                 for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
                 {
