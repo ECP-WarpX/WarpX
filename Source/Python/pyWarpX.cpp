@@ -41,11 +41,11 @@ void init_WarpX(py::module&);
 PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     // make sure AMReX types are known
 #if defined(WARPX_DIM_3D)
-    py::module::import("amrex.space3d");
+    auto amr = py::module::import("amrex.space3d");
 #elif defined(WARPX_DIM_1D_Z)
-    py::module::import("amrex.space1d");
+    auto amr = py::module::import("amrex.space1d");
 #else
-    py::module::import("amrex.space2d");
+    auto amr = py::module::import("amrex.space2d");
 #endif
 
     m.doc() = R"pbdoc(
@@ -66,6 +66,9 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
     init_ParticleBoundaryBuffer(m);
     init_MultiParticleContainer(m);
     init_WarpX(m);
+
+    // expose our amrex module
+    m.attr("amr") = amr;
 
     // API runtime version
     //   note PEP-440 syntax: x.y.zaN but x.y.z.devN
