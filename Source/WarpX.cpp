@@ -230,13 +230,27 @@ bool WarpX::do_device_synchronize = true;
 bool WarpX::do_device_synchronize = false;
 #endif
 
-WarpX* WarpX::m_instance = nullptr;
+std::unique_ptr<WarpX> WarpX::m_instance = nullptr;
+
+[[nodiscard]] std::unique_ptr<WarpX> WarpX::MakeWarpX ()
+{
+    ParseGeometryInput();
+
+    ConvertLabParamsToBoost();
+    ReadBCParams();
+
+#ifdef WARPX_DIM_RZ
+    CheckGriddingForRZSpectral();
+#endif
+
+  return std::make_unique<WarpX>();
+}
 
 WarpX&
 WarpX::GetInstance ()
 {
     if (!m_instance) {
-        m_instance = new WarpX();
+        m_instance = MakeWarpX();
     }
     return *m_instance;
 }
@@ -244,14 +258,11 @@ WarpX::GetInstance ()
 void
 WarpX::ResetInstance ()
 {
-    delete m_instance;
-    m_instance = nullptr;
+    m_instance.reset();
 }
 
 WarpX::WarpX ()
 {
-    m_instance = this;
-
     ReadParameters();
 
     BackwardCompatibility();

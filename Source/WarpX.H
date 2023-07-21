@@ -82,10 +82,18 @@ public:
 
     friend class PML;
 
+    /**
+     * \brief
+     *  WarpX constructor. This method should not be called directly, but rather through
+     * the static member function MakeWarpX(). MakeWarpX() is called by GetInstance ()
+     * if an instance of the WarpX class does not currently exist.
+     */
+    WarpX ();
+
     static WarpX& GetInstance ();
+
     static void ResetInstance ();
 
-    WarpX ();
     ~WarpX ();
 
     static std::string Version (); //!< Version of WarpX executable
@@ -1084,6 +1092,12 @@ protected:
 
     /**
      * \brief
+     * This method creates a new instance of the WarpX class.
+     */
+    [[nodiscard]] static std::unique_ptr<WarpX> MakeWarpX ();
+
+    /**
+     * \brief
      *  This function initializes E, B, rho, and F, at all the levels
      *  of the multifab. rho and F are initialized with 0.
      *  The E and B fields are initialized using user-defined inputs.
@@ -1137,7 +1151,7 @@ protected:
 private:
 
     // Singleton is used when the code is run from python
-    static WarpX* m_instance;
+    static std::unique_ptr<WarpX> m_instance;
 
     //! Check and clear signal flags and asynchronously broadcast them from process 0
     static void CheckSignals ();

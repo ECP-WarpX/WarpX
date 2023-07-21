@@ -11,7 +11,6 @@
 #include "Initialization/WarpXAMReXInit.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXrocfftUtil.H"
-#include "Utils/WarpXUtil.H"
 
 #include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/timer/Timer.H>
@@ -27,22 +26,13 @@ int main(int argc, char* argv[])
 
     utils::rocfft::setup();
 
-    ParseGeometryInput();
-
-    ConvertLabParamsToBoost();
-    ReadBCParams();
-
-#ifdef WARPX_DIM_RZ
-    CheckGriddingForRZSpectral();
-#endif
-
     {
         WARPX_PROFILE_VAR("main()", pmain);
 
         auto timer = ablastr::utils::timer::Timer{};
         timer.record_start_time();
 
-        WarpX warpx;
+        auto& warpx = WarpX::GetInstance();
 
         warpx.InitData();
 
