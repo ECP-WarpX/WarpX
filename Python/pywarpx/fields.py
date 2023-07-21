@@ -223,11 +223,15 @@ class _MultiFABWrapper(object):
         and so includes the +1.
         """
         min_box = self.mf.box_array().minimal_box()
-        return self._get_indices(min_box.size - min_box.small_end, 1)
+        indices = self._get_indices(min_box.big_end, 0)
+        indicesp1 = [i + 1 for i in indices]
+        return indicesp1
 
     def _get_intersect_slice(self, box, starts, stops, ic):
         """Return the slices where the block intersects with the global slice.
         If the block does not intersect, return None.
+        This also shifts the block slices by the number of guard cells in the
+        MultiFab arrays.
 
         Parameters
         ----------
@@ -252,16 +256,18 @@ class _MultiFABWrapper(object):
             The slice of the intersection relative to the global array where the data from individual block will go
         """
         ilo = self._get_indices(box.small_end, 0)
-        ihi = self._get_indices(box.size + box.small_end, 1)
+        ihi = self._get_indices(box.big_end, 0)
+        ihip1 = [i + 1 for i in ihi]
         i1 = np.maximum(starts, ilo)
-        i2 = np.minimum(stops, ihi)
+        i2 = np.minimum(stops, ihip1)
+        nguard = self._get_indices(self.mf.n_grow_vect(), 0)
 
         if np.all(i1 < i2):
 
             block_slices = []
             global_slices = []
             for i in range(3):
-                block_slices.append(slice(i1[i] - ilo[i], i2[i] - ilo[i]))
+                block_slices.append(slice(i1[i] - ilo[i] + nguard[i], i2[i] - ilo[i] + nguard[i]))
                 global_slices.append(slice(i1[i] - starts[i], i2[i] - starts[i]))
 
             if ic is None:
