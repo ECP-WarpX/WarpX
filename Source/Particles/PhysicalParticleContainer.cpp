@@ -1594,7 +1594,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                int r;
+                int r = 0;
                 if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
                     r = AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2]);
                 } else {
@@ -1614,7 +1614,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         const int max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
 
         // Update NextID to include particles created in this function
-        Long pid;
+        Long pid = 0;
 #ifdef AMREX_USE_OMP
 #pragma omp critical (add_plasma_nextid)
 #endif
