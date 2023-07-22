@@ -94,7 +94,6 @@ class CMakeBuild(build_ext):
             '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=' + extdir,
             '-DWarpX_DIMS=' + dims,
             '-DWarpX_APP:BOOL=OFF',
-            '-DWarpX_LIB:BOOL=ON',
             ## variants
             '-DWarpX_COMPUTE=' + WARPX_COMPUTE,
             '-DWarpX_MPI:BOOL=' + WARPX_MPI,
@@ -103,6 +102,7 @@ class CMakeBuild(build_ext):
             '-DWarpX_PRECISION=' + WARPX_PRECISION,
             '-DWarpX_PARTICLE_PRECISION=' + WARPX_PARTICLE_PRECISION,
             '-DWarpX_PSATD:BOOL=' + WARPX_PSATD,
+            '-DWarpX_PYTHON:BOOL=ON',
             '-DWarpX_PYTHON_IPO:BOOL=' + WARPX_PYTHON_IPO,
             '-DWarpX_QED:BOOL=' + WARPX_QED,
             '-DWarpX_QED_TABLE_GEN:BOOL=' + WARPX_QED_TABLE_GEN,
