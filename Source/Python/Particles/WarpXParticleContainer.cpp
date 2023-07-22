@@ -35,13 +35,56 @@ void init_WarpXParticleContainer (py::module& m)
             py::arg("name"), py::arg("comm")
         )
         .def("add_n_particles",
-            &WarpXParticleContainer::AddNParticles,
+            [](WarpXParticleContainer& pc, int lev,
+                int n, py::array_t<double> &x,
+                py::array_t<double> &y,
+                py::array_t<double> &z,
+                py::array_t<double> &ux,
+                py::array_t<double> &uy,
+                py::array_t<double> &uz,
+                const int nattr_real, py::array_t<double> &attr_real,
+                const int nattr_int, py::array_t<int> &attr_int,
+                int uniqueparticles, int id
+            ) {
+                amrex::Vector<amrex::ParticleReal> xp(x.data(), x.data() + n);
+                amrex::Vector<amrex::ParticleReal> yp(y.data(), y.data() + n);
+                amrex::Vector<amrex::ParticleReal> zp(z.data(), z.data() + n);
+                amrex::Vector<amrex::ParticleReal> uxp(ux.data(), ux.data() + n);
+                amrex::Vector<amrex::ParticleReal> uyp(uy.data(), uy.data() + n);
+                amrex::Vector<amrex::ParticleReal> uzp(uz.data(), uz.data() + n);
+
+                // create 2d arrays of real and in attributes
+                amrex::Vector<amrex::Vector<amrex::ParticleReal>> attr;
+                const double *attr_data = attr_real.data();
+                for (int ii=0; ii<nattr_real; ii++) {
+                    amrex::Vector<amrex::ParticleReal> attr_ii(n);
+                    for (int jj=0; jj<n; jj++) {
+                        attr_ii[jj] = attr_data[ii + jj*nattr_real];
+                    }
+                    attr.push_back(attr_ii);
+                }
+
+                amrex::Vector<amrex::Vector<int>> iattr;
+                const int *iattr_data = attr_int.data();
+                for (int ii=0; ii<nattr_int; ii++) {
+                    amrex::Vector<int> attr_ii(n);
+                    for (int jj=0; jj<n; jj++) {
+                        attr_ii[jj] = iattr_data[ii + jj*nattr_int];
+                    }
+                    iattr.push_back(attr_ii);
+                }
+
+                pc.AddNParticles(
+                    lev, n, xp, yp, zp, uxp, uyp, uzp, nattr_real, attr,
+                    nattr_int, iattr, uniqueparticles, id
+                );
+            },
             py::arg("lev"), py::arg("n"),
             py::arg("x"), py::arg("y"), py::arg("z"),
             py::arg("ux"), py::arg("uy"), py::arg("uz"),
             py::arg("nattr_real"), py::arg("attr_real"),
             py::arg("nattr_int"), py::arg("attr_int"),
-            py::arg("uniqueparticles"), py::arg("id")
+            py::arg("uniqueparticles"), py::arg("id")=-1
         )
         .def("num_real_comps", &WarpXParticleContainer::NumRealComps)
         .def("get_comp_index",

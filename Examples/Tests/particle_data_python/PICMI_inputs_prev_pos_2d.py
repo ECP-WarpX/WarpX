@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pywarpx import picmi
+from pywarpx import particle_containers, picmi
 
 constants = picmi.constants
 
@@ -110,14 +110,23 @@ sim.step(max_steps - 1)
 # exist
 ##########################
 
-assert (sim.extension.get_particle_comp_index('electrons', 'prev_x') > 0)
-assert (sim.extension.get_particle_comp_index('electrons', 'prev_z') > 0)
+elec_wrapper = particle_containers.ParticleContainerWrapper('electrons')
+elec_count = elec_wrapper.nps
 
-prev_z_vals = sim.extension.get_particle_arrays(
-    'electrons', 'prev_z', 0
-)
+# check that the runtime attributes have the right indices
+assert (elec_wrapper.particle_container.get_comp_index('prev_x') == 4)
+assert (elec_wrapper.particle_container.get_comp_index('prev_z') == 5)
+
+# sanity check that the prev_z values are reasonable and
+# that the correct number of values are returned
+prev_z_vals = elec_wrapper.get_particle_arrays('prev_z', 0)
+running_count = 0
+
 for z_vals in prev_z_vals:
+    running_count += len(z_vals)
     assert np.all(z_vals < zmax)
+
+assert elec_count == running_count
 
 ##########################
 # take the final sim step

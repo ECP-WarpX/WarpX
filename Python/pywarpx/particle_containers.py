@@ -117,22 +117,22 @@ class ParticleContainerWrapper(object):
         # --- The number of built in attributes
         # --- The three velocities
         built_in_attrs = 3
-        if self.geometry_dim == 'rz':
+        if libwarpx.geometry_dim == 'rz':
             # --- With RZ, there is also theta
             built_in_attrs += 1
 
         # --- The number of extra attributes (including the weight)
-        nattr = self.get_nattr_species(species_name) - built_in_attrs
+        nattr = self.particle_container.num_real_comps() - built_in_attrs
         attr = np.zeros((maxlen, nattr))
         attr[:,0] = w
 
         # --- Note that the velocities are handled separately and not included in attr
         # --- (even though they are stored as attributes in the C++)
         for key, vals in kwargs.items():
-            attr[:,self.get_particle_comp_index(key) - built_in_attrs] = vals
+            attr[:,self.particle_container.get_comp_index(key) - built_in_attrs] = vals
 
         nattr_int = 0
-        attr_int = np.empty([0], ctypes.c_int)
+        attr_int = np.empty([0],  dtype=np.int32)
 
         # TODO: expose ParticleReal through pyAMReX
         # and cast arrays to the correct types, before calling add_n_particles
@@ -238,7 +238,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            data_array.append(soa.GetRealData()[comp_idx])
+            data_array.append(soa.GetRealData(comp_idx))
         return data_array
 
     def get_particle_id(self, level=0):
