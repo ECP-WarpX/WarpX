@@ -126,7 +126,7 @@ for z_vals in prev_z_vals:
     running_count += len(z_vals)
     assert np.all(z_vals < zmax)
 
-assert elec_count == running_count
+assert running_count == elec_wrapper.get_particle_count(True)
 
 ##########################
 # take the final sim step

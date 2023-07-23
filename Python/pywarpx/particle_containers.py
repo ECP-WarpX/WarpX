@@ -238,7 +238,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            data_array.append(soa.GetRealData(comp_idx))
+            data_array.append(np.array(soa.GetRealData(comp_idx), copy=False))
         return data_array
 
     def get_particle_id(self, level=0):
@@ -545,14 +545,14 @@ class ParticleBoundaryBufferWrapper(object):
             comp_idx = part_container.num_int_comps() - 1
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
-                data_array.append(soa.GetIntData(comp_idx))
+                data_array.append(np.array(soa.GetIntData(comp_idx), copy=False))
         else:
             mypc = libwarpx.warpx.multi_particle_container()
             sim_part_container_wrapper = mypc.get_particle_container_from_name(species_name)
             comp_idx = sim_part_container_wrapper.get_comp_index(comp_name)
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
-                data_array.append(soa.GetRealData(comp_idx))
+                data_array.append(np.array(soa.GetRealData(comp_idx), copy=False))
 
         return data_array
 

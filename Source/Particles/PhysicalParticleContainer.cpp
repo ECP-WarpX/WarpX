@@ -684,7 +684,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
     amrex::Vector<amrex::Vector<int>> attr_int;
 
-    AddNParticles(0,np, xp,  yp,  zp, uxp, uyp, uzp,
+    AddNParticles(0, np, xp,  yp,  zp, uxp, uyp, uzp,
                   1, attr, 0, attr_int, 1);
 #endif // WARPX_USE_OPENPMD
 
@@ -846,15 +846,13 @@ PhysicalParticleContainer::AddParticles (int lev)
                                       plasma_injector->single_particle_u[1],
                                       plasma_injector->single_particle_u[2]);
         }
-        amrex::Vector<ParticleReal> xp{plasma_injector->single_particle_pos[0]};
-        amrex::Vector<ParticleReal> yp{plasma_injector->single_particle_pos[1]};
-        amrex::Vector<ParticleReal> zp{plasma_injector->single_particle_pos[2]};
-        amrex::Vector<ParticleReal> uxp{plasma_injector->single_particle_u[0]};
-        amrex::Vector<ParticleReal> uyp{plasma_injector->single_particle_u[1]};
-        amrex::Vector<ParticleReal> uzp{plasma_injector->single_particle_u[2]};
-        amrex::Vector<amrex::Vector<ParticleReal>> attr;
-        amrex::Vector<ParticleReal> wp{plasma_injector->multiple_particles_weight};
-        attr.push_back(wp);
+        amrex::Vector<ParticleReal> xp = {plasma_injector->single_particle_pos[0]};
+        amrex::Vector<ParticleReal> yp = {plasma_injector->single_particle_pos[1]};
+        amrex::Vector<ParticleReal> zp = {plasma_injector->single_particle_pos[2]};
+        amrex::Vector<ParticleReal> uxp = {plasma_injector->single_particle_u[0]};
+        amrex::Vector<ParticleReal> uyp = {plasma_injector->single_particle_u[1]};
+        amrex::Vector<ParticleReal> uzp = {plasma_injector->single_particle_u[2]};
+        amrex::Vector<amrex::Vector<ParticleReal>> attr = {{plasma_injector->single_particle_weight}};
         amrex::Vector<amrex::Vector<int>> attr_int;
         AddNParticles(lev, 1, xp, yp, zp, uxp, uyp, uzp,
                       1, attr, 0, attr_int, 0);

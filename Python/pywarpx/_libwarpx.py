@@ -135,7 +135,7 @@ class LibWarpX():
         return pc.num_real_comps()
 
     def amrex_init(self, argv, mpi_comm=None):
-        if mpi_comm is None or MPI is None:
+        if mpi_comm is None: # or MPI is None:
             self.libwarpx_so.amrex_init(argv)
         else:
             raise Exception('mpi_comm argument not yet supported')
