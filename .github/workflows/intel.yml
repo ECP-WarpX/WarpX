@@ -41,8 +41,11 @@ jobs:
         export CXX=$(which icpc)
         export CC=$(which icc)
 
+        python3 -m pip install --upgrade pip setuptools wheel
+
         cmake -S . -B build_dp \
           -DCMAKE_VERBOSE_MAKEFILE=ON \
+          -DpyAMReX_IPO=OFF           \
           -DWarpX_PYTHON=ON           \
           -DWarpX_PYTHON_IPO=OFF      \
           -DWarpX_MPI=OFF             \
@@ -52,6 +55,7 @@ jobs:
 
         cmake -S . -B build_sp \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DpyAMReX_IPO=OFF            \
           -DWarpX_PYTHON=ON            \
           -DWarpX_PYTHON_IPO=OFF       \
           -DWarpX_MPI=OFF              \
@@ -59,10 +63,7 @@ jobs:
           -DWarpX_openpmd_internal=OFF \
           -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
-
-        python3 -m pip install --upgrade pip setuptools wheel
-        export PYWARPX_LIB_DIR=$PWD/build_sp/lib/site-packages/pywarpx/
-        python3 -m pip install -v .
+        cmake --build build_sp --target pip_install
 
   build_icpx:
     name: oneAPI ICX SP
@@ -102,6 +103,9 @@ jobs:
         export CXX=$(which icpx)
         export CC=$(which icx)
 
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade setuptools wheel
+
         cmake -S . -B build_sp         \
           -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
@@ -111,12 +115,7 @@ jobs:
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
-
-        python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade setuptools wheel
-        export PYWARPX_LIB_DIR=$PWD/build_sp/lib/site-packages/pywarpx/
-        python3 -m pip wheel -v .
-        python3 -m pip install *.whl
+        cmake --build build_sp --target pip_install
 
     - name: run pywarpx
       run: |
