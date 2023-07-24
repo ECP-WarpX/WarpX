@@ -159,8 +159,7 @@ void ParticleEnergy::ComputeDiags (int step)
         }
 
         // Reduced sum over MPI ranks
-        ParallelDescriptor::ReduceRealSum(Etot, ParallelDescriptor::IOProcessorNumber());
-        ParallelDescriptor::ReduceRealSum(Ws  , ParallelDescriptor::IOProcessorNumber());
+        ParallelDescriptor::ReduceRealSum({Etot,Ws}, ParallelDescriptor::IOProcessorNumber());
 
         // Accumulate sum of weights over all species (must come after MPI reduction of Ws)
         Wtot += Ws;

@@ -1217,9 +1217,7 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
     }
 
     if (local == false) {
-        ParallelDescriptor::ReduceRealSum(vx_total);
-        ParallelDescriptor::ReduceRealSum(vy_total);
-        ParallelDescriptor::ReduceRealSum(vz_total);
+        ParallelDescriptor::ReduceRealSum<ParticleReal>({vx_total,vy_total,vz_total});
         ParallelDescriptor::ReduceLongSum(np_total);
     }
 
