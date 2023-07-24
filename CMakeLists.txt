@@ -257,6 +257,7 @@ foreach(D IN LISTS WarpX_DIMS)
     target_include_directories(ablastr_${SD} PUBLIC
         # future: own directory root
         $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
+        $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
     )
 
     # build Python module (this is always a shared library)
@@ -301,7 +302,7 @@ foreach(D IN LISTS WarpX_DIMS)
         endif()
         if(EMSCRIPTEN)
             set_target_properties(pyWarpX_${SD} PROPERTIES
-                    PREFIX "")
+                PREFIX "")
         else()
             pybind11_extension(pyWarpX_${SD})
         endif()
@@ -346,7 +347,7 @@ add_subdirectory(Source/Particles)
 add_subdirectory(Source/Python)
 add_subdirectory(Source/Utils)
 
-# Interprocedural optimization
+# Interprocedural optimization (IPO) / Link-Time Optimization (LTO)
 if(WarpX_IPO)
     enable_IPO("${_ALL_TARGETS}")
 endif()
@@ -477,6 +478,14 @@ foreach(D IN LISTS WarpX_DIMS)
     if(WIN32)
         target_compile_definitions(ablastr_${SD} PUBLIC _USE_MATH_DEFINES)
     endif()
+
+    # Windows DLLs and Global Symbols
+    # https://stackoverflow.com/questions/54560832/cmake-windows-export-all-symbols-does-not-cover-global-variables/54568678#54568678
+    #
+    if(WIN32 AND BUILD_SHARED_LIBS)
+        set(ABLASTR_IS_DLL ON)
+        target_compile_definitions(ablastr_${SD} PRIVATE ABLASTR_IS_DLL_BUILDING)
+    endif()
 endforeach()
 
 
@@ -491,6 +500,12 @@ get_source_version(WarpX_${WarpX_DIMS_LAST} ${WarpX_SOURCE_DIR})
 configure_file(
     ${WarpX_SOURCE_DIR}/Source/Utils/WarpXVersion.H.in
     ${WarpX_BINARY_DIR}/Source/Utils/WarpXVersion.H
+    @ONLY
+)
+
+configure_file(
+    ${WarpX_SOURCE_DIR}/Source/ablastr/export.H.in
+    ${WarpX_BINARY_DIR}/Source/ablastr/export.H
     @ONLY
 )
 
@@ -545,6 +560,12 @@ foreach(D IN LISTS WarpX_DIMS)
             \"${ABS_INSTALL_LIB_DIR}/libwarpx.${SD}$<TARGET_FILE_SUFFIX:lib_${SD}>\"
             COPY_ON_ERROR SYMBOLIC)")
     endif()
+
+    # WarpX
+    # Utils/WarpXVersion.H
+
+    # ABLASTR
+    # export.H
 
     # CMake package file for find_package(WarpX::WarpX) in depending projects
     #install(EXPORT WarpXTargets
