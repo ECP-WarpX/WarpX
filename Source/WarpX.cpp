@@ -2884,27 +2884,27 @@ WarpX::getCosts (int lev)
 
 void
 WarpX::setLoadBalanceEfficiency (const int lev, const amrex::Real efficiency)
+{
+    if (m_instance)
     {
-        if (m_instance)
-        {
-            m_instance->load_balance_efficiency[lev] = efficiency;
-        } else
-        {
-            return;
-        }
+        m_instance->load_balance_efficiency[lev] = efficiency;
+    } else
+    {
+        return;
     }
+}
 
 amrex::Real
 WarpX::getLoadBalanceEfficiency (const int lev)
+{
+    if (m_instance)
     {
-        if (m_instance)
-        {
-            return m_instance->load_balance_efficiency[lev];
-        } else
-        {
-            return -1;
-        }
+        return m_instance->load_balance_efficiency[lev];
+    } else
+    {
+        return -1;
     }
+}
 
 void
 WarpX::BuildBufferMasks ()
