@@ -284,6 +284,21 @@ foreach(D IN LISTS WarpX_DIMS)
             PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/pywarpx
             COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/pywarpx
         )
+        get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+        if(isMultiConfig)
+            foreach(CFG IN LISTS CMAKE_CONFIGURATION_TYPES)
+                string(TOUPPER "${CFG}" CFG_UPPER)
+                set_target_properties(pyWarpX_${SD} PROPERTIES
+                    # build output directories - mainly set to run tests from CMake & IDEs
+                    # note: same as above, but for Multi-Config generators
+                    ARCHIVE_OUTPUT_DIRECTORY_${CFG_UPPER} ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/pywarpx
+                    LIBRARY_OUTPUT_DIRECTORY_${CFG_UPPER} ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/pywarpx
+                    RUNTIME_OUTPUT_DIRECTORY_${CFG_UPPER} ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/pywarpx
+                    PDB_OUTPUT_DIRECTORY_${CFG_UPPER} ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/pywarpx
+                    COMPILE_PDB_OUTPUT_DIRECTORY_${CFG_UPPER} ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/pywarpx
+                )
+            endforeach()
+        endif()
         if(EMSCRIPTEN)
             set_target_properties(pyWarpX_${SD} PROPERTIES
                     PREFIX "")
@@ -518,9 +533,9 @@ foreach(D IN LISTS WarpX_DIMS)
     # this is currently expected by Python bindings
     if(WarpX_LIB)
         if(IS_ABSOLUTE ${CMAKE_INSTALL_LIBDIR})
-            set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
+            set(ABS_INSTALL_LIB_DIR "${CMAKE_INSTALL_LIBDIR}")
         else()
-            set(ABS_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+            set(ABS_INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
         endif()
         # escape spaces for generated cmake_install.cmake file
         file(TO_CMAKE_PATH "${ABS_INSTALL_LIB_DIR}" ABS_INSTALL_LIB_DIR)
