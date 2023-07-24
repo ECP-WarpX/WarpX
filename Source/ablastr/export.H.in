@@ -21,7 +21,8 @@
 #           if defined(ABLASTR_IS_DLL_BUILDING)
 #               define ABLASTR_EXPORT __declspec(dllexport)
 #           else
-#               define ABLASTR_EXPORT __declspec(dllimport)
+#               define ABLASTR_EXPORT
+// __declspec(dllimport)
 #           endif
 #       else
 #           define ABLASTR_EXPORT
