@@ -976,58 +976,9 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
     int const finest_level = rho.size() - 1;
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        // Reset the rho array if reset is True
-        int const nc = WarpX::ncomps;
-        if (reset) rho[lev]->setVal(0., icomp*nc, nc, rho[lev]->nGrowVect());
-
-        // Loop over particle tiles and deposit charge on each level
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-        {
-        const int thread_num = omp_get_thread_num();
-#else
-        const int thread_num = 0;
-#endif
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
-        {
-            const long np = pti.numParticles();
-            auto const & wp = pti.GetAttribs(PIdx::w);
-
-            int* AMREX_RESTRICT ion_lev = nullptr;
-            if (do_field_ionization)
-            {
-                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
-            }
-
-            DepositCharge(pti, wp, ion_lev, rho[lev].get(), icomp, 0, np, thread_num, lev, lev);
-        }
-#ifdef AMREX_USE_OMP
-        }
-#endif
-
-#ifdef WARPX_DIM_RZ
-        if (apply_boundary_and_scale_volume)
-        {
-            WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
-        }
-#endif
-
-        // Exchange guard cells
-        if (!local) {
-            // Possible performance optimization:
-            // pass less than `rho[lev]->nGrowVect()` in the fifth input variable `dst_ng`
-            ablastr::utils::communication::SumBoundary(
-                *rho[lev], 0, rho[lev]->nComp(), rho[lev]->nGrowVect(), rho[lev]->nGrowVect(),
-                WarpX::do_single_precision_comms, m_gdb->Geom(lev).periodicity());
-        }
-
-#ifndef WARPX_DIM_RZ
-        if (apply_boundary_and_scale_volume)
-        {
-            // Reflect density over PEC boundaries, if needed.
-            WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho[lev].get(), PatchType::fine);
-        }
-#endif
+        DepositCharge (
+            rho[lev], lev, local, reset, apply_boundary_and_scale_volume, icomp
+        );
     }
 
     // Now that the charge has been deposited at each level,
@@ -1053,10 +1004,71 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
     }
 }
 
+void
+WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
+                                       const int lev, const bool local, const bool reset,
+                                       const bool apply_boundary_and_scale_volume,
+                                       const int icomp)
+{
+    // Reset the rho array if reset is True
+    int const nc = WarpX::ncomps;
+    if (reset) rho->setVal(0., icomp*nc, nc, rho->nGrowVect());
+
+    // Loop over particle tiles and deposit charge on each level
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+    {
+    const int thread_num = omp_get_thread_num();
+#else
+    const int thread_num = 0;
+#endif
+    for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+    {
+        const long np = pti.numParticles();
+        auto const & wp = pti.GetAttribs(PIdx::w);
+
+        int* AMREX_RESTRICT ion_lev = nullptr;
+        if (do_field_ionization)
+        {
+            ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
+        }
+
+        DepositCharge(pti, wp, ion_lev, rho.get(), icomp, 0, np, thread_num, lev, lev);
+    }
+#ifdef AMREX_USE_OMP
+    }
+#endif
+
+#ifdef WARPX_DIM_RZ
+    if (apply_boundary_and_scale_volume)
+    {
+        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
+    }
+#endif
+
+    // Exchange guard cells
+    if (local == false) {
+        // Possible performance optimization:
+        // pass less than `rho->nGrowVect()` in the fifth input variable `dst_ng`
+        ablastr::utils::communication::SumBoundary(
+            *rho, 0, rho->nComp(), rho->nGrowVect(), rho->nGrowVect(),
+            WarpX::do_single_precision_comms,
+            m_gdb->Geom(lev).periodicity()
+        );
+    }
+
+#ifndef WARPX_DIM_RZ
+    if (apply_boundary_and_scale_volume)
+    {
+        // Reflect density over PEC boundaries, if needed.
+        WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho.get(), PatchType::fine);
+    }
+#endif
+}
+
 std::unique_ptr<MultiFab>
 WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    const auto& gm = m_gdb->Geom(lev);
     const auto& ba = m_gdb->ParticleBoxArray(lev);
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
@@ -1074,51 +1086,8 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const WarpX& warpx = WarpX::GetInstance();
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
-    auto rho = std::make_unique<MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
-    rho->setVal(0.0);
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    {
-#endif
-#ifdef AMREX_USE_OMP
-        const int thread_num = omp_get_thread_num();
-#else
-        const int thread_num = 0;
-#endif
-
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
-        {
-            const long np = pti.numParticles();
-            auto& wp = pti.GetAttribs(PIdx::w);
-
-            const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
-                pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
-
-            DepositCharge(pti, wp, ion_lev, rho.get(), 0, 0, np,
-                          thread_num, lev, lev);
-        }
-#ifdef AMREX_USE_OMP
-    }
-#endif
-
-#ifdef WARPX_DIM_RZ
-    WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
-#endif
-
-    if (!local) {
-        // Possible performance optimization:
-        // pass less than `rho->nGrowVect()` in the fifth input variable `dst_ng`
-        ablastr::utils::communication::SumBoundary(
-            *rho, 0, rho->nComp(), rho->nGrowVect(), rho->nGrowVect(),
-            WarpX::do_single_precision_comms, gm.periodicity());
-    }
-
-#ifndef WARPX_DIM_RZ
-    // Reflect density over PEC boundaries, if needed.
-    WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho.get(), PatchType::fine);
-#endif
-
+    auto rho = std::make_unique<MultiFab>(nba, dm, WarpX::ncomps,ng_rho);
+    DepositCharge(rho, lev, local, true, true, 0);
     return rho;
 }
 
