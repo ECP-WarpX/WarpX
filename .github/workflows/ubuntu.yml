@@ -165,7 +165,6 @@ jobs:
     env:
       CC: clang
       CXX: clang++
-      CXXFLAGS: "-Werror -Wno-error=pass-failed"
       # On CI for this test, Ninja is slower than the default:
       #CMAKE_GENERATOR: Ninja
       # setuptools/mp4py work-around, see
@@ -192,6 +191,8 @@ jobs:
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
+
+        export CXXFLAGS="-Werror -Wno-error=pass-failed"
 
         cmake -S . -B build            \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
