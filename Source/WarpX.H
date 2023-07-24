@@ -40,6 +40,8 @@
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
+#include <ablastr/export.H>
+
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
 #include <AMReX_Array.H>
@@ -69,13 +71,14 @@
 #include <vector>
 #include <map>
 
+
 enum struct PatchType : int
 {
     fine,
     coarse
 };
 
-class WarpX
+class ABLASTR_EXPORT WarpX
     : public amrex::AmrCore
 {
 public:

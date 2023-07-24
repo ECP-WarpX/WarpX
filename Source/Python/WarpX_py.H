@@ -11,8 +11,11 @@
 
 #include "Utils/WarpXProfilerWrapper.H"
 
+#include <ablastr/export.H>
+
 #include <map>
 #include <string>
+
 
 /**
  * Declare global map to hold python callback functions.
@@ -21,7 +24,7 @@
  * functions will be called. See ``WarpX/Python/pywarpx/callbacks.py`` for a
  * list of currently supported callback names.
 */
-extern std::map< std::string, std::function<void()> > warpx_callback_py_map;
+extern ABLASTR_EXPORT std::map< std::string, std::function<void()> > warpx_callback_py_map;
 
 /**
  * \brief Function to install the given name and function in warpx_callback_py_map

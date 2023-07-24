@@ -11,12 +11,15 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
 
+#include <ablastr/export.H>
+
 #include <vector>
+
 
 /**
  *  This stores particles that have left / been absorbed by domain and embedded boundaries.
  */
-class ParticleBoundaryBuffer
+class ABLASTR_EXPORT ParticleBoundaryBuffer
 {
 public:
     ParticleBoundaryBuffer ();

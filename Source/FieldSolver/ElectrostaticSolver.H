@@ -13,6 +13,12 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Parser.H>
 
+#include <ablastr/export.H>
+
+#include <array>
+#include <string>
+
+
 namespace ElectrostaticSolver {
 
     struct PhiCalculatorEB {
@@ -32,7 +38,7 @@ namespace ElectrostaticSolver {
         }
     };
 
-    class PoissonBoundaryHandler {
+    class ABLASTR_EXPORT PoissonBoundaryHandler {
     public:
 
         amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM> lobc, hibc;

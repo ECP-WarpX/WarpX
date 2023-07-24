@@ -9,12 +9,15 @@
 
 #include "Utils/TextMsg.H"
 
+#include <ablastr/export.H>
+
 #include <AMReX.H>
 #include <AMReX_AmrParGDB.H>
 #include <AMReX_Particles.H>
 
 #include <map>
 #include <string>
+
 
 /** Particle Attributes stored in amrex::ParticleContainer's struct of array
  */
@@ -42,7 +45,7 @@ struct PIdx
  * arena, pinned memory arena, etc.) the particle data will be stored
  */
 template <template<class> class T_Allocator=amrex::DefaultAllocator>
-class NamedComponentParticleContainer :
+class ABLASTR_EXPORT NamedComponentParticleContainer :
 public amrex::ParticleContainer<0,0,PIdx::nattribs,0,T_Allocator>
 {
 public:
