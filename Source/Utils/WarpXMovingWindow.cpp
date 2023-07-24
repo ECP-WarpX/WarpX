@@ -356,9 +356,9 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
     }
 
-    // Loop over species
-    const int n_species = mypc->nSpecies();
-    for (int i=0; i<n_species; i++)
+    // Loop over species (particles and lasers)
+    const int n_containers = mypc->nContainers();
+    for (int i=0; i<n_containers; i++)
     {
         WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
 
