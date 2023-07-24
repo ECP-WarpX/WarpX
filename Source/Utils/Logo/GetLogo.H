@@ -11,6 +11,6 @@ namespace utils::logo
          * \return a string containing an ASCII art logo
          */
         std::string get_logo () noexcept;
-}
+} // namespace utils::logo
 
 #endif
