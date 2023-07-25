@@ -613,6 +613,8 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
     }
     if (!local) {
         const Geometry& gm = allcontainers[0]->Geom(lev);
+        // Possible performance optimization:
+        // pass less than `rho->nGrowVect()` in the fifth input variable `dst_ng`
         ablastr::utils::communication::SumBoundary(
             *rho, 0, rho->nComp(), rho->nGrowVect(), rho->nGrowVect(),
             WarpX::do_single_precision_comms, gm.periodicity());
