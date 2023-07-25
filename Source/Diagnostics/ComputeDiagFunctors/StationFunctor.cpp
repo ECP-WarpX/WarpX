@@ -2,8 +2,8 @@
 
 #include "WarpX.H"
 
-#include <ablastr/utils/Communication.H>    
-        
+#include <ablastr/utils/Communication.H>
+
 #include <AMReX_Array4.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_Config.H>
@@ -15,7 +15,7 @@
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_MultiFabUtil.H> 
+#include <AMReX_MultiFabUtil.H>
 
 //StationFunctor::StationFunctor(const std::array<const amrex::MultiFab* const, 6> arr_mf_src,
 StationFunctor::StationFunctor ( const amrex::MultiFab* const mf_src,

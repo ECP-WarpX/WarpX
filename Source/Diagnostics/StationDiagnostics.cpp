@@ -82,7 +82,7 @@ StationDiagnostics::ReadParameters ()
     m_intervals = utils::parser::SliceParser(intervals_string_vec);
 
 
-    m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz"};    
+    m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz"};
 }
 
 bool
