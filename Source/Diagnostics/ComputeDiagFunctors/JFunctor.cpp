@@ -1,3 +1,9 @@
+/* This file is part of WarpX.
+ *
+ * Authors: Roelof Groenewald
+ * License: BSD-3-Clause-LBNL
+ */
+
 #include "JFunctor.H"
 
 #include "Particles/MultiParticleContainer.H"
@@ -25,8 +31,10 @@ JFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/)
     /** pointer to source multifab (can be multi-component) */
     amrex::MultiFab* m_mf_src = warpx.get_pointer_current_fp(m_lev, m_dir);
 
-    // Deposit current if no solver or an electrostatic solver is being used
-    if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None ) {
+    // Deposit current if no solver or the electrostatic solver is being used
+    if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
+        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic
+    ) {
         // allocate temporary multifab to deposit current density into
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
         current_fp_temp.resize(1);
