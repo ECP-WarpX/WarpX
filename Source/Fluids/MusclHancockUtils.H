@@ -12,6 +12,28 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_REAL.H>
 
+// Velocity at the half step
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real V_calc (amrex::Real Q0, amrex::Real Q1, amrex::Real Q2, amrex::Real Q3,
+    amrex::Real c, int comp)
+{
+    // Compute Ux, Uy, Uz:
+    auto Ux = Q1/Q0;
+    auto Uy = Q2/Q0;
+    auto Uz = Q3/Q0;
+
+    // Gamma Calc
+    auto gamma = sqrt(1.0 + (Ux*Ux + Uy*Uy + Uz*Uz)/(c*c));
+
+    // Return the proper component
+    if (comp == 0) // x
+        return Ux/gamma;
+    else if (comp == 1) // y
+        return Uy/gamma;
+    else // (comp == 2) // z
+        return Uz/gamma;
+}
+
 // mindmod
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real minmod (amrex::Real a, amrex::Real b)
