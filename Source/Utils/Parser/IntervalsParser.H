@@ -24,6 +24,11 @@ namespace utils::parser
     {
     public:
         /**
+        * \brief Default constructor of the SliceParser class.
+        */
+        SliceParser () = default;
+
+        /**
         * \brief Constructor of the SliceParser class.
         *
         * @param[in] instr an input string of the form "i:j:k", "i:j" or "k" where i, j and k are

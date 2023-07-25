@@ -3,6 +3,7 @@
 #include "Diagnostics/BTDiagnostics.H"
 #include "Diagnostics/FullDiagnostics.H"
 #include "Diagnostics/BoundaryScrapingDiagnostics.H"
+#include "Diagnostics/StationDiagnostics.H"
 #include "Utils/TextMsg.H"
 #include <ablastr/warn_manager/WarnManager.H>
 #include <AMReX_ParmParse.H>
@@ -27,6 +28,8 @@ MultiDiagnostics::MultiDiagnostics ()
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
         } else if ( diags_types[i] == DiagTypes::BoundaryScraping ){
             alldiags[i] = std::make_unique<BoundaryScrapingDiagnostics>(i, diags_names[i]);
+        } else if ( diags_types[i] == DiagTypes::Station ){
+            alldiags[i] = std::make_unique<StationDiagnostics>(i, diags_names[i]);
         } else {
             WARPX_ABORT_WITH_MESSAGE("Unknown diagnostic type");
         }
@@ -68,11 +71,12 @@ MultiDiagnostics::ReadParameters ()
         std::string diag_type_str;
         pp_diag_name.get("diag_type", diag_type_str);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            diag_type_str == "Full" || diag_type_str == "BackTransformed" || diag_type_str == "BoundaryScraping",
-            "<diag>.diag_type must be Full or BackTransformed or BoundaryScraping");
+            diag_type_str == "Full" || diag_type_str == "BackTransformed" || diag_type_str == "BoundaryScraping" || diag_type_str == "Station",
+            "<diag>.diag_type must be Full or BackTransformed or BoundaryScraping or Station");
         if (diag_type_str == "Full") diags_types[i] = DiagTypes::Full;
         if (diag_type_str == "BackTransformed") diags_types[i] = DiagTypes::BackTransformed;
         if (diag_type_str == "BoundaryScraping") diags_types[i] = DiagTypes::BoundaryScraping;
+        if (diag_type_str == "Station") diags_types[i] = DiagTypes::Station;
     }
 }
 

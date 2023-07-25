@@ -14,6 +14,7 @@ foreach(D IN LISTS WarpX_DIMS)
         BoundaryScrapingDiagnostics.cpp
         BTD_Plotfile_Header_Impl.cpp
         OpenPMDHelpFunction.cpp
+        StationDiagnostics.cpp
     )
 endforeach()
 

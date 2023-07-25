@@ -486,6 +486,17 @@ public:
             Efield_aux[lev][2].get()
         };
     }
+    std::array<const amrex::MultiFab* const, 6>
+    get_array_EBfield_fp (const int lev) const{
+        return {
+            Efield_fp[lev][0].get(),
+            Efield_fp[lev][1].get(),
+            Efield_fp[lev][2].get(),
+            Bfield_fp[lev][0].get(),
+            Bfield_fp[lev][1].get(),
+            Bfield_fp[lev][2].get()
+        };
+    }
 
     amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const { return Efield_aux[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_aux[lev][direction].get(); }
