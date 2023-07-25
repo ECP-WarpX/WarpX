@@ -104,8 +104,6 @@ namespace ablastr::coarsen::average
         int const crx = cr[0];
         int const cry = cr[1];
         int const crz = cr[2];
-        int ii, jj, kk;
-        amrex::Real wx, wy, wz;
 
         // Add neutral elements (=0) beyond guard cells in source array (fine)
         auto const arr_src_safe = [arr_src]
@@ -125,16 +123,16 @@ namespace ablastr::coarsen::average
         for (int kref = 0; kref < numz; ++kref) {
             for (int jref = 0; jref < numy; ++jref) {
                 for (int iref = 0; iref < numx; ++iref) {
-                    ii = imin + iref;
-                    jj = jmin + jref;
-                    kk = kmin + kref;
-                    wx = (1.0_rt / static_cast<amrex::Real>(numx)) * (1 - sfx) * (1 - scx) // if cell-centered
+                    const int ii = imin + iref;
+                    const int jj = jmin + jref;
+                    const int kk = kmin + kref;
+                    const amrex::Real wx = (1.0_rt / static_cast<amrex::Real>(numx)) * (1 - sfx) * (1 - scx) // if cell-centered
                          + ((amrex::Math::abs(crx - amrex::Math::abs(ii - i * crx))) /
                             static_cast<amrex::Real>(crx * crx)) * sfx * scx; // if nodal
-                    wy = (1.0_rt / static_cast<amrex::Real>(numy)) * (1 - sfy) * (1 - scy) // if cell-centered
+                    const amrex::Real wy = (1.0_rt / static_cast<amrex::Real>(numy)) * (1 - sfy) * (1 - scy) // if cell-centered
                          + ((amrex::Math::abs(cry - amrex::Math::abs(jj - j * cry))) /
                             static_cast<amrex::Real>(cry * cry)) * sfy * scy; // if nodal
-                    wz = (1.0_rt / static_cast<amrex::Real>(numz)) * (1 - sfz) * (1 - scz) // if cell-centered
+                    const amrex::Real wz = (1.0_rt / static_cast<amrex::Real>(numz)) * (1 - sfz) * (1 - scz) // if cell-centered
                          + ((amrex::Math::abs(crz - amrex::Math::abs(kk - k * crz))) /
                             static_cast<amrex::Real>(crz * crz)) * sfz * scz; // if nodal
                     c += wx * wy * wz * arr_src_safe(ii, jj, kk, comp);
