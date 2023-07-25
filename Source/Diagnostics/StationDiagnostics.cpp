@@ -29,8 +29,11 @@
 #include <AMReX_MakeType.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_PlotFileUtil.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
+#include <AMReX_VisMF.H>
 #include <AMReX_Vector.H>
 
 #include <algorithm>
@@ -49,7 +52,6 @@ StationDiagnostics::StationDiagnostics (int i, std::string name)
 void
 StationDiagnostics::ReadParameters ()
 {
-    amrex::Print() << " in station diags \n";
 #ifdef WARPX_DIM_RZ
     amrex::Abort("StationDiagnostics is not implemented for RZ, yet");
 #endif
@@ -81,8 +83,9 @@ StationDiagnostics::ReadParameters ()
     pp_diag_name.query("intervals", intervals_string_vec);
     m_intervals = utils::parser::SliceParser(intervals_string_vec);
 
-
     m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz"};
+    m_file_prefix = "diags/" + m_diag_name;
+    pp_diag_name.query("file_prefix", m_file_prefix);
 }
 
 bool
@@ -209,9 +212,57 @@ void
 StationDiagnostics::Flush (int i_buffer)
 {
     auto & warpx = WarpX::GetInstance();
-    // reset counter
     m_tmax = warpx.gett_new(0);
+    std::string filename = m_file_prefix;
+    filename = amrex::Concatenate(m_file_prefix, i_buffer, m_file_min_digits);
+    constexpr int permission_flag_rwxrxrx = 0755;
+    if (! amrex::UtilCreateDirectory(filename, permission_flag_rwxrxrx) ) {
+        amrex::CreateDirectoryFailed(filename);
+    }
+    WriteStationHeader(filename);
+    for (int lev = 0; lev < 1; ++lev) {
+        const std::string buffer_path = filename + amrex::Concatenate("/Level_",lev,1) + "/";
+        if (m_flush_counter == 0) {
+            if (! amrex::UtilCreateDirectory(buffer_path, permission_flag_rwxrxrx) ) {
+                amrex::CreateDirectoryFailed(buffer_path);
+            }
+        }
+        std::string buffer_string = amrex::Concatenate("buffer-",m_flush_counter,m_file_min_digits);
+        const std::string prefix = amrex::MultiFabFileFullPrefix(lev, filename, "Level_", buffer_string);
+        amrex::VisMF::Write(m_mf_output[i_buffer][lev], prefix);
+    }
+
+    // reset counter
     m_slice_counter = 0;
+    // update Flush counter
+    m_flush_counter++;
+}
+
+void
+StationDiagnostics::WriteStationHeader (const std::string& filename)
+{
+    if (amrex::ParallelDescriptor::IOProcessor())
+    {
+        amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::IO_Buffer_Size);
+        std::ofstream HeaderFile;
+        HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
+        const std::string HeaderFileName(filename + "/StationHeader");
+        HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
+                                                std::ofstream::trunc |
+                                                std::ofstream::binary);
+        if( ! HeaderFile.good())
+            amrex::FileOpenFailed(HeaderFileName);
+
+        HeaderFile.precision(17);
+
+        HeaderFile << m_tmin << "\n";
+        HeaderFile << m_tmax << "\n";
+        HeaderFile << m_buffer_size << "\n";
+        HeaderFile << m_slice_counter << "\n";
+        HeaderFile << m_flush_counter << "\n";
+
+
+    }
 }
 
 // temporary

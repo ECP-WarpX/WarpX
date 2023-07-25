@@ -61,6 +61,8 @@ private:
 
     void Flush (int i_buffer) override;
 
+    void WriteStationHeader (const std::string& filename);
+
     void PrepareFieldDataForOutput () override;
 
     void UpdateBufferData () override;
@@ -70,6 +72,7 @@ private:
     amrex::Real m_tmin;
     amrex::Real m_tmax;
     amrex::Box m_buffer_box;
+    int m_flush_counter = 0;
 
     // temporary
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_cell_centered_data;
