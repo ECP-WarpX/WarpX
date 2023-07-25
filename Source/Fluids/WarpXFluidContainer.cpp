@@ -717,12 +717,12 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto Vx_I_minus = V_calc(Q_minus_x(i,j,k,0),Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
                     auto Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
                     auto Vx_I_plus = V_calc(Q_plus_x(i,j,k,0),Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
-                    
+
                     auto Vy_L_minus = V_calc(Q_minus_y(i,j-1,k,0),Q_minus_y(i,j-1,k,1),Q_minus_y(i,j-1,k,2),Q_minus_y(i,j-1,k,3),clight,1);
                     auto Vy_I_minus = V_calc(Q_minus_y(i,j,k,0),Q_minus_y(i,j,k,1),Q_minus_y(i,j,k,2),Q_minus_y(i,j,k,3),clight,1);
                     auto Vy_L_plus = V_calc(Q_plus_y(i,j-1,k,0),Q_plus_y(i,j-1,k,1),Q_plus_y(i,j-1,k,2),Q_plus_y(i,j-1,k,3),clight,1);
                     auto Vy_I_plus = V_calc(Q_plus_y(i,j,k,0),Q_plus_y(i,j,k,1),Q_plus_y(i,j,k,2),Q_plus_y(i,j,k,3),clight,1);
-                    
+
                     auto Vz_L_minus = V_calc(Q_minus_z(i,j,k-1,0),Q_minus_z(i,j,k-1,1),Q_minus_z(i,j,k-1,2),Q_minus_z(i,j,k-1,3),clight,2);
                     auto Vz_I_minus = V_calc(Q_minus_z(i,j,k,0),Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
                     auto Vz_L_plus = V_calc(Q_plus_z(i,j,k-1,0),Q_plus_z(i,j,k-1,1),Q_plus_z(i,j,k-1,2),Q_plus_z(i,j,k-1,3),clight,2);
@@ -777,7 +777,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto Vx_I_minus = V_calc(Q_minus_x(i,j,k,0),Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
                     auto Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
                     auto Vx_I_plus = V_calc(Q_plus_x(i,j,k,0),Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
-                    
+
                     auto Vz_L_minus = V_calc(Q_minus_z(i,j-1,k,0),Q_minus_z(i,j-1,k,1),Q_minus_z(i,j-1,k,2),Q_minus_z(i,j-1,k,3),clight,2);
                     auto Vz_I_minus = V_calc(Q_minus_z(i,j,k,0),Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
                     auto Vz_L_plus = V_calc(Q_plus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,1),Q_plus_z(i,j-1,k,2),Q_plus_z(i,j-1,k,3),clight,2);
@@ -831,7 +831,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto Vx_I_minus = V_calc(Q_minus_x(i,j,k,0),Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
                     auto Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
                     auto Vx_I_plus = V_calc(Q_plus_x(i,j,k,0),Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
-                    
+
                     auto Vz_L_minus = V_calc(Q_minus_z(i,j-1,k,0),Q_minus_z(i,j-1,k,1),Q_minus_z(i,j-1,k,2),Q_minus_z(i,j-1,k,3),clight,2);
                     auto Vz_I_minus = V_calc(Q_minus_z(i,j,k,0),Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
                     auto Vz_L_plus = V_calc(Q_plus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,1),Q_plus_z(i,j-1,k,2),Q_plus_z(i,j-1,k,3),clight,2);
