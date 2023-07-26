@@ -7,7 +7,6 @@
 #include "Laser/LaserProfiles.H"
 
 #include "Utils/Algorithms/LinearInterpolation.H"
-#include "Utils/Algorithms/UpperBound.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpX_Complex.H"
