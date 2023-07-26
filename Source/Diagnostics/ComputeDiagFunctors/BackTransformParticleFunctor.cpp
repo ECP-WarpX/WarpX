@@ -171,5 +171,5 @@ BackTransformParticleFunctor::PrepareFunctorData ( int i_buffer, bool z_slice_in
     m_current_z_boost.at(i_buffer) = current_z_boost;
     m_t_lab.at(i_buffer) = t_lab;
     m_perform_backtransform.at(i_buffer) = 0;
-    if (z_slice_in_domain == true and snapshot_full == 0) m_perform_backtransform.at(i_buffer) = 1;
+    if (z_slice_in_domain && (snapshot_full == 0)) m_perform_backtransform.at(i_buffer) = 1;
 }

@@ -180,7 +180,7 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
         amrex::Box tb = convert(tilebox, field.ixType().toIntVect());
 
         // Lower corner of tile box physical domain
-        const std::array<amrex::Real, 3>& xyzmin = warpx.LowerCorner(tilebox, lev, 0._rt);
+        const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
         const Dim3 lo = lbound(tilebox);
         const Dim3 hi = ubound(tilebox);
         const Real rmin = xyzmin[0] + (tb.ixType().nodeCentered(0) ? 0._rt : 0.5_rt*dr);
@@ -190,7 +190,7 @@ FieldEnergy::ComputeNorm2RZ(const amrex::MultiFab& field, const int lev)
         int const ncomp = field.nComp();
 
         for (int idir=0 ; idir < AMREX_SPACEDIM ; idir++) {
-            if (warpx.field_boundary_hi[idir] == FieldBoundaryType::Periodic) {
+            if (WarpX::field_boundary_hi[idir] == FieldBoundaryType::Periodic) {
                 // For periodic boundaries, do not include the data in the nodes
                 // on the upper edge of the domain
                 tb.enclosedCells(idir);

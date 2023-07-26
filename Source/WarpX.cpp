@@ -1130,7 +1130,7 @@ WarpX::ReadParameters ()
         // - field_gathering_algo set to "default" above
         //   (default defined in Utils/WarpXAlgorithmSelection.cpp)
         // - reset default value here for hybrid grids
-        if (pp_algo.query("field_gathering", tmp_algo) == false)
+        if (!pp_algo.query("field_gathering", tmp_algo))
         {
             if (grid_type == GridType::Hybrid)
             {
@@ -1357,7 +1357,7 @@ WarpX::ReadParameters ()
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
         rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
 
-        if (psatd_solution_type != PSATDSolutionType::FirstOrder || do_multi_J == false)
+        if (psatd_solution_type != PSATDSolutionType::FirstOrder || !do_multi_J)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 rho_in_time == RhoInTime::Linear,
@@ -1382,7 +1382,7 @@ WarpX::ReadParameters ()
 
         pp_psatd.query("current_correction", current_correction);
 
-        if (current_correction == false &&
+        if (!current_correction &&
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov &&
             current_deposition_algo != CurrentDepositionAlgo::Vay)
         {
@@ -1401,18 +1401,18 @@ WarpX::ReadParameters ()
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                fft_periodic_single_box == false,
+                !fft_periodic_single_box,
                 "Option algo.current_deposition=vay must be used with psatd.periodic_single_box_fft=0.");
         }
 
         if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                current_correction == false,
+                !current_correction,
                 "Options algo.current_deposition=vay and psatd.current_correction=1 cannot be combined together.");
         }
 
-        // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
+        // Auxiliary: boosted_frame = true if WarpX::gamma_boost is set in the inputs
         const amrex::ParmParse pp_warpx("warpx");
         const bool boosted_frame = pp_warpx.query("gamma_boost", gamma_boost);
 
@@ -1422,10 +1422,10 @@ WarpX::ReadParameters ()
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !use_default_v_galilean || boosted_frame,
-            "psatd.use_default_v_galilean = 1 can be used only if warpx.gamma_boost is also set"
+            "psatd.use_default_v_galilean = 1 can be used only if WarpX::gamma_boost is also set"
         );
 
-        if (use_default_v_galilean == true && boosted_frame == true)
+        if (use_default_v_galilean && boosted_frame)
         {
             m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
         }
@@ -1441,10 +1441,10 @@ WarpX::ReadParameters ()
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !use_default_v_comoving || boosted_frame,
-            "psatd.use_default_v_comoving = 1 can be used only if warpx.gamma_boost is also set"
+            "psatd.use_default_v_comoving = 1 can be used only if WarpX::gamma_boost is also set"
         );
 
-        if (use_default_v_comoving == true && boosted_frame == true)
+        if (use_default_v_comoving && boosted_frame)
         {
             m_v_comoving[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
         }
@@ -1495,7 +1495,7 @@ WarpX::ReadParameters ()
 #   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
-            update_with_rho = (do_dive_cleaning) ? true : false; // standard PSATD
+            update_with_rho = do_dive_cleaning; // standard PSATD
         }
         else {
             update_with_rho = true;  // Galilean PSATD or comoving PSATD
@@ -1569,7 +1569,7 @@ WarpX::ReadParameters ()
 
         // Without periodic single box, fill guard cells with backward FFTs,
         // with current correction or Vay deposition
-        if (fft_periodic_single_box == false)
+        if (!fft_periodic_single_box)
         {
             if (current_correction ||
                 current_deposition_algo == CurrentDepositionAlgo::Vay)
@@ -2332,7 +2332,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.enclosedCells(); // Make it cell-centered
         // Define spectral solver
 #   ifdef WARPX_DIM_RZ
-        if ( fft_periodic_single_box == false ) {
+        if ( !fft_periodic_single_box ) {
             realspace_ba.grow(1, ngEB[1]); // add guard cells only in z
         }
         if (field_boundary_hi[0] == FieldBoundaryType::PML && !do_pml_in_domain) {
@@ -2346,7 +2346,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                    dm,
                                    dx);
 #   else
-        if ( fft_periodic_single_box == false ) {
+        if ( !fft_periodic_single_box ) {
             realspace_ba.grow(ngEB);   // add guard cells
         }
         bool const pml_flag_false = false;

@@ -544,7 +544,7 @@ void WarpX::SyncCurrentAndRho ()
             // Without periodic single box, synchronize J and rho here,
             // except with current correction or Vay deposition:
             // in these cases, synchronize later (in WarpX::PushPSATD)
-            if (current_correction == false &&
+            if (!current_correction &&
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
                 SyncCurrent(current_fp, current_cp, current_buf);

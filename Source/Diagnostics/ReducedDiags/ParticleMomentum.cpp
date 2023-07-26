@@ -116,10 +116,7 @@ ParticleMomentum::ParticleMomentum (std::string rd_name)
 void ParticleMomentum::ComputeDiags (int step)
 {
     // Check if the diags should be done
-    if (m_intervals.contains(step+1) == false)
-    {
-        return;
-    }
+    if (!m_intervals.contains(step+1)) return;
 
     // Get MultiParticleContainer class object
     const auto & mypc = WarpX::GetInstance().GetPartContainer();

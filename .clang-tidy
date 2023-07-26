@@ -20,7 +20,16 @@ Checks: '-*,
     performance-inefficient-algorithm,
     performance-inefficient-string-concatenation,
     performance-inefficient-vector-operation,
-    readability-non-const-parameter
+    readability-non-const-parameter,
+    readability-simplify-boolean-expr,
+    readability-simplify-subscript-expr,
+    readability-static-accessed-through-instance,
+    readability-static-definition-in-anonymous-namespace,
+    readability-string-compare,
+    readability-suspicious-call-argument,
+    readability-uniqueptr-delete-release,
+    -readability-uppercase-literal-suffix,
+    readability-use-anyofallof
     '
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'

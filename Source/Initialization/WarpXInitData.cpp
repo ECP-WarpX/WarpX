@@ -306,7 +306,7 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "                      |   - current_centering_noz = " << WarpX::current_centering_noz << "\n";
      }
     }
-    if (WarpX::use_hybrid_QED == true){
+    if (WarpX::use_hybrid_QED){
       amrex::Print() << "                      | - use_hybrid_QED = true \n";
     }
 

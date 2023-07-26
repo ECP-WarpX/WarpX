@@ -585,7 +585,7 @@ FlushFormatPlotfile::WriteAllRawFields(
         }
 
         // Averaged fields on fine patch
-        if (warpx.fft_do_time_averaging)
+        if (WarpX::fft_do_time_averaging)
         {
             WriteRawMF(warpx.getEfield_avg_fp(lev, 0) , dm, raw_pltname, default_level_prefix,
                        "Ex_avg_fp", lev, plot_raw_fields_guards);

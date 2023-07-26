@@ -135,7 +135,7 @@ WarpX::MoveWindow (const int step, bool move_j)
     if (step == end_moving_window_step) {
         amrex::Print() << Utils::TextMsg::Info("Stopping moving window");
     }
-    if (moving_window_active(step) == false) return 0;
+    if (!moving_window_active(step)) return 0;
 
     // Update the continuous position of the moving window,
     // and of the plasma injection
@@ -491,12 +491,12 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         const amrex::Box& outbox = mfi.fabbox() & adjBox;
 
         if (outbox.ok()) {
-            if (useparser == false) {
+            if (useparser) {
                 AMREX_PARALLEL_FOR_4D ( outbox, nc, i, j, k, n,
                 {
                     srcfab(i,j,k,n) = external_field;
                 })
-            } else if (useparser == true) {
+            } else if (useparser) {
                 // index type of the src mf
                 auto const& mf_IndexType = (tmpmf).ixType();
                 amrex::IntVect mf_type(AMREX_D_DECL(0,0,0));
