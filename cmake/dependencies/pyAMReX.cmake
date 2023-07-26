@@ -61,7 +61,7 @@ function(find_pyamrex)
         endif()
     elseif(NOT WarpX_pyamrex_internal)
         # TODO: MPI control
-        find_package(pyAMReX 22.10 CONFIG REQUIRED)
+        find_package(pyAMReX 23.07 CONFIG REQUIRED)
         message(STATUS "pyAMReX: Found version '${pyamrex_VERSION}'")
     endif()
 endfunction()
