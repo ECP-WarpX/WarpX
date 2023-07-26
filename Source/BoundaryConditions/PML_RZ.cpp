@@ -89,12 +89,7 @@ PML_RZ::ApplyDamping (amrex::MultiFab* Et_fp, amrex::MultiFab* Ez_fp,
 
         // Set tilebox to only include the upper radial cells
         const int nr_damp = m_ncell;
-        int nr_damp_min;
-        if (m_do_pml_in_domain) {
-            nr_damp_min = nr_domain - nr_damp;
-        } else {
-            nr_damp_min = nr_domain;
-        }
+        const int nr_damp_min = (m_do_pml_in_domain)?(nr_domain - nr_damp):(nr_domain);
         tilebox.setSmall(0, nr_damp_min + 1);
 
         amrex::ParallelFor( tilebox, Et_fp->nComp(),
