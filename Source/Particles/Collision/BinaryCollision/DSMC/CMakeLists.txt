@@ -1,4 +1,7 @@
-target_sources(WarpX
-  PRIVATE
-    DSMC.cpp
-)
+foreach(D IN LISTS WarpX_DIMS)
+    warpx_set_suffix_dims(SD ${D})
+    target_sources(WarpX_${SD}
+      PRIVATE
+      DSMC.cpp
+    )
+endforeach()
