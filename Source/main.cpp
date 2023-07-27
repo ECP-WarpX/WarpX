@@ -54,5 +54,7 @@ int main(int argc, char* argv[])
 
     amrex::Finalize();
 
+    WarpX::Finalize();
+
     ablastr::parallelization::mpi_finalize ();
 }

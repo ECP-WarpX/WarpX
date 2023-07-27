@@ -258,8 +258,16 @@ WarpX::GetInstance ()
 void
 WarpX::ResetInstance ()
 {
-    delete m_instance;
-    m_instance = nullptr;
+    if (m_instance){
+        delete m_instance;
+        m_instance = nullptr;
+    }
+}
+
+void
+WarpX::Finalize()
+{
+    WarpX::ResetInstance();
 }
 
 WarpX::WarpX ()

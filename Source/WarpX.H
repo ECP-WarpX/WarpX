@@ -86,6 +86,12 @@ public:
 
     static void ResetInstance ();
 
+    /**
+     * \brief
+     * This method has to be called at the end of the simulation. It deletes the WarpX instance.
+     */
+    static void Finalize();
+
     ~WarpX ();
 
     static std::string Version (); //!< Version of WarpX executable
