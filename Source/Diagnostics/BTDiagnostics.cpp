@@ -913,12 +913,9 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        amrex::Real cellsize;
-        if (idim < WARPX_ZINDEX) {
-            cellsize = warpx.Geom(lev).CellSize(idim);
-        } else {
-            cellsize = dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
-        }
+        const amrex::Real cellsize = (idim < WARPX_ZINDEX)?
+            warpx.Geom(lev).CellSize(idim):
+            dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
         const amrex::Real buffer_lo = m_snapshot_domain_lab[i_buffer].lo(idim)
                                 + ( buffer_ba.getCellCenteredBox(0).smallEnd(idim)
                                   - m_snapshot_box[i_buffer].smallEnd(idim)

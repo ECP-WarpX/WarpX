@@ -1020,12 +1020,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                int r;
-                if (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) {
-                    r = AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2]);
-                } else {
-                    r = 1;
-                }
+                const int r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv))?
+                    (AMREX_D_TERM(lrrfac[0],*lrrfac[1],*lrrfac[2])) : (1);
                 pcounts[index] = num_ppc*r;
                 // update pcount by checking if cell-corners or cell-center
                 // has non-zero density
@@ -1254,14 +1250,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #ifdef WARPX_DIM_RZ
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
-                Real theta;
-                if (nmodes == 1 && rz_random_theta) {
-                    // With only 1 mode, the angle doesn't matter so
-                    // choose it randomly.
-                    theta = 2._rt*MathConst::pi*amrex::Random(engine);
-                } else {
-                    theta = 2._rt*MathConst::pi*r.y + theta_offset;
-                }
+                // With only 1 mode, the angle doesn't matter so
+                // choose it randomly.
+                const Real theta = (nmodes == 1 && rz_random_theta)?
+                    (2._rt*MathConst::pi*amrex::Random(engine)):
+                    (2._rt*MathConst::pi*r.y + theta_offset);
                 pos.x = xb*std::cos(theta);
                 pos.y = xb*std::sin(theta);
 #endif
@@ -1794,14 +1787,11 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Conversion from cylindrical to Cartesian coordinates
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and flux
-                Real theta;
-                if (nmodes == 1 && rz_random_theta) {
-                    // With only 1 mode, the angle doesn't matter so
-                    // choose it randomly.
-                    theta = 2._prt*MathConst::pi*amrex::Random(engine);
-                } else {
-                    theta = 2._prt*MathConst::pi*r.y;
-                }
+                // With only 1 mode, the angle doesn't matter so
+                // choose it randomly.
+                const Real theta = (nmodes == 1 && rz_random_theta)?
+                    (2._prt*MathConst::pi*amrex::Random(engine)):
+                    (2._prt*MathConst::pi*r.y);
                 Real const cos_theta = std::cos(theta);
                 Real const sin_theta = std::sin(theta);
                 // Rotate the position
@@ -2047,12 +2037,10 @@ PhysicalParticleContainer::Evolve (int lev,
 
             if (rho && ! skip_deposition && ! do_not_deposit) {
                 // Deposit charge before particle push, in component 0 of MultiFab rho.
-                int* AMREX_RESTRICT ion_lev;
-                if (do_field_ionization){
-                    ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
-                } else {
-                    ion_lev = nullptr;
-                }
+
+                const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
+                    pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
+
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
                               np_current, thread_num, lev, lev);
                 if (has_buffer){
@@ -2120,12 +2108,9 @@ PhysicalParticleContainer::Evolve (int lev,
                     // Deposit at t_{n+1/2}
                     const amrex::Real relative_time = -0.5_rt * dt;
 
-                    int* AMREX_RESTRICT ion_lev;
-                    if (do_field_ionization){
-                        ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
-                    } else {
-                        ion_lev = nullptr;
-                    }
+                    const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
+                        pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
+
                     // Deposit inside domains
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                    0, np_current, thread_num,
@@ -2145,12 +2130,10 @@ PhysicalParticleContainer::Evolve (int lev,
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
                 // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
                 if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::None) {
-                    int* AMREX_RESTRICT ion_lev;
-                    if (do_field_ionization){
-                        ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
-                    } else {
-                        ion_lev = nullptr;
-                    }
+
+                    const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
+                        pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
+
                     DepositCharge(pti, wp, ion_lev, rho, 1, 0,
                                   np_current, thread_num, lev, lev);
                     if (has_buffer){

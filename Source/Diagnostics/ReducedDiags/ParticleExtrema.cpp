@@ -197,114 +197,92 @@ void ParticleExtrema::ComputeDiags (int step)
         Real xmin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::cos(p.rdata(PIdx::theta)); });
-        ParallelDescriptor::ReduceRealMin(xmin);
 #elif (defined WARPX_DIM_1D_Z)
-        const Real xmin = 0.0_rt;
+        Real xmin = 0.0_rt;
 #else
         Real xmin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0); });
-        ParallelDescriptor::ReduceRealMin(xmin);
 #endif
 
         // xmax
 #if (defined WARPX_DIM_RZ)
-        Real t_xmax = ReduceMax( myspc,
+        Real xmax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::cos(p.rdata(PIdx::theta)); });
-        ParallelDescriptor::ReduceRealMax(t_xmax);
-        const Real xmax = t_xmax;
 #elif (defined WARPX_DIM_1D_Z)
-        const Real xmax = 0.0_rt;
+        Real xmax = 0.0_rt;
 #else
-        Real t_xmax = ReduceMax( myspc,
+        Real xmax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0); });
-        ParallelDescriptor::ReduceRealMax(t_xmax);
-        const Real xmax = t_xmax;
 #endif
 
         // ymin
 #if (defined WARPX_DIM_RZ)
-        Real t_ymin = ReduceMin( myspc,
+        Real ymin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::sin(p.rdata(PIdx::theta)); });
-        ParallelDescriptor::ReduceRealMin(t_ymin);
-        const Real ymin = t_ymin;
 #elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
-        const Real ymin = 0.0_rt;
+        Real ymin = 0.0_rt;
 #else
-        Real t_ymin = ReduceMin( myspc,
+        Real ymin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(1); });
-        ParallelDescriptor::ReduceRealMin(t_ymin);
-        const Real ymin = t_ymin;
 #endif
 
         // ymax
 #if (defined WARPX_DIM_RZ)
-        Real t_ymax = ReduceMax( myspc,
+        Real ymax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(0)*std::sin(p.rdata(PIdx::theta)); });
-        ParallelDescriptor::ReduceRealMax(t_ymax);
-        const Real ymax = t_ymax;
 #elif (defined WARPX_DIM_XZ || WARPX_DIM_1D_Z)
-        const Real ymax = 0.0_rt;
+        Real ymax = 0.0_rt;
 #else
-        Real t_ymax = ReduceMax( myspc,
+        Real ymax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(1); });
-        ParallelDescriptor::ReduceRealMax(t_ymax);
-        const Real ymax = t_ymax;
 #endif
 
         // zmin
         Real zmin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(index_z); });
-        ParallelDescriptor::ReduceRealMin(zmin);
 
         // zmax
         Real zmax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.pos(index_z); });
-        ParallelDescriptor::ReduceRealMax(zmax);
 
         // uxmin
         Real uxmin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.rdata(PIdx::ux); });
-        ParallelDescriptor::ReduceRealMin(uxmin);
 
         // uxmax
         Real uxmax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.rdata(PIdx::ux); });
-        ParallelDescriptor::ReduceRealMax(uxmax);
 
         // uymin
         Real uymin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.rdata(PIdx::uy); });
-        ParallelDescriptor::ReduceRealMin(uymin);
 
         // uymax
         Real uymax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.rdata(PIdx::uy); });
-        ParallelDescriptor::ReduceRealMax(uymax);
 
         // uzmin
         Real uzmin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.rdata(PIdx::uz); });
-        ParallelDescriptor::ReduceRealMin(uzmin);
 
         // uzmax
         Real uzmax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.rdata(PIdx::uz); });
-        ParallelDescriptor::ReduceRealMax(uzmax);
 
         // gmin
         Real gmin = 0.0_rt;
@@ -329,7 +307,6 @@ void ParticleExtrema::ComputeDiags (int step)
                 return std::sqrt(1.0_rt + us*inv_c2);
             });
         }
-        ParallelDescriptor::ReduceRealMin(gmin);
 
         // gmax
         Real gmax = 0.0_rt;
@@ -354,19 +331,19 @@ void ParticleExtrema::ComputeDiags (int step)
                 return std::sqrt(1.0_rt + us*inv_c2);
             });
         }
-        ParallelDescriptor::ReduceRealMax(gmax);
 
         // wmin
         Real wmin = ReduceMin( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.rdata(PIdx::w); });
-        ParallelDescriptor::ReduceRealMin(wmin);
 
         // wmax
         Real wmax = ReduceMax( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         { return p.rdata(PIdx::w); });
-        ParallelDescriptor::ReduceRealMax(wmax);
+
+        ParallelDescriptor::ReduceRealMin({xmin,ymin,zmin,uxmin,uymin,uzmin,gmin,wmin});
+        ParallelDescriptor::ReduceRealMax({xmax,ymax,zmax,uxmax,uymax,uzmax,gmax,wmax});
 
 #if (defined WARPX_QED)
         // get number of level (int)
