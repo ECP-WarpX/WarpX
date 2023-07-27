@@ -115,7 +115,7 @@ void BTDiagnostics::DerivedInitData ()
     if ((m_output_species_names.size() == 0) && (write_species == 1))
         m_output_species_names = mpc.GetSpeciesNames();
 
-    const bool m_do_back_transformed_particles =
+    m_do_back_transformed_particles =
         ((m_output_species_names.size() > 0) && (write_species == 1));
 
     // Turn on do_back_transformed_particles in the particle containers so that
