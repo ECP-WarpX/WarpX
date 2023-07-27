@@ -21,6 +21,8 @@ Checks: '-*,
     performance-inefficient-algorithm,
     performance-inefficient-string-concatenation,
     performance-inefficient-vector-operation,
+    performance-move-const-arg,
+    performance-move-constructor-init,
     readability-non-const-parameter
     '
 
