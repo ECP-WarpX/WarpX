@@ -149,18 +149,10 @@ def compute_stencils(coeff_nodal, coeff_stagg, axis):
         stencil_avg_nodal = stencil_nodal
         stencil_avg_stagg = stencil_stagg
     elif dims == 2:
-        if axis == 0:
-              # Average over kz
-              stencil_avg_nodal  = np.sum(stencil_nodal, axis=-1)
-              stencil_avg_nodal /= stencil_nodal.shape[-1]
-              stencil_avg_stagg  = np.sum(stencil_stagg, axis=-1)
-              stencil_avg_stagg /= stencil_stagg.shape[-1]
-        elif axis == 1 or axis == -1:
-              # Average over kx
-              stencil_avg_nodal  = np.sum(stencil_nodal, axis=0)
-              stencil_avg_nodal /= stencil_nodal.shape[0]
-              stencil_avg_stagg  = np.sum(stencil_stagg, axis=0)
-              stencil_avg_stagg /= stencil_stagg.shape[0]
+        # Average over the other direction
+        i1 = (axis + 1) % 2
+        stencil_avg_nodal = stencil_nodal.sum(axis=i1) / stencil_nodal.shape[i1]
+        stencil_avg_stagg = stencil_stagg.sum(axis=i1) / stencil_stagg.shape[i1]
     elif dims == 3:
         # Average over the other two directions
         i1 = (axis + 1) % 3
