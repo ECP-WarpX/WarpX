@@ -605,10 +605,10 @@ def PhiFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(mf_name=f'phi_fp', level=level, include_ghosts=include_ghosts)
 
 def FFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'f_fp', level=level, include_ghosts=include_ghosts)
+    return _MultiFABWrapper(mf_name=f'F_fp', level=level, include_ghosts=include_ghosts)
 
 def GFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'g_fp', level=level, include_ghosts=include_ghosts)
+    return _MultiFABWrapper(mf_name=f'G_fp', level=level, include_ghosts=include_ghosts)
 
 def AxFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(mf_name=f'vector_potential_fp_nodal[x]', level=level, include_ghosts=include_ghosts)
@@ -710,10 +710,10 @@ def JzFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(mf_name='pml_j_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def FFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_f_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _MultiFABWrapper(mf_name='pml_F_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def GFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_g_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _MultiFABWrapper(mf_name='pml_G_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def ExCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(mf_name='pml_E_cp[x]', level=level, include_ghosts=include_ghosts)
