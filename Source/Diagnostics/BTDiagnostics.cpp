@@ -112,14 +112,12 @@ void BTDiagnostics::DerivedInitData ()
     const amrex::ParmParse pp_diag_name(m_diag_name);
     int write_species = 1;
     pp_diag_name.query("write_species", write_species);
-    if (m_output_species_names.size() == 0 and write_species == 1)
+    if ((m_output_species_names.size() == 0) && (write_species == 1))
         m_output_species_names = mpc.GetSpeciesNames();
 
-    if (m_output_species_names.size() > 0 and write_species == 1) {
-        m_do_back_transformed_particles = true;
-    } else {
-        m_do_back_transformed_particles = false;
-    }
+    const bool m_do_back_transformed_particles =
+        ((m_output_species_names.size() > 0) && (write_species == 1));
+
     // Turn on do_back_transformed_particles in the particle containers so that
     // the tmp_particle_data is allocated and the data of the corresponding species is
     // copied and stored in tmp_particle_data before particles are pushed.
@@ -994,12 +992,8 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 bool
 BTDiagnostics::GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev)
 {
-    if (k_index_zlab(i_buffer, lev) >= m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir) and
-        k_index_zlab(i_buffer, lev) <= m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir)) {
-        return true;
-    }
-
-    return false;
+    return (k_index_zlab(i_buffer, lev) >= m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir) &&
+        k_index_zlab(i_buffer, lev) <= m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir));
 }
 
 void

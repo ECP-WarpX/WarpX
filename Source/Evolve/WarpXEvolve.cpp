@@ -366,7 +366,7 @@ WarpX::Evolve (int numsteps)
         // inputs: unused parameters (e.g. typos) check after step 1 has finished
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
-            amrex::ParmParse().QueryUnusedInputs();
+            amrex::ParmParse::QueryUnusedInputs();
 
             //Print the warning list right after the first step.
             amrex::Print() <<

@@ -1204,7 +1204,6 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     // - Global offset
     std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
 #if defined(WARPX_DIM_RZ)
-    auto & warpx = WarpX::GetInstance();
     if (var_in_theta_mode) {
             global_size.emplace(global_size.begin(), WarpX::ncomps);
     }

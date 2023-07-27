@@ -2059,10 +2059,12 @@ PhysicalParticleContainer::Evolve (int lev,
                 // Gather and push for particles not in the buffer
                 //
                 WARPX_PROFILE_VAR_START(blp_fg);
+                const auto np_to_push = np_gather;
+                const auto gather_lev = lev;
                 PushPX(pti, exfab, eyfab, ezfab,
                        bxfab, byfab, bzfab,
                        Ex.nGrowVect(), e_is_nodal,
-                       0, np_gather, lev, lev, dt, ScaleFields(false), a_dt_type);
+                       0, np_to_push, lev, gather_lev, dt, ScaleFields(false), a_dt_type);
 
                 if (np_gather < np)
                 {
