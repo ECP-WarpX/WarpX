@@ -145,56 +145,6 @@ void FillBoundary (amrex::iMultiFab&         imf,
     imf.FillBoundary(ng, period);
 }
 
-void SumBoundary (amrex::MultiFab &mf, bool do_single_precision_comms, const amrex::Periodicity &period)
-{
-    BL_PROFILE("ablastr::utils::communication::SumBoundary");
-
-    if (do_single_precision_comms)
-    {
-        amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
-                                                                 mf.DistributionMap(),
-                                                                 mf.nComp(),
-                                                                 mf.nGrowVect());
-
-        mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
-
-        mf_tmp.SumBoundary(period);
-
-        mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
-    }
-    else
-    {
-        mf.SumBoundary(period);
-    }
-}
-
-void SumBoundary(amrex::MultiFab &mf,
-                 int start_comp,
-                 int num_comps,
-                 amrex::IntVect ng,
-                 bool do_single_precision_comms,
-                 const amrex::Periodicity &period)
-{
-    BL_PROFILE("ablastr::utils::communication::SumBoundary");
-
-    if (do_single_precision_comms)
-    {
-        amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
-                                                                 mf.DistributionMap(),
-                                                                 num_comps,
-                                                                 ng);
-        mixedCopy(mf_tmp, mf, start_comp, 0, num_comps, ng);
-
-        mf_tmp.SumBoundary(0, num_comps, ng, period);
-
-        mixedCopy(mf, mf_tmp, 0, start_comp, num_comps, ng);
-    }
-    else
-    {
-        mf.SumBoundary(start_comp, num_comps, ng, period);
-    }
-}
-
 void
 SumBoundary (amrex::MultiFab &mf,
              int start_comp,

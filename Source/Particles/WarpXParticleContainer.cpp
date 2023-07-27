@@ -1014,11 +1014,11 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
         // Exchange guard cells
         if (local == false) {
+            // Possible performance optimization:
+            // pass less than `rho[lev]->nGrowVect()` in the fifth input variable `dst_ng`
             ablastr::utils::communication::SumBoundary(
-                *rho[lev],
-                WarpX::do_single_precision_comms,
-                m_gdb->Geom(lev).periodicity()
-            );
+                *rho[lev], 0, rho[lev]->nComp(), rho[lev]->nGrowVect(), rho[lev]->nGrowVect(),
+                WarpX::do_single_precision_comms, m_gdb->Geom(lev).periodicity());
         }
 
 #ifndef WARPX_DIM_RZ
@@ -1106,7 +1106,13 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
 #endif
 
-    if (local == false) { ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity()); }
+    if (local == false) {
+        // Possible performance optimization:
+        // pass less than `rho->nGrowVect()` in the fifth input variable `dst_ng`
+        ablastr::utils::communication::SumBoundary(
+            *rho, 0, rho->nComp(), rho->nGrowVect(), rho->nGrowVect(),
+            WarpX::do_single_precision_comms, gm.periodicity());
+    }
 
 #ifndef WARPX_DIM_RZ
     // Reflect density over PEC boundaries, if needed.
