@@ -188,9 +188,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         auto cx_half = 0.5*(dt/dx[0]);
         auto cz_half = 0.5*(dt/dx[1]);
         amrex::Box const& domain = geom.Domain();
-        //auto i_min = domain.lo(0);
-        //auto i_max = domain.hi(0);
-        //printf("Low : %d, High: %d\n",i_min,i_max);
     #else
         auto cz = (dt/dx[0]);
         auto cz_half = 0.5*(dt/dx[0]);
@@ -231,24 +228,12 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         // the temporary arrays
         amrex::Box tile_box = mfi.growntilebox(1);
 
-        // TEMP
-        //std::cout << geom.Domain();
-        // amrex::Box const& domain = geom.Domain();
-        //std::cout << "\ndomain_small = " << domain.smallEnd();
-        //std::cout << "\ndomain_big = " << domain.bigEnd();
-        //std::cout << "\ndomain_small_0 = " << domain.smallEnd(0);
-        //std::cout << "\ndomain_small_1 = " << domain.smallEnd(1);
-        //std::cout << "\ndomain_big_0 = " << domain.bigEnd(0);
-        //std::cout << "\ndomain_big_1 = " << domain.bigEnd(1);
-
         // Limit the grown box for RZ at r = 0, r_max
         #if defined (WARPX_DIM_RZ)
-            std::cout << "\n (246) tile_box = " << tile_box;
             const int idir = 0;
             const int n_cell = -1;
             tile_box.growLo(idir, n_cell);
             tile_box.growHi(idir, n_cell);
-            std::cout << "\n (251) tile_box = " << tile_box;
         #endif
 
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
@@ -738,19 +723,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             amrex::Array4<amrex::Real> const &Q_plus_z = tmp_Q_plus_z.array(mfi);
         #endif
 
-        std::cout << "\n (741) tile_box = " << tile_box;
-
-        // Limit the grown box for RZ at r = 0, r_max
-        #if defined (WARPX_DIM_RZ)
-            // amrex::Box const& domain = geom.Domain();
-            //std::cout << "\ntile_box = " << tile_box;
-            //const int idir = 0;
-            //const int n_cell = -1;
-            //tile_box.growLo(idir, n_cell);
-            //tile_box.growHi(idir, n_cell);
-            //std::cout << "\n (749) tile_box = " << tile_box;
-        #endif
-
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
@@ -913,7 +885,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         F3_minusx = flux(Q_minus_x(i-1,j,k,3),Q_plus_x(i-1,j,k,3),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
                     }
                     if (i < domain.bigEnd(0)) {
-                        //printf("tile_box.tile_box(0): %d\n",tile_box.bigEnd(0));
                         auto Vx_I_plus = V_calc(Q_plus_x(i,j,k,0),Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
                         F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
                         F1_plusx =  flux(Q_minus_x(i,j,k,1),  Q_plus_x(i,j,k,1),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
