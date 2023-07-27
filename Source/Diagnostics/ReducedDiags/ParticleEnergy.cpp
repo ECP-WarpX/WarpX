@@ -96,9 +96,6 @@ void ParticleEnergy::ComputeDiags (int step)
     // Get number of species
     const int nSpecies = mypc.nSpecies();
 
-    // Some useful offsets to fill m_data below
-    int offset_total_species, offset_mean_species, offset_mean_all;
-
     amrex::Real Wtot = 0.0_rt;
 
     // Loop over species
@@ -166,7 +163,7 @@ void ParticleEnergy::ComputeDiags (int step)
         // Offset:
         // 1 value of total energy for all  species +
         // 1 value of total energy for each species
-        offset_total_species = 1 + i_s;
+        const int offset_total_species = 1 + i_s;
         m_data[offset_total_species] = Etot;
 
         // Offset:
@@ -174,7 +171,7 @@ void ParticleEnergy::ComputeDiags (int step)
         // 1 value of total energy for each species +
         // 1 value of mean  energy for all  species +
         // 1 value of mean  energy for each species
-        offset_mean_species = 1 + nSpecies + 1 + i_s;
+        const int offset_mean_species = 1 + nSpecies + 1 + i_s;
         if (Ws > std::numeric_limits<Real>::min())
         {
             m_data[offset_mean_species] = Etot / Ws;
@@ -194,14 +191,14 @@ void ParticleEnergy::ComputeDiags (int step)
         // Offset:
         // 1 value of total energy for all  species +
         // 1 value of total energy for each species
-        offset_total_species = 1 + i_s;
+        const int offset_total_species = 1 + i_s;
         m_data[0] += m_data[offset_total_species];
     }
 
     // Total mean energy. Offset:
     // 1 value of total energy for all  species +
     // 1 value of total energy for each species
-    offset_mean_all = 1 + nSpecies;
+    const int offset_mean_all = 1 + nSpecies;
     if (Wtot > std::numeric_limits<Real>::min())
     {
         m_data[offset_mean_all] = m_data[0] / Wtot;

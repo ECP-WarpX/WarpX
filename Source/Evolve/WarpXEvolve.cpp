@@ -65,12 +65,8 @@ WarpX::Evolve (int numsteps)
 
     Real cur_time = t_new[0];
 
-    int numsteps_max;
-    if (numsteps < 0) {  // Note that the default argument is numsteps = -1
-        numsteps_max = max_step;
-    } else {
-        numsteps_max = istep[0] + numsteps;
-    }
+    // Note that the default argument is numsteps = -1
+    const int numsteps_max = (numsteps < 0)?(max_step):(istep[0] + numsteps);
 
     bool early_params_checked = false; // check typos in inputs after step 1
     bool exit_loop_due_to_interrupt_signal = false;

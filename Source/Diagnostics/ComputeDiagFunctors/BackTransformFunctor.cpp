@@ -235,30 +235,29 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
                 for (int mode_comp = 0; mode_comp < n_rcomps; ++mode_comp) {
                     // Back-transform the transverse electric and magnetic fields.
                     // Note that the z-components, Ez, Bz, are not changed by the transform.
-                    amrex::Real e_lab, b_lab, j_lab, rho_lab;
 
                     // Transform Er_boost & Bt_boost to lab-frame for corresponding mode (mode_comp)
-                    e_lab = gamma_boost * ( arr(i, j, k, n_rcomps*0 + mode_comp)
+                    const amrex::Real er_lab = gamma_boost * ( arr(i, j, k, n_rcomps*0 + mode_comp)
                                             + beta_boost * clight * arr(i, j, k, n_rcomps*4+ mode_comp) );
-                    b_lab = gamma_boost * ( arr(i, j, k, n_rcomps*4 + mode_comp)
+                    const amrex::Real bt_lab = gamma_boost * ( arr(i, j, k, n_rcomps*4 + mode_comp)
                                             + beta_boost * inv_clight * arr(i, j, k, n_rcomps*0 + mode_comp) );
                     // Store lab-frame data in-place
-                    arr(i, j, k, n_rcomps*0 + mode_comp) = e_lab;
-                    arr(i, j, k, n_rcomps*4 + mode_comp) = b_lab;
+                    arr(i, j, k, n_rcomps*0 + mode_comp) = er_lab;
+                    arr(i, j, k, n_rcomps*4 + mode_comp) = bt_lab;
 
                     // Transform Et_boost & Br_boost to lab-frame for corresponding mode (mode_comp)
-                    e_lab = gamma_boost * ( arr(i, j, k, n_rcomps*1 + mode_comp)
+                    const amrex::Real et_lab = gamma_boost * ( arr(i, j, k, n_rcomps*1 + mode_comp)
                                             - beta_boost * clight * arr(i, j, k, n_rcomps*3 + mode_comp) );
-                    b_lab = gamma_boost * ( arr(i, j, k, n_rcomps*3 + mode_comp)
+                    const amrex::Real br_lab = gamma_boost * ( arr(i, j, k, n_rcomps*3 + mode_comp)
                                             - beta_boost * inv_clight * arr(i, j, k, n_rcomps*1 + mode_comp) );
                     // Store lab-frame data in-place
-                    arr(i, j, k, n_rcomps*1 + mode_comp) = e_lab;
-                    arr(i, j, k, n_rcomps*3 + mode_comp) = b_lab;
+                    arr(i, j, k, n_rcomps*1 + mode_comp) = et_lab;
+                    arr(i, j, k, n_rcomps*3 + mode_comp) = br_lab;
 
                     // Transform charge density z-component of current density
-                    j_lab = gamma_boost * ( arr(i, j, k, n_rcomps*8 + mode_comp)
+                    const amrex::Real j_lab = gamma_boost * ( arr(i, j, k, n_rcomps*8 + mode_comp)
                                             + beta_boost * clight * arr(i, j, k, n_rcomps*9 + mode_comp) );
-                    rho_lab = gamma_boost * ( arr(i, j, k, n_rcomps*9 + mode_comp)
+                    const amrex::Real rho_lab = gamma_boost * ( arr(i, j, k, n_rcomps*9 + mode_comp)
                                               + beta_boost * inv_clight * arr(i, j, k, n_rcomps*8 + mode_comp) );
                     // Store lab-frame jz and rho in-place
                     arr(i, j, k, n_rcomps*8 + mode_comp) = j_lab;
@@ -274,30 +273,30 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
             {
                 // Back-transform the transverse electric and magnetic fields.
                 // Note that the z-components, Ez, Bz, are not changed by the transform.
-                amrex::Real e_lab, b_lab, j_lab, rho_lab;
+
                 // Transform Ex_boost (ncomp=0) & By_boost (ncomp=4) to lab-frame
-                e_lab = gamma_boost * ( arr(i, j, k, 0)
+                const amrex::Real ex_lab = gamma_boost * ( arr(i, j, k, 0)
                                         + beta_boost * clight * arr(i, j, k, 4) );
-                b_lab = gamma_boost * ( arr(i, j, k, 4)
+                const amrex::Real by_lab = gamma_boost * ( arr(i, j, k, 4)
                                         + beta_boost * inv_clight * arr(i, j, k, 0) );
                 // Store lab-frame data in-place
-                arr(i, j, k, 0) = e_lab;
-                arr(i, j, k, 4) = b_lab;
+                arr(i, j, k, 0) = ex_lab;
+                arr(i, j, k, 4) = by_lab;
 
                 // Transform Ey_boost (ncomp=1) & Bx_boost (ncomp=3) to lab-frame
-                e_lab = gamma_boost * ( arr(i, j, k, 1)
+                const amrex::Real ey_lab = gamma_boost * ( arr(i, j, k, 1)
                                         - beta_boost * clight * arr(i, j, k, 3) );
-                b_lab = gamma_boost * ( arr(i, j, k, 3)
+                const amrex::Real bx_lab = gamma_boost * ( arr(i, j, k, 3)
                                         - beta_boost * inv_clight * arr(i, j, k, 1) );
                 // Store lab-frame data in-place
-                arr(i, j, k, 1) = e_lab;
-                arr(i, j, k, 3) = b_lab;
+                arr(i, j, k, 1) = ey_lab;
+                arr(i, j, k, 3) = bx_lab;
 
                 // Transform charge density (ncomp=9)
                 // and z-component of current density (ncomp=8)
-                j_lab = gamma_boost * ( arr(i, j, k, 8)
+                const amrex::Real j_lab = gamma_boost * ( arr(i, j, k, 8)
                                         + beta_boost * clight * arr(i, j, k, 9) );
-                rho_lab = gamma_boost * ( arr(i, j, k, 9)
+                const amrex::Real rho_lab = gamma_boost * ( arr(i, j, k, 9)
                                           + beta_boost * inv_clight * arr(i, j, k, 8) );
                 // Store lab-frame jz and rho in-place
                 arr(i, j, k, 8) = j_lab;

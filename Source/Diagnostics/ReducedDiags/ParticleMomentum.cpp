@@ -124,9 +124,6 @@ void ParticleMomentum::ComputeDiags (int step)
     // Get number of species
     const int nSpecies = mypc.nSpecies();
 
-    // Some useful offsets to fill m_data below
-    int offset_total_species, offset_mean_species, offset_mean_all;
-
     amrex::Real Wtot = 0.0_rt;
 
     // Loop over species
@@ -174,7 +171,7 @@ void ParticleMomentum::ComputeDiags (int step)
         // Offset:
         // 3 values of total momentum for all  species +
         // 3 values of total momentum for each species
-        offset_total_species = 3 + i_s*3;
+        const int offset_total_species = 3 + i_s*3;
         m_data[offset_total_species+0] = Px;
         m_data[offset_total_species+1] = Py;
         m_data[offset_total_species+2] = Pz;
@@ -184,7 +181,7 @@ void ParticleMomentum::ComputeDiags (int step)
         // 3 values of total momentum for each species +
         // 3 values of mean  momentum for all  species +
         // 3 values of mean  momentum for each species
-        offset_mean_species = 3 + nSpecies*3 + 3 + i_s*3;
+        const int offset_mean_species = 3 + nSpecies*3 + 3 + i_s*3;
         if (Ws > std::numeric_limits<Real>::min())
         {
             m_data[offset_mean_species+0] = Px / Ws;
@@ -210,7 +207,7 @@ void ParticleMomentum::ComputeDiags (int step)
         // Offset:
         // 3 values of total momentum for all  species +
         // 3 values of total momentum for each species
-        offset_total_species = 3 + i_s*3;
+        const int offset_total_species = 3 + i_s*3;
         m_data[0] += m_data[offset_total_species+0];
         m_data[1] += m_data[offset_total_species+1];
         m_data[2] += m_data[offset_total_species+2];
@@ -219,7 +216,7 @@ void ParticleMomentum::ComputeDiags (int step)
     // Total mean momentum. Offset:
     // 3 values of total momentum for all  species +
     // 3 values of total momentum for each species
-    offset_mean_all = 3 + nSpecies*3;
+    const int offset_mean_all = 3 + nSpecies*3;
     if (Wtot > std::numeric_limits<Real>::min())
     {
         m_data[offset_mean_all+0] = m_data[0] / Wtot;
