@@ -6,9 +6,9 @@ my_constants.micro = 1.e-6
 my_constants.MeV = q_e*1.e6
 # BEAMS
 my_constants.beam_npart = 1.e9
-my_constants.gammab = 10. 
-my_constants.chargeb = q_e*beam_npart 
-my_constants.sigmaz = 1.e-5 
+my_constants.gammab = 10.
+my_constants.chargeb = q_e*beam_npart
+my_constants.sigmaz = 1.e-5
 my_constants.sigmax = 1.e-5
 my_constants.sigmay = 1.e-5
 my_constants.mux = 0.0
@@ -49,10 +49,10 @@ warpx.use_filter = 0
 #################################
 ######## BOUNDARY CONDITION #####
 #################################
-boundary.field_lo = periodic periodic periodic 
-boundary.field_hi = periodic periodic periodic 
-boundary.particle_lo = periodic periodic periodic 
-boundary.particle_hi = periodic periodic periodic  
+boundary.field_lo = periodic periodic periodic
+boundary.field_hi = periodic periodic periodic
+boundary.particle_lo = periodic periodic periodic
+boundary.particle_hi = periodic periodic periodic
 #################################
 ############ NUMERICS ###########
 #################################
@@ -60,7 +60,7 @@ algo.maxwell_solver = ckc
 warpx.cfl = cfl
 algo.particle_shape = 1
 algo.load_balance_intervals=100
-algo.particle_pusher = vay 
+algo.particle_pusher = vay
 #################################
 ########### PARTICLES ###########
 #################################
@@ -123,7 +123,7 @@ warpx.do_qed_schwinger = 0
 #################################
 # FULL
 diagnostics.diags_names = diag1
-diag1.intervals = 1 
+diag1.intervals = 1
 diag1.diag_type = Full
 diag1.write_species = 0
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam_e rho_beam_p rho
@@ -132,7 +132,7 @@ diag1.format = openpmd
 diag1.openpmd_backend = bp
 diag1.dump_last_timestep = 1
 #diag1.particle_fields_to_plot= vx vy vz g
-#diag1.particle_fields_species = beam_p 
+#diag1.particle_fields_species = beam_p
 #diag1.particle_fields.vx(x,y,z,ux,uy,uz)=ux/sqrt(ux*ux+uy*uy+uz*uz)
 #diag1.particle_fields.vy(x,y,z,ux,uy,uz)=uy/sqrt(ux*ux+uy*uy+uz*uz)
 #diag1.particle_fields.vz(x,y,z,ux,uy,uz)=uz/sqrt(ux*ux+uy*uy+uz*uz)

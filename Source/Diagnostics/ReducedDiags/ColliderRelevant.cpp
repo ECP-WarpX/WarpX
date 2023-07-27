@@ -202,7 +202,7 @@ void ColliderRelevant::ComputeDiags (int step)
         // wtot
         Real wtot = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        { 
+        {
             return p.rdata(PIdx::w); });
         ParallelDescriptor::ReduceRealSum(wtot, ParallelDescriptor::IOProcessorNumber());
 
@@ -216,7 +216,7 @@ void ColliderRelevant::ComputeDiags (int step)
             return w*x; });
         ParallelDescriptor::ReduceRealSum(x_ave, ParallelDescriptor::IOProcessorNumber());
         x_ave = x_ave / wtot;
-        
+
         // x_std
         Real x_std = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
@@ -237,7 +237,7 @@ void ColliderRelevant::ComputeDiags (int step)
             return w*x; });
         ParallelDescriptor::ReduceRealSum(x_ave, ParallelDescriptor::IOProcessorNumber());
         x_ave = x_ave / wtot;
-        
+
         // x_std
         Real x_std = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
@@ -417,9 +417,9 @@ void ColliderRelevant::ComputeDiags (int step)
     amrex::MultiFab mf_dst2(ba.convert(amrex::IntVect::TheCellVector()), dmap, ncomp, ngrow);
     ablastr::coarsen::sample::Coarsen(mf_dst1, *num_dens[0], 0, 0, ncomp, ngrow);
     ablastr::coarsen::sample::Coarsen(mf_dst2, *num_dens[1], 0, 0, ncomp, ngrow);
-    
-    // compute luminosity 
-    auto const n1_dot_n2 = amrex::MultiFab::Dot(mf_dst1, 0, mf_dst2, 0, 1, 0);    
+
+    // compute luminosity
+    auto const n1_dot_n2 = amrex::MultiFab::Dot(mf_dst1, 0, mf_dst2, 0, 1, 0);
     auto const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
 
     m_data[get_idx("lumi")] = lumi;
