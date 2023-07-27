@@ -596,7 +596,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto dQ3z = ave( NUz_arr(i,j,k) - NUz_arr(i,j-1,k) , NUz_arr(i,j+1,k) - NUz_arr(i,j,k) );
 
                     // TODO: Generalize this condition
-                    // Impose "none" boundaries 
+                    // Impose "none" boundaries
                     // Condition: dQx = 0 at r = 0
                     if ( (i == domain.smallEnd(0)) || (i == domain.bigEnd(0)) ){
                         auto dQ0x = 0.0;
@@ -877,10 +877,10 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto S_Ar_minus = 2.0*pi*(r - dr/2.0)*dz;
 
                     // TODO: Generalize this condition
-                    // Impose "none" boundaries 
+                    // Impose "none" boundaries
                     // Condition: Vx(r) = 0 at boundaries
                     auto Vx_I_minus = V_calc(Q_minus_x(i,j,k,0),Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
-                    auto Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0); 
+                    auto Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
 
                     auto Vz_L_minus = V_calc(Q_minus_z(i,j-1,k,0),Q_minus_z(i,j-1,k,1),Q_minus_z(i,j-1,k,2),Q_minus_z(i,j-1,k,3),clight,2);
                     auto Vz_I_minus = V_calc(Q_minus_z(i,j,k,0),Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
@@ -890,13 +890,13 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                     // compute the fluxes:
                     // (note that _plus is shifted due to grid location)
-                    auto F0_minusx = 0.0; 
+                    auto F0_minusx = 0.0;
                     auto F1_minusx = 0.0;
-                    auto F2_minusx = 0.0; 
+                    auto F2_minusx = 0.0;
                     auto F3_minusx = 0.0;
-                    auto F0_plusx = 0.0; 
+                    auto F0_plusx = 0.0;
                     auto F1_plusx = 0.0;
-                    auto F2_plusx = 0.0; 
+                    auto F2_plusx = 0.0;
                     auto F3_plusx = 0.0;
                     if (i != domain.smallEnd(0)) {
                         auto Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,0),Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
