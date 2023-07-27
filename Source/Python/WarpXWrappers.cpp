@@ -165,7 +165,6 @@ namespace
 
     void warpx_init ()
     {
-        WarpX::MakeWarpX();
         WarpX& warpx = WarpX::GetInstance();
         warpx.InitData();
         ExecutePythonCallback("afterinit");

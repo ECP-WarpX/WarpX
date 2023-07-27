@@ -230,7 +230,7 @@ bool WarpX::do_device_synchronize = true;
 bool WarpX::do_device_synchronize = false;
 #endif
 
-std::unique_ptr<WarpX> WarpX::m_instance = nullptr;
+WarpX* WarpX::m_instance = nullptr;
 
 void WarpX::MakeWarpX ()
 {
@@ -243,14 +243,14 @@ void WarpX::MakeWarpX ()
     CheckGriddingForRZSpectral();
 #endif
 
-    m_instance = std::make_unique<WarpX>();
+    m_instance = new WarpX();
 }
 
 WarpX&
 WarpX::GetInstance ()
 {
     if (!m_instance) {
-        WARPX_ABORT_WITH_MESSAGE("WarpX object is not instantiated. Please call MakeWarpX()");
+        MakeWarpX();
     }
     return *m_instance;
 }
@@ -258,7 +258,8 @@ WarpX::GetInstance ()
 void
 WarpX::ResetInstance ()
 {
-    m_instance.reset();
+    delete m_instance;
+    m_instance = nullptr;
 }
 
 WarpX::WarpX ()
