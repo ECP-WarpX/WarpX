@@ -124,7 +124,7 @@ public:
     * @param[in] engine random number generator engine
     */
     template <typename DstData, typename SrcData>
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void operator() (DstData& dst1, DstData& dst2, SrcData& src,
         int const i_src, int const i_dst1, int const i_dst2,
         amrex::RandomEngine const& engine) const noexcept
