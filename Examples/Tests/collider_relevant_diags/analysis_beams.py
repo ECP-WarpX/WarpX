@@ -1,3 +1,4 @@
+import re
 
 from matplotlib import cm, use
 import matplotlib.colors
@@ -5,12 +6,9 @@ from matplotlib.colors import LogNorm, Normalize
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
-from numpy import exp, sqrt
 import openpmd_api as io
-from scipy.constants import alpha, c
-from scipy.constants import e as q_e
-from scipy.constants import hbar, m_e, physical_constants, pi
-
+from scipy.constants import c, e as q_e, hbar, m_e, physical_constants, alpha, pi 
+from numpy import sqrt, exp 
 r_e = physical_constants["classical electron radius"][0]
 
 
@@ -58,9 +56,9 @@ sigmay, = [float(x) for x in input_dict['my_constants.sigmay']]
 sigmaz, = [float(x) for x in input_dict['my_constants.sigmaz']]
 N, = [float(x) for x in input_dict['my_constants.beam_npart']]
 gamma, = [float(x) for x in input_dict['my_constants.gammab']]
-charge = N * q_e
+charge = N * q_e 
 n0 = charge / (q_e * sigmax * sigmay * sigmaz * (2.*pi)**(3./2.))
-Lx, Ly, Lz = 7*sigmax, 7*sigmay, 14*sigmaz
+Lx, Ly, Lz = 7*sigmax, 7*sigmay, 14*sigmaz 
 nx, = [float(x) for x in input_dict['my_constants.nx']]
 ny, = [float(x) for x in input_dict['my_constants.ny']]
 nz, = [float(x) for x in input_dict['my_constants.nz']]
@@ -82,10 +80,10 @@ def dL_dt_full():
         lumi.append(l)
     return lumi
 
-def num_dens(x,y,z):
+def num_dens(x,y,z): 
     return n0 * exp(-x**2/(2*sigmax**2))*exp(-y**2/(2*sigmay**2))*exp(-z**2/(2*sigmaz**2))
-
-
+    
+    
 
 
 '''
@@ -186,6 +184,31 @@ print('ColliderRelevant diag ele = ',  np.loadtxt(CollDiagFname)[:,12]/np.loadtx
 
 CollDiagFname='diags/reducedfiles/ColliderRelevant_beam_e_beam_p.txt'
 
+##################
+### LUMINOSITY ###
+##################
+dL_dt_cr = np.loadtxt(CollDiagFname)[:,2]
+times = np.loadtxt(CollDiagFname)[:,1]
+L_cr = np.trapz(dL_dt_cr, times)
+coll_timestep = np.argmax(dL_dt_cr)
+
+
+
+x = np.linspace(-3*sigmax,3*sigmax,128)
+y = np.linspace(-3*sigmay,3*sigmay,128)
+z = np.linspace(-3*sigmaz,3*sigmaz,128)
+dx, dy, dz = x[1]-x[0], y[1]-y[0], z[1]-z[0]
+X,Y,Z = np.meshgrid(x,y,z) 
+D = num_dens(X,Y,Z)
+dL_dt = 2.*np.sum(D**2)*dx*dy*dz*c
+
+# see formula (2.21) in Yokoya and Chen 
+L_theory = N**2 / (4*pi*sigmax*sigmay)
+
+#assert np.isclose(L_theory, L_cr, rtol=0.1, atol=1e-12)
+#assert np.isclose(dL_dt, np.max(dL_dt_cr), rtol=1e-1, atol=1e-12)
+#assert np.allclose(dL_dt_full(), dL_dt_cr, rtol=1e-12, atol=1e-12)
+
 ###############
 ### CHI MIN ###
 ###############
@@ -254,11 +277,11 @@ x = np.linspace(-3*sigmax,3*sigmax,128)
 y = np.linspace(-3*sigmay,3*sigmay,128)
 z = np.linspace(-3*sigmaz,3*sigmaz,128)
 dx, dy, dz = x[1]-x[0], y[1]-y[0], z[1]-z[0]
-X,Y,Z = np.meshgrid(x,y,z)
+X,Y,Z = np.meshgrid(x,y,z) 
 D = num_dens(X,Y,Z)
 dL_dt = 2.*np.sum(D**2)*dx*dy*dz*c
 
-# see formula (2.21) in Yokoya and Chen
+# see formula (2.21) in Yokoya and Chen 
 L_theory = N**2 / (4*pi*sigmax*sigmay)
 
 assert np.isclose(L_theory, L_cr, rtol=0.1, atol=1e-12)
@@ -274,7 +297,7 @@ y_std_ele = np.loadtxt(CollDiagFname)[:,12]
 x_std_pos = np.loadtxt(CollDiagFname)[:,6]
 y_std_pos = np.loadtxt(CollDiagFname)[:,7]
 
-#see formula (2.13) from Yokoya and Chen
+#see formula (2.13) from Yokoya and Chen 
 Dx = 2*N*r_e*sigmaz/(gamma*sigmax*(sigmax+sigmay))
 Dy = 2*N*r_e*sigmaz/(gamma*sigmay*(sigmax+sigmay))
 
@@ -286,13 +309,13 @@ print(Dx, Dy, boh)
 
 
 
-plt.plot(Dx*np.ones_like(x_std_pos))
+plt.plot(Dx*np.ones_like(x_std_pos)) 
 print(Dx)
 plt.plot(np.abs(x_std_ele-x_std_ele[0])/x_std_ele[0])
 plt.plot(np.abs(x_std_pos-x_std_pos[0])/x_std_pos[0])
 
 
-plt.plot(Dy*np.ones_like(x_std_pos))
+plt.plot(Dy*np.ones_like(x_std_pos)) 
 print(Dy)
 plt.plot(np.abs(y_std_ele-y_std_ele[0])/y_std_ele[0])
 plt.plot(np.abs(y_std_pos-y_std_pos[0])/y_std_pos[0])
@@ -300,7 +323,7 @@ plt.plot(np.abs(y_std_pos-y_std_pos[0])/y_std_pos[0])
 plt.axvline(x=coll_timestep)
 #plt.show()
 
-# see formula (2.35) in Yokoya and Chen
+# see formula (2.35) in Yokoya and Chen 
 #theta = 2*N*r_e/(gamma*(sigmax+sigmay))
 
 #plt.plot( 2.*np.sum(D**2)*dx*dy*dz*c*np.ones_like(chiave_pos_cr))
@@ -308,3 +331,24 @@ plt.axvline(x=coll_timestep)
 #plt.plot(dL_dt_full())
 #plt.show()
 #plt.close()
+
+
+fig, ax = plt.subplots(ncols=4, nrows=1, figsize=(12,5), dpi=300) 
+
+ax[0].plot(times, chiave_pos_cr)
+ax[0].plot(times, chiave_ele_cr)
+ax[0].plot(times, chiave_theory*np.ones_like(chiave_pos_cr))
+
+
+ax[1].plot(times, chimax_pos_cr)
+ax[1].plot(times, chimax_ele_cr)
+ax[1].plot(times, chimax_theory*np.ones_like(chiave_pos_cr))
+
+
+ax[2].plot(times, dL_dt_cr)
+ax[2].plot(times, dL_dt*np.ones_like(dL_dt_cr))
+ax[2].plot(times, dL_dt_full())
+
+plt.show()
+
+
