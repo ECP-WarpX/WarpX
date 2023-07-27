@@ -636,13 +636,9 @@ WarpX::computeMaxStepBoostAccelerator() {
     const Real interaction_time_boost = (len_plasma_boost-zmin_domain_boost_step_0)/
         (moving_window_v-v_plasma_boost);
     // Divide by dt, and update value of max_step.
-    int computed_max_step;
-    if (do_subcycling){
-        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
-    } else {
-        computed_max_step =
-            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
-    }
+    const auto computed_max_step = (do_subcycling)?
+        static_cast<int>(interaction_time_boost/dt[0]):
+        static_cast<int>(interaction_time_boost/dt[maxLevel()]);
     max_step = computed_max_step;
     Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
            <<max_step<<std::endl;
@@ -658,15 +654,14 @@ WarpX::InitNCICorrector ()
         {
             const Geometry& gm = Geom(lev);
             const Real* dx = gm.CellSize();
-            amrex::Real dz, cdtodz;
 #if defined(WARPX_DIM_3D)
-                dz = dx[2];
+                const auto dz = dx[2];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                dz = dx[1];
+                const auto dz = dx[1];
 #else
-                dz = dx[0];
+                const auto dz = dx[0];
 #endif
-            cdtodz = PhysConst::c * dt[lev] / dz;
+            const auto cdtodz = PhysConst::c * dt[lev] / dz;
 
             // Initialize Godfrey filters
             // Same filter for fields Ex, Ey and Bz

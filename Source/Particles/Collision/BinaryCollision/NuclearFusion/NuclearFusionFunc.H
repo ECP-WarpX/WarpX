@@ -161,15 +161,7 @@ public:
             const int c2 = amrex::max(NI1/NI2,1);
 
             // multiplier ratio to take into account unsampled pairs
-            int multiplier_ratio;
-            if (m_isSameSpecies)
-            {
-                multiplier_ratio = 2*max_N - 1;
-            }
-            else
-            {
-                multiplier_ratio = max_N;
-            }
+            const int multiplier_ratio = (m_isSameSpecies)?(2*max_N - 1):(max_N);
 
 #if (defined WARPX_DIM_RZ)
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];

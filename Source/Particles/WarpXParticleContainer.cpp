@@ -162,11 +162,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nattr_int <= NumIntComps(),
                                      "Too many integer attributes specified");
 
-    int ibegin, iend;
-    if (uniqueparticles) {
-        ibegin = 0;
-        iend = n;
-    } else {
+    int ibegin = 0;
+    int iend = n;
+    if (!uniqueparticles) {
         const int myproc = amrex::ParallelDescriptor::MyProc();
         const int nprocs = amrex::ParallelDescriptor::NProcs();
         const int navg = n/nprocs;
@@ -1094,12 +1092,8 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
 
-            int* AMREX_RESTRICT ion_lev;
-            if (do_field_ionization){
-                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
-            } else {
-                ion_lev = nullptr;
-            }
+            const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
+                pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
             DepositCharge(pti, wp, ion_lev, rho.get(), 0, 0, np,
                           thread_num, lev, lev);
