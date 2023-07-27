@@ -179,11 +179,18 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         auto cx_half = 0.5*(dt/dx[0]);
         auto cy_half = 0.5*(dt/dx[1]);
         auto cz_half = 0.5*(dt/dx[2]);
-    #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        auto cx = (dt/dx[0]);
-        auto cz = (dt/dx[1]);
+    #elif defined(WARPX_DIM_XZ)
         auto cx_half = 0.5*(dt/dx[0]);
         auto cz_half = 0.5*(dt/dx[1]);
+        auto cx = (dt/dx[0]);
+        auto cz = (dt/dx[1]);
+    #elif defined(WARPX_DIM_RZ)
+        auto cx_half = 0.5*(dt/dx[0]);
+        auto cz_half = 0.5*(dt/dx[1]);
+        amrex::Box const& domain = geom.Domain();
+        //auto i_min = domain.lo(0);
+        //auto i_max = domain.hi(0);
+        //printf("Low : %d, High: %d\n",i_min,i_max);
     #else
         auto cz = (dt/dx[0]);
         auto cz_half = 0.5*(dt/dx[0]);
@@ -222,7 +229,25 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
         // Loop over a box with one extra gridpoint to avoid needing to communicate
         // the temporary arrays
-        amrex::Box const tile_box = mfi.growntilebox(1);
+        amrex::Box tile_box = mfi.growntilebox(1);
+
+        // TEMP
+        //std::cout << geom.Domain();
+        amrex::Box const& domain = geom.Domain();
+        //std::cout << "\ndomain_small = " << domain.smallEnd();
+        //std::cout << "\ndomain_big = " << domain.bigEnd();
+        //std::cout << "\ndomain_small_0 = " << domain.smallEnd(0);
+        //std::cout << "\ndomain_small_1 = " << domain.smallEnd(1);
+        //std::cout << "\ndomain_big_0 = " << domain.bigEnd(0);
+        //std::cout << "\ndomain_big_1 = " << domain.bigEnd(1);
+
+        // Limit the grown box for RZ at r = 0, r_max
+        #if defined (WARPX_DIM_RZ)
+            const int idir = 0;
+            const int n_cell = -1;
+            tile_box.growLo(idir, n_cell);
+            tile_box.growHi(idir, n_cell);
+        #endif
 
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
         amrex::Array4<Real> const &NUx_arr = NU[lev][0]->array(mfi);
@@ -570,6 +595,16 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto dQ2z = ave( NUy_arr(i,j,k) - NUy_arr(i,j-1,k) , NUy_arr(i,j+1,k) - NUy_arr(i,j,k) );
                     auto dQ3z = ave( NUz_arr(i,j,k) - NUz_arr(i,j-1,k) , NUz_arr(i,j+1,k) - NUz_arr(i,j,k) );
 
+                    // TODO: Generalize this condition
+                    // Impose "none" boundaries 
+                    // Condition: dQx = 0 at r = 0
+                    if ( (i == domain.smallEnd(0)) || (i == domain.bigEnd(0)) ){
+                        auto dQ0x = 0.0;
+                        auto dQ1x = 0.0;
+                        auto dQ2x = 0.0;
+                        auto dQ3x = 0.0;
+                    }
+
                     // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
                     auto AdQ0x = A00x*dQ0x + A01x*dQ1x + A02x*dQ2x + A03x*dQ3x;
                     auto AdQ1x = A10x*dQ0x + A11x*dQ1x + A12x*dQ2x + A13x*dQ3x;
@@ -579,10 +614,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
                     auto AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
                     auto AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
-                    //auto Q_tilde0 = N_arr(i,j,k)   - (dt/(2.0*Vij))*(AdQ0x*S_Ar + AdQ0z*S_Az);
-                    //auto Q_tilde1 = NUx_arr(i,j,k) - (dt/(2.0*Vij))*(AdQ1x*S_Ar + AdQ1z*S_Az);
-                    //auto Q_tilde2 = NUy_arr(i,j,k) - (dt/(2.0*Vij))*(AdQ2x*S_Ar + AdQ2z*S_Az);
-                    //auto Q_tilde3 = NUz_arr(i,j,k) - (dt/(2.0*Vij))*(AdQ3x*S_Ar + AdQ3z*S_Az);
                     auto Q_tilde0 = N_arr(i,j,k)   - cx_half*AdQ0x - cz_half*AdQ0z;
                     auto Q_tilde1 = NUx_arr(i,j,k) - cx_half*AdQ1x - cz_half*AdQ1z;
                     auto Q_tilde2 = NUy_arr(i,j,k) - cx_half*AdQ2x - cz_half*AdQ2z;
@@ -682,7 +713,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
         amrex::Array4<Real> N_arr = N[lev]->array(mfi);
         amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
         amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
@@ -705,6 +736,13 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             amrex::Array4<amrex::Real> const &Q_plus_z = tmp_Q_plus_z.array(mfi);
         #endif
 
+        // Limit the grown box for RZ at r = 0, r_max
+        #if defined (WARPX_DIM_RZ)
+            const int idir = 0;
+            const int n_cell = -1;
+            tile_box.growLo(idir, n_cell);
+            tile_box.growHi(idir, n_cell);
+        #endif
 
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -822,15 +860,27 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real dr = dx[0];
                     amrex::Real dz = dx[1]; // Must be 1
                     amrex::Real r = problo[0] + i * dr + dr/2.0;
-                    auto Vij = 2*pi*r*dr*dz;
-                    auto S_Ar_plus = 2*pi*(r + dr/2.0)*dz;
-                    auto S_Ar_minus = 2*pi*(r - dr/2.0)*dz;
-                    auto S_Az = 2*pi*(r)*dr;
+                    auto Vij = 0.0;
+                    auto S_Az = 0.0;
+                    // Volume element:
+                    if (i == domain.smallEnd(0)) {
+                        Vij = 2.0*pi*(dr/2.0)*(dr/4.0)*dz;
+                        S_Az = 2.0*pi*(dr/4.0)*(dr/2.0);
+                    } else if (i == domain.bigEnd(0)) {
+                        Vij = 2.0*pi*(r - dr/4.0)*dr*dz;
+                        S_Az = 2.0*pi*(r - dr/4.0)*dr;
+                    }  else {
+                        Vij = 2.0*pi*r*dr*dz;
+                        S_Az = 2.0*pi*(r)*dr;
+                    }
+                    auto S_Ar_plus = 2.0*pi*(r + dr/2.0)*dz;
+                    auto S_Ar_minus = 2.0*pi*(r - dr/2.0)*dz;
 
-                    auto Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,0),Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
+                    // TODO: Generalize this condition
+                    // Impose "none" boundaries 
+                    // Condition: Vx(r) = 0 at boundaries
                     auto Vx_I_minus = V_calc(Q_minus_x(i,j,k,0),Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
-                    auto Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
-                    auto Vx_I_plus = V_calc(Q_plus_x(i,j,k,0),Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
+                    auto Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0); 
 
                     auto Vz_L_minus = V_calc(Q_minus_z(i,j-1,k,0),Q_minus_z(i,j-1,k,1),Q_minus_z(i,j-1,k,2),Q_minus_z(i,j-1,k,3),clight,2);
                     auto Vz_I_minus = V_calc(Q_minus_z(i,j,k,0),Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
@@ -840,14 +890,28 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                     // compute the fluxes:
                     // (note that _plus is shifted due to grid location)
-                    auto F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
-                    auto F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
-                    auto F1_minusx = flux(Q_minus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,1),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
-                    auto F1_plusx =  flux(Q_minus_x(i,j,k,1),  Q_plus_x(i,j,k,1),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
-                    auto F2_minusx = flux(Q_minus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,2),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
-                    auto F2_plusx =  flux(Q_minus_x(i,j,k,2),  Q_plus_x(i,j,k,2),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
-                    auto F3_minusx = flux(Q_minus_x(i-1,j,k,3),Q_plus_x(i-1,j,k,3),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
-                    auto F3_plusx =  flux(Q_minus_x(i,j,k,3),  Q_plus_x(i,j,k,3),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
+                    auto F0_minusx = 0.0; 
+                    auto F1_minusx = 0.0;
+                    auto F2_minusx = 0.0; 
+                    auto F3_minusx = 0.0;
+                    auto F0_plusx = 0.0; 
+                    auto F1_plusx = 0.0;
+                    auto F2_plusx = 0.0; 
+                    auto F3_plusx = 0.0;
+                    if (i != domain.smallEnd(0)) {
+                        auto Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,0),Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
+                        F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
+                        F1_minusx = flux(Q_minus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,1),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
+                        F2_minusx = flux(Q_minus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,2),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
+                        F3_minusx = flux(Q_minus_x(i-1,j,k,3),Q_plus_x(i-1,j,k,3),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
+                    }
+                    if (i != domain.bigEnd(0)) {
+                        auto Vx_I_plus = V_calc(Q_plus_x(i,j,k,0),Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
+                        F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
+                        F1_plusx =  flux(Q_minus_x(i,j,k,1),  Q_plus_x(i,j,k,1),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
+                        F2_plusx =  flux(Q_minus_x(i,j,k,2),  Q_plus_x(i,j,k,2),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
+                        F3_plusx =  flux(Q_minus_x(i,j,k,3),  Q_plus_x(i,j,k,3),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
+                    }
 
                     auto F0_minusz = flux(Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus)*S_Az;
                     auto F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus)*S_Az;
