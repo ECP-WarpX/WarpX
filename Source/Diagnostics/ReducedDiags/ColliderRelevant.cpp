@@ -75,20 +75,14 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
     // get MultiParticleContainer class object
     const auto & mypc =  warpx.GetPartContainer();
 
-    // get number of species (int)
-    const auto nSpecies = mypc.nSpecies();
-
     // get species names (std::vector<std::string>)
     const auto species_names = mypc.GetSpeciesNames();
 
     // loop over species
-    for (int i_s = 0; i_s < nSpecies; ++i_s)
+    for (int i_s = 0; i_s < 2; ++i_s)
     {
-        // only beam species does
-        if ((species_names[i_s] != m_beam_name[0]) && (species_names[i_s] != m_beam_name[1])) { continue; }
-
         // get WarpXParticleContainer class object
-        auto const &myspc = mypc.GetParticleContainer(i_s);
+        auto const &myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
 
         auto is_photon = myspc.AmIA<PhysicalSpecies::photon>();
 
@@ -114,25 +108,24 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
     add_diag("lumi", "lumi(s^-1)");
 #endif
 
-
     // loop over species
-    for (int i_s = 0; i_s < nSpecies; ++i_s)
+    for (int i_s = 0; i_s < 2; ++i_s)
     {
-        // only beam species does
-        if ((species_names[i_s] != m_beam_name[0]) && (species_names[i_s] != m_beam_name[1])) { continue; }
-
         // get WarpXParticleContainer class object
-        auto const &myspc = mypc.GetParticleContainer(i_s);
+        auto const &myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
 
         if (myspc.DoQED()){
             add_diag("chimin_"+species_names[i_s], "chimin_"+species_names[i_s]+"()");
             add_diag("chiave_"+species_names[i_s], "chiave_"+species_names[i_s]+"()");
             add_diag("chimax_"+species_names[i_s], "chimax_"+species_names[i_s]+"()");
         }
-#if defined(WARPX_DIM_3D)
-        add_diag("xy_ave_"+species_names[i_s], "xy_ave_"+species_names[i_s]+"(m)");
-        add_diag("xy_std_"+species_names[i_s], "xy_std_"+species_names[i_s]+"(m)");
+#if (defined WARPX_DIM_3D)
+        add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
+        add_diag("y_std_"+species_names[i_s], "y_std_"+species_names[i_s]+"(m)");
+#elif (defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ))
+        add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
 #endif
+
         m_data.resize(all_diag_names.size());
     }
     if (ParallelDescriptor::IOProcessor())
@@ -171,9 +164,6 @@ void ColliderRelevant::ComputeDiags (int step)
     // get MultiParticleContainer class object
     const auto & mypc = WarpX::GetInstance().GetPartContainer();
 
-    // get number of species
-    int const nSpecies = mypc.nSpecies();
-
     // get species names (std::vector<std::string>)
     auto const species_names = mypc.GetSpeciesNames();
 
@@ -188,75 +178,102 @@ void ColliderRelevant::ComputeDiags (int step)
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined(WARPX_DIM_3D)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-        Real xmin = geom.ProbLo(0);
-        Real ymin = geom.ProbLo(1);
-        Real xmax = geom.ProbHi(0);
-        Real ymax = geom.ProbHi(1);
-        Real midx = 0.5_rt * (xmax - xmin);
-        Real midy = 0.5_rt * (ymax - ymin);
 #endif
 
     const auto get_idx = [&](const std::string& name){
         return m_headers_indices.at(name).idx;
     };
 
-    std::unique_ptr<amrex::MultiFab> n1;
-    std::unique_ptr<amrex::MultiFab> n2;
+    std::array<std::unique_ptr<amrex::MultiFab>, 2> num_dens;
 
     // loop over species
-    for (int i_s = 0; i_s < nSpecies; ++i_s)
+    for (int i_s = 0; i_s < 2; ++i_s)
     {
-        // only beam species does
-        if ((species_names[i_s] != m_beam_name[0]) && (species_names[i_s] != m_beam_name[1])) { continue; }
-
         // get WarpXParticleContainer class object
-        auto &myspc = mypc.GetParticleContainer(i_s);
-
+        auto &myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
         // get charge
         ParticleReal const q = myspc.getCharge();
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
-        if (species_names[i_s] == m_beam_name[0]){
-            n1 = myspc.GetChargeDensity(0);
-            n1->mult(1./q);
-        }
-        if (species_names[i_s] == m_beam_name[1]){
-            n2 = myspc.GetChargeDensity(0);
-            n2->mult(1./q);
-        }
+        num_dens[i_s]=myspc.GetChargeDensity(0);
+        num_dens[i_s]->mult(1./q);
 
         // wtot
         Real wtot = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        { return p.rdata(PIdx::w); });
+        { 
+            return p.rdata(PIdx::w); });
         ParallelDescriptor::ReduceRealSum(wtot, ParallelDescriptor::IOProcessorNumber());
 
-#if defined(WARPX_DIM_3D)
-        // xy_ave
-        Real xy_ave = ReduceSum( myspc,
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        // x_ave
+        Real x_ave = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         {
             const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real xy = std::sqrt((p.pos(0)-midx)*(p.pos(0)-midx) + (p.pos(1)-midy)*(p.pos(1)-midy));
-            return w*xy; });
-        ParallelDescriptor::ReduceRealSum(xy_ave);
-        xy_ave = xy_ave / wtot;
-
-        // xy_std
-        Real xy_std = ReduceSum( myspc,
+            const amrex::Real x = p.pos(0);
+            return w*x; });
+        ParallelDescriptor::ReduceRealSum(x_ave, ParallelDescriptor::IOProcessorNumber());
+        x_ave = x_ave / wtot;
+        
+        // x_std
+        Real x_std = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p)
         {
             const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real xy = std::sqrt((p.pos(0)-midx)*(p.pos(0)-midx) + (p.pos(1)-midy)*(p.pos(1)-midy));
-            const amrex::Real tmp = (xy - xy_ave)*(xy - xy_ave)*w;
+            const amrex::Real x = p.pos(0);
+            const amrex::Real tmp = (x - x_ave)*(x - x_ave)*w;
             return tmp; });
-        ParallelDescriptor::ReduceRealSum(xy_std);
-        xy_std = std::sqrt(xy_std / wtot);
+        ParallelDescriptor::ReduceRealSum(x_std, ParallelDescriptor::IOProcessorNumber());
+        x_std = std::sqrt(x_std / wtot);
+#elif defined(WARPX_DIM_3D)
+        // x_ave
+        Real x_ave = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+        {
+            const amrex::Real w  = p.rdata(PIdx::w);
+            const amrex::Real x = p.pos(0);
+            return w*x; });
+        ParallelDescriptor::ReduceRealSum(x_ave, ParallelDescriptor::IOProcessorNumber());
+        x_ave = x_ave / wtot;
+        
+        // x_std
+        Real x_std = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+        {
+            const amrex::Real w  = p.rdata(PIdx::w);
+            const amrex::Real x = p.pos(0);
+            const amrex::Real tmp = (x - x_ave)*(x - x_ave)*w;
+            return tmp; });
+        ParallelDescriptor::ReduceRealSum(x_std, ParallelDescriptor::IOProcessorNumber());
+        x_std = std::sqrt(x_std / wtot);
 
-        m_data[get_idx("xy_ave_"+species_names[i_s])] = xy_ave;
-        m_data[get_idx("xy_std_"+species_names[i_s])] = xy_std;
+        // y_ave
+        Real y_ave = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+        {
+            const amrex::Real w  = p.rdata(PIdx::w);
+            const amrex::Real y = p.pos(1);
+            return w*y; });
+        ParallelDescriptor::ReduceRealSum(y_ave, ParallelDescriptor::IOProcessorNumber());
+        y_ave = y_ave / wtot;
 
+        // y_std
+        Real y_std = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+        {
+            const amrex::Real w  = p.rdata(PIdx::w);
+            const amrex::Real y = p.pos(1);
+            const amrex::Real tmp = (y - y_ave)*(y - y_ave)*w;
+            return tmp; });
+        ParallelDescriptor::ReduceRealSum(y_std, ParallelDescriptor::IOProcessorNumber());
+        y_std = std::sqrt(y_std / wtot);
+
+        //m_data[get_idx("x_ave_"+species_names[i_s])] = x_ave;
+        m_data[get_idx("x_std_"+species_names[i_s])] = x_std;
+        //m_data[get_idx("y_ave_"+species_names[i_s])] = y_ave;
+        m_data[get_idx("y_std_"+species_names[i_s])] = y_std;
 #endif
 
 #if (defined WARPX_QED)
@@ -365,7 +382,7 @@ void ColliderRelevant::ComputeDiags (int step)
                             chi = QedUtils::chi_ele_pos(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
                         }
-                        amrex::AllPrint() << "CHI DOT W " << chi << " " << w[i] << " " << chi*w[i] <<  "   \n";
+                        //amrex::AllPrint() << "CHI DOT W " << chi << " " << w[i] << " " << chi*w[i] <<  "   \n";
                         return {chi, chi, chi*w[i]};
                     });
 
@@ -374,30 +391,15 @@ void ColliderRelevant::ComputeDiags (int step)
                     chimin[lev] = get<0>(hv);
                     chimax[lev] = get<1>(hv);
                     chiave[lev] = get<2>(hv);
-
-                    amrex::AllPrint() << "CHIMININSIDE " << chimin[0] <<  "   \n";
-                    amrex::AllPrint() << "CHIMAXINSIDE " << chimax[0] <<  "   \n";
-                    amrex::AllPrint() << "CHIAVEINSIDE " << chiave[0] <<  "   \n";
-
                 }
-                chimin_f = *std::min_element(chimin.begin(), chimin.end());
-                chimax_f = *std::max_element(chimax.begin(), chimax.end());
-                chiave_f = chiave[0]; // FIXME mesh refinement
-                //chiave_f = std::accumulate(chiave.begin(), chiave.end(), 0.0);
-                //amrex::AllPrint() << "ACCUMULATE " << chiave_f  << " -- ZERO" << chiave[0] << " \n";
             }
-            ParallelDescriptor::ReduceRealMin(chimin_f);
-            ParallelDescriptor::ReduceRealMax(chimax_f);
+            chimin_f = *std::min_element(chimin.begin(), chimin.end());
+            chimax_f = *std::max_element(chimax.begin(), chimax.end());
+            chiave_f = chiave[0]; // FIXME mesh refinement
+
+            ParallelDescriptor::ReduceRealMin(chimin_f, ParallelDescriptor::IOProcessorNumber());
+            ParallelDescriptor::ReduceRealMax(chimax_f, ParallelDescriptor::IOProcessorNumber());
             ParallelDescriptor::ReduceRealSum(chiave_f, ParallelDescriptor::IOProcessorNumber());
-
-            //amrex::AllPrint() << "IDX " << get_idx("chimin_"+species_names[i_s])<<  " \n";
-            //amrex::AllPrint() << "mdata size " << m_data.size()  <<  " \n";
-            //amrex::AllPrint() << "mdata1 " << m_data[1]  <<  " \n";
-
-            amrex::AllPrint() << "CHIMIN_F " << chimin_f <<  "   \n";
-            amrex::AllPrint() << "CHIAVE_F " << chiave_f << "    " << chiave_f/wtot << "   \n";
-            amrex::AllPrint() << "CHIMAX_F " << chimax_f <<  "   \n";
-            amrex::AllPrint() << "WTOT " << wtot <<  "   \n";
 
             m_data[get_idx("chimin_"+species_names[i_s])] = chimin_f;
             m_data[get_idx("chiave_"+species_names[i_s])] = chiave_f/wtot;
@@ -413,16 +415,12 @@ void ColliderRelevant::ComputeDiags (int step)
     constexpr int ngrow = 0;
     amrex::MultiFab mf_dst1(ba.convert(amrex::IntVect::TheCellVector()), dmap, ncomp, ngrow);
     amrex::MultiFab mf_dst2(ba.convert(amrex::IntVect::TheCellVector()), dmap, ncomp, ngrow);
-    ablastr::coarsen::sample::Coarsen(mf_dst1, *n1, 0, 0, ncomp, ngrow);
-    ablastr::coarsen::sample::Coarsen(mf_dst2, *n2, 0, 0, ncomp, ngrow);
-    auto const n1_dot_n2 = amrex::MultiFab::Dot( mf_dst1, 0, mf_dst2, 0, 1, 0);
-    // (1 - cos phi ) = 2
+    ablastr::coarsen::sample::Coarsen(mf_dst1, *num_dens[0], 0, 0, ncomp, ngrow);
+    ablastr::coarsen::sample::Coarsen(mf_dst2, *num_dens[1], 0, 0, ncomp, ngrow);
+    
+    // compute luminosity 
+    auto const n1_dot_n2 = amrex::MultiFab::Dot(mf_dst1, 0, mf_dst2, 0, 1, 0);    
     auto const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
-
-    //auto const n1_sq = amrex::MultiFab::Dot( *n1, 0, *n1, 0, 1, 0);
-    //auto const n2_sq = amrex::MultiFab::Dot( *n2, 0, *n2, 0, 1, 0);
-    //amrex::AllPrint() << "AAAA " <<   lumi << "  " << n1_dot_n2 <<"  " << n1_sq << " " << n2_sq <<  " \n";
-    //amrex::AllPrint() << "AAAA " <<  n1_sq <<  " \n";
 
     m_data[get_idx("lumi")] = lumi;
 }
