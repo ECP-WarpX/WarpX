@@ -173,7 +173,7 @@ namespace
 
     void warpx_finalize ()
     {
-        WarpX::ResetInstance();
+        WarpX::Finalize();
     }
 
     void warpx_set_callback_py (
