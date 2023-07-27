@@ -976,16 +976,14 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
     const amrex::RealBox& boost_domain = warpx.Geom(lev).ProbDomain();
     const amrex::Real buffer_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
     const amrex::Real buffer_zmax_lab = m_snapshot_domain_lab[i_buffer].hi( m_moving_window_dir );
-    if ( ( m_current_z_boost[i_buffer] <= boost_domain.lo(m_moving_window_dir) ) or
-         ( m_current_z_boost[i_buffer] >= boost_domain.hi(m_moving_window_dir) ) or
-         ( m_current_z_lab[i_buffer] <= buffer_zmin_lab ) or
-         ( m_current_z_lab[i_buffer] >= buffer_zmax_lab ) )
-    {
-        // the slice is not in the boosted domain or lab-frame domain
-        return false;
-    }
 
-    return true;
+    const bool slice_not_in_domain =
+        ( m_current_z_boost[i_buffer] <= boost_domain.lo(m_moving_window_dir) ) ||
+        ( m_current_z_boost[i_buffer] >= boost_domain.hi(m_moving_window_dir) ) ||
+        ( m_current_z_lab[i_buffer] <= buffer_zmin_lab ) ||
+        ( m_current_z_lab[i_buffer] >= buffer_zmax_lab );
+
+    return !slice_not_in_domain;
 }
 
 
