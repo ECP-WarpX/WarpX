@@ -1,0 +1,5 @@
+#!/bin/bash
+REGEX="[a-z_A-Z0-9\/]*WarpX\/Source[a-z_A-Z0-9\/]+.cpp"
+if [[ $4 =~ $REGEX ]];then
+  clang-tidy-14 $@
+fi

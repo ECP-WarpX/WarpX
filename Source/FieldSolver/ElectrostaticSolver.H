@@ -13,6 +13,8 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Parser.H>
 
+#include <utility>
+
 namespace ElectrostaticSolver {
 
     struct PhiCalculatorEB {
@@ -101,7 +103,7 @@ namespace ElectrostaticSolver {
 
       public:
         EBCalcEfromPhiPerLevel(amrex::Vector<amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM> > e_field)
-                : m_e_field(e_field) {}
+                : m_e_field(std::move(e_field)) {}
 
         void operator()(amrex::MLMG & mlmg, int const lev) {
             using namespace amrex::literals;
