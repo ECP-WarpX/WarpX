@@ -4,11 +4,9 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include <Particles/ParticleBoundaryBuffer.H>
-#include <Particles/MultiParticleContainer.H>
-#include <Python/pyWarpX.H>
+#include "Python/pyWarpX.H"
 
-namespace py = pybind11;
+#include <Particles/ParticleBoundaryBuffer.H>
 
 namespace warpx {
     class BoundaryBufferParIter

@@ -56,7 +56,7 @@ namespace ElectrostaticSolver {
          *
          * \param [in] potential The string value of the potential
          */
-        void setPotentialEB(const std::string potential) {
+        void setPotentialEB (std::string potential) {
             potential_eb_str = potential;
             buildParsersEB();
         }

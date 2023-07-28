@@ -4,10 +4,9 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include <Particles/WarpXParticleContainer.H>
-#include <Python/pyWarpX.H>
+#include "Python/pyWarpX.H"
 
-namespace py = pybind11;
+#include <Particles/WarpXParticleContainer.H>
 
 
 void init_WarpXParIter (py::module& m)

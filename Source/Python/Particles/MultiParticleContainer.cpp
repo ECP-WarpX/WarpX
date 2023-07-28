@@ -4,11 +4,9 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include <Particles/MultiParticleContainer.H>
-#include <Particles/WarpXParticleContainer.H>
-#include <Python/pyWarpX.H>
+#include "Python/pyWarpX.H"
 
-namespace py = pybind11;
+#include <Particles/MultiParticleContainer.H>
 
 
 void init_MultiParticleContainer (py::module& m)

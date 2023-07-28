@@ -4,12 +4,12 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "pyWarpX.H"
-#include "Particles/MultiParticleContainer.H"
-#include "Particles/ParticleBoundaryBuffer.H"
-#include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <WarpX.H>
 #include <FieldSolver/ElectrostaticSolver.H>
+#include <Particles/MultiParticleContainer.H>
+#include <Particles/ParticleBoundaryBuffer.H>
+#include <Particles/PinnedMemoryParticleContainer.H>
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -21,7 +21,6 @@
 #include <string>
 
 
-namespace py = pybind11;
 //using namespace warpx;
 
 namespace warpx {
