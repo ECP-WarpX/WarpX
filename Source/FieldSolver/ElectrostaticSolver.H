@@ -8,6 +8,7 @@
 #define ELECTROSTATICSOLVER_H_
 
 #include <AMReX_Array.H>
+#include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_REAL.H>
@@ -41,7 +42,7 @@ namespace ElectrostaticSolver {
         bool has_non_periodic = false;
         bool phi_EB_only_t = true;
 
-        void definePhiBCs ();
+        void definePhiBCs (const amrex::Geometry& geom);
 
         void buildParsers ();
         void buildParsersEB ();
