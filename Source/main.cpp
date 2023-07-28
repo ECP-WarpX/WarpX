@@ -52,9 +52,9 @@ int main(int argc, char* argv[])
 
     utils::rocfft::cleanup();
 
-    amrex::Finalize();
-
     WarpX::Finalize();
+
+    amrex::Finalize();
 
     ablastr::parallelization::mpi_finalize ();
 }
