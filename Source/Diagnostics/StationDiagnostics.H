@@ -74,12 +74,6 @@ private:
     amrex::Box m_buffer_box;
     int m_flush_counter = 0;
 
-    // temporary
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_cell_centered_data;
-    // temporary
-    void DerivedInitData () override;
-    // temporary
-    amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_cell_center_functors;
 };
 
 

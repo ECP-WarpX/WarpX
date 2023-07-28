@@ -115,29 +115,11 @@ StationDiagnostics::InitializeFieldFunctors (int lev)
     int ncomp = 6;
     for (int i = 0; i < num_stationdiag_functors; ++i)
     {
-        //m_all_field_functors[lev][i] = std::make_unique<StationFunctor>(
-        //                                   warpx.get_array_EBfield_fp(lev), m_station_loc, lev,
-        //                                   m_crse_ratio, ncomp
-        //                               );
-        // temporary
         m_all_field_functors[lev][i] = std::make_unique<StationFunctor>(
-                                           m_cell_centered_data[lev].get(), m_station_loc, lev,
+                                           warpx.get_array_EBfield_fp(lev), m_station_loc, lev,
                                            m_crse_ratio, ncomp
                                        );
     }
-    m_cell_center_functors[lev].resize(ncomp);
-    m_cell_center_functors[lev][0] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev,0),
-                                                                         lev, m_crse_ratio);
-    m_cell_center_functors[lev][1] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev,1),
-                                                                         lev, m_crse_ratio);
-    m_cell_center_functors[lev][2] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev,2),
-                                                                         lev, m_crse_ratio);
-    m_cell_center_functors[lev][3] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev,0),
-                                                                         lev, m_crse_ratio);
-    m_cell_center_functors[lev][4] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev,1),
-                                                                         lev, m_crse_ratio);
-    m_cell_center_functors[lev][5] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev,2),
-                                                                         lev, m_crse_ratio);
 }
 
 void
@@ -149,7 +131,7 @@ StationDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart)
     auto & warpx = WarpX::GetInstance();
 
     amrex::IntVect lo(0);
-    amrex::IntVect hi(255);
+    amrex::IntVect hi(m_buffer_size-1);
     // in the station normal direction, with time, we need to determine number of points
     // hi : (t_max - t_min )/dt
     const amrex::Box diag_box(lo, hi);
@@ -159,29 +141,14 @@ StationDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart)
     amrex::BoxArray ba = diag_ba.maxSize(256);
     amrex::DistributionMapping dmap(ba);
     int ncomps = 6; //  Ex Ey Ez Bx By Bz
-    //m_mf_output[0][lev] = amrex::MultiFab( amrex::convert(ba, amrex::IntVect::TheNodeVector()), dmap, ncomps, 1);
-    // temporary
-    m_mf_output[0][lev] = amrex::MultiFab( ba, dmap, ncomps, 1);
+    int nghost = 1; //  Ex Ey Ez Bx By Bz
+    m_mf_output[0][lev] = amrex::MultiFab( amrex::convert(ba, amrex::IntVect::TheNodeVector()), dmap, ncomps, nghost);
     m_mf_output[0][lev].setVal(0.);
 }
 
 void
 StationDiagnostics::PrepareFieldDataForOutput ()
 {
-    // temporary
-    auto & warpx = WarpX::GetInstance();
-    for (int lev = 0; lev < 1; ++lev) {
-        int icomp_dst = 0;
-        for (int icomp = 0; icomp < 6; ++icomp) {
-            m_cell_center_functors[lev][icomp]->operator()(*m_cell_centered_data[lev], icomp_dst);
-            icomp_dst += m_cell_center_functors[lev][icomp]->nComp();
-        }
-        ablastr::utils::communication::FillBoundary(*m_cell_centered_data[lev],
-                                                    WarpX::do_single_precision_comms,
-                                                    warpx.Geom(lev).periodicity());
-    }
-
-
     const int num_station_functors = 1;
     const int nlev = 1;
     int k_index = m_slice_counter;
@@ -192,7 +159,6 @@ StationDiagnostics::PrepareFieldDataForOutput ()
                                                              m_slice_counter, m_buffer_size, 0);
         }
     }
-
 }
 
 
@@ -262,21 +228,5 @@ StationDiagnostics::WriteStationHeader (const std::string& filename)
         HeaderFile << m_flush_counter << "\n";
 
 
-    }
-}
-
-// temporary
-void
-StationDiagnostics::DerivedInitData ()
-{
-    m_cell_centered_data.resize(nmax_lev);
-    m_cell_center_functors.resize(nmax_lev);
-    auto & warpx = WarpX::GetInstance();
-    const int ngrow = 1;
-    const int ncomps = 6;
-    for (int lev = 0; lev < nmax_lev; ++lev) {
-        amrex::BoxArray ba = warpx.boxArray(lev);
-        const amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
-        WarpX::AllocInitMultiFab( m_cell_centered_data[lev], ba, dmap, ncomps, amrex::IntVect(ngrow), lev, "cellcentered_Station", 0._rt);
     }
 }
