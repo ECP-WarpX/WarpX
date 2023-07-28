@@ -105,8 +105,6 @@ extern "C" {
 
   int warpx_finestLevel ();
 
-  void warpx_setPotentialEB (const char * char_potential);
-
   void mypc_Redistribute ();
 
 #ifdef __cplusplus

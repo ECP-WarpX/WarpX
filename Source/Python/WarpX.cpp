@@ -9,6 +9,7 @@
 #include "Particles/PinnedMemoryParticleContainer.H"
 
 #include <WarpX.H>
+#include <FieldSolver/ElectrostaticSolver.H>
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
