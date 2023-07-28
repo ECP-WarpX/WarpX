@@ -14,6 +14,20 @@ Checks: '-*,
     misc-const-correctness,
     modernize-avoid-bind,
     modernize-concat-nested-namespaces,
+    modernize-deprecated-headers,
+    modernize-deprecated-ios-base-aliases,
+    modernize-loop-convert,
+    modernize-make-shared,
+    modernize-make-unique,
+    modernize-pass-by-value,
+    modernize-raw-string-literal,
+    modernize-redundant-void-arg,
+    modernize-replace-auto-ptr,
+    modernize-replace-disallow-copy-and-assign-macro,
+    modernize-replace-random-shuffle,
+    modernize-return-braced-init-list,
+    modernize-shrink-to-fit,
+    modernize-unary-static-assert,
     modernize-use-nullptr,
     performance-faster-string-find,
     performance-for-range-copy,
@@ -23,5 +37,9 @@ Checks: '-*,
     performance-inefficient-vector-operation,
     readability-non-const-parameter
     '
+
+CheckOptions:
+- key:          modernize-pass-by-value.ValuesOnly
+  value:        'true'
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'
