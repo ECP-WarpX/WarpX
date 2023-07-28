@@ -99,7 +99,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
-    WriteParticles(filename, particle_diags, isBTD);
+    WriteParticles(filename, particle_diags, time, isBTD);
 
     WriteJobInfo(filename);
 
