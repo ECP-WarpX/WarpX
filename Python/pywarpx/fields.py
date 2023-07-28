@@ -650,10 +650,10 @@ def RhoCPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(mf_name=f'rho_cp', level=level, include_ghosts=include_ghosts)
 
 def FCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'f_cp', level=level, include_ghosts=include_ghosts)
+    return _MultiFABWrapper(mf_name=f'F_cp', level=level, include_ghosts=include_ghosts)
 
 def GCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'g_cp', level=level, include_ghosts=include_ghosts)
+    return _MultiFABWrapper(mf_name=f'G_cp', level=level, include_ghosts=include_ghosts)
 
 def EdgeLengthsxWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(mf_name=f'm_edge_lengths[x]', level=level, include_ghosts=include_ghosts)
@@ -710,10 +710,10 @@ def JzFPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(mf_name='pml_j_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def FFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_F_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _MultiFABWrapper(mf_name='pml_F_fp', level=level, include_ghosts=include_ghosts)
 
 def GFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_G_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _MultiFABWrapper(mf_name='pml_G_fp', level=level, include_ghosts=include_ghosts)
 
 def ExCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(mf_name='pml_E_cp[x]', level=level, include_ghosts=include_ghosts)
@@ -743,7 +743,7 @@ def JzCPPMLWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(mf_name='pml_j_cp[z]', level=level, include_ghosts=include_ghosts)
 
 def FCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_f_cp[z]', level=level, include_ghosts=include_ghosts)
+    return _MultiFABWrapper(mf_name='pml_F_cp', level=level, include_ghosts=include_ghosts)
 
 def GCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_g_cp[z]', level=level, include_ghosts=include_ghosts)
+    return _MultiFABWrapper(mf_name='pml_G_cp', level=level, include_ghosts=include_ghosts)
