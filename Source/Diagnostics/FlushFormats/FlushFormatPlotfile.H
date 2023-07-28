@@ -48,10 +48,12 @@ public:
     /** \brief Write particles data to file.
      * \param[in] filename name of output directory
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
+     * \param[in] time the simulation time
      * \param[in] isBTD whether this is a back-transformed diagnostic
      */
     void WriteParticles(const std::string& filename,
                         const amrex::Vector<ParticleDiag>& particle_diags,
+                        const amrex::Real time,
                         bool isBTD = false) const;
 
     ~FlushFormatPlotfile() {}
