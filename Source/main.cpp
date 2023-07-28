@@ -48,11 +48,11 @@ int main(int argc, char* argv[])
         }
 
         WARPX_PROFILE_VAR_STOP(pmain);
+
+        WarpX::Finalize();
     }
 
     utils::rocfft::cleanup();
-
-    WarpX::Finalize();
 
     amrex::Finalize();
 
