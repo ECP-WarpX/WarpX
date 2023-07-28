@@ -315,6 +315,19 @@ $(srcTempDir)/ablastr/export.H:
 	@echo "#define ABLASTR_EXPORT" >> $@
 	@echo "#endif" >> $@
 
+# Generate Utils/export.H
+vpath export.H $(srcTempDir)/Utils
+
+AUTO_BUILD_SOURCES += $(srcTempDir)/Utils/export.H
+
+$(srcTempDir)/Utils/export.H:
+	@echo Generating Utils/export.H ...
+	@if [ ! -d $(srcTempDir)/Utils ]; then mkdir -p $(srcTempDir)/Utils; fi
+	@echo "#ifndef WARPX_EXPORT_H_" > $@
+	@echo "#define WARPX_EXPORT_H_" >> $@
+	@echo "#define WARPX_EXPORT" >> $@
+	@echo "#endif" >> $@
+
 cleanconfig::
 	$(SILENT) $(RM) -r $(srcTempDir)/Utils
 

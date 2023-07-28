@@ -9,9 +9,8 @@
 #ifndef WARPX_PY_H_
 #define WARPX_PY_H_
 
+#include "Utils/export.H"
 #include "Utils/WarpXProfilerWrapper.H"
-
-#include <ablastr/export.H>
 
 #include <map>
 #include <string>
@@ -24,7 +23,7 @@
  * functions will be called. See ``WarpX/Python/pywarpx/callbacks.py`` for a
  * list of currently supported callback names.
 */
-extern ABLASTR_EXPORT std::map< std::string, std::function<void()> > warpx_callback_py_map;
+extern WARPX_EXPORT std::map< std::string, std::function<void()> > warpx_callback_py_map;
 
 /**
  * \brief Function to install the given name and function in warpx_callback_py_map

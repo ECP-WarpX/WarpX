@@ -23,8 +23,7 @@
 #endif
 #include "MultiParticleContainer_fwd.H"
 #include "NamedComponentParticleContainer.H"
-
-#include <ablastr/export.H>
+#include "Utils/export.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
@@ -51,7 +50,7 @@
 
 using namespace amrex::literals;
 
-class ABLASTR_EXPORT WarpXParIter
+class WARPX_EXPORT WarpXParIter
     : public amrex::ParIter<0,0,PIdx::nattribs>
 {
 public:
@@ -103,7 +102,7 @@ public:
  * Note: many functions are pure virtual (meaning they MUST be defined in
  * derived classes, e.g., Evolve) or actual functions (e.g. CurrentDeposition).
  */
-class ABLASTR_EXPORT WarpXParticleContainer
+class WARPX_EXPORT WarpXParticleContainer
     : public NamedComponentParticleContainer<amrex::DefaultAllocator>
 {
 public:

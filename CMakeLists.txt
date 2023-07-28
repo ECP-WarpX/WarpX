@@ -197,6 +197,7 @@ endif()
 
 # Targets #####################################################################
 #
+include(GenerateExportHeader)
 set(_ALL_TARGETS)
 foreach(D IN LISTS WarpX_DIMS)
     warpx_set_suffix_dims(SD ${D})
@@ -320,6 +321,34 @@ foreach(D IN LISTS WarpX_DIMS)
     target_sources(WarpX_${SD} PRIVATE Source/WarpX.cpp)
     if(WarpX_APP)
         target_sources(app_${SD} PRIVATE Source/main.cpp)
+    endif()
+endforeach()
+
+# Headers controlling symbol visibility (for Windows)
+generate_export_header(WarpX_${WarpX_DIMS_LAST}
+    BASE_NAME warpx
+    EXPORT_FILE_NAME Source/Utils/export.H)
+generate_export_header(ablastr_${WarpX_DIMS_LAST}
+    BASE_NAME ablastr
+    EXPORT_FILE_NAME Source/ablastr/export.H)
+# At build-time, we might need to set WarpX_<last>_EXPORTS and ablastr_<last>_EXPORTS on all targets
+foreach(D IN LISTS WarpX_DIMS)
+    warpx_set_suffix_dims(SD ${D})
+    target_compile_definitions(ablastr_${SD} PRIVATE ablastr_${WarpX_DIMS_LAST}_EXPORTS)
+    target_compile_definitions(WarpX_${SD} PRIVATE WarpX_${WarpX_DIMS_LAST}_EXPORTS)
+    if(WarpX_LIB)
+        target_compile_definitions(lib_${SD} PRIVATE WarpX_${WarpX_DIMS_LAST}_EXPORTS)
+    endif()
+    # Static libs: WARPX_STATIC_DEFINE and ABLASTR_STATIC_DEFINE during build time
+    # note: using a static lib (lib_${SD}) in a .dll (pyWarpX_${SD}) still needs the exports for
+    #       dllimport at DLL build time.
+    #       https://cmake.org/cmake/help/latest/prop_tgt/WINDOWS_EXPORT_ALL_SYMBOLS.html
+    if(NOT BUILD_SHARED_LIBS)
+        target_compile_definitions(ablastr_${SD} PRIVATE ABLASTR_STATIC_DEFINE)
+        target_compile_definitions(WarpX_${SD} PRIVATE WARPX_STATIC_DEFINE)
+        if(WarpX_LIB)
+            target_compile_definitions(lib_${SD} PRIVATE WARPX_STATIC_DEFINE)
+        endif()
     endif()
 endforeach()
 
@@ -508,12 +537,6 @@ get_source_version(WarpX_${WarpX_DIMS_LAST} ${WarpX_SOURCE_DIR})
 configure_file(
     ${WarpX_SOURCE_DIR}/Source/Utils/WarpXVersion.H.in
     ${WarpX_BINARY_DIR}/Source/Utils/WarpXVersion.H
-    @ONLY
-)
-
-configure_file(
-    ${WarpX_SOURCE_DIR}/Source/ablastr/export.H.in
-    ${WarpX_BINARY_DIR}/Source/ablastr/export.H
     @ONLY
 )
 
