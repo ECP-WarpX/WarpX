@@ -490,7 +490,6 @@ class _MultiFABWrapper(object):
         ixstart, ixstop = self._find_start_stop(ii[0], ixmin, ixmax+1, 0)
         iystart, iystop = self._find_start_stop(ii[1], iymin, iymax+1, 1)
         izstart, izstop = self._find_start_stop(ii[2], izmin, izmax+1, 2)
-        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp(), 3)
 
         if isinstance(value, np.ndarray):
             # Expand the shape of the input array to match the shape of the global array
