@@ -3,7 +3,7 @@
  * Authors: Axel Huebl, Remi Lehe, Roelof Groenewald
  * License: BSD-3-Clause-LBNL
  */
- 
+
 #include "Python/pyWarpX.H"
 
 #include <Particles/PinnedMemoryParticleContainer.H>
