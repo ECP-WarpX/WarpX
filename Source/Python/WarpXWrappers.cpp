@@ -65,21 +65,6 @@
         return WarpX::galerkin_interpolation;
     }
 
-    int warpx_nComps()
-    {
-        return PIdx::nattribs;
-    }
-
-    int warpx_SpaceDim()
-    {
-        return AMREX_SPACEDIM;
-    }
-
-    void amrex_init (int argc, char* argv[])
-    {
-        warpx::initialization::amrex_init(argc, argv);
-    }
-
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm /* mpicomm */)
     {
       warpx::initialization::amrex_init(argc, argv, true);
@@ -90,36 +75,9 @@
         amrex::Finalize();
     }
 
-    void warpx_init ()
-    {
-        WarpX& warpx = WarpX::GetInstance();
-        warpx.InitData();
-        ExecutePythonCallback("afterinit");
-        ExecutePythonCallback("particleloader");
-    }
-
     void warpx_finalize ()
     {
         WarpX::ResetInstance();
-    }
-
-    void warpx_set_callback_py (
-        const char* char_callback_name, WARPX_CALLBACK_PY_FUNC_0 callback)
-    {
-        const std::string callback_name(char_callback_name);
-        warpx_callback_py_map[callback_name] = callback;
-    }
-
-    void warpx_clear_callback_py (const char* char_callback_name)
-    {
-        const std::string callback_name(char_callback_name);
-        warpx_callback_py_map.erase(callback_name);
-    }
-
-    void warpx_evolve (int numsteps)
-    {
-        WarpX& warpx = WarpX::GetInstance();
-        warpx.Evolve(numsteps);
     }
 
     void warpx_ConvertLabParamsToBoost()
@@ -156,114 +114,12 @@
         return dx[dir];
     }
 
-    amrex::ParticleReal** warpx_getParticleStructs(
-            const char* char_species_name, int lev,
-            int* num_tiles, int** particles_per_tile) {
-        const auto & mypc = WarpX::GetInstance().GetPartContainer();
-        const std::string species_name(char_species_name);
-        auto & myspc = mypc.GetParticleContainerFromName(species_name);
-
-        *num_tiles = myspc.numLocalTilesAtLevel(lev);
-        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
-        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
-
-        auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
-        int i = 0;
-        for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti, ++i) {
-            auto& aos = pti.GetArrayOfStructs();
-            data[i] = (amrex::ParticleReal*) aos.data();
-            (*particles_per_tile)[i] = pti.numParticles();
-        }
-        return data;
-    }
-
-    void warpx_convert_id_to_long (amrex::Long* ids, const WarpXParticleContainer::ParticleType* pstructs, int size)
-    {
-        amrex::Long* d_ptr = nullptr;
-#ifdef AMREX_USE_GPU
-        amrex::Gpu::DeviceVector<amrex::Long> d_ids(size);
-        d_ptr = d_ids.data();
-#else
-        d_ptr = ids;
-#endif
-        amrex::ParallelFor(size, [=] AMREX_GPU_DEVICE (int i) noexcept
-        {
-            d_ptr[i] = pstructs[i].id();
-        });
-#ifdef AMREX_USE_GPU
-        amrex::Gpu::dtoh_memcpy(ids, d_ptr, size*sizeof(amrex::Long));
-#endif
-    }
-
-    void warpx_convert_cpu_to_int (int* cpus, const WarpXParticleContainer::ParticleType* pstructs, int size)
-    {
-        int* d_ptr = nullptr;
-#ifdef AMREX_USE_GPU
-        amrex::Gpu::DeviceVector<int> d_cpus(size);
-        d_ptr = d_cpus.data();
-#else
-        d_ptr = cpus;
-#endif
-        amrex::ParallelFor(size, [=] AMREX_GPU_DEVICE (int i) noexcept
-        {
-            d_ptr[i] = pstructs[i].cpu();
-        });
-#ifdef AMREX_USE_GPU
-        amrex::Gpu::dtoh_memcpy(cpus, d_ptr, size*sizeof(int));
-#endif
-    }
-
     amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local)
     {
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         const std::string species_name(char_species_name);
         auto & myspc = mypc.GetParticleContainerFromName(species_name);
         return myspc.sumParticleCharge(local);
-    }
-
-    int** warpx_getParticleBoundaryBufferScrapedSteps(const char* species_name, int boundary, int lev,
-                     int* num_tiles, int** particles_per_tile)
-    {
-        const std::string name(species_name);
-        auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
-        auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
-
-        const int comp = particle_buffer.NumIntComps() - 1;
-
-        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
-        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
-        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
-
-        auto data = static_cast<int**>(malloc(*num_tiles*sizeof(int*)));
-        int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
-            auto& soa = pti.GetStructOfArrays();
-            data[i] = (int*) soa.GetIntData(comp).dataPtr();
-            (*particles_per_tile)[i] = pti.numParticles();
-        }
-
-        return data;
-    }
-
-    amrex::ParticleReal** warpx_getParticleBoundaryBufferStructs(const char* species_name, int boundary, int lev,
-                     int* num_tiles, int** particles_per_tile)
-    {
-        const std::string name(species_name);
-        auto& particle_buffers = WarpX::GetInstance().GetParticleBoundaryBuffer();
-        auto& particle_buffer = particle_buffers.getParticleBuffer(species_name, boundary);
-
-        *num_tiles = particle_buffer.numLocalTilesAtLevel(lev);
-        *particles_per_tile = static_cast<int*>(malloc(*num_tiles*sizeof(int)));
-        memset(*particles_per_tile, 0, *num_tiles*sizeof(int));
-
-        auto data = static_cast<amrex::ParticleReal**>(malloc(*num_tiles*sizeof(typename WarpXParticleContainer::ParticleType*)));
-        int i = 0;
-        for (amrex::ParIter<0,0,PIdx::nattribs, 0, amrex::PinnedArenaAllocator> pti(particle_buffer, lev); pti.isValid(); ++pti, ++i) {
-            auto& aos = pti.GetArrayOfStructs();
-            data[i] = (amrex::ParticleReal*) aos.data();
-            (*particles_per_tile)[i] = pti.numParticles();
-        }
-        return data;
     }
 
     void warpx_ComputeDt () {

@@ -30,27 +30,13 @@ extern "C" {
 
     int warpx_galerkin_interpolation();
 
-    int warpx_nComps();
-
-    int warpx_SpaceDim();
-
-    void amrex_init (int argc, char* argv[]);
-
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm);
 
     void amrex_finalize (int finalize_mpi);
 
-    void warpx_init ();
-
     void warpx_finalize ();
 
     typedef void(*WARPX_CALLBACK_PY_FUNC_0)();
-
-    void warpx_set_callback_py (const char* char_callback_name,
-                                WARPX_CALLBACK_PY_FUNC_0 callback);
-    void warpx_clear_callback_py (const char* char_callback_name);
-
-    void warpx_evolve (int numsteps);  // -1 means the inputs parameter will be used.
 
     void warpx_ConvertLabParamsToBoost();
 
@@ -64,23 +50,7 @@ extern "C" {
 
     amrex::Real warpx_getCellSize(int dir, int lev);
 
-    void warpx_convert_id_to_long (amrex::Long* ids, const WarpXParticleContainer::ParticleType* pstructs, int size);
-
-    void warpx_convert_cpu_to_int (int* cpus, const WarpXParticleContainer::ParticleType* pstructs, int size);
-
-    amrex::ParticleReal** warpx_getParticleStructs(
-        const char* char_species_name, int lev, int* num_tiles,
-        int** particles_per_tile);
-
     amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local);
-
-    int** warpx_getParticleBoundaryBufferScrapedSteps(
-        const char* species_name, int boundary, int lev,
-        int* num_tiles, int** particles_per_tile);
-
-    amrex::ParticleReal** warpx_getParticleBoundaryBufferStructs(
-            const char* species_name, int boundary, int lev,
-            int* num_tiles, int** particles_per_tile);
 
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);
