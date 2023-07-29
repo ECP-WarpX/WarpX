@@ -397,12 +397,262 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
 #ifndef AMREX_USE_EB
     amrex::ignore_unused(edge_lengths);
 #endif
-    amrex::ignore_unused(
-        Efield, Jfield, Jifield, Bfield, rhofield, Pefield, edge_lengths,
-        lev, hybrid_model, include_resistivity_term
-    );
-    amrex::Abort(Utils::TextMsg::Err(
-        "currently hybrid E-solve does not work for RZ"));
+
+    // Both steps below do not currently support m > 0 and should be
+    // modified if such support wants to be added
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (m_nmodes == 1),
+        "Ohm's law solver only support m = 0 azimuthal mode at present.");
+
+    // for the profiler
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
+    using namespace ablastr::coarsen::sample;
+
+    // get hybrid model parameters
+    const auto eta = hybrid_model->m_eta;
+    const auto rho_floor = hybrid_model->m_n_floor * PhysConst::q_e;
+
+    // Index type required for interpolating fields from their respective
+    // staggering to the Ex, Ey, Ez locations
+    amrex::GpuArray<int, 3> const& Er_stag = hybrid_model->Ex_IndexType;
+    amrex::GpuArray<int, 3> const& Et_stag = hybrid_model->Ey_IndexType;
+    amrex::GpuArray<int, 3> const& Ez_stag = hybrid_model->Ez_IndexType;
+    amrex::GpuArray<int, 3> const& Jr_stag = hybrid_model->Jx_IndexType;
+    amrex::GpuArray<int, 3> const& Jt_stag = hybrid_model->Jy_IndexType;
+    amrex::GpuArray<int, 3> const& Jz_stag = hybrid_model->Jz_IndexType;
+    amrex::GpuArray<int, 3> const& Br_stag = hybrid_model->Bx_IndexType;
+    amrex::GpuArray<int, 3> const& Bt_stag = hybrid_model->By_IndexType;
+    amrex::GpuArray<int, 3> const& Bz_stag = hybrid_model->Bz_IndexType;
+
+    // Parameters for `interp` that maps from Yee to nodal mesh and back
+    amrex::GpuArray<int, 3> const& nodal = {1, 1, 1};
+    // The "coarsening is just 1 i.e. no coarsening"
+    amrex::GpuArray<int, 3> const& coarsen = {1, 1, 1};
+
+    // The E-field calculation is done in 2 steps:
+    // 1) The J x B term is calculated on a nodal mesh in order to ensure
+    //    energy conservation.
+    // 2) The nodal E-field values are averaged onto the Yee grid and the
+    //    electron pressure & resistivity terms are added (these terms are
+    //    naturally located on the Yee grid).
+
+    // Create a temporary multifab to hold the nodal E-field values
+    // Note the multifab has 3 values for Ex, Ey and Ez which we can do here
+    // since all three components will be calculated on the same grid.
+    // Also note that enE_nodal_mf does not need to have any guard cells since
+    // these values will be interpolated to the Yee mesh which is contained
+    // by the nodal mesh.
+    auto const& ba = convert(rhofield->boxArray(), IntVect::TheNodeVector());
+    MultiFab enE_nodal_mf(ba, rhofield->DistributionMap(), 3, IntVect::TheZeroVector());
+
+    // Loop through the grids, and over the tiles within each grid for the
+    // initial, nodal calculation of E
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(enE_nodal_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+
+        Array4<Real> const& enE_nodal = enE_nodal_mf.array(mfi);
+        Array4<Real const> const& Jr = Jfield[0]->const_array(mfi);
+        Array4<Real const> const& Jt = Jfield[1]->const_array(mfi);
+        Array4<Real const> const& Jz = Jfield[2]->const_array(mfi);
+        Array4<Real const> const& Jir = Jifield[0]->const_array(mfi);
+        Array4<Real const> const& Jit = Jifield[1]->const_array(mfi);
+        Array4<Real const> const& Jiz = Jifield[2]->const_array(mfi);
+        Array4<Real const> const& Br = Bfield[0]->const_array(mfi);
+        Array4<Real const> const& Bt = Bfield[1]->const_array(mfi);
+        Array4<Real const> const& Bz = Bfield[2]->const_array(mfi);
+
+        // Loop over the cells and update the nodal E field
+        amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+
+            // interpolate the total current to a nodal grid
+            auto const jr_interp = Interp(Jr, Jr_stag, nodal, coarsen, i, j, 0, 0);
+            auto const jt_interp = Interp(Jt, Jt_stag, nodal, coarsen, i, j, 0, 0);
+            auto const jz_interp = Interp(Jz, Jz_stag, nodal, coarsen, i, j, 0, 0);
+
+            // interpolate the ion current to a nodal grid
+            auto const jir_interp = Interp(Jir, Jr_stag, nodal, coarsen, i, j, 0, 0);
+            auto const jit_interp = Interp(Jit, Jt_stag, nodal, coarsen, i, j, 0, 0);
+            auto const jiz_interp = Interp(Jiz, Jz_stag, nodal, coarsen, i, j, 0, 0);
+
+            // interpolate the B field to a nodal grid
+            auto const Br_interp = Interp(Br, Br_stag, nodal, coarsen, i, j, 0, 0);
+            auto const Bt_interp = Interp(Bt, Bt_stag, nodal, coarsen, i, j, 0, 0);
+            auto const Bz_interp = Interp(Bz, Bz_stag, nodal, coarsen, i, j, 0, 0);
+
+            // calculate enE = (J - Ji) x B
+            enE_nodal(i, j, 0, 0) = (
+                (jt_interp - jit_interp) * Bz_interp
+                - (jz_interp - jiz_interp) * Bt_interp
+            );
+            enE_nodal(i, j, 0, 1) = (
+                (jz_interp - jiz_interp) * Br_interp
+                - (jr_interp - jir_interp) * Bz_interp
+            );
+            enE_nodal(i, j, 0, 2) = (
+                (jr_interp - jir_interp) * Bt_interp
+                - (jt_interp - jit_interp) * Br_interp
+            );
+        });
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
+    }
+
+    // Loop through the grids, and over the tiles within each grid again
+    // for the Yee grid calculation of the E field
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*Efield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+
+        // Extract field data for this grid/tile
+        Array4<Real> const& Er = Efield[0]->array(mfi);
+        Array4<Real> const& Et = Efield[1]->array(mfi);
+        Array4<Real> const& Ez = Efield[2]->array(mfi);
+        Array4<Real const> const& Jr = Jfield[0]->const_array(mfi);
+        Array4<Real const> const& Jt = Jfield[1]->const_array(mfi);
+        Array4<Real const> const& Jz = Jfield[2]->const_array(mfi);
+        Array4<Real const> const& enE = enE_nodal_mf.const_array(mfi);
+        Array4<Real const> const& rho = rhofield->const_array(mfi);
+        Array4<Real> const& Pe = Pefield->array(mfi);
+
+#ifdef AMREX_USE_EB
+        amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
+#endif
+
+        // Extract stencil coefficients
+        Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
+        int const n_coefs_r = m_stencil_coefs_r.size();
+        Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+        int const n_coefs_z = m_stencil_coefs_z.size();
+
+        // Extract cylindrical specific parameters
+        Real const dr = m_dr;
+        // int const nmodes = m_nmodes;
+        Real const rmin = m_rmin;
+
+        Box const& ter  = mfi.tilebox(Efield[0]->ixType().toIntVect());
+        Box const& tet  = mfi.tilebox(Efield[1]->ixType().toIntVect());
+        Box const& tez  = mfi.tilebox(Efield[2]->ixType().toIntVect());
+
+        // Loop over the cells and update the E field
+        amrex::ParallelFor(ter, tet, tez,
+
+            // Er calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+#ifdef AMREX_USE_EB
+                // Skip if this cell is fully covered by embedded boundaries
+                if (lx(i, j, k) <= 0) return;
+#endif
+                // Interpolate to get the appropriate charge density in space
+                Real rho_val = Interp(rho, nodal, Er_stag, coarsen, i, j, 0, 0);
+
+                // safety condition since we divide by rho_val later
+                if (rho_val < rho_floor) rho_val = rho_floor;
+
+                // Get the gradient of the electron pressure
+                auto grad_Pe = T_Algo::UpwardDr(Pe, coefs_r, n_coefs_r, i, j, 0, 0);
+
+                // interpolate the nodal neE values to the Yee grid
+                auto enE_r = Interp(enE, nodal, Er_stag, coarsen, i, j, 0, 0);
+
+                Er(i, j, 0) = (enE_r - grad_Pe) / rho_val;
+
+                // Add resistivity only if E field value is used to update B
+                if (include_resistivity_term) Er(i, j, 0) += eta(rho_val) * Jr(i, j, 0);
+            },
+
+            // Et calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+#ifdef AMREX_USE_EB
+                // Skip field solve if this cell is fully covered by embedded boundaries
+#ifdef WARPX_DIM_3D
+                if (ly(i,j,k) <= 0) return;
+#elif defined(WARPX_DIM_XZ)
+                //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
+                amrex::ignore_unused(ly);
+                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
+#endif
+#endif
+                // r on a nodal grid (Et is nodal in r)
+                Real const r = rmin + i*dr;
+                // Mode m=0: // Ensure that Et remains 0 on axis
+                if (r < 0.5_rt*dr) {
+                    Et(i, j, 0, 0) = 0.;
+                    return;
+                }
+
+                // Interpolate to get the appropriate charge density in space
+                Real rho_val = Interp(rho, nodal, Er_stag, coarsen, i, j, 0, 0);
+
+                // safety condition since we divide by rho_val later
+                if (rho_val < rho_floor) rho_val = rho_floor;
+
+                // Get the gradient of the electron pressure
+                // -> d/dt = 0 for m = 0
+                auto grad_Pe = 0.0_rt;
+
+                // interpolate the nodal neE values to the Yee grid
+                auto enE_t = Interp(enE, nodal, Et_stag, coarsen, i, j, 0, 1);
+
+                Et(i, j, 0) = (enE_t - grad_Pe) / rho_val;
+
+                // Add resistivity only if E field value is used to update B
+                if (include_resistivity_term) Et(i, j, 0) += eta(rho_val) * Jt(i, j, 0);
+            },
+
+            // Ez calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+#ifdef AMREX_USE_EB
+                // Skip field solve if this cell is fully covered by embedded boundaries
+                if (lz(i,j,k) <= 0) return;
+#endif
+                // Interpolate to get the appropriate charge density in space
+                Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
+
+                // safety condition since we divide by rho_val later
+                if (rho_val < rho_floor) rho_val = rho_floor;
+
+                // Get the gradient of the electron pressure
+                auto grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k, 0);
+
+                // interpolate the nodal neE values to the Yee grid
+                auto enE_z = Interp(enE, nodal, Ez_stag, coarsen, i, j, k, 2);
+
+                Ez(i, j, k) = (enE_z - grad_Pe) / rho_val;
+
+                // Add resistivity only if E field value is used to update B
+                if (include_resistivity_term) Ez(i, j, k) += eta(rho_val) * Jz(i, j, k);
+            }
+        );
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
+    }
 }
 
 #else
