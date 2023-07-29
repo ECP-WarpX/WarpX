@@ -49,10 +49,10 @@ void FiniteDifferenceSolver::CalculateCurrentAmpere (
 }
 
 // /**
-//   * \brief Calculate electron current from Ampere's law without displacement
-//   * current and the kinetically tracked ion currents i.e. J_e = curl B.
+//   * \brief Calculate total current from Ampere's law without displacement
+//   * current i.e. J = 1/mu_0 curl x B.
 //   *
-//   * \param[out] Jfield  vector of electron current MultiFabs at a given level
+//   * \param[out] Jfield  vector of total current MultiFabs at a given level
 //   * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
 //   */
 #ifdef WARPX_DIM_RZ
@@ -64,11 +64,170 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
     int lev
 )
 {
-    amrex::ignore_unused(Jfield, Bfield, edge_lengths, lev);
-    amrex::Abort(Utils::TextMsg::Err(
-        "currently hybrid E-solve does not work for RZ"));
+    // for the profiler
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+
+#ifndef AMREX_USE_EB
+    amrex::ignore_unused(edge_lengths);
+#endif
+
+    // reset Jfield
+    Jfield[0]->setVal(0);
+    Jfield[1]->setVal(0);
+    Jfield[2]->setVal(0);
+
+    // Loop through the grids, and over the tiles within each grid
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for ( MFIter mfi(*Jfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+
+        // Extract field data for this grid/tile
+        Array4<Real> const& Jr = Jfield[0]->array(mfi);
+        Array4<Real> const& Jt = Jfield[1]->array(mfi);
+        Array4<Real> const& Jz = Jfield[2]->array(mfi);
+        Array4<Real> const& Br = Bfield[0]->array(mfi);
+        Array4<Real> const& Bt = Bfield[1]->array(mfi);
+        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+
+        // Extract stencil coefficients
+        Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
+        int const n_coefs_r = m_stencil_coefs_r.size();
+        Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+        int const n_coefs_z = m_stencil_coefs_z.size();
+
+        // Extract cylindrical specific parameters
+        Real const dr = m_dr;
+        int const nmodes = m_nmodes;
+        Real const rmin = m_rmin;
+
+        // Extract tileboxes for which to loop
+        Box const& tjr  = mfi.tilebox(Jfield[0]->ixType().toIntVect());
+        Box const& tjt  = mfi.tilebox(Jfield[1]->ixType().toIntVect());
+        Box const& tjz  = mfi.tilebox(Jfield[2]->ixType().toIntVect());
+
+        Real const one_over_mu0 = 1._rt / PhysConst::mu0;
+
+        // Calculate the total current, using Ampere's law, on the same grid
+        // as the E-field
+        amrex::ParallelFor(tjr, tjt, tjz,
+
+            // Jr calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                // Mode m=0
+                Jr(i, j, 0, 0) = one_over_mu0 * (
+                    - T_Algo::DownwardDz(Bt, coefs_z, n_coefs_z, i, j, 0, 0)
+                );
+
+                // Higher-order modes
+                // r on cell-centered point (Jr is cell-centered in r)
+                Real const r = rmin + (i + 0.5)*dr;
+                for (int m=1; m<nmodes; m++) {
+                    Jr(i, j, 0, 2*m-1) = one_over_mu0 * (
+                        - T_Algo::DownwardDz(Bt, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                        + m * Bz(i, j, 0, 2*m  ) / r
+                    );  // Real part
+                    Jr(i, j, 0, 2*m  ) = one_over_mu0 * (
+                        - T_Algo::DownwardDz(Bt, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                        - m * Bz(i, j, 0, 2*m-1) / r
+                    ); // Imaginary part
+                }
+            },
+
+            // Jt calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                // r on a nodal point (Jt is nodal in r)
+                Real const r = rmin + i*dr;
+                // Off-axis, regular curl
+                if (r > 0.5_rt*dr) {
+                    // Mode m=0
+                    Jt(i, j, 0, 0) = one_over_mu0 * (
+                        - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 0)
+                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 0)
+                    );
+
+                    // Higher-order modes
+                    for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
+                        Jt(i, j, 0, 2*m-1) = one_over_mu0 * (
+                            - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                            + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                        ); // Real part
+                        Jt(i, j, 0, 2*m  ) = one_over_mu0 * (
+                            - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m  )
+                            + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                        ); // Imaginary part
+                    }
+                // r==0: on-axis corrections
+                } else {
+                    // Ensure that Jt remains 0 on axis (except for m=1)
+                    // Mode m=0
+                    Jt(i, j, 0, 0) = 0.;
+                    // Higher-order modes
+                    for (int m=1; m<nmodes; m++) {
+                        if (m == 1){
+                            // The same logic as is used in the E-field update for the fully
+                            // electromagnetic FDTD case is used here.
+                            Jt(i,j,0,2*m-1) =  Jr(i,j,0,2*m  );
+                            Jt(i,j,0,2*m  ) = -Jr(i,j,0,2*m-1);
+                        } else {
+                            Jt(i, j, 0, 2*m-1) = 0.;
+                            Jt(i, j, 0, 2*m  ) = 0.;
+                        }
+                    }
+                }
+            },
+
+            // Jz calculation
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
+                // r on a nodal point (Jz is nodal in r)
+                Real const r = rmin + i*dr;
+                // Off-axis, regular curl
+                if (r > 0.5_rt*dr) {
+                    // Mode m=0
+                    Jz(i, j, 0, 0) = one_over_mu0 * (
+                       T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 0)
+                    );
+                    // Higher-order modes
+                    for (int m=1 ; m<nmodes ; m++) {
+                        Jz(i, j, 0, 2*m-1) = one_over_mu0 * (
+                            - m * Br(i, j, 0, 2*m  ) / r
+                            + T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                        ); // Real part
+                        Jz(i, j, 0, 2*m  ) = one_over_mu0 * (
+                            m * Br(i, j, 0, 2*m-1) / r
+                            + T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )
+                        ); // Imaginary part
+                    }
+                // r==0: on-axis corrections
+                } else {
+                    // For m==0, Bt is linear in r, for small r
+                    // Therefore, the formula below regularizes the singularity
+                    Jz(i, j, 0, 0) = one_over_mu0 * 4 * Bt(i, j, 0, 0) / dr;
+                    // Ensure that Ez remains 0 for higher-order modes
+                    for (int m=1; m<nmodes; m++) {
+                        Jz(i, j, 0, 2*m-1) = 0.;
+                        Jz(i, j, 0, 2*m  ) = 0.;
+                    }
+                }
+            }
+        );
+
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
+        }
+    }
 }
+
 #else
+
 template<typename T_Algo>
 void FiniteDifferenceSolver::CalculateCurrentAmpereCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
@@ -129,8 +288,8 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCartesian (
 
         Real const one_over_mu0 = 1._rt / PhysConst::mu0;
 
-        // First calculate the total current using Ampere's law on the
-        // same grid as the E-field
+        // Calculate the total current, using Ampere's law, on the same grid
+        // as the E-field
         amrex::ParallelFor(tjx, tjy, tjz,
 
             // Jx calculation
