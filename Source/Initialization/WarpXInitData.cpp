@@ -820,7 +820,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         std::stringstream warnMsg;
         warnMsg << "Parser for external B (r and theta) fields does not work with RZ\n"
             << "The initial Br and Bt fields are currently hardcoded to 0.\n"
-            << "The initial Bz field should only be a function of z.\n";
+            << "The initial Bz field can only be a function of z.\n";
         ablastr::warn_manager::WMRecordWarning(
           "Inputs", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
         str_Bx_ext_grid_function = "0";
@@ -833,13 +833,17 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
         utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
             str_Bz_ext_grid_function);
-
         Bxfield_parser = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+        utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
         Byfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
+#ifdef WARPX_DIM_RZ
+        Bzfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bz_ext_grid_function,{"z"}));
+#else
         Bzfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
+#endif
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
