@@ -8,7 +8,7 @@
 #ifndef ABLASTR_UTILS_TEXT_STREAMUTILS_H_
 #define ABLASTR_UTILS_TEXT_STREAMUTILS_H_
 
-#include <iostream>
+#include <istream>
 
 namespace ablastr::utils::text
 {
