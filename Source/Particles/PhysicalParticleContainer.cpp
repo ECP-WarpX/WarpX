@@ -2899,13 +2899,13 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
 {
     WARPX_PROFILE("PhysicalParticleContainer::getIonizationFunc()");
 
-    return IonizationFilterFunc(pti, lev, ngEB, Ex, Ey, Ez, Bx, By, Bz,
+    return {pti, lev, ngEB, Ex, Ey, Ez, Bx, By, Bz,
                                 ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),
                                 adk_power.dataPtr(),
                                 particle_icomps["ionizationLevel"],
-                                ion_atomic_number);
+                                ion_atomic_number};
 }
 
 PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector ()

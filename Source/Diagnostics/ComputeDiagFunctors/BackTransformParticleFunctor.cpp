@@ -71,7 +71,7 @@ BackTransformParticleFunctor::BackTransformParticleFunctor (
                               WarpXParticleContainer *pc_src,
                               std::string species_name,
                               int num_buffers)
-    : m_pc_src(pc_src), m_species_name(species_name), m_num_buffers(num_buffers)
+    : m_pc_src{pc_src}, m_species_name{std::move(species_name)}, m_num_buffers{num_buffers}
 {
     InitData();
 }

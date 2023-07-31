@@ -195,8 +195,7 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
    The ``TSTP`` (terminal stop) command is sent interactively from ``Ctrl+Z`` to temporarily send a process to sleep (until send in the background with commands such as ``bg`` or continued with ``fg``), overwriting it would thus disable that functionality.
    The signals ``KILL`` and ``STOP`` cannot be used.
 
-   The ``FPE`` signal should not be overwritten in WarpX, as it is `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
-
+   The ``FPE`` and ``ILL`` signals should not be overwritten in WarpX, as they are `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
 .. tip::
 
    For example, the following logic can be added to `Slurm batch scripts <https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:running_jobs_slurm:signals>`__ (`signal name to number mapping here <https://en.wikipedia.org/wiki/Signal_(IPC)#Default_action>`__) to gracefully shut down 6 min prior to walltime.
@@ -2468,7 +2467,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 BackTransformed Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Note that this diagnostic is not currently supported for RZ.  Additional options for this diagnostic include:
+``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Additional options for this diagnostic include:
 
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
@@ -2511,6 +2510,20 @@ BackTransformed Diagnostics
     to frequent flushes of the lab-frame data. The other option is to keep the default
     value for buffer size and use slices to reduce the memory footprint and maintain
     optimum I/O performance.
+
+* ``<diag_name>.do_back_transformed_fields`` (`0` or `1`) optional (default `1`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``
+    Whether to back transform the fields or not.
+    Note that for ``BackTransformed`` diagnostics, at least one of the options
+    ``<diag_name>.do_back_transformed_fields`` or ``<diag_name>.do_back_transformed_particles`` must be 1.
+
+* ``<diag_name>.do_back_transformed_particles`` (`0` or `1`) optional (default `1`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``
+    Whether to back transform the particle data or not.
+    Note that for ``BackTransformed`` diagnostics, at least one of the options
+    ``<diag_name>.do_back_transformed_fields`` or ``<diag_name>.do_back_transformed_particles`` must be 1.
+    If ``diag_name.write_species = 0``, then ``<diag_name>.do_back_transformed_particles`` will be set
+    to 0 in the simulation and particles will not be backtransformed.
 
 Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

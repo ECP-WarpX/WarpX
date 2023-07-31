@@ -21,7 +21,7 @@
 using namespace amrex::literals;
 
 BTDPlotfileHeaderImpl::BTDPlotfileHeaderImpl (std::string const & Headerfile_path)
-    : m_Header_path(Headerfile_path)
+    : m_Header_path{Headerfile_path}
 {
 
 }
@@ -177,7 +177,7 @@ BTDPlotfileHeaderImpl::WriteHeader ()
 
 
 BTDMultiFabHeaderImpl::BTDMultiFabHeaderImpl (std::string const & Headerfile_path)
-    : m_Header_path(Headerfile_path)
+    : m_Header_path{Headerfile_path}
 {
 
 }
@@ -353,7 +353,7 @@ BTDMultiFabHeaderImpl::CopyVec(amrex::Vector<amrex::Real>& dst,
 
 
 BTDSpeciesHeaderImpl::BTDSpeciesHeaderImpl (std::string const & Headerfile_path, std::string const& species_name)
-    : m_Header_path(Headerfile_path), m_species_name(species_name)
+    : m_Header_path{Headerfile_path}, m_species_name{species_name}
 {
 
 }

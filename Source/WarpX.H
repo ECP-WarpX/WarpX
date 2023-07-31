@@ -1241,12 +1241,6 @@ private:
     void CheckGuardCells();
 
     /**
-     * \brief Check that the number of guard cells is smaller than the number of valid cells,
-     * for a given MultiFab, and abort otherwise.
-     */
-    void CheckGuardCells(amrex::MultiFab const& mf);
-
-    /**
      * \brief Checks for known numerical issues involving different WarpX modules
      */
     void CheckKnownIssues();
