@@ -3,7 +3,7 @@
 In situ Visualization with Catalyst 2
 =====================================
 Catalyst 2 (further referred to as just Catalyst) is a lightweight in-situ visualization and analysis framework API developed for simulations and other scientific data producers. It has a lightweight implementation
-(or **stub**) and an SDK to develop custom implementations of Catalyst. ParaView comes with its own implementation (known as **ParaView Catalyst**) for leveraging ParaView's 
+(or **stub**) and an SDK to develop custom implementations of Catalyst. ParaView comes with its own implementation (known as **ParaView Catalyst**) for leveraging ParaView's
 visualization and analysis capabilities, which is what this document will focus on.
 
 
@@ -46,9 +46,9 @@ Because the scripts and implementations are global, Catalyst does not benefit fr
 
 Visualization/Analysis Pipeline Configuration
 ---------------------------------------------
-Catalyst uses the files specified in ``catalyst.script_paths`` to run all analysis. 
+Catalyst uses the files specified in ``catalyst.script_paths`` to run all analysis.
 
-The following script, :code:`simple_catalyst_pipeline.py`, automatically detects the type of data for both the mesh and particles, then creates an extractor for them. In most 
+The following script, :code:`simple_catalyst_pipeline.py`, automatically detects the type of data for both the mesh and particles, then creates an extractor for them. In most
 cases, these will be saved as ``.VTPC`` files which can be read with the ``XML Partitioned Dataset Collection Reader``.
 
 .. code-block:: python
@@ -68,7 +68,7 @@ cases, these will be saved as ``.VTPC`` files which can be read with the ``XML P
                 extractor = CreateExtractor(filetype, data_node, registrationName=f"_{filetype}")
                 extractor.Writer.FileName = filename + "_{timestep:}" + f".{filetype}"
                 return extractor
-        
+
         raise RuntimeError(f"Unsupported data type: {clientside_data.GetClassName()}")
 
     # Camera settings
