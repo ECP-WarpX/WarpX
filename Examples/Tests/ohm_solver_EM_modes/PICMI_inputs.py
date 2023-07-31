@@ -4,8 +4,8 @@
 # --- treated as kinetic particles and electrons as an isothermal, inertialess
 # --- background fluid. The script is set up to produce either parallel or
 # --- perpendicular (Bernstein) EM modes and can be run in 1d, 2d or 3d
-# --- Cartesian geometries. See Section 4.2 and 4.3 of Munoz et al. (2018) As a
-# --- CI test only a small number of steps are taken using the 1d version.
+# --- Cartesian geometries. See Section 4.2 and 4.3 of Munoz et al. (2018).
+# --- As a CI test only a small number of steps are taken using the 1d version.
 
 import argparse
 import os
@@ -312,7 +312,7 @@ class EMModes(object):
             return
 
         Bx_warpx = fields.BxWrapper()[...]
-        By_warpx = fields.BxWrapper()[...]
+        By_warpx = fields.ByWrapper()[...]
         Ez_warpx = fields.EzWrapper()[...]
 
         if sim_ext.getMyProc() != 0:
