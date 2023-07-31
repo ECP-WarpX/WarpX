@@ -144,7 +144,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_sigma_s == "parse_sigma_function") {
 
-        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), m_sigma_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), m_sigma_parser->compile<3>(), warpx.Geom(lev).CellSizeArray());
     }
     // Initialize epsilon
     if (m_epsilon_s == "constant") {
@@ -153,7 +153,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_epsilon_s == "parse_epsilon_function") {
 
-        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser->compile<3>(), warpx.Geom(lev).CellSizeArray());
 
     }
     // In the Maxwell solver, `epsilon` is used in the denominator.
@@ -169,7 +169,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_mu_s == "parse_mu_function") {
 
-        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), m_mu_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), m_mu_parser->compile<3>(), warpx.Geom(lev).CellSizeArray());
 
     }
 
@@ -204,10 +204,8 @@ void
 MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                        amrex::MultiFab *macro_mf,
                        amrex::ParserExecutor<3> const& macro_parser,
-                       const int lev)
+                       const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev)
 {
-    WarpX& warpx = WarpX::GetInstance();
-    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = warpx.Geom(lev).CellSizeArray();
     const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
     const amrex::IntVect iv = macro_mf->ixType().toIntVect();
     for ( amrex::MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
