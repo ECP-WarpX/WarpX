@@ -90,7 +90,7 @@ struct ParserFilter
      * \param a_is_active whether the test is active
      * \param a_filter_parser parser taking t, x, y, z, ux, uy, and uz, and returning a boolean for selected particle
      * \param a_mass mass of the particle species
-     * \param time simulation time
+     * \param time simulation time on the coarsest level
      */
     ParserFilter(bool a_is_active, amrex::ParserExecutor<7> const& a_filter_parser,
         const amrex::Real a_mass, const amrex::Real time):
@@ -138,7 +138,7 @@ public:
     amrex::ParserExecutor<7> const m_function_partparser;
     /** Mass of particle species */
     amrex::ParticleReal m_mass;
-    /** Store physical time. */
+    /** Store physical time on the coarsest level. */
     amrex::ParticleReal m_t;
     /** keep track of momentum units particles will come in with **/
     InputUnits m_units;
