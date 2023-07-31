@@ -585,7 +585,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     // TODO: Generalize this condition
                     // Impose "none" boundaries
                     // Condition: dQx = 0 at r = 0
-                    if ( (i == domain.smallEnd(0)) || (i == domain.bigEnd(0)) ){
+                    if ( (i <= domain.smallEnd(0)) || (i >= domain.bigEnd(0)) ){
                         dQ0x = 0.0;
                         dQ1x = 0.0;
                         dQ2x = 0.0;
@@ -838,22 +838,29 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     // Cell-centered radius
                     amrex::Real dr = dx[0];
                     amrex::Real dz = dx[1]; // Must be 1
-                    amrex::Real r = problo[0] + i * dr + dr/2.0;
+                    amrex::Real r = problo[0] + i * dr;
                     auto Vij = 0.0;
                     auto S_Az = 0.0;
-                    // Volume element:
+
+                    // Volume element and z-facing surfaces
                     if (i == domain.smallEnd(0)) {
                         Vij = 2.0*pi*(dr/2.0)*(dr/4.0)*dz;
                         S_Az = 2.0*pi*(dr/4.0)*(dr/2.0);
-                    } else if (i == domain.bigEnd(0)) {
+                    } else if (i == domain.bigEnd(0)+1) { // TODO: Fix domain? off by one
                         Vij = 2.0*pi*(r - dr/4.0)*(dr/2.0)*dz;
                         S_Az = 2.0*pi*(r - dr/4.0)*(dr/2.0);
                     }  else {
                         Vij = 2.0*pi*r*dr*dz;
                         S_Az = 2.0*pi*(r)*dr;
                     }
+
+                    // Radial Surfaces
                     auto S_Ar_plus = 2.0*pi*(r + dr/2.0)*dz;
                     auto S_Ar_minus = 2.0*pi*(r - dr/2.0)*dz;
+                    if (i == domain.smallEnd(0)) 
+                        S_Ar_minus = 0.0;
+                    if (i == domain.bigEnd(0)+1) 
+                        S_Ar_plus = 2.0*pi*(r)*dz;
 
                     // TODO: Generalize this condition
                     // Impose "none" boundaries
@@ -877,15 +884,17 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto F1_plusx = 0.0;
                     auto F2_plusx = 0.0;
                     auto F3_plusx = 0.0;
+                    auto Vx_L_minus = 0.0;
+                    auto Vx_I_plus = 0.0;
                     if (i != domain.smallEnd(0)) {
-                        auto Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,0),Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
+                        Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,0),Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
                         F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
                         F1_minusx = flux(Q_minus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,1),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
                         F2_minusx = flux(Q_minus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,2),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
                         F3_minusx = flux(Q_minus_x(i-1,j,k,3),Q_plus_x(i-1,j,k,3),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
                     }
                     if (i < domain.bigEnd(0)) {
-                        auto Vx_I_plus = V_calc(Q_plus_x(i,j,k,0),Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
+                        Vx_I_plus = V_calc(Q_plus_x(i,j,k,0),Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
                         F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
                         F1_plusx =  flux(Q_minus_x(i,j,k,1),  Q_plus_x(i,j,k,1),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
                         F2_plusx =  flux(Q_minus_x(i,j,k,2),  Q_plus_x(i,j,k,2),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
