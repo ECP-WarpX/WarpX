@@ -225,7 +225,8 @@ foreach(D IN LISTS WarpX_DIMS)
     if(WarpX_LIB)
         add_library(lib_${SD})
         add_library(WarpX::lib_${SD} ALIAS lib_${SD})
-        target_link_libraries(lib_${SD} PUBLIC WarpX_${SD} ablastr_${SD})
+        target_link_libraries(lib_${SD} PRIVATE WarpX_${SD})
+        target_link_libraries(lib_${SD} PUBLIC ablastr_${SD})
         set(_BUILDINFO_SRC lib_${SD})
         list(APPEND _ALL_TARGETS lib_${SD})
 
@@ -325,6 +326,9 @@ foreach(D IN LISTS WarpX_DIMS)
 endforeach()
 
 # Headers controlling symbol visibility (for Windows)
+# Note: once WarpX gets rid of all its globals, we will not need this.
+#   - extern ... functions
+#   - static class member variables
 generate_export_header(WarpX_${WarpX_DIMS_LAST}
     BASE_NAME warpx
     EXPORT_FILE_NAME Source/Utils/export.H)
