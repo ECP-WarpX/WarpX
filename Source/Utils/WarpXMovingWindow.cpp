@@ -554,7 +554,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
     }
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-    if (WarpX::GetInstance().getPMLRZ()) {
+    if (getPMLRZ()) {
         // This does the exchange of data in the corner guard cells, the cells that are in the
         // guard region both radially and longitudinally. These are the PML cells in the overlapping
         // longitudinal region. FillBoundary normally does not update these cells.
