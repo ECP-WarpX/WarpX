@@ -21,6 +21,8 @@ Checks: '-*,
     performance-inefficient-algorithm,
     performance-inefficient-string-concatenation,
     performance-inefficient-vector-operation,
+    performance-unnecessary-copy-initialization,
+    performance-unnecessary-value-param,
     readability-non-const-parameter
     '
 
