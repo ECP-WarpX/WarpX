@@ -1,11 +1,13 @@
 # script-version: 2.0
 # Catalyst state generated using paraview version 5.11.1-1332-ga0a402a54e
 import paraview
+
 paraview.compatibility.major = 5
 paraview.compatibility.minor = 11
 
 #### import the simple module from the paraview
 from paraview.simple import *
+
 #### disable automatic camera reset on 'Show'
 paraview.simple._DisableFirstRenderCameraReset()
 
@@ -189,12 +191,14 @@ SetActiveSource(pNG1)
 # Catalyst options
 # ------------------------------------------------------------------------------
 from paraview import catalyst
+
 options = catalyst.Options()
 options.GlobalTrigger = 'Time Step'
 options.CatalystLiveTrigger = 'Time Step'
 
 if __name__ == '__main__':
     from paraview.simple import SaveExtractsUsingCatalystOptions
+
     # Code for non in-situ environments; if executing in post-processing
     # i.e. non-Catalyst mode, let's generate extracts using Catalyst options
     SaveExtractsUsingCatalystOptions(options)
