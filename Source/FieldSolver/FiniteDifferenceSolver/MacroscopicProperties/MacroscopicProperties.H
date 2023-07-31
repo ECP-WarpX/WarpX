@@ -49,7 +49,8 @@ public:
       */
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
                                   amrex::ParserExecutor<3> const& macro_parser,
-                                  const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev);
+                                  const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev,
+                                  const amrex::RealBox& prob_domain_lev);
 
      /** Gpu Vector with index type of the conductivity multifab */
      amrex::GpuArray<int, 3> sigma_IndexType;
