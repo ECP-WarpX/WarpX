@@ -1,8 +1,8 @@
 Create a custom laser using lasy package
 ==================================
 
-LASY (LAser SYmple manipulator) is a Python package that can be used to define complex laser pulse profiles 
-for which either the analytical form or the experimental measurement is known. 
+LASY (LAser SYmple manipulator) is a Python package that can be used to define complex laser pulse profiles
+for which either the analytical form or the experimental measurement is known.
 Most of the contents of this user guide can be found in `lasy docs <https://lasydoc.readthedocs.io/en/latest/>`_ and one can see examples at ``Examples/Tests/laser_injection_from_file``.
 
 Install lasy package and dependencies
@@ -69,7 +69,7 @@ Now let's take a look at the laser parameters that need to be specified in the i
 
 .. code-block:: python
     #######################################################################################################################################
-    ######################################################## INPUTS FILE ################################################################## 
+    ######################################################## INPUTS FILE ##################################################################
     #######################################################################################################################################
     lasers.names        = lasy_laser
     lasy_laser.profile      = from_file                     # Specify that we want to read the lasy file instead of a handwritten laser
@@ -87,7 +87,7 @@ Now let's take a look at the laser parameters that need to be specified in the i
 or inside a PICMI script:
 
 .. code-block:: python
-    
+
 
 
 
@@ -116,7 +116,7 @@ lasy allows you to define a custom laser pulse profile using different longituna
     t_c = 20.*fs
     laser_energy = 1.0
     pol = (1, 0)
-    
+
     # Create a Laguerre Gaussian laser in RZ geometry
     profile = CombinedLongitudinalTransverseProfile(
     wavelength,pol,laser_energy,
@@ -147,7 +147,7 @@ Profile defined from a NumPy array directly (only supported for 3D arrays):
     pol = (1, 0)
 
     # Array of the electric field of the laser pulse.
-    E_field = custom_numpy_array 
+    E_field = custom_numpy_array
     # Python dictionary containing the axes vectors. Keys are ‘x’, ‘y’, ‘t’. Values are the 1D arrays of each axis. array.shape = (axes[‘x’].size, axes[‘y’].size, axes[‘t’].size)
     axes
     laser_profile = FromArrayProfile(wavelength, pol, E_field, axes, axes_order=['x', 'y', 't'])
@@ -185,4 +185,3 @@ Profile defined from an openPMD file:
 
     laser = Laser(dimensions, lo, hi, num_points, laser_profile)
     laser.write_to_file("openPMDlaser3D")
-    
