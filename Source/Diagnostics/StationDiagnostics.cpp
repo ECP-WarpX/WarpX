@@ -93,8 +93,7 @@ bool
 StationDiagnostics::DoDump (int step, int /* i_buffer*/, bool force_flush)
 {
     // Determine criterion to dump output
-
-    return ( (m_slice_counter == m_buffer_size) || force_flush );
+    return ( (m_slice_counter == m_buffer_size) || force_flush || m_last_timeslice_filled);
 }
 
 bool
@@ -181,6 +180,9 @@ StationDiagnostics::UpdateBufferData ()
 {
     if (GetZSliceInDomain(0))
         m_slice_counter++;
+    if (m_slice_counter > 0 and !GetZSliceInDomain(0)) {
+        m_last_timeslice_filled = true;
+    }
 }
 
 void
@@ -192,6 +194,7 @@ StationDiagnostics::InitializeParticleBuffer ()
 void
 StationDiagnostics::Flush (int i_buffer)
 {
+    if (m_slice_counter == 0) return;
     auto & warpx = WarpX::GetInstance();
     m_tmax = warpx.gett_new(0);
     std::string filename = m_file_prefix;
@@ -209,6 +212,7 @@ StationDiagnostics::Flush (int i_buffer)
             }
         }
         std::string buffer_string = amrex::Concatenate("buffer-",m_flush_counter,m_file_min_digits);
+        amrex::Print() << " Writing station buffer " << buffer_string << "\n";
         const std::string prefix = amrex::MultiFabFileFullPrefix(lev, filename, "Level_", buffer_string);
         amrex::VisMF::Write(m_mf_output[i_buffer][lev], prefix);
     }
