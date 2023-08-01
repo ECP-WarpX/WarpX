@@ -122,18 +122,10 @@ struct LatticeElementFinder
                 for (int ie = 0 ; ie < nelements ; ie++) {
                     // Find the mid points between element ie and the ones before and after it.
                     // The first and last element need special handling.
-                    amrex::ParticleReal zcenter_left, zcenter_right;
-                    if (ie == 0) {
-                        zcenter_left = std::numeric_limits<amrex::ParticleReal>::lowest();
-                    } else {
-                        zcenter_left = 0.5_prt*(ze_arr[ie-1] + zs_arr[ie]);
-                    }
-                    if (ie < nelements - 1) {
-                        zcenter_right = 0.5_prt*(ze_arr[ie] + zs_arr[ie+1]);
-                    } else {
-                        zcenter_right = std::numeric_limits<amrex::ParticleReal>::max();
-                    }
-
+                    const amrex::ParticleReal zcenter_left = (ie == 0)?
+                        (std::numeric_limits<amrex::ParticleReal>::lowest()) : (0.5_prt*(ze_arr[ie-1] + zs_arr[ie]));
+                    const amrex::ParticleReal zcenter_right = (ie < nelements - 1)?
+                        (0.5_prt*(ze_arr[ie] + zs_arr[ie+1])) : (std::numeric_limits<amrex::ParticleReal>::max());
                     if (zcenter_left <= z_node && z_node < zcenter_right) {
                         indices_arr[iz] = ie;
                     }

@@ -182,9 +182,7 @@ void FieldMomentum::ComputeDiags (int step)
         amrex::Real ExB_x = amrex::get<0>(r);
         amrex::Real ExB_y = amrex::get<1>(r);
         amrex::Real ExB_z = amrex::get<2>(r);
-        amrex::ParallelDescriptor::ReduceRealSum(ExB_x);
-        amrex::ParallelDescriptor::ReduceRealSum(ExB_y);
-        amrex::ParallelDescriptor::ReduceRealSum(ExB_z);
+        amrex::ParallelDescriptor::ReduceRealSum({ExB_x,ExB_y,ExB_z});
 
         // Get cell size
         amrex::Geometry const & geom = warpx.Geom(lev);

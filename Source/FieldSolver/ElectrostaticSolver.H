@@ -10,6 +10,7 @@
 #include "Utils/export.H"
 
 #include <AMReX_Array.H>
+#include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_REAL.H>
@@ -17,6 +18,7 @@
 
 #include <array>
 #include <string>
+#include <utility>
 
 
 namespace ElectrostaticSolver {
@@ -47,7 +49,7 @@ namespace ElectrostaticSolver {
         bool has_non_periodic = false;
         bool phi_EB_only_t = true;
 
-        void definePhiBCs ();
+        void definePhiBCs (const amrex::Geometry& geom);
 
         void buildParsers ();
         void buildParsersEB ();
@@ -107,7 +109,7 @@ namespace ElectrostaticSolver {
 
       public:
         EBCalcEfromPhiPerLevel(amrex::Vector<amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM> > e_field)
-                : m_e_field(e_field) {}
+                : m_e_field(std::move(e_field)) {}
 
         void operator()(amrex::MLMG & mlmg, int const lev) {
             using namespace amrex::literals;

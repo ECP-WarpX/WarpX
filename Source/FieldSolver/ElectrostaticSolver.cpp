@@ -103,7 +103,8 @@ WarpX::AddBoundaryField ()
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
-    if (!m_poisson_boundary_handler.bcs_set) m_poisson_boundary_handler.definePhiBCs();
+    if (!m_poisson_boundary_handler.bcs_set)
+        m_poisson_boundary_handler.definePhiBCs(Geom(0));
 
     // Allocate fields for charge and potential
     const int num_levels = max_level + 1;
@@ -143,7 +144,8 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
-    if (!m_poisson_boundary_handler.bcs_set) m_poisson_boundary_handler.definePhiBCs();
+    if (!m_poisson_boundary_handler.bcs_set)
+        m_poisson_boundary_handler.definePhiBCs(Geom(0));
 
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
@@ -197,7 +199,8 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
-    if (!m_poisson_boundary_handler.bcs_set) m_poisson_boundary_handler.definePhiBCs();
+    if (!m_poisson_boundary_handler.bcs_set)
+        m_poisson_boundary_handler.definePhiBCs(Geom(0));
 
 #ifdef WARPX_DIM_RZ
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
@@ -838,11 +841,9 @@ WarpX::computePhiTriDiagonal (const amrex::Vector<std::unique_ptr<amrex::MultiFa
     phi[lev]->ParallelCopy(phi1d_mf, 0, 0, 1);
 }
 
-void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
+void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geometry& geom)
 {
 #ifdef WARPX_DIM_RZ
-    WarpX& warpx = WarpX::GetInstance();
-    auto geom = warpx.Geom(0);
     if (geom.ProbLo(0) == 0){
         lobc[0] = LinOpBCType::Neumann;
         dirichlet_flag[0] = false;
@@ -866,6 +867,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs ( )
     const int dim_start = 1;
 #else
     const int dim_start = 0;
+    amrex::ignore_unused(geom);
 #endif
     for (int idim=dim_start; idim<AMREX_SPACEDIM; idim++){
         if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic

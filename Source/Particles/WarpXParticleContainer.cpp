@@ -164,11 +164,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, int n,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nattr_int <= NumIntComps(),
                                      "Too many integer attributes specified");
 
-    int ibegin, iend;
-    if (uniqueparticles) {
-        ibegin = 0;
-        iend = n;
-    } else {
+    int ibegin = 0;
+    int iend = n;
+    if (!uniqueparticles) {
         const int myproc = amrex::ParallelDescriptor::MyProc();
         const int nprocs = amrex::ParallelDescriptor::NProcs();
         const int navg = n/nprocs;
@@ -1004,11 +1002,11 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
         // Exchange guard cells
         if (local == false) {
+            // Possible performance optimization:
+            // pass less than `rho[lev]->nGrowVect()` in the fifth input variable `dst_ng`
             ablastr::utils::communication::SumBoundary(
-                *rho[lev],
-                WarpX::do_single_precision_comms,
-                m_gdb->Geom(lev).periodicity()
-            );
+                *rho[lev], 0, rho[lev]->nComp(), rho[lev]->nGrowVect(), rho[lev]->nGrowVect(),
+                WarpX::do_single_precision_comms, m_gdb->Geom(lev).periodicity());
         }
 
 #ifndef WARPX_DIM_RZ
@@ -1082,12 +1080,8 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
 
-            int* AMREX_RESTRICT ion_lev;
-            if (do_field_ionization){
-                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
-            } else {
-                ion_lev = nullptr;
-            }
+            const int* const AMREX_RESTRICT ion_lev = (do_field_ionization)?
+                pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr():nullptr;
 
             DepositCharge(pti, wp, ion_lev, rho.get(), 0, 0, np,
                           thread_num, lev, lev);
@@ -1100,7 +1094,13 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
 #endif
 
-    if (local == false) { ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity()); }
+    if (local == false) {
+        // Possible performance optimization:
+        // pass less than `rho->nGrowVect()` in the fifth input variable `dst_ng`
+        ablastr::utils::communication::SumBoundary(
+            *rho, 0, rho->nComp(), rho->nGrowVect(), rho->nGrowVect(),
+            WarpX::do_single_precision_comms, gm.periodicity());
+    }
 
 #ifndef WARPX_DIM_RZ
     // Reflect density over PEC boundaries, if needed.
@@ -1211,9 +1211,7 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
     }
 
     if (local == false) {
-        ParallelDescriptor::ReduceRealSum(vx_total);
-        ParallelDescriptor::ReduceRealSum(vy_total);
-        ParallelDescriptor::ReduceRealSum(vz_total);
+        ParallelDescriptor::ReduceRealSum<ParticleReal>({vx_total,vy_total,vz_total});
         ParallelDescriptor::ReduceLongSum(np_total);
     }
 

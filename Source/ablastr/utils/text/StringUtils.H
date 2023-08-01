@@ -11,6 +11,7 @@
 
 #include <AMReX_Utility.H>
 
+#include <cstddef>
 #include <string>
 #include <vector>
 

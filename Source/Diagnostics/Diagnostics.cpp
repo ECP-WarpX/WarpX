@@ -125,7 +125,6 @@ Diagnostics::BaseReadParameters ()
     // Get parser strings for particle fields and generate map of parsers
     std::string parser_str;
     std::string filter_parser_str = "";
-    bool do_parser_filter;
     const amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
         bool do_average = true;
@@ -136,15 +135,14 @@ Diagnostics::BaseReadParameters ()
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             parser_str != "",
-            "Input error: cannot find parser string for " + var + " in file. "
-            + m_diag_name + ".particle_fields." + var + "(x,y,z,ux,uy,uz) is required"
-        );
+            std::string("Input error: cannot find parser string for ").append(var).append(" in file. ").append(
+                m_diag_name).append(".particle_fields.").append(var).append("(x,y,z,ux,uy,uz) is required"));
 
         m_pfield_strings.push_back(parser_str);
 
         // Look for and record filter functions. If one is not found, the empty string will be
         // stored as the filter string, and will be ignored.
-        do_parser_filter = pp_diag_pfield.query((var + ".filter(x,y,z,ux,uy,uz)").c_str(), filter_parser_str);
+        const bool do_parser_filter = pp_diag_pfield.query((var + ".filter(x,y,z,ux,uy,uz)").c_str(), filter_parser_str);
         m_pfield_dofilter.push_back(do_parser_filter);
         m_pfield_filter_strings.push_back(filter_parser_str);
     }
@@ -159,11 +157,10 @@ Diagnostics::BaseReadParameters ()
     }
 
     // Check that species names specified in m_pfield_species are valid
-    bool p_species_name_is_wrong;
     // Loop over all species specified above
     for (const auto& species : m_pfield_species) {
         // Boolean used to check if species name was misspelled
-        p_species_name_is_wrong = true;
+        bool p_species_name_is_wrong = true;
         // Loop over all species
         for (int i = 0, n = int(m_all_species_names.size()); i < n; i++) {
             if (species == m_all_species_names[i]) {
@@ -189,7 +186,9 @@ Diagnostics::BaseReadParameters ()
     // Generate names of averaged particle fields and append to m_varnames
     for (const auto& fname : m_pfield_varnames) {
         for (const auto& sname : m_pfield_species) {
-            m_varnames.push_back(fname + '_' + sname);
+            auto varname = fname;
+            varname.append("_").append(sname);
+            m_varnames.push_back(varname);
         }
     }
 
@@ -248,17 +247,14 @@ Diagnostics::BaseReadParameters ()
         pp_diag_name.queryarr("species", m_output_species_names);
 
 
-    // Auxiliary variables
-    std::string species;
-    bool species_name_is_wrong;
     // Loop over all fields stored in m_varnames
     for (const auto& var : m_varnames) {
         // Check if m_varnames contains a string of the form rho_<species_name>
         if (var.rfind("rho_", 0) == 0) {
             // Extract species name from the string rho_<species_name>
-            species = var.substr(var.find("rho_") + 4);
+            const std::string species = var.substr(var.find("rho_") + 4);
             // Boolean used to check if species name was misspelled
-            species_name_is_wrong = true;
+            bool species_name_is_wrong = true;
             // Loop over all species
             for (int i = 0, n = int(m_all_species_names.size()); i < n; i++) {
                 // Check if species name extracted from the string rho_<species_name>
