@@ -12,7 +12,7 @@ boundary.field_lo = pml pml
 # diag1
 diag1.diag_type = Full
 diag1.intervals = 50
-diag1.fields_to_plot = Ex Ey Ez #A_laser_envelope
+diag1.fields_to_plot = Ex Ey Ez A_laser_envelope
 
 # diagnostics
 diagnostics.diags_names = diag1
@@ -30,7 +30,7 @@ laser.position = 0. 0. 10e-6
 laser.profile_duration = 15e-15 # tau_{fwhm}/sqrt(2*ln(2))
 laser.profile_focal_distance = 100e-6
 laser.profile = Gaussian
-laser.profile_t_peak = 30e-15 # not sure how to set this
+laser.profile_z_peak = 15e-6 # not sure how to set this
 laser.profile_waist = 15e-6 # w_0
 laser.wavelength = 0.8e-6 # lambda_0
 
@@ -46,7 +46,7 @@ warpx.do_dynamic_scheduling = 0
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0
-warpx.numprocs = 1 2
+warpx.numprocs = 1 1
 warpx.serialize_initial_conditions = 1
 warpx.use_filter = 0
 warpx.verbose = 1

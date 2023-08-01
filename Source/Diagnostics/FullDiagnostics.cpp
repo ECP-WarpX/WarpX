@@ -15,6 +15,7 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
+#include "Laser/LaserEnvelope.H"
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -618,6 +619,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(warpx.get_array_Bfield_aux(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "divE" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "A_laser_envelope" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.m_laser_envelope->A_laser_envelope[lev].get(), lev, m_crse_ratio);
         }
         else {
 

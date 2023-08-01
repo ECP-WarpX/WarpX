@@ -65,10 +65,10 @@ Diagnostics::BaseReadParameters ()
     const bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames_fields);
     if (!varnames_specified){
         if( dims == "RZ" ) {
-            m_varnames_fields = {"Er", "Et", "Ez", "Br", "Bt", "Bz", "jr", "jt", "jz"};
+            m_varnames_fields = {"Er", "Et", "Ez", "Br", "Bt", "Bz", "jr", "jt", "jz", "A_laser_envelope"};
         }
         else {
-            m_varnames_fields = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
+            m_varnames_fields = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz", "A_laser_envelope"};
         }
     }
 

@@ -20,6 +20,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
+#include "Laser/LaserEnvelope.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Algorithms/LinearInterpolation.H"
 #include "Utils/Logo/GetLogo.H"
@@ -425,6 +426,9 @@ WarpX::InitData ()
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
         m_hybrid_pic_model->InitData();
     }
+
+    // Initialize laser envelope
+    m_laser_envelope->InitData(WarpX::finestLevel());
 
     if (ParallelDescriptor::IOProcessor()) {
         std::cout << "\nGrids Summary:\n";

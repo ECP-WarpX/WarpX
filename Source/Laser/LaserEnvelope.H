@@ -53,14 +53,15 @@ public:
      */
     Complex FillAmplitude (const amrex::Real x, const amrex::Real y, const amrex::Real z);
 
-    /**
+    /** 
      * TODO
      */
-    void InitData (const int lev);
+    void InitData (const int finestLevel);
+
 
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> A_laser_envelope;
 
-    amrex::Real m_direction;
+    amrex::Vector<amrex::Real> m_direction;
     amrex::Real m_e_max;
     amrex::Real m_wavelength;
     amrex::Real m_polarization;

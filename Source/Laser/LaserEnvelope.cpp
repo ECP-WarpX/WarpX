@@ -1,12 +1,27 @@
 #include "LaserEnvelope.H"
 
-#include "Evolve/WarpXDtType.H"
-#include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/WarpXParticleContainer.H"
+#include "Laser/LaserProfiles.H"
+
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpX_Complex.H"
+
+#include <AMReX_BLassert.H>
+#include <AMReX_Config.H>
+#include <AMReX_Extension.H>
+#include <AMReX_GpuComplex.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_GpuQualifiers.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+
+#include <cmath>
+#include <cstdlib>
+#include <numeric>
+#include <vector>
+
 
 using namespace amrex;
 
@@ -52,20 +67,20 @@ void LaserEnvelope::ReadParameters ()
     {
         utils::parser::getWithParser(pp_laser_name, "profile_waist", m_waist);
         utils::parser::getWithParser(pp_laser_name, "profile_duration", m_duration);
-        utils::parser::getWithParser(pp_laser_name, "profile_t_peak", m_t_peak);
         utils::parser::getWithParser(pp_laser_name, "profile_z_peak", m_z_peak);
-        utils::parser::getWithParser(pp_laser_name, "theta_stc", m_theta_stc);
         utils::parser::getWithParser(pp_laser_name, "profile_focal_distance", m_focal_distance);
         utils::parser::queryWithParser(pp_laser_name, "zeta", m_zeta);
         utils::parser::queryWithParser(pp_laser_name, "beta", m_beta);
         utils::parser::queryWithParser(pp_laser_name, "phi2", m_phi2);
         utils::parser::queryWithParser(pp_laser_name, "phi0", m_phi0);
+        utils::parser::queryArrWithParser(pp_laser_name, "direction", m_direction);
     }
 
     amrex::Print() << "The wavelength of the laser is " << m_wavelength << " nm\n";
     amrex::Print() << "The profile waist of the laser is " << m_waist << " s\n";
-    amrex::Print() << "The profile peak of the laser is " << m_t_peak << " s\n";
+    amrex::Print() << "The profile peak of the laser is " << m_z_peak << " s\n";
     amrex::Print() << "We are considering the laser " << laser_name << " \n";
+    amrex::Print() << "Tue duration " << m_profile_duration << " \n";
 }
 
 void LaserEnvelope::AllocateMFs (const int nlevs_max)
@@ -100,7 +115,7 @@ Complex LaserEnvelope::FillAmplitude (const amrex::Real x, const amrex::Real y, 
     // Calculate a few factors which are independent of the macroparticle
     const Real k0 = 2._rt*MathConst::pi/m_wavelength;
     const Real inv_tau2 = 1._rt /(m_duration * m_duration);
-    const Real oscillation_phase = k0 * PhysConst::c * ( - m_z_peak ) + m_phi0;
+    const Real oscillation_phase = k0 * ( - m_z_peak ) + m_phi0;
     // The coefficients below contain info about Gouy phase,
     // laser diffraction, and phase front curvature
     const Complex diffract_factor =
@@ -131,16 +146,28 @@ Complex LaserEnvelope::FillAmplitude (const amrex::Real x, const amrex::Real y, 
     const Complex prefactor = t_prefactor;
 #endif
 
+#if defined(WARPX_DIM_3D)
+    auto arg = m_direction[0]*m_p_X[0] +
+        m_direction[1]*m_p_X[1] +
+        m_direction[2]*m_p_X[2];
+
+    if (arg < -1.0_rt || arg > 1.0_rt)
+        m_theta_stc = 0._rt;
+    else
+        m_theta_stc = std::acos(arg);
+#else
+    m_theta_stc = 0.;
+#endif
+
     // Copy member variables to tmp copies for GPU runs.
     auto const tmp_profile_z_peak = m_z_peak;
-    auto const tmp_profile_t_peak = m_t_peak;
     auto const tmp_beta = m_beta;
     auto const tmp_zeta = m_zeta;
     auto const tmp_theta_stc = m_theta_stc;
     auto const tmp_profile_focal_distance = m_focal_distance;
     // Loop through the macroparticle to calculate the proper amplitude
     const Complex stc_exponent = 1._rt / stretch_factor * inv_tau2 *
-        amrex::pow((- tmp_profile_t_peak -
+        amrex::pow((- tmp_profile_z_peak / PhysConst::c -
         tmp_beta*k0*(x*std::cos(tmp_theta_stc) + y*std::sin(tmp_theta_stc)) -
         2._rt *I*(x*std::cos(tmp_theta_stc) + y*std::sin(tmp_theta_stc))
         *( tmp_zeta - tmp_beta*tmp_profile_focal_distance ) * inv_complex_waist_2),2);
@@ -154,8 +181,11 @@ Complex LaserEnvelope::FillAmplitude (const amrex::Real x, const amrex::Real y, 
     return amplitude;
 }
 
-void LaserEnvelope::InitData (const int lev)
+void LaserEnvelope::InitData (const int finestLevel)
 {
+    // TODO
+    // Put all the body function inside a loop over levels
+    for (int lev = 0; lev <= finestLevel; ++lev) {
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -198,4 +228,5 @@ void LaserEnvelope::InitData (const int lev)
             //A_arr(i, j, k) = a_T(i, j, k) * a_L(i, j, k);
         });
     }
+}
 }

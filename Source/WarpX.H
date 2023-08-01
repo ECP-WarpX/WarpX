@@ -485,6 +485,7 @@ public:
     amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
     amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
     amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const { return vector_potential_fp_nodal[lev][direction].get(); }
+    // amrex::MultiFab * get_pointer_A_laser_envelope (const int lev) { return m_laser_envelope->A_laser_envelope[lev].get(); }
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
@@ -1484,9 +1485,6 @@ private:
     // Hybrid PIC algorithm parameters
     std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
 
-    // Laser Envelope Model parameters
-   std::unique_ptr<LaserEnvelope> m_laser_envelope;
-
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
      * for getting steps at which load balancing is performed */
@@ -1683,6 +1681,9 @@ public:
      *        from the current J (computed from D according to the Vay deposition scheme)
      */
     void PSATDSubtractCurrentPartialSumsAvg ();
+
+    // Laser Envelope Model parameters
+   std::unique_ptr<LaserEnvelope> m_laser_envelope;
 
 private:
     void ScrapeParticles ();
