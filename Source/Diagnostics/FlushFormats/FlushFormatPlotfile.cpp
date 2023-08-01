@@ -577,8 +577,8 @@ FlushFormatPlotfile::WriteAllRawFields(
         {
             // rho_fp will have either ncomps or 2*ncomps (2 being the old and new). When 2, return the new so
             // there is time synchronization.
-            const int nstart = warpx.getrho_fp(lev).nComp() - warpx.ncomps;
-            const MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, nstart, warpx.ncomps);
+            const int nstart = warpx.getrho_fp(lev).nComp() - WarpX::ncomps;
+            const MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, nstart, WarpX::ncomps);
             WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
         if (warpx.get_pointer_phi_fp(lev) != nullptr) {
