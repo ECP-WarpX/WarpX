@@ -56,6 +56,7 @@ StationDiagnostics::ReadParameters ()
     amrex::Abort("StationDiagnostics is not implemented for RZ, yet");
 #endif
 
+    BaseReadParameters();
     const amrex::ParmParse pp_diag_name(m_diag_name);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile", "<diag>.format must be plotfile");
@@ -155,17 +156,31 @@ StationDiagnostics::PrepareFieldDataForOutput ()
     for (int lev = 0; lev < nlev; ++lev) {
         for (int i = 0; i < num_station_functors; ++i) {
             // number of slices = 1
-            m_all_field_functors[lev][i]->PrepareFunctorData(0, true, m_station_loc, m_buffer_box,
+            const bool ZSliceInDomain = GetZSliceInDomain(lev);
+            m_all_field_functors[lev][i]->PrepareFunctorData(0, ZSliceInDomain, m_station_loc, m_buffer_box,
                                                              m_slice_counter, m_buffer_size, 0);
         }
     }
 }
 
+bool
+StationDiagnostics::GetZSliceInDomain (const int lev)
+{
+    auto & warpx = WarpX::GetInstance();
+    const amrex::RealBox& prob_domain = warpx.Geom(lev).ProbDomain();
+    if ( ( m_station_loc <= prob_domain.lo(WARPX_ZINDEX) ) or
+         ( m_station_loc >= prob_domain.hi(WARPX_ZINDEX) ) )
+    {
+        return false;
+    }
+    return true;
+}
 
 void
 StationDiagnostics::UpdateBufferData ()
 {
-    m_slice_counter++;
+    if (GetZSliceInDomain(0))
+        m_slice_counter++;
 }
 
 void

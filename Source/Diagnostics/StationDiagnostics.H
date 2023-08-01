@@ -74,6 +74,7 @@ private:
     amrex::Box m_buffer_box;
     int m_flush_counter = 0;
 
+    bool GetZSliceInDomain (const int lev);
 };
 
 
