@@ -58,6 +58,16 @@ public:
      */
     void AdvectivePush_Muscl (int lev);
 
+    /** 
+     * centrifugal_source adds contributions due to curvature acceleration for a
+     * single timestep using an SSP-RK3 timestep
+    */
+    /**
+     * \brief Centrifugal source term
+     *
+     * \param[in] lev refinement level
+     */
+    void centrifugal_source (int lev);
 
     /**
      * GatherAndPush introduces the lorentz term in the cold relativistic fluid

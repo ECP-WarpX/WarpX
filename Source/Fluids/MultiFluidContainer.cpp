@@ -52,16 +52,16 @@ MultiFluidContainer::GetFluidContainerFromName (const std::string& name) const
 void
 MultiFluidContainer::AllocateLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
-    for (auto& pc : allcontainers) {
-        pc->AllocateLevelMFs(lev, ba, dm);
+    for (auto& fl : allcontainers) {
+        fl->AllocateLevelMFs(lev, ba, dm);
     }
 }
 
 void
 MultiFluidContainer::InitData (int lev)
 {
-    for (auto& pc : allcontainers) {
-        pc->InitData(lev);
+    for (auto& fl : allcontainers) {
+        fl->InitData(lev);
     }
 }
 
@@ -69,8 +69,8 @@ MultiFluidContainer::InitData (int lev)
 void
 MultiFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho)
 {
-    for (auto& pc : allcontainers) {
-        pc->DepositCharge(lev,rho);
+    for (auto& fl : allcontainers) {
+        fl->DepositCharge(lev,rho);
     }
 }
 
@@ -80,7 +80,7 @@ MultiFluidContainer::Evolve (int lev,
                             const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
                             MultiFab& jx, MultiFab& jy, MultiFab& jz, bool skip_deposition)
 {
-    for (auto& pc : allcontainers) {
-        pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, skip_deposition);
+    for (auto& fl : allcontainers) {
+        fl->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, skip_deposition);
     }
 }

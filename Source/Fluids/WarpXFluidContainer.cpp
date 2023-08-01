@@ -148,6 +148,11 @@ void WarpXFluidContainer::Evolve(
     // Step the Lorentz Term
     GatherAndPush(lev, Ex, Ey, Ez, Bx, By, Bz);
 
+    // Cylindrical centrifugal term
+    #if defined(WARPX_DIM_RZ)
+        centrifugal_source(lev);
+    #endif
+
     // Step the Advective term
     AdvectivePush_Muscl(lev);
 
@@ -169,7 +174,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const Real dt = warpx.getdt(lev);
     const amrex::Geometry &geom = warpx.Geom(lev);
     const auto dx = geom.CellSizeArray();
-    const auto problo = geom.ProbLoArray();
     const amrex::Real clight = PhysConst::c;
     const amrex::Periodicity &period = geom.periodicity();
     #if defined(WARPX_DIM_3D)
@@ -185,6 +189,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         auto cx = (dt/dx[0]);
         auto cz = (dt/dx[1]);
     #elif defined(WARPX_DIM_RZ)
+        const auto problo = geom.ProbLoArray();
         auto cx_half = 0.5*(dt/dx[0]);
         auto cz_half = 0.5*(dt/dx[1]);
         amrex::Box const& domain = geom.Domain();
@@ -910,11 +915,29 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto F3_minusz = flux(Q_minus_z(i,j-1,k,3),Q_plus_z(i,j-1,k,3),  Vz_L_minus,Vz_L_plus)*S_Az;
                     auto F3_plusz =  flux(Q_minus_z(i,j,k,3),  Q_plus_z(i,j,k,3),    Vz_I_minus,Vz_I_plus)*S_Az;
 
+                    // RZ-Debug
+                    if  ( (i == 0) && (j == 0) ){
+                        std::cout << "\n *------------------------------------------*";
+                        std::cout << "\n i = " << i << " j = " << j << " k = " << k;
+                        std::cout << "\n [OLD] N: " <<  N_arr(i,j,k) << " NUx: " << NUx_arr(i,j,k) << " NUy: " << NUy_arr(i,j,k) << " NUz: " << NUz_arr(i,j,k);
+                        std::cout << "\n [---] F0_px: " <<  F0_plusx << " F0_mx: " << F0_minusx << " F0_pz: " << F0_plusz << " F0_mz: " << F0_minusz;
+                        std::cout << "\n [---] F3_px: " <<  F3_plusx << " F3_mx: " << F3_minusx << " F3_pz: " << F3_plusz << " F3_mz: " << F3_minusz;
+                        std::cout << "\n [---] S_Az: " << S_Az << " S_Ar_plus: " << S_Ar_plus << " S_Ar_minus: " << S_Ar_minus;
+                        std::cout << "\n [---] Vz_Lp: " <<  Vz_L_plus << " Vz_Lm: " << Vz_L_minus << " Vz_Ip: " << Vz_I_plus << " Vz_Im: " << Vz_I_minus;
+                    }
+
                     // Update Q from tn -> tn + dt
                     N_arr(i,j,k) = N_arr(i,j,k)     - (dt/Vij)*(F0_plusx - F0_minusx + F0_plusz - F0_minusz);
                     NUx_arr(i,j,k) = NUx_arr(i,j,k) - (dt/Vij)*(F1_plusx - F1_minusx + F1_plusz - F1_minusz);
                     NUy_arr(i,j,k) = NUy_arr(i,j,k) - (dt/Vij)*(F2_plusx - F2_minusx + F2_plusz - F2_minusz);
                     NUz_arr(i,j,k) = NUz_arr(i,j,k) - (dt/Vij)*(F3_plusx - F3_minusx + F3_plusz - F3_minusz);
+
+                    // RZ-Debug
+                    if  ( (i == 0) && (j == 0) ){
+                        std::cout << "\n [NEW] N: " <<  N_arr(i,j,k) << " NUx: " << NUx_arr(i,j,k) << " NUy: " << NUy_arr(i,j,k) << " NUz: " << NUz_arr(i,j,k);
+                        std::cout << "\n *------------------------------------------*\n\n";
+                    }
+
 
                 #else
 
@@ -948,6 +971,75 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
     // Fill guard cells
     FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
+}
+
+
+// Momentum source due to curvature
+void WarpXFluidContainer::centrifugal_source (int lev)
+{
+    WARPX_PROFILE("WarpXFluidContainer::centrifugal_source");
+
+    WarpX &warpx = WarpX::GetInstance();
+    const Real dt = warpx.getdt(lev);
+    const amrex::Geometry &geom = warpx.Geom(lev);
+    const auto dx = geom.CellSizeArray();
+    const auto problo = geom.ProbLoArray();
+    const amrex::Real clight = PhysConst::c;
+    amrex::Box const& domain = geom.Domain();
+
+    // H&C push the momentum
+    #ifdef AMREX_USE_OMP
+    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+    #endif
+    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+
+        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+
+        amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
+        amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
+        amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
+        amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
+
+        amrex::ParallelFor(tile_box,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+
+                // Compute r
+                amrex::Real r = problo[0] + i * dx[0];
+
+                // Isolate U from NU
+                auto u_r =     (NUx_arr(i, j, k) / (N_arr(i,j,k) * clight ));
+                auto u_theta = (NUy_arr(i, j, k) / (N_arr(i,j,k) * clight ));
+                auto u_z =     (NUz_arr(i, j, k) / (N_arr(i,j,k) * clight ));
+
+                // (SSP-RK3) Push the fluid momentum (R and Theta)
+                // F_r, F_theta are first order euler pushes of our rhs operator
+                if (i != domain.smallEnd(0)) {
+                    auto u_r_1     = F_r(r,u_r,u_theta,u_z,dt);
+                    auto u_theta_1 = F_theta(r,u_r,u_theta,u_z,dt);
+                    auto u_r_2     = (0.75)*(u_r)     + (0.25)*F_r(r,u_r_1,u_theta_1,u_z,dt);
+                    auto u_theta_2 = (0.75)*(u_theta) + (0.25)*F_theta(r,u_r_1,u_theta_1,u_z,dt);
+                    u_r            = (1.0/3.0)*(u_r)     + (2.0/3.0)*F_r(r,u_r_2,u_theta_2,u_z,dt);
+                    u_theta        = (1.0/3.0)*(u_theta) + (2.0/3.0)*F_theta(r,u_r_2,u_theta_2,u_z,dt);
+
+                    // Calculate NU, save NUr, NUtheta
+                    NUx_arr(i,j,k) = N_arr(i,j,k)*u_r*clight;
+                    NUy_arr(i,j,k) = N_arr(i,j,k)*u_theta*clight;
+
+                // BC r = 0, u_theta = 0, and there is no extra source terms
+                } else { 
+                    NUy_arr(i,j,k) = 0.0;
+                }
+            }
+        );
+    }
+
+    // Fill guard cells, still needed, TODO: Replace with grown box?
+    const amrex::Periodicity &period = geom.periodicity();
     FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
