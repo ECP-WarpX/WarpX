@@ -54,8 +54,9 @@ namespace {
     }
 }
 
-PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
-    : species_id{ispecies}, species_name{name}
+PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
+    const amrex::Geometry& geom):
+    species_id{ispecies}, species_name{name}
 {
     using namespace amrex::literals;
 
