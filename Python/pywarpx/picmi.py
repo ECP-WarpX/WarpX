@@ -2188,7 +2188,10 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
 class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
                               WarpXDiagnosticBase):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
+    for more information.
+
+    This will by default write out both field and particle data. This can be changed by setting warpx_write_species.
 
     Parameters
     ----------
@@ -2212,9 +2215,11 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
     warpx_upper_bound: vector of floats, optional
         Passed to <diagnostic name>.upper_bound
+
+    warpx_write_species: bool, optional, default=True
+        Whether the species will also be written out.
     """
     def init(self, kw):
-        # The user is using the new BTD
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
@@ -2222,6 +2227,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.buffer_size = kw.pop('warpx_buffer_size', None)
         self.lower_bound = kw.pop('warpx_lower_bound', None)
         self.upper_bound = kw.pop('warpx_upper_bound', None)
+        self.write_species = kw.pop('warpx_write_species', None)
 
     def initialize_inputs(self):
 
@@ -2238,6 +2244,8 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.diagnostic.num_snapshots_lab = self.num_snapshots
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
+
+        self.diagnostics.do_back_transformed_particles = self.write_species
 
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
@@ -2278,6 +2286,62 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             self.diagnostic.fields_to_plot = fields_to_plot
 
         self.set_write_dir()
+
+
+class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
+                                 WarpXDiagnosticBase):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
+    for more information.
+
+    This will by default write out both field and particle data. This can be changed by setting warpx_write_fields.
+
+    Parameters
+    ----------
+    warpx_format: string, optional
+        Passed to <diagnostic name>.format
+
+    warpx_openpmd_backend: string, optional
+        Passed to <diagnostic name>.openpmd_backend
+
+    warpx_file_prefix: string, optional
+        Passed to <diagnostic name>.file_prefix
+
+    warpx_file_min_digits: integer, optional
+        Passed to <diagnostic name>.file_min_digits
+
+    warpx_buffer_size: integer, optional
+        Passed to <diagnostic name>.buffer_size
+
+    warpx_write_fields: bool, optional, default=True
+        Whether the fields will also be written out.
+    """
+    def init(self, kw):
+        self.format = kw.pop('warpx_format', None)
+        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
+        self.buffer_size = kw.pop('warpx_buffer_size', None)
+        self.write_fields = kw.pop('warpx_write_fields', None)
+
+    def initialize_inputs(self):
+
+        self.add_diagnostic()
+
+        self.diagnostic.diag_type = 'BackTransformed'
+        self.diagnostic.format = self.format
+        self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.file_min_digits = self.file_min_digits
+
+        self.diagnostic.do_back_transformed_particles = 1
+        self.diagnostic.num_snapshots_lab = self.num_snapshots
+        self.diagnostic.dt_snapshots_lab = self.dt_snapshots
+        self.diagnostic.buffer_size = self.buffer_size
+
+        self.diagnostics.do_back_transformed_fields = self.write_fields
+
+        self.set_write_dir()
+
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     """
