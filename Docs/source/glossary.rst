@@ -22,12 +22,14 @@ Abbreviations
 * **CI:** continuous integration, automated tests that we perform before a proposed code-change is accepted; see PR
 * **CPU:** `central processing unit <https://en.wikipedia.org/wiki/Central_processing_unit>`__, we usual mean a socket or generally the host-side of a computer (compared to the accelerator, e.g. GPU)
 * **DOE:** `The United States Department of Energy <https://en.wikipedia.org/wiki/United_States_Department_of_Energy>`__, the largest sponsor of national laboratory research in the United States of America
+* **DSMC:** Direct Simulation Monte Carlo, a method to capture collisions between kinetic particles
 * **ECP:** `Exascale Computing Project <https://www.exascaleproject.org>`__, a :ref:`U.S. DOE funding source <funding>` that supports WarpX development
 * **ECT:** `Enlarged Cell Technique <https://ieeexplore.ieee.org/document/4463918>`__, an electromagnetic solver with accurate resolution of perfectly conducting embedded boundaries
 * **EB:** embedded boundary, boundary conditions inside the simulation box, e.g. following material surfaces
 * **EM:** electromagnetic, e.g. EM PIC
 * **ES:** electrostatic, e.g. ES PIC
 * **FDTD:** `Finite-difference time-domain or Yee's method <https://en.wikipedia.org/wiki/Finite-difference_time-domain_method>`__, a class of grid-based finite-difference field solvers
+* **FRC:** Field Reversed Configuration, an approach of magnetic confinement fusion
 * **GPU:** originally graphics processing unit, now used for fast `general purpose computing (GPGPU) <https://en.wikipedia.org/wiki/Graphics_processing_unit#Stream_processing_and_general_purpose_GPUs_(GPGPU)>`__; also called (hardware) accelerator
 * **IO:** input/output, usually files and/or data
 * **IPO:** `interprocedural optimization <https://en.wikipedia.org/wiki/Interprocedural_optimization>`__, a collection of compiler optimization techniques that analyze the whole code to avoid duplicate calculations and optimize performance
@@ -36,7 +38,9 @@ Abbreviations
 * **LPI:** laser-plasma interaction (often for laser-solid physics) *or* laser-plasma instability (often in fusion physics), depending on context
 * **LTO:** `link-time optimization <https://en.wikipedia.org/wiki/Interprocedural_optimization#WPO_and_LTO>`__, program optimizations for file-by-file compilation that optimize object files before linking them together to an executable
 * **LWFA:** laser-wakefield acceleration (of electrons/leptons)
+* **MCC:** Monte-Carlo collisions wherein a kinetic species collides with a fluid species, for example used in glow discharge simulations
 * **MR:** mesh-refinement
+* **MS:** magnetostatic, e.g. MS PIC
 * **MVA:** magnetic-vortex acceleration (of protons/ions)
 * **NERSC:** `National Energy Research Scientific Computing Center <https://www.nersc.gov/>`__, a supercomputing center located in Berkeley, CA (USA)
 * **NSF:** the `National Science Foundation <https://en.wikipedia.org/wiki/National_Science_Foundation>`__, a large public agency in the United States of America, supporting research and education
@@ -65,8 +69,11 @@ Terms
 * **evolve:** this is a generic term to advance a quantity (same nomenclature in AMReX).
               For instance, ``WarpX::EvolveE(dt)`` advances the electric field for duration ``dt``, ``PhysicalParticleContainer::Evolve(...)`` does field gather + particle push + current deposition for all particles in ``PhysicalParticleContainer``, and ``WarpX::EvolveEM`` is the central ``WarpX`` function that performs 1 PIC iteration.
 * **Frontier:** an `Exascale supercomputer at OLCF <https://www.olcf.ornl.gov/frontier/>`__
+* **hybrid-PIC:** a plasma simulation scheme that combines fluid and kinetic approaches, with (usually) the electrons treated as a fluid and the ions as kinetic particles (see :ref:`theory-kinetic-fluid-hybrid-model`)
 * **laser:** most of the time, we mean a `laser pulse <https://en.wikipedia.org/wiki/Ultrashort_pulse>`__
-* **openPMD**: `Open Standard for Particle-Mesh Data Files <https://www.openPMD.org>`__, a community meta-data project for scientific data
+* **openPMD:** `Open Standard for Particle-Mesh Data Files <https://www.openPMD.org>`__, a community meta-data project for scientific data
+* **Ohm's law solver:** the logic that solves for the electric-field when using the hybrid-PIC algorithm
 * **Perlmutter:** a Berkeley Lab nobel laureate and a `Pre-Exascale supercomputer at NERSC <https://www.nersc.gov/systems/perlmutter/>`__
-* **plotfiles**: the internal binary format for data files in *AMReX*
+* **plotfiles:** the internal binary format for data files in *AMReX*
 * **Python:** a popular scripted `programming language <https://www.python.org>`__
+* **scraping:** a term often used to refer to the process of removing particles that have crossed into an embedded boundary or pass an absorbing domain boundary from the simulation
