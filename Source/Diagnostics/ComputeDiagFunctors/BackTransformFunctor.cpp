@@ -52,8 +52,8 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
     if ( m_perform_backtransform[i_buffer] == 1) {
         auto& warpx = WarpX::GetInstance();
         auto geom = warpx.Geom(m_lev);
-        const amrex::Real gamma_boost = warpx.gamma_boost;
-        const int moving_window_dir = warpx.moving_window_dir;
+        const amrex::Real gamma_boost = WarpX::gamma_boost;
+        const int moving_window_dir = WarpX::moving_window_dir;
         const amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
         const bool interpolate = true;
         std::unique_ptr< amrex::MultiFab > slice = nullptr;
@@ -163,7 +163,7 @@ BackTransformFunctor::PrepareFunctorData (int i_buffer,
     m_current_z_boost[i_buffer] = current_z_boost;
     m_k_index_zlab[i_buffer] = k_index_zlab;
     m_perform_backtransform[i_buffer] = 0;
-    if (z_slice_in_domain == true and snapshot_full == 0) m_perform_backtransform[i_buffer] = 1;
+    if (z_slice_in_domain && (snapshot_full == 0)) m_perform_backtransform[i_buffer] = 1;
     m_max_box_size = max_box_size;
 }
 

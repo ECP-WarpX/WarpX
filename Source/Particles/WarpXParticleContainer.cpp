@@ -1013,7 +1013,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 #endif
 
         // Exchange guard cells
-        if (local == false) {
+        if (!local) {
             // Possible performance optimization:
             // pass less than `rho[lev]->nGrowVect()` in the fifth input variable `dst_ng`
             ablastr::utils::communication::SumBoundary(
@@ -1106,7 +1106,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
 #endif
 
-    if (local == false) {
+    if (!local) {
         // Possible performance optimization:
         // pass less than `rho->nGrowVect()` in the fifth input variable `dst_ng`
         ablastr::utils::communication::SumBoundary(
@@ -1146,7 +1146,7 @@ amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
 
     total_charge = get<0>(reduce_data.value());
 
-    if (local == false) ParallelDescriptor::ReduceRealSum(total_charge);
+    if (!local) ParallelDescriptor::ReduceRealSum(total_charge);
     total_charge *= this->charge;
     return total_charge;
 }
@@ -1222,7 +1222,7 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
         }
     }
 
-    if (local == false) {
+    if (!local) {
         ParallelDescriptor::ReduceRealSum<ParticleReal>({vx_total,vy_total,vz_total});
         ParallelDescriptor::ReduceLongSum(np_total);
     }
@@ -1259,7 +1259,7 @@ amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) {
         }
     }
 
-    if (local == false) ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator());
+    if (!local) ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator());
     return max_v;
 }
 

@@ -37,11 +37,11 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     const bool encodingDefined = pp_diag_name.query("openpmd_encoding", openpmd_encoding);
 
     openPMD::IterationEncoding encoding = openPMD::IterationEncoding::groupBased;
-    if ( 0 == openpmd_encoding.compare("v") )
+    if ( openpmd_encoding == "v" )
       encoding = openPMD::IterationEncoding::variableBased;
-    else if ( 0 == openpmd_encoding.compare("g") )
+    else if ( openpmd_encoding == "g" )
       encoding = openPMD::IterationEncoding::groupBased;
-    else if ( 0 == openpmd_encoding.compare("f") )
+    else if ( openpmd_encoding == "f" )
       encoding = openPMD::IterationEncoding::fileBased;
 
     std::string diag_type_str;
@@ -74,7 +74,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   pp_diag_name.query("adios2_operator.type", operator_type);
   std::string const prefix = diag_name + ".adios2_operator.parameters";
   const ParmParse pp;
-  auto entr = pp.getEntries(prefix);
+  auto entr = amrex::ParmParse::getEntries(prefix);
 
   std::map< std::string, std::string > operator_parameters;
   auto const prefix_len = prefix.size() + 1;
@@ -90,7 +90,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   pp_diag_name.query("adios2_engine.type", engine_type);
   std::string const engine_prefix = diag_name + ".adios2_engine.parameters";
   const ParmParse ppe;
-  auto eng_entr = ppe.getEntries(engine_prefix);
+  auto eng_entr = amrex::ParmParse::getEntries(engine_prefix);
 
   std::map< std::string, std::string > engine_parameters;
   auto const prefixlen = engine_prefix.size() + 1;
