@@ -122,7 +122,11 @@ StationFunctor::PrepareFunctorData (int i_station, bool slice_in_domain, amrex::
     m_buffer_box = buffer_box;
     m_k_index = k_index;
     m_max_box_size = max_box_size;
-    if (slice_in_domain == true) m_slice_in_domain = 1;
+    if (slice_in_domain == true) {
+        m_slice_in_domain = 1;
+    } else {
+        m_slice_in_domain = 0;
+    }
 }
 
 std::unique_ptr<amrex::MultiFab>

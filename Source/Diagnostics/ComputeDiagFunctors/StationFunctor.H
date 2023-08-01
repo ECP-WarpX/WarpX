@@ -30,7 +30,7 @@ private:
     int m_k_index;
     int m_max_box_size;
     amrex::Box m_buffer_box;
-    int m_slice_in_domain;
+    int m_slice_in_domain = 0;
 };
 
 
