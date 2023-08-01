@@ -156,10 +156,7 @@ FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // Data must be computed and packed for full diagnostics
     // whenever the data needs to be flushed.
-    if (force_flush || m_intervals.contains(step+1) ){
-        return true;
-    }
-    return false;
+    return (force_flush || m_intervals.contains(step+1));
 }
 
 void
@@ -489,7 +486,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
         }
     }
 
-    if (use_warpxba == false) {
+    if (!use_warpxba) {
         // Following are the steps to compute the lo and hi index corresponding to user-defined
         // m_lo and m_hi using the same resolution as the simulation at level, lev.
         amrex::IntVect lo(0);
@@ -539,7 +536,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
     ba.coarsen(m_crse_ratio);
     // Generate a new distribution map if the physical m_lo and m_hi for the output
     // is different from the lo and hi physical co-ordinates of the simulation domain.
-    if (use_warpxba == false) dmap = amrex::DistributionMapping{ba};
+    if (!use_warpxba) dmap = amrex::DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     const int ngrow = (m_format == "sensei" || m_format == "ascent") ? 1 : 0;
     int const ncomp = static_cast<int>(m_varnames.size());
@@ -558,7 +555,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
     } else if (lev > 0) {
         // Take the geom object of previous level and refine it.
         m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
-                                                      warpx.RefRatio(lev-1) );
+                                                      WarpX::RefRatio(lev-1) );
     }
 }
 
@@ -744,8 +741,8 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
         m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );
     }
     // For Moving Window Shift
-    if (warpx.moving_window_active(step+1)) {
-        const int moving_dir = warpx.moving_window_dir;
+    if (WarpX::moving_window_active(step+1)) {
+        const int moving_dir = WarpX::moving_window_dir;
         const amrex::Real moving_window_x = warpx.getmoving_window_x();
         // Get the updated lo and hi of the geom domain
         const amrex::Real* cur_lo = m_geom_output[0][0].ProbLo();
