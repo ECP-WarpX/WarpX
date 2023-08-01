@@ -279,7 +279,7 @@ class _MultiFABWrapper(object):
         assert imin <= iistop <= imax, Exception(f'Dimension {d+1} upper index is out of bounds')
         return iistart, iistop
 
-    def _get_intersect_slice(self, box, starts, stops, ic):
+    def _get_intersect_slice(self, box, starts, stops, icstart, icstop):
         """Return the slices where the block intersects with the global slice.
         If the block does not intersect, return None.
         This also shifts the block slices by the number of ghost cells in the
@@ -298,9 +298,13 @@ class _MultiFABWrapper(object):
             The maximum indices of the global slice.
             These can be negative.
 
-        ic: integer
-            The indices of the components
-            This can be negative.
+        icstart: integer
+            The minimum component index of the global slice.
+            These can be negative.
+
+        icstops: integer
+            The maximum component index of the global slice.
+            These can be negative.
 
         Returns
         -------
@@ -340,11 +344,8 @@ class _MultiFABWrapper(object):
                 block_slices.append(slice(i1[i] - ilo[i] + nghosts[i], i2[i] - ilo[i] + nghosts[i]))
                 global_slices.append(slice(i1[i] - starts[i], i2[i] - starts[i]))
 
-            if ic is None:
-                ic = slice(None)
-
-            block_slices.append(ic)
-            global_slices.append(ic)
+            block_slices.append(slice(icstart, icstop))
+            global_slices.append(slice(0, icstop - icstart))
 
             return tuple(block_slices), tuple(global_slices)
         else:
@@ -401,7 +402,7 @@ class _MultiFABWrapper(object):
         datalist = []
         for mfi in self.mf:
             box = mfi.tilebox()
-            block_slices, global_slices = self._get_intersect_slice(box, starts, stops, ic)
+            block_slices, global_slices = self._get_intersect_slice(box, starts, stops, icstart, icstop)
             if global_slices is not None:
                 # Note that the array will always have 4 dimensions,
                 # the three dimensions plus the components, even when
@@ -490,6 +491,7 @@ class _MultiFABWrapper(object):
         ixstart, ixstop = self._find_start_stop(ii[0], ixmin, ixmax+1, 0)
         iystart, iystop = self._find_start_stop(ii[1], iymin, iymax+1, 1)
         izstart, izstop = self._find_start_stop(ii[2], izmin, izmax+1, 2)
+        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp(), 3)
 
         if isinstance(value, np.ndarray):
             # Expand the shape of the input array to match the shape of the global array
@@ -510,7 +512,7 @@ class _MultiFABWrapper(object):
         stops = [ixstop, iystop, izstop]
         for mfi in self.mf:
             box = mfi.tilebox()
-            block_slices, global_slices = self._get_intersect_slice(box, starts, stops, ic)
+            block_slices, global_slices = self._get_intersect_slice(box, starts, stops, icstart, icstop)
             if global_slices is not None:
                 if cp is not None:
                     mf_arr = cp.array(self.mf.array(mfi), copy=False).T
