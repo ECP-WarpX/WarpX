@@ -99,7 +99,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
-    WriteParticles(filename, particle_diags, isBTD);
+    WriteParticles(filename, particle_diags, time, isBTD);
 
     WriteJobInfo(filename);
 
@@ -339,7 +339,7 @@ FlushFormatPlotfile::WriteWarpXHeader(
 void
 FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                     const amrex::Vector<ParticleDiag>& particle_diags,
-                                    bool isBTD) const
+                                    const amrex::Real time, bool isBTD) const
 {
 
     for (auto& part_diag : particle_diags) {
@@ -388,7 +388,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         ParserFilter parser_filter(part_diag.m_do_parser_filter,
                                    utils::parser::compileParser<ParticleDiag::m_nvars>
                                        (part_diag.m_particle_filter_parser.get()),
-                                   pc->getMass());
+                                   pc->getMass(), time);
         parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(part_diag.m_do_geom_filter,
                                              part_diag.m_diag_domain);

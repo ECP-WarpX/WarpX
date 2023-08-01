@@ -36,8 +36,10 @@ BackTransformFunctor::BackTransformFunctor (amrex::MultiFab const * mf_src, int 
                                             amrex::Vector< std::string > varnames,
                                             amrex::Vector< std::string > varnames_fields,
                                             const amrex::IntVect crse_ratio
-                                            )
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_mf_src(mf_src), m_lev(lev), m_num_buffers(num_buffers), m_varnames(varnames), m_varnames_fields(varnames_fields)
+                                            ):
+    ComputeDiagFunctor(ncomp, crse_ratio),
+    m_mf_src{mf_src}, m_lev{lev}, m_num_buffers{num_buffers},
+    m_varnames{std::move(varnames)}, m_varnames_fields{std::move(varnames_fields)}
 {
     InitData();
 }

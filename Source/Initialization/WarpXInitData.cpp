@@ -82,6 +82,30 @@
 
 using namespace amrex;
 
+namespace
+{
+    /**
+     * \brief Check that the number of guard cells is smaller than the number of valid cells,
+     * for a given MultiFab, and abort otherwise.
+     */
+    void CheckGuardCells(amrex::MultiFab const& mf)
+    {
+        for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
+        {
+            const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
+            const amrex::IntVect gc = mf.nGrowVect();
+
+            std::stringstream ss_msg;
+            ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
+                " the number of guard cells " << gc <<
+                " is larger than or equal to the number of valid cells "
+                << vc << ", please reduce the number of guard cells" <<
+                " or increase the grid size by changing domain decomposition.";
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
+        }
+    }
+}
+
 void
 WarpX::PostProcessBaseGrids (BoxArray& ba0) const
 {
@@ -1177,30 +1201,30 @@ void WarpX::CheckGuardCells()
     {
         for (int dim = 0; dim < 3; ++dim)
         {
-            CheckGuardCells(*Efield_fp[lev][dim]);
-            CheckGuardCells(*Bfield_fp[lev][dim]);
-            CheckGuardCells(*current_fp[lev][dim]);
+            ::CheckGuardCells(*Efield_fp[lev][dim]);
+            ::CheckGuardCells(*Bfield_fp[lev][dim]);
+            ::CheckGuardCells(*current_fp[lev][dim]);
 
             if (WarpX::fft_do_time_averaging)
             {
-                CheckGuardCells(*Efield_avg_fp[lev][dim]);
-                CheckGuardCells(*Bfield_avg_fp[lev][dim]);
+                ::CheckGuardCells(*Efield_avg_fp[lev][dim]);
+                ::CheckGuardCells(*Bfield_avg_fp[lev][dim]);
             }
         }
 
         if (rho_fp[lev])
         {
-            CheckGuardCells(*rho_fp[lev]);
+            ::CheckGuardCells(*rho_fp[lev]);
         }
 
         if (F_fp[lev])
         {
-            CheckGuardCells(*F_fp[lev]);
+            ::CheckGuardCells(*F_fp[lev]);
         }
 
         if (G_fp[lev])
         {
-            CheckGuardCells(*G_fp[lev]);
+            ::CheckGuardCells(*G_fp[lev]);
         }
 
         // MultiFabs on coarse patch
@@ -1208,49 +1232,32 @@ void WarpX::CheckGuardCells()
         {
             for (int dim = 0; dim < 3; ++dim)
             {
-                CheckGuardCells(*Efield_cp[lev][dim]);
-                CheckGuardCells(*Bfield_cp[lev][dim]);
-                CheckGuardCells(*current_cp[lev][dim]);
+                ::CheckGuardCells(*Efield_cp[lev][dim]);
+                ::CheckGuardCells(*Bfield_cp[lev][dim]);
+                ::CheckGuardCells(*current_cp[lev][dim]);
 
                 if (WarpX::fft_do_time_averaging)
                 {
-                    CheckGuardCells(*Efield_avg_cp[lev][dim]);
-                    CheckGuardCells(*Bfield_avg_cp[lev][dim]);
+                    ::CheckGuardCells(*Efield_avg_cp[lev][dim]);
+                    ::CheckGuardCells(*Bfield_avg_cp[lev][dim]);
                 }
             }
 
             if (rho_cp[lev])
             {
-                CheckGuardCells(*rho_cp[lev]);
+                ::CheckGuardCells(*rho_cp[lev]);
             }
 
             if (F_cp[lev])
             {
-                CheckGuardCells(*F_cp[lev]);
+                ::CheckGuardCells(*F_cp[lev]);
             }
 
             if (G_cp[lev])
             {
-                CheckGuardCells(*G_cp[lev]);
+                ::CheckGuardCells(*G_cp[lev]);
             }
         }
-    }
-}
-
-void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
-{
-    for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
-    {
-        const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
-        const amrex::IntVect gc = mf.nGrowVect();
-
-        std::stringstream ss_msg;
-        ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
-            " the number of guard cells " << gc <<
-            " is larger than or equal to the number of valid cells "
-            << vc << ", please reduce the number of guard cells" <<
-             " or increase the grid size by changing domain decomposition.";
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
     }
 }
 

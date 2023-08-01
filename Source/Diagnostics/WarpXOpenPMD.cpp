@@ -514,7 +514,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
-                  const bool use_pinned_pc, const bool isBTD, const bool isLastBTDFlush,
+                  const amrex::Real time, const bool use_pinned_pc,
+                  const bool isBTD, const bool isLastBTDFlush,
                   const amrex::Vector<int>& totalParticlesFlushedAlready)
 {
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
@@ -575,7 +576,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
                                 utils::parser::compileParser<ParticleDiag::m_nvars>
                                      (particle_diags[i].m_particle_filter_parser.get()),
-                                 pc->getMass());
+                                 pc->getMass(), time);
       parser_filter.m_units = InputUnits::SI;
       GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                            particle_diags[i].m_diag_domain);
