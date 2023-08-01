@@ -109,8 +109,6 @@ public:
                          amrex::Real external_field=0.0, bool useparser = false,
                          amrex::ParserExecutor<3> const& field_parser={});
 
-    static void GotoNextLine (std::istream& is);
-
     //! Author of an input file / simulation setup
     static std::string authors;
 
