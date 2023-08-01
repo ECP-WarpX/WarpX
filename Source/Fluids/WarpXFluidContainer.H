@@ -58,7 +58,7 @@ public:
      */
     void AdvectivePush_Muscl (int lev);
 
-    /** 
+    /**
      * centrifugal_source adds contributions due to curvature acceleration for a
      * single timestep using an SSP-RK3 timestep
     */

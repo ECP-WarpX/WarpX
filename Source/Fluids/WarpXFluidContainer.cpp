@@ -862,9 +862,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     // Radial Surfaces
                     auto S_Ar_plus = 2.0*pi*(r + dr/2.0)*dz;
                     auto S_Ar_minus = 2.0*pi*(r - dr/2.0)*dz;
-                    if (i == domain.smallEnd(0)) 
+                    if (i == domain.smallEnd(0))
                         S_Ar_minus = 0.0;
-                    if (i == domain.bigEnd(0)+1) 
+                    if (i == domain.bigEnd(0)+1)
                         S_Ar_plus = 2.0*pi*(r)*dz;
 
                     // TODO: Generalize this condition
@@ -1031,7 +1031,7 @@ void WarpXFluidContainer::centrifugal_source (int lev)
                     NUy_arr(i,j,k) = N_arr(i,j,k)*u_theta*clight;
 
                 // BC r = 0, u_theta = 0, and there is no extra source terms
-                } else { 
+                } else {
                     NUy_arr(i,j,k) = 0.0;
                 }
             }
