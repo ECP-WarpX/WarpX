@@ -122,7 +122,7 @@ struct CartesianCKCAlgorithm {
      */
     static amrex::IntVect GetMaxGuardCell () {
         // The ckc solver requires one guard cell in each dimension
-        return (amrex::IntVect(AMREX_D_DECL(1,1,1)));
+        return amrex::IntVect{AMREX_D_DECL(1,1,1)};
     }
 
     /**
