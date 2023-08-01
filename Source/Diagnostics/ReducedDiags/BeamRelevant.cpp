@@ -31,7 +31,7 @@
 using namespace amrex;
 
 // constructor
-BeamRelevant::BeamRelevant (std::string rd_name)
+BeamRelevant::BeamRelevant (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // read beam name

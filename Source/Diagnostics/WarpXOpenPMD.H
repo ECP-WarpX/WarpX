@@ -116,7 +116,7 @@ public:
                     const std::map< std::string, std::string >& operator_parameters,
                     const std::string& engine_type,
                     const std::map< std::string, std::string >& engine_parameters,
-                    std::vector<bool> fieldPMLdirections);
+                    const std::vector<bool>& fieldPMLdirections);
 
   ~WarpXOpenPMDPlot ();
 
@@ -203,9 +203,9 @@ private:
 
   void SetupMeshComp (
       openPMD::Mesh& mesh,
-      amrex::Geometry& full_geom,
-      std::string comp_name,
-      std::string field_name,
+      amrex::Geometry const& full_geom,
+      std::string const& comp_name,
+      std::string const& field_name,
       amrex::MultiFab const& mf,
       bool var_in_theta_mode
   ) const;

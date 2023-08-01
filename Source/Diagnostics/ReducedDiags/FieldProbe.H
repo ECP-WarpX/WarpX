@@ -43,7 +43,7 @@ public:
      * constructor
      * @param[in] rd_name reduced diags names
      */
-    FieldProbe (std::string rd_name);
+    FieldProbe (const std::string& rd_name);
 
     /**
      * This function assins test/data particles to constructed environemnt

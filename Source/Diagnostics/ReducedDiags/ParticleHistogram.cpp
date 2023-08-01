@@ -50,7 +50,7 @@ struct NormalizationType {
 };
 
 // constructor
-ParticleHistogram::ParticleHistogram (std::string rd_name)
+ParticleHistogram::ParticleHistogram (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     const ParmParse pp_rd_name(rd_name);

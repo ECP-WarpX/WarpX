@@ -28,7 +28,7 @@
 using namespace amrex;
 
 // constructor
-ChargeOnEB::ChargeOnEB (std::string rd_name)
+ChargeOnEB::ChargeOnEB (const std::string& rd_name)
 : ReducedDiags{rd_name}
 {
     // Only 3D is working for now

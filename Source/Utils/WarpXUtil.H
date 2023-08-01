@@ -116,7 +116,7 @@ namespace WarpXUtilLoadBalance
      * @param[in] dm the dmap to check
      * @return consistent whether the grids are consistent or not.
      */
-    bool doCosts (const amrex::LayoutData<amrex::Real>* cost, const amrex::BoxArray ba,
+    bool doCosts (const amrex::LayoutData<amrex::Real>* costs, const amrex::BoxArray& ba,
                   const amrex::DistributionMapping& dm);
 }
 

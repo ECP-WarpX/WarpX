@@ -31,9 +31,9 @@ public:
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     ParticleReductionFunctor(const amrex::MultiFab * const mf_src, const int lev,
-                       const amrex::IntVect crse_ratio, const std::string fn_str,
+                       const amrex::IntVect crse_ratio, const std::string& fn_str,
                        const int ispec, const bool do_average,
-                       const bool do_filter, const std::string filter_str,
+                       const bool do_filter, const std::string& filter_str,
                        const int ncomp=1);
 
     /** \brief Compute the average of the function m_map_fn over each grid cell.

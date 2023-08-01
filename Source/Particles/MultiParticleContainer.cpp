@@ -827,7 +827,7 @@ MultiParticleContainer::mapSpeciesProduct ()
 /* \brief Given a species name, return its ID.
  */
 int
-MultiParticleContainer::getSpeciesID (std::string product_str) const
+MultiParticleContainer::getSpeciesID (const std::string& product_str) const
 {
     auto species_and_lasers_names = GetSpeciesAndLasersNames();
     int i_product = 0;
@@ -856,7 +856,7 @@ MultiParticleContainer::SetDoBackTransformedParticles (const bool do_back_transf
 }
 
 void
-MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles) {
+MultiParticleContainer::SetDoBackTransformedParticles (const std::string& species_name, const bool do_back_transformed_particles) {
     auto species_names_list = GetSpeciesNames();
     bool found = 0;
     // Loop over species

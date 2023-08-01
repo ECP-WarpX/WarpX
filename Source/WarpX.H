@@ -1017,8 +1017,8 @@ public:
          const int lev, PatchType patch_type);
 
     void ReadExternalFieldFromFile (
-         std::string read_fields_from_path, amrex::MultiFab* mf,
-         std::string F_name, std::string F_component);
+         const std::string& read_fields_from_path, amrex::MultiFab* mf,
+         const std::string& F_name, const std::string& F_component);
 
     /**
      * \brief

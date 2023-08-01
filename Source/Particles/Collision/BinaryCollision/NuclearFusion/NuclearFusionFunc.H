@@ -53,7 +53,7 @@ public:
      * @param[in] mypc pointer to the MultiParticleContainer
      * @param[in] isSameSpecies whether the two colliding species are the same
      */
-    NuclearFusionFunc (const std::string collision_name, MultiParticleContainer const * const mypc,
+    NuclearFusionFunc (const std::string& collision_name, MultiParticleContainer const * const mypc,
                        const bool isSameSpecies) : m_isSameSpecies(isSameSpecies)
     {
         using namespace amrex::literals;

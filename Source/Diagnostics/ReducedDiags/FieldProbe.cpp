@@ -47,7 +47,7 @@ using namespace amrex;
 
 // constructor
 
-FieldProbe::FieldProbe (std::string rd_name)
+FieldProbe::FieldProbe (const std::string& rd_name)
 : ReducedDiags{rd_name}, m_probe(&WarpX::GetInstance())
 {
 

@@ -66,7 +66,7 @@ namespace
 }
 
 // constructor
-LoadBalanceCosts::LoadBalanceCosts (std::string rd_name)
+LoadBalanceCosts::LoadBalanceCosts (const std::string& rd_name)
     : ReducedDiags{rd_name}
 {
 }

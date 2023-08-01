@@ -17,7 +17,7 @@
 
 #include <string>
 
-ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
+ParticleCreationFunc::ParticleCreationFunc (const std::string& collision_name,
                                             MultiParticleContainer const * const mypc)
     {
         const amrex::ParmParse pp_collision_name(collision_name);

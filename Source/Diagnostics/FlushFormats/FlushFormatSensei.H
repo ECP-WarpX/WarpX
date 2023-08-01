@@ -43,7 +43,7 @@ public:
      * \param[in] amr_mesh an AmrMesh instance
      * \param[in] diag_name ParmParse scope string.
      */
-    FlushFormatSensei (amrex::AmrMesh *amr_mesh, std::string diag_name);
+    FlushFormatSensei (amrex::AmrMesh *amr_mesh, const std::string& diag_name);
 
     /** Do in-situ visualization for field and particle data */
     virtual void WriteToFile (

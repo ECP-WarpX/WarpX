@@ -353,7 +353,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 }
 
 int ParticleBoundaryBuffer::getNumParticlesInContainer(
-        const std::string species_name, int boundary, bool local) {
+        const std::string& species_name, int boundary, bool local) {
 
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
@@ -363,7 +363,7 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
 }
 
 PinnedMemoryParticleContainer &
-ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int boundary) {
+ParticleBoundaryBuffer::getParticleBuffer(const std::string& species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
@@ -378,7 +378,7 @@ ParticleBoundaryBuffer::getParticleBuffer(const std::string species_name, int bo
 }
 
 PinnedMemoryParticleContainer *
-ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name, int boundary) {
+ParticleBoundaryBuffer::getParticleBufferPointer(const std::string& species_name, int boundary) {
 
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);

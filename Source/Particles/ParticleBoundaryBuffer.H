@@ -43,11 +43,11 @@ public:
 
     void printNumParticles () const;
 
-    int getNumParticlesInContainer(const std::string species_name, int boundary, bool local);
+    int getNumParticlesInContainer(const std::string& species_name, int boundary, bool local);
 
-    PinnedMemoryParticleContainer& getParticleBuffer(const std::string species_name, int boundary);
+    PinnedMemoryParticleContainer& getParticleBuffer(const std::string& species_name, int boundary);
 
-    PinnedMemoryParticleContainer* getParticleBufferPointer(const std::string species_name, int boundary);
+    PinnedMemoryParticleContainer* getParticleBufferPointer(const std::string& species_name, int boundary);
 
     static constexpr int numBoundaries () {
         return AMREX_SPACEDIM*2

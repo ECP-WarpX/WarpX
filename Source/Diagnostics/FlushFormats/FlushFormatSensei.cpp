@@ -13,7 +13,7 @@ FlushFormatSensei::FlushFormatSensei () :
 {}
 
 FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
-    std::string diag_name) :
+    const std::string& diag_name) :
     m_insitu_config(), m_insitu_pin_mesh(0), m_insitu_bridge(nullptr),
     m_amr_mesh(amr_mesh)
 {

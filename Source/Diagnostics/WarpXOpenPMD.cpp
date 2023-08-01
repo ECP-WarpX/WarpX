@@ -373,11 +373,11 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     const std::map< std::string, std::string >& operator_parameters,
     const std::string& engine_type,
     const std::map< std::string, std::string >& engine_parameters,
-    std::vector<bool> fieldPMLdirections)
+    const std::vector<bool>& fieldPMLdirections)
   :m_Series(nullptr),
    m_Encoding(ie),
-   m_OpenPMDFileType(std::move(openPMDFileType)),
-   m_fieldPMLdirections(std::move(fieldPMLdirections))
+   m_OpenPMDFileType(openPMDFileType),
+   m_fieldPMLdirections(fieldPMLdirections)
 {
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
@@ -764,7 +764,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     for (auto i = 0; i < numParticleOnTile; i++) {
                         curr.get()[i] = aos[i].pos(currDim);
                     }
-                    std::string const positionComponent = positionComponents[currDim];
+                    std::string const& positionComponent = positionComponents[currDim];
                     currSpecies["position"][positionComponent].storeChunk(curr, {offset},
                                                                           {numParticleOnTile64});
                 }
@@ -863,7 +863,7 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
     // the beam/input3d showed write_real_comp.size() = 16 while only 10 real comp names
     // so using the min to be safe.
     //
-    auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
+    auto const getComponentRecord = [&currSpecies](std::string const& comp_name) {
         // handle scalar and non-scalar records by name
         const auto [record_name, component_name] = detail::name2openPMD(comp_name);
         return currSpecies[record_name][component_name];
@@ -963,7 +963,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     }
   }
 
-  auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
+  auto const getComponentRecord = [&currSpecies](std::string const& comp_name) {
     // handle scalar and non-scalar records by name
     const auto [record_name, component_name] = detail::name2openPMD(comp_name);
     return currSpecies[record_name][component_name];
@@ -1191,9 +1191,9 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
  */
 void
 WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
-                                 amrex::Geometry& full_geom,
-                                 std::string comp_name,
-                                 std::string field_name,
+                                 amrex::Geometry const& full_geom,
+                                 std::string const& comp_name,
+                                 std::string const& field_name,
                                  amrex::MultiFab const& mf,
                                  bool var_in_theta_mode) const
 {

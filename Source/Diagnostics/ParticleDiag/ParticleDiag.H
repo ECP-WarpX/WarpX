@@ -17,7 +17,8 @@
 class ParticleDiag
 {
 public:
-    ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc, PinnedMemoryParticleContainer *pinned_pc = nullptr);
+    ParticleDiag(const std::string& diag_name, const std::string& name,
+        WarpXParticleContainer* pc, PinnedMemoryParticleContainer *pinned_pc = nullptr);
     WarpXParticleContainer* getParticleContainer() const { return m_pc; }
     PinnedMemoryParticleContainer* getPinnedParticleContainer() const { return m_pinned_pc; }
     std::string getSpeciesName() const { return m_name; }
