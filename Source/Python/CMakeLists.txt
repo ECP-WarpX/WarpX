@@ -4,7 +4,7 @@
 #
 foreach(D IN LISTS WarpX_DIMS)
     warpx_set_suffix_dims(SD ${D})
-    target_sources(WarpX_${SD}
+    target_sources(lib_${SD}
       PRIVATE
         # callback hooks
         WarpX_py.cpp

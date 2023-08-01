@@ -126,17 +126,17 @@ option(WarpX_PYTHON_IPO
     ON
 )
 
+# enforce consistency of dependent options
+if(WarpX_APP OR WarpX_PYTHON)
+    set(WarpX_LIB ON CACHE STRING "Build WarpX as a library" FORCE)
+endif()
+
 # note: we could skip this if we solely build WarpX_APP, but if we build a
 # shared WarpX library or a third party, like ImpactX, uses ablastr in a
 # shared library (e.g., for Python bindings), then we need relocatable code.
 option(ABLASTR_POSITION_INDEPENDENT_CODE
     "Build ABLASTR with position independent code" ${WarpX_LIB})
 mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
-
-# enforce consistency of dependent options
-if(WarpX_PYTHON)
-    set(WarpX_LIB ON CACHE STRING "Build WarpX as a library" FORCE)
-endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
@@ -201,14 +201,26 @@ include(GenerateExportHeader)
 set(_ALL_TARGETS)
 foreach(D IN LISTS WarpX_DIMS)
     warpx_set_suffix_dims(SD ${D})
-    # collect all objects for compilation
-    add_library(WarpX_${SD} OBJECT)
-    add_library(ablastr_${SD})
 
     # ABLASTR library
+    add_library(ablastr_${SD})
     set(_BUILDINFO_SRC ablastr_${SD})
-    list(APPEND _ALL_TARGETS WarpX_${SD} ablastr_${SD})
+    list(APPEND _ALL_TARGETS ablastr_${SD})
     add_library(WarpX::ablastr_${SD} ALIAS ablastr_${SD})
+
+    # link into a library (default: static)
+    if(WarpX_LIB)
+        add_library(lib_${SD})
+        add_library(WarpX::lib_${SD} ALIAS lib_${SD})
+        target_link_libraries(lib_${SD} PUBLIC ablastr_${SD})
+        set(_BUILDINFO_SRC lib_${SD})
+        list(APPEND _ALL_TARGETS lib_${SD})
+
+        set_target_properties(lib_${SD} PROPERTIES
+            POSITION_INDEPENDENT_CODE ON
+            WINDOWS_EXPORT_ALL_SYMBOLS ON
+        )
+    endif()
 
     # executable application
     #   note: we currently avoid a dependency on a core library
@@ -216,24 +228,9 @@ foreach(D IN LISTS WarpX_DIMS)
     if(WarpX_APP)
         add_executable(app_${SD})
         add_executable(WarpX::app_${SD} ALIAS app_${SD})
-        target_link_libraries(app_${SD} PRIVATE WarpX_${SD} ablastr_${SD})
+        target_link_libraries(app_${SD} PRIVATE lib_${SD})
         set(_BUILDINFO_SRC app_${SD})
         list(APPEND _ALL_TARGETS app_${SD})
-    endif()
-
-    # link into a library (shared or static)
-    if(WarpX_LIB)
-        add_library(lib_${SD})
-        add_library(WarpX::lib_${SD} ALIAS lib_${SD})
-        target_link_libraries(lib_${SD} PRIVATE WarpX_${SD})
-        target_link_libraries(lib_${SD} PUBLIC ablastr_${SD})
-        set(_BUILDINFO_SRC lib_${SD})
-        list(APPEND _ALL_TARGETS lib_${SD})
-
-        set_target_properties(WarpX_${SD} lib_${SD} PROPERTIES
-            POSITION_INDEPENDENT_CODE ON
-            WINDOWS_EXPORT_ALL_SYMBOLS ON
-        )
     endif()
 
     if(WarpX_PYTHON OR WarpX_LIB)
@@ -252,15 +249,17 @@ foreach(D IN LISTS WarpX_DIMS)
     endif()
 
     # own headers
-    target_include_directories(WarpX_${SD} PUBLIC
-        $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
-        $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
-    )
     target_include_directories(ablastr_${SD} PUBLIC
         # future: own directory root
         $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
         $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
     )
+    if(WarpX_LIB)
+        target_include_directories(lib_${SD} PUBLIC
+            $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
+            $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
+        )
+    endif()
 
     # build Python module (this is always a shared library)
     if(WarpX_PYTHON)
@@ -313,13 +312,17 @@ foreach(D IN LISTS WarpX_DIMS)
         endif()
     endif()
 
-    # if we include <AMReX_buildInfo.H> we will need to call:
-    generate_buildinfo(${_BUILDINFO_SRC} "${WarpX_SOURCE_DIR}")
-    target_link_libraries(WarpX_${SD} PRIVATE buildInfo::${_BUILDINFO_SRC})
-    unset(_BUILDINFO_SRC)
+    if(WarpX_LIB)
+        # if we include <AMReX_buildInfo.H> we will need to call:
+        generate_buildinfo(${_BUILDINFO_SRC} "${WarpX_SOURCE_DIR}")
+        target_link_libraries(lib_${SD} PRIVATE buildInfo::${_BUILDINFO_SRC})
+        unset(_BUILDINFO_SRC)
+
+        # add sources
+        target_sources(lib_${SD} PRIVATE Source/WarpX.cpp)
+    endif()
 
     # add sources
-    target_sources(WarpX_${SD} PRIVATE Source/WarpX.cpp)
     if(WarpX_APP)
         target_sources(app_${SD} PRIVATE Source/main.cpp)
     endif()
@@ -329,19 +332,20 @@ endforeach()
 # Note: once WarpX gets rid of all its globals, we will not need this.
 #   - extern ... functions
 #   - static class member variables
-generate_export_header(WarpX_${WarpX_DIMS_LAST}
-    BASE_NAME warpx
-    EXPORT_FILE_NAME Source/Utils/export.H)
 generate_export_header(ablastr_${WarpX_DIMS_LAST}
     BASE_NAME ablastr
     EXPORT_FILE_NAME Source/ablastr/export.H)
+if(WarpX_LIB)
+    generate_export_header(lib_${WarpX_DIMS_LAST}
+        BASE_NAME warpx
+        EXPORT_FILE_NAME Source/Utils/export.H)
+endif()
 # At build-time, we might need to set WarpX_<last>_EXPORTS and ablastr_<last>_EXPORTS on all targets
 foreach(D IN LISTS WarpX_DIMS)
     warpx_set_suffix_dims(SD ${D})
     target_compile_definitions(ablastr_${SD} PRIVATE ablastr_${WarpX_DIMS_LAST}_EXPORTS)
-    target_compile_definitions(WarpX_${SD} PRIVATE WarpX_${WarpX_DIMS_LAST}_EXPORTS)
     if(WarpX_LIB)
-        target_compile_definitions(lib_${SD} PRIVATE WarpX_${WarpX_DIMS_LAST}_EXPORTS)
+        target_compile_definitions(lib_${SD} PRIVATE lib_${WarpX_DIMS_LAST}_EXPORTS)  # note: some collision risk here
     endif()
     # Static libs: WARPX_STATIC_DEFINE and ABLASTR_STATIC_DEFINE during build time
     # note: using a static lib (lib_${SD}) in a .dll (pyWarpX_${SD}) still needs the exports for
@@ -349,7 +353,6 @@ foreach(D IN LISTS WarpX_DIMS)
     #       https://cmake.org/cmake/help/latest/prop_tgt/WINDOWS_EXPORT_ALL_SYMBOLS.html
     if(NOT BUILD_SHARED_LIBS)
         target_compile_definitions(ablastr_${SD} PRIVATE ABLASTR_STATIC_DEFINE)
-        target_compile_definitions(WarpX_${SD} PRIVATE WARPX_STATIC_DEFINE)
         if(WarpX_LIB)
             target_compile_definitions(lib_${SD} PRIVATE WARPX_STATIC_DEFINE)
         endif()
@@ -366,19 +369,21 @@ if(WarpX_PYTHON)
 endif()
 
 add_subdirectory(Source/ablastr)
-add_subdirectory(Source/AcceleratorLattice)
-add_subdirectory(Source/BoundaryConditions)
-add_subdirectory(Source/Diagnostics)
-add_subdirectory(Source/EmbeddedBoundary)
-add_subdirectory(Source/Evolve)
-add_subdirectory(Source/FieldSolver)
-add_subdirectory(Source/Filter)
-add_subdirectory(Source/Initialization)
-add_subdirectory(Source/Laser)
-add_subdirectory(Source/Parallelization)
-add_subdirectory(Source/Particles)
-add_subdirectory(Source/Python)
-add_subdirectory(Source/Utils)
+if(WarpX_LIB)
+    add_subdirectory(Source/AcceleratorLattice)
+    add_subdirectory(Source/BoundaryConditions)
+    add_subdirectory(Source/Diagnostics)
+    add_subdirectory(Source/EmbeddedBoundary)
+    add_subdirectory(Source/Evolve)
+    add_subdirectory(Source/FieldSolver)
+    add_subdirectory(Source/Filter)
+    add_subdirectory(Source/Initialization)
+    add_subdirectory(Source/Laser)
+    add_subdirectory(Source/Parallelization)
+    add_subdirectory(Source/Particles)
+    add_subdirectory(Source/Python)
+    add_subdirectory(Source/Utils)
+endif()
 
 # Interprocedural optimization (IPO) / Link-Time Optimization (LTO)
 if(WarpX_IPO)
@@ -393,7 +398,6 @@ foreach(D IN LISTS WarpX_DIMS)
     else()
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::amrex_${D}d)
     endif()
-    target_link_libraries(WarpX_${SD} PUBLIC ablastr_${SD})
 
     if(WarpX_PSATD)
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::FFT)
@@ -454,14 +458,6 @@ endif()
 
 foreach(D IN LISTS WarpX_DIMS)
     warpx_set_suffix_dims(SD ${D})
-
-    # avoid building all object files if we are only used as ABLASTR library
-    if(NOT WarpX_APP AND NOT WarpX_LIB)
-        set_target_properties(WarpX_${SD} PROPERTIES
-            EXCLUDE_FROM_ALL 1
-            EXCLUDE_FROM_DEFAULT_BUILD 1
-        )
-    endif()
 
     # fancy binary name for build variants
     set_warpx_binary_name(${D})
