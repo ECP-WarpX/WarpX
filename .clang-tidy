@@ -39,7 +39,13 @@ Checks: '-*,
     performance-inefficient-vector-operation,
     performance-move-const-arg,
     performance-move-constructor-init,
-    readability-non-const-parameter,
+    readability-avoid-const-params-in-decls,
+    readability-braces-around-statements,
+    readability-const-return-type,
+    readability-container-contains,
+    readability-container-data-pointer,
+    readability-container-size-empty,
+    -readability-non-const-parameter,
     readability-simplify-boolean-expr,
     readability-simplify-subscript-expr,
     readability-static-accessed-through-instance,
@@ -55,5 +61,7 @@ Checks: '-*,
 CheckOptions:
 - key:          modernize-pass-by-value.ValuesOnly
   value:        'true'
+- key:          readability-braces-around-statements.ShortStatementLines
+  value:        '2'
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'
