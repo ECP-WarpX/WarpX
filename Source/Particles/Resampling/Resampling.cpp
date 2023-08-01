@@ -12,7 +12,7 @@
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
 
-Resampling::Resampling (const std::string species_name)
+Resampling::Resampling (const std::string& species_name)
 {
     const amrex::ParmParse pp_species_name(species_name);
     std::string resampling_algorithm_string = "leveling_thinning"; // default resampling algorithm

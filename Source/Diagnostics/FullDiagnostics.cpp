@@ -40,8 +40,8 @@
 
 using namespace amrex::literals;
 
-FullDiagnostics::FullDiagnostics (int i, std::string name)
-    : Diagnostics(i, name)
+FullDiagnostics::FullDiagnostics (int i, const std::string& name)
+    : Diagnostics{i, name}
 {
     ReadParameters();
     BackwardCompatibility();

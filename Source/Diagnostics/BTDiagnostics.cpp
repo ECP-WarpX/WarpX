@@ -52,8 +52,8 @@ namespace
     constexpr int permission_flag_rwxrxrx = 0755;
 }
 
-BTDiagnostics::BTDiagnostics (int i, std::string name)
-    : Diagnostics(i, name)
+BTDiagnostics::BTDiagnostics (int i, const std::string& name)
+    : Diagnostics{i, name}
 {
     ReadParameters();
 }
@@ -1270,8 +1270,8 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 }
 
 void
-BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_path,
-                                                   std::string snapshot_Header_path)
+BTDiagnostics::InterleaveBufferAndSnapshotHeader ( const std::string& buffer_Header_path,
+                                                   const std::string& snapshot_Header_path)
 {
     BTDPlotfileHeaderImpl snapshot_HeaderImpl(snapshot_Header_path);
     snapshot_HeaderImpl.ReadHeaderData();
@@ -1315,9 +1315,9 @@ BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_pat
 
 
 void
-BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
-                                        std::string snapshot_FabHeader_path,
-                                        std::string newsnapshot_FabFilename)
+BTDiagnostics::InterleaveFabArrayHeader(const std::string& Buffer_FabHeader_path,
+                                        const std::string& snapshot_FabHeader_path,
+                                        const std::string& newsnapshot_FabFilename)
 {
     BTDMultiFabHeaderImpl snapshot_FabHeader(snapshot_FabHeader_path);
     snapshot_FabHeader.ReadMultiFabHeader();
@@ -1345,9 +1345,9 @@ BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
 }
 
 void
-BTDiagnostics::InterleaveSpeciesHeader(std::string buffer_species_Header_path,
-                                       std::string snapshot_species_Header_path,
-                                       std::string species_name, const int new_data_index)
+BTDiagnostics::InterleaveSpeciesHeader(const std::string& buffer_species_Header_path,
+                                       const std::string& snapshot_species_Header_path,
+                                       const std::string& species_name, const int new_data_index)
 {
     BTDSpeciesHeaderImpl BufferSpeciesHeader(buffer_species_Header_path,
                                              species_name);
@@ -1369,8 +1369,8 @@ BTDiagnostics::InterleaveSpeciesHeader(std::string buffer_species_Header_path,
 }
 
 void
-BTDiagnostics::InterleaveParticleDataHeader(std::string buffer_ParticleHdrFilename,
-                                           std::string snapshot_ParticleHdrFilename)
+BTDiagnostics::InterleaveParticleDataHeader(const std::string& buffer_ParticleHdrFilename,
+                                            const std::string& snapshot_ParticleHdrFilename)
 {
     BTDParticleDataHeaderImpl BufferParticleHeader(buffer_ParticleHdrFilename);
     BufferParticleHeader.ReadHeader();

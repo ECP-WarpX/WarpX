@@ -333,14 +333,14 @@ public:
      * @param[in] ptr the pointer
      */
     void set_breit_wheeler_engine_ptr
-        (std::shared_ptr<BreitWheelerEngine> ptr) override;
+        (const std::shared_ptr<BreitWheelerEngine>& ptr) override;
 
     /**
      * Acquires a shared smart pointer to a QuantumSynchrotronEngine
      * @param[in] ptr the pointer
      */
     void set_quantum_sync_engine_ptr
-        (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
+        (const std::shared_ptr<QuantumSynchrotronEngine>& ptr) override;
     //__________
 
     PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();

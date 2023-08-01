@@ -266,7 +266,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
 }
 
 namespace WarpXUtilIO{
-    bool WriteBinaryDataOnFile(std::string filename, const amrex::Vector<char>& data)
+    bool WriteBinaryDataOnFile(const std::string& filename, const amrex::Vector<char>& data)
     {
         std::ofstream of{filename, std::ios::binary};
         of.write(data.data(), data.size());
@@ -472,7 +472,7 @@ void ReadBCParams ()
 
 namespace WarpXUtilLoadBalance
 {
-    bool doCosts (const amrex::LayoutData<amrex::Real>* costs, const amrex::BoxArray ba,
+    bool doCosts (const amrex::LayoutData<amrex::Real>* costs, const amrex::BoxArray& ba,
                   const amrex::DistributionMapping& dm)
     {
         const bool consistent = costs && (dm == costs->DistributionMap()) &&

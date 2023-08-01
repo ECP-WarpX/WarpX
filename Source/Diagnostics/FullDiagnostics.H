@@ -10,7 +10,7 @@ class
 FullDiagnostics final : public Diagnostics
 {
 public:
-    FullDiagnostics (int i, std::string name);
+    FullDiagnostics (int i, const std::string& name);
 private:
     /** Read user-requested parameters for full diagnostics */
     void ReadParameters ();

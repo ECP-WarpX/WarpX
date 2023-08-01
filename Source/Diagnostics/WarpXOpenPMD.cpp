@@ -334,7 +334,7 @@ namespace detail
      * set the metadata that indicates the physical unit.
      */
     inline void
-    setOpenPMDUnit ( openPMD::Mesh mesh, const std::string field_name )
+    setOpenPMDUnit ( openPMD::Mesh mesh, const std::string& field_name )
     {
         if (field_name[0] == 'E'){  // Electric field
             mesh.setUnitDimension({
@@ -368,11 +368,11 @@ namespace detail
 #ifdef WARPX_USE_OPENPMD
 WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     openPMD::IterationEncoding ie,
-    std::string openPMDFileType,
-    std::string operator_type,
-    std::map< std::string, std::string > operator_parameters,
-    std::string engine_type,
-    std::map< std::string, std::string > engine_parameters,
+    const std::string& openPMDFileType,
+    const std::string& operator_type,
+    const std::map< std::string, std::string >& operator_parameters,
+    const std::string& engine_type,
+    const std::map< std::string, std::string >& engine_parameters,
     std::vector<bool> fieldPMLdirections)
   :m_Series(nullptr),
    m_Encoding(ie),

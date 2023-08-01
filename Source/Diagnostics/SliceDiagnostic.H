@@ -26,7 +26,7 @@ void CheckSliceInput( const amrex::RealBox real_box,
 
 void InterpolateSliceValues( amrex::MultiFab& smf,
      amrex::IntVect interp_lo, amrex::RealBox slice_realbox,
-     amrex::Vector<amrex::Geometry> geom, int ncomp, int nghost,
+     const amrex::Vector<amrex::Geometry>& geom, int ncomp, int nghost,
      amrex::IntVect slice_lo, amrex::IntVect slice_hi,
      amrex::IntVect SliceType, const amrex::RealBox real_box);
 

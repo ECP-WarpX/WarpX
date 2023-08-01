@@ -65,7 +65,7 @@ namespace utils::parser
     */
     void Store_parserString(
         const amrex::ParmParse &pp,
-        std::string query_string,
+        const std::string& query_string,
         std::string& stored_string);
 
 

@@ -111,11 +111,11 @@ public:
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
    */
   WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
-                    std::string filetype,
-                    std::string operator_type,
-                    std::map< std::string, std::string > operator_parameters,
-                    std::string engine_type,
-                    std::map< std::string, std::string > engine_parameters,
+                    const std::string& filetype,
+                    const std::string& operator_type,
+                    const std::map< std::string, std::string >& operator_parameters,
+                    const std::string& engine_type,
+                    const std::map< std::string, std::string >& engine_parameters,
                     std::vector<bool> fieldPMLdirections);
 
   ~WarpXOpenPMDPlot ();

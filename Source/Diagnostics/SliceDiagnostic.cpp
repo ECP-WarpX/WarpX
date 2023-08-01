@@ -425,7 +425,7 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
  */
 void
 InterpolateSliceValues(MultiFab& smf, IntVect interp_lo, RealBox slice_realbox,
-                       Vector<Geometry> geom, int ncomp, int nghost,
+                       const Vector<Geometry>& geom, int ncomp, int nghost,
                        IntVect slice_lo, IntVect /*slice_hi*/, IntVect SliceType,
                        const RealBox real_box)
 {

@@ -2958,14 +2958,14 @@ bool PhysicalParticleContainer::has_breit_wheeler () const
 
 void
 PhysicalParticleContainer::
-set_breit_wheeler_engine_ptr (std::shared_ptr<BreitWheelerEngine> ptr)
+set_breit_wheeler_engine_ptr (const std::shared_ptr<BreitWheelerEngine>& ptr)
 {
     m_shr_p_bw_engine = ptr;
 }
 
 void
 PhysicalParticleContainer::
-set_quantum_sync_engine_ptr (std::shared_ptr<QuantumSynchrotronEngine> ptr)
+set_quantum_sync_engine_ptr (const std::shared_ptr<QuantumSynchrotronEngine>& ptr)
 {
     m_shr_p_qs_engine = ptr;
 }

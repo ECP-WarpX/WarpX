@@ -321,7 +321,7 @@ BTDMultiFabHeaderImpl::ResizeFabData ()
 }
 
 void
-BTDMultiFabHeaderImpl::SetFabName (int ifab, std::string fodPrefix, std::string FabName,
+BTDMultiFabHeaderImpl::SetFabName (int ifab, const std::string& fodPrefix, const std::string& FabName,
                                    int FabHead)
 {
     m_FabOnDiskPrefix[ifab] = fodPrefix;
@@ -331,13 +331,13 @@ BTDMultiFabHeaderImpl::SetFabName (int ifab, std::string fodPrefix, std::string 
 }
 
 void
-BTDMultiFabHeaderImpl::SetMinVal (int ifab, amrex::Vector<amrex::Real> minval)
+BTDMultiFabHeaderImpl::SetMinVal (int ifab, const amrex::Vector<amrex::Real>& minval)
 {
     CopyVec(m_minval[ifab], minval);
 }
 
 void
-BTDMultiFabHeaderImpl::SetMaxVal (int ifab, amrex::Vector<amrex::Real> maxval)
+BTDMultiFabHeaderImpl::SetMaxVal (int ifab, const amrex::Vector<amrex::Real>& maxval)
 {
     CopyVec(m_maxval[ifab], maxval);
 }
