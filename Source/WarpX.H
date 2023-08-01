@@ -83,9 +83,15 @@ public:
     friend class PML;
 
     static WarpX& GetInstance ();
+
     static void ResetInstance ();
 
-    WarpX ();
+    /**
+     * \brief
+     * This method has to be called at the end of the simulation. It deletes the WarpX instance.
+     */
+    static void Finalize();
+
     ~WarpX ();
 
     static std::string Version (); //!< Version of WarpX executable
@@ -1115,6 +1121,20 @@ protected:
     virtual void ClearLevel (int lev) final;
 
 private:
+
+    /**
+     * \brief
+     *  WarpX constructor. This method should not be called directly, but rather through
+     * the static member function MakeWarpX(). MakeWarpX() is called by GetInstance ()
+     * if an instance of the WarpX class does not currently exist.
+     */
+    WarpX ();
+
+    /**
+     * \brief
+     * This method creates a new instance of the WarpX class.
+     */
+    static void MakeWarpX ();
 
     // Singleton is used when the code is run from python
     static WarpX* m_instance;

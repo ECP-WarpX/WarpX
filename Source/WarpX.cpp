@@ -232,11 +232,25 @@ bool WarpX::do_device_synchronize = false;
 
 WarpX* WarpX::m_instance = nullptr;
 
+void WarpX::MakeWarpX ()
+{
+    ParseGeometryInput();
+
+    ConvertLabParamsToBoost();
+    ReadBCParams();
+
+#ifdef WARPX_DIM_RZ
+    CheckGriddingForRZSpectral();
+#endif
+
+    m_instance = new WarpX();
+}
+
 WarpX&
 WarpX::GetInstance ()
 {
     if (!m_instance) {
-        m_instance = new WarpX();
+        MakeWarpX();
     }
     return *m_instance;
 }
@@ -244,14 +258,20 @@ WarpX::GetInstance ()
 void
 WarpX::ResetInstance ()
 {
-    delete m_instance;
-    m_instance = nullptr;
+    if (m_instance){
+        delete m_instance;
+        m_instance = nullptr;
+    }
+}
+
+void
+WarpX::Finalize()
+{
+    WarpX::ResetInstance();
 }
 
 WarpX::WarpX ()
 {
-    m_instance = this;
-
     ReadParameters();
 
     BackwardCompatibility();
@@ -303,12 +323,6 @@ WarpX::WarpX ()
 
     // Particle Boundary Buffer (i.e., scraped particles on boundary)
     m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
-
-    // Diagnostics
-    multi_diags = std::make_unique<MultiDiagnostics>();
-
-    /** create object for reduced diagnostics */
-    reduced_diags = std::make_unique<MultiReducedDiags>();
 
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
