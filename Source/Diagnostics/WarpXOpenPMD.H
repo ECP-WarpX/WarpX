@@ -136,6 +136,7 @@ public:
 
   void WriteOpenPMDParticles (
               const amrex::Vector<ParticleDiag>& particle_diags,
+              const amrex::Real time,
               const bool use_pinned_pc = false,
               const bool isBTD = false,
               const bool isLastBTDFlush = false,

@@ -10,7 +10,6 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
-#include "WarpX.H"
 
 #include <AMReX_Gpu.H>
 #include <AMReX_Parser.H>
@@ -91,14 +90,15 @@ struct ParserFilter
      * \param a_is_active whether the test is active
      * \param a_filter_parser parser taking t, x, y, z, ux, uy, and uz, and returning a boolean for selected particle
      * \param a_mass mass of the particle species
+     * \param time simulation time on the coarsest level
      */
     ParserFilter(bool a_is_active, amrex::ParserExecutor<7> const& a_filter_parser,
-                 amrex::Real a_mass)
-        : m_is_active(a_is_active), m_function_partparser(a_filter_parser), m_mass(a_mass)
-    {
-        m_t = WarpX::GetInstance().gett_new(0);
-        m_units = InputUnits::WarpX;
-    }
+        const amrex::Real a_mass, const amrex::Real time):
+            m_is_active{a_is_active},
+            m_function_partparser{a_filter_parser},
+            m_mass{a_mass},
+            m_t{time},
+            m_units{InputUnits::WarpX}{}
 
     /**
      * \brief return 1 if the particle is selected by the parser
@@ -136,10 +136,10 @@ private:
 public:
     /** Parser function with 7 input variables, t,x,y,z,ux,uy,uz */
     amrex::ParserExecutor<7> const m_function_partparser;
-    /** Store physical time. */
-    amrex::ParticleReal m_t;
     /** Mass of particle species */
     amrex::ParticleReal m_mass;
+    /** Store physical time on the coarsest level. */
+    amrex::ParticleReal m_t;
     /** keep track of momentum units particles will come in with **/
     InputUnits m_units;
 };
