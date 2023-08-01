@@ -3,6 +3,8 @@ Checks: '-*,
     -bugprone-easily-swappable-parameters,
     -bugprone-implicit-widening-of-multiplication-result,
     -bugprone-misplaced-widening-cast,
+    cert-*
+    -cert-err58-cpp,
     cppcoreguidelines-avoid-goto,
     cppcoreguidelines-interfaces-global-init,
     -cppcoreguidelines-avoid-non-const-global-variables,
