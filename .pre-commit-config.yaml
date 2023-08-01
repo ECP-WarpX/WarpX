@@ -68,7 +68,7 @@ repos:
 
 # Autoremoves unused Python imports
 - repo: https://github.com/hadialqattan/pycln
-  rev: v2.1.6
+  rev: v2.2.0
   hooks:
   - id: pycln
     name: pycln (python)
