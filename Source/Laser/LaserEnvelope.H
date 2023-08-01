@@ -53,7 +53,7 @@ public:
      */
     Complex FillAmplitude (const amrex::Real x, const amrex::Real y, const amrex::Real z);
 
-    /** 
+    /**
      * TODO
      */
     void InitData (const int finestLevel);
