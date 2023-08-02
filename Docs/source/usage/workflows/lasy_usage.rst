@@ -31,6 +31,7 @@ First let's load the required functions from the library:
 Next, we define the physical parameters of the laser pulse and create the laser profile object:
 
 .. code-block:: python
+
     wavelength     = 1.e-6    # Laser wavelength in meters
     polarization   = (1,0)    # Linearly polarized in the x direction
     energy         = 1.0      # Energy of the laser pulse in joules
@@ -43,6 +44,7 @@ Next, we define the physical parameters of the laser pulse and create the laser 
 Now we create a full laser object containing the above physical parameters together with the computational settings:
 
 .. code-block:: python
+
     dimensions     = "xyt"                              # Use 3D geometry
     lo             = (-25e-6, -25e-6, -20e-15)          # Lower bounds of the simulation box
     hi             = (+25e-6, +25e-6, +20e-15)          # Upper bounds of the simulation box
@@ -54,6 +56,7 @@ Now we create a full laser object containing the above physical parameters toget
 Finally, we create a lasy file containing the laser profile, using openPMD standard:
 
 .. code-block:: python
+
     file_prefix    = 'gaussianlaser3d' # The file name will start with this prefix
     file_format    = 'h5'          # Format to be used for the output file
 
@@ -61,6 +64,7 @@ Finally, we create a lasy file containing the laser profile, using openPMD stand
 
 or simply:
 .. code-block:: python
+
     laser.write_to_file("gaussianlaser3d")  # Use h5 format by default
 
 
@@ -68,6 +72,7 @@ That's it! The laser pulse profile has been created and the complexe envelope is
 Now let's take a look at the laser parameters that need to be specified in the inputs parameters:
 
 .. code-block:: python
+
     #######################################################################################################################################
     ######################################################## INPUTS FILE ##################################################################
     #######################################################################################################################################
@@ -97,6 +102,7 @@ Customize your laser profile by using combined longitunal and transverse profile
 lasy allows you to define a custom laser pulse profile using different longitunal and transverse profiles.
 
 .. code-block:: python
+
     from lasy.laser import Laser
     from lasy.profiles import (
         CombinedLongitudinalTransverseProfile,
@@ -136,6 +142,7 @@ Customize your laser profile by using NumPy arrays
 
 Profile defined from a NumPy array directly (only supported for 3D arrays):
 .. code-block:: python
+
     from lasy.laser import Laser
     from lasy.profiles import FromArrayProfile
 
@@ -165,6 +172,7 @@ Customize your laser profile by using an openPMD file
 Profile defined from an openPMD file:
 
 .. code-block:: python
+
     from lasy.laser import Laser
     from lasy.profiles import FromOpenPMDProfile
 
