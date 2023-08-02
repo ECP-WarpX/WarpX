@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2019 Jean-Luc Vay, Maxence Thevenet, Remi Lehe
+# Copyright 2019 Jean-Luc Vay, Maxence Thevenet, Remi Lehe, Grant Johnson
 #
 #
 # This file is part of WarpX.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2019 David Grote, Maxence Thevenet
+# Copyright 2019 David Grote, Maxence Thevenet, Grant Johnson, Remi Lehe
 #
 # This file is part of WarpX.
 #
