@@ -1047,7 +1047,7 @@ WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
 #endif
 
     // Exchange guard cells
-    if (local == false) {
+    if ( !local ) {
         // Possible performance optimization:
         // pass less than `rho->nGrowVect()` in the fifth input variable `dst_ng`
         ablastr::utils::communication::SumBoundary(
