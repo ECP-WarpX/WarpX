@@ -80,7 +80,7 @@ public:
                      const amrex::IntVect& ncell, const amrex::IntVect& delta,
                      const amrex::Box& regular_domain, const amrex::Real v_sigma_sb)
         : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_regdomain(regular_domain), m_v_sigma_sb(v_sigma_sb) {}
-    virtual ~SigmaBoxFactory () = default;
+    ~SigmaBoxFactory () final = default;
 
     SigmaBoxFactory (const SigmaBoxFactory&) = default;
     SigmaBoxFactory (SigmaBoxFactory&&) noexcept = default;
@@ -89,13 +89,13 @@ public:
     SigmaBoxFactory& operator= (const SigmaBoxFactory&) = delete;
     SigmaBoxFactory& operator= (SigmaBoxFactory&&) = delete;
 
-    virtual SigmaBox* create (const amrex::Box& box, int /*ncomps*/,
+    SigmaBox* create (const amrex::Box& box, int /*ncomps*/,
                               const amrex::FabInfo& /*info*/, int /*box_index*/) const final
         { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta, m_regdomain, m_v_sigma_sb); }
-    virtual void destroy (SigmaBox* fab) const final {
+    void destroy (SigmaBox* fab) const final {
         delete fab;
     }
-    virtual SigmaBoxFactory* clone () const final {
+    SigmaBoxFactory* clone () const final {
         return new SigmaBoxFactory(*this);
     }
 private:
@@ -203,8 +203,6 @@ public:
     void Restart (const std::string& dir);
 
     static void Exchange (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom, int do_pml_in_domain);
-
-    ~PML () = default;
 
 private:
     bool m_ok;

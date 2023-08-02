@@ -31,8 +31,6 @@ public:
      * \param[in] Headerfile_path string containing path of Headerfile
      */
     BTDPlotfileHeaderImpl (std::string const& Headerfile_path);
-    /** Destructor */
-    ~BTDPlotfileHeaderImpl () = default;
 
     /** Returns the Header file version for plotfile */
     std::string fileVersion () const noexcept {return m_file_version; }
@@ -166,7 +164,7 @@ class BTDMultiFabHeaderImpl
      * \param[in] Headerfile_path string containing path of Headerfile
      */
     BTDMultiFabHeaderImpl (std::string const& Headerfile_path);
-    ~BTDMultiFabHeaderImpl () = default;
+
     /** Reads the Multifab Header file and stores its data. */
     void ReadMultiFabHeader ();
     /** Writes the meta-data of the Multifab in a header file, with path, m_Header_path. */
@@ -249,7 +247,7 @@ public:
      * \param[in] species_name string containing species name
      */
     BTDSpeciesHeaderImpl (std::string const& Headerfile_path, std::string const& species_name);
-    ~BTDSpeciesHeaderImpl () = default;
+
     /** Reads the Header file for BTD species*/
     void ReadHeader ();
     /** Writes the meta-data of species Header file, with path, m_Header_path*/
@@ -314,8 +312,7 @@ public:
      * \param[in] Headerfile_path containing path of Headerfile
      */
     BTDParticleDataHeaderImpl (std::string const& Headerfile_path);
-    /** Destructor */
-    ~BTDParticleDataHeaderImpl () = default;
+
     /** Reads the particle header file at m_Header_path and stores its data*/
     void ReadHeader ();
     /** Writes the meta-data of particle box array in header file, with path, m_Header_path*/

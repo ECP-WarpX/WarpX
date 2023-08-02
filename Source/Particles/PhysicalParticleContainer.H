@@ -56,7 +56,7 @@ public:
      *  the run if one of them is specified. */
     void BackwardCompatibility ();
 
-    virtual ~PhysicalParticleContainer () {}
+    ~PhysicalParticleContainer () override {}
 
     void InitData () override;
 
@@ -105,7 +105,7 @@ public:
      * field gather, particle push and current deposition for all particles
      * in the box.
      */
-    virtual void Evolve (int lev,
+    void Evolve (int lev,
                          const amrex::MultiFab& Ex,
                          const amrex::MultiFab& Ey,
                          const amrex::MultiFab& Ez,
@@ -145,7 +145,7 @@ public:
                          amrex::Real dt, ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full);
 
-    virtual void PushP (int lev, amrex::Real dt,
+    void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,
                         const amrex::MultiFab& Ey,
                         const amrex::MultiFab& Ez,
@@ -162,7 +162,7 @@ public:
                         amrex::iMultiFab const* current_masks,
                         amrex::iMultiFab const* gather_masks );
 
-    virtual void PostRestart () final {}
+    void PostRestart () final {}
 
     void SplitParticles (int lev);
 
@@ -240,13 +240,13 @@ public:
      * These are NOT initialized by this function.
      * @param[in] engine the random engine, used in initialization of QED optical depths
      */
-    virtual void DefaultInitializeRuntimeAttributes (
+    void DefaultInitializeRuntimeAttributes (
                     amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
                                         NArrayReal, NArrayInt,
                                         amrex::PinnedArenaAllocator>& pinned_tile,
                     const int n_external_attr_real,
                     const int n_external_attr_int,
-                    const amrex::RandomEngine& engine) override final;
+                    const amrex::RandomEngine& engine) final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
@@ -307,7 +307,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void resample (const int timestep) override final;
+    void resample (const int timestep) final;
 
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H

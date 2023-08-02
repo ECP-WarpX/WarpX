@@ -95,13 +95,12 @@ class fillBufferFlag
     public:
         fillBufferFlag( WarpXParIter const& pti, amrex::iMultiFab const* bmasks,
                         amrex::Gpu::DeviceVector<int>& inexflag,
-                        amrex::Geometry const& geom ) {
-
-            // Extract simple structure that can be used directly on the GPU
-            m_particles = &(pti.GetArrayOfStructs()[0]);
-            m_buffer_mask = (*bmasks)[pti].array();
-            m_inexflag_ptr = inexflag.dataPtr();
-            m_domain = geom.Domain();
+                        amrex::Geometry const& geom ):
+            m_particles{(pti.GetArrayOfStructs()[0])},
+            m_buffer_mask{(*bmasks)[pti].array()},
+            m_inexflag_ptr{inexflag.dataPtr()},
+            m_domain{geom.Domain()}
+        {
             for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
                 m_prob_lo[idim] = geom.ProbLo(idim);
                 m_inv_cell_size[idim] = geom.InvCellSize(idim);

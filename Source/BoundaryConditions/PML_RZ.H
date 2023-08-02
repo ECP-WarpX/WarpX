@@ -51,8 +51,6 @@ public:
     void CheckPoint (const std::string& dir) const;
     void Restart (const std::string& dir);
 
-    ~PML_RZ () = default;
-
 private:
 
     const int m_ncell;

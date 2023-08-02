@@ -18,6 +18,13 @@ public:
                         m_ncomp(ncomp), m_crse_ratio(crse_ratio) {}
     //** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~ComputeDiagFunctor() = default;
+
+    /** Default move and copy operations */
+    ComputeDiagFunctor(const ComputeDiagFunctor&) = default;
+    ComputeDiagFunctor& operator=(const ComputeDiagFunctor&) = default;
+    ComputeDiagFunctor(ComputeDiagFunctor&&) = default;
+    ComputeDiagFunctor& operator=(ComputeDiagFunctor&&) = default;
+
     /** Compute a field and store the result in mf_dst
      *
      * \param[out] mf_dst output MultiFab where the result is written

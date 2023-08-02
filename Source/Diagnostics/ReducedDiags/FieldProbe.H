@@ -48,18 +48,18 @@ public:
     /**
      * This function assins test/data particles to constructed environemnt
      */
-    void InitData () override final;
+    void InitData () final;
 
     /** Redistribute parallel data structures during load balance
      */
-    void LoadBalance () override final;
+    void LoadBalance () final;
 
     /**
      * This function computes the value of Ex, Ey, Ez, Bx, By, Bz and at a given point
      *
      * @param[in] step current time step
      */
-    void ComputeDiags (int step) override final;
+    void ComputeDiags (int step) final;
 
     /*
      * Define constants used throughout FieldProbe
@@ -115,7 +115,7 @@ private:
     /**
      * Built-in function in ReducedDiags to write out test data
      */
-    virtual void WriteToFile (int step) const override;
+    void WriteToFile (int step) const override;
 
     /** Check if the probe is in the simulation domain boundary
      */

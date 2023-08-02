@@ -26,7 +26,7 @@ class BackgroundStopping final
 public:
     BackgroundStopping (std::string collision_name);
 
-    virtual ~BackgroundStopping () = default;
+    ~BackgroundStopping () override = default;
 
     /** Perform the stopping calculation
      *

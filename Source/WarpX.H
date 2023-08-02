@@ -92,7 +92,13 @@ public:
      */
     static void Finalize();
 
-    ~WarpX ();
+    ~WarpX () override;
+
+    // WarpX object is a singleton: it should not be copied or moved.
+    WarpX(const WarpX&) = delete;
+    WarpX& operator=(const WarpX&) = delete;
+    WarpX(WarpX&&) = delete;
+    WarpX& operator=(WarpX&&) = delete;
 
     static std::string Version (); //!< Version of WarpX executable
     static std::string PicsarVersion (); //!< Version of PICSAR dependency
@@ -1061,7 +1067,7 @@ public:
 
     // This needs to be public for CUDA.
     //! Tagging cells for refinement
-    virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
+    void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
     // Return the accelerator lattice instance defined at the given refinement level
     const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}

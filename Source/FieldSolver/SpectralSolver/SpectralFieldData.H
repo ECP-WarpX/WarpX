@@ -129,8 +129,13 @@ class SpectralFieldData
                            const int n_field_required,
                            const bool periodic_single_box);
         SpectralFieldData() = default; // Default constructor
-        SpectralFieldData& operator=(SpectralFieldData&& field_data) = default;
         ~SpectralFieldData();
+
+        // default move and copy operations
+        SpectralFieldData(const SpectralFieldData) = default;
+        SpectralFieldData& operator=(const SpectralFieldData&) = default;
+        SpectralFieldData(SpectralFieldData&&) = default;
+        SpectralFieldData& operator=(SpectralFieldData&& field_data) = default;
 
         void ForwardTransform (const int lev,
                                const amrex::MultiFab& mf, const int field_index,

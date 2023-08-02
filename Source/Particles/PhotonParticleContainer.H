@@ -36,11 +36,11 @@ public:
     PhotonParticleContainer (amrex::AmrCore* amr_core,
                                     int ispecies,
                                     const std::string& name);
-    virtual ~PhotonParticleContainer () {}
+    ~PhotonParticleContainer () override {}
 
-    virtual void InitData() override;
+    void InitData() override;
 
-    virtual void Evolve (int lev,
+    void Evolve (int lev,
                          const amrex::MultiFab& Ex,
                          const amrex::MultiFab& Ey,
                          const amrex::MultiFab& Ez,
@@ -66,7 +66,7 @@ public:
                          DtType a_dt_type=DtType::Full,
                          bool skip_deposition=false) override;
 
-    virtual void PushPX(WarpXParIter& pti,
+    void PushPX(WarpXParIter& pti,
                         amrex::FArrayBox const * exfab,
                         amrex::FArrayBox const * eyfab,
                         amrex::FArrayBox const * ezfab,
@@ -81,7 +81,7 @@ public:
                         DtType a_dt_type) override;
 
     // Do nothing
-    virtual void PushP (int /*lev*/,
+    void PushP (int /*lev*/,
                         amrex::Real /*dt*/,
                         const amrex::MultiFab& /*Ex*/,
                         const amrex::MultiFab& /*Ey*/,
@@ -92,7 +92,7 @@ public:
 
 
     // DepositCharge should do nothing for photons
-    virtual void DepositCharge (WarpXParIter& /*pti*/,
+    void DepositCharge (WarpXParIter& /*pti*/,
                                 RealVector const & /*wp*/,
                                 const int * const /*ion_lev*/,
                                 amrex::MultiFab* /*rho*/,
@@ -104,7 +104,7 @@ public:
                                 int /*depos_lev*/) override {}
 
     // DepositCurrent should do nothing for photons
-    virtual void DepositCurrent (WarpXParIter& /*pti*/,
+    void DepositCurrent (WarpXParIter& /*pti*/,
                                  RealVector const & /*wp*/,
                                  RealVector const & /*uxp*/,
                                  RealVector const & /*uyp*/,

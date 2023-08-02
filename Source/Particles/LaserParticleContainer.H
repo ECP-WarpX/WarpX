@@ -42,25 +42,25 @@ class LaserParticleContainer
 {
 public:
     LaserParticleContainer (amrex::AmrCore* amr_core, int ispecies, const std::string& name);
-    virtual ~LaserParticleContainer () {}
+    ~LaserParticleContainer () override = default;
 
-    virtual void InitData () final;
+    void InitData () final;
 
     /**
      * \brief Method to initialize runtime attributes. Does nothing for LaserParticleContainer.
      */
-    virtual void DefaultInitializeRuntimeAttributes (
+    void DefaultInitializeRuntimeAttributes (
                         amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
                                             NArrayReal, NArrayInt, amrex::PinnedArenaAllocator>& /*pinned_tile*/,
                         const int /*n_external_attr_real*/,
                         const int /*n_external_attr_int*/,
-                        const amrex::RandomEngine& /*engine*/) override final {}
+                        const amrex::RandomEngine& /*engine*/) final {}
 
-    virtual void ReadHeader (std::istream& is) final;
+    void ReadHeader (std::istream& is) final;
 
-    virtual void WriteHeader (std::ostream& os) const final;
+    void WriteHeader (std::ostream& os) const final;
 
-    virtual void Evolve (int lev,
+    void Evolve (int lev,
                          const amrex::MultiFab&, const amrex::MultiFab&, const amrex::MultiFab&,
                          const amrex::MultiFab&, const amrex::MultiFab&, const amrex::MultiFab&,
                          amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz,
@@ -71,7 +71,7 @@ public:
                          amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full,
                          bool skip_deposition=false) final;
 
-    virtual void PushP (int lev, amrex::Real dt,
+    void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& ,
                         const amrex::MultiFab& ,
                         const amrex::MultiFab& ,
@@ -79,7 +79,7 @@ public:
                         const amrex::MultiFab& ,
                         const amrex::MultiFab& ) final;
 
-    virtual void PostRestart () final;
+    void PostRestart () final;
 
     void calculate_laser_plane_coordinates (const WarpXParIter& pti, const int np,
                                             amrex::Real * AMREX_RESTRICT const pplane_Xp,

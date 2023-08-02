@@ -48,7 +48,7 @@ public:
     RigidInjectedParticleContainer (amrex::AmrCore* amr_core,
                                     int ispecies,
                                     const std::string& name);
-    virtual ~RigidInjectedParticleContainer () {}
+    virtual ~RigidInjectedParticleContainer () override = default;
 
     void InitData() override;
 

@@ -42,7 +42,7 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
             const amrex::Real dt);
 
         // Redefine functions from base class
-        virtual void pushSpectralFields(SpectralFieldData& f) const override final;
+        void pushSpectralFields(SpectralFieldData& f) const final;
 
         /**
          * \brief Virtual function for current correction in Fourier space
@@ -53,7 +53,7 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void CurrentCorrection (SpectralFieldData& field_data) override final;
+        void CurrentCorrection (SpectralFieldData& field_data) final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -64,7 +64,7 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void VayDeposition (SpectralFieldData& field_data) override final;
+        void VayDeposition (SpectralFieldData& field_data) final;
 
     private:
         SpectralRealCoefficients C_coef, S_ck_coef, inv_k2_coef;

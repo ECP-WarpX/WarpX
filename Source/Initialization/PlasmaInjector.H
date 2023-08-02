@@ -42,9 +42,16 @@ class PlasmaInjector
 
 public:
 
+    /** Default constructor*/
     PlasmaInjector () = default;
 
     PlasmaInjector (int ispecies, const std::string& name, const amrex::Geometry& geom);
+
+    /** Default move and copy operations */
+    PlasmaInjector(const PlasmaInjector&) = delete;
+    PlasmaInjector& operator=(const PlasmaInjector&) = delete;
+    PlasmaInjector(PlasmaInjector&&) = default;
+    PlasmaInjector& operator=(PlasmaInjector&&) = default;
 
     ~PlasmaInjector ();
 

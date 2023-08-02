@@ -45,7 +45,7 @@ public:
      * @param[in] lev the index of the refinement level.
      * @param[in] pc a pointer to the particle container.
      */
-    void operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer * const pc) const override final;
+    void operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer * const pc) const final;
 
 private:
     amrex::Real m_target_ratio = amrex::Real(1.5);

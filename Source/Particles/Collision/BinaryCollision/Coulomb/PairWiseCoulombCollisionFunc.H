@@ -50,10 +50,11 @@ public:
         using namespace amrex::literals;
         const amrex::ParmParse pp_collision_name(collision_name);
         // default Coulomb log, if < 0, will be computed automatically
-        m_CoulombLog = -1.0_prt;
+        amrex::ParticleReal CoulombLog = -1.0_prt;
         utils::parser::queryWithParser(
-            pp_collision_name, "CoulombLog", m_CoulombLog);
+            pp_collision_name, "CoulombLog", CoulombLog);
         m_isSameSpecies = isSameSpecies;
+        m_CoulombLog = CoulombLog;
     }
 
     /**
