@@ -141,6 +141,7 @@ Customize your laser profile by using NumPy arrays
 -------------------
 
 Profile defined from a NumPy array directly (only supported for 3D arrays):
+
 .. code-block:: python
 
     from lasy.laser import Laser
