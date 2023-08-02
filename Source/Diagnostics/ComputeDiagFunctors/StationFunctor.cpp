@@ -35,7 +35,7 @@ StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int 
         auto geom = warpx.Geom(m_lev);
 //        std::unique_ptr< amrex::MultiFab > slice = nullptr;
         const int scomp = 0;
-        const int slice_dir = 2;
+        const int slice_dir = WARPX_ZINDEX;
         bool interpolate = true;
 
         amrex::Vector<int> slice_to_full_ba_map;
@@ -54,7 +54,6 @@ StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int 
             const amrex::Array4<amrex::Real const> src_Bz_arr = (*m_arr_mf_src[5])[full_gid].array();
 
             const amrex::Box& tbx = mfi.tilebox();
-
             amrex::ParallelFor( tbx,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
@@ -71,14 +70,12 @@ StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int 
         // Define MF with dmap of dst mf, with all 6 components from the slice generated from m_mf_src
         const int station_index = static_cast<int> ( ( m_z_location - geom.ProbLo(slice_dir))
                                                      / geom.CellSize(slice_dir) );
-
-        amrex::Box slice_box = m_buffer_box;
+        amrex::Box slice_box = amrex::surroundingNodes(m_buffer_box);
         slice_box.setSmall(slice_dir, station_index);
         slice_box.setBig(slice_dir, station_index);
 
         amrex::BoxArray slice_ba(slice_box);
         slice_ba.maxSize( m_max_box_size);
-
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
         const int nghost = 1;
         tmp_slice_ptr = std::make_unique< amrex::MultiFab > (slice_ba, mf_dst.DistributionMap(),
@@ -105,7 +102,11 @@ StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int 
             amrex::ParallelFor( tbx, ncomp_dst,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
                 {
+#if defined(WARPX_DIM_3D)
                     dst_arr(i,j,k_index,n) = src_arr(i,j,k,n);
+#elif defined(WARPX_DIM_XZ)
+                    dst_arr(i,k_index,k,n) = src_arr(i,j,k,n);
+#endif
                 });
         }
         slice = nullptr;
@@ -148,7 +149,7 @@ StationFunctor::AllocateSlice (amrex::Vector<int>& slice_to_full_ba_map) const
                               static_cast<int>(std::floor((real_slice.hi(1) - geom.ProbLo(1))/geom.CellSize(1))),
                               static_cast<int>(std::floor((real_slice.hi(2) - geom.ProbLo(2))/geom.CellSize(2)))
                              ));
-    amrex::Box slice_box = amrex::Box(slice_lo, slice_hi);
+    amrex::Box slice_box = amrex::surroundingNodes(amrex::Box(slice_lo, slice_hi));
 
     // Define nodal multifab that stores the slice
     amrex::BoxArray const& ba = amrex::convert( m_arr_mf_src[0]->boxArray(), amrex::IntVect::TheNodeVector());
