@@ -1779,6 +1779,16 @@ private:
     void PSATDMoveJNewToJOld ();
 
     /**
+     * \brief Copy rho_new to rho_mid in spectral space (when rho is quadratic in time)
+     */
+    void PSATDMoveRhoNewToRhoMid (); 
+
+    /**
+     * \brief Copy J_new to J_mid in spectral space (when J is quadratic in time)
+     */
+    void PSATDMoveJNewToJMid ();
+
+    /**
      * \brief Forward FFT of F on all mesh refinement levels
      */
     void PSATDForwardTransformF ();

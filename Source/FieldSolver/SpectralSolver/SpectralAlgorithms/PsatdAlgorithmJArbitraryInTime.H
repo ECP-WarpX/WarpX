@@ -127,6 +127,8 @@ class PsatdAlgorithmJArbitraryInTime : public SpectralBaseAlgorithm
         bool m_time_averaging;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
+        int m_J_in_time;
+        int m_rho_in_time;
 };
 #endif // WARPX_USE_PSATD
 #endif // WARPX_PSATD_ALGORITHM_J_ARBITRARY_IN_TIME_H_

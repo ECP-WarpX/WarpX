@@ -7,6 +7,7 @@
 #include "PsatdAlgorithmJArbitraryInTime.H"
 
 #include "Utils/TextMsg.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
 
@@ -89,9 +90,8 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
     const bool rho_linear   = (m_rho_in_time == RhoInTime::Linear  ) ? true : false;
     const bool rho_quadratic  = (m_rho_in_time == RhoInTime::Quadratic  ) ? true : false;
 
-
     const amrex::Real dt = m_dt;
- 
+
     const SpectralFieldIndex& Idx = m_spectral_index;
 
     // Loop over boxes
@@ -142,19 +142,22 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex Jx_old = fields(i,j,k,Idx.Jx_old);
             const Complex Jy_old = fields(i,j,k,Idx.Jy_old);
             const Complex Jz_old = fields(i,j,k,Idx.Jz_old);
+
             const Complex Jx_new = fields(i,j,k,Idx.Jx_new);
             const Complex Jy_new = fields(i,j,k,Idx.Jy_new);
             const Complex Jz_new = fields(i,j,k,Idx.Jz_new);
+
             const Complex Jx_mid = fields(i,j,k,Idx.Jx_mid);
             const Complex Jy_mid = fields(i,j,k,Idx.Jy_mid);
             const Complex Jz_mid = fields(i,j,k,Idx.Jz_mid);
+
             const Complex rho_old = fields(i,j,k,Idx.rho_old);
             const Complex rho_new = fields(i,j,k,Idx.rho_new);
             const Complex rho_mid = fields(i,j,k,Idx.rho_mid);
 
-            const Complex a_jx = (J_quadratic) ? (Jx_new-2._rt * Jx_mid + Jx_old) : 0._rt;
-            const Complex a_jy = (J_quadratic) ? (Jy_new-2._rt * Jy_mid + Jy_old) : 0._rt;
-            const Complex a_jz = (J_quadratic) ? (Jz_new-2._rt * Jz_mid + Jz_old) : 0._rt;
+            const Complex a_jx = (J_quadratic) ? (Jx_new - 2._rt * Jx_mid + Jx_old) : 0._rt;
+            const Complex a_jy = (J_quadratic) ? (Jy_new - 2._rt * Jy_mid + Jy_old) : 0._rt;
+            const Complex a_jz = (J_quadratic) ? (Jz_new - 2._rt * Jz_mid + Jz_old) : 0._rt;
 
             const Complex b_jx = (J_linear || J_quadratic) ? (Jx_new - Jx_old) : 0._rt;
             const Complex b_jy = (J_linear || J_quadratic) ? (Jy_new - Jy_old) : 0._rt;
@@ -164,9 +167,10 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex c_jy = (J_linear) ? (Jy_new + Jy_old)/2._rt : Jy_mid;
             const Complex c_jz = (J_linear) ? (Jz_new + Jz_old)/2._rt : Jz_mid;
 
-            const Complex a_rho = (J_quadratic) ? (rho_new-2._rt * rho_mid + rho_old) : 0._rt;
-            const Complex b_rho = (J_linear || J_quadratic) ? (rho_new - rho_old) : 0._rt;
-            const Complex c_rho = (J_linear) ? (rho_new + rho_old)/2._rt : rho_mid;
+            const Complex a_rho = (rho_quadratic) ? (rho_new - 2._rt * rho_mid + rho_old) : 0._rt;
+            const Complex b_rho = (rho_linear || rho_quadratic) ? (rho_new - rho_old) : 0._rt;
+            const Complex c_rho = (rho_linear) ? (rho_new + rho_old)/2._rt : rho_mid;
+
 
             Complex F_old, G_old;
             if (dive_cleaning) F_old = fields(i,j,k,Idx.F);
@@ -256,7 +260,7 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
                 + I * X1 * (ky * c_jz - kz * c_jy );
 
             fields(i,j,k,Idx.By) = C * By_old
-                - I * S_ck * (kz * Ex_old - kx * Ez_old) -
+                - I * S_ck * (kz * Ex_old - kx * Ez_old)
                 - I * a0 * (kz * a_jx - kx * a_jz)
                 + I * X2 * (kz * b_jx - kx * b_jz)
                 + I * X1 * (kz * c_jx - kx * c_jz);
@@ -266,6 +270,7 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
                 - I * a0 * (kx * a_jy - ky * a_jx)
                 + I * X2 * (kx * b_jy - ky * b_jx)
                 + I * X1 * (kx * c_jy - ky * c_jx);
+
             if (dive_cleaning)
             {
                 const Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;

@@ -1357,13 +1357,14 @@ WarpX::ReadParameters ()
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
         rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
 
-        if (psatd_solution_type != PSATDSolutionType::FirstOrder || do_multi_J == false)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                rho_in_time == RhoInTime::Linear,
-                "psatd.rho_in_time=constant not yet implemented, "
-                "except for psatd.solution_type=first-order and warpx.do_multi_J=1");
-        }
+        // Commented temporarily
+        // if (psatd_solution_type != PSATDSolutionType::FirstOrder || do_multi_J == false)
+        // {
+        //     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        //         rho_in_time == RhoInTime::Linear,
+        //         "psatd.rho_in_time=constant not yet implemented, "
+        //         "except for psatd.solution_type=first-order and warpx.do_multi_J=1");
+        // }
 
         // Current correction activated by default, unless a charge-conserving
         // current deposition (Esirkepov, Vay) or the div(E) cleaning scheme
