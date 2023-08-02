@@ -145,29 +145,36 @@ Profile defined from a NumPy array directly (only supported for 3D arrays):
 
 .. code-block:: python
 
+    import numpy as np
+    from scipy.constants import c
+    from openpmd_viewer import OpenPMDTimeSeries
+    from scipy.signal import hilbert
     from lasy.laser import Laser
-    from lasy.profiles import FromArrayProfile
+    from lasy.profiles.from_array_profile import FromArrayProfile
 
-    # Units
-    um = 1.e-6
+    wavelength = 0.8e-6
 
-    # Parameters of the Laguerre Gaussian beam
-    wavelength = 1.*um
-    pol = (1, 0)
+    # Read output of a FBPIC simulation, extract to 3D for simplicity
+    ts = OpenPMDTimeSeries('lab_diags/hdf5/')
+    F, m = ts.get_field(iteration=10, field='E', coord='y', theta=None)
 
-    # Array of the electric field of the laser pulse.
-    E_field = custom_numpy_array
-    # Python dictionary containing the axes vectors. Keys are ‘x’, ‘y’, ‘t’. Values are the 1D arrays of each axis. array.shape = (axes[‘x’].size, axes[‘y’].size, axes[‘t’].size)
-    axes
-    laser_profile = FromArrayProfile(wavelength, pol, E_field, axes, axes_order=['x', 'y', 't'])
+    # Get envelope from full profile
+    k0 = 2*np.pi/wavelength
+    env_F = hilbert(F)*np.exp(-1j*k0*m.z)
 
-    dimensions     = "xyt"                              # Use 3D geometry
-    lo             = (-25e-6, -25e-6, -20e-15)          # Lower bounds of the simulation box
-    hi             = (+25e-6, +25e-6, +20e-15)          # Upper bounds of the simulation box
-    num_points     = (100, 100, 100)                    # Number of points (nx,ny,nt) in each dimension
+    # Create LASY profile
+    pol = (1,0)
+    dim = 'xyt'
+    array = np.flip(env_F, axis=2) # Need to flip z vs. t
+    axes = {'x':m.x, 'y':m.y, 't':(m.z-m.z[0])/scc.c}
+    profile = FromArrayProfile(wavelength=wavelength, pol=pol, array=array, axes=axes, dim=dim)
 
-    laser = Laser(dimensions, lo, hi, num_points, laser_profile)
-    laser.write_to_file("numpylaser3d")
+    # Create LASY laser object and save to file
+    lo = (-120e-6, -120e-6, -10e-15)
+    hi = (+120e-6, +120e-6, +60e-15)
+    npoints=(32,64,128)
+    laser = Laser(dim, lo, hi, npoints, profile)
+    laser.write_to_file('./laserfbpic/laser3d')
 
 Customize your laser profile by using an openPMD file
 -------------------
@@ -175,23 +182,30 @@ Profile defined from an openPMD file:
 
 .. code-block:: python
 
+    from lasy.profiles.from_openpmd_profile import FromOpenPMDProfile
     from lasy.laser import Laser
-    from lasy.profiles import FromOpenPMDProfile
 
-    # Parameters of the Laguerre Gaussian beam
-    pol = (1, 0)
+    # Create profile: one of
+    # - from FBPIC output
+    profile = FromOpenPMDProfile('lab_diags/hdf5/', 10, (0,1), 'E', 'y')
+    # - from LASY output
+    profile = FromOpenPMDProfile('./laserfbpic', 0, (1,0), 'laserEnvelope', envelope=True, prefix='laser3d')
 
-    # Load the external openPMD file containing the laser pulse.
-    path = './diags/' # Path to openPMDTimeSeries
-    iteration = 450
-    field = 'E'
+    # Create laser
+    dim = 'xyt'
+    lo = (-120e-6, -120e-6, -10e-15)
+    hi = (+120e-6, +120e-6, +60e-15)
+    npoints=(32,64,128)
+    laser = Laser(dim, lo, hi, npoints, profile)
+    laser.write_to_file('./laserfbpic/laser3d')
 
-    laser_profile = FromOpenPMDProfile(path, iteration, pol, field)
-
-    dimensions     = "xyt"                              # Use 3D geometry
-    lo             = (-25e-6, -25e-6, -20e-15)          # Lower bounds of the simulation box
-    hi             = (+25e-6, +25e-6, +20e-15)          # Upper bounds of the simulation box
-    num_points     = (100, 100, 100)                    # Number of points (nx,ny,nt) in each dimension
-
-    laser = Laser(dimensions, lo, hi, num_points, laser_profile)
-    laser.write_to_file("openPMDlaser3d")
+    # Plot
+    from openpmd_viewer import OpenPMDTimeSeries
+    import numpy as np
+    import matplotlib.pyplot as plt
+    ts = OpenPMDTimeSeries('./laserfbpic')
+    F, m = ts.get_field(field='laserEnvelope')
+    F = np.abs(F)
+    plt.figure(figsize=(8,8))
+    plt.imshow(F[:,:,F.shape[2]//2], aspect='auto')
+    plt.colorbar()
