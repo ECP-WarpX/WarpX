@@ -132,7 +132,7 @@ class SpectralFieldData
         ~SpectralFieldData();
 
         // default move and copy operations
-        SpectralFieldData(const SpectralFieldData) = default;
+        SpectralFieldData(const SpectralFieldData&) = default;
         SpectralFieldData& operator=(const SpectralFieldData&) = default;
         SpectralFieldData(SpectralFieldData&&) = default;
         SpectralFieldData& operator=(SpectralFieldData&& field_data) = default;

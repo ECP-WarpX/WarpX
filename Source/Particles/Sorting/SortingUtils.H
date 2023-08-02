@@ -96,10 +96,10 @@ class fillBufferFlag
         fillBufferFlag( WarpXParIter const& pti, amrex::iMultiFab const* bmasks,
                         amrex::Gpu::DeviceVector<int>& inexflag,
                         amrex::Geometry const& geom ):
-            m_particles{(pti.GetArrayOfStructs()[0])},
-            m_buffer_mask{(*bmasks)[pti].array()},
+            m_domain{geom.Domain()},
             m_inexflag_ptr{inexflag.dataPtr()},
-            m_domain{geom.Domain()}
+            m_particles{&(pti.GetArrayOfStructs()[0])},
+            m_buffer_mask{(*bmasks)[pti].array()}
         {
             for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
                 m_prob_lo[idim] = geom.ProbLo(idim);
@@ -121,12 +121,12 @@ class fillBufferFlag
         }
 
     private:
-        amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_prob_lo;
-        amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_inv_cell_size;
         amrex::Box m_domain;
         int* m_inexflag_ptr;
         WarpXParticleContainer::ParticleType const* m_particles;
         amrex::Array4<int const> m_buffer_mask;
+        amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_prob_lo;
+        amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_inv_cell_size;
 };
 
 /** \brief Functor that fills the elements of the particle array `inexflag`

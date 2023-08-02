@@ -47,7 +47,7 @@ public:
 
     PlasmaInjector (int ispecies, const std::string& name, const amrex::Geometry& geom);
 
-    /** Default move and copy operations */
+    // Default move and copy operations
     PlasmaInjector(const PlasmaInjector&) = delete;
     PlasmaInjector& operator=(const PlasmaInjector&) = delete;
     PlasmaInjector(PlasmaInjector&&) = default;

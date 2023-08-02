@@ -19,7 +19,7 @@ public:
     //** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~ComputeDiagFunctor() = default;
 
-    /** Default move and copy operations */
+    // Default move and copy operations
     ComputeDiagFunctor(const ComputeDiagFunctor&) = default;
     ComputeDiagFunctor& operator=(const ComputeDiagFunctor&) = default;
     ComputeDiagFunctor(ComputeDiagFunctor&&) = default;

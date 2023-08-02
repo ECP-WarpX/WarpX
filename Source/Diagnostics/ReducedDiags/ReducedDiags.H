@@ -59,7 +59,7 @@ public:
      */
     virtual ~ReducedDiags () = default;
 
-    /** Default move and copy operations */
+    // Default move and copy operations
     ReducedDiags(const ReducedDiags&) = default;
     ReducedDiags& operator=(const ReducedDiags&) = default;
     ReducedDiags(ReducedDiags&&) = default;
