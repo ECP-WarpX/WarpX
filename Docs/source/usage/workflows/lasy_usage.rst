@@ -167,7 +167,7 @@ Profile defined from a NumPy array directly (only supported for 3D arrays):
     num_points     = (100, 100, 100)                    # Number of points (nx,ny,nt) in each dimension
 
     laser = Laser(dimensions, lo, hi, num_points, laser_profile)
-    laser.write_to_file("numpylaser3D")
+    laser.write_to_file("numpylaser3d")
 
 Customize your laser profile by using an openPMD file
 -------------------
@@ -186,7 +186,7 @@ Profile defined from an openPMD file:
     iteration = 450
     field = 'E'
 
-    FromOpenPMDProfile(path, iteration, pol, field)
+    laser_profile = FromOpenPMDProfile(path, iteration, pol, field)
 
     dimensions     = "xyt"                              # Use 3D geometry
     lo             = (-25e-6, -25e-6, -20e-15)          # Lower bounds of the simulation box
@@ -194,4 +194,4 @@ Profile defined from an openPMD file:
     num_points     = (100, 100, 100)                    # Number of points (nx,ny,nt) in each dimension
 
     laser = Laser(dimensions, lo, hi, num_points, laser_profile)
-    laser.write_to_file("openPMDlaser3D")
+    laser.write_to_file("openPMDlaser3d")
