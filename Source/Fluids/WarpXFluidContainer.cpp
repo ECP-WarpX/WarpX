@@ -1030,6 +1030,7 @@ void WarpXFluidContainer::centrifugal_source (int lev)
 
                 // (SSP-RK3) Push the fluid momentum (R and Theta)
                 // F_r, F_theta are first order euler pushes of our rhs operator
+                // TODO: only do this if (r != 0)
                 if (i != domain.smallEnd(0)) {
                     auto u_r_1     = F_r(r,u_r,u_theta,u_z,dt);
                     auto u_theta_1 = F_theta(r,u_r,u_theta,u_z,dt);
@@ -1277,14 +1278,30 @@ void WarpXFluidContainer::DepositCurrent(
         amrex::Array4<amrex::Real> tmp_jy_fluid_arr = tmp_jy_fluid.array(mfi);
         amrex::Array4<amrex::Real> tmp_jz_fluid_arr = tmp_jz_fluid.array(mfi);
 
+        // TEMP: Geometry coef. Ad-hoc addition
+        #if defined(WARPX_DIM_RZ)
+            // Extract grid geometry properties
+            const auto dx = geom.CellSizeArray();
+            const auto problo = geom.ProbLoArray();
+        #endif
+
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
+                // TEMP: Ad-hoc addition 
+                #if defined(WARPX_DIM_RZ)
+                    auto pi = 3.1415926535897932;
+                    amrex::Real r = problo[0] + i * dx[0];
+                    auto geom_coef = 2.0*pi*r;
+                #else
+                    auto geom_coef = 1.0;
+                #endif
+
                 // Calculate J from fluid quantities
                 auto gamma = std::sqrt(N_arr(i, j, k) * N_arr(i, j, k) + (NUx_arr(i, j, k) * NUx_arr(i, j, k) + NUy_arr(i, j, k) * NUy_arr(i, j, k) + NUz_arr(i, j, k) * NUz_arr(i, j, k)) * inv_clight_sq) / N_arr(i, j, k);
-                tmp_jx_fluid_arr(i, j, k) = q * (NUx_arr(i, j, k) / gamma);
-                tmp_jy_fluid_arr(i, j, k) = q * (NUy_arr(i, j, k) / gamma);
-                tmp_jz_fluid_arr(i, j, k) = q * (NUz_arr(i, j, k) / gamma);
+                tmp_jx_fluid_arr(i, j, k) = geom_coef * q * (NUx_arr(i, j, k) / gamma);
+                tmp_jy_fluid_arr(i, j, k) = geom_coef * q * (NUy_arr(i, j, k) / gamma);
+                tmp_jz_fluid_arr(i, j, k) = geom_coef * q * (NUz_arr(i, j, k) / gamma);
             }
         );
     }
@@ -1315,29 +1332,15 @@ void WarpXFluidContainer::DepositCurrent(
         // Here, we do not perform any coarsening.
         amrex::GpuArray<int, 3U> coarsening_ratio = {1, 1, 1};
 
-        // Extra r
-        #if defined(WARPX_DIM_RZ)
-            // Compute r
-            WarpX &warpx = WarpX::GetInstance();
-            const amrex::Geometry &geom = warpx.Geom(lev);
-            const auto dx = geom.CellSizeArray();
-            const auto problo = geom.ProbLoArray();
-        #else
-            auto r_coef = 1.0;
-        #endif
 
         // Interpolate fluid current and deposit it
         // ( mask double counting )
         amrex::ParallelFor( tile_box_x, tile_box_y, tile_box_z,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                #if defined(WARPX_DIM_RZ)
-                    amrex::Real r = problo[0] + i * dx[0] + dx[0]/2.0;
-                    auto r_coef = r;
-                #endif
                 amrex::Real jx_tmp = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr,
                     j_nodal_type, jx_type, coarsening_ratio, i, j, k, 0);
-                if ( owner_mask_x_arr(i,j,k) ) jx_arr(i, j, k) += r_coef*jx_tmp;
+                if ( owner_mask_x_arr(i,j,k) ) jx_arr(i, j, k) += jx_tmp;
             },
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
@@ -1347,13 +1350,9 @@ void WarpXFluidContainer::DepositCurrent(
             },
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                #if defined(WARPX_DIM_RZ)
-                    amrex::Real r = problo[0] + i * dx[0] + dx[0]/2.0;
-                    auto r_coef = r;
-                #endif
                 amrex::Real jz_tmp = ablastr::coarsen::sample::Interp(tmp_jz_fluid_arr,
                     j_nodal_type, jz_type, coarsening_ratio, i, j, k, 0);
-                if ( owner_mask_z_arr(i,j,k) ) jz_arr(i, j, k) += r_coef*jz_tmp;
+                if ( owner_mask_z_arr(i,j,k) ) jz_arr(i, j, k) += jz_tmp;
             }
         );
     }
