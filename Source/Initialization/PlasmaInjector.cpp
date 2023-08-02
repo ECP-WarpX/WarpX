@@ -54,8 +54,9 @@ namespace {
     }
 }
 
-PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
-    : species_id(ispecies), species_name(name)
+PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
+    const amrex::Geometry& geom):
+    species_id{ispecies}, species_name{name}
 {
     using namespace amrex::literals;
 
@@ -83,7 +84,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     zmax = std::numeric_limits<amrex::Real>::max();
 
     // NOTE: When periodic boundaries are used, default injection range is set to mother grid dimensions.
-    const amrex::Geometry& geom = WarpX::GetInstance().Geom(0);
     if( geom.isPeriodic(0) ) {
 #       ifndef WARPX_DIM_1D_Z
         xmin = geom.ProbLo(0);

@@ -10,7 +10,6 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
-#include <AMReX_BLassert.H>
 #include <AMReX_Extension.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
@@ -90,7 +89,6 @@ namespace ablastr::coarsen::sample
         const int imin = idx_min[0];
         const int jmin = idx_min[1];
         const int kmin = idx_min[2];
-        int  ii, jj, kk;
         amrex::Real const wx = 1.0_rt / static_cast<amrex::Real>(numx);
         amrex::Real const wy = 1.0_rt / static_cast<amrex::Real>(numy);
         amrex::Real const wz = 1.0_rt / static_cast<amrex::Real>(numz);
@@ -100,9 +98,9 @@ namespace ablastr::coarsen::sample
         for         (int kref = 0; kref < numz; ++kref) {
             for     (int jref = 0; jref < numy; ++jref) {
                 for (int iref = 0; iref < numx; ++iref) {
-                    ii = imin+iref;
-                    jj = jmin+jref;
-                    kk = kmin+kref;
+                    const int ii = imin+iref;
+                    const int jj = jmin+jref;
+                    const int kk = kmin+kref;
                     c += wx*wy*wz*arr_src(ii,jj,kk,comp);
                 }
             }

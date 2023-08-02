@@ -179,8 +179,7 @@ void ParticleHistogram::ComputeDiags (int step)
     auto const num_bins = m_bin_num;
     Real const bin_min  = m_bin_min;
     Real const bin_size = m_bin_size;
-    const bool is_unity_particle_weight =
-        (m_norm == NormalizationType::unity_particle_weight) ? true : false;
+    const bool is_unity_particle_weight = (m_norm == NormalizationType::unity_particle_weight);
 
     bool const do_parser_filter = m_do_parser_filter;
 
