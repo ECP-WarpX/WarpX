@@ -94,6 +94,9 @@ class LibWarpX():
         except ImportError:
             raise Exception(f"Dimensionality '{self.geometry_dim}' was not compiled in this Python install. Please recompile with -DWarpX_DIMS={_dims}")
 
+        # matching space-dim of pyAMReX module
+        self.amr = self.libwarpx_so.amr
+
     def getNProcs(self):
         '''
 

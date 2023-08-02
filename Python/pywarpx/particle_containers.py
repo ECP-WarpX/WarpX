@@ -248,14 +248,8 @@ class ParticleContainerWrapper(object):
         numbers on each tile.
 
         '''
-        raise NotImplementedError()
-        ids = []
         structs = self.get_particle_structs(level)
-        for ptile_of_structs in structs:
-            arr = np.empty(ptile_of_structs.shape, np.int64)
-            self.libwarpx_so.warpx_convert_id_to_long(arr, ptile_of_structs, arr.size)
-            ids.append(arr)
-        return ids
+        return [libwarpx.amr.unpack_ids(struct['cpuid']) for struct in structs]
 
     def get_particle_cpu(self, level=0):
         '''
@@ -264,14 +258,8 @@ class ParticleContainerWrapper(object):
         numbers on each tile.
 
         '''
-        raise NotImplementedError()
-        cpus = []
         structs = self.get_particle_structs(level)
-        for ptile_of_structs in structs:
-            arr = np.empty(ptile_of_structs.shape, np.int32)
-            self.libwarpx_so.warpx_convert_cpu_to_int(arr, ptile_of_structs, arr.size)
-            cpus.append(arr)
-        return cpus
+        return [libwarpx.amr.unpack_cpus(struct['cpuid']) for struct in structs]
 
     def get_particle_x(self, level=0):
         '''
