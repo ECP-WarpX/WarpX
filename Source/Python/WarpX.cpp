@@ -6,10 +6,33 @@
 #include "pyWarpX.H"
 
 #include <WarpX.H>
-#include <FieldSolver/ElectrostaticSolver.H>
+// see WarpX.cpp - full includes for _fwd.H headers
+#include <BoundaryConditions/PML.H>
+#include <Diagnostics/MultiDiagnostics.H>
+#include <Diagnostics/ReducedDiags/MultiReducedDiags.H>
+#include <EmbeddedBoundary/WarpXFaceInfoBox.H>
+#include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H>
+#include <FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H>
+#include <FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H>
+#ifdef WARPX_USE_PSATD
+#   include <FieldSolver/SpectralSolver/SpectralKSpace.H>
+#   ifdef WARPX_DIM_RZ
+#       include <FieldSolver/SpectralSolver/SpectralSolverRZ.H>
+#       include <BoundaryConditions/PML_RZ.H>
+#   else
+#       include <FieldSolver/SpectralSolver/SpectralSolver.H>
+#   endif // RZ ifdef
+#endif // use PSATD ifdef
+#include <FieldSolver/WarpX_FDTD.H>
+#include <Filter/NCIGodfreyFilter.H>
 #include <Particles/MultiParticleContainer.H>
 #include <Particles/ParticleBoundaryBuffer.H>
-#include <Particles/PinnedMemoryParticleContainer.H>
+#include <AcceleratorLattice/AcceleratorLattice.H>
+#include <Utils/TextMsg.H>
+#include <Utils/WarpXAlgorithmSelection.H>
+#include <Utils/WarpXConst.H>
+#include <Utils/WarpXProfilerWrapper.H>
+#include <Utils/WarpXUtil.H>
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -29,9 +52,25 @@ namespace warpx {
 
 void init_WarpX (py::module& m)
 {
+    // Expose the WarpX instance
+    m.def("get_instance",
+        [] () { return &WarpX::GetInstance(); },
+        "Return a reference to the WarpX object.");
+
+    m.def("warpx_finalize", &WarpX::ResetInstance,
+        "Close out the WarpX related data");
+
     py::class_<WarpX> warpx(m, "WarpX");
     warpx
-        .def(py::init<>())
+        // WarpX is a Singleton Class with a private constructor
+        //   https://github.com/ECP-WarpX/WarpX/pull/4104
+        //   https://pybind11.readthedocs.io/en/stable/advanced/classes.html?highlight=singleton#custom-constructors
+        .def(py::init([]() {
+            return &WarpX::GetInstance();
+        }))
+        .def_static("get_instance",
+            [] () { return &WarpX::GetInstance(); },
+            "Return a reference to the WarpX object.")
 
         .def("initialize_data", &WarpX::InitData,
             "Initializes the WarpX simulation"

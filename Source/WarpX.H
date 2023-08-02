@@ -94,7 +94,18 @@ public:
      */
     static void Finalize();
 
+    /** Destructor */
     ~WarpX ();
+
+    /** Copy constructor */
+    WarpX ( WarpX const &) = delete;
+    /** Copy operator */
+    WarpX& operator= ( WarpX const & ) = delete;
+
+    /** Move constructor */
+    WarpX ( WarpX && ) = default;
+    /** Move operator */
+    WarpX& operator= ( WarpX && ) = default;
 
     static std::string Version (); //!< Version of WarpX executable
     static std::string PicsarVersion (); //!< Version of PICSAR dependency
@@ -1546,7 +1557,7 @@ private:
     bool is_synchronized = true;
 
     // Synchronization of nodal points
-    const bool sync_nodal_points = true;
+    static constexpr bool sync_nodal_points = true;
 
     guardCellManager guard_cells;
 

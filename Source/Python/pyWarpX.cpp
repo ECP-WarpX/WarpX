@@ -6,9 +6,9 @@
 #include "pyWarpX.H"
 #include "WarpX_py.H"
 
-#include <WarpX.H>
+#include <WarpX.H>  // todo: move this out to Python/WarpX.cpp
+#include <Utils/WarpXUtil.H>  // todo: move to its own Python/Utils.cpp
 #include <Initialization/WarpXAMReXInit.H>
-#include <Utils/WarpXUtil.H>
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
@@ -25,7 +25,6 @@
 #  define PYWARPX_MODULE_NAME CONCAT_NAME(warpx_pybind_, 3d)
 #endif
 
-namespace py = pybind11;
 //using namespace warpx;
 
 
@@ -117,21 +116,14 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
             return warpx::initialization::amrex_init(argc, tmp, build_parm_parse);
         }, py::return_value_policy::reference,
         "Initialize AMReX library");
-    m.def("amrex_finalize", [] () {amrex::Finalize();},
+    m.def("amrex_finalize", [] () { amrex::Finalize(); },
         "Close out the amrex related data");
-    m.def("warpx_finalize", &WarpX::ResetInstance,
-        "Close out the WarpX related data");
     m.def("convert_lab_params_to_boost",  &ConvertLabParamsToBoost,
         "Convert input parameters from the lab frame to the boosted frame");
     m.def("read_BC_params", &ReadBCParams,
         "Read the boundary condition parametes and check for consistency");
     m.def("check_gridding_for_RZ_spectral", &CheckGriddingForRZSpectral,
         "Ensure that the grid is setup appropriately with using the RZ spectral solver");
-
-    // Expose the WarpX instance
-    m.def("get_instance", &WarpX::GetInstance,
-        py::return_value_policy::reference,
-        "Return a reference to the WarpX object.");
 
     // Expose functions to get the processor number
     m.def("getNProcs", [](){return amrex::ParallelDescriptor::NProcs();} );
