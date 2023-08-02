@@ -77,7 +77,7 @@
 
     void warpx_finalize ()
     {
-        WarpX::ResetInstance();
+        WarpX::Finalize();
     }
 
     void warpx_ConvertLabParamsToBoost()

@@ -330,7 +330,7 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "                      |   - current_centering_noz = " << WarpX::current_centering_noz << "\n";
      }
     }
-    if (WarpX::use_hybrid_QED == true){
+    if (WarpX::use_hybrid_QED){
       amrex::Print() << "                      | - use_hybrid_QED = true \n";
     }
 
@@ -410,6 +410,12 @@ WarpX::InitData ()
     Print() << "WarpX (" << WarpX::Version() << ")\n";
 
     Print() << utils::logo::get_logo();
+
+    // Diagnostics
+    multi_diags = std::make_unique<MultiDiagnostics>();
+
+    /** create object for reduced diagnostics */
+    reduced_diags = std::make_unique<MultiReducedDiags>();
 
     // WarpX::computeMaxStepBoostAccelerator
     // needs to start from the initial zmin_domain_boost,
