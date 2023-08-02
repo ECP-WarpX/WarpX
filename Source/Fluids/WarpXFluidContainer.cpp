@@ -1229,30 +1229,14 @@ void WarpXFluidContainer::DepositCurrent(
         amrex::Array4<amrex::Real> tmp_jy_fluid_arr = tmp_jy_fluid.array(mfi);
         amrex::Array4<amrex::Real> tmp_jz_fluid_arr = tmp_jz_fluid.array(mfi);
 
-        // TEMP: Geometry coef. Ad-hoc addition
-        #if defined(WARPX_DIM_RZ)
-            // Extract grid geometry properties
-            const auto dx = geom.CellSizeArray();
-            const auto problo = geom.ProbLoArray();
-        #endif
-
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                // TEMP: Ad-hoc addition 
-                #if defined(WARPX_DIM_RZ)
-                    auto pi = 3.1415926535897932;
-                    amrex::Real r = problo[0] + i * dx[0];
-                    auto geom_coef = 1.0; //2.0*pi*r;
-                #else
-                    auto geom_coef = 1.0;
-                #endif
-
                 // Calculate J from fluid quantities
                 auto gamma = std::sqrt(N_arr(i, j, k) * N_arr(i, j, k) + (NUx_arr(i, j, k) * NUx_arr(i, j, k) + NUy_arr(i, j, k) * NUy_arr(i, j, k) + NUz_arr(i, j, k) * NUz_arr(i, j, k)) * inv_clight_sq) / N_arr(i, j, k);
-                tmp_jx_fluid_arr(i, j, k) = geom_coef * q * (NUx_arr(i, j, k) / gamma);
-                tmp_jy_fluid_arr(i, j, k) = geom_coef * q * (NUy_arr(i, j, k) / gamma);
-                tmp_jz_fluid_arr(i, j, k) = geom_coef * q * (NUz_arr(i, j, k) / gamma);
+                tmp_jx_fluid_arr(i, j, k) = q * (NUx_arr(i, j, k) / gamma);
+                tmp_jy_fluid_arr(i, j, k) = q * (NUy_arr(i, j, k) / gamma);
+                tmp_jz_fluid_arr(i, j, k) = q * (NUz_arr(i, j, k) / gamma);
             }
         );
     }
