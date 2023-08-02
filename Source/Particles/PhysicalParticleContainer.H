@@ -58,18 +58,18 @@ public:
 
     virtual ~PhysicalParticleContainer () {}
 
-    virtual void InitData () override;
+    void InitData () override;
 
-    virtual void ReadHeader (std::istream& is) override;
+    void ReadHeader (std::istream& is) override;
 
-    virtual void WriteHeader (std::ostream& os) const override;
+    void WriteHeader (std::ostream& os) const override;
 
-    virtual void InitIonizationModule () override;
+    void InitIonizationModule () override;
 
     /*
      * \brief Returns a pointer to the plasma injector.
      */
-    virtual PlasmaInjector* GetPlasmaInjector () override;
+    PlasmaInjector* GetPlasmaInjector () override;
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that

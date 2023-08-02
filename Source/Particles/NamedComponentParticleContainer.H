@@ -72,7 +72,7 @@ public:
     }
 
     /** Destructor for NamedComponentParticleContainer */
-    virtual ~NamedComponentParticleContainer() = default;
+    ~NamedComponentParticleContainer() = default;
 
     /** Construct a NamedComponentParticleContainer from a regular
      * amrex::ParticleContainer, and additional name-to-index maps

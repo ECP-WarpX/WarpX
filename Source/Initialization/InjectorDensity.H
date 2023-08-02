@@ -150,6 +150,9 @@ struct InjectorDensity
     void operator= (InjectorDensity const&) = delete;
     void operator= (InjectorDensity &&) = delete;
 
+    // Default destructor
+    ~InjectorDensity () = default;
+
     void clear ();
 
     // call getDensity from the object stored in the union

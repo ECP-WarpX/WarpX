@@ -11,10 +11,8 @@
 
 #include <string>
 
-LatticeElementBase::LatticeElementBase (std::string const& element_name)
-{
-    m_element_name = element_name;
-}
+LatticeElementBase::LatticeElementBase (std::string const& element_name):
+    m_element_name{element_name}{}
 
 void
 LatticeElementBase::AddElementBase (amrex::ParmParse & pp_element, amrex::ParticleReal & z_location)

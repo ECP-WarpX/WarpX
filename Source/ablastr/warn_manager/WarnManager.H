@@ -52,12 +52,27 @@ namespace ablastr::warn_manager
         /**
         * A singleton class should not be cloneable.
         */
-        WarnManager(WarnManager &other) = delete;
+        WarnManager( const WarnManager& ) = delete;
+
+        /**
+        * A singleton class should not be cloneable.
+        */
+        WarnManager( WarnManager&& ) = delete;
 
         /**
         * A singleton class should not be assignable.
         */
-        void operator=(const WarnManager &) = delete;
+        WarnManager& operator=( const WarnManager & ) = delete;
+
+        /**
+        * A singleton class should not be assignable.
+        */
+        WarnManager& operator=( const WarnManager&& ) = delete;
+
+        /**
+        * Default destructor
+        */
+        ~WarnManager() = default;
 
         static WarnManager& GetInstance();
 
