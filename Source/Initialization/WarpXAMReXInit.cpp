@@ -61,7 +61,7 @@ namespace warpx::initialization
 {
 
     amrex::AMReX*
-    amrex_init (int& argc, char**& argv, bool const build_parm_parse, const MPI_Comm mpi_comm)
+    amrex_init (int& argc, char**& argv, bool const build_parm_parse, MPI_Comm mpi_comm)
     {
         return amrex::Initialize(
             argc,
