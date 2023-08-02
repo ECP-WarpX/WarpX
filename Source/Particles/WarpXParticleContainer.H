@@ -207,6 +207,10 @@ public:
                         const bool apply_boundary_and_scale_volume = false,
                         const bool interpolate_across_levels = true,
                         const int icomp = 0);
+    void DepositCharge (std::unique_ptr<amrex::MultiFab>& rho, const int lev,
+                        const bool local = false, const bool reset = false,
+                        const bool apply_boundary_and_scale_volume = false,
+                        const int icomp = 0);
 
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
