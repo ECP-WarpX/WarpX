@@ -63,6 +63,7 @@ Finally, we create a lasy file containing the laser profile, using openPMD stand
     laser.write_to_file(file_prefix, file_format)
 
 or simply:
+
 .. code-block:: python
 
     laser.write_to_file("gaussianlaser3d")  # Use h5 format by default
