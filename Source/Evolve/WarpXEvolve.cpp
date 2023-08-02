@@ -683,6 +683,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         if (J_in_time == JInTime::Quadratic)
         {
             PSATDMoveJNewToJMid();
+            auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
         // Deposit rho at relative time t_depose_charge
             mypc->DepositCurrent(current, dt[0], t_depose_current + 0.5_rt*sub_dt);
             amrex::Print() << "(3) DepositCurrent at ---  " <<t_depose_current + 0.5_rt*sub_dt << "\n";
@@ -705,7 +706,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Filter, exchange boundary, and interpolate across levels
             SyncRho(rho_fp, rho_cp, charge_buf);
             // Forward FFT of rho
-            const int rho_idx = (rho_in_time == RhoInTime::Linear) ? rho_new : rho_mid;
+            const int rho_idx = (rho_in_time != RhoInTime::Constant) ? rho_new : rho_mid;
             PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_idx);
 
             if (rho_in_time == RhoInTime::Quadratic)

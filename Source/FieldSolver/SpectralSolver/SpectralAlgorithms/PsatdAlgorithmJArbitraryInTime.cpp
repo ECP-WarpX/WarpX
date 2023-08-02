@@ -219,20 +219,22 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             //     + I * c2 * S_ck * (kx * By_old - ky * Bx_old)
             //     + g0 * (Jz_new - 2._rt * Jz_mid + Jz_old) + b0 * (Jz_new - Jz_old) - S_ck/ep0 * Jz_mid
             //     + I * c2 * kz * (a0 * (rho_new - 2._rt * rho_mid + rho_old) - X2 * (rho_new - rho_old) - X1 * rho_mid) ;
+            const Complex sum_rho = a0 * a_rho - X2 * b_rho - X1 * c_rho;
+
             fields(i,j,k,Idx.Ex) = C * Ex_old
                 + I * c2 * S_ck * (ky * Bz_old - kz * By_old)
                 + g0 * a_jx + b0 * b_jx - S_ck/ep0 * c_jx
-                + I * c2 * kx * (a0 * a_rho - X2 * b_rho - X1 * c_rho) ;
+                + I * c2 * kx * sum_rho;
 
             fields(i,j,k,Idx.Ey) = C * Ey_old
                 + I * c2 * S_ck * (kz * Bx_old - kx * Bz_old)
                 + g0 * a_jy + b0 * b_jy - S_ck/ep0 * c_jy
-                + I * c2 * ky * (a0 * a_rho - X2 * b_rho - X1 * c_rho) ;
+                + I * c2 * ky * sum_rho;
 
             fields(i,j,k,Idx.Ez) = C * Ez_old
                 + I * c2 * S_ck * (kx * By_old - ky * Bx_old)
                 + g0 * a_jz + b0 * b_jz - S_ck/ep0 * c_jz
-                + I * c2 * kz * (a0 * a_rho - X2 * b_rho - X1 * c_rho) ;
+                + I * c2 * kz * sum_rho;
 
             // Update equations for B
 
@@ -291,7 +293,7 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
                     +  g0 * a_rho + b0 * b_rho - S_ck/ep0 * c_rho;
             }
 
-            if (divb_cleaning)
+            if (divb_cleaning) 
             //To be changed
             {
                 const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
