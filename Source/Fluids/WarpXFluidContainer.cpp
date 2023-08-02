@@ -126,15 +126,6 @@ void WarpXFluidContainer::InitData(int lev)
                 NUy_arr(i, j, k) = n * u.y * clight;
                 NUz_arr(i, j, k) = n * u.z * clight;
 
-                 // RZ-Debug
-                if  ( (i == 0) && (j == 0) ){
-                    std::cout << "\n *--------------------- INIT ---------------------*";
-                    std::cout << "\n i = " << i << " j = " << j << " k = " << k;
-                    std::cout << "\n N: " <<  N_arr(i,j,k) << " NUx: " << NUx_arr(i,j,k) << " NUy: " << NUy_arr(i,j,k) << " NUz: " << NUz_arr(i,j,k);
-                    std::cout << "\n x: " <<  x << " y: " << y << " z: " << z << " clight: " << clight;
-                    std::cout << "\n n: " << n << " u.x: " <<  u.x << " u.y: " << u.y << " u.z: " << u.z;
-                    std::cout << "\n *------------------------------------------*";
-                }
             }
         );
     }
@@ -925,31 +916,11 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto F3_minusz = flux(Q_minus_z(i,j-1,k,3),Q_plus_z(i,j-1,k,3),  Vz_L_minus,Vz_L_plus)*S_Az;
                     auto F3_plusz =  flux(Q_minus_z(i,j,k,3),  Q_plus_z(i,j,k,3),    Vz_I_minus,Vz_I_plus)*S_Az;
 
-                    // RZ-Debug
-                    if  ( (i == 0) && (j == 0) ){
-                        std::cout << "\n *------------------------------------------*";
-                        std::cout << "\n i = " << i << " j = " << j << " k = " << k;
-                        std::cout << "\n [OLD] N: " <<  N_arr(i,j,k) << " NUx: " << NUx_arr(i,j,k) << " NUy: " << NUy_arr(i,j,k) << " NUz: " << NUz_arr(i,j,k);
-                        std::cout << "\n [---] F0_px: " <<  F0_plusx << " F0_mx: " << F0_minusx << " F0_pz: " << F0_plusz << " F0_mz: " << F0_minusz;
-                        std::cout << "\n [---] N_arr_rhs (dt/V*flux): " << -(dt/Vij)*(F0_plusx - F0_minusx + F0_plusz - F0_minusz);
-                        std::cout << "\n [---] F3_px: " <<  F3_plusx << " F3_mx: " << F3_minusx << " F3_pz: " << F3_plusz << " F3_mz: " << F3_minusz;
-                        std::cout << "\n [---] S_Az: " << S_Az << " S_Ar_plus: " << S_Ar_plus << " S_Ar_minus: " << S_Ar_minus;
-                        std::cout << "\n [---] Vz_Lp: " <<  Vz_L_plus << " Vz_Lm: " << Vz_L_minus << " Vz_Ip: " << Vz_I_plus << " Vz_Im: " << Vz_I_minus;
-                        std::cout << "\n [---] Vij: " << Vij << " dt: " << dt;
-                    }
-
                     // Update Q from tn -> tn + dt
                     N_arr(i,j,k) = N_arr(i,j,k)     - (dt/Vij)*(F0_plusx - F0_minusx + F0_plusz - F0_minusz);
                     NUx_arr(i,j,k) = NUx_arr(i,j,k) - (dt/Vij)*(F1_plusx - F1_minusx + F1_plusz - F1_minusz);
                     NUy_arr(i,j,k) = NUy_arr(i,j,k) - (dt/Vij)*(F2_plusx - F2_minusx + F2_plusz - F2_minusz);
                     NUz_arr(i,j,k) = NUz_arr(i,j,k) - (dt/Vij)*(F3_plusx - F3_minusx + F3_plusz - F3_minusz);
-
-                    // RZ-Debug
-                    if  ( (i == 0) && (j == 0) ){
-                        std::cout << "\n [NEW] N: " <<  N_arr(i,j,k) << " NUx: " << NUx_arr(i,j,k) << " NUy: " << NUy_arr(i,j,k) << " NUz: " << NUz_arr(i,j,k);
-                        std::cout << "\n *------------------------------------------*\n\n";
-                    }
-
 
                 #else
 
@@ -1119,13 +1090,6 @@ void WarpXFluidContainer::GatherAndPush (
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
 
-                if  ( (i == 0) && (j == 0) ){
-                    std::cout << "\n *------------------ FIELDS ------------------------*";
-                    std::cout << "\n Ex: " << Ex_arr(i,j,k) << " Ey: " << Ey_arr(i,j,k) << " Ez: " << Ez_arr(i,j,k);
-                    std::cout << "\n Bx: " << Bx_arr(i,j,k) << " By: " << By_arr(i,j,k) << " Bz: " << Bz_arr(i,j,k);
-                    std::cout << "\n *------------------ FIELDS ------------------------*";
-                }
-
                 // Interpolate fields from tmp to Nodal points
                 amrex::Real Ex_Nodal = ablastr::coarsen::sample::Interp(Ex_arr,
                     Ex_type, Nodal_type, coarsening_ratio, i, j, k, 0);
@@ -1145,14 +1109,6 @@ void WarpXFluidContainer::GatherAndPush (
                 auto tmp_Uy = (NUy_arr(i, j, k) / N_arr(i,j,k));
                 auto tmp_Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
 
-                if  ( (i == 0) && (j == 0) ){
-                    std::cout << "\n *------------------ H&C ------------------------*";
-                    std::cout << "\n i = " << i << " j = " << j << " k = " << k;
-                    std::cout << "\n [OLD] Ux: " << tmp_Ux << " Uy: " << tmp_Uy << " Uz: " << tmp_Uz;
-                    std::cout << "\n Ex: " << Ex_Nodal << " Ey: " << Ey_Nodal << " Ez: " << Ez_Nodal;
-                    std::cout << "\n Bx: " << Bx_Nodal << " By: " << By_Nodal << " Bz: " << Bz_Nodal;
-                }
-
                 // Enforce RZ boundary conditions
                 #if defined(WARPX_DIM_RZ)
                     if  ( i == 0 ){
@@ -1167,11 +1123,6 @@ void WarpXFluidContainer::GatherAndPush (
                 UpdateMomentumHigueraCary(tmp_Ux, tmp_Uy, tmp_Uz,
                     Ex_Nodal, Ey_Nodal, Ez_Nodal,
                     Bx_Nodal, By_Nodal, Bz_Nodal, q, m, dt );
-
-                if  ( (i == 0) && (j == 0) ){
-                    std::cout << "\n [NEW] Ux: " << tmp_Ux << " Uy: " << tmp_Uy << " Uz: " << tmp_Uz;
-                    std::cout << "\n *------------------------------------------*";
-                }
 
                 // Calculate NU
                 NUx_arr(i,j,k) = N_arr(i,j,k)*tmp_Ux;
@@ -1292,7 +1243,7 @@ void WarpXFluidContainer::DepositCurrent(
                 #if defined(WARPX_DIM_RZ)
                     auto pi = 3.1415926535897932;
                     amrex::Real r = problo[0] + i * dx[0];
-                    auto geom_coef = 2.0*pi*r;
+                    auto geom_coef = 1.0; //2.0*pi*r;
                 #else
                     auto geom_coef = 1.0;
                 #endif

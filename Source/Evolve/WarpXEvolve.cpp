@@ -1015,10 +1015,6 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
                  cur_time, dt[lev], a_dt_type, skip_deposition);
-    myfl->Evolve(lev,
-                 *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                 *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
-                 *current_x, *current_y, *current_z, skip_deposition);
     if (! skip_deposition) {
 #ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
@@ -1040,6 +1036,10 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         // of the filter to avoid incorrect results (moved to `SyncCurrentAndRho()`).
         // Might this be related to issue #1943?
 #endif
+    myfl->Evolve(lev,
+                *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+                *current_x, *current_y, *current_z, skip_deposition);
     }
 }
 
