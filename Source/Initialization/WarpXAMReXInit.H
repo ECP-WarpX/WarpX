@@ -31,7 +31,7 @@ namespace warpx::initialization
         int& argc,
         char**& argv,
         bool const build_parm_parse = true,
-        MPI_Comm const mpi_comm = MPI_COMM_WORLD
+        const MPI_Comm mpi_comm = MPI_COMM_WORLD
     );
 
 }
