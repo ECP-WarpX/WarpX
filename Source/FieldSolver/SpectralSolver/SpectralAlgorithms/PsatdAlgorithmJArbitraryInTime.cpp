@@ -72,6 +72,7 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
     {
         X5_coef = SpectralRealCoefficients(ba, dm, 1, 0);
         X6_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        X7_coef = SpectralRealCoefficients(ba, dm, 1, 0);
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
 }
@@ -114,10 +115,12 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
 
         amrex::Array4<const amrex::Real> X5_arr;
         amrex::Array4<const amrex::Real> X6_arr;
+        amrex::Array4<const amrex::Real> X7_arr;
         if (time_averaging)
         {
             X5_arr = X5_coef[mfi].array();
             X6_arr = X6_coef[mfi].array();
+            X7_arr = X7_coef[mfi].array();
         }
 
         // Extract pointers for the k vectors
@@ -293,7 +296,7 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
                     +  g0 * a_rho + b0 * b_rho - S_ck/ep0 * c_rho;
             }
 
-            if (divb_cleaning) 
+            if (divb_cleaning)
             //To be changed
             {
                 const Complex k_dot_B = kx * Bx_old + ky * By_old + kz * Bz_old;
@@ -309,6 +312,8 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             {
                 const amrex::Real X5 = X5_arr(i,j,k);
                 const amrex::Real X6 = X6_arr(i,j,k);
+                const amrex::Real X7 = X7_arr(i,j,k);
+
 
                 // TODO: Here the code is *accumulating* the average,
                 // because it is meant to be used with sub-cycling
@@ -316,27 +321,32 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
                 // To be changed
                 fields(i,j,k,Idx.Ex_avg) += S_ck * Ex_old
                     + I * c2 * ep0 * X1 * (ky * Bz_old - kz * By_old)
-                    + I * X5 * rho_old * kx + I * X6 * rho_new * kx + X3/c2 * Jx_old - X2/c2 * Jx_new;
+                    - I * c2 * kx * (X5 * a_rho + X6 * b_rho + X7 * c_rho)
+                    + ( a0 * a_jx - X2 * b_jx - X1 * c_jx);
 
                 fields(i,j,k,Idx.Ey_avg) += S_ck * Ey_old
                     + I * c2 * ep0 * X1 * (kz * Bx_old - kx * Bz_old)
-                    + I * X5 * rho_old * ky + I * X6 * rho_new * ky + X3/c2 * Jy_old - X2/c2 * Jy_new;
+                    - I * c2 * ky * (X5 * a_rho + X6 * b_rho + X7 * c_rho)
+                    + ( a0 * a_jy - X2 * b_jy - X1 * c_jy);
 
                 fields(i,j,k,Idx.Ez_avg) += S_ck * Ez_old
                     + I * c2 * ep0 * X1 * (kx * By_old - ky * Bx_old)
-                    + I * X5 * rho_old * kz + I * X6 * rho_new * kz + X3/c2 * Jz_old - X2/c2 * Jz_new;
+                    - I * c2 * kz * (X5 * a_rho + X6 * b_rho + X7 * c_rho)
+                    + ( a0 * a_jz - X2 * b_jz - X1 * c_jz);
+
+
 
                 fields(i,j,k,Idx.Bx_avg) += S_ck * Bx_old
                     - I * ep0 * X1 * (ky * Ez_old - kz * Ey_old)
-                    - I * X5/c2 * (ky * Jz_old - kz * Jy_old) - I * X6/c2 * (ky * Jz_new - kz * Jy_new);
+                    + I * (ky * (X5 * a_jz + X6 * b_jz + X7 * c_jz) - kz * (X5 * a_jy + X6 * b_jy + X7 * c_jy));
 
                 fields(i,j,k,Idx.By_avg) += S_ck * By_old
                     - I * ep0 * X1 * (kz * Ex_old - kx * Ez_old)
-                    - I * X5/c2 * (kz * Jx_old - kx * Jz_old) - I * X6/c2 * (kz * Jx_new - kx * Jz_new);
+                    + I * (kz * (X5 * a_jx + X6 * b_jx + X7 * c_jx) - kx * (X5 * a_jz + X6 * b_jz + X7 * c_jz));
 
                 fields(i,j,k,Idx.Bz_avg) += S_ck * Bz_old
                     - I * ep0 * X1 * (kx * Ey_old - ky * Ex_old)
-                    - I * X5/c2 * (kx * Jy_old - ky * Jx_old) - I * X6/c2 * (kx * Jy_new - ky * Jx_new);
+                    + I * (kx * (X5 * a_jy + X6 * b_jy + X7 * c_jy) - ky * (X5 * a_jx + X6 * b_jx + X7 * c_jx));
 
                 if (dive_cleaning)
                 {
@@ -420,6 +430,7 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
             }
 
             // X1 (multiplies i*([k] \times J) in the update equation for update B)
+
             if (om_s != 0.)
             {
                 X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * om2_s);
@@ -493,6 +504,7 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficientsAveraging (
 
         const amrex::Array4<amrex::Real> X5 = X5_coef[mfi].array();
         const amrex::Array4<amrex::Real> X6 = X6_coef[mfi].array();
+        const amrex::Array4<amrex::Real> X7 = X7_coef[mfi].array();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -511,29 +523,40 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficientsAveraging (
             constexpr amrex::Real ep0 = PhysConst::ep0;
 
             // Auxiliary coefficients
+            const amrex::Real dt2 = dt * dt;
             const amrex::Real dt3 = dt * dt * dt;
 
             const amrex::Real om_s  = c * knorm_s;
             const amrex::Real om2_s = om_s * om_s;
+            const amrex::Real om3_s = om2_s * om_s;
             const amrex::Real om4_s = om2_s * om2_s;
 
             if (om_s != 0.)
             {
-                X5(i,j,k) = c2 / ep0 * (S_ck(i,j,k) / om2_s - (1._rt - C(i,j,k)) / (om4_s * dt)
-                                        - 0.5_rt * dt / om2_s);
+                X5(i,j,k) = (dt3*om3_s - 3._rt*dt2*om3_s*S_ck(i,j,k) - 12._rt*dt*om_s*(1._rt+C(i,j,k)) + 24._rt*om_s*S_ck(i,j,k)) / (6._rt*ep0*dt2*om4_s*om_s);
             }
             else
             {
-                X5(i,j,k) = - c2 * dt3 / (8._rt * ep0);
+                X5(i,j,k) = dt3 / (30._rt * ep0);
             }
 
             if (om_s != 0.)
             {
-                X6(i,j,k) = c2 / ep0 * ((1._rt - C(i,j,k)) / (om4_s * dt) - 0.5_rt * dt / om2_s);
+                X6(i,j,k) =  ( dt*om2_s*S_ck(i,j,k) + 2._rt*C(i,j,k) - 2._rt) / (2._rt*ep0*dt*om4_s);
+
             }
             else
             {
-                X6(i,j,k) = - c2 * dt3 / (24._rt * ep0);
+                X6(i,j,k) = - dt3 / (24._rt * ep0);
+            }
+            if (om_s != 0.)
+            {
+                X7(i,j,k) =  ( dt - S_ck(i,j,k) ) / (ep0*om2_s);
+
+            }
+            else
+            {
+                X7(i,j,k) = dt3 / (6._rt * ep0);
             }
         });
     }
