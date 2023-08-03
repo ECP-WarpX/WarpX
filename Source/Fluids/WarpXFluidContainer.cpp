@@ -15,12 +15,12 @@
 using namespace ablastr::utils::communication;
 using namespace amrex;
 
-WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std::string &name)
+WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std::string &name, const amrex::Geometry geom)
 {
     species_id = ispecies;
     species_name = name;
-    WarpX &warpx = WarpX::GetInstance();
-    const amrex::Geometry &geom = warpx.Geom(0);
+    //WarpX &warpx = WarpX::GetInstance();
+    //const amrex::Geometry &geom = warpx.Geom(0);
 
     plasma_injector = std::make_unique<PlasmaInjector>(species_id, species_name, geom);
     physical_species = plasma_injector->getPhysicalSpecies();

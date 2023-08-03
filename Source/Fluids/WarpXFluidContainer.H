@@ -31,7 +31,7 @@ class WarpXFluidContainer
 public:
     friend MultiFluidContainer;
 
-    WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name);
+    WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name, const amrex::Geometry geom);
     ~WarpXFluidContainer() {}
 
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);

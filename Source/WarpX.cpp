@@ -327,7 +327,7 @@ WarpX::WarpX ()
     m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
 
     // Fluid Container
-    myfl = std::make_unique<MultiFluidContainer>(nlevs_max);
+    myfl = std::make_unique<MultiFluidContainer>(nlevs_max, geom[0]);
 
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
