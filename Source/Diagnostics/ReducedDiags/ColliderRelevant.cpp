@@ -101,11 +101,11 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
     };
 
 #if (defined WARPX_DIM_3D)
-    add_diag("lumi", "lumi(m^-2*s^-1)");
+    add_diag("dL_dt", "dL_dt(m^-2*s^-1)");
 #elif (defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ))
-    add_diag("lumi", "lumi(m^-1*s^-1)");
+    add_diag("dL_dt", "dL_dt(m^-1*s^-1)");
 #else
-    add_diag("lumi", "lumi(s^-1)");
+    add_diag("dL_dt", "dL_dt(s^-1)");
 #endif
 
     // loop over species
@@ -120,10 +120,27 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
             add_diag("chimax_"+species_names[i_s], "chimax_"+species_names[i_s]+"()");
         }
 #if (defined WARPX_DIM_3D)
+        add_diag("x_ave_"+species_names[i_s], "x_ave_"+species_names[i_s]+"(m)");
+        add_diag("y_ave_"+species_names[i_s], "y_ave_"+species_names[i_s]+"(m)");
         add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
         add_diag("y_std_"+species_names[i_s], "y_std_"+species_names[i_s]+"(m)");
+        add_diag("thetax_ave_"+species_names[i_s], "thetax_ave_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_ave_"+species_names[i_s], "thetay_ave_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_std_"+species_names[i_s], "thetax_std_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_std_"+species_names[i_s], "thetay_std_"+species_names[i_s]+"(rad)");        
+        add_diag("thetax_min_"+species_names[i_s], "thetax_min_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_min_"+species_names[i_s], "thetay_min_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_max_"+species_names[i_s], "thetax_max_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_max_"+species_names[i_s], "thetay_max_"+species_names[i_s]+"(rad)");
+
 #elif (defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ))
+        add_diag("x_ave_"+species_names[i_s], "x_ave_"+species_names[i_s]+"(m)");
         add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
+        add_diag("thetax_ave_"+species_names[i_s], "thetax_ave_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_std_"+species_names[i_s], "thetax_std_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_min_"+species_names[i_s], "thetax_min_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_max_"+species_names[i_s], "thetax_max_"+species_names[i_s]+"(rad)");
+
 #endif
 
         m_data.resize(all_diag_names.size());
@@ -142,7 +159,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
             ofs << "[" << off++ << "]step()";
             ofs << m_sep;
             ofs << "[" << off++ << "]time(s)";
-            ofs << m_sep;
+            //ofs << m_sep;
             for (const auto& name : all_diag_names){
                 const auto& el = m_headers_indices[name];
                 ofs << m_sep << "[" << el.idx + off << "]" << el.header;
@@ -207,73 +224,188 @@ void ColliderRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum(wtot, ParallelDescriptor::IOProcessorNumber());
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        // x_ave
-        Real x_ave = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        {
-            const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real x = p.pos(0);
-            return w*x; });
-        ParallelDescriptor::ReduceRealSum(x_ave, ParallelDescriptor::IOProcessorNumber());
+        // thetax_min, thetax_max  
+        Real thetax_min = 0.0_rt; 
+        Real thetax_max = 0.0_rt; 
+
+        amrex::ReduceOps<ReduceOpMin, ReduceOpMax> reduce_ops_minmax;
+        auto r_minmax = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
+            myspc,
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real>
+            {
+                const amrex::Real ux = p.rdata(PIdx::ux);
+                const amrex::Real uz = p.rdata(PIdx::uz);
+                const amrex::Real thetax = std::atan2(ux, uz);
+                return {thetax, thetax};
+            },
+            reduce_ops_minmax);
+        thetax_min = amrex::get<0>(r_minmax);
+        thetax_max = amrex::get<1>(r_minmax);
+        ParallelDescriptor::ReduceRealMin(thetax_min, ParallelDescriptor::IOProcessorNumber());
+        ParallelDescriptor::ReduceRealMax(thetax_max, ParallelDescriptor::IOProcessorNumber());
+   
+        // x_ave, thetax_ave 
+        Real x_ave = 0.0_rt;
+        Real thetax_ave = 0.0_rt;
+
+        amrex::ReduceOps<ReduceOpSum, ReduceOpSum> reduce_ops_ave;
+        auto r_ave = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
+            myspc,
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real>
+            {
+                const amrex::Real w  = p.rdata(PIdx::w);
+                const amrex::Real x = p.pos(0);
+                const amrex::Real ux = p.rdata(PIdx::ux);
+                const amrex::Real uz = p.rdata(PIdx::uz);
+                const amrex::Real thetax = std::atan2(ux, uz);
+                return {w*x, w*thetax};
+            },
+            reduce_ops_ave);
+        x_ave = amrex::get<0>(r_ave);
+        thetax_ave = amrex::get<1>(r_ave);
+        ParallelDescriptor::ReduceRealSum({x_ave, thetax_ave}, ParallelDescriptor::IOProcessorNumber());
         x_ave = x_ave / wtot;
+        thetax_ave = thetax_ave / wtot;
 
-        // x_std
-        Real x_std = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        {
-            const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real x = p.pos(0);
-            const amrex::Real tmp = (x - x_ave)*(x - x_ave)*w;
-            return tmp; });
-        ParallelDescriptor::ReduceRealSum(x_std, ParallelDescriptor::IOProcessorNumber());
+        // x_std, y_std, thetax_std, thetay_std 
+        Real x_std = 0.0_rt;
+        Real thetax_std = 0.0_rt;
+
+        amrex::ReduceOps<ReduceOpSum, ReduceOpSum> reduce_ops_std;
+        auto r_std = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
+            myspc,
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real>
+            {
+                const amrex::Real w  = p.rdata(PIdx::w);
+                const amrex::Real x = p.pos(0);
+                const amrex::Real ux = p.rdata(PIdx::ux);
+                const amrex::Real uz = p.rdata(PIdx::uz);
+                const amrex::Real thetax = std::atan2(ux, uz);
+                const amrex::Real tmp1 = (x - x_ave)*(x - x_ave)*w;
+                const amrex::Real tmp2 = (thetax - thetax_ave)*(thetax - thetax_ave)*w;
+                return {tmp1, tmp2};
+            },
+            reduce_ops_std);
+        x_std = amrex::get<0>(r_std);
+        thetax_std = amrex::get<1>(r_std);
+        ParallelDescriptor::ReduceRealSum({x_std, thetax_std}, ParallelDescriptor::IOProcessorNumber());
         x_std = std::sqrt(x_std / wtot);
-#elif defined(WARPX_DIM_3D)
-        // x_ave
-        Real x_ave = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        {
-            const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real x = p.pos(0);
-            return w*x; });
-        ParallelDescriptor::ReduceRealSum(x_ave, ParallelDescriptor::IOProcessorNumber());
-        x_ave = x_ave / wtot;
+        thetax_std = std::sqrt(thetax_std / wtot);
 
-        // x_std
-        Real x_std = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        {
-            const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real x = p.pos(0);
-            const amrex::Real tmp = (x - x_ave)*(x - x_ave)*w;
-            return tmp; });
-        ParallelDescriptor::ReduceRealSum(x_std, ParallelDescriptor::IOProcessorNumber());
-        x_std = std::sqrt(x_std / wtot);
-
-        // y_ave
-        Real y_ave = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        {
-            const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real y = p.pos(1);
-            return w*y; });
-        ParallelDescriptor::ReduceRealSum(y_ave, ParallelDescriptor::IOProcessorNumber());
-        y_ave = y_ave / wtot;
-
-        // y_std
-        Real y_std = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        {
-            const amrex::Real w  = p.rdata(PIdx::w);
-            const amrex::Real y = p.pos(1);
-            const amrex::Real tmp = (y - y_ave)*(y - y_ave)*w;
-            return tmp; });
-        ParallelDescriptor::ReduceRealSum(y_std, ParallelDescriptor::IOProcessorNumber());
-        y_std = std::sqrt(y_std / wtot);
-
-        //m_data[get_idx("x_ave_"+species_names[i_s])] = x_ave;
+        m_data[get_idx("x_ave_"+species_names[i_s])] = x_ave;
         m_data[get_idx("x_std_"+species_names[i_s])] = x_std;
-        //m_data[get_idx("y_ave_"+species_names[i_s])] = y_ave;
+        m_data[get_idx("thetax_min_"+species_names[i_s])] = thetax_min;
+        m_data[get_idx("thetax_ave_"+species_names[i_s])] = thetax_ave;
+        m_data[get_idx("thetax_max_"+species_names[i_s])] = thetax_max;
+        m_data[get_idx("thetax_std_"+species_names[i_s])] = thetax_std;
+
+#elif defined(WARPX_DIM_3D)
+        // thetax_min, thetax_max, thetay_min, thetay_max  
+        Real thetax_min = 0.0_rt; 
+        Real thetax_max = 0.0_rt; 
+        Real thetay_min = 0.0_rt; 
+        Real thetay_max = 0.0_rt; 
+
+        amrex::ReduceOps<ReduceOpMin, ReduceOpMax, ReduceOpMin, ReduceOpMax> reduce_ops_minmax;
+        auto r_minmax = amrex::ParticleReduce<amrex::ReduceData<Real, Real, Real, Real>>(
+            myspc,
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real, Real, Real>
+            {
+                const amrex::Real ux = p.rdata(PIdx::ux);
+                const amrex::Real uy = p.rdata(PIdx::uy);
+                const amrex::Real uz = p.rdata(PIdx::uz);
+                const amrex::Real thetax = std::atan2(ux, uz);
+                const amrex::Real thetay = std::atan2(uy, uz);
+                return {thetax, thetax, thetay, thetay};
+            },
+            reduce_ops_minmax);
+        thetax_min = amrex::get<0>(r_minmax);
+        thetax_max = amrex::get<1>(r_minmax);
+        thetay_min = amrex::get<2>(r_minmax);
+        thetay_max = amrex::get<3>(r_minmax);
+        ParallelDescriptor::ReduceRealMin({thetax_min, thetay_min}, ParallelDescriptor::IOProcessorNumber());
+        ParallelDescriptor::ReduceRealMax({thetax_max, thetay_max}, ParallelDescriptor::IOProcessorNumber());
+   
+        // x_ave, y_ave, thetax_ave, thetay_ave 
+        Real x_ave = 0.0_rt;
+        Real y_ave = 0.0_rt;
+        Real thetax_ave = 0.0_rt;
+        Real thetay_ave = 0.0_rt;
+
+        amrex::ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_ops_ave;
+        auto r_ave = amrex::ParticleReduce<amrex::ReduceData<Real, Real, Real, Real>>(
+            myspc,
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real, Real, Real>
+            {
+                const amrex::Real w  = p.rdata(PIdx::w);
+                const amrex::Real x = p.pos(0);
+                const amrex::Real ux = p.rdata(PIdx::ux);
+                const amrex::Real y = p.pos(1);
+                const amrex::Real uy = p.rdata(PIdx::uy);
+                const amrex::Real uz = p.rdata(PIdx::uz);
+                const amrex::Real thetax = std::atan2(ux, uz);
+                const amrex::Real thetay = std::atan2(uy, uz);
+                return {w*x, w*y, w*thetax, w*thetay};
+            },
+            reduce_ops_ave);
+        x_ave = amrex::get<0>(r_ave);
+        y_ave = amrex::get<1>(r_ave);
+        thetax_ave = amrex::get<2>(r_ave);
+        thetay_ave = amrex::get<3>(r_ave);
+        ParallelDescriptor::ReduceRealSum({x_ave, y_ave, thetax_ave, thetay_ave}, ParallelDescriptor::IOProcessorNumber());
+        x_ave = x_ave / wtot;
+        y_ave = y_ave / wtot;
+        thetax_ave = thetax_ave / wtot;
+        thetay_ave = thetay_ave / wtot;
+
+        // x_std, y_std, thetax_std, thetay_std 
+        Real x_std = 0.0_rt;
+        Real y_std = 0.0_rt;
+        Real thetax_std = 0.0_rt;
+        Real thetay_std = 0.0_rt;
+
+        amrex::ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_ops_std;
+        auto r_std = amrex::ParticleReduce<amrex::ReduceData<Real, Real, Real, Real>>(
+            myspc,
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real, Real, Real>
+            {
+                const amrex::Real w  = p.rdata(PIdx::w);
+                const amrex::Real x = p.pos(0);
+                const amrex::Real ux = p.rdata(PIdx::ux);
+                const amrex::Real y = p.pos(1);
+                const amrex::Real uy = p.rdata(PIdx::uy);
+                const amrex::Real uz = p.rdata(PIdx::uz);
+                const amrex::Real thetax = std::atan2(ux, uz);
+                const amrex::Real thetay = std::atan2(uy, uz);
+                const amrex::Real tmp1 = (x - x_ave)*(x - x_ave)*w;
+                const amrex::Real tmp2 = (y - y_ave)*(y - y_ave)*w;
+                const amrex::Real tmp3 = (thetax - thetax_ave)*(thetax - thetax_ave)*w;
+                const amrex::Real tmp4 = (thetay - thetay_ave)*(thetay - thetay_ave)*w;
+                return {tmp1, tmp2, tmp3, tmp4};
+            },
+            reduce_ops_std);
+        x_std = amrex::get<0>(r_std);
+        y_std = amrex::get<1>(r_std);
+        thetax_std = amrex::get<2>(r_std);
+        thetay_std = amrex::get<3>(r_std);
+        ParallelDescriptor::ReduceRealSum({x_std, y_std, thetax_std, thetay_std}, ParallelDescriptor::IOProcessorNumber());
+        x_std = std::sqrt(x_std / wtot);
+        y_std = std::sqrt(y_std / wtot);
+        thetax_std = std::sqrt(thetax_std / wtot);
+        thetay_std = std::sqrt(thetay_std / wtot);
+
+        m_data[get_idx("x_ave_"+species_names[i_s])] = x_ave;
+        m_data[get_idx("x_std_"+species_names[i_s])] = x_std;
+        m_data[get_idx("y_ave_"+species_names[i_s])] = y_ave;
         m_data[get_idx("y_std_"+species_names[i_s])] = y_std;
+        m_data[get_idx("thetax_min_"+species_names[i_s])] = thetax_min;
+        m_data[get_idx("thetax_ave_"+species_names[i_s])] = thetax_ave;
+        m_data[get_idx("thetax_max_"+species_names[i_s])] = thetax_max;
+        m_data[get_idx("thetax_std_"+species_names[i_s])] = thetax_std;
+        m_data[get_idx("thetay_min_"+species_names[i_s])] = thetay_min;
+        m_data[get_idx("thetay_ave_"+species_names[i_s])] = thetay_ave;
+        m_data[get_idx("thetay_max_"+species_names[i_s])] = thetay_max;
+        m_data[get_idx("thetay_std_"+species_names[i_s])] = thetay_std;
 #endif
 
 #if (defined WARPX_QED)
@@ -319,6 +451,11 @@ void ColliderRelevant::ComputeDiags (int step)
                 const MultiFab & By = warpx.getBfield(lev,1);
                 const MultiFab & Bz = warpx.getBfield(lev,2);
 
+                // declare reduce_op
+                ReduceOps<ReduceOpMin, ReduceOpMax, ReduceOpSum> reduce_op;
+                ReduceData<Real, Real, Real> reduce_data(reduce_op);
+                using ReduceTuple = typename decltype(reduce_data)::Type;
+
                 // Loop over boxes
                 for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
                 {
@@ -350,10 +487,7 @@ void ColliderRelevant::ComputeDiags (int step)
                     const IndexType by_type = By[pti].box().ixType();
                     const IndexType bz_type = Bz[pti].box().ixType();
 
-                    // declare reduce_op
-                    ReduceOps<ReduceOpMin, ReduceOpMax, ReduceOpSum> reduce_op;
-                    ReduceData<Real, Real, Real> reduce_data(reduce_op);
-                    using ReduceTuple = typename decltype(reduce_data)::Type;
+                    // evaluate reduce_op
                     reduce_op.eval(pti.numParticles(), reduce_data,
                     [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                     {
@@ -374,7 +508,6 @@ void ColliderRelevant::ComputeDiags (int step)
                             n_rz_azimuthal_modes, nox, galerkin_interpolation);
                         // compute chi
                         Real chi = 0.0_rt;
-
                         if ( is_photon ) {
                             chi = QedUtils::chi_photon(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
@@ -385,18 +518,15 @@ void ColliderRelevant::ComputeDiags (int step)
                         //amrex::AllPrint() << "CHI DOT W " << chi << " " << w[i] << " " << chi*w[i] <<  "   \n";
                         return {chi, chi, chi*w[i]};
                     });
-
-                    auto hv = reduce_data.value();
-
-                    chimin[lev] = get<0>(hv);
-                    chimax[lev] = get<1>(hv);
-                    chiave[lev] = get<2>(hv);
                 }
+                auto val = reduce_data.value();
+                chimin[lev] = get<0>(val);
+                chimax[lev] = get<1>(val);
+                chiave[lev] = get<2>(val);
             }
             chimin_f = *std::min_element(chimin.begin(), chimin.end());
             chimax_f = *std::max_element(chimax.begin(), chimax.end());
             chiave_f = chiave[0]; // FIXME mesh refinement
-
             ParallelDescriptor::ReduceRealMin(chimin_f, ParallelDescriptor::IOProcessorNumber());
             ParallelDescriptor::ReduceRealMax(chimax_f, ParallelDescriptor::IOProcessorNumber());
             ParallelDescriptor::ReduceRealSum(chiave_f, ParallelDescriptor::IOProcessorNumber());
@@ -421,7 +551,6 @@ void ColliderRelevant::ComputeDiags (int step)
     // compute luminosity
     auto const n1_dot_n2 = amrex::MultiFab::Dot(mf_dst1, 0, mf_dst2, 0, 1, 0);
     auto const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
-
-    m_data[get_idx("lumi")] = lumi;
+    m_data[get_idx("dL_dt")] = lumi;
 }
 // end void ColliderRelevant::ComputeDiags
