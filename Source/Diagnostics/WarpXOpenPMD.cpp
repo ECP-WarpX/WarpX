@@ -301,10 +301,7 @@ namespace detail
     getUnitDimension ( std::string const & record_name )
     {
 
-        if( record_name == "position" ) return {
-            {openPMD::UnitDimension::L,  1.}
-        };
-        else if( record_name == "positionOffset" ) return {
+        if( (record_name == "position") || (record_name == "positionOffset") ) return {
             {openPMD::UnitDimension::L,  1.}
         };
         else if( record_name == "momentum" ) return {
@@ -517,7 +514,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
-                  const bool use_pinned_pc, const bool isBTD, const bool isLastBTDFlush,
+                  const amrex::Real time, const bool use_pinned_pc,
+                  const bool isBTD, const bool isLastBTDFlush,
                   const amrex::Vector<int>& totalParticlesFlushedAlready)
 {
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
@@ -578,7 +576,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
                                 utils::parser::compileParser<ParticleDiag::m_nvars>
                                      (particle_diags[i].m_particle_filter_parser.get()),
-                                 pc->getMass());
+                                 pc->getMass(), time);
       parser_filter.m_units = InputUnits::SI;
       GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                            particle_diags[i].m_diag_domain);
@@ -1207,9 +1205,8 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     // - Global offset
     std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
 #if defined(WARPX_DIM_RZ)
-    auto & warpx = WarpX::GetInstance();
     if (var_in_theta_mode) {
-            global_size.emplace(global_size.begin(), warpx.ncomps);
+            global_size.emplace(global_size.begin(), WarpX::ncomps);
     }
 #endif
     // - AxisLabels
@@ -1251,8 +1248,8 @@ WarpXOpenPMDPlot::GetMeshCompNames (int meshLevel,
         std::vector< std::string > const field_components = detail::getFieldComponentLabels(var_in_theta_mode);
         for( std::string const& vector_field : vector_fields ) {
             for( std::string const& component : field_components ) {
-                if( vector_field.compare( varname_1st ) == 0 &&
-                    component.compare( varname_2nd ) == 0 )
+                if( vector_field == varname_1st &&
+                    component == varname_2nd )
                 {
                     field_name = varname_1st + varname.substr(2); // Strip component
                     comp_name = varname_2nd;

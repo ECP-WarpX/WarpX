@@ -655,7 +655,7 @@ LaserParticleContainer::Evolve (int lev,
             WARPX_PROFILE_VAR_STOP(blp_pp);
 
             // Current Deposition
-            if (skip_deposition == false)
+            if (!skip_deposition)
             {
                 // Deposit at t_{n+1/2}
                 const amrex::Real relative_time = -0.5_rt * dt;

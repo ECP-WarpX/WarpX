@@ -65,12 +65,8 @@ WarpX::Evolve (int numsteps)
 
     Real cur_time = t_new[0];
 
-    int numsteps_max;
-    if (numsteps < 0) {  // Note that the default argument is numsteps = -1
-        numsteps_max = max_step;
-    } else {
-        numsteps_max = istep[0] + numsteps;
-    }
+    // Note that the default argument is numsteps = -1
+    const int numsteps_max = (numsteps < 0)?(max_step):(istep[0] + numsteps);
 
     bool early_params_checked = false; // check typos in inputs after step 1
     bool exit_loop_due_to_interrupt_signal = false;
@@ -370,7 +366,7 @@ WarpX::Evolve (int numsteps)
         // inputs: unused parameters (e.g. typos) check after step 1 has finished
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
-            amrex::ParmParse().QueryUnusedInputs();
+            amrex::ParmParse::QueryUnusedInputs();
 
             //Print the warning list right after the first step.
             amrex::Print() <<
@@ -544,7 +540,7 @@ void WarpX::SyncCurrentAndRho ()
             // Without periodic single box, synchronize J and rho here,
             // except with current correction or Vay deposition:
             // in these cases, synchronize later (in WarpX::PushPSATD)
-            if (current_correction == false &&
+            if (!current_correction &&
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
                 SyncCurrent(current_fp, current_cp, current_buf);

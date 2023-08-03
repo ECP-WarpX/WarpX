@@ -82,6 +82,30 @@
 
 using namespace amrex;
 
+namespace
+{
+    /**
+     * \brief Check that the number of guard cells is smaller than the number of valid cells,
+     * for a given MultiFab, and abort otherwise.
+     */
+    void CheckGuardCells(amrex::MultiFab const& mf)
+    {
+        for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
+        {
+            const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
+            const amrex::IntVect gc = mf.nGrowVect();
+
+            std::stringstream ss_msg;
+            ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
+                " the number of guard cells " << gc <<
+                " is larger than or equal to the number of valid cells "
+                << vc << ", please reduce the number of guard cells" <<
+                " or increase the grid size by changing domain decomposition.";
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
+        }
+    }
+}
+
 void
 WarpX::PostProcessBaseGrids (BoxArray& ba0) const
 {
@@ -306,7 +330,7 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "                      |   - current_centering_noz = " << WarpX::current_centering_noz << "\n";
      }
     }
-    if (WarpX::use_hybrid_QED == true){
+    if (WarpX::use_hybrid_QED){
       amrex::Print() << "                      | - use_hybrid_QED = true \n";
     }
 
@@ -386,6 +410,12 @@ WarpX::InitData ()
     Print() << "WarpX (" << WarpX::Version() << ")\n";
 
     Print() << utils::logo::get_logo();
+
+    // Diagnostics
+    multi_diags = std::make_unique<MultiDiagnostics>();
+
+    /** create object for reduced diagnostics */
+    reduced_diags = std::make_unique<MultiReducedDiags>();
 
     // WarpX::computeMaxStepBoostAccelerator
     // needs to start from the initial zmin_domain_boost,
@@ -636,13 +666,9 @@ WarpX::computeMaxStepBoostAccelerator() {
     const Real interaction_time_boost = (len_plasma_boost-zmin_domain_boost_step_0)/
         (moving_window_v-v_plasma_boost);
     // Divide by dt, and update value of max_step.
-    int computed_max_step;
-    if (do_subcycling){
-        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
-    } else {
-        computed_max_step =
-            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
-    }
+    const auto computed_max_step = (do_subcycling)?
+        static_cast<int>(interaction_time_boost/dt[0]):
+        static_cast<int>(interaction_time_boost/dt[maxLevel()]);
     max_step = computed_max_step;
     Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
            <<max_step<<std::endl;
@@ -658,15 +684,14 @@ WarpX::InitNCICorrector ()
         {
             const Geometry& gm = Geom(lev);
             const Real* dx = gm.CellSize();
-            amrex::Real dz, cdtodz;
 #if defined(WARPX_DIM_3D)
-                dz = dx[2];
+                const auto dz = dx[2];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                dz = dx[1];
+                const auto dz = dx[1];
 #else
-                dz = dx[0];
+                const auto dz = dx[0];
 #endif
-            cdtodz = PhysConst::c * dt[lev] / dz;
+            const auto cdtodz = PhysConst::c * dt[lev] / dz;
 
             // Initialize Godfrey filters
             // Same filter for fields Ex, Ey and Bz
@@ -1182,30 +1207,30 @@ void WarpX::CheckGuardCells()
     {
         for (int dim = 0; dim < 3; ++dim)
         {
-            CheckGuardCells(*Efield_fp[lev][dim]);
-            CheckGuardCells(*Bfield_fp[lev][dim]);
-            CheckGuardCells(*current_fp[lev][dim]);
+            ::CheckGuardCells(*Efield_fp[lev][dim]);
+            ::CheckGuardCells(*Bfield_fp[lev][dim]);
+            ::CheckGuardCells(*current_fp[lev][dim]);
 
             if (WarpX::fft_do_time_averaging)
             {
-                CheckGuardCells(*Efield_avg_fp[lev][dim]);
-                CheckGuardCells(*Bfield_avg_fp[lev][dim]);
+                ::CheckGuardCells(*Efield_avg_fp[lev][dim]);
+                ::CheckGuardCells(*Bfield_avg_fp[lev][dim]);
             }
         }
 
         if (rho_fp[lev])
         {
-            CheckGuardCells(*rho_fp[lev]);
+            ::CheckGuardCells(*rho_fp[lev]);
         }
 
         if (F_fp[lev])
         {
-            CheckGuardCells(*F_fp[lev]);
+            ::CheckGuardCells(*F_fp[lev]);
         }
 
         if (G_fp[lev])
         {
-            CheckGuardCells(*G_fp[lev]);
+            ::CheckGuardCells(*G_fp[lev]);
         }
 
         // MultiFabs on coarse patch
@@ -1213,49 +1238,32 @@ void WarpX::CheckGuardCells()
         {
             for (int dim = 0; dim < 3; ++dim)
             {
-                CheckGuardCells(*Efield_cp[lev][dim]);
-                CheckGuardCells(*Bfield_cp[lev][dim]);
-                CheckGuardCells(*current_cp[lev][dim]);
+                ::CheckGuardCells(*Efield_cp[lev][dim]);
+                ::CheckGuardCells(*Bfield_cp[lev][dim]);
+                ::CheckGuardCells(*current_cp[lev][dim]);
 
                 if (WarpX::fft_do_time_averaging)
                 {
-                    CheckGuardCells(*Efield_avg_cp[lev][dim]);
-                    CheckGuardCells(*Bfield_avg_cp[lev][dim]);
+                    ::CheckGuardCells(*Efield_avg_cp[lev][dim]);
+                    ::CheckGuardCells(*Bfield_avg_cp[lev][dim]);
                 }
             }
 
             if (rho_cp[lev])
             {
-                CheckGuardCells(*rho_cp[lev]);
+                ::CheckGuardCells(*rho_cp[lev]);
             }
 
             if (F_cp[lev])
             {
-                CheckGuardCells(*F_cp[lev]);
+                ::CheckGuardCells(*F_cp[lev]);
             }
 
             if (G_cp[lev])
             {
-                CheckGuardCells(*G_cp[lev]);
+                ::CheckGuardCells(*G_cp[lev]);
             }
         }
-    }
-}
-
-void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
-{
-    for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
-    {
-        const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
-        const amrex::IntVect gc = mf.nGrowVect();
-
-        std::stringstream ss_msg;
-        ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
-            " the number of guard cells " << gc <<
-            " is larger than or equal to the number of valid cells "
-            << vc << ", please reduce the number of guard cells" <<
-             " or increase the grid size by changing domain decomposition.";
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
     }
 }
 
