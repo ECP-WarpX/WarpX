@@ -7,10 +7,10 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from numpy import exp, sqrt
 import openpmd_api as io
+import pandas as pd
 from scipy.constants import alpha, c
 from scipy.constants import e as q_e
 from scipy.constants import hbar, m_e, physical_constants, pi
-import pandas as pd 
 
 r_e = physical_constants["classical electron radius"][0]
 
@@ -193,7 +193,7 @@ df = pd.read_csv(CollDiagFname, sep=" ", header=0)
 ### LUMINOSITY ###
 ##################
 dL_dt_cr = df[[col for col in df.columns if 'dL_dt' in col]].to_numpy()
-times = df[[col for col in df.columns if 'time' in col]].to_numpy() 
+times = df[[col for col in df.columns if 'time' in col]].to_numpy()
 L_cr = np.trapz(dL_dt_cr, times)
 coll_timestep = np.argmax(dL_dt_cr)
 coll_time = times[coll_timestep]
@@ -210,7 +210,7 @@ dL_dt_theory = 2.*np.sum(D**2)*dx*dy*dz*c
 L_theory = N**2 / (4*pi*sigmax*sigmay)
 
 # from guinea-pig: lumi_fine
-L_gp = 7.95485e+30  
+L_gp = 7.95485e+30
 
 assert np.isclose(L_cr, L_theory, rtol=0.02, atol=0.)
 assert np.isclose(L_cr, L_gp, rtol=0.003, atol=0,)
@@ -359,7 +359,7 @@ ax[2].plot(times, dL_dt_full(), label='full')
 ax[2].set_title('dL/dt')
 
 for a in ax.reshape(-1):
-    a.legend() 
+    a.legend()
     a.axvline(x=times[coll_timestep], color='black')
     a.axvline(x=times[ref_timestep], color='magenta')
 
@@ -384,11 +384,11 @@ ax[2].set_title('theta max')
 
 
 for a in ax.reshape(-1):
-    a.legend() 
+    a.legend()
     a.axvline(x=times[coll_timestep], color='black')
     a.axvline(x=times[ref_timestep], color='magenta')
 
-fig.savefig('y.png', dpi=300.)   
+fig.savefig('y.png', dpi=300.)
 plt.close()
 
 
@@ -419,11 +419,11 @@ ax[2].set_title('theta ave')
 
 
 for a in ax.reshape(-1):
-    a.legend() 
+    a.legend()
     a.axvline(x=times[coll_timestep], color='black')
     a.axvline(x=times[ref_timestep], color='magenta')
 
-fig.savefig('z.png', dpi=300.)   
+fig.savefig('z.png', dpi=300.)
 plt.show()
 
 
@@ -504,6 +504,3 @@ plt.show()
 #ax[3].plot(times, yave_ele, label='ave')
 #ax[3].plot(times, ystd_ele, label='std')
 #ax[3].set_title('y')
-
-
-
