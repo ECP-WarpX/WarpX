@@ -15,7 +15,7 @@
 # A100 40GB (most nodes)
 #SBATCH -C gpu
 # A100 80GB (256 nodes)
-#S BATCH -C gpu&hbm80g
+#SBATCH -C gpu&hbm80g
 #SBATCH --exclusive
 #SBATCH --gpu-bind=none
 #SBATCH --gpus-per-node=4
