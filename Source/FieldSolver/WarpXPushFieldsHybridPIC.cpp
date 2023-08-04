@@ -88,8 +88,8 @@ void WarpX::HybridPICEvolveFields ()
     {
         m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
         m_hybrid_pic_model->HybridPICSolveE(
-            Efield_fp, current_fp, Bfield_fp, rho_fp, m_edge_lengths,
-            DtType::FirstHalf
+            Efield_fp, current_fp_temp, Bfield_fp, rho_fp_temp, m_edge_lengths,
+            true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
         EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
@@ -116,8 +116,8 @@ void WarpX::HybridPICEvolveFields ()
     {
         m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
         m_hybrid_pic_model->HybridPICSolveE(
-            Efield_fp, current_fp, Bfield_fp, rho_fp, m_edge_lengths,
-            DtType::SecondHalf
+            Efield_fp, current_fp, Bfield_fp, rho_fp_temp, m_edge_lengths,
+            true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
         EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
@@ -148,8 +148,8 @@ void WarpX::HybridPICEvolveFields ()
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
     m_hybrid_pic_model->HybridPICSolveE(
-        Efield_fp, current_fp, Bfield_fp, rho_fp, m_edge_lengths,
-        DtType::Full
+        Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths,
+        false
     );
     FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
 
