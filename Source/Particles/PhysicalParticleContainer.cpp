@@ -582,9 +582,14 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         auto series = std::move(plasma_injector->m_openpmd_input_series);
 
         // assumption asserts: see PlasmaInjector
-        // Optionnaly impose t_lab as the time in the species openPMD external file (create bool or 0/1 input parameter called 'impose_t_lab_from_file')
         openPMD::Iteration it = series->iterations.begin()->second;
-        double const t_lab = it.time<double>() * it.timeUnitSI();
+        const ParmParse pp_species_name(species_name);
+        pp_species_name.query("impose_t_lab_from_file", impose_t_lab_from_file);
+        
+        if (WarpX::gamma_boost > 1. && impose_t_lab_from_file) {
+            // Impose t_lab as being the time stored in the openPMD file
+            t_lab = it.time<double>() * it.timeUnitSI();
+        }
         std::string const ps_name = it.particles.begin()->first;
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
