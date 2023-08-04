@@ -567,7 +567,7 @@ WarpX::InitPML ()
                              do_pml_dive_cleaning, do_pml_divb_cleaning,
                              amrex::IntVect(0), amrex::IntVect(0),
                              guard_cells.ng_FieldSolver.max(),
-                             v_particle_pml,
+                             v_particle_pml, theta_pml,
                              do_pml_Lo[0], do_pml_Hi[0]);
 #endif
 
@@ -603,7 +603,7 @@ WarpX::InitPML ()
                                    psatd_solution_type, J_in_time, rho_in_time, do_pml_dive_cleaning, do_pml_divb_cleaning,
                                    amrex::IntVect(0), amrex::IntVect(0),
                                    guard_cells.ng_FieldSolver.max(),
-                                   v_particle_pml,
+                                   v_particle_pml, theta_pml,
                                    do_pml_Lo[lev], do_pml_Hi[lev]);
         }
     }
