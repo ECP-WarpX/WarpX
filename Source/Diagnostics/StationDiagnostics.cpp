@@ -129,15 +129,14 @@ StationDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart)
     // This will have the extension in x-y at a given location z, and the third dimension will be time
 
     auto & warpx = WarpX::GetInstance();
-
-    amrex::IntVect lo(0);
-    amrex::IntVect hi(m_buffer_size-1);
     // in the station normal direction, with time, we need to determine number of points
     // hi : (t_max - t_min )/dt
-    const amrex::Box diag_box(lo, hi);
-    m_buffer_box = diag_box;
+    amrex::Box domain = (warpx.boxArray(lev)).minimalBox();
+    domain.setSmall(WARPX_ZINDEX, 0);
+    domain.setBig(WARPX_ZINDEX, (m_buffer_size - 1));
+    m_buffer_box = domain;
     amrex::BoxArray diag_ba;
-    diag_ba.define(diag_box);
+    diag_ba.define(m_buffer_box);
     amrex::BoxArray ba = diag_ba.maxSize(256);
     amrex::DistributionMapping dmap(ba);
     int ncomps = 6; //  Ex Ey Ez Bx By Bz
