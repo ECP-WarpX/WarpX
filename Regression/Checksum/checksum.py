@@ -131,6 +131,7 @@ class Checksum:
             # Compute checksum for field quantities
             if do_fields:
                 for lev in range(nlevels+1):
+                    # Create list of fields specific to level lev
                     grid_fields = []
                     if lev == 0:
                         grid_fields = [field for field in ts.avail_fields if 'lvl' not in field]
@@ -143,13 +144,13 @@ class Checksum:
                             for coord in vector_components:
                                 Q, info = ts.get_field(field=field, iteration=ts.iterations[-1], coord=coord)
                                 # key stores strings composed of field name and vector components
-                                # (e.g., field='B' + coord='y' results in key 'By', as for plotfiles)
-                                key = field + coord
+                                # (e.g., field='B' or field='B_lvl1' + coord='y' results in key='By')
+                                key = field.replace(f'_lvl{lev}', '') + coord
                                 data_lev[key] = np.sum(np.abs(Q))
                         else: # scalar field
                             Q, info = ts.get_field(field=field, iteration=ts.iterations[-1])
                             data_lev[field] = np.sum(np.abs(Q))
-                    data['lev=' + str(lev)] = data_lev
+                    data[f'lev={lev}'] = data_lev
             # Compute checksum for particle quantities
             if do_particles:
                 species_list = ts.avail_record_components.keys()

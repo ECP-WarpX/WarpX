@@ -32,9 +32,10 @@ else:
     energy_threshold = 1.e24
 
 # Check EB energy after 1000 timesteps
-filename = sys.argv[1]
+plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
 
-ds = yt.load( filename )
+ds = yt.load(plotfile)
 ad0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 ex = ad0['boxlib', 'Ex'].v
 ez = ad0['boxlib', 'Ez'].v
@@ -49,4 +50,5 @@ print("energy from this run: %s" %energy)
 assert( energy < energy_threshold )
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openPMD')
