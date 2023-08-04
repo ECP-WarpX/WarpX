@@ -17,7 +17,7 @@ class Benchmark:
     Holds data and functions for referenc benchmark of one checksum test.
     """
 
-    def __init__(self, test_name, data=None):
+    def __init__(self, test_name, output_format, data=None):
         """
         Benchmark constructor.
         Store test name and reference checksum value, either from benchmark
@@ -28,6 +28,9 @@ class Benchmark:
         test_name: string
             Name of test, as found between [] in .ini file.
 
+        output_format: string
+            Format of the output file (plotfile, openPMD).
+
         data: dictionary, optional
             Checksum value.
             If None, it is read from benchmark.
@@ -35,7 +38,7 @@ class Benchmark:
 
         self.test_name = test_name
         self.json_file = os.path.join(config.benchmark_location,
-                                      self.test_name + '.json')
+                                      self.test_name + f'_{output_format.lower()}.json')
         if data is None:
             self.data = self.get()
         else:

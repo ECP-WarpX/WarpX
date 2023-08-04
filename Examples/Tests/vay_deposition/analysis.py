@@ -19,8 +19,11 @@ sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 # Plotfile data set
-fn = sys.argv[1]
-ds = yt.load(fn)
+plotfile = sys.argv[1]
+ds = yt.load(plotfile)
+
+# openPMD data set
+opmdfile = './diags/diag2'
 
 # Check relative L-infinity spatial norm of rho/epsilon_0 - div(E)
 data = ds.covering_grid(
@@ -38,4 +41,5 @@ assert( error_rel < tolerance )
 
 # Checksum analysis
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openPMD')
