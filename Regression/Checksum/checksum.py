@@ -10,8 +10,8 @@ import json
 import sys
 
 from benchmark import Benchmark
-from openpmd_viewer import OpenPMDTimeSeries
 import numpy as np
+from openpmd_viewer import OpenPMDTimeSeries
 import yt
 
 yt.funcs.mylog.setLevel(50)
