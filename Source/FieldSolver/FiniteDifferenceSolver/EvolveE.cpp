@@ -302,7 +302,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
                 Real const r = rmin + i*dr; // r on a nodal grid (Et is nodal in r)
-                if (r > 0.5_rt*dr) { // Off-axis, regular Maxwell equations
+                if (r != 0) { // Off-axis, regular Maxwell equations
                     Et(i, j, 0, 0) += c2 * dt*(
                         - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 0)
                         + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 0)
@@ -343,7 +343,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
                 Real const r = rmin + i*dr; // r on a nodal grid (Ez is nodal in r)
-                if (r > 0.5_rt*dr) { // Off-axis, regular Maxwell equations
+                if (r != 0) { // Off-axis, regular Maxwell equations
                     Ez(i, j, 0, 0) += c2 * dt*(
                        T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 0)
                         - PhysConst::mu0 * jz(i, j, 0, 0  ) ); // Mode m=0
