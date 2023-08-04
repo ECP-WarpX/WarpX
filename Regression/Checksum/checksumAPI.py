@@ -188,6 +188,8 @@ if __name__ == '__main__':
                           do_fields=args.do_fields, do_particles=args.do_particles)
 
     if args.reset_all_benchmarks:
-        # WARNING: this mode does not support skip-fields/particles
-        # and tolerances
+        # TODO Need to define naming convention for openPMD output
+        if args.output_format == 'openpmd':
+            sys.exit('Option --reset-all-benchmarks does not work with openPMD format')
+        # WARNING: this mode does not support skip-fields/particles and tolerances
         reset_all_benchmarks(args.path_to_all_output_files, args.output_format)
