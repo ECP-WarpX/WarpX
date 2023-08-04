@@ -1035,7 +1035,7 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
     myfl->Evolve(lev,
                 *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                 *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
-                *current_x, *current_y, *current_z, skip_deposition);
+                rho_fp[lev].get(),*current_x, *current_y, *current_z, skip_deposition);
     }
 }
 

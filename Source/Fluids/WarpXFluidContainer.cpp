@@ -143,8 +143,14 @@ void WarpXFluidContainer::Evolve(
     int lev,
     const amrex::MultiFab &Ex, const amrex::MultiFab &Ey, const amrex::MultiFab &Ez,
     const amrex::MultiFab &Bx, const amrex::MultiFab &By, const amrex::MultiFab &Bz,
-    amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz, bool skip_deposition)
+    amrex::MultiFab* rho, amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz, 
+    bool skip_deposition)
 {
+
+    if (rho && ! skip_deposition && ! do_not_deposit) {
+         // Deposit charge before particle push, in component 0 of MultiFab rho.
+         DepositCharge(lev, *rho, 0);
+    }
 
     // Step the Lorentz Term
     GatherAndPush(lev, Ex, Ey, Ez, Bx, By, Bz);
@@ -157,9 +163,14 @@ void WarpXFluidContainer::Evolve(
     // Step the Advective term
     AdvectivePush_Muscl(lev);
 
+    // Deposit rho to the simulation mesh
+    // Deposit charge (end of the step)
+    if (rho && ! skip_deposition && ! do_not_deposit) {
+        DepositCharge(lev, *rho, 1);
+    }
+
     // Deposit J to the simulation mesh
-    if (!skip_deposition)
-    {
+    if (!skip_deposition) {
         DepositCurrent(lev, jx, jy, jz);
     }
 }
@@ -591,11 +602,22 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     // TODO: Generalize this condition
                     // Impose "none" boundaries
                     // Condition: dQx = 0 at r = 0
-                    if ( (i <= domain.smallEnd(0)) || (i >= domain.bigEnd(0)) ){
-                        dQ0x = 0.0;
-                        dQ1x = 0.0;
-                        dQ2x = 0.0;
-                        dQ3x = 0.0;
+                    if  (i == domain.smallEnd(0)) {
+                        // TODO BC: Reflected across r = 0:
+                        // R|_{0+} -> L|_{0-}
+                        // N -> N (N_arr(i-1,j,k) -> N_arr(i+1,j,k))
+                        // NUr -> -NUr (NUx_arr(i-1,j,k) -> -NUx_arr(i+1,j,k))
+                        // NUt -> -NUt (NUy_arr(i-1,j,k) -> -NUy_arr(i+1,j,k))
+                        // NUz -> -NUz (NUz_arr(i-1,j,k) -> NUz_arr(i+1,j,k))
+                        dQ0x = ave( N_arr(i,j,k) - N_arr(i+1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
+                        dQ1x = ave( NUx_arr(i,j,k) + NUx_arr(i+1,j,k) , NUx_arr(i+1,j,k) - NUx_arr(i,j,k) );
+                        dQ2x = ave( NUy_arr(i,j,k) + NUy_arr(i+1,j,k) , NUy_arr(i+1,j,k) - NUy_arr(i,j,k) );
+                        dQ3x = ave( NUz_arr(i,j,k) - NUz_arr(i+1,j,k) , NUz_arr(i+1,j,k) - NUz_arr(i,j,k) );
+                    } else if (i == domain.bigEnd(0)+1) { 
+                        dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , 0.0 );
+                        dQ1x = ave( NUx_arr(i,j,k) - NUx_arr(i-1,j,k) , 0.0 );
+                        dQ2x = ave( NUy_arr(i,j,k) - NUy_arr(i-1,j,k) , 0.0 );
+                        dQ3x = ave( NUz_arr(i,j,k) - NUz_arr(i-1,j,k) , 0.0 );
                     }
 
                     // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
@@ -1014,8 +1036,9 @@ void WarpXFluidContainer::centrifugal_source (int lev)
                     NUx_arr(i,j,k) = N_arr(i,j,k)*u_r*clight;
                     NUy_arr(i,j,k) = N_arr(i,j,k)*u_theta*clight;
 
-                // BC r = 0, u_theta = 0, and there is no extra source terms
+                // TODO FIX: BC r = 0, u_theta = 0, and there is no extra source terms
                 } else {
+                    NUx_arr(i,j,k) = 0.0;
                     NUy_arr(i,j,k) = 0.0;
                 }
             }
@@ -1026,7 +1049,6 @@ void WarpXFluidContainer::centrifugal_source (int lev)
     const amrex::Periodicity &period = geom.periodicity();
     FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
     FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 // Momentum source from fields
@@ -1141,7 +1163,7 @@ void WarpXFluidContainer::GatherAndPush (
     FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
-void WarpXFluidContainer::DepositCharge(int lev, amrex::MultiFab &rho)
+void WarpXFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho, int icomp)
 {
     WARPX_PROFILE("WarpXFluidContainer::DepositCharge");
 
@@ -1170,7 +1192,7 @@ void WarpXFluidContainer::DepositCharge(int lev, amrex::MultiFab &rho)
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                if ( owner_mask_rho_arr(i,j,k) ) rho_arr(i,j,k) += q*N_arr(i,j,k);
+                if ( owner_mask_rho_arr(i,j,k) ) rho_arr(i,j,k,icomp) += q*N_arr(i,j,k);
             }
         );
     }

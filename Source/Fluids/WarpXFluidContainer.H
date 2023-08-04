@@ -45,7 +45,8 @@ public:
     void Evolve (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
         const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-        amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz, bool skip_deposition=false);
+        amrex::MultiFab* rho, amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz, 
+        bool skip_deposition=false);
 
     /**
      * AdvectivePush_Muscl takes a single timestep (dt) of the cold relativistic fluid equations
@@ -112,7 +113,7 @@ public:
      * \param[in] lev refinement level
      * \param[in,out] rho charge density MultiFab.
      */
-    void DepositCharge (int lev, amrex::MultiFab &rho);
+    void DepositCharge (int lev, amrex::MultiFab &rho, int icomp = 0);
 
     //amrex::Real getCharge () {return charge;}
     amrex::Real getCharge () const {return charge;}
