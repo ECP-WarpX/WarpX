@@ -51,4 +51,4 @@ assert( energy < energy_threshold )
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
-checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openPMD')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

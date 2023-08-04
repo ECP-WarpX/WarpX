@@ -29,7 +29,7 @@ class Benchmark:
             Name of test, as found between [] in .ini file.
 
         output_format: string
-            Format of the output file (plotfile, openPMD).
+            Format of the output file (plotfile, openpmd).
 
         data: dictionary, optional
             Checksum value.
@@ -38,7 +38,7 @@ class Benchmark:
 
         self.test_name = test_name
         self.json_file = os.path.join(config.benchmark_location,
-                                      self.test_name + f'_{output_format.lower()}.json')
+                                      self.test_name + f'_{output_format}.json')
         if data is None:
             self.data = self.get()
         else:

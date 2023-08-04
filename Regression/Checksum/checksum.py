@@ -36,7 +36,7 @@ class Checksum:
             Output file from which the checksum is computed.
 
         output_format: string
-            Format of the output file (plotfile, openPMD).
+            Format of the output file (plotfile, openpmd).
 
         do_fields: bool, default=True
             Whether to compare fields in the checksum.
@@ -119,7 +119,7 @@ class Checksum:
                         data_species[field] = np.sum(np.abs(Q))
                     data[species] = data_species
 
-        elif self.output_format == 'openPMD':
+        elif self.output_format == 'openpmd':
             # Load time series
             ts = OpenPMDTimeSeries(self.output_file)
             data = {}
