@@ -585,7 +585,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         openPMD::Iteration it = series->iterations.begin()->second;
         const ParmParse pp_species_name(species_name);
         pp_species_name.query("impose_t_lab_from_file", impose_t_lab_from_file);
-        
+
         if (WarpX::gamma_boost > 1. && impose_t_lab_from_file) {
             // Impose t_lab as being the time stored in the openPMD file
             t_lab = it.time<double>() * it.timeUnitSI();
