@@ -4,18 +4,16 @@
 # --- treated as kinetic particles and electrons as an isothermal, inertialess
 # --- background fluid. The script is set up to produce parallel normal EM modes
 # --- in a metallic cylinder and is run in RZ geometry.
-# --- See Section xxxx for a discussion and theoretical solution for this test.
 # --- As a CI test only a small number of steps are taken.
 
 import argparse
-import os
 import sys
 
 import dill
 from mpi4py import MPI as mpi
 import numpy as np
 
-from pywarpx import callbacks, fields, picmi
+from pywarpx import callbacks, picmi
 
 constants = picmi.constants
 
@@ -28,33 +26,33 @@ sim_ext = simulation.extension
 
 class CylindricalNormalModes(object):
     '''The following runs a simulation of an uniform plasma at a set ion
-    temperature (Te = 0) with an external magnetic field applied in the
+    temperature (and Te = 0) with an external magnetic field applied in the
     z-direction (parallel to domain).
     The analysis script (in this same directory) analyzes the output field
     data for EM modes.
     '''
     # Applied field parameters
-    B0          = 0.5 # Initial magnetic field strength (T)
-    beta        = 0.05 # Plasma beta, used to calculate temperature
+    B0          = 1.0 # Initial magnetic field strength (T)
+    beta        = 0.2 # Plasma beta, used to calculate temperature
 
     # Plasma species parameters
     m_ion       = 400.0 # Ion mass (electron masses)
     vA_over_c   = 1e-3 # ratio of Alfven speed and the speed of light
 
     # Spatial domain
-    Nz          = 8 # 512 # 1024 # number of cells in z direction
-    Nr          = 128 # 64 # 256 # number of cells in r direction
+    Nz          = 256 # number of cells in z direction
+    Nr          = 64 # number of cells in r direction
 
     # Temporal domain (if not run as a CI test)
-    LT          = 100 # 500.0 # Simulation temporal length (ion cyclotron periods)
+    LT          = 800.0 # Simulation temporal length (ion cyclotron periods)
 
     # Numerical parameters
-    NPPC        = 4*1024 # Seed number of particles per cell
-    DZ          = 1.0 / 4.0 # Cell size (ion skin depths)
-    DT          = 1e-6 # 5e-3 # Time step (ion cyclotron periods)
+    NPPC        = 10000 # Seed number of particles per cell
+    DZ          = 1.0 # Cell size (ion skin depths)
+    DT          = 0.02 # Time step (ion cyclotron periods)
 
     # Plasma resistivity - used to dampen the mode excitation
-    eta = 1e-7
+    eta = 5e-4
     # Number of substeps used to update B
     substeps = 250
 
@@ -66,19 +64,23 @@ class CylindricalNormalModes(object):
         # calculate various plasma parameters based on the simulation input
         self.get_plasma_quantities()
 
+        if not self.test:
+            self.total_steps = int(self.LT / self.DT)
+        else:
+            # if this is a test case run for only a small number of steps
+            self.total_steps = 100
+            # and make the grid and particle count smaller
+            self.Nz = 128
+            self.Nr = 64
+            self.NPPC = 200
+        # output diagnostics 20 times per cyclotron period
+        self.diag_steps = int(1.0/20 / self.DT)
+
         self.dz = self.DZ * self.l_i
         self.Lz = self.Nz * self.dz
         self.Lr = self.Nr * self.dz
 
         self.dt = self.DT * self.t_ci
-
-        if not self.test:
-            self.total_steps = int(self.LT / self.DT)
-        else:
-            # if this is a test case run for only a small number of steps
-            self.total_steps = 250
-        # output diagnostics 20 times per cyclotron period
-        self.diag_steps = int(1.0/20 / self.DT)
 
         # dump all the current attributes to a dill pickle file
         if comm.rank == 0:
@@ -152,13 +154,12 @@ class CylindricalNormalModes(object):
 
         self.grid = picmi.CylindricalGrid(
             number_of_cells=[self.Nr, self.Nz],
-            warpx_max_grid_size=self.Nr, # self.Nz,
-            lower_bound=[0, 0],
-            upper_bound=[self.Lr, self.Lz],
+            warpx_max_grid_size=self.Nz,
+            lower_bound=[0, -self.Lz/2.0],
+            upper_bound=[self.Lr, self.Lz/2.0],
             lower_boundary_conditions = ['none', 'periodic'],
             upper_boundary_conditions = ['dirichlet', 'periodic'],
             lower_boundary_conditions_particles = ['absorbing', 'periodic'],
-            # upper_boundary_conditions_particles = ['absorbing', 'periodic'],
             upper_boundary_conditions_particles = ['reflecting', 'periodic']
         )
         simulation.time_step_size = self.dt
@@ -174,9 +175,8 @@ class CylindricalNormalModes(object):
         self.solver = picmi.HybridPICSolver(
             grid=self.grid,
             Te=0.0, n0=self.n_plasma, plasma_resistivity=self.eta,
-            substeps=2,#self.substeps,
+            substeps=self.substeps,
             n_floor=self.n_plasma*0.05
-            # n_floor=self.n_plasma*1.1 # check if boundary handling causes the problems
         )
         simulation.solver = self.solver
 
@@ -199,12 +199,12 @@ class CylindricalNormalModes(object):
         simulation.add_species(
             self.ions,
             layout=picmi.PseudoRandomLayout(
-                grid=self.grid, n_macroparticles_per_cell=0.0 #self.NPPC
+                grid=self.grid, n_macroparticles_per_cell=self.NPPC
             )
         )
-        # use custom particle loader to avoid numerical Ji_r initially
-        # due to macro-particle diffusion
-        callbacks.installparticleloader(self._load_particles)
+        # # use custom particle loader to avoid numerical Ji_r initially
+        # # due to macro-particle diffusion
+        # callbacks.installparticleloader(self._load_particles)
 
         #######################################################################
         # Add diagnostics                                                     #
@@ -214,21 +214,18 @@ class CylindricalNormalModes(object):
             name='field_diag',
             grid=self.grid,
             period=(self.total_steps if self.test else self.diag_steps),
-            data_list=['B', 'E', 'J', 'rho'],
-            # data_list=(['B', 'E'] if not self.test else ['B', 'E', 'j', 'rho']),
+            data_list=(['B', 'E'] if not self.test else ['B', 'E', 'j', 'rho']),
             # write_dir=('.' if self.test else 'diags'),
             write_dir='.',
             warpx_file_prefix=(
-                'Python_ohms_law_solver_EM_modes_1d_plt' if self.test
+                'Python_ohms_law_solver_EM_modes_rz_plt' if self.test
                 else 'diags'
             ),
-            warpx_format=('openpmd' if not self.test else None),
-            warpx_openpmd_backend=('h5' if not self.test else None),
+            # warpx_format=('openpmd' if not self.test else None),
+            # warpx_openpmd_backend=('h5' if not self.test else None),
             warpx_write_species=(True if self.test else False)
         )
         simulation.add_diagnostic(field_diag)
-
-        callbacks.installafterstep(self.inspect_fields)
 
         #######################################################################
         # Initialize simulation                                               #
@@ -278,70 +275,6 @@ class CylindricalNormalModes(object):
         )
         print("Particles injected.")
 
-    def inspect_fields(self):
-        # if sim_ext.getistep() % 20:
-        #     return
-
-        # nodal = np.arange(-simulation.particle_shape-1, self.Nr+2+simulation.particle_shape)
-        nodal = np.arange(-simulation.particle_shape-1, self.Nr+2+simulation.particle_shape)
-        cell_centered = nodal[:-1] + 0.5
-
-        import matplotlib.pyplot as plt
-
-        # Jir = fields.JxWrapper(include_ghosts=True)[...]
-        # Jir = np.mean(
-        #     Jir[:,simulation.particle_shape+1:-simulation.particle_shape-1],
-        #     axis=1
-        # )
-        # plt.plot(cell_centered[1:-1], Jir / (self.n_plasma * constants.q_e * self.ur), 'o--')
-        # plt.plot(cell_centered, Jir[:,3] / (self.n_plasma * constants.q_e * self.ur), 'o--')
-        # plt.plot(cell_centered, Jir[:,5] / (self.n_plasma * constants.q_e * self.ur), 'o--')
-
-        Jit = fields.JyWrapper(include_ghosts=True)[...]
-        Jit = np.mean(
-            Jit[:,simulation.particle_shape+1:-simulation.particle_shape-1],
-            axis=1
-        )
-        plt.plot(nodal[1:-1], Jit / (self.n_plasma * constants.q_e * self.ut), 'o--')
-
-        # Jiz = fields.JzWrapper(include_ghosts=True)[...]
-        # Jiz = np.mean(
-        #     Jiz[:,simulation.particle_shape+1:-simulation.particle_shape-1],
-        #     axis=1
-        # )
-        # plt.plot(nodal[1:-1], Jiz / (self.n_plasma * constants.q_e * self.uz), 'o--')
-
-        # rho = fields.RhoFPWrapper(include_ghosts=True)[...]
-        # print(rho.shape)
-        # rho = np.mean(
-        #     rho[:,simulation.particle_shape+1:-simulation.particle_shape-1],
-        #     axis=1
-        # )
-        # plt.plot(nodal, rho/constants.q_e/self.n_plasma, 'o--')
-
-
-        # Jr = fields.JxFPAmpereWrapper(include_ghosts=True)[...]
-        # # Jir = np.mean(
-        # #     Jir[:,simulation.particle_shape+1:-simulation.particle_shape-1],
-        # #     axis=1
-        # # )
-        # plt.plot(cell_centered[1:-1], Jr[:,3], 'o--')
-        # plt.plot(cell_centered[1:-1], Jr[:,5], 'o--')
-        # print(Jir.shape)
-
-        # Bt = fields.ByWrapper(include_ghosts=True)[...]
-        # # Jir = np.mean(
-        # #     Jir[:,simulation.particle_shape+1:-simulation.particle_shape-1],
-        # #     axis=1
-        # # )
-        # plt.plot(cell_centered, Bt[:,3], 'o--')
-        # plt.plot(cell_centered, Bt[:,5], 'o--')
-
-        # plt.plot(np.var(Jir, axis=1), 'o--')
-        plt.show()
-
-
-
 
 ##########################
 # parse input parameters
@@ -359,4 +292,4 @@ args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1]+left
 
 run = CylindricalNormalModes(test=args.test, verbose=args.verbose)
-simulation.step(1)
+simulation.step()
