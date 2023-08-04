@@ -143,7 +143,7 @@ void WarpXFluidContainer::Evolve(
     int lev,
     const amrex::MultiFab &Ex, const amrex::MultiFab &Ey, const amrex::MultiFab &Ez,
     const amrex::MultiFab &Bx, const amrex::MultiFab &By, const amrex::MultiFab &Bz,
-    amrex::MultiFab* rho, amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz, 
+    amrex::MultiFab* rho, amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz,
     bool skip_deposition)
 {
 
@@ -613,7 +613,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         dQ1x = ave( NUx_arr(i,j,k) + NUx_arr(i+1,j,k) , NUx_arr(i+1,j,k) - NUx_arr(i,j,k) );
                         dQ2x = ave( NUy_arr(i,j,k) + NUy_arr(i+1,j,k) , NUy_arr(i+1,j,k) - NUy_arr(i,j,k) );
                         dQ3x = ave( NUz_arr(i,j,k) - NUz_arr(i+1,j,k) , NUz_arr(i+1,j,k) - NUz_arr(i,j,k) );
-                    } else if (i == domain.bigEnd(0)+1) { 
+                    } else if (i == domain.bigEnd(0)+1) {
                         dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , 0.0 );
                         dQ1x = ave( NUx_arr(i,j,k) - NUx_arr(i-1,j,k) , 0.0 );
                         dQ2x = ave( NUy_arr(i,j,k) - NUy_arr(i-1,j,k) , 0.0 );
