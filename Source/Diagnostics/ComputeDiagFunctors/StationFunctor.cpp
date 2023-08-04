@@ -40,6 +40,7 @@ StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int 
 
         amrex::Vector<int> slice_to_full_ba_map;
         std::unique_ptr<amrex::MultiFab> slice = AllocateSlice(slice_to_full_ba_map);
+        slice->setVal(0.);
 
         for (amrex::MFIter mfi(*slice, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
@@ -75,7 +76,7 @@ StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int 
         slice_box.setBig(slice_dir, station_index);
 
         amrex::BoxArray slice_ba(slice_box);
-        slice_ba.maxSize( m_max_box_size);
+        slice_ba.maxSize( 256);
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
         const int nghost = 1;
         tmp_slice_ptr = std::make_unique< amrex::MultiFab > (slice_ba, mf_dst.DistributionMap(),
