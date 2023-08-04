@@ -407,8 +407,6 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
     // tpr is the particle's time in the boosted frame
     const ParticleReal tpr = WarpX::gamma_boost*t_lab - uz_boost*z/(PhysConst::c*PhysConst::c);
 
-    // For all species: impose t_lab if the real input parameter 'species.t_lab' is given
-
     // The particle's transformed location in the boosted frame
     const ParticleReal xpr = x;
     const ParticleReal ypr = y;
@@ -585,7 +583,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         openPMD::Iteration it = series->iterations.begin()->second;
         const ParmParse pp_species_name(species_name);
         pp_species_name.query("impose_t_lab_from_file", impose_t_lab_from_file);
-        
+
         if (WarpX::gamma_boost > 1. && impose_t_lab_from_file) {
             // Impose t_lab as being the time stored in the openPMD file
             t_lab = it.time<double>() * it.timeUnitSI();
