@@ -80,7 +80,10 @@ void LaserEnvelope::ReadParameters ()
     amrex::Print() << "The profile waist of the laser is " << m_waist << " s\n";
     amrex::Print() << "The profile peak of the laser is " << m_z_peak << " s\n";
     amrex::Print() << "We are considering the laser " << laser_name << " \n";
-    amrex::Print() << "Tue duration " << m_profile_duration << " \n";
+    amrex::Print() << "zeta " << m_zeta << " \n";
+    amrex::Print() << "beta " << m_beta << " \n";
+    amrex::Print() << "phi2 " << m_phi2 << " \n";
+    amrex::Print() << "phi0 " << m_phi0 << " \n";
 }
 
 void LaserEnvelope::AllocateMFs (const int nlevs_max)
@@ -115,7 +118,7 @@ Complex LaserEnvelope::FillAmplitude (const amrex::Real x, const amrex::Real y, 
     // Calculate a few factors which are independent of the macroparticle
     const Real k0 = 2._rt*MathConst::pi/m_wavelength;
     const Real inv_tau2 = 1._rt /(m_duration * m_duration);
-    const Real oscillation_phase = k0 * ( - m_z_peak ) + m_phi0;
+    // const Real oscillation_phase = k0 * ( - m_z_peak ) + m_phi0;
     // The coefficients below contain info about Gouy phase,
     // laser diffraction, and phase front curvature
     const Complex diffract_factor =
@@ -133,7 +136,7 @@ Complex LaserEnvelope::FillAmplitude (const amrex::Real x, const amrex::Real y, 
 
     // Amplitude and monochromatic oscillations
     const Complex t_prefactor =
-        m_e_max * amrex::exp( I * oscillation_phase );
+        m_e_max; // * amrex::exp( I * oscillation_phase );
 
     // Because diffract_factor is a complex, the code below takes into
     // account the impact of the dimensionality on both the Gouy phase
@@ -167,7 +170,7 @@ Complex LaserEnvelope::FillAmplitude (const amrex::Real x, const amrex::Real y, 
     auto const tmp_profile_focal_distance = m_focal_distance;
     // Loop through the macroparticle to calculate the proper amplitude
     const Complex stc_exponent = 1._rt / stretch_factor * inv_tau2 *
-        amrex::pow((- tmp_profile_z_peak / PhysConst::c -
+        amrex::pow(((z- tmp_profile_z_peak) / PhysConst::c -
         tmp_beta*k0*(x*std::cos(tmp_theta_stc) + y*std::sin(tmp_theta_stc)) -
         2._rt *I*(x*std::cos(tmp_theta_stc) + y*std::sin(tmp_theta_stc))
         *( tmp_zeta - tmp_beta*tmp_profile_focal_distance ) * inv_complex_waist_2),2);
@@ -218,8 +221,9 @@ void LaserEnvelope::InitData (const int finestLevel)
                 amrex::Real z = problo[0] + i * dx[0];
             #endif
 
-            A_laser_envelope_arr(i,j,k,0) = FillAmplitude(x, y, z).real();
-            A_laser_envelope_arr(i,j,k,1) = FillAmplitude(x, y, z).imag();
+            Complex complex_amplitude = FillAmplitude(x, y, z);
+            A_laser_envelope_arr(i,j,k,0) = complex_amplitude.real();
+            A_laser_envelope_arr(i,j,k,1) = complex_amplitude.imag();
 
             //w_z =
             //Lz = std

@@ -28,7 +28,7 @@ laser.e_max = 4e12 # a_0=1
 laser.polarization = 0. 1. 0.
 laser.position = 0. 0. 10e-6
 laser.profile_duration = 15e-15 # tau_{fwhm}/sqrt(2*ln(2))
-laser.profile_focal_distance = 100e-6
+laser.profile_focal_distance = 0.
 laser.profile = Gaussian
 laser.profile_z_peak = 15e-6 # not sure how to set this
 laser.profile_waist = 15e-6 # w_0
@@ -38,7 +38,7 @@ laser.wavelength = 0.8e-6 # lambda_0
 laser_envelopes.names = laser
 
 # max_step
-max_step = 1000
+max_step = 100
 
 # warpx
 warpx.cfl = 0.7
