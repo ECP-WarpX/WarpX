@@ -127,7 +127,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         add_diag("thetax_ave_"+species_names[i_s], "thetax_ave_"+species_names[i_s]+"(rad)");
         add_diag("thetay_ave_"+species_names[i_s], "thetay_ave_"+species_names[i_s]+"(rad)");
         add_diag("thetax_std_"+species_names[i_s], "thetax_std_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_std_"+species_names[i_s], "thetay_std_"+species_names[i_s]+"(rad)");        
+        add_diag("thetay_std_"+species_names[i_s], "thetay_std_"+species_names[i_s]+"(rad)");
         add_diag("thetax_min_"+species_names[i_s], "thetax_min_"+species_names[i_s]+"(rad)");
         add_diag("thetay_min_"+species_names[i_s], "thetay_min_"+species_names[i_s]+"(rad)");
         add_diag("thetax_max_"+species_names[i_s], "thetax_max_"+species_names[i_s]+"(rad)");
@@ -224,9 +224,9 @@ void ColliderRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum(wtot, ParallelDescriptor::IOProcessorNumber());
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        // thetax_min, thetax_max  
-        Real thetax_min = 0.0_rt; 
-        Real thetax_max = 0.0_rt; 
+        // thetax_min, thetax_max
+        Real thetax_min = 0.0_rt;
+        Real thetax_max = 0.0_rt;
 
         amrex::ReduceOps<ReduceOpMin, ReduceOpMax> reduce_ops_minmax;
         auto r_minmax = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
@@ -243,8 +243,8 @@ void ColliderRelevant::ComputeDiags (int step)
         thetax_max = amrex::get<1>(r_minmax);
         ParallelDescriptor::ReduceRealMin(thetax_min, ParallelDescriptor::IOProcessorNumber());
         ParallelDescriptor::ReduceRealMax(thetax_max, ParallelDescriptor::IOProcessorNumber());
-   
-        // x_ave, thetax_ave 
+
+        // x_ave, thetax_ave
         Real x_ave = 0.0_rt;
         Real thetax_ave = 0.0_rt;
 
@@ -267,7 +267,7 @@ void ColliderRelevant::ComputeDiags (int step)
         x_ave = x_ave / wtot;
         thetax_ave = thetax_ave / wtot;
 
-        // x_std, y_std, thetax_std, thetay_std 
+        // x_std, y_std, thetax_std, thetay_std
         Real x_std = 0.0_rt;
         Real thetax_std = 0.0_rt;
 
@@ -300,11 +300,11 @@ void ColliderRelevant::ComputeDiags (int step)
         m_data[get_idx("thetax_std_"+species_names[i_s])] = thetax_std;
 
 #elif defined(WARPX_DIM_3D)
-        // thetax_min, thetax_max, thetay_min, thetay_max  
-        Real thetax_min = 0.0_rt; 
-        Real thetax_max = 0.0_rt; 
-        Real thetay_min = 0.0_rt; 
-        Real thetay_max = 0.0_rt; 
+        // thetax_min, thetax_max, thetay_min, thetay_max
+        Real thetax_min = 0.0_rt;
+        Real thetax_max = 0.0_rt;
+        Real thetay_min = 0.0_rt;
+        Real thetay_max = 0.0_rt;
 
         amrex::ReduceOps<ReduceOpMin, ReduceOpMax, ReduceOpMin, ReduceOpMax> reduce_ops_minmax;
         auto r_minmax = amrex::ParticleReduce<amrex::ReduceData<Real, Real, Real, Real>>(
@@ -325,8 +325,8 @@ void ColliderRelevant::ComputeDiags (int step)
         thetay_max = amrex::get<3>(r_minmax);
         ParallelDescriptor::ReduceRealMin({thetax_min, thetay_min}, ParallelDescriptor::IOProcessorNumber());
         ParallelDescriptor::ReduceRealMax({thetax_max, thetay_max}, ParallelDescriptor::IOProcessorNumber());
-   
-        // x_ave, y_ave, thetax_ave, thetay_ave 
+
+        // x_ave, y_ave, thetax_ave, thetay_ave
         Real x_ave = 0.0_rt;
         Real y_ave = 0.0_rt;
         Real thetax_ave = 0.0_rt;
@@ -358,7 +358,7 @@ void ColliderRelevant::ComputeDiags (int step)
         thetax_ave = thetax_ave / wtot;
         thetay_ave = thetay_ave / wtot;
 
-        // x_std, y_std, thetax_std, thetay_std 
+        // x_std, y_std, thetax_std, thetay_std
         Real x_std = 0.0_rt;
         Real y_std = 0.0_rt;
         Real thetax_std = 0.0_rt;
