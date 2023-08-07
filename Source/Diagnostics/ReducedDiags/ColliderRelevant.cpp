@@ -122,31 +122,31 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         auto const &myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
 
         if (myspc.DoQED()){
-            add_diag("chimin_"+species_names[i_s], "chimin_"+species_names[i_s]+"()");
-            add_diag("chiave_"+species_names[i_s], "chiave_"+species_names[i_s]+"()");
-            add_diag("chimax_"+species_names[i_s], "chimax_"+species_names[i_s]+"()");
+            add_diag("chimin_"+species_names[i_s], "chi_min_"+species_names[i_s]+"()");
+            add_diag("chiave_"+species_names[i_s], "chi_ave_"+species_names[i_s]+"()");
+            add_diag("chimax_"+species_names[i_s], "chi_max_"+species_names[i_s]+"()");
         }
 #if (defined WARPX_DIM_3D)
         add_diag("x_ave_"+species_names[i_s], "x_ave_"+species_names[i_s]+"(m)");
         add_diag("y_ave_"+species_names[i_s], "y_ave_"+species_names[i_s]+"(m)");
         add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
         add_diag("y_std_"+species_names[i_s], "y_std_"+species_names[i_s]+"(m)");
-        add_diag("thetax_ave_"+species_names[i_s], "thetax_ave_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_ave_"+species_names[i_s], "thetay_ave_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_std_"+species_names[i_s], "thetax_std_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_std_"+species_names[i_s], "thetay_std_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_min_"+species_names[i_s], "thetax_min_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_min_"+species_names[i_s], "thetay_min_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_max_"+species_names[i_s], "thetax_max_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_max_"+species_names[i_s], "thetay_max_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_ave_"+species_names[i_s], "theta_x_ave_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_ave_"+species_names[i_s], "theta_y_ave_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_std_"+species_names[i_s], "theta_x_std_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_std_"+species_names[i_s], "theta_y_std_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_min_"+species_names[i_s], "theta_x_min_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_min_"+species_names[i_s], "theta_y_min_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_max_"+species_names[i_s], "theta_x_max_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_max_"+species_names[i_s], "theta_y_max_"+species_names[i_s]+"(rad)");
 
 #elif (defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ))
         add_diag("x_ave_"+species_names[i_s], "x_ave_"+species_names[i_s]+"(m)");
         add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
-        add_diag("thetax_ave_"+species_names[i_s], "thetax_ave_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_std_"+species_names[i_s], "thetax_std_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_min_"+species_names[i_s], "thetax_min_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_max_"+species_names[i_s], "thetax_max_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_ave_"+species_names[i_s], "theta_x_ave_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_std_"+species_names[i_s], "theta_x_std_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_min_"+species_names[i_s], "theta_x_min_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_max_"+species_names[i_s], "theta_x_max_"+species_names[i_s]+"(rad)");
 
 #endif
 
