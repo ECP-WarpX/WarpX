@@ -76,26 +76,31 @@ class LibWarpX():
 
         try:
             if self.geometry_dim == "1d":
+                import amrex.space1d as amr
+                self.amr = amr
                 from . import warpx_pybind_1d as cxx_1d
                 self.libwarpx_so = cxx_1d
                 self.dim = 1
             elif self.geometry_dim == "2d":
+                import amrex.space2d as amr
+                self.amr = amr
                 from . import warpx_pybind_2d as cxx_2d
                 self.libwarpx_so = cxx_2d
                 self.dim = 2
             elif self.geometry_dim == "rz":
+                import amrex.space2d as amr
+                self.amr = amr
                 from . import warpx_pybind_rz as cxx_rz
                 self.libwarpx_so = cxx_rz
                 self.dim = 2
             elif self.geometry_dim == "3d":
+                import amrex.space3d as amr
+                self.amr = amr
                 from . import warpx_pybind_3d as cxx_3d
                 self.libwarpx_so = cxx_3d
                 self.dim = 3
         except ImportError:
             raise Exception(f"Dimensionality '{self.geometry_dim}' was not compiled in this Python install. Please recompile with -DWarpX_DIMS={_dims}")
-
-        # matching space-dim of pyAMReX module
-        self.amr = self.libwarpx_so.amr
 
     def getNProcs(self):
         '''
