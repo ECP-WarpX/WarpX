@@ -2,10 +2,8 @@ import os
 import sys 
 import re
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.constants import m_e, c, hbar, e 
 import openpmd_api as io
-import matplotlib.colors
 import pandas as pd 
 
 E_crit = m_e**2*c**3/(e*hbar)
