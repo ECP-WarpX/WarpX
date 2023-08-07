@@ -50,7 +50,7 @@ namespace {
         std::string string;
         stringstream << var << " string '" << name << "' not recognized.";
         string = stringstream.str();
-        WARPX_ABORT_WITH_MESSAGE(string.c_str());
+        WARPX_ABORT_WITH_MESSAGE(string);
     }
 }
 
@@ -688,16 +688,16 @@ void PlasmaInjector::parseMomentum (const amrex::ParmParse& pp)
                                              ux_min, uy_min, uz_min, ux_max, uy_max, uz_max));
     } else if (mom_dist_s == "maxwell_boltzmann"){
         h_mom_temp = std::make_unique<TemperatureProperties>(pp);
-        const GetTemperature getTemp(*h_mom_temp.get());
+        const GetTemperature getTemp(*h_mom_temp);
         h_mom_vel = std::make_unique<VelocityProperties>(pp);
-        const GetVelocity getVel(*h_mom_vel.get());
+        const GetVelocity getVel(*h_mom_vel);
         // Construct InjectorMomentum with InjectorMomentumBoltzmann.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "maxwell_juttner"){
         h_mom_temp = std::make_unique<TemperatureProperties>(pp);
-        const GetTemperature getTemp(*h_mom_temp.get());
+        const GetTemperature getTemp(*h_mom_temp);
         h_mom_vel = std::make_unique<VelocityProperties>(pp);
-        const GetVelocity getVel(*h_mom_vel.get());
+        const GetVelocity getVel(*h_mom_vel);
         // Construct InjectorMomentum with InjectorMomentumJuttner.
         h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, getTemp, getVel));
     } else if (mom_dist_s == "radial_expansion") {
