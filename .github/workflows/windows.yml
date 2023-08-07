@@ -106,9 +106,10 @@ jobs:
         if errorlevel 1 exit 1
 
     - name: Test
+      shell: cmd
       run: |
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\vc\Auxiliary\build\vcvarsall.bat" x64
-        $env:PATH += ';C:/Program Files (x86)/WarpX/bin/'
+        set "PATH=C:/Program Files (x86)/WarpX/bin/;%PATH%"
 
         python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
         if errorlevel 1 exit 1
