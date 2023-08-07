@@ -17,7 +17,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 
-JFunctor::JFunctor(const int dir, int lev,
+JFunctor::JFunctor (const int dir, int lev,
                    amrex::IntVect crse_ratio,
                    bool convertRZmodes2cartesian, int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_dir(dir), m_lev(lev),
@@ -25,16 +25,16 @@ JFunctor::JFunctor(const int dir, int lev,
 { }
 
 void
-JFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
+JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
 {
     auto& warpx = WarpX::GetInstance();
     /** pointer to source multifab (can be multi-component) */
     amrex::MultiFab* m_mf_src = warpx.get_pointer_current_fp(m_lev, m_dir);
 
     // Deposit current if no solver or the electrostatic solver is being used
-    if ( WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
-        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic
-    ) {
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
+        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    {
         // allocate temporary multifab to deposit current density into
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
         current_fp_temp.resize(1);
@@ -42,17 +42,17 @@ JFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/)
         auto& current_fp_x = warpx.getcurrent_fp(m_lev,0);
         current_fp_temp[0][0] = std::make_unique<amrex::MultiFab>(
             current_fp_x.boxArray(), current_fp_x.DistributionMap(),
-            current_fp_x.nComp(), current_fp_x.nGrow()
+            current_fp_x.nComp(), current_fp_x.nGrowVect()
         );
         auto& current_fp_y = warpx.getcurrent_fp(m_lev,1);
         current_fp_temp[0][1] = std::make_unique<amrex::MultiFab>(
             current_fp_y.boxArray(), current_fp_y.DistributionMap(),
-            current_fp_y.nComp(), current_fp_y.nGrow()
+            current_fp_y.nComp(), current_fp_y.nGrowVect()
         );
         auto& current_fp_z = warpx.getcurrent_fp(m_lev,2);
         current_fp_temp[0][2] = std::make_unique<amrex::MultiFab>(
             current_fp_z.boxArray(), current_fp_z.DistributionMap(),
-            current_fp_z.nComp(), current_fp_z.nGrow()
+            current_fp_z.nComp(), current_fp_z.nGrowVect()
         );
 
         auto& mypc = warpx.GetPartContainer();
