@@ -76,7 +76,7 @@ def get_theoretical_field( field, t ):
 
 def get_theoretical_J_field( field, t ):
     # wpdt/2 accounts for the Yee halfstep offset of the current
-    dt = 1.203645751e-15
+    dt = t / 40 # SPECIFIC to config parameters!
     amplitude = - epsilon_0 * wp * epsilon * (m_e*c**2*k[field])/e * np.cos(wp*t-wp*dt/2)
     cos_flag = cos[field]
     x_contribution = get_contribution( cos_flag, kx, 0 )
