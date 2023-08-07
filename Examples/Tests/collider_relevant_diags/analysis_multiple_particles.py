@@ -5,9 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.constants import m_e, c, hbar, e 
 import openpmd_api as io
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from matplotlib.colors import LogNorm, Normalize
-from matplotlib import use, cm
 import matplotlib.colors
 import pandas as pd 
 
@@ -85,7 +82,6 @@ Ep1, Ep2, Ep3 = m_e*c**2*(gp1-1.), m_e*c**2*(gp2-1.), m_e*c**2*(gp3-1.)
 
     
 def chi(ux, uy, uz, Ex=Ex, Ey=Ey, Ez=Ez, Bx=Bx, By=By, Bz=Bz):
-    #print(ux, uy, uz, Ex, Ey, Ez, Bx, By, Bz)
     gamma = np.sqrt(1.+ux**2+uy**2+uz**2)
     vx = ux / gamma * c
     vy = uy / gamma * c
@@ -94,7 +90,6 @@ def chi(ux, uy, uz, Ex=Ex, Ey=Ey, Ez=Ez, Bx=Bx, By=By, Bz=Bz):
     tmp1y = Ey - vx*Bz + vz*Bx
     tmp1z = Ez + vx*By - vy*Bx
     tmp2 = (Ex*vx + Ey*vy + Ez*vz)/c
-    
     chi = gamma/E_crit*np.sqrt(tmp1x**2+tmp1y**2+tmp1z**2 - tmp2**2)
     return chi 
 
@@ -114,12 +109,8 @@ def dL_dt():
         series.flush()
         n1 = rho1/q1
         n2 = rho2/q2
-        #print(np.where((n1>0), n1, 0.))
-        #print(n1)
         l = 2*np.sum(n1*n2)*dV*c
         lumi.append(l)
-        print('--------------')
-        print(np.sum(n1*n2), np.sum(n1*n1), np.sum(n2*n2))
     return lumi
 
 CHI_ANALYTICAL = np.array([chi(uex1, uey1, uez1), chi(uex2, uey2, uez2), chi(uex3, uey3, uez3)])
@@ -132,43 +123,52 @@ df = pd.read_csv(CollDiagFname, sep=" ", header=0)
 # CHI MAX
 fname='diags/reducedfiles/ParticleExtrema_beam_e.txt'
 chimax_pe = np.loadtxt(fname)[:,19]
-chimax_cr = df[[col for col in df.columns if 'chimax_beam_e' in col]].to_numpy()
+chimax_cr = df[[col for col in df.columns if 'chi_max_beam_e' in col]].to_numpy()
 assert np.allclose(np.max(CHI_ANALYTICAL), chimax_cr, rtol=1e-8)
 assert np.allclose(chimax_pe, chimax_cr, rtol=1e-8)
 
 # CHI MIN 
 fname='diags/reducedfiles/ParticleExtrema_beam_e.txt'
 chimin_pe = np.loadtxt(fname)[:,18]
-chimin_cr = df[[col for col in df.columns if 'chimin_beam_e' in col]].to_numpy()
+chimin_cr = df[[col for col in df.columns if 'chi_min_beam_e' in col]].to_numpy()
 assert np.allclose(np.min(CHI_ANALYTICAL), chimin_cr, rtol=1e-8)
 assert np.allclose(chimin_pe, chimin_cr, rtol=1e-8)
 
 # CHI AVERAGE 
-chiave_cr = df[[col for col in df.columns if 'chiave_beam_e' in col]].to_numpy()
+chiave_cr = df[[col for col in df.columns if 'chi_ave_beam_e' in col]].to_numpy()
 assert np.allclose(np.average(CHI_ANALYTICAL, weights=we), chiave_cr, rtol=1e-8)
 
 # X AVE STD 
-x_ave_cr = df[[col for col in df.columns if 'xave_beam_e' in col]].to_numpy()
-x_std_cr = df[[col for col in df.columns if 'xstd_beam_e' in col]].to_numpy()
+fname='diags/reducedfiles/BeamRelevant_beam_e.txt'
+x_ave_br = np.loadtxt(fname)[:,2]
+x_std_br = np.loadtxt(fname)[:,9]
+x_ave_cr = df[[col for col in df.columns if ']x_ave_beam_e' in col]].to_numpy()
+x_std_cr = df[[col for col in df.columns if ']x_std_beam_e' in col]].to_numpy()
 x_ave = np.average(xe, weights=we)
 x_std = np.sqrt(np.average((xe-x_ave)**2, weights=we))
 assert np.allclose(x_ave, x_ave_cr, rtol=1e-8)
+assert np.allclose(x_ave_br, x_ave_cr, rtol=1e-8)
 assert np.allclose(x_std, x_std_cr, rtol=1e-8)
+assert np.allclose(x_std_br, x_std_cr, rtol=1e-8)
 
 # Y AVE STD 
-y_ave_cr = df[[col for col in df.columns if 'yave_beam_e' in col]].to_numpy()
-y_std_cr = df[[col for col in df.columns if 'ystd_beam_e' in col]].to_numpy()
+fname='diags/reducedfiles/BeamRelevant_beam_e.txt'
+y_ave_br = np.loadtxt(fname)[:,3]
+y_std_br = np.loadtxt(fname)[:,10]
+y_ave_cr = df[[col for col in df.columns if ']y_ave_beam_e' in col]].to_numpy()
+y_std_cr = df[[col for col in df.columns if ']y_std_beam_e' in col]].to_numpy()
 y_ave = np.average(ye, weights=we)
 y_std = np.sqrt(np.average((ye-y_ave)**2, weights=we))
 assert np.allclose(y_ave, y_ave_cr, rtol=1e-8)
+assert np.allclose(y_ave_br, y_ave_cr, rtol=1e-8)
 assert np.allclose(y_std, y_std_cr, rtol=1e-8)
-
+assert np.allclose(y_std_br, y_std_cr, rtol=1e-8)
 
 # THETA X MIN AVE MAX STD 
-thetax_min_cr = df[[col for col in df.columns if 'thetax_min_beam_e' in col]].to_numpy()
-thetax_ave_cr = df[[col for col in df.columns if 'thetax_ave_beam_e' in col]].to_numpy()
-thetax_max_cr = df[[col for col in df.columns if 'thetax_max_beam_e' in col]].to_numpy()
-thetax_std_cr = df[[col for col in df.columns if 'thetax_std_beam_e' in col]].to_numpy()
+thetax_min_cr = df[[col for col in df.columns if 'theta_x_min_beam_e' in col]].to_numpy()
+thetax_ave_cr = df[[col for col in df.columns if 'theta_x_ave_beam_e' in col]].to_numpy()
+thetax_max_cr = df[[col for col in df.columns if 'theta_x_max_beam_e' in col]].to_numpy()
+thetax_std_cr = df[[col for col in df.columns if 'theta_x_std_beam_e' in col]].to_numpy()
 thetax_min = np.min(THETAX)
 thetax_ave = np.average(THETAX, weights=we)
 thetax_max = np.max(THETAX)
@@ -179,10 +179,10 @@ assert np.allclose(thetax_max, thetax_max_cr, rtol=1e-8)
 assert np.allclose(thetax_std, thetax_std_cr, rtol=1e-8)
 
 # THETA Y MIN AVE MAX STD 
-thetay_min_cr = df[[col for col in df.columns if 'thetay_min_beam_e' in col]].to_numpy()
-thetay_ave_cr = df[[col for col in df.columns if 'thetay_ave_beam_e' in col]].to_numpy()
-thetay_max_cr = df[[col for col in df.columns if 'thetay_max_beam_e' in col]].to_numpy()
-thetay_std_cr = df[[col for col in df.columns if 'thetay_std_beam_e' in col]].to_numpy()
+thetay_min_cr = df[[col for col in df.columns if 'theta_y_min_beam_e' in col]].to_numpy()
+thetay_ave_cr = df[[col for col in df.columns if 'theta_y_ave_beam_e' in col]].to_numpy()
+thetay_max_cr = df[[col for col in df.columns if 'theta_y_max_beam_e' in col]].to_numpy()
+thetay_std_cr = df[[col for col in df.columns if 'theta_y_std_beam_e' in col]].to_numpy()
 thetay_min = np.min(THETAY)
 thetay_ave = np.average(THETAY, weights=we)
 thetay_max = np.max(THETAY)
@@ -192,21 +192,6 @@ assert np.allclose(thetay_ave, thetay_ave_cr, rtol=1e-8)
 assert np.allclose(thetay_max, thetay_max_cr, rtol=1e-8)
 assert np.allclose(thetay_std, thetay_std_cr, rtol=1e-8)
 
-
 # dL/dt
 dL_dt_cr = df[[col for col in df.columns if 'dL_dt' in col]].to_numpy()
 assert np.allclose(dL_dt_cr, dL_dt(), rtol=1e-8)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
