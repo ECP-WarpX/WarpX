@@ -7,10 +7,10 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from numpy import exp, sqrt
 import openpmd_api as io
+import pandas as pd
 from scipy.constants import alpha, c
 from scipy.constants import e as q_e
 from scipy.constants import hbar, m_e, physical_constants, pi
-import pandas as pd 
 
 r_e = physical_constants["classical electron radius"][0]
 
@@ -359,7 +359,7 @@ ax[2].plot(times, dL_dt_full(), label='full')
 ax[2].set_title('dL/dt')
 
 for a in ax.reshape(-1):
-    a.legend() 
+    a.legend()
     a.axvline(x=times[coll_timestep], color='black')
     a.axvline(x=times[ref_timestep], color='magenta')
 
@@ -384,11 +384,11 @@ ax[2].set_title('theta max')
 
 
 for a in ax.reshape(-1):
-    a.legend() 
+    a.legend()
     a.axvline(x=times[coll_timestep], color='black')
     a.axvline(x=times[ref_timestep], color='magenta')
 
-fig.savefig('y.png', dpi=300.)   
+fig.savefig('y.png', dpi=300.)
 plt.close()
 
 
@@ -422,11 +422,11 @@ ax[2].set_title('theta ave')
 
 
 for a in ax.reshape(-1):
-    a.legend() 
+    a.legend()
     a.axvline(x=times[coll_timestep], color='black')
     a.axvline(x=times[ref_timestep], color='magenta')
 
-fig.savefig('z.png', dpi=300.)   
+fig.savefig('z.png', dpi=300.)
 plt.show()
 
 
@@ -460,13 +460,13 @@ ax[0].plot(t[121:], db_dt[120:]/c, lw=5)
 
 m = np.average(db_dt[120:]/c)
 
-T = - b[0] / m 
+T = - b[0] / m
 tt = np.linspace(0, T, 500)
 
 ax[1].plot(tt, b[0]+m*tt)
 ax[1].plot(tt, np.zeros_like(tt))
 
-myDx = sigmax / (T * c) 
+myDx = sigmax / (T * c)
 
 print(myDx)
 
@@ -541,6 +541,3 @@ plt.show()
 #ax[3].plot(times, yave_ele, label='ave')
 #ax[3].plot(times, ystd_ele, label='std')
 #ax[3].set_title('y')
-
-
-
