@@ -103,7 +103,7 @@ def rho( z, r, epsilon, k0, w0, wp, t) :
     dt = t / 80 # SPECIFIC to config parameters!
     rho_array = \
         epsilon_0 * epsilon * m_e*c**2/e * np.sin( wp*t ) * np.sin( k0*z ) * np.exp( -r**2/w0**2 ) * \
-            ((4.0/(w0**2))*(1 - (r**2)/(w0**2)) + k0**2)  
+            ((4.0/(w0**2))*(1 - (r**2)/(w0**2)) + k0**2)
     return( rho_array )
 
 # Read the file
