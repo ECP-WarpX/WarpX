@@ -393,7 +393,7 @@ void PhysicalParticleContainer::InitData ()
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame (
-    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz, ParticleReal t_lab)
+    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz, Real t_lab)
 {
     // Map the particles from the lab frame to the boosted frame.
     // This boosts the particle to the lab frame and calculates
@@ -583,7 +583,8 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         openPMD::Iteration it = series->iterations.begin()->second;
         const ParmParse pp_species_name(species_name);
         pp_species_name.query("impose_t_lab_from_file", impose_t_lab_from_file);
-        if (WarpX::gamma_boost > 1. && impose_t_lab_from_file) {
+        double t_lab = 0._prt;
+        if (impose_t_lab_from_file) {
             // Impose t_lab as being the time stored in the openPMD file
             t_lab = it.time<double>() * it.timeUnitSI();
         }
@@ -801,7 +802,7 @@ PhysicalParticleContainer::CheckAndAddParticle (
     Gpu::HostVector<ParticleReal>& particle_uy,
     Gpu::HostVector<ParticleReal>& particle_uz,
     Gpu::HostVector<ParticleReal>& particle_w,
-    ParticleReal t_lab)
+    Real t_lab)
 {
     if (WarpX::gamma_boost > 1.) {
         MapParticletoBoostedFrame(x, y, z, ux, uy, uz, t_lab);

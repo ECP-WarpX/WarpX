@@ -359,9 +359,6 @@ protected:
     bool do_backward_propagation = false;
     bool m_rz_random_theta = true;
 
-    // By default, t_lab for the Lorentz Transform is set to 0
-    amrex::Real t_lab = 0._prt;
-
     // Impose t_lab from the openPMD file for externally loaded species
     bool impose_t_lab_from_file = false;
 
