@@ -7,10 +7,10 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from numpy import exp, sqrt
 import openpmd_api as io
-import pandas as pd
 from scipy.constants import alpha, c
 from scipy.constants import e as q_e
 from scipy.constants import hbar, m_e, physical_constants, pi
+import pandas as pd 
 
 r_e = physical_constants["classical electron radius"][0]
 
@@ -316,8 +316,8 @@ print(chi, n_gamma)
 fname='diags/reducedfiles/ParticleNumber.txt'
 N_pho = np.loadtxt(fname)[:,9]
 N_ele = np.loadtxt(fname)[:,8]
-fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(5,5), dpi=300)
-ax.plot(times, N_pho/N_ele[0])
+#fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(5,5), dpi=300)
+#ax.plot(times, N_pho/N_ele[0])
 print(N_pho[-1]/N_ele[0])
 #boh = np.abs(x_std_ele-x_std_ele[0])/x_std_ele[0]
 #boh1 = np.abs(y_std_ele-y_std_ele[0])/y_std_ele[0]
@@ -359,7 +359,7 @@ ax[2].plot(times, dL_dt_full(), label='full')
 ax[2].set_title('dL/dt')
 
 for a in ax.reshape(-1):
-    a.legend()
+    a.legend() 
     a.axvline(x=times[coll_timestep], color='black')
     a.axvline(x=times[ref_timestep], color='magenta')
 
@@ -384,24 +384,27 @@ ax[2].set_title('theta max')
 
 
 for a in ax.reshape(-1):
-    a.legend()
+    a.legend() 
     a.axvline(x=times[coll_timestep], color='black')
     a.axvline(x=times[ref_timestep], color='magenta')
 
-fig.savefig('y.png', dpi=300.)
+fig.savefig('y.png', dpi=300.)   
 plt.close()
 
 
 
 
 fig, ax = plt.subplots(ncols=3, nrows=1, figsize=(15,5), dpi=300)
-b = 2.*xstd_ele[:,0]
+b = xstd_ele[:,0]
 t = times[:,0]
+
 
 db_dt = np.diff(b)/np.diff(t)
 
 ax[0].plot(t[:-1], db_dt/c)
 ax[0].plot(times, -Dx*np.ones_like(times))
+ax[0].plot(t[:-11], db_dt[:-10]/c)
+
 
 ax[1].plot(times, thetaxstd_ele, label='x')
 ax[1].plot(times, thetaystd_ele, label='y')
@@ -419,22 +422,56 @@ ax[2].set_title('theta ave')
 
 
 for a in ax.reshape(-1):
-    a.legend()
+    a.legend() 
     a.axvline(x=times[coll_timestep], color='black')
     a.axvline(x=times[ref_timestep], color='magenta')
 
-fig.savefig('z.png', dpi=300.)
+fig.savefig('z.png', dpi=300.)   
 plt.show()
 
 
 
+plt.close()
 
 #ax[0].plot(times, -Dx*np.ones_like(times), label='Dx theory')
 #ax[0].plot(times, -Dx*c*(times-coll_time)/sigmaz, label='dx/x theory')
 
 
+#fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(6,5), dpi=300)
+#dxstd = (xstd_ele[:,0]/ xstd_ele[0,0])
 
 
+#ax.plot(times, np.diff(dxstd))
+#ax.plot(times, np.zeros_like(times))
+
+
+
+fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(10,5), dpi=300)
+b = xstd_ele[:,0]
+t = times[:,0]
+
+
+db_dt = np.diff(b)/np.diff(t)
+
+ax[0].plot(t[:-1], db_dt/c)
+ax[0].plot(times, -Dx*np.ones_like(times))
+ax[0].plot(t[121:], db_dt[120:]/c, lw=5)
+
+
+m = np.average(db_dt[120:]/c)
+
+T = - b[0] / m 
+tt = np.linspace(0, T, 500)
+
+ax[1].plot(tt, b[0]+m*tt)
+ax[1].plot(tt, np.zeros_like(tt))
+
+myDx = sigmax / (T * c) 
+
+print(myDx)
+
+
+plt.show()
 #ax[1].plot(times, -(0.78+0.2*Dx)*np.ones_like(times))
 #ax[1].plot(times, -(r_e*N/gamma/sigmaz**2)*np.ones_like(times)* xstd_ele[0])
 
@@ -504,3 +541,6 @@ plt.show()
 #ax[3].plot(times, yave_ele, label='ave')
 #ax[3].plot(times, ystd_ele, label='std')
 #ax[3].set_title('y')
+
+
+

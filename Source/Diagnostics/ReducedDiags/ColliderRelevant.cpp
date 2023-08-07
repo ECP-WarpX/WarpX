@@ -45,6 +45,7 @@
 #include <AMReX_Vector.H>
 
 #include <ablastr/coarsen/sample.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #include <algorithm>
 #include <array>
@@ -68,6 +69,12 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         m_beam_name.size() == 2u,
         "Collider-relevant diagnostic must involve exactly two species"
     );
+
+    ablastr::warn_manager::WMRecordWarning(
+   "DIAGNOSTICS",
+   "The collider-relevant reduced diagnostic is meant for \
+   colliding species propagating along the z direction.",
+   ablastr::warn_manager::WarnPriority::low);
 
     // get WarpX class object
     auto & warpx = WarpX::GetInstance();
