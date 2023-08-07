@@ -234,9 +234,9 @@ public:
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies() const {return species_names.size();}
-    int nLasers() const {return lasers_names.size();}
-    int nContainers() const {return allcontainers.size();}
+    int nSpecies () const {return species_names.size();}
+    int nLasers () const {return lasers_names.size();}
+    int nContainers () const {return allcontainers.size();}
 
     /** Whether back-transformed diagnostics need to be performed for any plasma species.
      *
