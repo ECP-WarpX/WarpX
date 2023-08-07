@@ -33,14 +33,12 @@ StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int 
     if (m_slice_in_domain == 1) {
         auto& warpx = WarpX::GetInstance();
         auto geom = warpx.Geom(m_lev);
-//        std::unique_ptr< amrex::MultiFab > slice = nullptr;
         const int scomp = 0;
         const int slice_dir = WARPX_ZINDEX;
         bool interpolate = true;
 
         amrex::Vector<int> slice_to_full_ba_map;
         std::unique_ptr<amrex::MultiFab> slice = AllocateSlice(slice_to_full_ba_map);
-        slice->setVal(0.);
 
         for (amrex::MFIter mfi(*slice, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
@@ -157,14 +155,16 @@ StationFunctor::AllocateSlice (amrex::Vector<int>& slice_to_full_ba_map) const
     const amrex::DistributionMapping& dm = m_arr_mf_src[0]->DistributionMap();
     std::vector< std::pair<int, amrex::Box> > isects;
     ba.intersections(slice_box, isects, false, 0);
-    amrex::Vector<amrex::Box> boxes;
+    amrex::BosLost boxes(ba.isType());
     amrex::Vector<int> procs;
     for (auto const& is : isects) {
-        procs.push_back(dm[is.first]);
-        boxes.push_back(is.second);
-        slice_to_full_ba_map.push_back(is.first);
+        if (is.second.length(WARPX_ZINDEX) > 1) {
+            procs.push_back(dm[is.first]);
+            boxes.push_back(is.second);
+            slice_to_full_ba_map.push_back(is.first);
+        }
     }
-    amrex::BoxArray slice_ba(&boxes[0], static_cast<int>(boxes.size()));
+    amrex::BoxArray slice_ba(std::move(boxes));
     amrex::DistributionMapping slice_dmap(std::move(procs));
     const int nghost = 1;
     std::unique_ptr<amrex::MultiFab> slice = std::make_unique<amrex::MultiFab>(slice_ba, slice_dmap, nComp(), nghost,
