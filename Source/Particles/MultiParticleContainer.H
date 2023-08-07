@@ -71,21 +71,21 @@ public:
     ~MultiParticleContainer() {}
 
     WarpXParticleContainer&
-    GetParticleContainer (int ispecies) const {return *allcontainers[ispecies];}
+    GetParticleContainer (int index) const {return *allcontainers[index];}
 
     WarpXParticleContainer*
-    GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
+    GetParticleContainerPtr (int index) const {return allcontainers[index].get();}
 
     WarpXParticleContainer&
     GetParticleContainerFromName (const std::string& name) const;
 
 #ifdef WARPX_USE_OPENPMD
-    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
-      return  allcontainers[ispecies];
+    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int index) {
+      return  allcontainers[index];
     }
 #endif
-    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int ispecies) {
-        return allcontainers[ispecies]->meanParticleVelocity();
+    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int index) {
+        return allcontainers[index]->meanParticleVelocity();
     }
 
     void AllocData ();
