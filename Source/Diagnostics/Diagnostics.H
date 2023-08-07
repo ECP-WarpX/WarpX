@@ -294,7 +294,7 @@ protected:
     /** Higher corner of the diagnostics output, in physical coordinates */
     amrex::Vector< amrex::Real> m_hi;
     /** Number of output buffers. The value is set to 1 for all FullDiagnostics */
-    int m_num_buffers;
+    int m_num_buffers = 1;
     /** Array of species indices that dump rho per species */
     amrex::Vector<int> m_rho_per_species_index;
     /** Vector of particle buffer vectors for each snapshot */

@@ -13,26 +13,12 @@
 #include <ablastr/utils/SignalHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
-#include <AMReX.H>
-#include <AMReX_Array.H>
-#include <AMReX_BLassert.H>
-#include <AMReX_Box.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_Config.H>
-#include <AMReX_CoordSys.H>
-#include <AMReX_DistributionMapping.H>
-#include <AMReX_FArrayBox.H>
-#include <AMReX_FabArray.H>
-#include <AMReX_FabFactory.H>
 #include <AMReX_Geometry.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_MakeType.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_PlotFileUtil.H>
-#include <AMReX_REAL.H>
-#include <AMReX_RealBox.H>
+#include <AMReX_Utility.H>
 #include <AMReX_VisMF.H>
 #include <AMReX_Vector.H>
 
@@ -125,24 +111,28 @@ StationDiagnostics::InitializeFieldFunctors (int lev)
 void
 StationDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart)
 {
+    AMREX_ALWAYS_ASSERT(lev == 0);
+
     // Define boxArray, dmap, and initialize output multifab
     // This will have the extension in x-y at a given location z, and the third dimension will be time
 
     auto & warpx = WarpX::GetInstance();
     // in the station normal direction, with time, we need to determine number of points
     // hi : (t_max - t_min )/dt
-    amrex::Box domain = (warpx.boxArray(lev)).minimalBox();
+    amrex::Box domain = warpx.Geom(lev).Domain();
     domain.setSmall(WARPX_ZINDEX, 0);
     domain.setBig(WARPX_ZINDEX, (m_buffer_size - 1));
     m_buffer_box = domain;
     amrex::BoxArray diag_ba;
     diag_ba.define(m_buffer_box);
     amrex::BoxArray ba = diag_ba.maxSize(256);
+    amrex::IntVect typ(1);
+    typ[WARPX_ZINDEX] = 0; // nodal except in z-direction
+    ba.convert(typ);
     amrex::DistributionMapping dmap(ba);
     int ncomps = 6; //  Ex Ey Ez Bx By Bz
-    int nghost = 1; //  Ex Ey Ez Bx By Bz
-    m_mf_output[0][lev] = amrex::MultiFab( amrex::convert(ba, amrex::IntVect::TheNodeVector()), dmap, ncomps, nghost);
-    m_mf_output[0][lev].setVal(0.);
+    int nghost = 0; //  Ex Ey Ez Bx By Bz
+    m_mf_output[0][lev] = amrex::MultiFab(ba, dmap, ncomps, nghost);
 }
 
 void
@@ -177,10 +167,14 @@ StationDiagnostics::GetZSliceInDomain (const int lev)
 void
 StationDiagnostics::UpdateBufferData ()
 {
-    if (GetZSliceInDomain(0))
+    if (GetZSliceInDomain(0)) {
         m_slice_counter++;
+    }
     if (m_slice_counter > 0 and !GetZSliceInDomain(0)) {
         m_last_timeslice_filled = true;
+    }
+    if (m_slice_counter == 1) {
+        m_tmin = WarpX::GetInstance().gett_new(0);
     }
 }
 
@@ -194,26 +188,67 @@ void
 StationDiagnostics::Flush (int i_buffer)
 {
     if (m_slice_counter == 0) return;
+
     auto & warpx = WarpX::GetInstance();
     m_tmax = warpx.gett_new(0);
-    std::string filename = m_file_prefix;
-    filename = amrex::Concatenate(m_file_prefix, i_buffer, m_file_min_digits);
+    std::string filename = amrex::Concatenate(m_file_prefix, i_buffer, 1);
     constexpr int permission_flag_rwxrxrx = 0755;
-    if (! amrex::UtilCreateDirectory(filename, permission_flag_rwxrxrx) ) {
-        amrex::CreateDirectoryFailed(filename);
-    }
-    WriteStationHeader(filename);
-    for (int lev = 0; lev < 1; ++lev) {
-        const std::string buffer_path = filename + amrex::Concatenate("/Level_",lev,1) + "/";
-        if (m_flush_counter == 0) {
-            if (! amrex::UtilCreateDirectory(buffer_path, permission_flag_rwxrxrx) ) {
-                amrex::CreateDirectoryFailed(buffer_path);
+    if (amrex::ParallelDescriptor::IOProcessor()) {
+        if (! amrex::UtilCreateDirectory(filename, permission_flag_rwxrxrx) ) {
+            amrex::CreateDirectoryFailed(filename);
+        }
+        WriteStationHeader(filename);
+        for (int lev = 0; lev < 1; ++lev) {
+            const std::string buffer_path = filename + amrex::Concatenate("/Level_",lev,1) + "/";
+            if (m_flush_counter == 0) {
+                if (! amrex::UtilCreateDirectory(buffer_path, permission_flag_rwxrxrx) ) {
+                    amrex::CreateDirectoryFailed(buffer_path);
+                }
             }
         }
-        std::string buffer_string = amrex::Concatenate("buffer-",m_flush_counter,m_file_min_digits);
+    }
+    amrex::ParallelDescriptor::Barrier();
+    for (int lev = 0; lev < 1; ++lev) {
+        std::string buffer_string = amrex::Concatenate("buffer-",m_flush_counter,1);
         amrex::Print() << " Writing station buffer " << buffer_string << "\n";
         const std::string prefix = amrex::MultiFabFileFullPrefix(lev, filename, "Level_", buffer_string);
-        amrex::VisMF::Write(m_mf_output[i_buffer][lev], prefix);
+
+        auto const& out = m_mf_output[i_buffer][lev];
+
+        if (m_slice_counter == m_buffer_size) {
+            amrex::VisMF::Write(out, prefix);
+        } else {
+            auto const& ba = out.boxArray();
+            auto const& dm = out.DistributionMap();
+            amrex::BoxList bl(ba.ixType());
+            amrex::Vector<int> proc;
+            amrex::Vector<int> imap;
+            for (int i = 0; i < int(ba.size()); ++i) {
+                auto b = ba[i];
+                b.setBig(WARPX_ZINDEX, std::min(b.bigEnd(WARPX_ZINDEX),m_slice_counter-1));
+                if (b.ok()) {
+                    bl.push_back(b);
+                    proc.push_back(dm[i]);
+                    if (dm[i] == amrex::ParallelDescriptor::MyProc()) {
+                        imap.push_back(i);
+                    }
+                }
+            }
+            amrex::MultiFab tmp(amrex::BoxArray(std::move(bl)),
+                                amrex::DistributionMapping(std::move(proc)),
+                                out.nComp(), 0);
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+            for (amrex::MFIter mfi(tmp, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+            {
+                auto const& bx = mfi.tilebox();
+                tmp[mfi].template copy<amrex::RunOn::Device>
+                    (out[imap[mfi.LocalIndex()]], bx, 0, bx, 0, out.nComp());
+            }
+
+            amrex::VisMF::Write(tmp, prefix);
+        }
     }
 
     // reset counter
@@ -225,26 +260,27 @@ StationDiagnostics::Flush (int i_buffer)
 void
 StationDiagnostics::WriteStationHeader (const std::string& filename)
 {
-    if (amrex::ParallelDescriptor::IOProcessor())
-    {
-        amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::IO_Buffer_Size);
-        std::ofstream HeaderFile;
-        HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
-        const std::string HeaderFileName(filename + "/StationHeader");
+    amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::IO_Buffer_Size);
+    std::ofstream HeaderFile;
+    HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
+    const std::string HeaderFileName(filename + "/StationHeader");
+    if (m_flush_counter == 0) {
         HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
                                                 std::ofstream::trunc |
                                                 std::ofstream::binary);
-        if( ! HeaderFile.good())
-            amrex::FileOpenFailed(HeaderFileName);
-
-        HeaderFile.precision(17);
-
-        HeaderFile << m_tmin << "\n";
-        HeaderFile << m_tmax << "\n";
-        HeaderFile << m_buffer_size << "\n";
-        HeaderFile << m_slice_counter << "\n";
-        HeaderFile << m_flush_counter << "\n";
-
-
+    } else {
+        HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
+                                                std::ofstream::app   |
+                                                std::ofstream::binary);
     }
+    if( ! HeaderFile.good()) {
+        amrex::FileOpenFailed(HeaderFileName);
+    }
+
+    HeaderFile.precision(17);
+
+    if (m_flush_counter == 0) {
+        HeaderFile << m_station_loc << "\n";
+    }
+    HeaderFile << m_tmin << " " << m_tmax << "\n";
 }

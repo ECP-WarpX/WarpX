@@ -4,18 +4,41 @@
 
 #include <ablastr/utils/Communication.H>
 
-#include <AMReX_Array4.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_Config.H>
-#include <AMReX_FArrayBox.H>
-#include <AMReX_FabArray.H>
 #include <AMReX_Geometry.H>
-#include <AMReX_GpuControl.H>
-#include <AMReX_GpuLaunch.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
-#include <AMReX_MultiFabUtil.H>
+
+#include <algorithm>
+
+namespace {
+
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+amrex::Real interp_to_slice (int i, int j,
+                             amrex::Array4<amrex::Real const> const& src,
+                             amrex::IndexType type, amrex::Real z)
+{
+    using amrex::Real;
+    if (type.cellCentered()) { z -= Real(0.5); }
+    int const iz = static_cast<int>(std::floor(z));
+    Real const w = z - Real(iz);
+#if (AMREX_SPACEDIM == 1)
+    amrex::ignore_unused(i,j);
+    amrex::Abort("xxxxx todo");
+    return 0;
+#elif (AMREX_SPACEDIM == 2)
+    amrex::ignore_unused(j);
+    if (type.nodeCentered(0)) {
+        return src(i,iz,0)*(Real(1.0)-w) + src(i,iz+1,0)*w;
+    } else {
+        return Real(0.5)*(src(i-1,iz,0)*(Real(1.0)-w) + src(i-1,iz+1,0)*w +
+                          src(i  ,iz,0)*(Real(1.0)-w) + src(i  ,iz+1,0)*w);
+    }
+#else
+    amrex::Abort("xxxxx todo");
+    return 0;
+#endif
+}
+
+}
 
 //StationFunctor::StationFunctor ( const amrex::MultiFab* const mf_src,
 StationFunctor::StationFunctor(const std::array<const amrex::MultiFab* const, 6> arr_mf_src,
@@ -29,90 +52,63 @@ StationFunctor::StationFunctor(const std::array<const amrex::MultiFab* const, 6>
 void
 StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int i_buffer) const
 {
+    if (! m_slice_in_domain) { return; }
+
     // 1. First get slice at given z-location
-    if (m_slice_in_domain == 1) {
-        auto& warpx = WarpX::GetInstance();
-        auto geom = warpx.Geom(m_lev);
-//        std::unique_ptr< amrex::MultiFab > slice = nullptr;
-        const int scomp = 0;
-        const int slice_dir = WARPX_ZINDEX;
-        bool interpolate = true;
+    auto const& warpx = WarpX::GetInstance();
+    auto const& geom = warpx.Geom(m_lev);
+    amrex::Box const& domain = geom.Domain();
+    const int slice_dir = WARPX_ZINDEX;
+    // cell index for the slice
+    int slice_k = static_cast<int>(std::floor((m_z_location - geom.ProbLo(slice_dir))
+                                              * geom.InvCellSize(slice_dir)))
+        + domain.smallEnd(slice_dir);
+    slice_k = std::clamp(slice_k, domain.smallEnd(WARPX_ZINDEX), domain.bigEnd(WARPX_ZINDEX));
+    const amrex::Real slice_z = (m_z_location - geom.ProbLo(slice_dir)) *
+        geom.InvCellSize(slice_dir) + amrex::Real(domain.smallEnd(slice_dir));
 
-        amrex::Vector<int> slice_to_full_ba_map;
-        std::unique_ptr<amrex::MultiFab> slice = AllocateSlice(slice_to_full_ba_map);
-        slice->setVal(0.);
+    amrex::Vector<int> slice_to_full_ba_map;
+    std::unique_ptr<amrex::MultiFab> slice = AllocateSlice(slice_to_full_ba_map, slice_k);
 
-        for (amrex::MFIter mfi(*slice, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
-        {
-            int slice_gid = mfi.index();
-            int full_gid = slice_to_full_ba_map[slice_gid];
-            const amrex::Array4<amrex::Real> slice_arr = (*slice)[mfi].array();
-            const amrex::Array4<amrex::Real const> src_Ex_arr = (*m_arr_mf_src[0])[full_gid].array();
-            const amrex::Array4<amrex::Real const> src_Ey_arr = (*m_arr_mf_src[1])[full_gid].array();
-            const amrex::Array4<amrex::Real const> src_Ez_arr = (*m_arr_mf_src[2])[full_gid].array();
-            const amrex::Array4<amrex::Real const> src_Bx_arr = (*m_arr_mf_src[3])[full_gid].array();
-            const amrex::Array4<amrex::Real const> src_By_arr = (*m_arr_mf_src[4])[full_gid].array();
-            const amrex::Array4<amrex::Real const> src_Bz_arr = (*m_arr_mf_src[5])[full_gid].array();
-
-            const amrex::Box& tbx = mfi.tilebox();
-            amrex::ParallelFor( tbx,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k)
-                {
-                    slice_arr(i,j,k,0) = src_Ex_arr(i,j,k);
-                    slice_arr(i,j,k,1) = src_Ey_arr(i,j,k);
-                    slice_arr(i,j,k,2) = src_Ez_arr(i,j,k);
-                    slice_arr(i,j,k,3) = src_Bx_arr(i,j,k);
-                    slice_arr(i,j,k,4) = src_By_arr(i,j,k);
-                    slice_arr(i,j,k,5) = src_Bz_arr(i,j,k);
-                }
-            );
-        }
-
-        // Define MF with dmap of dst mf, with all 6 components from the slice generated from m_mf_src
-        const int station_index = static_cast<int> ( ( m_z_location - geom.ProbLo(slice_dir))
-                                                     / geom.CellSize(slice_dir) );
-        amrex::Box slice_box = amrex::surroundingNodes(m_buffer_box);
-        slice_box.setSmall(slice_dir, station_index);
-        slice_box.setBig(slice_dir, station_index);
-
-        amrex::BoxArray slice_ba(slice_box);
-        slice_ba.maxSize( 256);
-        std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
-        const int nghost = 1;
-        tmp_slice_ptr = std::make_unique< amrex::MultiFab > (slice_ba, mf_dst.DistributionMap(),
-                                                             slice->nComp(), nghost);
-        tmp_slice_ptr->setVal(0.);
-
-        // Parallel copy slice to tmp_slice MF
-        const int dcomp_tmp = 0;
-        amrex::IntVect src_ngrow = amrex::IntVect( AMREX_D_DECL(1,1,1) );
-        amrex::IntVect dst_ngrow = amrex::IntVect( AMREX_D_DECL(1,1,1) );
-        ablastr::utils::communication::ParallelCopy(*tmp_slice_ptr, *slice, scomp, dcomp_tmp, slice->nComp(),
-                                                    slice->nGrowVect(), tmp_slice_ptr->nGrowVect(),
-                                                    WarpX::do_single_precision_comms);
-
-        // MFIter to copy tmp_slice at k-index location in time-based mf
-        const int k_index = m_k_index;
-        const int ncomp_dst = mf_dst.nComp();
-        amrex::MultiFab& tmp = *tmp_slice_ptr;
-        for (amrex::MFIter mfi(tmp, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
-        {
-            const amrex::Box & tbx = mfi.tilebox();
-            const amrex::Array4<amrex::Real> src_arr = tmp[mfi].array();
-            const amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
-            amrex::ParallelFor( tbx, ncomp_dst,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
-                {
-#if defined(WARPX_DIM_3D)
-                    dst_arr(i,j,k_index,n) = src_arr(i,j,k,n);
-#elif defined(WARPX_DIM_XZ)
-                    dst_arr(i,k_index,k,n) = src_arr(i,j,k,n);
-#endif
-                });
-        }
-        slice = nullptr;
-        tmp_slice_ptr = nullptr;
+    for (auto& smf : m_arr_mf_src) {
+        AMREX_ALWAYS_ASSERT(smf->nGrowVect().allGE(amrex::IntVect(1)));
+        const_cast<amrex::MultiFab*>(smf)->FillBoundary
+            (0,1,amrex::IntVect(1),geom.periodicity());
     }
+
+    amrex::GpuArray<amrex::IndexType,6> src_itype
+        {m_arr_mf_src[0]->ixType(),
+         m_arr_mf_src[1]->ixType(),
+         m_arr_mf_src[2]->ixType(),
+         m_arr_mf_src[3]->ixType(),
+         m_arr_mf_src[4]->ixType(),
+         m_arr_mf_src[5]->ixType()};
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(*slice, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+        int full_gid = slice_to_full_ba_map[mfi.LocalIndex()];
+        const amrex::Array4<amrex::Real> slice_arr = (*slice)[mfi].array();
+        amrex::GpuArray<amrex::Array4<amrex::Real const>,6> src_arr
+            {(*m_arr_mf_src[0])[full_gid].const_array(),
+             (*m_arr_mf_src[1])[full_gid].const_array(),
+             (*m_arr_mf_src[2])[full_gid].const_array(),
+             (*m_arr_mf_src[3])[full_gid].const_array(),
+             (*m_arr_mf_src[4])[full_gid].const_array(),
+             (*m_arr_mf_src[5])[full_gid].const_array()};
+
+        const amrex::Box& tbx = mfi.tilebox();
+        amrex::ParallelFor( tbx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        {
+            for (int n = 0; n < 6; ++n) {
+                slice_arr(i,j,k,n) = interp_to_slice(i,j,src_arr[n],src_itype[n],slice_z);
+            }
+        });
+    }
+
+    mf_dst.ParallelCopy(*slice, 0, dcomp, nComp());
 }
 
 void
@@ -132,42 +128,34 @@ StationFunctor::PrepareFunctorData (int i_station, bool slice_in_domain, amrex::
 }
 
 std::unique_ptr<amrex::MultiFab>
-StationFunctor::AllocateSlice (amrex::Vector<int>& slice_to_full_ba_map) const
+StationFunctor::AllocateSlice (amrex::Vector<int>& slice_to_full_ba_map, int slice_k) const
 {
-    auto& warpx = WarpX::GetInstance();
-    amrex::Geometry geom = warpx.Geom(m_lev);
-    // get slice and convert to index space
-    amrex::RealBox real_slice = geom.ProbDomain();
-    real_slice.setLo(WARPX_ZINDEX, m_z_location);
-    real_slice.setHi(WARPX_ZINDEX, m_z_location);
-    amrex::IntVect slice_lo = amrex::IntVect( AMREX_D_DECL(
-                              static_cast<int>(std::floor((real_slice.lo(0) - geom.ProbLo(0))/geom.CellSize(0))),
-                              static_cast<int>(std::floor((real_slice.lo(1) - geom.ProbLo(1))/geom.CellSize(1))),
-                              static_cast<int>(std::floor((real_slice.lo(2) - geom.ProbLo(2))/geom.CellSize(2)))
-                              ));
-    amrex::IntVect slice_hi = amrex::IntVect( AMREX_D_DECL(
-                              static_cast<int>(std::floor((real_slice.hi(0) - geom.ProbLo(0))/geom.CellSize(0))),
-                              static_cast<int>(std::floor((real_slice.hi(1) - geom.ProbLo(1))/geom.CellSize(1))),
-                              static_cast<int>(std::floor((real_slice.hi(2) - geom.ProbLo(2))/geom.CellSize(2)))
-                             ));
-    amrex::Box slice_box = amrex::surroundingNodes(amrex::Box(slice_lo, slice_hi));
+    auto const& warpx = WarpX::GetInstance();
+    amrex::Geometry const& geom = warpx.Geom(m_lev);
+    amrex::Box slice_box = geom.Domain();
+    slice_box.setSmall(WARPX_ZINDEX, slice_k).setBig(WARPX_ZINDEX, slice_k);
 
-    // Define nodal multifab that stores the slice
-    amrex::BoxArray const& ba = amrex::convert( m_arr_mf_src[0]->boxArray(), amrex::IntVect::TheNodeVector());
+    amrex::BoxArray const& ba = amrex::convert(m_arr_mf_src[0]->boxArray(),
+                                               amrex::IntVect::TheCellVector());
     const amrex::DistributionMapping& dm = m_arr_mf_src[0]->DistributionMap();
     std::vector< std::pair<int, amrex::Box> > isects;
-    ba.intersections(slice_box, isects, false, 0);
-    amrex::Vector<amrex::Box> boxes;
+    ba.intersections(slice_box, isects);
+    amrex::BoxList boxes;
     amrex::Vector<int> procs;
     for (auto const& is : isects) {
         procs.push_back(dm[is.first]);
-        boxes.push_back(is.second);
-        slice_to_full_ba_map.push_back(is.first);
+        auto b = is.second;
+        b.setSmall(WARPX_ZINDEX, m_k_index).setBig(WARPX_ZINDEX, m_k_index);
+        boxes.push_back(b);
+        if (dm[is.first] == amrex::ParallelDescriptor::MyProc()) {
+            slice_to_full_ba_map.push_back(is.first);
+        }
     }
-    amrex::BoxArray slice_ba(&boxes[0], static_cast<int>(boxes.size()));
+    amrex::BoxArray slice_ba(std::move(boxes));
+    amrex::IntVect typ(1);
+    typ[WARPX_ZINDEX] = 0; // nodal except in z-direction
+    slice_ba.convert(typ);
     amrex::DistributionMapping slice_dmap(std::move(procs));
-    const int nghost = 1;
-    std::unique_ptr<amrex::MultiFab> slice = std::make_unique<amrex::MultiFab>(slice_ba, slice_dmap, nComp(), nghost,
-                                                                     amrex::MFInfo(), amrex::FArrayBoxFactory());
-    return slice;
+    const int nghost = 0;
+    return std::make_unique<amrex::MultiFab>(slice_ba, slice_dmap, nComp(), nghost);
 }

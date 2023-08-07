@@ -21,7 +21,7 @@ public:
     virtual void operator () (amrex::MultiFab & mf_dst, const int dcomp, const int i_buffer) const override;
     void PrepareFunctorData (int i_station, bool slice_in_domain, amrex::Real zlocation, amrex::Box buffer_box,
                              int k_index, const int max_box_size, const int buffer_full) override;
-    std::unique_ptr<amrex::MultiFab> AllocateSlice(amrex::Vector<int>& slice_to_full_ba_map) const;
+    std::unique_ptr<amrex::MultiFab> AllocateSlice(amrex::Vector<int>& slice_to_full_ba_map, int slice_k) const;
 private:
     std::array<const amrex::MultiFab * const, 6> m_arr_mf_src;
     //const amrex::MultiFab * const m_mf_src = nullptr;
