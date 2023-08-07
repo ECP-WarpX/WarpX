@@ -43,8 +43,14 @@ jobs:
 
         python3 -m pip install --upgrade pip setuptools wheel
         if(!$?) { Exit $LASTEXITCODE }
+        cmake --build build --config Debug --target install
+        if(!$?) { Exit $LASTEXITCODE }
         cmake --build build --config Debug --target pip_install
         if(!$?) { Exit $LASTEXITCODE }
+
+    - name: Test
+      run: |
+        $env:PATH += ';C:/Program Files (x86)/WarpX/bin/'
 
         python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py
 # JSON writes are currently very slow (50min) with MSVC
@@ -91,10 +97,18 @@ jobs:
         cmake --build build --config Release --parallel 2
         if errorlevel 1 exit 1
 
+        cmake --build build --config Release --target install
+        if errorlevel 1 exit 1
+
         python3 -m pip install --upgrade pip setuptools wheel
         if errorlevel 1 exit 1
         cmake --build build --config Release --target pip_install
         if errorlevel 1 exit 1
+
+    - name: Test
+      run: |
+        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\vc\Auxiliary\build\vcvarsall.bat" x64
+        $env:PATH += ';C:/Program Files (x86)/WarpX/bin/'
 
         python3 Examples\Tests\gaussian_beam\PICMI_inputs_gaussian_beam.py --diagformat=openpmd
         if errorlevel 1 exit 1
