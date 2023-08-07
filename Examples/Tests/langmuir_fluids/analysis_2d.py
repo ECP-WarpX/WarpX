@@ -45,8 +45,9 @@ kz = 2.*np.pi*n_osc_z/(zmax-zmin)
 # Plasma frequency
 wp = np.sqrt((n*e**2)/(m_e*epsilon_0))
 
-k = {'Ex':kx, 'Ez':kz}
-cos = {'Ex': (0,1,1), 'Ez':(1,1,0)}
+k = {'Ex':kx, 'Ez':kz, 'Jx':kx, 'Jz':kz}
+cos = {'Ex': (0,1,1), 'Ez':(1,1,0),'Jx': (0,1,1), 'Jz':(1,1,0)}
+cos_rho = {'rho': (1,1,1)}
 
 def get_contribution( is_cos, k ):
     du = (xmax-xmin)/Nx
@@ -67,6 +68,30 @@ def get_theoretical_field( field, t ):
 
     return( E )
 
+def get_theoretical_J_field( field, t ):
+    # wpdt/2 accounts for the Yee halfstep offset of the current
+    dt = t / 40 # SPECIFIC to config parameters!
+    amplitude = - epsilon_0 * wp * epsilon * (m_e*c**2*k[field])/e * np.cos(wp*t-wp*dt/2)
+    cos_flag = cos[field]
+    x_contribution = get_contribution( cos_flag[0], kx )
+    z_contribution = get_contribution( cos_flag[2], kz )
+
+    J = amplitude * x_contribution[:, np.newaxis] \
+                  * z_contribution[np.newaxis, :]
+
+    return( J )
+
+def get_theoretical_rho_field( field, t ):
+    amplitude = epsilon_0 * epsilon * (m_e*c**2*(kx*kx+kz*kz))/e * np.sin(wp*t)
+    cos_flag = cos_rho[field]
+    x_contribution = get_contribution( cos_flag[0], kx )
+    z_contribution = get_contribution( cos_flag[2], kz )
+
+    rho = amplitude * x_contribution[:, np.newaxis] \
+                  * z_contribution[ np.newaxis, :]
+
+    return( rho )
+
 # Read the file
 ds = yt.load(fn)
 t0 = ds.current_time.to_value()
@@ -80,6 +105,22 @@ for field in ['Ex', 'Ez']:
     E_sim = data[('mesh',field)].to_ndarray()[:,:,0]
     E_th = get_theoretical_field(field, t0)
     max_error = abs(E_sim-E_th).max()/abs(E_th).max()
+    print('%s: Max error: %.2e' %(field,max_error))
+    error_rel = max( error_rel, max_error )
+
+# Check the validity of the currents
+for field in ['Jx', 'Jz']:
+    J_sim = data[('mesh',field)].to_ndarray()[:,:,0]
+    J_th = get_theoretical_J_field(field, t0)
+    max_error = abs(J_sim-J_th).max()/abs(J_th).max()
+    print('%s: Max error: %.2e' %(field,max_error))
+    error_rel = max( error_rel, max_error )
+
+# Check the validity of the charge
+for field in ['rho']:
+    rho_sim = data[('boxlib',field)].to_ndarray()[:,:,0]
+    rho_th = get_theoretical_rho_field(field, t0)
+    max_error = abs(rho_sim-rho_th).max()/abs(rho_th).max()
     print('%s: Max error: %.2e' %(field,max_error))
     error_rel = max( error_rel, max_error )
 

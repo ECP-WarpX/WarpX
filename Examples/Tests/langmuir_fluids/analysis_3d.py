@@ -119,7 +119,6 @@ for field in ['Ex', 'Ey', 'Ez']:
     max_error = abs(E_sim-E_th).max()/abs(E_th).max()
     print('%s: Max error: %.2e' %(field,max_error))
     error_rel = max( error_rel, max_error )
-    print("error_rel    : " + str(error_rel))
 
 
 # Check the validity of the currents
@@ -129,7 +128,6 @@ for field in ['Jx', 'Jy', 'Jz']:
     max_error = abs(J_sim-J_th).max()/abs(J_th).max()
     print('%s: Max error: %.2e' %(field,max_error))
     error_rel = max( error_rel, max_error )
-    print("error_rel    : " + str(error_rel))
 
 # Check the validity of the charge
 for field in ['rho']:
@@ -138,7 +136,6 @@ for field in ['rho']:
     max_error = abs(rho_sim-rho_th).max()/abs(rho_th).max()
     print('%s: Max error: %.2e' %(field,max_error))
     error_rel = max( error_rel, max_error )
-    print("error_rel    : " + str(error_rel))
 
 
 # Plot the last field from the loop (Ez at iteration 40)
@@ -169,6 +166,7 @@ fig.savefig('Langmuir_fluid_multi_analysis.png', dpi = 200)
 
 tolerance_rel = 5e-2
 
+print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
