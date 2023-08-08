@@ -186,6 +186,18 @@ void ParticleBoundaryBuffer::redistribute () {
     }
 }
 
+const std::vector<std::string>& ParticleBoundaryBuffer::getSpeciesNames() const
+{
+    static bool initialized = false;
+    if (!initialized)
+    {
+        const amrex::ParmParse pp_particles("particles");
+        pp_particles.queryarr("species_names", m_species_names);
+        initialized = true;
+    }
+    return m_species_names;
+}
+
 void ParticleBoundaryBuffer::clearParticles () {
     for (int i = 0; i < numBoundaries(); ++i)
     {

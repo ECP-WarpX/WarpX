@@ -50,7 +50,7 @@ ChargeOnEB::ChargeOnEB (const std::string& rd_name)
     const amrex::ParmParse pp_rd_name(rd_name);
     m_do_parser_weighting = pp_rd_name.query("weighting_function(x,y,z)", buf);
     if (m_do_parser_weighting) {
-        std::string weighting_string = "";
+        std::string weighting_string;
         utils::parser::Store_parserString(
             pp_rd_name,"weighting_function(x,y,z)", weighting_string);
         m_parser_weighting = std::make_unique<amrex::Parser>(
