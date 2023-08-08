@@ -74,8 +74,8 @@ public:
     amrex::Real m_z_peak;
     amrex::Real m_theta_stc;
     amrex::Real m_focal_distance;
-    amrex::Real m_zeta;
-    amrex::Real m_beta;
-    amrex::Real m_phi2;
-    amrex::Real m_phi0;
+    amrex::Real m_zeta = 0._rt;
+    amrex::Real m_beta = 0._rt;
+    amrex::Real m_phi2 = 0._rt;
+    amrex::Real m_phi0 = 0._rt;
 };
