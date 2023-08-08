@@ -31,7 +31,6 @@ boundary.field_lo = PEC PEC PEC
 boundary.field_hi = PEC PEC PEC
 
 # NUMERICS
-particles.do_tiling = 0 
 warpx.do_electrostatic = relativistic
 warpx.const_dt = dt 
 warpx.grid_type = collocated 
@@ -74,19 +73,4 @@ ParticleExtrema_beam_p.intervals = 1
 ParticleExtrema_beam_p.species = beam_p
 ParticleNumber.type = ParticleNumber
 ParticleNumber.intervals = 1
-
-
-diagnostics.diags_names = diag1
-diag1.intervals = 1
-diag1.diag_type = Full
-diag1.write_species = 0
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam_p
-diag1.format = openpmd
-diag1.openpmd_backend = bp
-diag1.particle_fields_to_plot= vx vy vz g
-diag1.particle_fields_species = beam_p 
-diag1.particle_fields.vx(x,y,z,ux,uy,uz)=ux/sqrt(ux*ux+uy*uy+uz*uz)
-diag1.particle_fields.vy(x,y,z,ux,uy,uz)=uy/sqrt(ux*ux+uy*uy+uz*uz)
-diag1.particle_fields.vz(x,y,z,ux,uy,uz)=uz/sqrt(ux*ux+uy*uy+uz*uz)
-diag1.particle_fields.g(x,y,z,ux,uy,uz)=sqrt(ux*ux+uy*uy+uz*uz)
 
