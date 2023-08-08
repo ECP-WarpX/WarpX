@@ -38,7 +38,7 @@ WarpXLaserProfiles::FieldFunctionLaserProfile::init (
 void
 WarpXLaserProfiles::FieldFunctionLaserProfile::fill_amplitude (
     const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
-    Real t, Real * AMREX_RESTRICT const amplitude, bool laser_envelope) const
+    Real t, Real * AMREX_RESTRICT const amplitude) const
 {
     auto parser = m_parser.compile<3>();
     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) noexcept

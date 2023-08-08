@@ -543,7 +543,6 @@ LaserParticleContainer::InitData (int lev)
     amrex::Vector<amrex::ParticleReal> particle_ux(np, 0.0);
     amrex::Vector<amrex::ParticleReal> particle_uy(np, 0.0);
     amrex::Vector<amrex::ParticleReal> particle_uz(np, 0.0);
-    bool laser_envelope = false;
 
     if (Verbose()) amrex::Print() << Utils::TextMsg::Info("Adding laser particles");
     // Add particles on level 0. They will be redistributed afterwards
@@ -617,7 +616,6 @@ LaserParticleContainer::Evolve (int lev,
             plane_Xp.resize(np);
             plane_Yp.resize(np);
             amplitude_E.resize(np);
-            bool laser_envelope = false;
 
             // Determine whether particles will deposit on the fine or coarse level
             long np_current = np;
@@ -648,7 +646,7 @@ LaserParticleContainer::Evolve (int lev,
             // at the position of the emission plane
             m_up_laser_profile->fill_amplitude(
                 np, plane_Xp.dataPtr(), plane_Yp.dataPtr(),
-                t_lab, amplitude_E.dataPtr(), laser_envelope);
+                t_lab, amplitude_E.dataPtr());
 
             // Calculate the corresponding momentum and position for the particles
             update_laser_particle(pti, np, uxp.dataPtr(), uyp.dataPtr(),
