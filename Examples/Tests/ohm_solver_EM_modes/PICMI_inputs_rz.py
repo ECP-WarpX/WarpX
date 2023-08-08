@@ -40,16 +40,16 @@ class CylindricalNormalModes(object):
     vA_over_c   = 5e-3 # ratio of Alfven speed and the speed of light
 
     # Spatial domain
-    Nz          = 256 # number of cells in z direction
-    Nr          = 64 # number of cells in r direction
+    Nz          = 512 # number of cells in z direction
+    Nr          = 128 # number of cells in r direction
 
     # Temporal domain (if not run as a CI test)
     LT          = 800.0 # Simulation temporal length (ion cyclotron periods)
 
     # Numerical parameters
-    NPPC        = 10000 # Seed number of particles per cell
-    DZ          = 1.0 # Cell size (ion skin depths)
-    DR          = 1.0 # Cell size (ion skin depths)
+    NPPC        = 8000 # Seed number of particles per cell
+    DZ          = 0.4 # Cell size (ion skin depths)
+    DR          = 0.4 # Cell size (ion skin depths)
     DT          = 0.02 # Time step (ion cyclotron periods)
 
     # Plasma resistivity - used to dampen the mode excitation
@@ -75,7 +75,7 @@ class CylindricalNormalModes(object):
             self.Nr = 64
             self.NPPC = 200
         # output diagnostics 5 times per cyclotron period
-        self.diag_steps = int(1.0 / 5 / self.DT)
+        self.diag_steps = max(10, int(1.0 / 5 / self.DT))
 
         self.Lz = self.Nz * self.DZ * self.l_i
         self.Lr = self.Nr * self.DR * self.l_i
@@ -209,18 +209,26 @@ class CylindricalNormalModes(object):
         field_diag = picmi.FieldDiagnostic(
             name='field_diag',
             grid=self.grid,
-            period=(self.total_steps if self.test else self.diag_steps),
-            data_list=(['B', 'E'] if not self.test else ['B', 'E', 'j', 'rho']),
-            write_dir=('.' if self.test else 'diags'),
-            warpx_file_prefix=(
-                'Python_ohms_law_solver_EM_modes_rz_plt' if self.test
-                else 'field_diags'
-            ),
-            warpx_format=('openpmd' if not self.test else None),
-            warpx_openpmd_backend=('h5' if not self.test else None),
-            warpx_write_species=(True if self.test else False)
+            period=self.diag_steps,
+            data_list=['B', 'E'],
+            write_dir='diags',
+            warpx_file_prefix='field_diags',
+            warpx_format='openpmd',
+            warpx_openpmd_backend='h5',
+            warpx_write_species=False
         )
         simulation.add_diagnostic(field_diag)
+
+        # add particle diagnostic for checksum
+        if self.test:
+            part_diag = picmi.ParticleDiagnostic(
+                name='diag1',
+                period=self.total_steps,
+                species=[self.ions],
+                data_list=['ux', 'uy', 'uz', 'weighting'],
+                warpx_file_prefix='Python_ohms_law_solver_EM_modes_rz_plt'
+            )
+            simulation.add_diagnostic(part_diag)
 
         #######################################################################
         # Initialize simulation                                               #
