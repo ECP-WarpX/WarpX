@@ -13,7 +13,7 @@ import dill
 from mpi4py import MPI as mpi
 import numpy as np
 
-from pywarpx import callbacks, picmi
+from pywarpx import picmi
 
 constants = picmi.constants
 
@@ -32,12 +32,12 @@ class CylindricalNormalModes(object):
     data for EM modes.
     '''
     # Applied field parameters
-    B0          = 1.0 # Initial magnetic field strength (T)
-    beta        = 0.2 # Plasma beta, used to calculate temperature
+    B0          = 0.5 # Initial magnetic field strength (T)
+    beta        = 0.01 # Plasma beta, used to calculate temperature
 
     # Plasma species parameters
     m_ion       = 400.0 # Ion mass (electron masses)
-    vA_over_c   = 1e-3 # ratio of Alfven speed and the speed of light
+    vA_over_c   = 5e-3 # ratio of Alfven speed and the speed of light
 
     # Spatial domain
     Nz          = 256 # number of cells in z direction
@@ -49,6 +49,7 @@ class CylindricalNormalModes(object):
     # Numerical parameters
     NPPC        = 10000 # Seed number of particles per cell
     DZ          = 1.0 # Cell size (ion skin depths)
+    DR          = 1.0 # Cell size (ion skin depths)
     DT          = 0.02 # Time step (ion cyclotron periods)
 
     # Plasma resistivity - used to dampen the mode excitation
@@ -73,12 +74,11 @@ class CylindricalNormalModes(object):
             self.Nz = 128
             self.Nr = 64
             self.NPPC = 200
-        # output diagnostics 20 times per cyclotron period
-        self.diag_steps = int(1.0/20 / self.DT)
+        # output diagnostics 5 times per cyclotron period
+        self.diag_steps = int(1.0 / 5 / self.DT)
 
-        self.dz = self.DZ * self.l_i
-        self.Lz = self.Nz * self.dz
-        self.Lr = self.Nr * self.dz
+        self.Lz = self.Nz * self.DZ * self.l_i
+        self.Lr = self.Nr * self.DR * self.l_i
 
         self.dt = self.DT * self.t_ci
 
@@ -105,12 +105,11 @@ class CylindricalNormalModes(object):
             )
             print(
                 f"Numerical parameters:\n"
-                f"\tdz = {self.dz:.1e} m\n"
                 f"\tdt = {self.dt:.1e} s\n"
                 f"\tdiag steps = {self.diag_steps:d}\n"
-                f"\ttotal steps = {self.total_steps:d}\n"
+                f"\ttotal steps = {self.total_steps:d}\n",
+                flush=True
             )
-
         self.setup_run()
 
     def get_plasma_quantities(self):
@@ -202,9 +201,6 @@ class CylindricalNormalModes(object):
                 grid=self.grid, n_macroparticles_per_cell=self.NPPC
             )
         )
-        # # use custom particle loader to avoid numerical Ji_r initially
-        # # due to macro-particle diffusion
-        # callbacks.installparticleloader(self._load_particles)
 
         #######################################################################
         # Add diagnostics                                                     #
@@ -215,14 +211,13 @@ class CylindricalNormalModes(object):
             grid=self.grid,
             period=(self.total_steps if self.test else self.diag_steps),
             data_list=(['B', 'E'] if not self.test else ['B', 'E', 'j', 'rho']),
-            # write_dir=('.' if self.test else 'diags'),
-            write_dir='.',
+            write_dir=('.' if self.test else 'diags'),
             warpx_file_prefix=(
                 'Python_ohms_law_solver_EM_modes_rz_plt' if self.test
-                else 'diags'
+                else 'field_diags'
             ),
-            # warpx_format=('openpmd' if not self.test else None),
-            # warpx_openpmd_backend=('h5' if not self.test else None),
+            warpx_format=('openpmd' if not self.test else None),
+            warpx_openpmd_backend=('h5' if not self.test else None),
             warpx_write_species=(True if self.test else False)
         )
         simulation.add_diagnostic(field_diag)
@@ -233,47 +228,6 @@ class CylindricalNormalModes(object):
 
         simulation.initialize_inputs()
         simulation.initialize_warpx()
-
-    def _load_particles(self):
-
-        # determine how many particles to inject in total
-        parts_to_inject = self.Nr * self.Nz * self.NPPC
-
-        # determine how many particles to inject per process
-        my_parts_to_inject = parts_to_inject // sim_ext.getNProcs()
-
-        # determine particle weights
-        weight = (
-            self.n_plasma * np.pi * self.Lr**2 * self.Lz
-            / (my_parts_to_inject * sim_ext.getNProcs())
-        )
-
-        # generate uniformly random positions
-        rp = np.sqrt(np.random.rand(my_parts_to_inject)) * self.Lr
-        tp = np.random.rand(my_parts_to_inject) * 2.0 * np.pi
-
-        xp = rp * np.cos(tp)
-        yp = rp * np.sin(tp)
-        zp = np.random.rand(my_parts_to_inject) * self.Lz
-
-        uxp = self.v_ti * np.random.randn(my_parts_to_inject)
-        uyp = self.v_ti * np.random.randn(my_parts_to_inject)
-        uzp = self.v_ti * np.random.randn(my_parts_to_inject)
-
-        # add rigid rotation and radial velocity
-        self.ur = 1.0
-        self.ut = 1.0
-        uxp += xp / rp * self.ur - yp / rp * self.ut
-        uyp += xp / rp * self.ut + yp / rp * self.ur
-
-        # add axial velocity
-        self.uz = 1.0
-        uzp += self.uz
-
-        sim_ext.add_particles(
-            self.ions.name, xp, yp, zp, uxp, uyp, uzp, weight
-        )
-        print("Particles injected.")
 
 
 ##########################
