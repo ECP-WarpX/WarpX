@@ -60,14 +60,14 @@ void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const Di
         return tagname;
     };
 
-    warpx.AllocInitMultiFab(N[lev], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
+    WarpX::AllocInitMultiFab(N[lev], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
                             dm, ncomps, nguards, lev, tag("fluid density"), 0.0_rt);
 
-    warpx.AllocInitMultiFab(NU[lev][0], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
+    WarpX::AllocInitMultiFab(NU[lev][0], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
                             dm, ncomps, nguards, lev, tag("fluid momentum density [x]"), 0.0_rt);
-    warpx.AllocInitMultiFab(NU[lev][1], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
+    WarpX::AllocInitMultiFab(NU[lev][1], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
                             dm, ncomps, nguards, lev, tag("fluid momentum density [y]"), 0.0_rt);
-    warpx.AllocInitMultiFab(NU[lev][2], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
+    WarpX::AllocInitMultiFab(NU[lev][2], amrex::convert(ba, amrex::IntVect::TheNodeVector()),
                             dm, ncomps, nguards, lev, tag("fluid momentum density [z]"), 0.0_rt);
 }
 
