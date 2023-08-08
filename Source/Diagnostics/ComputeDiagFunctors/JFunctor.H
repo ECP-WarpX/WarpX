@@ -14,7 +14,7 @@ JFunctor final : public ComputeDiagFunctor
 public:
     /** Constructor.
      *
-     * \param[in] mf_src source multifab.
+     * \param[in] dir direction of vector field to operate on
      * \param[in] lev level of multifab. Used for averaging in rz.
      * \param[in] crse_ratio for interpolating field values from the simulation MultiFab, src_mf,
                   to the output diagnostic MultiFab, mf_dst.
