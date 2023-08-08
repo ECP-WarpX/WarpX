@@ -100,7 +100,6 @@ def rho( z, r, epsilon, k0, w0, wp, t) :
     Return the charge density as an array
     of the same length as z and r, in the half-plane theta=0
     """
-    dt = t / 80 # SPECIFIC to config parameters!
     rho_array = \
         epsilon_0 * epsilon * m_e*c**2/e * np.sin( wp*t ) * np.sin( k0*z ) * np.exp( -r**2/w0**2 ) * \
             ((4.0/(w0**2))*(1 - (r**2)/(w0**2)) + k0**2)
