@@ -49,7 +49,7 @@ FieldReduction::FieldReduction (std::string rd_name)
     const amrex::ParmParse pp_rd_name(rd_name);
 
     // read reduced function with parser
-    std::string parser_string = "";
+    std::string parser_string;
     utils::parser::Store_parserString(pp_rd_name,"reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz)",
                        parser_string);
     m_parser = std::make_unique<amrex::Parser>(
