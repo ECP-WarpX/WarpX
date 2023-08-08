@@ -1,10 +1,7 @@
-import os 
-import sys 
-import re
 import numpy as np
-from scipy.constants import m_e, c, hbar, e 
 import openpmd_api as io
-import pandas as pd 
+import pandas as pd
+from scipy.constants import c, e, hbar, m_e
 
 E_crit = m_e**2*c**3/(e*hbar)
 B_crit = m_e**2*c**2/(e*hbar)
@@ -47,16 +44,16 @@ def chi(ux, uy, uz, Ex, Ey, Ez, Bx, By, Bz):
     vx = ux / gamma * c
     vy = uy / gamma * c
     vz = uz / gamma * c
-    tmp1x = Ex + vy*Bz - vz*By 
+    tmp1x = Ex + vy*Bz - vz*By
     tmp1y = Ey - vx*Bz + vz*Bx
     tmp1z = Ez + vx*By - vy*Bx
     tmp2 = (Ex*vx + Ey*vy + Ez*vz)/c
     chi = gamma/E_crit*np.sqrt(tmp1x**2+tmp1y**2+tmp1z**2 - tmp2**2)
-    return chi 
+    return chi
 
 
 def dL_dt():
-    series = io.Series("diags/diag1/openpmd_%T.bp",io.Access.read_only) 
+    series = io.Series("diags/diag1/openpmd_%T.bp",io.Access.read_only)
     iterations = np.asarray(series.iterations)
     lumi = []
     for n,ts in enumerate(iterations):
@@ -94,37 +91,37 @@ for species in ['beam_p', 'beam_e']:
 
     px1, px2, px3 = ux1*m_e*c, ux2*m_e*c, ux3*m_e*c
     py1, py2, py3 = uy1*m_e*c, uy2*m_e*c, uy3*m_e*c
-    pz1, pz2, pz3 = uz1*m_e*c, uz2*m_e*c, uz3*m_e*c    
+    pz1, pz2, pz3 = uz1*m_e*c, uz2*m_e*c, uz3*m_e*c
 
-    g1, g2, g3 = np.sqrt(1.+ux1**2+uy1**2+uz1**2), np.sqrt(1.+ux2**2+uy2**2+uz2**2), np.sqrt(1.+ux3**2+uy3**2+uz3**2) 
+    g1, g2, g3 = np.sqrt(1.+ux1**2+uy1**2+uz1**2), np.sqrt(1.+ux2**2+uy2**2+uz2**2), np.sqrt(1.+ux3**2+uy3**2+uz3**2)
 
     E1, E2, E3 = m_e*c**2*(g1-1.), m_e*c**2*(g2-1.), m_e*c**2*(g3-1.)
 
-    CHI_ANALYTICAL = np.array([chi(ux1, uy1, uz1, Ex, Ey, Ez, Bx, By, Bz), 
-                               chi(ux2, uy2, uz2, Ex, Ey, Ez, Bx, By, Bz), 
+    CHI_ANALYTICAL = np.array([chi(ux1, uy1, uz1, Ex, Ey, Ez, Bx, By, Bz),
+                               chi(ux2, uy2, uz2, Ex, Ey, Ez, Bx, By, Bz),
                                chi(ux3, uy3, uz3, Ex, Ey, Ez, Bx, By, Bz)])
-    THETAX = np.array([np.arctan2(ux1, uz1), np.arctan2(ux2, uz2), np.arctan2(ux3, uz3)]) 
-    THETAY = np.array([np.arctan2(uy1, uz1), np.arctan2(uy2, uz2), np.arctan2(uy3, uz3)]) 
+    THETAX = np.array([np.arctan2(ux1, uz1), np.arctan2(ux2, uz2), np.arctan2(ux3, uz3)])
+    THETAY = np.array([np.arctan2(uy1, uz1), np.arctan2(uy2, uz2), np.arctan2(uy3, uz3)])
 
     # CHI MAX
-    fname=f'diags/reducedfiles/ParticleExtrema_{species}.txt' 
+    fname=f'diags/reducedfiles/ParticleExtrema_{species}.txt'
     chimax_pe = np.loadtxt(fname)[:,19]
     chimax_cr = df[[col for col in df.columns if f'chi_max_{species}' in col]].to_numpy()
     assert np.allclose(np.max(CHI_ANALYTICAL), chimax_cr, rtol=1e-8)
     assert np.allclose(chimax_pe, chimax_cr, rtol=1e-8)
 
-    # CHI MIN 
+    # CHI MIN
     fname=f'diags/reducedfiles/ParticleExtrema_{species}.txt'
     chimin_pe = np.loadtxt(fname)[:,18]
     chimin_cr = df[[col for col in df.columns if f'chi_min_{species}' in col]].to_numpy()
     assert np.allclose(np.min(CHI_ANALYTICAL), chimin_cr, rtol=1e-8)
     assert np.allclose(chimin_pe, chimin_cr, rtol=1e-8)
 
-    # CHI AVERAGE 
+    # CHI AVERAGE
     chiave_cr = df[[col for col in df.columns if f'chi_ave_{species}' in col]].to_numpy()
     assert np.allclose(np.average(CHI_ANALYTICAL, weights=w), chiave_cr, rtol=1e-8)
 
-    # X AVE STD 
+    # X AVE STD
     fname=f'diags/reducedfiles/BeamRelevant_{species}.txt'
     x_ave_br = np.loadtxt(fname)[:,2]
     x_std_br = np.loadtxt(fname)[:,9]
@@ -137,7 +134,7 @@ for species in ['beam_p', 'beam_e']:
     assert np.allclose(x_std, x_std_cr, rtol=1e-8)
     assert np.allclose(x_std_br, x_std_cr, rtol=1e-8)
 
-    # Y AVE STD 
+    # Y AVE STD
     fname=f'diags/reducedfiles/BeamRelevant_{species}.txt'
     y_ave_br = np.loadtxt(fname)[:,3]
     y_std_br = np.loadtxt(fname)[:,10]
@@ -150,7 +147,7 @@ for species in ['beam_p', 'beam_e']:
     assert np.allclose(y_std, y_std_cr, rtol=1e-8)
     assert np.allclose(y_std_br, y_std_cr, rtol=1e-8)
 
-    # THETA X MIN AVE MAX STD 
+    # THETA X MIN AVE MAX STD
     thetax_min_cr = df[[col for col in df.columns if f'theta_x_min_{species}' in col]].to_numpy()
     thetax_ave_cr = df[[col for col in df.columns if f'theta_x_ave_{species}' in col]].to_numpy()
     thetax_max_cr = df[[col for col in df.columns if f'theta_x_max_{species}' in col]].to_numpy()
@@ -164,7 +161,7 @@ for species in ['beam_p', 'beam_e']:
     assert np.allclose(thetax_max, thetax_max_cr, rtol=1e-8)
     assert np.allclose(thetax_std, thetax_std_cr, rtol=1e-8)
 
-    # THETA Y MIN AVE MAX STD 
+    # THETA Y MIN AVE MAX STD
     thetay_min_cr = df[[col for col in df.columns if f'theta_y_min_{species}' in col]].to_numpy()
     thetay_ave_cr = df[[col for col in df.columns if f'theta_y_ave_{species}' in col]].to_numpy()
     thetay_max_cr = df[[col for col in df.columns if f'theta_y_max_{species}' in col]].to_numpy()
