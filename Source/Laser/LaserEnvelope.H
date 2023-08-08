@@ -70,7 +70,6 @@ public:
     amrex::Real m_profile;
     amrex::Real m_waist;
     amrex::Real m_duration;
-    amrex::Real m_t_peak;
     amrex::Real m_z_peak;
     amrex::Real m_theta_stc;
     amrex::Real m_focal_distance;
