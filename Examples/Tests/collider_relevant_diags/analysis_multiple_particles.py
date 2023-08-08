@@ -1,7 +1,15 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+
 import numpy as np
 import openpmd_api as io
 import pandas as pd
 from scipy.constants import c, e, hbar, m_e
+
+sys.path.append('../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 E_crit = m_e**2*c**3/(e*hbar)
 B_crit = m_e**2*c**2/(e*hbar)
@@ -51,9 +59,8 @@ def chi(ux, uy, uz, Ex, Ey, Ez, Bx, By, Bz):
     chi = gamma/E_crit*np.sqrt(tmp1x**2+tmp1y**2+tmp1z**2 - tmp2**2)
     return chi
 
-
 def dL_dt():
-    series = io.Series("diags/diag1/openpmd_%T.bp",io.Access.read_only)
+    series = io.Series("diags/diag2/openpmd_%T.h5",io.Access.read_only)
     iterations = np.asarray(series.iterations)
     lumi = []
     for n,ts in enumerate(iterations):
@@ -178,3 +185,8 @@ for species in ['beam_p', 'beam_e']:
     # dL/dt
     dL_dt_cr = df[[col for col in df.columns if 'dL_dt' in col]].to_numpy()
     assert np.allclose(dL_dt_cr, dL_dt(), rtol=1e-8)
+
+# Checksum analysis
+plotfile = sys.argv[1]
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, plotfile)
