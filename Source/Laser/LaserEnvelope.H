@@ -1,3 +1,10 @@
+/* Copyright 2023 The WarpX Community
+ *
+ * This file is part of WarpX.
+ *
+ * Authors: Adam Bensoubaya, Edoardo Zoni, Remi Lehe
+ * License: BSD-3-Clause-LBNL
+ */
 #include <complex>
 #include <iostream>
 #include <complex>
@@ -20,12 +27,12 @@ public:
     /**
      * \brief Constructor
      */
-    LaserEnvelope(const int nlevs_max);
+    LaserEnvelope (const int nlevs_max);
 
     /**
      * TODO
      */
-    void ReadParameters();
+    void ReadParameters ();
 
     /**
      * TODO
@@ -57,7 +64,6 @@ public:
      * TODO
      */
     void InitData (const int finestLevel);
-
 
     amrex::Vector<std::unique_ptr<amrex::MultiFab>> A_laser_envelope;
 

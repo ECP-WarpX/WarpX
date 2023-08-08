@@ -1,7 +1,13 @@
+/* Copyright 2023 The WarpX Community
+ *
+ * This file is part of WarpX.
+ *
+ * Authors: Adam Bensoubaya, Edoardo Zoni, Remi Lehe
+ * License: BSD-3-Clause-LBNL
+ */
 #include "LaserEnvelope.H"
 
 #include "Laser/LaserProfiles.H"
-
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
@@ -22,10 +28,10 @@
 #include <numeric>
 #include <vector>
 
-
 using namespace amrex;
 
-LaserEnvelope::LaserEnvelope (const int nlevs_max){
+LaserEnvelope::LaserEnvelope (const int nlevs_max)
+{
     ReadParameters();
     AllocateMFs(nlevs_max);
 }
@@ -186,51 +192,44 @@ Complex LaserEnvelope::FillAmplitude (const amrex::Real x, const amrex::Real y, 
 
 void LaserEnvelope::InitData (const int finestLevel)
 {
-    // TODO
-    // Put all the body function inside a loop over levels
-    for (int lev = 0; lev <= finestLevel; ++lev) {
-    // Loop through the grids, and over the tiles within each grid
+    for (int lev = 0; lev <= finestLevel; ++lev)
+    {
+        // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (amrex::MFIter mfi(*A_laser_envelope[lev], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
-    {
-        WarpX &warpx = WarpX::GetInstance();
-        const amrex::Geometry &geom = warpx.Geom(lev);
-        const auto problo = geom.ProbLoArray();
-        const auto dx = geom.CellSizeArray();
-        // Extract field data for this grid/tile
-        amrex::Array4<amrex::Real> const& A_laser_envelope_arr = A_laser_envelope[lev]->array(mfi);
-
-        // Extract tileboxes for which to loop
-        const amrex::Box& tilebox  = mfi.tilebox();
-
-        ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        for (amrex::MFIter mfi(*A_laser_envelope[lev], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            #if defined(WARPX_DIM_3D)
-                amrex::Real x = problo[0] + i * dx[0];
-                amrex::Real y = problo[1] + j * dx[1];
-                amrex::Real z = problo[2] + k * dx[2];
-            #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                amrex::Real x = problo[0] + i * dx[0];
-                amrex::Real y = 0.0_rt;
-                amrex::Real z = problo[1] + j * dx[1];
-            #else
-                amrex::Real x = 0.0_rt;
-                amrex::Real y = 0.0_rt;
-                amrex::Real z = problo[0] + i * dx[0];
-            #endif
+            WarpX &warpx = WarpX::GetInstance();
+            const amrex::Geometry &geom = warpx.Geom(lev);
+            const auto problo = geom.ProbLoArray();
+            const auto dx = geom.CellSizeArray();
+            // Extract field data for this grid/tile
+            amrex::Array4<amrex::Real> const& A_laser_envelope_arr = A_laser_envelope[lev]->array(mfi);
 
-            Complex complex_amplitude = FillAmplitude(x, y, z);
-            A_laser_envelope_arr(i,j,k,0) = complex_amplitude.real();
-            A_laser_envelope_arr(i,j,k,1) = complex_amplitude.imag();
+            // Extract tileboxes for which to loop
+            const amrex::Box& tilebox  = mfi.tilebox();
 
-            //w_z =
-            //Lz = std
-            //a_T(i, j, k) = std::exp(-(std::pow(x, 2)+ std::pow(y, 2))/std::pow(w_z,2));
-            //a_L(i, j, k) = a_0/(1+std::pow(z,2)) * std::exp(-std::pow((z-zf),2)/std::pow(Lz, 2))
-            //A_arr(i, j, k) = a_T(i, j, k) * a_L(i, j, k);
-        });
+            ParallelFor(tilebox, [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+                #if defined(WARPX_DIM_3D)
+                    amrex::Real x = problo[0] + i * dx[0];
+                    amrex::Real y = problo[1] + j * dx[1];
+                    amrex::Real z = problo[2] + k * dx[2];
+                #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                    amrex::Real x = problo[0] + i * dx[0];
+                    amrex::Real y = 0.0_rt;
+                    amrex::Real z = problo[1] + j * dx[1];
+                #else
+                    amrex::Real x = 0.0_rt;
+                    amrex::Real y = 0.0_rt;
+                    amrex::Real z = problo[0] + i * dx[0];
+                #endif
+
+                Complex complex_amplitude = FillAmplitude(x, y, z);
+                A_laser_envelope_arr(i,j,k,0) = complex_amplitude.real();
+                A_laser_envelope_arr(i,j,k,1) = complex_amplitude.imag();
+            });
+        }
     }
-}
 }
