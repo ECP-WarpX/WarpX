@@ -298,9 +298,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 auto gamma_cubed = gamma*gamma*gamma;
                 auto a = c_sq*gamma_cubed;
 
-                // Select the specific implmentation depending on dimensionality
-                #if defined(WARPX_DIM_3D)
 
+                // Calc Ax: (Needed for 2D, 3D, Rz)
+                #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
                     // Compute the Flux-Jacobian Elements in x
                     auto A00x = (Ux*(Uz_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
                     auto A01x = ((c_sq)+(Uz_sq)+(Uy_sq))/a;
@@ -321,8 +321,10 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto A31x = (Uz*(c_sq)+(Uz_cubed)+(Uy_sq)*Uz)/a;
                     auto A32x = -(Ux*Uy*Uz)/a;
                     auto A33x = (Ux*(c_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
+                #endif
 
-
+                // Calc Ay: (Needed for 3d)
+                #if defined(WARPX_DIM_3D)
                     // Compute the Flux-Jacobian Elements in y
                     auto A00y = (Uy*(Uz_sq)+(Uy_cubed)+(Ux_sq)*Uy)/a;
                     auto A01y = -(Ux*Uy)/a;
@@ -344,27 +346,34 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     auto A32y = (Uz*(c_sq)+(Uz_cubed)+(Ux_sq)*Uz)/a;
                     auto A33y = (Uy*(c_sq)+(Uy_cubed)+(Ux_sq)*Uy)/a;
 
+                #endif
 
-                    // Compute the Flux-Jacobian Elements in z
-                    auto A00z = ((Uz_cubed)+((Uy_sq)+(Ux_sq))*Uz)/a;
-                    auto A01z = -(Ux*Uz)/a;
-                    auto A02z = -(Uy*Uz)/a;
-                    auto A03z = ((c_sq)+(Uy_sq)+(Ux_sq))/a;
+                // Calc Az: (needed for all)
+                // Compute the Flux-Jacobian Elements in z
+                auto A00z = ((Uz_cubed)+((Uy_sq)+(Ux_sq))*Uz)/a;
+                auto A01z = -(Ux*Uz)/a;
+                auto A02z = -(Uy*Uz)/a;
+                auto A03z = ((c_sq)+(Uy_sq)+(Ux_sq))/a;
 
-                    auto A10z = -(Ux*Uz)/(gamma_cubed);
-                    auto A11z = (Uz*(c_sq)+(Uz_cubed)+(Uy_sq)*Uz)/a;
-                    auto A12z = -(Ux*Uy*Uz)/a;
-                    auto A13z = (Ux*(c_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
+                auto A10z = -(Ux*Uz)/(gamma_cubed);
+                auto A11z = (Uz*(c_sq)+(Uz_cubed)+(Uy_sq)*Uz)/a;
+                auto A12z = -(Ux*Uy*Uz)/a;
+                auto A13z = (Ux*(c_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
 
-                    auto A20z = -(Uy*Uz)/(gamma_cubed);
-                    auto A21z = -(Ux*Uy*Uz)/a;
-                    auto A22z = (Uz*(c_sq)+(Uz_cubed)+(Ux_sq)*Uz)/a;
-                    auto A23z = (Uy*(c_sq)+(Uy_cubed)+(Ux_sq)*Uy)/a;
+                auto A20z = -(Uy*Uz)/(gamma_cubed);
+                auto A21z = -(Ux*Uy*Uz)/a;
+                auto A22z = (Uz*(c_sq)+(Uz_cubed)+(Ux_sq)*Uz)/a;
+                auto A23z = (Uy*(c_sq)+(Uy_cubed)+(Ux_sq)*Uy)/a;
 
-                    auto A30z = -(Uz_sq)/(gamma_cubed);
-                    auto A31z = -(Ux*(Uz_sq))/a;
-                    auto A32z = -(Uy*(Uz_sq))/a;
-                    auto A33z = (2.0*Uz*(c_sq)+(Uz_cubed)+(2.0*(Uy_sq)+2.0*(Ux_sq))*Uz)/a;
+                auto A30z = -(Uz_sq)/(gamma_cubed);
+                auto A31z = -(Ux*(Uz_sq))/a;
+                auto A32z = -(Uy*(Uz_sq))/a;
+                auto A33z = (2.0*Uz*(c_sq)+(Uz_cubed)+(2.0*(Uy_sq)+2.0*(Ux_sq))*Uz)/a;
+                
+
+
+                // Select the specific implmentation depending on dimensionality
+                #if defined(WARPX_DIM_3D)
 
                     // Compute the cell slopes x
                     auto dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
@@ -446,48 +455,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                 #elif defined(WARPX_DIM_XZ)
 
-                    // Compute the Flux-Jacobian Elements in x
-                    auto A00x = (Ux*(Uz_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
-                    auto A01x = ((c_sq)+(Uz_sq)+(Uy_sq))/a;
-                    auto A02x = -(Ux*Uy)/a;
-                    auto A03x = -(Ux*Uz)/a;
-
-                    auto A10x = -(Ux_sq)/(gamma_cubed);
-                    auto A11x = (2.0*Ux*(c_sq)+2.0*Ux*(Uz_sq)+2.0*Ux*(Uy_sq)+(Ux_cubed))/a;
-                    auto A12x = -((Ux_sq)*Uy)/a;
-                    auto A13x = -((Ux_sq)*Uz)/a;
-
-                    auto A20x = -(Ux*Uy)/(gamma_cubed);
-                    auto A21x = (Uy*(c_sq)+Uy*(Uz_sq)+(Uy_cubed))/a;
-                    auto A22x = (Ux*(c_sq)+Ux*(Uz_sq)+(Ux_cubed))/a;
-                    auto A23x = -(Ux*Uy*Uz)/a;
-
-                    auto A30x = -(Ux*Uz)/(gamma_cubed);
-                    auto A31x = (Uz*(c_sq)+(Uz_cubed)+(Uy_sq)*Uz)/a;
-                    auto A32x = -(Ux*Uy*Uz)/a;
-                    auto A33x = (Ux*(c_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
-
-                    // Compute the Flux-Jacobian Elements in z
-                    auto A00z = ((Uz_cubed)+((Uy_sq)+(Ux_sq))*Uz)/a;
-                    auto A01z = -(Ux*Uz)/a;
-                    auto A02z = -(Uy*Uz)/a;
-                    auto A03z = ((c_sq)+(Uy_sq)+(Ux_sq))/a;
-
-                    auto A10z = -(Ux*Uz)/(gamma_cubed);
-                    auto A11z = (Uz*(c_sq)+(Uz_cubed)+(Uy_sq)*Uz)/a;
-                    auto A12z = -(Ux*Uy*Uz)/a;
-                    auto A13z = (Ux*(c_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
-
-                    auto A20z = -(Uy*Uz)/(gamma_cubed);
-                    auto A21z = -(Ux*Uy*Uz)/a;
-                    auto A22z = (Uz*(c_sq)+(Uz_cubed)+(Ux_sq)*Uz)/a;
-                    auto A23z = (Uy*(c_sq)+(Uy_cubed)+(Ux_sq)*Uy)/a;
-
-                    auto A30z = -(Uz_sq)/(gamma_cubed);
-                    auto A31z = -(Ux*(Uz_sq))/a;
-                    auto A32z = -(Uy*(Uz_sq))/a;
-                    auto A33z = (2.0*Uz*(c_sq)+(Uz_cubed)+(2.0*(Uy_sq)+2.0*(Ux_sq))*Uz)/a;
-
                     // Compute the cell slopes x
                     auto dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
                     auto dQ1x = ave( NUx_arr(i,j,k) - NUx_arr(i-1,j,k) , NUx_arr(i+1,j,k) - NUx_arr(i,j,k) );
@@ -542,50 +509,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_z(i,j-1,k,3) = Q_tilde3 - dQ3z/2.0;
                     }
 
-
                 #elif defined(WARPX_DIM_RZ)
-
-                    // Compute the Flux-Jacobian Elements in r
-                    auto A00x = (Ux*(Uz_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
-                    auto A01x = ((c_sq)+(Uz_sq)+(Uy_sq))/a;
-                    auto A02x = -(Ux*Uy)/a;
-                    auto A03x = -(Ux*Uz)/a;
-
-                    auto A10x = -(Ux_sq)/(gamma_cubed);
-                    auto A11x = (2.0*Ux*(c_sq)+2.0*Ux*(Uz_sq)+2.0*Ux*(Uy_sq)+(Ux_cubed))/a;
-                    auto A12x = -((Ux_sq)*Uy)/a;
-                    auto A13x = -((Ux_sq)*Uz)/a;
-
-                    auto A20x = -(Ux*Uy)/(gamma_cubed);
-                    auto A21x = (Uy*(c_sq)+Uy*(Uz_sq)+(Uy_cubed))/a;
-                    auto A22x = (Ux*(c_sq)+Ux*(Uz_sq)+(Ux_cubed))/a;
-                    auto A23x = -(Ux*Uy*Uz)/a;
-
-                    auto A30x = -(Ux*Uz)/(gamma_cubed);
-                    auto A31x = (Uz*(c_sq)+(Uz_cubed)+(Uy_sq)*Uz)/a;
-                    auto A32x = -(Ux*Uy*Uz)/a;
-                    auto A33x = (Ux*(c_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
-
-                    // Compute the Flux-Jacobian Elements in z
-                    auto A00z = ((Uz_cubed)+((Uy_sq)+(Ux_sq))*Uz)/a;
-                    auto A01z = -(Ux*Uz)/a;
-                    auto A02z = -(Uy*Uz)/a;
-                    auto A03z = ((c_sq)+(Uy_sq)+(Ux_sq))/a;
-
-                    auto A10z = -(Ux*Uz)/(gamma_cubed);
-                    auto A11z = (Uz*(c_sq)+(Uz_cubed)+(Uy_sq)*Uz)/a;
-                    auto A12z = -(Ux*Uy*Uz)/a;
-                    auto A13z = (Ux*(c_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
-
-                    auto A20z = -(Uy*Uz)/(gamma_cubed);
-                    auto A21z = -(Ux*Uy*Uz)/a;
-                    auto A22z = (Uz*(c_sq)+(Uz_cubed)+(Ux_sq)*Uz)/a;
-                    auto A23z = (Uy*(c_sq)+(Uy_cubed)+(Ux_sq)*Uy)/a;
-
-                    auto A30z = -(Uz_sq)/(gamma_cubed);
-                    auto A31z = -(Ux*(Uz_sq))/a;
-                    auto A32z = -(Uy*(Uz_sq))/a;
-                    auto A33z = (2.0*Uz*(c_sq)+(Uz_cubed)+(2.0*(Uy_sq)+2.0*(Ux_sq))*Uz)/a;
 
                     // Compute the cell slopes x
                     auto dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
@@ -664,27 +588,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
                 #else
-
-                    // Compute the Flux-Jacobian Elements in z
-                    auto A00z = ((Uz_cubed)+((Uy_sq)+(Ux_sq))*Uz)/a;
-                    auto A01z = -(Ux*Uz)/a;
-                    auto A02z = -(Uy*Uz)/a;
-                    auto A03z = ((c_sq)+(Uy_sq)+(Ux_sq))/a;
-
-                    auto A10z = -(Ux*Uz)/(gamma_cubed);
-                    auto A11z = (Uz*(c_sq)+(Uz_cubed)+(Uy_sq)*Uz)/a;
-                    auto A12z = -(Ux*Uy*Uz)/a;
-                    auto A13z = (Ux*(c_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
-
-                    auto A20z = -(Uy*Uz)/(gamma_cubed);
-                    auto A21z = -(Ux*Uy*Uz)/a;
-                    auto A22z = (Uz*(c_sq)+(Uz_cubed)+(Ux_sq)*Uz)/a;
-                    auto A23z = (Uy*(c_sq)+(Uy_cubed)+(Ux_sq)*Uy)/a;
-
-                    auto A30z = -(Uz_sq)/(gamma_cubed);
-                    auto A31z = -(Ux*(Uz_sq))/a;
-                    auto A32z = -(Uy*(Uz_sq))/a;
-                    auto A33z = (2.0*Uz*(c_sq)+(Uz_cubed)+(2.0*(Uy_sq)+2.0*(Ux_sq))*Uz)/a;
 
                     // Compute the cell slopes z
                     auto dQ0z = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
