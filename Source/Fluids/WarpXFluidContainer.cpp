@@ -369,7 +369,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 auto A31z = -(Ux*(Uz_sq))/a;
                 auto A32z = -(Uy*(Uz_sq))/a;
                 auto A33z = (2.0*Uz*(c_sq)+(Uz_cubed)+(2.0*(Uy_sq)+2.0*(Ux_sq))*Uz)/a;
-                
+
 
 
                 // Select the specific implmentation depending on dimensionality
