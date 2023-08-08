@@ -56,4 +56,4 @@ collision.CoulombLog = 15.9
 diagnostics.diags_names = diag1
 diag1.intervals = 10
 diag1.diag_type = Full
-diag1.fields_to_plot = B E
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz
