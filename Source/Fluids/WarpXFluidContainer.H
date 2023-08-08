@@ -137,6 +137,7 @@ protected:
 public:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > N;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > NU;
+
 };
 
 #endif

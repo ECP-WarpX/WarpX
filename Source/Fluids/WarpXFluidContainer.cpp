@@ -51,8 +51,6 @@ void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const Di
     //const amrex::IntVect nguards = {AMREX_D_DECL(2, 2, 2)};
     const amrex::IntVect nguards(AMREX_D_DECL(2, 2, 2));
 
-    WarpX &warpx = WarpX::GetInstance();
-
     // set human-readable tag for each MultiFab
     auto const tag = [lev](std::string tagname)
     {
@@ -100,7 +98,24 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
         amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
         amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
 
-        amrex::ParallelFor(tile_box,
+        std::cout << "\n\nBEFORE:";
+        std::cout << "\ntile_box = " << tile_box;
+        std::cout << "\ninit_box = " << init_box;
+        std::cout << "\nAre the boxes the same type (bool): " << init_box.sameType(tile_box)<< "\n" ;
+        amrex::Box nodal_init_box = init_box.convert(tile_box.type());
+        std::cout << "\nAfter conversion:";
+        std::cout << "\ntile_box = " << tile_box;
+        std::cout << "\ninit_box = " << init_box;
+        std::cout << "\nnodal_init_box = " << nodal_init_box;
+        std::cout << "\n(after convert) Are the boxes the same type (bool): " << init_box.sameType(tile_box)<< "\n" ;
+
+        // Return the intersection of all cells and the ones we wish to update
+        amrex::Box init_box_intersection = nodal_init_box.operator&=(tile_box);
+
+        std::cout << "\nAFTER: ";
+        std::cout << "\ninit_box_intersection = " << init_box_intersection;
+
+        amrex::ParallelFor(init_box_intersection,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
 #if defined(WARPX_DIM_3D)
@@ -301,7 +316,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
                 // Calc Ax: (Needed for 2D, 3D, Rz)
-                #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+                #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
                     // Compute the Flux-Jacobian Elements in x
                     auto A00x = (Ux*(Uz_sq)+Ux*(Uy_sq)+(Ux_cubed))/a;
                     auto A01x = ((c_sq)+(Uz_sq)+(Uy_sq))/a;

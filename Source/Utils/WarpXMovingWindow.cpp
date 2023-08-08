@@ -14,6 +14,7 @@
 #endif
 #include "Particles/MultiParticleContainer.H"
 #include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -357,13 +358,14 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
 
         // Shift values of N, NU for each fluid species
-        const int n_fluid_species = myfl->nSpecies();
+        auto& warpx = WarpX::GetInstance();
+        const int n_fluid_species = warpx.myfl->nSpecies();
         for (int i=0; i<n_fluid_species; i++) {
             WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-            shiftMF( myfl.N[lev], geom[lev], num_shift, dir, lev, do_update_cost );
-            shiftMF( myfl.NU[lev][0], geom[lev], num_shift, dir, lev, do_update_cost );
-            shiftMF( myfl.NU[lev][1], geom[lev], num_shift, dir, lev, do_update_cost );
-            shiftMF( myfl.NU[lev][2], geom[lev], num_shift, dir, lev, do_update_cost );
+            shiftMF( *fl.N[lev], geom[lev], num_shift, dir, lev, do_update_cost );
+            shiftMF( *fl.NU[lev][0], geom[lev], num_shift, dir, lev, do_update_cost );
+            shiftMF( *fl.NU[lev][1], geom[lev], num_shift, dir, lev, do_update_cost );
+            shiftMF( *fl.NU[lev][2], geom[lev], num_shift, dir, lev, do_update_cost );
         }
     }
 
@@ -423,6 +425,8 @@ WarpX::MoveWindow (const int step, bool move_j)
     // Loop over fluid species, and fill the values of the new cells
     const int n_fluid_species = myfl->nSpecies();
     // Find box in which to initialize new fluid cells
+    // Continuously inject plasma in new cells (by default only on level 0)
+    const int lev = 0;
     amrex::RealBox fluid_init_box = geom[lev].ProbDomain();
     if (moving_window_v > 0._rt)
     {
@@ -434,10 +438,40 @@ WarpX::MoveWindow (const int step, bool move_j)
         fluid_init_box.setLo( dir, new_lo[dir] );
         fluid_init_box.setHi( dir, new_lo[dir] + num_shift_base * cdx[dir] );
     }
+
     // Loop over fluid species
     for (int i=0; i<n_fluid_species; i++) {
+        
+        // Convert from RealBox to Box:
+        // Make a box that covers the region that the window moved into
         WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-        fl.InitData( 0, fluid_init_box );
+        const amrex::BoxArray& ba = fl.N[lev]->boxArray();
+        const amrex::IndexType& typ = ba.ixType();
+        const amrex::IntVect& ng = fl.N[lev]->nGrowVect();
+        const amrex::Box& domainBox_all = geom[0].Domain();
+        amrex::Box domainBox;
+        if (num_shift > 0) {
+            domainBox = adjCellHi(domainBox_all, dir, ng[dir]);
+        } else {
+            domainBox = adjCellLo(domainBox_all, dir, ng[dir]);
+        }
+        domainBox = amrex::convert(domainBox, typ);
+
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (idim == dir and typ.nodeCentered(dir)) {
+                if (num_shift > 0) {
+                    domainBox.growLo(idim, -1);
+                } else {
+                    domainBox.growHi(idim, -1);
+                }
+            } else if (idim != dir) {
+                domainBox.growLo(idim, ng[idim]);
+                domainBox.growHi(idim, ng[idim]);
+            }
+        }
+
+        // Initialize the data inside the shifted box
+        fl.InitData( lev, domainBox );
     }
 
     return num_shift_base;
