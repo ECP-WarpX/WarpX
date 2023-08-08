@@ -441,7 +441,7 @@ WarpX::MoveWindow (const int step, bool move_j)
 
     // Loop over fluid species
     for (int i=0; i<n_fluid_species; i++) {
-        
+
         // Convert from RealBox to Box:
         // Make a box that covers the region that the window moved into
         WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
