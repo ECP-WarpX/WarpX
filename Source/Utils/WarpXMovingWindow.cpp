@@ -13,6 +13,7 @@
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Particles/MultiParticleContainer.H"
+#include "Fluids/MultiFluidContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -354,9 +355,21 @@ WarpX::MoveWindow (const int step, bool move_j)
                 }
             }
         }
+
+        // Shift values of N, NU for each fluid species
+        const int n_fluid_species = myfl->nSpecies();
+        for (int i=0; i<n_fluid_species; i++) {
+            WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
+            shiftMF( myfl.N[lev], geom[lev], num_shift, dir, lev, do_update_cost );
+            shiftMF( myfl.NU[lev][0], geom[lev], num_shift, dir, lev, do_update_cost );
+            shiftMF( myfl.NU[lev][1], geom[lev], num_shift, dir, lev, do_update_cost );
+            shiftMF( myfl.NU[lev][2], geom[lev], num_shift, dir, lev, do_update_cost );
+        }
     }
 
-    // Loop over species
+
+
+    // Loop over particle species, and generate new particles at the edge of the moving window
     const int n_species = mypc->nSpecies();
     for (int i=0; i<n_species; i++)
     {
@@ -405,6 +418,26 @@ WarpX::MoveWindow (const int step, bool move_j)
                 pc.m_current_injection_position = new_injection_position;
             }
         }
+    }
+
+    // Loop over fluid species, and fill the values of the new cells
+    const int n_fluid_species = myfl->nSpecies();
+    // Find box in which to initialize new fluid cells
+    amrex::RealBox fluid_init_box = geom[lev].ProbDomain();
+    if (moving_window_v > 0._rt)
+    {
+        fluid_init_box.setLo( dir, new_hi[dir] - num_shift_base * cdx[dir] );
+        fluid_init_box.setHi( dir, new_hi[dir] );
+    }
+    else if (moving_window_v < 0._rt)
+    {
+        fluid_init_box.setLo( dir, new_lo[dir] );
+        fluid_init_box.setHi( dir, new_lo[dir] + num_shift_base * cdx[dir] );
+    }
+    // Loop over fluid species
+    for (int i=0; i<n_fluid_species; i++) {
+        WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
+        fl.InitData( 0, fluid_init_box );
     }
 
     return num_shift_base;

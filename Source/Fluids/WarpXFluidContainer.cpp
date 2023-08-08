@@ -71,7 +71,7 @@ void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const Di
                             dm, ncomps, nguards, lev, tag("fluid momentum density [z]"), 0.0_rt);
 }
 
-void WarpXFluidContainer::InitData(int lev)
+void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
 {
     WARPX_PROFILE("WarpXFluidContainer::InitData");
 
@@ -92,6 +92,7 @@ void WarpXFluidContainer::InitData(int lev)
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
+        // TODO: Only run the code below if this cell overlaps is in `init_box`
 
         amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);

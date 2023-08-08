@@ -36,7 +36,7 @@ public:
 
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);
 
-    void InitData (int lev);
+    void InitData (int lev, amrex::Box init_box);
 
     void ReadParameters ();
     /**
@@ -134,7 +134,7 @@ protected:
 
     std::unique_ptr<PlasmaInjector> plasma_injector;
 
-private:
+public:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > N;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > NU;
 };
