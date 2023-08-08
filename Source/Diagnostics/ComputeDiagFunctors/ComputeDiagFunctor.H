@@ -2,6 +2,9 @@
 #define WARPX_COMPUTEDIAGFUNCTOR_H_
 
 #include "ComputeDiagFunctor_fwd.H"
+#include "Utils/TextMsg.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX.H>
 #include <AMReX_MultiFab.H>
@@ -57,9 +60,41 @@ public:
                                           k_index_zlab, max_box_size, snapshot_full);
                                       }
     virtual void InitData() {}
+
+    void InterpolateToDst (
+        amrex::MultiFab& mf_dst, const amrex::MultiFab& mf_src, int dcomp,
+        const amrex::DistributionMapping& dm, bool convertRZmodes2cartesian ) const
+    {
+#ifdef WARPX_DIM_RZ
+        if (convertRZmodes2cartesian) {
+            // In cylindrical geometry, sum real part of all modes of mf_src in
+            // temporary MultiFab mf_dst_stag, and cell-center it to mf_dst
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                nComp()==1,
+                "The RZ averaging over modes must write into one single component");
+            amrex::MultiFab mf_dst_stag( mf_src.boxArray(), dm, 1, mf_src.nGrowVect() );
+            // Mode 0
+            amrex::MultiFab::Copy( mf_dst_stag, mf_src, 0, 0, 1, mf_src.nGrowVect() );
+            for (int ic=1 ; ic < mf_src.nComp() ; ic += 2) {
+                // Real part of all modes > 0
+                amrex::MultiFab::Add( mf_dst_stag, mf_src, ic, 0, 1, mf_src.nGrowVect() );
+            }
+            ablastr::coarsen::sample::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0, m_crse_ratio );
+        } else {
+            ablastr::coarsen::sample::Coarsen( mf_dst, mf_src, dcomp, 0, nComp(), 0, m_crse_ratio );
+        }
+#else
+        // In Cartesian geometry, coarsen and interpolate from temporary MultiFab mf_src
+        // to output diagnostic MultiFab mf_dst
+        ablastr::coarsen::sample::Coarsen(mf_dst, mf_src, dcomp, 0, nComp(), mf_dst.nGrowVect(), m_crse_ratio );
+        amrex::ignore_unused(convertRZmodes2cartesian, dm);
+#endif
+    }
+
 private:
     /** Number of components of mf_dst that this functor updates. */
     int m_ncomp;
+
 protected:
     /** Coarsening ratio used to interpolate fields from simulation MultiFabs to output MultiFab. */
     amrex::IntVect m_crse_ratio;
