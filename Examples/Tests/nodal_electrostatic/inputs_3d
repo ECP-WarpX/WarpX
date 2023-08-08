@@ -31,6 +31,7 @@ boundary.field_lo = PEC PEC PEC
 boundary.field_hi = PEC PEC PEC
 
 # NUMERICS
+particles.do_tiling = 0 
 warpx.do_electrostatic = relativistic
 warpx.const_dt = dt 
 warpx.grid_type = collocated 
@@ -45,6 +46,7 @@ beam_p.injection_style = "NUniformPerCell"
 beam_p.num_particles_per_cell_each_dim = 1 1 1
 beam_p.profile = parse_density_function
 beam_p.density_function(x,y,z)="n0 * exp(-x**2/(2*sigma**2)) * exp(-y**2/(2*sigma**2)) * exp(-z**2/(2*sigma**2))" 
+beam_p.density_min = n0 / 1e2
 beam_p.momentum_distribution_type = "constant"
 beam_p.ux = 0.0
 beam_p.uy = 0.0
