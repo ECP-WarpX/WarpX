@@ -59,6 +59,18 @@ public:
      */
     void AdvectivePush_Muscl (int lev);
 
+
+    /**
+    * Apply (non-periodic) BC on the fluids (needed for spatial derivative),
+    * and communicate N, NU at boundaries
+    */
+    /**
+     * \brief Apply non-periodic BC to fluids and communicate boundaries
+     *
+     * \param[in] lev refinement level
+     */
+    void ApplyBcFluidsAndComms (int lev);
+
     /**
      * centrifugal_source adds contributions due to curvature acceleration for a
      * single timestep using an SSP-RK3 timestep

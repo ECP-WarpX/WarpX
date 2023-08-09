@@ -145,13 +145,6 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
             }
         );
     }
-
-    // Fill guard cells
-    const amrex::Periodicity &period = geom.periodicity();
-    FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 
@@ -176,6 +169,10 @@ void WarpXFluidContainer::Evolve(
         centrifugal_source(lev);
     #endif
 
+    // Apply (non-periodic) BC on the fluids (needed for spatial derivative),
+    // and communicate N, NU at boundaries
+    ApplyBcFluidsAndComms(lev);
+
     // Step the Advective term
     AdvectivePush_Muscl(lev);
 
@@ -191,6 +188,54 @@ void WarpXFluidContainer::Evolve(
     }
 }
 
+// Momentum source due to curvature
+void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
+{
+    WARPX_PROFILE("WarpXFluidContainer::ApplyBcFluidsAndComms");
+
+    WarpX &warpx = WarpX::GetInstance();
+    const Real dt = warpx.getdt(lev);
+    const amrex::Geometry &geom = warpx.Geom(lev);
+    const auto dx = geom.CellSizeArray();
+    const auto problo = geom.ProbLoArray();
+    const amrex::Real clight = PhysConst::c;
+    amrex::Box const& domain = geom.Domain();
+
+    // H&C push the momentum
+    #ifdef AMREX_USE_OMP
+    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+    #endif
+    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+
+        amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+
+        amrex::Array4<Real> N_arr = N[lev]->array(mfi);
+        amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
+        amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
+        amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
+
+        //Grow the tilebox
+        tile_box.grow(1);
+
+        amrex::ParallelFor(tile_box,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+
+                // If the cell is is first gaurd cell & the dimension is non
+                // periodic, then copy Q_{i+1} = Q_{i-1}
+                auto a = 5; // Do nothing for now, just see if Comms work
+            }
+        );
+    }
+
+    // Fill guard cells
+    const amrex::Periodicity &period = geom.periodicity();
+    FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
+}
 
 // Muscl Advection Update
 void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
@@ -892,12 +937,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             }
         );
     }
-
-    // Fill guard cells
-    FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 
@@ -963,11 +1002,6 @@ void WarpXFluidContainer::centrifugal_source (int lev)
             }
         );
     }
-
-    // Fill guard cells, still needed, TODO: Replace with grown box?
-    const amrex::Periodicity &period = geom.periodicity();
-    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 // Momentum source from fields
@@ -1073,13 +1107,6 @@ void WarpXFluidContainer::GatherAndPush (
             }
         );
     }
-
-    // Fill guard cells
-    const amrex::Geometry &geom = warpx.Geom(lev);
-    const amrex::Periodicity &period = geom.periodicity();
-    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 void WarpXFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho, int icomp)
