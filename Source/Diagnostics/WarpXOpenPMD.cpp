@@ -218,9 +218,9 @@ namespace detail
     {
         using vs = std::vector< std::string >;
 #if defined(WARPX_DIM_1D_Z)
-        vs const positionComponents{"z"};
+        vs positionComponents{"z"};
 #elif defined(WARPX_DIM_XZ)
-        vs const positionComponents{"x", "z"};
+        vs positionComponents{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
         // note: although we internally store particle positions
         //       for AMReX in r,z and a theta attribute, we
@@ -228,9 +228,9 @@ namespace detail
         //       and I/O in Cartesian.
         //       Other attributes like momentum are consequently
         //       stored in x,y,z internally.
-        vs const positionComponents{"x", "y", "z"};
+        vs positionComponents{"x", "y", "z"};
 #elif defined(WARPX_DIM_3D)
-        vs const positionComponents{"x", "y", "z"};
+        vs positionComponents{"x", "y", "z"};
 #else
 #   error Unknown WarpX dimensionality.
 #endif
@@ -282,12 +282,12 @@ namespace detail
         using vs = std::vector< std::string >;
         if (var_in_theta_mode) {
             // if we write individual modes
-            vs const fieldComponents{"r", "t", "z"};
+            vs fieldComponents{"r", "t", "z"};
             return fieldComponents;
         } else {
             // if we just write reconstructed fields at theta=0 or are Cartesian
             // note: 1D3V and 2D3V simulations still have 3 components for the fields
-            vs const fieldComponents{"x", "y", "z"};
+            vs fieldComponents{"x", "y", "z"};
             return fieldComponents;
         }
     }
