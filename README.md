@@ -46,9 +46,9 @@ To contact the developers, feel free to open an issue on this repo, or visit our
 
 Our workflow is described in [CONTRIBUTING.rst](CONTRIBUTING.rst).
 
-## License
+## Copyright Notice
 
-WarpX Copyright (c) 2018-2023, The Regents of the University of California,
+WarpX Copyright (c) 2018, The Regents of the University of California,
 through Lawrence Berkeley National Laboratory (subject to receipt of any
 required approvals from the U.S. Dept. of Energy).  All rights reserved.
 
@@ -64,4 +64,5 @@ Software to reproduce, distribute copies to the public, prepare derivative
 works, and perform publicly and display publicly, and to permit other to do
 so.
 
-License for WarpX can be found at [LICENSE.txt](LICENSE.txt).
+Please see the full license agreement in [LICENSE.txt](LICENSE.txt).
+The SPDX license identifier is `BSD-3-Clause-LBNL`.
