@@ -226,6 +226,7 @@ class CylindricalNormalModes(object):
                 period=self.total_steps,
                 species=[self.ions],
                 data_list=['ux', 'uy', 'uz', 'weighting'],
+                write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_EM_modes_rz_plt'
             )
             simulation.add_diagnostic(part_diag)

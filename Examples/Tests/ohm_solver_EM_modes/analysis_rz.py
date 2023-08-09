@@ -145,9 +145,16 @@ axes[1, 0].set_xlabel('$k_zl_i$')
 axes[1, 1].set_xlabel('$k_zl_i$')
 
 plt.savefig('normal_modes_disp.png', dpi=600)
-plt.show()
+if not sim.test:
+    plt.show()
+else:
+    plt.close()
 
-print(F_kw[len(kz)//2 - 5:len(kz)//2 + 5, 1, 2])
+    # check if power spectrum sampling match earlier results
+    assert np.allclose(
+        np.abs(F_kw[2, 1, len(kz)//2-2:len(kz)//2+2]),
+        np.array([36.61730107, 27.13914006, 183.05033116, 21.73217512])
+    )
 
 if sim.test:
     import os
