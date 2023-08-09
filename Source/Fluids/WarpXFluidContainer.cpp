@@ -194,12 +194,7 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
     WARPX_PROFILE("WarpXFluidContainer::ApplyBcFluidsAndComms");
 
     WarpX &warpx = WarpX::GetInstance();
-    const Real dt = warpx.getdt(lev);
     const amrex::Geometry &geom = warpx.Geom(lev);
-    const auto dx = geom.CellSizeArray();
-    const auto problo = geom.ProbLoArray();
-    const amrex::Real clight = PhysConst::c;
-    amrex::Box const& domain = geom.Domain();
 
     // H&C push the momentum
     #ifdef AMREX_USE_OMP
@@ -248,7 +243,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const amrex::Geometry &geom = warpx.Geom(lev);
     const auto dx = geom.CellSizeArray();
     const amrex::Real clight = PhysConst::c;
-    const amrex::Periodicity &period = geom.periodicity();
     #if defined(WARPX_DIM_3D)
         auto cx = (dt/dx[0]);
         auto cy = (dt/dx[1]);
