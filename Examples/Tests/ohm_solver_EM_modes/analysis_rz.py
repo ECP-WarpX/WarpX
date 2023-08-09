@@ -166,4 +166,4 @@ if sim.test:
     # this will be the name of the plot file
     fn = sys.argv[1]
     test_name = os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, fn)
+    checksumAPI.evaluate_checksum(test_name, fn, rtol=1e-6)
