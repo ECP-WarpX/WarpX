@@ -1,6 +1,3 @@
-# algo
-algo.particle_shape = 3
-
 # amr
 amr.max_level = 0
 amr.n_cell = 256 1024
