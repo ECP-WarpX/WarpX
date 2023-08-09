@@ -151,9 +151,10 @@ else:
     plt.close()
 
     # check if power spectrum sampling match earlier results
+    amps = np.abs(F_kw[2, 1, len(kz)//2-2:len(kz)//2+2])
+    print(amps)
     assert np.allclose(
-        np.abs(F_kw[2, 1, len(kz)//2-2:len(kz)//2+2]),
-        np.array([36.61730107, 27.13914006, 183.05033116, 21.73217512])
+        amps, np.array([36.61730107, 27.13914006, 183.05033116, 21.73217512])
     )
 
 if sim.test:
