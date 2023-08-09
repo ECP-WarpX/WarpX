@@ -1540,6 +1540,9 @@ private:
 
     std::string restart_chkfile;
 
+    /** When `true`, write the diagnostics after restart at the time of the restart. */
+    bool write_diagonstics_on_restart = false;
+
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 
