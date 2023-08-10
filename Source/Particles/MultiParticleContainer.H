@@ -488,9 +488,7 @@ private:
     bool m_do_back_transformed_particles = false;
 
     void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
-    {
-        return;
-    }
+    {}
 
     template<typename First, typename ...Args>
     void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src,

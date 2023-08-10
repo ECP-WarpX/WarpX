@@ -485,15 +485,17 @@ WarpX::InitData ()
         // looks at field values will see the composite of the field
         // solution and any external field
         AddExternalFields();
+    }
 
+    if (restart_chkfile.empty() || write_diagonstics_on_restart) {
         // Write full diagnostics before the first iteration.
-        multi_diags->FilterComputePackFlush( -1 );
+        multi_diags->FilterComputePackFlush(istep[0] - 1);
 
         // Write reduced diagnostics before the first iteration.
         if (reduced_diags->m_plot_rd != 0)
         {
-            reduced_diags->ComputeDiags(-1);
-            reduced_diags->WriteToFile(-1);
+            reduced_diags->ComputeDiags(istep[0] - 1);
+            reduced_diags->WriteToFile(istep[0] - 1);
         }
     }
 
