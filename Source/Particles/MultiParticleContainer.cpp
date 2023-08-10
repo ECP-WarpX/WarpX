@@ -738,17 +738,12 @@ MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
     }
 }
 
-/* \brief Update position of continuous injection parameters.
- * \param dt: simulation time step (level 0)
- * All classes inherited from WarpXParticleContainer do not have
- * a position to update (PhysicalParticleContainer does not do anything).
- */
 void
-MultiParticleContainer::UpdateContinuousInjectionPosition (Real dt) const
+MultiParticleContainer::UpdateAntennaPosition (const amrex::Real dt) const
 {
     for (auto& pc : allcontainers){
         if (pc->do_continuous_injection){
-            pc->UpdateContinuousInjectionPosition(dt);
+            pc->UpdateAntennaPosition(dt);
         }
     }
 }
