@@ -428,7 +428,7 @@ WarpX::MoveWindow (const int step, bool move_j)
     // Continuously inject plasma in new cells (by default only on level 0)
     const int lev = 0;
 
-    
+
     // Loop over fluid species
     for (int i=0; i<n_fluid_species; i++) {
 

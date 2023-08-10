@@ -200,7 +200,7 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
 
         amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
 
-        // Convert domain to Nodal 
+        // Convert domain to Nodal
         domain = domain.convert( tile_box.type() );
 
         amrex::Array4<Real> N_arr = N[lev]->array(mfi);
@@ -222,7 +222,7 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
                 #if defined(WARPX_DIM_3D)
 
                     // Upper end (index 2)
-                    if ( (periodic_directions[2] != 1) && (k==domain.bigEnd(2)+1) ){ 
+                    if ( (periodic_directions[2] != 1) && (k==domain.bigEnd(2)+1) ){
                         N_arr(i,j,k) = N_arr(i,j,k-2);
                         NUx_arr(i,j,k) = NUx_arr(i,j,k-2);
                         NUy_arr(i,j,k) = NUy_arr(i,j,k-2);
@@ -239,12 +239,12 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
                 #elif ( defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D) )
 
                     // Upper end (index 1)
-                    if ( (periodic_directions[1] != 1) && (j==domain.bigEnd(1)+1) ){ 
+                    if ( (periodic_directions[1] != 1) && (j==domain.bigEnd(1)+1) ){
                         N_arr(i,j,k) = N_arr(i,j-2,k);
                         NUx_arr(i,j,k) = NUx_arr(i,j-2,k);
                         NUy_arr(i,j,k) = NUy_arr(i,j-2,k);
                         NUz_arr(i,j,k) = NUz_arr(i,j-2,k);
-                        
+
                     // Lower end (index 1`)
                     } else if ( (periodic_directions[1] != 1) && (j==domain.smallEnd(1)-1) ) {
                         N_arr(i,j,k) = N_arr(i,j+2,k);
@@ -255,14 +255,14 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
                     }
 
                 #elif ( defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D) )
-                
+
                     // Upper end (index 0)
-                    if ( (periodic_directions[0] != 1) && (i==domain.bigEnd(0)+1) ){ 
+                    if ( (periodic_directions[0] != 1) && (i==domain.bigEnd(0)+1) ){
                         N_arr(i,j,k) = N_arr(i-2,j,k);
                         NUx_arr(i,j,k) = NUx_arr(i-2,j,k);
                         NUy_arr(i,j,k) = NUy_arr(i-2,j,k);
                         NUz_arr(i,j,k) = NUz_arr(i-2,j,k);
-                        
+
                     // Lower end (index 0)
                     } else if ( (periodic_directions[0] != 1) && (i==domain.smallEnd(0)-1) ) {
                         N_arr(i,j,k) = N_arr(i+2,j,k);
