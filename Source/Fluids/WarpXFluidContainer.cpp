@@ -1127,9 +1127,9 @@ void WarpXFluidContainer::GatherAndPush (
                     Bz_type, Nodal_type, coarsening_ratio, i, j, k, 0);
 
                 // Isolate U from NU
-                auto tmp_Ux = (NUx_arr(i, j, k) / N_arr(i,j,k));
-                auto tmp_Uy = (NUy_arr(i, j, k) / N_arr(i,j,k));
-                auto tmp_Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
+                amrex::Real tmp_Ux = (NUx_arr(i, j, k) / N_arr(i,j,k));
+                amrex::Real tmp_Uy = (NUy_arr(i, j, k) / N_arr(i,j,k));
+                amrex::Real tmp_Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
 
                 // Enforce RZ boundary conditions
                 #if defined(WARPX_DIM_RZ)
