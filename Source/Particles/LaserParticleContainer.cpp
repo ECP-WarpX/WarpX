@@ -319,12 +319,8 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
     }
 }
 
-/* \brief update position of the antenna if running in boosted frame.
- * \param dt time step (level 0).
- * The up-to-date antenna position is stored in updated_position.
- */
 void
-LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
+LaserParticleContainer::UpdateAntennaPosition (const amrex::Real dt)
 {
     if (!m_enabled) return;
 
