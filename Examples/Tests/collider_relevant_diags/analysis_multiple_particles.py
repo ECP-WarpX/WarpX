@@ -66,13 +66,7 @@ for species in ['beam_p', 'beam_e']:
 
     w = np.array([float(w) for w in input_dict[f'{species}.multiple_particles_weight']])
 
-    px1, px2, px3 = ux1*m_e*c, ux2*m_e*c, ux3*m_e*c
-    py1, py2, py3 = uy1*m_e*c, uy2*m_e*c, uy3*m_e*c
-    pz1, pz2, pz3 = uz1*m_e*c, uz2*m_e*c, uz3*m_e*c
-
     g1, g2, g3 = np.sqrt(1.+ux1**2+uy1**2+uz1**2), np.sqrt(1.+ux2**2+uy2**2+uz2**2), np.sqrt(1.+ux3**2+uy3**2+uz3**2)
-
-    E1, E2, E3 = m_e*c**2*(g1-1.), m_e*c**2*(g2-1.), m_e*c**2*(g3-1.)
 
     CHI_ANALYTICAL = np.array([chi(ux1, uy1, uz1, Ex, Ey, Ez, Bx, By, Bz),
                                chi(ux2, uy2, uz2, Ex, Ey, Ez, Bx, By, Bz),
