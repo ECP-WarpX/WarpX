@@ -427,17 +427,7 @@ WarpX::MoveWindow (const int step, bool move_j)
     // Find box in which to initialize new fluid cells
     // Continuously inject plasma in new cells (by default only on level 0)
     const int lev = 0;
-    amrex::RealBox fluid_init_box = geom[lev].ProbDomain();
-    if (moving_window_v > 0._rt)
-    {
-        fluid_init_box.setLo( dir, new_hi[dir] - num_shift_base * cdx[dir] );
-        fluid_init_box.setHi( dir, new_hi[dir] );
-    }
-    else if (moving_window_v < 0._rt)
-    {
-        fluid_init_box.setLo( dir, new_lo[dir] );
-        fluid_init_box.setHi( dir, new_lo[dir] + num_shift_base * cdx[dir] );
-    }
+
 
     // Loop over fluid species
     for (int i=0; i<n_fluid_species; i++) {
@@ -460,9 +450,9 @@ WarpX::MoveWindow (const int step, bool move_j)
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if (idim == dir and typ.nodeCentered(dir)) {
                 if (num_shift > 0) {
-                    domainBox.growLo(idim, -1);
+                    domainBox.growLo(idim, 0);
                 } else {
-                    domainBox.growHi(idim, -1);
+                    domainBox.growHi(idim,0);
                 }
             } else if (idim != dir) {
                 domainBox.growLo(idim, ng[idim]);

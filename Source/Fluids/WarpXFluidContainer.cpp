@@ -92,28 +92,20 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
     {
         // TODO: Only run the code below if this cell overlaps is in `init_box`
 
-        amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
         amrex::Array4<Real> const &NUx_arr = NU[lev][0]->array(mfi);
         amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
         amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
 
-        std::cout << "\n\nBEFORE:";
-        std::cout << "\ntile_box = " << tile_box;
-        std::cout << "\ninit_box = " << init_box;
-        std::cout << "\nAre the boxes the same type (bool): " << init_box.sameType(tile_box)<< "\n" ;
+        //Grow the tilebox
+        tile_box.grow(1);
+
+        // Convert to Nodal box
         amrex::Box nodal_init_box = init_box.convert(tile_box.type());
-        std::cout << "\nAfter conversion:";
-        std::cout << "\ntile_box = " << tile_box;
-        std::cout << "\ninit_box = " << init_box;
-        std::cout << "\nnodal_init_box = " << nodal_init_box;
-        std::cout << "\n(after convert) Are the boxes the same type (bool): " << init_box.sameType(tile_box)<< "\n" ;
 
         // Return the intersection of all cells and the ones we wish to update
         amrex::Box init_box_intersection = nodal_init_box.operator&=(tile_box);
-
-        std::cout << "\nAFTER: ";
-        std::cout << "\ninit_box_intersection = " << init_box_intersection;
 
         amrex::ParallelFor(init_box_intersection,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -145,13 +137,6 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
             }
         );
     }
-
-    // Fill guard cells
-    const amrex::Periodicity &period = geom.periodicity();
-    FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 
@@ -176,6 +161,10 @@ void WarpXFluidContainer::Evolve(
         centrifugal_source(lev);
     #endif
 
+    // Apply (non-periodic) BC on the fluids (needed for spatial derivative),
+    // and communicate N, NU at boundaries
+    ApplyBcFluidsAndComms(lev);
+
     // Step the Advective term
     AdvectivePush_Muscl(lev);
 
@@ -191,6 +180,110 @@ void WarpXFluidContainer::Evolve(
     }
 }
 
+// Momentum source due to curvature
+void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
+{
+    WARPX_PROFILE("WarpXFluidContainer::ApplyBcFluidsAndComms");
+
+    WarpX &warpx = WarpX::GetInstance();
+    const amrex::Geometry &geom = warpx.Geom(lev);
+    const amrex::Periodicity &period = geom.periodicity();
+    const Array<int,AMREX_SPACEDIM> periodic_directions = geom.isPeriodic();
+    amrex::Box domain = geom.Domain();
+
+    // H&C push the momentum
+    #ifdef AMREX_USE_OMP
+    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+    #endif
+    for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
+    {
+
+        amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+
+        // Convert domain to Nodal
+        domain = domain.convert( tile_box.type() );
+
+        amrex::Array4<Real> N_arr = N[lev]->array(mfi);
+        amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
+        amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
+        amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
+
+        //Grow the tilebox
+        tile_box.grow(1);
+
+        amrex::ParallelFor(tile_box,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+
+                // If the cell is is first gaurd cell & the dimension is non
+                // periodic, then copy Q_{i+1} = Q_{i-1}.
+
+                // Don't check r-dir in Z:
+                #if defined(WARPX_DIM_3D)
+
+                    // Upper end (index 2)
+                    if ( (periodic_directions[2] != 1) && (k==domain.bigEnd(2)+1) ){
+                        N_arr(i,j,k) = N_arr(i,j,k-2);
+                        NUx_arr(i,j,k) = NUx_arr(i,j,k-2);
+                        NUy_arr(i,j,k) = NUy_arr(i,j,k-2);
+                        NUz_arr(i,j,k) = NUz_arr(i,j,k-2);
+
+                    // Lower end (index 2)
+                    } else if ( (periodic_directions[2] != 1) && (k==domain.smallEnd(2)-1) ) {
+                        N_arr(i,j,k) = N_arr(i,j,k+2);
+                        NUx_arr(i,j,k) = NUx_arr(i,j,k+2);
+                        NUy_arr(i,j,k) = NUy_arr(i,j,k+2);
+                        NUz_arr(i,j,k) = NUz_arr(i,j,k+2);
+                    }
+
+                #elif ( defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D) )
+
+                    // Upper end (index 1)
+                    if ( (periodic_directions[1] != 1) && (j==domain.bigEnd(1)+1) ){
+                        N_arr(i,j,k) = N_arr(i,j-2,k);
+                        NUx_arr(i,j,k) = NUx_arr(i,j-2,k);
+                        NUy_arr(i,j,k) = NUy_arr(i,j-2,k);
+                        NUz_arr(i,j,k) = NUz_arr(i,j-2,k);
+
+                    // Lower end (index 1`)
+                    } else if ( (periodic_directions[1] != 1) && (j==domain.smallEnd(1)-1) ) {
+                        N_arr(i,j,k) = N_arr(i,j+2,k);
+                        NUx_arr(i,j,k) = NUx_arr(i,j+2,k);
+                        NUy_arr(i,j,k) = NUy_arr(i,j+2,k);
+                        NUz_arr(i,j,k) = NUz_arr(i,j+2,k);
+
+                    }
+
+                #elif ( defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D) )
+
+                    // Upper end (index 0)
+                    if ( (periodic_directions[0] != 1) && (i==domain.bigEnd(0)+1) ){
+                        N_arr(i,j,k) = N_arr(i-2,j,k);
+                        NUx_arr(i,j,k) = NUx_arr(i-2,j,k);
+                        NUy_arr(i,j,k) = NUy_arr(i-2,j,k);
+                        NUz_arr(i,j,k) = NUz_arr(i-2,j,k);
+
+                    // Lower end (index 0)
+                    } else if ( (periodic_directions[0] != 1) && (i==domain.smallEnd(0)-1) ) {
+                        N_arr(i,j,k) = N_arr(i+2,j,k);
+                        NUx_arr(i,j,k) = NUx_arr(i+2,j,k);
+                        NUy_arr(i,j,k) = NUy_arr(i+2,j,k);
+                        NUz_arr(i,j,k) = NUz_arr(i+2,j,k);
+                    }
+
+                #else
+
+                #endif
+            }
+        );
+    }
+
+    // Fill guard cells
+    FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
+    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
+}
 
 // Muscl Advection Update
 void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
@@ -203,7 +296,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const amrex::Geometry &geom = warpx.Geom(lev);
     const auto dx = geom.CellSizeArray();
     const amrex::Real clight = PhysConst::c;
-    const amrex::Periodicity &period = geom.periodicity();
     #if defined(WARPX_DIM_3D)
         auto cx = (dt/dx[0]);
         auto cy = (dt/dx[1]);
@@ -892,12 +984,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             }
         );
     }
-
-    // Fill guard cells
-    FillBoundary(*N[lev], N[lev]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 
@@ -963,11 +1049,6 @@ void WarpXFluidContainer::centrifugal_source (int lev)
             }
         );
     }
-
-    // Fill guard cells, still needed, TODO: Replace with grown box?
-    const amrex::Periodicity &period = geom.periodicity();
-    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 // Momentum source from fields
@@ -1073,13 +1154,6 @@ void WarpXFluidContainer::GatherAndPush (
             }
         );
     }
-
-    // Fill guard cells
-    const amrex::Geometry &geom = warpx.Geom(lev);
-    const amrex::Periodicity &period = geom.periodicity();
-    FillBoundary(*NU[lev][0], NU[lev][0]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][1], NU[lev][1]->nGrowVect(), WarpX::do_single_precision_comms, period);
-    FillBoundary(*NU[lev][2], NU[lev][2]->nGrowVect(), WarpX::do_single_precision_comms, period);
 }
 
 void WarpXFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho, int icomp)
