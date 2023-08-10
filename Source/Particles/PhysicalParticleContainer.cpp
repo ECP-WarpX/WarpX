@@ -2497,8 +2497,8 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             }
 
             // Loop over the particles and update their momentum
-            const amrex::Real q = this->charge;
-            const amrex::Real m = this-> mass;
+            const amrex::ParticleReal q = this->charge;
+            const amrex::ParticleReal m = this-> mass;
 
             const auto pusher_algo = WarpX::particle_pusher_algo;
             const auto do_crr = do_classical_radiation_reaction;
@@ -2535,25 +2535,25 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 }
 
                 if (do_crr) {
-                    amrex::Real qp = q;
+                    amrex::ParticleReal qp = q;
                     if (ion_lev) { qp *= ion_lev[ip]; }
                     UpdateMomentumBorisWithRadiationReaction(ux[ip], uy[ip], uz[ip],
                                                              Exp, Eyp, Ezp, Bxp,
                                                              Byp, Bzp, qp, m, dt);
                 } else if (pusher_algo == ParticlePusherAlgo::Boris) {
-                    amrex::Real qp = q;
+                    amrex::ParticleReal qp = q;
                     if (ion_lev) { qp *= ion_lev[ip]; }
                     UpdateMomentumBoris( ux[ip], uy[ip], uz[ip],
                                          Exp, Eyp, Ezp, Bxp,
                                          Byp, Bzp, qp, m, dt);
                 } else if (pusher_algo == ParticlePusherAlgo::Vay) {
-                    amrex::Real qp = q;
+                    amrex::ParticleReal qp = q;
                     if (ion_lev){ qp *= ion_lev[ip]; }
                     UpdateMomentumVay( ux[ip], uy[ip], uz[ip],
                                        Exp, Eyp, Ezp, Bxp,
                                        Byp, Bzp, qp, m, dt);
                 } else if (pusher_algo == ParticlePusherAlgo::HigueraCary) {
-                    amrex::Real qp = q;
+                    amrex::ParticleReal qp = q;
                     if (ion_lev){ qp *= ion_lev[ip]; }
                     UpdateMomentumHigueraCary( ux[ip], uy[ip], uz[ip],
                                                Exp, Eyp, Ezp, Bxp,
