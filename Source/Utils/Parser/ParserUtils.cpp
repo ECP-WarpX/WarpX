@@ -87,7 +87,7 @@ amrex::Parser utils::parser::makeParser (
     parser.registerVariables(varnames);
 
     std::set<std::string> symbols = parser.symbols();
-    for (auto const& v : varnames) symbols.erase(v.c_str());
+    for (auto const& v : varnames) symbols.erase(v);
 
     // User can provide inputs under this name, through which expressions
     // can be provided for arbitrary variables. PICMI inputs are aware of

@@ -37,16 +37,7 @@ public:
 
     int numSpecies() const { return getSpeciesNames().size(); }
 
-    const std::vector<std::string>& getSpeciesNames() const {
-        static bool initialized = false;
-        if (!initialized)
-        {
-            const amrex::ParmParse pp_particles("particles");
-            pp_particles.queryarr("species_names", m_species_names);
-            initialized = true;
-        }
-        return m_species_names;
-    }
+    const std::vector<std::string>& getSpeciesNames() const;
 
     void gatherParticles (MultiParticleContainer& mypc,
                           const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);

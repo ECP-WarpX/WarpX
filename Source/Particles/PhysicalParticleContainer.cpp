@@ -689,8 +689,6 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 #endif // WARPX_USE_OPENPMD
 
     ignore_unused(q_tot, z_shift);
-
-    return;
 }
 
 void

@@ -60,7 +60,7 @@ namespace warpx::initialization
 {
 
     amrex::AMReX*
-    amrex_init (int& argc, char**& argv, bool const build_parm_parse)
+    amrex_init (int& argc, char**& argv, bool build_parm_parse)
     {
         return amrex::Initialize(
             argc,

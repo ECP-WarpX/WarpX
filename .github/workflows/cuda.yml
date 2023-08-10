@@ -111,7 +111,7 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex
-        cd ../amrex && git checkout --detach cf8d9f8e233be2ac68aeb65a95e992adfb483939 && cd -
+        cd ../amrex && git checkout --detach d92232a0c17b846ac85851ca5c950d1cd916e3e3 && cd -
         make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE USE_CCACHE=TRUE -j 2
 
   build_nvhpc21-11-nvcc:
