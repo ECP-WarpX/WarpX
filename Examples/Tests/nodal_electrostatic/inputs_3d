@@ -5,7 +5,7 @@ my_constants.GeV = q_e*1.e9
 
 my_constants.nx = 128
 my_constants.ny = 128
-my_constants.nz = 128 
+my_constants.nz = 128
 
 my_constants.sigma = 10*nano
 my_constants.gammab = 125.*GeV/(mc2)
@@ -16,16 +16,16 @@ my_constants.Ly = 7*sigma
 my_constants.Lz = 7*sigma
 
 my_constants.n0 = chargeb / q_e / ((2 * pi)**(3./2.) * sigma*sigma*sigma)
-my_constants.dt = sigma/clight/20. 
+my_constants.dt = sigma/clight/20.
 
-# GENERAL 
+# GENERAL
 max_step = 10
 amr.n_cell = nx ny nz
 amr.max_level = 0
 geometry.dims = 3
 geometry.prob_lo = -0.5*Lx  -0.5*Ly -0.5*Lz
 geometry.prob_hi =  0.5*Lx   0.5*Ly  0.5*Lz
-warpx.numprocs = 1 1 1 
+warpx.numprocs = 1 1 1
 
 # BOUNDARY
 boundary.field_lo = PEC PEC PEC
@@ -33,9 +33,9 @@ boundary.field_hi = PEC PEC PEC
 
 # NUMERICS
 warpx.do_electrostatic = relativistic
-warpx.const_dt = dt 
-warpx.grid_type = collocated 
-algo.particle_pusher = vay 
+warpx.const_dt = dt
+warpx.grid_type = collocated
+algo.particle_pusher = vay
 algo.particle_shape = 3
 
 # SPECIES
@@ -45,7 +45,7 @@ beam_p.species_type = positron
 beam_p.injection_style = "NUniformPerCell"
 beam_p.num_particles_per_cell_each_dim = 1 1 1
 beam_p.profile = parse_density_function
-beam_p.density_function(x,y,z)="n0 * exp(-x**2/(2*sigma**2)) * exp(-y**2/(2*sigma**2)) * exp(-z**2/(2*sigma**2))" 
+beam_p.density_function(x,y,z)="n0 * exp(-x**2/(2*sigma**2)) * exp(-y**2/(2*sigma**2)) * exp(-z**2/(2*sigma**2))"
 beam_p.density_min = n0 / 1e2
 beam_p.momentum_distribution_type = "constant"
 beam_p.ux = 0.0
@@ -83,9 +83,8 @@ diag1.write_species = 0
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam_p
 diag1.format = plotfile
 diag1.particle_fields_to_plot= vx vy vz g
-diag1.particle_fields_species = beam_p 
+diag1.particle_fields_species = beam_p
 diag1.particle_fields.vx(x,y,z,ux,uy,uz)=ux/sqrt(ux*ux+uy*uy+uz*uz)
 diag1.particle_fields.vy(x,y,z,ux,uy,uz)=uy/sqrt(ux*ux+uy*uy+uz*uz)
 diag1.particle_fields.vz(x,y,z,ux,uy,uz)=uz/sqrt(ux*ux+uy*uy+uz*uz)
 diag1.particle_fields.g(x,y,z,ux,uy,uz)=sqrt(ux*ux+uy*uy+uz*uz)
-
