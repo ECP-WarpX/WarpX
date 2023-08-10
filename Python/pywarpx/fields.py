@@ -195,30 +195,29 @@ class _MultiFABWrapper(object):
         elif self.dim == 3:
             return index[0], index[1], index[2]
 
+    def _get_n_ghosts(self):
+        """Return the list of number of ghosts. This includes the component dimension."""
+        nghosts = list(self._get_indices(self.mf.n_grow_vect(), 0))
+        # The components always has nghosts = 0
+        nghosts.append(0)
+        return nghosts
+
     def _get_min_indices(self):
         """Returns the minimum indices, expanded to length 3"""
         min_box = self.mf.box_array().minimal_box()
-        imin = self._get_indices(min_box.small_end, 0)
         if self.include_ghosts:
-            nghosts = self._get_n_ghosts()
-            imin = [imin[i] - nghosts[i] for i in range(3)]
+            min_box.grow(self.mf.n_grow_vect())
+        imin = self._get_indices(min_box.small_end, 0)
         return imin
 
     def _get_max_indices(self):
         """Returns the maximum indices, expanded to length 3.
         """
         min_box = self.mf.box_array().minimal_box()
-        imax = self._get_indices(min_box.big_end, 0)
         if self.include_ghosts:
-            nghosts = self._get_n_ghosts()
-            imax = [imax[i] + nghosts[i] for i in range(3)]
+            min_box.grow(self.mf.n_grow_vect())
+        imax = self._get_indices(min_box.big_end, 0)
         return imax
-
-    def _get_n_ghosts(self):
-        nghosts = list(self._get_indices(self.mf.n_grow_vect(), 0))
-        # The components always has nghosts = 0
-        nghosts.append(0)
-        return nghosts
 
     def _fix_index(self, ii, imax, d):
         """Handle negative index, wrapping them as needed.
@@ -279,7 +278,25 @@ class _MultiFABWrapper(object):
         assert imin <= iistop <= imax, Exception(f'Dimension {d+1} upper index is out of bounds')
         return iistart, iistop
 
-    def _get_intersect_slice(self, box, starts, stops, icstart, icstop):
+    def _get_field(self, mfi):
+        """Return the field at the given mfi.
+        If include ghosts is true, return the whole array, otherwise
+        return the interior slice that does not include the ghosts.
+        """
+        # Note that the array will always have 4 dimensions.
+        # even when self.dim < 3.
+        # The transpose is taken since the thing returned by self.mf.array(mfi) is in C ordering.
+        device_arr4 = self.mf.array(mfi)
+        if cp is not None:
+            device_arr = cp.array(device_arr4, copy=False).T
+        else:
+            device_arr = np.array(device_arr4, copy=False).T
+        if not self.include_ghosts:
+            nghosts = self._get_n_ghosts()
+            device_arr = device_arr[tuple([slice(ng, -ng) for ng in nghosts[:self.dim]])]
+        return device_arr
+
+    def _get_intersect_slice(self, mfi, starts, stops, icstart, icstop):
         """Return the slices where the block intersects with the global slice.
         If the block does not intersect, return None.
         This also shifts the block slices by the number of ghost cells in the
@@ -287,8 +304,8 @@ class _MultiFABWrapper(object):
 
         Parameters
         ----------
-        box: Box instance
-            The box defining the block
+        mfi: MFIter
+            The MFIter instance for the current block,
 
         starts: sequence
             The minimum indices of the global slice.
@@ -314,34 +331,24 @@ class _MultiFABWrapper(object):
         global_slices:
             The slice of the intersection relative to the global array where the data from individual block will go
         """
-        ilo = self._get_indices(box.small_end, 0)
-        ilo_g = self._get_indices(box.small_end, 0)
-        ihi_g = self._get_indices(box.big_end, 0)
-        nghosts = self._get_indices(self.mf.n_grow_vect(), 0)
+        box = mfi.tilebox()
         if self.include_ghosts:
-            # The starts and stops could include the ghost cells, so add the ghost cells
-            # to the lo and hi that they are compared against (to get i1 and i2 below).
-            # The ghost cells are only added to the lower and upper end of the global domain.
-            ilo_g = list(ilo_g)
-            ihi_g = list(ihi_g)
-            min_box = self.mf.box_array().minimal_box()
-            imax = self._get_indices(min_box.big_end, 0)
-            for i in range(3):
-                if ilo_g[i] == 0:
-                    ilo_g[i] -= nghosts[i]
-                if ihi_g[i] == imax[i]:
-                    ihi_g[i] += nghosts[i]
+            box.grow(self.mf.n_grow_vect())
+
+        ilo = self._get_indices(box.small_end, 0)
+        ihi = self._get_indices(box.big_end, 0)
+
         # Add 1 to the upper end to be consistent with the slicing notation
-        ihi_g_p1 = [i + 1 for i in ihi_g]
-        i1 = np.maximum(starts, ilo_g)
-        i2 = np.minimum(stops, ihi_g_p1)
+        ihi_p1 = [i + 1 for i in ihi]
+        i1 = np.maximum(starts, ilo)
+        i2 = np.minimum(stops, ihi_p1)
 
         if np.all(i1 < i2):
 
             block_slices = []
             global_slices = []
             for i in range(3):
-                block_slices.append(slice(i1[i] - ilo[i] + nghosts[i], i2[i] - ilo[i] + nghosts[i]))
+                block_slices.append(slice(i1[i] - ilo[i], i2[i] - ilo[i]))
                 global_slices.append(slice(i1[i] - starts[i], i2[i] - starts[i]))
 
             block_slices.append(slice(icstart, icstop))
@@ -401,20 +408,14 @@ class _MultiFABWrapper(object):
         stops = [ixstop, iystop, izstop]
         datalist = []
         for mfi in self.mf:
-            box = mfi.tilebox()
-            block_slices, global_slices = self._get_intersect_slice(box, starts, stops, icstart, icstop)
+            block_slices, global_slices = self._get_intersect_slice(mfi, starts, stops, icstart, icstop)
             if global_slices is not None:
-                # Note that the array will always have 4 dimensions,
-                # the three dimensions plus the components, even when
-                # self.dim < 3. The transpose is taken since the thing
-                # returned by self.mf.array(mfi) is in C ordering.
-                device_arr4 = self.mf.array(mfi)
+                # Note that the array will always have 4 dimensions.
+                device_arr = self._get_field(mfi)
                 if cp is not None:
-                    device_arr = cp.array(device_arr4, copy=False).T
                     # Copy the data from the device to the host
                     slice_arr = cp.asnumpy(device_arr[block_slices])
                 else:
-                    device_arr = np.array(device_arr4, copy=False).T
                     slice_arr = device_arr[block_slices]
                 datalist.append((global_slices, slice_arr))
 
@@ -511,13 +512,9 @@ class _MultiFABWrapper(object):
         starts = [ixstart, iystart, izstart]
         stops = [ixstop, iystop, izstop]
         for mfi in self.mf:
-            box = mfi.tilebox()
-            block_slices, global_slices = self._get_intersect_slice(box, starts, stops, icstart, icstop)
+            block_slices, global_slices = self._get_intersect_slice(mfi, starts, stops, icstart, icstop)
             if global_slices is not None:
-                if cp is not None:
-                    mf_arr = cp.array(self.mf.array(mfi), copy=False).T
-                else:
-                    mf_arr = np.array(self.mf.array(mfi), copy=False).T
+                mf_arr = self._get_field(mfi)
                 if isinstance(value, np.ndarray):
                     slice_value = value3d[global_slices]
                     if cp is not None:
