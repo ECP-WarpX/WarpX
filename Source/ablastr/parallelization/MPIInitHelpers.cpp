@@ -10,7 +10,6 @@
 
 #include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
-#include <AMReX_Print.H>
 
 #if defined(AMREX_USE_MPI)
 #   include <mpi.h>

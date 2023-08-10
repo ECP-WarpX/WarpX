@@ -44,7 +44,7 @@ public:
 
     PlasmaInjector () = default;
 
-    PlasmaInjector (int ispecies, const std::string& name);
+    PlasmaInjector (int ispecies, const std::string& name, const amrex::Geometry& geom);
 
     ~PlasmaInjector ();
 

@@ -613,7 +613,11 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
     }
     if (!local) {
         const Geometry& gm = allcontainers[0]->Geom(lev);
-        ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity());
+        // Possible performance optimization:
+        // pass less than `rho->nGrowVect()` in the fifth input variable `dst_ng`
+        ablastr::utils::communication::SumBoundary(
+            *rho, 0, rho->nComp(), rho->nGrowVect(), rho->nGrowVect(),
+            WarpX::do_single_precision_comms, gm.periodicity());
     }
 
     return rho;
@@ -668,7 +672,7 @@ MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
 {
     const WarpX& warpx = WarpX::GetInstance();
     const int num_boxes = warpx.boxArray(lev).size();
-    const Vector<Long> r(num_boxes, 0);
+    Vector<Long> r(num_boxes, 0);
     return r;
 }
 
@@ -677,7 +681,7 @@ MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
 {
     if (allcontainers.empty())
     {
-        const Vector<Long> r = GetZeroParticlesInGrid(lev);
+        Vector<Long> r = GetZeroParticlesInGrid(lev);
         return r;
     }
     else

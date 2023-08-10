@@ -66,7 +66,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
 
     // read histogram function
-    std::string function_string = "";
+    std::string function_string;
     utils::parser::Store_parserString(pp_rd_name,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
     m_parser = std::make_unique<amrex::Parser>(
@@ -111,7 +111,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     std::string buf;
     m_do_parser_filter = pp_rd_name.query("filter_function(t,x,y,z,ux,uy,uz)", buf);
     if (m_do_parser_filter) {
-        std::string filter_string = "";
+        std::string filter_string;
         utils::parser::Store_parserString(
             pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
         m_parser_filter = std::make_unique<amrex::Parser>(
@@ -179,8 +179,7 @@ void ParticleHistogram::ComputeDiags (int step)
     auto const num_bins = m_bin_num;
     Real const bin_min  = m_bin_min;
     Real const bin_size = m_bin_size;
-    const bool is_unity_particle_weight =
-        (m_norm == NormalizationType::unity_particle_weight) ? true : false;
+    const bool is_unity_particle_weight = (m_norm == NormalizationType::unity_particle_weight);
 
     bool const do_parser_filter = m_do_parser_filter;
 
