@@ -358,8 +358,7 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
 
         // Shift values of N, NU for each fluid species
-        auto& warpx = WarpX::GetInstance();
-        const int n_fluid_species = warpx.myfl->nSpecies();
+        const int n_fluid_species = myfl->nSpecies();
         for (int i=0; i<n_fluid_species; i++) {
             WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
             shiftMF( *fl.N[lev], geom[lev], num_shift, dir, lev, do_update_cost );

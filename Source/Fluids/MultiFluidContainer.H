@@ -77,7 +77,7 @@ protected:
 
     std::vector<std::string> species_names;
 
-public:
+private:
 
     // Vector of fluid species
     amrex::Vector<std::unique_ptr<WarpXFluidContainer>> allcontainers;
