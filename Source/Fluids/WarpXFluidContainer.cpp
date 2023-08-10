@@ -73,6 +73,9 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
 {
     WARPX_PROFILE("WarpXFluidContainer::InitData");
 
+    // Convert initialization box to nodal box
+    init_box.surroundingNodes();
+
     // Extract objects that give the initial density and momentum
     InjectorDensity *inj_rho = plasma_injector->getInjectorDensity();
     InjectorMomentum *inj_mom = plasma_injector->getInjectorMomentumDevice();
@@ -101,11 +104,8 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
         //Grow the tilebox
         tile_box.grow(1);
 
-        // Convert to Nodal box
-        amrex::Box nodal_init_box = init_box.convert(tile_box.type());
-
         // Return the intersection of all cells and the ones we wish to update
-        amrex::Box init_box_intersection = nodal_init_box & tile_box;
+        amrex::Box init_box_intersection = init_box & tile_box;
 
         amrex::ParallelFor(init_box_intersection,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -190,6 +190,8 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
     const amrex::Periodicity &period = geom.periodicity();
     const Array<int,AMREX_SPACEDIM> periodic_directions = geom.isPeriodic();
     amrex::Box domain = geom.Domain();
+    // Convert to nodal box
+    domain.surroundingNodes();
 
     // H&C push the momentum
     #ifdef AMREX_USE_OMP
@@ -199,9 +201,6 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
     {
 
         amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
-
-        // Convert domain to Nodal
-        domain = domain.convert( tile_box.type() );
 
         amrex::Array4<Real> N_arr = N[lev]->array(mfi);
         amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
