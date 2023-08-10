@@ -266,8 +266,13 @@ public:
     // simulation domain after some iterations, due to flowing plasma and/or
     // moving window).
     void ContinuousInjection(const amrex::RealBox& injection_box) const;
-    // Update injection position for continuously-injected species.
-    void UpdateContinuousInjectionPosition(amrex::Real dt) const;
+
+    /**
+     * \brief  Update antenna position for continuous injection of lasers
+     *         in a boosted frame. Empty function for containers other than lasers.
+     */
+    void UpdateAntennaPosition(const amrex::Real dt) const;
+
     int doContinuousInjection() const;
 
     // Inject particles from a surface during the simulation

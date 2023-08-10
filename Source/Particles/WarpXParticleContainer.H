@@ -246,8 +246,13 @@ public:
     // LaserParticleContainer: implemented.
     // RigidInjectedParticleContainer: not implemented.
     virtual void ContinuousInjection(const amrex::RealBox& /*injection_box*/) {}
-    // Update optional sub-class-specific injection location.
-    virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
+
+    /**
+     * \brief Update antenna position for continuous injection of lasers
+     *        in a boosted frame. Empty function for containers other than lasers.
+     */
+    virtual void UpdateAntennaPosition(const amrex::Real /*dt*/) {}
+
     bool doContinuousInjection() const {return do_continuous_injection;}
 
     // Inject a continuous flux of particles from a defined plane

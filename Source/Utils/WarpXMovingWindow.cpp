@@ -53,7 +53,7 @@
 using namespace amrex;
 
 void
-WarpX::UpdateCurrentInjectionPosition (amrex::Real a_dt)
+WarpX::UpdateInjectionPosition (const amrex::Real a_dt)
 {
     const int dir = moving_window_dir;
 
@@ -148,10 +148,10 @@ WarpX::MoveWindow (const int step, bool move_j)
     const int dir = moving_window_dir;
 
     // Update current injection position for all containers
-    UpdateCurrentInjectionPosition(dt[0]);
+    UpdateInjectionPosition(dt[0]);
     // Update antenna position for all lasers
-    // FIXME Make this specific to lasers only
-    mypc->UpdateContinuousInjectionPosition(dt[0]);
+    // TODO Make this specific to lasers only
+    mypc->UpdateAntennaPosition(dt[0]);
 
     // compute the number of cells to shift on the base level
     amrex::Real new_lo[AMREX_SPACEDIM];

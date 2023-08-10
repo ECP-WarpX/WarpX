@@ -605,7 +605,13 @@ public:
      * In doding so, only positions attributes are changed while fields remain unchanged.
      */
     void ShiftGalileanBoundary ();
-    void UpdateCurrentInjectionPosition (amrex::Real dt);
+
+    /**
+     * \brief Update injection position for continuous injection of
+     *        particles and lasers (loops over species and lasers).
+     */
+    void UpdateInjectionPosition (const amrex::Real dt);
+
     void ResetProbDomain (const amrex::RealBox& rb);
     void EvolveE (         amrex::Real dt);
     void EvolveE (int lev, amrex::Real dt);
