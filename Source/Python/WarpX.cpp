@@ -37,6 +37,7 @@
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_GpuContainers.H>
 
 #if defined(AMREX_DEBUG) || defined(DEBUG)
 #   include <cstdio>
@@ -145,6 +146,29 @@ void init_WarpX (py::module& m)
                 wx.m_poisson_boundary_handler.setPotentialEB(potential);
             },
             py::arg("potential")
+        )
+
+        .def("set_plasma_lens_strength",
+            [](WarpX& wx, int i_lens, amrex::Real strength_E, amrex::Real strength_B) {
+                auto & mypc = wx.GetPartContainer();
+                mypc.h_repeated_plasma_lens_strengths_E.at(i_lens) = strength_E;
+                mypc.h_repeated_plasma_lens_strengths_B.at(i_lens) = strength_B;
+                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                               mypc.h_repeated_plasma_lens_strengths_E.begin(), mypc.h_repeated_plasma_lens_strengths_E.end(),
+                               mypc.d_repeated_plasma_lens_strengths_E.begin());
+                amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                               mypc.h_repeated_plasma_lens_strengths_B.begin(), mypc.h_repeated_plasma_lens_strengths_B.end(),
+                               mypc.d_repeated_plasma_lens_strengths_B.begin());
+                amrex::Gpu::synchronize();
+            },
+            py::arg("i_lens"), py::arg("strength_E"), py::arg("strength_B"),
+            R"pbdoc(Set the strength of the `i_lens`-th lens
+              Parameters
+              ----------
+              i_lens: int
+                  Index of the lens to be modified
+              strength_E, strength_B: floats
+                  The electric and magnetic focusing strength of the lens)pbdoc"
         )
     ;
 

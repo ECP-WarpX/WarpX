@@ -3,6 +3,11 @@
 # This file is part of WarpX. It defines the wrapper functions that directly
 # call the underlying compiled routines through pybind11.
 #
+# NOTE: We will reduce the libwarpx.py level of abstraction eventually!
+# Please add new functionality directly to pybind11-bound modules
+# and call them via sim.extension.libwarpx_so. ... and sim.extension.warpx.
+# ... from user code.
+#
 # Authors: Axel Huebl, Andrew Myers, David Grote, Remi Lehe, Weiqun Zhang
 #
 # License: BSD-3-Clause-LBNL
@@ -360,6 +365,7 @@ class LibWarpX():
 
         if sync_rho:
             self.warpx.sync_rho()
+
 
     def set_potential_EB(self, potential):
         """
