@@ -16,7 +16,6 @@
 # - Compute the theory for laser envelope at time T
 # - Compare theory and simulation in RZ, for both envelope and central frequency
 
-from mpi4py import MPI as mpi
 import glob
 import os
 import sys
@@ -34,8 +33,6 @@ import yt ; yt.funcs.mylog.setLevel(50)
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-
-comm = mpi.COMM_WORLD
 
 #Maximum acceptable error for this test
 relative_error_threshold = 0.065
@@ -149,30 +146,29 @@ def launch_analysis(executable):
 
 
 def main() :
-    if comm.rank == 0:
-        from lasy.laser import Laser
-        from lasy.profiles import (
-            CombinedLongitudinalTransverseProfile,
-            GaussianProfile,
-        )
-        from lasy.profiles.longitudinal import GaussianLongitudinalProfile
-        from lasy.profiles.transverse import LaguerreGaussianTransverseProfile
 
-        # Create a Laguerre Gaussian laser in RZ geometry using lasy
-        pol = (1, 0)
-        profile = CombinedLongitudinalTransverseProfile(
-        wavelength,pol,laser_energy,
-        GaussianLongitudinalProfile(wavelength, tt, t_peak=0),
-        LaguerreGaussianTransverseProfile(w0, p=0, m=1),
-        )
-        dim = "rt"
-        lo = (0e-6, -20e-15)
-        hi = (+25e-6, +20e-15)
-        npoints = (100,100)
-        laser = Laser(dim, lo, hi, npoints, profile, n_azimuthal_modes=2)
-        laser.normalize(laser_energy, kind="energy")
-        laser.write_to_file("laguerrelaserRZ")
+    from lasy.laser import Laser
+    from lasy.profiles import (
+        CombinedLongitudinalTransverseProfile,
+        GaussianProfile,
+    )
+    from lasy.profiles.longitudinal import GaussianLongitudinalProfile
+    from lasy.profiles.transverse import LaguerreGaussianTransverseProfile
 
+    # Create a Laguerre Gaussian laser in RZ geometry using lasy
+    pol = (1, 0)
+    profile = CombinedLongitudinalTransverseProfile(
+    wavelength,pol,laser_energy,
+    GaussianLongitudinalProfile(wavelength, tt, t_peak=0),
+    LaguerreGaussianTransverseProfile(w0, p=0, m=1),
+    )
+    dim = "rt"
+    lo = (0e-6, -20e-15)
+    hi = (+25e-6, +20e-15)
+    npoints = (100,100)
+    laser = Laser(dim, lo, hi, npoints, profile, n_azimuthal_modes=2)
+    laser.normalize(laser_energy, kind="energy")
+    laser.write_to_file("laguerrelaserRZ")
     executables = glob.glob("*.ex")
     if len(executables) == 1 :
         launch_analysis(executables[0])
