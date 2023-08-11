@@ -16,6 +16,7 @@
 # - Compute the theory for laser envelope at time T
 # - Compare theory and simulation in RZ, for both envelope and central frequency
 
+from mpi4py import MPI as mpi
 import glob
 import os
 import sys
@@ -32,6 +33,8 @@ import yt ; yt.funcs.mylog.setLevel(50)
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
+
+comm = mpi.COMM_WORLD
 
 #Maximum acceptable error for this test
 relative_error_threshold = 0.065
@@ -135,20 +138,21 @@ def launch_analysis(executable):
 
 
 def main() :
+    if comm.rank == 0:
+        from lasy.laser import Laser
+        from lasy.profiles import GaussianProfile
 
-    from lasy.laser import Laser
-    from lasy.profiles import GaussianProfile
+        # Create a laser using lasy
+        pol = (1, 0)
+        profile = GaussianProfile(wavelength, pol, laser_energy, w0, tt, t_peak=0)
+        dim = "xyt"
+        lo = (-25e-6, -25e-6, -20e-15)
+        hi = (+25e-6, +25e-6, +20e-15)
+        npoints = (100, 100, 100)
+        laser = Laser(dim, lo, hi, npoints, profile)
+        laser.normalize(laser_energy, kind="energy")
+        laser.write_to_file("gaussianlaser3d")
 
-    # Create a laser using lasy
-    pol = (1, 0)
-    profile = GaussianProfile(wavelength, pol, laser_energy, w0, tt, t_peak=0)
-    dim = "xyt"
-    lo = (-25e-6, -25e-6, -20e-15)
-    hi = (+25e-6, +25e-6, +20e-15)
-    npoints = (100, 100, 100)
-    laser = Laser(dim, lo, hi, npoints, profile)
-    laser.normalize(laser_energy, kind="energy")
-    laser.write_to_file("gaussianlaser3d")
     executables = glob.glob("*.ex")
     if len(executables) == 1 :
         launch_analysis(executables[0])
