@@ -188,12 +188,12 @@ class _MultiFABWrapper(object):
         missing:
             The value used to fill in the extra dimensions added
         """
-        if self.dim == 1:
-            return index[0], missing, missing
-        elif self.dim == 2:
-            return index[0], index[1], missing
-        elif self.dim == 3:
-            return index[0], index[1], index[2]
+        result = []
+        for i in range(self.dim):
+            result.append(index[i])
+        for i in range(self.dim, 3):
+            result.append(missing)
+        return result
 
     def _get_n_ghosts(self):
         """Return the list of number of ghosts. This includes the component dimension."""
