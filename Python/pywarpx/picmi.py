@@ -1991,7 +1991,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                     fields_to_plot.add(dataname)
                 elif dataname in A_fields_list:
                     fields_to_plot.add(dataname)
-                elif dataname in ['rho', 'phi', 'F', 'divE', 'divB', 'proc_number', 'part_per_cell']:
+                elif dataname in ['rho', 'phi', 'F', 'G', 'divE', 'divB', 'proc_number', 'part_per_cell']:
                     fields_to_plot.add(dataname)
                 elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
