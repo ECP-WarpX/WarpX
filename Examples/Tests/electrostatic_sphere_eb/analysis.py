@@ -16,7 +16,7 @@ from scipy.constants import epsilon_0
 # Theoretical charge on the embedded boundary, for sphere at potential phi_0
 phi_0 = 1. # V
 R = 0.1 # m
-q_th = -4*np.pi*epsilon_0*phi_0*R
+q_th = 4*np.pi*epsilon_0*phi_0*R
 print('Theoretical charge: ', q_th)
 
 data = np.loadtxt('diags/reducedfiles/eb_charge.txt')

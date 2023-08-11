@@ -105,11 +105,11 @@ macro(find_amrex)
             endif()
         endif()
 
-        if(WarpX_DIMS STREQUAL RZ)
-            set(AMReX_SPACEDIM 2 CACHE INTERNAL "")
-        else()
-            set(AMReX_SPACEDIM ${WarpX_DIMS} CACHE INTERNAL "")
-        endif()
+        # RZ is AMReX 2D
+        set(WarpX_amrex_dim ${WarpX_DIMS})
+        list(TRANSFORM WarpX_amrex_dim REPLACE RZ 2)
+        list(REMOVE_DUPLICATES WarpX_amrex_dim)
+        set(AMReX_SPACEDIM ${WarpX_amrex_dim} CACHE INTERNAL "")
 
         if(WarpX_amrex_src)
             list(APPEND CMAKE_MODULE_PATH "${WarpX_amrex_src}/Tools/CMake")
@@ -204,11 +204,14 @@ macro(find_amrex)
         else()
             set(COMPONENT_ASCENT)
         endif()
-        if(WarpX_DIMS STREQUAL RZ)
-            set(COMPONENT_DIM 2D)
-        else()
-            set(COMPONENT_DIM ${WarpX_DIMS}D)
-        endif()
+
+        set(WarpX_amrex_dim ${WarpX_DIMS})  # RZ is AMReX 2D
+        list(TRANSFORM WarpX_amrex_dim REPLACE RZ 2)
+        list(REMOVE_DUPLICATES WarpX_amrex_dim)
+        set(COMPONENT_DIMS)
+        foreach(D IN LISTS WarpX_amrex_dim)
+            set(COMPONENT_DIMS ${COMPONENT_DIMS} ${D}D)
+        endforeach()
         if(WarpX_EB)
             set(COMPONENT_EB EB)
         else()
@@ -226,7 +229,7 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
-        find_package(AMReX 23.03 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
+        find_package(AMReX 23.08 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -240,7 +243,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "1ffc6e427e3aea9302602190c8fc1cfbea0c9725"
+set(WarpX_amrex_branch "d92232a0c17b846ac85851ca5c950d1cd916e3e3"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

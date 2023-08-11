@@ -200,6 +200,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_getCurrentDensityCPLoVects_PML.restype = _LP_c_int
         self.libwarpx_so.warpx_getCurrentDensityFP_PML.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getCurrentDensityFPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getCurrentDensityFP_Ampere.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getChargeDensityCP.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getChargeDensityFP.restype = _LP_LP_c_real
@@ -684,14 +685,22 @@ class LibWarpX():
                     maxlen, val, self._numpy_particlereal_dtype
                 )
 
-        # --- The -3 is because the comps include the velocites
-        nattr = self.get_nattr_species(species_name) - 3
+        # --- The number of built in attributes
+        # --- The three velocities
+        built_in_attrs = 3
+        if self.geometry_dim == 'rz':
+            # --- With RZ, there is also theta
+            built_in_attrs += 1
+
+        # --- The number of extra attributes (including the weight)
+        nattr = self.get_nattr_species(species_name) - built_in_attrs
         attr = np.zeros((maxlen, nattr), self._numpy_particlereal_dtype)
         attr[:,0] = w
 
+        # --- Note that the velocities are handled separately and not included in attr
+        # --- (even though they are stored as attributes in the C++)
         for key, vals in kwargs.items():
-            # --- The -3 is because components 1 to 3 are velocities
-            attr[:,self.get_particle_comp_index(species_name, key)-3] = vals
+            attr[:,self.get_particle_comp_index(species_name, key) - built_in_attrs] = vals
 
         nattr_int = 0
         attr_int = np.empty([0], ctypes.c_int)
@@ -1724,6 +1733,37 @@ class LibWarpX():
             return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensityFP_PML, level, direction, include_ghosts)
         except ValueError:
             raise Exception('PML not initialized')
+
+    def get_mesh_current_density_fp_ampere(self, level, direction, include_ghosts=True):
+        '''
+
+        This returns a list of numpy arrays containing the mesh current density
+        data on each grid for this process calculated from the curl of B. This
+        quantity is calculated in the kinetic-fluid hybrid model to get the
+        electron current. This function returns the current density on the fine
+        patch for the given level.
+
+        The data for the numpy arrays are not copied, but share the underlying
+        memory buffer with WarpX. The numpy arrays are fully writeable.
+
+        Parameters
+        ----------
+
+            level          : the AMR level to get the data for
+            direction      : the component of the data you want
+            include_ghosts : whether to include ghost zones or not
+
+        Returns
+        -------
+
+            A List of numpy arrays.
+
+        '''
+
+        try:
+            return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensityFP_Ampere, level, direction, include_ghosts)
+        except ValueError:
+            raise Exception('Current multifab not allocated.')
 
     def get_mesh_charge_density_cp(self, level, include_ghosts=True):
         '''

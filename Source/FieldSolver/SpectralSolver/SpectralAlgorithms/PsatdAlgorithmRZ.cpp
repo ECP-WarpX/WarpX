@@ -30,7 +30,6 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     const bool divb_cleaning)
      // Initialize members of base class
      : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
-       m_spectral_index(spectral_index),
        m_dt(dt),
        m_update_with_rho(update_with_rho),
        m_time_averaging(time_averaging),
@@ -58,20 +57,20 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
 
     if (time_averaging && J_in_time != JInTime::Linear)
     {
-        amrex::Abort(Utils::TextMsg::Err(
-            "RZ PSATD: psatd.do_time_averaging=1 implemented only with psatd.J_in_time=linear"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "RZ PSATD: psatd.do_time_averaging=1 implemented only with psatd.J_in_time=linear");
     }
 
     if (dive_cleaning && J_in_time != JInTime::Linear)
     {
-        amrex::Abort(Utils::TextMsg::Err(
-            "RZ PSATD: warpx.do_dive_cleaning=1 implemented only with psatd.J_in_time=linear"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "RZ PSATD: warpx.do_dive_cleaning=1 implemented only with psatd.J_in_time=linear");
     }
 
     if (divb_cleaning && J_in_time != JInTime::Linear)
     {
-        amrex::Abort(Utils::TextMsg::Err(
-            "RZ PSATD: warpx.do_divb_cleaning=1 implemented only with psatd.J_in_time=linear"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "RZ PSATD: warpx.do_divb_cleaning=1 implemented only with psatd.J_in_time=linear");
     }
 }
 
@@ -83,7 +82,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging = m_time_averaging;
-    const bool J_linear = (m_J_in_time == JInTime::Linear) ? true : false;
+    const bool J_linear = (m_J_in_time == JInTime::Linear);
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
@@ -338,7 +337,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
     const bool time_averaging = m_time_averaging;
-    const bool J_linear = (m_J_in_time == JInTime::Linear) ? true : false;
+    const bool J_linear = (m_J_in_time == JInTime::Linear);
 
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
@@ -400,7 +399,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
             if (time_averaging && J_linear)
             {
-                constexpr amrex::Real c2 = PhysConst::c;
+                constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
                 const amrex::Real dt3 = dt * dt * dt;
                 const amrex::Real om  = c * k_norm;
                 const amrex::Real om2 = om * om;
@@ -408,14 +407,14 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 
                 if (om != 0.0_rt)
                 {
-                    X5(i,j,k) = c2 / ep0 * (S_ck(i,j,k) / om2 - (1._rt - C(i,j,k)) / (om4 * dt)
+                    X5(i,j,k,mode) = c2 / ep0 * (S_ck(i,j,k,mode) / om2 - (1._rt - C(i,j,k,mode)) / (om4 * dt)
                                             - 0.5_rt * dt / om2);
-                    X6(i,j,k) = c2 / ep0 * ((1._rt - C(i,j,k)) / (om4 * dt) - 0.5_rt * dt / om2);
+                    X6(i,j,k,mode) = c2 / ep0 * ((1._rt - C(i,j,k,mode)) / (om4 * dt) - 0.5_rt * dt / om2);
                 }
                 else
                 {
-                    X5(i,j,k) = - c2 * dt3 / (8._rt * ep0);
-                    X6(i,j,k) = - c2 * dt3 / (24._rt * ep0);
+                    X5(i,j,k,mode) = - c2 * dt3 / (8._rt * ep0);
+                    X6(i,j,k,mode) = - c2 * dt3 / (24._rt * ep0);
                 }
             }
         });
@@ -491,6 +490,6 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 void
 PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented in RZ geometry"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented in RZ geometry");
 }

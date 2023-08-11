@@ -15,6 +15,7 @@
 
 #include <map>
 #include <string>
+#include <utility>
 
 /** Particle Attributes stored in amrex::ParticleContainer's struct of array
  */
@@ -89,10 +90,15 @@ public:
         std::map<std::string, int> p_rcomps,
         std::map<std::string, int> p_ricomps)
     : amrex::ParticleContainer<0,0,PIdx::nattribs,0,T_Allocator>(std::move(pc)),
-    particle_comps(p_comps),
-    particle_icomps(p_icomps),
-    particle_runtime_comps(p_rcomps),
-    particle_runtime_icomps(p_ricomps) {}
+    particle_comps(std::move(p_comps)),
+    particle_icomps(std::move(p_icomps)),
+    particle_runtime_comps(std::move(p_rcomps)),
+    particle_runtime_icomps(std::move(p_ricomps)) {}
+
+    /** Copy constructor for NamedComponentParticleContainer */
+    NamedComponentParticleContainer ( const NamedComponentParticleContainer &) = delete;
+    /** Copy operator for NamedComponentParticleContainer */
+    NamedComponentParticleContainer& operator= ( const NamedComponentParticleContainer & ) = delete;
 
     /** Move constructor for NamedComponentParticleContainer */
     NamedComponentParticleContainer ( NamedComponentParticleContainer && ) = default;

@@ -149,7 +149,7 @@ endif
 
 ifeq ($(USE_OPENPMD), TRUE)
    # try pkg-config query
-   ifeq (0, $(shell pkg-config "openPMD >= 0.14.2"; echo $$?))
+   ifeq (0, $(shell pkg-config "openPMD >= 0.15.1"; echo $$?))
        CXXFLAGS += $(shell pkg-config --cflags openPMD)
        LIBRARY_LOCATIONS += $(shell pkg-config --variable=libdir openPMD)
        libraries += $(shell pkg-config --libs-only-l openPMD)
@@ -206,7 +206,7 @@ ifeq ($(USE_PSATD),TRUE)
 endif
 
 ifeq ($(USE_RZ),TRUE)
-  USERSuffix := $(USERSuffix).RZ
+  USERSuffix := $(USERSuffix).rz
 endif
 
 ifeq ($(USE_HDF5),TRUE)

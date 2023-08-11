@@ -51,7 +51,7 @@ SpectralKSpace::SpectralKSpace( const BoxArray& realspace_ba,
         // For local FFTs, boxes in spectral space start at 0 in
         // each direction and have the same number of points as the
         // (cell-centered) real space box
-        Box realspace_bx = realspace_ba[i];
+        const Box realspace_bx = realspace_ba[i];
         IntVect fft_size = realspace_bx.length();
         // Because the spectral solver uses real-to-complex FFTs, we only
         // need the positive k values along the fastest axis
@@ -61,21 +61,16 @@ SpectralKSpace::SpectralKSpace( const BoxArray& realspace_ba,
         IntVect spectral_bx_size = fft_size;
         spectral_bx_size[0] = fft_size[0]/2 + 1;
         // Define the corresponding box
-        Box spectral_bx = Box( IntVect::TheZeroVector(),
+        const Box spectral_bx = Box( IntVect::TheZeroVector(),
                                spectral_bx_size - IntVect::TheUnitVector() );
         spectral_bl.push_back( spectral_bx );
     }
     spectralspace_ba.define( spectral_bl );
 
     // Allocate the components of the k vector: kx, ky (only in 3D), kz
-    bool only_positive_k;
     for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++) {
-        if (i_dim==0) {
-            // Real-to-complex FFTs: first axis contains only the positive k
-            only_positive_k = true;
-        } else {
-            only_positive_k = false;
-        }
+        // Real-to-complex FFTs: first axis contains only the positive k
+        const auto only_positive_k = (i_dim==0);
         k_vec[i_dim] = getKComponent(dm, realspace_ba, i_dim, only_positive_k);
     }
 }
@@ -95,11 +90,11 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
     // Loop over boxes and allocate the corresponding DeviceVector
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
-        Box bx = spectralspace_ba[mfi];
+        const Box bx = spectralspace_ba[mfi];
         Gpu::DeviceVector<Real>& k = k_comp[mfi];
 
         // Allocate k to the right size
-        int N = bx.length( i_dim );
+        const int N = bx.length( i_dim );
         k.resize( N );
         Real* pk = k.data();
 
@@ -227,7 +222,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
         // Loop over boxes and allocate the corresponding DeviceVector
         // for each box owned by the local MPI proc
         for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
-            Real delta_x = dx[i_dim];
+            const Real delta_x = dx[i_dim];
             const Gpu::DeviceVector<Real>& k = k_vec[i_dim][mfi];
             Gpu::DeviceVector<Real>& modified_k = modified_k_comp[mfi];
 

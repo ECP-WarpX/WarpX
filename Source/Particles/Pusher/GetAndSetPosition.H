@@ -26,8 +26,8 @@ void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
                             amrex::ParticleReal& z) noexcept
 {
 #ifdef WARPX_DIM_RZ
-    amrex::ParticleReal theta = p.rdata(PIdx::theta);
-    amrex::ParticleReal r = p.pos(0);
+    const amrex::ParticleReal theta = p.rdata(PIdx::theta);
+    const amrex::ParticleReal r = p.pos(0);
     x = r*std::cos(theta);
     y = r*std::sin(theta);
     z = p.pos(1);
@@ -92,7 +92,7 @@ struct GetParticlePosition
     {
         const PType& p = m_structs[i];
 #ifdef WARPX_DIM_RZ
-        RType r = p.pos(0);
+        const RType r = p.pos(0);
         x = r*std::cos(m_theta[i]);
         y = r*std::sin(m_theta[i]);
         z = p.pos(1);

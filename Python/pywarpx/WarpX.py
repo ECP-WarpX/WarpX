@@ -10,6 +10,7 @@ import re
 from . import Particles
 from .Algo import algo
 from .Amr import amr
+from .Amrex import amrex
 from .Boundary import boundary
 from .Bucket import Bucket
 from .Collisions import collisions, collisions_list
@@ -17,8 +18,8 @@ from .Constants import my_constants
 from .Diagnostics import diagnostics, reduced_diagnostics
 from .EB2 import eb2
 from .Geometry import geometry
+from .HybridPICModel import hybridpicmodel
 from .Interpolation import interpolation
-from .Langmuirwave import langmuirwave
 from .Lasers import lasers, lasers_list
 from .PSATD import psatd
 from .Particles import particles, particles_list
@@ -40,10 +41,11 @@ class WarpX(Bucket):
         argv += warpx.attrlist()
         argv += my_constants.attrlist()
         argv += amr.attrlist()
+        argv += amrex.attrlist()
         argv += geometry.attrlist()
+        argv += hybridpicmodel.attrlist()
         argv += boundary.attrlist()
         argv += algo.attrlist()
-        argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
         argv += psatd.attrlist()
         argv += eb2.attrlist()

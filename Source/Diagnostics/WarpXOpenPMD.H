@@ -10,7 +10,6 @@
 
 #include "Particles/WarpXParticleContainer.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
-#include "Utils/TextMsg.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
@@ -35,26 +34,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-//
-// helper class
-//
-class Timer
-{
-public:
-  Timer (const char* tag) {m_Tag = tag; m_Start = amrex::second();}
-  ~Timer () {
-      m_End = amrex::second();
-      amrex::ParallelDescriptor::ReduceRealMax(m_End, amrex::ParallelDescriptor::IOProcessorNumber());
-      amrex::Print() << Utils::TextMsg::Info(
-        m_Tag + " took: "+ std::to_string(m_End - m_Start) + " seconds");
-  }
-private:
-  amrex::Real m_Start;
-  amrex::Real m_End;
-  std::string m_Tag;
-};
-
 
 //
 //
@@ -136,6 +115,7 @@ public:
 
   void WriteOpenPMDParticles (
               const amrex::Vector<ParticleDiag>& particle_diags,
+              const amrex::Real time,
               const bool use_pinned_pc = false,
               const bool isBTD = false,
               const bool isLastBTDFlush = false,
