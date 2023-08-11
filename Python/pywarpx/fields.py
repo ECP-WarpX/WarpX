@@ -285,7 +285,9 @@ class _MultiFABWrapper(object):
         """
         # Note that the array will always have 4 dimensions.
         # even when self.dim < 3.
-        # The transpose is taken since the thing returned by self.mf.array(mfi) is in C ordering.
+        # The transpose is taken since the Python array interface to Array4 in
+        # self.mf.array(mfi) is in C ordering.
+        # Note: transposing creates a view and not a copy.
         device_arr4 = self.mf.array(mfi)
         if cp is not None:
             device_arr = cp.array(device_arr4, copy=False).T

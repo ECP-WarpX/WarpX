@@ -58,7 +58,7 @@ void init_WarpX (py::module& m)
         [] () { return &WarpX::GetInstance(); },
         "Return a reference to the WarpX object.");
 
-    m.def("warpx_finalize", &WarpX::ResetInstance,
+    m.def("finalize", &WarpX::Finalize,
         "Close out the WarpX related data");
 
     py::class_<WarpX> warpx(m, "WarpX");
@@ -71,7 +71,11 @@ void init_WarpX (py::module& m)
         }))
         .def_static("get_instance",
             [] () { return &WarpX::GetInstance(); },
-            "Return a reference to the WarpX object.")
+            "Return a reference to the WarpX object."
+        )
+        .def_static("finalize", &WarpX::Finalize,
+            "Close out the WarpX related data"
+        )
 
         .def("initialize_data", &WarpX::InitData,
             "Initializes the WarpX simulation"

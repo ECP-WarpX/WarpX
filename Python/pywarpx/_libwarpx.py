@@ -61,7 +61,9 @@ class LibWarpX():
 
         if 'libwarpx_so' in self.__dict__:
             raise RuntimeError(
-                "Invalid attempt to load libwarpx_so... library multiple times."
+                "Invalid attempt to load the pybind11 bindings library multiple times. "
+                "Note that multiple AMReX/WarpX geometries cannot be loaded yet into the same Python process. "
+                "Please write separate scripts for each geometry."
             )
 
         # --- Use geometry to determine whether to import the 1D, 2D, 3D or RZ version.

@@ -70,16 +70,6 @@
       warpx::initialization::amrex_init(argc, argv, true);
     }
 
-    void amrex_finalize (int /*finalize_mpi*/)
-    {
-        amrex::Finalize();
-    }
-
-    void warpx_finalize ()
-    {
-        WarpX::Finalize();
-    }
-
     void warpx_ConvertLabParamsToBoost()
     {
       ConvertLabParamsToBoost();
