@@ -148,7 +148,7 @@ private:
      */
     bool m_do_back_transformed_particles = true;
 
-    /** m_gamma_boost, is a copy of warpx.gamma_boost
+    /** m_gamma_boost, is a copy of WarpX::gamma_boost
      *  That is, the Lorentz factor of the boosted frame in which the simulation is run.
      *  The direction for Lorentz transformation is assumed to be along
      *  ``warpx.boost_direction``, which is the same as the moving window direction.
@@ -157,7 +157,7 @@ private:
      */
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
-    /** m_moving_window_dir is a copy of warpx.moving_window_dir
+    /** m_moving_window_dir is a copy of WarpX::moving_window_dir
      *  Currently, back-transformed diagnostics only works if moving window is
      *  in z-direction for both 2D and 3D simulations in the Cartesian frame of reference.
      */
@@ -280,7 +280,7 @@ private:
       */
     amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
-        amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
+        const amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
         return current_z_boost;
     }
     /** Compute and return z-position in the lab-frame at the current timestep
@@ -289,7 +289,7 @@ private:
       */
     amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
-        amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
+        const amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
         return current_z_lab;
     }
     /** Compute and return cell-size in z-dimension in the lab-frame at level, lev

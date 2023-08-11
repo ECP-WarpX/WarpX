@@ -138,7 +138,8 @@ extern "C" {
   void warpx_SyncRho ();
   void warpx_SyncCurrent (
       const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-      const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+      const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+      const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer);
   void warpx_UpdateAuxilaryData ();
   void warpx_PushParticlesandDepose (amrex::Real cur_time);
 
@@ -158,6 +159,8 @@ extern "C" {
 
   void warpx_setPotentialEB (const char * char_potential);
 
+  void warpx_setPlasmaLensStrength (const int i_lens, const amrex::Real strength_E, const amrex::Real strength_B);
+
   void mypc_Redistribute ();
 
   amrex::Real** warpx_getEfield (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
@@ -171,6 +174,8 @@ extern "C" {
   amrex::Real** warpx_getCurrentDensity (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
   amrex::Real** warpx_getCurrentDensityCP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
   amrex::Real** warpx_getCurrentDensityFP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
+
+  amrex::Real** warpx_getCurrentDensityFP_Ampere (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
 
   amrex::Real** warpx_getVectorPotentialFP (int lev, int direction, int *return_size, int *ncomps, int **ngrowvect, int **shapes);
 

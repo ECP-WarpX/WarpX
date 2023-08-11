@@ -10,7 +10,7 @@
 
 #include "ablastr/utils/msg_logger/MsgLogger_fwd.H"
 
-#include <AMReX_ParmParse.H>
+#include <AMReX_BaseFwd.H>
 
 #include <memory>
 #include <optional>
@@ -128,7 +128,7 @@ namespace ablastr::warn_manager
         *
         * @param[in, out] params the inputfile parser
         */
-        void debug_read_warnings_from_input(amrex::ParmParse& params);
+        void debug_read_warnings_from_input(const amrex::ParmParse& params);
 
         static const int warn_line_size = 80 /*! Maximum line length to be used in formatting warning list*/;
         static const int warn_tab_size = 5 /*! Tabulation size to be used in formatting warning list*/;

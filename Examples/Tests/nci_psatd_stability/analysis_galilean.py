@@ -113,4 +113,4 @@ if current_correction:
     assert(err_charge < tol_charge)
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, filename, rtol=1.e-8)

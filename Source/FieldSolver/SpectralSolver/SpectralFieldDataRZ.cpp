@@ -319,14 +319,14 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
     // are grouped together in memory.
     amrex::Box const& spectralspace_bx = tmpSpectralField[mfi].box();
     int const nz = spectralspace_bx.length(1);
-    amrex::Real inv_nz = 1._rt/nz;
+    const amrex::Real inv_nz = 1._rt/nz;
     const int n_fields = m_n_fields;
 
     ParallelFor(spectralspace_bx, modes,
     [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
         Complex spectral_field_value = tmp_arr(i,j,k,mode);
         // Apply proper shift.
-        if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
+        if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
         // Copy field into the correct index.
         int const ic = field_index + mode*n_fields;
         fields_arr(i,j,k,ic) = spectral_field_value*inv_nz;
@@ -364,7 +364,7 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
         int const ic = field_index + mode*n_fields;
         Complex spectral_field_value = fields_arr(i,j,k,ic);
         // Apply proper shift.
-        if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
+        if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
         // Copy field into the right index.
         tmp_arr(i,j,k,mode) = spectral_field_value;
     });
@@ -446,7 +446,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
                                        int const i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf.boxArray(), field_mf.DistributionMap());
+    const bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf.boxArray(), field_mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
     // Only cell centered in r is supported.
@@ -506,11 +506,11 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
                                        amrex::MultiFab const & field_mf_t, int const field_index_t)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf_r.boxArray(), field_mf_r.DistributionMap());
+    const bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf_r.boxArray(), field_mf_r.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
     // Only cell centered in r is supported.
-    bool const is_nodal_z = field_mf_r.is_nodal(1);
+    const bool is_nodal_z = field_mf_r.is_nodal(1);
 
     // Create copies of the input multifabs. The copies will include the imaginary part of mode 0.
     // Also note that the Hankel transform will overwrite the copies.
@@ -571,10 +571,10 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                                         int const i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf.boxArray(), field_mf.DistributionMap());
+    const bool do_costs = WarpXUtilLoadBalance::doCosts(cost, field_mf.boxArray(), field_mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space.
-    bool const is_nodal_z = field_mf.is_nodal(1);
+    const bool is_nodal_z = field_mf.is_nodal(1);
 
     // A full multifab is created so that each GPU stream has its own temp space.
     amrex::MultiFab tempHTransformedSplit(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);

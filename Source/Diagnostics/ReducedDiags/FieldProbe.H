@@ -66,7 +66,7 @@ public:
      */
 
     //! noutputs is 11 for particle id + (x, y, z, Ex, Ey, Ez, Bx, By, Bz, S)
-    static constexpr int noutputs = FieldProbePIdx::nattribs + 3 + 1;
+    static const int noutputs = 11;
 
 private:
     amrex::Real x_probe = 0._rt;
@@ -109,9 +109,6 @@ private:
     //! particle shape used for field gather
     int interp_order = 1;
 
-    //! Judges whether to gather raw fields or interpolated data
-    bool raw_fields = false;
-
     //! Judges whether to follow a moving window
     bool do_moving_window_FP = false;
 
@@ -129,7 +126,7 @@ private:
      */
     void normalize(amrex::Real &AMREX_RESTRICT x, amrex::Real &AMREX_RESTRICT y,
                    amrex::Real &AMREX_RESTRICT z){
-        amrex::Real mag = std::sqrt(x*x + y*y + z*z);
+        const amrex::Real mag = std::sqrt(x*x + y*y + z*z);
         x /= mag;
         y /= mag;
         z /= mag;

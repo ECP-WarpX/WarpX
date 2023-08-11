@@ -33,7 +33,7 @@ LevelingThinning::LevelingThinning (const std::string species_name)
 {
     using namespace amrex::literals;
 
-    amrex::ParmParse pp_species_name(species_name);
+    const amrex::ParmParse pp_species_name(species_name);
     utils::parser::queryWithParser(
         pp_species_name, "resampling_algorithm_target_ratio", m_target_ratio);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_target_ratio > 0._rt,

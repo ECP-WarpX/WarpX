@@ -12,9 +12,11 @@ foreach(D IN LISTS WarpX_DIMS)
         EvolveG.cpp
         EvolveECTRho.cpp
         FiniteDifferenceSolver.cpp
+        HybridPICSolveE.cpp
         MacroscopicEvolveE.cpp
         ApplySilverMuellerBoundary.cpp
     )
 endforeach()
 
+add_subdirectory(HybridPICModel)
 add_subdirectory(MacroscopicProperties)

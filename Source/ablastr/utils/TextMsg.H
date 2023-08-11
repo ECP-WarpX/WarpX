@@ -9,8 +9,6 @@
 #define ABLASTR_TEXT_MSG_H_
 
 #include <string>
-#include <vector>
-
 
 namespace ablastr::utils::TextMsg
 {

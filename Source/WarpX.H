@@ -18,6 +18,7 @@
 #include "EmbeddedBoundary/WarpXFaceInfoBox_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
 #include "Filter/NCIGodfreyFilter_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
 #include "Particles/MultiParticleContainer_fwd.H"
@@ -82,10 +83,27 @@ public:
     friend class PML;
 
     static WarpX& GetInstance ();
+
     static void ResetInstance ();
 
-    WarpX ();
+    /**
+     * \brief
+     * This method has to be called at the end of the simulation. It deletes the WarpX instance.
+     */
+    static void Finalize();
+
+    /** Destructor */
     ~WarpX ();
+
+    /** Copy constructor */
+    WarpX ( WarpX const &) = delete;
+    /** Copy operator */
+    WarpX& operator= ( WarpX const & ) = delete;
+
+    /** Move constructor */
+    WarpX ( WarpX && ) = default;
+    /** Move operator */
+    WarpX& operator= ( WarpX && ) = default;
 
     static std::string Version (); //!< Version of WarpX executable
     static std::string PicsarVersion (); //!< Version of PICSAR dependency
@@ -98,6 +116,7 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
+    HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
 
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
@@ -106,8 +125,6 @@ public:
                          int num_shift, int dir, const int lev, bool update_cost_flag,
                          amrex::Real external_field=0.0, bool useparser = false,
                          amrex::ParserExecutor<3> const& field_parser={});
-
-    static void GotoNextLine (std::istream& is);
 
     //! Author of an input file / simulation setup
     static std::string authors;
@@ -368,6 +385,7 @@ public:
      * \param[in] dm The DistributionMapping describing the MultiFab
      * \param[in] ncomp The number of components in the MultiFab
      * \param[in] ngrow The number of guard cells in the MultiFab
+     * \param[in] level The refinement level
      * \param[in] name The name of the MultiFab to use in the map
      * \param[in] initial_value The optional initial value
      */
@@ -377,6 +395,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
+        const int level,
         const std::string& name,
         std::optional<const amrex::Real> initial_value = {});
 
@@ -391,6 +410,7 @@ public:
      * \param[in] dm The DistributionMapping describing the iMultiFab
      * \param[in] ncomp The number of components in the iMultiFab
      * \param[in] ngrow The number of guard cells in the iMultiFab
+     * \param[in] level The refinement level
      * \param[in] name The name of the iMultiFab to use in the map
      * \param[in] initial_value The optional initial value
      */
@@ -400,6 +420,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
+        const int level,
         const std::string& name,
         std::optional<const int> initial_value = {});
 
@@ -410,6 +431,7 @@ public:
      * \param[in] mf_to_alias The MultiFab to alias
      * \param[in] scomp The starting component to be aliased
      * \param[in] ncomp The number of components to alias
+     * \param[in] level The refinement level
      * \param[in] name The name of the MultiFab to use in the map
      * \param[in] initial_value optional initial value for MultiFab
      */
@@ -418,6 +440,7 @@ public:
         const amrex::MultiFab& mf_to_alias,
         const int scomp,
         const int ncomp,
+        const int level,
         const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
@@ -521,27 +544,9 @@ public:
 
     static amrex::LayoutData<amrex::Real>* getCosts (int lev);
 
-    void setLoadBalanceEfficiency (const int lev, const amrex::Real efficiency)
-    {
-        if (m_instance)
-        {
-            m_instance->load_balance_efficiency[lev] = efficiency;
-        } else
-        {
-            return;
-        }
-    }
+    void setLoadBalanceEfficiency (const int lev, const amrex::Real efficiency);
 
-    amrex::Real getLoadBalanceEfficiency (const int lev)
-    {
-        if (m_instance)
-        {
-            return m_instance->load_balance_efficiency[lev];
-        } else
-        {
-            return -1;
-        }
-    }
+    amrex::Real getLoadBalanceEfficiency (const int lev);
 
     static amrex::IntVect filter_npass_each_dir;
     BilinearFilter bilinear_filter;
@@ -597,7 +602,13 @@ public:
      * In doding so, only positions attributes are changed while fields remain unchanged.
      */
     void ShiftGalileanBoundary ();
-    void UpdatePlasmaInjectionPosition (amrex::Real dt);
+
+    /**
+     * \brief Update injection position for continuous injection of
+     *        particles and lasers (loops over species and lasers).
+     */
+    void UpdateInjectionPosition (const amrex::Real dt);
+
     void ResetProbDomain (const amrex::RealBox& rb);
     void EvolveE (         amrex::Real dt);
     void EvolveE (int lev, amrex::Real dt);
@@ -615,6 +626,22 @@ public:
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
+
+    /**
+     * \brief Hybrid-PIC field evolve function.
+     * This function contains the logic involved in evolving the electric and
+     * magnetic fields in the hybrid PIC algorithm.
+     */
+    void HybridPICEvolveFields ();
+
+    /**
+     * \brief Hybrid-PIC initial deposition function.
+     * The hybrid-PIC algorithm uses the charge and current density from both
+     * the current and previous step when updating the fields. This function
+     * deposits the initial ion charge and current (before the first particle
+     * push), to be used in the ``HybridPICEvolveFields()`` function.
+     */
+    void HybridPICDepositInitialRhoAndJ ();
 
     /** apply QED correction on electric field
      *
@@ -703,6 +730,16 @@ public:
     void ApplyEfieldBoundary (const int lev, PatchType patch_type);
     void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
 
+    /**
+     * \brief When the Ohm's law solver is used, the electron pressure values
+     * on PEC boundaries are set to enforce a zero derivative Neumann condition,
+     * otherwise the E_perp values have large spikes (that grows as 1/dx). This
+     * has to be done since the E-field is algebraically calculated instead of
+     * evolved which means the 1/dx growth is not avoided by multiplication
+     * with dt as happens in the B-field evolve.
+     */
+    void ApplyElectronPressureBoundary (const int lev, PatchType patch_type);
+
     void DampPML ();
     void DampPML (const int lev);
     void DampPML (const int lev, PatchType patch_type);
@@ -790,7 +827,8 @@ public:
 
     /**
      * \brief Synchronize J and rho:
-     * filter (if used), exchange guard cells, interpolate across MR levels.
+     * filter (if used), exchange guard cells, interpolate across MR levels
+     * and apply boundary conditions.
      * Contains separate calls to WarpX::SyncCurrent and WarpX::SyncRho.
      */
     void SyncCurrentAndRho ();
@@ -805,16 +843,19 @@ public:
      *
      * \param[in,out] J_fp reference to fine-patch current \c MultiFab (all MR levels)
      * \param[in,out] J_cp reference to coarse-patch current \c MultiFab (all MR levels)
+     * \param[in,out] J_buffer reference to buffer current \c MultiFab (all MR levels)
      */
     void SyncCurrent (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
-        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp);
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer);
 
     void SyncRho ();
 
     void SyncRho (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
-        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp);
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer);
 
     amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
     int getnsubsteps (int lev) const {return nsubsteps[lev];}
@@ -830,7 +871,6 @@ public:
     amrex::Real getdt (int lev) const {return dt[lev];}
     int getdo_moving_window() const {return do_moving_window;}
     amrex::Real getmoving_window_x() const {return moving_window_x;}
-    amrex::Real getcurrent_injection_position () const {return current_injection_position;}
     bool getis_synchronized() const {return is_synchronized;}
 
     int maxStep () const {return max_step;}
@@ -1099,6 +1139,20 @@ protected:
 
 private:
 
+    /**
+     * \brief
+     *  WarpX constructor. This method should not be called directly, but rather through
+     * the static member function MakeWarpX(). MakeWarpX() is called by GetInstance ()
+     * if an instance of the WarpX class does not currently exist.
+     */
+    WarpX ();
+
+    /**
+     * \brief
+     * This method creates a new instance of the WarpX class.
+     */
+    static void MakeWarpX ();
+
     // Singleton is used when the code is run from python
     static WarpX* m_instance;
 
@@ -1137,6 +1191,7 @@ private:
     void AddCurrentFromFineLevelandSumBoundary (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
+        const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer,
         const int lev);
     void StoreCurrent (const int lev);
     void RestoreCurrent (const int lev);
@@ -1176,6 +1231,7 @@ private:
     void AddRhoFromFineLevelandSumBoundary (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
+        const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
         const int lev,
         const int icomp,
         const int ncomp);
@@ -1218,12 +1274,6 @@ private:
      * for all available MultiFabs, and abort otherwise.
      */
     void CheckGuardCells();
-
-    /**
-     * \brief Check that the number of guard cells is smaller than the number of valid cells,
-     * for a given MultiFab, and abort otherwise.
-     */
-    void CheckGuardCells(amrex::MultiFab const& mf);
 
     /**
      * \brief Checks for known numerical issues involving different WarpX modules
@@ -1430,7 +1480,6 @@ private:
     amrex::Real v_particle_pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
-    amrex::Real current_injection_position = 0;
 
     // Plasma injection parameters
     int warpx_do_continuous_injection = 0;
@@ -1441,6 +1490,9 @@ private:
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
+
+    // Hybrid PIC algorithm parameters
+    std::unique_ptr<HybridPICModel> m_hybrid_pic_model;
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
@@ -1494,6 +1546,9 @@ private:
 
     std::string restart_chkfile;
 
+    /** When `true`, write the diagnostics after restart at the time of the restart. */
+    bool write_diagonstics_on_restart = false;
+
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 
@@ -1509,7 +1564,7 @@ private:
     bool is_synchronized = true;
 
     // Synchronization of nodal points
-    const bool sync_nodal_points = true;
+    static constexpr bool sync_nodal_points = true;
 
     guardCellManager guard_cells;
 
@@ -1819,6 +1874,9 @@ public:
 #   endif
             get_spectral_solver_fp (int lev) {return *spectral_solver_fp[lev];}
 #endif
+
+public:
+    FiniteDifferenceSolver * get_pointer_fdtd_solver_fp (int lev) { return m_fdtd_solver_fp[lev].get(); }
 
 private:
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;

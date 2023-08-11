@@ -200,6 +200,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_getCurrentDensityCPLoVects_PML.restype = _LP_c_int
         self.libwarpx_so.warpx_getCurrentDensityFP_PML.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getCurrentDensityFPLoVects_PML.restype = _LP_c_int
+        self.libwarpx_so.warpx_getCurrentDensityFP_Ampere.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getChargeDensityCP.restype = _LP_LP_c_real
         self.libwarpx_so.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
         self.libwarpx_so.warpx_getChargeDensityFP.restype = _LP_LP_c_real
@@ -310,6 +311,7 @@ class LibWarpX():
         self.libwarpx_so.warpx_sett_new.argtypes = [ctypes.c_int, c_real]
         self.libwarpx_so.warpx_getdt.argtypes = [ctypes.c_int]
         self.libwarpx_so.warpx_setPotentialEB.argtypes = [ctypes.c_char_p]
+        self.libwarpx_so.warpx_setPlasmaLensStrength.argtypes = [ctypes.c_int, c_real, c_real]
 
     def _get_boundary_number(self, boundary):
         '''
@@ -1230,6 +1232,27 @@ class LibWarpX():
         """
         self.libwarpx_so.warpx_setPotentialEB(ctypes.c_char_p(potential.encode('utf-8')))
 
+    def set_plasma_lens_strength( self, i_lens, strength_E, strength_B ):
+        """
+        Set the strength of the `i_lens`-th lens
+
+        Parameters
+        ----------
+        i_lens: int
+            Index of the lens to be modified
+
+        strength_E, strength_B: floats
+            The electric and magnetic focusing strength of the lens
+        """
+        if self._numpy_real_dtype == 'f8':
+            c_real = ctypes.c_double
+        else:
+            c_real = ctypes.c_float
+
+        self.libwarpx_so.warpx_setPlasmaLensStrength(
+            ctypes.c_int(i_lens), c_real(strength_E), c_real(strength_B) )
+
+
     def _get_mesh_field_list(self, warpx_func, level, direction, include_ghosts):
         """
         Generic routine to fetch the list of field data arrays.
@@ -1710,6 +1733,37 @@ class LibWarpX():
             return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensityFP_PML, level, direction, include_ghosts)
         except ValueError:
             raise Exception('PML not initialized')
+
+    def get_mesh_current_density_fp_ampere(self, level, direction, include_ghosts=True):
+        '''
+
+        This returns a list of numpy arrays containing the mesh current density
+        data on each grid for this process calculated from the curl of B. This
+        quantity is calculated in the kinetic-fluid hybrid model to get the
+        electron current. This function returns the current density on the fine
+        patch for the given level.
+
+        The data for the numpy arrays are not copied, but share the underlying
+        memory buffer with WarpX. The numpy arrays are fully writeable.
+
+        Parameters
+        ----------
+
+            level          : the AMR level to get the data for
+            direction      : the component of the data you want
+            include_ghosts : whether to include ghost zones or not
+
+        Returns
+        -------
+
+            A List of numpy arrays.
+
+        '''
+
+        try:
+            return self._get_mesh_field_list(self.libwarpx_so.warpx_getCurrentDensityFP_Ampere, level, direction, include_ghosts)
+        except ValueError:
+            raise Exception('Current multifab not allocated.')
 
     def get_mesh_charge_density_cp(self, level, include_ghosts=True):
         '''

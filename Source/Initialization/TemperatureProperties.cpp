@@ -17,7 +17,7 @@
  * If temperature is a constant, store value. If a parser, make and
  * store the parser function
  */
-TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
+TemperatureProperties::TemperatureProperties (const amrex::ParmParse& pp) {
     // Set defaults
     amrex::Real theta;
     std::string temp_dist_s = "constant";
@@ -69,6 +69,6 @@ TemperatureProperties::TemperatureProperties (amrex::ParmParse& pp) {
         std::string string;
         stringstream << "Temperature distribution type '" << temp_dist_s << "' not recognized.";
         string = stringstream.str();
-        WARPX_ABORT_WITH_MESSAGE(string.c_str());
+        WARPX_ABORT_WITH_MESSAGE(string);
     }
 }

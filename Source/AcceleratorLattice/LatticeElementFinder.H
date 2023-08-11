@@ -94,7 +94,7 @@ struct LatticeElementFinder
 
         using namespace amrex::literals;
 
-        int nelements = static_cast<int>(zs.size());
+        const auto nelements = static_cast<int>(zs.size());
         amrex::ParticleReal const * zs_arr = zs.data();
         amrex::ParticleReal const * ze_arr = ze.data();
         int * indices_arr = indices.data();
@@ -122,18 +122,10 @@ struct LatticeElementFinder
                 for (int ie = 0 ; ie < nelements ; ie++) {
                     // Find the mid points between element ie and the ones before and after it.
                     // The first and last element need special handling.
-                    amrex::ParticleReal zcenter_left, zcenter_right;
-                    if (ie == 0) {
-                        zcenter_left = std::numeric_limits<amrex::ParticleReal>::lowest();
-                    } else {
-                        zcenter_left = 0.5_prt*(ze_arr[ie-1] + zs_arr[ie]);
-                    }
-                    if (ie < nelements - 1) {
-                        zcenter_right = 0.5_prt*(ze_arr[ie] + zs_arr[ie+1]);
-                    } else {
-                        zcenter_right = std::numeric_limits<amrex::ParticleReal>::max();
-                    }
-
+                    const amrex::ParticleReal zcenter_left = (ie == 0)?
+                        (std::numeric_limits<amrex::ParticleReal>::lowest()) : (0.5_prt*(ze_arr[ie-1] + zs_arr[ie]));
+                    const amrex::ParticleReal zcenter_right = (ie < nelements - 1)?
+                        (0.5_prt*(ze_arr[ie] + zs_arr[ie+1])) : (std::numeric_limits<amrex::ParticleReal>::max());
                     if (zcenter_left <= z_node && z_node < zcenter_right) {
                         indices_arr[iz] = ie;
                     }
@@ -227,14 +219,14 @@ struct LatticeElementFinderDevice
 
         amrex::ParticleReal Ex_sum = 0._prt;
         amrex::ParticleReal Ey_sum = 0._prt;
-        amrex::ParticleReal Ez_sum = 0._prt;
+        const amrex::ParticleReal Ez_sum = 0._prt;
         amrex::ParticleReal Bx_sum = 0._prt;
         amrex::ParticleReal By_sum = 0._prt;
-        amrex::ParticleReal Bz_sum = 0._prt;
+        const amrex::ParticleReal Bz_sum = 0._prt;
 
         if (d_quad.nelements > 0) {
             if (d_quad_indices_arr[iz] > -1) {
-                int ielement = d_quad_indices_arr[iz];
+                const auto ielement = d_quad_indices_arr[iz];
                 amrex::ParticleReal Ex, Ey, Bx, By;
                 d_quad.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
@@ -246,7 +238,7 @@ struct LatticeElementFinderDevice
 
         if (d_plasmalens.nelements > 0) {
             if (d_plasmalens_indices_arr[iz] > -1) {
-                int ielement = d_plasmalens_indices_arr[iz];
+                const auto ielement = d_plasmalens_indices_arr[iz];
                 amrex::ParticleReal Ex, Ey, Bx, By;
                 d_plasmalens.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
