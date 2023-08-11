@@ -774,8 +774,9 @@ namespace
     }
 
     void warpx_setPlasmaLensStrength (const int i_lens, const amrex::Real strength_E, const amrex::Real strength_B ) {
-        // TODO: raise error if i_lens is larger than the array length
         auto & mypc = WarpX::GetInstance().GetPartContainer();
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( i_lens >= mypc.h_repeated_plasma_lens_strengths_E.size(),
+            "i_lens is larger than the number of plasma lenses.");
         mypc.h_repeated_plasma_lens_strengths_E[i_lens] = strength_E;
         mypc.h_repeated_plasma_lens_strengths_B[i_lens] = strength_B;
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
