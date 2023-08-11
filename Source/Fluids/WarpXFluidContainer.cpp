@@ -101,9 +101,6 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
         amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
         amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
 
-        //Grow the tilebox
-        tile_box.grow(1);
-
         // Return the intersection of all cells and the ones we wish to update
         amrex::Box init_box_intersection = init_box & tile_box;
 

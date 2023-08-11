@@ -422,46 +422,25 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
     }
 
+    // Continuously inject fluid species in new cells (by default only on level 0)
+    const int lev = 0;
+    // Find box in which to initialize new fluid cells
+    amrex::Box injection_box = geom[lev].Domain();
+    injection_box.surroundingNodes(); // get nodal box
+    // Restrict box in the direction of the moving window, to only include the new cells
+    if (moving_window_v > 0._rt)
+    {
+        injection_box.setSmall( dir, injection_box.bigEnd(dir) - num_shift_base + 1 );
+    }
+    else if (moving_window_v < 0._rt)
+    {
+        injection_box.setBig( dir, injection_box.smallEnd(dir) + num_shift_base - 1 );
+    }
     // Loop over fluid species, and fill the values of the new cells
     const int n_fluid_species = myfl->nSpecies();
-    // Find box in which to initialize new fluid cells
-    // Continuously inject plasma in new cells (by default only on level 0)
-    const int lev = 0;
-
-
-    // Loop over fluid species
     for (int i=0; i<n_fluid_species; i++) {
-
-        // Convert from RealBox to Box:
-        // Make a box that covers the region that the window moved into
         WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-        const amrex::BoxArray& ba = fl.N[lev]->boxArray();
-        const amrex::IndexType& typ = ba.ixType();
-        const amrex::IntVect& ng = fl.N[lev]->nGrowVect();
-        const amrex::Box& domainBox_all = geom[0].Domain();
-        amrex::Box domainBox;
-        if (num_shift > 0) {
-            domainBox = adjCellHi(domainBox_all, dir, ng[dir]);
-        } else {
-            domainBox = adjCellLo(domainBox_all, dir, ng[dir]);
-        }
-        domainBox = amrex::convert(domainBox, typ);
-
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if (idim == dir and typ.nodeCentered(dir)) {
-                if (num_shift > 0) {
-                    domainBox.growLo(idim, 0);
-                } else {
-                    domainBox.growHi(idim,0);
-                }
-            } else if (idim != dir) {
-                domainBox.growLo(idim, ng[idim]);
-                domainBox.growHi(idim, ng[idim]);
-            }
-        }
-
-        // Initialize the data inside the shifted box
-        fl.InitData( lev, domainBox );
+        fl.InitData( lev, injection_box );
     }
 
     return num_shift_base;
