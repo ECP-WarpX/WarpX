@@ -414,7 +414,7 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
         # --- Use specific attributes for flux injection
         species.injection_style = "nfluxpercell"
         assert (isinstance(layout, PseudoRandomLayout)), Exception('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
-        if species.momentum_distribution_type == "gaussian":
+        if self.gaussian_flux_momentum_distribution:
             species.momentum_distribution_type = "gaussianflux"
 
 
