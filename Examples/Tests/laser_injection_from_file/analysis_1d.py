@@ -16,12 +16,12 @@
 # - Compute the theory for laser envelope at time T
 # - Compare theory and simulation in 1D, for both envelope and central frequency
 
+from mpi4py import MPI as mpi
 import glob
 import os
 import sys
 
 import matplotlib
-from mpi4py import MPI as mpi
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
