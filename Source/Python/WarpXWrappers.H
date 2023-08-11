@@ -3,6 +3,10 @@
  *
  * This file is part of WarpX.
  *
+ * This file is a legacy file and will be removed soon.
+ * Please do NOT add new bindings here! Please see the other files
+ * in this directory for the new pybind11-based bindings!
+ *
  * License: BSD-3-Clause-LBNL
  */
 #ifndef WARPX_WRAPPERS_H_
@@ -43,10 +47,6 @@ extern "C" {
     void warpx_ReadBCParams();
 
     void warpx_CheckGriddingForRZSpectral();
-
-    amrex::Real warpx_getProbLo(int dir);
-
-    amrex::Real warpx_getProbHi(int dir);
 
     amrex::Real warpx_getCellSize(int dir, int lev);
 

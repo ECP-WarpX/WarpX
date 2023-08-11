@@ -95,20 +95,6 @@
         CheckGriddingForRZSpectral();
     }
 
-    amrex::Real warpx_getProbLo(int dir)
-    {
-      WarpX& warpx = WarpX::GetInstance();
-      const amrex::Geometry& geom = warpx.Geom(0);
-      return geom.ProbLo(dir);
-    }
-
-    amrex::Real warpx_getProbHi(int dir)
-    {
-      WarpX& warpx = WarpX::GetInstance();
-      const amrex::Geometry& geom = warpx.Geom(0);
-      return geom.ProbHi(dir);
-    }
-
     amrex::Real warpx_getCellSize(int dir, int lev) {
         const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
         return dx[dir];

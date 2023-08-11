@@ -228,7 +228,7 @@ class LibWarpX():
 
         self.warpx.evolve(num_steps)
 
-    def getProbLo(self, direction):
+    def getProbLo(self, direction, level=0):
         '''
         Get the values of the lower domain boundary.
 
@@ -240,9 +240,9 @@ class LibWarpX():
         '''
 
         assert 0 <= direction < self.dim, 'Inappropriate direction specified'
-        return self.libwarpx_so.warpx_getProbLo(direction)
+        return self.warpx.Geom(level).ProbLo(direction)
 
-    def getProbHi(self, direction):
+    def getProbHi(self, direction, level=0):
         '''
         Get the values of the upper domain boundary.
 
@@ -254,7 +254,7 @@ class LibWarpX():
         '''
 
         assert 0 <= direction < self.dim, 'Inappropriate direction specified'
-        return self.libwarpx_so.warpx_getProbHi(direction)
+        return self.warpx.Geom(level).ProbHi(direction)
 
     def getCellSize(self, direction, level=0):
         '''
