@@ -128,26 +128,25 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         }
 #if (defined WARPX_DIM_3D)
         add_diag("x_ave_"+species_names[i_s], "x_ave_"+species_names[i_s]+"(m)");
-        add_diag("y_ave_"+species_names[i_s], "y_ave_"+species_names[i_s]+"(m)");
         add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
+        add_diag("y_ave_"+species_names[i_s], "y_ave_"+species_names[i_s]+"(m)");
         add_diag("y_std_"+species_names[i_s], "y_std_"+species_names[i_s]+"(m)");
-        add_diag("thetax_ave_"+species_names[i_s], "theta_x_ave_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_ave_"+species_names[i_s], "theta_y_ave_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_std_"+species_names[i_s], "theta_x_std_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_std_"+species_names[i_s], "theta_y_std_"+species_names[i_s]+"(rad)");
         add_diag("thetax_min_"+species_names[i_s], "theta_x_min_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_min_"+species_names[i_s], "theta_y_min_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_ave_"+species_names[i_s], "theta_x_ave_"+species_names[i_s]+"(rad)");
         add_diag("thetax_max_"+species_names[i_s], "theta_x_max_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_std_"+species_names[i_s], "theta_x_std_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_ave_"+species_names[i_s], "theta_y_ave_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_min_"+species_names[i_s], "theta_y_min_"+species_names[i_s]+"(rad)");
         add_diag("thetay_max_"+species_names[i_s], "theta_y_max_"+species_names[i_s]+"(rad)");
+        add_diag("thetay_std_"+species_names[i_s], "theta_y_std_"+species_names[i_s]+"(rad)");
 
 #elif (defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ))
         add_diag("x_ave_"+species_names[i_s], "x_ave_"+species_names[i_s]+"(m)");
         add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
-        add_diag("thetax_ave_"+species_names[i_s], "theta_x_ave_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_std_"+species_names[i_s], "theta_x_std_"+species_names[i_s]+"(rad)");
         add_diag("thetax_min_"+species_names[i_s], "theta_x_min_"+species_names[i_s]+"(rad)");
+        add_diag("thetax_ave_"+species_names[i_s], "theta_x_ave_"+species_names[i_s]+"(rad)");
         add_diag("thetax_max_"+species_names[i_s], "theta_x_max_"+species_names[i_s]+"(rad)");
-
+        add_diag("thetax_std_"+species_names[i_s], "theta_x_std_"+species_names[i_s]+"(rad)");
 #endif
 
         m_data.resize(all_diag_names.size());
