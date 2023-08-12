@@ -7,6 +7,8 @@
 #ifndef ELECTROSTATICSOLVER_H_
 #define ELECTROSTATICSOLVER_H_
 
+#include "Utils/export.H"
+
 #include <AMReX_Array.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
@@ -14,7 +16,10 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Parser.H>
 
+#include <array>
+#include <string>
 #include <utility>
+
 
 namespace ElectrostaticSolver {
 
@@ -35,7 +40,7 @@ namespace ElectrostaticSolver {
         }
     };
 
-    class PoissonBoundaryHandler {
+    class WARPX_EXPORT PoissonBoundaryHandler {
     public:
 
         amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM> lobc, hibc;
@@ -53,7 +58,7 @@ namespace ElectrostaticSolver {
          *
          * \param [in] potential The string value of the potential
          */
-        void setPotentialEB(const std::string potential) {
+        void setPotentialEB (std::string potential) {
             potential_eb_str = potential;
             buildParsersEB();
         }

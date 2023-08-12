@@ -23,6 +23,7 @@
 #endif
 #include "MultiParticleContainer_fwd.H"
 #include "NamedComponentParticleContainer.H"
+#include "Utils/export.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
@@ -46,9 +47,10 @@
 #include <string>
 #include <utility>
 
+
 using namespace amrex::literals;
 
-class WarpXParIter
+class WARPX_EXPORT WarpXParIter
     : public amrex::ParIter<0,0,PIdx::nattribs>
 {
 public:
@@ -100,7 +102,7 @@ public:
  * Note: many functions are pure virtual (meaning they MUST be defined in
  * derived classes, e.g., Evolve) or actual functions (e.g. CurrentDeposition).
  */
-class WarpXParticleContainer
+class WARPX_EXPORT WarpXParticleContainer
     : public NamedComponentParticleContainer<amrex::DefaultAllocator>
 {
 public:
@@ -298,11 +300,16 @@ public:
      * @param[in] id if different than -1, this id will be assigned to the particles (used for
      * particle tagging in some routines, e.g. SplitParticle)
      */
-    void AddNParticles (int lev,
-                        int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
-                        const amrex::ParticleReal* ux, const amrex::ParticleReal* uy, const amrex::ParticleReal* uz,
-                        const int nattr_real, const amrex::ParticleReal* attr_real,
-                        const int nattr_int, const int* attr_int,
+    void AddNParticles (int lev, int n,
+                        amrex::Vector<amrex::ParticleReal> const & x,
+                        amrex::Vector<amrex::ParticleReal> const & y,
+                        amrex::Vector<amrex::ParticleReal> const & z,
+                        amrex::Vector<amrex::ParticleReal> const & ux,
+                        amrex::Vector<amrex::ParticleReal> const & uy,
+                        amrex::Vector<amrex::ParticleReal> const & uz,
+                        const int nattr_real,
+                        amrex::Vector<amrex::Vector<amrex::ParticleReal>> const & attr_real,
+                        const int nattr_int, amrex::Vector<amrex::Vector<int>> const & attr_int,
                         int uniqueparticles, amrex::Long id=-1);
 
     virtual void ReadHeader (std::istream& is) = 0;

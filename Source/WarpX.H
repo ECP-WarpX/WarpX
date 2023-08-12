@@ -39,6 +39,7 @@
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/export.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -69,13 +70,14 @@
 #include <vector>
 #include <map>
 
+
 enum struct PatchType : int
 {
     fine,
     coarse
 };
 
-class WarpX
+class WARPX_EXPORT WarpX
     : public amrex::AmrCore
 {
 public:
