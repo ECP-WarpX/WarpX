@@ -26,61 +26,113 @@ If you are new to this system, **please see the following resources**:
   * ``$HOME`` : meant for scripts and tools, single user, never purged, backed up
 
 
-Installation
-------------
+.. _building-adastra-preparation:
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
+Preparation
+-----------
+
+Use the following commands to download the WarpX source code:
 
 .. code-block:: bash
 
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
-We use the following modules and environments on the system (``$HOME/adastra_warpx.profile``).
-
-.. literalinclude:: ../../../../Tools/machines/adastra-cines/adastra_warpx.profile.example
-   :language: bash
-   :caption: You can copy this file from ``Tools/machines/adastra-cines/adastra_warpx.profile.example``.
-
-We recommend to store the above lines in a file, such as ``$HOME/adastra_warpx.profile``, and load it into your shell after a login:
+We use system software modules, add environment hints and further dependencies via the file ``$HOME/adastra_warpx.profile``.
+Create it now:
 
 .. code-block:: bash
 
-   source $HOME/adastra_warpx.profile
+   cp $HOME/src/warpx/Tools/machines/adastra-cines/adastra_warpx.profile.example $HOME/adastra_warpx.profile
 
-And since Adastra does not yet provide a module for them, install c-blosc and ADIOS2:
+.. dropdown:: Script Details
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
+
+   .. literalinclude:: ../../../../Tools/machines/adastra-cines/adastra_warpx.profile.example
+      :language: bash
+
+Edit the 2nd line of this script, which sets the ``export proj=""`` variable using a text editor
+such as ``nano``, ``emacs``, or ``vim`` (all available by default on
+Adastra login nodes).
+
+.. important::
+
+   Now, and as the first step on future logins to Adastra, activate these environment settings:
+
+   .. code-block:: bash
+
+      source $HOME/adastra_warpx.profile
+
+Finally, since Adastra does not yet provide software modules for some of our dependencies, install them once:
 
 .. code-block:: bash
 
-   export CMAKE_PREFIX_PATH=${HOME}/sw/adastra/gpu/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
-   export CMAKE_PREFIX_PATH=${HOME}/sw/adastra/gpu/adios2-2.8.3:$CMAKE_PREFIX_PATH
+   bash $HOME/src/warpx/Tools/machines/adastra-cines/install_dependencies.sh
+   source $HOME/sw/adastra/gpu/venvs/warpx-adastra/bin/activate
 
-   # c-blosc (I/O compression)
-   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git src/c-blosc
-   rm -rf src/c-blosc-pm-build
-   cmake -S src/c-blosc -B src/c-blosc-pm-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/adastra/gpu/c-blosc-1.21.1
-   cmake --build src/c-blosc-pm-build --target install --parallel 16
+.. dropdown:: Script Details
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
 
-   # ADIOS2
-   git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git src/adios2
-   rm -rf src/adios2-pm-build
-   cmake -S src/adios2 -B src/adios2-pm-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/adastra/gpu/adios2-2.8.3
-   cmake --build src/adios2-pm-build --target install -j 16
+   .. literalinclude:: ../../../../Tools/machines/adastra-cines/install_dependencies.sh
+      :language: bash
 
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+
+.. _building-adastra-compilation:
+
+Compilation
+-----------
+
+Use the following :ref:`cmake commands <building-cmake>` to compile:
 
 .. code-block:: bash
 
    cd $HOME/src/warpx
-   rm -rf build
+   rm -rf build_adastra
 
-   cmake -S . -B build -DWarpX_DIMS="1;2;3" -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON
-   cmake --build build -j 32
-
-The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+   cmake -S . -B build_adastra -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build_adastra -j 16
+   cmake --build build_adastra -j 16 --target pip_install
 
 **That's it!**
-A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-adastra>` with a :ref:`3D example inputs file <usage-examples>`.
-Most people execute the binary directly or copy it out to a location in ``$WORKDIR`` or ``$SCRATCHDIR``.
+The WarpX application executables are now in ``$HOME/src/warpx/build_adastra/bin/`` and we installed the ``pywarpx`` Python module.
+
+Now, you can :ref:`submit Adstra compute jobs <running-cpp-adastra>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
+Or, you can use the WarpX executables to submit Adastra jobs (:ref:`example inputs <usage-examples>`).
+For executables, you can reference their location in your :ref:`job script <running-cpp-adastra>` .
+
+
+.. _building-adastra-update:
+
+Update WarpX & Dependencies
+---------------------------
+
+If you already installed WarpX in the past and want to update it, start by getting the latest source code:
+
+.. code-block:: bash
+
+   cd $HOME/src/warpx
+
+   # read the output of this command - does it look ok?
+   git status
+
+   # get the latest WarpX source code
+   git fetch
+   git pull
+
+   # read the output of these commands - do they look ok?
+   git status
+   git log     # press q to exit
+
+And, if needed,
+
+- :ref:`update the adastra_warpx.profile file <building-adastra-preparation>`,
+- log out and into the system, activate the now updated environment profile as usual,
+- :ref:`execute the dependency install scripts <building-adastra-preparation>`.
+
+As a last step, clean the build directory ``rm -rf $HOME/src/warpx/build_adastra`` and rebuild WarpX.
 
 
 .. _running-cpp-adastra:
@@ -97,7 +149,7 @@ In non-interactive runs:
 
 .. literalinclude:: ../../../../Tools/machines/adastra-cines/submit.sh
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/adastra-cines/submit.sh``.
+   :caption: You can copy this file from ``$HOME/src/warpx/Tools/machines/adastra-cines/submit.sh``.
 
 
 .. _post-processing-adastra:

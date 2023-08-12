@@ -34,15 +34,15 @@ class CopyPreBuild(build):
         # call superclass
         build.run(self)
 
-        # matches: libwarpx.(1d|2d|rz|3d).(so|pyd)
-        re_libprefix = re.compile(r"libwarpx\...\.(?:so|dll)")
+        # matches: warpx_pybind_(1d|2d|rz|3d). ... .(so|pyd)
+        re_libprefix = re.compile(r"warpx_pybind_..\..*\.(?:so|pyd)")
         libs_found = []
         for lib_name in os.listdir(PYWARPX_LIB_DIR):
             if re_libprefix.match(lib_name):
                 lib_path = os.path.join(PYWARPX_LIB_DIR, lib_name)
                 libs_found.append(lib_path)
         if len(libs_found) == 0:
-            raise RuntimeError("Error: no pre-build WarpX libraries found in "
+            raise RuntimeError("Error: no pre-build WarpX modules found in "
                                "PYWARPX_LIB_DIR='{}'".format(PYWARPX_LIB_DIR))
 
         # copy external libs into collection of files in a temporary build dir
@@ -94,7 +94,6 @@ class CMakeBuild(build_ext):
             '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=' + extdir,
             '-DWarpX_DIMS=' + dims,
             '-DWarpX_APP:BOOL=OFF',
-            '-DWarpX_LIB:BOOL=ON',
             ## variants
             '-DWarpX_COMPUTE=' + WARPX_COMPUTE,
             '-DWarpX_MPI:BOOL=' + WARPX_MPI,
@@ -103,6 +102,8 @@ class CMakeBuild(build_ext):
             '-DWarpX_PRECISION=' + WARPX_PRECISION,
             '-DWarpX_PARTICLE_PRECISION=' + WARPX_PARTICLE_PRECISION,
             '-DWarpX_PSATD:BOOL=' + WARPX_PSATD,
+            '-DWarpX_PYTHON:BOOL=ON',
+            '-DWarpX_PYTHON_IPO:BOOL=' + WARPX_PYTHON_IPO,
             '-DWarpX_QED:BOOL=' + WARPX_QED,
             '-DWarpX_QED_TABLE_GEN:BOOL=' + WARPX_QED_TABLE_GEN,
             ## dependency control (developers & package managers)
@@ -137,6 +138,14 @@ class CMakeBuild(build_ext):
             cmake_args.append('-DWarpX_openpmd_src=' + WARPX_OPENPMD_SRC)
         if WARPX_PICSAR_SRC:
             cmake_args.append('-DWarpX_picsar_src=' + WARPX_PICSAR_SRC)
+        if WARPX_PYAMREX_SRC:
+            cmake_args.append('-DWarpX_pyamrex_src=' + WARPX_PYAMREX_SRC)
+        if WARPX_PYAMREX_INTERNAL:
+            cmake_args.append('-DWarpX_pyamrex_internal=' + WARPX_PYAMREX_INTERNAL)
+        if WARPX_PYBIND11_SRC:
+            cmake_args.append('-DWarpX_pybind11_src=' + WARPX_PYBIND11_SRC)
+        if WARPX_PYBIND11_INTERNAL:
+            cmake_args.append('-DWarpX_pybind11_internal=' + WARPX_PYBIND11_INTERNAL)
         if WARPX_CCACHE_PROGRAM is not None:
             cmake_args.append('-DCCACHE_PROGRAM=' + WARPX_CCACHE_PROGRAM)
 
@@ -192,6 +201,8 @@ with open('./README.md', encoding='utf-8') as f:
 # Pick up existing WarpX libraries or...
 PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
 
+WARPX_PYTHON_IPO = os.environ.get("WARPX_PYTHON_IPO", "ON")
+
 env = os.environ.copy()
 # ... build WarpX libraries with CMake
 #   note: changed default for SHARED, MPI, TESTING and EXAMPLES
@@ -226,6 +237,10 @@ WARPX_OPENPMD_SRC = env.pop('WARPX_OPENPMD_SRC', '')
 WARPX_OPENPMD_INTERNAL = env.pop('WARPX_OPENPMD_INTERNAL', 'ON')
 WARPX_PICSAR_SRC = env.pop('WARPX_PICSAR_SRC', '')
 WARPX_PICSAR_INTERNAL = env.pop('WARPX_PICSAR_INTERNAL', 'ON')
+WARPX_PYAMREX_SRC = env.pop('WARPX_PYAMREX_SRC', '')
+WARPX_PYAMREX_INTERNAL = env.pop('WARPX_PYAMREX_INTERNAL', 'ON')
+WARPX_PYBIND11_SRC = env.pop('WARPX_PYBIND11_SRC', '')
+WARPX_PYBIND11_INTERNAL = env.pop('WARPX_PYBIND11_INTERNAL', 'ON')
 WARPX_CCACHE_PROGRAM = env.pop('WARPX_CCACHE_PROGRAM', None)
 
 for key in env.keys():
@@ -272,7 +287,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '23.06',
+    version = '23.08',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',

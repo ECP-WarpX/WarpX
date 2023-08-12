@@ -5,8 +5,6 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "HardEdgedPlasmaLens.H"
-#include "Utils/WarpXUtil.H"
-#include "Utils/TextMsg.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>

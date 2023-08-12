@@ -59,8 +59,6 @@ void HybridPICModel::AllocateLevelMFs (int lev, const BoxArray& ba, const Distri
                                        const IntVect& jz_nodal_flag,
                                        const IntVect& rho_nodal_flag)
 {
-    auto & warpx = WarpX::GetInstance();
-
     // The "electron_pressure_fp" multifab stores the electron pressure calculated
     // from the specified equation of state.
     // The "rho_fp_temp" multifab is used to store the ion charge density
@@ -69,24 +67,24 @@ void HybridPICModel::AllocateLevelMFs (int lev, const BoxArray& ba, const Distri
     // interpolated or extrapolated to appropriate timesteps.
     // The "current_fp_ampere" multifab stores the total current calculated as
     // the curl of B.
-    warpx.AllocInitMultiFab(electron_pressure_fp[lev], amrex::convert(ba, rho_nodal_flag),
+    WarpX::AllocInitMultiFab(electron_pressure_fp[lev], amrex::convert(ba, rho_nodal_flag),
         dm, ncomps, ngRho, lev, "electron_pressure_fp", 0.0_rt);
 
-    warpx.AllocInitMultiFab(rho_fp_temp[lev], amrex::convert(ba, rho_nodal_flag),
+    WarpX::AllocInitMultiFab(rho_fp_temp[lev], amrex::convert(ba, rho_nodal_flag),
         dm, ncomps, ngRho, lev, "rho_fp_temp", 0.0_rt);
 
-    warpx.AllocInitMultiFab(current_fp_temp[lev][0], amrex::convert(ba, jx_nodal_flag),
+    WarpX::AllocInitMultiFab(current_fp_temp[lev][0], amrex::convert(ba, jx_nodal_flag),
         dm, ncomps, ngJ, lev, "current_fp_temp[x]", 0.0_rt);
-    warpx.AllocInitMultiFab(current_fp_temp[lev][1], amrex::convert(ba, jy_nodal_flag),
+    WarpX::AllocInitMultiFab(current_fp_temp[lev][1], amrex::convert(ba, jy_nodal_flag),
         dm, ncomps, ngJ, lev, "current_fp_temp[y]", 0.0_rt);
-    warpx.AllocInitMultiFab(current_fp_temp[lev][2], amrex::convert(ba, jz_nodal_flag),
+    WarpX::AllocInitMultiFab(current_fp_temp[lev][2], amrex::convert(ba, jz_nodal_flag),
         dm, ncomps, ngJ, lev, "current_fp_temp[z]", 0.0_rt);
 
-    warpx.AllocInitMultiFab(current_fp_ampere[lev][0], amrex::convert(ba, jx_nodal_flag),
+    WarpX::AllocInitMultiFab(current_fp_ampere[lev][0], amrex::convert(ba, jx_nodal_flag),
         dm, ncomps, ngJ, lev, "current_fp_ampere[x]", 0.0_rt);
-    warpx.AllocInitMultiFab(current_fp_ampere[lev][1], amrex::convert(ba, jy_nodal_flag),
+    WarpX::AllocInitMultiFab(current_fp_ampere[lev][1], amrex::convert(ba, jy_nodal_flag),
         dm, ncomps, ngJ, lev, "current_fp_ampere[y]", 0.0_rt);
-    warpx.AllocInitMultiFab(current_fp_ampere[lev][2], amrex::convert(ba, jz_nodal_flag),
+    WarpX::AllocInitMultiFab(current_fp_ampere[lev][2], amrex::convert(ba, jz_nodal_flag),
         dm, ncomps, ngJ, lev, "current_fp_ampere[z]", 0.0_rt);
 }
 

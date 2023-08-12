@@ -64,12 +64,7 @@ HankelTransform::HankelTransform (int const hankel_order,
     // NB: When compared with the FBPIC article, all the matrices here
     // are calculated in transposed form. This is done so as to use the
     // `dot` and `gemm` functions, in the `transform` method.
-    int p_denom;
-    if (hankel_order == azimuthal_mode) {
-        p_denom = hankel_order + 1;
-    } else {
-        p_denom = hankel_order;
-    }
+    const int p_denom = (hankel_order == azimuthal_mode)?(hankel_order + 1):(hankel_order);
 
     amrex::Vector<amrex::Real> denom(m_nk);
     for (int ik=0 ; ik < m_nk ; ik++) {
