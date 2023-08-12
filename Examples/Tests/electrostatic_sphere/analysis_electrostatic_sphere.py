@@ -17,8 +17,8 @@ the correct speed and that the electric field is accurately modeled against a
 known analytic solution. While the radius r(t) is not analytically known, its
 inverse t(r) can be solved for exactly.
 """
-import sys
 import os
+import sys
 
 import numpy as np
 from scipy.optimize import fsolve
