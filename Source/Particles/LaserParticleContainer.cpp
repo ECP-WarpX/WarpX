@@ -155,7 +155,6 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
                 lasers.str());
         }
     }
-
     //Check if profile exists
     if(laser_profiles_dictionary.count(laser_type_s) == 0 ){
         WARPX_ABORT_WITH_MESSAGE(std::string("Unknown laser type: ").append(laser_type_s));
@@ -187,7 +186,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         // Get the position of the plane, along the boost direction, in the lab frame
         // and convert the position of the antenna to the boosted frame
         m_Z0_lab = m_nvec[0]*m_position[0] + m_nvec[1]*m_position[1] + m_nvec[2]*m_position[2];
-        const Real Z0_boost = m_Z0_lab/WarpX::gamma_boost;
+        const Real Z0_boost = m_Z0_lab/WarpX::gamma_boost - WarpX::beta_boost*PhysConst::c*WarpX::GetInstance().m_t_boost_offset;
         m_position[0] += (Z0_boost-m_Z0_lab)*m_nvec[0];
         m_position[1] += (Z0_boost-m_Z0_lab)*m_nvec[1];
         m_position[2] += (Z0_boost-m_Z0_lab)*m_nvec[2];
@@ -577,7 +576,7 @@ LaserParticleContainer::Evolve (int lev,
     }
 
     // Update laser profile
-    m_up_laser_profile->update(t);
+    m_up_laser_profile->update(t_lab);
 
     BL_ASSERT(OnSameGrids(lev,jx));
 

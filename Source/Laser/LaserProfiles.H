@@ -377,6 +377,24 @@ private:
     CommonLaserParameters m_common_params;
 };
 
+class StationFieldLaserProfile : public ILaserProfile
+{
+public:
+
+    void init (const amrex::ParmParse& ppl, CommonLaserParameters params) override;
+
+    void update (amrex::Real t) override;
+
+    void fill_amplitude (const int np,
+                         amrex::Real const * AMREX_RESTRICT const Xp,
+                         amrex::Real const * AMREX_RESTRICT const Yp,
+                         amrex::Real t,
+                         amrex::Real * AMREX_RESTRICT const amplitude) const override;
+
+private:
+    CommonLaserParameters m_common_params;
+};
+
 /**
  * Maps laser profile names to lambdas returing unique pointers
  * to the corresponding laser profile objects.
@@ -393,7 +411,9 @@ laser_profiles_dictionary =
     {"parse_field_function",
         [] () {return std::make_unique<FieldFunctionLaserProfile>();} },
     {"from_file",
-        [] () {return std::make_unique<FromFileLaserProfile>();} }
+        [] () {return std::make_unique<FromFileLaserProfile>();} },
+    {"station_field",
+        [] () {return std::make_unique<StationFieldLaserProfile>();} }
 };
 
 } //WarpXLaserProfiles

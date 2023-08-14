@@ -5,5 +5,6 @@ foreach(D IN LISTS WarpX_DIMS)
         LaserProfileFieldFunction.cpp
         LaserProfileFromFile.cpp
         LaserProfileGaussian.cpp
+        LaserProfileStationField.cpp
     )
 endforeach()
