@@ -576,7 +576,7 @@ LaserParticleContainer::Evolve (int lev,
     }
 
     // Update laser profile
-    m_up_laser_profile->update(t);
+    m_up_laser_profile->update(t_lab);
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
