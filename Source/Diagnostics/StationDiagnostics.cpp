@@ -62,8 +62,6 @@ StationDiagnostics::ReadParameters ()
     pp_diag_name.query("plot_raw_fields", m_plot_raw_fields_guards);
 
     pp_diag_name.query("buffer_size",m_buffer_size);
-    amrex::Print() << "xxxxx StationDiagnostics: hard wire buffer size for now\n";
-    m_buffer_size = 2048;
 
     // for now, number of buffers or in this case, z-locations is assumed to be 1
     // This is used to allocate the number of output multi-level multifabs, m_mf_output
@@ -171,8 +169,10 @@ StationDiagnostics::UpdateBufferData ()
 {
     if (GetZSliceInDomain(0)) {
         m_slice_counter++;
+        auto & warpx = WarpX::GetInstance();
+        m_tmax = warpx.gett_new(0);
         if (m_slice_counter == 1) {
-            m_tmin = WarpX::GetInstance().gett_new(0);
+            m_tmin = m_tmax;
         }
     }
     if (m_slice_counter > 0 and !GetZSliceInDomain(0)) {
@@ -191,8 +191,6 @@ StationDiagnostics::Flush (int i_buffer)
 {
     if (m_slice_counter == 0) return;
 
-    auto & warpx = WarpX::GetInstance();
-    m_tmax = warpx.gett_new(0);
     std::string filename = amrex::Concatenate(m_file_prefix, i_buffer, 1);
     constexpr int permission_flag_rwxrxrx = 0755;
     if (amrex::ParallelDescriptor::IOProcessor()) {

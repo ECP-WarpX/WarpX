@@ -69,8 +69,8 @@ private:
 
     int m_buffer_size = 256;
     int m_slice_counter = 0;
-    amrex::Real m_tmin;
-    amrex::Real m_tmax;
+    amrex::Real m_tmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_tmax = std::numeric_limits<amrex::Real>::lowest();
     amrex::Box m_buffer_box;
     int m_flush_counter = 0;
 
