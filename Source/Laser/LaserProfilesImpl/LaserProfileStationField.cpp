@@ -56,12 +56,20 @@ void StationFieldLaserProfile::update (amrex::Real t)
             amrex::MultiFab mf;
             amrex::VisMF::Read(mf, m_station_file+"/Level_0/buffer-"
                                +std::to_string(m_ibuffer));
+
+            amrex::Print() << "xxxxx LaserProfileStationField: reading "
+                           << m_station_file+"/Level_0/buffer-"+std::to_string(m_ibuffer)
+                           << "\n";
+
             m_station_mf = std::make_unique<amrex::MultiFab>
                 (mf.boxArray(), mf.DistributionMap(), 1, 0);
             amrex::MultiFab::Copy(*m_station_mf, mf, m_xy, 0, 1, 0);
         } else {
             m_station_mf.reset();
             m_slice_fab.reset();
+
+            amrex::Print() << "xxxxx LaserProfileStationField: no more data\n";
+
             return;
         }
     }
