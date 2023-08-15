@@ -251,7 +251,7 @@ StationDiagnostics::Flush (int i_buffer)
     }
 
     // reset counter
-    m_slice_counter = 0;
+    m_slice_counter = (m_last_timeslice_filled) ? 0 : 1; // Keep the last slice
     m_tmin = m_tmax;
     // update Flush counter
     m_flush_counter++;

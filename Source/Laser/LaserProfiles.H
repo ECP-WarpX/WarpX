@@ -10,10 +10,8 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
-#include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Box.H>
-#include <AMReX_FArrayBox.H>
+#include <AMReX_MultiFab.H>
 
 #include <functional>
 #include <limits>
@@ -393,6 +391,12 @@ public:
 
 private:
     CommonLaserParameters m_common_params;
+    int m_xy = -1;
+    std::string m_station_file;
+    int m_ibuffer = -1;
+    amrex::Vector<std::pair<amrex::Real,amrex::Real>> m_times;
+    std::unique_ptr<amrex::MultiFab> m_station_mf;
+    std::unique_ptr<amrex::FArrayBox> m_slice_fab;
 };
 
 /**
