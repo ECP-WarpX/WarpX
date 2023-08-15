@@ -110,7 +110,6 @@ void StationFieldLaserProfile::update (amrex::Real t)
     }
 
     if (amrex::ParallelDescriptor::MyProc() == 0) {
-        amrex::Real inv_e_max = amrex::Real(1.0) / m_common_params.e_max;
         amrex::Real w = (t - m_times[m_ibuffer].first)/dt - amrex::Real(islice);
         amrex::Box b = m_slice_fab->box();
         b.setBig(AMREX_SPACEDIM-1,0);
@@ -118,9 +117,9 @@ void StationFieldLaserProfile::update (amrex::Real t)
         amrex::ParallelFor(b, [=] AMREX_GPU_DEVICE (int i, int j, int)
         {
 #if (AMREX_SPACEDIM == 2)
-            a(i,j,0) = (a(i,0,0)*(amrex::Real(1.0)-w) + a(i,1,0)*w) * inv_e_max;
+            a(i,j,0) = (a(i,0,0)*(amrex::Real(1.0)-w) + a(i,1,0)*w);
 #elif (AMREX_SPACEDIM == 3)
-            a(i,j,0) = (a(i,j,0)*(amrex::Real(1.0)-w) + a(i,j,1)*w) * inv_e_max;
+            a(i,j,0) = (a(i,j,0)*(amrex::Real(1.0)-w) + a(i,j,1)*w);
 #endif
         });
     }

@@ -62,6 +62,9 @@ StationDiagnostics::ReadParameters ()
     pp_diag_name.query("plot_raw_fields", m_plot_raw_fields_guards);
 
     pp_diag_name.query("buffer_size",m_buffer_size);
+    amrex::Print() << "xxxxx StationDiagnostics: hard wire buffer size for now\n";
+    m_buffer_size = 2048;
+
     // for now, number of buffers or in this case, z-locations is assumed to be 1
     // This is used to allocate the number of output multi-level multifabs, m_mf_output
     m_num_buffers = 1;
