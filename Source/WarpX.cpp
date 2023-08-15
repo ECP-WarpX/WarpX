@@ -690,6 +690,10 @@ WarpX::ReadParameters ()
             compute_max_step_from_btd);
 
         pp_warpx.query("do_moving_window", do_moving_window);
+#if defined(AMREX_USE_EB)
+        AMREX_ALWAYS_ASSERT_WTH_MESSAGE(do_moving_window == 0,
+            "The moving window is currently not supported when embedded boundaries are enabled.");
+#endi
         if (do_moving_window)
         {
             utils::parser::queryWithParser(
