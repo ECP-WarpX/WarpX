@@ -755,7 +755,7 @@ void PlasmaInjector::parseMomentum (const amrex::ParmParse& pp_species_name, con
                                              ux_parser->compile<3>(),
                                              uy_parser->compile<3>(),
                                              uz_parser->compile<3>()));
-    } else if (mom_dist_s != "none") {
+    } else {
         StringParseAbortMessage("Momentum distribution type", mom_dist_s);
     }
     if (h_inj_mom) {
