@@ -228,6 +228,9 @@ WarpX::ImposeFieldsInPlane ()
 void
 WarpX::ImposeStationFieldsInPlane ()
 {
+    return;
+
+#if 0
     const int zdir = WARPX_ZINDEX;
     const Real t_boost = t_new[0];
     const Real z_lab = m_impose_station_info.location;
@@ -271,7 +274,6 @@ WarpX::ImposeStationFieldsInPlane ()
         Vector<int> procmap;
     }
 
-#if 0
     const Real t_lab = t_boost / gamma_boost + beta_boost * z_lab / PhysConst::c;
     const Real z_boost = gamma_boost * (z_lab - beta_boost*PhysConst::c*t_lab);
 
@@ -291,7 +293,7 @@ WarpX::ImposeStationFieldsInPlane ()
             break;
         }
     }
-#if 0
+
     AMREX_ALWAYS_ASSERT(ibuffer != nbuffers);
 
     if (ibuffer != m_impose_station_info.ibuffer) {
@@ -300,7 +302,6 @@ WarpX::ImposeStationFieldsInPlane ()
                        << " " << t_lab << " " << m_impose_station_info.time[ibuffer].first << " " << m_impose_station_info.time[ibuffer].second << "\n";
         amrex::Abort("xxxxx need to read data");
     }
-#endif
 #endif
 }
 
