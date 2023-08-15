@@ -530,6 +530,34 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
                     }
 
+                    // Positivity and Monotonicty Limiter for density N:
+                    if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) )) {
+                        if ((Q_minus_x(i,j,k,0) < 0.0) || (Q_plus_x(i-1,j,k,0) < 0.0)){
+                            Q_minus_x(i,j,k,0) = Q_tilde0;
+                            Q_minus_x(i,j,k,1) = Q_tilde1;
+                            Q_minus_x(i,j,k,2) = Q_tilde2;
+                            Q_minus_x(i,j,k,3) = Q_tilde3;
+                            Q_plus_x(i-1,j,k,0) = Q_tilde0;
+                            Q_plus_x(i-1,j,k,1) = Q_tilde1;
+                            Q_plus_x(i-1,j,k,2) = Q_tilde2;
+                            Q_plus_x(i-1,j,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) != 1)) {
+                        if (Q_minus_x(i,j,k,0) < 0.0) {
+                            Q_minus_x(i,j,k,0) = Q_tilde0;
+                            Q_minus_x(i,j,k,1) = Q_tilde1;
+                            Q_minus_x(i,j,k,2) = Q_tilde2;
+                            Q_minus_x(i,j,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_x.contains(i,j,k) != 1 ) && ( box_x.contains(i-1,j,k) )) {
+                        if (Q_plus_x(i-1,j,k,0) < 0.0){
+                            Q_plus_x(i-1,j,k,0) = Q_tilde0;
+                            Q_plus_x(i-1,j,k,1) = Q_tilde1;
+                            Q_plus_x(i-1,j,k,2) = Q_tilde2;
+                            Q_plus_x(i-1,j,k,3) = Q_tilde3;
+                        }
+                    }
+
                     // Predict Q at the cell edges (y)
                     if ( box_y.contains(i,j,k) ) {
                         Q_minus_y(i,j,k,0) = Q_tilde0 + dQ0y/2.0;
@@ -543,6 +571,35 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_y(i,j-1,k,2) = Q_tilde2 - dQ2y/2.0;
                         Q_plus_y(i,j-1,k,3) = Q_tilde3 - dQ3y/2.0;
                     }
+
+                    // Positivity and Monotonicty Limiter for density N:
+                    if (( box_y.contains(i,j,k) ) && ( box_y.contains(i,j-1,k) )) {
+                        if ((Q_minus_y(i,j,k,0) < 0.0) || (Q_plus_y(i,j-1,k,0) < 0.0)){
+                            Q_minus_y(i,j,k,0) = Q_tilde0;
+                            Q_minus_y(i,j,k,1) = Q_tilde1;
+                            Q_minus_y(i,j,k,2) = Q_tilde2;
+                            Q_minus_y(i,j,k,3) = Q_tilde3;
+                            Q_plus_y(i,j-1,k,0) = Q_tilde0;
+                            Q_plus_y(i,j-1,k,1) = Q_tilde1;
+                            Q_plus_y(i,j-1,k,2) = Q_tilde2;
+                            Q_plus_y(i,j-1,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_y.contains(i,j,k) ) && ( box_y.contains(i,j-1,k) != 1)) {
+                        if (Q_minus_y(i,j,k,0) < 0.0) {
+                            Q_minus_y(i,j,k,0) = Q_tilde0;
+                            Q_minus_y(i,j,k,1) = Q_tilde1;
+                            Q_minus_y(i,j,k,2) = Q_tilde2;
+                            Q_minus_y(i,j,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_y.contains(i,j,k) != 1 ) && ( box_y.contains(i,j-1,k) )) {
+                        if (Q_plus_y(i,j-1,k,0) < 0.0){
+                            Q_plus_y(i,j-1,k,0) = Q_tilde0;
+                            Q_plus_y(i,j-1,k,1) = Q_tilde1;
+                            Q_plus_y(i,j-1,k,2) = Q_tilde2;
+                            Q_plus_y(i,j-1,k,3) = Q_tilde3;
+                        }
+                    }
+
                     if ( box_z.contains(i,j,k) ) {
                     // Predict Q at the cell edges (z)
                         Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
@@ -555,6 +612,35 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_z(i,j,k-1,1) = Q_tilde1 - dQ1z/2.0;
                         Q_plus_z(i,j,k-1,2) = Q_tilde2 - dQ2z/2.0;
                         Q_plus_z(i,j,k-1,3) = Q_tilde3 - dQ3z/2.0;
+                    }
+
+
+                    // Positivity and Monotonicty Limiter for density N: z
+                    if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j,k-1) )) {
+                        if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i,j,k-1,0) < 0.0)){
+                            Q_minus_z(i,j,k,0) = Q_tilde0;
+                            Q_minus_z(i,j,k,1) = Q_tilde1;
+                            Q_minus_z(i,j,k,2) = Q_tilde2;
+                            Q_minus_z(i,j,k,3) = Q_tilde3;
+                            Q_plus_z(i,j,k-1,0) = Q_tilde0;
+                            Q_plus_z(i,j,k-1,1) = Q_tilde1;
+                            Q_plus_z(i,j,k-1,2) = Q_tilde2;
+                            Q_plus_z(i,j,k-1,3) = Q_tilde3;
+                        }
+                    } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j,k-1) != 1)) {
+                        if (Q_minus_z(i,j,k,0) < 0.0) {
+                            Q_minus_z(i,j,k,0) = Q_tilde0;
+                            Q_minus_z(i,j,k,1) = Q_tilde1;
+                            Q_minus_z(i,j,k,2) = Q_tilde2;
+                            Q_minus_z(i,j,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i,j,k-1) )) {
+                        if (Q_plus_z(i,j,k-1,0) < 0.0){
+                            Q_plus_z(i,j,k-1,0) = Q_tilde0;
+                            Q_plus_z(i,j,k-1,1) = Q_tilde1;
+                            Q_plus_z(i,j,k-1,2) = Q_tilde2;
+                            Q_plus_z(i,j,k-1,3) = Q_tilde3;
+                        }
                     }
 
                 #elif defined(WARPX_DIM_XZ)
@@ -599,6 +685,35 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_x(i-1,j,k,2) = Q_tilde2 - dQ2x/2.0;
                         Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
                     }
+
+                    // Positivity and Monotonicty Limiter for density N:
+                    if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) )) {
+                        if ((Q_minus_x(i,j,k,0) < 0.0) || (Q_plus_x(i-1,j,k,0) < 0.0)){
+                            Q_minus_x(i,j,k,0) = Q_tilde0;
+                            Q_minus_x(i,j,k,1) = Q_tilde1;
+                            Q_minus_x(i,j,k,2) = Q_tilde2;
+                            Q_minus_x(i,j,k,3) = Q_tilde3;
+                            Q_plus_x(i-1,j,k,0) = Q_tilde0;
+                            Q_plus_x(i-1,j,k,1) = Q_tilde1;
+                            Q_plus_x(i-1,j,k,2) = Q_tilde2;
+                            Q_plus_x(i-1,j,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) != 1)) {
+                        if (Q_minus_x(i,j,k,0) < 0.0) {
+                            Q_minus_x(i,j,k,0) = Q_tilde0;
+                            Q_minus_x(i,j,k,1) = Q_tilde1;
+                            Q_minus_x(i,j,k,2) = Q_tilde2;
+                            Q_minus_x(i,j,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_x.contains(i,j,k) != 1 ) && ( box_x.contains(i-1,j,k) )) {
+                        if (Q_plus_x(i-1,j,k,0) < 0.0){
+                            Q_plus_x(i-1,j,k,0) = Q_tilde0;
+                            Q_plus_x(i-1,j,k,1) = Q_tilde1;
+                            Q_plus_x(i-1,j,k,2) = Q_tilde2;
+                            Q_plus_x(i-1,j,k,3) = Q_tilde3;
+                        }
+                    }
+
                     if ( box_z.contains(i,j,k) ) {
                     // Predict Q at the cell edges (z)
                         Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
@@ -611,6 +726,34 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_z(i,j-1,k,1) = Q_tilde1 - dQ1z/2.0;
                         Q_plus_z(i,j-1,k,2) = Q_tilde2 - dQ2z/2.0;
                         Q_plus_z(i,j-1,k,3) = Q_tilde3 - dQ3z/2.0;
+                    }
+
+                    // Positivity and Monotonicty Limiter for density N: z
+                    if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j-1,k) )) {
+                        if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i,j-1,k,0) < 0.0)){
+                            Q_minus_z(i,j,k,0) = Q_tilde0;
+                            Q_minus_z(i,j,k,1) = Q_tilde1;
+                            Q_minus_z(i,j,k,2) = Q_tilde2;
+                            Q_minus_z(i,j,k,3) = Q_tilde3;
+                            Q_plus_z(i,j-1,k,0) = Q_tilde0;
+                            Q_plus_z(i,j-1,k,1) = Q_tilde1;
+                            Q_plus_z(i,j-1,k,2) = Q_tilde2;
+                            Q_plus_z(i,j-1,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j-1,k) != 1)) {
+                        if (Q_minus_z(i,j,k,0) < 0.0) {
+                            Q_minus_z(i,j,k,0) = Q_tilde0;
+                            Q_minus_z(i,j,k,1) = Q_tilde1;
+                            Q_minus_z(i,j,k,2) = Q_tilde2;
+                            Q_minus_z(i,j,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i,j-1,k) )) {
+                        if (Q_plus_z(i,j-1,k,0) < 0.0){
+                            Q_plus_z(i,j-1,k,0) = Q_tilde0;
+                            Q_plus_z(i,j-1,k,1) = Q_tilde1;
+                            Q_plus_z(i,j-1,k,2) = Q_tilde2;
+                            Q_plus_z(i,j-1,k,3) = Q_tilde3;
+                        }
                     }
 
                 #elif defined(WARPX_DIM_RZ)
@@ -676,6 +819,35 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_x(i-1,j,k,2) = Q_tilde2 - dQ2x/2.0;
                         Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
                     }
+
+                    // Positivity and Monotonicty Limiter for density N:
+                    if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) )) {
+                        if ((Q_minus_x(i,j,k,0) < 0.0) || (Q_plus_x(i-1,j,k,0) < 0.0)){
+                            Q_minus_x(i,j,k,0) = Q_tilde0;
+                            Q_minus_x(i,j,k,1) = Q_tilde1;
+                            Q_minus_x(i,j,k,2) = Q_tilde2;
+                            Q_minus_x(i,j,k,3) = Q_tilde3;
+                            Q_plus_x(i-1,j,k,0) = Q_tilde0;
+                            Q_plus_x(i-1,j,k,1) = Q_tilde1;
+                            Q_plus_x(i-1,j,k,2) = Q_tilde2;
+                            Q_plus_x(i-1,j,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) != 1)) {
+                        if (Q_minus_x(i,j,k,0) < 0.0) {
+                            Q_minus_x(i,j,k,0) = Q_tilde0;
+                            Q_minus_x(i,j,k,1) = Q_tilde1;
+                            Q_minus_x(i,j,k,2) = Q_tilde2;
+                            Q_minus_x(i,j,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_x.contains(i,j,k) != 1 ) && ( box_x.contains(i-1,j,k) )) {
+                        if (Q_plus_x(i-1,j,k,0) < 0.0){
+                            Q_plus_x(i-1,j,k,0) = Q_tilde0;
+                            Q_plus_x(i-1,j,k,1) = Q_tilde1;
+                            Q_plus_x(i-1,j,k,2) = Q_tilde2;
+                            Q_plus_x(i-1,j,k,3) = Q_tilde3;
+                        }
+                    }
+
                     if ( box_z.contains(i,j,k) ) {
                     // Predict Q at the cell edges (z)
                         Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
@@ -688,6 +860,34 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_z(i,j-1,k,1) = Q_tilde1 - dQ1z/2.0;
                         Q_plus_z(i,j-1,k,2) = Q_tilde2 - dQ2z/2.0;
                         Q_plus_z(i,j-1,k,3) = Q_tilde3 - dQ3z/2.0;
+                    }
+
+                    // Positivity and Monotonicty Limiter for density N: z
+                    if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j-1,k) )) {
+                        if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i,j-1,k,0) < 0.0)){
+                            Q_minus_z(i,j,k,0) = Q_tilde0;
+                            Q_minus_z(i,j,k,1) = Q_tilde1;
+                            Q_minus_z(i,j,k,2) = Q_tilde2;
+                            Q_minus_z(i,j,k,3) = Q_tilde3;
+                            Q_plus_z(i,j-1,k,0) = Q_tilde0;
+                            Q_plus_z(i,j-1,k,1) = Q_tilde1;
+                            Q_plus_z(i,j-1,k,2) = Q_tilde2;
+                            Q_plus_z(i,j-1,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j-1,k) != 1)) {
+                        if (Q_minus_z(i,j,k,0) < 0.0) {
+                            Q_minus_z(i,j,k,0) = Q_tilde0;
+                            Q_minus_z(i,j,k,1) = Q_tilde1;
+                            Q_minus_z(i,j,k,2) = Q_tilde2;
+                            Q_minus_z(i,j,k,3) = Q_tilde3;
+                        }
+                    } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i,j-1,k) )) {
+                        if (Q_plus_z(i,j-1,k,0) < 0.0){
+                            Q_plus_z(i,j-1,k,0) = Q_tilde0;
+                            Q_plus_z(i,j-1,k,1) = Q_tilde1;
+                            Q_plus_z(i,j-1,k,2) = Q_tilde2;
+                            Q_plus_z(i,j-1,k,3) = Q_tilde3;
+                        }
                     }
 
 
@@ -724,6 +924,35 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     Q_plus_z(i-1,j,k,2) = Q_tilde2 - dQ2z/2.0;
                     Q_plus_z(i-1,j,k,3) = Q_tilde3 - dQ3z/2.0;
                 }
+
+                // Positivity and Monotonicty Limiter for density N:
+                if (( box_z.contains(i,j,k) ) && ( box_z.contains(i-1,j,k) )) {
+                    if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i-1,j,k,0) < 0.0)) {
+                        Q_minus_z(i,j,k,0) = Q_tilde0;
+                        Q_minus_z(i,j,k,1) = Q_tilde1;
+                        Q_minus_z(i,j,k,2) = Q_tilde2;
+                        Q_minus_z(i,j,k,3) = Q_tilde3;
+                        Q_plus_z(i-1,j,k,0) = Q_tilde0;
+                        Q_plus_z(i-1,j,k,1) = Q_tilde1;
+                        Q_plus_z(i-1,j,k,2) = Q_tilde2;
+                        Q_plus_z(i-1,j,k,3) = Q_tilde3;
+                    }
+                } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i-1,j,k) != 1)) {
+                    if (Q_minus_z(i,j,k,0) < 0.0) {
+                        Q_minus_z(i,j,k,0) = Q_tilde0;
+                        Q_minus_z(i,j,k,1) = Q_tilde1;
+                        Q_minus_z(i,j,k,2) = Q_tilde2;
+                        Q_minus_z(i,j,k,3) = Q_tilde3;
+                    }
+                } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i-1,j,k) )) {
+                    if (Q_plus_z(i-1,j,k,0) < 0.0){
+                        Q_plus_z(i-1,j,k,0) = Q_tilde0;
+                        Q_plus_z(i-1,j,k,1) = Q_tilde1;
+                        Q_plus_z(i-1,j,k,2) = Q_tilde2;
+                        Q_plus_z(i-1,j,k,3) = Q_tilde3;
+                    }
+                }
+
                 #endif
             }
         );
