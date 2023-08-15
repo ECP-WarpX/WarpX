@@ -693,7 +693,7 @@ WarpX::ReadParameters ()
 #if defined(AMREX_USE_EB)
         AMREX_ALWAYS_ASSERT_WTH_MESSAGE(do_moving_window == 0,
             "The moving window is currently not supported when embedded boundaries are enabled.");
-#endi
+#endif
         if (do_moving_window)
         {
             utils::parser::queryWithParser(
