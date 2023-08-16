@@ -46,7 +46,7 @@ lasy_laser.polarization = 0. 1. 0.     # The main polarization vector
 lasy_laser.e_max        = 1.e14        # Maximum amplitude of the laser field (in V/m)
 lasy_laser.wavelength = 1.0e-6         # The wavelength of the laser (in meters)
 lasy_laser.profile      = from_file
-lasy_laser.time_chunk_size = 100
+lasy_laser.time_chunk_size = 50
 lasy_laser.lasy_file_name = "gaussianlaser3d_00000.h5"
 lasy_laser.delay = 0.0
 
