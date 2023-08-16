@@ -236,12 +236,75 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 {
     BackwardCompatibility();
 
-    plasma_injector = std::make_unique<PlasmaInjector>(species_id, species_name, amr_core->Geom(0));
-    physical_species = plasma_injector->getPhysicalSpecies();
-    charge = plasma_injector->getCharge();
-    mass = plasma_injector->getMass();
+    // The base plasma injector, whose input parameters have no source prefix.
+    plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_id, species_name, amr_core->Geom(0)));
 
     const ParmParse pp_species_name(species_name);
+
+    std::vector<std::string> injection_sources;
+    pp_species_name.queryarr("injection_sources", injection_sources);
+    for (auto &source_name : injection_sources) {
+        plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_id, species_name, amr_core->Geom(0),
+                                                                    source_name));
+    }
+
+    // Setup the charge and mass. There are multiple ways that they can be specified, so checks are needed to
+    // ensure that a value is specified and warnings given if multiple values are specified.
+    // The ordering is that species.charge and species.mass take precedence over all other values.
+    // Next is charge and mass determined from species_type.
+    // Last is charge and mass from the plasma injector setup
+    bool charge_from_source = false;
+    bool mass_from_source = false;
+    for (auto &plasma_injector : plasma_injectors) {
+        // For now, use the last value for charge and mass that is found.
+        // A check could be added for consistency of multiple values, but it'll probably never be needed
+        charge_from_source |= plasma_injector->queryCharge(charge);
+        mass_from_source |= plasma_injector->queryMass(mass);
+    }
+
+    std::string physical_species_s;
+    const bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
+    if (species_is_specified) {
+        const auto physical_species_from_string = species::from_string( physical_species_s );
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
+            physical_species_s + " does not exist!");
+        physical_species = physical_species_from_string.value();
+        charge = species::get_charge( physical_species );
+        mass = species::get_mass( physical_species );
+    }
+
+    // parse charge and mass (overriding values above)
+    const bool charge_is_specified = utils::parser::queryWithParser(pp_species_name, "charge", charge);
+    const bool mass_is_specified = utils::parser::queryWithParser(pp_species_name, "mass", mass);
+
+    if (charge_is_specified && species_is_specified) {
+        ablastr::warn_manager::WMRecordWarning("Species",
+            "Both '" + species_name +  ".charge' and " +
+                species_name + ".species_type' are specified.\n" +
+                species_name + ".charge' will take precedence.\n");
+    }
+    if (mass_is_specified && species_is_specified) {
+        ablastr::warn_manager::WMRecordWarning("Species",
+            "Both '" + species_name +  ".mass' and " +
+                species_name + ".species_type' are specified.\n" +
+                species_name + ".mass' will take precedence.\n");
+    }
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        charge_from_source ||
+        charge_is_specified ||
+        species_is_specified,
+        "Need to specify at least one of species_type or charge for species '" +
+        species_name + "'."
+    );
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        mass_from_source ||
+        mass_is_specified ||
+        species_is_specified,
+        "Need to specify at least one of species_type or mass for species '" +
+        species_name + "'."
+    );
 
     pp_species_name.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
     pp_species_name.query("do_backward_propagation", do_backward_propagation);
@@ -366,7 +429,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
     : WarpXParticleContainer(amr_core, 0)
 {
-    plasma_injector = std::make_unique<PlasmaInjector>();
 }
 
 void
@@ -440,6 +502,7 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
 
 void
 PhysicalParticleContainer::AddGaussianBeam (
+    const PlasmaInjector * plasma_injector,
     const Real x_m, const Real y_m, const Real z_m,
     const Real x_rms, const Real y_rms, const Real z_rms,
     const Real x_cut, const Real y_cut, const Real z_cut,
@@ -570,7 +633,8 @@ PhysicalParticleContainer::AddGaussianBeam (
 }
 
 void
-PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
+PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector * plasma_injector,
+                                             ParticleReal q_tot,
                                              ParticleReal z_shift)
 {
     // Declare temporary vectors on the CPU
@@ -841,85 +905,85 @@ PhysicalParticleContainer::AddParticles (int lev)
 {
     WARPX_PROFILE("PhysicalParticleContainer::AddParticles()");
 
-    if (plasma_injector->add_single_particle) {
-        if (WarpX::gamma_boost > 1.) {
-            MapParticletoBoostedFrame(plasma_injector->single_particle_pos[0],
-                                      plasma_injector->single_particle_pos[1],
-                                      plasma_injector->single_particle_pos[2],
-                                      plasma_injector->single_particle_u[0],
-                                      plasma_injector->single_particle_u[1],
-                                      plasma_injector->single_particle_u[2]);
-        }
-        amrex::Vector<ParticleReal> xp = {plasma_injector->single_particle_pos[0]};
-        amrex::Vector<ParticleReal> yp = {plasma_injector->single_particle_pos[1]};
-        amrex::Vector<ParticleReal> zp = {plasma_injector->single_particle_pos[2]};
-        amrex::Vector<ParticleReal> uxp = {plasma_injector->single_particle_u[0]};
-        amrex::Vector<ParticleReal> uyp = {plasma_injector->single_particle_u[1]};
-        amrex::Vector<ParticleReal> uzp = {plasma_injector->single_particle_u[2]};
-        amrex::Vector<amrex::Vector<ParticleReal>> attr = {{plasma_injector->single_particle_weight}};
-        amrex::Vector<amrex::Vector<int>> attr_int;
-        AddNParticles(lev, 1, xp, yp, zp, uxp, uyp, uzp,
-                      1, attr, 0, attr_int, 0);
-        return;
-    }
+    for (const auto & plasma_injector : plasma_injectors) {
 
-    if (plasma_injector->add_multiple_particles) {
-        if (WarpX::gamma_boost > 1.) {
-            for (int i=0 ; i < plasma_injector->multiple_particles_pos_x.size() ; i++) {
-                MapParticletoBoostedFrame(plasma_injector->multiple_particles_pos_x[i],
-                                          plasma_injector->multiple_particles_pos_y[i],
-                                          plasma_injector->multiple_particles_pos_z[i],
-                                          plasma_injector->multiple_particles_ux[i],
-                                          plasma_injector->multiple_particles_uy[i],
-                                          plasma_injector->multiple_particles_uz[i]);
+        if (plasma_injector->add_single_particle) {
+            if (WarpX::gamma_boost > 1.) {
+                MapParticletoBoostedFrame(plasma_injector->single_particle_pos[0],
+                                          plasma_injector->single_particle_pos[1],
+                                          plasma_injector->single_particle_pos[2],
+                                          plasma_injector->single_particle_u[0],
+                                          plasma_injector->single_particle_u[1],
+                                          plasma_injector->single_particle_u[2]);
             }
+            amrex::Vector<ParticleReal> xp = {plasma_injector->single_particle_pos[0]};
+            amrex::Vector<ParticleReal> yp = {plasma_injector->single_particle_pos[1]};
+            amrex::Vector<ParticleReal> zp = {plasma_injector->single_particle_pos[2]};
+            amrex::Vector<ParticleReal> uxp = {plasma_injector->single_particle_u[0]};
+            amrex::Vector<ParticleReal> uyp = {plasma_injector->single_particle_u[1]};
+            amrex::Vector<ParticleReal> uzp = {plasma_injector->single_particle_u[2]};
+            amrex::Vector<amrex::Vector<ParticleReal>> attr = {{plasma_injector->single_particle_weight}};
+            amrex::Vector<amrex::Vector<int>> attr_int;
+            AddNParticles(lev, 1, xp, yp, zp, uxp, uyp, uzp,
+                          1, attr, 0, attr_int, 0);
+            return;
         }
-        amrex::Vector<amrex::Vector<ParticleReal>> attr;
-        attr.push_back(plasma_injector->multiple_particles_weight);
-        amrex::Vector<amrex::Vector<int>> attr_int;
-        AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
-                      plasma_injector->multiple_particles_pos_x,
-                      plasma_injector->multiple_particles_pos_y,
-                      plasma_injector->multiple_particles_pos_z,
-                      plasma_injector->multiple_particles_ux,
-                      plasma_injector->multiple_particles_uy,
-                      plasma_injector->multiple_particles_uz,
-                      1, attr, 0, attr_int, 0);
-        return;
-    }
 
-    if (plasma_injector->gaussian_beam) {
-        AddGaussianBeam(plasma_injector->x_m,
-                        plasma_injector->y_m,
-                        plasma_injector->z_m,
-                        plasma_injector->x_rms,
-                        plasma_injector->y_rms,
-                        plasma_injector->z_rms,
-                        plasma_injector->x_cut,
-                        plasma_injector->y_cut,
-                        plasma_injector->z_cut,
-                        plasma_injector->q_tot,
-                        plasma_injector->npart,
-                        plasma_injector->do_symmetrize,
-                        plasma_injector->symmetrization_order);
+        if (plasma_injector->add_multiple_particles) {
+            if (WarpX::gamma_boost > 1.) {
+                for (int i=0 ; i < plasma_injector->multiple_particles_pos_x.size() ; i++) {
+                    MapParticletoBoostedFrame(plasma_injector->multiple_particles_pos_x[i],
+                                              plasma_injector->multiple_particles_pos_y[i],
+                                              plasma_injector->multiple_particles_pos_z[i],
+                                              plasma_injector->multiple_particles_ux[i],
+                                              plasma_injector->multiple_particles_uy[i],
+                                              plasma_injector->multiple_particles_uz[i]);
+                }
+            }
+            amrex::Vector<amrex::Vector<ParticleReal>> attr;
+            attr.push_back(plasma_injector->multiple_particles_weight);
+            amrex::Vector<amrex::Vector<int>> attr_int;
+            AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
+                          plasma_injector->multiple_particles_pos_x,
+                          plasma_injector->multiple_particles_pos_y,
+                          plasma_injector->multiple_particles_pos_z,
+                          plasma_injector->multiple_particles_ux,
+                          plasma_injector->multiple_particles_uy,
+                          plasma_injector->multiple_particles_uz,
+                          1, attr, 0, attr_int, 0);
+        }
 
+        if (plasma_injector->gaussian_beam) {
+            AddGaussianBeam(plasma_injector.get(),
+                            plasma_injector->x_m,
+                            plasma_injector->y_m,
+                            plasma_injector->z_m,
+                            plasma_injector->x_rms,
+                            plasma_injector->y_rms,
+                            plasma_injector->z_rms,
+                            plasma_injector->x_cut,
+                            plasma_injector->y_cut,
+                            plasma_injector->z_cut,
+                            plasma_injector->q_tot,
+                            plasma_injector->npart,
+                            plasma_injector->do_symmetrize,
+                            plasma_injector->symmetrization_order);
+        }
 
-        return;
-    }
+        if (plasma_injector->external_file) {
+            AddPlasmaFromFile(plasma_injector.get(),
+                              plasma_injector->q_tot,
+                              plasma_injector->z_shift);
+        }
 
-    if (plasma_injector->external_file) {
-        AddPlasmaFromFile(plasma_injector->q_tot,
-                          plasma_injector->z_shift);
-        return;
-    }
-
-    if ( plasma_injector->doInjection() ) {
-        AddPlasma( lev );
+        if ( plasma_injector->doInjection() ) {
+            AddPlasma(plasma_injector.get(), lev);
+        }
     }
 }
 
 void
-PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
+PhysicalParticleContainer::AddPlasma (const PlasmaInjector * plasma_injector, int lev, RealBox part_realbox)
 {
     WARPX_PROFILE("PhysicalParticleContainer::AddPlasma()");
 
@@ -1441,7 +1505,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 }
 
 void
-PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
+PhysicalParticleContainer::AddPlasmaFlux (const PlasmaInjector * plasma_injector, amrex::Real dt)
 {
     WARPX_PROFILE("PhysicalParticleContainer::AddPlasmaFlux()");
 
@@ -2301,7 +2365,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
     {
         const auto GetPosition = GetParticlePosition(pti);
 
-        const amrex::Vector<int> ppc_nd = plasma_injector->num_particles_per_cell_each_dim;
+        const amrex::Vector<int> ppc_nd = plasma_injectors[0]->num_particles_per_cell_each_dim;
         const std::array<Real,3>& dx = WarpX::CellSize(lev);
         amrex::Vector<Real> split_offset = {dx[0]/2._rt,
                                             dx[1]/2._rt,
@@ -2612,7 +2676,9 @@ PhysicalParticleContainer::ContinuousInjection (const RealBox& injection_box)
 {
     // Inject plasma on level 0. Paticles will be redistributed.
     const int lev=0;
-    AddPlasma(lev, injection_box);
+    for (const auto & plasma_injector : plasma_injectors) {
+        AddPlasma(plasma_injector.get(), lev, injection_box);
+    }
 }
 
 /* \brief Inject a flux of particles during the simulation
@@ -2620,13 +2686,15 @@ PhysicalParticleContainer::ContinuousInjection (const RealBox& injection_box)
 void
 PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real dt)
 {
-    if (plasma_injector->doFluxInjection()){
-        // Check the optional parameters for start and stop of injection
-        if ( ((plasma_injector->flux_tmin<0) || (t>=plasma_injector->flux_tmin)) &&
-             ((plasma_injector->flux_tmax<0) || (t< plasma_injector->flux_tmax)) ){
+    for (const auto & plasma_injector : plasma_injectors) {
+        if (plasma_injector->doFluxInjection()){
+            // Check the optional parameters for start and stop of injection
+            if ( ((plasma_injector->flux_tmin<0) || (t>=plasma_injector->flux_tmin)) &&
+                 ((plasma_injector->flux_tmax<0) || (t< plasma_injector->flux_tmax)) ){
 
-            AddPlasmaFlux(dt);
+                AddPlasmaFlux(plasma_injector.get(), dt);
 
+            }
         }
     }
 }
@@ -2944,9 +3012,14 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 ion_atomic_number};
 }
 
-PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector ()
+int PhysicalParticleContainer::numberOfPlasmaInjectors ()
 {
-    return plasma_injector.get();
+    return static_cast<int>(plasma_injectors.size());
+}
+
+PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector (const int i)
+{
+    return plasma_injectors[i].get();
 }
 
 void PhysicalParticleContainer::resample (const int timestep)

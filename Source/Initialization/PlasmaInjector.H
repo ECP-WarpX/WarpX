@@ -44,7 +44,8 @@ public:
 
     PlasmaInjector () = default;
 
-    PlasmaInjector (int ispecies, const std::string& name, const amrex::Geometry& geom);
+    PlasmaInjector (int ispecies, const std::string& name, const amrex::Geometry& geom,
+                    const std::string& source_name="");
 
     ~PlasmaInjector ();
 
@@ -132,16 +133,21 @@ public:
     amrex::Real density_min = std::numeric_limits<amrex::Real>::epsilon();
     amrex::Real density_max = std::numeric_limits<amrex::Real>::max();
 
-    InjectorPosition* getInjectorPosition ();
-    InjectorPosition* getInjectorFluxPosition ();
-    InjectorDensity*  getInjectorDensity ();
+    bool queryCharge (amrex::Real& a_charge) const;
+    bool queryMass (amrex::Real& a_mass) const;
 
-    InjectorFlux*  getInjectorFlux ();
-    InjectorMomentum* getInjectorMomentumDevice ();
-    InjectorMomentum* getInjectorMomentumHost ();
+    InjectorPosition* getInjectorPosition () const;
+    InjectorPosition* getInjectorFluxPosition () const;
+    InjectorDensity*  getInjectorDensity () const;
+
+    InjectorFlux*  getInjectorFlux () const;
+    InjectorMomentum* getInjectorMomentumDevice () const;
+    InjectorMomentum* getInjectorMomentumHost () const;
 
 protected:
 
+    bool mass_from_source = false;
+    bool charge_from_source = false;
     amrex::Real mass, charge;
 
     PhysicalSpecies physical_species = PhysicalSpecies::unspecified;

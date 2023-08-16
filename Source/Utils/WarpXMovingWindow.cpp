@@ -79,7 +79,8 @@ WarpX::UpdateInjectionPosition (const amrex::Real a_dt)
             current_injection_position[dir] = pc.m_current_injection_position;
 #endif
 
-            PlasmaInjector* plasma_injector = pc.GetPlasmaInjector();
+            // This only uses the base plasma injector
+            PlasmaInjector* plasma_injector = pc.GetPlasmaInjector(0);
 
             amrex::Real v_shift = 0._rt;
             if (plasma_injector != nullptr)

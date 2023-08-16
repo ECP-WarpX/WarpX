@@ -55,12 +55,10 @@ namespace {
 }
 
 PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
-    const amrex::Geometry& geom):
+    const amrex::Geometry& geom, const std::string& source_name):
     species_id{ispecies}, species_name{name}
 {
     using namespace amrex::literals;
-
-    const amrex::ParmParse pp_species_name(species_name);
 
 #ifdef AMREX_USE_GPU
     static_assert(std::is_trivially_copyable<InjectorPosition>::value,
@@ -70,6 +68,12 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     static_assert(std::is_trivially_copyable<InjectorMomentum>::value,
                   "InjectorMomentum must be trivially copyable");
 #endif
+
+    std::string parameter_base = species_name;
+    if (!source_name.empty()) {
+        parameter_base = species_name + "." + source_name;
+    }
+    const amrex::ParmParse pp_species_name(parameter_base);
 
     pp_species_name.query("radially_weighted", radially_weighted);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
@@ -123,17 +127,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     utils::parser::queryWithParser(pp_species_name, "density_min", density_min);
     utils::parser::queryWithParser(pp_species_name, "density_max", density_max);
 
-    std::string physical_species_s;
-    const bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
-    if (species_is_specified){
-        const auto physical_species_from_string = species::from_string( physical_species_s );
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
-            physical_species_s + " does not exist!");
-        physical_species = physical_species_from_string.value();
-        charge = species::get_charge( physical_species );
-        mass = species::get_mass( physical_species );
-    }
-
     // Parse injection style
     std::string injection_style = "none";
     pp_species_name.query("injection_style", injection_style);
@@ -141,42 +134,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
                    injection_style.end(),
                    injection_style.begin(),
                    ::tolower);
-
-    // parse charge and mass
-    const bool charge_is_specified =
-        utils::parser::queryWithParser(pp_species_name, "charge", charge);
-    const bool mass_is_specified =
-        utils::parser::queryWithParser(pp_species_name, "mass", mass);
-
-    if ( charge_is_specified && species_is_specified ){
-        ablastr::warn_manager::WMRecordWarning("Species",
-            "Both '" + species_name +  ".charge' and " +
-                species_name + ".species_type' are specified.\n" +
-                species_name + ".charge' will take precedence.\n");
-
-    }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        charge_is_specified ||
-        species_is_specified ||
-        (injection_style == "external_file"),
-        "Need to specify at least one of species_type or charge for species '" +
-        species_name + "'."
-    );
-
-    if ( mass_is_specified && species_is_specified ){
-        ablastr::warn_manager::WMRecordWarning("Species",
-            "Both '" + species_name +  ".mass' and " +
-                species_name + ".species_type' are specified.\n" +
-                species_name + ".mass' will take precedence.\n");
-    }
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        mass_is_specified ||
-        species_is_specified ||
-        (injection_style == "external_file"),
-        "Need to specify at least one of species_type or mass for species '" +
-        species_name + "'."
-    );
 
     num_particles_per_cell_each_dim.assign(3, 0);
 
@@ -492,66 +449,67 @@ void PlasmaInjector::setupExternalFile (const amrex::ParmParse& pp_species_name)
         std::string const ps_name = it.particles.begin()->first;
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            ps.contains("charge") || charge_is_specified || species_is_specified,
-            std::string("'") + ps_name +
-            ".injection_file' does not contain a 'charge' species record. "
-            "Please specify '" + ps_name + ".charge' or "
-            "'" + ps_name + ".species_type' in your input file!\n");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            ps.contains("mass") || mass_is_specified || species_is_specified,
-            std::string("'") + ps_name +
-            ".injection_file' does not contain a 'mass' species record. "
-            "Please specify '" + ps_name + ".mass' or "
-            "'" + ps_name + ".species_type' in your input file!\n");
+        charge_from_source = ps.contains("charge");
+        mass_from_source = ps.contains("mass");
 
-        if (charge_is_specified) {
-            ablastr::warn_manager::WMRecordWarning("Species",
-                "Both '" + ps_name + ".charge' and '" +
-                    ps_name + ".injection_file' specify a charge.\n'" +
-                    ps_name + ".charge' will take precedence.\n");
+        if (charge_from_source) {
+            if (charge_is_specified) {
+                ablastr::warn_manager::WMRecordWarning("Species",
+                    "Both '" + ps_name + ".charge' and '" +
+                        ps_name + ".injection_file' specify a charge.\n'" +
+                        ps_name + ".charge' will take precedence.\n");
+            }
+            else if (species_is_specified) {
+                ablastr::warn_manager::WMRecordWarning("Species",
+                    "Both '" + ps_name + ".species_type' and '" +
+                        ps_name + ".injection_file' specify a charge.\n'" +
+                        ps_name + ".species_type' will take precedence.\n");
+            }
+            else {
+                // TODO: Add ASSERT_WITH_MESSAGE to test if charge is a constant record
+                amrex::ParticleReal const p_q =
+                    ps["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+                double const charge_unit = ps["charge"][openPMD::RecordComponent::SCALAR].unitSI();
+                charge = p_q * charge_unit;
+            }
         }
-        else if (species_is_specified) {
-            ablastr::warn_manager::WMRecordWarning("Species",
-                "Both '" + ps_name + ".species_type' and '" +
-                    ps_name + ".injection_file' specify a charge.\n'" +
-                    ps_name + ".species_type' will take precedence.\n");
-        }
-        else {
-            // TODO: Add ASSERT_WITH_MESSAGE to test if charge is a constant record
-            amrex::ParticleReal const p_q =
-                ps["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
-            double const charge_unit = ps["charge"][openPMD::RecordComponent::SCALAR].unitSI();
-            charge = p_q * charge_unit;
-        }
-        if (mass_is_specified) {
-            ablastr::warn_manager::WMRecordWarning("Species",
-                "Both '" + ps_name + ".mass' and '" +
-                    ps_name + ".injection_file' specify a charge.\n'" +
-                    ps_name + ".mass' will take precedence.\n");
-        }
-        else if (species_is_specified) {
-            ablastr::warn_manager::WMRecordWarning("Species",
-                "Both '" + ps_name + ".species_type' and '" +
-                    ps_name + ".injection_file' specify a mass.\n'" +
-                    ps_name + ".species_type' will take precedence.\n");
-        }
-        else {
-            // TODO: Add ASSERT_WITH_MESSAGE to test if mass is a constant record
-            amrex::ParticleReal const p_m =
-                ps["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
-            double const mass_unit = ps["mass"][openPMD::RecordComponent::SCALAR].unitSI();
-            mass = p_m * mass_unit;
+        if (mass_from_source) {
+            if (mass_is_specified) {
+                ablastr::warn_manager::WMRecordWarning("Species",
+                    "Both '" + ps_name + ".mass' and '" +
+                        ps_name + ".injection_file' specify a charge.\n'" +
+                        ps_name + ".mass' will take precedence.\n");
+            }
+            else if (species_is_specified) {
+                ablastr::warn_manager::WMRecordWarning("Species",
+                    "Both '" + ps_name + ".species_type' and '" +
+                        ps_name + ".injection_file' specify a mass.\n'" +
+                        ps_name + ".species_type' will take precedence.\n");
+            }
+            else {
+                // TODO: Add ASSERT_WITH_MESSAGE to test if mass is a constant record
+                amrex::ParticleReal const p_m =
+                    ps["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+                double const mass_unit = ps["mass"][openPMD::RecordComponent::SCALAR].unitSI();
+                mass = p_m * mass_unit;
+            }
         }
     } // IOProcessor
 
-    // Broadcast charge and mass to non-IO processors
-    if (!charge_is_specified && !species_is_specified)
-        amrex::ParallelDescriptor::Bcast(&charge, 1,
-            amrex::ParallelDescriptor::IOProcessorNumber());
-    if (!mass_is_specified && !species_is_specified)
-        amrex::ParallelDescriptor::Bcast(&mass, 1,
-            amrex::ParallelDescriptor::IOProcessorNumber());
+    // Broadcast charge and mass to non-IO processors if read in from the file
+    if (!charge_is_specified && !species_is_specified) {
+        // Use ReduceBoolOr since Bcast(bool) doesn't compile
+        amrex::ParallelDescriptor::ReduceBoolOr(charge_from_source, amrex::ParallelDescriptor::IOProcessorNumber());
+        if (charge_from_source) {
+            amrex::ParallelDescriptor::Bcast(&charge, 1, amrex::ParallelDescriptor::IOProcessorNumber());
+        }
+    }
+    if (!mass_is_specified && !species_is_specified) {
+        amrex::ParallelDescriptor::ReduceBoolOr(mass_from_source, amrex::ParallelDescriptor::IOProcessorNumber());
+        if (mass_from_source) {
+            amrex::ParallelDescriptor::Bcast(&mass, 1, amrex::ParallelDescriptor::IOProcessorNumber());
+        }
+    }
 #else
     WARPX_ABORT_WITH_MESSAGE(
         "Plasma injection via external_file requires openPMD support: "
@@ -790,38 +748,56 @@ bool PlasmaInjector::overlapsWith (const amrex::XDim3& lo,
               || (zmin > hi.z) || (zmax < lo.z) );
 }
 
+bool
+PlasmaInjector::queryCharge (amrex::Real& a_charge) const
+{
+    if (charge_from_source) {
+        a_charge = charge;
+    }
+    return charge_from_source;
+}
+
+bool
+PlasmaInjector::queryMass (amrex::Real& a_mass) const
+{
+    if (mass_from_source) {
+        a_mass = mass;
+    }
+    return mass_from_source;
+}
+
 InjectorPosition*
-PlasmaInjector::getInjectorPosition ()
+PlasmaInjector::getInjectorPosition () const
 {
     return d_inj_pos;
 }
 
 InjectorPosition*
-PlasmaInjector::getInjectorFluxPosition ()
+PlasmaInjector::getInjectorFluxPosition () const
 {
     return d_flux_pos;
 }
 
 InjectorDensity*
-PlasmaInjector::getInjectorDensity ()
+PlasmaInjector::getInjectorDensity () const
 {
     return d_inj_rho;
 }
 
 InjectorFlux*
-PlasmaInjector::getInjectorFlux ()
+PlasmaInjector::getInjectorFlux () const
 {
     return d_inj_flux;
 }
 
 InjectorMomentum*
-PlasmaInjector::getInjectorMomentumDevice ()
+PlasmaInjector::getInjectorMomentumDevice () const
 {
     return d_inj_mom;
 }
 
 InjectorMomentum*
-PlasmaInjector::getInjectorMomentumHost ()
+PlasmaInjector::getInjectorMomentumHost () const
 {
     return h_inj_mom.get();
 }

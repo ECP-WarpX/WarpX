@@ -125,10 +125,16 @@ public:
     virtual void InitIonizationModule () {}
 
     /*
+     * \brief Virtual function that returns the number plasma injectors,
+     *        for derived classes that define one (PhysicalParticleContainer).
+     */
+    virtual int numberOfPlasmaInjectors () {return 0;}
+
+    /*
      * \brief Virtual function that returns a pointer to the plasma injector,
      *        for derived classes that define one (PhysicalParticleContainer).
      */
-    virtual PlasmaInjector* GetPlasmaInjector () { return nullptr; }
+    virtual PlasmaInjector* GetPlasmaInjector (const int /*i*/) { return nullptr; }
 
     /**
      * Evolve is the central WarpXParticleContainer function that advances

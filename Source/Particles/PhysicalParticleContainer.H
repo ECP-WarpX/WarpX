@@ -67,9 +67,14 @@ public:
     virtual void InitIonizationModule () override;
 
     /*
-     * \brief Returns a pointer to the plasma injector.
+     * \brief Returns the number of plasma injectors
      */
-    virtual PlasmaInjector* GetPlasmaInjector () override;
+    virtual int numberOfPlasmaInjectors () override;
+
+    /*
+     * \brief Returns a pointer to the i'th plasma injector.
+     */
+    virtual PlasmaInjector* GetPlasmaInjector (const int i) override;
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that
@@ -184,35 +189,40 @@ public:
      * number of particles per cell (in the cells of `part_realbox`).
      * The new particles are only created inside the intersection of `part_realbox`
      * with the local grid for the current proc.
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] lev the index of the refinement level
      * @param[in] part_realbox the box in which new particles should be created
      * (this box should correspond to an integer number of cells in each direction,
      * but its boundaries need not be aligned with the actual cells of the simulation)
     */
-    void AddPlasma (int lev, amrex::RealBox part_realbox = amrex::RealBox());
+    void AddPlasma (const PlasmaInjector * plasma_injector, int lev, amrex::RealBox part_realbox = amrex::RealBox());
 
     /**
      * Create new macroparticles for this species, with a fixed
      * number of particles per cell in a plane.
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] dt time step size, used to partially advance the particles
     */
-    void AddPlasmaFlux (amrex::Real dt);
+    void AddPlasmaFlux (const PlasmaInjector * plasma_injector, amrex::Real dt);
 
     void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                                     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
                                     amrex::Real t_lab = 0._prt);
 
     void AddGaussianBeam (
+        const PlasmaInjector * plasma_injector,
         const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
         const amrex::Real x_rms, const amrex::Real y_rms, const amrex::Real z_rms,
         const amrex::Real x_cut, const amrex::Real y_cut, const amrex::Real z_cut,
         const amrex::Real q_tot, long npart, const int do_symmetrize, const int symmetrization_order);
 
     /** Load a particle beam from an external file
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] q_tot total charge of the particle species to be initialized
      * @param[in] z_shift optional shift to the z position of particles (useful for boosted frame runs)
      */
-    void AddPlasmaFromFile (amrex::ParticleReal q_tot,
+    void AddPlasmaFromFile (PlasmaInjector * plasma_injector,
+                            amrex::ParticleReal q_tot,
                             amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (
@@ -350,7 +360,7 @@ public:
 
 protected:
     std::string species_name;
-    std::unique_ptr<PlasmaInjector> plasma_injector;
+    std::vector<std::unique_ptr<PlasmaInjector>> plasma_injectors;
 
     // When true, adjust the transverse particle positions accounting
     // for the difference between the Lorentz transformed time of the
