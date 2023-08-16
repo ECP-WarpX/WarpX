@@ -14,7 +14,7 @@ fn = sys.argv[1]
 # check that the maximum chi value is small
 fname = 'diags/reducedfiles/ParticleExtrema_beam_p.txt'
 chi_max = np.loadtxt(fname)[:,19]
-assert(np.sum(chi_max<2.e-8) == len(chi_max))
+assert np.all(chi_max < 2e-8)
 
 # check that no photons have been produced
 fname = 'diags/reducedfiles/ParticleNumber.txt'
