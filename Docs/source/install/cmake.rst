@@ -315,21 +315,16 @@ So another sophisticated example might be: use Clang as the compiler, build with
 Here we wrote this all in one line, but one can also set all environment variables in a development environment and keep the pip call nice and short as in the beginning.
 Note that you need to use absolute paths for external source trees, because pip builds in a temporary directory, e.g. ``export WARPX_AMREX_SRC=$HOME/src/amrex``.
 
-The Python library ``pywarpx`` can also be created by pre-building WarpX into one or more shared libraries externally.
-For example, a package manager might split WarpX into a C++ package and a Python package.
-If the C++ libraries are already pre-compiled, we can pick them up in the Python build step instead of compiling them again:
+All of this can also be run from CMake.
+This is the workflow most developers will prefer as it allows rapid re-compiles:
 
 .. code-block:: bash
 
    # build WarpX executables and libraries
    cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
-   cmake --build build -j 4
 
-   # Python package
-   PYWARPX_LIB_DIR=$PWD/build/lib python3 -m pip wheel .
-
-   # install
-   python3 -m pip install pywarpx-*whl
+   # build & install Python only
+   cmake --build build -j 4 --target pip_install
 
 
 WarpX release managers might also want to generate a self-contained source package that can be distributed to exotic architectures:
