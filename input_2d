@@ -12,7 +12,7 @@ psatd.nz_guard = 24
 
 amr.max_grid_size_x = 128
 amr.max_grid_size_z = 2048
-amr.blocking_factor_x = 32 64 
+amr.blocking_factor_x = 32 64
 amr.blocking_factor_z = 32 32
 
 geometry.dims = 2
