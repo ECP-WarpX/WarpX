@@ -187,7 +187,7 @@ protected:
 
     void parseDensity (const amrex::ParmParse& pp_species_name);
     void parseFlux (const amrex::ParmParse& pp_species_name);
-    void parseMomentum (const amrex::ParmParse& pp_species_name, const std::string style);
+    void parseMomentum (const amrex::ParmParse& pp_species_name, const std::string& style);
 };
 
 #endif

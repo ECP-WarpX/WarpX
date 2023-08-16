@@ -640,7 +640,7 @@ void PlasmaInjector::parseFlux (const amrex::ParmParse& pp_species_name)
 // Depending on injection type at runtime, initialize inj_mom
 // so that inj_mom->getMomentum calls
 // InjectorMomentum[Constant or Gaussian or etc.].getMomentum.
-void PlasmaInjector::parseMomentum (const amrex::ParmParse& pp_species_name, const std::string style)
+void PlasmaInjector::parseMomentum (const amrex::ParmParse& pp_species_name, const std::string& style)
 {
     using namespace amrex::literals;
 
