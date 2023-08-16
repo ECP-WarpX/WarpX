@@ -62,6 +62,17 @@ amrex::Real minmod (amrex::Real a, amrex::Real b)
     else
         return 0.0;
 }
+// mindmod
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real minmod3 (amrex::Real a, amrex::Real b , amrex::Real c)
+{
+    if (a > 0.0 && b > 0.0 && c > 0.0)
+        return std::min(a, std::min(b, c) );
+    else if (a < 0.0 && b < 0.0 && c < 0.0)
+        return std::max(a, std::max(b, c) );
+    else
+        return 0.0;
+}
 //maxmod
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real maxmod (amrex::Real a, amrex::Real b)
@@ -80,9 +91,18 @@ amrex::Real flux (amrex::Real Qm, amrex::Real Qp, amrex::Real Vm, amrex::Real Vp
     auto c = std::max( std::abs(Vm) , std::abs(Vp) );
     return 0.5*(Vm*Qm + Vp*Qp) - (0.5*c)*(Qp - Qm);
 }
-// ave_minmod
+// ave
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real ave (amrex::Real a, amrex::Real b)
+{
+    if (a*b > 0.0)
+        return minmod3( (a+b)/2.0, 2.0*a, 2.0*b );
+    else
+        return 0.0;
+}
+// ave_superbee
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real ave_superbee (amrex::Real a, amrex::Real b)
 {
     if (a*b > 0.0)
         return minmod( maxmod(a,b), minmod(2.0*a,2.0*b));
