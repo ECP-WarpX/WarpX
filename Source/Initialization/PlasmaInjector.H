@@ -63,9 +63,8 @@ public:
     // gamma * beta
     amrex::XDim3 getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
 
-    amrex::Real getCharge () {return charge;}
-    amrex::Real getMass () {return mass;}
-    PhysicalSpecies getPhysicalSpecies() const {return physical_species;}
+    bool queryCharge (amrex::Real& a_charge) const;
+    bool queryMass (amrex::Real& a_mass) const;
 
     // bool: whether the initial injection of particles should be done
     // This routine is called during initialization of the plasma.
@@ -132,9 +131,6 @@ public:
     amrex::Real zmin, zmax;
     amrex::Real density_min = std::numeric_limits<amrex::Real>::epsilon();
     amrex::Real density_max = std::numeric_limits<amrex::Real>::max();
-
-    bool queryCharge (amrex::Real& a_charge) const;
-    bool queryMass (amrex::Real& a_mass) const;
 
     InjectorPosition* getInjectorPosition () const;
     InjectorPosition* getInjectorFluxPosition () const;

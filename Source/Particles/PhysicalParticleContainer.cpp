@@ -236,10 +236,15 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 {
     BackwardCompatibility();
 
-    // The base plasma injector, whose input parameters have no source prefix.
-    plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_id, species_name, amr_core->Geom(0)));
-
     const ParmParse pp_species_name(species_name);
+
+    std::vector<std::string> injection_style = "none";
+    pp_species_name.queryarr("injection_style", injection_style);
+    if (injection_style != "none") {
+        // The base plasma injector, whose input parameters have no source prefix.
+        // Only created if needed
+        plasma_injectors.push_back(std::make_unique<PlasmaInjector>(species_id, species_name, amr_core->Geom(0)));
+    }
 
     std::vector<std::string> injection_sources;
     pp_species_name.queryarr("injection_sources", injection_sources);
@@ -3019,7 +3024,11 @@ int PhysicalParticleContainer::numberOfPlasmaInjectors ()
 
 PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector (const int i)
 {
-    return plasma_injectors[i].get();
+    if (i < 0 || i >= numberOfPlasmaInjectors()) {
+        return nullptr;
+    } else {
+        return plasma_injectors[i].get();
+    }
 }
 
 void PhysicalParticleContainer::resample (const int timestep)
