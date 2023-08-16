@@ -332,7 +332,6 @@ void PlasmaInjector::setupNRandomPerCell (const amrex::ParmParse& pp_species_nam
 
 void PlasmaInjector::setupNFluxPerCell (const amrex::ParmParse& pp_species_name)
 {
-    surface_flux = true;
     utils::parser::getWithParser(
         pp_species_name, "num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
