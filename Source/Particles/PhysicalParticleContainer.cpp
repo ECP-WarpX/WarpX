@@ -1499,7 +1499,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         fine_injection_box.coarsen(rrfac);
     }
 
-    InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
+    InjectorPosition* flux_pos = plasma_injector->getInjectorFluxPosition();
     InjectorFlux*  inj_flux = plasma_injector->getInjectorFlux();
     InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentumDevice();
     constexpr int level_zero = 0;
@@ -1619,7 +1619,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
             const int num_ppc_int = static_cast<int>(num_ppc_real + amrex::Random(engine));
 
-            if (inj_pos->overlapsWith(lo, hi))
+            if (flux_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
                 int r;
@@ -1767,12 +1767,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 p.id() = pid+ip;
                 p.cpu() = cpuid;
 
-                // This assumes the inj_pos is of type InjectorPositionRandomPlane
+                // This assumes the flux_pos is of type InjectorPositionRandomPlane
                 const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
                   // In the refined injection region: use refinement ratio `lrrfac`
-                  inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
+                  flux_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
-                  inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
+                  flux_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
                 auto ppos = PDim3(pos);
 
@@ -1809,7 +1809,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Lab-frame simulation
                 // If the particle's initial position is not within or on the species's
                 // xmin, xmax, ymin, ymax, zmin, zmax, go to the next generated particle.
-                if (!inj_pos->insideBoundsInclusive(ppos.x, ppos.y, ppos.z)) {
+                if (!flux_pos->insideBoundsInclusive(ppos.x, ppos.y, ppos.z)) {
                     p.id() = -1;
                     continue;
                 }
@@ -2620,7 +2620,7 @@ PhysicalParticleContainer::ContinuousInjection (const RealBox& injection_box)
 void
 PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real dt)
 {
-    if (plasma_injector->surface_flux){
+    if (plasma_injector->doFluxInjection()){
         // Check the optional parameters for start and stop of injection
         if ( ((plasma_injector->flux_tmin<0) || (t>=plasma_injector->flux_tmin)) &&
              ((plasma_injector->flux_tmax<0) || (t< plasma_injector->flux_tmax)) ){
