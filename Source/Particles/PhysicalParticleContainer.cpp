@@ -238,8 +238,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     const ParmParse pp_species_name(species_name);
 
-    std::vector<std::string> injection_style = "none";
-    pp_species_name.queryarr("injection_style", injection_style);
+    std::string injection_style = "none";
+    pp_species_name.query("injection_style", injection_style);
     if (injection_style != "none") {
         // The base plasma injector, whose input parameters have no source prefix.
         // Only created if needed
