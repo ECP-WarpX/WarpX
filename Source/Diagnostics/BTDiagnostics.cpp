@@ -68,7 +68,7 @@ void BTDiagnostics::DerivedInitData ()
     // Currently, for BTD, all the data is averaged+coarsened to coarsest level
     // and then sliced+back-transformed+filled_to_buffer.
     // The number of levels to be output is nlev_output.
-    nlev_output = 1;
+    nlev_output = nmax_lev;
 
     m_t_lab.resize(m_num_buffers);
     m_snapshot_domain_lab.resize(m_num_buffers);
@@ -803,12 +803,12 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                                     warpx.Geom(lev).periodicity());
     }
     // Flattening out MF over levels
-
-    for (int lev = warpx.finestLevel(); lev > 0; --lev) {
-        ablastr::coarsen::sample::Coarsen(*m_cell_centered_data[lev - 1], *m_cell_centered_data[lev], 0, 0,
-                                          m_cellcenter_varnames.size(), 0, WarpX::RefRatio(lev-1) );
-    }
-
+//
+//    for (int lev = warpx.finestLevel(); lev > 0; --lev) {
+//        ablastr::coarsen::sample::Coarsen(*m_cell_centered_data[lev - 1], *m_cell_centered_data[lev], 0, 0,
+//                                          m_cellcenter_varnames.size(), 0, WarpX::RefRatio(lev-1) );
+//    }
+//
     const int num_BT_functors = 1;
     for (int lev = 0; lev < nlev_output; ++lev)
     {
