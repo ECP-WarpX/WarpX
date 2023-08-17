@@ -124,14 +124,14 @@ Diagnostics::BaseReadParameters ()
 
     // Get parser strings for particle fields and generate map of parsers
     std::string parser_str;
-    std::string filter_parser_str = "";
+    std::string filter_parser_str;
     const amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
         bool do_average = true;
         pp_diag_pfield.query((var + ".do_average").c_str(), do_average);
         m_pfield_do_average.push_back(do_average);
         utils::parser::Store_parserString(
-            pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
+            pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)"), parser_str);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             parser_str != "",
@@ -212,7 +212,7 @@ Diagnostics::BaseReadParameters ()
        }
     }
     // For a moving window simulation, the user-defined m_lo and m_hi must be converted.
-    if (warpx.do_moving_window) {
+    if (WarpX::do_moving_window) {
 #if defined(WARPX_DIM_3D)
     amrex::Vector<int> dim_map {0, 1, 2};
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -220,13 +220,13 @@ Diagnostics::BaseReadParameters ()
 #else
     amrex::Vector<int> dim_map {2};
 #endif
-       if (warpx.boost_direction[ dim_map[warpx.moving_window_dir] ] == 1) {
+       if (WarpX::boost_direction[ dim_map[WarpX::moving_window_dir] ] == 1) {
            // Convert user-defined lo and hi for diagnostics to account for boosted-frame
            // simulations with moving window
-           const amrex::Real convert_factor = 1._rt/(warpx.gamma_boost * (1._rt - warpx.beta_boost) );
+           const amrex::Real convert_factor = 1._rt/(WarpX::gamma_boost * (1._rt - WarpX::beta_boost) );
            // Assuming that the window travels with speed c
-           m_lo[warpx.moving_window_dir] *= convert_factor;
-           m_hi[warpx.moving_window_dir] *= convert_factor;
+           m_lo[WarpX::moving_window_dir] *= convert_factor;
+           m_hi[WarpX::moving_window_dir] *= convert_factor;
        }
     }
 
@@ -275,18 +275,17 @@ Diagnostics::BaseReadParameters ()
         }
     }
 
-    bool checkpoint_compatibility = false;
-    if (m_format == "checkpoint"){
-       if ( varnames_specified == false &&
-            pfield_varnames_specified == false &&
-            pfield_species_specified == false &&
-            lo_specified == false &&
-            hi_specified == false &&
-            cr_specified == false &&
-            species_specified == false ) checkpoint_compatibility = true;
-    }
-    return checkpoint_compatibility;
+    const bool checkpoint_compatibility = (
+        m_format == "checkpoint" &&
+        !varnames_specified &&
+        !pfield_varnames_specified &&
+        !pfield_species_specified &&
+        !lo_specified &&
+        !hi_specified &&
+        !cr_specified &&
+        !species_specified );
 
+    return checkpoint_compatibility;
 }
 
 
@@ -463,8 +462,8 @@ Diagnostics::InitBaseData ()
 
     // For restart, move the m_lo and m_hi of the diag consistent with the
     // current moving_window location
-    if (warpx.do_moving_window) {
-        const int moving_dir = warpx.moving_window_dir;
+    if (WarpX::do_moving_window) {
+        const int moving_dir = WarpX::moving_window_dir;
         const int shift_num_base = static_cast<int>((warpx.getmoving_window_x() - m_lo[moving_dir]) / warpx.Geom(0).CellSize(moving_dir) );
         m_lo[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
         m_hi[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);

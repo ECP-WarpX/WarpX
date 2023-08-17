@@ -7,6 +7,7 @@
 #ifndef NamedComponentParticleContainer_H_
 #define NamedComponentParticleContainer_H_
 
+#include "Utils/export.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX.H>
@@ -15,6 +16,8 @@
 
 #include <map>
 #include <string>
+#include <utility>
+
 
 /** Particle Attributes stored in amrex::ParticleContainer's struct of array
  */
@@ -42,7 +45,7 @@ struct PIdx
  * arena, pinned memory arena, etc.) the particle data will be stored
  */
 template <template<class> class T_Allocator=amrex::DefaultAllocator>
-class NamedComponentParticleContainer :
+class WARPX_EXPORT NamedComponentParticleContainer :
 public amrex::ParticleContainer<0,0,PIdx::nattribs,0,T_Allocator>
 {
 public:
@@ -89,10 +92,10 @@ public:
         std::map<std::string, int> p_rcomps,
         std::map<std::string, int> p_ricomps)
     : amrex::ParticleContainer<0,0,PIdx::nattribs,0,T_Allocator>(std::move(pc)),
-    particle_comps(p_comps),
-    particle_icomps(p_icomps),
-    particle_runtime_comps(p_rcomps),
-    particle_runtime_icomps(p_ricomps) {}
+    particle_comps(std::move(p_comps)),
+    particle_icomps(std::move(p_icomps)),
+    particle_runtime_comps(std::move(p_rcomps)),
+    particle_runtime_icomps(std::move(p_ricomps)) {}
 
     /** Copy constructor for NamedComponentParticleContainer */
     NamedComponentParticleContainer ( const NamedComponentParticleContainer &) = delete;

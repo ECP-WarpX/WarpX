@@ -672,7 +672,7 @@ MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
 {
     const WarpX& warpx = WarpX::GetInstance();
     const int num_boxes = warpx.boxArray(lev).size();
-    const Vector<Long> r(num_boxes, 0);
+    Vector<Long> r(num_boxes, 0);
     return r;
 }
 
@@ -681,7 +681,7 @@ MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
 {
     if (allcontainers.empty())
     {
-        const Vector<Long> r = GetZeroParticlesInGrid(lev);
+        Vector<Long> r = GetZeroParticlesInGrid(lev);
         return r;
     }
     else
@@ -738,17 +738,12 @@ MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
     }
 }
 
-/* \brief Update position of continuous injection parameters.
- * \param dt: simulation time step (level 0)
- * All classes inherited from WarpXParticleContainer do not have
- * a position to update (PhysicalParticleContainer does not do anything).
- */
 void
-MultiParticleContainer::UpdateContinuousInjectionPosition (Real dt) const
+MultiParticleContainer::UpdateAntennaPosition (const amrex::Real dt) const
 {
     for (auto& pc : allcontainers){
         if (pc->do_continuous_injection){
-            pc->UpdateContinuousInjectionPosition(dt);
+            pc->UpdateAntennaPosition(dt);
         }
     }
 }

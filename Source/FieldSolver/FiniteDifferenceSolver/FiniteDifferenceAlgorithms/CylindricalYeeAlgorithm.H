@@ -65,7 +65,7 @@ struct CylindricalYeeAlgorithm {
      */
     static amrex::IntVect GetMaxGuardCell () {
         // The cylindrical solver requires one guard cell in each dimension
-        return (amrex::IntVect(AMREX_D_DECL(1,1,1)));
+        return amrex::IntVect{AMREX_D_DECL(1,1,1)};
     }
 
     /** Applies the differential operator `1/r * d(rF)/dr`,

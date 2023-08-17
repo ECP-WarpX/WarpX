@@ -16,7 +16,6 @@
 #include <blas.hh>
 #include <lapack.hh>
 
-using amrex::operator""_rt;
 
 HankelTransform::HankelTransform (int const hankel_order,
                                   int const azimuthal_mode,
