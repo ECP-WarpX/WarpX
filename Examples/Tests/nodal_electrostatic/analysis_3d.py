@@ -21,7 +21,6 @@ fname = 'diags/reducedfiles/ParticleNumber.txt'
 pho_num = np.loadtxt(fname)[:,7]
 assert(pho_num.all()==0.)
 
-# Get name of the test
+# Checksum regression analysis
 test_name = os.path.split(os.getcwd())[1]
-
 checksumAPI.evaluate_checksum(test_name, fn)

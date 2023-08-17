@@ -476,12 +476,13 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #else
             const Real inv_dz = 1._rt/dx[0];
 #endif
-            const IntVect ex_type = E[lev][0]->ixType().toIntVect();
-            const Box& tbx  = mfi.tilebox( ex_type );
-            const IntVect ey_type = E[lev][1]->ixType().toIntVect();
-            const Box& tby  = mfi.tilebox( ey_type );
-            const IntVect ez_type = E[lev][2]->ixType().toIntVect();
-            const Box& tbz  = mfi.tilebox( ez_type );
+            const amrex::IntVect ex_type = E[lev][0]->ixType().toIntVect();
+            const amrex::IntVect ey_type = E[lev][1]->ixType().toIntVect();
+            const amrex::IntVect ez_type = E[lev][2]->ixType().toIntVect();
+
+            const amrex::Box& tbx = mfi.tilebox(ex_type);
+            const amrex::Box& tby = mfi.tilebox(ey_type);
+            const amrex::Box& tbz = mfi.tilebox(ez_type);
 
             const auto& phi_arr = phi[lev]->array(mfi);
             const auto& Ex_arr = (*E[lev][0])[mfi].array();
@@ -495,9 +496,9 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
             // Calculate the electric field
             // Use discretized derivative that matches the staggering of the grid.
             // Nodal solver
-            if (ex_type == IntVect::TheNodeVector() &&
-                ey_type == IntVect::TheNodeVector() &&
-                ez_type == IntVect::TheNodeVector())
+            if (ex_type == amrex::IntVect::TheNodeVector() &&
+                ey_type == amrex::IntVect::TheNodeVector() &&
+                ez_type == amrex::IntVect::TheNodeVector())
             {
 #if defined(WARPX_DIM_3D)
                 amrex::ParallelFor( tbx, tby, tbz,
@@ -655,14 +656,13 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #else
             const Real inv_dz = 1._rt/dx[0];
 #endif
+            const amrex::IntVect bx_type = B[lev][0]->ixType().toIntVect();
+            const amrex::IntVect by_type = B[lev][1]->ixType().toIntVect();
+            const amrex::IntVect bz_type = B[lev][2]->ixType().toIntVect();
 
-            const IntVect bx_type = B[lev][0]->ixType().toIntVect();
-            const IntVect by_type = B[lev][1]->ixType().toIntVect();
-            const IntVect bz_type = B[lev][2]->ixType().toIntVect();
-
-            const Box& tbx  = mfi.tilebox( bx_type );
-            const Box& tby  = mfi.tilebox( by_type );
-            const Box& tbz  = mfi.tilebox( bz_type );
+            const amrex::Box& tbx = mfi.tilebox(bx_type);
+            const amrex::Box& tby = mfi.tilebox(by_type);
+            const amrex::Box& tbz = mfi.tilebox(bz_type);
 
             const auto& phi_arr = phi[lev]->array(mfi);
             const auto& Bx_arr = (*B[lev][0])[mfi].array();
@@ -678,9 +678,9 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
             // Calculate the magnetic field
             // Use discretized derivative that matches the staggering of the grid.
             // Nodal solver
-            if (bx_type == IntVect::TheNodeVector() &&
-                by_type == IntVect::TheNodeVector() &&
-                bz_type == IntVect::TheNodeVector())
+            if (bx_type == amrex::IntVect::TheNodeVector() &&
+                by_type == amrex::IntVect::TheNodeVector() &&
+                bz_type == amrex::IntVect::TheNodeVector())
             {
 #if defined(WARPX_DIM_3D)
                 amrex::ParallelFor( tbx, tby, tbz,
