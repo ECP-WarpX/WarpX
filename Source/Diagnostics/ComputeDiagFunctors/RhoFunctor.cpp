@@ -33,8 +33,29 @@ RhoFunctor::RhoFunctor (const int lev,
 void
 RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/ ) const
 {
+    // Prepare temporary MultiFabs, in order to sum across levels
     auto& warpx = WarpX::GetInstance();
-    std::unique_ptr<amrex::MultiFab> rho;
+    const int nlevs_max = warpx.maxLevel() + 1;
+    amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_fp;
+    amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_cp;
+    amrex::Vector< std::unique_ptr<amrex::MultiFab> > rho_buf;
+    rho_cp.resize(nlevs_max);
+    rho_fp.resize(nlevs_max);
+    rho_buf.resize(nlevs_max);
+    const int ng_rho = warpx.get_ng_depos_rho().max();
+    for (int lev=m_lev; lev<=warpx.maxLevel(); lev++) {
+        // Allocate rho_fp
+        const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
+        amrex::BoxArray nba = warpx.boxArray(lev);
+        nba.surroundingNodes();
+        rho_fp[lev] = std::make_unique<amrex::MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
+        rho_fp[lev]->setVal(0.0);
+        // Allocate rho_cp
+        if (lev>m_lev) {
+            nba.coarsen(warpx.refRatio(lev-1));
+            rho_cp[lev] = std::make_unique<amrex::MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
+        }
+    }
 
     // Deposit charge density
     // Call this with local=true since the parallel transfers will be handled
@@ -43,17 +64,24 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     // Dump total rho
     if (m_species_index == -1) {
         auto& mypc = warpx.GetPartContainer();
-        rho = mypc.GetChargeDensity(m_lev, true);
+        for (int lev=m_lev; lev<=warpx.finestLevel(); lev++) {
+            rho_fp[lev] = mypc.GetChargeDensity(lev, true);
+        }
     }
     // Dump rho per species
     else {
         auto& mypc = warpx.GetPartContainer().GetParticleContainer(m_species_index);
-        rho = mypc.GetChargeDensity(m_lev, true);
+        for (int lev=m_lev; lev<=warpx.finestLevel(); lev++) {
+            rho_fp[lev] = mypc.GetChargeDensity(lev, true);
+        }
     }
 
-    // Handle the parallel transfers of guard cells and
-    // apply the filtering if requested.
-    warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
+    // Handle parallel transfers of guard cells,
+    // summation between levels, and filtering
+    warpx.SyncRho(rho_fp, rho_cp, rho_buf, m_lev);
+
+    // Select the correct level
+    std::unique_ptr<amrex::MultiFab>& rho = rho_fp[m_lev];
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     // Apply k-space filtering when using the PSATD solver
