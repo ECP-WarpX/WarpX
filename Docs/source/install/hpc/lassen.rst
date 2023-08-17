@@ -138,11 +138,31 @@ Known System Issues
 
 .. warning::
 
-   Feb 17th, 2022 (INC0278922):
-   The implementation of ``AllGatherv`` in IBM's MPI optimization library "libcollectives" is broken and leads to HDF5 crashes for multi-node runs.
+   Feb 17th, 2022 (INC0278922) and August 16th, 2023:
+   The implementation of ``AllGatherv`` (update: and ``AllGather``) in IBM's MPI optimization library "libcollectives" is broken and leads to HDF5 crashes for multi-node runs.
 
    Our batch script templates above `apply this work-around <https://github.com/ECP-WarpX/WarpX/pull/2874>`__ *before* the call to ``jsrun``, which avoids the broken routines from IBM and trades them for an OpenMPI implementation of collectives:
 
    .. code-block:: bash
 
       export OMPI_MCA_coll_ibm_skip_allgatherv=true
+      export OMPI_MCA_coll_ibm_skip_allgather=true
+
+
+.. warning::
+
+   For HDF5 output, Lassen's OpenMPI uses slow defaults and is bugged.
+   Chunked HDF5 fails due to `this bug <https://github.com/open-mpi/ompi/issues/7795>`__.
+   File locks are slow and not needed (`see this <https://github.com/open-mpi/ompi/issues/10053>__):
+
+   .. code-block:: bash
+
+      # Work-around OpenMPI bug with chunked HDF5
+      #   https://github.com/open-mpi/ompi/issues/7795
+      export OMPI_MCA_io=ompio
+
+      # OpenMPI file locks https://github.com/open-mpi/ompi/issues/10053
+      export OMPI_MCA_sharedfp=^lockedfile,individual
+
+      # HDF5: disable slow locks (promise not to open half-written files)
+      export HDF5_USE_FILE_LOCKING=FALSE
