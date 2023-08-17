@@ -46,8 +46,9 @@ my_filter = my_filterx[:,None]*my_filtery
 my_F_filtered = signal.convolve2d(my_F_nofilter, my_filter, boundary='symm', mode='same')
 
 # Get simulation result for F_filtered
-filename = sys.argv[1]
-ds = yt.load( filename )
+plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
+ds = yt.load(plotfile)
 sl = yt.SlicePlot(ds, 2, 'jx', aspect=1)
 all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 F_filtered = all_data_level_0['boxlib', 'jx'].v.squeeze()
@@ -62,4 +63,5 @@ print("tolerance_rel: " + str(tolerance_rel))
 assert( error_rel < tolerance_rel )
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

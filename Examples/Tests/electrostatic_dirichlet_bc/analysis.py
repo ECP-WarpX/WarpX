@@ -14,21 +14,26 @@
 # Possible running time: ~ 19 s
 
 import glob
+import os
+import sys
 
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 import numpy as np
 import yt
 
-files = sorted(glob.glob('dirichletbc_plt*'))[1:]
-if len(files) == 0:
-    files = sorted(glob.glob('Python_dirichletbc_plt*'))[1:]
-assert len(files) > 0
+plotfiles = sorted(glob.glob('dirichletbc_plt*'))[1:]
+if len(plotfiles) == 0:
+    plotfiles = sorted(glob.glob('Python_dirichletbc_plt*'))[1:]
+assert len(plotfiles) > 0
+opmdfile = './diags/diag2'
 
-times = np.ones(len(files))
-potentials_lo = np.zeros(len(files))
-potentials_hi = np.zeros(len(files))
+times = np.ones(len(plotfiles))
+potentials_lo = np.zeros(len(plotfiles))
+potentials_hi = np.zeros(len(plotfiles))
 
-for ii, file in enumerate(files):
-    ds = yt.load( file )
+for ii, plotfile in enumerate(plotfiles):
+    ds = yt.load(plotfile)
     times[ii] = (
         ds.current_time.item()
     )
@@ -43,3 +48,7 @@ expected_potentials_hi = 450.0 * np.sin(2.0 * np.pi * 13.56e6 * times)
 
 assert np.allclose(potentials_lo, expected_potentials_lo, rtol=0.1)
 assert np.allclose(potentials_hi, expected_potentials_hi, rtol=0.1)
+
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

@@ -18,14 +18,11 @@ yt.funcs.mylog.setLevel(50)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-# Plotfile data set
 plotfile = sys.argv[1]
-ds = yt.load(plotfile)
-
-# openPMD data set
 opmdfile = './diags/diag2'
 
 # Check relative L-infinity spatial norm of rho/epsilon_0 - div(E)
+ds = yt.load(plotfile)
 data = ds.covering_grid(
     level=0,
     left_edge=ds.domain_left_edge,

@@ -54,25 +54,26 @@ mi = me * 5.0
 a =  0.04330638981264072
 b = -0.11588277796546632
 
-last_fn = sys.argv[1]
+last_plotfile = sys.argv[1]
 # Remove trailing '/' from file name, if necessary
-last_fn.rstrip('/')
+last_plotfile.rstrip('/')
 # Find last iteration in file name, such as 'test_name_plt000001' (last_it = '000001')
-last_it = re.search('\d+', last_fn).group()
+last_it = re.search('\d+', last_plotfile).group()
 # Find output prefix in file name, such as 'test_name_plt000001' (prefix = 'test_name_plt')
-prefix = last_fn[:-len(last_it)]
-# Collect all output files in fn_list (names match pattern prefix + arbitrary number)
-fn_list = glob.glob(prefix + '*[0-9]')
+prefix = last_plotfile[:-len(last_it)]
+# Collect all output files in plotfile_list (names match pattern prefix + arbitrary number)
+plotfile_list = glob.glob(prefix + '*[0-9]')
+opmdfile = './diags/diag2'
 
 error = 0.0
 nt = 0
-for fn in fn_list:
+for plotfile in plotfile_list:
     # load file
-    ds  = yt.load( fn )
+    ds  = yt.load(plotfile)
     ad  = ds.all_data()
     px  = ad[('all', 'particle_momentum_x')].to_ndarray()
     # get time index j
-    j = int(fn[-5:])
+    j = int(plotfile[-5:])
     # compute error
     vxe = numpy.mean(px[ 0:ne])/me/c
     vxi = numpy.mean(px[ne:np])/mi/c
@@ -89,7 +90,7 @@ assert(error < tolerance)
 
 # The second part of the analysis is not done for the Python test
 # since the particle filter function is not accessible from PICMI yet
-if "Python" in last_fn:
+if "Python" in last_plotfile:
     exit()
 
 ## In the second past of the test, we verify that the diagnostic particle filter function works as
@@ -98,20 +99,21 @@ if "Python" in last_fn:
 dim = "2d"
 species_name = "electron"
 
-parser_filter_fn = "diags/diag_parser_filter" + last_it
+parser_filter_plotfile = "diags/diag_parser_filter" + last_it
 parser_filter_expression = "(x>200) * (z<200) * (px-3*pz>0)"
-post_processing_utils.check_particle_filter(last_fn, parser_filter_fn, parser_filter_expression,
+post_processing_utils.check_particle_filter(last_plotfile, parser_filter_plotfile, parser_filter_expression,
                                             dim, species_name)
 
-uniform_filter_fn = "diags/diag_uniform_filter" + last_it
+uniform_filter_plotfile = "diags/diag_uniform_filter" + last_it
 uniform_filter_expression = "ids%6 == 0"
-post_processing_utils.check_particle_filter(last_fn, uniform_filter_fn, uniform_filter_expression,
+post_processing_utils.check_particle_filter(last_plotfile, uniform_filter_plotfile, uniform_filter_expression,
                                             dim, species_name)
 
-random_filter_fn = "diags/diag_random_filter" + last_it
+random_filter_plotfile = "diags/diag_random_filter" + last_it
 random_fraction = 0.77
-post_processing_utils.check_random_filter(last_fn, random_filter_fn, random_fraction,
+post_processing_utils.check_random_filter(last_plotfile, random_filter_plotfile, random_fraction,
                                           dim, species_name)
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile', do_particles=False)
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd', do_particles=False)

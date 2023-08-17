@@ -16,7 +16,12 @@ boundary.field_hi = pec periodic
 boundary.potential_lo_x = 150.0*sin(2*pi*6.78e+06*t)
 boundary.potential_hi_x = 450.0*sin(2*pi*13.56e+06*t)
 
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 diag2
 diag1.diag_type = Full
+diag1.format = plotfile
 diag1.intervals = ::4
 diag1.fields_to_plot = phi
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.intervals = ::4
+diag2.fields_to_plot = phi

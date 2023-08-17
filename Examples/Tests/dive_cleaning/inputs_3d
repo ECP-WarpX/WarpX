@@ -30,6 +30,10 @@ beam.npart = 20000
 beam.q_tot = -1.e-20
 beam.momentum_distribution_type = "at_rest"
 
-diagnostics.diags_names = diag1
-diag1.intervals = 8
+diagnostics.diags_names = diag1 diag2
 diag1.diag_type = Full
+diag1.format = plotfile
+diag1.intervals = 8
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.intervals = 8

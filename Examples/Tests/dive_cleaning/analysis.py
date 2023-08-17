@@ -14,7 +14,11 @@ space-charge field propagate away and be absorbed in the PML.
 This script verifies that the field at the end of the simulation corresponds
 to the theoretical field of a Gaussian beam.
 """
+import os
 import sys
+
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 import matplotlib
 
@@ -31,9 +35,12 @@ yt.funcs.mylog.setLevel(0)
 Qtot = -1.e-20
 r0 = 2.e-6
 
+# Name of output files
+plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
+
 # Open data file
-filename = sys.argv[1]
-ds = yt.load( filename )
+ds = yt.load(plotfile)
 # yt 4.0+ has rounding issues with our domain data:
 # RuntimeError: yt attempted to read outside the boundaries
 #               of a non-periodic domain along dimension 0.
@@ -113,3 +120,7 @@ check( Ex_array, Ex_th, 'Ex' )
 check( Ey_array, Ey_th, 'Ey' )
 if ds.dimensionality == 3:
     check( Ez_array, Ez_th, 'Ez' )
+
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

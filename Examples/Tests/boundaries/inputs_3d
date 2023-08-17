@@ -65,7 +65,12 @@ periodic_particles.multiple_particles_uz = -0.94 +0.95
 periodic_particles.multiple_particles_weight = 1. 1.
 
 # Diagnostics
-diagnostics.diags_names = diag1
-diag1.intervals = 8
+diagnostics.diags_names = diag1 diag2
 diag1.diag_type = Full
+diag1.format = plotfile
+diag1.intervals = 8
 diag1.fields_to_plot = Ex
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.intervals = 8
+diag2.fields_to_plot = Ex

@@ -146,5 +146,7 @@ for species in ['beam_p', 'beam_e']:
 
 # Checksum analysis
 plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, plotfile)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

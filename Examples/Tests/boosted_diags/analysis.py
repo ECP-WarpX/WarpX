@@ -28,14 +28,15 @@ yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-filename = sys.argv[1]
+plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
 
 # Tolerances to check consistency between legacy BTD and new BTD
 rtol = 1e-16
 atol = 1e-16
 
 # Read data from new back-transformed diagnostics (plotfile)
-ds_plotfile = yt.load(filename)
+ds_plotfile = yt.load(plotfile)
 data = ds_plotfile.covering_grid(
     level=0,
     left_edge=ds_plotfile.domain_left_edge,
@@ -53,4 +54,5 @@ series.flush()
 assert(np.allclose(Ez_plotfile, Ez_openpmd, rtol=rtol, atol=atol))
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

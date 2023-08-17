@@ -153,7 +153,9 @@ class Checksum:
                     data[f'lev={lev}'] = data_lev
             # Compute checksum for particle quantities
             if do_particles:
-                species_list = ts.avail_record_components.keys()
+                species_list = []
+                if ts.avail_record_components is not None:
+                    species_list = ts.avail_record_components.keys()
                 for species in species_list:
                     data_species = {}
                     part_fields = [item for item in ts.avail_record_components[species]
@@ -189,7 +191,7 @@ class Checksum:
             print("ERROR: Benchmark and output file checksum "
                   "have different outer keys:")
             print("Benchmark: %s" % ref_benchmark.data.keys())
-            print("Plotfile : %s" % self.data.keys())
+            print("Test file: %s" % self.data.keys())
             print("\n----------------\nNew file for " + self.test_name + ":")
             print(json.dumps(self.data, indent=2))
             print("----------------")
@@ -203,7 +205,7 @@ class Checksum:
                 print("Common outer keys: %s" % ref_benchmark.data.keys())
                 print("Benchmark inner keys in %s: %s"
                       % (key1, ref_benchmark.data[key1].keys()))
-                print("Plotfile  inner keys in %s: %s"
+                print("Test file inner keys in %s: %s"
                       % (key1, self.data[key1].keys()))
                 print("\n----------------\nNew file for " + self.test_name + ":")
                 print(json.dumps(self.data, indent=2))
@@ -222,7 +224,7 @@ class Checksum:
                           "different value for key [%s,%s]" % (key1, key2))
                     print("Benchmark: [%s,%s] %.15e"
                           % (key1, key2, ref_benchmark.data[key1][key2]))
-                    print("Plotfile : [%s,%s] %.15e"
+                    print("Test file: [%s,%s] %.15e"
                           % (key1, key2, self.data[key1][key2]))
                     checksums_differ = True
                     # Print absolute and relative error for each failing key

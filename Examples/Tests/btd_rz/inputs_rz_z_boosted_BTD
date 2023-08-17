@@ -52,9 +52,15 @@ laser1.profile_focal_distance = 1.e-6  # Focal distance from the antenna (in met
 laser1.wavelength = 0.8e-6         # The wavelength of the laser (in meters)
 
 # Diagnostics
-diagnostics.diags_names = diag1 back_rz
-diag1.intervals = 50
+diagnostics.diags_names = diag1 diag2 back_rz
+
 diag1.diag_type = Full
+diag1.format = plotfile
+diag1.intervals = 50
+
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.intervals = 50
 
 back_rz.diag_type = BackTransformed
 back_rz.dt_snapshots_lab = 80.e-15

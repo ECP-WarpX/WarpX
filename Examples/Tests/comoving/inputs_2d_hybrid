@@ -109,7 +109,12 @@ laser1.profile_t_peak = 66.e-15
 laser1.profile_focal_distance = 0.5e-3
 laser1.wavelength = 0.81e-6
 
-diagnostics.diags_names = diag1
-diag1.intervals = 400
+diagnostics.diags_names = diag1 diag2
 diag1.diag_type = Full
+diag1.format = plotfile
+diag1.intervals = 400
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.intervals = 400
+diag2.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho

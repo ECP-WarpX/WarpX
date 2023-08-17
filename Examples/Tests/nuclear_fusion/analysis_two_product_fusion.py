@@ -401,6 +401,7 @@ def check_charge_conservation(rho_start, rho_end):
 def main():
     filename_end = sys.argv[1]
     filename_start = filename_end[:-4] + '0000'
+    opmdfile = './diags/diag2'
     ds_end = yt.load(filename_end)
     ds_start = yt.load(filename_start)
     ad_end = ds_end.all_data()
@@ -432,7 +433,8 @@ def main():
     check_charge_conservation(rho_start, rho_end)
 
     test_name = os.path.split(os.getcwd())[1]
-    checksumAPI.evaluate_checksum(test_name, filename_end)
+    checksumAPI.evaluate_checksum(test_name, output_file=filename_end, output_format='plotfile')
+    checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')
 
 if __name__ == "__main__":
     main()
