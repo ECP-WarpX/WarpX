@@ -125,12 +125,20 @@ private:
      */
     bool GetZSliceInDomainFlag (const int i_buffer, const int lev);
 
+    /** whether the k-index corresponding to the z-slice for the ith buffer, i_buffer,
+     *  is within the bounds of the box in index-space
+     * \param[in] i_buffer index of the buffer for which the k-index is checked.
+     * \param[in] lev mesh-refinement level using which the k-index for the z-slice being filled in the ith buffer is computed
+     *            Return true if the k-index of the z-slice is within the bounds of the box for the buffer being filled
+     */
+    bool GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev);
+
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
      * \param[in] i_buffer i^th snapshot or buffer
      * \param[in] lev mesh-refinement level for which the field and/or particle buffer data is initialized.
      */
-    void InitializeBufferData ( int i_buffer , int lev) override;
+    void InitializeBufferData ( int i_buffer , int lev, bool restart=false) override;
     /** Whether to compute back-tranformed values for field-data.
      *  default value is true.
      */
@@ -140,7 +148,7 @@ private:
      */
     bool m_do_back_transformed_particles = true;
 
-    /** m_gamma_boost, is a copy of warpx.gamma_boost
+    /** m_gamma_boost, is a copy of WarpX::gamma_boost
      *  That is, the Lorentz factor of the boosted frame in which the simulation is run.
      *  The direction for Lorentz transformation is assumed to be along
      *  ``warpx.boost_direction``, which is the same as the moving window direction.
@@ -149,7 +157,7 @@ private:
      */
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
-    /** m_moving_window_dir is a copy of warpx.moving_window_dir
+    /** m_moving_window_dir is a copy of WarpX::moving_window_dir
      *  Currently, back-transformed diagnostics only works if moving window is
      *  in z-direction for both 2D and 3D simulations in the Cartesian frame of reference.
      */
@@ -229,6 +237,9 @@ private:
     /** Vector of counters tracking number of times the buffer of multifab is
      *  flushed out and emptied before being refilled again for each snapshot */
     amrex::Vector<int> m_buffer_flush_counter;
+    /** Vector of k-indices in the hi-end along the moving window direction for the buffer being filled
+     *  for each snapshot.
+     */
     amrex::Vector<int> m_buffer_k_index_hi;
     /** Multi-level cell-centered multifab with all field-data components, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
@@ -269,7 +280,7 @@ private:
       */
     amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
-        amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
+        const amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
         return current_z_boost;
     }
     /** Compute and return z-position in the lab-frame at the current timestep
@@ -278,7 +289,7 @@ private:
       */
     amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
-        amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
+        const amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
         return current_z_lab;
     }
     /** Compute and return cell-size in z-dimension in the lab-frame at level, lev
@@ -309,6 +320,19 @@ private:
     bool buffer_empty (int i_buffer) {
         return ( m_buffer_counter[i_buffer] == 0) ;
     }
+
+    /** Vector of integers to indicate if is the first flush for a snapshot so that appropriate meta-data and geometry is written (0 if not, 1 if yes). */
+    amrex::Vector<int> m_first_flush_after_restart;
+
+    /** Resets integer for first flush to 0 for the ith snapshot (i_buffer).
+     *  This function is called after flush the first buffer after restarting the simulation
+     */
+    void NullifyFirstFlush(int i_buffer) {m_first_flush_after_restart[i_buffer] = 0;}
+
+    /** Vector of integers to indicate if the snapshot geometry is defined. */
+    amrex::Vector<int> m_snapshot_geometry_defined;
+    /** Vector of integers to indicate if the field buffer multifab, m_mf_output, is defined in DefineFieldBufferMultifab() function */
+    amrex::Vector<int> m_field_buffer_multifab_defined;
 
     /** Reset buffer counter to zero.
      * \param[in] i_buffer snapshot index for which the counter is set to zero.
@@ -388,5 +412,17 @@ private:
     void RedistributeParticleBuffer (const int i_buffer);
     void UpdateVarnamesForRZopenPMD();
 
+    amrex::Real gettlab (int i_buffer) override {return m_t_lab[i_buffer];}
+    void settlab (int i_buffer, amrex::Real tlab) override {m_t_lab[i_buffer] = tlab; }
+    int get_buffer_k_index_hi (int i_buffer) override {return m_buffer_k_index_hi[i_buffer]; }
+    void set_buffer_k_index_hi (int i_buffer, int kindex) override {m_buffer_k_index_hi[i_buffer] = kindex;}
+    amrex::Real get_snapshot_domain_lo (int i_buffer, int idim) override {return m_snapshot_domain_lab[i_buffer].lo(idim); }
+    amrex::Real get_snapshot_domain_hi (int i_buffer, int idim) override {return m_snapshot_domain_lab[i_buffer].hi(idim); }
+    int get_flush_counter (int i_buffer) override {return m_buffer_flush_counter[i_buffer]; }
+    void set_flush_counter ([[maybe_unused]] int i_buffer, int flush_counter) override { m_buffer_flush_counter[i_buffer] = flush_counter; }
+    int get_last_valid_Zslice ( int i_buffer) override { return m_lastValidZSlice[i_buffer]; }
+    void set_last_valid_Zslice ( int i_buffer, int last_valid_Zslice) override { m_lastValidZSlice[i_buffer] = last_valid_Zslice; }
+    int get_snapshot_full_flag ( int i_buffer) override { return m_snapshot_full[i_buffer]; }
+    void set_snapshot_full ( int i_buffer, int snapshot_full) override { m_snapshot_full[i_buffer] = snapshot_full; }
 };
 #endif // WARPX_BTDIAGNOSTICS_H_

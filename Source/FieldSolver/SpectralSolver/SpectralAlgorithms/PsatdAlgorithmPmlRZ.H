@@ -20,7 +20,7 @@ class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
                              amrex::DistributionMapping const & dm,
                              const SpectralFieldIndex& spectral_index,
                              int const n_rz_azimuthal_modes, int const norder_z,
-                             bool const nodal, amrex::Real const dt_step);
+                             short const grid_type, amrex::Real const dt_step);
 
         // Redefine functions from base class
         virtual void pushSpectralFields (SpectralFieldDataRZ & f) override final;
@@ -50,8 +50,6 @@ class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
         virtual void VayDeposition (SpectralFieldDataRZ& field_data) override final;
 
     private:
-
-        SpectralFieldIndex m_spectral_index;
 
         bool coefficients_initialized;
         // Note that dt is saved to use in InitializeSpectralCoefficients

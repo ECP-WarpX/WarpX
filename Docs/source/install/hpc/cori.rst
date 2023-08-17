@@ -262,7 +262,7 @@ The general :ref:`cmake compile-time options and instructions for Python (PICMI)
    # install or update dependencies
    python3 -m pip install -r requirements.txt
 
-   # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
+   # compile parallel PICMI interfaces with openPMD support and 3D, 2D, 1D and RZ
    WARPX_MPI=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall --no-deps -v .
 
 
@@ -390,6 +390,15 @@ In this manual, we often use this ``conda create`` line over the officially docu
    conda create -n myenv -c conda-forge python mamba ipykernel ipympl==0.8.6 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram dask dask-jobqueue pyarrow
 
 We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
+
+``kernel_helper.sh`` should read:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   module load python
+   source activate myenv
+   exec "$@"
 
 When opening a Jupyter notebook, just select the name you picked for your custom kernel on the top right of the notebook.
 

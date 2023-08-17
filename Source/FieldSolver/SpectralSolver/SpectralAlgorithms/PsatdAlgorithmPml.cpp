@@ -34,12 +34,11 @@ PsatdAlgorithmPml::PsatdAlgorithmPml(const SpectralKSpace& spectral_kspace,
                                      const DistributionMapping& dm,
                                      const SpectralFieldIndex& spectral_index,
                                      const int norder_x, const int norder_y,
-                                     const int norder_z, const bool nodal,
+                                     const int norder_z, const short grid_type,
                                      const Real dt,
                                      const bool dive_cleaning, const bool divb_cleaning)
      // Initialize members of base class
-     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, nodal),
-       m_spectral_index(spectral_index),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
        m_dt(dt),
        m_dive_cleaning(dive_cleaning),
        m_divb_cleaning(divb_cleaning)
@@ -70,12 +69,12 @@ PsatdAlgorithmPml::pushSpectralFields(SpectralFieldData& f) const {
         const Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        Array4<Complex> fields = f.fields[mfi].array();
+        const Array4<Complex> fields = f.fields[mfi].array();
 
         // Extract arrays for the coefficients
-        Array4<const Real> C_arr = C_coef[mfi].array();
-        Array4<const Real> S_ck_arr = S_ck_coef[mfi].array();
-        Array4<const Real> inv_k2_arr = inv_k2_coef[mfi].array();
+        const Array4<const Real> C_arr = C_coef[mfi].array();
+        const Array4<const Real> S_ck_arr = S_ck_coef[mfi].array();
+        const Array4<const Real> inv_k2_arr = inv_k2_coef[mfi].array();
 
         // Extract pointers for the k vectors
         const Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
@@ -369,9 +368,9 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
         const Real* modified_kz = modified_kz_vec[mfi].dataPtr();
 
         // Extract arrays for the coefficients
-        Array4<Real> C = C_coef[mfi].array();
-        Array4<Real> S_ck = S_ck_coef[mfi].array();
-        Array4<Real> inv_k2 = inv_k2_coef[mfi].array();
+        const Array4<Real> C = C_coef[mfi].array();
+        const Array4<Real> S_ck = S_ck_coef[mfi].array();
+        const Array4<Real> inv_k2 = inv_k2_coef[mfi].array();
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -405,15 +404,15 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
 void
 PsatdAlgorithmPml::CurrentCorrection (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Current correction not implemented for PML PSATD"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Current correction not implemented for PML PSATD");
 }
 
 void
 PsatdAlgorithmPml::VayDeposition (SpectralFieldData& /*field_data*/)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented for PML PSATD"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented for PML PSATD");
 }
 
 #endif // WARPX_USE_PSATD

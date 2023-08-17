@@ -11,7 +11,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
-VelocityProperties::VelocityProperties (amrex::ParmParse& pp) {
+VelocityProperties::VelocityProperties (const amrex::ParmParse& pp) {
     // Set defaults
     std::string vel_dist_s = "constant";
     std::string vel_dir_s = "x";
@@ -38,10 +38,10 @@ VelocityProperties::VelocityProperties (amrex::ParmParse& pp) {
         m_dir = 2;
     }
     else {
-        amrex::Abort(Utils::TextMsg::Err(
+        WARPX_ABORT_WITH_MESSAGE(
             "Cannot interpret <s_name>.bulk_vel_dir input '" + vel_dir_s +
             "'. Please enter +/- x, y, or z with no whitespace between the sign and"+
-            " other character."));
+            " other character.");
     }
 
     pp.query("beta_distribution_type", vel_dist_s);
@@ -63,7 +63,7 @@ VelocityProperties::VelocityProperties (amrex::ParmParse& pp) {
         m_type = VelParserFunction;
     }
     else {
-        amrex::Abort(Utils::TextMsg::Err(
-            "Velocity distribution type '" + vel_dist_s + "' not recognized."));
+        WARPX_ABORT_WITH_MESSAGE(
+            "Velocity distribution type '" + vel_dist_s + "' not recognized.");
     }
 }

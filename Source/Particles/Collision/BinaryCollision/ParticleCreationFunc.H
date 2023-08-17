@@ -114,7 +114,7 @@ public:
                     const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight
                     ) const
     {
-        if (n_total_pairs == 0) return amrex::Vector<int>(m_num_product_species, 0);
+        if (n_total_pairs == 0) return {m_num_product_species, 0};
 
         // Compute offset array and allocate memory for the produced species
         amrex::Gpu::DeviceVector<index_type> offsets(n_total_pairs);
@@ -306,7 +306,7 @@ public:
                     const amrex::ParticleReal* /*p_pair_reaction_weight*/
                     ) const
     {
-        return amrex::Vector<int>();
+        return {};
     }
 };
 

@@ -32,7 +32,7 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
                                 const int norder_x,
                                 const int norder_y,
                                 const int norder_z,
-                                const bool nodal,
+                                const short grid_type,
                                 const amrex::Vector<amrex::Real>& v_comoving,
                                 const amrex::Real dt,
                                 const bool update_with_rho);
@@ -73,8 +73,6 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
         // Real and complex spectral coefficients
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
-
-        SpectralFieldIndex m_spectral_index;
 
         // k vectors
         KVectorComponent kx_vec;

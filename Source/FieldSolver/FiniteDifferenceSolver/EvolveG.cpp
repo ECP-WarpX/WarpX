@@ -47,7 +47,7 @@ void FiniteDifferenceSolver::EvolveG (
     amrex::ignore_unused(Gfield, Bfield, dt);
 #else
     // Select algorithm
-    if (m_do_nodal)
+    if (m_grid_type == GridType::Collocated)
     {
         EvolveGCartesian<CartesianNodalAlgorithm>(Gfield, Bfield, dt);
     }
@@ -61,7 +61,7 @@ void FiniteDifferenceSolver::EvolveG (
     }
     else
     {
-        amrex::Abort(Utils::TextMsg::Err("EvolveG: unknown FDTD algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveG: unknown FDTD algorithm");
     }
 #endif
 }

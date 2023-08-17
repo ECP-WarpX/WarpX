@@ -202,13 +202,13 @@ public:
         ParticleUtils::getEnergy(u_coll2, m_mass1, E_coll);
 
         // each electron gets half the energy (could change this later)
-        amrex::ParticleReal E_out = (E_coll - m_energy_cost) / 2.0_prt * PhysConst::q_e;
+        const amrex::ParticleReal E_out = (E_coll - m_energy_cost) / 2.0_prt * PhysConst::q_e;
 
         // precalculate often used value
         constexpr auto c2 = PhysConst::c * PhysConst::c;
         const auto mc2 = m_mass1*c2;
 
-        amrex::ParticleReal up = sqrt(E_out * (E_out + 2.0_prt*mc2) / c2) / m_mass1;
+        const amrex::ParticleReal up = sqrt(E_out * (E_out + 2.0_prt*mc2) / c2) / m_mass1;
 
         // isotropically scatter electrons
         ParticleUtils::RandomizeVelocity(ux, uy, uz, up, engine);

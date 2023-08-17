@@ -13,6 +13,7 @@
 #include "WarpXParticleContainer_fwd.H"
 
 #include "Evolve/WarpXDtType.H"
+#include "Initialization/PlasmaInjector.H"
 #include "Particles/ParticleBoundaries.H"
 #include "SpeciesPhysicalProperties.H"
 
@@ -22,9 +23,11 @@
 #endif
 #include "MultiParticleContainer_fwd.H"
 #include "NamedComponentParticleContainer.H"
+#include "Utils/export.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_FArrayBox.H>
+#include <AMReX_GpuAllocators.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_INT.H>
 #include <AMReX_ParIter.H>
@@ -44,9 +47,10 @@
 #include <string>
 #include <utility>
 
+
 using namespace amrex::literals;
 
-class WarpXParIter
+class WARPX_EXPORT WarpXParIter
     : public amrex::ParIter<0,0,PIdx::nattribs>
 {
 public:
@@ -98,7 +102,7 @@ public:
  * Note: many functions are pure virtual (meaning they MUST be defined in
  * derived classes, e.g., Evolve) or actual functions (e.g. CurrentDeposition).
  */
-class WarpXParticleContainer
+class WARPX_EXPORT WarpXParticleContainer
     : public NamedComponentParticleContainer<amrex::DefaultAllocator>
 {
 public:
@@ -119,6 +123,12 @@ public:
     virtual void InitData () = 0;
 
     virtual void InitIonizationModule () {}
+
+    /*
+     * \brief Virtual function that returns a pointer to the plasma injector,
+     *        for derived classes that define one (PhysicalParticleContainer).
+     */
+    virtual PlasmaInjector* GetPlasmaInjector () { return nullptr; }
 
     /**
      * Evolve is the central WarpXParticleContainer function that advances
@@ -144,8 +154,9 @@ public:
      * class.
      */
     virtual void DefaultInitializeRuntimeAttributes (
-                        amrex::ParticleTile<NStructReal, NStructInt, NArrayReal,
-                                            NArrayInt,amrex::PinnedArenaAllocator>& pinned_tile,
+                        amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                            NArrayReal, NArrayInt,
+                                            amrex::PinnedArenaAllocator>& pinned_tile,
                         const int n_external_attr_real,
                         const int n_external_attr_int,
                         const amrex::RandomEngine& engine) = 0;
@@ -189,14 +200,18 @@ public:
      * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
      * \param[in] local if false, exchange the data in the guard cells after the deposition
      * \param[in] reset if true, reset all values of rho to zero
-     * \param[in] do_rz_volume_scaling whether to scale the final density by some volume norm in RZ geometry
+     * \param[in] apply_boundary_and_scale_volume whether to apply boundary conditions and scale the final density by some volume norm in RZ geometry
      * \param[in] interpolate_across_levels whether to average down from the fine patch to the coarse patch
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                         const bool local = false, const bool reset = false,
-                        const bool do_rz_volume_scaling = false,
+                        const bool apply_boundary_and_scale_volume = false,
                         const bool interpolate_across_levels = true,
+                        const int icomp = 0);
+    void DepositCharge (std::unique_ptr<amrex::MultiFab>& rho, const int lev,
+                        const bool local = false, const bool reset = false,
+                        const bool apply_boundary_and_scale_volume = false,
                         const int icomp = 0);
 
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
@@ -205,12 +220,12 @@ public:
                                RealVector const & wp,
                                const int * const ion_lev,
                                amrex::MultiFab* rho,
-                               int icomp,
+                               const int icomp,
                                const long offset,
                                const long np_to_depose,
-                               int thread_num,
-                               int lev,
-                               int depos_lev);
+                               const int thread_num,
+                               const int lev,
+                               const int depos_lev);
 
     virtual void DepositCurrent (WarpXParIter& pti,
                                 RealVector const & wp,
@@ -237,11 +252,19 @@ public:
     // LaserParticleContainer: implemented.
     // RigidInjectedParticleContainer: not implemented.
     virtual void ContinuousInjection(const amrex::RealBox& /*injection_box*/) {}
-    // Update optional sub-class-specific injection location.
-    virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
+
+    /**
+     * \brief Update antenna position for continuous injection of lasers
+     *        in a boosted frame. Empty function for containers other than lasers.
+     */
+    virtual void UpdateAntennaPosition(const amrex::Real /*dt*/) {}
+
+    bool doContinuousInjection() const {return do_continuous_injection;}
 
     // Inject a continuous flux of particles from a defined plane
     virtual void ContinuousFluxInjection(amrex::Real /*t*/, amrex::Real /*dt*/) {}
+
+    int getSpeciesId() const {return species_id;}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.
@@ -277,11 +300,16 @@ public:
      * @param[in] id if different than -1, this id will be assigned to the particles (used for
      * particle tagging in some routines, e.g. SplitParticle)
      */
-    void AddNParticles (int lev,
-                        int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
-                        const amrex::ParticleReal* ux, const amrex::ParticleReal* uy, const amrex::ParticleReal* uz,
-                        const int nattr_real, const amrex::ParticleReal* attr_real,
-                        const int nattr_int, const int* attr_int,
+    void AddNParticles (int lev, int n,
+                        amrex::Vector<amrex::ParticleReal> const & x,
+                        amrex::Vector<amrex::ParticleReal> const & y,
+                        amrex::Vector<amrex::ParticleReal> const & z,
+                        amrex::Vector<amrex::ParticleReal> const & ux,
+                        amrex::Vector<amrex::ParticleReal> const & uy,
+                        amrex::Vector<amrex::ParticleReal> const & uz,
+                        const int nattr_real,
+                        amrex::Vector<amrex::Vector<amrex::ParticleReal>> const & attr_real,
+                        const int nattr_int, amrex::Vector<amrex::Vector<int>> const & attr_int,
                         int uniqueparticles, amrex::Long id=-1);
 
     virtual void ReadHeader (std::istream& is) = 0;
@@ -303,6 +331,9 @@ public:
     amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
+
+    //! Current injection position
+    amrex::Real m_current_injection_position;
 
     // split along diagonals (0) or axes (1)
     int split_type = 0;

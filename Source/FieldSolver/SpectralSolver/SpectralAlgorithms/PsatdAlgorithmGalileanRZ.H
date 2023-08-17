@@ -20,7 +20,7 @@ class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
                                   amrex::DistributionMapping const & dm,
                                   const SpectralFieldIndex& spectral_index,
                                   int const n_rz_azimuthal_modes, int const norder_z,
-                                  bool const nodal,
+                                  short const grid_type,
                                   const amrex::Vector<amrex::Real>& v_galilean,
                                   amrex::Real const dt_step,
                                   bool const update_with_rho);
@@ -50,8 +50,6 @@ class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
         virtual void VayDeposition (SpectralFieldDataRZ& field_data) override final;
 
     private:
-
-        SpectralFieldIndex m_spectral_index;
 
         bool coefficients_initialized;
         // Note that dt and v_galilean are saved to use in InitializeSpectralCoefficients

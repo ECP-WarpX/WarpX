@@ -4,7 +4,7 @@ Python (PICMI)
 ==============
 
 WarpX uses the `PICMI standard <https://github.com/picmi-standard/picmi>`__ for its Python input files.
-Python version 3.7 or newer is required.
+Python version 3.8 or newer is required.
 
 Example input files can be found in :ref:`the examples section <usage-examples>`.
 In the input file, instances of classes are created defining the various aspects of the simulation.
@@ -162,6 +162,10 @@ MCCCollisions
 """""""""""""
 .. autoclass:: pywarpx.picmi.MCCCollisions
 
+FieldIonization
+"""""""""""""""
+.. autoclass:: pywarpx.picmi.FieldIonization
+
 Lasers
 ^^^^^^
 
@@ -229,8 +233,8 @@ specific location in the WarpX simulation loop.
 
 Places in the WarpX loop where callbacks are available include:
 ``afterinit``, ``beforecollisions``, ``aftercollisions``, ``beforeEsolve``, ``afterEsolve``,
-``beforedeposition``, ``afterdeposition``, ``beforestep``, ``afterstep``, ``afterdiagnostics``,
-``afterrestart`` and ``oncheckpointsignal``.
+``beforeInitEsolve``, ``afterInitEsolve``, ``beforedeposition``, ``afterdeposition``,
+``beforestep``, ``afterstep``, ``afterdiagnostics``,``afterrestart`` and ``oncheckpointsignal``.
 See the examples in *Examples/Tests/ParticleDataPython* for references on how to use
 ``callbacks``.
 

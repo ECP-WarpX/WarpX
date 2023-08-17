@@ -37,7 +37,7 @@ class PsatdAlgorithmJConstantInTime : public SpectralBaseAlgorithm
          * \param[in] norder_x order of the spectral solver along x
          * \param[in] norder_y order of the spectral solver along y
          * \param[in] norder_z order of the spectral solver along z
-         * \param[in] nodal whether the E and B fields are defined on a fully nodal grid or a Yee grid
+         * \param[in] grid_type type of grid (collocated or not)
          * \param[in] v_galilean Galilean velocity (three-dimensional array)
          * \param[in] dt time step of the simulation
          * \param[in] update_with_rho whether the update equation for E uses rho or not
@@ -52,7 +52,7 @@ class PsatdAlgorithmJConstantInTime : public SpectralBaseAlgorithm
             const int norder_x,
             const int norder_y,
             const int norder_z,
-            const bool nodal,
+            const short grid_type,
             const amrex::Vector<amrex::Real>& v_galilean,
             const amrex::Real dt,
             const bool update_with_rho,
@@ -122,8 +122,6 @@ class PsatdAlgorithmJConstantInTime : public SpectralBaseAlgorithm
 
         // These real and complex coefficients are allocated only with averaged Galilean PSATD
         SpectralComplexCoefficients Psi1_coef, Psi2_coef, Y1_coef, Y2_coef, Y3_coef, Y4_coef;
-
-        SpectralFieldIndex m_spectral_index;
 
         // Centered modified finite-order k vectors
         KVectorComponent modified_kx_vec_centered;

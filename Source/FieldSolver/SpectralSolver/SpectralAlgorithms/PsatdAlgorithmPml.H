@@ -31,7 +31,7 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
                           const amrex::DistributionMapping& dm,
                           const SpectralFieldIndex& spectral_index,
                           const int norder_x, const int norder_y,
-                          const int norder_z, const bool nodal,
+                          const int norder_z, const short grid_type,
                           const amrex::Real dt,
                           const bool dive_cleaning,
                           const bool divb_cleaning);
@@ -67,7 +67,6 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
         virtual void VayDeposition (SpectralFieldData& field_data) override final;
 
     private:
-        SpectralFieldIndex m_spectral_index;
         SpectralRealCoefficients C_coef, S_ck_coef, inv_k2_coef;
         amrex::Real m_dt;
         bool m_dive_cleaning;

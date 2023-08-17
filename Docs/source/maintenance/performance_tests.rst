@@ -48,7 +48,7 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
    module load lapackpp/2021.04.00
    module load boost/1.76.0
    module load adios2/2.7.1
-   module load hdf5/1.10.7
+   module load hdf5/1.12.2
 
    module unload darshan-runtime
 

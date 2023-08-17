@@ -10,6 +10,7 @@ CEXE_sources += BeamRelevant.cpp
 CEXE_sources += LoadBalanceCosts.cpp
 CEXE_sources += LoadBalanceEfficiency.cpp
 CEXE_sources += ParticleHistogram.cpp
+CEXE_sources += ParticleHistogram2D.cpp
 CEXE_sources += FieldMaximum.cpp
 CEXE_sources += FieldProbe.cpp
 CEXE_sources += ParticleExtrema.cpp

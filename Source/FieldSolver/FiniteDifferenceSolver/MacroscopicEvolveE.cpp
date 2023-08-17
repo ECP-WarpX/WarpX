@@ -47,11 +47,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
-    amrex::Abort(Utils::TextMsg::Err(
-        "currently macro E-push does not work for RZ"));
+
+    WARPX_ABORT_WITH_MESSAGE("currently macro E-push does not work for RZ");
 #else
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !m_do_nodal, "macro E-push does not work for nodal");
+        m_grid_type != GridType::Collocated, "Macroscopic E field solver does not work on collocated grids");
 
 
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
@@ -86,8 +86,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         }
 
     } else {
-        amrex::Abort(Utils::TextMsg::Err(
-            "MacroscopicEvolveE: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE(
+            "MacroscopicEvolveE: Unknown algorithm");
     }
 #endif
 
@@ -184,8 +184,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Interpolated permittivity, epsilon, to Ex position on the grid
                 amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
                                                                                     Ex_stag, macro_cr, i, j, k, scomp);
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
-                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
+                const amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
+                const amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
                 Ex(i, j, k) = alpha * Ex(i, j, k)
                             + beta * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
                                        + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)
@@ -208,8 +208,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Interpolated permittivity, epsilon, to Ey position on the grid
                 amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
                                                                                     Ey_stag, macro_cr, i, j, k, scomp);
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
-                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
+                const amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
+                const amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
                 Ey(i, j, k) = alpha * Ey(i, j, k)
                             + beta * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
@@ -228,8 +228,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Interpolated permittivity, epsilon, to Ez position on the grid
                 amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
                                                                                     Ez_stag, macro_cr, i, j, k, scomp);
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
-                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
+                const amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
+                const amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
                 Ez(i, j, k) = alpha * Ez(i, j, k)
                             + beta * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)

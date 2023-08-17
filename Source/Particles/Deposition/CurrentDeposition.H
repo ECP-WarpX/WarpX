@@ -8,9 +8,11 @@
 #ifndef CURRENTDEPOSITION_H_
 #define CURRENTDEPOSITION_H_
 
-#include "Parallelization/KernelTimer.H"
+#include "Particles/Deposition/SharedDepositionUtils.H"
+#include "ablastr/parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #ifdef WARPX_DIM_RZ
@@ -49,24 +51,24 @@ using namespace amrex::literals;
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doDepositionShapeN(const GetParticlePosition& GetPosition,
-                        const amrex::ParticleReal * const wp,
-                        const amrex::ParticleReal * const uxp,
-                        const amrex::ParticleReal * const uyp,
-                        const amrex::ParticleReal * const uzp,
-                        const int * const ion_lev,
-                        amrex::FArrayBox& jx_fab,
-                        amrex::FArrayBox& jy_fab,
-                        amrex::FArrayBox& jz_fab,
-                        const long np_to_depose,
-                        const amrex::Real relative_time,
-                        const std::array<amrex::Real,3>& dx,
-                        const std::array<amrex::Real,3>& xyzmin,
-                        const amrex::Dim3 lo,
-                        const amrex::Real q,
-                        const int n_rz_azimuthal_modes,
-                        amrex::Real* cost,
-                        const long load_balance_costs_update_algo)
+void doDepositionShapeN (const GetParticlePosition& GetPosition,
+                         const amrex::ParticleReal * const wp,
+                         const amrex::ParticleReal * const uxp,
+                         const amrex::ParticleReal * const uyp,
+                         const amrex::ParticleReal * const uzp,
+                         const int * const ion_lev,
+                         amrex::FArrayBox& jx_fab,
+                         amrex::FArrayBox& jy_fab,
+                         amrex::FArrayBox& jz_fab,
+                         const long np_to_depose,
+                         const amrex::Real relative_time,
+                         const std::array<amrex::Real,3>& dx,
+                         const std::array<amrex::Real,3>& xyzmin,
+                         const amrex::Dim3 lo,
+                         const amrex::Real q,
+                         const int n_rz_azimuthal_modes,
+                         amrex::Real* cost,
+                         const long load_balance_costs_update_algo)
 {
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
@@ -125,8 +127,9 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
 #if defined(WARPX_USE_GPUCLOCK)
-            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
 
             // --- Get particle quantities
@@ -326,11 +329,220 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
         }
     );
 #if defined(WARPX_USE_GPUCLOCK)
-    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+    if(cost && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         amrex::Gpu::streamSynchronize();
         *cost += *cost_real;
         amrex::The_Managed_Arena()->free(cost_real);
     }
+#endif
+}
+
+/**
+ * \brief Current Deposition for thread thread_num using shared memory
+ * \tparam depos_order deposition order
+ * \param GetPosition  A functor for returning the particle position.
+ * \param wp           Pointer to array of particle weights.
+ * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
+ * \param ion_lev      Pointer to array of particle ionization level. This is
+                         required to have the charge of each macroparticle
+                         since q is a scalar. For non-ionizable species,
+                         ion_lev is a null pointer.
+ * \param jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile.
+ * \param np_to_depose Number of particles for which current is deposited.
+ * \param dt           Time step for particle level
+ * \param relative_time Time at which to deposit J, relative to the time of the
+ *                      current positions of the particles. When different than 0,
+ *                      the particle position will be temporarily modified to match
+ *                      the time of the deposition.
+ * \param dx           3D cell size
+ * \param xyzmin       Physical lower bounds of domain.
+ * \param lo           Index lower bounds of domain.
+ * \param q            species charge.
+ * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
+ * \param cost  Pointer to (load balancing) cost corresponding to box where present particles deposit current.
+ * \param load_balance_costs_update_algo Selected method for updating load balance costs.
+ */
+template <int depos_order>
+void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
+                               const amrex::ParticleReal * const wp,
+                               const amrex::ParticleReal * const uxp,
+                               const amrex::ParticleReal * const uyp,
+                               const amrex::ParticleReal * const uzp,
+                               const int * const ion_lev,
+                               amrex::FArrayBox& jx_fab,
+                               amrex::FArrayBox& jy_fab,
+                               amrex::FArrayBox& jz_fab,
+                               const long np_to_depose,
+                               const amrex::Real relative_time,
+                               const std::array<amrex::Real,3>& dx,
+                               const std::array<amrex::Real,3>& xyzmin,
+                               const amrex::Dim3 lo,
+                               const amrex::Real q,
+                               const int n_rz_azimuthal_modes,
+                               amrex::Real* cost,
+                               const long load_balance_costs_update_algo,
+                               const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
+                               const amrex::Box& box,
+                               const amrex::Geometry& geom,
+                               const amrex::IntVect& a_tbox_max_size)
+{
+#if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
+    using namespace amrex;
+
+    auto permutation = a_bins.permutationPtr();
+
+    amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
+    amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
+    amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
+    amrex::IntVect const jx_type = jx_fab.box().type();
+    amrex::IntVect const jy_type = jy_fab.box().type();
+    amrex::IntVect const jz_type = jz_fab.box().type();
+
+    constexpr int zdir = WARPX_ZINDEX;
+    constexpr int NODE = amrex::IndexType::NODE;
+    constexpr int CELL = amrex::IndexType::CELL;
+
+    // Loop over particles and deposit into jx_fab, jy_fab and jz_fab
+#if defined(WARPX_USE_GPUCLOCK)
+    amrex::Real* cost_real = nullptr;
+    if (cost && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+        cost_real = (amrex::Real *) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
+        *cost_real = 0._rt;
+    }
+#endif
+    const auto dxiarr = geom.InvCellSizeArray();
+    const auto plo = geom.ProbLoArray();
+    const auto domain = geom.Domain();
+
+    amrex::Box sample_tbox(IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
+    sample_tbox.grow(depos_order);
+
+    amrex::Box sample_tbox_x = convert(sample_tbox, jx_type);
+    amrex::Box sample_tbox_y = convert(sample_tbox, jy_type);
+    amrex::Box sample_tbox_z = convert(sample_tbox, jz_type);
+
+    const auto npts = amrex::max(sample_tbox_x.numPts(), sample_tbox_y.numPts(), sample_tbox_z.numPts());
+
+    const int nblocks = a_bins.numBins();
+    const int threads_per_block = WarpX::shared_mem_current_tpb;
+    const auto offsets_ptr = a_bins.offsetsPtr();
+
+    const std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
+    const amrex::IntVect bin_size = WarpX::shared_tilesize;
+    const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
+                                     "Tile size too big for GPU shared memory current deposition");
+
+    amrex::ignore_unused(np_to_depose);
+    // Launch one thread-block per bin
+    amrex::launch(
+            nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
+            [=] AMREX_GPU_DEVICE () noexcept {
+#if defined(WARPX_USE_GPUCLOCK)
+        const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
+#endif
+        const int bin_id = blockIdx.x;
+        const unsigned int bin_start = offsets_ptr[bin_id];
+        const unsigned int bin_stop = offsets_ptr[bin_id+1];
+
+        if (bin_start == bin_stop) { return; /*this bin has no particles*/ }
+
+        // These boxes define the index space for the shared memory buffers
+        amrex::Box buffer_box;
+        {
+            ParticleReal xp, yp, zp;
+            GetPosition(permutation[bin_start], xp, yp, zp);
+#if defined(WARPX_DIM_3D)
+            IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
+                                 int( amrex::Math::floor((yp-plo[1]) * dxiarr[1]) ),
+                                 int( amrex::Math::floor((zp-plo[2]) * dxiarr[2]) ));
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+            IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
+                                 int( amrex::Math::floor((zp-plo[1]) * dxiarr[1]) ));
+#elif defined(WARPX_DIM_1D_Z)
+            IntVect iv = IntVect(int( amrex::Math::floor((zp-plo[0]) * dxiarr[0]) ));
+#endif
+            iv += domain.smallEnd();
+            getTileIndex(iv, box, true, bin_size, buffer_box);
+        }
+
+        buffer_box.grow(depos_order);
+        Box tbox_x = convert(buffer_box, jx_type);
+        Box tbox_y = convert(buffer_box, jy_type);
+        Box tbox_z = convert(buffer_box, jz_type);
+
+        Gpu::SharedMemory<amrex::Real> gsm;
+        amrex::Real* const shared = gsm.dataPtr();
+
+        amrex::Array4<amrex::Real> const jx_buff(shared,
+                amrex::begin(tbox_x), amrex::end(tbox_x), 1);
+        amrex::Array4<amrex::Real> const jy_buff(shared,
+                amrex::begin(tbox_y), amrex::end(tbox_y), 1);
+        amrex::Array4<amrex::Real> const jz_buff(shared,
+                amrex::begin(tbox_z), amrex::end(tbox_z), 1);
+
+        // Zero-initialize the temporary array in shared memory
+        volatile amrex::Real* vs = shared;
+        for (int i = threadIdx.x; i < npts; i += blockDim.x){
+            vs[i] = 0.0;
+        }
+        __syncthreads();
+        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
+        {
+            const unsigned int ip = permutation[ip_orig];
+            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
+                                          relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          ip, zdir, NODE, CELL, 0);
+        }
+
+        __syncthreads();
+        addLocalToGlobal(tbox_x, jx_arr, jx_buff);
+        for (int i = threadIdx.x; i < npts; i += blockDim.x){
+            vs[i] = 0.0;
+        }
+
+        __syncthreads();
+        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
+        {
+            const unsigned int ip = permutation[ip_orig];
+            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
+                                          relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          ip, zdir, NODE, CELL, 1);
+        }
+
+        __syncthreads();
+        addLocalToGlobal(tbox_y, jy_arr, jy_buff);
+        for (int i = threadIdx.x; i < npts; i += blockDim.x){
+            vs[i] = 0.0;
+        }
+
+        __syncthreads();
+        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
+        {
+            const unsigned int ip = permutation[ip_orig];
+            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
+                                          relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          ip, zdir, NODE, CELL, 2);
+        }
+
+        __syncthreads();
+        addLocalToGlobal(tbox_z, jz_arr, jz_buff);
+    });
+#if defined(WARPX_USE_GPUCLOCK)
+    if (cost && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+        amrex::Gpu::streamSynchronize();
+        *cost += *cost_real;
+        amrex::The_Managed_Arena()->free(cost_real);
+    }
+#endif
+#else // not using hip/cuda
+    // Note, you should never reach this part of the code. This funcion cannot be called unless
+    // using HIP/CUDA, and those things are checked prior
+    //don't use any args
+    ignore_unused( GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
+    WARPX_ABORT_WITH_MESSAGE("Shared memory only implemented for HIP/CUDA");
 #endif
 }
 
@@ -441,8 +653,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long const ip) {
 #if defined(WARPX_USE_GPUCLOCK)
-            KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            const auto KernelTimer = ablastr::parallelization::KernelTimer(
+                cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+                cost_real);
 #endif
 
             // --- Get particle quantities
@@ -554,8 +767,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             // --- Compute shape factors
             // Compute shape factors for position as they are now and at old positions
             // [ijk]_new: leftmost grid point that the particle touches
-            Compute_shape_factor< depos_order > compute_shape_factor;
-            Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
+            const Compute_shape_factor< depos_order > compute_shape_factor;
+            const Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
 
 #if !defined(WARPX_DIM_1D_Z)
             const int i_new = compute_shape_factor(sx_new+1, x_new);
@@ -700,7 +913,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
         }
     );
 #if defined(WARPX_USE_GPUCLOCK)
-    if( load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
+    if(cost && load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock) {
         amrex::Gpu::streamSynchronize();
         *cost += *cost_real;
         amrex::The_Managed_Arena()->free(cost_real);
@@ -762,17 +975,17 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
         np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
-    amrex::Abort("Vay deposition not implemented in RZ geometry");
+    WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in RZ geometry");
 #endif
 
 #if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
         np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
-    amrex::Abort("Vay deposition not implemented in cartesian 1D geometry");
+    WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in cartesian 1D geometry");
 #endif
 
-#if !defined(AMREX_USE_GPU)
+#if !defined(WARPX_USE_GPUCLOCK)
     amrex::ignore_unused(cost, load_balance_costs_update_algo);
 #endif
 
@@ -836,8 +1049,9 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)
     {
 #if defined(WARPX_USE_GPUCLOCK)
-        KernelTimer kernelTimer(cost && load_balance_costs_update_algo
-                             == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+        const auto KernelTimer = ablastr::parallelization::KernelTimer(
+            cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
+            cost_real);
 #endif
 
         // Inverse of Lorentz factor gamma

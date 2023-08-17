@@ -23,7 +23,11 @@
  *        otherwise L will be calculated based on the algorithm.
  *        To see if there are nan or inf updated velocities,
  *        compile with USE_ASSERTION=TRUE.
-*/
+ *
+ * Updates and corrections to the original publication are documented in
+ * https://github.com/ECP-WarpX/WarpX/issues/429
+ * https://github.com/ECP-WarpX/WarpX/files/3799803/main.pdf
+ */
 
 template <typename T_PR, typename T_R>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -77,11 +81,14 @@ void UpdateMomentumPerezElastic (
     T_PR p1sz;
     if ( vcms > std::numeric_limits<T_PR>::min() )
     {
-        T_PR const lorentz_tansform_factor =
-            ( (gc-T_PR(1.0))/vcms*vcDv1 - gc )*m1*g1;
-        p1sx = p1x + vcx*lorentz_tansform_factor;
-        p1sy = p1y + vcy*lorentz_tansform_factor;
-        p1sz = p1z + vcz*lorentz_tansform_factor;
+        /* lorentz_transform_factor = ( (gc-1.0)/vcms*vcDv1 - gc )*m1*g1;
+         * Rewrite to avoid loss of precision from subtracting similar
+         * numbers when gc is close to 1 */
+        T_PR const lorentz_transform_factor =
+            ( (gc*gc*vcms*inv_c2/(T_PR(1.0) + gc))/vcms*vcDv1 - gc )*m1*g1;
+        p1sx = p1x + vcx*lorentz_transform_factor;
+        p1sy = p1y + vcy*lorentz_transform_factor;
+        p1sz = p1z + vcz*lorentz_transform_factor;
     }
     else // If vcms = 0, don't do Lorentz-transform.
     {
@@ -100,7 +107,10 @@ void UpdateMomentumPerezElastic (
     if ( L > T_PR(0.0) ) { lnLmd = L; }
     else
     {
-        // Compute b0
+        // Compute b0 according to eq (22) from Perez et al., Phys.Plasmas.19.083104 (2012)
+        // Note: there is a typo in the equation, the last square is incorrect!
+        // See the SMILEI documentation: https://smileipic.github.io/Smilei/Understand/collisions.html
+        // and https://github.com/ECP-WarpX/WarpX/files/3799803/main.pdf from GitHub #429
         T_PR const b0 = amrex::Math::abs(q1*q2) * inv_c2 /
                (T_PR(4.0)*MathConst::pi*PhysConst::ep0) * gc/mass_g *
                ( m1*g1s*m2*g2s/(p1sm*p1sm*inv_c2) + T_PR(1.0) );
@@ -226,7 +236,8 @@ void UpdateMomentumPerezElastic (
     {
         T_PR const vcDp1fs = vcx*p1fsx + vcy*p1fsy + vcz*p1fsz;
         T_PR const vcDp2fs = vcx*p2fsx + vcy*p2fsy + vcz*p2fsz;
-        T_PR const factor = (gc-T_PR(1.0))/vcms;
+        /* factor = (gc-1.0)/vcms; Rewrite to avoid subtraction losing precision when gc is close to 1 */
+        T_PR const factor = gc*gc*inv_c2/(gc+T_PR(1.0));
         T_PR const factor1 = factor*vcDp1fs + m1*g1s*gc;
         T_PR const factor2 = factor*vcDp2fs + m2*g2s*gc;
         p1fx = p1fsx + vcx * factor1;

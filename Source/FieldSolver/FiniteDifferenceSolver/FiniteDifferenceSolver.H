@@ -12,6 +12,8 @@
 #include "FiniteDifferenceSolver_fwd.H"
 
 #include "BoundaryConditions/PML_fwd.H"
+#include "Evolve/WarpXDtType.H"
+#include "HybridPICModel/HybridPICModel_fwd.H"
 #include "MacroscopicProperties/MacroscopicProperties_fwd.H"
 
 #include <AMReX_GpuContainers.H>
@@ -39,12 +41,12 @@ class FiniteDifferenceSolver
          *
          * \param fdtd_algo Identifies the chosen algorithm, as defined in WarpXAlgorithmSelection.H
          * \param cell_size Cell size along each dimension, for the chosen refinement level
-         * \param do_nodal  Whether the solver is applied to a nodal or staggered grid
+         * \param grid_type Whether the solver is applied to a collocated or staggered grid
          */
         FiniteDifferenceSolver (
             int const fdtd_algo,
             std::array<amrex::Real,3> cell_size,
-            bool const do_nodal );
+            short const grid_type );
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -129,10 +131,51 @@ class FiniteDifferenceSolver
                      std::array< amrex::MultiFab*, 3 > const Efield,
                      amrex::Real const dt );
 
+        /**
+          * \brief E-update in the hybrid PIC algorithm as described in
+          * Winske et al. (2003) Eq. 10.
+          * https://link.springer.com/chapter/10.1007/3-540-36530-3_8
+          *
+          * \param[out] Efield  vector of electric field MultiFabs updated at a given level
+          * \param[in] Jfield   vector of total current MultiFabs at a given level
+          * \param[in] Jifield  vector of ion current density MultiFabs at a given level
+          * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
+          * \param[in] rhofield scalar ion charge density Multifab at a given level
+          * \param[in] Pefield  scalar electron pressure MultiFab at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
+          * \param[in] lev  level number for the calculation
+          * \param[in] hybrid_pic_model instance of the hybrid-PIC model
+          * \param[in] include_resistivity_term boolean flag for whether to include resistivity
+          */
+        void HybridPICSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                      std::unique_ptr<amrex::MultiFab> const& rhofield,
+                      std::unique_ptr<amrex::MultiFab> const& Pefield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      int lev, HybridPICModel const* hybrid_pic_model,
+                      const bool include_resistivity_term );
+
+        /**
+          * \brief Calculation of total current using Ampere's law (without
+          * displacement current): J = (curl x B) / mu0.
+          *
+          * \param[out] Jfield  vector of current MultiFabs at a given level
+          * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
+          * \param[in] edge_lengths length of edges along embedded boundaries
+          * \param[in] lev  level number for the calculation
+          */
+        void CalculateCurrentAmpere (
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+                      int lev );
+
     private:
 
         int m_fdtd_algo;
-        bool m_do_nodal;
+        short m_grid_type;
 
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;
@@ -184,6 +227,27 @@ class FiniteDifferenceSolver
         void ComputeDivECylindrical (
             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
             amrex::MultiFab& divE );
+
+        template<typename T_Algo>
+        void HybridPICSolveECylindrical (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+            std::unique_ptr<amrex::MultiFab> const& rhofield,
+            std::unique_ptr<amrex::MultiFab> const& Pefield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev, HybridPICModel const* hybrid_pic_model,
+            const bool include_resistivity_term );
+
+        template<typename T_Algo>
+        void CalculateCurrentAmpereCylindrical (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev
+        );
+
 #else
         template< typename T_Algo >
         void EvolveBCartesian (
@@ -267,6 +331,26 @@ class FiniteDifferenceSolver
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
                       amrex::Real const dt );
+
+        template<typename T_Algo>
+        void HybridPICSolveECartesian (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+            std::unique_ptr<amrex::MultiFab> const& rhofield,
+            std::unique_ptr<amrex::MultiFab> const& Pefield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev, HybridPICModel const* hybrid_pic_model,
+            const bool include_resistivity_term );
+
+        template<typename T_Algo>
+        void CalculateCurrentAmpereCartesian (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            int lev
+        );
 #endif
 
 };

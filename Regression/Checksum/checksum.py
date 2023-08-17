@@ -6,6 +6,7 @@
  License: BSD-3-Clause-LBNL
  """
 
+import json
 import sys
 
 from benchmark import Benchmark
@@ -139,6 +140,9 @@ class Checksum:
                   "have different outer keys:")
             print("Benchmark: %s" % ref_benchmark.data.keys())
             print("Plotfile : %s" % self.data.keys())
+            print("\n----------------\nNew file for " + self.test_name + ":")
+            print(json.dumps(self.data, indent=2))
+            print("----------------")
             sys.exit(1)
 
         # Dictionaries have same inner keys (field and particle quantities)?
@@ -151,6 +155,9 @@ class Checksum:
                       % (key1, ref_benchmark.data[key1].keys()))
                 print("Plotfile  inner keys in %s: %s"
                       % (key1, self.data[key1].keys()))
+                print("\n----------------\nNew file for " + self.test_name + ":")
+                print(json.dumps(self.data, indent=2))
+                print("----------------")
                 sys.exit(1)
 
         # Dictionaries have same values?
@@ -177,4 +184,7 @@ class Checksum:
                         rel_err = abs_err / np.abs(x)
                         print("Relative error: {:.2e}".format(rel_err))
         if checksums_differ:
+            print("\n----------------\nNew file for " + self.test_name + ":")
+            print(json.dumps(self.data, indent=2))
+            print("----------------")
             sys.exit(1)

@@ -70,7 +70,7 @@ void FiniteDifferenceSolver::EvolveE (
         ignore_unused(edge_lengths);
         EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
@@ -84,7 +84,7 @@ void FiniteDifferenceSolver::EvolveE (
 
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("EvolveE: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveE: Unknown algorithm");
     }
 
 }
@@ -199,7 +199,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
         if (Ffield) {
 
             // Extract field data for this grid/tile
-            Array4<Real> F = Ffield->array(mfi);
+            const Array4<Real> F = Ffield->array(mfi);
 
             // Loop over the cells and update the fields
             amrex::ParallelFor(tex, tey, tez,

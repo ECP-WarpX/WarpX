@@ -14,11 +14,9 @@
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_Extension.H>
-#include <AMReX_GpuContainers.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Random.H>
-#include <AMReX_Vector.H>
 
 #include <picsar_qed/containers/picsar_array.hpp>
 #include <picsar_qed/math/cmath_overloads.hpp>
@@ -42,7 +40,7 @@ using QS_dndt_table =
     picsar::multi_physics::phys::quantum_sync::
     dndt_lookup_table<
     amrex::ParticleReal,
-    amrex::Gpu::DeviceVector<amrex::ParticleReal>>;
+    PicsarQedVector<amrex::ParticleReal>>;
 
 using QS_dndt_table_view = QS_dndt_table::view_type;
 
@@ -54,7 +52,7 @@ using QS_phot_em_table =
     picsar::multi_physics::phys::quantum_sync::
     photon_emission_lookup_table<
     amrex::ParticleReal,
-    amrex::Gpu::DeviceVector<amrex::ParticleReal>>;
+    PicsarQedVector<amrex::ParticleReal>>;
 
 using QS_phot_em_table_view = QS_phot_em_table::view_type;
 
