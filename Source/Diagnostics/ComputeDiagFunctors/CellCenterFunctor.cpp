@@ -17,6 +17,6 @@ void
 CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
 {
     auto& warpx = WarpX::GetInstance();
-    InterpolateToDst(mf_dst, *m_mf_src, dcomp, warpx.DistributionMap(m_lev),
-                     m_convertRZmodes2cartesian);
+    InterpolateMFForDiag(mf_dst, *m_mf_src, dcomp, warpx.DistributionMap(m_lev),
+                         m_convertRZmodes2cartesian);
 }

@@ -59,6 +59,6 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
         amrex::MultiFab::Copy(*m_mf_src, *current_fp_temp[0][m_dir], 0, 0, 1, m_mf_src->nGrowVect());
     }
 
-    InterpolateToDst(mf_dst, *m_mf_src, dcomp, warpx.DistributionMap(m_lev),
-                     m_convertRZmodes2cartesian);
+    InterpolateMFForDiag(mf_dst, *m_mf_src, dcomp, warpx.DistributionMap(m_lev),
+                         m_convertRZmodes2cartesian);
 }

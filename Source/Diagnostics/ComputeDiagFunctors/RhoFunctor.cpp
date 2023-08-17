@@ -66,6 +66,6 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     }
 #endif
 
-    InterpolateToDst(mf_dst, *rho, dcomp, warpx.DistributionMap(m_lev),
-                     m_convertRZmodes2cartesian);
+    InterpolateMFForDiag(mf_dst, *rho, dcomp, warpx.DistributionMap(m_lev),
+                         m_convertRZmodes2cartesian);
 }

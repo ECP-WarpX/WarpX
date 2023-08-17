@@ -61,7 +61,7 @@ public:
                                       }
     virtual void InitData() {}
 
-    void InterpolateToDst (
+    void InterpolateMFForDiag (
         amrex::MultiFab& mf_dst, const amrex::MultiFab& mf_src, int dcomp,
         const amrex::DistributionMapping& dm, bool convertRZmodes2cartesian ) const
     {
