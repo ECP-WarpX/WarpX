@@ -6,9 +6,12 @@ import sys
 import numpy as np
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-from analysis_base import (check_charge_conservation,
-                           check_energy_conservation,
-                           check_momentum_conservation, find_num_in_line)
+from analysis_base import (
+    check_charge_conservation,
+    check_energy_conservation,
+    check_momentum_conservation,
+    find_num_in_line,
+)
 import checksumAPI
 
 
