@@ -319,12 +319,8 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
     }
 }
 
-/* \brief update position of the antenna if running in boosted frame.
- * \param dt time step (level 0).
- * The up-to-date antenna position is stored in updated_position.
- */
 void
-LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
+LaserParticleContainer::UpdateAntennaPosition (const amrex::Real dt)
 {
     if (!m_enabled) return;
 
@@ -545,11 +541,14 @@ LaserParticleContainer::InitData (int lev)
     amrex::Vector<amrex::ParticleReal> particle_uz(np, 0.0);
 
     if (Verbose()) amrex::Print() << Utils::TextMsg::Info("Adding laser particles");
+    amrex::Vector<amrex::Vector<ParticleReal>> attr;
+    attr.push_back(particle_w);
+    amrex::Vector<amrex::Vector<int>> attr_int;
     // Add particles on level 0. They will be redistributed afterwards
     AddNParticles(0,
-                  np, particle_x.dataPtr(), particle_y.dataPtr(), particle_z.dataPtr(),
-                  particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
-                  1, particle_w.dataPtr(), 0, nullptr, 1);
+                  np, particle_x, particle_y, particle_z,
+                  particle_ux, particle_uy, particle_uz,
+                  1, attr, 0, attr_int, 1);
 }
 
 void
@@ -577,7 +576,7 @@ LaserParticleContainer::Evolve (int lev,
     }
 
     // Update laser profile
-    m_up_laser_profile->update(t);
+    m_up_laser_profile->update(t_lab);
 
     BL_ASSERT(OnSameGrids(lev,jx));
 

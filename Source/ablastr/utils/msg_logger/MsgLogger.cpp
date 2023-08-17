@@ -19,7 +19,6 @@
 
 namespace abl_msg_logger = ablastr::utils::msg_logger;
 namespace abl_ser = ablastr::utils::serialization;
-namespace abl_utils = ablastr::utils;
 
 using namespace abl_msg_logger;
 

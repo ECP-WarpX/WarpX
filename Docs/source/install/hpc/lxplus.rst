@@ -150,11 +150,11 @@ Now, ensure Python tooling is up-to-date:
    python3 -m pip install -U pip setuptools wheel
    python3 -m pip install -U cmake
 
-Then we compile WarpX as in the previous section (with or without CUDA) adding ``-DWarpX_LIB=ON`` and then we install it into our Python:
+Then we compile WarpX as in the previous section (with or without CUDA) adding ``-DWarpX_PYTHON=ON`` and then we install it into our Python:
 
 .. code-block:: bash
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_DIMS="1;2;RZ;3" -DWarpX_LIB=ON
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_DIMS="1;2;RZ;3" -DWarpX_PYTHON=ON
    cmake --build build --target pip_install -j 6
 
 This builds WarpX for 3D geometry.

@@ -223,13 +223,11 @@ WarpX::InitFromCheckpoint ()
         is >> time_of_last_gal_shift;
         ablastr::utils::text::goto_next_line(is);
 
-
-        auto & warpx = WarpX::GetInstance();
-        for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
+        for (int idiag = 0; idiag < multi_diags->GetTotalDiags(); ++idiag)
         {
-            if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
+            if( multi_diags->diagstypes(idiag) == DiagTypes::BackTransformed )
             {
-                auto& diag = warpx.GetMultiDiags().GetDiag(idiag);
+                auto& diag = multi_diags->GetDiag(idiag);
                 if (diag.getnumbuffers() > 0) {
                     diag.InitDataBeforeRestart();
                     for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
@@ -269,7 +267,7 @@ WarpX::InitFromCheckpoint ()
                     diag.InitData();
                 }
             } else {
-                warpx.GetMultiDiags().GetDiag(idiag).InitData();
+                multi_diags->GetDiag(idiag).InitData();
             }
         }
     }

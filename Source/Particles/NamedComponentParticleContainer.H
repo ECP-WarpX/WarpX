@@ -7,6 +7,7 @@
 #ifndef NamedComponentParticleContainer_H_
 #define NamedComponentParticleContainer_H_
 
+#include "Utils/export.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX.H>
@@ -16,6 +17,7 @@
 #include <map>
 #include <string>
 #include <utility>
+
 
 /** Particle Attributes stored in amrex::ParticleContainer's struct of array
  */
@@ -43,7 +45,7 @@ struct PIdx
  * arena, pinned memory arena, etc.) the particle data will be stored
  */
 template <template<class> class T_Allocator=amrex::DefaultAllocator>
-class NamedComponentParticleContainer :
+class WARPX_EXPORT NamedComponentParticleContainer :
 public amrex::ParticleContainer<0,0,PIdx::nattribs,0,T_Allocator>
 {
 public:

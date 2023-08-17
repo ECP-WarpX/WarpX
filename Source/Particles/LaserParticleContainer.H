@@ -129,8 +129,12 @@ private:
     // Inject the laser antenna during the simulation, if it started
     // outside of the simulation domain and enters it.
     void ContinuousInjection(const amrex::RealBox& injection_box) override;
-    // Update position of the antenna
-    void UpdateContinuousInjectionPosition(amrex::Real dt) override;
+
+    /**
+     * \brief  Update antenna position for continuous injection of lasers
+     *         in a boosted frame
+     */
+    void UpdateAntennaPosition (const amrex::Real dt) override;
 
     // Unique (smart) pointer to the laser profile
     std::unique_ptr<WarpXLaserProfiles::ILaserProfile> m_up_laser_profile;

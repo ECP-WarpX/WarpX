@@ -414,7 +414,7 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
         # --- Use specific attributes for flux injection
         species.injection_style = "nfluxpercell"
         assert (isinstance(layout, PseudoRandomLayout)), Exception('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
-        if species.momentum_distribution_type == "gaussian":
+        if self.gaussian_flux_momentum_distribution:
             species.momentum_distribution_type = "gaussianflux"
 
 
@@ -1991,7 +1991,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                     fields_to_plot.add(dataname)
                 elif dataname in A_fields_list:
                     fields_to_plot.add(dataname)
-                elif dataname in ['rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                elif dataname in ['rho', 'phi', 'F', 'G', 'divE', 'divB', 'proc_number', 'part_per_cell']:
                     fields_to_plot.add(dataname)
                 elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
