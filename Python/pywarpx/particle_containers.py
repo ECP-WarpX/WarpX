@@ -8,13 +8,7 @@
 
 import numpy as np
 
-try:
-    import cupy as cp
-    cnp = cp
-except ImportError:
-    cp = None
-    cnp = np
-
+from .LoadThirdParty import load_cupy
 from ._libwarpx import libwarpx
 
 
@@ -217,13 +211,14 @@ class ParticleContainerWrapper(object):
             particle_data.append(aos_arr)
         return particle_data
 
-    def get_particle_arrays(self, comp_name, level):
+    def get_particle_arrays(self, comp_name, level, copy_to_host=False):
         '''
         This returns a list of numpy or cupy arrays containing the particle array data
         on each tile for this process.
 
-        The data for the arrays are not copied, but share the underlying
-        memory buffer with WarpX. The arrays are fully writeable.
+        Unless copy_to_host is specified, the data for the arrays are not
+        copied, but share the underlying memory buffer with WarpX. The
+        arrays are fully writeable.
 
         Parameters
         ----------
@@ -234,20 +229,34 @@ class ParticleContainerWrapper(object):
         level        : int
             The refinement level to reference
 
+        copy_to_host   : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays or force a device-to-host copy.
+
         Returns
         -------
 
         List of arrays
             The requested particle array data
         '''
+        xp, cupy_status = load_cupy()
+        if cupy_status is not None:
+            libwarpx.amr.Print(cupy_status)
+
         comp_idx = self.particle_container.get_comp_index(comp_name)
 
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
             idx = soa.GetRealData(comp_idx)
-            idx_arr = cnp.array(idx, copy=False)
+            idx_arr = xp.array(idx, copy=False)
+            if copy_to_host:
+                if cupy_status is None:
+                    idx_arr = xp.asnumpy(idx_arr)  # explicit
+                else:
+                    idx_arr = idx_arr.copy()  # managed memory
             data_array.append(idx_arr)
+
         return data_array
 
     def get_particle_id(self, level=0):
@@ -350,37 +359,37 @@ class ParticleContainerWrapper(object):
             return [struct['x'] for struct in structs]
     zp = property(get_particle_z)
 
-    def get_particle_weight(self, level=0):
+    def get_particle_weight(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle
         weight on each tile.
 
         '''
-        return self.get_particle_arrays('w', level)
+        return self.get_particle_arrays('w', level, copy_to_host=copy_to_host)
     wp = property(get_particle_weight)
 
-    def get_particle_ux(self, level=0):
+    def get_particle_ux(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle
         x momentum on each tile.
 
         '''
-        return self.get_particle_arrays('ux', level)
+        return self.get_particle_arrays('ux', level, copy_to_host=copy_to_host)
     uxp = property(get_particle_ux)
 
-    def get_particle_uy(self, level=0):
+    def get_particle_uy(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle
         y momentum on each tile.
 
         '''
-        return self.get_particle_arrays('uy', level)
+        return self.get_particle_arrays('uy', level, copy_to_host=copy_to_host)
     uyp = property(get_particle_uy)
 
-    def get_particle_uz(self, level=0):
+    def get_particle_uz(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle
@@ -388,10 +397,10 @@ class ParticleContainerWrapper(object):
 
         '''
 
-        return self.get_particle_arrays('uz', level)
+        return self.get_particle_arrays('uz', level, copy_to_host=copy_to_host)
     uzp = property(get_particle_uz)
 
-    def get_species_charge_sum(self, local=False):
+    def get_species_charge_sum(self, local=False, copy_to_host=copy_to_host):
         '''
         Returns the total charge in the simulation due to the given species.
 
