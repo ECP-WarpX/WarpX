@@ -16,6 +16,7 @@
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpX_Complex.H"
 #endif
+#include "WarpX.H"
 
 #include <AMReX.H>
 
