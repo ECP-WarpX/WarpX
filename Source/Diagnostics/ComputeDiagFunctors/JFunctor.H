@@ -24,7 +24,8 @@ public:
      */
     JFunctor (const int dir, const int lev,
              const amrex::IntVect crse_ratio,
-             bool convertRZmodes2cartesian=true, int ncomp=1);
+             bool convertRZmodes2cartesian=true,
+             bool deposit_current=false, int ncomp=1);
     /** \brief Cell-center m_mf_src and write the result in mf_dst.
      *
      * In cylindrical geometry, by default this functor average all components
@@ -42,6 +43,8 @@ private:
     int m_lev;
     /** (for cylindrical) whether to average all modes into 1 comp */
     bool m_convertRZmodes2cartesian;
+    /** whether to deposit current density before saving */
+    bool m_deposit_current;
 };
 
 #endif // WARPX_JFUNCTOR_H_

@@ -7,7 +7,6 @@
 #include "JFunctor.H"
 
 #include "Particles/MultiParticleContainer.H"
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
 #include <AMReX.H>
@@ -16,9 +15,11 @@
 
 JFunctor::JFunctor (const int dir, int lev,
                    amrex::IntVect crse_ratio,
-                   bool convertRZmodes2cartesian, int ncomp)
+                   bool convertRZmodes2cartesian,
+                   bool deposit_current, int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_dir(dir), m_lev(lev),
-      m_convertRZmodes2cartesian(convertRZmodes2cartesian)
+      m_convertRZmodes2cartesian(convertRZmodes2cartesian),
+      m_deposit_current(deposit_current)
 { }
 
 void
@@ -29,8 +30,7 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
     amrex::MultiFab* m_mf_src = warpx.get_pointer_current_fp(m_lev, m_dir);
 
     // Deposit current if no solver or the electrostatic solver is being used
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
-        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+    if (m_deposit_current)
     {
         // allocate temporary multifab to deposit current density into
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
