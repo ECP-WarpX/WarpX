@@ -2,7 +2,7 @@
 #
 # This file is part of WarpX.
 #
-# Authors: David Grote, Roelof Groenewald
+# Authors: David Grote, Roelof Groenewald, Axel Huebl
 #
 # License: BSD-3-Clause-LBNL
 
@@ -184,14 +184,20 @@ class ParticleContainerWrapper(object):
         '''
         self.particle_container.add_real_comp(pid_name, comm)
 
-    def get_particle_structs(self, level):
+    def get_particle_structs(self, level, copy_to_host=False):
         '''
         This returns a list of numpy or cupy arrays containing the particle struct data
         on each tile for this process. The particle data is represented as a structured
         array and contains the particle 'x', 'y', 'z', and 'idcpu'.
 
-        The data for the arrays are not copied, but share the underlying
-        memory buffer with WarpX. The arrays are fully writeable.
+        Unless copy_to_host is specified, the data for the structs are
+        not copied, but share the underlying memory buffer with WarpX. The
+        arrays are fully writeable.
+
+        Note that cupy does not support structs:
+        ...
+        and will return arrays of binary blobs for the AoS (DP: "|V24"). If copied
+        to host via copy_to_host, we correct for the right numpy AoS type.
 
         Parameters
         ----------
@@ -199,15 +205,34 @@ class ParticleContainerWrapper(object):
         level        : int
             The refinement level to reference
 
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays or force a device-to-host copy.
+
         Returns
         -------
 
         List of arrays
             The requested particle struct data
         '''
+        xp, cupy_status = load_cupy()
+        if cupy_status is not None:
+            libwarpx.amr.Print(cupy_status)
+
         particle_data = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
-            aos_arr = cnp.array(pti.aos(), copy=False)
+            dt = np.array(pti.aos(), copy=False).dtype  # numpy gets the struct dtype right
+            aos_arr = xp.array(pti.aos(), copy=False)   # void blobs for cupy
+            if copy_to_host:
+                if cupy_status is None:
+                    aos_arr = xp.asnumpy(aos_arr)  # explicit
+                else:
+                    aos_arr = aos_arr.copy()  # managed memory
+
+                # reinterpret void to numpy struct dtype
+                # DP
+                aos_arr.dtype = dt
+                # SP: TODO
             particle_data.append(aos_arr)
         return particle_data
 
@@ -226,7 +251,7 @@ class ParticleContainerWrapper(object):
         comp_name      : str
             The component of the array data that will be returned
 
-        level        : int
+        level          : int
             The refinement level to reference
 
         copy_to_host   : bool
