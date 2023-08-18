@@ -19,6 +19,7 @@ from scipy.optimize import curve_fit
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
+
 def gaussian_laser( z, a0, z0_phase, z0_prop, ctau, lambda0 ):
     """
     Returns a Gaussian laser profile
