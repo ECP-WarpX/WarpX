@@ -8,6 +8,13 @@
 
 import numpy as np
 
+try:
+    import cupy as cp
+    cnp = cp
+except ImportError:
+    cp = None
+    cnp = np
+
 from ._libwarpx import libwarpx
 
 
@@ -185,12 +192,12 @@ class ParticleContainerWrapper(object):
 
     def get_particle_structs(self, level):
         '''
-        This returns a list of numpy arrays containing the particle struct data
+        This returns a list of numpy or cupy arrays containing the particle struct data
         on each tile for this process. The particle data is represented as a structured
-        numpy array and contains the particle 'x', 'y', 'z', and 'idcpu'.
+        array and contains the particle 'x', 'y', 'z', and 'idcpu'.
 
-        The data for the numpy arrays are not copied, but share the underlying
-        memory buffer with WarpX. The numpy arrays are fully writeable.
+        The data for the arrays are not copied, but share the underlying
+        memory buffer with WarpX. The arrays are fully writeable.
 
         Parameters
         ----------
@@ -201,22 +208,22 @@ class ParticleContainerWrapper(object):
         Returns
         -------
 
-        List of numpy arrays
+        List of arrays
             The requested particle struct data
         '''
         particle_data = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
-            aos_arr = np.array(pti.aos(), copy=False)
+            aos_arr = cnp.array(pti.aos(), copy=False)
             particle_data.append(aos_arr)
         return particle_data
 
     def get_particle_arrays(self, comp_name, level):
         '''
-        This returns a list of numpy arrays containing the particle array data
+        This returns a list of numpy or cupy arrays containing the particle array data
         on each tile for this process.
 
-        The data for the numpy arrays are not copied, but share the underlying
-        memory buffer with WarpX. The numpy arrays are fully writeable.
+        The data for the arrays are not copied, but share the underlying
+        memory buffer with WarpX. The arrays are fully writeable.
 
         Parameters
         ----------
@@ -230,7 +237,7 @@ class ParticleContainerWrapper(object):
         Returns
         -------
 
-        List of numpy arrays
+        List of arrays
             The requested particle array data
         '''
         comp_idx = self.particle_container.get_comp_index(comp_name)
@@ -238,13 +245,15 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            data_array.append(np.array(soa.GetRealData(comp_idx), copy=False))
+            idx = soa.GetRealData(comp_idx)
+            idx_arr = cnp.array(idx, copy=False)
+            data_array.append(idx_arr)
         return data_array
 
     def get_particle_id(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle 'id'
+        Return a list of numpy or cupy arrays containing the particle 'id'
         numbers on each tile.
 
         '''
@@ -254,7 +263,7 @@ class ParticleContainerWrapper(object):
     def get_particle_cpu(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle 'cpu'
+        Return a list of numpy or cupy arrays containing the particle 'cpu'
         numbers on each tile.
 
         '''
@@ -264,7 +273,7 @@ class ParticleContainerWrapper(object):
     def get_particle_x(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle 'x'
+        Return a list of numpy or cupy arrays containing the particle 'x'
         positions on each tile.
 
         '''
@@ -272,7 +281,7 @@ class ParticleContainerWrapper(object):
         if libwarpx.geometry_dim == '3d' or libwarpx.geometry_dim == '2d':
             return [struct['x'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
-            return [struct['x']*np.cos(theta) for struct, theta in zip(structs, self.get_particle_theta())]
+            return [struct['x']*cnp.cos(theta) for struct, theta in zip(structs, self.get_particle_theta())]
         elif libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_x: There is no x coordinate with 1D Cartesian')
     xp = property(get_particle_x)
@@ -280,7 +289,7 @@ class ParticleContainerWrapper(object):
     def get_particle_y(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle 'y'
+        Return a list of numpy or cupy arrays containing the particle 'y'
         positions on each tile.
 
         '''
@@ -288,7 +297,7 @@ class ParticleContainerWrapper(object):
         if libwarpx.geometry_dim == '3d':
             return [struct['y'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
-            return [struct['x']*np.sin(theta) for struct, theta in zip(structs, self.get_particle_theta())]
+            return [struct['x']*cnp.sin(theta) for struct, theta in zip(structs, self.get_particle_theta())]
         elif libwarpx.geometry_dim == '1d' or libwarpx.geometry_dim == '2d':
             raise Exception('get_particle_y: There is no y coordinate with 1D or 2D Cartesian')
     yp = property(get_particle_y)
@@ -296,7 +305,7 @@ class ParticleContainerWrapper(object):
     def get_particle_r(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle 'r'
+        Return a list of numpy or cupy arrays containing the particle 'r'
         positions on each tile.
 
         '''
@@ -304,7 +313,7 @@ class ParticleContainerWrapper(object):
         if libwarpx.geometry_dim == 'rz':
             return [struct['x'] for struct in structs]
         elif libwarpx.geometry_dim == '3d':
-            return [np.sqrt(struct['x']**2 + struct['y']**2) for struct in structs]
+            return [cnp.sqrt(struct['x']**2 + struct['y']**2) for struct in structs]
         elif libwarpx.geometry_dim == '2d' or libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_r: There is no r coordinate with 1D or 2D Cartesian')
     rp = property(get_particle_r)
@@ -312,7 +321,7 @@ class ParticleContainerWrapper(object):
     def get_particle_theta(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle
+        Return a list of numpy or cupy arrays containing the particle
         theta on each tile.
 
         '''
@@ -320,7 +329,7 @@ class ParticleContainerWrapper(object):
             return self.get_particle_arrays('theta', level)
         elif libwarpx.geometry_dim == '3d':
             structs = self.get_particle_structs(level)
-            return [np.arctan2(struct['y'], struct['x']) for struct in structs]
+            return [cnp.arctan2(struct['y'], struct['x']) for struct in structs]
         elif libwarpx.geometry_dim == '2d' or libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_theta: There is no theta coordinate with 1D or 2D Cartesian')
     thetap = property(get_particle_theta)
@@ -328,7 +337,7 @@ class ParticleContainerWrapper(object):
     def get_particle_z(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle 'z'
+        Return a list of numpy or cupy arrays containing the particle 'z'
         positions on each tile.
 
         '''
@@ -344,7 +353,7 @@ class ParticleContainerWrapper(object):
     def get_particle_weight(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle
+        Return a list of numpy or cupy arrays containing the particle
         weight on each tile.
 
         '''
@@ -354,7 +363,7 @@ class ParticleContainerWrapper(object):
     def get_particle_ux(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle
+        Return a list of numpy or cupy arrays containing the particle
         x momentum on each tile.
 
         '''
@@ -364,7 +373,7 @@ class ParticleContainerWrapper(object):
     def get_particle_uy(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle
+        Return a list of numpy or cupy arrays containing the particle
         y momentum on each tile.
 
         '''
@@ -374,7 +383,7 @@ class ParticleContainerWrapper(object):
     def get_particle_uz(self, level=0):
         '''
 
-        Return a list of numpy arrays containing the particle
+        Return a list of numpy or cupy arrays containing the particle
         z momentum on each tile.
 
         '''
@@ -457,13 +466,13 @@ class ParticleBoundaryBufferWrapper(object):
 
     def get_particle_boundary_buffer_structs(self, species_name, boundary, level):
         '''
-        This returns a list of numpy arrays containing the particle struct data
+        This returns a list of numpy or cupy arrays containing the particle struct data
         for a species that has been scraped by a specific simulation boundary. The
-        particle data is represented as a structured numpy array and contains the
+        particle data is represented as a structured array and contains the
         particle 'x', 'y', 'z', and 'idcpu'.
 
-        The data for the numpy arrays are not copied, but share the underlying
-        memory buffer with WarpX. The numpy arrays are fully writeable.
+        The data for the arrays are not copied, but share the underlying
+        memory buffer with WarpX. The arrays are fully writeable.
 
         Parameters
         ----------
@@ -500,11 +509,11 @@ class ParticleBoundaryBufferWrapper(object):
 
     def get_particle_boundary_buffer(self, species_name, boundary, comp_name, level):
         '''
-        This returns a list of numpy arrays containing the particle array data
+        This returns a list of numpy or cupy arrays containing the particle array data
         for a species that has been scraped by a specific simulation boundary.
 
-        The data for the numpy arrays are not copied, but share the underlying
-        memory buffer with WarpX. The numpy arrays are fully writeable.
+        The data for the arrays are not copied, but share the underlying
+        memory buffer with WarpX. The arrays are fully writeable.
 
         Parameters
         ----------
@@ -533,14 +542,14 @@ class ParticleBoundaryBufferWrapper(object):
             comp_idx = part_container.num_int_comps() - 1
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
-                data_array.append(np.array(soa.GetIntData(comp_idx), copy=False))
+                data_array.append(cnp.array(soa.GetIntData(comp_idx), copy=False))
         else:
             mypc = libwarpx.warpx.multi_particle_container()
             sim_part_container_wrapper = mypc.get_particle_container_from_name(species_name)
             comp_idx = sim_part_container_wrapper.get_comp_index(comp_name)
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
-                data_array.append(np.array(soa.GetRealData(comp_idx), copy=False))
+                data_array.append(cnp.array(soa.GetRealData(comp_idx), copy=False))
 
         return data_array
 
