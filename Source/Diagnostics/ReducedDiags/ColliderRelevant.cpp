@@ -58,47 +58,44 @@
 
 using namespace amrex;
 
-// constructor
 ColliderRelevant::ColliderRelevant (std::string rd_name)
 : ReducedDiags{rd_name}
 {
     // read colliding species names - must be 2
-    ParmParse pp_rd_name(rd_name);
+    amrex::ParmParse pp_rd_name(rd_name);
     pp_rd_name.getarr("species", m_beam_name);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_beam_name.size() == 2u,
-        "Collider-relevant diagnostic must involve exactly two species"
-    );
+        "Collider-relevant diagnostic must involve exactly two species");
 
     ablastr::warn_manager::WMRecordWarning(
-   "DIAGNOSTICS",
-   "The collider-relevant reduced diagnostic is meant for \
-   colliding species propagating along the z direction.",
-   ablastr::warn_manager::WarnPriority::low);
+        "DIAGNOSTICS",
+        "The collider-relevant reduced diagnostic is meant for \
+        colliding species propagating along the z direction.",
+        ablastr::warn_manager::WarnPriority::low);
 
     // get WarpX class object
-    auto & warpx = WarpX::GetInstance();
+    auto& warpx = WarpX::GetInstance();
 
     // get MultiParticleContainer class object
-    const auto & mypc =  warpx.GetPartContainer();
+    const MultiParticleContainer& mypc =  warpx.GetPartContainer();
 
     // get species names (std::vector<std::string>)
-    const auto species_names = mypc.GetSpeciesNames();
+    const std::vector<std::string> species_names = mypc.GetSpeciesNames();
 
     // loop over species
     for (int i_s = 0; i_s < 2; ++i_s)
     {
         // get WarpXParticleContainer class object
-        auto const &myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
+        const WarpXParticleContainer& myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
 
-        auto is_photon = myspc.AmIA<PhysicalSpecies::photon>();
+        const bool is_photon = myspc.AmIA<PhysicalSpecies::photon>();
 
         // photon number density is not available yet
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !is_photon,
-            "Collider-relevant diagnostic does not work for colliding photons yet"
-        );
+            "Collider-relevant diagnostic does not work for colliding photons yet");
     }
 
     auto all_diag_names = std::vector<std::string>{};
@@ -120,7 +117,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
     for (int i_s = 0; i_s < 2; ++i_s)
     {
         // get WarpXParticleContainer class object
-        auto const &myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
+        const WarpXParticleContainer& myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
 
         if (myspc.DoQED()){
             add_diag("chimin_"+species_names[i_s], "chi_min_"+species_names[i_s]+"()");
@@ -149,10 +146,10 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         add_diag("thetax_max_"+species_names[i_s], "theta_x_max_"+species_names[i_s]+"(rad)");
         add_diag("thetax_std_"+species_names[i_s], "theta_x_std_"+species_names[i_s]+"(rad)");
 #endif
-
         m_data.resize(all_diag_names.size());
     }
-    if (ParallelDescriptor::IOProcessor())
+
+    if (amrex::ParallelDescriptor::IOProcessor())
     {
         if ( m_write_header )
         {
@@ -177,31 +174,29 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         }
     }
 }
-// end constructor
 
-// function that compute beam relevant quantities
 void ColliderRelevant::ComputeDiags (int step)
 {
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
     // get MultiParticleContainer class object
-    const auto & mypc = WarpX::GetInstance().GetPartContainer();
+    const MultiParticleContainer& mypc = WarpX::GetInstance().GetPartContainer();
 
     // get species names (std::vector<std::string>)
-    auto const species_names = mypc.GetSpeciesNames();
+    const std::vector<std::string> species_names = mypc.GetSpeciesNames();
 
     // get a reference to WarpX instance
-    auto & warpx = WarpX::GetInstance();
+    auto& warpx = WarpX::GetInstance();
 
     // get cell size
     amrex::Geometry const & geom = warpx.Geom(0);
 #if defined(WARPX_DIM_1D_Z)
-        auto dV = geom.CellSize(0);
+        amrex::Real dV = geom.CellSize(0);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        auto dV = geom.CellSize(0) * geom.CellSize(1);
+        amrex::Real dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined(WARPX_DIM_3D)
-        auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
+        amrex::Real dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
     const auto get_idx = [&](const std::string& name){
@@ -214,26 +209,27 @@ void ColliderRelevant::ComputeDiags (int step)
     for (int i_s = 0; i_s < 2; ++i_s)
     {
         // get WarpXParticleContainer class object
-        auto &myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
+        WarpXParticleContainer& myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
         // get charge
-        ParticleReal const q = myspc.getCharge();
+        amrex::ParticleReal const q = myspc.getCharge();
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
-        num_dens[i_s]=myspc.GetChargeDensity(0);
+        num_dens[i_s] = myspc.GetChargeDensity(0);
         num_dens[i_s]->mult(1./q);
 
         // wtot
-        Real wtot = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p)
-        {
-            return p.rdata(PIdx::w); });
-        ParallelDescriptor::ReduceRealSum(wtot, ParallelDescriptor::IOProcessorNumber());
+        amrex::Real wtot = ReduceSum( myspc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+            {
+                return p.rdata(PIdx::w);
+            });
+        amrex::ParallelDescriptor::ReduceRealSum(wtot, amrex::ParallelDescriptor::IOProcessorNumber());
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
         // thetax_min, thetax_max
-        Real thetax_min = 0.0_rt;
-        Real thetax_max = 0.0_rt;
+        amrex::Real thetax_min = 0.0_rt;
+        amrex::Real thetax_max = 0.0_rt;
 
         amrex::ReduceOps<ReduceOpMin, ReduceOpMax> reduce_ops_minmax;
         auto r_minmax = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
@@ -248,12 +244,12 @@ void ColliderRelevant::ComputeDiags (int step)
             reduce_ops_minmax);
         thetax_min = amrex::get<0>(r_minmax);
         thetax_max = amrex::get<1>(r_minmax);
-        ParallelDescriptor::ReduceRealMin(thetax_min, ParallelDescriptor::IOProcessorNumber());
-        ParallelDescriptor::ReduceRealMax(thetax_max, ParallelDescriptor::IOProcessorNumber());
+        amrex::ParallelDescriptor::ReduceRealMin(thetax_min, amrex::ParallelDescriptor::IOProcessorNumber());
+        amrex::ParallelDescriptor::ReduceRealMax(thetax_max, amrex::ParallelDescriptor::IOProcessorNumber());
 
         // x_ave, thetax_ave
-        Real x_ave = 0.0_rt;
-        Real thetax_ave = 0.0_rt;
+        amrex::Real x_ave = 0.0_rt;
+        amrex::Real thetax_ave = 0.0_rt;
 
         amrex::ReduceOps<ReduceOpSum, ReduceOpSum> reduce_ops_ave;
         auto r_ave = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
@@ -270,13 +266,13 @@ void ColliderRelevant::ComputeDiags (int step)
             reduce_ops_ave);
         x_ave = amrex::get<0>(r_ave);
         thetax_ave = amrex::get<1>(r_ave);
-        ParallelDescriptor::ReduceRealSum({x_ave, thetax_ave}, ParallelDescriptor::IOProcessorNumber());
+        amrex::ParallelDescriptor::ReduceRealSum({x_ave, thetax_ave}, amrex::ParallelDescriptor::IOProcessorNumber());
         x_ave = x_ave / wtot;
         thetax_ave = thetax_ave / wtot;
 
         // x_std, y_std, thetax_std, thetay_std
-        Real x_std = 0.0_rt;
-        Real thetax_std = 0.0_rt;
+        amrex::Real x_std = 0.0_rt;
+        amrex::Real thetax_std = 0.0_rt;
 
         amrex::ReduceOps<ReduceOpSum, ReduceOpSum> reduce_ops_std;
         auto r_std = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
@@ -295,7 +291,7 @@ void ColliderRelevant::ComputeDiags (int step)
             reduce_ops_std);
         x_std = amrex::get<0>(r_std);
         thetax_std = amrex::get<1>(r_std);
-        ParallelDescriptor::ReduceRealSum({x_std, thetax_std}, ParallelDescriptor::IOProcessorNumber());
+        amrex::ParallelDescriptor::ReduceRealSum({x_std, thetax_std}, amrex::ParallelDescriptor::IOProcessorNumber());
         x_std = std::sqrt(x_std / wtot);
         thetax_std = std::sqrt(thetax_std / wtot);
 
@@ -308,10 +304,10 @@ void ColliderRelevant::ComputeDiags (int step)
 
 #elif defined(WARPX_DIM_3D)
         // thetax_min, thetax_max, thetay_min, thetay_max
-        Real thetax_min = 0.0_rt;
-        Real thetax_max = 0.0_rt;
-        Real thetay_min = 0.0_rt;
-        Real thetay_max = 0.0_rt;
+        amrex::Real thetax_min = 0.0_rt;
+        amrex::Real thetax_max = 0.0_rt;
+        amrex::Real thetay_min = 0.0_rt;
+        amrex::Real thetay_max = 0.0_rt;
 
         amrex::ReduceOps<ReduceOpMin, ReduceOpMax, ReduceOpMin, ReduceOpMax> reduce_ops_minmax;
         auto r_minmax = amrex::ParticleReduce<amrex::ReduceData<Real, Real, Real, Real>>(
@@ -330,14 +326,14 @@ void ColliderRelevant::ComputeDiags (int step)
         thetax_max = amrex::get<1>(r_minmax);
         thetay_min = amrex::get<2>(r_minmax);
         thetay_max = amrex::get<3>(r_minmax);
-        ParallelDescriptor::ReduceRealMin({thetax_min, thetay_min}, ParallelDescriptor::IOProcessorNumber());
-        ParallelDescriptor::ReduceRealMax({thetax_max, thetay_max}, ParallelDescriptor::IOProcessorNumber());
+        amrex::ParallelDescriptor::ReduceRealMin({thetax_min, thetay_min}, amrex::ParallelDescriptor::IOProcessorNumber());
+        amrex::ParallelDescriptor::ReduceRealMax({thetax_max, thetay_max}, amrex::ParallelDescriptor::IOProcessorNumber());
 
         // x_ave, y_ave, thetax_ave, thetay_ave
-        Real x_ave = 0.0_rt;
-        Real y_ave = 0.0_rt;
-        Real thetax_ave = 0.0_rt;
-        Real thetay_ave = 0.0_rt;
+        amrex::Real x_ave = 0.0_rt;
+        amrex::Real y_ave = 0.0_rt;
+        amrex::Real thetax_ave = 0.0_rt;
+        amrex::Real thetay_ave = 0.0_rt;
 
         amrex::ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_ops_ave;
         auto r_ave = amrex::ParticleReduce<amrex::ReduceData<Real, Real, Real, Real>>(
@@ -359,17 +355,17 @@ void ColliderRelevant::ComputeDiags (int step)
         y_ave = amrex::get<1>(r_ave);
         thetax_ave = amrex::get<2>(r_ave);
         thetay_ave = amrex::get<3>(r_ave);
-        ParallelDescriptor::ReduceRealSum({x_ave, y_ave, thetax_ave, thetay_ave}, ParallelDescriptor::IOProcessorNumber());
+        amrex::ParallelDescriptor::ReduceRealSum({x_ave, y_ave, thetax_ave, thetay_ave}, amrex::ParallelDescriptor::IOProcessorNumber());
         x_ave = x_ave / wtot;
         y_ave = y_ave / wtot;
         thetax_ave = thetax_ave / wtot;
         thetay_ave = thetay_ave / wtot;
 
         // x_std, y_std, thetax_std, thetay_std
-        Real x_std = 0.0_rt;
-        Real y_std = 0.0_rt;
-        Real thetax_std = 0.0_rt;
-        Real thetay_std = 0.0_rt;
+        amrex::Real x_std = 0.0_rt;
+        amrex::Real y_std = 0.0_rt;
+        amrex::Real thetax_std = 0.0_rt;
+        amrex::Real thetay_std = 0.0_rt;
 
         amrex::ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_ops_std;
         auto r_std = amrex::ParticleReduce<amrex::ReduceData<Real, Real, Real, Real>>(
@@ -395,7 +391,7 @@ void ColliderRelevant::ComputeDiags (int step)
         y_std = amrex::get<1>(r_std);
         thetax_std = amrex::get<2>(r_std);
         thetay_std = amrex::get<3>(r_std);
-        ParallelDescriptor::ReduceRealSum({x_std, y_std, thetax_std, thetay_std}, ParallelDescriptor::IOProcessorNumber());
+        amrex::ParallelDescriptor::ReduceRealSum({x_std, y_std, thetax_std, thetay_std}, amrex::ParallelDescriptor::IOProcessorNumber());
         x_std = std::sqrt(x_std / wtot);
         y_std = std::sqrt(y_std / wtot);
         thetax_std = std::sqrt(thetax_std / wtot);
@@ -416,20 +412,20 @@ void ColliderRelevant::ComputeDiags (int step)
 #endif
 
 #if (defined WARPX_QED)
-        // get number of level (int)
-        const auto level_number = WarpX::GetInstance().finestLevel();
+        // get number of level
+        const int level_number = WarpX::GetInstance().finestLevel();
 
         // get mass
         amrex::ParticleReal m = myspc.getMass();
-        auto is_photon = myspc.AmIA<PhysicalSpecies::photon>();
+        const bool is_photon = myspc.AmIA<PhysicalSpecies::photon>();
         if (is_photon) {
             m = PhysConst::m_e;
         }
 
         // compute chimin, chiave and chimax
-        Real chimin_f = 0.0_rt;
-        Real chimax_f = 0.0_rt;
-        Real chiave_f = 0.0_rt;
+        amrex::Real chimin_f = 0.0_rt;
+        amrex::Real chimax_f = 0.0_rt;
+        amrex::Real chiave_f = 0.0_rt;
 
         if (myspc.DoQED())
         {
@@ -450,13 +446,13 @@ void ColliderRelevant::ComputeDiags (int step)
             {
                 // define variables in preparation for field gathering
                 const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
-                const GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-                const MultiFab & Ex = warpx.getEfield(lev,0);
-                const MultiFab & Ey = warpx.getEfield(lev,1);
-                const MultiFab & Ez = warpx.getEfield(lev,2);
-                const MultiFab & Bx = warpx.getBfield(lev,0);
-                const MultiFab & By = warpx.getBfield(lev,1);
-                const MultiFab & Bz = warpx.getBfield(lev,2);
+                const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+                const amrex::MultiFab & Ex = warpx.getEfield(lev,0);
+                const amrex::MultiFab & Ey = warpx.getEfield(lev,1);
+                const amrex::MultiFab & Ez = warpx.getEfield(lev,2);
+                const amrex::MultiFab & Bx = warpx.getBfield(lev,0);
+                const amrex::MultiFab & By = warpx.getBfield(lev,1);
+                const amrex::MultiFab & Bz = warpx.getBfield(lev,2);
 
                 // declare reduce_op
                 ReduceOps<ReduceOpMin, ReduceOpMax, ReduceOpSum> reduce_op;
@@ -478,31 +474,31 @@ void ColliderRelevant::ComputeDiags (int step)
                     // define variables in preparation for field gathering
                     amrex::Box box = pti.tilebox();
                     box.grow(ngEB);
-                    const Dim3 lo = amrex::lbound(box);
+                    const amrex::Dim3 lo = amrex::lbound(box);
                     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
-                    const GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
-                    const auto& ex_arr = Ex[pti].array();
-                    const auto& ey_arr = Ey[pti].array();
-                    const auto& ez_arr = Ez[pti].array();
-                    const auto& bx_arr = Bx[pti].array();
-                    const auto& by_arr = By[pti].array();
-                    const auto& bz_arr = Bz[pti].array();
-                    const IndexType ex_type = Ex[pti].box().ixType();
-                    const IndexType ey_type = Ey[pti].box().ixType();
-                    const IndexType ez_type = Ez[pti].box().ixType();
-                    const IndexType bx_type = Bx[pti].box().ixType();
-                    const IndexType by_type = By[pti].box().ixType();
-                    const IndexType bz_type = Bz[pti].box().ixType();
+                    const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+                    const amrex::Array4<const amrex::Real> & ex_arr = Ex[pti].array();
+                    const amrex::Array4<const amrex::Real> & ey_arr = Ey[pti].array();
+                    const amrex::Array4<const amrex::Real> & ez_arr = Ez[pti].array();
+                    const amrex::Array4<const amrex::Real> & bx_arr = Bx[pti].array();
+                    const amrex::Array4<const amrex::Real> & by_arr = By[pti].array();
+                    const amrex::Array4<const amrex::Real> & bz_arr = Bz[pti].array();
+                    const amrex::IndexType ex_type = Ex[pti].box().ixType();
+                    const amrex::IndexType ey_type = Ey[pti].box().ixType();
+                    const amrex::IndexType ez_type = Ez[pti].box().ixType();
+                    const amrex::IndexType bx_type = Bx[pti].box().ixType();
+                    const amrex::IndexType by_type = By[pti].box().ixType();
+                    const amrex::IndexType bz_type = Bz[pti].box().ixType();
 
                     // evaluate reduce_op
                     reduce_op.eval(pti.numParticles(), reduce_data,
                     [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                     {
                         // get external fields
-                        ParticleReal xp, yp, zp;
+                        amrex::ParticleReal xp, yp, zp;
                         GetPosition(i, xp, yp, zp);
-                        ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
-                        ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
+                        amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
+                        amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
                         getExternalEB(i, ex, ey, ez, bx, by, bz);
 
                         // gather E and B
@@ -514,15 +510,14 @@ void ColliderRelevant::ComputeDiags (int step)
                             dx_arr, xyzmin_arr, lo,
                             n_rz_azimuthal_modes, nox, galerkin_interpolation);
                         // compute chi
-                        Real chi = 0.0_rt;
-                        if ( is_photon ) {
+                        amrex::Real chi = 0.0_rt;
+                        if (is_photon) {
                             chi = QedUtils::chi_photon(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
                         } else {
                             chi = QedUtils::chi_ele_pos(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
                         }
-                        //amrex::AllPrint() << "CHI DOT W " << chi << " " << w[i] << " " << chi*w[i] <<  "   \n";
                         return {chi, chi, chi*w[i]};
                     });
                 }
@@ -534,9 +529,9 @@ void ColliderRelevant::ComputeDiags (int step)
             chimin_f = *std::min_element(chimin.begin(), chimin.end());
             chimax_f = *std::max_element(chimax.begin(), chimax.end());
             chiave_f = chiave[0]; // FIXME mesh refinement
-            ParallelDescriptor::ReduceRealMin(chimin_f, ParallelDescriptor::IOProcessorNumber());
-            ParallelDescriptor::ReduceRealMax(chimax_f, ParallelDescriptor::IOProcessorNumber());
-            ParallelDescriptor::ReduceRealSum(chiave_f, ParallelDescriptor::IOProcessorNumber());
+            amrex::ParallelDescriptor::ReduceRealMin(chimin_f, amrex::ParallelDescriptor::IOProcessorNumber());
+            amrex::ParallelDescriptor::ReduceRealMax(chimax_f, amrex::ParallelDescriptor::IOProcessorNumber());
+            amrex::ParallelDescriptor::ReduceRealSum(chiave_f, amrex::ParallelDescriptor::IOProcessorNumber());
 
             m_data[get_idx("chimin_"+species_names[i_s])] = chimin_f;
             m_data[get_idx("chiave_"+species_names[i_s])] = chiave_f/wtot;
@@ -556,8 +551,7 @@ void ColliderRelevant::ComputeDiags (int step)
     ablastr::coarsen::sample::Coarsen(mf_dst2, *num_dens[1], 0, 0, ncomp, ngrow);
 
     // compute luminosity
-    auto const n1_dot_n2 = amrex::MultiFab::Dot(mf_dst1, 0, mf_dst2, 0, 1, 0);
-    auto const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
+    amrex::Real const n1_dot_n2 = amrex::MultiFab::Dot(mf_dst1, 0, mf_dst2, 0, 1, 0);
+    amrex::Real const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
     m_data[get_idx("dL_dt")] = lumi;
 }
-// end void ColliderRelevant::ComputeDiags
