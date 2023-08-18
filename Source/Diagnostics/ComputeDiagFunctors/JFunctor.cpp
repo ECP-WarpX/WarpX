@@ -55,8 +55,14 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
         auto& mypc = warpx.GetPartContainer();
         mypc.DepositCurrent(current_fp_temp, warpx.getdt(m_lev), 0.0);
 
-        // copy the deposited current into the src mf
-        amrex::MultiFab::Copy(*m_mf_src, *current_fp_temp[0][m_dir], 0, 0, 1, m_mf_src->nGrowVect());
+        // copy the deposited current into the warpx.current_fp multifab
+        for (int ii=0; ii<3; ii++)
+        {
+            amrex::MultiFab* current_fp = warpx.get_pointer_current_fp(m_lev, ii);
+            amrex::MultiFab::Copy(
+                *current_fp, *current_fp_temp[0][ii], 0, 0, 1, current_fp->nGrowVect()
+            );
+        }
     }
 
     InterpolateMFForDiag(mf_dst, *m_mf_src, dcomp, warpx.DistributionMap(m_lev),
