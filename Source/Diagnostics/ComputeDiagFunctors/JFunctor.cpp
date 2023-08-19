@@ -38,31 +38,20 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
 
         auto& current_fp_x = warpx.getcurrent_fp(m_lev,0);
         current_fp_temp[0][0] = std::make_unique<amrex::MultiFab>(
-            current_fp_x.boxArray(), current_fp_x.DistributionMap(),
-            current_fp_x.nComp(), current_fp_x.nGrowVect()
+            current_fp_x, amrex::make_alias, 0, current_fp_x.nComp()
         );
+
         auto& current_fp_y = warpx.getcurrent_fp(m_lev,1);
         current_fp_temp[0][1] = std::make_unique<amrex::MultiFab>(
-            current_fp_y.boxArray(), current_fp_y.DistributionMap(),
-            current_fp_y.nComp(), current_fp_y.nGrowVect()
+            current_fp_y, amrex::make_alias, 0, current_fp_y.nComp()
         );
         auto& current_fp_z = warpx.getcurrent_fp(m_lev,2);
         current_fp_temp[0][2] = std::make_unique<amrex::MultiFab>(
-            current_fp_z.boxArray(), current_fp_z.DistributionMap(),
-            current_fp_z.nComp(), current_fp_z.nGrowVect()
+            current_fp_z, amrex::make_alias, 0, current_fp_z.nComp()
         );
 
         auto& mypc = warpx.GetPartContainer();
         mypc.DepositCurrent(current_fp_temp, warpx.getdt(m_lev), 0.0);
-
-        // copy the deposited current into the warpx.current_fp multifab
-        for (int ii=0; ii<3; ii++)
-        {
-            amrex::MultiFab* current_fp = warpx.get_pointer_current_fp(m_lev, ii);
-            amrex::MultiFab::Copy(
-                *current_fp, *current_fp_temp[0][ii], 0, 0, 1, current_fp->nGrowVect()
-            );
-        }
     }
 
     InterpolateMFForDiag(mf_dst, *m_mf_src, dcomp, warpx.DistributionMap(m_lev),
