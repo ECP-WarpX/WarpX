@@ -11,7 +11,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
-VelocityProperties::VelocityProperties (const amrex::ParmParse& pp) {
+VelocityProperties::VelocityProperties (const ParmParseWithOptionalGroup& pp) {
     // Set defaults
     std::string vel_dist_s = "constant";
     std::string vel_dir_s = "x";
@@ -46,7 +46,7 @@ VelocityProperties::VelocityProperties (const amrex::ParmParse& pp) {
 
     pp.query("beta_distribution_type", vel_dist_s);
     if (vel_dist_s == "constant") {
-        utils::parser::queryWithParser(pp, "beta", m_velocity);
+        pp.query("beta", m_velocity);
         m_type = VelConstantValue;
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_velocity > -1 && m_velocity < 1,
@@ -56,7 +56,7 @@ VelocityProperties::VelocityProperties (const amrex::ParmParse& pp) {
     }
     else if (vel_dist_s == "parser") {
         std::string str_beta_function;
-        utils::parser::Store_parserString(pp, "beta_function(x,y,z)", str_beta_function);
+        pp.get_long_string("beta_function(x,y,z)", str_beta_function);
         m_ptr_velocity_parser =
             std::make_unique<amrex::Parser>(
                 utils::parser::makeParser(str_beta_function,{"x","y","z"}));

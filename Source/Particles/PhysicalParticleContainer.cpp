@@ -763,7 +763,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector * plasma_injector,
                   1, attr, 0, attr_int, 1);
 #endif // WARPX_USE_OPENPMD
 
-    ignore_unused(q_tot, z_shift);
+    ignore_unused(plasma_injector, q_tot, z_shift);
 }
 
 void

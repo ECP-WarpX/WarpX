@@ -9,6 +9,7 @@
 #ifndef PLASMA_INJECTOR_H_
 #define PLASMA_INJECTOR_H_
 
+#include "ParmParseWithOptionalGroup.H"
 #include "InjectorDensity.H"
 #include "InjectorFlux.H"
 #include "InjectorMomentum.H"
@@ -45,7 +46,7 @@ public:
     PlasmaInjector () = default;
 
     PlasmaInjector (int ispecies, const std::string& name, const amrex::Geometry& geom,
-                    const std::string& source_name="");
+                    const std::string& src_name="");
 
     ~PlasmaInjector ();
 
@@ -153,6 +154,7 @@ protected:
 
     int species_id;
     std::string species_name;
+    std::string source_name;
 
     std::unique_ptr<InjectorPosition> h_inj_pos;
     InjectorPosition* d_inj_pos = nullptr;
@@ -179,17 +181,17 @@ protected:
     std::unique_ptr<TemperatureProperties> h_mom_temp;
     std::unique_ptr<VelocityProperties> h_mom_vel;
 
-    void setupSingleParticle (const amrex::ParmParse& pp_species_name);
-    void setupMultipleParticles (const amrex::ParmParse& pp_species_name);
-    void setupGaussianBeam (const amrex::ParmParse& pp_species_name);
-    void setupNRandomPerCell (const amrex::ParmParse& pp_species_name);
-    void setupNFluxPerCell (const amrex::ParmParse& pp_species_name);
-    void setupNuniformPerCell (const amrex::ParmParse& pp_species_name);
-    void setupExternalFile (const amrex::ParmParse& pp_species_name);
+    void setupSingleParticle (ParmParseWithOptionalGroup& pp_species_dot_source);
+    void setupMultipleParticles (ParmParseWithOptionalGroup& pp_species_dot_source);
+    void setupGaussianBeam (ParmParseWithOptionalGroup& pp_species_dot_source);
+    void setupNRandomPerCell (ParmParseWithOptionalGroup& pp_species_dot_source);
+    void setupNFluxPerCell (ParmParseWithOptionalGroup& pp_species_dot_source);
+    void setupNuniformPerCell (ParmParseWithOptionalGroup& pp_species_dot_source);
+    void setupExternalFile (ParmParseWithOptionalGroup& pp_species_dot_source);
 
-    void parseDensity (const amrex::ParmParse& pp_species_name);
-    void parseFlux (const amrex::ParmParse& pp_species_name);
-    void parseMomentum (const amrex::ParmParse& pp_species_name, const std::string& style);
+    void parseDensity (ParmParseWithOptionalGroup& pp_species_dot_source);
+    void parseFlux (ParmParseWithOptionalGroup& pp_species_dot_source);
+    void parseMomentum (ParmParseWithOptionalGroup& pp_species_dot_source, const std::string& style);
 };
 
 #endif

@@ -1,5 +1,6 @@
 CEXE_sources += WarpXAMReXInit.cpp
 CEXE_sources += WarpXInitData.cpp
+CEXE_sources += ParmParseWithOptionalGroup.cpp
 CEXE_sources += PlasmaInjector.cpp
 CEXE_sources += InjectorDensity.cpp
 CEXE_sources += InjectorMomentum.cpp

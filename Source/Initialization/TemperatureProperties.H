@@ -9,7 +9,8 @@
 #ifndef TEMPERATURE_PROPERTIES_H_
 #define TEMPERATURE_PROPERTIES_H_
 
-#include <AMReX_ParmParse.H>
+#include "ParmParseWithOptionalGroup.H"
+
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 
@@ -31,7 +32,7 @@ struct TemperatureProperties
      *
      * \param[in] pp: Reference to the parameter parser object for the species being initialized
      */
-    TemperatureProperties (const amrex::ParmParse& pp);
+    TemperatureProperties (const ParmParseWithOptionalGroup& pp);
 
     /* Type of temperature initialization */
     TemperatureInitType m_type;
