@@ -672,10 +672,14 @@ Particle initialization
 * ``<species_name>.injection_sources`` (``list of strings``) optional
     Names of additional injection sources. By default, WarpX assumes one injection source per species, hence all of the input
     parameters below describing the injection are parameters directly of the species. However, this option allows
-    additional sources, the names of which are listed here. For each source, the name of the source is added to the
+    additional sources, the names of which are specified here. For each source, the name of the source is added to the
     input parameters below. For instance, with ``<species_name>.injection_sources = source1 source2`` there will be two input
-    parameters ``<species_name>.source1.injection_style`` and ``<species_name>.source2.injection_style``. Note that since by
-    default ``<species_name>.injection_style = none``, all injection sources can be input this way.
+    parameters ``<species_name>.source1.injection_style`` and ``<species_name>.source2.injection_style``.
+    For each source listed, the ``injection_style`` must be supplied. For the parameters of each source, the name with the source
+    will be read first. If it is not given, it will read the parameter without the source. This allows parameters used for all
+    sources to be specified once. For example, if the ``source1`` and ``source2`` have the same value of ``uz_m``, then it can be
+    set using ``<species_name>.uz_m`` instead of setting it for each source.
+    Note that since by default ``<species_name>.injection_style = none``, all injection sources can be input this way.
 
 * ``<species_name>.injection_style`` (`string`; default: ``none``)
     Determines how the (macro-)particles will be injected in the simulation.
