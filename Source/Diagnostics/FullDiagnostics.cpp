@@ -46,6 +46,11 @@ FullDiagnostics::FullDiagnostics (int i, std::string name)
 {
     ReadParameters();
     BackwardCompatibility();
+
+    m_solver_deposits_current = (
+        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
+        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic
+    );
 }
 
 void
@@ -195,10 +200,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
 
     // Boolean flag for whether the current density should be deposited before
     // diagnostic output
-    bool deposit_current = (
-        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
-        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic
-    );
+    bool deposit_current = !m_solver_deposits_current;
 
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0, n=m_varnames_fields.size(); comp<n; comp++){
@@ -366,10 +368,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
 
     // Boolean flag for whether the current density should be deposited before
     // diagnostic output
-    bool deposit_current = (
-        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
-        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic
-    );
+    bool deposit_current = !m_solver_deposits_current;
 
     // First index of m_all_field_functors[lev] where RZ modes are stored
     int icomp = m_all_field_functors[0].size();
@@ -603,10 +602,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
 
     // Boolean flag for whether the current density should be deposited before
     // diagnostic output
-    bool deposit_current = (
-        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
-        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic
-    );
+    bool deposit_current = !m_solver_deposits_current;
 
     m_all_field_functors[lev].resize(ntot);
     // Fill vector of functors for all components except individual cylindrical modes.
