@@ -74,13 +74,14 @@ electrons = picmi.Species(
 # diagnostics
 ##########################
 
-field_diag = picmi.ParticleDiagnostic(
-    species=electrons,
+field_diag = picmi.FieldDiagnostic(
+    grid=grid,
     name = 'diag1',
-    data_list=['previous_positions'],
+    data_list=['E'],
     period = 10,
     write_dir = '.',
-    warpx_file_prefix = 'Python_particle_reflection_plt'
+    warpx_file_prefix = 'Python_particle_reflection_plt',
+    warpx_write_species=False
 )
 
 ##########################
