@@ -47,7 +47,7 @@ FullDiagnostics::FullDiagnostics (int i, std::string name)
     ReadParameters();
     BackwardCompatibility();
 
-    m_solver_deposits_current = (
+    m_solver_deposits_current = !(
         WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
         WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic
     );
