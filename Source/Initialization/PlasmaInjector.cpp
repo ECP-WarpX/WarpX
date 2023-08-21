@@ -157,8 +157,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         charge_is_specified ||
-        species_is_specified ||
-        (injection_style == "external_file"),
+        species_is_specified,
         "Need to specify at least one of species_type or charge for species '" +
         species_name + "'."
     );
@@ -172,8 +171,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         mass_is_specified ||
-        species_is_specified ||
-        (injection_style == "external_file"),
+        species_is_specified,
         "Need to specify at least one of species_type or mass for species '" +
         species_name + "'."
     );
