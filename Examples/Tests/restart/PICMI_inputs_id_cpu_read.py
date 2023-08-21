@@ -7,7 +7,7 @@ import sys
 
 import numpy as np
 
-from pywarpx import callbacks, picmi
+from pywarpx import callbacks, particle_containers, picmi
 
 ##########################
 # physics parameters
@@ -116,7 +116,9 @@ sim.initialize_warpx()
 # below will be reproducible from run to run
 np.random.seed(30025025)
 
-sim.extension.add_real_comp('electrons', 'newPid')
+# wrap the electrons particle container
+electron_wrapper = particle_containers.ParticleContainerWrapper('electrons')
+electron_wrapper.add_real_comp('newPid')
 
 def add_particles():
 
@@ -130,8 +132,8 @@ def add_particles():
     w = np.ones(nps) * 2.0
     newPid = 5.0
 
-    sim.extension.add_particles(
-        species_name='electrons', x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
+    electron_wrapper.add_particles(
+        x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
         w=w, newPid=newPid
     )
 
@@ -147,5 +149,6 @@ sim.step(max_steps)
 ###############################################
 # check that the ids and cpus are read properly
 ###############################################
-assert(np.sum(np.concatenate(sim.extension.get_particle_id('electrons'))) == 5050)
-assert(np.sum(np.concatenate(sim.extension.get_particle_cpu('electrons'))) == 0)
+
+assert(np.sum(np.concatenate(electron_wrapper.get_particle_id())) == 5050)
+assert(np.sum(np.concatenate(electron_wrapper.get_particle_cpu())) == 0)

@@ -1,4 +1,4 @@
-target_sources(WarpX_rz
+target_sources(lib_rz
   PRIVATE
     SpectralHankelTransformer.cpp
     HankelTransform.cpp

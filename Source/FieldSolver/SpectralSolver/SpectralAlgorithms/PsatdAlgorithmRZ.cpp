@@ -13,8 +13,6 @@
 
 #include <cmath>
 
-using amrex::operator""_rt;
-
 
 /* \brief Initialize coefficients for the update equation */
 PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,

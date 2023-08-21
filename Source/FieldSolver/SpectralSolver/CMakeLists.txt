@@ -1,6 +1,6 @@
 foreach(D IN LISTS WarpX_DIMS)
     warpx_set_suffix_dims(SD ${D})
-    target_sources(WarpX_${SD}
+    target_sources(lib_${SD}
       PRIVATE
         SpectralFieldData.cpp
         SpectralKSpace.cpp
@@ -8,7 +8,7 @@ foreach(D IN LISTS WarpX_DIMS)
     )
 
     if(D STREQUAL "RZ")
-        target_sources(WarpX_${SD}
+        target_sources(lib_${SD}
           PRIVATE
             SpectralSolverRZ.cpp
             SpectralFieldDataRZ.cpp
