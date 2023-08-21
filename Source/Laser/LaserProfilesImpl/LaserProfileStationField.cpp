@@ -1,5 +1,6 @@
 #include "Laser/LaserProfiles.H"
 #include "WarpX.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_VisMF.H>
 
@@ -63,7 +64,26 @@ void StationFieldLaserProfile::update (amrex::Real t)
 
             m_station_mf = std::make_unique<amrex::MultiFab>
                 (mf.boxArray(), mf.DistributionMap(), 1, 0);
-            amrex::MultiFab::Copy(*m_station_mf, mf, m_xy, 0, 1, 0);
+
+            auto const& sa = mf.const_arrays();
+            auto const& da = m_station_mf->arrays();
+            if (m_xy == 0) {
+                amrex::ParallelFor(*m_station_mf,
+                [=] AMREX_GPU_DEVICE (int bno, int i, int j, int k)
+                {
+                    // 0.5*(Ex+c*By)
+                    da[bno](i,j,k) = amrex::Real(0.5) *
+                        (sa[bno](i,j,k,0) + PhysConst::c*sa[bno](i,j,k,4));
+                });
+            } else {
+                amrex::ParallelFor(*m_station_mf,
+                [=] AMREX_GPU_DEVICE (int bno, int i, int j, int k)
+                {
+                    // 0.5*(Ey-c*Bx)
+                    da[bno](i,j,k) = amrex::Real(0.5) *
+                        (sa[bno](i,j,k,1) - PhysConst::c*sa[bno](i,j,k,3));
+                });
+            }
         } else {
             m_station_mf.reset();
             m_slice_fab.reset();
