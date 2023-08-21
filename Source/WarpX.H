@@ -39,6 +39,7 @@
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/export.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -69,13 +70,14 @@
 #include <vector>
 #include <map>
 
+
 enum struct PatchType : int
 {
     fine,
     coarse
 };
 
-class WarpX
+class WARPX_EXPORT WarpX
     : public amrex::AmrCore
 {
 public:
@@ -602,7 +604,13 @@ public:
      * In doding so, only positions attributes are changed while fields remain unchanged.
      */
     void ShiftGalileanBoundary ();
-    void UpdatePlasmaInjectionPosition (amrex::Real dt);
+
+    /**
+     * \brief Update injection position for continuous injection of
+     *        particles and lasers (loops over species and lasers).
+     */
+    void UpdateInjectionPosition (const amrex::Real dt);
+
     void ResetProbDomain (const amrex::RealBox& rb);
     void EvolveE (         amrex::Real dt);
     void EvolveE (int lev, amrex::Real dt);
@@ -1539,6 +1547,9 @@ private:
     amrex::Real cfl = amrex::Real(0.999);
 
     std::string restart_chkfile;
+
+    /** When `true`, write the diagnostics after restart at the time of the restart. */
+    bool write_diagonstics_on_restart = false;
 
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;

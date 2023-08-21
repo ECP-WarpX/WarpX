@@ -14,7 +14,10 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Parser.H>
 
+#include <array>
+#include <string>
 #include <utility>
+
 
 namespace ElectrostaticSolver {
 

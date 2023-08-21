@@ -22,6 +22,10 @@ private:
     bool m_plot_raw_fields_guards = false;
     /** Whether to dump the RZ modes */
     bool m_dump_rz_modes = false;
+    /** Whether the field solver deposits current density, if not it will be done
+     * before writing the diagnostic.
+     */
+    bool m_solver_deposits_current = true;
     /** Flush m_mf_output and particles to file for the i^th buffer */
     void Flush (int i_buffer) override;
     /** Flush raw data */
