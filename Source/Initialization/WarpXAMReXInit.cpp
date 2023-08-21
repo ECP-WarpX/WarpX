@@ -56,18 +56,17 @@ namespace {
     }
 }
 
-
 namespace warpx::initialization
 {
 
     amrex::AMReX*
-    amrex_init (int& argc, char**& argv, bool const build_parm_parse, MPI_Comm const mpi_comm)
+    amrex_init (int& argc, char**& argv, bool build_parm_parse)
     {
         return amrex::Initialize(
             argc,
             argv,
             build_parm_parse,
-            mpi_comm,
+            MPI_COMM_WORLD,
             ::overwrite_amrex_parser_defaults
         );
     }

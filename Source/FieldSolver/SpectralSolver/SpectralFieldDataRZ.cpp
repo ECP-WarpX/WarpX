@@ -15,8 +15,6 @@
 #include <AMReX_Config.H>
 
 
-using amrex::operator""_rt;
-
 /* \brief Initialize fields in spectral space, and FFT plans
  *
  * \param realspace_ba Box array that corresponds to the decomposition
