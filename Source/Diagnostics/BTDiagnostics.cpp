@@ -897,7 +897,6 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
     m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
     amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
-    buffer_ba.maxSize(m_max_box_size);
     // Generate a new distribution map for the back-transformed buffer multifab
     const amrex::DistributionMapping buffer_dmap(buffer_ba);
     // Number of guard cells for the output buffer is zero.
@@ -1035,7 +1034,6 @@ BTDiagnostics::Flush (int i_buffer)
         m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) + 1) );
         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
         amrex::BoxArray buffer_ba( particle_buffer_box );
-        buffer_ba.maxSize(m_max_box_size*2);
         m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
         for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
             // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
@@ -1458,7 +1456,6 @@ BTDiagnostics::PrepareParticleDataForOutput()
                         }
                         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
                         amrex::BoxArray buffer_ba( particle_buffer_box );
-                        buffer_ba.maxSize(m_max_box_size);
                         const amrex::DistributionMapping buffer_dmap(buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
