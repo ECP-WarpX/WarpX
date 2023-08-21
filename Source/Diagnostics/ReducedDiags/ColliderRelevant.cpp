@@ -163,7 +163,6 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
             ofs << "[" << off++ << "]step()";
             ofs << m_sep;
             ofs << "[" << off++ << "]time(s)";
-            //ofs << m_sep;
             for (const auto& name : all_diag_names){
                 const auto& el = m_headers_indices[name];
                 ofs << m_sep << "[" << el.idx + off << "]" << el.header;
