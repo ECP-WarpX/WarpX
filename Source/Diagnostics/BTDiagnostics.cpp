@@ -1159,8 +1159,12 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             const std::string snapshot_WarpXHeader_path = snapshot_path + "/WarpXHeader";
             const std::string buffer_job_info_path = recent_Buffer_filepath + "/warpx_job_info";
             const std::string snapshot_job_info_path = snapshot_path + "/warpx_job_info";
-            std::rename(buffer_WarpXHeader_path.c_str(), snapshot_WarpXHeader_path.c_str());
-            std::rename(buffer_job_info_path.c_str(), snapshot_job_info_path.c_str());
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                std::rename(buffer_WarpXHeader_path.c_str(), snapshot_WarpXHeader_path.c_str()) == 0,
+                std::string("Renaming ").append(buffer_WarpXHeader_path).append(" to ").append(snapshot_WarpXHeader_path).append(" has failed"));
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                std::rename(buffer_job_info_path.c_str(), snapshot_job_info_path.c_str()) == 0,
+                std::string("Renaming ").append(buffer_job_info_path).append(" to ").append(snapshot_job_info_path).append(" has failed"));
         }
 
         if (m_do_back_transformed_fields) {
@@ -1184,15 +1188,19 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             const std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_", m_buffer_flush_counter[i_snapshot], amrex_fabfile_digits);
 
             if (m_buffer_flush_counter[i_snapshot] == 0 || m_first_flush_after_restart[i_snapshot] == 1) {
-                std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str()) == 0,
+                    std::string("Renaming ").append(recent_Header_filename).append(" to ").append(snapshot_Header_filename).append(" has failed"));
                 Buffer_FabHeader.SetFabName(0, Buffer_FabHeader.fodPrefix(0),
                                             new_snapshotFabFilename,
                                             Buffer_FabHeader.FabHead(0));
                 Buffer_FabHeader.WriteMultiFabHeader();
-                std::rename(recent_Buffer_FabHeaderFilename.c_str(),
-                            snapshot_FabHeaderFilename.c_str());
-                std::rename(recent_Buffer_FabFilename.c_str(),
-                            snapshot_FabFilename.c_str());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::rename(recent_Buffer_FabHeaderFilename.c_str(), snapshot_FabHeaderFilename.c_str()) == 0,
+                    std::string("Renaming ").append(recent_Buffer_FabHeaderFilename).append(" to ").append(snapshot_FabHeaderFilename).append(" has failed"));
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::rename(recent_Buffer_FabFilename.c_str(), snapshot_FabFilename.c_str()) == 0,
+                    std::string("Renaming ").append(recent_Buffer_FabFilename).append(" to ").append(snapshot_FabFilename).append(" has failed"));
             } else {
                 // Interleave Header file
                 InterleaveBufferAndSnapshotHeader(recent_Header_filename,
@@ -1200,8 +1208,9 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                 InterleaveFabArrayHeader(recent_Buffer_FabHeaderFilename,
                                          snapshot_FabHeaderFilename,
                                          new_snapshotFabFilename);
-                std::rename(recent_Buffer_FabFilename.c_str(),
-                            snapshot_FabFilename.c_str());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::rename(recent_Buffer_FabFilename.c_str(), snapshot_FabFilename.c_str()) == 0,
+                    std::string("Renaming ").append(recent_Buffer_FabFilename).append(" to ").append(snapshot_FabFilename).append(" has failed"));
             }
         }
         for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
@@ -1234,22 +1243,32 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                 BufferSpeciesHeader.WriteHeader();
 
                 // copy Header file for the species
-                std::rename(recent_species_Header.c_str(), snapshot_species_Header.c_str());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::rename(recent_species_Header.c_str(), snapshot_species_Header.c_str()) == 0,
+                    std::string("Renaming ").append(recent_species_Header).append(" to ").append(snapshot_species_Header).append(" has failed"));
                 if (BufferSpeciesHeader.m_total_particles == 0) continue;
                 // if finite number of particles in the output, copy ParticleHdr and Data file
-                std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str());
-                std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str()) == 0,
+                    std::string("Renaming ").append(recent_ParticleHdrFilename).append(" to ").append(snapshot_ParticleHdrFilename).append(" has failed"));
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str()) == 0,
+                    std::string("Renaming ").append(recent_ParticleDataFilename).append(" to ").append(snapshot_ParticleDataFilename).append(" has failed"));
             } else {
                 InterleaveSpeciesHeader(recent_species_Header,snapshot_species_Header,
                                         m_output_species_names[i], m_buffer_flush_counter[i_snapshot]);
                 if (BufferSpeciesHeader.m_total_particles == 0) continue;
                 if (m_totalParticles_flushed_already[i_snapshot][i]==0) {
-                    std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str()) == 0,
+                    std::string("Renaming ").append(recent_ParticleHdrFilename).append(" to ").append(snapshot_ParticleHdrFilename).append(" has failed"));
                 } else {
                     InterleaveParticleDataHeader(recent_ParticleHdrFilename,
                                                  snapshot_ParticleHdrFilename);
                 }
-                std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::rename(recent_ParticleDataFilename.c_str(), snapshot_ParticleDataFilename.c_str()) == 0,
+                    std::string("Renaming ").append(recent_ParticleDataFilename).append(" to ").append(snapshot_ParticleDataFilename).append(" has failed"));
             }
         }
         // Destroying the recently flushed buffer directory since it is already merged.

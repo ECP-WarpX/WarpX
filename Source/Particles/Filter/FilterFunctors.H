@@ -93,7 +93,7 @@ struct ParserFilter
      * \param time simulation time on the coarsest level
      */
     ParserFilter(bool a_is_active, amrex::ParserExecutor<7> const& a_filter_parser,
-        const amrex::Real a_mass, const amrex::Real time):
+        const amrex::ParticleReal a_mass, const amrex::Real time):
             m_is_active{a_is_active},
             m_function_partparser{a_filter_parser},
             m_mass{a_mass},
@@ -139,7 +139,7 @@ public:
     /** Mass of particle species */
     amrex::ParticleReal m_mass;
     /** Store physical time on the coarsest level. */
-    amrex::ParticleReal m_t;
+    amrex::Real m_t;
     /** keep track of momentum units particles will come in with **/
     InputUnits m_units;
 };

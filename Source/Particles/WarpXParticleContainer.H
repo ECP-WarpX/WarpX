@@ -46,6 +46,7 @@
 #include <string>
 #include <utility>
 
+
 using namespace amrex::literals;
 
 class WarpXParIter
@@ -207,6 +208,10 @@ public:
                         const bool apply_boundary_and_scale_volume = false,
                         const bool interpolate_across_levels = true,
                         const int icomp = 0);
+    void DepositCharge (std::unique_ptr<amrex::MultiFab>& rho, const int lev,
+                        const bool local = false, const bool reset = false,
+                        const bool apply_boundary_and_scale_volume = false,
+                        const int icomp = 0);
 
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
@@ -246,8 +251,13 @@ public:
     // LaserParticleContainer: implemented.
     // RigidInjectedParticleContainer: not implemented.
     virtual void ContinuousInjection(const amrex::RealBox& /*injection_box*/) {}
-    // Update optional sub-class-specific injection location.
-    virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
+
+    /**
+     * \brief Update antenna position for continuous injection of lasers
+     *        in a boosted frame. Empty function for containers other than lasers.
+     */
+    virtual void UpdateAntennaPosition(const amrex::Real /*dt*/) {}
+
     bool doContinuousInjection() const {return do_continuous_injection;}
 
     // Inject a continuous flux of particles from a defined plane
@@ -289,11 +299,16 @@ public:
      * @param[in] id if different than -1, this id will be assigned to the particles (used for
      * particle tagging in some routines, e.g. SplitParticle)
      */
-    void AddNParticles (int lev,
-                        int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
-                        const amrex::ParticleReal* ux, const amrex::ParticleReal* uy, const amrex::ParticleReal* uz,
-                        const int nattr_real, const amrex::ParticleReal* attr_real,
-                        const int nattr_int, const int* attr_int,
+    void AddNParticles (int lev, int n,
+                        amrex::Vector<amrex::ParticleReal> const & x,
+                        amrex::Vector<amrex::ParticleReal> const & y,
+                        amrex::Vector<amrex::ParticleReal> const & z,
+                        amrex::Vector<amrex::ParticleReal> const & ux,
+                        amrex::Vector<amrex::ParticleReal> const & uy,
+                        amrex::Vector<amrex::ParticleReal> const & uz,
+                        const int nattr_real,
+                        amrex::Vector<amrex::Vector<amrex::ParticleReal>> const & attr_real,
+                        const int nattr_int, amrex::Vector<amrex::Vector<int>> const & attr_int,
                         int uniqueparticles, amrex::Long id=-1);
 
     virtual void ReadHeader (std::istream& is) = 0;

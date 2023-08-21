@@ -717,6 +717,7 @@ Particle initialization
       ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
+      ``<species_name>.impose_t_lab_from_file`` (`bool`) optional (default is false) only read if warpx.gamma_boost > 1., it allows to set t_lab for the Lorentz Transform as being the time stored in the openPMD file.
       Warning: ``q_tot!=0`` is not supported with the ``external_file`` injection style. If a value is provided, it is ignored and no re-scaling is done.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
@@ -1275,7 +1276,7 @@ Laser initialization
 
         E(\boldsymbol{x},t) \propto \exp\left( -\frac{(t-t_{peak})^2}{\tau^2} \right)
 
-    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.174`.
+    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.1774`.
 
     When running a **boosted-frame simulation**, provide the value of
     ``<laser_name>.profile_duration`` in the laboratory frame, and use ``warpx.gamma_boost``
@@ -3128,6 +3129,9 @@ The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.
 * ``amr.restart`` (`string`)
     Name of the checkpoint file to restart from. Returns an error if the folder does not exist
     or if it is not properly formatted.
+
+* ``warpx.write_diagonstics_on_restart`` (`bool`) optional (default `false`)
+    When `true`, write the diagnostics after restart at the time of the restart.
 
 Intervals parser
 ----------------

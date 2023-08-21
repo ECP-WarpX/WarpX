@@ -153,7 +153,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
          cd $HOME/src/warpx
          rm -rf build_pm_gpu
 
-         cmake -S . -B build_pm_gpu -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
+         cmake -S . -B build_pm_gpu -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_pm_gpu -j 16
          cmake --build build_pm_gpu -j 16 --target pip_install
 
@@ -167,7 +167,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
          cd $HOME/src/warpx
          rm -rf build_pm_cpu
 
-         cmake -S . -B build_pm_cpu -DWarpX_COMPUTE=OMP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
+         cmake -S . -B build_pm_cpu -DWarpX_COMPUTE=OMP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
          cmake --build build_pm_cpu -j 16
          cmake --build build_pm_cpu -j 16 --target pip_install
 
