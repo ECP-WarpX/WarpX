@@ -28,7 +28,7 @@ public:
      *            to the output diagnostic MultiFab, mf_dst.
      * \param[in] i_buffer index of a back-transformed snapshot
      */
-    virtual void operator() (amrex::MultiFab& mf_dst, int dcomp, const int i_buffer = 0) const = 0;
+    virtual void operator() (amrex::MultiFab& mf_dst, int dcomp, int i_buffer = 0) const = 0;
     /** Number of component from the input multifab to write to the output
      * multifab */
     int nComp () const { return m_ncomp; }

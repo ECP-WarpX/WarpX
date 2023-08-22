@@ -115,7 +115,7 @@ class FiniteDifferenceSolver
                       std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
-                      std::array< amrex::MultiFab*, 3 > const Efield,
+                      std::array< amrex::MultiFab*, 3 > Efield,
                       amrex::Real dt,
                       bool dive_cleaning);
 
@@ -123,7 +123,7 @@ class FiniteDifferenceSolver
                       std::array< amrex::MultiFab*, 3 > Bfield,
                       std::array< amrex::MultiFab*, 3 > Jfield,
                       std::array< amrex::MultiFab*, 3 >  edge_lengths,
-                      amrex::MultiFab* const Ffield,
+                      amrex::MultiFab* Ffield,
                       MultiSigmaBox const& sigba,
                       amrex::Real dt, bool pml_has_particles );
 
@@ -204,7 +204,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             int lev,
-            amrex::Real const dt );
+            amrex::Real dt );
 
         template< typename T_Algo >
         void EvolveECylindrical (
@@ -213,7 +213,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             std::unique_ptr<amrex::MultiFab> const& Ffield,
             int lev,
-            amrex::Real const dt );
+            amrex::Real dt );
 
         template< typename T_Algo >
         void EvolveFCylindrical (
@@ -221,7 +221,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             int rhocomp,
-            amrex::Real const dt );
+            amrex::Real dt );
 
         template< typename T_Algo >
         void ComputeDivECylindrical (
@@ -238,7 +238,7 @@ class FiniteDifferenceSolver
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             int lev, HybridPICModel const* hybrid_pic_model,
-            const bool include_resistivity_term );
+            bool include_resistivity_term );
 
         template<typename T_Algo>
         void CalculateCurrentAmpereCylindrical (
@@ -304,7 +304,7 @@ class FiniteDifferenceSolver
         template< typename T_Algo, typename T_MacroAlgo >
         void MacroscopicEvolveECartesian (
             std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
-            std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Bfield,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Bfield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             amrex::Real dt,
@@ -313,7 +313,7 @@ class FiniteDifferenceSolver
         template< typename T_Algo >
         void EvolveBPMLCartesian (
             std::array< amrex::MultiFab*, 3 > Bfield,
-            std::array< amrex::MultiFab*, 3 > const Efield,
+            std::array< amrex::MultiFab*, 3 > Efield,
             amrex::Real dt,
             bool dive_cleaning);
 
@@ -323,14 +323,14 @@ class FiniteDifferenceSolver
             std::array< amrex::MultiFab*, 3 > Bfield,
             std::array< amrex::MultiFab*, 3 > Jfield,
             std::array< amrex::MultiFab*, 3 > edge_lengths,
-            amrex::MultiFab* const Ffield,
+            amrex::MultiFab* Ffield,
             MultiSigmaBox const& sigba,
             amrex::Real dt, bool pml_has_particles );
 
         template< typename T_Algo >
         void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
                       std::array< amrex::MultiFab*, 3 > Efield,
-                      amrex::Real const dt );
+                      amrex::Real dt );
 
         template<typename T_Algo>
         void HybridPICSolveECartesian (

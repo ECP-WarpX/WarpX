@@ -132,7 +132,7 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
+    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(int lev);
 
     /**
      * \brief Deposit charge density.
@@ -145,7 +145,7 @@ public:
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   const amrex::Real relative_time);
+                   amrex::Real relative_time);
 
     /**
      * \brief Deposit current density.
@@ -242,7 +242,7 @@ public:
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (bool do_back_transformed_particles);
     /** Whether back-transformed diagnostics is set for species with species_name.
      *
      * \param[in] species_name The species for which back-transformed particles is set.
