@@ -360,7 +360,7 @@ protected:
     bool m_rz_random_theta = true;
 
     // Impose t_lab from the openPMD file for externally loaded species
-    bool impose_t_lab_from_file = false;
+    bool t_lab_from_file = false;
 
     Resampling m_resampler;
 
