@@ -940,6 +940,8 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
                                                       WarpX::RefRatio(lev-1) );
     }
     m_field_buffer_multifab_defined[i_buffer] = 1;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_mf_output[i_buffer][lev].boxArray().size() == 1,
+        "BoxArray size must be 1 for back-transformed diagnostics multifab that stores buffers");
 }
 
 
@@ -1049,6 +1051,8 @@ BTDiagnostics::Flush (int i_buffer)
             for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][i]->ParticleBoxArray(0).size() == 1,
+                    "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
             }
         }
     }
@@ -1060,7 +1064,7 @@ BTDiagnostics::Flush (int i_buffer)
         m_max_buffer_multifabs[i_buffer], m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
 
-    // Note : test if this is needed before or after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. Hence rescaling the box after WriteToFile
+    // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
         if (m_particles_buffer.at(i_buffer).size() > 0 ) {
             m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
@@ -1069,6 +1073,8 @@ BTDiagnostics::Flush (int i_buffer)
             for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][i]->ParticleBoxArray(0).size() == 1,
+                    "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
             }
         }
     }
@@ -1458,6 +1464,8 @@ BTDiagnostics::PrepareParticleDataForOutput()
                         m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
                         m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
+                        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][i]->ParticleBoxArray(lev).size() == 1,
+                            "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
                     }
                 }
                 m_all_particle_functors[i]->PrepareFunctorData (
