@@ -534,6 +534,7 @@ set_cxx_warnings()
 # Generate Configuration and .pc Files ########################################
 #
 get_source_version(WarpX_${WarpX_DIMS_LAST} ${WarpX_SOURCE_DIR})
+set(WarpX_GIT_VERSION ${WarpX_${WarpX_DIMS_LAST}_GIT_VERSION})
 configure_file(
     ${WarpX_SOURCE_DIR}/Source/Utils/WarpXVersion.H.in
     ${WarpX_BINARY_DIR}/Source/Utils/WarpXVersion.H
