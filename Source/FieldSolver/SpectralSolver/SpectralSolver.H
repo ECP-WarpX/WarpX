@@ -97,20 +97,20 @@ class SpectralSolver
          * \param[in] field_index index of the spectral field that stores the FFT result
          * \param[in] i_comp component of the MultiFab mf that is transformed to Fourier space
          */
-        void ForwardTransform (const int lev,
+        void ForwardTransform (int lev,
                                const amrex::MultiFab& mf,
-                               const int field_index,
-                               const int i_comp = 0);
+                               int field_index,
+                               int i_comp = 0);
 
         /**
          * \brief Transform spectral field specified by `field_index` back to
          * real space, and store it in the component `i_comp` of `mf`
          */
-        void BackwardTransform( const int lev,
+        void BackwardTransform( int lev,
                                 amrex::MultiFab& mf,
-                                const int field_index,
+                                int field_index,
                                 const amrex::IntVect& fill_guards,
-                                const int i_comp=0 );
+                                int i_comp=0 );
 
         /**
          * \brief Update the fields in spectral space, over one timestep

@@ -609,7 +609,7 @@ public:
      * \brief Update injection position for continuous injection of
      *        particles and lasers (loops over species and lasers).
      */
-    void UpdateInjectionPosition (const amrex::Real dt);
+    void UpdateInjectionPosition (amrex::Real dt);
 
     void ResetProbDomain (const amrex::RealBox& rb);
     void EvolveE (         amrex::Real dt);
@@ -689,7 +689,7 @@ public:
      * can appear in parallel simulations. This will be called
      * when FieldBoundaryType is set to damped. Vector version.
      */
-    void DampFieldsInGuards (const int lev,
+    void DampFieldsInGuards (int lev,
                              const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                              const std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
 
@@ -700,7 +700,7 @@ public:
      * can appear in parallel simulations. This will be called
      * when FieldBoundaryType is set to damped. Scalar version.
      */
-    void DampFieldsInGuards (const int lev, std::unique_ptr<amrex::MultiFab>& mf);
+    void DampFieldsInGuards (int lev, std::unique_ptr<amrex::MultiFab>& mf);
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -717,7 +717,7 @@ public:
      * density deposited in the guard cells have to be reflected back into
      * the simulation domain. This function performs that logic.
      */
-    void ApplyRhofieldBoundary (const int lev, amrex::MultiFab* Rho,
+    void ApplyRhofieldBoundary (int lev, amrex::MultiFab* Rho,
                                 PatchType patch_type);
 
     /**
@@ -725,12 +725,12 @@ public:
      * density deposited in the guard cells have to be reflected back into
      * the simulation domain. This function performs that logic.
      */
-    void ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
+    void ApplyJfieldBoundary (int lev, amrex::MultiFab* Jx,
                               amrex::MultiFab* Jy, amrex::MultiFab* Jz,
                               PatchType patch_type);
 
-    void ApplyEfieldBoundary (const int lev, PatchType patch_type);
-    void ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType dt_type);
+    void ApplyEfieldBoundary (int lev, PatchType patch_type);
+    void ApplyBfieldBoundary (int lev, PatchType patch_type, DtType dt_type);
 
     /**
      * \brief When the Ohm's law solver is used, the electron pressure values
@@ -743,9 +743,9 @@ public:
     void ApplyElectronPressureBoundary (const int lev, PatchType patch_type);
 
     void DampPML ();
-    void DampPML (const int lev);
-    void DampPML (const int lev, PatchType patch_type);
-    void DampPML_Cartesian (const int lev, PatchType patch_type);
+    void DampPML (int lev);
+    void DampPML (int lev, PatchType patch_type);
+    void DampPML_Cartesian (int lev, PatchType patch_type);
 
     void DampJPML ();
     void DampJPML (int lev);
@@ -883,7 +883,7 @@ public:
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const amrex::IntVect ngrow) const;
 
-    void prepareFields( int const step, amrex::Vector<std::string>& varnames,
+    void prepareFields( int step, amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg,
         amrex::Vector<const amrex::MultiFab*>& output_mf,
         amrex::Vector<amrex::Geometry>& output_geom ) const;
@@ -899,7 +899,7 @@ public:
      *                         (when v_galilean is not zero)
      * \return An array of the position coordinates
      */
-    static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx, const int lev, const amrex::Real time_shift_delta);
+    static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx, int lev, const amrex::Real time_shift_delta);
     /**
      * \brief Return the upper corner of the box in real units.
      * \param bx The box
@@ -908,7 +908,7 @@ public:
      *                         (when v_galilean is not zero)
      * \return An array of the position coordinates
      */
-    static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, const int lev, const amrex::Real time_shift_delta);
+    static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev, amrex::Real time_shift_delta);
 
     static amrex::IntVect RefRatio (int lev);
 
@@ -941,22 +941,22 @@ public:
     static bool fft_do_time_averaging;
 
     // these should be private, but can't due to Cuda limitations
-    static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
+    static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
                              const std::array<const amrex::MultiFab* const, 3>& B,
                              const std::array<amrex::Real,3>& dx);
 
-    static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
+    static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
                              const std::array<const amrex::MultiFab* const, 3>& B,
                              const std::array<amrex::Real,3>& dx, amrex::IntVect const ngrow);
 
-    void ComputeDivE(amrex::MultiFab& divE, const int lev);
+    void ComputeDivE(amrex::MultiFab& divE, int lev);
 
-    const amrex::IntVect getngEB() const { return guard_cells.ng_alloc_EB; }
-    const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
-    const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
-    const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
-    const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
-    const amrex::IntVect get_ng_fieldgather () const {return guard_cells.ng_FieldGather;}
+    amrex::IntVect getngEB() const { return guard_cells.ng_alloc_EB; }
+    amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
+    amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
+    amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
+    amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
+    amrex::IntVect get_ng_fieldgather () const {return guard_cells.ng_FieldGather;}
 
     /** Coarsest-level Domain Decomposition
      *
@@ -968,7 +968,7 @@ public:
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
     ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
-    void ComputeSpaceChargeField (bool const reset_fields);
+    void ComputeSpaceChargeField (bool reset_fields);
     void AddBoundaryField ();
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void AddSpaceChargeFieldLabFrame ();
@@ -977,8 +977,8 @@ public:
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
                      amrex::Real const required_precision=amrex::Real(1.e-11),
                      amrex::Real absolute_tolerance=amrex::Real(0.0),
-                     const int max_iters=200,
-                     const int verbosity=2) const;
+                     int max_iters=200,
+                     int verbosity=2) const;
 
     void setPhiBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi ) const;
 
@@ -999,8 +999,8 @@ public:
                                  amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A,
                                  amrex::Real const required_precision=amrex::Real(1.e-11),
                                  amrex::Real absolute_tolerance=amrex::Real(0.0),
-                                 const int max_iters=200,
-                                 const int verbosity=2) const;
+                                 int max_iters=200,
+                                 int verbosity=2) const;
 
     void setVectorPotentialBC (amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>, 3> >& A) const;
 
@@ -1032,8 +1032,8 @@ public:
          amrex::ParserExecutor<3> const& zfield_parser,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
          std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-         const char field,
-         const int lev, PatchType patch_type);
+         char field,
+         int lev, PatchType patch_type);
 
     void ReadExternalFieldFromFile (
          std::string read_fields_from_path, amrex::MultiFab* mf,
@@ -1066,7 +1066,7 @@ public:
      * \param[in] n_order order of the finite-difference approximation
      * \param[in] a_grid_type type of grid (collocated or not)
      */
-    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(const int n_order, const short a_grid_type);
+    static amrex::Vector<amrex::Real> getFornbergStencilCoefficients(int n_order, short a_grid_type);
 
     // Device vectors of stencil coefficients used for finite-order centering of fields
     amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
@@ -1168,8 +1168,8 @@ private:
     ///
     void EvolveEM(int numsteps);
 
-    void FillBoundaryB (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
-    void FillBoundaryE (const int lev, const PatchType patch_type, const amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryB (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
+    void FillBoundaryE (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryG (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
 
@@ -1287,8 +1287,8 @@ private:
 
     void BuildBufferMasks ();
 public: // for cuda
-    void BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
-                                 const amrex::IArrayBox &guard_mask, const int ng );
+    void BuildBufferMasksInBox ( amrex::Box tbx, amrex::IArrayBox &buffer_mask,
+                                 const amrex::IArrayBox &guard_mask, int ng );
 private:
     const amrex::iMultiFab* getCurrentBufferMasks (int lev) const {
         return current_buffer_masks[lev].get();
@@ -1324,15 +1324,15 @@ private:
     void AllocateCenteringCoefficients (amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_x,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_y,
                                         amrex::Gpu::DeviceVector<amrex::Real>& device_centering_stencil_coeffs_z,
-                                        const int centering_nox,
-                                        const int centering_noy,
-                                        const int centering_noz,
-                                        const short a_grid_type);
+                                        int centering_nox,
+                                        int centering_noy,
+                                        int centering_noz,
+                                        short a_grid_type);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngEB, amrex::IntVect& ngJ,
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
-                        const amrex::IntVect& ngG, const bool aux_is_nodal);
+                        const amrex::IntVect& ngG, bool aux_is_nodal);
 
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
@@ -1688,7 +1688,7 @@ public:
     * @param idim Integer indicating the dimension (x->0, y->1, z->2) for which the BCK correction is done
     *
     */
-    void ApplyBCKCorrection(const int idim);
+    void ApplyBCKCorrection(int idim);
 
     /**
      * \brief Subtract the average of the cumulative sums of the preliminary current D
@@ -1800,7 +1800,7 @@ private:
     void PSATDForwardTransformRho (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        const int icomp, const int dcomp, const bool apply_kspace_filter=true);
+        int icomp, int dcomp, bool apply_kspace_filter=true);
 
     /**
      * \brief Copy rho_new to rho_old in spectral space (when rho is linear in time)
@@ -1852,7 +1852,7 @@ private:
      *
      * \param[in] scale_factor scalar to multiply each field component by
      */
-    void PSATDScaleAverageFields (const amrex::Real scale_factor);
+    void PSATDScaleAverageFields (amrex::Real scale_factor);
 
     /**
      * \brief Set averaged E,B fields to zero before new iteration

@@ -138,9 +138,9 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
-                         const amrex::IntVect ngEB, const int /*e_is_nodal*/,
-                         const long offset,
-                         const long np_to_push,
+                         const amrex::IntVect ngEB, int /*e_is_nodal*/,
+                         long offset,
+                         long np_to_push,
                          int lev, int gather_lev,
                          amrex::Real dt, ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full);
@@ -244,8 +244,8 @@ public:
                     amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
                                         NArrayReal, NArrayInt,
                                         amrex::PinnedArenaAllocator>& pinned_tile,
-                    const int n_external_attr_real,
-                    const int n_external_attr_int,
+                    int n_external_attr_real,
+                    int n_external_attr_int,
                     const amrex::RandomEngine& engine) override final;
 
 /**

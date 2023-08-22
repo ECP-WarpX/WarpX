@@ -74,7 +74,7 @@ namespace
     std::pair<std::vector<char>, std::vector<int>>
     gather_all_data(
         const std::vector<char>& package_for_gather_rank,
-        const int gather_rank, const int my_rank);
+        int gather_rank, int my_rank);
 
     /**
     * \brief This function converts a vector of Msg struct into a byte array
