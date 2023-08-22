@@ -259,9 +259,7 @@ BTDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
-    if (utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
-        if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
-    }
+    utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size);
 #ifdef WARPX_DIM_RZ
     const amrex::Vector< std::string > BTD_varnames_supported = {"Er", "Et", "Ez",
                                                            "Br", "Bt", "Bz",
@@ -847,7 +845,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
                                              m_buffer_box[i_buffer],
-                                             k_index_zlab(i_buffer, lev), m_max_box_size,
+                                             k_index_zlab(i_buffer, lev),
                                              m_snapshot_full[i_buffer] );
 
             }
