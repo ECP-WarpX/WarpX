@@ -97,7 +97,7 @@ namespace AnyFFT
      * \param[in] dim direction, number of dimensions of the arrays. Must be <= AMREX_SPACEDIM.
      */
     FFTplan CreatePlan(const amrex::IntVect& real_size, amrex::Real * const real_array,
-                       Complex * const complex_array, const direction dir, const int dim);
+                       Complex * const complex_array, direction dir, int dim);
 
     /** \brief Destroy library FFT plan.
      * \param[out] fft_plan plan to destroy

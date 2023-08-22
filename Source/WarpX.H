@@ -1189,44 +1189,44 @@ private:
     void RestrictCurrentFromFineToCoarsePatch (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        const int lev);
+        int lev);
     void AddCurrentFromFineLevelandSumBoundary (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_buffer,
-        const int lev);
+        int lev);
     void StoreCurrent (const int lev);
     void RestoreCurrent (const int lev);
     void ApplyFilterJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
-        const int lev,
-        const int idim);
+        int lev,
+        int idim);
     void ApplyFilterJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
-        const int lev);
+        int lev);
     void SumBoundaryJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
-        const int lev,
-        const int idim,
+        int lev,
+        int idim,
         const amrex::Periodicity& period);
     void SumBoundaryJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& current,
-        const int lev,
+        int lev,
         const amrex::Periodicity& period);
     void NodalSyncJ (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_cp,
-        const int lev,
+        int lev,
         PatchType patch_type);
 
     void RestrictRhoFromFineToCoarsePatch (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        const int lev);
+        int lev);
     void ApplyFilterandSumBoundaryRho (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        const int lev,
+        int lev,
         PatchType patch_type,
         const int icomp,
         const int ncomp);
@@ -1234,16 +1234,16 @@ private:
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer,
-        const int lev,
-        const int icomp,
-        const int ncomp);
+        int lev,
+        int icomp,
+        int ncomp);
     void NodalSyncRho (
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_fp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
-        const int lev,
+        int lev,
         PatchType patch_type,
-        const int icomp,
-        const int ncomp);
+        int icomp,
+        int ncomp);
 
     void ReadParameters ();
 
