@@ -87,9 +87,13 @@ macro(find_amrex)
         endif()
 
         # shared libs, i.e. for Python bindings, need relocatable code
-        #   openPMD: currently triggers shared libs (TODO)
-        if(WarpX_PYTHON OR (WarpX_LIB AND BUILD_SHARED_LIBS) OR ABLASTR_POSITION_INDEPENDENT_CODE OR WarpX_OPENPMD)
-            set(AMReX_PIC ON CACHE INTERNAL "")
+        if(WarpX_PYTHON OR
+           ABLASTR_POSITION_INDEPENDENT_CODE OR
+           (WarpX_LIB AND BUILD_SHARED_LIBS))
+            set(AMReX_PIC ON CACHE INTERNAL "" FORCE)
+        endif()
+        if(WarpX_PYTHON OR (WarpX_LIB AND BUILD_SHARED_LIBS))
+            set(AMReX_PIC ON CACHE INTERNAL "" FORCE)
 
             # WE NEED AMReX AS SHARED LIB, OTHERWISE WE CANNOT SHARE ITS GLOBALS
             # BETWEEN MULTIPLE PYTHON MODULES
