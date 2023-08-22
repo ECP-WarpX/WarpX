@@ -125,8 +125,15 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     pp_species_dot_source.query("density_max", density_max);
 
     // Parse injection style
+    // Must be supplied for each source
+    std::string species_with_source = species_name;
+    if (!source_name.empty()) {
+        species_with_source = species_with_source + "." + source_name;
+    }
+    const amrex::ParmParse pp_species_with_source(species_with_source);
+
     std::string injection_style = "none";
-    pp_species_dot_source.query("injection_style", injection_style);
+    pp_species_with_source.query("injection_style", injection_style);
     std::transform(injection_style.begin(),
                    injection_style.end(),
                    injection_style.begin(),
