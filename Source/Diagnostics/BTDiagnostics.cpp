@@ -1051,7 +1051,7 @@ BTDiagnostics::Flush (int i_buffer)
             for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][i]->ParticleBoxArray(0).size() == 1,
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
                     "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
             }
         }
@@ -1073,7 +1073,7 @@ BTDiagnostics::Flush (int i_buffer)
             for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][i]->ParticleBoxArray(0).size() == 1,
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
                     "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
             }
         }
