@@ -5,11 +5,12 @@
 #SBATCH -o %x-%j.out
 #SBATCH -t 00:10:00
 #SBATCH -p batch
-# Currently not configured on Frontier:
-#S BATCH --ntasks-per-node=8
-#S BATCH --cpus-per-task=8
-#S BATCH --gpus-per-task=1
-#S BATCH --gpu-bind=closest
+#SBATCH --ntasks-per-node=8
+# Due to Frontier's Low-Noise Mode Layout only 7 instead of 8 cores are available per process
+# https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#low-noise-mode-layout
+#SBATCH --cpus-per-task=7
+#SBATCH --gpus-per-task=1
+#SBATCH --gpu-bind=closest
 #SBATCH -N 20
 
 # load cray libs and ROCm libs

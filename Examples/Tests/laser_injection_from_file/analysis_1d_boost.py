@@ -57,9 +57,10 @@ def gauss_env(T,Z):
     exp_arg = - inv_tau2 / c/c * (Z-T*c)*(Z-T*c)
     return E_max * np.real(np.exp(exp_arg))
 
-def do_analysis(fname, compname, steps):
+def do_analysis(fname, compname):
     ds = yt.load(fname)
-    dt = ds.current_time.to_value()/steps
+    dz = (ds.domain_right_edge[0].v-ds.domain_left_edge[0].v)/ds.domain_dimensions[0]
+    dt = dz/c
 
     z = np.linspace(
         ds.domain_left_edge[0].v,
@@ -111,8 +112,8 @@ def do_analysis(fname, compname, steps):
 
 
 def launch_analysis(executable):
-    os.system("./" + executable + " inputs.1d_test diag1.file_prefix=diags/plotfiles/plt")
-    do_analysis("diags/plotfiles/plt000251/", "comp_unf.pdf", 251)
+    os.system("./" + executable + " inputs.1d_boost_test diag1.file_prefix=diags/plotfiles/plt")
+    do_analysis("diags/plotfiles/plt000001/", "comp_unf.pdf")
 
 
 def main() :
@@ -137,7 +138,7 @@ def main() :
         assert(False)
 
     # Do the checksum test
-    filename_end = "diags/plotfiles/plt000251/"
+    filename_end = "diags/plotfiles/plt000001/"
     test_name = os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
     print('Passed')
