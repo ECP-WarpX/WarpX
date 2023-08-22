@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 The ImpactX Community
+/* Copyright 2021-2023 The WarpX Community
  *
  * Authors: Axel Huebl
  * License: BSD-3-Clause-LBNL
@@ -71,8 +71,8 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
 
     // API runtime version
     //   note PEP-440 syntax: x.y.zaN but x.y.z.devN
-#ifdef PYIMPACTX_VERSION_INFO
-    m.attr("__version__") = MACRO_STRINGIFY(PYIMPACTX_VERSION_INFO);
+#ifdef PYWARPX_VERSION_INFO
+    m.attr("__version__") = MACRO_STRINGIFY(PYWARPX_VERSION_INFO);
 #else
     m.attr("__version__") = "dev";
 #endif
