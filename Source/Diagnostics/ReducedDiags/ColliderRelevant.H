@@ -34,15 +34,15 @@ public:
     /**
      * \brief This function computes collider-relevant diagnostics.
      * @param[in] step current time step
-     * 
-     * [0]step, [1]time, [2]dL/dt, 
-     * for first species: 
-     * [3]chi_min, [4]chi_ave, [5] chi_max, 
-     * [6]x_ave, [7]x_std, 
-     * [8]y_ave, [9]y_std, 
-     * [10]thetax_min, [11]thetax_ave, [12]thetax_max, [13]thetax_std, 
+     *
+     * [0]step, [1]time, [2]dL/dt,
+     * for first species:
+     * [3]chi_min, [4]chi_ave, [5] chi_max,
+     * [6]x_ave, [7]x_std,
+     * [8]y_ave, [9]y_std,
+     * [10]thetax_min, [11]thetax_ave, [12]thetax_max, [13]thetax_std,
      * [14]thetay_min, [15]thetay_ave, [16]thetay_max, [17]thetay_std
-     * same for second species follows. 
+     * same for second species follows.
      */
     void ComputeDiags(int step) override final;
 

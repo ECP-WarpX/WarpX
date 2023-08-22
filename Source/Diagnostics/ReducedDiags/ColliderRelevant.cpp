@@ -526,7 +526,7 @@ void ColliderRelevant::ComputeDiags (int step)
             auto val = reduce_data.value();
             chimin_f = get<0>(val);
             chimax_f = get<1>(val);
-            chiave_f = get<2>(val); 
+            chiave_f = get<2>(val);
             amrex::ParallelDescriptor::ReduceRealMin(chimin_f, amrex::ParallelDescriptor::IOProcessorNumber());
             amrex::ParallelDescriptor::ReduceRealMax(chimax_f, amrex::ParallelDescriptor::IOProcessorNumber());
             amrex::ParallelDescriptor::ReduceRealSum(chiave_f, amrex::ParallelDescriptor::IOProcessorNumber());
