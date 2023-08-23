@@ -58,7 +58,7 @@ using namespace amrex;
 
 namespace
 {
-    static void FillLo (Sigma& sigma, Sigma& sigma_cumsum,
+    void FillLo (Sigma& sigma, Sigma& sigma_cumsum,
                         Sigma& sigma_star, Sigma& sigma_star_cumsum,
                         const int olo, const int ohi, const int glo, Real fac,
                         const amrex::Real v_sigma)
@@ -87,7 +87,7 @@ namespace
         });
     }
 
-    static void FillHi (Sigma& sigma, Sigma& sigma_cumsum,
+    void FillHi (Sigma& sigma, Sigma& sigma_cumsum,
                         Sigma& sigma_star, Sigma& sigma_star_cumsum,
                         const int olo, const int ohi, const int ghi, Real fac,
                         const amrex::Real v_sigma)
@@ -115,7 +115,7 @@ namespace
     }
 
 #if (AMREX_SPACEDIM != 1)
-    static void FillZero (Sigma& sigma, Sigma& sigma_cumsum,
+    void FillZero (Sigma& sigma, Sigma& sigma_cumsum,
                           Sigma& sigma_star, Sigma& sigma_star_cumsum,
                           const int olo, const int ohi)
     {

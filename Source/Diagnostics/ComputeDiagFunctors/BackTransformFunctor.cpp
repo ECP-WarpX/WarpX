@@ -36,8 +36,10 @@ BackTransformFunctor::BackTransformFunctor (amrex::MultiFab const * mf_src, int 
                                             amrex::Vector< std::string > varnames,
                                             amrex::Vector< std::string > varnames_fields,
                                             const amrex::IntVect crse_ratio
-                                            )
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_mf_src(mf_src), m_lev(lev), m_num_buffers(num_buffers), m_varnames(varnames), m_varnames_fields(varnames_fields)
+                                            ):
+    ComputeDiagFunctor(ncomp, crse_ratio),
+    m_mf_src{mf_src}, m_lev{lev}, m_num_buffers{num_buffers},
+    m_varnames{std::move(varnames)}, m_varnames_fields{std::move(varnames_fields)}
 {
     InitData();
 }
@@ -50,8 +52,8 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
     if ( m_perform_backtransform[i_buffer] == 1) {
         auto& warpx = WarpX::GetInstance();
         auto geom = warpx.Geom(m_lev);
-        const amrex::Real gamma_boost = warpx.gamma_boost;
-        const int moving_window_dir = warpx.moving_window_dir;
+        const amrex::Real gamma_boost = WarpX::gamma_boost;
+        const int moving_window_dir = WarpX::moving_window_dir;
         const amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
         const bool interpolate = true;
         std::unique_ptr< amrex::MultiFab > slice = nullptr;
@@ -80,7 +82,6 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
 
         // Make it a BoxArray
         amrex::BoxArray slice_ba(slice_box);
-        slice_ba.maxSize( m_max_box_size );
         // Define MultiFab with the distribution map of the destination multifab and
         // containing all ten components that were in the slice generated from m_mf_src.
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
@@ -155,14 +156,13 @@ void
 BackTransformFunctor::PrepareFunctorData (int i_buffer,
                           bool z_slice_in_domain, amrex::Real current_z_boost,
                           amrex::Box buffer_box, const int k_index_zlab,
-                          const int max_box_size, const int snapshot_full)
+                          const int snapshot_full)
 {
     m_buffer_box[i_buffer] = buffer_box;
     m_current_z_boost[i_buffer] = current_z_boost;
     m_k_index_zlab[i_buffer] = k_index_zlab;
     m_perform_backtransform[i_buffer] = 0;
-    if (z_slice_in_domain == true and snapshot_full == 0) m_perform_backtransform[i_buffer] = 1;
-    m_max_box_size = max_box_size;
+    if (z_slice_in_domain && (snapshot_full == 0)) m_perform_backtransform[i_buffer] = 1;
 }
 
 void

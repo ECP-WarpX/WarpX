@@ -200,7 +200,7 @@ public:
 
     void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                                     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
-                                    amrex::ParticleReal t_lab = 0._prt);
+                                    amrex::Real t_lab = 0._prt);
 
     void AddGaussianBeam (
         const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
@@ -226,7 +226,7 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uy,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uz,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w,
-        amrex::ParticleReal t_lab= 0._prt);
+        amrex::Real t_lab= 0._prt);
 
     /**
      * \brief Default initialize runtime attributes in a tile. This routine does not initialize the
@@ -375,6 +375,9 @@ protected:
     bool boost_adjust_transverse_positions = false;
     bool do_backward_propagation = false;
     bool m_rz_random_theta = true;
+
+    // Impose t_lab from the openPMD file for externally loaded species
+    bool impose_t_lab_from_file = false;
 
     Resampling m_resampler;
 

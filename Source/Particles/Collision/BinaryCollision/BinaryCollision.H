@@ -90,10 +90,7 @@ public:
         if(m_species_names.size() != 2)
             WARPX_ABORT_WITH_MESSAGE("Binary collision " + collision_name + " must have exactly two species.");
 
-        if (m_species_names[0] == m_species_names[1])
-            m_isSameSpecies = true;
-        else
-            m_isSameSpecies = false;
+        m_isSameSpecies = (m_species_names[0] == m_species_names[1]);
 
         m_binary_collision_functor = CollisionFunctorType(collision_name, mypc, m_isSameSpecies);
 

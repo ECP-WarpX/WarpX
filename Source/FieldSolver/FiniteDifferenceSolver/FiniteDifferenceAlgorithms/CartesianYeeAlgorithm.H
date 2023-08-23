@@ -60,7 +60,7 @@ struct CartesianYeeAlgorithm {
      */
     static amrex::IntVect GetMaxGuardCell () {
         // The yee solver requires one guard cell in each dimension
-        return (amrex::IntVect(AMREX_D_DECL(1,1,1)));
+        return amrex::IntVect{AMREX_D_DECL(1,1,1)};
     }
 
     /**
