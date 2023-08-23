@@ -45,7 +45,6 @@ public:
      * \param[in] buffer_box     Box with index-space in lab-frame for the ith buffer
      * \param[in] k_index_zlab   k-index in the lab-frame corresponding to the
      *                           current z co-ordinate in the lab-frame for the ith buffer.
-     * \param[in] max_box_size   maximum box size for the multifab to generate box arrays
      * \param[in] snapshot_full   if the current snapshot, with index, i_buffer, is full (1)
                                  or not (0). If it is full, then Lorentz-transform
                                  is not performed by setting m_perform_backtransform to 0;
@@ -53,11 +52,11 @@ public:
     virtual void PrepareFunctorData ( int i_buffer, bool z_slice_in_domain,
                                       amrex::Real current_z_boost,
                                       amrex::Box buffer_box, const int k_index_zlab,
-                                      const int max_box_size, const int snapshot_full) {
+                                      const int snapshot_full) {
                                           amrex::ignore_unused(i_buffer,
                                           z_slice_in_domain,
                                           current_z_boost, buffer_box,
-                                          k_index_zlab, max_box_size, snapshot_full);
+                                          k_index_zlab, snapshot_full);
                                       }
     virtual void InitData() {}
 
