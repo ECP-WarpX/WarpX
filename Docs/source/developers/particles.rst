@@ -112,9 +112,9 @@ WarpX adds the following particle attributes by default to WarpX particles.
 These attributes are either stored in an Array-of-Struct (AoS) or Struct-of-Array (SoA) location of the AMReX particle containers.
 The data structures for those are either pre-described at compile-time (CT) or runtime (RT).
 
-====================  ================  ==================================  ===== ==== =====================
+====================  ================  ==================================  ===== ==== =======================
 Attribute name        ``int``/``real``  Description                         Where When Notes
-====================  ================  ==================================  ===== ==== =====================
+====================  ================  ==================================  ===== ==== =======================
 ``position_x/y/z``    ``real``          Particle position.                  AoS   CT
 ``cpu``               ``int``           CPU index where the particle        AoS   CT
                                         was created.
@@ -126,7 +126,15 @@ Attribute name        ``int``/``real``  Description                         Wher
                                         Synchrotron process                            physics is used.
 ``opticalDepthBW``    ``real``          QED: optical depth of the Breit-    SoA   RT   Added when PICSAR QED
                                         Wheeler process                                physics is used.
-====================  ================  ==================================  ===== ==== =====================
+``chiAtCreationQSR``  ``real``          | QED: quantum parameter of the     SoA   RT   | Added when PICSAR QED
+                                          parent particle at the time of                 physics is used and
+                                        | creation of a particle by the                | when requested by the
+                                          Quantum-Synchrotron process                    user
+``chiAtCreationBW``   ``real``          | QED: quantum parameter of the     SoA   RT   | Added when PICSAR QED
+                                          parent particle at the time of                 physics is used and
+                                        | creation of a particle by the                | when requested by the
+                                          Breit-Wheeler process                          user
+====================  ================  ==================================  ===== ==== =======================
 
 WarpX allows extra runtime attributes to be added to particle containers (through ``AddRealComp("attrname")`` or ``AddIntComp("attrname")``).
 The attribute name can then be used to access the values of that attribute.
