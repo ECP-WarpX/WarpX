@@ -94,10 +94,12 @@ void StationFieldLaserProfile::update (amrex::Real t)
         }
     }
 
+    m_station_domain = m_station_mf->boxArray().minimalBox();
+    auto const nz = m_station_domain.length(AMREX_SPACEDIM-1);
+    AMREX_ASSERT(nz > 1);
+
     if (m_slice_fab == nullptr) {
-        auto const& warpx = WarpX::GetInstance();
-        AMREX_ALWAYS_ASSERT(warpx.finestLevel() == 0);
-        auto slicebox = amrex::convert(warpx.Geom(0).Domain(), m_station_mf->ixType());
+        auto slicebox = m_station_domain;
         slicebox.setSmall(AMREX_SPACEDIM-1,0);
         if (amrex::ParallelDescriptor::MyProc() == 0) {
             slicebox.setBig(AMREX_SPACEDIM-1,1);
@@ -107,17 +109,13 @@ void StationFieldLaserProfile::update (amrex::Real t)
         m_slice_fab = std::make_unique<amrex::FArrayBox>(slicebox,1);
     }
 
-    auto const mbox = m_station_mf->boxArray().minimalBox();
-    auto const nz = mbox.length(AMREX_SPACEDIM-1);
-    AMREX_ASSERT(nz > 1);
-
     auto const dt = (m_times[m_ibuffer].second - m_times[m_ibuffer].first)
         / amrex::Real(nz-1);
     auto islice = static_cast<int>(std::floor((t-m_times[m_ibuffer].first)/dt));
     islice = std::min(islice, nz-2);
 
     {
-        auto slicebox = mbox;
+        auto slicebox = m_station_domain;
         slicebox.setSmall(AMREX_SPACEDIM-1, islice);
         slicebox.setBig(AMREX_SPACEDIM-1, islice+1);
         amrex::BoxArray sliceba(slicebox);
@@ -160,18 +158,22 @@ void StationFieldLaserProfile::fill_amplitude (
     if (m_ibuffer >= 0 && m_ibuffer < int(m_times.size())) {
         auto const& geom = WarpX::GetInstance().Geom(0);
         auto const plo = geom.ProbLoArray();
-        auto const dxinv = geom.InvCellSizeArray();
+        auto const phi = geom.ProbHiArray();
+        auto const dxi = amrex::Real(m_station_domain.length(0)-1) / (phi[0]-plo[0]); // -1: because box is nodal
+#if (AMREX_SPACEDIM == 3)
+        auto const dyi = amrex::Real(m_station_domain.length(1)-1) / (phi[1]-plo[1]);
+#endif
         auto const& a = m_slice_fab->const_array();
         amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int ip)
         {
-            auto const xi = (Xp[ip]-plo[0])*dxinv[0];
+            auto const xi = (Xp[ip]-plo[0])*dxi;
             auto const i = static_cast<int>(std::floor(xi));
             amrex::Real const wx = xi - amrex::Real(i);
 #if (AMREX_SPACEDIM == 2)
             amplitude[ip] = (1._rt-wx)*a(i  ,0,0)
                 +                  wx *a(i+1,0,0);
 #elif (AMREX_SPACEDIM == 3)
-            auto const yj = (Yp[ip]-plo[1])*dxinv[1];
+            auto const yj = (Yp[ip]-plo[1])*dyi;
             auto const j = static_cast<int>(std::floor(yj));
             amrex::Real const wy = yi - amrex::Real(j);
             amplitude[ip] = (1._rt-wx)*(1._rt-wy)*a(i  ,j  ,0)

@@ -397,6 +397,7 @@ private:
     amrex::Vector<std::pair<amrex::Real,amrex::Real>> m_times;
     std::unique_ptr<amrex::MultiFab> m_station_mf;
     std::unique_ptr<amrex::FArrayBox> m_slice_fab;
+    amrex::Box m_station_domain;
 };
 
 /**
