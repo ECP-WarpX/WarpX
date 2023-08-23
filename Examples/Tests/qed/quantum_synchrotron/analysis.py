@@ -162,7 +162,7 @@ def get_spec(ytdata, specname, is_photon):
 
     if (is_photon):
         opt = ytdata[specname,"particle_opticalDepthBW"].v
-        chi_at_creation = ytdata[specname,"particle_qs_chi_at_creation"].v
+        chi_at_creation = ytdata[specname,"particle_chiAtCreationQSR"].v
         return {"px" : px, "py" : py, "pz" : pz, "w" : w, "opt" : opt,
                 "chi_at_creation" : chi_at_creation}
     else:

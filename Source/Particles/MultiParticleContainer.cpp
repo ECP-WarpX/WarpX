@@ -990,16 +990,16 @@ void MultiParticleContainer::InitQED ()
                 (m_shr_p_qs_engine);
             m_nspecies_quantum_sync++;
             allcontainers[pc->m_qed_quantum_sync_phot_product]->initChiAtCreation(
-                                                                    "qs_chi_at_creation");
+                                                                    "chiAtCreationQSR");
         }
         if(pc->has_breit_wheeler()){
             pc->set_breit_wheeler_engine_ptr
                 (m_shr_p_bw_engine);
             m_nspecies_breit_wheeler++;
             allcontainers[pc->m_qed_breit_wheeler_ele_product]->initChiAtCreation(
-                                                                    "bw_chi_at_creation");
+                                                                    "chiAtCreationBW");
             allcontainers[pc->m_qed_breit_wheeler_pos_product]->initChiAtCreation(
-                                                                    "bw_chi_at_creation");
+                                                                    "chiAtCreationBW");
         }
     }
 
@@ -1540,9 +1540,9 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
         const bool store_chi_at_creation_pos = pc_product_pos->store_chi_at_creation();
         const bool store_chi_at_creation_ele = pc_product_ele->store_chi_at_creation();
         const int chi_at_creation_runtime_comp_pos = (store_chi_at_creation_pos)?
-                        pc_product_pos->particle_runtime_comps["bw_chi_at_creation"] : 0;
+                        pc_product_pos->particle_runtime_comps["chiAtCreationBW"] : 0;
         const int chi_at_creation_runtime_comp_ele = (store_chi_at_creation_ele)?
-                        pc_product_ele->particle_runtime_comps["bw_chi_at_creation"] : 0;
+                        pc_product_ele->particle_runtime_comps["chiAtCreationBW"] : 0;
 
         auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
 
@@ -1625,7 +1625,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 
         const bool store_chi_at_creation = pc_product_phot->store_chi_at_creation();
         const int chi_at_creation_runtime_comp = (store_chi_at_creation)?
-                        pc_product_phot->particle_runtime_comps["qs_chi_at_creation"] : 0;
+                        pc_product_phot->particle_runtime_comps["chiAtCreationQSR"] : 0;
 
         auto info = getMFItInfo(*pc_source, *pc_product_phot);
 

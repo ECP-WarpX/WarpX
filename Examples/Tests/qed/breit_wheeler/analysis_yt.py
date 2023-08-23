@@ -51,7 +51,7 @@ def main():
             data["opt"] =  all_data_end[spec_name, "particle_opticalDepthBW"].v
         else:
             data["opt"] = all_data_end[spec_name, "particle_opticalDepthQSR"].v
-            data["chi_at_creation"] = all_data_end[spec_name, "particle_bw_chi_at_creation"].v
+            data["chi_at_creation"] = all_data_end[spec_name, "particle_chiAtCreationBW"].v
 
         particle_data[spec_name] = data
 

@@ -8,7 +8,7 @@
     "particle_position_y": 3.753643750000000e-02,
     "particle_position_z": 3.754731250000000e-02,
     "particle_weight": 1.430339813232422e+00,
-    "particle_bw_chi_at_creation": 719771.4906620119
+    "particle_chiAtCreationBW": 719771.4906620119
   },
   "ele2": {
     "particle_momentum_x": 0.0,
@@ -19,7 +19,7 @@
     "particle_position_y": 4.773031169456623e-03,
     "particle_position_z": 4.769421875000000e-03,
     "particle_weight": 1.819992065429687e-01,
-    "particle_bw_chi_at_creation": 44609.916926229474
+    "particle_chiAtCreationBW": 44609.916926229474
   },
   "ele3": {
     "particle_momentum_x": 0.0,
@@ -30,7 +30,7 @@
     "particle_position_y": 4.950395312500000e-02,
     "particle_position_z": 4.948470042879365e-02,
     "particle_weight": 1.889324188232422e+00,
-    "particle_bw_chi_at_creation": 6204071.123794872
+    "particle_chiAtCreationBW": 6204071.123794872
   },
   "ele4": {
     "particle_momentum_x": 6.270940742446365e-13,
@@ -41,7 +41,7 @@
     "particle_position_y": 1.987547526041667e-02,
     "particle_position_z": 1.979189843750000e-02,
     "particle_weight": 7.561206817626952e-01,
-    "particle_bw_chi_at_creation": 14399920.95855514
+    "particle_chiAtCreationBW": 14399920.95855514
   },
   "lev=0": {
     "Ex": 0.0
@@ -95,7 +95,7 @@
     "particle_position_y": 3.753643750000000e-02,
     "particle_position_z": 3.754731250000000e-02,
     "particle_weight": 1.430339813232422e+00,
-    "particle_bw_chi_at_creation": 719771.4906620119
+    "particle_chiAtCreationBW": 719771.4906620119
   },
   "pos2": {
     "particle_momentum_x": 0.0,
@@ -106,7 +106,7 @@
     "particle_position_y": 4.773031169456623e-03,
     "particle_position_z": 4.769421875000000e-03,
     "particle_weight": 1.819992065429687e-01,
-    "particle_bw_chi_at_creation": 44609.916926229474
+    "particle_chiAtCreationBW": 44609.916926229474
   },
   "pos3": {
     "particle_momentum_x": 0.0,
@@ -117,7 +117,7 @@
     "particle_position_y": 4.950395312500000e-02,
     "particle_position_z": 4.948470042879365e-02,
     "particle_weight": 1.889324188232422e+00,
-    "particle_bw_chi_at_creation": 6204071.123794872
+    "particle_chiAtCreationBW": 6204071.123794872
   },
   "pos4": {
     "particle_momentum_x": 6.229925285542024e-13,
@@ -128,6 +128,6 @@
     "particle_position_y": 1.987547526041667e-02,
     "particle_position_z": 1.979189843750000e-02,
     "particle_weight": 7.561206817626952e-01,
-    "particle_bw_chi_at_creation": 14399920.95855514
+    "particle_chiAtCreationBW": 14399920.95855514
   }
 }

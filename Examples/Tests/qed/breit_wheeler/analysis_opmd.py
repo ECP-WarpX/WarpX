@@ -52,7 +52,7 @@ def main():
             opt = data_set_end.particles[spec_name]["opticalDepthBW"][io.Mesh_Record_Component.SCALAR][:]
         else:
             opt = data_set_end.particles[spec_name]["opticalDepthQSR"][io.Mesh_Record_Component.SCALAR][:]
-            chi_at_creation = data_set_end.particles[spec_name]["bwChiAtCreation"][io.Mesh_Record_Component.SCALAR][:]
+            chi_at_creation = data_set_end.particles[spec_name]["chiAtCreationBW"][io.Mesh_Record_Component.SCALAR][:]
 
         series.flush()
 

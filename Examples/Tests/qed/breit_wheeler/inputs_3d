@@ -214,14 +214,14 @@ diag1.p2.variables = ux uy uz w opticalDepthBW
 diag1.p3.variables = ux uy uz w opticalDepthBW
 diag1.p4.variables = ux uy uz w opticalDepthBW
 
-diag1.ele1.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
-diag1.ele2.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
-diag1.ele3.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
-diag1.ele4.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
+diag1.ele1.variables = ux uy uz w opticalDepthQSR chiAtCreationBW
+diag1.ele2.variables = ux uy uz w opticalDepthQSR chiAtCreationBW
+diag1.ele3.variables = ux uy uz w opticalDepthQSR chiAtCreationBW
+diag1.ele4.variables = ux uy uz w opticalDepthQSR chiAtCreationBW
 
-diag1.pos1.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
-diag1.pos2.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
-diag1.pos3.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
-diag1.pos4.variables = ux uy uz w opticalDepthQSR bw_chi_at_creation
+diag1.pos1.variables = ux uy uz w opticalDepthQSR chiAtCreationBW
+diag1.pos2.variables = ux uy uz w opticalDepthQSR chiAtCreationBW
+diag1.pos3.variables = ux uy uz w opticalDepthQSR chiAtCreationBW
+diag1.pos4.variables = ux uy uz w opticalDepthQSR chiAtCreationBW
 
 diag1.format = plotfile
