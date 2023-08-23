@@ -1539,16 +1539,10 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 
         const bool store_chi_at_creation_pos = pc_product_pos->store_chi_at_creation();
         const bool store_chi_at_creation_ele = pc_product_ele->store_chi_at_creation();
-        int chi_at_creation_runtime_comp_pos = 0;
-        int chi_at_creation_runtime_comp_ele = 0;
-        if (store_chi_at_creation_pos){
-            chi_at_creation_runtime_comp_pos =
-                                    pc_product_pos->particle_runtime_comps["bw_chi_at_creation"];
-        }
-        if (store_chi_at_creation_ele){
-            chi_at_creation_runtime_comp_ele =
-                                    pc_product_ele->particle_runtime_comps["bw_chi_at_creation"];
-        }
+        const int chi_at_creation_runtime_comp_pos = (store_chi_at_creation_pos)?
+                        pc_product_pos->particle_runtime_comps["bw_chi_at_creation"] : 0;
+        const int chi_at_creation_runtime_comp_ele = (store_chi_at_creation_ele)?
+                        pc_product_ele->particle_runtime_comps["bw_chi_at_creation"] : 0;
 
         auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
 
@@ -1630,11 +1624,8 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
         pc_product_phot->defineAllParticleTiles();
 
         const bool store_chi_at_creation = pc_product_phot->store_chi_at_creation();
-        int chi_at_creation_runtime_comp = 0;
-        if (store_chi_at_creation){
-            chi_at_creation_runtime_comp =
-                                    pc_product_phot->particle_runtime_comps["qs_chi_at_creation"];
-        }
+        const int chi_at_creation_runtime_comp = (store_chi_at_creation)?
+                        pc_product_phot->particle_runtime_comps["qs_chi_at_creation"] : 0;
 
         auto info = getMFItInfo(*pc_source, *pc_product_phot);
 

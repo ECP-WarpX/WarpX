@@ -1176,22 +1176,14 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         }
 
 #ifdef WARPX_QED
-        //Pointer to the optical depth component
-        amrex::ParticleReal* p_optical_depth_QSR = nullptr;
-        amrex::ParticleReal* p_optical_depth_BW  = nullptr;
-        //Pointer to the chi at creation component
-        amrex::ParticleReal* p_chi_at_creation  = nullptr;
 
-        // If a QED effect is enabled, the corresponding optical depth
-        // has to be initialized
+        // If a QED effect is enabled, the corresponding optical depth has to be initialized
         const bool loc_has_quantum_sync = has_quantum_sync();
         const bool loc_has_breit_wheeler = has_breit_wheeler();
-        if (loc_has_quantum_sync)
-            p_optical_depth_QSR = soa.GetRealData(
-                particle_comps["opticalDepthQSR"]).data() + old_size;
-        if(loc_has_breit_wheeler)
-            p_optical_depth_BW = soa.GetRealData(
-                particle_comps["opticalDepthBW"]).data() + old_size;
+        amrex::ParticleReal* const p_optical_depth_QSR = (loc_has_quantum_sync)?
+            soa.GetRealData(particle_comps["opticalDepthQSR"]).data() + old_size : nullptr;
+        amrex::ParticleReal* const p_optical_depth_BW = (loc_has_breit_wheeler)?
+            soa.GetRealData(particle_comps["opticalDepthBW"]).data() + old_size : nullptr;
 
         //If needed, get the appropriate functors from the engines
         QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
@@ -1208,9 +1200,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         // If chi at creation is stored, get the pointer to the attribute data, which will be
         // initialized to -1 below.
         const bool loc_has_chi_at_creation = m_store_chi_at_creation;
-        if(loc_has_chi_at_creation)
-            p_chi_at_creation = soa.GetRealData(
-                particle_comps[m_store_chi_at_creation_attrib]).data() + old_size;
+        amrex::ParticleReal* const p_chi_at_creation = (loc_has_chi_at_creation)?
+            soa.GetRealData(particle_comps[m_store_chi_at_creation_attrib]).data() + old_size :
+             nullptr;
 #endif
 
         const bool loc_do_field_ionization = do_field_ionization;
@@ -1740,22 +1732,13 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         }
 
 #ifdef WARPX_QED
-        //Pointer to the optical depth component
-        amrex::ParticleReal* p_optical_depth_QSR = nullptr;
-        amrex::ParticleReal* p_optical_depth_BW  = nullptr;
-        //Pointer to the chi at creation component
-        amrex::ParticleReal* p_chi_at_creation  = nullptr;
-
-        // If a QED effect is enabled, the corresponding optical depth
-        // has to be initialized
+        // If a QED effect is enabled, the corresponding optical depth has to be initialized
         const bool loc_has_quantum_sync = has_quantum_sync();
         const bool loc_has_breit_wheeler = has_breit_wheeler();
-        if (loc_has_quantum_sync)
-            p_optical_depth_QSR = soa.GetRealData(
-                particle_comps["opticalDepthQSR"]).data() + old_size;
-        if(loc_has_breit_wheeler)
-            p_optical_depth_BW = soa.GetRealData(
-                particle_comps["opticalDepthBW"]).data() + old_size;
+        amrex::ParticleReal* const p_optical_depth_QSR = (loc_has_quantum_sync)?
+            soa.GetRealData(particle_comps["opticalDepthQSR"]).data() + old_size : nullptr;
+        amrex::ParticleReal* const p_optical_depth_BW = (loc_has_breit_wheeler)?
+            soa.GetRealData(particle_comps["opticalDepthBW"]).data() + old_size : nullptr;
 
         //If needed, get the appropriate functors from the engines
         QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
@@ -1772,10 +1755,9 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         // If chi at creation is stored, get the pointer to the attribute data, which will be
         // initialized to -1 below.
         const bool loc_has_chi_at_creation = m_store_chi_at_creation;
-        if(loc_has_chi_at_creation)
-            p_chi_at_creation = soa.GetRealData(
-                particle_comps[m_store_chi_at_creation_attrib]).data() + old_size;
-
+        amrex::ParticleReal* const p_chi_at_creation = (loc_has_chi_at_creation)?
+            soa.GetRealData(particle_comps[m_store_chi_at_creation_attrib]).data() + old_size :
+             nullptr;
 #endif
 
         const bool loc_do_field_ionization = do_field_ionization;
