@@ -259,9 +259,7 @@ BTDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
-    if (utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
-        if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
-    }
+    utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size);
 #ifdef WARPX_DIM_RZ
     const amrex::Vector< std::string > BTD_varnames_supported = {"Er", "Et", "Ez",
                                                            "Br", "Bt", "Bz",
@@ -847,7 +845,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
                                              m_buffer_box[i_buffer],
-                                             k_index_zlab(i_buffer, lev), m_max_box_size,
+                                             k_index_zlab(i_buffer, lev),
                                              m_snapshot_full[i_buffer] );
 
             }
@@ -897,7 +895,6 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
     m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
     amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
-    buffer_ba.maxSize(m_max_box_size);
     // Generate a new distribution map for the back-transformed buffer multifab
     const amrex::DistributionMapping buffer_dmap(buffer_ba);
     // Number of guard cells for the output buffer is zero.
@@ -943,6 +940,8 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
                                                       WarpX::RefRatio(lev-1) );
     }
     m_field_buffer_multifab_defined[i_buffer] = 1;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_mf_output[i_buffer][lev].boxArray().size() == 1,
+        "BoxArray size must be 1 for back-transformed diagnostics multifab that stores buffers");
 }
 
 
@@ -1035,7 +1034,6 @@ BTDiagnostics::Flush (int i_buffer)
         m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) + 1) );
         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
         amrex::BoxArray buffer_ba( particle_buffer_box );
-        buffer_ba.maxSize(m_max_box_size*2);
         m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
         for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
             // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
@@ -1053,6 +1051,8 @@ BTDiagnostics::Flush (int i_buffer)
             for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
+                    "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
             }
         }
     }
@@ -1064,7 +1064,7 @@ BTDiagnostics::Flush (int i_buffer)
         m_max_buffer_multifabs[i_buffer], m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
 
-    // Note : test if this is needed before or after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. Hence rescaling the box after WriteToFile
+    // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
         if (!m_particles_buffer.at(i_buffer).empty()) {
             m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
@@ -1073,6 +1073,8 @@ BTDiagnostics::Flush (int i_buffer)
             for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
+                    "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
             }
         }
     }
@@ -1458,11 +1460,12 @@ BTDiagnostics::PrepareParticleDataForOutput()
                         }
                         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
                         amrex::BoxArray buffer_ba( particle_buffer_box );
-                        buffer_ba.maxSize(m_max_box_size);
                         const amrex::DistributionMapping buffer_dmap(buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
                         m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
+                        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][i]->ParticleBoxArray(lev).size() == 1,
+                            "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
                     }
                 }
                 m_all_particle_functors[i]->PrepareFunctorData (
