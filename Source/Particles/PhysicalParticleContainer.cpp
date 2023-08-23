@@ -751,6 +751,16 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                     attr_temp[i] = breit_wheeler_get_opt(engine);
                 }
             }
+
+            // Current runtime comp is chi at creation, which is set to -1 for particles not
+            // created by a QED process.
+            if (particle_comps.find(m_store_chi_at_creation_attrib) != particle_comps.end() &&
+                particle_comps[m_store_chi_at_creation_attrib] == j)
+            {
+                for (int i = 0; i < np; ++i) {
+                    attr_temp[i] = -1._prt;
+                }
+            }
 #endif
 
             for (int ia = 0; ia < n_user_real_attribs; ++ia)
@@ -1169,6 +1179,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         //Pointer to the optical depth component
         amrex::ParticleReal* p_optical_depth_QSR = nullptr;
         amrex::ParticleReal* p_optical_depth_BW  = nullptr;
+        //Pointer to the chi at creation component
+        amrex::ParticleReal* p_chi_at_creation  = nullptr;
 
         // If a QED effect is enabled, the corresponding optical depth
         // has to be initialized
@@ -1192,6 +1204,13 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             breit_wheeler_get_opt =
                 m_shr_p_bw_engine->build_optical_depth_functor();
         }
+
+        // If chi at creation is stored, get the pointer to the attribute data, which will be
+        // initialized to -1 below.
+        const bool loc_has_chi_at_creation = m_store_chi_at_creation;
+        if(loc_has_chi_at_creation)
+            p_chi_at_creation = soa.GetRealData(
+                particle_comps[m_store_chi_at_creation_attrib]).data() + old_size;
 #endif
 
         const bool loc_do_field_ionization = do_field_ionization;
@@ -1379,6 +1398,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
                 if(loc_has_breit_wheeler){
                     p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
+                }
+                // Chi at creation is only relevant when particles are created from a QED process,
+                // so we set this attribute to -1 here.
+                if(loc_has_chi_at_creation){
+                    p_chi_at_creation[ip] = -1._prt;
                 }
 #endif
                 // Initialize user-defined integers with user-defined parser
@@ -1719,6 +1743,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         //Pointer to the optical depth component
         amrex::ParticleReal* p_optical_depth_QSR = nullptr;
         amrex::ParticleReal* p_optical_depth_BW  = nullptr;
+        //Pointer to the chi at creation component
+        amrex::ParticleReal* p_chi_at_creation  = nullptr;
 
         // If a QED effect is enabled, the corresponding optical depth
         // has to be initialized
@@ -1742,6 +1768,14 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             breit_wheeler_get_opt =
                 m_shr_p_bw_engine->build_optical_depth_functor();
         }
+
+        // If chi at creation is stored, get the pointer to the attribute data, which will be
+        // initialized to -1 below.
+        const bool loc_has_chi_at_creation = m_store_chi_at_creation;
+        if(loc_has_chi_at_creation)
+            p_chi_at_creation = soa.GetRealData(
+                particle_comps[m_store_chi_at_creation_attrib]).data() + old_size;
+
 #endif
 
         const bool loc_do_field_ionization = do_field_ionization;
@@ -1859,6 +1893,11 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
                 if(loc_has_breit_wheeler){
                     p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
+                }
+                // Chi at creation is only relevant when particles are created from a QED process,
+                // so we set this attribute to -1 here.
+                if(loc_has_chi_at_creation){
+                    p_chi_at_creation[ip] = -1._prt;
                 }
 #endif
                 // Initialize user-defined integers with user-defined parser

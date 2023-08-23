@@ -360,6 +360,10 @@ public:
     // is created
     bool m_store_chi_at_creation = false;
 
+    // Name of the attribute where the quantum chi parameter of the parent particle at the time of
+    // creation is stored.
+    std::string m_store_chi_at_creation_attrib;
+
     PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
 
     PairGenerationFilterFunc getPairGenerationFilterFunc ();
