@@ -153,27 +153,31 @@ struct GetExternalEBField
                 zr = m_gamma_boost*zr + m_uz_boost*(m_time + m_dt);
             }
 
-            // This assumes that zl > 0.
-            int i_lens = static_cast<int>(std::floor(zl/m_repeated_plasma_lens_period));
-            i_lens = i_lens % m_n_lenses;
-            amrex::ParticleReal const lens_start = m_repeated_plasma_lens_starts[i_lens] + i_lens*m_repeated_plasma_lens_period;
-            amrex::ParticleReal const lens_end = lens_start + m_repeated_plasma_lens_lengths[i_lens];
+            if (zl > m_repeated_plasma_lens_starts[0]) {
+                // find which is the next lens
+                amrex::ParticleReal z_rel_to_first = zl - m_repeated_plasma_lens_starts[0];
+                int i_lens = static_cast<int>(std::floor(z_rel_to_first/m_repeated_plasma_lens_period));
+                i_lens = i_lens % m_n_lenses;
 
-            // Calculate the residence correction
-            // frac will be 1 if the step is completely inside the lens, between 0 and 1
-            // when entering or leaving the lens, and otherwise 0.
-            // This accounts for the case when particles step over the element without landing in it.
-            // This assumes that vzp > 0.
-            amrex::ParticleReal const zl_bounded = std::min(std::max(zl, lens_start), lens_end);
-            amrex::ParticleReal const zr_bounded = std::min(std::max(zr, lens_start), lens_end);
-            amrex::ParticleReal const frac = ((zr - zl) == 0._rt ? 1._rt : (zr_bounded - zl_bounded)/(zr - zl));
+                amrex::ParticleReal const lens_start = m_repeated_plasma_lens_starts[i_lens] + i_lens*m_repeated_plasma_lens_period;
+                amrex::ParticleReal const lens_end = lens_start + m_repeated_plasma_lens_lengths[i_lens];
 
-            // Note that "+=" is used since the fields may have been set above
-            // if a different E or Btype was specified.
-            Ex += x*frac*m_repeated_plasma_lens_strengths_E[i_lens];
-            Ey += y*frac*m_repeated_plasma_lens_strengths_E[i_lens];
-            Bx += +y*frac*m_repeated_plasma_lens_strengths_B[i_lens];
-            By += -x*frac*m_repeated_plasma_lens_strengths_B[i_lens];
+                // Calculate the residence correction
+                // frac will be 1 if the step is completely inside the lens, between 0 and 1
+                // when entering or leaving the lens, and otherwise 0.
+                // This accounts for the case when particles step over the element without landing in it.
+                // This assumes that vzp > 0.
+                amrex::ParticleReal const zl_bounded = std::min(std::max(zl, lens_start), lens_end);
+                amrex::ParticleReal const zr_bounded = std::min(std::max(zr, lens_start), lens_end);
+                amrex::ParticleReal const frac = ((zr - zl) == 0._rt ? 1._rt : (zr_bounded - zl_bounded)/(zr - zl));
+
+                // Note that "+=" is used since the fields may have been set above
+                // if a different E or Btype was specified.
+                Ex += x*frac*m_repeated_plasma_lens_strengths_E[i_lens];
+                Ey += y*frac*m_repeated_plasma_lens_strengths_E[i_lens];
+                Bx += +y*frac*m_repeated_plasma_lens_strengths_B[i_lens];
+                By += -x*frac*m_repeated_plasma_lens_strengths_B[i_lens];
+            }
 
         }
 
