@@ -425,7 +425,7 @@ class ParticleContainerWrapper(object):
         return self.get_particle_arrays('uz', level, copy_to_host=copy_to_host)
     uzp = property(get_particle_uz)
 
-    def get_species_charge_sum(self, local=False, copy_to_host=copy_to_host):
+    def get_species_charge_sum(self, local=False):
         '''
         Returns the total charge in the simulation due to the given species.
 
