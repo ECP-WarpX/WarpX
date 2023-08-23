@@ -1106,7 +1106,7 @@ Particle initialization
     **This feature requires to compile with QED=TRUE**
 
 * ``<species>.store_chi_at_creation`` (`0` or `1`) optional (default `0`)
-    For species which are product of Quantum synchrotron or Breit-Wheeler processes, enable this parameter to store the quantum chi parameter of the parent particle at the time of product particle creation.
+    For species that are product of Quantum synchrotron or Breit-Wheeler processes, enable this parameter to store the quantum chi parameter of the parent particle at the time of product particle creation.
     The value is stored as an extra runtime real attribute of the product particle.
     This feature requires to compile with QED=TRUE.
 
