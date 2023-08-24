@@ -91,7 +91,7 @@ def check_pair_rate():
     NB_est = NB0 / (1. + 2.*sigma* c * t / V * NB0)
     # number of <<real>> photons of species photonA in time from simulation
     NB = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,9]
-
+    # estimated number of real positrons in time
     Nplus_est = 2.*sigma*c/V*cumtrapz(NA_est*NB_est, x=t, dx=dt, initial=0)
     # number of <<real>> positrons in time from simulation
     Nplus = np.loadtxt('diags/reducedfiles/ParticleNumber.txt')[:,11]
