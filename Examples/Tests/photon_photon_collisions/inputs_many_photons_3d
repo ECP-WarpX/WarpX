@@ -87,7 +87,7 @@ diag1.dump_last_timestep = 1
 
 my_constants.out_freq_red = 1
 # Reduced diagnostics
-warpx.reduced_diags_names = FieldEnergy FieldMomentum FieldMaximum ParticleExtrema_photonA ParticleExtrema_photonB ParticleExtrema_electron ParticleExtrema_positron ParticleEnergy ParticleMomentum RhoMaximum ParticleNumber BeamRelevant_photonA BeamRelevant_photonB BeamRelevant_electron BeamRelevant_positron
+warpx.reduced_diags_names = FieldEnergy FieldMomentum FieldMaximum ParticleExtrema_photonA ParticleExtrema_photonB ParticleExtrema_electron ParticleExtrema_positron ParticleEnergy ParticleMomentum RhoMaximum ParticleNumber 
 
 FieldEnergy.type = FieldEnergy
 FieldEnergy.intervals = out_freq_red
@@ -125,19 +125,3 @@ RhoMaximum.intervals = out_freq_red
 
 ParticleNumber.type = ParticleNumber
 ParticleNumber.intervals = out_freq_red
-
-BeamRelevant_photonA.type = BeamRelevant
-BeamRelevant_photonA.species = photonA
-BeamRelevant_photonA.intervals = out_freq_red
-
-BeamRelevant_photonB.type = BeamRelevant
-BeamRelevant_photonB.species = photonB
-BeamRelevant_photonB.intervals = out_freq_red
-
-BeamRelevant_electron.type = BeamRelevant
-BeamRelevant_electron.species = electron
-BeamRelevant_electron.intervals = out_freq_red
-
-BeamRelevant_positron.type = BeamRelevant
-BeamRelevant_positron.species = positron
-BeamRelevant_positron.intervals = out_freq_red
