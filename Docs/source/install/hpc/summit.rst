@@ -124,9 +124,17 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
    cd $HOME/src/warpx
    rm -rf build_summit
 
-   cmake -S . -B build_summit -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake -S . -B build_summit -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_summit -j 8
-   cmake --build build_summit -j 8 --target pip_install
+
+and the following for the Python module:
+
+.. code-block:: bash
+
+   rm -rf build_summit_py
+
+   cmake -S . -B build_summit_py -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build_summit_py -j 8 --target pip_install
 
 **That's it!**
 The WarpX application executables are now in ``$HOME/src/warpx/build_summit/bin/`` and we installed the ``pywarpx`` Python module.

@@ -126,7 +126,7 @@ Or, if you are *developing*, do a quick PICMI install of a *single geometry* (se
 .. code-block:: bash
 
    # find dependencies & configure
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_PYTHON=ON -DWarpX_DIMS=RZ
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS=RZ
 
    # build and then call "python3 -m pip install ..."
    cmake --build build --target pip_install -j 12

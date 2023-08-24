@@ -85,16 +85,24 @@ Finally, since Adastra does not yet provide software modules for some of our dep
 Compilation
 -----------
 
-Use the following :ref:`cmake commands <building-cmake>` to compile:
+Use the following :ref:`cmake commands <building-cmake>` to compile the application:
 
 .. code-block:: bash
 
    cd $HOME/src/warpx
    rm -rf build_adastra
 
-   cmake -S . -B build_adastra -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake -S . -B build_adastra -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_adastra -j 16
-   cmake --build build_adastra -j 16 --target pip_install
+
+and the following for the Python module:
+
+.. code-block:: bash
+
+   rm -rf build_adastra_py
+
+   cmake -S . -B build_adastra_py -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build_adastra_py -j 16 --target pip_install
 
 **That's it!**
 The WarpX application executables are now in ``$HOME/src/warpx/build_adastra/bin/`` and we installed the ``pywarpx`` Python module.
