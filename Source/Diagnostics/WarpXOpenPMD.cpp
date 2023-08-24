@@ -214,26 +214,31 @@ namespace detail
     /** Return the component labels for particle positions
      */
     inline std::vector< std::string >
-    getParticlePositionComponentLabels ()
+    getParticlePositionComponentLabels (bool ignore_dims=false)
     {
         using vs = std::vector< std::string >;
+        vs positionComponents;
+        if (ignore_dims) {
+            positionComponents = vs{"x", "y", "z"};
+        } else {
 #if defined(WARPX_DIM_1D_Z)
-        vs positionComponents{"z"};
+            positionComponents = vs{"z"};
 #elif defined(WARPX_DIM_XZ)
-        vs positionComponents{"x", "z"};
+            positionComponents = vs{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
-        // note: although we internally store particle positions
-        //       for AMReX in r,z and a theta attribute, we
-        //       actually need them for algorithms (e.g. push)
-        //       and I/O in Cartesian.
-        //       Other attributes like momentum are consequently
-        //       stored in x,y,z internally.
-        vs positionComponents{"x", "y", "z"};
+            // note: although we internally store particle positions
+            //       for AMReX in r,z and a theta attribute, we
+            //       actually need them for algorithms (e.g. push)
+            //       and I/O in Cartesian.
+            //       Other attributes like momentum are consequently
+            //       stored in x,y,z internally.
+            positionComponents = vs{"x", "y", "z"};
 #elif defined(WARPX_DIM_3D)
-        vs positionComponents{"x", "y", "z"};
+            positionComponents = vs{"x", "y", "z"};
 #else
 #   error Unknown WarpX dimensionality.
 #endif
+        }
         return positionComponents;
     }
 
@@ -719,7 +724,6 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
             const auto &aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
             {
                 // Save positions
-                auto const positionComponents = detail::getParticlePositionComponentLabels();
 #if defined(WARPX_DIM_RZ)
                 {
                    const std::shared_ptr<amrex::ParticleReal> z(
@@ -756,6 +760,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
                 }
 #else
+                auto const positionComponents = detail::getParticlePositionComponentLabels();
                 for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
                     const std::shared_ptr<amrex::ParticleReal> curr(
                             new amrex::ParticleReal[numParticleOnTile],
@@ -1025,12 +1030,19 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
     auto const scalar = openPMD::RecordComponent::SCALAR;
 
     // define record shape to be number of particles
-    auto const positionComponents = detail::getParticlePositionComponentLabels();
+    auto const positionComponents = detail::getParticlePositionComponentLabels(true);
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].resetDataset( realType );
     }
     currSpecies["charge"][scalar].resetDataset( realType );
     currSpecies["mass"][scalar].resetDataset( realType );
+#if defined(WARPX_DIM_1D_Z)
+    currSpecies["position"]["x"].resetDataset( realType );
+    currSpecies["position"]["y"].resetDataset( realType );
+#endif
+#if defined(WARPX_DIM_XZ)
+    currSpecies["position"]["y"].resetDataset( realType );
+#endif
 
     // make constant
     using namespace amrex::literals;
@@ -1039,6 +1051,14 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
     }
     currSpecies["charge"][scalar].makeConstant( charge );
     currSpecies["mass"][scalar].makeConstant( mass );
+    //   convention: in 1D3V and 2D3V, omitted positions are set to zero
+#if defined(WARPX_DIM_1D_Z)
+    currSpecies["position"]["x"].makeConstant( 0._prt );
+    currSpecies["position"]["y"].makeConstant( 0._prt );
+#endif
+#if defined(WARPX_DIM_XZ)
+    currSpecies["position"]["y"].makeConstant( 0._prt );
+#endif
 
     // meta data
     currSpecies["position"].setUnitDimension( detail::getUnitDimension("position") );
