@@ -893,7 +893,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                 #else
 
-                    // Compute the cell slopes z
                     auto dQ0z = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
                     auto dQ1z = ave( NUx_arr(i,j,k) - NUx_arr(i-1,j,k) , NUx_arr(i+1,j,k) - NUx_arr(i,j,k) );
                     auto dQ2z = ave( NUy_arr(i,j,k) - NUy_arr(i-1,j,k) , NUy_arr(i+1,j,k) - NUy_arr(i,j,k) );
@@ -925,31 +924,48 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     Q_plus_z(i-1,j,k,3) = Q_tilde3 - dQ3z/2.0;
                 }
 
+                // If negative, recompute self-consistently
+                 if ( ((Q_tilde0 + dQ0z/2.0) < 0.0) || ((Q_tilde0 - dQ0z/2.0) < 0.0) ) {
+                    dQ0z = 0.0;
+                    dQ1z = 0.0;
+                    dQ2z = 0.0;
+                    dQ3z = 0.0;
+                    AdQ0z = A00z*dQ0z + A01z*dQ1z + A02z*dQ2z + A03z*dQ3z;
+                    AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
+                    AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
+                    AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
+                    Q_tilde0 = N_arr(i,j,k)   - cz_half*AdQ0z;
+                    Q_tilde1 = NUx_arr(i,j,k) - cz_half*AdQ1z;
+                    Q_tilde2 = NUy_arr(i,j,k) - cz_half*AdQ2z;
+                    Q_tilde3 = NUz_arr(i,j,k) - cz_half*AdQ3z;
+                } 
+
+
                 // Positivity and Monotonicty Limiter for density N:
                 if (( box_z.contains(i,j,k) ) && ( box_z.contains(i-1,j,k) )) {
                     if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i-1,j,k,0) < 0.0)) {
-                        Q_minus_z(i,j,k,0) = Q_tilde0;
-                        Q_minus_z(i,j,k,1) = Q_tilde1;
-                        Q_minus_z(i,j,k,2) = Q_tilde2;
-                        Q_minus_z(i,j,k,3) = Q_tilde3;
-                        Q_plus_z(i-1,j,k,0) = Q_tilde0;
-                        Q_plus_z(i-1,j,k,1) = Q_tilde1;
-                        Q_plus_z(i-1,j,k,2) = Q_tilde2;
-                        Q_plus_z(i-1,j,k,3) = Q_tilde3;
+                        Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
+                        Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
+                        Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
+                        Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
+                        Q_plus_z(i-1,j,k,0) = Q_tilde0 - dQ0z/2.0;
+                        Q_plus_z(i-1,j,k,1) = Q_tilde1 - dQ1z/2.0;
+                        Q_plus_z(i-1,j,k,2) = Q_tilde2 - dQ2z/2.0;
+                        Q_plus_z(i-1,j,k,3) = Q_tilde3 - dQ3z/2.0;
                     }
                 } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i-1,j,k) != 1)) {
                     if (Q_minus_z(i,j,k,0) < 0.0) {
-                        Q_minus_z(i,j,k,0) = Q_tilde0;
-                        Q_minus_z(i,j,k,1) = Q_tilde1;
-                        Q_minus_z(i,j,k,2) = Q_tilde2;
-                        Q_minus_z(i,j,k,3) = Q_tilde3;
+                        Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
+                        Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
+                        Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
+                        Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
                     }
                 } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i-1,j,k) )) {
                     if (Q_plus_z(i-1,j,k,0) < 0.0){
-                        Q_plus_z(i-1,j,k,0) = Q_tilde0;
-                        Q_plus_z(i-1,j,k,1) = Q_tilde1;
-                        Q_plus_z(i-1,j,k,2) = Q_tilde2;
-                        Q_plus_z(i-1,j,k,3) = Q_tilde3;
+                        Q_plus_z(i-1,j,k,0) = Q_tilde0 - dQ0z/2.0;
+                        Q_plus_z(i-1,j,k,1) = Q_tilde1 - dQ1z/2.0;
+                        Q_plus_z(i-1,j,k,2) = Q_tilde2 - dQ2z/2.0;
+                        Q_plus_z(i-1,j,k,3) = Q_tilde3 - dQ3z/2.0;
                     }
                 }
 

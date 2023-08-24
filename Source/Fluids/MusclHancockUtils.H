@@ -91,7 +91,23 @@ amrex::Real flux (amrex::Real Qm, amrex::Real Qp, amrex::Real Vm, amrex::Real Vp
     auto c = std::max( std::abs(Vm) , std::abs(Vp) );
     return 0.5*(Vm*Qm + Vp*Qp) - (0.5*c)*(Qp - Qm);
 }
-// ave
+// ave_epsilon
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real ave_epsilon (amrex::Real a, amrex::Real b, amrex::Real dx)
+{
+    auto epsilon_sq = 10.0*dx*dx*dx;
+    return ((b*b + epsilon_sq)*a + (a*a + epsilon_sq)*b)/(a*a + b*b + 2.0*epsilon_sq);
+}
+// ave_minmod high diffusivity
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real ave_high_diff (amrex::Real a, amrex::Real b)
+{
+    if (a*b > 0.0)
+        return minmod3( (a+b)/2.0, a, b );
+    else
+        return 0.0;
+}
+// ave_minmod Low diffusivity
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real ave (amrex::Real a, amrex::Real b)
 {
