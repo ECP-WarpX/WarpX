@@ -8,6 +8,7 @@
 
 #include <WarpX.H>  // todo: move this out to Python/WarpX.cpp
 #include <Utils/WarpXUtil.H>  // todo: move to its own Python/Utils.cpp
+#include <Utils/WarpXVersion.H>
 #include <Initialization/WarpXAMReXInit.H>
 
 #define STRINGIFY(x) #x
@@ -74,7 +75,8 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
 #ifdef PYWARPX_VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(PYWARPX_VERSION_INFO);
 #else
-    m.attr("__version__") = "dev";
+    // note: not necessarily PEP-440 compliant
+    m.attr("__version__") = WarpX::Version();
 #endif
 
     // authors

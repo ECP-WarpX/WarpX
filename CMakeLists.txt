@@ -500,7 +500,7 @@ foreach(D IN LISTS WarpX_DIMS)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_PSATD)
     endif()
 
-    if(WarpX_PYTHON)
+    if(WarpX_PYTHON AND pyWarpX_VERSION_INFO)
         # for module __version__
         target_compile_definitions(pyWarpX_${SD} PRIVATE
             PYWARPX_VERSION_INFO=${pyWarpX_VERSION_INFO})
