@@ -370,6 +370,10 @@ Known System Issues
 
       !jupyter serverextension enable --py --sys-prefix dask_labextension
 
+.. warning::
+
+   Due to NVCC compiler bugs, we cannot use the default CUDA 11.0 on the system.
+   As a consequence, `GPU-aware MPI cannot be used <https://docs.olcf.ornl.gov/systems/summit_user_guide.html#unsupported-cuda-versions-do-not-work-with-gpu-aware-mpi>`__.
 
 .. _post-processing-summit:
 
