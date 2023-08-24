@@ -32,14 +32,14 @@ particles.photon_species = photonA photonB
 photonA.species_type = photon
 photonA.injection_style = "SingleParticle"
 photonA.single_particle_pos = 0 0 0
-photonA.single_particle_u = 2.8 0 0 # gamma times beta
+photonA.single_particle_u = 2.8 0 0 
 photonA.single_particle_weight = 1e14
 photonA.do_not_push = 1
 
 photonB.species_type = photon
 photonB.injection_style = "SingleParticle"
 photonB.single_particle_pos = 0 0 0
-photonB.single_particle_u = -2.8 0 0 # gamma times beta
+photonB.single_particle_u = -2.8 0 0 
 photonB.single_particle_weight = 1e14
 photonB.do_not_push = 1
 
