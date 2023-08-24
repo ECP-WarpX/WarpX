@@ -119,7 +119,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
 
 #if (defined WARPX_DIM_3D)
     add_diag("dL_dt", "dL_dt(m^-2*s^-1)");
-#elif (defined(WARPX_DIM_XZ)
+#elif (defined WARPX_DIM_XZ)
     add_diag("dL_dt", "dL_dt(m^-1*s^-1)");
 #else
     add_diag("dL_dt", "dL_dt(s^-1)");
@@ -150,7 +150,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         add_diag("thetay_max_"+species_names[i_s], "theta_y_max_"+species_names[i_s]+"(rad)");
         add_diag("thetay_std_"+species_names[i_s], "theta_y_std_"+species_names[i_s]+"(rad)");
 
-#elif (defined(WARPX_DIM_XZ)
+#elif (defined WARPX_DIM_XZ)
         add_diag("x_ave_"+species_names[i_s], "x_ave_"+species_names[i_s]+"(m)");
         add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
         add_diag("thetax_min_"+species_names[i_s], "theta_x_min_"+species_names[i_s]+"(rad)");
