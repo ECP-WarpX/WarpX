@@ -29,7 +29,7 @@ algo.particle_shape = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = proton1 boron1 alpha1 proton2 boron2 alpha2 proton3 boron3 alpha3
+particles.species_names = proton1 boron1 alpha1 proton2 boron2 alpha2 proton3 boron3 alpha3 \
                           proton4 boron4 alpha4 proton5 boron5 alpha5
 
 my_constants.m_b11 = 11.00930536*m_u # Boron 11 mass

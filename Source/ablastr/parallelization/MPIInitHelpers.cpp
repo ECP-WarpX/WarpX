@@ -1,6 +1,6 @@
 /* Copyright 2020 Axel Huebl
  *
- * This file is part of WarpX.
+ * This file is part of ABLASTR.
  *
  * License: BSD-3-Clause-LBNL
  */
@@ -10,7 +10,6 @@
 
 #include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
-#include <AMReX_Print.H>
 
 #if defined(AMREX_USE_MPI)
 #   include <mpi.h>
@@ -20,10 +19,10 @@
 #include <utility>
 #include <sstream>
 
-namespace utils
+namespace ablastr::parallelization
 {
     int
-    warpx_mpi_thread_required ()
+    mpi_thread_required ()
     {
         int thread_required = -1;
 #ifdef AMREX_USE_MPI
@@ -39,9 +38,9 @@ namespace utils
     }
 
     std::pair< int, int >
-    warpx_mpi_init (int argc, char* argv[])
+    mpi_init (int argc, char* argv[])
     {
-        const int thread_required = warpx_mpi_thread_required();
+        const int thread_required = mpi_thread_required();
 #ifdef AMREX_USE_MPI
         int thread_provided = -1;
         MPI_Init_thread(&argc, &argv, thread_required, &thread_provided);
@@ -54,7 +53,7 @@ namespace utils
 
 
     void
-    warpx_mpi_finalize ()
+    mpi_finalize ()
     {
 #ifdef AMREX_USE_MPI
         MPI_Finalize();
@@ -62,10 +61,10 @@ namespace utils
     }
 
     void
-    warpx_check_mpi_thread_level ()
+    check_mpi_thread_level ()
     {
 #ifdef AMREX_USE_MPI
-        const int thread_required = warpx_mpi_thread_required();
+        const int thread_required = mpi_thread_required();
         int thread_provided = -1;
         MPI_Query_thread(&thread_provided);
         auto mtn = amrex::ParallelDescriptor::mpi_level_to_string;
@@ -90,4 +89,4 @@ namespace utils
 #endif
     }
 
-} // namespace utils
+} // namespace ablastr::parallelization

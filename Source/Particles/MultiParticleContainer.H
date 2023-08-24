@@ -71,21 +71,21 @@ public:
     ~MultiParticleContainer() {}
 
     WarpXParticleContainer&
-    GetParticleContainer (int ispecies) const {return *allcontainers[ispecies];}
+    GetParticleContainer (int index) const {return *allcontainers[index];}
 
     WarpXParticleContainer*
-    GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
+    GetParticleContainerPtr (int index) const {return allcontainers[index].get();}
 
     WarpXParticleContainer&
     GetParticleContainerFromName (const std::string& name) const;
 
 #ifdef WARPX_USE_OPENPMD
-    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
-      return  allcontainers[ispecies];
+    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int index) {
+      return  allcontainers[index];
     }
 #endif
-    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int ispecies) {
-        return allcontainers[ispecies]->meanParticleVelocity();
+    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int index) {
+        return allcontainers[index]->meanParticleVelocity();
     }
 
     void AllocData ();
@@ -234,7 +234,9 @@ public:
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies() const {return species_names.size();}
+    int nSpecies () const {return species_names.size();}
+    int nLasers () const {return lasers_names.size();}
+    int nContainers () const {return allcontainers.size();}
 
     /** Whether back-transformed diagnostics need to be performed for any plasma species.
      *
@@ -264,8 +266,13 @@ public:
     // simulation domain after some iterations, due to flowing plasma and/or
     // moving window).
     void ContinuousInjection(const amrex::RealBox& injection_box) const;
-    // Update injection position for continuously-injected species.
-    void UpdateContinuousInjectionPosition(amrex::Real dt) const;
+
+    /**
+     * \brief  Update antenna position for continuous injection of lasers
+     *         in a boosted frame. Empty function for containers other than lasers.
+     */
+    void UpdateAntennaPosition(const amrex::Real dt) const;
+
     int doContinuousInjection() const;
 
     // Inject particles from a surface during the simulation
@@ -376,8 +383,8 @@ protected:
 
         MFItInfoCheckTiling(pc_src, pc_dsts...);
 
-        if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
-            info.EnableTiling(pc_src.tile_size);
+        if (WarpXParticleContainer::do_tiling && amrex::Gpu::notInLaunchRegion()) {
+            info.EnableTiling(WarpXParticleContainer::tile_size);
         }
 
 #ifdef AMREX_USE_OMP
@@ -488,15 +495,13 @@ private:
     bool m_do_back_transformed_particles = false;
 
     void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
-    {
-        return;
-    }
+    {}
 
     template<typename First, typename ...Args>
     void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src,
                              First const& pc_dst, Args const&... others) const noexcept
     {
-        if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
+        if (WarpXParticleContainer::do_tiling && amrex::Gpu::notInLaunchRegion()) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
                 "For particle creation processes, either all or none of the "
                 "particle species must use tiling.");

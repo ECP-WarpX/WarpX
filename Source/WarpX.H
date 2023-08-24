@@ -39,6 +39,7 @@
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/export.H"
 
 #include <AMReX.H>
 #include <AMReX_AmrCore.H>
@@ -69,13 +70,14 @@
 #include <vector>
 #include <map>
 
+
 enum struct PatchType : int
 {
     fine,
     coarse
 };
 
-class WarpX
+class WARPX_EXPORT WarpX
     : public amrex::AmrCore
 {
 public:
@@ -83,10 +85,27 @@ public:
     friend class PML;
 
     static WarpX& GetInstance ();
+
     static void ResetInstance ();
 
-    WarpX ();
+    /**
+     * \brief
+     * This method has to be called at the end of the simulation. It deletes the WarpX instance.
+     */
+    static void Finalize();
+
+    /** Destructor */
     ~WarpX ();
+
+    /** Copy constructor */
+    WarpX ( WarpX const &) = delete;
+    /** Copy operator */
+    WarpX& operator= ( WarpX const & ) = delete;
+
+    /** Move constructor */
+    WarpX ( WarpX && ) = default;
+    /** Move operator */
+    WarpX& operator= ( WarpX && ) = default;
 
     static std::string Version (); //!< Version of WarpX executable
     static std::string PicsarVersion (); //!< Version of PICSAR dependency
@@ -108,8 +127,6 @@ public:
                          int num_shift, int dir, const int lev, bool update_cost_flag,
                          amrex::Real external_field=0.0, bool useparser = false,
                          amrex::ParserExecutor<3> const& field_parser={});
-
-    static void GotoNextLine (std::istream& is);
 
     //! Author of an input file / simulation setup
     static std::string authors;
@@ -370,6 +387,7 @@ public:
      * \param[in] dm The DistributionMapping describing the MultiFab
      * \param[in] ncomp The number of components in the MultiFab
      * \param[in] ngrow The number of guard cells in the MultiFab
+     * \param[in] level The refinement level
      * \param[in] name The name of the MultiFab to use in the map
      * \param[in] initial_value The optional initial value
      */
@@ -379,6 +397,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
+        const int level,
         const std::string& name,
         std::optional<const amrex::Real> initial_value = {});
 
@@ -393,6 +412,7 @@ public:
      * \param[in] dm The DistributionMapping describing the iMultiFab
      * \param[in] ncomp The number of components in the iMultiFab
      * \param[in] ngrow The number of guard cells in the iMultiFab
+     * \param[in] level The refinement level
      * \param[in] name The name of the iMultiFab to use in the map
      * \param[in] initial_value The optional initial value
      */
@@ -402,6 +422,7 @@ public:
         const amrex::DistributionMapping& dm,
         const int ncomp,
         const amrex::IntVect& ngrow,
+        const int level,
         const std::string& name,
         std::optional<const int> initial_value = {});
 
@@ -412,6 +433,7 @@ public:
      * \param[in] mf_to_alias The MultiFab to alias
      * \param[in] scomp The starting component to be aliased
      * \param[in] ncomp The number of components to alias
+     * \param[in] level The refinement level
      * \param[in] name The name of the MultiFab to use in the map
      * \param[in] initial_value optional initial value for MultiFab
      */
@@ -420,6 +442,7 @@ public:
         const amrex::MultiFab& mf_to_alias,
         const int scomp,
         const int ncomp,
+        const int level,
         const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
@@ -523,27 +546,9 @@ public:
 
     static amrex::LayoutData<amrex::Real>* getCosts (int lev);
 
-    void setLoadBalanceEfficiency (const int lev, const amrex::Real efficiency)
-    {
-        if (m_instance)
-        {
-            m_instance->load_balance_efficiency[lev] = efficiency;
-        } else
-        {
-            return;
-        }
-    }
+    void setLoadBalanceEfficiency (const int lev, const amrex::Real efficiency);
 
-    amrex::Real getLoadBalanceEfficiency (const int lev)
-    {
-        if (m_instance)
-        {
-            return m_instance->load_balance_efficiency[lev];
-        } else
-        {
-            return -1;
-        }
-    }
+    amrex::Real getLoadBalanceEfficiency (const int lev);
 
     static amrex::IntVect filter_npass_each_dir;
     BilinearFilter bilinear_filter;
@@ -599,7 +604,13 @@ public:
      * In doding so, only positions attributes are changed while fields remain unchanged.
      */
     void ShiftGalileanBoundary ();
-    void UpdatePlasmaInjectionPosition (amrex::Real dt);
+
+    /**
+     * \brief Update injection position for continuous injection of
+     *        particles and lasers (loops over species and lasers).
+     */
+    void UpdateInjectionPosition (const amrex::Real dt);
+
     void ResetProbDomain (const amrex::RealBox& rb);
     void EvolveE (         amrex::Real dt);
     void EvolveE (int lev, amrex::Real dt);
@@ -619,11 +630,20 @@ public:
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
 
     /**
-     * \brief
+     * \brief Hybrid-PIC field evolve function.
      * This function contains the logic involved in evolving the electric and
      * magnetic fields in the hybrid PIC algorithm.
      */
     void HybridPICEvolveFields ();
+
+    /**
+     * \brief Hybrid-PIC initial deposition function.
+     * The hybrid-PIC algorithm uses the charge and current density from both
+     * the current and previous step when updating the fields. This function
+     * deposits the initial ion charge and current (before the first particle
+     * push), to be used in the ``HybridPICEvolveFields()`` function.
+     */
+    void HybridPICDepositInitialRhoAndJ ();
 
     /** apply QED correction on electric field
      *
@@ -853,7 +873,6 @@ public:
     amrex::Real getdt (int lev) const {return dt[lev];}
     int getdo_moving_window() const {return do_moving_window;}
     amrex::Real getmoving_window_x() const {return moving_window_x;}
-    amrex::Real getcurrent_injection_position () const {return current_injection_position;}
     bool getis_synchronized() const {return is_synchronized;}
 
     int maxStep () const {return max_step;}
@@ -1122,6 +1141,20 @@ protected:
 
 private:
 
+    /**
+     * \brief
+     *  WarpX constructor. This method should not be called directly, but rather through
+     * the static member function MakeWarpX(). MakeWarpX() is called by GetInstance ()
+     * if an instance of the WarpX class does not currently exist.
+     */
+    WarpX ();
+
+    /**
+     * \brief
+     * This method creates a new instance of the WarpX class.
+     */
+    static void MakeWarpX ();
+
     // Singleton is used when the code is run from python
     static WarpX* m_instance;
 
@@ -1243,12 +1276,6 @@ private:
      * for all available MultiFabs, and abort otherwise.
      */
     void CheckGuardCells();
-
-    /**
-     * \brief Check that the number of guard cells is smaller than the number of valid cells,
-     * for a given MultiFab, and abort otherwise.
-     */
-    void CheckGuardCells(amrex::MultiFab const& mf);
 
     /**
      * \brief Checks for known numerical issues involving different WarpX modules
@@ -1455,7 +1482,6 @@ private:
     amrex::Real v_particle_pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
-    amrex::Real current_injection_position = 0;
 
     // Plasma injection parameters
     int warpx_do_continuous_injection = 0;
@@ -1522,6 +1548,9 @@ private:
 
     std::string restart_chkfile;
 
+    /** When `true`, write the diagnostics after restart at the time of the restart. */
+    bool write_diagonstics_on_restart = false;
+
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 
@@ -1537,7 +1566,7 @@ private:
     bool is_synchronized = true;
 
     // Synchronization of nodal points
-    const bool sync_nodal_points = true;
+    static constexpr bool sync_nodal_points = true;
 
     guardCellManager guard_cells;
 

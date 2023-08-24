@@ -391,15 +391,8 @@ void PsatdAlgorithmGalilean::InitializeSpectralCoefficients (
             }
 
             // Auxiliary variable
-            amrex::Real tmp;
-            if (om_s != 0.)
-            {
-                tmp = (1._rt - C(i,j,k)) / (ep0 * om2_s);
-            }
-            else // om_s = 0
-            {
-                tmp = 0.5_rt * dt2 / ep0;
-            }
+            const amrex::Real tmp = (om_s != 0.)?
+                ((1._rt - C(i,j,k)) / (ep0 * om2_s)):(0.5_rt * dt2 / ep0);
 
             // T2
             T2(i,j,k) = theta_c * theta_c;
@@ -539,18 +532,10 @@ void PsatdAlgorithmGalilean::InitializeSpectralCoefficientsAveraging (
             const amrex::Real C1 = std::cos(0.5_rt * om_s * dt);
             const amrex::Real C3 = std::cos(1.5_rt * om_s * dt);
 
-            // S1_om, S3_om
-            amrex::Real S1_om, S3_om;
-            if (om_s != 0.)
-            {
-                S1_om = std::sin(0.5_rt * om_s * dt) / om_s;
-                S3_om = std::sin(1.5_rt * om_s * dt) / om_s;
-            }
-            else // om_s = 0
-            {
-                S1_om = 0.5_rt * dt;
-                S3_om = 1.5_rt * dt;
-            }
+            const amrex::Real S1_om = (om_s != 0.)?
+                (std::sin(0.5_rt * om_s * dt) / om_s) : (0.5_rt * dt);
+            const amrex::Real S3_om = (om_s != 0.)?
+                 (std::sin(1.5_rt * om_s * dt) / om_s) : (1.5_rt * dt);
 
             // Psi1 (multiplies E in the update equation for <E>)
             // Psi1 (multiplies B in the update equation for <B>)

@@ -10,18 +10,15 @@
 #include "ablastr/utils/TextMsg.H"
 #include "ablastr/utils/Serialization.H"
 
-#ifdef AMREX_USE_MPI
-#   include <AMReX_ParallelDescriptor.H>
-#endif
-#include <AMReX_Print.H>
+#include <AMReX_ParallelDescriptor.H>
 
-#include <iostream>
-#include <sstream>
+#include <algorithm>
+#include <array>
+#include <memory>
 #include <numeric>
 
 namespace abl_msg_logger = ablastr::utils::msg_logger;
 namespace abl_ser = ablastr::utils::serialization;
-namespace abl_utils = ablastr::utils;
 
 using namespace abl_msg_logger;
 
@@ -355,6 +352,7 @@ Logger::compute_msgs_with_counter_and_ranks(
     std::vector<MsgWithCounterAndRanks> msgs_with_counter_and_ranks;
 
     // Put messages of the gather rank in msgs_with_counter_and_ranks
+    msgs_with_counter_and_ranks.reserve(my_msg_map.size());
     for (const auto& el : my_msg_map)
     {
         msgs_with_counter_and_ranks.emplace_back(

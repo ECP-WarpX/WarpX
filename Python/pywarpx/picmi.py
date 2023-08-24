@@ -401,10 +401,10 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
         self.set_mangle_dict()
         self.set_species_attributes(species, layout)
 
-        species.profile = "constant"
-        species.density = self.flux
+        species.flux_profile = "constant"
+        species.flux = self.flux
         if density_scale is not None:
-            species.density *= density_scale
+            species.flux *= density_scale
         species.flux_normal_axis = self.flux_normal_axis
         species.surface_flux_pos = self.surface_flux_position
         species.flux_direction = self.flux_direction
@@ -414,7 +414,7 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
         # --- Use specific attributes for flux injection
         species.injection_style = "nfluxpercell"
         assert (isinstance(layout, PseudoRandomLayout)), Exception('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
-        if species.momentum_distribution_type == "gaussian":
+        if self.gaussian_flux_momentum_distribution:
             species.momentum_distribution_type = "gaussianflux"
 
 
@@ -1991,7 +1991,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                     fields_to_plot.add(dataname)
                 elif dataname in A_fields_list:
                     fields_to_plot.add(dataname)
-                elif dataname in ['rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                elif dataname in ['rho', 'phi', 'F', 'G', 'divE', 'divB', 'proc_number', 'part_per_cell']:
                     fields_to_plot.add(dataname)
                 elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
@@ -2478,7 +2478,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
         self.reduction_type = kw.pop("reduction_type")
         reduced_function = kw.pop("reduced_function")
 
-        self.__setattr__("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)", reduced_function)
+        self.__setattr__("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz)", reduced_function)
 
         # Check the reduced function expression for constants
         for k in list(kw.keys()):

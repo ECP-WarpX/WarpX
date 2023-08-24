@@ -50,11 +50,12 @@ Create it now:
      :language: bash
 
 Edit the 2nd line of this script, which sets the ``export proj=""`` variable.
-For example, if you are member of the project ``strawberry``, then run ``vi $HOME/hpc3_gpu_warpx.profile`` and edit line 2 to read:
+For example, if you are member of the project ``plasma``, then run ``vi $HOME/hpc3_gpu_warpx.profile``.
+Enter the edit mode by typing ``i`` and edit line 2 to read:
 
 .. code-block:: bash
 
-   export proj="strawberry"
+   export proj="plasma"
 
 Exit the ``vi`` editor with ``Esc`` and then type ``:wq`` (write & quit).
 
@@ -71,6 +72,7 @@ Finally, since HPC3 does not yet provide software modules for some of our depend
 .. code-block:: bash
 
    bash $HOME/src/warpx/Tools/machines/hpc3-uci/install_gpu_dependencies.sh
+   source $HOME/sw/hpc3/gpu/venvs/warpx-gpu/bin/activate
 
 .. dropdown:: Script Details
    :color: light
@@ -93,9 +95,9 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
-   cmake --build build -j 16
-   cmake --build build -j 16 --target pip_install
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build -j 12
+   cmake --build build -j 12 --target pip_install
 
 **That's it!**
 The WarpX application executables are now in ``$HOME/src/warpx/build/bin/`` and we installed the ``pywarpx`` Python module.
@@ -144,7 +146,7 @@ Running
 The batch script below can be used to run a WarpX simulation on multiple nodes (change ``-N`` accordingly) on the supercomputer HPC3 at UCI.
 This partition as up to `32 nodes <https://rcic.uci.edu/hpc3/slurm.html#memmap>`__ with four V100 GPUs (16 GB each) per node.
 
-Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<proj>`` could be ``strawberry``.
+Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<proj>`` could be ``plasma``.
 Note that we run one MPI rank per GPU.
 
 .. literalinclude:: ../../../../Tools/machines/hpc3-uci/hpc3_gpu.sbatch

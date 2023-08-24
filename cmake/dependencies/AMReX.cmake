@@ -69,11 +69,6 @@ macro(find_amrex)
             set(AMReX_SENSEI ON CACHE INTERNAL "")
         endif()
 
-        if(DEFINED AMReX_BUILD_SHARED_LIBS)
-            set(AMReX_INSTALL ${AMReX_BUILD_SHARED_LIBS} CACHE INTERNAL "")
-        else()
-            set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "")
-        endif()
         set(AMReX_AMRLEVEL OFF CACHE INTERNAL "")
         set(AMReX_ENABLE_TESTS OFF CACHE INTERNAL "")
         set(AMReX_FORTRAN OFF CACHE INTERNAL "")
@@ -92,9 +87,19 @@ macro(find_amrex)
         endif()
 
         # shared libs, i.e. for Python bindings, need relocatable code
-        #   openPMD: currently triggers shared libs (TODO)
-        if(WarpX_LIB OR ABLASTR_POSITION_INDEPENDENT_CODE OR BUILD_SHARED_LIBS OR WarpX_OPENPMD)
-            set(AMReX_PIC ON CACHE INTERNAL "")
+        if(WarpX_PYTHON OR
+           ABLASTR_POSITION_INDEPENDENT_CODE OR
+           (WarpX_LIB AND BUILD_SHARED_LIBS))
+            set(AMReX_PIC ON CACHE INTERNAL "" FORCE)
+        endif()
+        if(WarpX_PYTHON OR (WarpX_LIB AND BUILD_SHARED_LIBS))
+            set(AMReX_PIC ON CACHE INTERNAL "" FORCE)
+
+            # WE NEED AMReX AS SHARED LIB, OTHERWISE WE CANNOT SHARE ITS GLOBALS
+            # BETWEEN MULTIPLE PYTHON MODULES
+            # TODO this is likely an export/symbol hiding issue that we could
+            #      alleviate later on
+            set(AMReX_BUILD_SHARED_LIBS ON CACHE BOOL "Build AMReX shared library" FORCE)
         endif()
 
         # IPO/LTO
@@ -103,6 +108,12 @@ macro(find_amrex)
             if(WarpX_COMPUTE STREQUAL CUDA)
                 set(AMReX_CUDA_LTO ON CACHE BOOL "")
             endif()
+        endif()
+
+        if(DEFINED AMReX_BUILD_SHARED_LIBS)
+            set(AMReX_INSTALL ${AMReX_BUILD_SHARED_LIBS} CACHE INTERNAL "Generate Install Targets" FORCE)
+        else()
+            set(AMReX_INSTALL ${BUILD_SHARED_LIBS} CACHE INTERNAL "Generate Install Targets" FORCE)
         endif()
 
         # RZ is AMReX 2D
@@ -229,7 +240,7 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
-        find_package(AMReX 23.06 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
+        find_package(AMReX 23.08 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -243,7 +254,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "d28b9ab1cd64e648372ae679a6be01c733899525"
+set(WarpX_amrex_branch "dda0d979ca2ec912f7dd2eb630399f33ee7990e0"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

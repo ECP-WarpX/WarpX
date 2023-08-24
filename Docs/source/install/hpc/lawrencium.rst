@@ -99,7 +99,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON
+   cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3" -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON
    cmake --build build -j 12
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
@@ -126,7 +126,7 @@ Or, if you are *developing*, do a quick PICMI install of a *single geometry* (se
 .. code-block:: bash
 
    # find dependencies & configure
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_LIB=ON -DWarpX_DIMS=RZ
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_PYTHON=ON -DWarpX_DIMS=RZ
 
    # build and then call "python3 -m pip install ..."
    cmake --build build --target pip_install -j 12

@@ -8,7 +8,6 @@
 #ifndef INJECTOR_MOMENTUM_H_
 #define INJECTOR_MOMENTUM_H_
 
-#include "CustomMomentumProb.H"
 #include "GetTemperature.H"
 #include "GetVelocity.H"
 #include "TemperatureProperties.H"
@@ -332,7 +331,7 @@ struct InjectorMomentumBoltzmann
     {
         using namespace amrex::literals;
         amrex::Real u[3];
-        for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
+        for (auto& el : u) el = 0.0_rt;
         const amrex::Real beta = velocity(x,y,z);
         int const dir = velocity.direction();
         const amrex::Real gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
@@ -433,7 +432,7 @@ struct InjectorMomentumJuttner
     {
         using namespace amrex::literals;
         amrex::Real u[3];
-        for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
+        for (auto& el : u) el = 0.0_rt;
         amrex::Real const beta = velocity(x,y,z);
         int const dir = velocity.direction();
         amrex::Real const gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
@@ -571,13 +570,6 @@ struct InjectorMomentum
            object(t, temperature, velocity)
     { }
 
-    // This constructor stores a InjectorMomentumCustom in union object.
-    InjectorMomentum (InjectorMomentumCustom* t,
-                      std::string const& a_species_name)
-        : type(Type::custom),
-          object(t, a_species_name)
-    { }
-
     // This constructor stores a InjectorMomentumRadialExpansion in union object.
     InjectorMomentum (InjectorMomentumRadialExpansion* t,
                       amrex::Real u_over_r)
@@ -635,10 +627,6 @@ struct InjectorMomentum
         {
             return object.radial_expansion.getMomentum(x,y,z,engine);
         }
-        case Type::custom:
-        {
-            return object.custom.getMomentum(x,y,z,engine);
-        }
         default:
         {
             amrex::Abort("InjectorMomentum: unknown type");
@@ -687,10 +675,6 @@ struct InjectorMomentum
         {
             return object.radial_expansion.getBulkMomentum(x,y,z);
         }
-        case Type::custom:
-        {
-            return object.custom.getBulkMomentum(x,y,z);
-        }
         default:
         {
             amrex::Abort("InjectorMomentum: unknown type");
@@ -699,21 +683,18 @@ struct InjectorMomentum
         }
     }
 
-    enum struct Type { constant, custom, gaussian, gaussianflux, uniform, boltzmann, juttner, radial_expansion, parser };
+    enum struct Type { constant, gaussian, gaussianflux, uniform, boltzmann, juttner, radial_expansion, parser };
     Type type;
 
 private:
 
     // An instance of union Object constructs and stores any one of
-    // the objects declared (constant or custom or gaussian or
+    // the objects declared (constant or gaussian or
     // radial_expansion or parser).
     union Object {
         Object (InjectorMomentumConstant*,
                 amrex::Real a_ux, amrex::Real a_uy, amrex::Real a_uz) noexcept
             : constant(a_ux,a_uy,a_uz) {}
-        Object (InjectorMomentumCustom*,
-                std::string const& a_species_name) noexcept
-            : custom(a_species_name) {}
         Object (InjectorMomentumGaussian*,
                 amrex::Real a_ux_m, amrex::Real a_uy_m,
                 amrex::Real a_uz_m, amrex::Real a_ux_th,
@@ -745,7 +726,6 @@ private:
                 amrex::ParserExecutor<3> const& a_uz_parser) noexcept
             : parser(a_ux_parser, a_uy_parser, a_uz_parser) {}
         InjectorMomentumConstant constant;
-        InjectorMomentumCustom   custom;
         InjectorMomentumGaussian gaussian;
         InjectorMomentumGaussianFlux gaussianflux;
         InjectorMomentumUniform uniform;

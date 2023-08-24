@@ -148,7 +148,7 @@ private:
      */
     bool m_do_back_transformed_particles = true;
 
-    /** m_gamma_boost, is a copy of warpx.gamma_boost
+    /** m_gamma_boost, is a copy of WarpX::gamma_boost
      *  That is, the Lorentz factor of the boosted frame in which the simulation is run.
      *  The direction for Lorentz transformation is assumed to be along
      *  ``warpx.boost_direction``, which is the same as the moving window direction.
@@ -157,7 +157,7 @@ private:
      */
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
-    /** m_moving_window_dir is a copy of warpx.moving_window_dir
+    /** m_moving_window_dir is a copy of WarpX::moving_window_dir
      *  Currently, back-transformed diagnostics only works if moving window is
      *  in z-direction for both 2D and 3D simulations in the Cartesian frame of reference.
      */
@@ -174,8 +174,6 @@ private:
 
     /** Number of z-slices in each buffer of the snapshot */
     int m_buffer_size = 256;
-    /** max grid size used to generate BoxArray to define output MultiFabs */
-    int m_max_box_size = 256;
 
     /** Vector of lab-frame time corresponding to each snapshot */
     amrex::Vector<amrex::Real> m_t_lab;

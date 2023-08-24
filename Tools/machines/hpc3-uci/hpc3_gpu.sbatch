@@ -30,6 +30,7 @@ INPUTS=inputs_rz
 export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 
 # run
-mpirun -np ${SLURM_NTASKS}  \
-  ${EXE} ${INPUTS}          \
+mpirun -np ${SLURM_NTASKS} bash -c "
+    export CUDA_VISIBLE_DEVICES=\${SLURM_LOCALID};
+    ${EXE} ${INPUTS}" \
   > output.txt

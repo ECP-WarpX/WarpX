@@ -99,7 +99,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
-    WriteParticles(filename, particle_diags, isBTD);
+    WriteParticles(filename, particle_diags, time, isBTD);
 
     WriteJobInfo(filename);
 
@@ -302,7 +302,12 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         warpx.GetPartContainer().WriteHeader(HeaderFile);
 
-        HeaderFile << warpx.getcurrent_injection_position() << "\n";
+        MultiParticleContainer& mypc = warpx.GetPartContainer();
+        const int n_species = mypc.nSpecies();
+        for (int i=0; i<n_species; i++)
+        {
+             HeaderFile << mypc.GetParticleContainer(i).m_current_injection_position << "\n";
+        }
 
         HeaderFile << warpx.getdo_moving_window() << "\n";
 
@@ -334,7 +339,7 @@ FlushFormatPlotfile::WriteWarpXHeader(
 void
 FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                     const amrex::Vector<ParticleDiag>& particle_diags,
-                                    bool isBTD) const
+                                    const amrex::Real time, bool isBTD) const
 {
 
     for (auto& part_diag : particle_diags) {
@@ -383,7 +388,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         ParserFilter parser_filter(part_diag.m_do_parser_filter,
                                    utils::parser::compileParser<ParticleDiag::m_nvars>
                                        (part_diag.m_particle_filter_parser.get()),
-                                   pc->getMass());
+                                   pc->getMass(), time);
         parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(part_diag.m_do_geom_filter,
                                              part_diag.m_diag_domain);
@@ -570,9 +575,10 @@ FlushFormatPlotfile::WriteAllRawFields(
         }
         if (warpx.get_pointer_rho_fp(lev))
         {
-            // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
-            // If nComp > 1, this is the upper half of the list of components.
-            const MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, warpx.getrho_fp(lev).nComp()/2, warpx.getrho_fp(lev).nComp()/2);
+            // rho_fp will have either ncomps or 2*ncomps (2 being the old and new). When 2, return the new so
+            // there is time synchronization.
+            const int nstart = warpx.getrho_fp(lev).nComp() - WarpX::ncomps;
+            const MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, nstart, WarpX::ncomps);
             WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
         if (warpx.get_pointer_phi_fp(lev) != nullptr) {
@@ -580,7 +586,7 @@ FlushFormatPlotfile::WriteAllRawFields(
         }
 
         // Averaged fields on fine patch
-        if (warpx.fft_do_time_averaging)
+        if (WarpX::fft_do_time_averaging)
         {
             WriteRawMF(warpx.getEfield_avg_fp(lev, 0) , dm, raw_pltname, default_level_prefix,
                        "Ex_avg_fp", lev, plot_raw_fields_guards);

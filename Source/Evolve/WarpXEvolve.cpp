@@ -65,12 +65,8 @@ WarpX::Evolve (int numsteps)
 
     Real cur_time = t_new[0];
 
-    int numsteps_max;
-    if (numsteps < 0) {  // Note that the default argument is numsteps = -1
-        numsteps_max = max_step;
-    } else {
-        numsteps_max = istep[0] + numsteps;
-    }
+    // Note that the default argument is numsteps = -1
+    const int numsteps_max = (numsteps < 0)?(max_step):(istep[0] + numsteps);
 
     bool early_params_checked = false; // check typos in inputs after step 1
     bool exit_loop_due_to_interrupt_signal = false;
@@ -162,37 +158,11 @@ WarpX::Evolve (int numsteps)
             FillBoundaryAux(guard_cells.ng_UpdateAux);
         }
 
-        // The hybrid-PIC algorithm uses the charge and current density from
-        // both the current and previous step when updating the fields, so we
-        // deposit the ion charge and current in the temp multifab locations on
-        // the first loop iteration.
+        // If needed, deposit the initial ion charge and current densities that
+        // will be used to update the E-field in Ohm's law.
         if (step == step_begin &&
-            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
-        {
-            auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
-            auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
-            mypc->DepositCharge(rho_fp_temp, 0._rt);
-            mypc->DepositCurrent(current_fp_temp, dt[0], 0._rt);
-            SyncRho(rho_fp_temp, rho_cp, charge_buf);
-            SyncCurrent(current_fp_temp, current_cp, current_buf);
-            for (int lev=0; lev <= finest_level; ++lev) {
-                // SyncCurrent does not include a call to FillBoundary, but it is needed
-                // for the hybrid-PIC solver since current values are interpolated to
-                // a nodal grid
-                current_fp_temp[lev][0]->FillBoundary(Geom(lev).periodicity());
-                current_fp_temp[lev][1]->FillBoundary(Geom(lev).periodicity());
-                current_fp_temp[lev][2]->FillBoundary(Geom(lev).periodicity());
-
-                ApplyRhofieldBoundary(lev, rho_fp_temp[lev].get(), PatchType::fine);
-                // Set current density at PEC boundaries, if needed.
-                ApplyJfieldBoundary(
-                    lev, current_fp_temp[lev][0].get(),
-                    current_fp_temp[lev][1].get(),
-                    current_fp_temp[lev][2].get(),
-                    PatchType::fine
-                );
-            }
-        }
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC
+        ) HybridPICDepositInitialRhoAndJ();
 
         // Run multi-physics modules:
         // ionization, Coulomb collisions, QED
@@ -396,7 +366,7 @@ WarpX::Evolve (int numsteps)
         // inputs: unused parameters (e.g. typos) check after step 1 has finished
         if (!early_params_checked) {
             amrex::Print() << "\n"; // better: conditional \n based on return value
-            amrex::ParmParse().QueryUnusedInputs();
+            amrex::ParmParse::QueryUnusedInputs();
 
             //Print the warning list right after the first step.
             amrex::Print() <<
@@ -570,7 +540,7 @@ void WarpX::SyncCurrentAndRho ()
             // Without periodic single box, synchronize J and rho here,
             // except with current correction or Vay deposition:
             // in these cases, synchronize later (in WarpX::PushPSATD)
-            if (current_correction == false &&
+            if (!current_correction &&
                 current_deposition_algo != CurrentDepositionAlgo::Vay)
             {
                 SyncCurrent(current_fp, current_cp, current_buf);
@@ -594,7 +564,7 @@ void WarpX::SyncCurrentAndRho ()
     // Reflect charge and current density over PEC boundaries, if needed.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (rho_fp[lev].get()) {
+        if (rho_fp[lev]) {
             ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
         }
         ApplyJfieldBoundary(
@@ -602,7 +572,7 @@ void WarpX::SyncCurrentAndRho ()
             current_fp[lev][2].get(), PatchType::fine
         );
         if (lev > 0) {
-            if (rho_cp[lev].get()) {
+            if (rho_cp[lev]) {
                 ApplyRhofieldBoundary(lev, rho_cp[lev].get(), PatchType::coarse);
             }
             ApplyJfieldBoundary(
@@ -1046,9 +1016,9 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         if (current_buf[lev][0].get()) {
             ApplyInverseVolumeScalingToCurrentDensity(current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(), lev-1);
         }
-        if (rho_fp[lev].get()) {
+        if (rho_fp[lev]) {
             ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
-            if (charge_buf[lev].get()) {
+            if (charge_buf[lev]) {
                 ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
             }
         }
@@ -1109,8 +1079,8 @@ WarpX::applyMirrors(Real time)
             NullifyMF(Bz, lev, z_min, z_max);
 
             // If div(E)/div(B) cleaning are used, set F/G field to zero
-            if (F_fp[lev]) NullifyMF(*F_fp[lev].get(), lev, z_min, z_max);
-            if (G_fp[lev]) NullifyMF(*G_fp[lev].get(), lev, z_min, z_max);
+            if (F_fp[lev]) NullifyMF(*F_fp[lev], lev, z_min, z_max);
+            if (G_fp[lev]) NullifyMF(*G_fp[lev], lev, z_min, z_max);
 
             if (lev>0)
             {
@@ -1131,8 +1101,8 @@ WarpX::applyMirrors(Real time)
                 NullifyMF(cBz, lev, z_min, z_max);
 
                 // If div(E)/div(B) cleaning are used, set F/G field to zero
-                if (F_cp[lev]) NullifyMF(*F_cp[lev].get(), lev, z_min, z_max);
-                if (G_cp[lev]) NullifyMF(*G_cp[lev].get(), lev, z_min, z_max);
+                if (F_cp[lev]) NullifyMF(*F_cp[lev], lev, z_min, z_max);
+                if (G_cp[lev]) NullifyMF(*G_cp[lev], lev, z_min, z_max);
             }
         }
     }
