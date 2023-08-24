@@ -87,7 +87,7 @@ diag1.dump_last_timestep = 1
 
 my_constants.out_freq_red = 1
 # Reduced diagnostics
-warpx.reduced_diags_names = FieldEnergy FieldMomentum FieldMaximum ParticleExtrema_photonA ParticleExtrema_photonB ParticleExtrema_electron ParticleExtrema_positron ParticleEnergy ParticleMomentum RhoMaximum ParticleNumber 
+warpx.reduced_diags_names = FieldEnergy FieldMomentum FieldMaximum ParticleExtrema_photonA ParticleExtrema_photonB ParticleExtrema_electron ParticleExtrema_positron ParticleEnergy ParticleMomentum RhoMaximum ParticleNumber
 
 FieldEnergy.type = FieldEnergy
 FieldEnergy.intervals = out_freq_red
