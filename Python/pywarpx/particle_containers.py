@@ -272,7 +272,7 @@ class ParticleContainerWrapper(object):
         if libwarpx.geometry_dim == '3d' or libwarpx.geometry_dim == '2d':
             return [struct['x'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
-            return [struct['x']*np.cos(theta) for struct, theta in zip(structs, self.get_particle_theta(species_name))]
+            return [struct['x']*np.cos(theta) for struct, theta in zip(structs, self.get_particle_theta())]
         elif libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_x: There is no x coordinate with 1D Cartesian')
     xp = property(get_particle_x)
@@ -288,7 +288,7 @@ class ParticleContainerWrapper(object):
         if libwarpx.geometry_dim == '3d':
             return [struct['y'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
-            return [struct['x']*np.sin(theta) for struct, theta in zip(structs, self.get_particle_theta(species_name))]
+            return [struct['x']*np.sin(theta) for struct, theta in zip(structs, self.get_particle_theta())]
         elif libwarpx.geometry_dim == '1d' or libwarpx.geometry_dim == '2d':
             raise Exception('get_particle_y: There is no y coordinate with 1D or 2D Cartesian')
     yp = property(get_particle_y)
@@ -309,7 +309,7 @@ class ParticleContainerWrapper(object):
             raise Exception('get_particle_r: There is no r coordinate with 1D or 2D Cartesian')
     rp = property(get_particle_r)
 
-    def get_particle_theta(self, species_name, level=0):
+    def get_particle_theta(self, level=0):
         '''
 
         Return a list of numpy arrays containing the particle
