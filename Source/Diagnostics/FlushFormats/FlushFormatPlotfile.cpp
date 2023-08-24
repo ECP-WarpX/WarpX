@@ -344,8 +344,9 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (auto& part_diag : particle_diags) {
         WarpXParticleContainer* pc = part_diag.getParticleContainer();
+        PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
         auto tmp = isBTD ?
-            part_diag.getPinnedParticleContainer()->make_alike<amrex::PinnedArenaAllocator>() :
+            pinned_pc->make_alike<amrex::PinnedArenaAllocator>() :
             pc->make_alike<amrex::PinnedArenaAllocator>();
 
         Vector<std::string> real_names;
@@ -364,21 +365,21 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 #endif
 
         // get the names of the real comps
-        real_names.resize(pc->NumRealComps());
-        auto runtime_rnames = pc->getParticleRuntimeComps();
+        real_names.resize(tmp.NumRealComps());
+        auto runtime_rnames = tmp.getParticleRuntimeComps();
         for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
         // plot any "extra" fields by default
         real_flags = part_diag.m_plot_flags;
-        real_flags.resize(pc->NumRealComps(), 1);
+        real_flags.resize(tmp.NumRealComps(), 1);
 
         // and the names
-        int_names.resize(pc->NumIntComps());
-        auto runtime_inames = pc->getParticleRuntimeiComps();
+        int_names.resize(tmp.NumIntComps());
+        auto runtime_inames = tmp.getParticleRuntimeiComps();
         for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
 
         // plot by default
-        int_flags.resize(pc->NumIntComps(), 1);
+        int_flags.resize(tmp.NumIntComps(), 1);
 
         const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
         RandomFilter const random_filter(part_diag.m_do_random_filter,
@@ -405,7 +406,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             }, true);
             particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
         } else {
-            PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
             tmp.copyParticles(*pinned_pc, true);
             particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
         }
