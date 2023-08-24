@@ -173,10 +173,10 @@ jobs:
         # work-around for mpi4py 3.1.1 build system issue with using
         # a GNU-built Python executable with non-GNU Python modules
         #   https://github.com/mpi4py/mpi4py/issues/114
-        export CFLAGS="-noswitcherror"
+        #export CFLAGS="-noswitcherror"
 
-        python3 -m pip install --upgrade pip setuptools wheel
-        export WARPX_MPI=ON
-        export PYWARPX_LIB_DIR=$PWD/build/lib/site-packages/pywarpx/
-        python3 -m pip wheel .
-        python3 -m pip install *.whl
+        #python3 -m pip install --upgrade pip setuptools wheel
+        #export WARPX_MPI=ON
+        #export PYWARPX_LIB_DIR=$PWD/build/lib/site-packages/pywarpx/
+        #python3 -m pip wheel .
+        #python3 -m pip install *.whl
