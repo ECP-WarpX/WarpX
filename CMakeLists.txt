@@ -135,7 +135,7 @@ endif()
 # shared WarpX library or a third party, like ImpactX, uses ablastr in a
 # shared library (e.g., for Python bindings), then we need relocatable code.
 option(ABLASTR_POSITION_INDEPENDENT_CODE
-    "Build ABLASTR with position independent code" ${WarpX_LIB})
+       "Build ABLASTR with position independent code" ON)
 mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 
 # this defined the variable BUILD_TESTING which is ON by default
@@ -233,7 +233,7 @@ foreach(D IN LISTS WarpX_DIMS)
         list(APPEND _ALL_TARGETS app_${SD})
     endif()
 
-    if(WarpX_PYTHON OR WarpX_LIB)
+    if(WarpX_PYTHON OR (WarpX_LIB AND BUILD_SHARED_LIBS))
         set(ABLASTR_POSITION_INDEPENDENT_CODE ON CACHE BOOL
             "Build ABLASTR with position independent code" FORCE)
     endif()

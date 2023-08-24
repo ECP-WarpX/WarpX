@@ -174,8 +174,6 @@ private:
 
     /** Number of z-slices in each buffer of the snapshot */
     int m_buffer_size = 256;
-    /** max grid size used to generate BoxArray to define output MultiFabs */
-    int m_max_box_size = 256;
 
     /** Vector of lab-frame time corresponding to each snapshot */
     amrex::Vector<amrex::Real> m_t_lab;
