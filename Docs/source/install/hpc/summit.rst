@@ -117,7 +117,7 @@ Finally, since Summit does not yet provide software modules for some of our depe
 Compilation
 -----------
 
-Use the following :ref:`cmake commands <building-cmake>` to compile:
+Use the following :ref:`cmake commands <building-cmake>` to compile the application executable:
 
 .. code-block:: bash
 
@@ -127,7 +127,8 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
    cmake -S . -B build_summit -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_summit -j 8
 
-and the following for the Python module:
+The WarpX application executables are now in ``$HOME/src/warpx/build_summit/bin/``.
+Additionally, the following commands will install WarpX as a Python module:
 
 .. code-block:: bash
 
@@ -135,9 +136,6 @@ and the following for the Python module:
 
    cmake -S . -B build_summit_py -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_summit_py -j 8 --target pip_install
-
-**That's it!**
-The WarpX application executables are now in ``$HOME/src/warpx/build_summit/bin/`` and we installed the ``pywarpx`` Python module.
 
 Now, you can :ref:`submit Summit compute jobs <running-cpp-summit>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
 Or, you can use the WarpX executables to submit Summit jobs (:ref:`example inputs <usage-examples>`).

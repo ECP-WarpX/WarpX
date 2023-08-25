@@ -92,7 +92,7 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
    # optional: for libEnsemble
    python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile the application executable:
 
 .. code-block:: bash
 
