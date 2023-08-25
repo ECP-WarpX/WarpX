@@ -76,7 +76,6 @@ public:
      * \param[in] buffer_box        Box with index-space in lab-frame for the ith buffer
      * \param[in] k_index_zlab      k-index in the lab-frame corresponding to the
      *            current z co-ordinate in the lab-frame for the ith buffer.
-     * \param[in] max_box_size      maximum box size for the multifab to generate box arrays
      * \param[in] snapshot_full     if the current snapshot, with index, i_buffer, is full (1)
                   or not (0). If it is full, then Lorentz-transform is not performed
                   by setting m_perform_backtransform to 0.
@@ -84,7 +83,7 @@ public:
     void PrepareFunctorData ( int i_buffer, bool z_slice_in_domain,
                               amrex::Real current_z_boost,
                               amrex::Box buffer_box, const int k_index_zlab,
-                              const int max_box_size, const int snapshot_full ) override;
+                              const int snapshot_full ) override;
     /** Allocate and initialize member variables and arrays required to back-transform
      *  field-data from boosted-frame to lab-frame.
      */
@@ -123,8 +122,6 @@ private:
     /** Vector of user-defined field names without modifications for rz modes */
     amrex::Vector< std::string > m_varnames_fields;
 
-    /** max grid size used to generate BoxArray to define output MultiFabs */
-    int m_max_box_size = 256;
     /** Indices that map user-defined fields to plot to the fields
      *  stored in the cell-centered MultiFab, m_mf_src.
      *  The cell-centered MultiFab stores Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.

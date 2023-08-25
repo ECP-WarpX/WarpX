@@ -1347,6 +1347,16 @@ void WarpX::CheckKnownIssues()
             "applied directly to particles."
         );
     }
+
+#if defined(__CUDACC__) && (__CUDACC_VER_MAJOR__ == 11) && (__CUDACC_VER_MINOR__ == 6)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee)
+    {
+        WARPX_ABORT_WITH_MESSAGE(
+            "CUDA 11.6 does not work with the Yee Maxwell "
+            "solver: https://github.com/AMReX-Codes/amrex/issues/2607"
+        );
+    }
+#endif
 }
 
 #if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z) && !defined(WARPX_DIM_XZ)

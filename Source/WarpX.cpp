@@ -1039,6 +1039,12 @@ WarpX::ReadParameters ()
             current_centering_noz = 8;
         }
 
+#ifdef WARPX_DIM_RZ
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            grid_type != GridType::Hybrid,
+            "warpx.grid_type=hybrid is not implemented in RZ geometry");
+#endif
+
         // If true, the current is deposited on a nodal grid and centered onto
         // a staggered grid. Setting warpx.do_current_centering=1 makes sense
         // only if warpx.grid_type=hybrid. Instead, if warpx.grid_type=nodal or

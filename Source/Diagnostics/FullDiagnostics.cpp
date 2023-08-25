@@ -3,6 +3,7 @@
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
+#include "ComputeDiagFunctors/JFunctor.H"
 #include "ComputeDiagFunctors/PartPerCellFunctor.H"
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/ParticleReductionFunctor.H"
@@ -45,6 +46,11 @@ FullDiagnostics::FullDiagnostics (int i, std::string name)
 {
     ReadParameters();
     BackwardCompatibility();
+
+    m_solver_deposits_current = !(
+        WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
+        WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic
+    );
 }
 
 void
@@ -192,6 +198,10 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     m_all_field_functors[lev].clear();
     m_all_field_functors[lev].resize(m_varnames_fields.size());
 
+    // Boolean flag for whether the current density should be deposited before
+    // diagnostic output
+    bool deposit_current = !m_solver_deposits_current;
+
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0, n=m_varnames_fields.size(); comp<n; comp++){
         if        ( m_varnames_fields[comp] == "Er" ){
@@ -231,20 +241,23 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
                 AddRZModesToOutputNames(std::string("Bz"), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "jr" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio,
-                                                        false, ncomp);
+            m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(0, lev, m_crse_ratio,
+                                                        false, deposit_current, ncomp);
+            deposit_current = false;
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jr"), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "jt" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio,
-                                                        false, ncomp);
+            m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio,
+                                                        false, deposit_current, ncomp);
+            deposit_current = false;
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jt"), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "jz" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio,
-                                                        false, ncomp);
+            m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(2, lev, m_crse_ratio,
+                                                        false, deposit_current, ncomp);
+            deposit_current = false;
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jz"), ncomp);
             }
@@ -353,6 +366,10 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     // If rho is requested, all components will be written out
     const bool rho_requested = utils::algorithms::is_in( m_varnames, "rho" );
 
+    // Boolean flag for whether the current density should be deposited before
+    // diagnostic output
+    bool deposit_current = !m_solver_deposits_current;
+
     // First index of m_all_field_functors[lev] where RZ modes are stored
     int icomp = m_all_field_functors[0].size();
     const std::array<std::string, 3> coord {"r", "theta", "z"};
@@ -391,8 +408,8 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     for (int dim=0; dim<3; dim++){
         // 3 components, r theta z
         m_all_field_functors[lev][icomp] =
-            std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, dim), lev,
-                              m_crse_ratio, false, ncomp_multimodefab);
+            std::make_unique<JFunctor>(dim, lev, m_crse_ratio, false, deposit_current, ncomp_multimodefab);
+        deposit_current = false;
         icomp += 1;
         AddRZModesToOutputNames(std::string("J") + coord[dim],
                                 warpx.get_pointer_current_fp(0, 0)->nComp());
@@ -583,6 +600,10 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     const auto nspec = static_cast<int>(m_pfield_species.size());
     const auto ntot = static_cast<int>(nvar + m_pfield_varnames.size() * nspec);
 
+    // Boolean flag for whether the current density should be deposited before
+    // diagnostic output
+    bool deposit_current = !m_solver_deposits_current;
+
     m_all_field_functors[lev].resize(ntot);
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0; comp<nvar; comp++){
@@ -591,7 +612,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "Bz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "jz" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(2, lev, m_crse_ratio, true, deposit_current);
+            deposit_current = false;
         } else if ( m_varnames[comp] == "Az" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
@@ -628,9 +650,11 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "Bt" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "jr" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(0, lev, m_crse_ratio, true, deposit_current);
+                deposit_current = false;
             } else if ( m_varnames[comp] == "jt" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
+                deposit_current = false;
             } else if ( m_varnames[comp] == "Ar" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "At" ){
@@ -649,9 +673,11 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "By" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "jx" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(0, lev, m_crse_ratio, true, deposit_current);
+                deposit_current = false;
             } else if ( m_varnames[comp] == "jy" ){
-                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
+                deposit_current = false;
             } else if ( m_varnames[comp] == "Ax" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ay" ){
