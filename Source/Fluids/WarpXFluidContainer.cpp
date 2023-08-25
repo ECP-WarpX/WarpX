@@ -12,6 +12,7 @@
 #include "WarpXFluidContainer.H"
 #include "WarpX.H"
 #include <ablastr/utils/Communication.H>
+#include "Utils/Parser/ParserUtils.H"
 using namespace ablastr::utils::communication;
 using namespace amrex;
 
@@ -41,6 +42,80 @@ void WarpXFluidContainer::ReadParameters()
         pp_species_name.query("do_not_deposit", do_not_deposit);
         pp_species_name.query("do_not_gather", do_not_gather);
         pp_species_name.query("do_not_push", do_not_push);
+
+        // default values of E_external and B_external
+        // are used to set the E and B field when "constant" or "parser"
+        // is not explicitly used in the input
+        pp_species_name.query("B_ext_init_style", m_B_ext_s);
+        std::transform(m_B_ext_s.begin(),
+                       m_B_ext_s.end(),
+                       m_B_ext_s.begin(),
+                       ::tolower);
+        pp_species_name.query("E_ext_init_style", m_E_ext_s);
+        std::transform(m_E_ext_s.begin(),
+                       m_E_ext_s.end(),
+                       m_E_ext_s.begin(),
+                       ::tolower);
+
+        // Parse external fields:
+        // if the input string for B_ext_s is
+        // "parse_b_ext_function" then the mathematical expression
+        // for the Bx_, By_, Bz_external_function(x,y,z)
+        // must be provided in the input file.
+        if (m_B_ext_s == "parse_b_ext_function") {
+           // store the mathematical expression as string
+           std::string str_Bx_ext_function;
+           std::string str_By_ext_function;
+           std::string str_Bz_ext_function;
+           utils::parser::Store_parserString(
+                pp_species_name, "Bx_external_function(x,y,z,t)",
+                str_Bx_ext_function);
+           utils::parser::Store_parserString(
+                pp_species_name, "By_external_function(x,y,z,t)",
+                str_By_ext_function);
+           utils::parser::Store_parserString(
+                pp_species_name, "Bz_external_function(x,y,z,t)",
+                str_Bz_ext_function);
+
+           // Parser for B_external on the fluid
+           m_Bx_parser = std::make_unique<amrex::Parser>(
+               utils::parser::makeParser(str_Bx_ext_function,{"x","y","z","t"}));
+           m_By_parser = std::make_unique<amrex::Parser>(
+               utils::parser::makeParser(str_By_ext_function,{"x","y","z","t"}));
+           m_Bz_parser = std::make_unique<amrex::Parser>(
+               utils::parser::makeParser(str_Bz_ext_function,{"x","y","z","t"}));
+
+        }
+
+        // if the input string for E_ext_s is
+        // "parse_e_ext_function" then the mathematical expression
+        // for the Ex_, Ey_, Ez_external_function(x,y,z)
+        // must be provided in the input file.
+        if (m_E_ext_s == "parse_e_ext_function") {
+           // store the mathematical expression as string
+           std::string str_Ex_ext_function;
+           std::string str_Ey_ext_function;
+           std::string str_Ez_ext_function;
+           utils::parser::Store_parserString(
+               pp_species_name, "Ex_external_function(x,y,z,t)",
+               str_Ex_ext_function);
+           utils::parser::Store_parserString(
+               pp_species_name, "Ey_external_function(x,y,z,t)",
+               str_Ey_ext_function);
+           utils::parser::Store_parserString(
+               pp_species_name, "Ez_external_function(x,y,z,t)",
+               str_Ez_ext_function);
+           // Parser for E_external on the fluid
+           m_Ex_parser = std::make_unique<amrex::Parser>(
+               utils::parser::makeParser(str_Ex_ext_function,{"x","y","z","t"}));
+           m_Ey_parser = std::make_unique<amrex::Parser>(
+               utils::parser::makeParser(str_Ey_ext_function,{"x","y","z","t"}));
+           m_Ez_parser = std::make_unique<amrex::Parser>(
+               utils::parser::makeParser(str_Ez_ext_function,{"x","y","z","t"}));
+
+        }
+
+
         initialized = true;
     }
 }
@@ -142,7 +217,7 @@ void WarpXFluidContainer::Evolve(
     const amrex::MultiFab &Ex, const amrex::MultiFab &Ey, const amrex::MultiFab &Ez,
     const amrex::MultiFab &Bx, const amrex::MultiFab &By, const amrex::MultiFab &Bz,
     amrex::MultiFab* rho, amrex::MultiFab &jx, amrex::MultiFab &jy, amrex::MultiFab &jz,
-    bool skip_deposition)
+    amrex::Real cur_time, bool skip_deposition)
 {
 
     if (rho && ! skip_deposition && ! do_not_deposit) {
@@ -151,7 +226,7 @@ void WarpXFluidContainer::Evolve(
     }
 
     // Step the Lorentz Term
-    GatherAndPush(lev, Ex, Ey, Ez, Bx, By, Bz);
+    GatherAndPush(lev, Ex, Ey, Ez, Bx, By, Bz, cur_time);
 
     // Cylindrical centrifugal term
     #if defined(WARPX_DIM_RZ)
@@ -924,7 +999,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     Q_plus_z(i-1,j,k,3) = Q_tilde3 - dQ3z/2.0;
                 }
 
-                // If negative, recompute self-consistently
+                // If negative densities at the edges, recompute self-consistently
                  if ( ((Q_tilde0 + dQ0z/2.0) < 0.0) || ((Q_tilde0 - dQ0z/2.0) < 0.0) ) {
                     dQ0z = 0.0;
                     dQ1z = 0.0;
@@ -1296,7 +1371,8 @@ void WarpXFluidContainer::centrifugal_source (int lev)
 void WarpXFluidContainer::GatherAndPush (
     int lev,
     const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
-    const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz)
+    const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
+    Real t)
 {
     WARPX_PROFILE("WarpXFluidContainer::GatherAndPush");
 
@@ -1304,6 +1380,13 @@ void WarpXFluidContainer::GatherAndPush (
     const amrex::Real q = getCharge();
     const amrex::Real m = getMass();
     const Real dt = warpx.getdt(lev);
+    const amrex::Geometry &geom = warpx.Geom(lev);
+    const auto dx = geom.CellSizeArray();
+    const auto problo = geom.ProbLoArray();
+    //Check whether m_E_ext_s is "none"
+    bool external_e_fields; // Needs intializing
+    bool external_b_fields; // Needs intializing
+
 
    // Prepare interpolation of current components to cell center
     auto Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
@@ -1324,6 +1407,23 @@ void WarpXFluidContainer::GatherAndPush (
         Bz_type[i] = Bz.ixType()[i];
     }
 
+    // External field parsers
+    external_e_fields = (m_E_ext_s == "parse_e_ext_function");
+    external_b_fields = (m_B_ext_s == "parse_b_ext_function");
+    if (external_e_fields){
+        constexpr auto num_arguments = 4; //x,y,z,t
+        m_Exfield_parser = m_Ex_parser->compile<num_arguments>();
+        m_Eyfield_parser = m_Ey_parser->compile<num_arguments>();
+        m_Ezfield_parser = m_Ez_parser->compile<num_arguments>();
+    }
+
+    if (external_b_fields){
+        constexpr auto num_arguments = 4; //x,y,z,t
+        m_Bxfield_parser = m_Bx_parser->compile<num_arguments>();
+        m_Byfield_parser = m_By_parser->compile<num_arguments>();
+        m_Bzfield_parser = m_Bz_parser->compile<num_arguments>();
+    }
+    
 
     // H&C push the momentum
     #ifdef AMREX_USE_OMP
@@ -1366,6 +1466,48 @@ void WarpXFluidContainer::GatherAndPush (
                     By_type, Nodal_type, coarsening_ratio, i, j, k, 0);
                 amrex::Real Bz_Nodal = ablastr::coarsen::sample::Interp(Bz_arr,
                     Bz_type, Nodal_type, coarsening_ratio, i, j, k, 0);
+
+                // Added external e fields:
+                if ( external_e_fields ){
+                    #if defined(WARPX_DIM_3D)
+                    amrex::Real x = problo[0] + i * dx[0];
+                    amrex::Real y = problo[1] + j * dx[1];
+                    amrex::Real z = problo[2] + k * dx[2];
+                    #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                    amrex::Real x = problo[0] + i * dx[0];
+                    amrex::Real y = 0.0_rt;
+                    amrex::Real z = problo[1] + j * dx[1];
+                    #else
+                    amrex::Real x = 0.0_rt;
+                    amrex::Real y = 0.0_rt;
+                    amrex::Real z = problo[0] + i * dx[0];
+                    #endif
+
+                    Ex_Nodal += m_Exfield_parser(x, y, z, t);
+                    Ey_Nodal += m_Eyfield_parser(x, y, z, t); 
+                    Ez_Nodal += m_Ezfield_parser(x, y, z, t);
+                }
+
+                // Added external b fields:
+                if ( external_b_fields ){
+                    #if defined(WARPX_DIM_3D)
+                    amrex::Real x = problo[0] + i * dx[0];
+                    amrex::Real y = problo[1] + j * dx[1];
+                    amrex::Real z = problo[2] + k * dx[2];
+                    #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                    amrex::Real x = problo[0] + i * dx[0];
+                    amrex::Real y = 0.0_rt;
+                    amrex::Real z = problo[1] + j * dx[1];
+                    #else
+                    amrex::Real x = 0.0_rt;
+                    amrex::Real y = 0.0_rt;
+                    amrex::Real z = problo[0] + i * dx[0];
+                    #endif
+
+                    Bx_Nodal += m_Bxfield_parser(x, y, z, t);
+                    By_Nodal += m_Byfield_parser(x, y, z, t);
+                    Bz_Nodal += m_Bzfield_parser(x, y, z, t);
+                }
 
                 // Isolate U from NU
                 amrex::Real tmp_Ux = (NUx_arr(i, j, k) / N_arr(i,j,k));

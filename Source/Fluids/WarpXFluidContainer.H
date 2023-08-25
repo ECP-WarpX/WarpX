@@ -46,7 +46,7 @@ public:
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
         const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
         amrex::MultiFab* rho, amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz,
-        bool skip_deposition=false);
+        amrex::Real cur_time, bool skip_deposition=false);
 
     /**
      * AdvectivePush_Muscl takes a single timestep (dt) of the cold relativistic fluid equations
@@ -96,10 +96,12 @@ public:
      * \param[in] Bx Yee magnetic field (x)
      * \param[in] By Yee magnetic field (y)
      * \param[in] Bz Yee magnetic field (z)
+     * \param[in] cur_time Current time
      */
     void GatherAndPush (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
-        const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
+        const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
+        amrex::Real cur_time);
 
     /**
      * DepositCurrent interpolates the fluid current density comps. onto the Yee grid and
@@ -143,6 +145,24 @@ protected:
     int do_not_deposit = 0;
     std::string physical_element;
     PhysicalSpecies physical_species;
+
+    // Parser for external fields
+    std::string m_B_ext_s = "none";
+    std::string m_E_ext_s = "none";
+    // Parser for B_external on the particle
+    std::unique_ptr<amrex::Parser> m_Bx_parser;
+    std::unique_ptr<amrex::Parser> m_By_parser;
+    std::unique_ptr<amrex::Parser> m_Bz_parser;
+    // Parser for E_external on the particle
+    std::unique_ptr<amrex::Parser> m_Ex_parser;
+    std::unique_ptr<amrex::Parser> m_Ey_parser;
+    std::unique_ptr<amrex::Parser> m_Ez_parser;
+    amrex::ParserExecutor<4> m_Exfield_parser;
+    amrex::ParserExecutor<4> m_Eyfield_parser;
+    amrex::ParserExecutor<4> m_Ezfield_parser;
+    amrex::ParserExecutor<4> m_Bxfield_parser;
+    amrex::ParserExecutor<4> m_Byfield_parser;
+    amrex::ParserExecutor<4> m_Bzfield_parser;
 
     std::unique_ptr<PlasmaInjector> plasma_injector;
 

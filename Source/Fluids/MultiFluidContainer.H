@@ -65,7 +65,7 @@ public:
                  const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                  const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
                  amrex::MultiFab* rho, amrex::MultiFab& jx,  amrex::MultiFab& jy, amrex::MultiFab& jz,
-                 bool skip_deposition=false);
+                 amrex::Real cur_time, bool skip_deposition=false);
 
     int nSpecies() const {return species_names.size();}
 
