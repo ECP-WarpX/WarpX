@@ -12,7 +12,7 @@ std::map< std::string, std::function<void()> > warpx_callback_py_map;
 
 void InstallPythonCallback ( const std::string& name, std::function<void()> callback )
 {
-    warpx_callback_py_map[name] = callback;
+    warpx_callback_py_map[name] = std::move(callback);
 }
 
 bool IsPythonCallBackInstalled ( const std::string& name )
