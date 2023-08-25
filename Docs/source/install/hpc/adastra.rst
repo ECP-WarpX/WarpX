@@ -85,7 +85,7 @@ Finally, since Adastra does not yet provide software modules for some of our dep
 Compilation
 -----------
 
-Use the following :ref:`cmake commands <building-cmake>` to compile the application:
+Use the following :ref:`cmake commands <building-cmake>` to compile the application executable:
 
 .. code-block:: bash
 
@@ -95,7 +95,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
    cmake -S . -B build_adastra -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_adastra -j 16
 
-and the following for the Python module:
+Additionally, the following commands will install WarpX as a Python module:
 
 .. code-block:: bash
 
