@@ -220,6 +220,17 @@ Known System Issues
 
 .. warning::
 
+   August, 2023 (OLCFDEV-1597, OLCFHELP-12850, OLCFHELP-14253):
+   With runs above 500 nodes, we observed issues in ``MPI_Waitall`` calls of the kind ``OFI Poll Failed UNDELIVERABLE``.
+   According to the system known issues entry `OLCFDEV-1597 <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#olcfdev-1597-ofi-poll-failed-undeliverable-errors>`__, we work around this by setting this environment variable in job scripts:
+
+   .. code-block:: bash
+
+      export MPICH_SMP_SINGLE_COPY_MODE=NONE
+      export FI_CXI_RX_MATCH_MODE=software
+
+.. warning::
+
    Checkpoints and I/O at scale seem to be slow with the default Lustre filesystem configuration.
    Please test checkpointing and I/O with short ``#SBATCH -q debug`` runs before running the full simulation.
    Execute ``lfs getstripe -d <dir>`` to show the default progressive file layout.
@@ -234,3 +245,11 @@ Known System Issues
       # change striping for new files before you submit the simulation
       #   this is an example, striping 10 MB blocks onto 32 nodes
       lfs setstripe -S 10M -c 32 diags
+
+   Additionally, other AMReX users reported good performance for plotfile checkpoint/restart when using
+
+   .. code-block:: ini
+
+      amr.plot_nfiles = -1
+      amr.checkpoint_nfiles = -1
+      amrex.async_out_nfiles = 4096  # set to number of GPUs used
