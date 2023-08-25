@@ -169,10 +169,6 @@ class LibWarpX():
         if argv is None:
             argv = sys.argv
         self.amrex_init(argv, mpi_comm)
-        self.libwarpx_so.convert_lab_params_to_boost()
-        self.libwarpx_so.read_BC_params()
-        if self.geometry_dim == 'rz':
-            self.libwarpx_so.check_gridding_for_RZ_spectral()
         self.warpx = self.libwarpx_so.get_instance()
         self.warpx.initialize_data()
         self.libwarpx_so.execute_python_callback("afterinit")

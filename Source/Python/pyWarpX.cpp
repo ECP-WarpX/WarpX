@@ -120,12 +120,6 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
         "Initialize AMReX library");
     m.def("amrex_finalize", [] () { amrex::Finalize(); },
         "Close out the amrex related data");
-    m.def("convert_lab_params_to_boost",  &ConvertLabParamsToBoost,
-        "Convert input parameters from the lab frame to the boosted frame");
-    m.def("read_BC_params", &ReadBCParams,
-        "Read the boundary condition parametes and check for consistency");
-    m.def("check_gridding_for_RZ_spectral", &CheckGriddingForRZSpectral,
-        "Ensure that the grid is setup appropriately with using the RZ spectral solver");
 
     // Expose functions to get the processor number
     m.def("getNProcs", [](){return amrex::ParallelDescriptor::NProcs();} );
