@@ -25,7 +25,6 @@ with the gaussian_beam injection style.
 
 import glob
 import os
-import sys
 
 import numpy as np
 
@@ -45,8 +44,8 @@ def do_analysis(filename):
     print(df)
 
 def compute_particles(n_particles):
-    from scipy.constants import e, m_e
     import pandas as pd
+    from scipy.constants import e, m_e
 
     # Create physical quantities
     id = np.arange(1,n_particles+1)
@@ -76,19 +75,19 @@ def compute_particles(n_particles):
             'positionOffset_x': positionOffset_x,
             'positionOffset_y': positionOffset_y,
             'positionOffset_z': positionOffset_z,
-            'weighting': weighting     
+            'weighting': weighting
             }
 
     df = pd.DataFrame(data)
     return(df)
 
 def h5_create(h5name, n_particles):
-    from openpmd_api import (Access, Dataset, Mesh_Record_Component, Series)
+    from openpmd_api import Access, Dataset, Mesh_Record_Component, Series
 
     SCALAR = Mesh_Record_Component.SCALAR
 
     df = compute_particles(n_particles)
-    
+
     f = Series(
         h5name,
         Access.create
