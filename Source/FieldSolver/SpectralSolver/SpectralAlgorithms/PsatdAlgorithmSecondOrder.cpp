@@ -80,10 +80,10 @@ void PsatdAlgorithmSecondOrder::pushSpectralFields (SpectralFieldData& f) const
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
-    const bool J_constant = (m_J_in_time == JInTime::Constant) ? true : false;
-    const bool J_linear   = (m_J_in_time == JInTime::Linear  ) ? true : false;
-    const bool rho_constant = (m_rho_in_time == RhoInTime::Constant) ? true : false;
-    const bool rho_linear   = (m_rho_in_time == RhoInTime::Linear  ) ? true : false;
+    const bool J_constant = (m_J_in_time == JInTime::Constant);
+    const bool J_linear   = (m_J_in_time == JInTime::Linear);
+    const bool rho_constant = (m_rho_in_time == RhoInTime::Constant);
+    const bool rho_linear   = (m_rho_in_time == RhoInTime::Linear);
 
     // TODO Implement case with rho constant in time
     amrex::ignore_unused(rho_constant);
@@ -454,8 +454,8 @@ void PsatdAlgorithmSecondOrder::CurrentCorrection (SpectralFieldData& field_data
     // Profiling
     BL_PROFILE("PsatdAlgorithmSecondOrder::CurrentCorrection");
 
-    const bool J_constant = (m_J_in_time   == JInTime::Constant) ? true : false;
-    const bool rho_linear = (m_rho_in_time == RhoInTime::Linear) ? true : false;
+    const bool J_constant = (m_J_in_time   == JInTime::Constant);
+    const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         J_constant && rho_linear,
@@ -522,8 +522,8 @@ void PsatdAlgorithmSecondOrder::VayDeposition (SpectralFieldData& field_data)
     // Profiling
     BL_PROFILE("PsatdAlgorithmSecondOrder::VayDeposition()");
 
-    const bool J_constant = (m_J_in_time   == JInTime::Constant) ? true : false;
-    const bool rho_linear = (m_rho_in_time == RhoInTime::Linear) ? true : false;
+    const bool J_constant = (m_J_in_time   == JInTime::Constant);
+    const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         J_constant && rho_linear,
