@@ -33,6 +33,9 @@ class LibWarpX():
         self.initialized = False
         atexit.register(self.finalize)
 
+        # set once libwarpx_so is loaded
+        self.__version__ = None
+
     def __getattr__(self, attribute):
         if attribute == 'libwarpx_so':
             # If the 'libwarpx_so' is referenced, load it.
@@ -108,6 +111,8 @@ class LibWarpX():
                 self.dim = 3
         except ImportError:
             raise Exception(f"Dimensionality '{self.geometry_dim}' was not compiled in this Python install. Please recompile with -DWarpX_DIMS={_dims}")
+
+        self.__version__ = self.libwarpx_so.__version__
 
     def getNProcs(self):
         '''
