@@ -10,7 +10,7 @@
 
 std::map< std::string, std::function<void()> > warpx_callback_py_map;
 
-void InstallPythonCallback ( std::string name, std::function<void()> callback )
+void InstallPythonCallback ( const std::string& name, std::function<void()> callback )
 {
     warpx_callback_py_map[name] = callback;
 }
@@ -23,13 +23,13 @@ bool IsPythonCallBackInstalled ( const std::string& name )
 // Execute Python callbacks of the type given by the input string
 void ExecutePythonCallback ( const std::string& name )
 {
-    if ( IsPythonCallbackInstalled(name) ) {
+    if ( IsPythonCallBackInstalled(name) ) {
         WARPX_PROFILE("warpx_py_"+name);
         warpx_callback_py_map[name]();
     }
 }
 
-void ClearPythonCallback ( std::string name )
+void ClearPythonCallback ( const std::string& name )
 {
     warpx_callback_py_map.erase(name);
 }
