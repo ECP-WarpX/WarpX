@@ -95,6 +95,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
    cmake -S . -B build_adastra -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_adastra -j 16
 
+The WarpX application executables are now in ``$HOME/src/warpx/build_adastra/bin/``.
 Additionally, the following commands will install WarpX as a Python module:
 
 .. code-block:: bash
@@ -104,8 +105,6 @@ Additionally, the following commands will install WarpX as a Python module:
    cmake -S . -B build_adastra_py -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_adastra_py -j 16 --target pip_install
 
-**That's it!**
-The WarpX application executables are now in ``$HOME/src/warpx/build_adastra/bin/`` and we installed the ``pywarpx`` Python module.
 
 Now, you can :ref:`submit Adstra compute jobs <running-cpp-adastra>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
 Or, you can use the WarpX executables to submit Adastra jobs (:ref:`example inputs <usage-examples>`).
