@@ -23,6 +23,7 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <stdexcept>
 #include <sstream>
 
 
@@ -53,7 +54,7 @@ namespace ablastr::parallelization
         hipError_t hip_ok = hipInit(0);
         if (hip_ok != hipSuccess) {
             std::cerr << "hipInit failed with error code " << hip_ok << "! Aborting now.\n";
-            return 1;
+            throw std::runtime_error("hipInit failed. Did not proceeding with MPI_Init_thread.");
         }
 #endif
 
