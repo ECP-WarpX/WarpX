@@ -92,15 +92,6 @@ std::string WarpX::E_ext_grid_s = "default";
 bool WarpX::add_external_E_field = false;
 bool WarpX::add_external_B_field = false;
 
-// Parser for B_external on the grid
-std::string WarpX::str_Bx_ext_grid_function;
-std::string WarpX::str_By_ext_grid_function;
-std::string WarpX::str_Bz_ext_grid_function;
-// Parser for E_external on the grid
-std::string WarpX::str_Ex_ext_grid_function;
-std::string WarpX::str_Ey_ext_grid_function;
-std::string WarpX::str_Ez_ext_grid_function;
-
 int WarpX::do_moving_window = 0;
 int WarpX::start_moving_window_step = 0;
 int WarpX::end_moving_window_step = -1;
