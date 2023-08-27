@@ -3175,7 +3175,7 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    multifab_map[name] = mf.get();
+    multifab_map[name_with_suffix] = mf.get();
 }
 
 void
@@ -3195,7 +3195,7 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    imultifab_map[name] = mf.get();
+    imultifab_map[name_with_suffix] = mf.get();
 }
 
 void
@@ -3213,5 +3213,5 @@ WarpX::AliasInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    multifab_map[name] = mf.get();
+    multifab_map[name_with_suffix] = mf.get();
 }
