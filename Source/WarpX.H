@@ -439,26 +439,6 @@ public:
     static std::map<std::string, amrex::MultiFab *> multifab_map;
     static std::map<std::string, amrex::iMultiFab *> imultifab_map;
 
-    /**
-     * \brief
-     * Add the MultiFab to the map of MultiFabs
-     * \param name The name of the MultiFab use to reference the MultiFab
-     * \param mf The MultiFab to be added to the map (via a pointer to it)
-     */
-    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::MultiFab>& mf) {
-        multifab_map[name] = mf.get();
-    }
-
-    /**
-     * \brief
-     * Add the iMultiFab to the map of MultiFabs
-     * \param name The name of the iMultiFab use to reference the iMultiFab
-     * \param mf The iMultiFab to be added to the map (via a pointer to it)
-     */
-    static void AddToMultiFabMap(const std::string& name, const std::unique_ptr<amrex::iMultiFab>& mf) {
-        imultifab_map[name] = mf.get();
-    }
-
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
         return {
