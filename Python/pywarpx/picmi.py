@@ -1891,6 +1891,7 @@ class WarpXDiagnosticBase(object):
             self.diagnostic = pywarpx.Diagnostics.Diagnostic(
                 self.name, _species_dict={}
             )
+            self.diagnostic.fields_to_plot = 'none'
             bucket._diagnostics_dict[self.name] = self.diagnostic
 
     def set_write_dir(self):
