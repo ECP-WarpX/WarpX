@@ -2245,7 +2245,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
 
-        self.diagnostics.do_back_transformed_particles = self.write_species
+        self.diagnostic.do_back_transformed_particles = self.write_species
 
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
@@ -2338,7 +2338,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
 
-        self.diagnostics.do_back_transformed_fields = self.write_fields
+        self.diagnostic.do_back_transformed_fields = self.write_fields
 
         self.set_write_dir()
 
