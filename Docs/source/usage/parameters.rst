@@ -2985,7 +2985,7 @@ Reduced Diagnostics
         1 or 0, it is possible to compute the charge on only some part of the
         embedded boundary.
 
-    * ``Collider-relevant``
+    * ``ColliderRelevant``
         This diagnostics computes properties of two colliding beams that are relevant for particle colliders.
         Two species must be specified. Photon species are not supported yet.
         It is assumed that the two species propagate and collide along the ``z`` direction.
