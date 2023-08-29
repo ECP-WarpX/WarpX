@@ -58,4 +58,4 @@ private:
     std::map<std::string, aux_header_index> m_headers_indices;
 };
 
-#endif
+#endif  // WARPX_DIAGNOSTICS_REDUCEDDIAGS_COLLIDERRELEVANT_H_
