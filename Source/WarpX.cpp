@@ -2228,7 +2228,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     // Allocate extra multifabs needed for fluids
     myfl->AllocateLevelMFs(lev, ba, dm);
-    myfl->InitData(lev, geom[lev].Domain());
+    auto & warpx = GetInstance();
+    const amrex::Real cur_time = warpx.gett_new(lev);
+    myfl->InitData(lev, geom[lev].Domain(),cur_time); 
 
     if (fft_do_time_averaging)
     {

@@ -438,9 +438,10 @@ WarpX::MoveWindow (const int step, bool move_j)
     }
     // Loop over fluid species, and fill the values of the new cells
     const int n_fluid_species = myfl->nSpecies();
+    const amrex::Real cur_time = t_new[0];
     for (int i=0; i<n_fluid_species; i++) {
         WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-        fl.InitData( lev, injection_box );
+        fl.InitData( lev, injection_box, cur_time );
     }
 
     return num_shift_base;

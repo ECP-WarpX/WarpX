@@ -36,7 +36,7 @@ public:
 
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);
 
-    void InitData (int lev, amrex::Box init_box);
+    void InitData (int lev, amrex::Box init_box, amrex::Real cur_time);
 
     void ReadParameters ();
     /**

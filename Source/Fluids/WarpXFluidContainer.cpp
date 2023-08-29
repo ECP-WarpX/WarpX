@@ -13,6 +13,7 @@
 #include "WarpX.H"
 #include <ablastr/utils/Communication.H>
 #include "Utils/Parser/ParserUtils.H"
+#include "Utils/WarpXUtil.H"
 using namespace ablastr::utils::communication;
 using namespace amrex;
 
@@ -144,7 +145,7 @@ void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const Di
                             dm, ncomps, nguards, lev, tag("fluid momentum density [z]"), 0.0_rt);
 }
 
-void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
+void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur_time)
 {
     WARPX_PROFILE("WarpXFluidContainer::InitData");
 
@@ -161,6 +162,12 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
     const auto dx = geom.CellSizeArray();
     const auto problo = geom.ProbLoArray();
     const amrex::Real clight = PhysConst::c;
+
+    // Boosted Frame
+    Real gamma_boost = 1._rt;
+    Real beta_boost = 0._rt;
+    Vector<int> boost_direction = {0,0,0};
+    ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
 
     // Loop through cells and initialize their value
 #ifdef AMREX_USE_OMP
@@ -196,9 +203,21 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box)
                 amrex::Real z = problo[0] + i * dx[0];
 #endif
 
+                // Lorentz transform z (from boosted to lab frame)
+                if (WarpX::gamma_boost > 1._rt){
+                    amrex::Real t_boost = gamma_boost*cur_time;
+                    z = gamma_boost*(z + beta_boost*clight*t_boost);
+                }
+
                 amrex::Real n = inj_rho->getDensity(x, y, z);
                 auto u = inj_mom->getBulkMomentum(x, y, z);
 
+                // Lorentz transform n, u (from lab to boosted frame)
+                if (WarpX::gamma_boost > 1._rt){
+                    n = gamma_boost*(n - beta_boost*n*u.z/clight);
+                    auto nuz = gamma_boost*(n*u.z - beta_boost*n*clight);
+                    u.z = nuz/n;
+                }
 
                 // Multiply by clight so u is back in SI units
                 N_arr(i, j, k) = n;

@@ -58,10 +58,10 @@ MultiFluidContainer::AllocateLevelMFs (int lev, const BoxArray& ba, const Distri
 }
 
 void
-MultiFluidContainer::InitData (int lev, amrex::Box init_box)
+MultiFluidContainer::InitData (int lev, amrex::Box init_box, amrex::Real cur_time)
 {
     for (auto& fl : allcontainers) {
-        fl->InitData(lev, init_box);
+        fl->InitData(lev, init_box, cur_time);
     }
 }
 
