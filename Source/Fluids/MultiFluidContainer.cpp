@@ -13,7 +13,7 @@
 
 using namespace amrex;
 
-MultiFluidContainer::MultiFluidContainer (int nlevs_max, const amrex::Geometry geom)
+MultiFluidContainer::MultiFluidContainer (int nlevs_max, const amrex::Geometry& geom)
 {
     ReadParameters();
 

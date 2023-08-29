@@ -31,7 +31,7 @@ class WarpXFluidContainer
 public:
     friend MultiFluidContainer;
 
-    WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name, const amrex::Geometry geom);
+    WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name, const amrex::Geometry& geom);
     ~WarpXFluidContainer() {}
 
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);
@@ -129,9 +129,7 @@ public:
      */
     void DepositCharge (int lev, amrex::MultiFab &rho, int icomp = 0);
 
-    //amrex::Real getCharge () {return charge;}
     amrex::Real getCharge () const {return charge;}
-    //amrex::Real getMass () {return mass;}
     amrex::Real getMass () const {return mass;}
 
 protected:

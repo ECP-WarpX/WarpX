@@ -17,7 +17,7 @@
 using namespace ablastr::utils::communication;
 using namespace amrex;
 
-WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std::string &name, const amrex::Geometry geom)
+WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std::string &name, const amrex::Geometry& geom)
 {
     species_id = ispecies;
     species_name = name;
@@ -124,7 +124,6 @@ void WarpXFluidContainer::ReadParameters()
 void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const DistributionMapping &dm)
 {
     int ncomps = 1;
-    //const amrex::IntVect nguards = {AMREX_D_DECL(2, 2, 2)};
     const amrex::IntVect nguards(AMREX_D_DECL(2, 2, 2));
 
     // set human-readable tag for each MultiFab

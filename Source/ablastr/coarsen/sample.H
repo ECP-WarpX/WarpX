@@ -77,11 +77,6 @@ namespace ablastr::coarsen::sample
             else              idx_min[l] = ic[l]*cr[l]+static_cast<int>(cr[l]/2)*(1-sc[l])-(1-sf[l]);
         }
 
-
-        //std::cout << "\nic [2]" << ic[2];
-        //std::cout << "\nsc [2]" << sc[2];
-        //std::cout << "\nsf [2]" << sf[2];
-
         // Auxiliary integer variables
         const int numx = np[0];
         const int numy = np[1];
