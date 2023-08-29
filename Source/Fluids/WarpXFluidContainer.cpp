@@ -162,12 +162,6 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
     const auto problo = geom.ProbLoArray();
     const amrex::Real clight = PhysConst::c;
 
-    // Boosted Frame
-    Real gamma_boost = 1._rt;
-    Real beta_boost = 0._rt;
-    Vector<int> boost_direction = {0,0,0};
-    ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
-
     // Loop through cells and initialize their value
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -204,8 +198,7 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
 
                 // Lorentz transform z (from boosted to lab frame)
                 if (WarpX::gamma_boost > 1._rt){
-                    amrex::Real t_boost = gamma_boost*cur_time;
-                    z = gamma_boost*(z + beta_boost*clight*t_boost);
+                    z = WarpX::gamma_boost*(z + WarpX::beta_boost*clight*cur_time);
                 }
 
                 amrex::Real n = inj_rho->getDensity(x, y, z);
@@ -213,9 +206,10 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
 
                 // Lorentz transform n, u (from lab to boosted frame)
                 if (WarpX::gamma_boost > 1._rt){
-                    n = gamma_boost*(n - beta_boost*n*u.z/clight);
-                    auto nuz = gamma_boost*(n*u.z - beta_boost*n*clight);
-                    u.z = nuz/n;
+                    amrex::Real n_lab = WarpX::gamma_boost*(n - WarpX::beta_boost*n*u.z/clight);
+                    amrex::Real nuz_lab = WarpX::gamma_boost*(n*u.z - WarpX::beta_boost*n*clight);
+                    u.z = nuz_lab/n_lab;
+                    n = n_lab;
                 }
 
                 // Multiply by clight so u is back in SI units
