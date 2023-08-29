@@ -71,7 +71,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
 
     // RZ coordinate is not supported
 #if (defined WARPX_DIM_RZ)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+    WARPX_ABORT_WITH_MESSAGE(
         "Collider-relevant diagnostics do not work in RZ geometry.");
 #endif
 
