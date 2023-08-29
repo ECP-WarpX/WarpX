@@ -1,8 +1,18 @@
-#include "StationDiagnostics.H"
+/* Copyright 2023 Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 
+#include "StationDiagnostics.H"
 #include "ComputeDiagFunctors/StationFunctor.H"
 //temporary
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
+#include "ComputeDiagFunctors/StationParticleFunctor.H"
+#include "Diagnostics/Diagnostics.H"
+#include "Diagnostics/FlushFormats/FlushFormat.H"
+
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
@@ -87,6 +97,28 @@ StationDiagnostics::ReadParameters ()
     m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz"};
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
+
+    auto& warpx = WarpX::GetInstance();
+    MultiParticleContainer& mpc = warpx.GetPartContainer();
+    int write_species = 1;
+    pp_diag_name.query("write_species", write_species);
+    if (m_output_species_names.size() == 0 and write_species == 1)
+        m_output_species_names = mpc.GetSpeciesNames();
+
+    bool m_record_particles = false;
+    if (m_output_species_names.size() > 0 and write_species == 1) {
+        m_record_particles = true;
+    }
+    if (m_record_particles) {
+        // we use the same logic. I dont think we need a separate variable. but might be more explicit
+        mpc.SetDoBackTransformedParticles(m_record_particles);
+        for (auto const& species : m_output_species_names) {
+            mpc.SetDoBackTransformedParticles(species, m_record_particles);
+        }
+    }
+    const int num_stationdiag_buffers = 1;
+    m_particles_buffer.resize(num_stationdiag_buffers);
+    m_totalParticles_in_buffer.resize(num_stationdiag_buffers);
 }
 
 bool
@@ -185,9 +217,66 @@ StationDiagnostics::UpdateBufferData ()
 }
 
 void
+StationDiagnostics::InitializeParticleFunctors ()
+{
+    auto& warpx = WarpX::GetInstance();
+    const int num_station_buffers = 1;
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    m_all_particle_functors.resize(m_output_species_names.size());
+    m_totalParticles_in_buffer[0].resize(m_output_species_names.size());
+    for (int i = 0; i < m_all_particle_functors.size(); ++i)
+    {
+        m_totalParticles_in_buffer[0][i] = 0;
+        const int idx = mpc.getSpeciesID(m_output_species_names[i]);
+        m_all_particle_functors[i] = std::make_unique<StationParticleFunctor>(mpc.GetParticleContainerPtr(idx), m_output_species_names[i], num_station_buffers);
+    }
+}
+
+void
 StationDiagnostics::InitializeParticleBuffer ()
 {
+    auto& warpx = WarpX::GetInstance();
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    const int num_stationdiag_buffers = 1;
+    for (int i = 0; i < num_stationdiag_buffers; ++i) {
+        m_particles_buffer[i].resize(m_output_species_names.size());
+        for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
+            m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(warpx.GetParGDB());
+            const int idx = mpc.getSpeciesID(m_output_species_names[isp]);
+            m_output_species[i].push_back(ParticleDiag(m_diag_name,
+                                                       m_output_species_names[isp],
+                                                       mpc.GetParticleContainerPtr(idx),
+                                                       m_particles_buffer[i][isp].get() ));
+        }
+    }
 
+}
+
+void
+StationDiagnostics::PrepareParticleDataForOutput ()
+{
+    const int lev = 0;
+    auto& warpx = WarpX::GetInstance();
+    for (int i = 0; i < m_particles_buffer.size(); ++i) {
+        for (int isp = 0; isp < m_all_particle_functors.size(); ++isp )
+        {
+            amrex::Box domain = (warpx.boxArray(lev)).minimalBox();
+            domain.setSmall(WARPX_ZINDEX, 0);
+            domain.setBig(WARPX_ZINDEX, (m_buffer_size - 1));
+            const amrex::Box particle_buffer_box = domain;
+            amrex::BoxArray diag_ba;
+            diag_ba.define(m_buffer_box);
+            amrex::BoxArray ba = diag_ba.maxSize(256);
+            amrex::DistributionMapping dmap(ba);
+            m_particles_buffer[i][isp]->SetParticleBoxArray(lev, ba);
+            m_particles_buffer[i][isp]->SetParticleDistributionMap(lev, dmap);
+            m_particles_buffer[i][isp]->SetParticleGeometry(lev, warpx.Geom(0));
+        }
+    }
+    for (int isp = 0; isp < m_all_particle_functors.size(); ++isp)
+    {
+        m_all_particle_functors[isp]->PrepareFunctorData(0, GetZSliceInDomain(0), m_station_loc);
+    }
 }
 
 void
@@ -211,10 +300,12 @@ StationDiagnostics::Flush (int i_buffer)
             }
         }
         std::string buffer_string = amrex::Concatenate("buffer-",m_flush_counter,m_file_min_digits);
-        amrex::Print() << " Writing station buffer " << buffer_string << "\n";
         const std::string prefix = amrex::MultiFabFileFullPrefix(lev, filename, "Level_", buffer_string);
         amrex::VisMF::Write(m_mf_output[i_buffer][lev], prefix);
     }
+
+
+    FlushParticleBuffer();
 
     // reset counter
     m_slice_counter = 0;
@@ -247,4 +338,10 @@ StationDiagnostics::WriteStationHeader (const std::string& filename)
 
 
     }
+}
+
+void
+StationDiagnostics::FlushParticleBuffer ()
+{
+
 }

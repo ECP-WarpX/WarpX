@@ -48,8 +48,8 @@ public:
      */
     virtual void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                                       amrex::Real old_z_boost,
-                                      amrex::Real current_z_boost, amrex::Real t_lab,
-                                      int snapshot_full)
+                                      amrex::Real current_z_boost = 0., amrex::Real t_lab = 0.,
+                                      int snapshot_full = 0)
                                       {
                                           amrex::ignore_unused(i_buffer,
                                           ZSliceInDomain, old_z_boost,

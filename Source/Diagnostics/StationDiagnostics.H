@@ -59,13 +59,19 @@ private:
 
     void InitializeParticleBuffer () override;
 
+    void InitializeParticleFunctors () override;
+
     void Flush (int i_buffer) override;
 
     void WriteStationHeader (const std::string& filename);
 
     void PrepareFieldDataForOutput () override;
 
+    void PrepareParticleDataForOutput () override;
+
     void UpdateBufferData () override;
+
+    void FlushParticleBuffer ();
 
     int m_buffer_size = 256;
     int m_slice_counter = 0;

@@ -155,7 +155,7 @@ StationFunctor::AllocateSlice (amrex::Vector<int>& slice_to_full_ba_map) const
     const amrex::DistributionMapping& dm = m_arr_mf_src[0]->DistributionMap();
     std::vector< std::pair<int, amrex::Box> > isects;
     ba.intersections(slice_box, isects, false, 0);
-    amrex::BosLost boxes(ba.isType());
+    amrex::BoxList boxes(ba.ixType());
     amrex::Vector<int> procs;
     for (auto const& is : isects) {
         if (is.second.length(WARPX_ZINDEX) > 1) {
