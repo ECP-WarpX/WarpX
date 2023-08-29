@@ -69,7 +69,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         m_beam_name.size() == 2u,
         "Collider-relevant diagnostics must involve exactly two species");
 
-    // RZ coordinate is not working
+    // RZ coordinate is not supported
 #if (defined WARPX_DIM_RZ)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "Collider-relevant diagnostics do not work in RZ geometry.");
