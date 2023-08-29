@@ -89,7 +89,7 @@ MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush, bool BackT
             if ( (diags_types[i] == DiagTypes::BackTransformed) || (diags_types[i] == DiagTypes::Station))
                 diag->FilterComputePackFlush (step, force_flush);
         } else {
-            if ((diags_types[i] != DiagTypes::BackTransformed) || (diags_types[i] !=DiagTypes::Station))
+            if ((diags_types[i] != DiagTypes::BackTransformed) && (diags_types[i] !=DiagTypes::Station))
                 diag->FilterComputePackFlush (step, force_flush);
         }
         ++i;
