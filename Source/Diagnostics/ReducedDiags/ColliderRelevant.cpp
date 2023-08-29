@@ -2,7 +2,7 @@
  *
  * This file is part of WarpX.
  *
- * Authors: Yinjian Zhao, Arianna Formenti
+ * Authors: Arianna Formenti, Yinjian Zhao
  * License: BSD-3-Clause-LBNL
  */
 #include "ColliderRelevant.H"
