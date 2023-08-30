@@ -19,6 +19,8 @@
 #   include "Utils/WarpX_Complex.H"
 #endif
 
+#include "WarpX.H" // todo: remove include and pass globals as args
+
 #include <AMReX.H>
 #include <AMReX_Arena.H>
 #include <AMReX_Array4.H>
