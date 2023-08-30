@@ -71,7 +71,12 @@ private:
 
     void UpdateBufferData () override;
 
-    void FlushParticleBuffer ();
+    void FlushParticleBuffer (std::string path, std::string species_name, int isp, int i_buffer=0);
+    void WriteHeaderFile (std::string pdir, amrex::Vector<std::string> real_names,
+                          amrex::Vector<std::string> int_names, int isp);
+    void WriteParticleData (std::string pdir, amrex::Vector<std::string> real_names,
+                            amrex::Vector<std::string> int_names,
+                            amrex::Vector<int> real_flags, amrex::Vector<int> int_flags, int isp);
 
     int m_buffer_size = 256;
     int m_slice_counter = 0;
