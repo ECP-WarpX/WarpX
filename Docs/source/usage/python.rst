@@ -14,7 +14,7 @@ defining the simulation time, field solver, registered species, etc.
 .. _usage-picmi-parameters:
 
 Classes
-----------
+-------
 
 Simulation and grid setup
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -222,6 +222,8 @@ where ``<n_ranks>`` is the number of MPI ranks used, and ``<python_script>``
 is the name of the script.
 
 
+.. _usage-picmi-extend:
+
 Extending a Simulation from Python
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -235,85 +237,101 @@ Places in the WarpX loop where callbacks are available include:
 ``afterinit``, ``beforecollisions``, ``aftercollisions``, ``beforeEsolve``, ``afterEsolve``,
 ``beforeInitEsolve``, ``afterInitEsolve``, ``beforedeposition``, ``afterdeposition``,
 ``beforestep``, ``afterstep``, ``afterdiagnostics``,``afterrestart`` and ``oncheckpointsignal``.
-See the examples in *Examples/Tests/ParticleDataPython* for references on how to use
+See the examples in ``Examples/Tests/ParticleDataPython`` for references on how to use
 ``callbacks``.
 
 There are several "hooks" available via the ``libwarpx`` shared library to access and manipulate
 simulation objects (particles, fields and memory buffers) as well as general properties
 (such as processor number). These "hooks" are accessible through the `Simulation.extension` object.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getNProcs
+An important object is ``Simulation.extension.warpx``, which is available during simulation run.
+This object is the Python equivalent to the central ``WarpX`` simulation class and provides access to
+field ``MultiFab`` and ``ParticleContainer`` data.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getMyProc
+.. function:: pywarpx.picmi.Simulation.extension.warpx.getistep
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_nattr
+.. function:: pywarpx.picmi.Simulation.extension.warpx.gett_new
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_nattr_species
-
-.. autofunction:: pywarpx.picmi.Simulation.extension.getistep
-
-.. autofunction:: pywarpx.picmi.Simulation.extension.gett_new
-
-.. autofunction:: pywarpx.picmi.Simulation.extension.evolve
+.. function:: pywarpx.picmi.Simulation.extension.warpx.evolve
 
 .. autofunction:: pywarpx.picmi.Simulation.extension.finalize
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getProbLo
+These and other classes are provided through `pyAMReX <https://github.com/AMReX-Codes/pyamrex>`__.
+After the simulation is initialized, pyAMReX can be accessed via
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getProbHi
+.. code-block:: python
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.getCellSize
+   from pywarpx import picmi, libwarpx
+
+   # ... simulation definition ...
+
+   # equivalent to
+   #   import amrex.space3d as amr
+   # for a 3D simulation
+   amr = libwarpx.amr  # picks the right 1d, 2d or 3d variant
+
+.. function:: amr.ParallelDescriptor.NProcs()
+
+.. function:: amr.ParallelDescriptor.MyProc()
+
+.. function:: amr.ParallelDescriptor.IOProcessor()
+
+.. function:: amr.ParallelDescriptor.IOProcessorNumber()
 
 Particles can be added to the simulation at specific positions and with specific
 attribute values:
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.add_particles
+.. code-block:: python
+
+   from pywarpx import particle_containers, picmi
+
+   # ...
+
+   electron_wrapper = particle_containers.ParticleContainerWrapper("electrons")
+
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.add_particles
 
 Properties of the particles already in the simulation can be obtained with various
 functions.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_count
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.get_particle_count
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_structs
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.get_particle_structs
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_arrays
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.get_particle_arrays
 
 The ``get_particle_structs()`` and ``get_particle_arrays()`` functions are called
 by several utility functions of the form ``get_particle_{comp_name}`` where
 ``comp_name`` is one of ``x``, ``y``, ``z``, ``r``, ``theta``, ``id``, ``cpu``,
 ``weight``, ``ux``, ``uy`` or ``uz``.
 
-The index of some specific component of the particle data can be obtained.
-
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_comp_index
-
 New components can be added via Python.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.add_real_comp
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.add_real_comp
 
 Various diagnostics are also accessible from Python.
 This includes getting the deposited or total charge density from a given species
 as well as accessing the scraped particle buffer. See the example in
-*Examples/Tests/ParticleBoudaryScrape* for a reference on how to interact
+``Examples/Tests/ParticleBoundaryScrape`` for a reference on how to interact
 with scraped particle data.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_species_charge_sum
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.get_species_charge_sum
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.depositChargeDensity
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.deposit_charge_density
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_size
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.get_particle_boundary_buffer_size
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer_structs
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.get_particle_boundary_buffer_structs
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.get_particle_boundary_buffer
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.get_particle_boundary_buffer
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.clearParticleBoundaryBuffer
+.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.clearParticleBoundaryBuffer
 
 The embedded boundary conditions can be modified when using the electrostatic solver.
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.set_potential_EB
+.. function:: pywarpx.picmi.Simulation.extension.warpx.set_potential_on_eb
 
-Using Python input as a preprocessor
+Using Python Input as a Preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In this case, only the pure Python version needs to be installed, as described :ref:`here <developers-gnumake-python>`.
