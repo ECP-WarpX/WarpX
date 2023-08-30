@@ -1353,47 +1353,116 @@ void WarpXFluidContainer::GatherAndPush (
                 amrex::Real Bz_Nodal = ablastr::coarsen::sample::Interp(Bz_arr,
                     Bz_type, Nodal_type, coarsening_ratio, i, j, k, 0);
 
-                // Added external e fields:
-                if ( external_e_fields ){
-                    #if defined(WARPX_DIM_3D)
-                    amrex::Real x = problo[0] + i * dx[0];
-                    amrex::Real y = problo[1] + j * dx[1];
-                    amrex::Real z = problo[2] + k * dx[2];
-                    #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                    amrex::Real x = problo[0] + i * dx[0];
-                    amrex::Real y = 0.0_rt;
-                    amrex::Real z = problo[1] + j * dx[1];
-                    #else
-                    amrex::Real x = 0.0_rt;
-                    amrex::Real y = 0.0_rt;
-                    amrex::Real z = problo[0] + i * dx[0];
-                    #endif
+                if (WarpX::gamma_boost > 1._rt) { // Lorentz transform fields due to moving frame
+                    if ( ( external_b_fields ) || ( external_e_fields ) ){
 
-                    Ex_Nodal += m_Exfield_parser(x, y, z, t);
-                    Ey_Nodal += m_Eyfield_parser(x, y, z, t); 
-                    Ez_Nodal += m_Ezfield_parser(x, y, z, t);
-                }
+                        // Lorentz transform z (from boosted to lab frame)
+                        amrex::Real Ex_ext_boost, Ey_ext_boost, Ez_ext_boost;
+                        amrex::Real Bx_ext_boost, By_ext_boost, Bz_ext_boost;
+                        amrex::Real Ex_ext_lab, Ey_ext_lab, Ez_ext_lab;
+                        amrex::Real Bx_ext_lab, By_ext_lab, Bz_ext_lab;
 
-                // Added external b fields:
-                if ( external_b_fields ){
-                    #if defined(WARPX_DIM_3D)
-                    amrex::Real x = problo[0] + i * dx[0];
-                    amrex::Real y = problo[1] + j * dx[1];
-                    amrex::Real z = problo[2] + k * dx[2];
-                    #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                    amrex::Real x = problo[0] + i * dx[0];
-                    amrex::Real y = 0.0_rt;
-                    amrex::Real z = problo[1] + j * dx[1];
-                    #else
-                    amrex::Real x = 0.0_rt;
-                    amrex::Real y = 0.0_rt;
-                    amrex::Real z = problo[0] + i * dx[0];
-                    #endif
+                        // Grab the location
+                        #if defined(WARPX_DIM_3D)
+                        amrex::Real x = problo[0] + i * dx[0];
+                        amrex::Real y = problo[1] + j * dx[1];
+                        amrex::Real z = problo[2] + k * dx[2];
+                        #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                        amrex::Real x = problo[0] + i * dx[0];
+                        amrex::Real y = 0.0_rt;
+                        amrex::Real z = problo[1] + j * dx[1];
+                        #else
+                        amrex::Real x = 0.0_rt;
+                        amrex::Real y = 0.0_rt;
+                        amrex::Real z = problo[0] + i * dx[0];
+                        #endif
 
-                    Bx_Nodal += m_Bxfield_parser(x, y, z, t);
-                    By_Nodal += m_Byfield_parser(x, y, z, t);
-                    Bz_Nodal += m_Bzfield_parser(x, y, z, t);
-                }
+                        // Get the lab frame E and B
+                        amrex::Real t_lab = WarpX::gamma_boost*(t + WarpX::beta_boost*z/PhysConst::c);
+                        amrex::Real z_lab = WarpX::gamma_boost*(z + WarpX::beta_boost*PhysConst::c*t);                        
+
+                        // Grab the external fields in the lab frame:
+                        if ( external_e_fields ) {
+                            Ex_ext_lab = m_Exfield_parser(x, y, z_lab, t_lab);
+                            Ey_ext_lab = m_Eyfield_parser(x, y, z_lab, t_lab);
+                            Ez_ext_lab = m_Ezfield_parser(x, y, z_lab, t_lab);
+                        }else{
+                            Ex_ext_lab = 0.0;
+                            Ey_ext_lab = 0.0;
+                            Ez_ext_lab = 0.0;
+                        }
+                        if ( external_b_fields ) {
+                            Bx_ext_lab = m_Bxfield_parser(x, y, z_lab, t_lab);
+                            By_ext_lab = m_Byfield_parser(x, y, z_lab, t_lab);
+                            Bz_ext_lab = m_Bzfield_parser(x, y, z_lab, t_lab);
+                        }else{
+                            Bx_ext_lab = 0.0;
+                            By_ext_lab = 0.0;
+                            Bz_ext_lab = 0.0;
+                        }
+
+                        // Transform E & B (lab to boosted frame)
+                        // (Require both to for the lorentz transform)
+                        // RHS m_parser
+                        Ez_ext_boost = Ez_ext_lab;
+                        Bz_ext_boost = Bz_ext_lab;  
+                        Ex_ext_boost = WarpX::gamma_boost*(Ex_ext_lab - WarpX::beta_boost*PhysConst::c*By_ext_lab); 
+                        Ey_ext_boost = WarpX::gamma_boost*(Ey_ext_lab + WarpX::beta_boost*PhysConst::c*Bx_ext_lab);
+                        Bx_ext_boost = WarpX::gamma_boost*(Bx_ext_lab + WarpX::beta_boost*Ey_ext_lab/PhysConst::c); 
+                        By_ext_boost = WarpX::gamma_boost*(By_ext_lab - WarpX::beta_boost*Ez_ext_lab/PhysConst::c);
+
+                        // Then add to Nodal quantities in the boosted frame:
+                        Ex_Nodal += Ex_ext_boost;
+                        Ey_Nodal += Ey_ext_boost; 
+                        Ez_Nodal += Ez_ext_boost;
+                        Bx_Nodal += Bx_ext_boost;
+                        By_Nodal += By_ext_boost;
+                        Bz_Nodal += Bz_ext_boost;
+                    }
+                } else {
+
+                    // Added external e fields:
+                    if ( external_e_fields ){
+                        #if defined(WARPX_DIM_3D)
+                        amrex::Real x = problo[0] + i * dx[0];
+                        amrex::Real y = problo[1] + j * dx[1];
+                        amrex::Real z = problo[2] + k * dx[2];
+                        #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                        amrex::Real x = problo[0] + i * dx[0];
+                        amrex::Real y = 0.0_rt;
+                        amrex::Real z = problo[1] + j * dx[1];
+                        #else
+                        amrex::Real x = 0.0_rt;
+                        amrex::Real y = 0.0_rt;
+                        amrex::Real z = problo[0] + i * dx[0];
+                        #endif
+
+                        Ex_Nodal += m_Exfield_parser(x, y, z, t);
+                        Ey_Nodal += m_Eyfield_parser(x, y, z, t); 
+                        Ez_Nodal += m_Ezfield_parser(x, y, z, t);
+                    }
+
+                    // Added external b fields:
+                    if ( external_b_fields ){
+                        #if defined(WARPX_DIM_3D)
+                        amrex::Real x = problo[0] + i * dx[0];
+                        amrex::Real y = problo[1] + j * dx[1];
+                        amrex::Real z = problo[2] + k * dx[2];
+                        #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                        amrex::Real x = problo[0] + i * dx[0];
+                        amrex::Real y = 0.0_rt;
+                        amrex::Real z = problo[1] + j * dx[1];
+                        #else
+                        amrex::Real x = 0.0_rt;
+                        amrex::Real y = 0.0_rt;
+                        amrex::Real z = problo[0] + i * dx[0];
+                        #endif
+
+                        Bx_Nodal += m_Bxfield_parser(x, y, z, t);
+                        By_Nodal += m_Byfield_parser(x, y, z, t);
+                        Bz_Nodal += m_Bzfield_parser(x, y, z, t);
+                    }
+                } 
 
                 // Isolate U from NU
                 amrex::Real tmp_Ux = (NUx_arr(i, j, k) / N_arr(i,j,k));
