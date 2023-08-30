@@ -40,16 +40,16 @@
 template <int depos_order>
 void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                                const amrex::ParticleReal * const wp,
-                               const int * const ion_lev,
+                               const int* ion_lev,
                                amrex::FArrayBox& rho_fab,
-                               const long np_to_depose,
+                               long np_to_depose,
                                const std::array<amrex::Real,3>& dx,
                                const std::array<amrex::Real, 3> xyzmin,
-                               const amrex::Dim3 lo,
-                               const amrex::Real q,
-                               const int n_rz_azimuthal_modes,
+                               amrex::Dim3 lo,
+                               amrex::Real q,
+                               int n_rz_azimuthal_modes,
                                amrex::Real* cost,
-                               const long load_balance_costs_update_algo)
+                               long load_balance_costs_update_algo)
 {
     using namespace amrex;
 
@@ -236,7 +236,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 template <int depos_order>
 void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                                      const amrex::ParticleReal * const wp,
-                                     const int * const ion_lev,
+                                     const int* ion_lev,
                                      amrex::FArrayBox& rho_fab,
                                      const amrex::IntVect& ix_type,
                                      const long np_to_deposit,
