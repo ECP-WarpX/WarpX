@@ -1125,8 +1125,6 @@ private:
     // Singleton is used when the code is run from python
     static WarpX* m_instance;
 
-    //! Check and clear signal flags and asynchronously broadcast them from process 0
-    static void CheckSignals ();
     //! Complete the asynchronous broadcast of signal flags, and initiate a checkpoint if requested
     void HandleSignals ();
 
