@@ -195,8 +195,7 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
    The ``TSTP`` (terminal stop) command is sent interactively from ``Ctrl+Z`` to temporarily send a process to sleep (until send in the background with commands such as ``bg`` or continued with ``fg``), overwriting it would thus disable that functionality.
    The signals ``KILL`` and ``STOP`` cannot be used.
 
-   The ``FPE`` signal should not be overwritten in WarpX, as it is `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
-
+   The ``FPE`` and ``ILL`` signals should not be overwritten in WarpX, as they are `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
 .. tip::
 
    For example, the following logic can be added to `Slurm batch scripts <https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:running_jobs_slurm:signals>`__ (`signal name to number mapping here <https://en.wikipedia.org/wiki/Signal_(IPC)#Default_action>`__) to gracefully shut down 6 min prior to walltime.
@@ -396,16 +395,17 @@ Additional PML parameters
 * ``warpx.v_particle_pml`` (`float`; default: 1)
     When ``warpx.do_pml_j_damping = 1``, the assumed velocity of the particles to be absorbed in the PML, in units of the speed of light `c`.
 
-* ``warpx.do_pml_dive_cleaning`` (`bool`; default: 1)
+* ``warpx.do_pml_dive_cleaning`` (`bool`)
     Whether to use divergence cleaning for E in the PML region.
     The value must match ``warpx.do_pml_divb_cleaning`` (either both false or both true).
     This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
-    This option is implemented only for the PSATD solver.
+    This option is implemented only for the Cartesian PSATD solver; it is turned on by default in this case.
 
-* ``warpx.do_pml_divb_cleaning`` (`bool`; default: 1)
+* ``warpx.do_pml_divb_cleaning`` (`bool`)
     Whether to use divergence cleaning for B in the PML region.
     The value must match ``warpx.do_pml_dive_cleaning`` (either both false or both true).
     This option seems to be necessary in order to avoid strong Nyquist instabilities in 3D simulations with the PSATD solver, open boundary conditions and PML in all directions. 2D simulations and 3D simulations with open boundary conditions and PML only in one direction might run well even without divergence cleaning.
+    This option is implemented only for the Cartesian PSATD solver; it is turned on by default in this case.
 
 .. _running-cpp-parameters-eb:
 
@@ -717,6 +717,7 @@ Particle initialization
       ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
+      ``<species_name>.impose_t_lab_from_file`` (`bool`) optional (default is false) only read if warpx.gamma_boost > 1., it allows to set t_lab for the Lorentz Transform as being the time stored in the openPMD file.
       Warning: ``q_tot!=0`` is not supported with the ``external_file`` injection style. If a value is provided, it is ignored and no re-scaling is done.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
@@ -724,8 +725,8 @@ Particle initialization
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :ref:`the install section <install-developers>`.
 
     * ``NFluxPerCell``: Continuously inject a flux of macroparticles from a planar surface.
-      The density specified by the density profile is interpreted to have the units of #/m^2/s.
       This requires the additional parameters:
+      ``<species_name>.flux_profile`` (see the description of this parameter further below)
       ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
       ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r`, `t`, or `z` for RZ. When `flux_normal_axis` is `r` or `t`, the `x` and `y` components of the user-specified momentum distribution are interpreted as the `r` and `t` components respectively)
       ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
@@ -801,6 +802,16 @@ Particle initialization
       ``electrons.density_function(x,y,z) = "n0+n0*x**2*1.e12"`` where ``n0`` is a
       user-defined constant, see above. WARNING: where ``density_function(x,y,z)`` is close to zero, particles will still be injected between ``xmin`` and ``xmax`` etc., with a null weight. This is undesirable because it results in useless computing. To avoid this, see option ``density_min`` below.
 
+* ``<species_name>.flux_profile`` (`string`)
+    Defines the expression of the flux, when using ``<species_name>.injection_style=NFluxPerCell``
+
+    * ``constant``: Constant flux. This requires the additional parameter ``<species_name>.flux``.
+      i.e., the injection flux in :math:`m^{-2}.s^{-1}`.
+
+    * ``parse_flux_function``: the flux is given by a function in the input file.
+      It requires the additional argument ``<species_name>.flux_function(x,y,z,t)``, which is a
+      mathematical expression for the flux of the species.
+
 * ``<species_name>.density_min`` (`float`) optional (default `0.`)
     Minimum plasma density. No particle is injected where the density is below this value.
 
@@ -819,6 +830,14 @@ Particle initialization
     * ``constant``: constant momentum profile. This can be controlled with the additional parameters
       ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
       momenta in the x, y and z direction respectively, which are all ``0.`` by default.
+
+    * ``uniform``: uniform probability distribution between a minumum and a maximum value.
+      The x, y and z directions are sampled independently and the final momentum space is a cuboid.
+      The parameters that control the minimum and maximum domain of the distribution
+      are ``<species_name>.u<x,y,z>_min`` and ``<species_name>.u<x,y,z>_max`` in each
+      direction respectively (e.g., ``<species_name>.uz_min = 0.2`` and ``<species_name>.uz_max = 0.4``
+      to control the generation along the ``z`` direction).
+      All the parameters default to ``0``.
 
     * ``gaussian``: gaussian momentum distribution in all 3 directions. This can be controlled with the
       additional arguments for the average momenta along each direction
@@ -1209,19 +1228,22 @@ Laser initialization
       though ``<laser_name>.wavelength`` and ``<laser_name>.e_max`` should be included in the laser
       function, they still have to be specified as they are used for numerical purposes.
     - ``"from_file"``: the electric field of the laser is read from an external file. Currently both
-      the `lasy <https://lasydoc.readthedocs.io/en/latest/>` format as well as a custom binary format are supported. It requires to provide
+      the `lasy <https://lasydoc.readthedocs.io/en/latest/>`_ format as well as a custom binary format are supported. It requires to provide
       the name of the file to load setting the additional parameter ``<laser_name>.binary_file_name`` or ``<laser_name>.lasy_file_name`` (`string`).
-      It accepts an optional parameter ``<laser_name>.time_chunk_size`` (`int`) , only supported for a lasy file;
-      this allows to read only time_chunk_size timesteps from the lasy file. New timesteps are read as soon as they are needed.
+      It accepts an optional parameter ``<laser_name>.time_chunk_size`` (`int`), supported for both lasy and binary files;
+      this allows to read only time_chunk_size timesteps from the file. New timesteps are read as soon as they are needed.
 
-      The default value is automatically set to the number of timesteps contained in the lasy file
+      The default value is automatically set to the number of timesteps contained in the file
       (i.e. only one read is performed at the beginning of the simulation).
       It also accepts the optional parameter ``<laser_name>.delay`` (`float`; in seconds), which allows
       delaying (``delay > 0``) or anticipating (``delay < 0``) the laser by the specified amount of time.
 
-      Details about the usage of the lasy format: A lasy file is always 3D, but in the case where WarpX is compiled in 2D (or 1D), the laser antenna
-      will emit the field values that correspond to y=0 in the lasy file (and x=0 in the 1D case).
-      One can generate a lasy file from Python, see an example at ``Examples/Tests/laser_injection_from_file``.
+      Details about the usage of the lasy format: lasy can produce either 3D Cartesian files or RZ files.
+      WarpX can read both types of files independently of the geometry in which it was compiled (e.g. WarpX
+      compiled with ``WarpX_DIMS=RZ`` can read 3D Cartesian lasy files). In the case where WarpX is compiled
+      in 2D (or 1D) Cartesian, the laser antenna will emit the field values that correspond to the slice ``y=0``
+      in the lasy file (and ``x=0`` in the 1D case). One can generate a lasy file from Python, see an example
+      at ``Examples/Tests/laser_injection_from_file``.
 
       Details about the usage of the binary format: The external binary file should provide E(x,y,t) on a rectangular (necessarily uniform)
       grid. The code performs a bi-linear (in 2D) or tri-linear (in 3D) interpolation to set the field
@@ -1229,16 +1251,14 @@ Laser initialization
       ``<laser_name>.e_max`` (i.e. in most cases the maximum of abs(E(x,y,t)) should be 1,
       so that the maximum field intensity can be set straightforwardly with ``<laser_name>.e_max``).
       The binary file has to respect the following format:
-
         * flag to indicate the grid is uniform(1 byte, 0 means non-uniform, !=0 means uniform) - only uniform is supported
-        * np, numbrer of timesteps (uint32_t, must be >=2)
+        * nt, number of timesteps (uint32_t, must be >=2)
         * nx, number of points along x (uint32_t, must be >=2)
         * ny, number of points along y (uint32_t, must be 1 for 2D simulations and >=2 for 3D simulations)
         * timesteps (double[2]=[t_min,t_max])
         * x_coords (double[2]=[x_min,x_max])
-        * y_coords (double[1] if 2D, double[2]=[y_min,y_max] if 3D)
+        * y_coords (double[1] in 2D, double[2]=[y_min,y_max] in 3D)
         * field_data (double[nt * nx * ny], with nt being the slowest coordinate).
-
       A binary file can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file``
 
 * ``<laser_name>.profile_t_peak`` (`float`; in seconds)
@@ -1256,7 +1276,7 @@ Laser initialization
 
         E(\boldsymbol{x},t) \propto \exp\left( -\frac{(t-t_{peak})^2}{\tau^2} \right)
 
-    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.174`.
+    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.1774`.
 
     When running a **boosted-frame simulation**, provide the value of
     ``<laser_name>.profile_duration`` in the laboratory frame, and use ``warpx.gamma_boost``
@@ -1454,8 +1474,8 @@ Applied to Particles
 
       Note that the position is defined in Cartesian coordinates, as a function of (x,y,z), even for RZ.
 
-    * ``repeated_plasma_lens``: apply a series of plasma lenses. The properties of the lenses are defined in the
-      lab frame by the input parameters:
+    * ``repeated_plasma_lens``: apply a series of plasma lenses.
+      The properties of the lenses are defined in the lab frame by the input parameters:
 
         * ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
 
@@ -1468,6 +1488,9 @@ Applied to Particles
 
         * ``repeated_plasma_lens_strengths_B``, the magnetic focusing strength of each lens, an array of floats, when
           ``particles.B_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
+
+      The repeated lenses are only defined for :math:`z > 0`.
+      Once the number of lenses specified in the input are exceeded, the repeated lens stops.
 
       The applied field is uniform longitudinally (along z) with a hard edge,
       where residence corrections are used for more accurate field calculation. On the time step when a particle enters
@@ -1756,8 +1779,9 @@ Particle push, charge and current deposition, field gathering
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
-    is ``esirkepov`` for FDTD maxwell solvers and ``direct`` for standard or
-    Galilean PSATD solver (that is, with ``algo.maxwell_solver = psatd``).
+    is ``esirkepov`` for FDTD maxwell solvers but ``direct`` for standard or
+    Galilean PSATD solver (i.e. with ``algo.maxwell_solver = psatd``) and
+    for the hybrid-PIC solver (i.e. with ``algo.maxwell_solver = hybrid``).
     Note that ``vay`` is only available for ``algo.maxwell_solver = psatd``.
 
     1. ``direct``
@@ -1823,11 +1847,11 @@ Two families of Maxwell solvers are implemented in WarpX, based on the Finite-Di
 
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
-       coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
-     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`)
-     - ``ect``: Enlarged cell technique (conformal finite difference solver. See Xiao and Liu,
-                IEEE Antennas and Propagation Society International Symposium (2005),
-                <https://ieeexplore.ieee.org/document/1551259>)
+       coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`_).
+     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`).
+     - ``ect``: Enlarged cell technique (conformal finite difference solver. See `Xiao and Liu, IEEE Antennas and Propagation Society International Symposium (2005) <https://ieeexplore.ieee.org/document/1551259>`_).
+     - ``hybrid``: The E-field will be solved using Ohm's law and a kinetic-fluid hybrid model (see :ref:`theory <theory-kinetic-fluid-hybrid-model>`).
+     - ``none``: No field solve will be performed.
 
      If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
 
@@ -2003,6 +2027,37 @@ Maxwell solver: macroscopic media
     computational medium, respectively. The default values are the corresponding values
     in vacuum.
 
+.. _running-cpp-parameters-hybrid-model:
+
+Maxwell solver: kinetic-fluid hybrid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``hybrid_pic_model.elec_temp`` (`float`)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the electron temperature, in eV, used to calculate
+     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+
+* ``hybrid_pic_model.n0_ref`` (`float`)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}`, used to calculate
+     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+
+* ``hybrid_pic_model.gamma`` (`float`) optional (default ``5/3``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the exponent used to calculate
+     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+
+* ``hybrid_pic_model.plasma_resistivity(rho)`` (`float` or `str`) optional (default ``0``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
+
+* ``hybrid_pic_model.n_floor`` (`float`) optional (default ``1``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma density floor, in :math:`m^{-3}`, which is useful since the generalized Ohm's law used to calculate the E-field includes a :math:`1/n` term.
+
+* ``hybrid_pic_model.substeps`` (`int`) optional (default ``100``)
+     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the number of sub-steps to take during the B-field update.
+
+.. note::
+
+    Based on results from :cite:t:`param-Stanier2020` it is recommended to use
+    linear particles when using the hybrid-PIC model.
+
 Grid types (collocated, staggered, hybrid)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -2012,6 +2067,7 @@ Grid types (collocated, staggered, hybrid)
     and currents are interpolated back and forth between a staggered grid and a
     nodal grid, must be used with momentum-conserving field gathering algorithm,
     ``algo.field_gathering = momentum-conserving``).
+    The option ``hybrid`` is currently not supported in RZ geometry.
 
     Default: ``warpx.grid_type = staggered``.
 
@@ -2416,7 +2472,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 BackTransformed Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Note that this diagnostic is not currently supported for RZ.  Additional options for this diagnostic include:
+``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Additional options for this diagnostic include:
 
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
@@ -2459,6 +2515,20 @@ BackTransformed Diagnostics
     to frequent flushes of the lab-frame data. The other option is to keep the default
     value for buffer size and use slices to reduce the memory footprint and maintain
     optimum I/O performance.
+
+* ``<diag_name>.do_back_transformed_fields`` (`0` or `1`) optional (default `1`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``
+    Whether to back transform the fields or not.
+    Note that for ``BackTransformed`` diagnostics, at least one of the options
+    ``<diag_name>.do_back_transformed_fields`` or ``<diag_name>.do_back_transformed_particles`` must be 1.
+
+* ``<diag_name>.do_back_transformed_particles`` (`0` or `1`) optional (default `1`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``
+    Whether to back transform the particle data or not.
+    Note that for ``BackTransformed`` diagnostics, at least one of the options
+    ``<diag_name>.do_back_transformed_fields`` or ``<diag_name>.do_back_transformed_particles`` must be 1.
+    If ``diag_name.write_species = 0``, then ``<diag_name>.do_back_transformed_particles`` will be set
+    to 0 in the simulation and particles will not be backtransformed.
 
 Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2603,13 +2673,11 @@ Reduced Diagnostics
         the value of the Poynting Vector :math:`|S|` of the electromagnetic fields,
         at mesh refinement levels from  0 to :math:`n`, at point (:math:`x`, :math:`y`, :math:`z`).
 
-        Note: the norms are always interpolated to the measurement point before they are written
-        to file. The electromagnetic field components are interpolated to the measurement point
-        by default, but can they be saved as non-averaged by setting
-        ``<reduced_diags_name>.raw_fields = true``, in which case the raw fields for the cell
-        containing the measurement point are saved.
+        The fields are always interpolated to the measurement point.
         The interpolation order can be set by specifying ``<reduced_diags_name>.interp_order``,
-        otherwise it is set to ``1``.
+        defaulting to ``1``.
+        In RZ geometry, this only saves the
+        0'th azimuthal mode component of the fields.
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
         In a *moving window* simulation, the FieldProbe can be set to follow the moving frame by specifying ``<reduced_diags_name>.do_moving_window_FP = 1`` (default 0).
@@ -2633,9 +2701,9 @@ Reduced Diagnostics
         are computed.
 
     * ``FieldReduction``
-        This type computes an arbitrary reduction of the positions and the electromagnetic fields.
+        This type computes an arbitrary reduction of the positions, the current density, and the electromagnetic fields.
 
-        * ``<reduced_diags_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)`` (`string`)
+        * ``<reduced_diags_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz)`` (`string`)
             An analytic function to be reduced must be provided, using the math parser.
 
         * ``<reduced_diags_name>.reduction_type`` (`string`)
@@ -2707,11 +2775,15 @@ Reduced Diagnostics
         :math:`\epsilon_z = \dfrac{1}{mc} \sqrt{\delta_z^2 \delta_{pz}^2 -
         \Big\langle (z-\langle z \rangle) (p_z-\langle p_z \rangle) \Big\rangle^2}`.
 
-        [19], [20]: beta function for the transverse directions (m)
+        [19], [20]: Twiss alpha for the transverse directions
+        :math:`\alpha_x = - \Big\langle (x-\langle x \rangle) (p_x-\langle p_x \rangle) \Big\rangle \Big/ \epsilon_x`,
+        :math:`\alpha_y = - \Big\langle (y-\langle y \rangle) (p_y-\langle p_y \rangle) \Big\rangle \Big/ \epsilon_y`.
+
+        [21], [22]: beta function for the transverse directions (m)
         :math:`\beta_x = \dfrac{{\delta_x}^2}{\epsilon_x}`,
         :math:`\beta_y = \dfrac{{\delta_y}^2}{\epsilon_y}`.
 
-        [21]: The charge of the beam (C).
+        [23]: The charge of the beam (C).
 
         For 2D-XZ,
         :math:`\langle y \rangle`,
@@ -2814,6 +2886,64 @@ Reduced Diagnostics
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
 
+    * ``ParticleHistogram2D``
+        This type computes a user defined, 2D particle histogram.
+
+        * ``<reduced_diags_name>.species`` (`string`)
+            A species name must be provided,
+            such that the diagnostics are done for this species.
+
+        * ``<reduced_diags_name>.histogram_function_abs(t,x,y,z,ux,uy,uz,w)`` (`string`)
+            A histogram function must be provided for the abscissa axis.
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent the particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            `w` represents the weight.
+
+        * ``<reduced_diags_name>.histogram_function_ord(t,x,y,z,ux,uy,uz,w)`` (`string`)
+            A histogram function must be provided for the ordinate axis.
+
+        * ``<reduced_diags_name>.bin_number_abs`` (`int` > 0) and ``<reduced_diags_name>.bin_number_ord`` (`int` > 0)
+            These are the number of bins used for the histogram for the abscissa and ordinate axis respectively.
+
+        * ``<reduced_diags_name>.bin_max_abs`` (`float`) and ``<reduced_diags_name>.bin_max_ord`` (`float`)
+            These are the maximum value of the bins for the abscissa and ordinate axis respectively.
+            Particles with values outside of these ranges are discarded.
+
+        * ``<reduced_diags_name>.bin_min_abs`` (`float`) and ``<reduced_diags_name>.bin_min_ord`` (`float`)
+            These are the minimum value of the bins for the abscissa and ordinate axis respectively.
+            Particles with values outside of these ranges are discarded.
+
+        * ``<reduced_diags_name>.filter_function(t,x,y,z,ux,uy,uz,w)`` (`string`) optional
+            Users can provide an expression returning a boolean for whether a particle is taken
+            into account when calculating the histogram.
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            `w` represents the weight.
+
+        * ``<reduced_diags_name>.value_function(t,x,y,z,ux,uy,uz,w)`` (`string`) optional
+            Users can provide an expression for the weight used to calculate the number of particles
+            per cell associated with the selected abscissa and ordinate functions and/or the filter function.
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            `w` represents the weight.
+
+        The output is a ``<reduced_diags_name>`` folder containing a set of openPMD files.
+        An example input file and a loading python script of
+        using the histogram2D reduced diagnostics
+        are given in ``Examples/Tests/histogram2D/``.
+
     * ``ParticleExtrema``
         This type computes the minimum and maximum values of
         particle position, momentum, gamma, weight,
@@ -2868,6 +2998,9 @@ Reduced Diagnostics
 * ``<reduced_diags_name>.separator`` (`string`) optional (default a `whitespace`)
     The separator between row values in the output file.
     The default separator is a whitespace.
+
+* ``<reduced_diags_name>.precision`` (`integer`) optional (default `14`)
+    The precision used when writing out the data to the text files.
 
 Lookup tables and other settings for QED modules
 ------------------------------------------------
@@ -3001,6 +3134,9 @@ The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.
     Name of the checkpoint file to restart from. Returns an error if the folder does not exist
     or if it is not properly formatted.
 
+* ``warpx.write_diagonstics_on_restart`` (`bool`) optional (default `false`)
+    When `true`, write the diagnostics after restart at the time of the restart.
+
 Intervals parser
 ----------------
 
@@ -3090,3 +3226,6 @@ When developing, testing and :ref:`debugging WarpX <debugging_warpx>`, the follo
 * ``ablastr.fillboundary_always_sync`` (`0` or `1`) optional (default `0`)
     Run all ``FillBoundary`` operations on ``MultiFab`` to force-synchronize shared nodal points.
     This slightly increases communication cost and can help to spot missing ``nodal_sync`` flags in these operations.
+
+.. bibliography::
+    :keyprefix: param-

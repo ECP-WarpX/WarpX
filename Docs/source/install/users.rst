@@ -53,6 +53,13 @@ A package for WarpX is available via the `Conda <https://conda.io>`_ package man
       conda install -n base conda-libmamba-solver
       conda config --set solver libmamba
 
+   We recommend to deactivate that conda self-activates its ``base`` environment.
+   This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.
+
+   .. code-block:: bash
+
+      conda config --set auto_activate_base false
+
 .. code-block:: bash
 
    conda create -n warpx -c conda-forge warpx
@@ -61,15 +68,6 @@ A package for WarpX is available via the `Conda <https://conda.io>`_ package man
 .. note::
 
    The ``warpx`` `conda package <https://anaconda.org/conda-forge/warpx>`__ does not yet provide GPU support.
-
-.. tip::
-
-   A general option to deactivate that conda self-activates its base environment.
-   This `avoids interference with the system and other package managers <https://collegeville.github.io/CW20/WorkshopResources/WhitePapers/huebl-working-with-multiple-pkg-mgrs.pdf>`__.
-
-   .. code-block:: bash
-
-      conda config --set auto_activate_base false
 
 
 .. _install-spack:

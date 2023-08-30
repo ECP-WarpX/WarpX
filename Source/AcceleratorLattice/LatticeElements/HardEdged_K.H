@@ -10,7 +10,6 @@
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_REAL.H>
-#include <AMReX_Vector.H>
 
 /**
  * \brief Calculate the residence correction, the fraction of the time step the particle
@@ -42,7 +41,7 @@ amrex::ParticleReal hard_edged_fraction(const amrex::ParticleReal z,
    // This assumes that vzp != 0.
    amrex::ParticleReal const zl_bounded = std::min(std::max(zl, zs), ze);
    amrex::ParticleReal const zr_bounded = std::min(std::max(zr, zs), ze);
-   amrex::ParticleReal frac = (zr_bounded - zl_bounded)/(zr - zl);
+   const amrex::ParticleReal frac = (zr_bounded - zl_bounded)/(zr - zl);
 
     return frac;
 }

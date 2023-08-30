@@ -25,6 +25,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.constants import c, epsilon_0
 from scipy.signal import hilbert
 
 import yt ; yt.funcs.mylog.setLevel(50)
@@ -46,7 +47,8 @@ w0 = 12.*um
 tt = 10.*fs
 t_c = 20.*fs
 
-E_max= 16282454014843.37
+laser_energy = 1.0
+E_max = np.sqrt( 2*(2/np.pi)**(3/2)*laser_energy / (epsilon_0*w0**2*c*tt) )
 
 # Function for the envelope
 def gauss_env(T,Z):
@@ -100,7 +102,7 @@ def do_analysis(fname, compname, steps):
 
     pos_max = np.unravel_index(np.abs(fft_F_laser).argmax(), fft_F_laser.shape)
 
-    freq = freq_z[pos_max[0]]
+    freq = np.abs(freq_z[pos_max[0]])
     exp_freq = c/wavelength
     relative_error_freq = np.abs(freq-exp_freq)/exp_freq
     print("Relative error frequency: ", relative_error_freq)
@@ -120,7 +122,6 @@ def main() :
 
     # Create a laser using lasy
     pol = (1, 0)
-    laser_energy = 1.0  # J
     profile = GaussianProfile(wavelength, pol, laser_energy, w0, tt, t_peak=0)
     dim = "xyt"
     lo = (-25e-6, -25e-6, -20e-15)

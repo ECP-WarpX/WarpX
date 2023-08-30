@@ -27,7 +27,7 @@ public:
     MCCProcess (
                 const std::string& scattering_process,
                 const std::string& cross_section_file,
-                const amrex::ParticleReal energy
+                amrex::ParticleReal energy
                 );
 
     template <typename InputVector>
@@ -35,7 +35,7 @@ public:
                 const std::string& scattering_process,
                 const InputVector&& energies,
                 const InputVector&& sigmas,
-                const amrex::ParticleReal energy
+                amrex::ParticleReal energy
                 );
 
     MCCProcess (MCCProcess const&) = delete;
@@ -54,7 +54,7 @@ public:
      */
     static
     void readCrossSectionFile (
-                               const std::string cross_section_file,
+                               std::string cross_section_file,
                                amrex::Vector<amrex::ParticleReal>& energies,
                                amrex::Gpu::HostVector<amrex::ParticleReal>& sigmas
                                );
@@ -85,8 +85,8 @@ public:
                 using amrex::Math::ceil;
                 // calculate index of bounding energy pairs
                 amrex::ParticleReal temp = (E_coll - m_energy_lo) / m_dE;
-                int idx_1 = static_cast<int>(floor(temp));
-                int idx_2 = static_cast<int>(ceil(temp));
+                const int idx_1 = static_cast<int>(floor(temp));
+                const int idx_2 = static_cast<int>(ceil(temp));
 
                 // linearly interpolate to the given energy value
                 temp -= idx_1;
@@ -125,7 +125,7 @@ private:
     static
     MCCProcessType parseProcessType(const std::string& process);
 
-    void init (const std::string& scattering_process, const amrex::ParticleReal energy);
+    void init (const std::string& scattering_process, amrex::ParticleReal energy);
 
     amrex::Vector<amrex::ParticleReal> m_energies;
 

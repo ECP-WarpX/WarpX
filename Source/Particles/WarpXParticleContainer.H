@@ -13,6 +13,7 @@
 #include "WarpXParticleContainer_fwd.H"
 
 #include "Evolve/WarpXDtType.H"
+#include "Initialization/PlasmaInjector.H"
 #include "Particles/ParticleBoundaries.H"
 #include "SpeciesPhysicalProperties.H"
 
@@ -44,6 +45,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+
 
 using namespace amrex::literals;
 
@@ -121,6 +123,12 @@ public:
 
     virtual void InitIonizationModule () {}
 
+    /*
+     * \brief Virtual function that returns a pointer to the plasma injector,
+     *        for derived classes that define one (PhysicalParticleContainer).
+     */
+    virtual PlasmaInjector* GetPlasmaInjector () { return nullptr; }
+
     /**
      * Evolve is the central WarpXParticleContainer function that advances
      * particles for a time dt (typically one timestep). It is a pure virtual
@@ -148,8 +156,8 @@ public:
                         amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
                                             NArrayReal, NArrayInt,
                                             amrex::PinnedArenaAllocator>& pinned_tile,
-                        const int n_external_attr_real,
-                        const int n_external_attr_int,
+                        int n_external_attr_real,
+                        int n_external_attr_int,
                         const amrex::RandomEngine& engine) = 0;
 
     ///
@@ -183,7 +191,7 @@ public:
      *                          the time of the deposition.
      */
     void DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                         const amrex::Real dt, const amrex::Real relative_time);
+                         amrex::Real dt, amrex::Real relative_time);
 
     /**
      * \brief Deposit charge density.
@@ -196,40 +204,44 @@ public:
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
     void DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                        const bool local = false, const bool reset = false,
-                        const bool apply_boundary_and_scale_volume = false,
-                        const bool interpolate_across_levels = true,
-                        const int icomp = 0);
+                        bool local = false, bool reset = false,
+                        bool apply_boundary_and_scale_volume = false,
+                        bool interpolate_across_levels = true,
+                        int icomp = 0);
+    void DepositCharge (std::unique_ptr<amrex::MultiFab>& rho, int lev,
+                        bool local = false, bool reset = false,
+                        bool apply_boundary_and_scale_volume = false,
+                        int icomp = 0);
 
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
     virtual void DepositCharge (WarpXParIter& pti,
                                RealVector const & wp,
-                               const int * const ion_lev,
+                               const int* ion_lev,
                                amrex::MultiFab* rho,
-                               const int icomp,
-                               const long offset,
-                               const long np_to_depose,
-                               const int thread_num,
-                               const int lev,
-                               const int depos_lev);
+                               int icomp,
+                               long offset,
+                               long np_to_depose,
+                               int thread_num,
+                               int lev,
+                               int depos_lev);
 
     virtual void DepositCurrent (WarpXParIter& pti,
                                 RealVector const & wp,
                                 RealVector const & uxp,
                                 RealVector const & uyp,
                                 RealVector const & uzp,
-                                int const * const ion_lev,
-                                amrex::MultiFab* const jx,
-                                amrex::MultiFab* const jy,
-                                amrex::MultiFab* const jz,
-                                long const offset,
-                                long const np_to_depose,
-                                int const thread_num,
-                                int const lev,
-                                int const depos_lev,
-                                amrex::Real const dt,
-                                amrex::Real const relative_time);
+                                int const* ion_lev,
+                                amrex::MultiFab* jx,
+                                amrex::MultiFab* jy,
+                                amrex::MultiFab* jz,
+                                long offset,
+                                long np_to_depose,
+                                int thread_num,
+                                int lev,
+                                int depos_lev,
+                                amrex::Real dt,
+                                amrex::Real relative_time);
 
     // If particles start outside of the domain, ContinuousInjection
     // makes sure that they are initialized when they enter the domain, and
@@ -239,11 +251,19 @@ public:
     // LaserParticleContainer: implemented.
     // RigidInjectedParticleContainer: not implemented.
     virtual void ContinuousInjection(const amrex::RealBox& /*injection_box*/) {}
-    // Update optional sub-class-specific injection location.
-    virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
+
+    /**
+     * \brief Update antenna position for continuous injection of lasers
+     *        in a boosted frame. Empty function for containers other than lasers.
+     */
+    virtual void UpdateAntennaPosition(const amrex::Real /*dt*/) {}
+
+    bool doContinuousInjection() const {return do_continuous_injection;}
 
     // Inject a continuous flux of particles from a defined plane
     virtual void ContinuousFluxInjection(amrex::Real /*t*/, amrex::Real /*dt*/) {}
+
+    int getSpeciesId() const {return species_id;}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.
@@ -279,11 +299,16 @@ public:
      * @param[in] id if different than -1, this id will be assigned to the particles (used for
      * particle tagging in some routines, e.g. SplitParticle)
      */
-    void AddNParticles (int lev,
-                        int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
-                        const amrex::ParticleReal* ux, const amrex::ParticleReal* uy, const amrex::ParticleReal* uz,
-                        const int nattr_real, const amrex::ParticleReal* attr_real,
-                        const int nattr_int, const int* attr_int,
+    void AddNParticles (int lev, int n,
+                        amrex::Vector<amrex::ParticleReal> const & x,
+                        amrex::Vector<amrex::ParticleReal> const & y,
+                        amrex::Vector<amrex::ParticleReal> const & z,
+                        amrex::Vector<amrex::ParticleReal> const & ux,
+                        amrex::Vector<amrex::ParticleReal> const & uy,
+                        amrex::Vector<amrex::ParticleReal> const & uz,
+                        int nattr_real,
+                        amrex::Vector<amrex::Vector<amrex::ParticleReal>> const & attr_real,
+                        int nattr_int, amrex::Vector<amrex::Vector<int>> const & attr_int,
                         int uniqueparticles, amrex::Long id=-1);
 
     virtual void ReadHeader (std::istream& is) = 0;
@@ -305,6 +330,9 @@ public:
     amrex::Real self_fields_absolute_tolerance = amrex::Real(0.0);
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
+
+    //! Current injection position
+    amrex::Real m_current_injection_position;
 
     // split along diagonals (0) or axes (1)
     int split_type = 0;
@@ -437,7 +465,7 @@ protected:
 
 private:
     virtual void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,
-                                    const int lev) override;
+                                    int lev) override;
 
 };
 

@@ -53,10 +53,10 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool div_cleaning = m_div_cleaning;
 
-    const bool J_constant = (m_J_in_time == JInTime::Constant) ? true : false;
-    const bool J_linear   = (m_J_in_time == JInTime::Linear  ) ? true : false;
-    const bool rho_constant = (m_rho_in_time == RhoInTime::Constant) ? true : false;
-    const bool rho_linear   = (m_rho_in_time == RhoInTime::Linear  ) ? true : false;
+    const bool J_constant = (m_J_in_time == JInTime::Constant);
+    const bool J_linear   = (m_J_in_time == JInTime::Linear);
+    const bool rho_constant = (m_rho_in_time == RhoInTime::Constant);
+    const bool rho_linear   = (m_rho_in_time == RhoInTime::Linear);
 
     const amrex::Real dt = m_dt;
     const amrex::Real dt2 = dt*dt;
@@ -69,7 +69,7 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
         const amrex::Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        amrex::Array4<Complex> fields = f.fields[mfi].array();
+        const amrex::Array4<Complex> fields = f.fields[mfi].array();
 
         // Extract pointers for the k vectors
         const amrex::Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();

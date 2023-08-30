@@ -63,6 +63,12 @@ macro(set_default_build_dirs)
                 CACHE PATH "Build directory for binaries")
         mark_as_advanced(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     endif()
+    if(NOT CMAKE_PYTHON_OUTPUT_DIRECTORY)
+        set(CMAKE_PYTHON_OUTPUT_DIRECTORY
+            "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/site-packages"
+            CACHE PATH "Build directory for python modules"
+        )
+    endif()
 endmacro()
 
 
@@ -89,6 +95,58 @@ macro(set_default_install_dirs)
         set(WarpX_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}")
     else()
         set(WarpX_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}/WarpX")
+    endif()
+endmacro()
+
+
+# set names and paths of install directories
+# the defaults in CMake are sub-ideal for historic reasons, lets make them more
+# Unix-ish and portable.
+#
+macro(warpx_set_default_install_dirs)
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        include(GNUInstallDirs)
+        if(NOT CMAKE_INSTALL_CMAKEDIR)
+            set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake"
+                    CACHE PATH "CMake config package location for installed targets")
+            if(WIN32)
+                set(CMAKE_INSTALL_LIBDIR Lib
+                        CACHE PATH "Object code libraries")
+                set_property(CACHE CMAKE_INSTALL_CMAKEDIR PROPERTY VALUE "cmake")
+            endif()
+            mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
+        endif()
+    endif()
+
+    if(WIN32)
+        set(WarpX_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}")
+    else()
+        set(WarpX_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}/WarpX")
+    endif()
+endmacro()
+
+
+# set names and paths for Python modules
+# this needs to be slightly delayed until we found Python and know its
+# major and minor version number
+#
+macro(warpx_set_default_install_dirs_python)
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+        # Python install and build output dirs
+        if(NOT CMAKE_INSTALL_PYTHONDIR)
+            if(WIN32)
+                set(CMAKE_INSTALL_PYTHONDIR_DEFAULT
+                        "${CMAKE_INSTALL_LIBDIR}/site-packages"
+                        )
+            else()
+                set(CMAKE_INSTALL_PYTHONDIR_DEFAULT
+                        "${CMAKE_INSTALL_LIBDIR}/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages"
+                        )
+            endif()
+            set(CMAKE_INSTALL_PYTHONDIR "${CMAKE_INSTALL_PYTHONDIR_DEFAULT}"
+                    CACHE STRING "Location for installed python package"
+                    )
+        endif()
     endif()
 endmacro()
 
@@ -133,6 +191,8 @@ macro(set_cxx_warnings)
 
         #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weverything")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code")
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code")
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wshadow -Woverloaded-virtual -Wunreachable-code")
     elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -161,6 +221,19 @@ function(enable_IPO all_targets_list)
     endif()
 endfunction()
 
+# Set the suffix for targets and binaries depending on dimension
+#
+# User specify 1;2;RZ;D in WarpX_DIMS.
+# We append to CMake targets and binaries the suffix "Nd" for 1,2,3 and "rz" for RZ.
+#
+macro(warpx_set_suffix_dims suffix dim)
+    if("${dim}" STREQUAL "RZ")
+        set(${suffix} rz)
+    else()
+        set(${suffix} ${dim}d)
+    endif()
+endmacro()
+
 # Take an <imported_target> and expose it as INTERFACE target with
 # WarpX::thirdparty::<propagated_name> naming and SYSTEM includes.
 #
@@ -184,21 +257,25 @@ endfunction()
 # Set a feature-based binary name for the WarpX executable and create a generic
 # warpx symlink to it. Only sets options relevant for users (see summary).
 #
-function(set_warpx_binary_name)
+function(set_warpx_binary_name D)
+    warpx_set_suffix_dims(SD ${D})
+
     set(warpx_bin_names)
     if(WarpX_APP)
-        list(APPEND warpx_bin_names app)
+        list(APPEND warpx_bin_names app_${SD})
+        set_target_properties(app_${SD} PROPERTIES OUTPUT_NAME "warpx")
     endif()
     if(WarpX_LIB)
-        list(APPEND warpx_bin_names shared)
+        list(APPEND warpx_bin_names lib_${SD})
+        # On WIN32, the OUTPUT_NAME must not collide between lib and app!
+        if(WIN32)
+            set_target_properties(lib_${SD} PROPERTIES OUTPUT_NAME "libwarpx")
+        else()
+            set_target_properties(lib_${SD} PROPERTIES OUTPUT_NAME "warpx")
+        endif()
     endif()
     foreach(tgt IN LISTS warpx_bin_names)
-        set_target_properties(${tgt} PROPERTIES OUTPUT_NAME "warpx")
-        if(WarpX_DIMS STREQUAL RZ)
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".RZ")
-        else()
-            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".${WarpX_DIMS}d")
-        endif()
+        set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".${SD}")
 
         if(WarpX_MPI)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".MPI")
@@ -252,29 +329,24 @@ function(set_warpx_binary_name)
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".DEBUG")
         endif()
-    endforeach()
 
-    if(WarpX_APP)
-        # alias to the latest build, because using the full name is often confusing
-        add_custom_command(TARGET app POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E create_symlink
-                $<TARGET_FILE_NAME:app>
-                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx
-        )
-    endif()
-    if(WarpX_LIB)
-        # alias to the latest build; this is the one expected by Python bindings
-        if(WarpX_DIMS STREQUAL RZ)
-            set(lib_suffix "rz")
-        else()
-            set(lib_suffix "${WarpX_DIMS}d")
+        if(WarpX_APP)
+            # alias to the latest build, because using the full name is often confusing
+            add_custom_command(TARGET app_${SD} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E create_symlink
+                    $<TARGET_FILE_NAME:app_${SD}>
+                    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx.${SD}
+            )
         endif()
-        add_custom_command(TARGET shared POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E create_symlink
-                $<TARGET_FILE_NAME:shared>
-                $<TARGET_FILE_DIR:shared>/libwarpx.${lib_suffix}$<TARGET_FILE_SUFFIX:shared>
-        )
-    endif()
+        if(WarpX_LIB)
+            # alias to the latest build; this is the one expected by Python bindings
+            add_custom_command(TARGET lib_${SD} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E create_symlink
+                    $<TARGET_FILE_NAME:lib_${SD}>
+                    $<TARGET_FILE_DIR:lib_${SD}>/libwarpx.${SD}$<TARGET_FILE_SUFFIX:lib_${SD}>
+            )
+        endif()
+    endforeach()
 endfunction()
 
 
@@ -347,6 +419,9 @@ function(warpx_print_summary)
     message("        lib: ${CMAKE_INSTALL_LIBDIR}")
     message("    include: ${CMAKE_INSTALL_INCLUDEDIR}")
     message("      cmake: ${WarpX_INSTALL_CMAKEDIR}")
+    if(WarpX_PYTHON)
+        message("     python: ${CMAKE_INSTALL_PYTHONDIR}")
+    endif()
     message("")
     set(BLD_TYPE_UNKNOWN "")
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR AND
@@ -376,9 +451,13 @@ function(warpx_print_summary)
     if(MPI)
         message("    MPI (thread multiple): ${WarpX_MPI_THREAD_MULTIPLE}")
     endif()
-    message("    PSATD: ${WarpX_PSATD}")
-    message("    PRECISION: ${WarpX_PRECISION}")
     message("    PARTICLE PRECISION: ${WarpX_PARTICLE_PRECISION}")
+    message("    PRECISION: ${WarpX_PRECISION}")
+    message("    PSATD: ${WarpX_PSATD}")
+    message("    PYTHON: ${WarpX_PYTHON}")
+    if(WarpX_PYTHON)
+        message("    PYTHON IPO: ${WarpX_PYTHON_IPO}")
+    endif()
     message("    OPENPMD: ${WarpX_OPENPMD}")
     message("    QED: ${WarpX_QED}")
     message("    QED table generation: ${WarpX_QED_TABLE_GEN}")

@@ -92,7 +92,7 @@ private:
      * \param[in] cellcenter_data if true, m_cellcenter_varnames are updated
                                   if false, m_varnames is updated
      */
-    void AddRZModesToOutputNames (const std::string& field, const int ncomp, bool cellcenter_data);
+    void AddRZModesToOutputNames (const std::string& field, int ncomp, bool cellcenter_data);
     /** This function allocates and initializes particle buffers for all the snapshots.
      * This is currently an empty function:
      * The particle containers required for this must be added to populate this function.
@@ -123,7 +123,7 @@ private:
      *            are within the bounds of the boosted-frame and lab-frame domain.
      * \param[in] lev the mesh-refinement level
      */
-    bool GetZSliceInDomainFlag (const int i_buffer, const int lev);
+    bool GetZSliceInDomainFlag (int i_buffer, int lev);
 
     /** whether the k-index corresponding to the z-slice for the ith buffer, i_buffer,
      *  is within the bounds of the box in index-space
@@ -131,7 +131,7 @@ private:
      * \param[in] lev mesh-refinement level using which the k-index for the z-slice being filled in the ith buffer is computed
      *            Return true if the k-index of the z-slice is within the bounds of the box for the buffer being filled
      */
-    bool GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev);
+    bool GetKIndexInSnapshotBoxFlag (int i_buffer, int lev);
 
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
@@ -148,7 +148,7 @@ private:
      */
     bool m_do_back_transformed_particles = true;
 
-    /** m_gamma_boost, is a copy of warpx.gamma_boost
+    /** m_gamma_boost, is a copy of WarpX::gamma_boost
      *  That is, the Lorentz factor of the boosted frame in which the simulation is run.
      *  The direction for Lorentz transformation is assumed to be along
      *  ``warpx.boost_direction``, which is the same as the moving window direction.
@@ -157,7 +157,7 @@ private:
      */
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
-    /** m_moving_window_dir is a copy of warpx.moving_window_dir
+    /** m_moving_window_dir is a copy of WarpX::moving_window_dir
      *  Currently, back-transformed diagnostics only works if moving window is
      *  in z-direction for both 2D and 3D simulations in the Cartesian frame of reference.
      */
@@ -174,8 +174,6 @@ private:
 
     /** Number of z-slices in each buffer of the snapshot */
     int m_buffer_size = 256;
-    /** max grid size used to generate BoxArray to define output MultiFabs */
-    int m_max_box_size = 256;
 
     /** Vector of lab-frame time corresponding to each snapshot */
     amrex::Vector<amrex::Real> m_t_lab;
@@ -264,7 +262,7 @@ private:
      * \param[in] i_buffer buffer-id of the back-transformed snapshot
      * \param[in] lev      mesh-refinement level at which the output buffer MultiFab is defined
      */
-    void DefineFieldBufferMultiFab (const int i_buffer, const int lev);
+    void DefineFieldBufferMultiFab (int i_buffer, int lev);
 
     /** Define the geometry object that spans the user-defined region for the
      *  ith snapshot, i_buffer, at level, lev.
@@ -272,7 +270,7 @@ private:
      * \param[in] i_buffer id of the back-transformed snapshot
      * \param[in] lev      level at which the geometry object is defined
      */
-    void DefineSnapshotGeometry (const int i_buffer, const int lev);
+    void DefineSnapshotGeometry (int i_buffer, int lev);
 
     /** Compute and return z-position in the boosted-frame at the current timestep
       * \param[in] t_lab   lab-frame time of the snapshot
@@ -280,7 +278,7 @@ private:
       */
     amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
-        amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
+        const amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
         return current_z_boost;
     }
     /** Compute and return z-position in the lab-frame at the current timestep
@@ -289,7 +287,7 @@ private:
       */
     amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
-        amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
+        const amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
         return current_z_lab;
     }
     /** Compute and return cell-size in z-dimension in the lab-frame at level, lev
@@ -351,7 +349,7 @@ private:
      *
      *  \param[in] i_buffer snapshot index
      */
-    void SetSnapshotFullStatus (const int i_buffer);
+    void SetSnapshotFullStatus (int i_buffer);
     /** Vector of field-data stored in the cell-centered multifab, m_cell_centered_data.
      *  All the fields are stored regardless of the specific fields to plot selected
      *  by the user.
@@ -391,7 +389,7 @@ private:
      */
     void InterleaveSpeciesHeader(std::string buffer_species_Header_path,
                                  std::string snapshot_species_Header_path,
-                                 std::string species_name, const int new_data_index);
+                                 std::string species_name, int new_data_index);
 
     /** Interleave lab-frame metadata of the particle header file in the buffers to
      *  be consistent with the merged plotfile lab-frame data
@@ -409,7 +407,7 @@ private:
     /** Clear particle data stored in the particle buffer */
     void ClearParticleBuffer(int i_buffer);
     /** Redistributes particles to the buffer box array in the lab-frame */
-    void RedistributeParticleBuffer (const int i_buffer);
+    void RedistributeParticleBuffer (int i_buffer);
     void UpdateVarnamesForRZopenPMD();
 
     amrex::Real gettlab (int i_buffer) override {return m_t_lab[i_buffer];}
