@@ -807,7 +807,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         std::string str_Bx_ext_grid_function;
         std::string str_By_ext_grid_function;
         std::string str_Bz_ext_grid_function;
-      
+
 #ifdef WARPX_DIM_RZ
         std::stringstream warnMsg;
         warnMsg << "Parser for external B (r and theta) fields does not work with RZ\n"
@@ -825,7 +825,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
         utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
             str_Bz_ext_grid_function);
-      
+
         Bxfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
         Byfield_parser = std::make_unique<amrex::Parser>(
