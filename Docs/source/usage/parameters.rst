@@ -3008,7 +3008,7 @@ Reduced Diagnostics
         :math:`\chi_{min}`,
         :math:`\langle \chi \rangle`,
         :math:`\chi_{max}`.
-        If QED is not enabled, these numbers are not computed. 
+        If QED is not enabled, these numbers are not computed.
 
         [6], [7]: The average and standard deviation of the values of the transverse coordinate :math:`x` (m) of species 1:
         :math:`\langle x \rangle`,
