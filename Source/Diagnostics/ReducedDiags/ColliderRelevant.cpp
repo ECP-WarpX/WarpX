@@ -54,6 +54,7 @@
 #include <fstream>
 #include <limits>
 #include <map>
+#include <memory>
 #include <vector>
 
 using namespace amrex;
@@ -62,7 +63,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
 : ReducedDiags{std::move(rd_name)}
 {
     // read colliding species names - must be 2
-    amrex::ParmParse pp_rd_name(rd_name);
+    amrex::ParmParse pp_rd_name(m_rd_name);
     pp_rd_name.getarr("species", m_beam_name);
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -110,7 +111,8 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
             "Collider-relevant diagnostic does not work for colliding photons yet");
     }
 
-    auto all_diag_names = std::vector<std::string>{};
+    // function to fill a vector with diags names and create corresponding entry in header
+    std::vector<std::string> all_diag_names;
     auto add_diag = [&,c=0](
         const std::string& name, const std::string& header) mutable {
         m_headers_indices[name] = aux_header_index{header, c++};
@@ -279,11 +281,21 @@ void ColliderRelevant::ComputeDiags (int step)
         amrex::ParallelDescriptor::ReduceRealMin({thetax_min, thetay_min}, amrex::ParallelDescriptor::IOProcessorNumber());
         amrex::ParallelDescriptor::ReduceRealMax({thetax_max, thetay_max}, amrex::ParallelDescriptor::IOProcessorNumber());
        
-        x_ave = x_ave / w_tot;
-        x2_ave = x2_ave / w_tot;
-        thetax_ave = thetax_ave / w_tot;
-        thetax2_ave = thetax2_ave / w_tot;
-        
+        if (w_tot > std::numeric_limits<Real>::min())
+        {
+            x_ave = x_ave / w_tot;
+            x2_ave = x2_ave / w_tot;
+            thetax_ave = thetax_ave / w_tot;
+            thetax2_ave = thetax2_ave / w_tot;
+        }
+        else
+        {
+            x_ave = 0.0_rt;
+            x2_ave = 0.0_rt;
+            thetax_ave = 0.0_rt;
+            thetax2_ave = 0.0_rt;
+        }
+
         // x_std, thetax_std
         amrex::Real x_std = 0.0_rt;
         amrex::Real thetax_std = 0.0_rt;
@@ -364,16 +376,31 @@ void ColliderRelevant::ComputeDiags (int step)
                                                   amrex::ParallelDescriptor::IOProcessorNumber());
         amrex::ParallelDescriptor::ReduceRealMin({thetax_min, thetay_min}, amrex::ParallelDescriptor::IOProcessorNumber());
         amrex::ParallelDescriptor::ReduceRealMax({thetax_max, thetay_max}, amrex::ParallelDescriptor::IOProcessorNumber());
+
        
-        x_ave = x_ave / w_tot;
-        x2_ave = x2_ave / w_tot;
-        y_ave = y_ave / w_tot;
-        y2_ave = y2_ave / w_tot;
-        thetax_ave = thetax_ave / w_tot;
-        thetax2_ave = thetax2_ave / w_tot;
-        thetay_ave = thetay_ave / w_tot;
-        thetay2_ave = thetay2_ave / w_tot;
-        
+        if (w_tot > std::numeric_limits<Real>::min())
+        {
+            x_ave = x_ave / w_tot;
+            x2_ave = x2_ave / w_tot;
+            y_ave = y_ave / w_tot;
+            y2_ave = y2_ave / w_tot;
+            thetax_ave = thetax_ave / w_tot;
+            thetax2_ave = thetax2_ave / w_tot;
+            thetay_ave = thetay_ave / w_tot;
+            thetay2_ave = thetay2_ave / w_tot;
+        }
+        else
+        {
+            x_ave = 0.0_rt;
+            x2_ave = 0.0_rt;
+            y_ave = 0.0_rt;
+            y2_ave = 0.0_rt;
+            thetax_ave = 0.0_rt;
+            thetax2_ave = 0.0_rt;
+            thetay_ave = 0.0_rt;
+            thetay2_ave = 0.0_rt;
+        }
+
         // x_std, y_std, thetax_std, thetay_std
         amrex::Real x_std = 0.0_rt;
         amrex::Real y_std = 0.0_rt;
