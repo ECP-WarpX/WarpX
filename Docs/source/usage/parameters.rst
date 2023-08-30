@@ -3004,10 +3004,11 @@ Reduced Diagnostics
 
         where :math:`n_1`, :math:`n_2` are the number densities of the two colliding species.
 
-        [3], [4], [5]: The minimum, average and maximum values of the quantum parameter :math:`\chi` of species 1:
+        [3], [4], [5]: If, QED is enabled, the minimum, average and maximum values of the quantum parameter :math:`\chi` of species 1:
         :math:`\chi_{min}`,
         :math:`\langle \chi \rangle`,
         :math:`\chi_{max}`.
+        If QED is not enabled, these numbers are not computed. 
 
         [6], [7]: The average and standard deviation of the values of the transverse coordinate :math:`x` (m) of species 1:
         :math:`\langle x \rangle`,
