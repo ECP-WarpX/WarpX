@@ -1409,7 +1409,7 @@ void WarpXFluidContainer::GatherAndPush (
                         Ex_ext_boost = WarpX::gamma_boost*(Ex_ext_lab - WarpX::beta_boost*PhysConst::c*By_ext_lab); 
                         Ey_ext_boost = WarpX::gamma_boost*(Ey_ext_lab + WarpX::beta_boost*PhysConst::c*Bx_ext_lab);
                         Bx_ext_boost = WarpX::gamma_boost*(Bx_ext_lab + WarpX::beta_boost*Ey_ext_lab/PhysConst::c); 
-                        By_ext_boost = WarpX::gamma_boost*(By_ext_lab - WarpX::beta_boost*Ez_ext_lab/PhysConst::c);
+                        By_ext_boost = WarpX::gamma_boost*(By_ext_lab - WarpX::beta_boost*Ex_ext_lab/PhysConst::c);
 
                         // Then add to Nodal quantities in the boosted frame:
                         Ex_Nodal += Ex_ext_boost;
