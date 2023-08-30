@@ -803,6 +803,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // provided in the input file.
     if (B_ext_grid_s == "parse_b_ext_grid_function") {
 
+        //! Strings storing parser function to initialize the components of the magnetic field on the grid
+        std::string str_Bx_ext_grid_function;
+        std::string str_By_ext_grid_function;
+        std::string str_Bz_ext_grid_function;
+      
 #ifdef WARPX_DIM_RZ
         std::stringstream warnMsg;
         warnMsg << "Parser for external B (r and theta) fields does not work with RZ\n"
@@ -820,17 +825,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
         utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
             str_Bz_ext_grid_function);
+      
         Bxfield_parser = std::make_unique<amrex::Parser>(
-        utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+            utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
         Byfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
-#ifdef WARPX_DIM_RZ
         Bzfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
-#else
-        Bzfield_parser = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
-#endif
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
@@ -877,6 +878,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        WARPX_ABORT_WITH_MESSAGE(
            "E and B parser for external fields does not work with RZ -- TO DO");
 #endif
+
+       //! Strings storing parser function to initialize the components of the electric field on the grid
+       std::string str_Ex_ext_grid_function;
+       std::string str_Ey_ext_grid_function;
+       std::string str_Ez_ext_grid_function;
+
        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
            str_Ex_ext_grid_function);
        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
@@ -1359,6 +1366,16 @@ void WarpX::CheckKnownIssues()
             "applied directly to particles."
         );
     }
+
+#if defined(__CUDACC__) && (__CUDACC_VER_MAJOR__ == 11) && (__CUDACC_VER_MINOR__ == 6)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee)
+    {
+        WARPX_ABORT_WITH_MESSAGE(
+            "CUDA 11.6 does not work with the Yee Maxwell "
+            "solver: https://github.com/AMReX-Codes/amrex/issues/2607"
+        );
+    }
+#endif
 }
 
 #if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z) && !defined(WARPX_DIM_XZ)

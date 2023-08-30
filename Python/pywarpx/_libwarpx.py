@@ -33,6 +33,9 @@ class LibWarpX():
         self.initialized = False
         atexit.register(self.finalize)
 
+        # set once libwarpx_so is loaded
+        self.__version__ = None
+
     def __getattr__(self, attribute):
         if attribute == 'libwarpx_so':
             # If the 'libwarpx_so' is referenced, load it.
@@ -109,6 +112,8 @@ class LibWarpX():
         except ImportError:
             raise Exception(f"Dimensionality '{self.geometry_dim}' was not compiled in this Python install. Please recompile with -DWarpX_DIMS={_dims}")
 
+        self.__version__ = self.libwarpx_so.__version__
+
     def getNProcs(self):
         '''
 
@@ -164,10 +169,6 @@ class LibWarpX():
         if argv is None:
             argv = sys.argv
         self.amrex_init(argv, mpi_comm)
-        self.libwarpx_so.convert_lab_params_to_boost()
-        self.libwarpx_so.read_BC_params()
-        if self.geometry_dim == 'rz':
-            self.libwarpx_so.check_gridding_for_RZ_spectral()
         self.warpx = self.libwarpx_so.get_instance()
         self.warpx.initialize_data()
         self.libwarpx_so.execute_python_callback("afterinit")

@@ -81,16 +81,16 @@ public:
 
     virtual void PostRestart () final;
 
-    void calculate_laser_plane_coordinates (const WarpXParIter& pti, const int np,
-                                            amrex::Real * AMREX_RESTRICT const pplane_Xp,
-                                            amrex::Real * AMREX_RESTRICT const pplane_Yp);
+    void calculate_laser_plane_coordinates (const WarpXParIter& pti, int np,
+                                            amrex::Real * AMREX_RESTRICT pplane_Xp,
+                                            amrex::Real * AMREX_RESTRICT pplane_Yp);
 
-    void update_laser_particle (WarpXParIter& pti, const int np, amrex::ParticleReal * AMREX_RESTRICT const puxp,
-                                amrex::ParticleReal * AMREX_RESTRICT const puyp,
-                                amrex::ParticleReal * AMREX_RESTRICT const puzp,
-                                amrex::ParticleReal const * AMREX_RESTRICT const pwp,
-                                amrex::Real const * AMREX_RESTRICT const amplitude,
-                                const amrex::Real dt);
+    void update_laser_particle (WarpXParIter& pti, int np, amrex::ParticleReal * AMREX_RESTRICT puxp,
+                                amrex::ParticleReal * AMREX_RESTRICT puyp,
+                                amrex::ParticleReal * AMREX_RESTRICT puzp,
+                                amrex::ParticleReal const * AMREX_RESTRICT pwp,
+                                amrex::Real const * AMREX_RESTRICT amplitude,
+                                amrex::Real dt);
 
 protected:
 
@@ -134,7 +134,7 @@ private:
      * \brief  Update antenna position for continuous injection of lasers
      *         in a boosted frame
      */
-    void UpdateAntennaPosition (const amrex::Real dt) override;
+    void UpdateAntennaPosition (amrex::Real dt) override;
 
     // Unique (smart) pointer to the laser profile
     std::unique_ptr<WarpXLaserProfiles::ILaserProfile> m_up_laser_profile;

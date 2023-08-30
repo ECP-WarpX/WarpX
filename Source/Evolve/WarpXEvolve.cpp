@@ -79,7 +79,8 @@ WarpX::Evolve (int numsteps)
         WARPX_PROFILE("WarpX::Evolve::step");
         const Real evolve_time_beg_step = amrex::second();
 
-        CheckSignals();
+        //Check and clear signal flags and asynchronously broadcast them from process 0
+        SignalHandling::CheckSignals();
 
         multi_diags->NewIteration();
 
@@ -1106,12 +1107,6 @@ WarpX::applyMirrors(Real time)
             }
         }
     }
-}
-
-void
-WarpX::CheckSignals()
-{
-    SignalHandling::CheckSignals();
 }
 
 void
