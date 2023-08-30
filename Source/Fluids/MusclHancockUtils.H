@@ -34,8 +34,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real V_calc (amrex::Real Q0, amrex::Real Q1, amrex::Real Q2, amrex::Real Q3,
     amrex::Real c, int comp)
 {
-    // Test if Q0 is zero
-    if (Q0 <= 0) printf("Error in V_calc! N <= 0!\n");
 
     // Compute Ux, Uy, Uz:
     amrex::Real Ux = Q1/Q0;
