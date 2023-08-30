@@ -478,12 +478,12 @@ StationDiagnostics::WriteParticleData (std::string pdir, amrex::Vector<std::stri
     const int lev = 0;
 
     // flags to determine which particles to output
-    amrex::Vector<std::map<std::pair<int,int>, amrex::Vector<int> > > particle_io_flags(m_particles_buffer[0][isp]->GetParticles().size());
+    amrex::Vector<std::map<std::pair<int,int>, typename PinnedMemoryParticleContainer::IntVector > > particle_io_flags(m_particles_buffer[0][isp]->GetParticles().size());
     const auto pmap = m_particles_buffer[0][isp]->GetParticles(lev);
     for (const auto & kv : pmap)
     {
         auto& flags = particle_io_flags[lev][kv.first];
-        const auto np = kv.second.numParticles(); 
+        const auto np = kv.second.numParticles();
         flags.resize(np,1);
     }
     amrex::Gpu::Device::streamSynchronize();
@@ -542,7 +542,7 @@ StationDiagnostics::WriteParticleData (std::string pdir, amrex::Vector<std::stri
                 if (count[grid] == 0) continue;
                 amrex::Vector<int> istuff;
                 amrex::Vector<amrex::ParticleReal> rstuff;
-                amrex::particle_detail::packIOData(istuff, rstuff, m_particles_buffer[0][isp].get(), lev, grid,
+                amrex::particle_detail::packIOData(istuff, rstuff, *m_particles_buffer[0][isp], lev, grid,
                                                    real_flags, int_flags,
                                                    particle_io_flags, tile_map[grid], count[grid], true);
 
