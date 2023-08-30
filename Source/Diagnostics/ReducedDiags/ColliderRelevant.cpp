@@ -59,7 +59,7 @@
 using namespace amrex;
 
 ColliderRelevant::ColliderRelevant (std::string rd_name)
-: ReducedDiags{rd_name}
+: ReducedDiags{std::move(rd_name)}
 {
     // read colliding species names - must be 2
     amrex::ParmParse pp_rd_name(rd_name);
