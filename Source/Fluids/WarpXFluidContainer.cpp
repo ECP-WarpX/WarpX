@@ -282,7 +282,7 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
     domain.surroundingNodes();
 
     // H&C push the momentum
-    #ifdef AMREX_USE_OMP
+    #ifdef AMREX_USE_OMP 
     #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
     #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -481,7 +481,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
 
-                if( N_arr(i,j,k) > 0){
+                if( N_arr(i,j,k) > 0.0){
 
                     // - Grab local Uz Uy Ux gamma
                     // Isolate U from NU
@@ -1205,8 +1205,8 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     if (N_arr(i,j,k)>0.0) Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
 
                     if (N_arr(i,j-1,k)>0.0) Vz_L_minus = V_calc(Q_minus_z(i,j-1,k,0),Q_minus_z(i,j-1,k,1),Q_minus_z(i,j-1,k,2),Q_minus_z(i,j-1,k,3),clight,2);
-                    if (N_arr(i,j,k)>0.0) Vz_I_minus = V_calc(Q_minus_z(i,j,k,0),Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
-                    if (N_arr(i,j,k)>0.0) Vz_L_plus = V_calc(Q_plus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,1),Q_plus_z(i,j-1,k,2),Q_plus_z(i,j-1,k,3),clight,2);
+                    if (N_arr(i,j,k)>0.0)   Vz_I_minus = V_calc(Q_minus_z(i,j,k,0),Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
+                    if (N_arr(i,j,k)>0.0)   Vz_L_plus = V_calc(Q_plus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,1),Q_plus_z(i,j-1,k,2),Q_plus_z(i,j-1,k,3),clight,2);
                     if (N_arr(i,j+1,k)>0.0) Vz_I_plus = V_calc(Q_plus_z(i,j,k,0),Q_plus_z(i,j,k,1),Q_plus_z(i,j,k,2),Q_plus_z(i,j,k,3),clight,2);
 
 
@@ -1250,8 +1250,8 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                     // Compute the half-timestep velocities
                     if (N_arr(i-1,j,k)>0.0) Vz_L_minus = V_calc(Q_minus_z(i-1,j,k,0),Q_minus_z(i-1,j,k,1),Q_minus_z(i-1,j,k,2),Q_minus_z(i-1,j,k,3),clight,2);
-                    if (N_arr(i,j,k)>0.0) Vz_I_minus = V_calc(Q_minus_z(i,j,k,0),Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
-                    if (N_arr(i,j,k)>0.0) Vz_L_plus = V_calc(Q_plus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,1),Q_plus_z(i-1,j,k,2),Q_plus_z(i-1,j,k,3),clight,2);
+                    if (N_arr(i,j,k)>0.0)   Vz_I_minus = V_calc(Q_minus_z(i,j,k,0),Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
+                    if (N_arr(i,j,k)>0.0)   Vz_L_plus = V_calc(Q_plus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,1),Q_plus_z(i-1,j,k,2),Q_plus_z(i-1,j,k,3),clight,2);
                     if (N_arr(i+1,j,k)>0.0) Vz_I_plus = V_calc(Q_plus_z(i,j,k,0),Q_plus_z(i,j,k,1),Q_plus_z(i,j,k,2),Q_plus_z(i,j,k,3),clight,2);
 
                     // compute the fluzes:
