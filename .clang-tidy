@@ -3,6 +3,7 @@ Checks: '-*,
         -bugprone-easily-swappable-parameters,
         -bugprone-implicit-widening-of-multiplication-result,
         -bugprone-misplaced-widening-cast,
+        -bugprone-unchecked-optional-access,
     cert-*
         -cert-err58-cpp,
     cppcoreguidelines-avoid-goto,
