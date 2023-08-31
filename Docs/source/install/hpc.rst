@@ -50,6 +50,7 @@ This section documents quick-start guides for a selection of supercomputers that
    hpc/spock
    hpc/summit
    hpc/taurus
+   hpc/lonestar6
 
 .. tip::
 
