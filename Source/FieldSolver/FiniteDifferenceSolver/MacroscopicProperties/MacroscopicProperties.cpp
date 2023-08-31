@@ -66,6 +66,7 @@ MacroscopicProperties::ReadParameters ()
             utils::parser::makeParser(m_str_sigma_function,{"x","y","z"}));
     }
 
+    // Query input for material permittivity, epsilon.
     bool epsilon_specified = false;
     if (utils::parser::queryWithParser(pp_macroscopic, "epsilon", m_epsilon)) {
         m_epsilon_s = "constant";
@@ -82,7 +83,6 @@ MacroscopicProperties::ReadParameters ()
         ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
-
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
         utils::parser::Store_parserString(
@@ -91,7 +91,7 @@ MacroscopicProperties::ReadParameters ()
             utils::parser::makeParser(m_str_epsilon_function,{"x","y","z"}));
     }
 
-    // Query input for material permittivity, epsilon.
+    // Query input for material permeability, mu.
     bool mu_specified = false;
     if (utils::parser::queryWithParser(pp_macroscopic, "mu", m_mu)) {
         m_mu_s = "constant";
@@ -108,13 +108,18 @@ MacroscopicProperties::ReadParameters ()
         ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
-
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
         utils::parser::Store_parserString(
             pp_macroscopic, "mu_function(x,y,z)", m_str_mu_function);
         m_mu_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(m_str_mu_function,{"x","y","z"}));
+    }
+
+    // Query input for ferromagnetic materials
+    m_ferromagnetic_material_present_flag = false;
+    if (pp_macroscopic.query("ferromagnetic_material_id_function(x,y,z)", m_str_ferro_material_id_function)) {
+        m_ferromagnetic_material_present_flag = true;
     }
 
 }
@@ -245,8 +250,3 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     }
 }
 
-// void JAModel::ComputeH(std::array<amrex::Real, 3UL> H,
-//                        std::array<amrex::Real, 3UL> B,
-//                     std::array<amrex::Real, 3UL> E,
-//             amrex::Real dt
-// );

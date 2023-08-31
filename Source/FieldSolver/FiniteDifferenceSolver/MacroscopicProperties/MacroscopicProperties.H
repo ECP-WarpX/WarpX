@@ -37,22 +37,22 @@ public:
     /** Initialize multifabs storing macroscopic multifabs */
     void InitData ();
 
-/** return MultiFab, sigma (conductivity) of the medium. */
-amrex::MultiFab& getsigma_mf  () {return (*m_sigma_mf);}
-/** return MultiFab, epsilon (permittivity) of the medium. */
-amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
-/** return MultiFab, mu (permeability) of the medium. */
-amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
-/** return MultiFab */
-amrex::iMultiFab& getferromagnetic_id_mf  () {return (*m_ferromagnetic_id_mf);}
+    /** return MultiFab, sigma (conductivity) of the medium. */
+    amrex::MultiFab& getsigma_mf  () {return (*m_sigma_mf);}
+    /** return MultiFab, epsilon (permittivity) of the medium. */
+    amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
+    /** return MultiFab, mu (permeability) of the medium. */
+    amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
+    /** return MultiFab */
+    amrex::iMultiFab& getferro_material_id_mf  () {return (*m_ferro_material_id_mf);}
 
-/** Bool flag on whether there are any ferromagnetic materials present. */
-bool is_ferromagnetic_material_present () { return m_ferromagnetic_material_present_flag; }
+    /** Bool flag on whether there are any ferromagnetic materials present. */
+    bool is_ferromagnetic_material_present () { return m_ferromagnetic_material_present_flag; }
 
     /** Initializes the Multifabs storing macroscopic properties
      *  with user-defined functions(x,y,z). */
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
-                                  amrex::ParserExecutor<3> const& macro_parser,
+                                  const amrex::ParserExecutor<3> &macro_parser,
                                   const int lev);
 
     /** Gpu Vector with index type of the conductivity multifab */
@@ -84,10 +84,11 @@ private:
     std::unique_ptr<amrex::MultiFab> m_eps_mf;
     /** Multifab for m_mu */
     std::unique_ptr<amrex::MultiFab> m_mu_mf;
-    /** iMultifab for m_ferromagnetic_id. The integer refers specifies which ferromagnetic material is at
-     *  the indexed location. Note that 0 (or maybe -1 ...) corresponds to non-ferromagnetic and defaults to m_mu. 
-     */
-    std::unique_ptr<amrex::iMultiFab> m_ferromagnetic_id_mf;
+    /** iMultifab for ferromagnetic objects, where the integer refers specifies to the ID 
+     * of which ferromagnetic material is at the indexed location. The properties of each
+     * ferromagnetic material are storing in m_ferro_objects. Note that -1 corresponds to 
+     * non-ferromagnetic and defaults to m_mu_mf. */
+    std::unique_ptr<amrex::iMultiFab> m_ferro_material_id_mf;
 
     /** Stores initialization type for conductivity : constant or parser */
     std::string m_sigma_s = "constant";
@@ -96,17 +97,30 @@ private:
     /** Stores initialization type for permeability : constant or parser */
     std::string m_mu_s = "constant";
 
-    /** string for storing parser function */
+    /** string for storing parser function for conductivity */
     std::string m_str_sigma_function;
+    /** string for storing parser function for permittivity */
     std::string m_str_epsilon_function;
+    /** string for storing parser function for permeability */
     std::string m_str_mu_function;
-    /** Parser Wrappers */
-    std::unique_ptr<amrex::Parser> m_sigma_parser;
-    std::unique_ptr<amrex::Parser> m_epsilon_parser;
-    std::unique_ptr<amrex::Parser> m_mu_parser;
+    /** string for storing parser function for the integer ID of ferromagnetic material.
+     * This index specifies which element to use in m_ferro_materials. If the ID is -1,
+     * this indicates an absence of any ferromagnetic material present at that location. */
+    std::string m_str_ferro_material_id_function;
 
-    /** Vector for storing ferromagnetic objects */
-    std::vector<FerromagneticObject> m_ferro_objects;
+    /** Parser Wrapper for conductivity */
+    std::unique_ptr<amrex::Parser> m_sigma_parser;
+    /** Parser Wrapper for permittivity */
+    std::unique_ptr<amrex::Parser> m_epsilon_parser;
+    /** Parser Wrapper for permeability */
+    std::unique_ptr<amrex::Parser> m_mu_parser;
+    /** Parser Wrapper for the integer ID of ferromagnetic material.
+     * This index specifies which element to use in m_ferro_materials. If the ID is -1,
+     * this indicates an absence of any ferromagnetic material present at that location. */
+    std::unique_ptr<amrex::Parser> m_ferro_material_id_parser;
+
+    /** Vector for storing ferromagnetic materials present */
+    amrex::Vector<FerromagneticMaterial> m_ferro_materials;
 
     /** Bool flag on whether ferromagnetic material is present. */
     bool m_ferromagnetic_material_present_flag = false;
@@ -177,35 +191,33 @@ struct BackwardEulerAlgo {
 
 };
 
-class FerromagneticObject {
+class FerromagneticMaterial {
 
 public:
 
-private:
-    /** String for storing parser function, which specifies where the object is location. */
-    std::string m_str_ferro_location_function;
-    /** Location parser wrappers. Describes where the object is location */
-    std::unique_ptr<amrex::Parser> m_ferro_location_parser;
-    /** Specifies the hysteretic properties of the ferromagnetic object using the Jiles-Atherton model */
-    JAModelParameters m_ja_model_parameters;
-};
-
-struct MagneticMaterials {
-
-     static const JAModelParameters M330_50_A_steel;
+    void ComputeH(
+        amrex::RealVect H,
+        amrex::RealVect B_at_t_plus_dt_over_2,
+        amrex::RealVect B_at_t_minus_dt_over_2);
 
 };
 
-const JAModelParameters MagneticMaterials::M330_50_A_steel(7.45E-5_rt /* alpha (unitless) */,
-                                                           26.1_rt    /* a (A/m) */,
-                                                           1.26E6_rt  /* Ms (A/m) */,
-                                                           52.3_rt    /* k (A/m) */,
-                                                           0.13_rt    /* c (unitless) */);
+// class FerromagneticObject {
+
+// public:
 
 
+// private:
+//     /** String for storing parser function, which specifies where the object is location. */
+//     std::string m_str_ferro_location_function;
+//     /** Location parser wrappers. Describes where the object is location */
+//     std::unique_ptr<amrex::Parser> m_ferro_location_parser;
+//     /** Specifies the hysteretic properties of the ferromagnetic object using the Jiles-Atherton model */
+//     JAModelParameters m_ja_model_parameters;
+// };
 
 /**
- * \brief This class contains the five parameters necessary to describe magnetic
+ * \brief This struct contains the five parameters necessary to describe magnetic
  * hysteresis of a material using the Jiles-Atherton (JA) model.
  */
 struct JAModelParameters {
@@ -246,18 +258,20 @@ public:
         m_Ms = a_Ms;
         m_k = a_k;
         m_c = a_c;
+        m_Ms_over_a = a_Ms / a_a;
+        m_c_times_Ms_over_a = a_c * a_Ms / a_a;
     }
     /**(unitless) Defines the effective field `H_e = H + alpha M`,
      * where `H` is the magnetic field and `M` is the total magnetization.
      * Quantifies interdomain coupling in the magnetic material. */
     amrex::Real alpha () { return m_alpha; }
 
-    /**Describes the scale of the `H` field at which the magnetic 
+    /**(A/m) Describes the scale of the `H` field at which the magnetic 
      * material saturates. Used in the Langevin function as `L(H_e / a)`.
      * Quantifies domain walls density in the magnetic material. */
     amrex::Real a () { return m_a; }
 
-    /** (A/m) Saturation magnetization of the magnetic material. */
+    /**(A/m) Saturation magnetization of the magnetic material. */
     amrex::Real Ms () { return m_Ms; }
 
     /**(A/m) Quantifies average energy required to break a pinning site in the magnetic material.
@@ -267,216 +281,174 @@ public:
      */
     amrex::Real k () { return m_k; }
 
-    /**(unitless) Quantifies magnetization reversiblity: `M_rev = c (M_an - M_irr)`,
+    /** (unitless) Quantifies magnetization reversiblity: `M_rev = c (M_an - M_irr)`,
      * where `M_rev`, `M_an`, and `M_irr` are the reversible, anhysteretic, and irreversible
      * magnetizations, respectively. This equation corresponds to the bulge of the domain walls 
      * for small displacement. The total magnetization is 
      * `M = M_rev + M_irr = c M_an + (1-c) M_irr`.
      */
     amrex::Real c () { return m_c; }
+
+    amrex::Real Ms_over_a () { return m_Ms_over_a; }
+
+    amrex::Real c_times_Ms_over_a () { return m_c_times_Ms_over_a; }
+
     
 private:
-    amrex::Real m_alpha = 0_rt;
-    amrex::Real m_a = 1_rt;
-    amrex::Real m_Ms = 1_rt;
-    amrex::Real m_k = 1_rt;
-    amrex::Real m_c = 0_rt;
+    amrex::Real m_alpha = 0._rt;
+    amrex::Real m_a = 1._rt;
+    amrex::Real m_Ms = 1._rt;
+    amrex::Real m_k = 1._rt;
+    amrex::Real m_c = 0._rt;
+    amrex::Real m_one_minus_alpha = 1._rt;
+    amrex::Real m_Ms_over_a = 1._rt;
+    amrex::Real m_c_times_Ms_over_a = 0._rt;
 };
 
 class JAModel {
-
 public:
-
-    void ComputeH(amrex::RealVect & H,
-                amrex::RealVect const& B,
-                amrex::RealVect const& E,
-                amrex::Real dt,
-                JAModelParameters* ja_model_parameters)
+    /**
+     * \brief Update the magnetization for the Jiles-Atherton model
+     * 
+     * \param[out] M Magnetization vector, will be updated from t-dt/2 to t+dt/2
+     * \param[in] B Magnetic flux density B(t-dt/2)
+     * \param[in] dB dB = B(t+dt/2) - B(t-dt/2)
+     * \param[in] ja_model_parameters Parameters of the Jiles-Atherton model
+     */
+    void
+    UpdateM (amrex::RealVect &M, const amrex::RealVect &B, 
+             const amrex::RealVect &dB, JAModelParameters *ja_model_parameters)
     {
-        amrex::Real alpha = ja_model_parameters->alpha();
-        amrex::Real k =  ja_model_parameters->k();
-        amrex::RealVect M = (B / PhysConst::mu0) - H;
-        amrex::RealVect H_e = H + (alpha * M);
-        amrex::RealVect M_an; // The anhysteretic magnetization
-        std::array<amrex::Real, 6> chi_an; // The anhysteretic contribution to chi
-
-        amrex::Vector<amrex::Real> v1(3);
-        amrex::Vector<amrex::Real> v2(3);
-        amrex::Vector<amrex::Real> v3 = v1 - v2;
-
+        /* 1 - alpha */
+        amrex::Real oneMinusAlpha = 1._rt - ja_model_parameters->alpha();
+        /* The anhysteretic magnetization */
+        amrex::RealVect M_an;
+        /* Jacobian matrix chi_an = dM_an/dH_e. The anhysteretic part to chi */
+        amrex::Array<amrex::Real, 6> chi_an;
+        /* The effective field H_e = H + alpha M = mu0^{-1} B - (1-alpha) M */
+        amrex::RealVect H_e = (1._rt / PhysConst::mu0) * B - oneMinusAlpha * M;
+        /* Compute M_an and chi_an */ 
         ComputeAnhystereticContribution(M_an, chi_an, H_e, ja_model_parameters);
-
-        amrex::RealVect M_diff = M_an - M;
-        amrex::Real M_diff_mag = M_diff.vectorLength();
-        amrex::Real denominator = k * M_diff_mag;
-
-        std::array<amrex::Real, 6> chi; // The total contribution
-
-        // Now account for the irreversible contribution
-        // The order of elements is xx, xy, yy, xz, yz, zz)
-        chi[0] = chi_an[0] + M_diff[0] * M_diff[0] / denominator;
+        /* The change in the effective field */
+        amrex::RealVect dH_e;
+        amrex::RealVect dB_over_mu0 = (1._rt / PhysConst::mu0) * dB; // mu0^{-1} dB
+        amrex::RealVect M_diff = M_an - M; // M_an - M
+        amrex::Real M_diff_mag = M_diff.vectorLength(); // |M_an - M|
+        amrex::Real denominator = ja_model_parameters->k() * M_diff_mag; // k |M_an - M|
+        if (denominator != 0) {
+            // Jacobian matrix chi = dM/dH_e = chi_an + chi_irr
+            amrex::Array<amrex::Real, 6> chi(chi_an);
+            // Add the irreversible contribution chi_irr.
+            chi[0] += M_diff[0] * M_diff[0] / denominator; // xx
 #if AMREX_SPACEDIM > 1
-        chi[1] = chi_an[1] + M_diff[1] * M_diff[0] / denominator;
-        chi[2] = chi_an[2] + M_diff[1] * M_diff[1] / denominator;
+            chi[1] += M_diff[1] * M_diff[0] / denominator; // xy
+            chi[2] += M_diff[1] * M_diff[1] / denominator; // yy
 #endif
 #if AMREX_SPACEDIM > 2
-        chi[3] = chi_an[3] + M_diff[2] * M_diff[0] / denominator;
-        chi[4] = chi_an[4] + M_diff[2] * M_diff[1] / denominator;
-        chi[5] = chi_an[5] + M_diff[2] * M_diff[2] / denominator;
+            chi[3] += M_diff[2] * M_diff[0] / denominator; // xz
+            chi[4] += M_diff[2] * M_diff[1] / denominator; // yz
+            chi[5] += M_diff[2] * M_diff[2] / denominator; // zz
 #endif
-
-        Matrix chi_matrix(AMREX_SPACEDIM, amrex::Vector<amrex::Real>(AMREX_SPACEDIM, 0));
-        Matrix chi_an_matrix(AMREX_SPACEDIM, amrex::Vector<amrex::Real>(AMREX_SPACEDIM, 0));
-        for (int j = 0; j < AMREX_SPACEDIM; ++j){
-            chi_matrix[j][j] = chi[i * (3 + i) / 2];
-            chi_an_matrix[j][j] = chi_an[i * (3 + i) / 2];
-            for (int i = 0; i < j; ++i){
-                chi_matrix[i][j] = chi[i + j * (j + 1) / 2];
-                chi_matrix[j][i] = chi[i + j * (j + 1) / 2];
-                chi_an_matrix[i][j] = chi_an[i + j * (j + 1) / 2];
-                chi_an_matrix[j][i] = chi_an[i + j * (j + 1) / 2];
+            /* Compute dH_e using the total contribution */
+            dH_e = Compute_dHe(chi, dB_over_mu0, oneMinusAlpha);
+            /* Check the sign of (M_an - M) dot dH_e */
+            if (M_diff.dotProduct(dH_e) < 0) {
+                /* Use only anhysteretic part of chi if (M_an - M) dot dH_e < 0 */
+                dH_e = Compute_dHe(chi_an, dB_over_mu0, oneMinusAlpha);
             }
         }
-
-        Matrix dHdB = Compute_dHdB(chi_matrix, alpha);
-
-        
-
-
-        /* Compute dH = (dH/dB)dB = (dH/dB)(-curl E)dt/2 */
-
-        /* Compute dH_e = (1 - alpha)dH + alpha/mu0 dB 
-                        = ((1 - alpha)(dH/dB) + alpha/mu0 identity) dB
-                        = ((1 - alpha)(dH/dB) + alpha/mu0 identity) (-curl E) dt/2
-                        */
-
-        /** Determine sign of (M_an - M) \cdot dH_e.
-         *  If negative, recalculate H by replacing chi with chi_an */
-
+        else {
+            dH_e = Compute_dHe(chi_an, dB_over_mu0, oneMinusAlpha);
+        }
+        /* Update the magnetization */
+        M = M + (1._rt / oneMinusAlpha) * (dB_over_mu0 - dH_e);
     };
-
 
 private:
 
-    typedef amrex::Vector<amrex::Vector<amrex::Real>> Matrix;
-
-    // typedef std::array<amrex::Real, AMREX_SPACEDIM * AMREX_SPACEDIM> Matrix;
-
     /**
-     * \brief Compute the derivative matrix dH/dB. 
-     * 
-     * \param chi Matrix elements of dM/dH_e. Always symmetric.
-     * \param alpha Parameter from Jiles-Atherton model.
-     * \return Matrix with elements dH_j/dB_i, where i (j) is the row (column) index.
-     */
-    Matrix Compute_dHdB(Matrix chi, amrex::Real alpha){
-
-        /* Compute I - alpha chi */
-        int n = chi.size();
-        Matrix I_alphachi(n, amrex::Vector<amrex::Real>(n, 0));
-        for (int i = 0; i < n; ++i){
-            for (int j = 0; j < n; ++j){
-                I_alphachi[i][j] = ((i == j) ? 1._rt : 0._rt) - alpha * chi[i][j];
-            }
-        }
-
-        /* Compute (I - alpha chi)^(-1) */
-        Matrix I_alphachi_inv = MatrixInverse(I_alphachi);
-
-        /* Compute dM_j/dH_i = ([I - alpha chi]^(-1) chi)_{ij} */
-        Matrix dMdH = MatrixProduct(I_alphachi_inv, chi);
-
-        Matrix dBdH;
-        /* Compute dB_j/dH_i = m0 (I + dM/dH) */
-        for (int i = 0; i < n; ++i){
-            for (int j = 0; j < n; ++j){
-                dBdH[i][j] = PhysConst::mu0 * ( (i == j ? 1._rt : 0._rt) + dMdH[i][j]);
-            }
-        }
-
-        /* Compute dH/dB = [identity + [identity - alpha chi]^(-1) chi ]^(-1)  */
-        return MatrixInverse(dBdH);
-    }
-
-
-    /**
-     * \brief 
+     * \brief Compute the anhysteretic quantities for the JA model.
      * 
      * \param[out] M_an The anhysteretic magnetization
-     * \param[out] chi_an The matrix of derivatives of M_an w.r.t. H_e. Turns out to be symmetric in this case, so only 6 components are necessary. The elements are ordered xx, xy, yy, xz, yz, zz.
+     * \param[out] chi_an The Jacobian matrix dM_an/dH_e.
+     *                    Symmetric, with elements ordered as xx, xy, yy, xz, yz, zz.
      * \param[in] H_e The effective magnetic field
      * \param[in] ja_model_parameters Parameters from the Jiles-Atherton model
      */
-    void ComputeAnhystereticContribution(amrex::RealVect & M_an,
-                                        std::array<amrex::Real, 6>& chi_an,
-                                        amrex::RealVect const& H_e,
-                                        JAModelParameters* ja_model_parameters){
+    void 
+    ComputeAnhystereticContribution (amrex::RealVect &M_an,
+                                     amrex::Array<amrex::Real, 6> &chi_an,
+                                     const amrex::RealVect &H_e,
+                                     JAModelParameters* ja_model_parameters) {
         amrex::Real a = ja_model_parameters->a();
-        amrex::Real Ms = ja_model_parameters->Ms();
-        amrex::Real c = ja_model_parameters->c();
-
-        amrex::Real c_Ms_over_a = c * Ms / a;
-        amrex::Real H_e_mag = H_e.vectorLength();
-        if (H_e_mag <= 0._rt){
-            return;
-        }
-        amrex::Real x = H_e_mag / a;
-        amrex::Real L_over_x = Langevin::L_over_x(x);
-        amrex::Real dLdx = Langevin::dLdx(x);
-        
-        
-        M_an = ((Ms / a) * L_over_x) * H_e;
-
-        amrex::Real delta = dLdx - L_over_x;
-        amrex::RealVect H_e_hat = H_e / H_e_mag; // Division errors could be an issue here
-
-        // for (int k = 0; k < AMREX_SPACEDIM; ++k){
-        //     int kchoose2 = k * (k + 1) / 2;
-        //     for (int i = 0; i <= k; ++i){
-        //         chi_an[i + kchoose2] = c_Ms_over_a * (delta * H_e_hat[i] * H_e_hat[k] + L_over_x);
-        //     }
-        // }
-
+        /* c Ms / a */
+        amrex::Real c_Ms_over_a = ja_model_parameters->c_times_Ms_over_a();
+        amrex::Real H_e_mag = H_e.vectorLength(); // |H_e|
+        if (H_e_mag <= 0._rt) { return; }
+        amrex::Real x = H_e_mag / a; // x = |H_e| / a
+        amrex::Real L_over_x = Langevin::L_over_x(x); // L(x)/x
+        amrex::Real dLdx = Langevin::dLdx(x); // L'(x)
+        M_an = ((ja_model_parameters->Ms_over_a()) * L_over_x) * H_e;
+        amrex::Real delta = dLdx - L_over_x;  // delta = L'(x) - L(x)/x
+        amrex::RealVect H_e_hat = H_e / H_e_mag; // Unit vector in direction of H_e
         // chi_an is a symmetric matrix, so only 6 components need to be specified.
         // The order of elements is xx, xy, yy, xz, yz, zz)
-        chi_an[0] = c_Ms_over_a * (delta * H_e_hat[0] * H_e_hat[0] + L_over_x);
+        chi_an[0] = c_Ms_over_a * (L_over_x + delta * H_e_hat[0] * H_e_hat[0]);
 #if AMREX_SPACEDIM > 1
-        chi_an[1] = c_Ms_over_a * (delta * H_e_hat[1] * H_e_hat[0]           );
-        chi_an[2] = c_Ms_over_a * (delta * H_e_hat[1] * H_e_hat[1] + L_over_x);
+        chi_an[1] = c_Ms_over_a * (           delta * H_e_hat[1] * H_e_hat[0]);
+        chi_an[2] = c_Ms_over_a * (L_over_x + delta * H_e_hat[1] * H_e_hat[1]);
 #endif
 #if AMREX_SPACEDIM > 2
-        chi_an[3] = c_Ms_over_a * (delta * H_e_hat[2] * H_e_hat[0]           );
-        chi_an[4] = c_Ms_over_a * (delta * H_e_hat[2] * H_e_hat[1]           );
-        chi_an[5] = c_Ms_over_a * (delta * H_e_hat[2] * H_e_hat[2] + L_over_x);
+        chi_an[3] = c_Ms_over_a * (           delta * H_e_hat[2] * H_e_hat[0]);
+        chi_an[4] = c_Ms_over_a * (           delta * H_e_hat[2] * H_e_hat[1]);
+        chi_an[5] = c_Ms_over_a * (L_over_x + delta * H_e_hat[2] * H_e_hat[2]);
 #endif        
     }
 
+    /**
+     * \brief Computes change in effective field as dH_e = (dB/dH_e)^{-1} dB.
+     * Since B/mu0 = H_e + (1-alpha) M, we have d(B/mu0)/dH_e = I + (1-alpha) chi,
+     * where chi = dM/dH_e.
+     * 
+     * \param chi Components of symmetric matrix chi = dM/dH_e
+     * \param dB_over_mu0 mu0^{-1} dB
+     * \param oneMinusAlpha 1 - alpha
+     * \return amrex::RealVect dH_e = (dB/dH_e)^{-1} dB
+     */
+    amrex::RealVect
+    Compute_dHe (amrex::Array<amrex::Real, 6> chi, RealVect dB_over_mu0, amrex::Real oneMinusAlpha) {
+        /* Jacobian matrix mu0^{-1} dB/dHe = I + (1 - alpha) chi */
+        Matrix dB_over_mu0_dHe(AMREX_SPACEDIM, amrex::Vector<amrex::Real>(AMREX_SPACEDIM, 0));
+        for (int j = 0; j < AMREX_SPACEDIM; ++j){
+            int jp1choose2 = j * (j + 1) / 2;
+            dB_over_mu0_dHe[j][j] = 1 + oneMinusAlpha * chi[j + jp1choose2];
+            for (int i = 0; i < j; ++i){
+                dB_over_mu0_dHe[i][j] = oneMinusAlpha * chi[i + jp1choose2];
+                dB_over_mu0_dHe[j][i] = dB_over_mu0_dHe[i][j];
+            }
+        }
+        /* Jacobian matrix mu0 dHe/dB */
+        Matrix dHe_dB_over_mu0 = MatrixInverse(dB_over_mu0_dHe, AMREX_SPACEDIM);
+        /* Could be more efficient by writing a function that solves x = A^{-1} b directly */
+        return MatrixVectorProduct(dHe_dB_over_mu0, dB_over_mu0, AMREX_SPACEDIM);
+    }
 
-    // void SymmetricMatrixInverse(std::array<amrex::Real, 6>& invS, std::array<amrex::Real, 6> const& S){
-    //     amrex::Real det = S[]
-    // }
+    typedef amrex::Vector<amrex::Vector<amrex::Real>> Matrix;
 
-    // template <int n>
-    // void MatrixInverse(std::array<amrex::Real>& invM, std::array<amrex::Real, 6> const& S){
-    //     amrex::Real det = S[]
-    // }
-
-    
-
-    Matrix MatrixInverse(Matrix A) {
-        int n = A.size();
-        Matrix B(n, amrex::Vector<amrex::Real>(n * 2, 0));
+    Matrix MatrixInverse (Matrix A, int order) {
+        // int order = A.size();
+        Matrix B(order, amrex::Vector<amrex::Real>(order * 2, 0));
 
         // copy A into B and create identity matrix
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
+        for (int i = 0; i < order; i++) {
+            for (int j = 0; j < order; j++) {
                 B[i][j] = A[i][j];
             }
-            B[i][i + n] = 1;
+            B[i][i + order] = 1;
         }
 
         // perform row operations
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < order; i++) {
             // pivot element
             double pivot = B[i][i];
             if (pivot == 0) {
@@ -485,15 +457,15 @@ private:
             }
 
             // divide row i by pivot
-            for (int j = 0; j < n * 2; j++) {
+            for (int j = 0; j < order * 2; j++) {
                 B[i][j] /= pivot;
             }
 
             // eliminate other rows
-            for (int j = 0; j < n; j++) {
+            for (int j = 0; j < order; j++) {
                 if (i != j) {
                     double factor = B[j][i];
-                    for (int k = 0; k < n * 2; k++) {
+                    for (int k = 0; k < order * 2; k++) {
                         B[j][k] -= factor * B[i][k];
                     }
                 }
@@ -501,16 +473,16 @@ private:
         }
 
         // extract inverse matrix
-        Matrix inverse(n, amrex::Vector<amrex::Real>(n));
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                inverse[i][j] = B[i][j + n];
+        Matrix inverse(order, amrex::Vector<amrex::Real>(order));
+        for (int i = 0; i < order; i++) {
+            for (int j = 0; j < order; j++) {
+                inverse[i][j] = B[i][j + order];
             }
         }
         return inverse;
     }
 
-    Matrix MatrixProduct(Matrix A, Matrix B){
+    Matrix MatrixProduct (Matrix A, Matrix B){
         int n = A.size();
         Matrix product(n, amrex::Vector<amrex::Real>(n, 0));
         for (int i = 0; i < n; ++i){
@@ -523,7 +495,7 @@ private:
         return product;
     }
 
-    amrex::RealVect MatrixVectorProduct(Matrix A, amrex::RealVect v, int order){
+    amrex::RealVect MatrixVectorProduct (Matrix A, amrex::RealVect v, int order){
         amrex::RealVect result;
         for (int i = 0; i < order; ++i){
             for (int k = 0; k < order; ++k){
@@ -532,32 +504,32 @@ private:
         }
         return result;
     }
-
-
+    
 };
 
 struct Langevin {
 
 private:
-
-     static amrex::Real const l1 = 1._rt/3._rt; // L(x) = x/3 + O(x^3)
-     static amrex::Real const l3 = -0.02222226972489055_rt; // Slightly different from -1/45 so that L(x) is continuous
-     static amrex::Real const dldx2 = -0.06666510671493597_rt; // Slightly different from -1/15 so that dLdx is continuous
+    // L(x) = (1/3)x + O(x^3)
+    static constexpr amrex::Real l1 = 1._rt/3._rt;
+    // Slightly different from -1/45 so that L(x) is continuous
+    static constexpr amrex::Real l3 = -0.02222201058412696_rt;
+    // Slightly different from -1/15 so that dLdx is continuous
+    static constexpr amrex::Real dldx2 = -0.06666559177859188_rt;
 
 public:
-
     /**
      * \brief The Langevin function L(x).
      * 
      * \param x Input (unitless)
      * \return L(x) = coth(x) - 1/x
      */
-     static amrex::Real L(amrex::Real x){
-          if (x < 0.01_rt){
-               return l1 * x + l3 * pow(x, 3); // Use Taylor expansion for small x
-          }
-          amrex::Real y =  exp(-2._rt * x);
-          return (1._rt + y) / (1._rt - y) - 1._rt / x;
+    static amrex::Real
+    L (amrex::Real x) {
+        if (x < 0.01_rt) { // Use Taylor expansion for small x
+            return l1 * x + l3 * std::pow(x, 3); 
+        }
+        return 1._rt / std::tanh(x) - 1._rt / x;
      };
 
     /**
@@ -566,29 +538,41 @@ public:
      * \param x Input (unitless)
      * \return L(x)/x = coth(x)/x - 1/x^2
      */
-     static amrex::Real L_over_x(amrex::Real x){
-          if (x < 0.01_rt){
-               return l1 + l3 * pow(x, 2); // Use Taylor expansion for small x
+     static amrex::Real
+     L_over_x (amrex::Real x) {
+          if (x < 0.01_rt) { // Use Taylor expansion for small x
+               return l1 + l3 * x * x; 
           }
-          amrex::Real y =  exp(-2._rt * x);
-          return (1._rt + y) / (1._rt - y) / x - 1._rt / pow(x, 2);
+          amrex::Real xinv = 1._rt / x;
+          return xinv * (1._rt / std::tanh(x) - xinv );
      };
 
     /**
      * \brief The derivative of the Langevin function.
      * 
      * \param x Input (unitless)
-     * \return L'(x) = - 4 e^(-2x)/(1-e^(-2x)) + 1/x^2
+     * \return L'(x) = - 1/sinh^2(x) + 1/x^2
      */
-     static amrex::Real dLdx(amrex::Real x){
-          if (x < 0.01_rt){
-               return l1 + dldx2 * pow(x, 2); // Use Taylor expansion for small x
+     static amrex::Real 
+     dLdx (amrex::Real x) {
+        if (x < 0.01_rt) { // Use Taylor expansion for small x
+               return l1 + dldx2 * x * x; 
           }
-          amrex::Real y =  exp(-2._rt * x);
-          return -4._rt * y / pow(1._rt - y, 2) + 1._rt / pow(x, 2);
+          amrex::Real y = std::sinh(x);
+          return -1._rt / (y * y) + 1._rt / (x * x);
      };
 };
 
+struct MagneticMaterials {
 
+     static const JAModelParameters M330_50_A_steel;
+
+};
+
+const JAModelParameters MagneticMaterials::M330_50_A_steel(7.45E-5_rt /* alpha (unitless) */,
+                                                           26.1_rt    /* a (A/m) */,
+                                                           1.26E6_rt  /* Ms (A/m) */,
+                                                           52.3_rt    /* k (A/m) */,
+                                                           0.13_rt    /* c (unitless) */);
 
 #endif // WARPX_MACROSCOPIC_PROPERTIES_H_

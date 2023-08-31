@@ -161,15 +161,16 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
 
         if (macroscopic_properties->is_ferromagnetic_material_present() == false){
+           
+            
+        }
+        else{
             // This functor computes Hx = Bx/mu
             // Note that mu is cell-centered here and will be interpolated/averaged
             // to the location where the B-field and H-field are defined
             FieldAccessorMacroscopic const Hx(Bx, mu_arr);
             FieldAccessorMacroscopic const Hy(By, mu_arr);
             FieldAccessorMacroscopic const Hz(Bz, mu_arr);
-        }
-        else{
-
         }
 
 

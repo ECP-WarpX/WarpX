@@ -269,6 +269,10 @@ class FiniteDifferenceSolver
                       amrex::Real const dt );
 #endif
 
+    public:
+
+        std::array< amrex::MultiFab*, 3 > Hfield;
+
 };
 
 #endif // WARPX_FINITE_DIFFERENCE_SOLVER_H_

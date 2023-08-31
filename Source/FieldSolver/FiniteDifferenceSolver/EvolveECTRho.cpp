@@ -44,7 +44,7 @@
 using namespace amrex;
 
 /**
- * \brief Update the B field, over one timestep
+ * \brief Update the E field, over one timestep
  */
 void FiniteDifferenceSolver::EvolveECTRho (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
