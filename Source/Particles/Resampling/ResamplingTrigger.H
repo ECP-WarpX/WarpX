@@ -42,7 +42,7 @@ public:
      * @param[in] timestep the current timestep
      * @param[in] global_numparts the total number of particles of the considered species
      */
-    bool triggered (const int timestep, const amrex::Real global_numparts) const;
+    bool triggered (int timestep, amrex::Real global_numparts) const;
 
     /**
      * \brief A method that initializes the member m_global_numcells. It is only called once (the

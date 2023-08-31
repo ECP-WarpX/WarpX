@@ -593,7 +593,9 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
           using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
           tmp.copyParticles(*pc,
-                            [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+                            [random_filter,uniform_filter,parser_filter,geometry_filter]
+                            AMREX_GPU_HOST_DEVICE
+                            (const SrcData& src, int ip, const amrex::RandomEngine& engine)
           {
               const SuperParticleType& p = src.getSuperParticle(ip);
               return random_filter(p, engine) * uniform_filter(p, engine)
@@ -1362,7 +1364,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
     }
 
     // If there are no fields to be written, interrupt the function here
-    if ( varnames.size()==0 ) return;
+    if ( varnames.empty() ) return;
 
     // loop over levels up to output_levels
     //   note: this is usually the finestLevel, not the maxLevel

@@ -42,7 +42,7 @@ public:
      *
      * @param[in] step current time step
      */
-    virtual void ComputeDiags (const int step) override final;
+    virtual void ComputeDiags (int step) override final;
 
 private:
     /// Optional parser to add weight inside the integral

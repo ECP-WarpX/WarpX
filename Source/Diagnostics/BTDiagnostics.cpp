@@ -112,11 +112,11 @@ void BTDiagnostics::DerivedInitData ()
     const amrex::ParmParse pp_diag_name(m_diag_name);
     int write_species = 1;
     pp_diag_name.query("write_species", write_species);
-    if ((m_output_species_names.size() == 0) && (write_species == 1))
+    if ((m_output_species_names.empty()) && (write_species == 1))
         m_output_species_names = mpc.GetSpeciesNames();
 
     m_do_back_transformed_particles =
-        ((m_output_species_names.size() > 0) && (write_species == 1));
+        ((!m_output_species_names.empty()) && (write_species == 1));
 
     // Turn on do_back_transformed_particles in the particle containers so that
     // the tmp_particle_data is allocated and the data of the corresponding species is
@@ -282,7 +282,7 @@ BTDiagnostics::ReadParameters ()
 
     const bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!particle_fields_to_plot_specified, "particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
-    if (m_varnames.size() == 0) {
+    if (m_varnames.empty()) {
         m_do_back_transformed_fields = false;
     }
 
@@ -1012,7 +1012,7 @@ BTDiagnostics::Flush (int i_buffer)
     amrex::Vector<amrex::DistributionMapping> vdmap;
     amrex::Vector<amrex::Geometry> vgeom;
     amrex::Vector<amrex::IntVect> vrefratio;
-    if (m_particles_buffer.at(i_buffer).size() > 0) {
+    if (!m_particles_buffer.at(i_buffer).empty()) {
         const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
         for (int lev = 0 ; lev < nlevels; ++lev) {
             // Store BoxArray, dmap, geometry, and refratio for every level
@@ -1044,7 +1044,7 @@ BTDiagnostics::Flush (int i_buffer)
 
     // Reset buffer box and particle box array
     if (m_format == "openpmd") {
-        if (m_particles_buffer.at(i_buffer).size() > 0 ) {
+        if (!m_particles_buffer.at(i_buffer).empty()) {
             m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
             m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
             m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
@@ -1066,7 +1066,7 @@ BTDiagnostics::Flush (int i_buffer)
 
     // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
-        if (m_particles_buffer.at(i_buffer).size() > 0 ) {
+        if (!m_particles_buffer.at(i_buffer).empty()) {
             m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
             m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
             m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
@@ -1095,7 +1095,7 @@ BTDiagnostics::Flush (int i_buffer)
     IncrementBufferFlushCounter(i_buffer);
     NullifyFirstFlush(i_buffer);
     // if particles are selected for output then update and reset counters
-    if (m_output_species_names.size() > 0) {
+    if (!m_output_species_names.empty()) {
         UpdateTotalParticlesFlushed(i_buffer);
         ResetTotalParticlesInBuffer(i_buffer);
         ClearParticleBuffer(i_buffer);
@@ -1452,7 +1452,7 @@ BTDiagnostics::PrepareParticleDataForOutput()
                 const bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 if (ZSliceInDomain) {
                     if ( m_totalParticles_in_buffer[i_buffer][i] == 0) {
-                        if (!m_do_back_transformed_fields || m_varnames_fields.size()==0) {
+                        if (!m_do_back_transformed_fields || m_varnames_fields.empty()) {
                             if ( m_buffer_flush_counter[i_buffer] == 0) {
                                 DefineSnapshotGeometry(i_buffer, lev);
                             }

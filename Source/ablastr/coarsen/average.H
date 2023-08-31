@@ -159,9 +159,9 @@ namespace ablastr::coarsen::average
     Loop (
         amrex::MultiFab & mf_dst,
         amrex::MultiFab const & mf_src,
-        int const ncomp,
-        amrex::IntVect const ngrow,
-        amrex::IntVect const crse_ratio
+        int ncomp,
+        amrex::IntVect ngrow,
+        amrex::IntVect crse_ratio
     );
 
     /**
@@ -178,7 +178,7 @@ namespace ablastr::coarsen::average
     Coarsen (
         amrex::MultiFab & mf_dst,
         amrex::MultiFab const & mf_src,
-        amrex::IntVect const crse_ratio
+        amrex::IntVect crse_ratio
     );
 
 } // namespace ablastr::coarsen::average

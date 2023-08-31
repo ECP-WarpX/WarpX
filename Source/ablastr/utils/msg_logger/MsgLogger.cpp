@@ -38,8 +38,8 @@ namespace
     std::vector<char>
     get_serialized_gather_rank_msgs(
         const std::vector<Msg>& my_msgs,
-        const int gather_rank,
-        const int my_rank);
+        int gather_rank,
+        int my_rank);
 
     /**
     * \brief This function generates data to send back to the "gather rank"
@@ -53,9 +53,9 @@ namespace
     std::vector<char>
     compute_package_for_gather_rank(
         const std::vector<char>& serialized_gather_rank_msgs,
-        const std::int64_t gather_rank_how_many_msgs,
+        std::int64_t gather_rank_how_many_msgs,
         const std::map<Msg, std::int64_t>& my_msg_map,
-        const bool is_gather_rank
+        bool is_gather_rank
     );
 
     /**
@@ -74,7 +74,7 @@ namespace
     std::pair<std::vector<char>, std::vector<int>>
     gather_all_data(
         const std::vector<char>& package_for_gather_rank,
-        const int gather_rank, const int my_rank);
+        int gather_rank, int my_rank);
 
     /**
     * \brief This function converts a vector of Msg struct into a byte array

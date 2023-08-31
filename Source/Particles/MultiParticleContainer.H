@@ -132,7 +132,7 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
+    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(int lev);
 
     /**
      * \brief Deposit charge density.
@@ -145,7 +145,7 @@ public:
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   const amrex::Real relative_time);
+                   amrex::Real relative_time);
 
     /**
      * \brief Deposit current density.
@@ -160,7 +160,7 @@ public:
      */
     void
     DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                    const amrex::Real dt, const amrex::Real relative_time);
+                    amrex::Real dt, amrex::Real relative_time);
 
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
@@ -179,7 +179,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void doResampling (const int timestep);
+    void doResampling (int timestep);
 
 #ifdef WARPX_QED
     /** If Schwinger process is activated, this function is called at every
@@ -212,7 +212,7 @@ public:
 
     void defineAllParticleTiles ();
 
-    void RedistributeLocal (const int num_ghost);
+    void RedistributeLocal (int num_ghost);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless
      *  of the whole simulation BC. */
@@ -225,7 +225,7 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(const int lev) const;
+    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(int lev) const;
 
     amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
 
@@ -242,13 +242,13 @@ public:
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (bool do_back_transformed_particles);
     /** Whether back-transformed diagnostics is set for species with species_name.
      *
      * \param[in] species_name The species for which back-transformed particles is set.
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (const std::string& species_name, const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (const std::string& species_name, bool do_back_transformed_particles);
 
     int nSpeciesDepositOnMainGrid () const {
         bool const onMainGrid = true;
@@ -271,7 +271,7 @@ public:
      * \brief  Update antenna position for continuous injection of lasers
      *         in a boosted frame. Empty function for containers other than lasers.
      */
-    void UpdateAntennaPosition(const amrex::Real dt) const;
+    void UpdateAntennaPosition(amrex::Real dt) const;
 
     int doContinuousInjection() const;
 

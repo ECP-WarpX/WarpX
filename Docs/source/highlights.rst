@@ -14,6 +14,11 @@ Plasma-Based Acceleration
 
 Scientific works in laser-plasma and beam-plasma acceleration.
 
+#. Mewes SM, Boyle GJ, Ferran Pousa A, Shalloo RJ, Osterhoff J, Arran C, Corner L, Walczak R, Hooker SM, Thévenet M.
+   **Demonstration of tunability of HOFI waveguides via start-to-end simulations**.
+   Phys. Rev. Research **5**, 033112, 2023
+   `DOI:10.1103/PhysRevResearch.5.033112 <https://doi.org/10.1103/PhysRevResearch.5.033112>`__
+
 #. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L, Huebl A.
    **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
    14th International Particle Accelerator Conference (IPAC'23), WEPA101, *in print*, 2023.

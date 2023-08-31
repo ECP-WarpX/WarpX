@@ -44,7 +44,7 @@ public:
 
     void redistribute ();
     void clearParticles ();
-    void clearParticles (int const i);
+    void clearParticles (int i);
 
     void printNumParticles () const;
 
