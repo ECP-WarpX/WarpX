@@ -1088,8 +1088,8 @@ WarpX::ReadParameters ()
         // Ensure code aborts if PEC is specified at r=0 for RZ
         if (Geom(0).ProbLo(0) == 0){
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                WarpX::field_boundary_lo[0] == FieldBoundaryType::None,
-                "Error : Field boundary at r=0 must be ``none``. \n");
+                WarpX::field_boundary_lo[0] == FieldBoundaryType::r_origin,
+                "The field boundary condition at r=0 must be 'r_origin'");
         }
 
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {

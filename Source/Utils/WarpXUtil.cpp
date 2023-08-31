@@ -413,6 +413,17 @@ void ReadBCParams ()
     const ParmParse pp_boundary("boundary");
     pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
     pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
+
+#if defined(WARPX_DIM_RZ)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(field_BC_lo[0] == "r_origin",
+        "The boundary condition 'r_origin' must be used in RZ geometry for the boundary at r=0");
+#else // not RZ
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::count(field_BC_lo.begin(), field_BC_lo.end(), "r_origin") == 0,
+        "The boundary condition 'r_origin' can be used only in RZ geometry for the boundary at r=0");
+#endif
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::count(field_BC_hi.begin(), field_BC_hi.end(), "r_origin") == 0,
+        "The boundary condition 'r_origin' can be used only in RZ geometry for the boundary at r=0");
+
     if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM))
         particle_boundary_specified = true;
     if (pp_boundary.queryarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM))
