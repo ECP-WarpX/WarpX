@@ -302,7 +302,7 @@ void ColliderRelevant::ComputeDiags (int step)
                     return {tmp1, tmp2};
                 },
                 reduce_ops_std);
-                
+
             x_std = amrex::get<0>(r_std);
             thetax_std = amrex::get<1>(r_std);
 
@@ -320,7 +320,7 @@ void ColliderRelevant::ComputeDiags (int step)
         m_data[get_idx("thetax_std_"+species_names[i_s])] = thetax_std;
 #elif defined(WARPX_DIM_3D)
         // w_tot
-        // x_ave, y_ave, 
+        // x_ave, y_ave,
         // thetax_min, thetax_ave, thetax_max
         // thetay_min, thetay_ave, thetay_max
         amrex::ReduceOps<ReduceOpSum,
@@ -410,7 +410,7 @@ void ColliderRelevant::ComputeDiags (int step)
                     return {tmp1, tmp2, tmp3, tmp4};
                 },
                 reduce_ops_std);
-                
+
             x_std = amrex::get<0>(r_std);
             y_std = amrex::get<1>(r_std);
             thetax_std = amrex::get<2>(r_std);
