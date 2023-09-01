@@ -235,7 +235,7 @@ void ColliderRelevant::ComputeDiags (int step)
             {
                 return p.rdata(PIdx::w);
             });
-        amrex::ParallelDescriptor::ReduceRealSum(wtot, IOProc);
+        amrex::ParallelDescriptor::ReduceRealSum(w_tot, IOProc);
 #elif defined(WARPX_DIM_XZ)
         // w_tot
         // x_ave,
