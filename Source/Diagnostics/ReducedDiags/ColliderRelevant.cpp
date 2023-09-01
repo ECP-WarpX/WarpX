@@ -191,6 +191,9 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
 
 void ColliderRelevant::ComputeDiags (int step)
 {
+#if defined(WARPX_DIM_RZ)
+    amrex::ignore_unused(step);
+#else
     const int IOProc = amrex::ParallelDescriptor::IOProcessorNumber();
 
     // Judge if the diags should be done
@@ -560,4 +563,5 @@ void ColliderRelevant::ComputeDiags (int step)
     amrex::Real const n1_dot_n2 = amrex::MultiFab::Dot(mf_dst1, 0, mf_dst2, 0, 1, 0);
     amrex::Real const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
     m_data[get_idx("dL_dt")] = lumi;
+#endif // not RZ
 }
