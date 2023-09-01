@@ -2075,6 +2075,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
         self.set_write_dir()
 
+
 ElectrostaticFieldDiagnostic = FieldDiagnostic
 
 
