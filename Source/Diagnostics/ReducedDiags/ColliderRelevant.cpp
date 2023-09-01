@@ -103,12 +103,13 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         // get WarpXParticleContainer class object
         const WarpXParticleContainer& myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
 
-        const bool is_photon = myspc.AmIA<PhysicalSpecies::photon>();
+        // get charge
+        amrex::ParticleReal const q = myspc.getCharge();
 
         // photon number density is not available yet
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !is_photon,
-            "Collider-relevant diagnostic does not work for colliding photons yet");
+            q!=amrex::Real(0.0),
+            "Collider-relevant diagnostic does not work for neutral species yet");
     }
 
     // function to fill a vector with diags names and create corresponding entry in header
@@ -190,9 +191,8 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
 
 void ColliderRelevant::ComputeDiags (int step)
 {
-#if defined(WARPX_DIM_RZ)
-    amrex::ignore_unused(step);
-#else
+    const int IOProc = amrex::ParallelDescriptor::IOProcessorNumber();
+    
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -205,15 +205,9 @@ void ColliderRelevant::ComputeDiags (int step)
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
-    // get cell size
+    // get cell volume 
     amrex::Geometry const & geom = warpx.Geom(0);
-#if defined(WARPX_DIM_1D_Z)
-        amrex::Real dV = geom.CellSize(0);
-#elif defined(WARPX_DIM_XZ)
-        amrex::Real dV = geom.CellSize(0) * geom.CellSize(1);
-#elif defined(WARPX_DIM_3D)
-        amrex::Real dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-#endif
+    amrex::Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
 
     const auto get_idx = [&](const std::string& name){
         return m_headers_indices.at(name).idx;
@@ -234,7 +228,15 @@ void ColliderRelevant::ComputeDiags (int step)
         num_dens[i_s] = myspc.GetChargeDensity(0);
         num_dens[i_s]->mult(1./q);
 
-#if defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_1D_Z)
+        // w_tot
+        amrex::Real w_tot = ReduceSum( myspc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p)
+            {
+                return p.rdata(PIdx::w);
+            });
+        amrex::ParallelDescriptor::ReduceRealSum(wtot, IOProc);
+#elif defined(WARPX_DIM_XZ)
         // w_tot
         // x_ave,
         // thetax_min, thetax_ave, thetax_max
@@ -254,8 +256,7 @@ void ColliderRelevant::ComputeDiags (int step)
                 const amrex::Real ux = p.rdata(PIdx::ux);
                 const amrex::Real uz = p.rdata(PIdx::uz);
                 const amrex::Real thetax = std::atan2(ux, uz);
-                return {w, w*x,
-                        thetax, w*thetax, thetax};
+                return {w, w*x, thetax, w*thetax, thetax};
             },
             reduce_ops);
 
@@ -265,28 +266,22 @@ void ColliderRelevant::ComputeDiags (int step)
         amrex::Real thetax_ave  = amrex::get<3>(r);
         amrex::Real thetax_max  = amrex::get<4>(r);
 
-        amrex::ParallelDescriptor::ReduceRealSum({w_tot, x_ave, thetax_ave},
-                                                  amrex::ParallelDescriptor::IOProcessorNumber());
-        amrex::ParallelDescriptor::ReduceRealMin(thetax_min, amrex::ParallelDescriptor::IOProcessorNumber());
-        amrex::ParallelDescriptor::ReduceRealMax(thetax_max, amrex::ParallelDescriptor::IOProcessorNumber());
-
-        if (w_tot > std::numeric_limits<Real>::min())
-        {
-            x_ave = x_ave / w_tot;
-            thetax_ave = thetax_ave / w_tot;
-        }
-        else
-        {
-            x_ave = 0.0_rt;
-            thetax_ave = 0.0_rt;
-        }
+        amrex::ParallelDescriptor::ReduceRealSum({w_tot, x_ave, thetax_ave}, IOProc);
+        amrex::ParallelDescriptor::ReduceRealMin({thetax_min}, IOProc);
+        amrex::ParallelDescriptor::ReduceRealMax({thetax_max}, IOProc);
 
         // x_std, thetax_std
         amrex::Real x_std = 0.0_rt;
         amrex::Real thetax_std = 0.0_rt;
 
-        if (w_tot > std::numeric_limits<Real>::min())
+        if (w_tot > 0.0_rt)
         {
+            if(amrex::ParallelDescriptor::IOProcessor())
+            {
+                x_ave = x_ave / w_tot;
+                thetax_ave = thetax_ave / w_tot;
+            }
+
             amrex::ReduceOps<ReduceOpSum, ReduceOpSum> reduce_ops_std;
             auto r_std = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
                 myspc,
@@ -306,10 +301,13 @@ void ColliderRelevant::ComputeDiags (int step)
             x_std = amrex::get<0>(r_std);
             thetax_std = amrex::get<1>(r_std);
 
-            amrex::ParallelDescriptor::ReduceRealSum({x_std, thetax_std}, amrex::ParallelDescriptor::IOProcessorNumber());
+            amrex::ParallelDescriptor::ReduceRealSum({x_std, thetax_std}, IOProc);
 
-            x_std = std::sqrt(x_std / w_tot);
-            thetax_std = std::sqrt(thetax_std / w_tot);
+            if(amrex::ParallelDescriptor::IOProcessor())
+            {
+                x_std = std::sqrt(x_std / w_tot);
+                thetax_std = std::sqrt(thetax_std / w_tot);
+            }
         }
 
         m_data[get_idx("x_ave_"+species_names[i_s])] = x_ave;
@@ -361,26 +359,9 @@ void ColliderRelevant::ComputeDiags (int step)
         amrex::Real thetay_ave  = amrex::get<7>(r);
         amrex::Real thetay_max  = amrex::get<8>(r);
 
-        amrex::ParallelDescriptor::ReduceRealSum({w_tot, x_ave, y_ave,
-                                                  thetax_ave, thetay_ave},
-                                                  amrex::ParallelDescriptor::IOProcessorNumber());
-        amrex::ParallelDescriptor::ReduceRealMin({thetax_min, thetay_min}, amrex::ParallelDescriptor::IOProcessorNumber());
-        amrex::ParallelDescriptor::ReduceRealMax({thetax_max, thetay_max}, amrex::ParallelDescriptor::IOProcessorNumber());
-
-        if (w_tot > std::numeric_limits<Real>::min())
-        {
-            x_ave = x_ave / w_tot;
-            y_ave = y_ave / w_tot;
-            thetax_ave = thetax_ave / w_tot;
-            thetay_ave = thetay_ave / w_tot;
-        }
-        else
-        {
-            x_ave = 0.0_rt;
-            y_ave = 0.0_rt;
-            thetax_ave = 0.0_rt;
-            thetay_ave = 0.0_rt;
-        }
+        amrex::ParallelDescriptor::ReduceRealSum({w_tot, x_ave, y_ave, thetax_ave, thetay_ave}, IOProc);
+        amrex::ParallelDescriptor::ReduceRealMin({thetax_min, thetay_min}, IOProc);
+        amrex::ParallelDescriptor::ReduceRealMax({thetax_max, thetay_max}, IOProc);
 
         // x_std, y_std, thetax_std, thetay_std
         amrex::Real x_std = 0.0_rt;
@@ -388,8 +369,16 @@ void ColliderRelevant::ComputeDiags (int step)
         amrex::Real thetax_std = 0.0_rt;
         amrex::Real thetay_std = 0.0_rt;
 
-        if (w_tot > std::numeric_limits<Real>::min())
+        if (w_tot > 0.0_rt)
         {
+            if(amrex::ParallelDescriptor::IOProcessor())
+            {
+                x_ave = x_ave / w_tot;
+                y_ave = y_ave / w_tot;
+                thetax_ave = thetax_ave / w_tot;
+                thetay_ave = thetay_ave / w_tot;
+            }
+
             amrex::ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_ops_std;
             auto r_std = amrex::ParticleReduce<amrex::ReduceData<Real, Real, Real, Real>>(
                 myspc,
@@ -416,12 +405,15 @@ void ColliderRelevant::ComputeDiags (int step)
             thetax_std = amrex::get<2>(r_std);
             thetay_std = amrex::get<3>(r_std);
 
-            amrex::ParallelDescriptor::ReduceRealSum({x_std, y_std, thetax_std, thetay_std}, amrex::ParallelDescriptor::IOProcessorNumber());
+            amrex::ParallelDescriptor::ReduceRealSum({x_std, y_std, thetax_std, thetay_std}, IOProc);
 
-            x_std = std::sqrt(x_std / w_tot);
-            y_std = std::sqrt(y_std / w_tot);
-            thetax_std = std::sqrt(thetax_std / w_tot);
-            thetay_std = std::sqrt(thetay_std / w_tot);
+            if(amrex::ParallelDescriptor::IOProcessor())
+            {
+                x_std = std::sqrt(x_std / w_tot);
+                y_std = std::sqrt(y_std / w_tot);
+                thetax_std = std::sqrt(thetax_std / w_tot);
+                thetay_std = std::sqrt(thetay_std / w_tot);
+            }
         }
 
         m_data[get_idx("x_ave_"+species_names[i_s])] = x_ave;
@@ -543,9 +535,9 @@ void ColliderRelevant::ComputeDiags (int step)
             chimin_f = get<0>(val);
             chimax_f = get<1>(val);
             chiave_f = get<2>(val);
-            amrex::ParallelDescriptor::ReduceRealMin(chimin_f, amrex::ParallelDescriptor::IOProcessorNumber());
-            amrex::ParallelDescriptor::ReduceRealMax(chimax_f, amrex::ParallelDescriptor::IOProcessorNumber());
-            amrex::ParallelDescriptor::ReduceRealSum(chiave_f, amrex::ParallelDescriptor::IOProcessorNumber());
+            amrex::ParallelDescriptor::ReduceRealMin(chimin_f, IOProc);
+            amrex::ParallelDescriptor::ReduceRealMax(chimax_f, IOProc);
+            amrex::ParallelDescriptor::ReduceRealSum(chiave_f, IOProc);
 
             m_data[get_idx("chimin_"+species_names[i_s])] = chimin_f;
             m_data[get_idx("chiave_"+species_names[i_s])] = chiave_f/w_tot;
@@ -568,5 +560,4 @@ void ColliderRelevant::ComputeDiags (int step)
     amrex::Real const n1_dot_n2 = amrex::MultiFab::Dot(mf_dst1, 0, mf_dst2, 0, 1, 0);
     amrex::Real const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
     m_data[get_idx("dL_dt")] = lumi;
-#endif // not RZ
 }
