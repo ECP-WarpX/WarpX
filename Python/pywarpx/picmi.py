@@ -2051,14 +2051,20 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                     self.diagnostic.__setattr__(
                         f'particle_fields.{dataname}(x,y,z,ux,uy,uz)', params['func']
                     )
+                    params.pop('func', None)
                 if "do_average" in params:
                     self.diagnostic.__setattr__(
                         f'particle_fields.{dataname}.do_average', params['do_average']
                     )
+                    params.pop('do_average', None)
                 if "filter" in params:
                     self.diagnostic.__setattr__(
                         f'particle_fields.{dataname}.filter(x,y,z,ux,uy,uz)', params['filter']
                     )
+                    params.pop('filter', None)
+                # catches unexpected keywords
+                if params:
+                    raise TypeError(f"Unexpected keyword argument for particle field {dataname} - {list(params)}")
 
             # --- Convert the set to a sorted list so that the order
             # --- is the same on all processors.
