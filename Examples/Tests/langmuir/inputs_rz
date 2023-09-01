@@ -27,7 +27,7 @@ geometry.dims = RZ
 geometry.prob_lo     =   0.e-6   -20.e-6    # physical domain
 geometry.prob_hi     =  20.e-6    20.e-6
 boundary.field_lo = r_origin periodic
-boundary.field_hi = none periodic
+boundary.field_hi = pml periodic
 
 warpx.serialize_initial_conditions = 1
 

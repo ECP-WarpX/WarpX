@@ -10,8 +10,8 @@ geometry.prob_hi     =  125.e-6  125.e-6   1.e-6
 warpx.cfl = 0.99
 
 # Domain Boundary condition
-boundary.field_lo = none none none
-boundary.field_hi = none none none
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
 
 # Use parser to build EB
 # Note that for amrex EB implicit function, >0 is covered, =0 is boundary and <0 is regular.

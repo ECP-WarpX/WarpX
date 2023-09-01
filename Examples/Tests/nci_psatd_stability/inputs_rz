@@ -13,7 +13,7 @@ geometry.dims = RZ
 geometry.prob_lo  =    0. -38.68
 geometry.prob_hi  = 38.68  38.68
 boundary.field_lo = r_origin periodic
-boundary.field_hi = none periodic
+boundary.field_hi = pml periodic
 
 #################################
 ############ NUMERICS ###########

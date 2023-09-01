@@ -14,7 +14,7 @@ geometry.prob_hi = 4.154046151855669e2  4.154046151855669e2
 ###### Boundary Condition #######
 #################################
 boundary.field_lo = r_origin periodic
-boundary.field_hi = none periodic
+boundary.field_hi = pml periodic
 
 #################################
 ############ NUMERICS ###########
