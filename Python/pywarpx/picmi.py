@@ -1938,6 +1938,17 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
     warpx_dump_rz_modes: bool, optional
         Flag whether to dump the data for all RZ modes
+
+    warpx_particle_fields_to_plot: dict, optional
+        Keys: particle field diagnostic name (string)
+        Values: Dictionaries with key/value pairs of corresponding parser function
+        and parameters. The keys must be "func" (parser string, mandatory),
+        "do_average" (0 or 1, optional, default 1), and "filter" (parser string, optional).
+
+    warpx_particle_fields_species: list of strings, optional
+        Species for which to calcualte particle_fields_to_plot functions. Fields will
+        be calculated separately for each specified species. If not passed, default is
+        all of the available particle species.
     """
     def init(self, kw):
 
