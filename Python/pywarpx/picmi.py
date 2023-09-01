@@ -1951,6 +1951,8 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
+        self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', None)
+        self.particle_fields_species = kw.pop('warpx_particle_fields_species', None)
 
     def initialize_inputs(self):
 
@@ -2028,6 +2030,32 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             fields_to_plot.sort()
             self.diagnostic.fields_to_plot = fields_to_plot
 
+        particle_fields_to_plot = set()
+        if self.particle_fields_to_plot is not None:
+            for dataname, params in self.particle_fields_to_plot.items():
+                particle_fields_to_plot.add(dataname)
+                if "func" not in params:
+                    raise ValueError("A function must be provided for a particle field!")
+                else:
+                    self.diagnostic.__setattr__(
+                        f'particle_fields.{dataname}(x,y,z,ux,uy,uz)', params['func']
+                    )
+                if "do_average" in params:
+                    self.diagnostic.__setattr__(
+                        f'particle_fields.{dataname}.do_average', params['do_average']
+                    )
+                if "filter" in params:
+                    self.diagnostic.__setattr__(
+                        f'particle_fields.{dataname}.filter(x,y,z,ux,uy,uz)', params['filter']
+                    )
+
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            particle_fields_to_plot = list(particle_fields_to_plot)
+            particle_fields_to_plot.sort()
+            self.diagnostic.particle_fields_to_plot = particle_fields_to_plot
+            self.diagnostic.particle_fields_species = self.particle_fields_species
+
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
         self.diagnostic.plot_finepatch = self.plot_finepatch
@@ -2035,7 +2063,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.diagnostic.write_species = self.write_species
 
         self.set_write_dir()
-
 
 ElectrostaticFieldDiagnostic = FieldDiagnostic
 
