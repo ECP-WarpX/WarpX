@@ -361,15 +361,14 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
 #if (defined WARPX_DIM_1D_Z)
             // For 1D : icomp=0 and icomp=1 (Ex and Ey are tangential to the z boundary)
             //          The logic below ensures that the flags are set right for 1D
-            is_tangent_to_bndy[icomp][idim] = ( ( icomp == idim+2) ? false : true );
+            is_tangent_to_bndy[icomp][idim] = (icomp != (idim+2));
 #elif (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ),
             //          icomp=1 is tangential to both x and z boundaries
             //          The logic below ensures that the flags are set right for 2D
-            is_tangent_to_bndy[icomp][idim] = ( (icomp == AMREX_SPACEDIM*idim)
-                                            ? false : true );
+            is_tangent_to_bndy[icomp][idim] = (icomp != AMREX_SPACEDIM*idim);
 #else
-            is_tangent_to_bndy[icomp][idim] = ( ( icomp == idim) ? false : true );
+            is_tangent_to_bndy[icomp][idim] = (icomp != idim);
 #endif
 
             if (is_tangent_to_bndy[icomp][idim]){

@@ -79,16 +79,6 @@ void
 FillBoundary(amrex::Vector<amrex::MultiFab *> const &mf, bool do_single_precision_comms,
              const amrex::Periodicity &period);
 
-void SumBoundary (amrex::MultiFab &mf,
-                  bool do_single_precision_comms,
-                  const amrex::Periodicity &period = amrex::Periodicity::NonPeriodic());
-
-void SumBoundary (amrex::MultiFab &mf,
-                  int start_comp,
-                  int num_comps, amrex::IntVect ng,
-                  bool do_single_precision_comms,
-                  const amrex::Periodicity &period = amrex::Periodicity::NonPeriodic());
-
 void
 SumBoundary (amrex::MultiFab &mf,
              int start_comp,

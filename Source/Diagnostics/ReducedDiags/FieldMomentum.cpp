@@ -94,10 +94,7 @@ FieldMomentum::FieldMomentum (std::string rd_name)
 void FieldMomentum::ComputeDiags (int step)
 {
     // Check if the diags should be done
-    if (m_intervals.contains(step+1) == false)
-    {
-        return;
-    }
+    if (!m_intervals.contains(step+1)) return;
 
     // Get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();

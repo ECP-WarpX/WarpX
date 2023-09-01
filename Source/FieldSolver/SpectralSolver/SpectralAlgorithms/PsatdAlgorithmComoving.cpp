@@ -32,18 +32,18 @@ PsatdAlgorithmComoving::PsatdAlgorithmComoving (const SpectralKSpace& spectral_k
                                                 const amrex::Real dt,
                                                 const bool update_with_rho)
      // Members initialization
-     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
+     : SpectralBaseAlgorithm{spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type},
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
        // the infinite order option, the argument grid_type=GridType::Staggered is then irrelevant)
-       kx_vec(spectral_kspace.getModifiedKComponent(dm, 0, -1, GridType::Staggered)),
+       kx_vec{spectral_kspace.getModifiedKComponent(dm, 0, -1, GridType::Staggered)},
 #if defined(WARPX_DIM_3D)
-       ky_vec(spectral_kspace.getModifiedKComponent(dm, 1, -1, GridType::Staggered)),
-       kz_vec(spectral_kspace.getModifiedKComponent(dm, 2, -1, GridType::Staggered)),
+       ky_vec{spectral_kspace.getModifiedKComponent(dm, 1, -1, GridType::Staggered)},
+       kz_vec{spectral_kspace.getModifiedKComponent(dm, 2, -1, GridType::Staggered)},
 #else
-       kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, -1, GridType::Staggered)),
+       kz_vec{spectral_kspace.getModifiedKComponent(dm, 1, -1, GridType::Staggered)},
 #endif
-       m_v_comoving(v_comoving),
-       m_dt(dt)
+       m_v_comoving{v_comoving},
+       m_dt{dt}
 {
     amrex::ignore_unused(update_with_rho);
 

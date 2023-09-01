@@ -47,7 +47,7 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
 
     int c = 0;
 
-    if (pml == false)
+    if (!pml)
     {
         Ex = c++; Ey = c++; Ez = c++;
         Bx = c++; By = c++; Bz = c++;
@@ -303,15 +303,15 @@ SpectralFieldData::ForwardTransform (const int lev,
                 Complex spectral_field_value = tmp_arr(i,j,k);
                 // Apply proper shift in each dimension
 #if (AMREX_SPACEDIM >= 2)
-                if (is_nodal_x==false) spectral_field_value *= xshift_arr[i];
+                if (!is_nodal_x) spectral_field_value *= xshift_arr[i];
 #endif
 #if defined(WARPX_DIM_3D)
-                if (is_nodal_y==false) spectral_field_value *= yshift_arr[j];
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[k];
+                if (!is_nodal_y) spectral_field_value *= yshift_arr[j];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[k];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
 #elif defined(WARPX_DIM_1D_Z)
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[i];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[i];
 #endif
                 // Copy field into the right index
                 fields_arr(i,j,k,field_index) = spectral_field_value;
@@ -403,15 +403,15 @@ SpectralFieldData::BackwardTransform (const int lev,
                 Complex spectral_field_value = field_arr(i,j,k,field_index);
                 // Apply proper shift in each dimension
 #if (AMREX_SPACEDIM >= 2)
-                if (is_nodal_x==false) spectral_field_value *= xshift_arr[i];
+                if (!is_nodal_x) spectral_field_value *= xshift_arr[i];
 #endif
 #if defined(WARPX_DIM_3D)
-                if (is_nodal_y==false) spectral_field_value *= yshift_arr[j];
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[k];
+                if (!is_nodal_y) spectral_field_value *= yshift_arr[j];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[k];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
 #elif defined(WARPX_DIM_1D_Z)
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[i];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[i];
 #endif
                 // Copy field into temporary array
                 tmp_arr(i,j,k) = spectral_field_value;
@@ -456,11 +456,11 @@ SpectralFieldData::BackwardTransform (const int lev,
 #endif
             // If necessary, do not fill the guard cells
             // (shrink box by passing negative number of cells)
-            if (m_periodic_single_box == false)
+            if (!m_periodic_single_box)
             {
                 for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
                 {
-                    if (static_cast<bool>(fill_guards[dir]) == false) mf_box.grow(dir, -mf_ng[dir]);
+                    if ((fill_guards[dir]) == 0) mf_box.grow(dir, -mf_ng[dir]);
                 }
             }
 

@@ -195,8 +195,7 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
    The ``TSTP`` (terminal stop) command is sent interactively from ``Ctrl+Z`` to temporarily send a process to sleep (until send in the background with commands such as ``bg`` or continued with ``fg``), overwriting it would thus disable that functionality.
    The signals ``KILL`` and ``STOP`` cannot be used.
 
-   The ``FPE`` signal should not be overwritten in WarpX, as it is `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
-
+   The ``FPE`` and ``ILL`` signals should not be overwritten in WarpX, as they are `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
 .. tip::
 
    For example, the following logic can be added to `Slurm batch scripts <https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:running_jobs_slurm:signals>`__ (`signal name to number mapping here <https://en.wikipedia.org/wiki/Signal_(IPC)#Default_action>`__) to gracefully shut down 6 min prior to walltime.
@@ -718,6 +717,7 @@ Particle initialization
       ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
+      ``<species_name>.impose_t_lab_from_file`` (`bool`) optional (default is false) only read if warpx.gamma_boost > 1., it allows to set t_lab for the Lorentz Transform as being the time stored in the openPMD file.
       Warning: ``q_tot!=0`` is not supported with the ``external_file`` injection style. If a value is provided, it is ignored and no re-scaling is done.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
@@ -1276,7 +1276,7 @@ Laser initialization
 
         E(\boldsymbol{x},t) \propto \exp\left( -\frac{(t-t_{peak})^2}{\tau^2} \right)
 
-    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.174`.
+    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.1774`.
 
     When running a **boosted-frame simulation**, provide the value of
     ``<laser_name>.profile_duration`` in the laboratory frame, and use ``warpx.gamma_boost``
@@ -2468,7 +2468,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 BackTransformed Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Note that this diagnostic is not currently supported for RZ.  Additional options for this diagnostic include:
+``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Additional options for this diagnostic include:
 
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
@@ -2511,6 +2511,20 @@ BackTransformed Diagnostics
     to frequent flushes of the lab-frame data. The other option is to keep the default
     value for buffer size and use slices to reduce the memory footprint and maintain
     optimum I/O performance.
+
+* ``<diag_name>.do_back_transformed_fields`` (`0` or `1`) optional (default `1`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``
+    Whether to back transform the fields or not.
+    Note that for ``BackTransformed`` diagnostics, at least one of the options
+    ``<diag_name>.do_back_transformed_fields`` or ``<diag_name>.do_back_transformed_particles`` must be 1.
+
+* ``<diag_name>.do_back_transformed_particles`` (`0` or `1`) optional (default `1`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``
+    Whether to back transform the particle data or not.
+    Note that for ``BackTransformed`` diagnostics, at least one of the options
+    ``<diag_name>.do_back_transformed_fields`` or ``<diag_name>.do_back_transformed_particles`` must be 1.
+    If ``diag_name.write_species = 0``, then ``<diag_name>.do_back_transformed_particles`` will be set
+    to 0 in the simulation and particles will not be backtransformed.
 
 Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3115,6 +3129,9 @@ The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.
 * ``amr.restart`` (`string`)
     Name of the checkpoint file to restart from. Returns an error if the folder does not exist
     or if it is not properly formatted.
+
+* ``warpx.write_diagonstics_on_restart`` (`bool`) optional (default `false`)
+    When `true`, write the diagnostics after restart at the time of the restart.
 
 Intervals parser
 ----------------
