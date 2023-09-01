@@ -71,6 +71,12 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
         {
             Jx_mid = c++; Jy_mid = c++; Jz_mid = c++;
         }
+        if (J_in_time == JInTime::Quadratic)
+        {
+            Jx_old = c++; Jy_old = c++; Jz_old = c++;
+            Jx_new = c++; Jy_new = c++; Jz_new = c++;
+            Jx_mid = c++; Jy_mid = c++; Jz_mid = c++;
+        }
         else if (J_in_time == JInTime::Linear)
         {
             Jx_old = c++; Jy_old = c++; Jz_old = c++;
@@ -80,6 +86,12 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
         if (rho_in_time == RhoInTime::Constant)
         {
             rho_mid = c++;
+        }
+        if (rho_in_time == RhoInTime::Quadratic)
+        {
+            rho_old = c++;
+            rho_mid = c++;
+            rho_new = c++;
         }
         else if (rho_in_time == RhoInTime::Linear)
         {

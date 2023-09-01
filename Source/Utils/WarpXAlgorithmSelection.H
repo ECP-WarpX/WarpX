@@ -104,14 +104,16 @@ struct PSATDSolutionType {
 struct JInTime {
     enum {
         Constant = 0,
-        Linear = 1
+        Linear = 1,
+        Quadratic = 2
     };
 };
 
 struct RhoInTime {
     enum {
         Constant = 0,
-        Linear = 1
+        Linear = 1,
+        Quadratic = 2
     };
 };
 
