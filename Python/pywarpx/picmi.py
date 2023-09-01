@@ -1673,6 +1673,12 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     warpx_checkpoint_signals: list of strings
         Signals on which to write out a checkpoint
+
+    warpx_numprocs: list of ints (1 in 1D, 2 in 2D, 3 in 3D)
+        Domain decomposition on the coarsest level.
+        The domain will be chopped into the exact number of pieces in each dimension as specified by this parameter.
+        https://warpx.readthedocs.io/en/latest/usage/parameters.html#distribution-across-mpi-ranks-and-parallelization
+        https://warpx.readthedocs.io/en/latest/usage/domain_decomposition.html#simple-method
     """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
@@ -1716,6 +1722,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         self.break_signals = kw.pop('warpx_break_signals', None)
         self.checkpoint_signals = kw.pop('warpx_checkpoint_signals', None)
+        self.numprocs = kw.pop('warpx_numprocs', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -1765,6 +1772,8 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.break_signals = self.break_signals
         pywarpx.warpx.checkpoint_signals = self.checkpoint_signals
+
+        pywarpx.warpx.numprocs = self.numprocs
 
         particle_shape = self.particle_shape
         for s in self.species:
