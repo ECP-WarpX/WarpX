@@ -192,7 +192,7 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
 void ColliderRelevant::ComputeDiags (int step)
 {
     const int IOProc = amrex::ParallelDescriptor::IOProcessorNumber();
-    
+
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -205,7 +205,7 @@ void ColliderRelevant::ComputeDiags (int step)
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
-    // get cell volume 
+    // get cell volume
     amrex::Geometry const & geom = warpx.Geom(0);
     amrex::Real dV = AMREX_D_TERM(geom.CellSize(0), *geom.CellSize(1), *geom.CellSize(2));
 
