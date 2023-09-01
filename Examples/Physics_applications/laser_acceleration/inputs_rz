@@ -12,7 +12,7 @@ amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not s
 
 warpx.n_rz_azimuthal_modes = 2
 
-boundary.field_lo = none pec
+boundary.field_lo = r_origin pec
 boundary.field_hi = pec pec
 
 #################################

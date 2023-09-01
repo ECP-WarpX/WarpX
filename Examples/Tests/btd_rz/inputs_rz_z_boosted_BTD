@@ -15,7 +15,7 @@ geometry.dims = RZ
 geometry.prob_lo     =  0.e-6 -20.e-6
 geometry.prob_hi     =  40.e-6  0.e-6
 
-boundary.field_lo = none absorbing_silver_mueller
+boundary.field_lo = r_origin absorbing_silver_mueller
 boundary.field_hi = absorbing_silver_mueller absorbing_silver_mueller
 
 # Boosted frame and moving window

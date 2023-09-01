@@ -10,7 +10,7 @@ warpx.numprocs = 1 2
 geometry.dims = RZ
 geometry.prob_lo =   0    -220e-6
 geometry.prob_hi = 200e-6   10e-6
-boundary.field_lo = none damped
+boundary.field_lo = r_origin damped
 boundary.field_hi = none damped
 
 # Algorithms
