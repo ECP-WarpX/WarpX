@@ -266,7 +266,7 @@ class IonLandauDamping(object):
     def text_diag(self):
         """Diagnostic function to print out timing data and particle numbers."""
         warpx = simulation.extension.warpx
-        step = warpx.getistep(0)
+        step = warpx.getistep(lev=0)
         if step % (self.total_steps // 10) != 0:
             return
 
@@ -302,7 +302,7 @@ class IonLandauDamping(object):
         script can be used regardless of the simulation dimension.
         """
         warpx = simulation.extension.warpx
-        step = warpx.getistep() - 1
+        step = warpx.getistep(lev=0) - 1
 
         if step % self.diag_steps != 0:
             return

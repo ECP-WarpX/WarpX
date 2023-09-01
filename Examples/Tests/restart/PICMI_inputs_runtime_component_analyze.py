@@ -150,7 +150,7 @@ callbacks.installbeforestep(add_particles)
 # simulation run
 ##########################
 
-step_number = sim.extension.warpx.getistep(0)
+step_number = sim.extension.warpx.getistep(lev=0)
 sim.step(max_steps - 1 - step_number)
 
 ##########################

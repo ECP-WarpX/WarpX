@@ -108,7 +108,6 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         calculating phi from rho."""
 
         left_voltage = 0.0
-        t = self.sim_ext.warpx.gett_new()
         right_voltage = eval(self.right_voltage)
 
         # Construct b vector

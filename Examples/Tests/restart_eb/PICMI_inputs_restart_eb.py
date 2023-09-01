@@ -132,5 +132,5 @@ sim.initialize_warpx()
 # simulation run
 ##########################
 
-step_number = sim.extension.warpx.getistep(0)
+step_number = sim.extension.warpx.getistep(lev=0)
 sim.step(max_steps - step_number)
