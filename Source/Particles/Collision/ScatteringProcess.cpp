@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 The WarpX Community
+/* Copyright 2021-2023 The WarpX Community
  *
  * This file is part of WarpX.
  *

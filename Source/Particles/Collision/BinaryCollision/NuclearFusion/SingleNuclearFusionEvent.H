@@ -15,7 +15,6 @@
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_Algorithm.H>
-#include <AMReX_Math.H>
 #include <AMReX_Random.H>
 #include <AMReX_REAL.H>
 
@@ -74,7 +73,6 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
         E_coll, v_coll, lab_to_COM_factor);
 
     using namespace amrex::literals;
-    using namespace amrex::Math;
 
     const amrex::ParticleReal w_min = amrex::min(w1, w2);
     const amrex::ParticleReal w_max = amrex::max(w1, w2);

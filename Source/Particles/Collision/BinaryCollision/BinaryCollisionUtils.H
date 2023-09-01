@@ -12,6 +12,8 @@
 
 #include "Particles/MultiParticleContainer.H"
 
+#include <AMReX_Math.H>
+
 enum struct CollisionType { DeuteriumTritiumToNeutronHeliumFusion,
                             DeuteriumDeuteriumToProtonTritiumFusion,
                             DeuteriumDeuteriumToNeutronHeliumFusion,
@@ -51,6 +53,7 @@ namespace BinaryCollisionUtils{
         //     x_star denotes the value of x in the center of mass frame
 
         using namespace amrex::literals;
+        using namespace amrex::Math;
 
         constexpr auto one_pr = amrex::ParticleReal(1.);
         constexpr auto inv_four_pr = amrex::ParticleReal(1./4.);
@@ -72,10 +75,9 @@ namespace BinaryCollisionUtils{
         const amrex::ParticleReal p2y = u2y * m2;
         const amrex::ParticleReal p2z = u2z * m2;
         // Square norm of the total (sum between the two particles) momenta in the lab frame
-        auto constexpr pow2 = [](double const x) { return x*x; };
-        const amrex::ParticleReal p_total_sq = pow2(p1x + p2x) +
-                                            pow2(p1y+p2y) +
-                                            pow2(p1z+p2z);
+        const amrex::ParticleReal p_total_sq = powi<2>(p1x + p2x) +
+                                               powi<2>(p1y + p2y) +
+                                               powi<2>(p1z + p2z);
 
         // Total energy in the lab frame
         const amrex::ParticleReal E_lab = (m1 * g1 + m2 * g2) * c_sq;
@@ -92,8 +94,8 @@ namespace BinaryCollisionUtils{
         // The expression below is specifically written in a form that avoids returning
         // small negative numbers due to machine precision errors, for low-energy particles
         const amrex::ParticleReal E_ratio = E_star/((m1 + m2)*c_sq);
-        const amrex::ParticleReal p_star_sq = m1*m2*c_sq * ( pow2(E_ratio) - one_pr )
-                + pow2(m1 - m2)*c_sq*inv_four_pr * pow2( E_ratio - 1._prt/E_ratio );
+        const amrex::ParticleReal p_star_sq = m1*m2*c_sq * ( powi<2>(E_ratio) - one_pr )
+                + powi<2>(m1 - m2)*c_sq*inv_four_pr * powi<2>( E_ratio - 1._prt/E_ratio );
 
         // Lorentz factors in the center of mass frame
         const amrex::ParticleReal g1_star = std::sqrt(one_pr + p_star_sq / (m1_sq*c_sq));

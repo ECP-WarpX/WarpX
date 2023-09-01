@@ -1,4 +1,4 @@
-/* Copyright 2022 The WarpX Community
+/* Copyright 2023 The WarpX Community
  *
  * This file is part of WarpX.
  *
@@ -12,7 +12,8 @@
 #include "Particles/Collision/ScatteringProcess.H"
 
 /**
- * \brief ...
+ * \brief Function that performs the particle scattering and injection due
+ * to binary collisions.
  *
  * \return num_added the number of particles that were written to dst.
  */
@@ -42,7 +43,6 @@ Index splitScatteringParticles (
     {
         p_offsets[i] = offset;
         if (mask[i]) offset++;
-        // Print() << i << "/" << n_total_pairs << " : " << offset << " " << p_offsets[i] << std::endl;
     }
 
     const Index num_added = offset;
@@ -61,7 +61,6 @@ Index splitScatteringParticles (
     {
         if (mask[i])
         {
-            // Print() << p_offsets[i] << std::endl;
             // First, make copies of the colliding particles
             copy1(ptile1_data, ptile1_data, p_pair_indices_1[i], p_offsets[i] + ptile1_index, engine);
             copy2(ptile2_data, ptile2_data, p_pair_indices_2[i], p_offsets[i] + ptile2_index, engine);
@@ -77,9 +76,7 @@ Index splitScatteringParticles (
             Gpu::Atomic::AddNoRet(&w1, -p_pair_reaction_weight[i]);
             if (w1 <= 0._prt) {
                 auto& p = ptile1_data.m_aos[p_pair_indices_1[i]];
-                // Print() << p.id() << " at " << std::addressof(p) << std::endl;
                 p.atomicSetID(minus_one_long);
-                // Print() << p.id() << " at " << std::addressof(p) << " mask: " << mask[i] << std::endl;
             }
 
             Gpu::Atomic::AddNoRet(&w2, -p_pair_reaction_weight[i]);
@@ -87,10 +84,6 @@ Index splitScatteringParticles (
                 auto& p = ptile2_data.m_aos[p_pair_indices_2[i]];
                 p.atomicSetID(minus_one_long);
             }
-
-            if (w2 < 10.0) Print() << w2 << "  " << ptile2_data.m_aos[p_pair_indices_2[i]].id() << std::endl;
-            if (w1 < 10.0 && ptile1_data.m_aos[p_pair_indices_1[i]].id() != -1) Print() << w1 << "  " << ptile1_data.m_aos[p_pair_indices_1[i]].id() << std::endl;
-            if (p_pair_reaction_weight[i] < 10.0) Print() << "hierso!! " << p_pair_reaction_weight[i] << std::endl;
 
             // Set the child particle properties appropriately
             ptile1_data.m_rdata[PIdx::w][p_offsets[i] + ptile1_index] = p_pair_reaction_weight[i];
@@ -103,17 +96,20 @@ Index splitScatteringParticles (
             auto& uy2 = ptile2_data.m_rdata[PIdx::uy][p_offsets[i] + ptile2_index];
             auto& uz2 = ptile2_data.m_rdata[PIdx::uz][p_offsets[i] + ptile2_index];
 
-            // Print() << "weight: " << w1 << " " << (w1 <= 0.01_prt) << " id " << ptile1_data.m_aos[p_pair_indices_1[i]].id() << " -> " << p_pair_indices_1[i] << "  .  " << ptile1_data.m_rdata[PIdx::w][p_offsets[i] + ptile1_index] << std::endl;
-            // Print() << "        :  " << "weight: " << w2 << " " << (w2 <= 0.01_prt) << " id " << ptile2_data.m_aos[p_pair_indices_2[i]].id() << std::endl;
-            // amrex::Print() << " w1 = " << w1 << "  w_new " << ptile1_data.m_rdata[PIdx::w][p_offsets[i] + ptile1_index] << std::endl;
-            // amrex::Print() << "    -> " << std::sqrt(ux2*ux2+uy2*uy2+uz2*uz2) << "  " << ptile2_data.m_rdata[PIdx::w][p_pair_indices_2[i]] << "\n\n";
-            // auto const vel_std = sqrt(PhysConst::kb * 300.0 / 6.67e-27);
-            // auto ux2 = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
-            // auto uy2 = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
-            // auto uz2 = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
+
+            // TODO: Remove this section. For testing purposes we sample a neutral
+            // velocity from Maxwellian as is done in the MCC test
+            auto const vel_std = sqrt(PhysConst::kb * 300.0 / 6.67e-27);
+            auto ux2 = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
+            auto uy2 = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
+            auto uz2 = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
+
+
 
 
             // for simplicity (for now) we assume non-relativistic particles
+            // and simply calculate the center-of-momentum velocity from the
+            // rest masses
             auto const uCOM_x = (m1 * ux1 + m2 * ux2) / (m1 + m2);
             auto const uCOM_y = (m1 * uy1 + m2 * uy2) / (m1 + m2);
             auto const uCOM_z = (m1 * uz1 + m2 * uz2) / (m1 + m2);
@@ -122,9 +118,9 @@ Index splitScatteringParticles (
             ux1 -= uCOM_x;
             uy1 -= uCOM_y;
             uz1 -= uCOM_z;
-            // ux2 -= uCOM_x;
-            // uy2 -= uCOM_y;
-            // uz2 -= uCOM_z;
+            ux2 -= uCOM_x;
+            uy2 -= uCOM_y;
+            uz2 -= uCOM_z;
 
             if (mask[i] == int(ScatteringProcessType::ELASTIC)) {
                 // randomly rotate the velocity vector for the first particle
@@ -133,17 +129,17 @@ Index splitScatteringParticles (
                 );
                 // set the second particles velocity so that the total momentum
                 // is zero
-                // ux2 = -ux1 * m1 / m2;
-                // uy2 = -uy1 * m1 / m2;
-                // uz2 = -uz1 * m1 / m2;
+                ux2 = -ux1 * m1 / m2;
+                uy2 = -uy1 * m1 / m2;
+                uz2 = -uz1 * m1 / m2;
             } else if (mask[i] == int(ScatteringProcessType::BACK)) {
                 // reverse the velocity vectors of both particles
                 ux1 *= -1.0_prt;
                 uy1 *= -1.0_prt;
                 uz1 *= -1.0_prt;
-                // ux2 *= -1.0_prt;
-                // uy2 *= -1.0_prt;
-                // uz2 *= -1.0_prt;
+                ux2 *= -1.0_prt;
+                uy2 *= -1.0_prt;
+                uz2 *= -1.0_prt;
             } else if (mask[i] == int(ScatteringProcessType::CHARGE_EXCHANGE)) {
                 if (m1 == m2) {
                     auto const temp_ux = ux1;
@@ -167,29 +163,13 @@ Index splitScatteringParticles (
             ux1 += uCOM_x;
             uy1 += uCOM_y;
             uz1 += uCOM_z;
-            // ux2 += uCOM_x;
-            // uy2 += uCOM_y;
-            // uz2 += uCOM_z;
+            ux2 += uCOM_x;
+            uy2 += uCOM_y;
+            uz2 += uCOM_z;
         }
     });
-
-    // offset = 0;
-    // int zero_weight = 0;
-    // for (Index i=0; i<n_total_pairs; i++)
-    // {
-    //     auto p = ptile1_data[p_pair_indices_1[i]];
-    //     if (p.id() == -1) offset++;
-    //     // if (mask[i] && p_pair_reaction_weight[i] < 10) Print() << i << "  " << mask[i] << "  " << p_pair_reaction_weight[i] << std::endl;
-
-    //     auto& w1 = ptile1_data.m_rdata[PIdx::w][p_pair_indices_1[i]];
-    //     if (w1 < 1.0) zero_weight++;
-    // }
-    // Print() << "zero weight: " << zero_weight << "   num_added: " << num_added << std::endl;
-    // if (offset > num_added) Print() << num_added << "   " << offset << std::endl;
-    // Print() << "outside: " << ptile1_data.m_aos[567].id() << " and " << ptile1_data.m_aos[743].id() << std::endl;
 
     Gpu::synchronize();
     return num_added;
 }
-
 #endif // SPLIT_AND_SCATTER_FUNC_H_

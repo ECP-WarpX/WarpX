@@ -1,4 +1,4 @@
-/* Copyright 2022 The WarpX Community
+/* Copyright 2023 The WarpX Community
  *
  * This file is part of WarpX.
  *
@@ -81,7 +81,7 @@ DSMC::DSMC (const std::string collision_name)
 }
 
 void
-DSMC::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc)
+DSMC::doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleContainer* mypc)
 {
     WARPX_PROFILE("DSMC::doCollisions()");
 

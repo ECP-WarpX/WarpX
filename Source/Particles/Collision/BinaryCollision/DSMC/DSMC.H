@@ -1,4 +1,4 @@
-/* Copyright 2022 The WarpX Community
+/* Copyright 2023 The WarpX Community
  *
  * This file is part of WarpX.
  *
@@ -62,7 +62,7 @@ public:
      * @param mypc Container of species involved
      *
      */
-    void doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc) override;
+    void doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleContainer* mypc) override;
 
     /** Perform all binary collisions within a tile
      *
