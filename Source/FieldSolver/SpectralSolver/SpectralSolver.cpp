@@ -97,27 +97,6 @@ SpectralSolver::SpectralSolver(
             algorithm = std::make_unique<PsatdAlgorithmJArbitraryInTime>(
               k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
               dt, fft_do_time_averaging, dive_cleaning, divb_cleaning, J_in_time, rho_in_time);
-
-            //Commented temporarily
-            // if (J_in_time == JInTime::Constant)
-            // {
-            //     algorithm = std::make_unique<PsatdAlgorithmJConstantInTime>(
-            //         k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
-            //         v_galilean, dt, update_with_rho, fft_do_time_averaging,
-            //         dive_cleaning, divb_cleaning);
-            // }
-            // if (J_in_time == JInTime::Linear)
-            // {
-            //     algorithm = std::make_unique<PsatdAlgorithmJLinearInTime>(
-            //         k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
-            //         dt, fft_do_time_averaging, dive_cleaning, divb_cleaning);
-            // }
-            // else if (J_in_time = JInTime::Quadratic)
-            // {
-            //     algorithm = std::make_unique<PsatdAlgorithmJArbitraryInTime>(
-            //         k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
-            //         dt, fft_do_time_averaging, dive_cleaning, divb_cleaning, J_in_time, rho_in_time);
-            // }
         }
     }
 

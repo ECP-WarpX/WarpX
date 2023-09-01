@@ -676,7 +676,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             PSATDMoveJNewToJMid();
             auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
         // Deposit rho at relative time t_depose_charge
-            mypc->DepositCurrent(current, dt[0], t_depose_current+0.5_rt*sub_dt);
+            mypc->DepositCurrent(current, dt[0], t_depose_current + 0.5_rt*sub_dt);
 
             SyncCurrent(current_fp, current_cp, current_buf);
             PSATDForwardTransformJ(current_fp, current_cp);
@@ -702,7 +702,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             {
                 PSATDMoveRhoNewToRhoMid();
                 // Deposit rho at relative time t_depose_charge+0.5_rt*sub_dt
-                mypc->DepositCharge(rho_fp, t_depose_charge+0.5_rt*sub_dt);
+                mypc->DepositCharge(rho_fp, t_depose_charge + 0.5_rt*sub_dt);
                 SyncRho(rho_fp, rho_cp, charge_buf);
                 PSATDForwardTransformRho(rho_fp, rho_cp, 0, rho_new);
             }
