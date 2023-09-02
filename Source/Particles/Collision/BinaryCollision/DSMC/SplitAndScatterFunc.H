@@ -96,17 +96,6 @@ Index splitScatteringParticles (
             auto& uy2 = ptile2_data.m_rdata[PIdx::uy][p_offsets[i] + ptile2_index];
             auto& uz2 = ptile2_data.m_rdata[PIdx::uz][p_offsets[i] + ptile2_index];
 
-
-            // TODO: Remove this section. For testing purposes we sample a neutral
-            // velocity from Maxwellian as is done in the MCC test
-            auto const vel_std = sqrt(PhysConst::kb * 300.0 / 6.67e-27);
-            auto ux2 = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
-            auto uy2 = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
-            auto uz2 = vel_std * amrex::RandomNormal(0_prt, 1.0_prt, engine);
-
-
-
-
             // for simplicity (for now) we assume non-relativistic particles
             // and simply calculate the center-of-momentum velocity from the
             // rest masses

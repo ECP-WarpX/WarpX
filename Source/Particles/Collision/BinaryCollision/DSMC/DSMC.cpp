@@ -138,14 +138,6 @@ DSMC::doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleConta
             doCollisionsWithinTile(dt, lev, mfi, species1, species2,
                                    copy_species1, copy_species2);
 
-    //         ParticleTileType& ptile_1 = species1.ParticlesAt(lev, mfi);
-    //         amrex::Particle<0,0> * const particle_ptr_1 = ptile_1.GetArrayOfStructs()().data();
-
-    //         amrex::Print() << "further outside: " << particle_ptr_1[567].id() << " and " << particle_ptr_1[743].id() << std::endl;
-    //     amrex::Print() << "addr: " << std::addressof(particle_ptr_1[567]) << std::endl;
-    // amrex::Print() << "\n";
-
-
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
@@ -322,7 +314,4 @@ DSMC::doCollisionsWithinTile(
 
     setNewParticleIDs(ptile_1, num_p_tile1, num_added);
     setNewParticleIDs(ptile_2, num_p_tile2, num_added);
-
-    // amrex::Print() << "and then: " << ptd_1.m_aos[567].id() << " and " << ptd_1.m_aos[743].id() << std::endl;
-    // amrex::Print() << "addr: " << std::addressof(ptd_1.m_aos[567]) << std::endl;
 }
