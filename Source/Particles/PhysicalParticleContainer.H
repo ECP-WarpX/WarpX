@@ -307,7 +307,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void resample (int timestep) override final;
+    void resample (int timestep, const bool verbose=true) override final;
 
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H

@@ -381,7 +381,7 @@ public:
      * override the method for every derived class. Note that in practice this function is never
      * called because resample() is only called for PhysicalParticleContainers.
      */
-    virtual void resample (const int /*timestep*/) {}
+    virtual void resample (const int /*timestep*/, const bool /*verbose*/) {}
 
     /**
      * When using runtime components, AMReX requires to touch all tiles

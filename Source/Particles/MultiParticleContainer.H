@@ -179,7 +179,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void doResampling (int timestep);
+    void doResampling (int timestep, const bool verbose);
 
 #ifdef WARPX_QED
     /** If Schwinger process is activated, this function is called at every
