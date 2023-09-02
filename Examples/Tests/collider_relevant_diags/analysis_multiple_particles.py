@@ -91,30 +91,20 @@ for species in ['beam_p', 'beam_e']:
     assert np.allclose(np.average(CHI_ANALYTICAL, weights=w), chiave_cr, rtol=1e-8)
 
     # X AVE STD
-    fname=f'diags/reducedfiles/BeamRelevant_{species}.txt'
-    x_ave_br = np.loadtxt(fname)[:,2]
-    x_std_br = np.loadtxt(fname)[:,9]
     x_ave_cr = df[[col for col in df.columns if f']x_ave_{species}' in col]].to_numpy()
     x_std_cr = df[[col for col in df.columns if f']x_std_{species}' in col]].to_numpy()
     x_ave = np.average(x, weights=w)
     x_std = np.sqrt(np.average((x-x_ave)**2, weights=w))
     assert np.allclose(x_ave, x_ave_cr, rtol=1e-8)
-    assert np.allclose(x_ave_br, x_ave_cr, rtol=1e-8)
     assert np.allclose(x_std, x_std_cr, rtol=1e-8)
-    assert np.allclose(x_std_br, x_std_cr, rtol=1e-8)
 
     # Y AVE STD
-    fname=f'diags/reducedfiles/BeamRelevant_{species}.txt'
-    y_ave_br = np.loadtxt(fname)[:,3]
-    y_std_br = np.loadtxt(fname)[:,10]
     y_ave_cr = df[[col for col in df.columns if f']y_ave_{species}' in col]].to_numpy()
     y_std_cr = df[[col for col in df.columns if f']y_std_{species}' in col]].to_numpy()
     y_ave = np.average(y, weights=w)
     y_std = np.sqrt(np.average((y-y_ave)**2, weights=w))
     assert np.allclose(y_ave, y_ave_cr, rtol=1e-8)
-    assert np.allclose(y_ave_br, y_ave_cr, rtol=1e-8)
     assert np.allclose(y_std, y_std_cr, rtol=1e-8)
-    assert np.allclose(y_std_br, y_std_cr, rtol=1e-8)
 
     # THETA X MIN AVE MAX STD
     thetax_min_cr = df[[col for col in df.columns if f'theta_x_min_{species}' in col]].to_numpy()

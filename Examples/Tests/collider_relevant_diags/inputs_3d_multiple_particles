@@ -10,7 +10,8 @@ my_constants.nz = 8
 #################################
 max_step = 1
 amr.n_cell = nx ny nz
-warpx.numprocs = 1 1 1
+amr.max_grid_size = 4
+amr.blocking_factor = 4 
 amr.max_level = 0
 geometry.dims = 3
 geometry.prob_lo = 0 0 0
@@ -114,7 +115,7 @@ diag2.openpmd_backend = h5
 #diag2.dump_last_timestep = 1
 
 # REDUCED
-warpx.reduced_diags_names = ParticleExtrema_beam_e ParticleExtrema_beam_p BeamRelevant_beam_e BeamRelevant_beam_p ColliderRelevant_beam_e_beam_p
+warpx.reduced_diags_names = ParticleExtrema_beam_e ParticleExtrema_beam_p ColliderRelevant_beam_e_beam_p
 
 ColliderRelevant_beam_e_beam_p.type = ColliderRelevant
 ColliderRelevant_beam_e_beam_p.intervals = 1
@@ -127,11 +128,3 @@ ParticleExtrema_beam_e.species = beam_e
 ParticleExtrema_beam_p.type = ParticleExtrema
 ParticleExtrema_beam_p.intervals = 1
 ParticleExtrema_beam_p.species = beam_p
-
-BeamRelevant_beam_e.type = BeamRelevant
-BeamRelevant_beam_e.species = beam_e
-BeamRelevant_beam_e.intervals = 1
-
-BeamRelevant_beam_p.type= BeamRelevant
-BeamRelevant_beam_p.species = beam_p
-BeamRelevant_beam_p.intervals = 1
