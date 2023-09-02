@@ -543,7 +543,7 @@ void ColliderRelevant::ComputeDiags (int step)
             amrex::ParallelDescriptor::ReduceRealSum(chiave_f, IOProc);
 
             if(amrex::ParallelDescriptor::IOProcessor()) { chiave_f /= w_tot; }
-            
+
             m_data[get_idx("chimin_"+species_names[i_s])] = chimin_f;
             m_data[get_idx("chiave_"+species_names[i_s])] = chiave_f;
             m_data[get_idx("chimax_"+species_names[i_s])] = chimax_f;
