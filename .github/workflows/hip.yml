@@ -38,7 +38,7 @@ jobs:
         hipcc --version
         which clang
         which clang++
-        export CXX=$(which clang++)
+        export CXX=$(which hipcc)
         export CC=$(which clang)
 
         # "mpic++ --showme" forgets open-pal in Ubuntu 20.04 + OpenMPI 4.0.3
