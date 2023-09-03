@@ -36,9 +36,9 @@ DSMC::DSMC (const std::string collision_name)
         std::string cross_section_file;
         pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);
 
-        amrex::ParticleReal energy = 0._prt;
         // if the scattering process is excitation or ionization get the
         // energy associated with that process
+        amrex::ParticleReal energy = 0._prt;
         if (scattering_process.find("excitation") != std::string::npos ||
             scattering_process.find("ionization") != std::string::npos) {
             std::string kw_energy = scattering_process + "_energy";
@@ -49,34 +49,24 @@ DSMC::DSMC (const std::string collision_name)
         ScatteringProcess process(scattering_process, cross_section_file, energy);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(process.type() != ScatteringProcessType::INVALID,
-                                        "Cannot add an unknown scattering process type");
+                                         "Cannot add an unknown scattering process type");
 
         m_scattering_processes.push_back(std::move(process));
     }
 
 #ifdef AMREX_USE_GPU
     amrex::Gpu::HostVector<ScatteringProcess::Executor> h_scattering_processes_exe;
-    // amrex::Gpu::HostVector<ScatteringProcess::Executor> h_ionization_processes_exe;
     for (auto const& p : m_scattering_processes) {
         h_scattering_processes_exe.push_back(p.executor());
     }
-    // for (auto const& p : m_ionization_processes) {
-    //     h_ionization_processes_exe.push_back(p.executor());
-    // }
     m_scattering_processes_exe.resize(h_scattering_processes_exe.size());
-    // m_ionization_processes_exe.resize(h_ionization_processes_exe.size());
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_scattering_processes_exe.begin(),
                           h_scattering_processes_exe.end(), m_scattering_processes_exe.begin());
-    // amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, h_ionization_processes_exe.begin(),
-    //                       h_ionization_processes_exe.end(), m_ionization_processes_exe.begin());
     amrex::Gpu::streamSynchronize();
 #else
     for (auto const& p : m_scattering_processes) {
         m_scattering_processes_exe.push_back(p.executor());
     }
-    // for (auto const& p : m_ionization_processes) {
-    //     m_ionization_processes_exe.push_back(p.executor());
-    // }
 #endif
 }
 
@@ -95,21 +85,6 @@ DSMC::doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleConta
     SmartCopyFactory copy_factory_species2(species2, species2);
     auto copy_species1 = copy_factory_species1.getSmartCopy();
     auto copy_species2 = copy_factory_species2.getSmartCopy();
-
-// #ifdef AMREX_USE_GPU
-//     amrex::Gpu::DeviceVector<SmartCopy> device_copy_species1(n_product_species);
-//     amrex::Gpu::DeviceVector<SmartCopy> device_copy_species2(n_product_species);
-//     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, copy_species1.begin(),
-//                             copy_species1.end(), device_copy_species1.begin());
-//     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, copy_species2.begin(),
-//                             copy_species2.end(), device_copy_species2.begin());
-//     amrex::Gpu::streamSynchronize();
-//     auto copy_species1_data = device_copy_species1.data();
-//     auto copy_species2_data = device_copy_species2.data();
-// #else
-//     auto copy_species1_data = copy_species1.data();
-//     auto copy_species2_data = copy_species2.data();
-// #endif
 
     species1.defineAllParticleTiles();
     species2.defineAllParticleTiles();

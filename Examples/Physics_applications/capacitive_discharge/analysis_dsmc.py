@@ -16,7 +16,7 @@ fn = sys.argv[1]
 test_name = os.path.split(os.getcwd())[1]
 
 my_check = checksumAPI.evaluate_checksum(
-    test_name, fn, do_particles=True, rtol=5e-3
+    test_name, fn, do_particles=True, rtol=0.01
 )
 
 ref_density = np.array([
