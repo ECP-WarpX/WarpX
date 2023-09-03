@@ -2,8 +2,9 @@
 
 # 2023 TAE Technologies
 
-import numpy as np
 import sys
+
+import numpy as np
 
 sys.path.append('../../../../warpx/Regression/Checksum/')
 
