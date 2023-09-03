@@ -53,7 +53,7 @@ public:
      *
      * @param[in] collision_name the name of the collision
      */
-    DSMC (const std::string collision_name);
+    DSMC (std::string collision_name);
 
     /** Perform the collisions
      *
@@ -75,7 +75,7 @@ public:
      *
      */
     void doCollisionsWithinTile (
-        amrex::Real dt, int const lev, amrex::MFIter const& mfi,
+        amrex::Real dt, int lev, amrex::MFIter const& mfi,
         WarpXParticleContainer& species_1,
         WarpXParticleContainer& species_2,
         SmartCopy& copy_species1,

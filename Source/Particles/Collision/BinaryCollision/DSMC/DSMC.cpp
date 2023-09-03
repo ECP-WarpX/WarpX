@@ -116,7 +116,7 @@ DSMC::doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleConta
 
     // Enable tiling
     amrex::MFItInfo info;
-    if (amrex::Gpu::notInLaunchRegion()) info.EnableTiling(species1.tile_size);
+    if (amrex::Gpu::notInLaunchRegion()) info.EnableTiling(WarpXParticleContainer::tile_size);
 
     // Loop over refinement levels
     for (int lev = 0; lev <= species1.finestLevel(); ++lev){
