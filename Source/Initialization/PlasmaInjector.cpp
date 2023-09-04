@@ -519,8 +519,10 @@ void PlasmaInjector::setupExternalFile (const amrex::ParmParse& pp_species_name)
         }
         else {
             // TODO: Add ASSERT_WITH_MESSAGE to test if charge is a constant record
-            amrex::ParticleReal const p_q =
-                ps["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+            auto p_q_ptr =
+                ps["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>();
+            m_openpmd_input_series->flush();
+            amrex::ParticleReal const p_q = p_q_ptr.get()[0];
             double const charge_unit = ps["charge"][openPMD::RecordComponent::SCALAR].unitSI();
             charge = p_q * charge_unit;
         }
@@ -538,8 +540,10 @@ void PlasmaInjector::setupExternalFile (const amrex::ParmParse& pp_species_name)
         }
         else {
             // TODO: Add ASSERT_WITH_MESSAGE to test if mass is a constant record
-            amrex::ParticleReal const p_m =
-                ps["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+            auto p_m_ptr =
+                ps["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>();
+            m_openpmd_input_series->flush();
+            amrex::ParticleReal const p_m = p_m_ptr.get()[0];
             double const mass_unit = ps["mass"][openPMD::RecordComponent::SCALAR].unitSI();
             mass = p_m * mass_unit;
         }

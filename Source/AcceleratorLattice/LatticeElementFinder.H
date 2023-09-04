@@ -33,7 +33,7 @@ struct LatticeElementFinder
      * @param[in] a_mfi specifies the grid where the finder is defined
      * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
      */
-    void InitElementFinder (int const lev, amrex::MFIter const& a_mfi,
+    void InitElementFinder (int lev, amrex::MFIter const& a_mfi,
                             AcceleratorLattice const& accelerator_lattice);
 
     /**
@@ -50,7 +50,7 @@ struct LatticeElementFinder
      * @param[in] a_mfi specifies the grid where the finder is defined
      * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
      */
-    void UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
+    void UpdateIndices (int lev, amrex::MFIter const& a_mfi,
                         AcceleratorLattice const& accelerator_lattice);
 
     /* Define the location and size of the index lookup table */
@@ -72,7 +72,7 @@ struct LatticeElementFinder
      * @param[in] a_offset particle index offset needed to access particle info
      * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
      */
-    LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset,
+    LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int a_offset,
                                                         AcceleratorLattice const& accelerator_lattice);
 
     /* The index lookup tables for each lattice element type */
@@ -153,7 +153,7 @@ struct LatticeElementFinderDevice
      * @param[in] h_finder The host level instance of the element finder that this is associated with
      */
     void
-    InitLatticeElementFinderDevice (WarpXParIter const& a_pti, int const a_offset,
+    InitLatticeElementFinderDevice (WarpXParIter const& a_pti, int a_offset,
                                     AcceleratorLattice const& accelerator_lattice,
                                     LatticeElementFinder const & h_finder);
 

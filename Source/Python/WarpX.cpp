@@ -143,6 +143,10 @@ void init_WarpX (py::module& m)
             [](WarpX const & wx, int lev){ return wx.gett_new(lev); },
             py::arg("lev")
         )
+        .def("getdt",
+            [](WarpX const & wx, int lev){ return wx.getdt(lev); },
+            py::arg("lev")
+        )
 
         .def("set_potential_on_eb",
             [](WarpX& wx, std::string potential) {

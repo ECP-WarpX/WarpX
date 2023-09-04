@@ -879,17 +879,20 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
             doChargeDepositionSharedShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                               rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
                                               WarpX::n_rz_azimuthal_modes, cost,
-                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                                              WarpX::shared_tilesize);
         } else if (WarpX::nox == 2){
             doChargeDepositionSharedShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                               rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
                                               WarpX::n_rz_azimuthal_modes, cost,
-                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                                              WarpX::shared_tilesize);
         } else if (WarpX::nox == 3){
             doChargeDepositionSharedShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                               rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
                                               WarpX::n_rz_azimuthal_modes, cost,
-                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                                              WarpX::shared_tilesize);
         }
 #ifndef AMREX_USE_GPU
         // CPU, tiling: atomicAdd local_rho into rho

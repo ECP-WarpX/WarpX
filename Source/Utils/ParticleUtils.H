@@ -29,7 +29,7 @@ namespace ParticleUtils {
      * @param[in] ptile the particle tile.
      */
     amrex::DenseBins<WarpXParticleContainer::ParticleType>
-    findParticlesInEachCell( int const lev, amrex::MFIter const& mfi,
+    findParticlesInEachCell(int lev, amrex::MFIter const& mfi,
                              WarpXParticleContainer::ParticleTileType const& ptile);
 
     /**

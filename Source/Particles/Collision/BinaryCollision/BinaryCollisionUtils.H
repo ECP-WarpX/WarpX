@@ -29,13 +29,13 @@ enum struct NuclearFusionType {
 
 namespace BinaryCollisionUtils{
 
-    NuclearFusionType get_nuclear_fusion_type (const std::string collision_name,
-                                               MultiParticleContainer const * const mypc);
+    NuclearFusionType get_nuclear_fusion_type (std::string collision_name,
+                                               MultiParticleContainer const * mypc);
 
-    CollisionType get_collision_type (const std::string collision_name,
-                                      MultiParticleContainer const * const mypc);
+    CollisionType get_collision_type (std::string collision_name,
+                                      MultiParticleContainer const * mypc);
 
-    CollisionType nuclear_fusion_type_to_collision_type (const NuclearFusionType fusion_type);
+    CollisionType nuclear_fusion_type_to_collision_type (NuclearFusionType fusion_type);
 }
 
 #endif // BINARY_COLLISION_UTILS_H_
