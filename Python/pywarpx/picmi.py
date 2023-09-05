@@ -1673,6 +1673,12 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     warpx_checkpoint_signals: list of strings
         Signals on which to write out a checkpoint
+
+    warpx_numprocs: list of ints (1 in 1D, 2 in 2D, 3 in 3D)
+        Domain decomposition on the coarsest level.
+        The domain will be chopped into the exact number of pieces in each dimension as specified by this parameter.
+        https://warpx.readthedocs.io/en/latest/usage/parameters.html#distribution-across-mpi-ranks-and-parallelization
+        https://warpx.readthedocs.io/en/latest/usage/domain_decomposition.html#simple-method
     """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
@@ -1716,6 +1722,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         self.break_signals = kw.pop('warpx_break_signals', None)
         self.checkpoint_signals = kw.pop('warpx_checkpoint_signals', None)
+        self.numprocs = kw.pop('warpx_numprocs', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -1765,6 +1772,8 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.break_signals = self.break_signals
         pywarpx.warpx.checkpoint_signals = self.checkpoint_signals
+
+        pywarpx.warpx.numprocs = self.numprocs
 
         particle_shape = self.particle_shape
         for s in self.species:
@@ -2161,6 +2170,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
             variables = list(variables)
             variables.sort()
 
+        # species list
         if np.iterable(self.species):
             species_list = self.species
         else:
@@ -2341,6 +2351,46 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.do_back_transformed_fields = self.write_fields
 
         self.set_write_dir()
+
+        # --- Use a set to ensure that fields don't get repeated.
+        variables = set()
+
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'position':
+                    # --- The positions are alway written out anyway
+                    pass
+                elif dataname == 'momentum':
+                    variables.add('ux')
+                    variables.add('uy')
+                    variables.add('uz')
+                elif dataname == 'weighting':
+                    variables.add('w')
+                elif dataname == 'fields':
+                    variables.add('Ex')
+                    variables.add('Ey')
+                    variables.add('Ez')
+                    variables.add('Bx')
+                    variables.add('By')
+                    variables.add('Bz')
+                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                    variables.add(dataname)
+
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            variables = list(variables)
+            variables.sort()
+
+        # species list
+        if np.iterable(self.species):
+            species_list = self.species
+        else:
+            species_list = [self.species]
+
+        for specie in species_list:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + specie.name,
+                                         variables = variables)
+            self.diagnostic._species_dict[specie.name] = diag
 
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):

@@ -216,7 +216,7 @@ WarpX::Evolve (int numsteps)
         // Resample particles
         // +1 is necessary here because value of step seen by user (first step is 1) is different than
         // value of step in code (first step is 0)
-        mypc->doResampling(istep[0]+1);
+        mypc->doResampling(istep[0]+1, verbose);
 
         if (num_mirrors>0){
             applyMirrors(cur_time);
