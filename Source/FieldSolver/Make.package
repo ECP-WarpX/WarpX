@@ -1,4 +1,5 @@
 CEXE_sources += WarpXPushFieldsEM.cpp
+CEXE_sources += WarpXPushFieldsHybridPIC.cpp
 CEXE_sources += ElectrostaticSolver.cpp
 CEXE_sources += WarpX_QED_Field_Pushers.cpp
 ifeq ($(USE_PSATD),TRUE)

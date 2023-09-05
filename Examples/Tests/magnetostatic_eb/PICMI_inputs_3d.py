@@ -155,9 +155,9 @@ sim.step(max_steps)
 Ex = fields.ExWrapper()
 Ey = fields.EyWrapper()
 
-x_vec = Ex.mesh('x') + xmin
-y_vec = Ex.mesh('y') + ymin
-z_vec = Ex.mesh('z') + zmin
+x_vec = Ex.mesh('x')
+y_vec = Ex.mesh('y')
+z_vec = Ex.mesh('z')
 
 @np.vectorize
 def Er_an(r):
@@ -214,9 +214,9 @@ assert (er_err < 0.05), "Er Max Error increased above 5%"
 Bx = fields.BxWrapper()
 By = fields.ByWrapper()
 
-x_vec = Bx.mesh('x') + xmin
-y_vec = Bx.mesh('y') + ymin
-z_vec = Bx.mesh('z') + zmin
+x_vec = Bx.mesh('x')
+y_vec = Bx.mesh('y')
+z_vec = Bx.mesh('z')
 
 dx = x_vec[1] - x_vec[0]
 dy = y_vec[1] - y_vec[0]

@@ -69,12 +69,12 @@ PsatdAlgorithmPml::pushSpectralFields(SpectralFieldData& f) const {
         const Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        Array4<Complex> fields = f.fields[mfi].array();
+        const Array4<Complex> fields = f.fields[mfi].array();
 
         // Extract arrays for the coefficients
-        Array4<const Real> C_arr = C_coef[mfi].array();
-        Array4<const Real> S_ck_arr = S_ck_coef[mfi].array();
-        Array4<const Real> inv_k2_arr = inv_k2_coef[mfi].array();
+        const Array4<const Real> C_arr = C_coef[mfi].array();
+        const Array4<const Real> S_ck_arr = S_ck_coef[mfi].array();
+        const Array4<const Real> inv_k2_arr = inv_k2_coef[mfi].array();
 
         // Extract pointers for the k vectors
         const Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
@@ -368,9 +368,9 @@ void PsatdAlgorithmPml::InitializeSpectralCoefficients (
         const Real* modified_kz = modified_kz_vec[mfi].dataPtr();
 
         // Extract arrays for the coefficients
-        Array4<Real> C = C_coef[mfi].array();
-        Array4<Real> S_ck = S_ck_coef[mfi].array();
-        Array4<Real> inv_k2 = inv_k2_coef[mfi].array();
+        const Array4<Real> C = C_coef[mfi].array();
+        const Array4<Real> S_ck = S_ck_coef[mfi].array();
+        const Array4<Real> inv_k2 = inv_k2_coef[mfi].array();
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept

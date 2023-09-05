@@ -10,7 +10,7 @@
 
 #include "ablastr/utils/msg_logger/MsgLogger_fwd.H"
 
-#include <AMReX_ParmParse.H>
+#include <AMReX_BaseFwd.H>
 
 #include <memory>
 #include <optional>
@@ -128,7 +128,7 @@ namespace ablastr::warn_manager
         *
         * @param[in, out] params the inputfile parser
         */
-        void debug_read_warnings_from_input(amrex::ParmParse& params);
+        void debug_read_warnings_from_input(const amrex::ParmParse& params);
 
         static const int warn_line_size = 80 /*! Maximum line length to be used in formatting warning list*/;
         static const int warn_tab_size = 5 /*! Tabulation size to be used in formatting warning list*/;
@@ -172,8 +172,8 @@ namespace ablastr::warn_manager
         */
         static std::string GetHeader(
             const std::string& when,
-            const int line_size,
-            const bool is_global);
+            int line_size,
+            bool is_global);
 
         /**
         * \brief This function formats each line of a warning message text
@@ -185,8 +185,8 @@ namespace ablastr::warn_manager
         */
         static std::string MsgFormatter(
             const std::string& msg,
-            const int line_size,
-            const int tab_size);
+            int line_size,
+            int tab_size);
 
         int m_rank = 0 /*! MPI rank (appears in the warning list)*/;
         std::unique_ptr<ablastr::utils::msg_logger::Logger> m_p_logger /*! The Logger stores all the warning messages*/;

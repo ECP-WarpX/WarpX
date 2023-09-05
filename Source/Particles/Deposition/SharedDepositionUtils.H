@@ -10,7 +10,6 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXConst.H"
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpX_Complex.H"
@@ -26,8 +25,8 @@
 AMREX_FORCE_INLINE
 int getMaxTboxAlongDim (int nCells, int tilesize){
     int maxTilesize = 0;
-    int nTiles = nCells / tilesize;
-    int remainder = nCells % tilesize;
+    const int nTiles = nCells / tilesize;
+    const int remainder = nCells % tilesize;
     maxTilesize = tilesize + int(std::ceil((amrex::Real) remainder / nTiles));
     return maxTilesize;
 }
@@ -69,7 +68,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
                        const amrex::ParticleReal * const uxp,
                        const amrex::ParticleReal * const uyp,
                        const amrex::ParticleReal * const uzp,
-                       const int * const ion_lev,
+                       const int* ion_lev,
                        amrex::Array4<amrex::Real> const& j_buff,
                        amrex::IntVect const j_type,
                        const amrex::Real relative_time,

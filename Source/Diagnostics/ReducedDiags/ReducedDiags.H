@@ -36,11 +36,14 @@ public:
     /// output intervals
     utils::parser::IntervalsParser m_intervals;
 
-    /// check if it is a restart run
-    int m_IsNotRestart = 1;
+    /// check if header should be written
+    bool m_write_header = false;
 
     /// separator in the output file
     std::string m_sep = " ";
+
+    /// precision for data in the output file
+    int m_precision = 14;
 
     /// output data
     std::vector<amrex::Real> m_data;

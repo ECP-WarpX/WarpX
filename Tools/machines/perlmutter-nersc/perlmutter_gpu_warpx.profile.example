@@ -1,11 +1,15 @@
 # please set your project account
-#export proj="<yourProject>_g"  # change me
+export proj=""  # change me! GPU projects must end in "..._g"
+
+# remembers the location of this script
+export MY_PROFILE=$(cd $(dirname $BASH_SOURCE) && pwd)"/"$(basename $BASH_SOURCE)
+if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in your $MY_PROFILE file! Please edit its line 2 to continue!"; return; fi
 
 # required dependencies
 module load cmake/3.22.0
 
 # optional: for QED support with detailed tables
-export BOOST_ROOT=/global/common/software/spackecp/perlmutter/e4s-22.05/78535/spack/opt/spack/cray-sles15-zen3/gcc-11.2.0/boost-1.79.0-lmdngktoeuwdi6ty55noznunah2mvk5w
+export BOOST_ROOT=/global/common/software/spackecp/perlmutter/e4s-22.11/83104/spack/opt/spack/linux-sles15-zen3/gcc-11.2.0/boost-1.80.0-ute7nbx4wmfrw53q7hyh6wyezub5ljry
 
 # optional: for openPMD and PSATD+RZ support
 module load cray-hdf5-parallel/1.12.2.1
