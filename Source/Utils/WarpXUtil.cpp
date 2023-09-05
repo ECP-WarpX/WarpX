@@ -387,6 +387,7 @@ void CheckGriddingForRZSpectral ()
 
 void ReadBCParams ()
 {
+
     amrex::Vector<std::string> field_BC_lo(AMREX_SPACEDIM,"default");
     amrex::Vector<std::string> field_BC_hi(AMREX_SPACEDIM,"default");
     amrex::Vector<std::string> particle_BC_lo(AMREX_SPACEDIM,"default");
