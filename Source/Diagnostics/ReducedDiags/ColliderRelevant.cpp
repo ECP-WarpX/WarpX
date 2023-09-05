@@ -55,7 +55,6 @@
 #include <limits>
 #include <map>
 #include <memory>
-#include <memory>
 #include <vector>
 
 using namespace amrex;
@@ -78,13 +77,13 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
 #endif
 
     ablastr::warn_manager::WMRecordWarning(
-        "DIAGNOSTICS",
+        "Diagnostics",
         "The collider-relevant reduced diagnostic is meant for \
         colliding species propagating along the z direction.",
         ablastr::warn_manager::WarnPriority::low);
 
     ablastr::warn_manager::WMRecordWarning(
-        "DIAGNOSTICS",
+        "Diagnostics",
         "The collider-relevant reduced diagnostic only considers the \
         coarsest level of refinement for the calculations involving chi.",
         ablastr::warn_manager::WarnPriority::low);
@@ -442,8 +441,8 @@ void ColliderRelevant::ComputeDiags (int step)
             const bool galerkin_interpolation = WarpX::galerkin_interpolation;
             const amrex::IntVect ngEB = warpx.getngEB();
 
-            // TO DO: loop over refinement levels: for (int lev = 0; lev <= level_number; ++lev)
-            int lev = 0;
+            // TODO loop over refinement levels: for (int lev = 0; lev <= level_number; ++lev)
+            const int lev = 0;
 
             // define variables in preparation for field gathering
             const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));

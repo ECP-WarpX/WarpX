@@ -3034,7 +3034,7 @@ Reduced Diagnostics
 
         For 2D-XZ, :math:`y`-related quantities are not outputted.
         For 1D-Z, :math:`x`-related and :math:`y`-related quantities are not outputted.
-        RZ geomtry is not supported yet.
+        RZ geometry is not supported yet.
 
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
