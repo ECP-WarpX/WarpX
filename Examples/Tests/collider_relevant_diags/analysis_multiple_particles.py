@@ -39,8 +39,14 @@ def dL_dt():
         dV = np.prod(rho1.grid_spacing)
         rho1 = it.meshes["rho_beam_e"][io.Mesh_Record_Component.SCALAR].load_chunk()
         rho2 = it.meshes["rho_beam_p"][io.Mesh_Record_Component.SCALAR].load_chunk()
-        q1 = np.unique(it.particles["beam_e"]["charge"][io.Mesh_Record_Component.SCALAR].load_chunk())
-        q2 = np.unique(it.particles["beam_p"]["charge"][io.Mesh_Record_Component.SCALAR].load_chunk())
+        beam_e_charge = it.particles["beam_e"]["charge"][io.Mesh_Record_Component.SCALAR].load_chunk()
+        beam_p_charge = it.particles["beam_p"]["charge"][io.Mesh_Record_Component.SCALAR].load_chunk()
+        q1 = beam_e_charge[0]
+        if not np.all(beam_e_charge == q1):
+            sys.exit('beam_e particles do not have the same charge')
+        q2 = beam_p_charge[0]
+        if not np.all(beam_p_charge == q2):
+            sys.exit('beam_p particles do not have the same charge')
         series.flush()
         n1 = rho1/q1
         n2 = rho2/q2
