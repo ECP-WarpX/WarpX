@@ -18,6 +18,7 @@
 
 #include <AMReX_Print.H>
 
+
 int main(int argc, char* argv[])
 {
     ablastr::parallelization::mpi_init(argc, argv);
@@ -39,7 +40,8 @@ int main(int argc, char* argv[])
         warpx.Evolve();
 
         //Print warning messages at the end of the simulation
-        ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
+        amrex::Print() <<
+            ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 
         timer.record_stop_time();
         if (warpx.Verbose()) {

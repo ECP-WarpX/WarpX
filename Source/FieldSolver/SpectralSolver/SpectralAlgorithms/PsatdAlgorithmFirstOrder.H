@@ -47,14 +47,14 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
-            const int norder_x,
-            const int norder_y,
-            const int norder_z,
-            const short grid_type,
-            const amrex::Real dt,
-            const bool div_cleaning,
-            const int J_in_time,
-            const int rho_in_time);
+            int norder_x,
+            int norder_y,
+            int norder_z,
+            short grid_type,
+            amrex::Real dt,
+            bool div_cleaning,
+            int J_in_time,
+            int rho_in_time);
 
         /**
          * \brief Updates E, B, F, and G fields in spectral space,

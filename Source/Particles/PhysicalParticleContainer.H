@@ -138,9 +138,9 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
-                         const amrex::IntVect ngEB, const int /*e_is_nodal*/,
-                         const long offset,
-                         const long np_to_push,
+                         amrex::IntVect ngEB, int /*e_is_nodal*/,
+                         long offset,
+                         long np_to_push,
                          int lev, int gather_lev,
                          amrex::Real dt, ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full);
@@ -156,9 +156,9 @@ public:
     void PartitionParticlesInBuffers (
                         long& nfine_current,
                         long& nfine_gather,
-                        long const np,
+                        long np,
                         WarpXParIter& pti,
-                        int const lev,
+                        int lev,
                         amrex::iMultiFab const* current_masks,
                         amrex::iMultiFab const* gather_masks );
 
@@ -200,13 +200,13 @@ public:
 
     void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                                     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
-                                    amrex::ParticleReal t_lab = 0._prt);
+                                    amrex::Real t_lab = 0._prt);
 
     void AddGaussianBeam (
-        const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
-        const amrex::Real x_rms, const amrex::Real y_rms, const amrex::Real z_rms,
-        const amrex::Real x_cut, const amrex::Real y_cut, const amrex::Real z_cut,
-        const amrex::Real q_tot, long npart, const int do_symmetrize, const int symmetrization_order);
+        amrex::Real x_m, amrex::Real y_m, amrex::Real z_m,
+        amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
+        amrex::Real x_cut, amrex::Real y_cut, amrex::Real z_cut,
+        amrex::Real q_tot, long npart, int do_symmetrize, int symmetrization_order);
 
     /** Load a particle beam from an external file
      * @param[in] q_tot total charge of the particle species to be initialized
@@ -226,7 +226,7 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uy,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uz,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w,
-        amrex::ParticleReal t_lab= 0._prt);
+        amrex::Real t_lab= 0._prt);
 
     /**
      * \brief Default initialize runtime attributes in a tile. This routine does not initialize the
@@ -307,7 +307,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void resample (const int timestep) final;
+    void resample (const int timestep, bool verbose) final;
 
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H
@@ -359,13 +359,16 @@ protected:
     bool do_backward_propagation = false;
     bool m_rz_random_theta = true;
 
+    // Impose t_lab from the openPMD file for externally loaded species
+    bool impose_t_lab_from_file = false;
+
     Resampling m_resampler;
 
     // Inject particles during the whole simulation
     void ContinuousInjection (const amrex::RealBox& injection_box) override;
 
     // Continuously inject a flux of particles from a defined surface
-    void ContinuousFluxInjection (const amrex::Real t, const amrex::Real dt) override;
+    void ContinuousFluxInjection (amrex::Real t, amrex::Real dt) override;
 
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise

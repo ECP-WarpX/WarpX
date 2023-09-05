@@ -214,26 +214,31 @@ namespace detail
     /** Return the component labels for particle positions
      */
     inline std::vector< std::string >
-    getParticlePositionComponentLabels ()
+    getParticlePositionComponentLabels (bool ignore_dims=false)
     {
         using vs = std::vector< std::string >;
+        vs positionComponents;
+        if (ignore_dims) {
+            positionComponents = vs{"x", "y", "z"};
+        } else {
 #if defined(WARPX_DIM_1D_Z)
-        vs const positionComponents{"z"};
+            positionComponents = vs{"z"};
 #elif defined(WARPX_DIM_XZ)
-        vs const positionComponents{"x", "z"};
+            positionComponents = vs{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
-        // note: although we internally store particle positions
-        //       for AMReX in r,z and a theta attribute, we
-        //       actually need them for algorithms (e.g. push)
-        //       and I/O in Cartesian.
-        //       Other attributes like momentum are consequently
-        //       stored in x,y,z internally.
-        vs const positionComponents{"x", "y", "z"};
+            // note: although we internally store particle positions
+            //       for AMReX in r,z and a theta attribute, we
+            //       actually need them for algorithms (e.g. push)
+            //       and I/O in Cartesian.
+            //       Other attributes like momentum are consequently
+            //       stored in x,y,z internally.
+            positionComponents = vs{"x", "y", "z"};
 #elif defined(WARPX_DIM_3D)
-        vs const positionComponents{"x", "y", "z"};
+            positionComponents = vs{"x", "y", "z"};
 #else
 #   error Unknown WarpX dimensionality.
 #endif
+        }
         return positionComponents;
     }
 
@@ -282,12 +287,12 @@ namespace detail
         using vs = std::vector< std::string >;
         if (var_in_theta_mode) {
             // if we write individual modes
-            vs const fieldComponents{"r", "t", "z"};
+            vs fieldComponents{"r", "t", "z"};
             return fieldComponents;
         } else {
             // if we just write reconstructed fields at theta=0 or are Cartesian
             // note: 1D3V and 2D3V simulations still have 3 components for the fields
-            vs const fieldComponents{"x", "y", "z"};
+            vs fieldComponents{"x", "y", "z"};
             return fieldComponents;
         }
     }
@@ -588,7 +593,9 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
           using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
           tmp.copyParticles(*pc,
-                            [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+                            [random_filter,uniform_filter,parser_filter,geometry_filter]
+                            AMREX_GPU_HOST_DEVICE
+                            (const SrcData& src, int ip, const amrex::RandomEngine& engine)
           {
               const SuperParticleType& p = src.getSuperParticle(ip);
               return random_filter(p, engine) * uniform_filter(p, engine)
@@ -719,7 +726,6 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
             const auto &aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
             {
                 // Save positions
-                auto const positionComponents = detail::getParticlePositionComponentLabels();
 #if defined(WARPX_DIM_RZ)
                 {
                    const std::shared_ptr<amrex::ParticleReal> z(
@@ -756,6 +762,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
                 }
 #else
+                auto const positionComponents = detail::getParticlePositionComponentLabels();
                 for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
                     const std::shared_ptr<amrex::ParticleReal> curr(
                             new amrex::ParticleReal[numParticleOnTile],
@@ -1025,12 +1032,19 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
     auto const scalar = openPMD::RecordComponent::SCALAR;
 
     // define record shape to be number of particles
-    auto const positionComponents = detail::getParticlePositionComponentLabels();
+    auto const positionComponents = detail::getParticlePositionComponentLabels(true);
     for( auto const& comp : positionComponents ) {
         currSpecies["positionOffset"][comp].resetDataset( realType );
     }
     currSpecies["charge"][scalar].resetDataset( realType );
     currSpecies["mass"][scalar].resetDataset( realType );
+#if defined(WARPX_DIM_1D_Z)
+    currSpecies["position"]["x"].resetDataset( realType );
+    currSpecies["position"]["y"].resetDataset( realType );
+#endif
+#if defined(WARPX_DIM_XZ)
+    currSpecies["position"]["y"].resetDataset( realType );
+#endif
 
     // make constant
     using namespace amrex::literals;
@@ -1039,6 +1053,14 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
     }
     currSpecies["charge"][scalar].makeConstant( charge );
     currSpecies["mass"][scalar].makeConstant( mass );
+    //   convention: in 1D3V and 2D3V, omitted positions are set to zero
+#if defined(WARPX_DIM_1D_Z)
+    currSpecies["position"]["x"].makeConstant( 0._prt );
+    currSpecies["position"]["y"].makeConstant( 0._prt );
+#endif
+#if defined(WARPX_DIM_XZ)
+    currSpecies["position"]["y"].makeConstant( 0._prt );
+#endif
 
     // meta data
     currSpecies["position"].setUnitDimension( detail::getUnitDimension("position") );
@@ -1342,7 +1364,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
     }
 
     // If there are no fields to be written, interrupt the function here
-    if ( varnames.size()==0 ) return;
+    if ( varnames.empty() ) return;
 
     // loop over levels up to output_levels
     //   note: this is usually the finestLevel, not the maxLevel

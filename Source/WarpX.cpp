@@ -86,20 +86,11 @@ using namespace amrex;
 Vector<Real> WarpX::E_external_grid(3, 0.0);
 Vector<Real> WarpX::B_external_grid(3, 0.0);
 
-std::string WarpX::authors = "";
+std::string WarpX::authors;
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
 bool WarpX::add_external_E_field = false;
 bool WarpX::add_external_B_field = false;
-
-// Parser for B_external on the grid
-std::string WarpX::str_Bx_ext_grid_function;
-std::string WarpX::str_By_ext_grid_function;
-std::string WarpX::str_Bz_ext_grid_function;
-// Parser for E_external on the grid
-std::string WarpX::str_Ex_ext_grid_function;
-std::string WarpX::str_Ey_ext_grid_function;
-std::string WarpX::str_Ez_ext_grid_function;
 
 int WarpX::do_moving_window = 0;
 int WarpX::start_moving_window_step = 0;
@@ -299,10 +290,11 @@ WarpX::WarpX ()
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
-    // Loop over species and set current injection position per species
+    // Loop over species (particles and lasers)
+    // and set current injection position per species
     mypc = std::make_unique<MultiParticleContainer>(this);
-    const int n_species = mypc->nSpecies();
-    for (int i=0; i<n_species; i++)
+    const int n_containers = mypc->nContainers();
+    for (int i=0; i<n_containers; i++)
     {
         WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
 
@@ -546,7 +538,7 @@ WarpX::ReadParameters ()
         ablastr::warn_manager::GetWMInstance().SetAlwaysWarnImmediately(always_warn_immediately);
 
         // Set the WarnPriority threshold to decide if WarpX has to abort when a warning is recorded
-        if(std::string str_abort_on_warning_threshold = "";
+        if(std::string str_abort_on_warning_threshold;
             pp_warpx.query("abort_on_warning_threshold", str_abort_on_warning_threshold)){
             std::optional<ablastr::warn_manager::WarnPriority> abort_on_warning_threshold = std::nullopt;
             if (str_abort_on_warning_threshold == "high")
@@ -616,6 +608,8 @@ WarpX::ReadParameters ()
                 break;
             }
         }
+
+        pp_warpx.query("write_diagonstics_on_restart", write_diagonstics_on_restart);
 
         pp_warpx.queryarr("checkpoint_signals", signals_in);
 #if defined(__linux__) || defined(__APPLE__)
@@ -1036,6 +1030,12 @@ WarpX::ReadParameters ()
             current_centering_noz = 8;
         }
 
+#ifdef WARPX_DIM_RZ
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            grid_type != GridType::Hybrid,
+            "warpx.grid_type=hybrid is not implemented in RZ geometry");
+#endif
+
         // If true, the current is deposited on a nodal grid and centered onto
         // a staggered grid. Setting warpx.do_current_centering=1 makes sense
         // only if warpx.grid_type=hybrid. Instead, if warpx.grid_type=nodal or
@@ -1212,7 +1212,7 @@ WarpX::ReadParameters ()
         // In that case we should throw a specific warning since
         // representation of a laser pulse in cylindrical coordinates
         // requires at least 2 azimuthal modes
-        if (lasers_names.size() > 0 && n_rz_azimuthal_modes < 2) {
+        if (!lasers_names.empty() && n_rz_azimuthal_modes < 2) {
             ablastr::warn_manager::WMRecordWarning("Laser",
             "Laser pulse representation in RZ requires at least 2 azimuthal modes",
             ablastr::warn_manager::WarnPriority::high);
@@ -3166,7 +3166,7 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMultiFabMap(name_with_suffix, mf);
+    multifab_map[name_with_suffix] = mf.get();
 }
 
 void
@@ -3186,7 +3186,7 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMultiFabMap(name_with_suffix, mf);
+    imultifab_map[name_with_suffix] = mf.get();
 }
 
 void
@@ -3204,5 +3204,5 @@ WarpX::AliasInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMultiFabMap(name_with_suffix, mf);
+    multifab_map[name_with_suffix] = mf.get();
 }

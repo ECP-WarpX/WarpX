@@ -15,8 +15,6 @@
 #include <AMReX_Config.H>
 
 
-using amrex::operator""_rt;
-
 /* \brief Initialize fields in spectral space, and FFT plans
  *
  * \param realspace_ba Box array that corresponds to the decomposition
@@ -204,7 +202,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
 
 SpectralFieldDataRZ::~SpectralFieldDataRZ()
 {
-    if (fields.size() > 0){
+    if (!fields.empty()){
         for (amrex::MFIter mfi(fields); mfi.isValid(); ++mfi){
 #if defined(AMREX_USE_CUDA)
             // Destroy cuFFT plans.

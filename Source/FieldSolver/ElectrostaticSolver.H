@@ -14,7 +14,10 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Parser.H>
 
+#include <array>
+#include <string>
 #include <utility>
+
 
 namespace ElectrostaticSolver {
 
@@ -53,7 +56,7 @@ namespace ElectrostaticSolver {
          *
          * \param [in] potential The string value of the potential
          */
-        void setPotentialEB(const std::string potential) {
+        void setPotentialEB (std::string potential) {
             potential_eb_str = potential;
             buildParsersEB();
         }

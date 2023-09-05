@@ -79,7 +79,8 @@ WarpX::Evolve (int numsteps)
         WARPX_PROFILE("WarpX::Evolve::step");
         const Real evolve_time_beg_step = amrex::second();
 
-        CheckSignals();
+        //Check and clear signal flags and asynchronously broadcast them from process 0
+        SignalHandling::CheckSignals();
 
         multi_diags->NewIteration();
 
@@ -215,7 +216,7 @@ WarpX::Evolve (int numsteps)
         // Resample particles
         // +1 is necessary here because value of step seen by user (first step is 1) is different than
         // value of step in code (first step is 0)
-        mypc->doResampling(istep[0]+1);
+        mypc->doResampling(istep[0]+1, verbose);
 
         if (num_mirrors>0){
             applyMirrors(cur_time);
@@ -564,7 +565,7 @@ void WarpX::SyncCurrentAndRho ()
     // Reflect charge and current density over PEC boundaries, if needed.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (rho_fp[lev].get()) {
+        if (rho_fp[lev]) {
             ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
         }
         ApplyJfieldBoundary(
@@ -572,7 +573,7 @@ void WarpX::SyncCurrentAndRho ()
             current_fp[lev][2].get(), PatchType::fine
         );
         if (lev > 0) {
-            if (rho_cp[lev].get()) {
+            if (rho_cp[lev]) {
                 ApplyRhofieldBoundary(lev, rho_cp[lev].get(), PatchType::coarse);
             }
             ApplyJfieldBoundary(
@@ -1016,9 +1017,9 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         if (current_buf[lev][0].get()) {
             ApplyInverseVolumeScalingToCurrentDensity(current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(), lev-1);
         }
-        if (rho_fp[lev].get()) {
+        if (rho_fp[lev]) {
             ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
-            if (charge_buf[lev].get()) {
+            if (charge_buf[lev]) {
                 ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
             }
         }
@@ -1079,8 +1080,8 @@ WarpX::applyMirrors(Real time)
             NullifyMF(Bz, lev, z_min, z_max);
 
             // If div(E)/div(B) cleaning are used, set F/G field to zero
-            if (F_fp[lev]) NullifyMF(*F_fp[lev].get(), lev, z_min, z_max);
-            if (G_fp[lev]) NullifyMF(*G_fp[lev].get(), lev, z_min, z_max);
+            if (F_fp[lev]) NullifyMF(*F_fp[lev], lev, z_min, z_max);
+            if (G_fp[lev]) NullifyMF(*G_fp[lev], lev, z_min, z_max);
 
             if (lev>0)
             {
@@ -1101,17 +1102,11 @@ WarpX::applyMirrors(Real time)
                 NullifyMF(cBz, lev, z_min, z_max);
 
                 // If div(E)/div(B) cleaning are used, set F/G field to zero
-                if (F_cp[lev]) NullifyMF(*F_cp[lev].get(), lev, z_min, z_max);
-                if (G_cp[lev]) NullifyMF(*G_cp[lev].get(), lev, z_min, z_max);
+                if (F_cp[lev]) NullifyMF(*F_cp[lev], lev, z_min, z_max);
+                if (G_cp[lev]) NullifyMF(*G_cp[lev], lev, z_min, z_max);
             }
         }
     }
-}
-
-void
-WarpX::CheckSignals()
-{
-    SignalHandling::CheckSignals();
 }
 
 void

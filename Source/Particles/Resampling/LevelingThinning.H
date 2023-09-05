@@ -36,7 +36,7 @@ public:
      *
      * @param[in] species_name the name of the resampled species
      */
-    LevelingThinning (const std::string species_name);
+    LevelingThinning (std::string species_name);
 
     /**
      * \brief A method that performs leveling thinning for the considered species.

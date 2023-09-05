@@ -20,8 +20,8 @@ public:
                   to the output diagnostic MultiFab mf_dst.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    PartPerCellFunctor(const amrex::MultiFab * const mf_src, const int lev,
-                       const amrex::IntVect crse_ratio, const int ncomp=1);
+    PartPerCellFunctor(const amrex::MultiFab* mf_src, int lev,
+                       amrex::IntVect crse_ratio, int ncomp=1);
 
     /** \brief Compute the number of particles per cell directly into mf_dst.
      *

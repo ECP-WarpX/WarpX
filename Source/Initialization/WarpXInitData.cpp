@@ -483,15 +483,17 @@ WarpX::InitData ()
         // looks at field values will see the composite of the field
         // solution and any external field
         AddExternalFields();
+    }
 
+    if (restart_chkfile.empty() || write_diagonstics_on_restart) {
         // Write full diagnostics before the first iteration.
-        multi_diags->FilterComputePackFlush( -1 );
+        multi_diags->FilterComputePackFlush(istep[0] - 1);
 
         // Write reduced diagnostics before the first iteration.
         if (reduced_diags->m_plot_rd != 0)
         {
-            reduced_diags->ComputeDiags(-1);
-            reduced_diags->WriteToFile(-1);
+            reduced_diags->ComputeDiags(istep[0] - 1);
+            reduced_diags->WriteToFile(istep[0] - 1);
         }
     }
 
@@ -805,6 +807,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        WARPX_ABORT_WITH_MESSAGE(
            "E and B parser for external fields does not work with RZ -- TO DO");
 #endif
+
+       //! Strings storing parser function to initialize the components of the magnetic field on the grid
+       std::string str_Bx_ext_grid_function;
+       std::string str_By_ext_grid_function;
+       std::string str_Bz_ext_grid_function;
+
        utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
           str_Bx_ext_grid_function);
        utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
@@ -863,6 +871,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        WARPX_ABORT_WITH_MESSAGE(
            "E and B parser for external fields does not work with RZ -- TO DO");
 #endif
+
+       //! Strings storing parser function to initialize the components of the electric field on the grid
+       std::string str_Ex_ext_grid_function;
+       std::string str_Ey_ext_grid_function;
+       std::string str_Ez_ext_grid_function;
+
        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
            str_Ex_ext_grid_function);
        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
@@ -1345,6 +1359,16 @@ void WarpX::CheckKnownIssues()
             "applied directly to particles."
         );
     }
+
+#if defined(__CUDACC__) && (__CUDACC_VER_MAJOR__ == 11) && (__CUDACC_VER_MINOR__ == 6)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee)
+    {
+        WARPX_ABORT_WITH_MESSAGE(
+            "CUDA 11.6 does not work with the Yee Maxwell "
+            "solver: https://github.com/AMReX-Codes/amrex/issues/2607"
+        );
+    }
+#endif
 }
 
 #if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z) && !defined(WARPX_DIM_XZ)

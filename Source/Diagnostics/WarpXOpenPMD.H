@@ -10,7 +10,6 @@
 
 #include "Particles/WarpXParticleContainer.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
-#include "Utils/TextMsg.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
 
@@ -35,26 +34,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-//
-// helper class
-//
-class Timer
-{
-public:
-  Timer (const char* tag) {m_Tag = tag; m_Start = amrex::second();}
-  ~Timer () {
-      m_End = amrex::second();
-      amrex::ParallelDescriptor::ReduceRealMax(m_End, amrex::ParallelDescriptor::IOProcessorNumber());
-      amrex::Print() << Utils::TextMsg::Info(
-        m_Tag + " took: "+ std::to_string(m_End - m_Start) + " seconds");
-  }
-private:
-  amrex::Real m_Start;
-  amrex::Real m_End;
-  std::string m_Tag;
-};
-
 
 //
 //
@@ -136,10 +115,10 @@ public:
 
   void WriteOpenPMDParticles (
               const amrex::Vector<ParticleDiag>& particle_diags,
-              const amrex::Real time,
-              const bool use_pinned_pc = false,
-              const bool isBTD = false,
-              const bool isLastBTDFlush = false,
+              amrex::Real time,
+              bool use_pinned_pc = false,
+              bool isBTD = false,
+              bool isLastBTDFlush = false,
               const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>());
 
   /** Write out all openPMD fields for all active MR levels
@@ -159,8 +138,8 @@ public:
               const amrex::Vector<amrex::MultiFab>& mf,
               amrex::Vector<amrex::Geometry>& geom,
               int output_levels,
-              const int iteration,
-              const double time,
+              int iteration,
+              double time,
               bool isBTD = false,
               const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
 
@@ -239,7 +218,7 @@ private:
   void SetupPos (
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np,
-        bool const isBTD = false);
+        bool isBTD = false);
 
   /** This function sets constant particle records and ED-PIC attributes.
    *
@@ -253,8 +232,8 @@ private:
   void SetConstParticleRecordsEDPIC (
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np,
-        amrex::ParticleReal const charge,
-        amrex::ParticleReal const mass);
+        amrex::ParticleReal charge,
+        amrex::ParticleReal mass);
 
   /** This function sets up the entries for particle properties
    *
@@ -273,7 +252,7 @@ private:
                const amrex::Vector<std::string>& real_comp_names,
                const amrex::Vector<int>& write_int_comp,
                const amrex::Vector<std::string>& int_comp_names,
-               const unsigned long long np, bool const isBTD = false) const;
+               unsigned long long np, bool isBTD = false) const;
 
   /** This function saves the values of the entries for particle properties
    *
@@ -315,10 +294,10 @@ private:
             const amrex::Vector<int>& write_int_comp,
             const amrex::Vector<std::string>& real_comp_names,
             const amrex::Vector<std::string>&  int_comp_names,
-            amrex::ParticleReal const charge,
-            amrex::ParticleReal const mass,
-            const bool isBTD = false,
-            const bool isLastBTDFlush = false,
+            amrex::ParticleReal charge,
+            amrex::ParticleReal mass,
+            bool isBTD = false,
+            bool isLastBTDFlush = false,
             int ParticleFlushOffset = 0);
 
   /** Get the openPMD-api filename for openPMD::Series

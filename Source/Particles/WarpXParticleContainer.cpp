@@ -144,15 +144,17 @@ WarpXParticleContainer::AllocData ()
 }
 
 void
-WarpXParticleContainer::AddNParticles (int /*lev*/,
-                                       int n, const amrex::ParticleReal* x,
-                                       const amrex::ParticleReal* y,
-                                       const amrex::ParticleReal* z,
-                                       const amrex::ParticleReal* ux,
-                                       const amrex::ParticleReal* uy,
-                                       const amrex::ParticleReal* uz,
-                                       const int nattr_real, const amrex::ParticleReal* attr_real,
-                                       const int nattr_int, const int* attr_int,
+WarpXParticleContainer::AddNParticles (int /*lev*/, int n,
+                                       amrex::Vector<amrex::ParticleReal> const & x,
+                                       amrex::Vector<amrex::ParticleReal> const & y,
+                                       amrex::Vector<amrex::ParticleReal> const & z,
+                                       amrex::Vector<amrex::ParticleReal> const & ux,
+                                       amrex::Vector<amrex::ParticleReal> const & uy,
+                                       amrex::Vector<amrex::ParticleReal> const & uz,
+                                       const int nattr_real,
+                                       amrex::Vector<amrex::Vector<amrex::ParticleReal>> const & attr_real,
+                                       const int nattr_int,
+                                       amrex::Vector<amrex::Vector<int>> const & attr_int,
                                        int uniqueparticles, amrex::Long id)
 {
     using namespace amrex::literals;
@@ -190,9 +192,6 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 
     const std::size_t np = iend-ibegin;
 
-    // treat weight as a special attr since it will always be specified
-    amrex::Vector<amrex::ParticleReal> weight(np);
-
 #ifdef WARPX_DIM_RZ
     amrex::Vector<amrex::ParticleReal> theta(np);
 #endif
@@ -226,17 +225,14 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 #endif
 
         pinned_tile.push_back(p);
-
-        // grab weight from the attr array
-        weight[i-ibegin] = attr_real[i*nattr_real];
     }
 
     if (np > 0)
     {
-        pinned_tile.push_back_real(PIdx::w , weight.data(), weight.data() + np);
-        pinned_tile.push_back_real(PIdx::ux,     ux + ibegin,     ux + iend);
-        pinned_tile.push_back_real(PIdx::uy,     uy + ibegin,     uy + iend);
-        pinned_tile.push_back_real(PIdx::uz,     uz + ibegin,     uz + iend);
+        pinned_tile.push_back_real(PIdx::w , attr_real[0].data() + ibegin, attr_real[0].data() + iend);
+        pinned_tile.push_back_real(PIdx::ux, ux.data() + ibegin, ux.data() + iend);
+        pinned_tile.push_back_real(PIdx::uy, uy.data() + ibegin, uy.data() + iend);
+        pinned_tile.push_back_real(PIdx::uz, uz.data() + ibegin, uz.data() + iend);
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
             DefineAndReturnParticleTile(0, 0, 0);
@@ -260,24 +256,16 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         for (int j = PIdx::nattribs; j < PIdx::nattribs + nattr_real - 1; ++j)
         {
             // get the next attribute from attr_real array
-            amrex::Vector<amrex::ParticleReal> attr_vals(np);
-            for (int i = ibegin; i < iend; ++i)
-            {
-                attr_vals[i-ibegin] = attr_real[j - PIdx::nattribs + 1 + i*nattr_real];
-            }
-            pinned_tile.push_back_real(j, attr_vals.data(), attr_vals.data() + np);
+            pinned_tile.push_back_real(
+                j, attr_real[j - PIdx::nattribs + 1].data() + ibegin, attr_real[j - PIdx::nattribs + 1].data() + iend
+            );
         }
 
         // Initialize nattr_int runtime integer attributes from data in the attr_int array
         for (int j = 0; j < nattr_int; ++j)
         {
             // get the next attribute from attr_int array
-            amrex::Vector<int> attr_vals(np);
-            for (int i = ibegin; i < iend; ++i)
-            {
-                attr_vals[i-ibegin] = attr_int[j + i*nattr_int];
-            }
-            pinned_tile.push_back_int(j, attr_vals.data(), attr_vals.data() + np);
+            pinned_tile.push_back_int(j, attr_int[j].data() + ibegin, attr_int[j].data() + iend);
         }
 
         // Default initialize the other real and integer runtime attributes
@@ -891,17 +879,20 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
             doChargeDepositionSharedShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                               rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
                                               WarpX::n_rz_azimuthal_modes, cost,
-                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                                              WarpX::shared_tilesize);
         } else if (WarpX::nox == 2){
             doChargeDepositionSharedShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                               rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
                                               WarpX::n_rz_azimuthal_modes, cost,
-                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                                              WarpX::shared_tilesize);
         } else if (WarpX::nox == 3){
             doChargeDepositionSharedShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                               rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
                                               WarpX::n_rz_azimuthal_modes, cost,
-                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                                              WarpX::shared_tilesize);
         }
 #ifndef AMREX_USE_GPU
         // CPU, tiling: atomicAdd local_rho into rho

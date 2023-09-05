@@ -96,7 +96,7 @@ public:
 
         const amrex::ParmParse pp_collision_name(collision_name);
         pp_collision_name.queryarr("product_species", m_product_species);
-        m_have_product_species = m_product_species.size() > 0;
+        m_have_product_species = !m_product_species.empty();
         m_copy_transform_functor = CopyTransformFunctorType(collision_name, mypc);
     }
 

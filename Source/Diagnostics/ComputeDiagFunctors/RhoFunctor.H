@@ -26,11 +26,11 @@ public:
      * \param[in] ncomp optional number of component of source MultiFab mf_src
      *                  to be cell-centered in output MultiFab mf_dst
      */
-    RhoFunctor (const int lev,
-                const amrex::IntVect crse_ratio,
-                const int species_index = -1,
+    RhoFunctor (int lev,
+                amrex::IntVect crse_ratio,
+                int species_index = -1,
                 bool convertRZmodes2cartesian = true,
-                const int ncomp = 1);
+                int ncomp = 1);
 
     /**
      * \brief Compute rho directly into mf_dst

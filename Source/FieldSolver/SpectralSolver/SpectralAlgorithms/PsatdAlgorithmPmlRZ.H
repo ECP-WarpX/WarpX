@@ -19,8 +19,8 @@ class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
         PsatdAlgorithmPmlRZ (SpectralKSpaceRZ const & spectral_kspace,
                              amrex::DistributionMapping const & dm,
                              const SpectralFieldIndex& spectral_index,
-                             int const n_rz_azimuthal_modes, int const norder_z,
-                             short const grid_type, amrex::Real const dt_step);
+                             int n_rz_azimuthal_modes, int norder_z,
+                             short grid_type, amrex::Real dt_step);
 
         // Redefine functions from base class
         void pushSpectralFields (SpectralFieldDataRZ & f) final;

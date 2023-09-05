@@ -23,8 +23,8 @@ public:
      *            (summing over modes)
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, amrex::IntVect crse_ratio,
-                bool convertRZmodes2cartesian=true, const int ncomp=1);
+    DivBFunctor(std::array<const amrex::MultiFab* const, 3> arr_mf_src, int lev, amrex::IntVect crse_ratio,
+                bool convertRZmodes2cartesian=true, int ncomp=1);
 
     /** \brief Compute DivB directly into mf_dst.
      *

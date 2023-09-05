@@ -37,7 +37,7 @@ LorentzTransformParticles::LorentzTransformParticles ( const WarpXParIter& a_pti
 {
     using namespace amrex::literals;
 
-    if (tmp_particle_data.size() == 0) return;
+    if (tmp_particle_data.empty()) return;
     m_get_position = GetParticlePosition(a_pti, a_offset);
 
     auto& attribs = a_pti.GetAttribs();
