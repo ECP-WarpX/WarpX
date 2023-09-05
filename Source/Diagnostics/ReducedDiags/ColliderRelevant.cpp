@@ -94,9 +94,6 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
     // get MultiParticleContainer class object
     const MultiParticleContainer& mypc =  warpx.GetPartContainer();
 
-    // get species names (std::vector<std::string>)
-    const std::vector<std::string> species_names = mypc.GetSpeciesNames();
-
     // loop over species
     for (int i_s = 0; i_s < 2; ++i_s)
     {
@@ -135,31 +132,31 @@ ColliderRelevant::ColliderRelevant (std::string rd_name)
         const WarpXParticleContainer& myspc = mypc.GetParticleContainerFromName(m_beam_name[i_s]);
 
         if (myspc.DoQED()){
-            add_diag("chimin_"+species_names[i_s], "chi_min_"+species_names[i_s]+"()");
-            add_diag("chiave_"+species_names[i_s], "chi_ave_"+species_names[i_s]+"()");
-            add_diag("chimax_"+species_names[i_s], "chi_max_"+species_names[i_s]+"()");
+            add_diag("chimin_"+m_beam_name[i_s], "chi_min_"+m_beam_name[i_s]+"()");
+            add_diag("chiave_"+m_beam_name[i_s], "chi_ave_"+m_beam_name[i_s]+"()");
+            add_diag("chimax_"+m_beam_name[i_s], "chi_max_"+m_beam_name[i_s]+"()");
         }
 #if (defined WARPX_DIM_3D)
-        add_diag("x_ave_"+species_names[i_s], "x_ave_"+species_names[i_s]+"(m)");
-        add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
-        add_diag("y_ave_"+species_names[i_s], "y_ave_"+species_names[i_s]+"(m)");
-        add_diag("y_std_"+species_names[i_s], "y_std_"+species_names[i_s]+"(m)");
-        add_diag("thetax_min_"+species_names[i_s], "theta_x_min_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_ave_"+species_names[i_s], "theta_x_ave_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_max_"+species_names[i_s], "theta_x_max_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_std_"+species_names[i_s], "theta_x_std_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_min_"+species_names[i_s], "theta_y_min_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_ave_"+species_names[i_s], "theta_y_ave_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_max_"+species_names[i_s], "theta_y_max_"+species_names[i_s]+"(rad)");
-        add_diag("thetay_std_"+species_names[i_s], "theta_y_std_"+species_names[i_s]+"(rad)");
+        add_diag("x_ave_"+m_beam_name[i_s], "x_ave_"+m_beam_name[i_s]+"(m)");
+        add_diag("x_std_"+m_beam_name[i_s], "x_std_"+m_beam_name[i_s]+"(m)");
+        add_diag("y_ave_"+m_beam_name[i_s], "y_ave_"+m_beam_name[i_s]+"(m)");
+        add_diag("y_std_"+m_beam_name[i_s], "y_std_"+m_beam_name[i_s]+"(m)");
+        add_diag("thetax_min_"+m_beam_name[i_s], "theta_x_min_"+m_beam_name[i_s]+"(rad)");
+        add_diag("thetax_ave_"+m_beam_name[i_s], "theta_x_ave_"+m_beam_name[i_s]+"(rad)");
+        add_diag("thetax_max_"+m_beam_name[i_s], "theta_x_max_"+m_beam_name[i_s]+"(rad)");
+        add_diag("thetax_std_"+m_beam_name[i_s], "theta_x_std_"+m_beam_name[i_s]+"(rad)");
+        add_diag("thetay_min_"+m_beam_name[i_s], "theta_y_min_"+m_beam_name[i_s]+"(rad)");
+        add_diag("thetay_ave_"+m_beam_name[i_s], "theta_y_ave_"+m_beam_name[i_s]+"(rad)");
+        add_diag("thetay_max_"+m_beam_name[i_s], "theta_y_max_"+m_beam_name[i_s]+"(rad)");
+        add_diag("thetay_std_"+m_beam_name[i_s], "theta_y_std_"+m_beam_name[i_s]+"(rad)");
 
 #elif (defined WARPX_DIM_XZ)
-        add_diag("x_ave_"+species_names[i_s], "x_ave_"+species_names[i_s]+"(m)");
-        add_diag("x_std_"+species_names[i_s], "x_std_"+species_names[i_s]+"(m)");
-        add_diag("thetax_min_"+species_names[i_s], "theta_x_min_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_ave_"+species_names[i_s], "theta_x_ave_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_max_"+species_names[i_s], "theta_x_max_"+species_names[i_s]+"(rad)");
-        add_diag("thetax_std_"+species_names[i_s], "theta_x_std_"+species_names[i_s]+"(rad)");
+        add_diag("x_ave_"+m_beam_name[i_s], "x_ave_"+m_beam_name[i_s]+"(m)");
+        add_diag("x_std_"+m_beam_name[i_s], "x_std_"+m_beam_name[i_s]+"(m)");
+        add_diag("thetax_min_"+m_beam_name[i_s], "theta_x_min_"+m_beam_name[i_s]+"(rad)");
+        add_diag("thetax_ave_"+m_beam_name[i_s], "theta_x_ave_"+m_beam_name[i_s]+"(rad)");
+        add_diag("thetax_max_"+m_beam_name[i_s], "theta_x_max_"+m_beam_name[i_s]+"(rad)");
+        add_diag("thetax_std_"+m_beam_name[i_s], "theta_x_std_"+m_beam_name[i_s]+"(rad)");
 #endif
         m_data.resize(all_diag_names.size());
     }
@@ -200,9 +197,6 @@ void ColliderRelevant::ComputeDiags (int step)
 
     // get MultiParticleContainer class object
     const MultiParticleContainer& mypc = WarpX::GetInstance().GetPartContainer();
-
-    // get species names (std::vector<std::string>)
-    const std::vector<std::string> species_names = mypc.GetSpeciesNames();
 
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
@@ -306,12 +300,12 @@ void ColliderRelevant::ComputeDiags (int step)
             thetax_std = std::sqrt(thetax_std / w_tot);
         }
 
-        m_data[get_idx("x_ave_"+species_names[i_s])] = x_ave;
-        m_data[get_idx("x_std_"+species_names[i_s])] = x_std;
-        m_data[get_idx("thetax_min_"+species_names[i_s])] = thetax_min;
-        m_data[get_idx("thetax_ave_"+species_names[i_s])] = thetax_ave;
-        m_data[get_idx("thetax_max_"+species_names[i_s])] = thetax_max;
-        m_data[get_idx("thetax_std_"+species_names[i_s])] = thetax_std;
+        m_data[get_idx("x_ave_"+m_beam_name[i_s])] = x_ave;
+        m_data[get_idx("x_std_"+m_beam_name[i_s])] = x_std;
+        m_data[get_idx("thetax_min_"+m_beam_name[i_s])] = thetax_min;
+        m_data[get_idx("thetax_ave_"+m_beam_name[i_s])] = thetax_ave;
+        m_data[get_idx("thetax_max_"+m_beam_name[i_s])] = thetax_max;
+        m_data[get_idx("thetax_std_"+m_beam_name[i_s])] = thetax_std;
 #elif defined(WARPX_DIM_3D)
         // w_tot
         // x_ave, y_ave,
@@ -406,18 +400,18 @@ void ColliderRelevant::ComputeDiags (int step)
             thetay_std = std::sqrt(thetay_std / w_tot);
         }
 
-        m_data[get_idx("x_ave_"+species_names[i_s])] = x_ave;
-        m_data[get_idx("x_std_"+species_names[i_s])] = x_std;
-        m_data[get_idx("y_ave_"+species_names[i_s])] = y_ave;
-        m_data[get_idx("y_std_"+species_names[i_s])] = y_std;
-        m_data[get_idx("thetax_min_"+species_names[i_s])] = thetax_min;
-        m_data[get_idx("thetax_ave_"+species_names[i_s])] = thetax_ave;
-        m_data[get_idx("thetax_max_"+species_names[i_s])] = thetax_max;
-        m_data[get_idx("thetax_std_"+species_names[i_s])] = thetax_std;
-        m_data[get_idx("thetay_min_"+species_names[i_s])] = thetay_min;
-        m_data[get_idx("thetay_ave_"+species_names[i_s])] = thetay_ave;
-        m_data[get_idx("thetay_max_"+species_names[i_s])] = thetay_max;
-        m_data[get_idx("thetay_std_"+species_names[i_s])] = thetay_std;
+        m_data[get_idx("x_ave_"+m_beam_name[i_s])] = x_ave;
+        m_data[get_idx("x_std_"+m_beam_name[i_s])] = x_std;
+        m_data[get_idx("y_ave_"+m_beam_name[i_s])] = y_ave;
+        m_data[get_idx("y_std_"+m_beam_name[i_s])] = y_std;
+        m_data[get_idx("thetax_min_"+m_beam_name[i_s])] = thetax_min;
+        m_data[get_idx("thetax_ave_"+m_beam_name[i_s])] = thetax_ave;
+        m_data[get_idx("thetax_max_"+m_beam_name[i_s])] = thetax_max;
+        m_data[get_idx("thetax_std_"+m_beam_name[i_s])] = thetax_std;
+        m_data[get_idx("thetay_min_"+m_beam_name[i_s])] = thetay_min;
+        m_data[get_idx("thetay_ave_"+m_beam_name[i_s])] = thetay_ave;
+        m_data[get_idx("thetay_max_"+m_beam_name[i_s])] = thetay_max;
+        m_data[get_idx("thetay_std_"+m_beam_name[i_s])] = thetay_std;
 #endif
 
 #if (defined WARPX_QED)
@@ -529,9 +523,9 @@ void ColliderRelevant::ComputeDiags (int step)
             amrex::ParallelDescriptor::ReduceRealMax(chimax_f);
             amrex::ParallelDescriptor::ReduceRealSum(chiave_f);
 
-            m_data[get_idx("chimin_"+species_names[i_s])] = chimin_f;
-            m_data[get_idx("chiave_"+species_names[i_s])] = chiave_f/w_tot;
-            m_data[get_idx("chimax_"+species_names[i_s])] = chimax_f;
+            m_data[get_idx("chimin_"+m_beam_name[i_s])] = chimin_f;
+            m_data[get_idx("chiave_"+m_beam_name[i_s])] = chiave_f/w_tot;
+            m_data[get_idx("chimax_"+m_beam_name[i_s])] = chimax_f;
         }
 #endif
     } // end loop over species
