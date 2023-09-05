@@ -717,6 +717,7 @@ Particle initialization
       ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
+      ``<species_name>.impose_t_lab_from_file`` (`bool`) optional (default is false) only read if warpx.gamma_boost > 1., it allows to set t_lab for the Lorentz Transform as being the time stored in the openPMD file.
       Warning: ``q_tot!=0`` is not supported with the ``external_file`` injection style. If a value is provided, it is ignored and no re-scaling is done.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
@@ -1473,8 +1474,8 @@ Applied to Particles
 
       Note that the position is defined in Cartesian coordinates, as a function of (x,y,z), even for RZ.
 
-    * ``repeated_plasma_lens``: apply a series of plasma lenses. The properties of the lenses are defined in the
-      lab frame by the input parameters:
+    * ``repeated_plasma_lens``: apply a series of plasma lenses.
+      The properties of the lenses are defined in the lab frame by the input parameters:
 
         * ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
 
@@ -1487,6 +1488,9 @@ Applied to Particles
 
         * ``repeated_plasma_lens_strengths_B``, the magnetic focusing strength of each lens, an array of floats, when
           ``particles.B_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
+
+      The repeated lenses are only defined for :math:`z > 0`.
+      Once the number of lenses specified in the input are exceeded, the repeated lens stops.
 
       The applied field is uniform longitudinally (along z) with a hard edge,
       where residence corrections are used for more accurate field calculation. On the time step when a particle enters
@@ -2063,6 +2067,7 @@ Grid types (collocated, staggered, hybrid)
     and currents are interpolated back and forth between a staggered grid and a
     nodal grid, must be used with momentum-conserving field gathering algorithm,
     ``algo.field_gathering = momentum-conserving``).
+    The option ``hybrid`` is currently not supported in RZ geometry.
 
     Default: ``warpx.grid_type = staggered``.
 
@@ -2467,7 +2472,10 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 BackTransformed Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Additional options for this diagnostic include:
+``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. We support the following list of options from `Full Diagnostics`_
+    ``<diag_name>.format``, ``<diag_name>.openpmd_backend``, ``<diag_name>.dump_rz_modes``, ``<diag_name>.file_prefix``, ``<diag_name>.diag_lo``, ``<diag_name>.diag_hi``, ``<diag_name>.write_species``, ``<diag_name>.species``.
+
+    Additional options for this diagnostic include:
 
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.

@@ -108,6 +108,8 @@ class CMakeBuild(build_ext):
             '-DWarpX_QED_TABLE_GEN:BOOL=' + WARPX_QED_TABLE_GEN,
             ## dependency control (developers & package managers)
             '-DWarpX_amrex_internal=' + WARPX_AMREX_INTERNAL,
+            # PEP-440 conformant version from package
+            "-DpyWarpX_VERSION_INFO=" + self.distribution.get_version(),
             #        see PICSAR and openPMD below
             ## static/shared libs
             '-DBUILD_SHARED_LIBS:BOOL=' + BUILD_SHARED_LIBS,
@@ -173,17 +175,11 @@ class CMakeBuild(build_ext):
 
         build_args += ['--parallel', BUILD_PARALLEL]
 
-        env = os.environ.copy()
-        env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(
-            env.get('CXXFLAGS', ''),
-            self.distribution.get_version()
-        )
         build_dir = os.path.join(self.build_temp, dims)
         os.makedirs(build_dir, exist_ok=True)
         subprocess.check_call(
             ['cmake', ext.sourcedir] + cmake_args,
-            cwd=build_dir,
-            env=env
+            cwd=build_dir
         )
         subprocess.check_call(
             ['cmake', '--build', '.'] + build_args,
@@ -312,7 +308,7 @@ setup(
     cmdclass=cmdclass,
     # scripts=['warpx_1d', 'warpx_2d', 'warpx_rz', 'warpx_3d'],
     zip_safe=False,
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     # tests_require=['pytest'],
     install_requires=install_requires,
     # see: src/bindings/python/cli
@@ -336,10 +332,10 @@ setup(
         'Topic :: Scientific/Engineering :: Physics',
         'Programming Language :: C++',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         ('License :: OSI Approved :: '
          'BSD License'), # TODO: use real SPDX: BSD-3-Clause-LBNL
     ],

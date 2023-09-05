@@ -13,7 +13,6 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpX_Complex.H"
 #endif
@@ -21,35 +20,35 @@
 #include <AMReX.H>
 
 /* \brief Perform charge deposition on a tile
- * \param GetPosition : A functor for returning the particle position.
- * \param wp           : Pointer to array of particle weights.
- * \param ion_lev      : Pointer to array of particle ionization level. This is
-                         required to have the charge of each macroparticle
-                         since q is a scalar. For non-ionizable species,
-                         ion_lev is a null pointer.
- * \param rho_fab      : FArrayBox of charge density, either full array or tile.
- * \param np_to_depose : Number of particles for which current is deposited.
- * \param dx           : 3D cell size
- * \param xyzmin       : Physical lower bounds of domain.
- * \param lo           : Index lower bounds of domain.
- * \param q            : species charge.
- * \param n_rz_azimuthal_modes: Number of azimuthal modes when using RZ geometry.
+ * \param GetPosition A functor for returning the particle position.
+ * \param wp           Pointer to array of particle weights.
+ * \param ion_lev      Pointer to array of particle ionization level. This is
+                       required to have the charge of each macroparticle
+                       since q is a scalar. For non-ionizable species,
+                       ion_lev is a null pointer.
+ * \param rho_fab      FArrayBox of charge density, either full array or tile.
+ * \param np_to_depose Number of particles for which current is deposited.
+ * \param dx           3D cell size
+ * \param xyzmin       Physical lower bounds of domain.
+ * \param lo           Index lower bounds of domain.
+ * \param q            species charge.
+ * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
  * \param cost: Pointer to (load balancing) cost corresponding to box where present particles deposit current.
- * \param load_balance_costs_update_algo: Selected method for updating load balance costs.
+ * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
 void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                                const amrex::ParticleReal * const wp,
-                               const int * const ion_lev,
+                               const int* ion_lev,
                                amrex::FArrayBox& rho_fab,
-                               const long np_to_depose,
+                               long np_to_depose,
                                const std::array<amrex::Real,3>& dx,
                                const std::array<amrex::Real, 3> xyzmin,
-                               const amrex::Dim3 lo,
-                               const amrex::Real q,
-                               const int n_rz_azimuthal_modes,
+                               amrex::Dim3 lo,
+                               amrex::Real q,
+                               int n_rz_azimuthal_modes,
                                amrex::Real* cost,
-                               const long load_balance_costs_update_algo)
+                               long load_balance_costs_update_algo)
 {
     using namespace amrex;
 
@@ -217,26 +216,32 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
 }
 
 /* \brief Perform charge deposition on a tile using shared memory
- * \param GetPosition   : A functor for returning the particle position.
- * \param wp            : Pointer to array of particle weights.
- * \param ion_lev       : Pointer to array of particle ionization level. This is
-                          required to have the charge of each macroparticle
-                          since q is a scalar. For non-ionizable species,
-                          ion_lev is a null pointer.
- * \param rho_fab       : FArrayBox of charge density, either full array or tile.
- * \param np_to_deposit : Number of particles for which charge is deposited.
- * \param dx            : 3D cell size
- * \param xyzmin        : Physical lower bounds of domain.
- * \param lo            : Index lower bounds of domain.
- * \param q             : species charge.
- * \param n_rz_azimuthal_modes: Number of azimuthal modes when using RZ geometry.
- * \param cost: Pointer to (load balancing) cost corresponding to box where present particles deposit current.
- * \param load_balance_costs_update_algo: Selected method for updating load balance costs.
+ * \param GetPosition   A functor for returning the particle position.
+ * \param wp            Pointer to array of particle weights.
+ * \param ion_lev       Pointer to array of particle ionization level. This is
+                        required to have the charge of each macroparticle
+                        since q is a scalar. For non-ionizable species,
+                        ion_lev is a null pointer.
+ * \param rho_fab       FArrayBox of charge density, either full array or tile.
+ * \param ix_type
+ * \param np_to_deposit Number of particles for which charge is deposited.
+ * \param dx            3D cell size
+ * \param xyzmin        Physical lower bounds of domain.
+ * \param lo            Index lower bounds of domain.
+ * \param q             species charge.
+ * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
+ * \param cost Pointer to (load balancing) cost corresponding to box where present particles deposit current.
+ * \param load_balance_costs_update_algo Selected method for updating load balance costs.
+ * \param a_bins
+ * \param box
+ * \param geom
+ * \param a_tbox_max_size
+ * \param bin_size tile size to use for shared current deposition operations
  */
 template <int depos_order>
 void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                                      const amrex::ParticleReal * const wp,
-                                     const int * const ion_lev,
+                                     const int* ion_lev,
                                      amrex::FArrayBox& rho_fab,
                                      const amrex::IntVect& ix_type,
                                      const long np_to_deposit,
@@ -250,14 +255,16 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                                      const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
                                      const amrex::Box& box,
                                      const amrex::Geometry& geom,
-                                     const amrex::IntVect& a_tbox_max_size)
+                                     const amrex::IntVect& a_tbox_max_size,
+                                     const amrex::IntVect bin_size
+                                     )
 {
     using namespace amrex;
 
     auto permutation = a_bins.permutationPtr();
 
 #if !defined(AMREX_USE_GPU)
-    amrex::ignore_unused(ix_type, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
+    amrex::ignore_unused(ix_type, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size, bin_size);
 #endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
@@ -317,7 +324,6 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const int threads_per_block = 256;
 
     std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
-    const amrex::IntVect bin_size = WarpX::shared_tilesize;
 
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
 

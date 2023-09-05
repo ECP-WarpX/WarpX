@@ -472,8 +472,8 @@ using namespace amrex;
      *                                split pml field
      */
     void ApplyPECtoEfield ( std::array<amrex::MultiFab*, 3> Efield,
-                            const int lev, PatchType patch_type,
-                            const bool split_pml_field = false);
+                            int lev, PatchType patch_type,
+                            bool split_pml_field = false);
     /**
      * \brief Sets the normal component of the magnetic field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell
@@ -484,7 +484,7 @@ using namespace amrex;
      * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoBfield ( std::array<amrex::MultiFab*, 3> Bfield,
-                            const int lev, PatchType patch_type);
+                            int lev, PatchType patch_type);
 
     /**
      * \brief Reflects charge density deposited over the PEC boundary back into
@@ -494,7 +494,7 @@ using namespace amrex;
      * \param[in]     lev        level of the Multifab
      * \param[in]     patch_type coarse or fine
      */
-    void ApplyPECtoRhofield(amrex::MultiFab* rho, const int lev,
+    void ApplyPECtoRhofield(amrex::MultiFab* rho, int lev,
                             PatchType patch_type);
 
     /**
@@ -506,7 +506,7 @@ using namespace amrex;
      * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
-                          amrex::MultiFab* Jz, const int lev,
+                          amrex::MultiFab* Jz, int lev,
                           PatchType patch_type);
 
     /**
@@ -517,6 +517,6 @@ using namespace amrex;
      * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoElectronPressure (amrex::MultiFab* Pefield,
-                                     const int lev, PatchType patch_type);
+                                     int lev, PatchType patch_type);
 }
 #endif // WarpX_PEC_KERNELS_H_
