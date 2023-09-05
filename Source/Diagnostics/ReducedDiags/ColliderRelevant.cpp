@@ -55,6 +55,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <memory>
 #include <vector>
 
 using namespace amrex;
