@@ -47,7 +47,7 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
                                                   const std::string& name)
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
-    ParmParse pp_species_name(species_name);
+    const ParmParse pp_species_name(species_name);
 
 #ifdef WARPX_QED
         //Find out if Breit Wheeler process is enabled
@@ -127,8 +127,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 #endif
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
-    int do_copy = (WarpX::do_back_transformed_diagnostics &&
-                   do_back_transformed_diagnostics && a_dt_type!=DtType::SecondHalf);
+    const int do_copy = (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf) );
 
     const auto GetPosition = GetParticlePosition(pti, offset);
     auto SetPosition = SetParticlePosition(pti, offset);
@@ -140,12 +139,12 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const Dim3 lo = lbound(box);
 
-    bool galerkin_interpolation = WarpX::galerkin_interpolation;
-    int nox = WarpX::nox;
-    int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+    const bool galerkin_interpolation = WarpX::galerkin_interpolation;
+    const int nox = WarpX::nox;
+    const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
-    amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-    amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+    const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+    const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
     amrex::Array4<const amrex::Real> const& ex_arr = exfab->array();
     amrex::Array4<const amrex::Real> const& ey_arr = eyfab->array();
@@ -163,9 +162,22 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
-    amrex::ParallelFor(
-        np_to_push,
-        [=] AMREX_GPU_DEVICE (long i) {
+    enum exteb_flags : int { no_exteb, has_exteb };
+    enum qed_flags : int { no_qed, has_qed };
+
+    const int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+#ifdef WARPX_QED
+    const int qed_runtime_flag = (local_has_breit_wheeler) ? has_qed : no_qed;
+#else
+    const int qed_runtime_flag = no_qed;
+#endif
+
+    amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
+                                CompileTimeOptions<no_qed  ,has_qed>>{},
+                       {exteb_runtime_flag, qed_runtime_flag},
+                       np_to_push,
+                       [=] AMREX_GPU_DEVICE (long i, auto exteb_control,
+                                             auto qed_control) {
             if (do_copy) copyAttribs(i);
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
@@ -181,13 +193,25 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
             }
-            getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+
+            [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB; // workaround for nvcc
+            if constexpr (exteb_control == has_exteb) {
+                getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+            }
 
 #ifdef WARPX_QED
-            if (local_has_breit_wheeler) {
+            [[maybe_unused]] auto& evolve_opt_tmp = evolve_opt;
+            [[maybe_unused]] auto p_optical_depth_BW_tmp = p_optical_depth_BW;
+            [[maybe_unused]] auto ux_tmp = ux; // for nvhpc
+            [[maybe_unused]] auto uy_tmp = uy;
+            [[maybe_unused]] auto uz_tmp = uz;
+            [[maybe_unused]] auto dt_tmp = dt;
+            if constexpr (qed_control == has_qed) {
                 evolve_opt(ux[i], uy[i], uz[i], Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                    dt, p_optical_depth_BW[i]);
+                           dt, p_optical_depth_BW[i]);
             }
+#else
+            amrex::ignore_unused(qed_control);
 #endif
 
             UpdatePositionPhoton( x, y, z, ux[i], uy[i], uz[i], dt );

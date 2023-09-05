@@ -7,6 +7,7 @@
 from .Bucket import Bucket
 
 diagnostics = Bucket('diagnostics', _diagnostics_dict={})
+reduced_diagnostics = Bucket('warpx', _diagnostics_dict={})
 
 class Diagnostic(Bucket):
     """

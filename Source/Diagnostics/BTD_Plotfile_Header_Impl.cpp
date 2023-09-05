@@ -7,7 +7,8 @@
 #include "BTD_Plotfile_Header_Impl.H"
 
 #include "Utils/TextMsg.H"
-#include "WarpX.H"
+
+#include <ablastr/utils/text/StreamUtils.H>
 
 #include <AMReX.H>
 #include <AMReX_FileSystem.H>
@@ -21,7 +22,7 @@
 using namespace amrex::literals;
 
 BTDPlotfileHeaderImpl::BTDPlotfileHeaderImpl (std::string const & Headerfile_path)
-    : m_Header_path(Headerfile_path)
+    : m_Header_path{Headerfile_path}
 {
 
 }
@@ -71,7 +72,7 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
     for (int idim = 0; idim < m_spacedim; ++idim) {
         is >> m_prob_hi[idim];
     }
-    WarpX::GotoNextLine(is);
+    ablastr::utils::text::goto_next_line(is);
 
     is >> m_prob_domain;
 
@@ -111,7 +112,6 @@ void
 BTDPlotfileHeaderImpl::WriteHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
-        amrex::Print() << Utils::TextMsg::Info(" removing this file : " + m_Header_path);
         amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream HeaderFile;
@@ -127,8 +127,8 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     // number of components
     HeaderFile << m_varnames.size() << '\n';
     // write the component string
-    for (int icomp = 0; icomp < m_varnames.size(); ++icomp ) {
-        HeaderFile << m_varnames[icomp] << '\n';
+    for (const auto& vname : m_varnames) {
+        HeaderFile << vname << '\n';
     }
     // space dim
     HeaderFile << m_spacedim << '\n';
@@ -178,7 +178,7 @@ BTDPlotfileHeaderImpl::WriteHeader ()
 
 
 BTDMultiFabHeaderImpl::BTDMultiFabHeaderImpl (std::string const & Headerfile_path)
-    : m_Header_path(Headerfile_path)
+    : m_Header_path{Headerfile_path}
 {
 
 }
@@ -216,7 +216,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     is >> m_ngrow;
     // can also call readBoxArray(m_ba, is, True);
     int in_hash;
-    int bl_ignore_max = 100000;
+    const int bl_ignore_max = 100000;
     is.ignore(bl_ignore_max,'(') >> m_ba_size >> in_hash;
     m_ba.resize(m_ba_size);
     for (int ibox = 0; ibox < m_ba.size(); ++ibox) {
@@ -233,7 +233,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
     for (int ifab = 0; ifab < m_ba.size(); ++ifab) {
         is >> m_FabOnDiskPrefix[ifab] >> m_fabname[ifab] >> m_fabhead[ifab];
     }
-    WarpX::GotoNextLine(is);
+    ablastr::utils::text::goto_next_line(is);
     char ch;
     is >> in_hash >> ch >> in_hash;
     m_minval.resize(m_ba.size());
@@ -244,7 +244,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
             if( ch != ',' ) amrex::Error("Expected a ',' got something else");
         }
     }
-    WarpX::GotoNextLine(is);
+    ablastr::utils::text::goto_next_line(is);
     is >> in_hash >> ch >> in_hash;
     m_maxval.resize(m_ba.size());
     for (int ifab = 0; ifab < m_ba.size(); ++ifab) {
@@ -262,7 +262,6 @@ void
 BTDMultiFabHeaderImpl::WriteMultiFabHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
-        amrex::Print() << Utils::TextMsg::Info(" removing this file : " + m_Header_path);
         amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream FabHeaderFile;
@@ -355,7 +354,7 @@ BTDMultiFabHeaderImpl::CopyVec(amrex::Vector<amrex::Real>& dst,
 
 
 BTDSpeciesHeaderImpl::BTDSpeciesHeaderImpl (std::string const & Headerfile_path, std::string const& species_name)
-    : m_Header_path(Headerfile_path), m_species_name(species_name)
+    : m_Header_path{Headerfile_path}, m_species_name{species_name}
 {
 
 }
@@ -385,12 +384,12 @@ BTDSpeciesHeaderImpl::ReadHeader ()
     is >> m_spacedim;
     is >> m_num_output_real;
     m_real_comp_names.resize(m_num_output_real);
-    for (int i = 0; i < m_real_comp_names.size(); ++i) {
-        is >> m_real_comp_names[i];
+    for (auto& real_comp_name : m_real_comp_names) {
+        is >> real_comp_name;
     }
     is >> m_num_output_int;
-    for (int i = 0; i < m_int_comp_names.size(); ++i) {
-        is >> m_int_comp_names[i];
+    for (auto& int_comp_name : m_int_comp_names) {
+        is >> int_comp_name;
     }
     is >> m_is_checkpoint;
     is >> m_total_particles;
@@ -503,7 +502,7 @@ BTDParticleDataHeaderImpl::ReadHeader ()
 
 
     int in_hash;
-    int bl_ignore_max = 100000;
+    const int bl_ignore_max = 100000;
 
     is.ignore(bl_ignore_max,'(') >> m_ba_size >> in_hash;
     m_ba.resize(m_ba_size);

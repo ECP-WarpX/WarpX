@@ -22,7 +22,6 @@
 #include "PhysicalParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpXParticleContainer.H"
 #include "ParticleBoundaries.H"
 
@@ -72,21 +71,21 @@ public:
     ~MultiParticleContainer() {}
 
     WarpXParticleContainer&
-    GetParticleContainer (int ispecies) const {return *allcontainers[ispecies];}
+    GetParticleContainer (int index) const {return *allcontainers[index];}
 
     WarpXParticleContainer*
-    GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
+    GetParticleContainerPtr (int index) const {return allcontainers[index].get();}
 
     WarpXParticleContainer&
     GetParticleContainerFromName (const std::string& name) const;
 
 #ifdef WARPX_USE_OPENPMD
-    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
-      return  allcontainers[ispecies];
+    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int index) {
+      return  allcontainers[index];
     }
 #endif
-    std::array<amrex::Real, 3> meanParticleVelocity(int ispecies) {
-        return allcontainers[ispecies]->meanParticleVelocity();
+    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int index) {
+        return allcontainers[index]->meanParticleVelocity();
     }
 
     void AllocData ();
@@ -133,7 +132,7 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
+    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(int lev);
 
     /**
      * \brief Deposit charge density.
@@ -146,7 +145,7 @@ public:
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   const amrex::Real relative_time);
+                   amrex::Real relative_time);
 
     /**
      * \brief Deposit current density.
@@ -161,7 +160,7 @@ public:
      */
     void
     DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                    const amrex::Real dt, const amrex::Real relative_time);
+                    amrex::Real dt, amrex::Real relative_time);
 
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
@@ -180,7 +179,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void doResampling (const int timestep);
+    void doResampling (int timestep, bool verbose);
 
 #ifdef WARPX_QED
     /** If Schwinger process is activated, this function is called at every
@@ -213,7 +212,7 @@ public:
 
     void defineAllParticleTiles ();
 
-    void RedistributeLocal (const int num_ghost);
+    void RedistributeLocal (int num_ghost);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless
      *  of the whole simulation BC. */
@@ -226,7 +225,7 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(const int lev) const;
+    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(int lev) const;
 
     amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
 
@@ -235,22 +234,21 @@ public:
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies() const {return species_names.size();}
+    int nSpecies () const {return species_names.size();}
+    int nLasers () const {return lasers_names.size();}
+    int nContainers () const {return allcontainers.size();}
 
-    int nSpeciesBackTransformedDiagnostics() const {return nspecies_back_transformed_diagnostics;}
-    int mapSpeciesBackTransformedDiagnostics(int i) const {return map_species_back_transformed_diagnostics[i];}
-    int doBackTransformedDiagnostics() const {return do_back_transformed_diagnostics;}
     /** Whether back-transformed diagnostics need to be performed for any plasma species.
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (bool do_back_transformed_particles);
     /** Whether back-transformed diagnostics is set for species with species_name.
      *
      * \param[in] species_name The species for which back-transformed particles is set.
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (std::string species_name, bool do_back_transformed_particles);
 
     int nSpeciesDepositOnMainGrid () const {
         bool const onMainGrid = true;
@@ -264,18 +262,17 @@ public:
         return std::count( v.begin(), v.end(), fromMainGrid );
     }
 
-    void GetLabFrameData(const std::string& snapshot_name,
-                         const int i_lab, const int direction,
-                         const amrex::Real z_old, const amrex::Real z_new,
-                         const amrex::Real t_boost, const amrex::Real t_lab, const amrex::Real dt,
-                         amrex::Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const;
-
     // Inject particles during the simulation (for particles entering the
     // simulation domain after some iterations, due to flowing plasma and/or
     // moving window).
     void ContinuousInjection(const amrex::RealBox& injection_box) const;
-    // Update injection position for continuously-injected species.
-    void UpdateContinuousInjectionPosition(amrex::Real dt) const;
+
+    /**
+     * \brief  Update antenna position for continuous injection of lasers
+     *         in a boosted frame. Empty function for containers other than lasers.
+     */
+    void UpdateAntennaPosition(amrex::Real dt) const;
+
     int doContinuousInjection() const;
 
     // Inject particles from a surface during the simulation
@@ -298,8 +295,8 @@ public:
     std::string m_B_ext_particle_s = "none";
     std::string m_E_ext_particle_s = "none";
     // External fields added to particle fields.
-    amrex::Vector<amrex::Real> m_B_external_particle;
-    amrex::Vector<amrex::Real> m_E_external_particle;
+    amrex::Vector<amrex::ParticleReal> m_B_external_particle;
+    amrex::Vector<amrex::ParticleReal> m_E_external_particle;
     // Parser for B_external on the particle
     std::unique_ptr<amrex::Parser> m_Bx_particle_parser;
     std::unique_ptr<amrex::Parser> m_By_particle_parser;
@@ -309,15 +306,15 @@ public:
     std::unique_ptr<amrex::Parser> m_Ey_particle_parser;
     std::unique_ptr<amrex::Parser> m_Ez_particle_parser;
 
-    amrex::Real m_repeated_plasma_lens_period;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_starts;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_lengths;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_E;
-    amrex::Vector<amrex::Real> h_repeated_plasma_lens_strengths_B;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_starts;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_lengths;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_E;
-    amrex::Gpu::DeviceVector<amrex::Real> d_repeated_plasma_lens_strengths_B;
+    amrex::ParticleReal m_repeated_plasma_lens_period;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_starts;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_lengths;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_strengths_E;
+    amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_strengths_B;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_starts;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_lengths;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_strengths_E;
+    amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_strengths_B;
 
 #ifdef WARPX_QED
     /**
@@ -371,6 +368,7 @@ protected:
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     std::vector<bool> m_deposit_on_main_grid;
+    std::vector<bool> m_laser_deposit_on_main_grid;
 
     //! instead of gathering fields from the finest patch level, gather from the coarsest
     std::vector<bool> m_gather_from_main_grid;
@@ -385,8 +383,8 @@ protected:
 
         MFItInfoCheckTiling(pc_src, pc_dsts...);
 
-        if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
-            info.EnableTiling(pc_src.tile_size);
+        if (WarpXParticleContainer::do_tiling && amrex::Gpu::notInLaunchRegion()) {
+            info.EnableTiling(WarpXParticleContainer::tile_size);
         }
 
 #ifdef AMREX_USE_OMP
@@ -494,24 +492,16 @@ private:
 
     void mapSpeciesProduct ();
 
-    // Number of species dumped in BackTransformedDiagnostics
-    int nspecies_back_transformed_diagnostics = 0;
-    // map_species_back_transformed_diagnostics[i] is the species ID in
-    // MultiParticleContainer for 0<i<nspecies_back_transformed_diagnostics
-    std::vector<int> map_species_back_transformed_diagnostics;
-    int do_back_transformed_diagnostics = 0;
     bool m_do_back_transformed_particles = false;
 
     void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
-    {
-        return;
-    }
+    {}
 
     template<typename First, typename ...Args>
     void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src,
                              First const& pc_dst, Args const&... others) const noexcept
     {
-        if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
+        if (WarpXParticleContainer::do_tiling && amrex::Gpu::notInLaunchRegion()) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
                 "For particle creation processes, either all or none of the "
                 "particle species must use tiling.");

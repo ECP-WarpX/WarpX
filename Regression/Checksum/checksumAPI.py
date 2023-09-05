@@ -16,7 +16,7 @@ import sys
 from benchmark import Benchmark
 from checksum import Checksum
 
-'''
+"""
 API for WarpX checksum tests. It can be used in two ways:
 
 - Directly use functions below to make a checksum test from a python script.
@@ -32,39 +32,61 @@ API for WarpX checksum tests. It can be used in two ways:
   * Reset a benchmark. From a bash terminal:
     $ ./checksumAPI.py --reset-benchmark --plotfile <path/to/plotfile> \
                        --test-name <test name>
-'''
+"""
 
 
 def evaluate_checksum(test_name, plotfile, rtol=1.e-9, atol=1.e-40,
                       do_fields=True, do_particles=True):
-    '''Compare plotfile checksum with benchmark.
-
+    """
+    Compare plotfile checksum with benchmark.
     Read checksum from input plotfile, read benchmark
     corresponding to test_name, and assert their equality.
 
-    @param test_name Name of test, as found between [] in .ini file.
-    @param plotfile Plotfile from which the checksum is computed.
-    @param rtol Relative tolerance for the comparison.
-    @param atol Absolute tolerance for the comparison.
-    @param do_fields Whether to compare fields in the checksum.
-    @param do_particles Whether to compare particles in the checksum.
-    '''
+    Parameters
+    ----------
+    test_name: string
+        Name of test, as found between [] in .ini file.
+
+    plotfile : string
+        Plotfile from which the checksum is computed.
+
+    rtol: float, default=1.e-9
+        Relative tolerance for the comparison.
+
+    atol: float, default=1.e-40
+        Absolute tolerance for the comparison.
+
+    do_fields: bool, default=True
+        Whether to compare fields in the checksum.
+
+    do_particles: bool, default=True
+        Whether to compare particles in the checksum.
+    """
     test_checksum = Checksum(test_name, plotfile, do_fields=do_fields,
                              do_particles=do_particles)
     test_checksum.evaluate(rtol=rtol, atol=atol)
 
 
 def reset_benchmark(test_name, plotfile, do_fields=True, do_particles=True):
-    '''Update the benchmark (overwrites reference json file).
-
+    """
+    Update the benchmark (overwrites reference json file).
     Overwrite value of benchmark corresponding to
     test_name with checksum read from input plotfile.
 
-    @param test_name Name of test, as found between [] in .ini file.
-    @param plotfile Plotfile from which the checksum is computed.
-    @param do_fields Whether to write field checksums in the benchmark.
-    @param do_particles Whether to write particles checksums in the benchmark.
-    '''
+    Parameters
+    ----------
+    test_name: string
+        Name of test, as found between [] in .ini file.
+
+    plotfile: string
+        Plotfile from which the checksum is computed.
+
+    do_fields: bool, default=True
+        Whether to write field checksums in the benchmark.
+
+    do_particles: bool, default=True
+        Whether to write particles checksums in the benchmark.
+    """
     ref_checksum = Checksum(test_name, plotfile, do_fields=do_fields,
                             do_particles=do_particles)
     ref_benchmark = Benchmark(test_name, ref_checksum.data)
@@ -72,13 +94,17 @@ def reset_benchmark(test_name, plotfile, do_fields=True, do_particles=True):
 
 
 def reset_all_benchmarks(path_to_all_plotfiles):
-    '''Update all benchmarks (overwrites reference json files)
+    """
+    Update all benchmarks (overwrites reference json files)
     found in path_to_all_plotfiles
 
-    @param path_to_all_plotfiles Path to all plotfiles for which the benchmarks
-    are to be reset. The plotfiles should be named <test_name>_plt, which is
-    what regression_testing.regtests.py does, provided we're careful enough.
-    '''
+    Parameters
+    ----------
+    path_to_all_plotfiles: string
+        Path to all plotfiles for which the benchmarks
+        are to be reset. The plotfiles should be named <test_name>_plt, which is
+        what regression_testing.regtests.py does, provided we're careful enough.
+    """
 
     # Get list of plotfiles in path_to_all_plotfiles
     plotfile_list = glob.glob(path_to_all_plotfiles + '*_plt*[0-9]',

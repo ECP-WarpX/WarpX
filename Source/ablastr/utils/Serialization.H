@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <iterator>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -35,7 +36,7 @@ namespace ablastr::utils::serialization
             const auto length = static_cast<int>(val.size());
 
             put_in(length, vec);
-            vec.insert(vec.end(), c_str, c_str + length);
+            std::copy(c_str, c_str + length, std::back_inserter(vec));
         }
         else
         {
@@ -43,7 +44,7 @@ namespace ablastr::utils::serialization
                 "Cannot serialize non-trivally copyable types, except std::string.");
 
             const auto *ptr_val = reinterpret_cast<const char *>(&val);
-            vec.insert(vec.end(), ptr_val, ptr_val + sizeof(T));
+            std::copy(ptr_val, ptr_val + sizeof(T), std::back_inserter(vec));
         }
     }
 
@@ -93,7 +94,7 @@ namespace ablastr::utils::serialization
         if constexpr (std::is_same<T, std::string>())
         {
             const auto length = get_out<int>(it);
-            const auto str = std::string{it, it + length};
+            auto str = std::string{it, it + length};
             it += length;
 
             return str;

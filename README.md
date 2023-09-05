@@ -5,7 +5,7 @@
 [![Documentation Status](https://readthedocs.org/projects/warpx/badge/?version=latest)](https://warpx.readthedocs.io/en/latest/?badge=latest)
 [![Spack Version](https://img.shields.io/spack/v/warpx)](https://spack.readthedocs.io/en/latest/package_list.html#warpx)
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/warpx)](https://anaconda.org/conda-forge/warpx)
-[![Gitter](https://badges.gitter.im/ECP-WarpX/community.svg)](https://gitter.im/ECP-WarpX/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)  
+[![Discussions](https://img.shields.io/badge/chat-discussions-turquoise.svg)](https://github.com/ECP-WarpX/WarpX/discussions)  
 [![Supported Platforms](https://img.shields.io/badge/platforms-linux%20|%20osx%20|%20win-blue)](https://warpx.readthedocs.io/en/latest/install/users.html)
 [![GitHub commits since last release](https://img.shields.io/github/commits-since/ECP-WarpX/WarpX/latest/development.svg)](https://github.com/ECP-WarpX/WarpX/compare/development)
 [![Exascale Computing Project](https://img.shields.io/badge/supported%20by-ECP-orange)](https://www.exascaleproject.org/research/)
@@ -13,12 +13,15 @@
 [![Language: Python](https://img.shields.io/badge/language-Python-orange.svg)](https://python.org/)  
 [![License WarpX](https://img.shields.io/badge/license-BSD--3--Clause--LBNL-blue.svg)](https://spdx.org/licenses/BSD-3-Clause-LBNL.html)
 [![DOI (source)](https://img.shields.io/badge/DOI%20(source)-10.5281/zenodo.4571577-blue.svg)](https://doi.org/10.5281/zenodo.4571577)
-[![DOI (paper)](https://img.shields.io/badge/DOI%20(paper)-10.1016/j.parco.2021.102833-blue.svg)](https://doi.org/10.1016/j.parco.2021.102833)
+[![DOI (paper)](https://img.shields.io/badge/DOI%20(paper)-10.1109/SC41404.2022.00008-blue.svg)](https://doi.org/10.1109/SC41404.2022.00008)
 
 ## Overview
 
-WarpX is an advanced electromagnetic Particle-In-Cell code.
+WarpX is an advanced **electromagnetic & electrostatic Particle-In-Cell** code.
 It supports many features including Perfectly-Matched Layers (PML), mesh refinement, and the boosted-frame technique.
+
+WarpX is a *highly-parallel and highly-optimized code*, which can run on GPUs and multi-core CPUs, and includes load balancing capabilities.
+WarpX scales to the world's largest supercomputers and was awarded the [2022 ACM Gordon Bell Prize](https://www.exascaleproject.org/ecp-supported-collaborative-teams-win-the-2022-acm-gordon-bell-prize-and-special-prize/).
 
 ## Documentation
 
@@ -29,7 +32,7 @@ It supports many features including Perfectly-Matched Layers (PML), mesh refinem
 In order to learn how to install and run the code, please see the online documentation:
 https://warpx.readthedocs.io
 
-To contact the developers, feel free to open an issue on this repo, or visit our Gitter room at https://gitter.im/ECP-WarpX/community
+To contact the developers, feel free to open an issue on this repo, or visit our discussions page at https://github.com/ECP-WarpX/WarpX/discussions
 
 ## Contributing
 
@@ -43,9 +46,9 @@ To contact the developers, feel free to open an issue on this repo, or visit our
 
 Our workflow is described in [CONTRIBUTING.rst](CONTRIBUTING.rst).
 
-## License
+## Copyright Notice
 
-WarpX Copyright (c) 2018-2022, The Regents of the University of California,
+WarpX Copyright (c) 2018, The Regents of the University of California,
 through Lawrence Berkeley National Laboratory (subject to receipt of any
 required approvals from the U.S. Dept. of Energy).  All rights reserved.
 
@@ -61,4 +64,5 @@ Software to reproduce, distribute copies to the public, prepare derivative
 works, and perform publicly and display publicly, and to permit other to do
 so.
 
-License for WarpX can be found at [LICENSE.txt](LICENSE.txt).
+Please see the full license agreement in [LICENSE.txt](LICENSE.txt).
+The SPDX license identifier is `BSD-3-Clause-LBNL`.

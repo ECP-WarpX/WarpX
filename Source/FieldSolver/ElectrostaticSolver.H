@@ -8,10 +8,16 @@
 #define ELECTROSTATICSOLVER_H_
 
 #include <AMReX_Array.H>
+#include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Parser.H>
+
+#include <array>
+#include <string>
+#include <utility>
+
 
 namespace ElectrostaticSolver {
 
@@ -41,9 +47,19 @@ namespace ElectrostaticSolver {
         bool has_non_periodic = false;
         bool phi_EB_only_t = true;
 
-        void definePhiBCs ();
+        void definePhiBCs (const amrex::Geometry& geom);
 
         void buildParsers ();
+        void buildParsersEB ();
+
+        /* \brief Sets the EB potential string and updates the parsers
+         *
+         * \param [in] potential The string value of the potential
+         */
+        void setPotentialEB (std::string potential) {
+            potential_eb_str = potential;
+            buildParsersEB();
+        }
 
         PhiCalculatorEB getPhiEB(amrex::Real t) const noexcept {
             return PhiCalculatorEB{t, potential_eb};
@@ -91,7 +107,7 @@ namespace ElectrostaticSolver {
 
       public:
         EBCalcEfromPhiPerLevel(amrex::Vector<amrex::Array<amrex::MultiFab *, AMREX_SPACEDIM> > e_field)
-                : m_e_field(e_field) {}
+                : m_e_field(std::move(e_field)) {}
 
         void operator()(amrex::MLMG & mlmg, int const lev) {
             using namespace amrex::literals;

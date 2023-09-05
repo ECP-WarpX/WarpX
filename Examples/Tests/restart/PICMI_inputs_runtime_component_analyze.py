@@ -7,7 +7,8 @@
 import sys
 
 import numpy as np
-from pywarpx import callbacks, picmi
+
+from pywarpx import callbacks, particle_containers, picmi
 
 ##########################
 # physics parameters
@@ -116,7 +117,8 @@ sim.initialize_warpx()
 # below will be reproducible from run to run
 np.random.seed(30025025)
 
-sim.extension.add_real_comp('electrons', 'newPid')
+electron_wrapper = particle_containers.ParticleContainerWrapper("electrons")
+electron_wrapper.add_real_comp("newPid")
 
 def add_particles():
 
@@ -130,8 +132,8 @@ def add_particles():
     w = np.ones(nps) * 2.0
     newPid = 5.0
 
-    sim.extension.add_particles(
-        species_name='electrons', x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
+    electron_wrapper.add_particles(
+        x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
         w=w, newPid=newPid
     )
 
@@ -148,13 +150,11 @@ sim.step(max_steps - 1 - step_number)
 # check that the new PIDs are properly set
 ##########################
 
-assert(sim.extension.get_particle_count('electrons') == 90)
-assert (sim.extension.get_particle_comp_index('electrons', 'w') == 0)
-assert (sim.extension.get_particle_comp_index('electrons', 'newPid') == 4)
+assert electron_wrapper.nps == 90
+assert electron_wrapper.particle_container.get_comp_index("w") == 0
+assert electron_wrapper.particle_container.get_comp_index("newPid") == 4
 
-new_pid_vals = sim.extension.get_particle_arrays(
-    'electrons', 'newPid', 0
-)
+new_pid_vals = electron_wrapper.get_particle_arrays("newPid", 0)
 for vals in new_pid_vals:
     assert np.allclose(vals, 5)
 

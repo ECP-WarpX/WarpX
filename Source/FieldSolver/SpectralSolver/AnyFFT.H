@@ -14,10 +14,11 @@
 #if defined(AMREX_USE_CUDA)
 #  include <cufft.h>
 #elif defined(AMREX_USE_HIP)
-// cstddef: work-around for ROCm/rocFFT <=4.3.0
-// https://github.com/ROCmSoftwarePlatform/rocFFT/blob/rocm-4.3.0/library/include/rocfft.h#L36-L42
-#  include <cstddef>
-#  include <rocfft.h>
+#  if __has_include(<rocfft/rocfft.h>)  // ROCm 5.3+
+#    include <rocfft/rocfft.h>
+#  else
+#    include <rocfft.h>
+#  endif
 #else
 #  include <fftw3.h>
 #endif
@@ -95,8 +96,8 @@ namespace AnyFFT
      * \param[in] dir direction, either R2C or C2R
      * \param[in] dim direction, number of dimensions of the arrays. Must be <= AMREX_SPACEDIM.
      */
-    FFTplan CreatePlan(const amrex::IntVect& real_size, amrex::Real * const real_array,
-                       Complex * const complex_array, const direction dir, const int dim);
+    FFTplan CreatePlan(const amrex::IntVect& real_size, amrex::Real* real_array,
+                       Complex* complex_array, direction dir, int dim);
 
     /** \brief Destroy library FFT plan.
      * \param[out] fft_plan plan to destroy

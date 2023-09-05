@@ -8,6 +8,9 @@
 #ifndef WARPX_WarpXParticleContainer_fwd_H_
 #define WARPX_WarpXParticleContainer_fwd_H_
 
+#include <AMReX_GpuAllocators.H>
+
+
 enum struct ParticleBC;
 enum struct ConvertDirection;
 
@@ -18,8 +21,6 @@ struct TmpIdx;
 class WarpXParIter;
 
 class WarpXParticleContainer;
-
-enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
 
 struct DiagIdx
 {

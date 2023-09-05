@@ -29,14 +29,13 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
         PsatdAlgorithmComoving (const SpectralKSpace& spectral_kspace,
                                 const amrex::DistributionMapping& dm,
                                 const SpectralFieldIndex& spectral_index,
-                                const int norder_x,
-                                const int norder_y,
-                                const int norder_z,
-                                const bool nodal,
-                                const amrex::IntVect& fill_guards,
+                                int norder_x,
+                                int norder_y,
+                                int norder_z,
+                                short grid_type,
                                 const amrex::Vector<amrex::Real>& v_comoving,
-                                const amrex::Real dt,
-                                const bool update_with_rho);
+                                amrex::Real dt,
+                                bool update_with_rho);
 
         /**
          * \brief Override the update equations in Fourier space
@@ -47,7 +46,7 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
          */
         void InitializeSpectralCoefficients (const SpectralKSpace& spectral_kspace,
                                              const amrex::DistributionMapping& dm,
-                                             const amrex::Real dt);
+                                             amrex::Real dt);
 
         /**
          * \brief Virtual function for current correction in Fourier space.
@@ -74,8 +73,6 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
         // Real and complex spectral coefficients
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
-
-        SpectralFieldIndex m_spectral_index;
 
         // k vectors
         KVectorComponent kx_vec;

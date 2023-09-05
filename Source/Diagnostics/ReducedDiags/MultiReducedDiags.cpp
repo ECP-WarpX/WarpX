@@ -7,6 +7,7 @@
 #include "MultiReducedDiags.H"
 
 #include "BeamRelevant.H"
+#include "ChargeOnEB.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
 #include "FieldProbe.H"
@@ -17,10 +18,10 @@
 #include "ParticleEnergy.H"
 #include "ParticleExtrema.H"
 #include "ParticleHistogram.H"
+#include "ParticleHistogram2D.H"
 #include "ParticleMomentum.H"
 #include "ParticleNumber.H"
 #include "RhoMaximum.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
@@ -40,7 +41,7 @@ using namespace amrex;
 MultiReducedDiags::MultiReducedDiags ()
 {
     // read reduced diags names
-    ParmParse pp_warpx("warpx");
+    const ParmParse pp_warpx("warpx");
     m_plot_rd = pp_warpx.queryarr("reduced_diags_names", m_rd_names);
 
     // if names are not given, reduced diags will not be done
@@ -61,13 +62,15 @@ MultiReducedDiags::MultiReducedDiags ()
             {"LoadBalanceCosts",      [](CS s){return std::make_unique<LoadBalanceCosts>(s);}},
             {"LoadBalanceEfficiency", [](CS s){return std::make_unique<LoadBalanceEfficiency>(s);}},
             {"ParticleHistogram",     [](CS s){return std::make_unique<ParticleHistogram>(s);}},
+            {"ParticleHistogram2D",   [](CS s){return std::make_unique<ParticleHistogram2D>(s);}},
             {"ParticleNumber",        [](CS s){return std::make_unique<ParticleNumber>(s);}},
-            {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}}
-        };
+            {"ParticleExtrema",       [](CS s){return std::make_unique<ParticleExtrema>(s);}},
+            {"ChargeOnEB",  [](CS s){return std::make_unique<ChargeOnEB>(s);}}
+    };
     // loop over all reduced diags and fill m_multi_rd with requested reduced diags
     std::transform(m_rd_names.begin(), m_rd_names.end(), std::back_inserter(m_multi_rd),
         [&](const auto& rd_name){
-            ParmParse pp_rd_name(rd_name);
+            const ParmParse pp_rd_name(rd_name);
 
             // read reduced diags type
             std::string rd_type;

@@ -29,7 +29,7 @@ algo.particle_shape = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam maxwell_juttner_parser velocity_constant velocity_parser
+particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam maxwell_juttner_parser velocity_constant velocity_parser uniform
 particles.rigid_injected_species = beam
 
 gaussian.charge                     = -q_e
@@ -119,6 +119,20 @@ velocity_parser.beta_distribution_type     = "parser"
 velocity_parser.beta_function(x,y,z)       = "-0.2 + 0.4 * heaviside(z,0)"
 velocity_parser.bulk_vel_dir               = -y
 
+uniform.charge                     = q_e
+uniform.mass                       = m_e
+uniform.injection_style            = "NRandomPerCell"
+uniform.num_particles_per_cell     = 1000
+uniform.profile                    = constant
+uniform.density                    = 1.0e21
+uniform.momentum_distribution_type = "uniform"
+uniform.ux_min                     = -0.2
+uniform.ux_max                     = 0.3
+uniform.uy_min                     = -0.1
+uniform.uy_max                     = 0.1
+uniform.uz_min                     = 10
+uniform.uz_max                     = 11.2
+
 #################################
 ########## DIAGNOSTIC ###########
 #################################
@@ -129,7 +143,8 @@ velocity_parser.bulk_vel_dir               = -y
 # 5 for maxwell-juttner with parser function temperature
 # 6 for maxwell-boltzmann with constant velocity
 # 7 for maxwell-boltzmann with parser velocity
-warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h3_filtered h4x h4y h4z bmmntr h5_neg h5_pos h6 h6uy h7 h7uy_pos h7uy_neg
+# 8 for cuboid in momentum space
+warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h3_filtered h4x h4y h4z bmmntr h5_neg h5_pos h6 h6uy h7 h7uy_pos h7uy_neg h8x h8y h8z
 
 h1x.type                                 = ParticleHistogram
 h1x.intervals                            = 1
@@ -307,6 +322,33 @@ h7uy_neg.bin_min                              = -1.0
 h7uy_neg.bin_max                              = 1.0
 h7uy_neg.histogram_function(t,x,y,z,ux,uy,uz) = "uy"
 h7uy_neg.filter_function(t,x,y,z,ux,uy,uz)    = "z < 0.0"
+
+h8x.type                                 = ParticleHistogram
+h8x.intervals                            = 1
+h8x.path                                 = "./"
+h8x.species                              = uniform
+h8x.bin_number                           = 50
+h8x.bin_min                              = -1
+h8x.bin_max                              = 1
+h8x.histogram_function(t,x,y,z,ux,uy,uz) = "ux"
+
+h8y.type                                 = ParticleHistogram
+h8y.intervals                            = 1
+h8y.path                                 = "./"
+h8y.species                              = uniform
+h8y.bin_number                           = 50
+h8y.bin_min                              = -1
+h8y.bin_max                              = 1
+h8y.histogram_function(t,x,y,z,ux,uy,uz) = "uy"
+
+h8z.type                                 = ParticleHistogram
+h8z.intervals                            = 1
+h8z.path                                 = "./"
+h8z.species                              = uniform
+h8z.bin_number                           = 200
+h8z.bin_min                              = 0
+h8z.bin_max                              = 15
+h8z.histogram_function(t,x,y,z,ux,uy,uz) = "uz"
 
 # our little beam monitor
 bmmntr.type                              = BeamRelevant

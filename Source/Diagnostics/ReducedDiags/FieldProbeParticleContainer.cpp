@@ -1,4 +1,4 @@
-/* Copyright 2021 Tiberius Rheaume, Axel Huebl
+/* Copyright 2021 Elisa Rheaume, Axel Huebl
  *
  * This file is part of WarpX.
  *
@@ -12,7 +12,6 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/UpdatePosition.H"
 #include "Particles/ParticleBoundaries_K.H"
-#include "Utils/CoarsenMR.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
@@ -92,7 +91,8 @@ FieldProbeParticleContainer::AddNParticles (int lev,
      * (particle_tile).
      */
 
-    using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
+    using PinnedTile = ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                    NArrayReal, NArrayInt,
                                     amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
@@ -107,16 +107,25 @@ FieldProbeParticleContainer::AddNParticles (int lev,
         p.pos(1) = y[i];
         p.pos(2) = z[i];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::ignore_unused(y) ;
+        amrex::ignore_unused(y);
         p.pos(0) = x[i];
         p.pos(1) = z[i];
+#elif defined(WARPX_DIM_1D_Z)
+        amrex::ignore_unused(x, y);
+        p.pos(0) = z[i];
 #endif
+
         // write position, cpu id, and particle id to particle
         pinned_tile.push_back(p);
     }
 
     // write Real attributes (SoA) to particle initialized zero
     DefineAndReturnParticleTile(0, 0, 0);
+
+    // for RZ write theta value
+#ifdef WARPX_DIM_RZ
+    pinned_tile.push_back_real(FieldProbePIdx::theta, np, 0.0);
+#endif
 
     pinned_tile.push_back_real(FieldProbePIdx::Ex, np, 0.0);
     pinned_tile.push_back_real(FieldProbePIdx::Ey, np, 0.0);
@@ -126,16 +135,16 @@ FieldProbeParticleContainer::AddNParticles (int lev,
     pinned_tile.push_back_real(FieldProbePIdx::Bz, np, 0.0);
     pinned_tile.push_back_real(FieldProbePIdx::S, np, 0.0);
 
+    auto old_np = particle_tile.numParticles();
+    auto new_np = old_np + pinned_tile.numParticles();
+    particle_tile.resize(new_np);
+    amrex::copyParticles(
+        particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
+
     /*
      * Redistributes particles to their appropriate tiles if the box
      * structure of the simulation changes to accomodate data more
      * efficiently.
      */
-    auto old_np = particle_tile.numParticles();
-        auto new_np = old_np + pinned_tile.numParticles();
-        particle_tile.resize(new_np);
-        amrex::copyParticles(
-        particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
     Redistribute();
-
 }

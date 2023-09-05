@@ -8,22 +8,17 @@
 #define ABLASTR_DEPOSIT_CHARGE_H_
 
 #include "ablastr/profiler/ProfilerWrapper.H"
-#include "Parallelization/KernelTimer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/ShapeFactors.H"
 #include "Particles/Deposition/ChargeDeposition.H"
 #include "ablastr/utils/TextMsg.H"
-#ifdef WARPX_DIM_RZ
-#   include "Utils/WarpX_Complex.H"
-#endif
 
 #include <AMReX.H>
 
 #include <optional>
 
 
-namespace ablastr {
-namespace particles {
+namespace ablastr::particles
+{
 
 /** Perform charge deposition for the particles on a tile.
  *
@@ -208,7 +203,6 @@ deposit_charge (typename T_PC::ParIterType& pti,
 #endif
 }
 
-} // namespace particles
-} // namespace ablastr
+} // namespace ablastr::particles
 
 #endif // ABLASTR_DEPOSIT_CHARGE_H_

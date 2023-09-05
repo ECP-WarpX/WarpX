@@ -245,7 +245,8 @@ class BTDSpeciesHeaderImpl
 {
 public:
     /** Constructor.
-     * \param[in] string containing path of Headerfile
+     * \param[in] Headerfile_path string containing path of Headerfile
+     * \param[in] species_name string containing species name
      */
     BTDSpeciesHeaderImpl (std::string const& Headerfile_path, std::string const& species_name);
     ~BTDSpeciesHeaderImpl () = default;
@@ -254,9 +255,9 @@ public:
     /** Writes the meta-data of species Header file, with path, m_Header_path*/
     void WriteHeader ();
     /** Set data Index of the data-file, DATAXXXXX, that the particles belong to*/
-    void set_DataIndex (const int lev, const int box_id, const int data_index);
+    void set_DataIndex (int lev, int box_id, int data_index);
     /** Add new_particles to existing to obtain the total number of particles of the species.
-        \param[in] new_particles, total particles in the new buffer
+        \param[in] new_particles total particles in the new buffer
      */
     void AddTotalParticles (const int new_particles) { m_total_particles += new_particles;}
     /** Increment number of boxes in a box array by 1, with every flush. */
@@ -264,7 +265,7 @@ public:
     /** Append particle info of the newly added box, namely,
         m_which_data, m_particles_per_box, m_offset_per_box.
      */
-    void AppendParticleInfoForNewBox (const int data_index, const int particles_per_box, const int offset);
+    void AppendParticleInfoForNewBox (int data_index, int particles_per_box, int offset);
     /** Vector of data indices of all particle data for each level*/
     amrex::Vector< amrex::Vector<int> > m_which_data;
     /** Vector of particles per box for each level*/
@@ -310,7 +311,7 @@ class BTDParticleDataHeaderImpl
 {
 public:
     /** Constructor.
-     * \param[in] string containing path of Headerfile
+     * \param[in] Headerfile_path containing path of Headerfile
      */
     BTDParticleDataHeaderImpl (std::string const& Headerfile_path);
     /** Destructor */
@@ -326,14 +327,14 @@ public:
      */
     void IncreaseBoxArraySize ( const int add_size) { m_ba_size += add_size;}
     /** Returns box corresponding to the ith box in the BoxArray, m_ba.
-     *  \param[in] int ibox, index of the box in the BoxArray.
+     *  \param[in] ibox index of the box in the BoxArray.
      */
     amrex::Box ba_box (int ibox) {return m_ba[ibox]; }
     /** Resize boxArray, m_ba, to size, m_ba_size. */
     void ResizeBoxArray () { m_ba.resize(m_ba_size); }
     /** Set Box indices of the ith-box in Box Array, m_ba, to the new Box, ba_box.
-     *  \param[in] int ibox, index of the ith box in BoxArray, m_ba.
-     *  \param[in] amrex::Box box dimensions corresponding to the ith Fab.
+     *  \param[in] ibox index of the ith box in BoxArray, m_ba.
+     *  \param[in] ba_box dimensions corresponding to the ith Fab.
      */
     void SetBox (int ibox, amrex::Box ba_box) { m_ba.set(ibox, ba_box); }
     /** Size of BoxArray, m_ba*/

@@ -53,28 +53,79 @@
 using namespace amrex;
 
 void
-WarpX::UpdatePlasmaInjectionPosition (amrex::Real a_dt)
+WarpX::UpdateInjectionPosition (const amrex::Real a_dt)
 {
-    int dir = moving_window_dir;
-    // Continuously inject plasma in new cells (by default only on level 0)
-    if (WarpX::warpx_do_continuous_injection and (WarpX::gamma_boost > 1)){
-        // In boosted-frame simulations, the plasma has moved since the last
-        // call to this function, and injection position needs to be updated
-        current_injection_position -= WarpX::beta_boost *
-#if defined(WARPX_DIM_3D)
-            WarpX::boost_direction[dir] * PhysConst::c * a_dt;
+    const int dir = moving_window_dir;
+
+    // Loop over species (particles and lasers)
+    const int n_containers = mypc->nContainers();
+    for (int i=0; i<n_containers; i++)
+    {
+        WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
+
+        // Continuously inject plasma in new cells (by default only on level 0)
+        if (pc.doContinuousInjection())
+        {
+            // Get bulk momentum and velocity of plasma
+            // 1D: dir=0 is z
+            // 2D: dir=0 is x, dir=1 is z
+            // 3D: dir=0 is x, dir=1 is y, dir=2 is z
+            amrex::Vector<amrex::Real> current_injection_position = {0._rt, 0._rt, 0._rt};
+#if defined(WARPX_DIM_1D_Z)
+            current_injection_position[2] = pc.m_current_injection_position;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            // In 2D, dir=0 corresponds to x and dir=1 corresponds to z
-            // This needs to be converted in order to index `boost_direction`
-            // which has 3 components, for both 2D and 3D simulations.
-            WarpX::boost_direction[2*dir] * PhysConst::c * a_dt;
-#elif defined(WARPX_DIM_1D_Z)
-            // In 1D, dir=0 corresponds to z
-            // This needs to be converted in order to index `boost_direction`
-            // which has 3 components, for 1D, 2D, and 3D simulations.
-            WarpX::boost_direction[2] * PhysConst::c * a_dt;
-            amrex::ignore_unused(dir);
+            current_injection_position[dir*2] = pc.m_current_injection_position;
+#else // 3D
+            current_injection_position[dir] = pc.m_current_injection_position;
 #endif
+
+            PlasmaInjector* plasma_injector = pc.GetPlasmaInjector();
+
+            amrex::Real v_shift = 0._rt;
+            if (plasma_injector != nullptr)
+            {
+                amrex::XDim3 u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(
+                    current_injection_position[0],
+                    current_injection_position[1],
+                    current_injection_position[2]);
+#if defined(WARPX_DIM_1D_Z)
+                amrex::Vector<amrex::Real> u_bulk_vec = {u_bulk.z};
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                amrex::Vector<amrex::Real> u_bulk_vec = {u_bulk.x, u_bulk.z};
+#else // 3D
+                amrex::Vector<amrex::Real> u_bulk_vec = {u_bulk.x, u_bulk.y, u_bulk.z};
+#endif
+                v_shift = PhysConst::c * u_bulk_vec[dir] / std::sqrt(1._rt + u_bulk_vec[dir]*u_bulk_vec[dir]);
+            }
+
+            // In boosted-frame simulations, the plasma has moved since the last
+            // call to this function, and injection position needs to be updated.
+            // Note that the bulk velocity v, obtained from getBulkMomentum, is
+            // transformed to the boosted frame velocity v' via the formula
+            // v' = (v-c*beta)/(1-v*beta/c)
+            if (WarpX::gamma_boost > 1._rt)
+            {
+                v_shift = (v_shift - PhysConst::c*WarpX::beta_boost)
+                          / (1._rt - v_shift*WarpX::beta_boost/PhysConst::c);
+#if defined(WARPX_DIM_3D)
+                v_shift *= WarpX::boost_direction[dir];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                // In 2D, dir=0 corresponds to x and dir=1 corresponds to z.
+                // This needs to be converted to access boost_direction,
+                // which has always 3 components.
+                v_shift *= WarpX::boost_direction[2*dir];
+#elif defined(WARPX_DIM_1D_Z)
+                // In 1D, dir=0 corresponds to z.
+                // This needs to be converted to access boost_direction,
+                // which has always 3 components.
+                v_shift *= WarpX::boost_direction[2];
+                amrex::ignore_unused(dir);
+#endif
+            }
+
+            // Update current injection position
+            pc.m_current_injection_position += v_shift * a_dt;
+        }
     }
 }
 
@@ -89,22 +140,18 @@ WarpX::MoveWindow (const int step, bool move_j)
     if (step == end_moving_window_step) {
         amrex::Print() << Utils::TextMsg::Info("Stopping moving window");
     }
-    if (moving_window_active(step) == false) return 0;
+    if (!moving_window_active(step)) return 0;
 
     // Update the continuous position of the moving window,
     // and of the plasma injection
     moving_window_x += (moving_window_v - WarpX::beta_boost * PhysConst::c)/(1 - moving_window_v * WarpX::beta_boost / PhysConst::c) * dt[0];
-    int dir = moving_window_dir;
+    const int dir = moving_window_dir;
 
-    // Update warpx.current_injection_position
-    // PhysicalParticleContainer uses this injection position
-    UpdatePlasmaInjectionPosition( dt[0] );
-    if (WarpX::warpx_do_continuous_injection){
-        // Update injection position for WarpXParticleContainer in mypc.
-        // Nothing to do for PhysicalParticleContainers
-        // For LaserParticleContainer, need to update the antenna position.
-        mypc->UpdateContinuousInjectionPosition( dt[0] );
-    }
+    // Update current injection position for all containers
+    UpdateInjectionPosition(dt[0]);
+    // Update antenna position for all lasers
+    // TODO Make this specific to lasers only
+    mypc->UpdateAntennaPosition(dt[0]);
 
     // compute the number of cells to shift on the base level
     amrex::Real new_lo[AMREX_SPACEDIM];
@@ -112,7 +159,7 @@ WarpX::MoveWindow (const int step, bool move_j)
     const amrex::Real* current_lo = geom[0].ProbLo();
     const amrex::Real* current_hi = geom[0].ProbHi();
     const amrex::Real* cdx = geom[0].CellSize();
-    int num_shift_base = static_cast<int>((moving_window_x - current_lo[dir]) / cdx[dir]);
+    const int num_shift_base = static_cast<int>((moving_window_x - current_lo[dir]) / cdx[dir]);
 
     if (num_shift_base == 0) return 0;
 
@@ -139,7 +186,7 @@ WarpX::MoveWindow (const int step, bool move_j)
            new_slice_lo[i] = current_slice_lo[i];
            new_slice_hi[i] = current_slice_hi[i];
        }
-       int num_shift_base_slice = static_cast<int> ((moving_window_x -
+       const int num_shift_base_slice = static_cast<int> ((moving_window_x -
                                   current_slice_lo[dir]) / cdx[dir]);
        new_slice_lo[dir] = current_slice_lo[dir] + num_shift_base_slice*cdx[dir];
        new_slice_hi[dir] = current_slice_hi[dir] + num_shift_base_slice*cdx[dir];
@@ -149,6 +196,9 @@ WarpX::MoveWindow (const int step, bool move_j)
 
     int num_shift      = num_shift_base;
     int num_shift_crse = num_shift;
+
+    constexpr auto do_update_cost = true;
+    constexpr auto dont_update_cost = false; //We can't update cost for PML
 
     // Shift the mesh fields
     for (int lev = 0; lev <= finest_level; ++lev) {
@@ -177,65 +227,121 @@ WarpX::MoveWindow (const int step, bool move_j)
                 if (dim == 1) Efield_parser = Eyfield_parser->compile<3>();
                 if (dim == 2) Efield_parser = Ezfield_parser->compile<3>();
             }
-            shiftMF(*Bfield_fp[lev][dim], geom[lev], num_shift, dir, lev, B_external_grid[dim], use_Bparser, Bfield_parser);
-            shiftMF(*Efield_fp[lev][dim], geom[lev], num_shift, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser);
+            shiftMF(*Bfield_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
+                B_external_grid[dim], use_Bparser, Bfield_parser);
+            shiftMF(*Efield_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
+                E_external_grid[dim], use_Eparser, Efield_parser);
             if (fft_do_time_averaging) {
-                shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, B_external_grid[dim], use_Bparser, Bfield_parser);
-                shiftMF(*Efield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser);
+                shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
+                    B_external_grid[dim], use_Bparser, Bfield_parser);
+                shiftMF(*Efield_avg_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost,
+                    E_external_grid[dim], use_Eparser, Efield_parser);
             }
             if (move_j) {
-                shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir, lev);
+                shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
             }
             if (pml[lev] && pml[lev]->ok()) {
                 const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_fp();
                 const std::array<amrex::MultiFab*, 3>& pml_E = pml[lev]->GetE_fp();
-                shiftMF(*pml_B[dim], geom[lev], num_shift, dir, lev);
-                shiftMF(*pml_E[dim], geom[lev], num_shift, dir, lev);
+                shiftMF(*pml_B[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
+                shiftMF(*pml_E[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
             }
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
             if (pml_rz[lev] && dim < 2) {
                 const std::array<amrex::MultiFab*, 2>& pml_rz_B = pml_rz[lev]->GetB_fp();
                 const std::array<amrex::MultiFab*, 2>& pml_rz_E = pml_rz[lev]->GetE_fp();
-                shiftMF(*pml_rz_B[dim], geom[lev], num_shift, dir, lev);
-                shiftMF(*pml_rz_E[dim], geom[lev], num_shift, dir, lev);
+                shiftMF(*pml_rz_B[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
+                shiftMF(*pml_rz_E[dim], geom[lev], num_shift, dir, lev, dont_update_cost);
             }
 #endif
             if (lev > 0) {
                 // coarse grid
-                shiftMF(*Bfield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, B_external_grid[dim], use_Bparser, Bfield_parser);
-                shiftMF(*Efield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser);
-                shiftMF(*Bfield_aux[lev][dim], geom[lev], num_shift, dir, lev);
-                shiftMF(*Efield_aux[lev][dim], geom[lev], num_shift, dir, lev);
+                shiftMF(*Bfield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
+                    B_external_grid[dim], use_Bparser, Bfield_parser);
+                shiftMF(*Efield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
+                    E_external_grid[dim], use_Eparser, Efield_parser);
+                shiftMF(*Bfield_aux[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
+                shiftMF(*Efield_aux[lev][dim], geom[lev], num_shift, dir, lev, do_update_cost);
                 if (fft_do_time_averaging) {
-                    shiftMF(*Bfield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, B_external_grid[dim], use_Bparser, Bfield_parser);
-                    shiftMF(*Efield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, E_external_grid[dim], use_Eparser, Efield_parser);
+                    shiftMF(*Bfield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
+                        B_external_grid[dim], use_Bparser, Bfield_parser);
+                    shiftMF(*Efield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost,
+                        E_external_grid[dim], use_Eparser, Efield_parser);
                 }
                 if (move_j) {
-                    shiftMF(*current_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev);
+                    shiftMF(*current_cp[lev][dim], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
                 }
                 if (do_pml && pml[lev]->ok()) {
                     const std::array<amrex::MultiFab*, 3>& pml_B = pml[lev]->GetB_cp();
                     const std::array<amrex::MultiFab*, 3>& pml_E = pml[lev]->GetE_cp();
-                    shiftMF(*pml_B[dim], geom[lev-1], num_shift_crse, dir, lev);
-                    shiftMF(*pml_E[dim], geom[lev-1], num_shift_crse, dir, lev);
+                    shiftMF(*pml_B[dim], geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
+                    shiftMF(*pml_E[dim], geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
                 }
             }
         }
 
-        // Shift scalar component F for dive cleaning
-        if (do_dive_cleaning) {
+        // Shift scalar field F with div(E) cleaning in valid domain
+        // TODO: shift F from pml_rz for RZ geometry with PSATD, once implemented
+        if (F_fp[lev])
+        {
             // Fine grid
-            shiftMF(*F_fp[lev], geom[lev], num_shift, dir, lev);
-            if (do_pml && pml[lev]->ok()) {
-                amrex::MultiFab* pml_F = pml[lev]->GetF_fp();
-                shiftMF(*pml_F, geom[lev], num_shift, dir, lev);
-            }
-            if (lev > 0) {
+            shiftMF(*F_fp[lev], geom[lev], num_shift, dir, lev, do_update_cost);
+            if (lev > 0)
+            {
                 // Coarse grid
-                shiftMF(*F_cp[lev], geom[lev-1], num_shift_crse, dir, lev);
-                if (do_pml && pml[lev]->ok()) {
+                shiftMF(*F_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
+            }
+        }
+
+        // Shift scalar field F with div(E) cleaning in pml region
+        if (do_pml_dive_cleaning)
+        {
+            // Fine grid
+            if (do_pml && pml[lev]->ok())
+            {
+                amrex::MultiFab* pml_F = pml[lev]->GetF_fp();
+                shiftMF(*pml_F, geom[lev], num_shift, dir, lev, dont_update_cost);
+            }
+            if (lev > 0)
+            {
+                // Coarse grid
+                if (do_pml && pml[lev]->ok())
+                {
                     amrex::MultiFab* pml_F = pml[lev]->GetF_cp();
-                    shiftMF(*pml_F, geom[lev-1], num_shift_crse, dir, lev);
+                    shiftMF(*pml_F, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
+                }
+            }
+        }
+
+        // Shift scalar field G with div(B) cleaning in valid domain
+        // TODO: shift G from pml_rz for RZ geometry with PSATD, once implemented
+        if (G_fp[lev])
+        {
+            // Fine grid
+            shiftMF(*G_fp[lev], geom[lev], num_shift, dir, lev, do_update_cost);
+            if (lev > 0)
+            {
+                // Coarse grid
+                shiftMF(*G_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
+            }
+        }
+
+        // Shift scalar field G with div(B) cleaning in pml region
+        if (do_pml_divb_cleaning)
+        {
+            // Fine grid
+            if (do_pml && pml[lev]->ok())
+            {
+                amrex::MultiFab* pml_G = pml[lev]->GetG_fp();
+                shiftMF(*pml_G, geom[lev], num_shift, dir, lev, dont_update_cost);
+            }
+            if (lev > 0)
+            {
+                // Coarse grid
+                if (do_pml && pml[lev]->ok())
+                {
+                    amrex::MultiFab* pml_G = pml[lev]->GetG_cp();
+                    shiftMF(*pml_G, geom[lev-1], num_shift_crse, dir, lev, dont_update_cost);
                 }
             }
         }
@@ -244,50 +350,63 @@ WarpX::MoveWindow (const int step, bool move_j)
         if (move_j) {
             if (rho_fp[lev]){
                 // Fine grid
-                shiftMF(*rho_fp[lev],   geom[lev], num_shift, dir, lev);
+                shiftMF(*rho_fp[lev],   geom[lev], num_shift, dir, lev, do_update_cost);
                 if (lev > 0){
                     // Coarse grid
-                    shiftMF(*rho_cp[lev], geom[lev-1], num_shift_crse, dir, lev);
+                    shiftMF(*rho_cp[lev], geom[lev-1], num_shift_crse, dir, lev, do_update_cost);
                 }
             }
         }
     }
 
-    // Continuously inject plasma in new cells (by default only on level 0)
-    if (WarpX::warpx_do_continuous_injection) {
+    // Loop over species (particles and lasers)
+    const int n_containers = mypc->nContainers();
+    for (int i=0; i<n_containers; i++)
+    {
+        WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
 
-        const int lev = 0;
+        // Continuously inject plasma in new cells (by default only on level 0)
+        if (pc.doContinuousInjection())
+        {
+            const int lev = 0;
 
-        // particleBox encloses the cells where we generate particles
-        // (only injects particles in an integer number of cells,
-        // for correct particle spacing)
-        amrex::RealBox particleBox = geom[lev].ProbDomain();
-        amrex::Real new_injection_position;
-        if (moving_window_v >= 0){
-            // Forward-moving window
-            amrex::Real dx = geom[lev].CellSize(dir);
-            new_injection_position = current_injection_position +
-                std::floor( (geom[lev].ProbHi(dir) - current_injection_position)/dx ) * dx;
-        } else {
-            // Backward-moving window
-            amrex::Real dx = geom[lev].CellSize(dir);
-            new_injection_position = current_injection_position -
-                std::floor( (current_injection_position - geom[lev].ProbLo(dir))/dx) * dx;
-        }
-        // Modify the corresponding bounds of the particleBox
-        if (moving_window_v >= 0) {
-            particleBox.setLo( dir, current_injection_position );
-            particleBox.setHi( dir, new_injection_position );
-        } else {
-            particleBox.setLo( dir, new_injection_position );
-            particleBox.setHi( dir, current_injection_position );
-        }
+            // particleBox encloses the cells where we generate particles
+            // (only injects particles in an integer number of cells,
+            // for correct particle spacing)
+            amrex::RealBox particleBox = geom[lev].ProbDomain();
+            amrex::Real new_injection_position = pc.m_current_injection_position;
+            if (moving_window_v > 0._rt)
+            {
+                // Forward-moving window
+                const amrex::Real dx = geom[lev].CellSize(dir);
+                new_injection_position = pc.m_current_injection_position +
+                    std::floor( (geom[lev].ProbHi(dir) - pc.m_current_injection_position)/dx ) * dx;
+            }
+            else if (moving_window_v < 0._rt)
+            {
+                // Backward-moving window
+                const amrex::Real dx = geom[lev].CellSize(dir);
+                new_injection_position = pc.m_current_injection_position -
+                    std::floor( (pc.m_current_injection_position - geom[lev].ProbLo(dir))/dx) * dx;
+            }
+            // Modify the corresponding bounds of the particleBox
+            if (moving_window_v > 0._rt)
+            {
+                particleBox.setLo( dir, pc.m_current_injection_position );
+                particleBox.setHi( dir, new_injection_position );
+            }
+            else if (moving_window_v < 0._rt)
+            {
+                particleBox.setLo( dir, new_injection_position );
+                particleBox.setHi( dir, pc.m_current_injection_position );
+            }
 
-        if (particleBox.ok() and (current_injection_position != new_injection_position)){
-            // Performs continuous injection of all WarpXParticleContainer
-            // in mypc.
-            mypc->ContinuousInjection(particleBox);
-            current_injection_position = new_injection_position;
+            if (particleBox.ok() and (pc.m_current_injection_position != new_injection_position)){
+                // Performs continuous injection of all WarpXParticleContainer
+                // in mypc.
+                pc.ContinuousInjection(particleBox);
+                pc.m_current_injection_position = new_injection_position;
+            }
         }
     }
 
@@ -296,7 +415,7 @@ WarpX::MoveWindow (const int step, bool move_j)
 
 void
 WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
-                int num_shift, int dir, const int lev,
+                int num_shift, int dir, const int lev, bool update_cost_flag,
                 amrex::Real external_field, bool useparser,
                 amrex::ParserExecutor<3> const& field_parser)
 {
@@ -351,7 +470,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 
     amrex::IntVect shiftiv(0);
     shiftiv[dir] = num_shift;
-    amrex::Dim3 shift = shiftiv.dim3();
+    const amrex::Dim3 shift = shiftiv.dim3();
 
     const amrex::RealBox& real_box = geom.ProbDomain();
     const auto dx = geom.CellSizeArray();
@@ -375,12 +494,12 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         const amrex::Box& outbox = mfi.fabbox() & adjBox;
 
         if (outbox.ok()) {
-            if (useparser == false) {
+            if (!useparser) {
                 AMREX_PARALLEL_FOR_4D ( outbox, nc, i, j, k, n,
                 {
                     srcfab(i,j,k,n) = external_field;
                 })
-            } else if (useparser == true) {
+            } else {
                 // index type of the src mf
                 auto const& mf_IndexType = (tmpmf).ixType();
                 amrex::IntVect mf_type(AMREX_D_DECL(0,0,0));
@@ -393,23 +512,23 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                 {
                       // Compute x,y,z co-ordinates based on index type of mf
 #if defined(WARPX_DIM_1D_Z)
-                      amrex::Real x = 0.0_rt;
-                      amrex::Real y = 0.0_rt;
-                      amrex::Real fac_z = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
-                      amrex::Real z = i*dx[0] + real_box.lo(0) + fac_z;
+                      const amrex::Real x = 0.0_rt;
+                      const amrex::Real y = 0.0_rt;
+                      const amrex::Real fac_z = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
+                      const amrex::Real z = i*dx[0] + real_box.lo(0) + fac_z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                      amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
-                      amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
-                      amrex::Real y = 0.0;
-                      amrex::Real fac_z = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
-                      amrex::Real z = j*dx[1] + real_box.lo(1) + fac_z;
+                      const amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
+                      const amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
+                      const amrex::Real y = 0.0;
+                      const amrex::Real fac_z = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
+                      const amrex::Real z = j*dx[1] + real_box.lo(1) + fac_z;
 #else
-                      amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
-                      amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
-                      amrex::Real fac_y = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
-                      amrex::Real y = j*dx[1] + real_box.lo(1) + fac_y;
-                      amrex::Real fac_z = (1.0_rt - mf_type[2]) * dx[2]*0.5_rt;
-                      amrex::Real z = k*dx[2] + real_box.lo(2) + fac_z;
+                      const amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
+                      const amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
+                      const amrex::Real fac_y = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
+                      const amrex::Real y = j*dx[1] + real_box.lo(1) + fac_y;
+                      const amrex::Real fac_z = (1.0_rt - mf_type[2]) * dx[2]*0.5_rt;
+                      const amrex::Real z = k*dx[2] + real_box.lo(2) + fac_z;
 #endif
                       srcfab(i,j,k,n) = field_parser(x,y,z);
                 });
@@ -428,7 +547,8 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
             dstfab(i,j,k,n) = srcfab(i+shift.x,j+shift.y,k+shift.z,n);
         })
 
-        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (cost && update_cost_flag &&
+            WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
@@ -452,7 +572,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         for (int i = 0, N=ba.size(); i < N; ++i) {
             bl.push_back(amrex::grow(ba[i], 0, mf.nGrowVect()[0]));
         }
-        amrex::BoxArray rba(std::move(bl));
+        const amrex::BoxArray rba(std::move(bl));
         amrex::MultiFab rmf(rba, dm, mf.nComp(), IntVect(0,mf.nGrowVect()[1]), MFInfo().SetAlloc(false));
 
         for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {
@@ -467,13 +587,13 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 void
 WarpX::ShiftGalileanBoundary ()
 {
-    amrex::Real cur_time = t_new[0];
+    const amrex::Real cur_time = t_new[0];
     amrex::Real new_lo[AMREX_SPACEDIM];
     amrex::Real new_hi[AMREX_SPACEDIM];
     const amrex::Real* current_lo = geom[0].ProbLo();
     const amrex::Real* current_hi = geom[0].ProbHi();
 
-    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
+    const amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
 
 #if defined(WARPX_DIM_3D)
         m_galilean_shift = {

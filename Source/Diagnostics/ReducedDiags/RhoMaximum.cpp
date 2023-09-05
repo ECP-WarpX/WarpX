@@ -11,7 +11,6 @@
 #include "Diagnostics/ReducedDiags/ReducedDiags.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/IntervalsParser.H"
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
 
@@ -41,7 +40,7 @@ RhoMaximum::RhoMaximum (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    amrex::ParmParse pp_amr("amr");
+    const amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
     m_rho_functors.resize(nLevel);
@@ -91,7 +90,7 @@ RhoMaximum::RhoMaximum (std::string rd_name)
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -104,14 +103,14 @@ RhoMaximum::RhoMaximum (std::string rd_name)
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]max_rho_lev" + std::to_string(lev) + " (C/m^3)";
+                ofs << "[" << c++ << "]max_rho_lev" + std::to_string(lev) + "(C/m^3)";
                 ofs << m_sep;
-                ofs << "[" << c++ << "]min_rho_lev" + std::to_string(lev) + " (C/m^3)";
+                ofs << "[" << c++ << "]min_rho_lev" + std::to_string(lev) + "(C/m^3)";
                 for (int i = 0; i < n_charged_species; ++i)
                 {
                     ofs << m_sep;
                     ofs << "[" << c++ << "]max_" + species_names[indices_charged_species[i]]
-                                         + "_|rho|_lev" + std::to_string(lev) + " (C/m^3)";
+                                         + "_|rho|_lev" + std::to_string(lev) + "(C/m^3)";
                 }
             }
             ofs << std::endl;
@@ -142,8 +141,8 @@ void RhoMaximum::ComputeDiags (int step)
     for (int lev = 0; lev < nLevel; ++lev)
     {
         // Declare a temporary MultiFAB to store the charge densities.
-        amrex::BoxArray ba = warpx.boxArray(lev);
-        amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
+        const amrex::BoxArray ba = warpx.boxArray(lev);
+        const amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
         constexpr int ncomp = 1;
         constexpr int ngrow = 0;
         amrex::MultiFab mf_temp(ba, dmap, ncomp, ngrow);

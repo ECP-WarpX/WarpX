@@ -7,8 +7,7 @@
 #ifndef ABLASTR_POISSON_SOLVER_H
 #define ABLASTR_POISSON_SOLVER_H
 
-#include "Utils/WarpXConst.H"
-
+#include <ablastr/constant.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -58,6 +57,41 @@
 
 
 namespace ablastr::fields {
+
+namespace details
+{
+    /** Local interpolation from phi_cp to phi[lev+1]
+     *
+     * This is needed to work-around an NVCC limitation in downstream code (ImpactX),
+     * when nesting lambdas. Otherwise this could be written directly into the
+     * ParallelFor.
+     *
+     * @param[out] phi_fp_arr phi on the fine level
+     * @param[in] phi_cp_arr phi on the coarse level
+     * @param[in] refratio refinement ration
+     */
+    struct PoissonInterpCPtoFP
+    {
+        PoissonInterpCPtoFP(
+                amrex::Array4<amrex::Real> const phi_fp_arr,
+                amrex::Array4<amrex::Real const> const phi_cp_arr,
+                amrex::IntVect const refratio)
+        : m_phi_fp_arr(phi_fp_arr), m_phi_cp_arr(phi_cp_arr), m_refratio(refratio)
+        {}
+
+        AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+        void
+        operator() (long i, long j, long k) const noexcept
+        {
+            amrex::mf_nodebilin_interp(i, j, k, 0, m_phi_fp_arr, 0, m_phi_cp_arr,
+                                       0, m_refratio);
+        }
+
+        amrex::Array4<amrex::Real> const m_phi_fp_arr;
+        amrex::Array4<amrex::Real const> const m_phi_cp_arr;
+        amrex::IntVect const m_refratio;
+    };
+}
 
 /** Compute the potential `phi` by solving the Poisson equation
  *
@@ -126,12 +160,13 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
     // scale rho appropriately; also determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
-        rho[lev]->mult(-1._rt/PhysConst::ep0); // TODO: when do we "un-multiply" this? We need to document this side-effect!
+        using namespace ablastr::constant::SI;
+        rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
         max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
 
-    bool always_use_bnorm = (max_norm_b > 0);
+    const bool always_use_bnorm = (max_norm_b > 0);
     if (!always_use_bnorm) {
         if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
         ablastr::warn_manager::WMRecordWarning(
@@ -153,7 +188,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                 {{ beta[0], beta[1], beta[2] }};
 #endif
 
-#if !(defined(AMREX_USE_EB) && defined(WARPX_DIM_RZ))
+#if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
                 {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
@@ -161,9 +196,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                               geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
         int max_semicoarsening_level = 0;
         int semicoarsening_direction = -1;
-        int min_dir = std::distance(dx_scaled.begin(),
+        const int min_dir = std::distance(dx_scaled.begin(),
                                     std::min_element(dx_scaled.begin(),dx_scaled.end()));
-        int max_dir = std::distance(dx_scaled.begin(),
+        const int max_dir = std::distance(dx_scaled.begin(),
                                     std::max_element(dx_scaled.begin(),dx_scaled.end()));
         if (dx_scaled[max_dir] > dx_scaled[min_dir]) {
             semicoarsening_direction = max_dir;
@@ -247,7 +282,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
             // Copy from phi[lev] to phi_cp (in parallel)
             const amrex::IntVect& ng = amrex::IntVect::TheUnitVector();
             const amrex::Periodicity& crse_period = geom[lev].periodicity();
-            // TODO: move WarpXCommUtil.cpp over to ABLASTR
+
             ablastr::utils::communication::ParallelCopy(
                 phi_cp,
                 *phi[lev],
@@ -264,17 +299,14 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-            for (amrex::MFIter mfi(*phi[lev+1],amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
-            {
-                amrex::Array4<amrex::Real> const& phi_fp_arr = phi[lev+1]->array(mfi);
-                amrex::Array4<amrex::Real> const& phi_cp_arr = phi_cp.array(mfi);
+            for (amrex::MFIter mfi(*phi[lev + 1], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+                amrex::Array4<amrex::Real> const phi_fp_arr = phi[lev + 1]->array(mfi);
+                amrex::Array4<amrex::Real const> const phi_cp_arr = phi_cp.array(mfi);
 
-                amrex::Box const& b = mfi.tilebox(phi[lev+1]->ixType().toIntVect());
-                amrex::ParallelFor( b,
-                                    [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                {
-                    amrex::mf_nodebilin_interp(i, j, k, 0, phi_fp_arr, 0, phi_cp_arr, 0, refratio);
-                });
+                details::PoissonInterpCPtoFP const interp(phi_fp_arr, phi_cp_arr, refratio);
+
+                amrex::Box const b = mfi.tilebox(phi[lev + 1]->ixType().toIntVect());
+                amrex::ParallelFor(b, interp);
             }
 
         }

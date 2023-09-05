@@ -19,11 +19,11 @@ class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
         PsatdAlgorithmGalileanRZ (SpectralKSpaceRZ const & spectral_kspace,
                                   amrex::DistributionMapping const & dm,
                                   const SpectralFieldIndex& spectral_index,
-                                  int const n_rz_azimuthal_modes, int const norder_z,
-                                  bool const nodal,
+                                  int n_rz_azimuthal_modes, int norder_z,
+                                  short grid_type,
                                   const amrex::Vector<amrex::Real>& v_galilean,
-                                  amrex::Real const dt_step,
-                                  bool const update_with_rho);
+                                  amrex::Real dt_step,
+                                  bool update_with_rho);
         // Redefine functions from base class
         virtual void pushSpectralFields (SpectralFieldDataRZ & f) override final;
 
@@ -51,11 +51,9 @@ class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
 
     private:
 
-        SpectralFieldIndex m_spectral_index;
-
         bool coefficients_initialized;
         // Note that dt and v_galilean are saved to use in InitializeSpectralCoefficients
-        amrex::Real const m_dt;
+        amrex::Real m_dt;
         amrex::Vector<amrex::Real> m_v_galilean;
         bool m_update_with_rho;
 

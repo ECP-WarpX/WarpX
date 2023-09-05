@@ -9,8 +9,6 @@
 #ifndef TEMPERATURE_PROPERTIES_H_
 #define TEMPERATURE_PROPERTIES_H_
 
-#include <Utils/WarpXUtil.H>
-
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
@@ -33,7 +31,7 @@ struct TemperatureProperties
      *
      * \param[in] pp: Reference to the parameter parser object for the species being initialized
      */
-    TemperatureProperties (amrex::ParmParse& pp);
+    TemperatureProperties (const amrex::ParmParse& pp);
 
     /* Type of temperature initialization */
     TemperatureInitType m_type;

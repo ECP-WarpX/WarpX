@@ -53,26 +53,26 @@ void FiniteDifferenceSolver::EvolveF (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
-    if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
+    if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
 
         EvolveFCylindrical <CylindricalYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
 #else
-    if (m_do_nodal) {
+    if (m_grid_type == GridType::Collocated) {
 
         EvolveFCartesian <CartesianNodalAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee) {
 
         EvolveFCartesian <CartesianYeeAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
+    } else if (m_fdtd_algo == ElectromagneticSolverAlgo::CKC) {
 
         EvolveFCartesian <CartesianCKCAlgorithm> ( Ffield, Efield, rhofield, rhocomp, dt );
 
 #endif
     } else {
-        amrex::Abort(Utils::TextMsg::Err("EvolveF: Unknown algorithm"));
+        WARPX_ABORT_WITH_MESSAGE("EvolveF: Unknown algorithm");
     }
 
 }
@@ -169,7 +169,6 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
         Box const& tf  = mfi.tilebox(Ffield->ixType().toIntVect());
 
         Real constexpr inv_epsilon0 = 1./PhysConst::ep0;
-        Real constexpr c2 = PhysConst::c * PhysConst::c;
 
         // Use the right shift in components:
         // - the first WarpX::ncomps (2*n_rz_azimuthal_modes-1) components correspond to rho old (i.e. rhocomp=0)
@@ -195,7 +194,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
                             + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
                             + m * Et( i, j, 0, 2*m )/r
                             + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 2*m-1) ); // Real part
-                        F(i, j, 0, 2*m  ) += c2 * dt *(
+                        F(i, j, 0, 2*m  ) += dt *(
                             - rho(i, j, 0, rho_shift + 2*m-1) * inv_epsilon0
                             + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
                             - m * Et( i, j, 0, 2*m-1 )/r

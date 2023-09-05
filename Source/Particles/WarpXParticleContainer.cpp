@@ -12,16 +12,17 @@
 #include "ablastr/particles/DepositCharge.H"
 #include "Deposition/ChargeDeposition.H"
 #include "Deposition/CurrentDeposition.H"
+#include "Deposition/SharedDepositionUtils.H"
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
 #include "ParticleBoundaries_K.H"
-#include "Utils/CoarsenMR.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <ablastr/coarsen/average.H>
 #include <ablastr/utils/Communication.H>
 
 #include <AMReX.H>
@@ -56,6 +57,7 @@
 #include <AMReX_ParticleTile.H>
 #include <AMReX_ParticleTransformation.H>
 #include <AMReX_ParticleUtil.H>
+#include <AMReX_Random.H>
 #include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 
@@ -89,12 +91,15 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     ReadParameters();
 
     // Initialize temporary local arrays for charge/current deposition
-    int num_threads = 1;
 #ifdef AMREX_USE_OMP
+    int num_threads = 1;
 #pragma omp parallel
 #pragma omp single
     num_threads = omp_get_num_threads();
+#else
+    const int num_threads = 1;
 #endif
+
     local_rho.resize(num_threads);
     local_jx.resize(num_threads);
     local_jy.resize(num_threads);
@@ -123,7 +128,7 @@ WarpXParticleContainer::ReadParameters ()
     static bool initialized = false;
     if (!initialized)
     {
-        ParmParse pp_particles("particles");
+        const ParmParse pp_particles("particles");
         pp_particles.query("do_tiling", do_tiling);
         initialized = true;
     }
@@ -139,20 +144,33 @@ WarpXParticleContainer::AllocData ()
 }
 
 void
-WarpXParticleContainer::AddNParticles (int /*lev*/,
-                                       int n, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z,
-                                       const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
-                                       int nattr, const ParticleReal* attr, int uniqueparticles, amrex::Long id)
+WarpXParticleContainer::AddNParticles (int /*lev*/, int n,
+                                       amrex::Vector<amrex::ParticleReal> const & x,
+                                       amrex::Vector<amrex::ParticleReal> const & y,
+                                       amrex::Vector<amrex::ParticleReal> const & z,
+                                       amrex::Vector<amrex::ParticleReal> const & ux,
+                                       amrex::Vector<amrex::ParticleReal> const & uy,
+                                       amrex::Vector<amrex::ParticleReal> const & uz,
+                                       const int nattr_real,
+                                       amrex::Vector<amrex::Vector<amrex::ParticleReal>> const & attr_real,
+                                       const int nattr_int,
+                                       amrex::Vector<amrex::Vector<int>> const & attr_int,
+                                       int uniqueparticles, amrex::Long id)
 {
-    int ibegin, iend;
-    if (uniqueparticles) {
-        ibegin = 0;
-        iend = n;
-    } else {
-        int myproc = ParallelDescriptor::MyProc();
-        int nprocs = ParallelDescriptor::NProcs();
-        int navg = n/nprocs;
-        int nleft = n - navg * nprocs;
+    using namespace amrex::literals;
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE((PIdx::nattribs + nattr_real - 1) <= NumRealComps(),
+                                     "Too many real attributes specified");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nattr_int <= NumIntComps(),
+                                     "Too many integer attributes specified");
+
+    int ibegin = 0;
+    int iend = n;
+    if (!uniqueparticles) {
+        const int myproc = amrex::ParallelDescriptor::MyProc();
+        const int nprocs = amrex::ParallelDescriptor::NProcs();
+        const int navg = n/nprocs;
+        const int nleft = n - navg * nprocs;
         if (myproc < nleft) {
             ibegin = myproc*(navg+1);
             iend = ibegin + navg+1;
@@ -166,18 +184,16 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     // Redistribute() will move them to proper places.
     auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
-    using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
-                                    amrex::PinnedArenaAllocator>;
+    using PinnedTile = amrex::ParticleTile<Particle<NStructReal, NStructInt>,
+                                           NArrayReal, NArrayInt,
+                                           amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
 
-    std::size_t np = iend-ibegin;
-
-    // treat weight as a special attr since it will always be specified
-    Vector<ParticleReal> weight(np);
+    const std::size_t np = iend-ibegin;
 
 #ifdef WARPX_DIM_RZ
-    Vector<ParticleReal> theta(np);
+    amrex::Vector<amrex::ParticleReal> theta(np);
 #endif
 
     for (int i = ibegin; i < iend; ++i)
@@ -189,7 +205,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         } else {
             p.id() = id;
         }
-        p.cpu() = ParallelDescriptor::MyProc();
+        p.cpu() = amrex::ParallelDescriptor::MyProc();
 #if defined(WARPX_DIM_3D)
         p.pos(0) = x[i];
         p.pos(1) = y[i];
@@ -209,17 +225,14 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 #endif
 
         pinned_tile.push_back(p);
-
-        // grab weight from the attr array
-        weight[i-ibegin] = attr[i*nattr];
     }
 
     if (np > 0)
     {
-        pinned_tile.push_back_real(PIdx::w , weight.data(), weight.data() + np);
-        pinned_tile.push_back_real(PIdx::ux,     vx + ibegin,     vx + iend);
-        pinned_tile.push_back_real(PIdx::uy,     vy + ibegin,     vy + iend);
-        pinned_tile.push_back_real(PIdx::uz,     vz + ibegin,     vz + iend);
+        pinned_tile.push_back_real(PIdx::w , attr_real[0].data() + ibegin, attr_real[0].data() + iend);
+        pinned_tile.push_back_real(PIdx::ux, ux.data() + ibegin, ux.data() + iend);
+        pinned_tile.push_back_real(PIdx::uy, uy.data() + ibegin, uy.data() + iend);
+        pinned_tile.push_back_real(PIdx::uz, uz.data() + ibegin, uz.data() + iend);
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
             DefineAndReturnParticleTile(0, 0, 0);
@@ -232,28 +245,32 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
                 pinned_tile.push_back_real(comp, theta.data(), theta.data() + np);
             }
             else {
-                pinned_tile.push_back_real(comp, np, 0.0);
+                pinned_tile.push_back_real(comp, np, 0.0_prt);
             }
 #else
-            pinned_tile.push_back_real(comp, np, 0.0);
+            pinned_tile.push_back_real(comp, np, 0.0_prt);
 #endif
         }
 
-        for (int j = PIdx::nattribs; j < NumRealComps(); ++j)
+        // Initialize nattr_real - 1 runtime real attributes from data in the attr_real array
+        for (int j = PIdx::nattribs; j < PIdx::nattribs + nattr_real - 1; ++j)
         {
-            if (j - PIdx::nattribs < nattr - 1) {
-                // get the next attribute from attr array
-                Vector<ParticleReal> attr_vals(np);
-                for (int i = ibegin; i < iend; ++i)
-                {
-                    attr_vals[i-ibegin] = attr[j - PIdx::nattribs + 1 + i*nattr];
-                }
-                pinned_tile.push_back_real(j, attr_vals.data(), attr_vals.data() + np);
-            }
-            else {
-                pinned_tile.push_back_real(j, np, 0.0);
-            }
+            // get the next attribute from attr_real array
+            pinned_tile.push_back_real(
+                j, attr_real[j - PIdx::nattribs + 1].data() + ibegin, attr_real[j - PIdx::nattribs + 1].data() + iend
+            );
         }
+
+        // Initialize nattr_int runtime integer attributes from data in the attr_int array
+        for (int j = 0; j < nattr_int; ++j)
+        {
+            // get the next attribute from attr_int array
+            pinned_tile.push_back_int(j, attr_int[j].data() + ibegin, attr_int[j].data() + iend);
+        }
+
+        // Default initialize the other real and integer runtime attributes
+        DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int,
+                                           amrex::RandomEngine{});
 
         auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();
@@ -308,7 +325,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     if (do_not_deposit) return;
 
     // Number of guard cells for local deposition of J
-    WarpX& warpx = WarpX::GetInstance();
+    const WarpX& warpx = WarpX::GetInstance();
 
     const amrex::IntVect& ng_J = warpx.get_ng_depos_J();
 
@@ -343,8 +360,15 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for current deposition");
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
-    Real q = this->charge;
+    const amrex::ParticleReal q = this->charge;
 
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Sorting", blp_sort);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::FindMaxTilesize",
+            blp_get_max_tilesize);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::DirectCurrentDepKernel",
+            direct_current_dep_kernel);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::EsirkepovCurrentDepKernel",
+            esirkepov_current_dep_kernel);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::CurrentDeposition", blp_deposit);
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Accumulate", blp_accumulate);
 
@@ -409,8 +433,8 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, 0.5_rt*dt);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-        if (WarpX::do_nodal==1) {
-          amrex::Abort("The Esirkepov algorithm cannot be used with a nodal grid.");
+        if (WarpX::grid_type == GridType::Collocated) {
+          WARPX_ABORT_WITH_MESSAGE("The Esirkepov algorithm cannot be used with a collocated grid.");
         }
     }
 
@@ -418,74 +442,159 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     amrex::LayoutData<amrex::Real> * const costs = WarpX::getCosts(lev);
     amrex::Real * const cost = costs ? &((*costs)[pti.index()]) : nullptr;
 
-    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-        if        (WarpX::nox == 1){
-            doEsirkepovDepositionShapeN<1>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
-        } else if (WarpX::nox == 2){
-            doEsirkepovDepositionShapeN<2>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
-        } else if (WarpX::nox == 3){
-            doEsirkepovDepositionShapeN<3>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
+    // If doing shared mem current deposition, get tile info
+    if (WarpX::do_shared_mem_current_deposition) {
+        const Geometry& geom = Geom(lev);
+        const auto dxi = geom.InvCellSizeArray();
+        const auto plo = geom.ProbLoArray();
+        const auto domain = geom.Domain();
+
+        Box box = pti.validbox();
+        box.grow(ng_J);
+        const amrex::IntVect bin_size = WarpX::shared_tilesize;
+
+        //sort particles by bin
+        WARPX_PROFILE_VAR_START(blp_sort);
+        amrex::DenseBins<ParticleType> bins;
+        {
+            auto& ptile = ParticlesAt(lev, pti);
+            auto& aos = ptile.GetArrayOfStructs();
+            auto pstruct_ptr = aos().dataPtr();
+
+            const int ntiles = numTilesInBox(box, true, bin_size);
+
+            bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
+                    [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) -> unsigned int
+                    {
+                        Box tbox;
+                        auto iv = getParticleCell(p, plo, dxi, domain);
+                        AMREX_ASSERT(box.contains(iv));
+                        auto tid = getTileIndex(iv, box, true, bin_size, tbox);
+                        return static_cast<unsigned int>(tid);
+                    });
         }
-    } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
-        if        (WarpX::nox == 1){
-            doVayDepositionShapeN<1>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
-        } else if (WarpX::nox == 2){
-            doVayDepositionShapeN<2>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
-        } else if (WarpX::nox == 3){
-            doVayDepositionShapeN<3>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
+        WARPX_PROFILE_VAR_STOP(blp_sort);
+        WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
+            //get the maximum size necessary for shared mem
+            // get tile boxes
+        //get the maximum size necessary for shared mem
+#if AMREX_SPACEDIM > 0
+        const int sizeX = getMaxTboxAlongDim(box.size()[0], WarpX::shared_tilesize[0]);
+#endif
+#if AMREX_SPACEDIM > 1
+        const int sizeZ = getMaxTboxAlongDim(box.size()[1], WarpX::shared_tilesize[1]);
+#endif
+#if AMREX_SPACEDIM > 2
+        const int sizeY = getMaxTboxAlongDim(box.size()[2], WarpX::shared_tilesize[2]);
+#endif
+        const amrex::IntVect max_tbox_size( AMREX_D_DECL(sizeX,sizeZ,sizeY) );
+        WARPX_PROFILE_VAR_STOP(blp_get_max_tilesize);
+
+        // Now pick current deposition algorithm
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+            WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Esirkepov algorithm");
         }
-    } else {
-        if        (WarpX::nox == 1){
-            doDepositionShapeN<1>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
-                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
-        } else if (WarpX::nox == 2){
-            doDepositionShapeN<2>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
-                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
-        } else if (WarpX::nox == 3){
-            doDepositionShapeN<3>(
-                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
-                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                WarpX::load_balance_costs_update_algo);
+        else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+            WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Vay algorithm");
+        }
+        else {
+            WARPX_PROFILE_VAR_START(direct_current_dep_kernel);
+            if        (WarpX::nox == 1){
+                doDepositionSharedShapeN<1>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
+                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+            } else if (WarpX::nox == 2){
+                doDepositionSharedShapeN<2>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
+                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+            } else if (WarpX::nox == 3){
+                doDepositionSharedShapeN<3>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
+                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+            }
+            WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
+        }
+    }
+    // If not doing shared memory deposition, call normal kernels
+    else {
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+            if        (WarpX::nox == 1){
+                doEsirkepovDepositionShapeN<1>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            } else if (WarpX::nox == 2){
+                doEsirkepovDepositionShapeN<2>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            } else if (WarpX::nox == 3){
+                doEsirkepovDepositionShapeN<3>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            }
+        } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+            if        (WarpX::nox == 1){
+                doVayDepositionShapeN<1>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            } else if (WarpX::nox == 2){
+                doVayDepositionShapeN<2>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            } else if (WarpX::nox == 3){
+                doVayDepositionShapeN<3>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
+                    WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            }
+        } else { // Direct deposition
+            if        (WarpX::nox == 1){
+                doDepositionShapeN<1>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
+                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            } else if (WarpX::nox == 2){
+                doDepositionShapeN<2>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
+                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            } else if (WarpX::nox == 3){
+                doDepositionShapeN<3>(
+                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
+                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                    WarpX::load_balance_costs_update_algo);
+            }
         }
     }
     WARPX_PROFILE_VAR_STOP(blp_deposit);
@@ -513,9 +622,9 @@ WarpXParticleContainer::DepositCurrent (
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
         {
-        int thread_num = omp_get_thread_num();
+        const int thread_num = omp_get_thread_num();
 #else
-        int thread_num = 0;
+        const int thread_num = 0;
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
@@ -554,7 +663,7 @@ WarpXParticleContainer::DepositCurrent (
                         1: new value (after particle push).
  * \param offset      : Index of first particle for which charge is deposited
  * \param np_to_depose: Number of particles for which charge is deposited.
-                        Particles [offset,offset+np_tp_depose] deposit charge
+                        Particles [offset,offset+np_tp_depose) deposit charge
  * \param thread_num  : Thread number (if tiling)
  * \param lev         : Level of box that contains particles
  * \param depos_lev   : Level on which particles deposit (if buffers are used)
@@ -562,12 +671,238 @@ WarpXParticleContainer::DepositCurrent (
 void
 WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                        const int * const ion_lev,
-                                       amrex::MultiFab* rho, int icomp,
+                                       amrex::MultiFab* rho, const int icomp,
                                        const long offset, const long np_to_depose,
-                                       int thread_num, int lev, int depos_lev)
+                                       const int thread_num, const int lev, const int depos_lev)
 {
-    if (!do_not_deposit) {
-        WarpX& warpx = WarpX::GetInstance();
+    if (WarpX::do_shared_mem_charge_deposition)
+    {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
+                                         (depos_lev==(lev  )),
+                                         "Deposition buffers only work for lev-1");
+
+        // If no particles, do not do anything
+        if (np_to_depose == 0) return;
+
+        // Number of guard cells for local deposition of rho
+        const WarpX& warpx = WarpX::GetInstance();
+        const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
+
+        // Extract deposition order and check that particles shape fits within the guard cells.
+        // NOTE: In specific situations where the staggering of rho and the charge deposition algorithm
+        // are not trivial, this check might be too strict and we might need to relax it, as currently
+        // done for the current deposition.
+
+#if   defined(WARPX_DIM_1D_Z)
+        const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::noz/2));
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2+1),
+                                                           static_cast<int>(WarpX::noz/2+1));
+#elif defined(WARPX_DIM_3D)
+        const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2+1),
+                                                           static_cast<int>(WarpX::noy/2+1),
+                                                           static_cast<int>(WarpX::noz/2+1));
+#endif
+
+        // On CPU: particles deposit on tile arrays, which have a small number of guard cells ng_rho
+        // On GPU: particles deposit directly on the rho array, which usually have a larger number of guard cells
+#ifndef AMREX_USE_GPU
+        const amrex::IntVect range = ng_rho - shape_extent;
+#else
+        const amrex::IntVect range = rho->nGrowVect() - shape_extent;
+#endif
+
+        AMREX_ASSERT_WITH_MESSAGE(
+                                  amrex::numParticlesOutOfRange(pti, range) == 0,
+                                  "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for charge deposition");
+        amrex::ignore_unused(range); // In case the assertion isn't compiled
+
+        const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
+        const Real q = this->charge;
+
+        WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::Sorting", blp_sort);
+        WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::ChargeDeposition", blp_ppc_chd);
+        WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::Accumulate", blp_accumulate);
+
+        // Get tile box where charge is deposited.
+        // The tile box is different when depositing in the buffers (depos_lev<lev)
+        // or when depositing inside the level (depos_lev=lev)
+        Box tilebox;
+        if (lev == depos_lev) {
+            tilebox = pti.tilebox();
+        } else {
+            const IntVect& ref_ratio = WarpX::RefRatio(depos_lev);
+            tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
+        }
+
+        const auto ix_type = rho->ixType().toIntVect();
+#ifndef AMREX_USE_GPU
+        // Staggered tile box
+        Box tb = amrex::convert( tilebox, ix_type );
+#endif
+
+        tilebox.grow(ng_rho);
+
+        const int nc = WarpX::ncomps;
+
+#ifdef AMREX_USE_GPU
+        amrex::ignore_unused(thread_num);
+        // GPU, no tiling: rho_fab points to the full rho array
+        MultiFab rhoi(*rho, amrex::make_alias, icomp*nc, nc);
+        auto & rho_fab = rhoi.get(pti);
+#else
+        tb.grow(ng_rho);
+
+        // CPU, tiling: rho_fab points to local_rho[thread_num]
+        local_rho[thread_num].resize(tb, nc);
+
+        // local_rho[thread_num] is set to zero
+        local_rho[thread_num].setVal(0.0);
+
+        auto & rho_fab = local_rho[thread_num];
+#endif
+
+        // Lower corner of tile box physical domain
+        // Note that this includes guard cells since it is after tilebox.ngrow
+        // Take into account Galilean shift
+        const Real dt = warpx.getdt(lev);
+        const amrex::Real time_shift_delta = (icomp == 0 ? 0.0_rt : dt);
+        const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(
+                tilebox, depos_lev, time_shift_delta);
+
+        // Indices of the lower bound
+        const Dim3 lo = lbound(tilebox);
+
+        // HACK - sort particles by bin here.
+        WARPX_PROFILE_VAR_START(blp_sort);
+        amrex::DenseBins<ParticleType> bins;
+        {
+            const Geometry& geom = Geom(lev);
+            const auto dxi = geom.InvCellSizeArray();
+            const auto plo = geom.ProbLoArray();
+            const auto domain = geom.Domain();
+
+            auto& ptile = ParticlesAt(lev, pti);
+            auto& aos   = ptile.GetArrayOfStructs();
+            auto pstruct_ptr = aos().dataPtr();
+
+            Box box = pti.validbox();
+            box.grow(ng_rho);
+            const amrex::IntVect bin_size = WarpX::shared_tilesize;
+            const int ntiles = numTilesInBox(box, true, bin_size);
+
+            bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
+                       [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) -> unsigned int
+                       {
+                           Box tbx;
+                           auto iv = getParticleCell(p, plo, dxi, domain);
+                           AMREX_ASSERT(box.contains(iv));
+                           auto tid = getTileIndex(iv, box, true, bin_size, tbx);
+                           return static_cast<unsigned int>(tid);
+                       });
+        }
+        WARPX_PROFILE_VAR_STOP(blp_sort);
+
+        // get tile boxes
+        amrex::Gpu::DeviceVector<Box> tboxes(bins.numBins(), amrex::Box());
+        {
+            const Geometry& geom = Geom(lev);
+            const auto dxi = geom.InvCellSizeArray();
+            const auto plo = geom.ProbLoArray();
+            const auto domain = geom.Domain();
+
+            auto& ptile = ParticlesAt(lev, pti);
+            auto& aos   = ptile.GetArrayOfStructs();
+            auto pstruct_ptr = aos().dataPtr();
+
+            Box box = pti.validbox();
+            box.grow(ng_rho);
+            const amrex::IntVect bin_size = WarpX::shared_tilesize;
+
+            const auto offsets_ptr = bins.offsetsPtr();
+            auto tbox_ptr = tboxes.dataPtr();
+            auto permutation = bins.permutationPtr();
+            amrex::ParallelFor(bins.numBins(),
+                               [=] AMREX_GPU_DEVICE (int ibin) {
+                                   const int bin_start = offsets_ptr[ibin];
+                                   const int bin_stop = offsets_ptr[ibin+1];
+                                   if (bin_start < bin_stop) {
+                                       auto p = pstruct_ptr[permutation[bin_start]];
+                                       Box tbx;
+                                       auto iv = getParticleCell(p, plo, dxi, domain);
+                                       AMREX_ASSERT(box.contains(iv));
+                                       [[maybe_unused]] auto tid = getTileIndex(iv, box, true, bin_size, tbx);
+                                       AMREX_ASSERT(tid == ibin);
+                                       AMREX_ASSERT(tbx.contains(iv));
+                                       tbox_ptr[ibin] = tbx;
+                                   }
+                               });
+        }
+
+        // compute max tile box size in each direction
+        amrex::IntVect max_tbox_size;
+        {
+            ReduceOps<AMREX_D_DECL(ReduceOpMax, ReduceOpMax, ReduceOpMax)> reduce_op;
+            ReduceData<AMREX_D_DECL(int, int, int)> reduce_data(reduce_op);
+            using ReduceTuple = typename decltype(reduce_data)::Type;
+
+            const auto boxes_ptr = tboxes.dataPtr();
+            reduce_op.eval(tboxes.size(), reduce_data,
+                           [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
+                           {
+                               const Box& box = boxes_ptr[i];
+                               if (box.ok()) {
+                                   IntVect si = box.length();
+                                   return {AMREX_D_DECL(si[0], si[1], si[2])};
+                               } else {
+                                   return {AMREX_D_DECL(0, 0, 0)};
+                               }
+                           });
+
+            ReduceTuple hv = reduce_data.value();
+
+            max_tbox_size = IntVect(AMREX_D_DECL(amrex::get<0>(hv),
+                                                 amrex::get<1>(hv),
+                                                 amrex::get<2>(hv)));
+        }
+
+        WARPX_PROFILE_VAR_START(blp_ppc_chd);
+        amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
+        amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
+
+        const auto GetPosition = GetParticlePosition(pti, offset);
+        const Geometry& geom = Geom(lev);
+        Box box = pti.validbox();
+        box.grow(ng_rho);
+
+        if (WarpX::nox == 1){
+            doChargeDepositionSharedShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
+                                              rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
+                                              WarpX::n_rz_azimuthal_modes, cost,
+                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                                              WarpX::shared_tilesize);
+        } else if (WarpX::nox == 2){
+            doChargeDepositionSharedShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
+                                              rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
+                                              WarpX::n_rz_azimuthal_modes, cost,
+                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                                              WarpX::shared_tilesize);
+        } else if (WarpX::nox == 3){
+            doChargeDepositionSharedShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
+                                              rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
+                                              WarpX::n_rz_azimuthal_modes, cost,
+                                              WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                                              WarpX::shared_tilesize);
+        }
+#ifndef AMREX_USE_GPU
+        // CPU, tiling: atomicAdd local_rho into rho
+        WARPX_PROFILE_VAR_START(blp_accumulate);
+        (*rho)[pti].atomicAdd(local_rho[thread_num], tb, tb, 0, icomp*nc, nc);
+        WARPX_PROFILE_VAR_STOP(blp_accumulate);
+#endif
+    } else {
+
+        const WarpX& warpx = WarpX::GetInstance();
 
         // deposition guards
         //   note: this is smaller than rho->nGrowVect() for PSATD
@@ -622,65 +957,19 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 void
 WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                                        const bool local, const bool reset,
-                                       const bool do_rz_volume_scaling,
+                                       const bool apply_boundary_and_scale_volume,
                                        const bool interpolate_across_levels,
                                        const int icomp)
 {
     WARPX_PROFILE("WarpXParticleContainer::DepositCharge");
 
-#ifdef WARPX_DIM_RZ
-    (void)do_rz_volume_scaling;
-#endif
     // Loop over the refinement levels
     int const finest_level = rho.size() - 1;
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        // Reset the rho array if reset is True
-        int const nc = WarpX::ncomps;
-        if (reset) rho[lev]->setVal(0., icomp*nc, nc, rho[lev]->nGrowVect());
-
-        // Loop over particle tiles and deposit charge on each level
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-        {
-        int thread_num = omp_get_thread_num();
-#else
-        int thread_num = 0;
-#endif
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
-        {
-            const long np = pti.numParticles();
-            auto const & wp = pti.GetAttribs(PIdx::w);
-
-            int* AMREX_RESTRICT ion_lev = nullptr;
-            if (do_field_ionization)
-            {
-                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
-            }
-
-            DepositCharge(pti, wp, ion_lev, rho[lev].get(), icomp, 0, np, thread_num, lev, lev);
-        }
-#ifdef AMREX_USE_OMP
-        }
-#endif
-
-#ifdef WARPX_DIM_RZ
-        if (do_rz_volume_scaling)
-        {
-            WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
-        }
-#else
-        ignore_unused(do_rz_volume_scaling);
-#endif
-
-        // Exchange guard cells
-        if (local == false) {
-            ablastr::utils::communication::SumBoundary(
-                *rho[lev],
-                WarpX::do_single_precision_comms,
-                m_gdb->Geom(lev).periodicity()
-            );
-        }
+        DepositCharge (
+            rho[lev], lev, local, reset, apply_boundary_and_scale_volume, icomp
+        );
     }
 
     // Now that the charge has been deposited at each level,
@@ -695,7 +984,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
             MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), ngrow );
             coarsened_fine_data.setVal(0.0);
 
-            CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], m_gdb->refRatio(lev) );
+            ablastr::coarsen::average::Coarsen(coarsened_fine_data, *rho[lev + 1], m_gdb->refRatio(lev) );
             ablastr::utils::communication::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0,
                                                        rho[lev]->nComp(),
                                                        amrex::IntVect::TheZeroVector(),
@@ -706,101 +995,131 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
     }
 }
 
+void
+WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
+                                       const int lev, const bool local, const bool reset,
+                                       const bool apply_boundary_and_scale_volume,
+                                       const int icomp)
+{
+    // Reset the rho array if reset is True
+    int const nc = WarpX::ncomps;
+    if (reset) rho->setVal(0., icomp*nc, nc, rho->nGrowVect());
+
+    // Loop over particle tiles and deposit charge on each level
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+    {
+    const int thread_num = omp_get_thread_num();
+#else
+    const int thread_num = 0;
+#endif
+    for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+    {
+        const long np = pti.numParticles();
+        auto const & wp = pti.GetAttribs(PIdx::w);
+
+        int* AMREX_RESTRICT ion_lev = nullptr;
+        if (do_field_ionization)
+        {
+            ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
+        }
+
+        DepositCharge(pti, wp, ion_lev, rho.get(), icomp, 0, np, thread_num, lev, lev);
+    }
+#ifdef AMREX_USE_OMP
+    }
+#endif
+
+#ifdef WARPX_DIM_RZ
+    if (apply_boundary_and_scale_volume)
+    {
+        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
+    }
+#endif
+
+    // Exchange guard cells
+    if ( !local ) {
+        // Possible performance optimization:
+        // pass less than `rho->nGrowVect()` in the fifth input variable `dst_ng`
+        ablastr::utils::communication::SumBoundary(
+            *rho, 0, rho->nComp(), rho->nGrowVect(), rho->nGrowVect(),
+            WarpX::do_single_precision_comms,
+            m_gdb->Geom(lev).periodicity()
+        );
+    }
+
+#ifndef WARPX_DIM_RZ
+    if (apply_boundary_and_scale_volume)
+    {
+        // Reflect density over PEC boundaries, if needed.
+        WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho.get(), PatchType::fine);
+    }
+#endif
+}
+
 std::unique_ptr<MultiFab>
 WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    const auto& gm = m_gdb->Geom(lev);
     const auto& ba = m_gdb->ParticleBoxArray(lev);
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
 
-    bool is_PSATD_RZ = false;
 #ifdef WARPX_DIM_RZ
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
-        is_PSATD_RZ = true;
+    const bool is_PSATD_RZ =
+        (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD);
+#else
+    const bool is_PSATD_RZ = false;
 #endif
     if( !is_PSATD_RZ )
         nba.surroundingNodes();
 
     // Number of guard cells for local deposition of rho
-    WarpX& warpx = WarpX::GetInstance();
+    const WarpX& warpx = WarpX::GetInstance();
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
-    auto rho = std::make_unique<MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
-    rho->setVal(0.0);
-
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    {
-#endif
-#ifdef AMREX_USE_OMP
-        int thread_num = omp_get_thread_num();
-#else
-        int thread_num = 0;
-#endif
-
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
-        {
-            const long np = pti.numParticles();
-            auto& wp = pti.GetAttribs(PIdx::w);
-
-            int* AMREX_RESTRICT ion_lev;
-            if (do_field_ionization){
-                ion_lev = pti.GetiAttribs(particle_icomps["ionizationLevel"]).dataPtr();
-            } else {
-                ion_lev = nullptr;
-            }
-
-            DepositCharge(pti, wp, ion_lev, rho.get(), 0, 0, np,
-                          thread_num, lev, lev);
-        }
-#ifdef AMREX_USE_OMP
-    }
-#endif
-
-#ifdef WARPX_DIM_RZ
-    WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho.get(), lev);
-#endif
-
-    if (local == false) { ablastr::utils::communication::SumBoundary(*rho, WarpX::do_single_precision_comms, gm.periodicity()); }
-
+    auto rho = std::make_unique<MultiFab>(nba, dm, WarpX::ncomps,ng_rho);
+    DepositCharge(rho, lev, local, true, true, 0);
     return rho;
 }
 
-Real WarpXParticleContainer::sumParticleCharge(bool local) {
+amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
 
-    amrex::Real total_charge = 0.0;
+    amrex::ParticleReal total_charge = 0.0;
+    ReduceOps<ReduceOpSum> reduce_op;
+    ReduceData<ParticleReal> reduce_data(reduce_op);
 
     const int nLevels = finestLevel();
-    for (int lev = 0; lev <= nLevels; ++lev)
-    {
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel reduction(+:total_charge)
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
+    for (int lev = 0; lev <= nLevels; ++lev) {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            auto& wp = pti.GetAttribs(PIdx::w);
-            for (unsigned long i = 0; i < wp.size(); i++) {
-                total_charge += wp[i];
-            }
+            const auto wp = pti.GetAttribs(PIdx::w).data();
+
+            reduce_op.eval(pti.numParticles(), reduce_data,
+                            [=] AMREX_GPU_DEVICE (int ip)
+                            { return wp[ip]; });
         }
     }
 
-    if (local == false) ParallelDescriptor::ReduceRealSum(total_charge);
+    total_charge = get<0>(reduce_data.value());
+
+    if (!local) ParallelDescriptor::ReduceRealSum(total_charge);
     total_charge *= this->charge;
     return total_charge;
 }
 
-std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
+std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
 
-    amrex::Real vx_total = 0.0_rt;
-    amrex::Real vy_total = 0.0_rt;
-    amrex::Real vz_total = 0.0_rt;
+    amrex::ParticleReal vx_total = 0.0_prt;
+    amrex::ParticleReal vy_total = 0.0_prt;
+    amrex::ParticleReal vz_total = 0.0_prt;
 
     amrex::Long np_total = 0;
 
-    amrex::Real inv_clight_sq = 1.0_rt/PhysConst::c/PhysConst::c;
+    const amrex::ParticleReal inv_clight_sq = 1.0_prt/PhysConst::c/PhysConst::c;
 
     const int nLevels = finestLevel();
 
@@ -808,7 +1127,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
     if (Gpu::inLaunchRegion())
     {
         ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_op;
-        ReduceData<Real, Real, Real> reduce_data(reduce_op);
+        ReduceData<ParticleReal, ParticleReal, ParticleReal> reduce_data(reduce_op);
         using ReduceTuple = typename decltype(reduce_data)::Type;
         for (int lev = 0; lev <= nLevels; ++lev) {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -823,10 +1142,10 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
                 reduce_op.eval(np, reduce_data,
                                [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                                {
-                                   Real usq = (uxp[i]*uxp[i] +
-                                               uyp[i]*uyp[i] +
-                                               uzp[i]*uzp[i])*inv_clight_sq;
-                                   Real gaminv = 1.0_rt/std::sqrt(1.0_rt + usq);
+                                   amrex::ParticleReal usq = (uxp[i]*uxp[i] +
+                                                              uyp[i]*uyp[i] +
+                                                              uzp[i]*uzp[i])*inv_clight_sq;
+                                   const amrex::ParticleReal gaminv = 1.0_prt/std::sqrt(1.0_prt + usq);
                                    return {uxp[i]*gaminv,  uyp[i]*gaminv, uzp[i]*gaminv};
                                });
             }
@@ -853,8 +1172,8 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
                 np_total += pti.numParticles();
 
                 for (unsigned long i = 0; i < ux.size(); i++) {
-                    Real usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_clight_sq;
-                    Real gaminv = 1.0_rt/std::sqrt(1.0_rt + usq);
+                    const amrex::ParticleReal usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_clight_sq;
+                    const amrex::ParticleReal gaminv = 1.0_prt/std::sqrt(1.0_prt + usq);
                     vx_total += ux[i]*gaminv;
                     vy_total += uy[i]*gaminv;
                     vz_total += uz[i]*gaminv;
@@ -863,14 +1182,12 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
         }
     }
 
-    if (local == false) {
-        ParallelDescriptor::ReduceRealSum(vx_total);
-        ParallelDescriptor::ReduceRealSum(vy_total);
-        ParallelDescriptor::ReduceRealSum(vz_total);
+    if (!local) {
+        ParallelDescriptor::ReduceRealSum<ParticleReal>({vx_total,vy_total,vz_total});
         ParallelDescriptor::ReduceLongSum(np_total);
     }
 
-    std::array<Real, 3> mean_v;
+    std::array<amrex::ParticleReal, 3> mean_v;
     if (np_total > 0) {
         mean_v[0] = vx_total / np_total;
         mean_v[1] = vy_total / np_total;
@@ -880,7 +1197,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
     return mean_v;
 }
 
-Real WarpXParticleContainer::maxParticleVelocity(bool local) {
+amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) {
 
     amrex::ParticleReal max_v = 0.0;
 
@@ -902,7 +1219,7 @@ Real WarpXParticleContainer::maxParticleVelocity(bool local) {
         }
     }
 
-    if (local == false) ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator());
+    if (!local) ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator());
     return max_v;
 }
 
@@ -1067,8 +1384,11 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 #ifndef WARPX_DIM_1D_Z
                                                               x, xmin, xmax,
 #endif
-#ifdef WARPX_DIM_3D
-                                                              y, ymin, ymax,
+#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
+                                                              y,
+#endif
+#if (defined WARPX_DIM_3D)
+                                                              ymin, ymax,
 #endif
                                                               z, zmin, zmax,
                                                               ux[i], uy[i], uz[i], particle_lost,

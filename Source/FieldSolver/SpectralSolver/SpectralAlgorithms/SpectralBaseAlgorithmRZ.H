@@ -40,7 +40,7 @@ class SpectralBaseAlgorithmRZ
         /**
          * \brief Compute spectral divergence of E
          */
-        void ComputeSpectralDivE ( const int lev,
+        void ComputeSpectralDivE ( int lev,
                                    SpectralFieldDataRZ& field_data,
                                    const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                    amrex::MultiFab& divE );
@@ -63,10 +63,10 @@ class SpectralBaseAlgorithmRZ
         SpectralBaseAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                                 amrex::DistributionMapping const & dm,
                                 const SpectralFieldIndex& spectral_index,
-                                int const norder_z, bool const nodal)
+                                int const norder_z, short const grid_type)
           // Compute and assign the modified k vectors
           : m_spectral_index(spectral_index),
-            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, nodal))
+            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, grid_type))
           {}
 
         SpectralFieldIndex m_spectral_index;

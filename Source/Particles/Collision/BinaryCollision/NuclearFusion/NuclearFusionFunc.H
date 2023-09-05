@@ -14,8 +14,8 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 #include <AMReX_Algorithm.H>
@@ -59,50 +59,25 @@ public:
         using namespace amrex::literals;
 
 #ifdef AMREX_SINGLE_PRECISION_PARTICLES
-        amrex::Abort("Nuclear fusion module does not currently work with single precision");
+        WARPX_ABORT_WITH_MESSAGE("Nuclear fusion module does not currently work with single precision");
 #endif
 
         m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);
 
-        amrex::ParmParse pp_collision_name(collision_name);
-        amrex::Vector<std::string> product_species_name;
-        pp_collision_name.getarr("product_species", product_species_name);
-
-        if (m_fusion_type == NuclearFusionType::DeuteriumTritium)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                product_species_name.size() == 2u,
-                "ERROR: Deuterium-tritium fusion must contain exactly two product species");
-            auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
-            auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                (product_species1.AmIA<PhysicalSpecies::helium4>() && product_species2.AmIA<PhysicalSpecies::neutron>())
-                ||
-                (product_species1.AmIA<PhysicalSpecies::neutron>() && product_species2.AmIA<PhysicalSpecies::helium4>()),
-                "ERROR: Product species of deuterium-tritium fusion must be of type neutron and helium4");
-        }
-        if (m_fusion_type == NuclearFusionType::ProtonBoron)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                product_species_name.size() == 1,
-                "ERROR: Proton-boron must contain exactly one product species");
-            auto& product_species = mypc->GetParticleContainerFromName(product_species_name[0]);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                product_species.AmIA<PhysicalSpecies::helium>(),
-                "ERROR: Product species of proton-boron fusion must be of type alpha");
-        }
-
+        const amrex::ParmParse pp_collision_name(collision_name);
         // default fusion multiplier
-        m_fusion_multiplier = 1.0_rt;
-        queryWithParser(pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
+        m_fusion_multiplier = 1.0_prt;
+        utils::parser::queryWithParser(
+            pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
         // default fusion probability threshold
-        m_probability_threshold = 0.02_rt;
-        queryWithParser(pp_collision_name, "fusion_probability_threshold",
-                                            m_probability_threshold);
+        m_probability_threshold = 0.02_prt;
+        utils::parser::queryWithParser(
+            pp_collision_name, "fusion_probability_threshold", m_probability_threshold);
         // default fusion probability target_value
-        m_probability_target_value = 0.002_rt;
-        queryWithParser(pp_collision_name, "fusion_probability_target_value",
-                                            m_probability_target_value);
+        m_probability_target_value = 0.002_prt;
+        utils::parser::queryWithParser(
+            pp_collision_name, "fusion_probability_target_value",
+            m_probability_target_value);
     }
 
     /**
@@ -186,15 +161,12 @@ public:
             const int c2 = amrex::max(NI1/NI2,1);
 
             // multiplier ratio to take into account unsampled pairs
-            int multiplier_ratio;
-            if (m_isSameSpecies)
-            {
-                multiplier_ratio = 2*max_N - 1;
-            }
-            else
-            {
-                multiplier_ratio = max_N;
-            }
+            const int multiplier_ratio = (m_isSameSpecies)?(2*max_N - 1):(max_N);
+
+#if (defined WARPX_DIM_RZ)
+            amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
+            amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
+#endif
 
             for (int k = 0; k < max_N; ++k)
             {
@@ -202,6 +174,22 @@ public:
                 // of species 2. Same for c2k.
                 const int c1k = (k%NI1 < max_N%NI1) ? c1 + 1: c1;
                 const int c2k = (k%NI2 < max_N%NI2) ? c2 + 1: c2;
+
+#if (defined WARPX_DIM_RZ)
+                /* In RZ geometry, macroparticles can collide with other macroparticles
+                 * in the same *cylindrical* cell. For this reason, collisions between macroparticles
+                 * are actually not local in space. In this case, the underlying assumption is that
+                 * particles within the same cylindrical cell represent a cylindrically-symmetry
+                 * momentum distribution function. Therefore, here, we temporarily rotate the
+                 * momentum of one of the macroparticles in agreement with this cylindrical symmetry.
+                 * (This is technically only valid if we use only the m=0 azimuthal mode in the simulation;
+                 * there is a corresponding assert statement at initialization.) */
+                amrex::ParticleReal const theta = theta2[I2[i2]]-theta1[I1[i1]];
+                amrex::ParticleReal const u1xbuf = u1x[I1[i1]];
+                u1x[I1[i1]] = u1xbuf*std::cos(theta) - u1y[I1[i1]]*std::sin(theta);
+                u1y[I1[i1]] = u1xbuf*std::sin(theta) + u1y[I1[i1]]*std::cos(theta);
+#endif
+
                 SingleNuclearFusionEvent(
                     u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
                     u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
@@ -211,6 +199,13 @@ public:
                     m_probability_threshold,
                     m_probability_target_value,
                     m_fusion_type, engine);
+
+#if (defined WARPX_DIM_RZ)
+                amrex::ParticleReal const u1xbuf_new = u1x[I1[i1]];
+                u1x[I1[i1]] = u1xbuf_new*std::cos(-theta) - u1y[I1[i1]]*std::sin(-theta);
+                u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
+#endif
+
                 p_pair_indices_1[pair_index] = I1[i1];
                 p_pair_indices_2[pair_index] = I2[i2];
                 ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
@@ -223,15 +218,15 @@ public:
 private:
     // Factor used to increase the number of fusion reaction by decreasing the weight of the
     // produced particles
-    amrex::Real m_fusion_multiplier;
+    amrex::ParticleReal m_fusion_multiplier;
     // If the fusion multiplier is too high and results in a fusion probability that approaches
     // 1, there is a risk of underestimating the total fusion yield. In these cases, we reduce
     // the fusion multiplier used in a given collision. m_probability_threshold is the fusion
     // probability threshold above which we reduce the fusion multiplier.
     // m_probability_target_value is the target probability used to determine by how much
     // the fusion multiplier should be reduced.
-    amrex::Real m_probability_threshold;
-    amrex::Real m_probability_target_value;
+    amrex::ParticleReal m_probability_threshold;
+    amrex::ParticleReal m_probability_target_value;
     NuclearFusionType m_fusion_type;
     bool m_isSameSpecies;
 };

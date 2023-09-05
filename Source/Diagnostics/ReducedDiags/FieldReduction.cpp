@@ -7,10 +7,9 @@
 
 #include "FieldReduction.H"
 
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Algorithm.H>
 #include <AMReX_BLassert.H>
@@ -36,7 +35,7 @@ FieldReduction::FieldReduction (std::string rd_name)
 
     // read number of levels
     int nLevel = 0;
-    amrex::ParmParse pp_amr("amr");
+    const amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nLevel == 0,
         "FieldReduction reduced diagnostics does not work with mesh refinement.");
@@ -45,14 +44,16 @@ FieldReduction::FieldReduction (std::string rd_name)
     // resize data array
     m_data.resize(noutputs, 0.0_rt);
 
-    amrex::ParmParse pp_rd_name(rd_name);
+    BackwardCompatibility();
+
+    const amrex::ParmParse pp_rd_name(rd_name);
 
     // read reduced function with parser
-    std::string parser_string = "";
-    Store_parserString(pp_rd_name,"reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)",
+    std::string parser_string;
+    utils::parser::Store_parserString(pp_rd_name,"reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz)",
                        parser_string);
     m_parser = std::make_unique<amrex::Parser>(
-        makeParser(parser_string,{"x","y","z","Ex","Ey","Ez","Bx","By","Bz"}));
+        utils::parser::makeParser(parser_string,{"x","y","z","Ex","Ey","Ez","Bx","By","Bz","jx","jy","jz"}));
 
     // Replace all newlines and possible following whitespaces with a single whitespace. This
     // should avoid weird formatting when the string is written in the header of the output file.
@@ -65,7 +66,7 @@ FieldReduction::FieldReduction (std::string rd_name)
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -85,6 +86,18 @@ FieldReduction::FieldReduction (std::string rd_name)
     }
 }
 // end constructor
+
+void FieldReduction::BackwardCompatibility ()
+{
+    amrex::ParmParse pp_rd_name(m_rd_name);
+    std::vector<std::string> backward_strings;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pp_rd_name.queryarr("reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz)", backward_strings),
+        "<reduced_diag_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz) is no longer a valid option. "
+        "Please use the renamed option <reduced_diag_name>.reduced_function(x,y,z,Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz) instead."
+    );
+}
+
 
 // function that does an arbitrary reduction of the electromagnetic fields
 void FieldReduction::ComputeDiags (int step)

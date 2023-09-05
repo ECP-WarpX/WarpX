@@ -8,7 +8,7 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_REDUCEDDIAGS_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_REDUCEDDIAGS_H_
 
-#include "Utils/IntervalsParser.H"
+#include "Utils/Parser/IntervalsParser.H"
 
 #include <AMReX_REAL.H>
 
@@ -34,13 +34,16 @@ public:
     std::string m_rd_name;
 
     /// output intervals
-    IntervalsParser m_intervals;
+    utils::parser::IntervalsParser m_intervals;
 
-    /// check if it is a restart run
-    int m_IsNotRestart = 1;
+    /// check if header should be written
+    bool m_write_header = false;
 
     /// separator in the output file
     std::string m_sep = " ";
+
+    /// precision for data in the output file
+    int m_precision = 14;
 
     /// output data
     std::vector<amrex::Real> m_data;

@@ -5,6 +5,12 @@ LXPLUS (CERN)
 
 The LXPLUS cluster is located at CERN.
 
+
+Introduction
+------------
+
+If you are new to this system, **please see the following resources**:
+
 * `Lxplus documentation <https://lxplusdoc.web.cern.ch>`__
 * Batch system: `HTCondor <https://batchdocs.web.cern.ch/index.html>`__
 * Filesystem locations:
@@ -13,6 +19,7 @@ The LXPLUS cluster is located at CERN.
     * Eos storage: ``/eos/home-<a>/<account>`` (1T)
 
 Through LXPLUS we have access to CPU and GPU nodes (the latter equipped with NVIDIA V100 and T4 GPUs).
+
 
 Installation
 ------------
@@ -117,15 +124,19 @@ Then we build WarpX:
 
 .. code-block:: bash
 
-    cmake -S . -B build
+    cmake -S . -B build -DWarpX_DIMS="1;2;RZ;3"
     cmake --build build -j 6
 
 Or if we need to compile with CUDA:
 
 .. code-block:: bash
 
-    cmake -S . -B build -DWarpX_COMPUTE=CUDA
+    cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_DIMS="1;2;RZ;3"
     cmake --build build -j 6
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and can be run with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$WORK``.
 
 Python Bindings
 ^^^^^^^^^^^^^^^
@@ -139,11 +150,11 @@ Now, ensure Python tooling is up-to-date:
    python3 -m pip install -U pip setuptools wheel
    python3 -m pip install -U cmake
 
-Then we compile WarpX as in the previous section (with or without CUDA) adding ``-DWarpX_LIB=ON`` and then we install it into our Python:
+Then we compile WarpX as in the previous section (with or without CUDA) adding ``-DWarpX_PYTHON=ON`` and then we install it into our Python:
 
 .. code-block:: bash
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_LIB=ON
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_DIMS="1;2;RZ;3" -DWarpX_APP=OFF -DWarpX_PYTHON=ON
    cmake --build build --target pip_install -j 6
 
 This builds WarpX for 3D geometry.
