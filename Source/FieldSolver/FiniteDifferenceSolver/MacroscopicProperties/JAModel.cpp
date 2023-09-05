@@ -29,7 +29,7 @@ JAModel::UpdateM (amrex::RealVect& M, const amrex::RealVect& B,
     JAModel::ComputeAnhystereticContribution(M_an, chi_an, H_e, ja_model_parameters);
     /* The change in the effective field */
     amrex::RealVect dH_e;
-    amrex::RealVect dB_over_mu0 = (1._rt / PhysConst::mu0) * dB; // mu0^{-1} dB
+    amrex::RealVect dBovermu0 = (1._rt / PhysConst::mu0) * dB; // mu0^{-1} dB
     amrex::RealVect M_diff = M_an - M; // M_an - M
     amrex::Real M_diff_mag = M_diff.vectorLength(); // |M_an - M|
     amrex::Real denominator = ja_model_parameters->k() * M_diff_mag; // k |M_an - M|
@@ -48,11 +48,11 @@ JAModel::UpdateM (amrex::RealVect& M, const amrex::RealVect& B,
         chi[5] += M_diff[2] * M_diff[2] / denominator; // zz
 #endif
         /* Compute dH_e using the total contribution */
-        dH_e = Compute_dHe(chi, dB_over_mu0, oneMinusAlpha);
+        dH_e = Compute_dHe(chi, dBovermu0, oneMinusAlpha);
         /* Check the sign of (M_an - M) dot dH_e */
         if (M_diff.dotProduct(dH_e) < 0) {
             /* Use only anhysteretic part of chi if (M_an - M) dot dH_e < 0 */
-            dH_e = Compute_dHe(chi_an, dB_over_mu0, oneMinusAlpha);
+            dH_e = Compute_dHe(chi_an, dBovermu0, oneMinusAlpha);
         }
     }
     else {
@@ -97,11 +97,6 @@ amrex::RealVect
 JAModel::Compute_dHe (amrex::Array<amrex::Real, 6> chi, amrex::RealVect dBovermu0, amrex::Real oneMinusAlpha)
 {
     /* Jacobian matrix mu0^{-1} dB/dHe = I + (1 - alpha) chi */
-    std::array<amrex::Real, 3UL> d;
-
-
-    amrex::Array<amrex::Real, 6> chi_an;
-
     RealMatrix dBovermu0_dHe;
 
     amrex::Real offDiag;
