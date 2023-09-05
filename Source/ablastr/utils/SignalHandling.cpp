@@ -16,7 +16,7 @@
 
 // For sigaction() et al.
 #if defined(__linux__) || defined(__APPLE__)
-#   include <signal.h>
+#   include <csignal>
 #endif
 
 namespace ablastr::utils {
@@ -121,8 +121,8 @@ SignalHandling::InitSignalHandling ()
         signal_received_flags[signal_number] = false;
 
         bool signal_active = false;
-        for (int signal_request = 0; signal_request < SIGNAL_REQUESTS_SIZE; ++signal_request) {
-            signal_active |= signal_conf_requests[signal_request][signal_number];
+        for (const auto& request : signal_conf_requests) {
+            signal_active |= request[signal_number];
         }
         if (signal_active) {
             // at least one signal action is configured
@@ -162,8 +162,9 @@ SignalHandling::CheckSignals ()
             const bool signal_received = signal_received_flags[signal_number].exchange(false);
 
             if (signal_received) {
-                for (int signal_request = 0; signal_request < SIGNAL_REQUESTS_SIZE; ++signal_request) {
-                    signal_actions_requested[signal_request] |= signal_conf_requests[signal_request][signal_number];
+                int signal_request = 0;
+                for (const auto& request : signal_conf_requests) {
+                    signal_actions_requested[signal_request++] |= request[signal_number];
                 }
             }
         }

@@ -44,7 +44,7 @@ public:
 
     PlasmaInjector () = default;
 
-    PlasmaInjector (int ispecies, const std::string& name);
+    PlasmaInjector (int ispecies, const std::string& name, const amrex::Geometry& geom);
 
     ~PlasmaInjector ();
 
@@ -67,9 +67,11 @@ public:
     PhysicalSpecies getPhysicalSpecies() const {return physical_species;}
 
     // bool: whether the initial injection of particles should be done
-    // This routine is called during initialization of the plasma. When injecting
-    // a surface flux, no injection is done doing initialization so return false.
-    bool doInjection () const noexcept { return h_inj_pos != nullptr && !surface_flux;}
+    // This routine is called during initialization of the plasma.
+    bool doInjection () const noexcept { return h_inj_pos != nullptr;}
+
+    // bool: whether the flux injection of particles should be done.
+    bool doFluxInjection () const noexcept { return h_flux_pos != nullptr;}
 
     bool add_single_particle = false;
     amrex::Vector<amrex::ParticleReal> single_particle_pos;
@@ -107,7 +109,6 @@ public:
     std::unique_ptr<openPMD::Series> m_openpmd_input_series;
 #endif
 
-    bool surface_flux = false; // inject from a surface
     amrex::Real surface_flux_pos; // surface location
     amrex::Real flux_tmin = -1.; // Time after which we start injecting particles
     amrex::Real flux_tmax = -1.; // Time after which we stop injecting particles
@@ -132,6 +133,7 @@ public:
     amrex::Real density_max = std::numeric_limits<amrex::Real>::max();
 
     InjectorPosition* getInjectorPosition ();
+    InjectorPosition* getInjectorFluxPosition ();
     InjectorDensity*  getInjectorDensity ();
 
     InjectorFlux*  getInjectorFlux ();
@@ -153,6 +155,9 @@ protected:
     std::unique_ptr<InjectorPosition> h_inj_pos;
     InjectorPosition* d_inj_pos = nullptr;
 
+    std::unique_ptr<InjectorPosition> h_flux_pos;
+    InjectorPosition* d_flux_pos = nullptr;
+
     std::unique_ptr<InjectorDensity,InjectorDensityDeleter> h_inj_rho;
     InjectorDensity* d_inj_rho = nullptr;
     std::unique_ptr<amrex::Parser> density_parser;
@@ -172,9 +177,17 @@ protected:
     std::unique_ptr<TemperatureProperties> h_mom_temp;
     std::unique_ptr<VelocityProperties> h_mom_vel;
 
-    void parseDensity (const amrex::ParmParse& pp);
-    void parseFlux (const amrex::ParmParse& pp);
-    void parseMomentum (const amrex::ParmParse& pp);
+    void setupSingleParticle (const amrex::ParmParse& pp_species_name);
+    void setupMultipleParticles (const amrex::ParmParse& pp_species_name);
+    void setupGaussianBeam (const amrex::ParmParse& pp_species_name);
+    void setupNRandomPerCell (const amrex::ParmParse& pp_species_name);
+    void setupNFluxPerCell (const amrex::ParmParse& pp_species_name);
+    void setupNuniformPerCell (const amrex::ParmParse& pp_species_name);
+    void setupExternalFile (const amrex::ParmParse& pp_species_name);
+
+    void parseDensity (const amrex::ParmParse& pp_species_name);
+    void parseFlux (const amrex::ParmParse& pp_species_name);
+    void parseMomentum (const amrex::ParmParse& pp_species_name, const std::string& style);
 };
 
 #endif
