@@ -278,8 +278,8 @@ class MultiSpecies(picmistandard.PICMI_MultiSpecies):
 
 class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
     def init(self, kw):
-        self.do_symmetrize = kw.pop('warpx_do_symmetrize', 0)
-        self.symmetrization_order = kw.pop('warpx_symmetrization_order', 4)
+        self.do_symmetrize = kw.pop('warpx_do_symmetrize', None)
+        self.symmetrization_order = kw.pop('warpx_symmetrization_order', None)
 
     def initialize_inputs(self, species_number, layout, species, density_scale):
         species.injection_style = "gaussian_beam"
