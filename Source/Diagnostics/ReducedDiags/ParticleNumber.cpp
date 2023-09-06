@@ -48,7 +48,7 @@ ParticleNumber::ParticleNumber (std::string rd_name)
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -59,21 +59,21 @@ ParticleNumber::ParticleNumber (std::string rd_name)
             ofs << m_sep;
             ofs << "[" << c++ << "]time(s)";
             ofs << m_sep;
-            ofs << "[" << c++ << "]total macroparticles()";
+            ofs << "[" << c++ << "]total_macroparticles()";
             // Column number of first species macroparticle number
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]" << species_names[i] + " macroparticles()";
+                ofs << "[" << c++ << "]" << species_names[i] + "_macroparticles()";
             }
             // Column number of total weight (summed over all species)
             ofs << m_sep;
-            ofs << "[" << c++ << "]total weight()";
+            ofs << "[" << c++ << "]total_weight()";
             // Column number of first species weight
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]" << species_names[i] + " weight()";
+                ofs << "[" << c++ << "]" << species_names[i] + "_weight()";
             }
             ofs << std::endl;
             // close file

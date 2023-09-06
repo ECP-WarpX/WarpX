@@ -16,8 +16,10 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
+#include "Diagnostics/MultiDiagnostics.H"
 
 #include <ablastr/utils/Communication.H>
+#include <ablastr/utils/text/StreamUtils.H>
 
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -49,13 +51,6 @@ namespace
     const std::string level_prefix {"Level_"};
 }
 
-void
-WarpX::GotoNextLine (std::istream& is)
-{
-    constexpr std::streamsize bl_ignore_max { 100000 };
-    is.ignore(bl_ignore_max, '\n');
-}
-
 amrex::DistributionMapping
 WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, int lev) const {
     std::string DMFileName = chkfile;
@@ -69,7 +64,7 @@ WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, in
 
     Vector<char> fileCharPtr;
     ParallelDescriptor::ReadAndBcastFile(DMFileName, fileCharPtr);
-    std::string fileCharPtrString(fileCharPtr.dataPtr());
+    const std::string fileCharPtrString(fileCharPtr.dataPtr());
     std::istringstream DMFile(fileCharPtrString, std::istringstream::in);
     if ( ! DMFile.good()) amrex::FileOpenFailed(DMFileName);
     DMFile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
@@ -99,13 +94,13 @@ WarpX::InitFromCheckpoint ()
 
     // Header
     {
-        std::string File(restart_chkfile + "/WarpXHeader");
+        const std::string File(restart_chkfile + "/WarpXHeader");
 
-        VisMF::IO_Buffer io_buffer(VisMF::GetIOBufferSize());
+        const VisMF::IO_Buffer io_buffer(VisMF::GetIOBufferSize());
 
         Vector<char> fileCharPtr;
         ParallelDescriptor::ReadAndBcastFile(File, fileCharPtr);
-        std::string fileCharPtrString(fileCharPtr.dataPtr());
+        const std::string fileCharPtrString(fileCharPtr.dataPtr());
         std::istringstream is(fileCharPtrString, std::istringstream::in);
         is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
@@ -115,16 +110,16 @@ WarpX::InitFromCheckpoint ()
 
         int nlevs;
         is >> nlevs;
-        GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
         finest_level = nlevs-1;
 
         std::getline(is, line);
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < istep.size(); ++i) {
+            for (auto& istep_lev : istep) {
                 lis >> word;
-                istep.at(i) = std::stoi(word);
+                istep_lev = std::stoi(word);
             }
         }
 
@@ -132,9 +127,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < nsubsteps.size(); ++i) {
+            for (auto& nsub : nsubsteps) {
                 lis >> word;
-                nsubsteps.at(i) = std::stoi(word);
+                nsub = std::stoi(word);
             }
         }
 
@@ -142,9 +137,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < t_new.size(); ++i) {
+            for (auto& t_new_lev : t_new) {
                 lis >> word;
-                t_new.at(i) = static_cast<Real>(std::stod(word));
+                t_new_lev = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -152,9 +147,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < t_old.size(); ++i) {
+            for (auto& t_old_lev : t_old) {
                 lis >> word;
-                t_old.at(i) = static_cast<Real>(std::stod(word));
+                t_old_lev = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -162,27 +157,27 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < dt.size(); ++i) {
+            for (auto& dt_lev : dt) {
                 lis >> word;
-                dt.at(i) = static_cast<Real>(std::stod(word));
+                dt_lev = static_cast<Real>(std::stod(word));
             }
         }
 
         amrex::Real moving_window_x_checkpoint;
         is >> moving_window_x_checkpoint;
-        GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
 
         is >> is_synchronized;
-        GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
 
         amrex::Vector<amrex::Real> prob_lo( AMREX_SPACEDIM );
         std::getline(is, line);
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < prob_lo.size(); ++i) {
+            for (auto& prob_lo_comp : prob_lo) {
                 lis >> word;
-                prob_lo.at(i) = static_cast<Real>(std::stod(word));
+                prob_lo_comp = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -191,9 +186,9 @@ WarpX::InitFromCheckpoint ()
         {
             std::istringstream lis(line);
             lis.exceptions(std::ios_base::failbit | std::ios_base::badbit);
-            for (int i = 0; i < prob_hi.size(); ++i) {
+            for (auto& prob_hi_comp : prob_hi) {
                 lis >> word;
-                prob_hi.at(i) = static_cast<Real>(std::stod(word));
+                prob_hi_comp = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -202,27 +197,79 @@ WarpX::InitFromCheckpoint ()
         for (int lev = 0; lev < nlevs; ++lev) {
             BoxArray ba;
             ba.readFrom(is);
-            GotoNextLine(is);
-            DistributionMapping dm = GetRestartDMap(restart_chkfile, ba, lev);
+            ablastr::utils::text::goto_next_line(is);
+            const DistributionMapping dm = GetRestartDMap(restart_chkfile, ba, lev);
             SetBoxArray(lev, ba);
             SetDistributionMap(lev, dm);
             AllocLevelData(lev, ba, dm);
         }
 
         mypc->ReadHeader(is);
-        is >> current_injection_position;
-        GotoNextLine(is);
+        const int n_species = mypc->nSpecies();
+        for (int i=0; i<n_species; i++)
+        {
+             is >> mypc->GetParticleContainer(i).m_current_injection_position;
+             ablastr::utils::text::goto_next_line(is);
+        }
 
         int do_moving_window_before_restart;
         is >> do_moving_window_before_restart;
-        GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
 
         if (do_moving_window_before_restart) {
             moving_window_x = moving_window_x_checkpoint;
         }
 
         is >> time_of_last_gal_shift;
-        GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
+
+        for (int idiag = 0; idiag < multi_diags->GetTotalDiags(); ++idiag)
+        {
+            if( multi_diags->diagstypes(idiag) == DiagTypes::BackTransformed )
+            {
+                auto& diag = multi_diags->GetDiag(idiag);
+                if (diag.getnumbuffers() > 0) {
+                    diag.InitDataBeforeRestart();
+                    for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
+                        amrex::Real tlab;
+                        is >> tlab;
+                        diag.settlab(i_buffer, tlab);
+                        int kindex_hi;
+                        is >> kindex_hi;
+                        diag.set_buffer_k_index_hi(i_buffer, kindex_hi);
+
+                        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                            amrex::Real snapshot_lo;
+                            is >> snapshot_lo;
+                            diag.setSnapshotDomainLo(i_buffer, idim, snapshot_lo);
+                        }
+                        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                            amrex::Real snapshot_hi;
+                            is >> snapshot_hi;
+                            diag.setSnapshotDomainHi(i_buffer, idim, snapshot_hi);
+                        }
+
+                        int flush_counter;
+                        is >> flush_counter;
+                        diag.set_flush_counter(i_buffer, flush_counter);
+
+                        int last_valid_Zslice;
+                        is >> last_valid_Zslice;
+                        diag.set_last_valid_Zslice(i_buffer, last_valid_Zslice);
+
+                        int snapshot_full_flag;
+                        is >> snapshot_full_flag;
+                        diag.set_snapshot_full(i_buffer, snapshot_full_flag);
+
+                    }
+                    diag.InitDataAfterRestart();
+                } else {
+                    diag.InitData();
+                }
+            } else {
+                multi_diags->GetDiag(idiag).InitData();
+            }
+        }
     }
 
     const int nlevs = finestLevel()+1;

@@ -70,7 +70,7 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
         const Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        Array4<Complex> fields = field_data.fields[mfi].array();
+       const Array4<Complex> fields = field_data.fields[mfi].array();
         // Extract pointers for the k vectors
         const Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
 #if defined(WARPX_DIM_3D)

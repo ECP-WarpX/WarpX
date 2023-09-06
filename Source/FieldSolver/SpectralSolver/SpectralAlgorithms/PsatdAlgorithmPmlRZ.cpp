@@ -13,8 +13,6 @@
 
 #include <cmath>
 
-using amrex::operator""_rt;
-
 
 /* \brief Initialize coefficients for the update equation */
 PsatdAlgorithmPmlRZ::PsatdAlgorithmPmlRZ (SpectralKSpaceRZ const & spectral_kspace,
@@ -24,7 +22,6 @@ PsatdAlgorithmPmlRZ::PsatdAlgorithmPmlRZ (SpectralKSpaceRZ const & spectral_kspa
                                           short const grid_type, amrex::Real const dt)
      // Initialize members of base class
      : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
-       m_spectral_index(spectral_index),
        m_dt(dt)
 {
     // Allocate the arrays of coefficients
@@ -163,13 +160,13 @@ void PsatdAlgorithmPmlRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ co
 void
 PsatdAlgorithmPmlRZ::CurrentCorrection (SpectralFieldDataRZ& /* field_data */)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Current correction not implemented in RZ geometry PML"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Current correction not implemented in RZ geometry PML");
 }
 
 void
 PsatdAlgorithmPmlRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/)
 {
-    amrex::Abort(Utils::TextMsg::Err(
-        "Vay deposition not implemented in RZ geometry PML"));
+    WARPX_ABORT_WITH_MESSAGE(
+        "Vay deposition not implemented in RZ geometry PML");
 }

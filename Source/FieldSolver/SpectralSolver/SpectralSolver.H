@@ -69,24 +69,24 @@ class SpectralSolver
          * \param[in] divb_cleaning whether to use div(B) cleaning to account for errors in
          *                          div(B) = 0 law (new field G in the update equations)
          */
-        SpectralSolver (const int lev,
+        SpectralSolver (int lev,
                         const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
-                        const int norder_x, const int norder_y,
-                        const int norder_z, const short grid_type,
+                        int norder_x, int norder_y,
+                        int norder_z, short grid_type,
                         const amrex::Vector<amrex::Real>& v_galilean,
                         const amrex::Vector<amrex::Real>& v_comoving,
-                        const amrex::RealVect dx,
-                        const amrex::Real dt,
-                        const bool pml,
-                        const bool periodic_single_box,
-                        const bool update_with_rho,
-                        const bool fft_do_time_averaging,
-                        const int psatd_solution_type,
-                        const int J_in_time,
-                        const int rho_in_time,
-                        const bool dive_cleaning,
-                        const bool divb_cleaning);
+                        amrex::RealVect dx,
+                        amrex::Real dt,
+                        bool pml,
+                        bool periodic_single_box,
+                        bool update_with_rho,
+                        bool fft_do_time_averaging,
+                        int psatd_solution_type,
+                        int J_in_time,
+                        int rho_in_time,
+                        bool dive_cleaning,
+                        bool divb_cleaning);
 
         /**
          * \brief Transform the component i_comp of the MultiFab mf to Fourier space,
@@ -97,20 +97,20 @@ class SpectralSolver
          * \param[in] field_index index of the spectral field that stores the FFT result
          * \param[in] i_comp component of the MultiFab mf that is transformed to Fourier space
          */
-        void ForwardTransform (const int lev,
+        void ForwardTransform (int lev,
                                const amrex::MultiFab& mf,
-                               const int field_index,
-                               const int i_comp = 0);
+                               int field_index,
+                               int i_comp = 0);
 
         /**
          * \brief Transform spectral field specified by `field_index` back to
          * real space, and store it in the component `i_comp` of `mf`
          */
-        void BackwardTransform( const int lev,
+        void BackwardTransform( int lev,
                                 amrex::MultiFab& mf,
-                                const int field_index,
+                                int field_index,
                                 const amrex::IntVect& fill_guards,
-                                const int i_comp=0 );
+                                int i_comp=0 );
 
         /**
          * \brief Update the fields in spectral space, over one timestep
@@ -121,7 +121,7 @@ class SpectralSolver
           * \brief Public interface to call the member function ComputeSpectralDivE
           * of the base class SpectralBaseAlgorithm from objects of class SpectralSolver
           */
-        void ComputeSpectralDivE ( const int lev,
+        void ComputeSpectralDivE ( int lev,
                                    const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                    amrex::MultiFab& divE ) {
             algorithm->ComputeSpectralDivE( lev, field_data, Efield, divE );

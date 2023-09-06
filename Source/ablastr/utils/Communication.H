@@ -7,16 +7,13 @@
 #ifndef ABLASTR_UTILS_COMMUNICATION_H_
 #define ABLASTR_UTILS_COMMUNICATION_H_
 
-#include <AMReX_FabArray.H>
-#include <AMReX_Gpu.H>
+#include <AMReX_FabArrayBase.H>
 #include <AMReX_GpuDevice.H>
-#include <AMReX_iMultiFab.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_MultiFab.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_Periodicity.H>
-#include <AMReX_TypeTraits.H>
+#include <AMReX_Vector.H>
 
-#include "WarpX.H"
+#include <AMReX_BaseFwd.H>
 
 #include <optional>
 
@@ -81,16 +78,6 @@ void FillBoundary (amrex::iMultiFab&         mf,
 void
 FillBoundary(amrex::Vector<amrex::MultiFab *> const &mf, bool do_single_precision_comms,
              const amrex::Periodicity &period);
-
-void SumBoundary (amrex::MultiFab &mf,
-                  bool do_single_precision_comms,
-                  const amrex::Periodicity &period = amrex::Periodicity::NonPeriodic());
-
-void SumBoundary (amrex::MultiFab &mf,
-                  int start_comp,
-                  int num_comps, amrex::IntVect ng,
-                  bool do_single_precision_comms,
-                  const amrex::Periodicity &period = amrex::Periodicity::NonPeriodic());
 
 void
 SumBoundary (amrex::MultiFab &mf,

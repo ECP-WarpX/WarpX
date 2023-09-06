@@ -49,7 +49,7 @@ public:
       */
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
                                   amrex::ParserExecutor<3> const& macro_parser,
-                                  const int lev);
+                                  int lev);
 
      /** Gpu Vector with index type of the conductivity multifab */
      amrex::GpuArray<int, 3> sigma_IndexType;
@@ -114,8 +114,8 @@ struct LaxWendroffAlgo {
                                amrex::Real const epsilon,
                                amrex::Real dt) {
          using namespace amrex;
-         amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
-         amrex::Real alpha = (1._rt - fac1)/(1._rt + fac1);
+         const amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
+         const amrex::Real alpha = (1._rt - fac1)/(1._rt + fac1);
          return alpha;
      }
 
@@ -124,8 +124,8 @@ struct LaxWendroffAlgo {
                               amrex::Real const epsilon,
                               amrex::Real dt) {
          using namespace amrex;
-         amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
-         amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
+         const amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
+         const amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
          return beta;
      }
 
@@ -146,8 +146,8 @@ struct BackwardEulerAlgo {
                                amrex::Real const epsilon,
                                amrex::Real dt) {
          using namespace amrex;
-         amrex::Real fac1 = sigma * dt / epsilon;
-         amrex::Real alpha = (1._rt)/(1._rt + fac1);
+         const amrex::Real fac1 = sigma * dt / epsilon;
+         const amrex::Real alpha = (1._rt)/(1._rt + fac1);
          return alpha;
      }
 
@@ -156,8 +156,8 @@ struct BackwardEulerAlgo {
                               amrex::Real const epsilon,
                               amrex::Real dt) {
          using namespace amrex;
-         amrex::Real fac1 = sigma * dt / epsilon;
-         amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
+         const amrex::Real fac1 = sigma * dt / epsilon;
+         const amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
          return beta;
      }
 

@@ -53,7 +53,7 @@ struct NormalizationType {
 ParticleHistogram::ParticleHistogram (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-    ParmParse pp_rd_name(rd_name);
+    const ParmParse pp_rd_name(rd_name);
 
     // read species
     std::string selected_species_name;
@@ -66,7 +66,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
 
     // read histogram function
-    std::string function_string = "";
+    std::string function_string;
     utils::parser::Store_parserString(pp_rd_name,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
     m_parser = std::make_unique<amrex::Parser>(
@@ -86,8 +86,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     } else if ( norm_string == "area_to_unity" ) {
         m_norm = NormalizationType::area_to_unity;
     } else {
-        Abort(Utils::TextMsg::Err(
-            "Unknown ParticleHistogram normalization type."));
+        WARPX_ABORT_WITH_MESSAGE(
+            "Unknown ParticleHistogram normalization type.");
     }
 
     // get MultiParticleContainer class object
@@ -103,15 +103,15 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     }
     // if m_selected_species_id is not modified
     if ( m_selected_species_id == -1 ){
-        Abort(Utils::TextMsg::Err(
-            "Unknown species for ParticleHistogram reduced diagnostic."));
+        WARPX_ABORT_WITH_MESSAGE(
+            "Unknown species for ParticleHistogram reduced diagnostic.");
     }
 
     // Read optional filter
     std::string buf;
     m_do_parser_filter = pp_rd_name.query("filter_function(t,x,y,z,ux,uy,uz)", buf);
     if (m_do_parser_filter) {
-        std::string filter_string = "";
+        std::string filter_string;
         utils::parser::Store_parserString(
             pp_rd_name,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
         m_parser_filter = std::make_unique<amrex::Parser>(
@@ -123,7 +123,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
 
     if (ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -137,7 +137,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             {
                 ofs << m_sep;
                 ofs << "[" << c++ << "]";
-                Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
+                const Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
                 ofs << "bin" + std::to_string(1+i)
                              + "=" + std::to_string(b) + "()";
             }
@@ -179,8 +179,7 @@ void ParticleHistogram::ComputeDiags (int step)
     auto const num_bins = m_bin_num;
     Real const bin_min  = m_bin_min;
     Real const bin_size = m_bin_size;
-    const bool is_unity_particle_weight =
-        (m_norm == NormalizationType::unity_particle_weight) ? true : false;
+    const bool is_unity_particle_weight = (m_norm == NormalizationType::unity_particle_weight);
 
     bool const do_parser_filter = m_do_parser_filter;
 

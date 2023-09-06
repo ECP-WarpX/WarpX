@@ -34,6 +34,10 @@ boundary.field_hi = pml pml
 # Order of particle shape factors
 algo.particle_shape = 3
 
+# improved plasma stability for 2D with very low initial target temperature
+# when using Esirkepov current deposition with energy-conserving field gather
+interpolation.galerkin_scheme = 0
+
 # numerical tuning
 warpx.cfl = 0.999
 warpx.use_filter = 1          # bilinear current/charge filter
@@ -89,7 +93,7 @@ particles.species_names = electrons hydrogen
 # particle species
 hydrogen.species_type = hydrogen
 hydrogen.injection_style = NUniformPerCell
-hydrogen.num_particles_per_cell_each_dim = 2 2 4
+hydrogen.num_particles_per_cell_each_dim = 2 2
 hydrogen.momentum_distribution_type = at_rest
 # minimum and maximum z position between which particles are initialized
 # --> should be set for dense targets limit memory consumption during initialization
@@ -102,7 +106,7 @@ hydrogen.attribute.orig_z(x,y,z,ux,uy,uz,t) = "z"
 
 electrons.species_type = electron
 electrons.injection_style = NUniformPerCell
-electrons.num_particles_per_cell_each_dim = 2 2 4
+electrons.num_particles_per_cell_each_dim = 2 2
 electrons.momentum_distribution_type = "gaussian"
 electrons.ux_th = .01
 electrons.uz_th = .01
@@ -238,7 +242,7 @@ openPMDbw.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz<0)
 # histograms with 2.0 degree acceptance angle in fw direction
 # 2 deg * pi / 180 : 0.03490658503 rad
 # half-angle +/-   : 0.017453292515 rad
-warpx.reduced_diags_names                   = histuH histue histuzAll FieldProbe_Z FieldProbe_ScatPoint FieldProbe_ScatLine LBC
+warpx.reduced_diags_names                   = histuH histue histuzAll FieldProbe_Z FieldProbe_ScatPoint FieldProbe_ScatLine LBC PhaseSpaceIons PhaseSpaceElectrons
 
 histuH.type                                 = ParticleHistogram
 histuH.intervals                            = 100
@@ -301,6 +305,34 @@ FieldProbe_ScatLine.resolution = 201
 # check computational load per box
 LBC.type = LoadBalanceCosts
 LBC.intervals = 100
+
+PhaseSpaceIons.type                                 = ParticleHistogram2D
+PhaseSpaceIons.intervals                            = 100
+PhaseSpaceIons.species                              = hydrogen
+PhaseSpaceIons.bin_number_abs                       = 1000
+PhaseSpaceIons.bin_number_ord                       = 1000
+PhaseSpaceIons.bin_min_abs                          = -5.e-6
+PhaseSpaceIons.bin_max_abs                          = 25.e-6
+PhaseSpaceIons.bin_min_ord                          = -20.e-6
+PhaseSpaceIons.bin_max_ord                          = 20.e-6
+PhaseSpaceIons.histogram_function_abs(t,x,y,z,ux,uy,uz,w) = "z"
+PhaseSpaceIons.histogram_function_ord(t,x,y,z,ux,uy,uz,w) = "uz"
+PhaseSpaceIons.value_function(t,x,y,z,ux,uy,uz,w) = "w"
+# PhaseSpaceIons.filter_function(t,x,y,z,ux,uy,uz,w) = "u2=ux*ux+uy*uy+uz*uz; if(u2>0, abs(acos(uz / sqrt(u2))) <= 0.017453, 0)"
+
+PhaseSpaceElectrons.type                                 = ParticleHistogram2D
+PhaseSpaceElectrons.intervals                            = 100
+PhaseSpaceElectrons.species                              = electrons
+PhaseSpaceElectrons.bin_number_abs                       = 1000
+PhaseSpaceElectrons.bin_number_ord                       = 1000
+PhaseSpaceElectrons.bin_min_abs                          = -5.e-6
+PhaseSpaceElectrons.bin_max_abs                          = 25.e-6
+PhaseSpaceElectrons.bin_min_ord                          = -20
+PhaseSpaceElectrons.bin_max_ord                          = 20
+PhaseSpaceElectrons.histogram_function_abs(t,x,y,z,ux,uy,uz,w) = "z"
+PhaseSpaceElectrons.histogram_function_ord(t,x,y,z,ux,uy,uz,w) = "uz"
+PhaseSpaceElectrons.value_function(t,x,y,z,ux,uy,uz,w) = "w"
+PhaseSpaceElectrons.filter_function(t,x,y,z,ux,uy,uz,w) = "sqrt(x*x+y*y) < 1e-6"
 
 #################################
 # Physical Background

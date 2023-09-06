@@ -8,13 +8,13 @@
 #endif
 
 FlushFormatSensei::FlushFormatSensei () :
-    m_insitu_config(), m_insitu_pin_mesh(0), m_insitu_bridge(nullptr),
+    m_insitu_pin_mesh(0), m_insitu_bridge(nullptr),
     m_amr_mesh(nullptr)
 {}
 
 FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
     std::string diag_name) :
-    m_insitu_config(), m_insitu_pin_mesh(0), m_insitu_bridge(nullptr),
+    m_insitu_pin_mesh(0), m_insitu_bridge(nullptr),
     m_amr_mesh(amr_mesh)
 {
 #ifndef AMREX_USE_SENSEI_INSITU
@@ -39,12 +39,14 @@ FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
 #endif
 }
 
+#ifdef AMREX_USE_SENSEI_INSITU
 FlushFormatSensei::~FlushFormatSensei ()
 {
-#ifdef AMREX_USE_SENSEI_INSITU
     delete m_insitu_bridge;
-#endif
 }
+#else
+FlushFormatSensei::~FlushFormatSensei () = default;
+#endif
 
 void
 FlushFormatSensei::WriteToFile (
@@ -100,9 +102,9 @@ FlushFormatSensei::WriteParticles (
 {
     amrex::ignore_unused(particle_diags);
 #ifdef AMREX_USE_SENSEI_INSITU
-    amrex::Abort(Utils::TextMsg::Err(
+    WARPX_ABORT_WITH_MESSAGE(
         "FlushFormatSensei::WriteParticles : "
         "Not yet implemented."
-    ));
+    );
 #endif
 }

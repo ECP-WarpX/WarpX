@@ -21,13 +21,13 @@ void
 AverageAndPackVectorField( amrex::MultiFab& mf_avg,
                          const std::array< std::unique_ptr<amrex::MultiFab>, 3 >& vector_field,
                          const amrex::DistributionMapping& dm,
-                         const int dcomp, const amrex::IntVect ngrow );
+                         int dcomp, amrex::IntVect ngrow );
 
 void
 AverageAndPackScalarField( amrex::MultiFab& mf_avg,
                          const amrex::MultiFab & scalar_field,
                          const amrex::DistributionMapping& dm,
-                         const int dcomp, const amrex::IntVect ngrow );
+                         int dcomp, amrex::IntVect ngrow );
 
 /** Convert amrex IntVect to vector of `uint64`, reverse if requested
  *
