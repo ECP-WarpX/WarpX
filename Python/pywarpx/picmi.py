@@ -1951,6 +1951,8 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
+        self.lower_bound = kw.pop('warpx_lower_bound', None)
+        self.upper_bound = kw.pop('warpx_upper_bound', None)
 
     def initialize_inputs(self):
 
