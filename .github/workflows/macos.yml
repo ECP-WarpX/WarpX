@@ -13,6 +13,7 @@ jobs:
     if: github.event.pull_request.draft == false
     env:
       CXXFLAGS: "-Werror -Wno-error=pass-failed"
+      HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: TRUE
       # For macOS, Ninja is slower than the default:
       #CMAKE_GENERATOR: Ninja
       # setuptools/mp4py work-around, see
