@@ -10,16 +10,30 @@
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
+#include "Utils/export.H"
 
 #include <vector>
+
 
 /**
  *  This stores particles that have left / been absorbed by domain and embedded boundaries.
  */
-class ParticleBoundaryBuffer
+class WARPX_EXPORT ParticleBoundaryBuffer
 {
 public:
     ParticleBoundaryBuffer ();
+
+    ~ParticleBoundaryBuffer() {}
+
+    /** Copy constructor for ParticleBoundaryBuffer */
+    ParticleBoundaryBuffer ( const ParticleBoundaryBuffer &) = delete;
+    /** Copy operator for ParticleBoundaryBuffer */
+    ParticleBoundaryBuffer& operator= ( const ParticleBoundaryBuffer & ) = delete;
+
+    /** Move constructor for NamedComponentParticleContainer */
+    ParticleBoundaryBuffer ( ParticleBoundaryBuffer && ) = default;
+    /** Move operator for NamedComponentParticleContainer */
+    ParticleBoundaryBuffer& operator= ( ParticleBoundaryBuffer && ) = default;
 
     int numSpecies() const { return getSpeciesNames().size(); }
 
@@ -30,15 +44,15 @@ public:
 
     void redistribute ();
     void clearParticles ();
-    void clearParticles (int const i);
+    void clearParticles (int i);
 
     void printNumParticles () const;
 
-    int getNumParticlesInContainer(const std::string species_name, int boundary, bool local);
+    int getNumParticlesInContainer(std::string species_name, int boundary, bool local);
 
-    PinnedMemoryParticleContainer& getParticleBuffer(const std::string species_name, int boundary);
+    PinnedMemoryParticleContainer& getParticleBuffer(std::string species_name, int boundary);
 
-    PinnedMemoryParticleContainer* getParticleBufferPointer(const std::string species_name, int boundary);
+    PinnedMemoryParticleContainer* getParticleBufferPointer(std::string species_name, int boundary);
 
     static constexpr int numBoundaries () {
         return AMREX_SPACEDIM*2

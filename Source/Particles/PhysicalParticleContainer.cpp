@@ -393,7 +393,7 @@ void PhysicalParticleContainer::InitData ()
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame (
-    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz, ParticleReal t_lab)
+    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz, Real t_lab)
 {
     // Map the particles from the lab frame to the boosted frame.
     // This boosts the particle to the lab frame and calculates
@@ -552,10 +552,21 @@ PhysicalParticleContainer::AddGaussianBeam (
     }
     // Add the temporary CPU vectors to the particle structure
     np = particle_z.size();
-    AddNParticles(0,np,
-                  particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
-                  particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
-                  1, particle_w.dataPtr(), 0, nullptr, 1);
+    amrex::Vector<ParticleReal> xp(particle_x.data(), particle_x.data() + np);
+    amrex::Vector<ParticleReal> yp(particle_y.data(), particle_y.data() + np);
+    amrex::Vector<ParticleReal> zp(particle_z.data(), particle_z.data() + np);
+    amrex::Vector<ParticleReal> uxp(particle_ux.data(), particle_ux.data() + np);
+    amrex::Vector<ParticleReal> uyp(particle_uy.data(), particle_uy.data() + np);
+    amrex::Vector<ParticleReal> uzp(particle_uz.data(), particle_uz.data() + np);
+
+    amrex::Vector<amrex::Vector<ParticleReal>> attr;
+    amrex::Vector<ParticleReal> wp(particle_w.data(), particle_w.data() + np);
+    attr.push_back(wp);
+
+    amrex::Vector<amrex::Vector<int>> attr_int;
+
+    AddNParticles(0, np, xp,  yp,  zp, uxp, uyp, uzp,
+                  1, attr, 0, attr_int, 1);
 }
 
 void
@@ -581,7 +592,13 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 
         // assumption asserts: see PlasmaInjector
         openPMD::Iteration it = series->iterations.begin()->second;
-        double const t_lab = it.time<double>() * it.timeUnitSI();
+        const ParmParse pp_species_name(species_name);
+        pp_species_name.query("impose_t_lab_from_file", impose_t_lab_from_file);
+        double t_lab = 0._prt;
+        if (impose_t_lab_from_file) {
+            // Impose t_lab as being the time stored in the openPMD file
+            t_lab = it.time<double>() * it.timeUnitSI();
+        }
         std::string const ps_name = it.particles.begin()->first;
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
@@ -660,10 +677,21 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
     } // IO Processor
     auto const np = particle_z.size();
-    AddNParticles(0, np,
-                  particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
-                  particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
-                  1, particle_w.dataPtr(), 0, nullptr, 1);
+    amrex::Vector<ParticleReal> xp(particle_x.data(), particle_x.data() + np);
+    amrex::Vector<ParticleReal> yp(particle_y.data(), particle_y.data() + np);
+    amrex::Vector<ParticleReal> zp(particle_z.data(), particle_z.data() + np);
+    amrex::Vector<ParticleReal> uxp(particle_ux.data(), particle_ux.data() + np);
+    amrex::Vector<ParticleReal> uyp(particle_uy.data(), particle_uy.data() + np);
+    amrex::Vector<ParticleReal> uzp(particle_uz.data(), particle_uz.data() + np);
+
+    amrex::Vector<amrex::Vector<ParticleReal>> attr;
+    amrex::Vector<ParticleReal> wp(particle_w.data(), particle_w.data() + np);
+    attr.push_back(wp);
+
+    amrex::Vector<amrex::Vector<int>> attr_int;
+
+    AddNParticles(0, np, xp,  yp,  zp, uxp, uyp, uzp,
+                  1, attr, 0, attr_int, 1);
 #endif // WARPX_USE_OPENPMD
 
     ignore_unused(q_tot, z_shift);
@@ -794,7 +822,7 @@ PhysicalParticleContainer::CheckAndAddParticle (
     Gpu::HostVector<ParticleReal>& particle_uy,
     Gpu::HostVector<ParticleReal>& particle_uz,
     Gpu::HostVector<ParticleReal>& particle_w,
-    ParticleReal t_lab)
+    Real t_lab)
 {
     if (WarpX::gamma_boost > 1.) {
         MapParticletoBoostedFrame(x, y, z, ux, uy, uz, t_lab);
@@ -822,14 +850,16 @@ PhysicalParticleContainer::AddParticles (int lev)
                                       plasma_injector->single_particle_u[1],
                                       plasma_injector->single_particle_u[2]);
         }
-        AddNParticles(lev, 1,
-                      &(plasma_injector->single_particle_pos[0]),
-                      &(plasma_injector->single_particle_pos[1]),
-                      &(plasma_injector->single_particle_pos[2]),
-                      &(plasma_injector->single_particle_u[0]),
-                      &(plasma_injector->single_particle_u[1]),
-                      &(plasma_injector->single_particle_u[2]),
-                      1, &(plasma_injector->single_particle_weight), 0, nullptr, 0);
+        amrex::Vector<ParticleReal> xp = {plasma_injector->single_particle_pos[0]};
+        amrex::Vector<ParticleReal> yp = {plasma_injector->single_particle_pos[1]};
+        amrex::Vector<ParticleReal> zp = {plasma_injector->single_particle_pos[2]};
+        amrex::Vector<ParticleReal> uxp = {plasma_injector->single_particle_u[0]};
+        amrex::Vector<ParticleReal> uyp = {plasma_injector->single_particle_u[1]};
+        amrex::Vector<ParticleReal> uzp = {plasma_injector->single_particle_u[2]};
+        amrex::Vector<amrex::Vector<ParticleReal>> attr = {{plasma_injector->single_particle_weight}};
+        amrex::Vector<amrex::Vector<int>> attr_int;
+        AddNParticles(lev, 1, xp, yp, zp, uxp, uyp, uzp,
+                      1, attr, 0, attr_int, 0);
         return;
     }
 
@@ -844,14 +874,17 @@ PhysicalParticleContainer::AddParticles (int lev)
                                           plasma_injector->multiple_particles_uz[i]);
             }
         }
+        amrex::Vector<amrex::Vector<ParticleReal>> attr;
+        attr.push_back(plasma_injector->multiple_particles_weight);
+        amrex::Vector<amrex::Vector<int>> attr_int;
         AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
-                      plasma_injector->multiple_particles_pos_x.dataPtr(),
-                      plasma_injector->multiple_particles_pos_y.dataPtr(),
-                      plasma_injector->multiple_particles_pos_z.dataPtr(),
-                      plasma_injector->multiple_particles_ux.dataPtr(),
-                      plasma_injector->multiple_particles_uy.dataPtr(),
-                      plasma_injector->multiple_particles_uz.dataPtr(),
-                      1, plasma_injector->multiple_particles_weight.dataPtr(), 0, nullptr, 0);
+                      plasma_injector->multiple_particles_pos_x,
+                      plasma_injector->multiple_particles_pos_y,
+                      plasma_injector->multiple_particles_pos_z,
+                      plasma_injector->multiple_particles_ux,
+                      plasma_injector->multiple_particles_uy,
+                      plasma_injector->multiple_particles_uz,
+                      1, attr, 0, attr_int, 0);
         return;
     }
 
@@ -1466,7 +1499,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         fine_injection_box.coarsen(rrfac);
     }
 
-    InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
+    InjectorPosition* flux_pos = plasma_injector->getInjectorFluxPosition();
     InjectorFlux*  inj_flux = plasma_injector->getInjectorFlux();
     InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentumDevice();
     constexpr int level_zero = 0;
@@ -1586,7 +1619,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
             const int num_ppc_int = static_cast<int>(num_ppc_real + amrex::Random(engine));
 
-            if (inj_pos->overlapsWith(lo, hi))
+            if (flux_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
                 int r;
@@ -1734,12 +1767,12 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 p.id() = pid+ip;
                 p.cpu() = cpuid;
 
-                // This assumes the inj_pos is of type InjectorPositionRandomPlane
+                // This assumes the flux_pos is of type InjectorPositionRandomPlane
                 const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
                   // In the refined injection region: use refinement ratio `lrrfac`
-                  inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
+                  flux_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
-                  inj_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
+                  flux_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
                 auto ppos = PDim3(pos);
 
@@ -1776,7 +1809,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                 // Lab-frame simulation
                 // If the particle's initial position is not within or on the species's
                 // xmin, xmax, ymin, ymax, zmin, zmax, go to the next generated particle.
-                if (!inj_pos->insideBoundsInclusive(ppos.x, ppos.y, ppos.z)) {
+                if (!flux_pos->insideBoundsInclusive(ppos.x, ppos.y, ppos.z)) {
                     p.id() = -1;
                     continue;
                 }
@@ -2409,17 +2442,22 @@ PhysicalParticleContainer::SplitParticles (int lev)
     // they are not re-split when entering a higher level
     // AddNParticles calls Redistribute, so that particles
     // in pctmp_split are in the proper grids and tiles
+    amrex::Vector<ParticleReal> xp(psplit_x.data(), psplit_x.data() + np_split_to_add);
+    amrex::Vector<ParticleReal> yp(psplit_y.data(), psplit_y.data() + np_split_to_add);
+    amrex::Vector<ParticleReal> zp(psplit_z.data(), psplit_z.data() + np_split_to_add);
+    amrex::Vector<ParticleReal> uxp(psplit_ux.data(), psplit_ux.data() + np_split_to_add);
+    amrex::Vector<ParticleReal> uyp(psplit_uy.data(), psplit_uy.data() + np_split_to_add);
+    amrex::Vector<ParticleReal> uzp(psplit_uz.data(), psplit_uz.data() + np_split_to_add);
+    amrex::Vector<ParticleReal> wp(psplit_w.data(), psplit_w.data() + np_split_to_add);
+
+    amrex::Vector<amrex::Vector<ParticleReal>> attr;
+    attr.push_back(wp);
+    amrex::Vector<amrex::Vector<int>> attr_int;
     pctmp_split.AddNParticles(lev,
                               np_split_to_add,
-                              psplit_x.dataPtr(),
-                              psplit_y.dataPtr(),
-                              psplit_z.dataPtr(),
-                              psplit_ux.dataPtr(),
-                              psplit_uy.dataPtr(),
-                              psplit_uz.dataPtr(),
-                              1,
-                              psplit_w.dataPtr(),
-                              0, nullptr,
+                              xp,  yp,  zp, uxp, uyp, uzp,
+                              1, attr,
+                              0, attr_int,
                               1, NoSplitParticleID);
     // Copy particles from tmp to current particle container
     addParticles(pctmp_split,1);
@@ -2582,7 +2620,7 @@ PhysicalParticleContainer::ContinuousInjection (const RealBox& injection_box)
 void
 PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real dt)
 {
-    if (plasma_injector->surface_flux){
+    if (plasma_injector->doFluxInjection()){
         // Check the optional parameters for start and stop of injection
         if ( ((plasma_injector->flux_tmin<0) || (t>=plasma_injector->flux_tmin)) &&
              ((plasma_injector->flux_tmax<0) || (t< plasma_injector->flux_tmax)) ){
@@ -2911,7 +2949,7 @@ PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector ()
     return plasma_injector.get();
 }
 
-void PhysicalParticleContainer::resample (const int timestep)
+void PhysicalParticleContainer::resample (const int timestep, const bool verbose)
 {
     // In heavily load imbalanced simulations, MPI processes with few particles will spend most of
     // the time at the MPI synchronization in TotalNumberOfParticles(). Having two profiler entries
@@ -2929,7 +2967,11 @@ void PhysicalParticleContainer::resample (const int timestep)
     WARPX_PROFILE_VAR_START(blp_resample_actual);
     if (m_resampler.triggered(timestep, global_numparts))
     {
-        amrex::Print() << Utils::TextMsg::Info("Resampling " + species_name);
+        if (verbose) {
+            amrex::Print() << Utils::TextMsg::Info(
+                "Resampling " + species_name + " at step " + std::to_string(timestep)
+            );
+        }
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -2939,7 +2981,6 @@ void PhysicalParticleContainer::resample (const int timestep)
         }
     }
     WARPX_PROFILE_VAR_STOP(blp_resample_actual);
-
 }
 
 

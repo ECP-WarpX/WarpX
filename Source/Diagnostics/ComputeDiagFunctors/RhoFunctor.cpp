@@ -10,10 +10,7 @@
 #include "Fluids/MultiFluidContainer.H"
 #include "Fluids/WarpXFluidContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Utils/TextMsg.H"
 #include "WarpX.H"
-
-#include <ablastr/coarsen/sample.H>
 
 #include <AMReX.H>
 #include <AMReX_IntVect.H>
@@ -72,29 +69,6 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     }
 #endif
 
-
-#ifdef WARPX_DIM_RZ
-    if (m_convertRZmodes2cartesian) {
-        // In cylindrical geometry, sum real part of all modes of rho in
-        // temporary MultiFab mf_dst_stag, and cell-center it to mf_dst
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            nComp()==1,
-            "The RZ averaging over modes must write into one single component");
-        amrex::MultiFab mf_dst_stag( rho->boxArray(), warpx.DistributionMap(m_lev), 1, rho->nGrowVect() );
-        // Mode 0
-        amrex::MultiFab::Copy( mf_dst_stag, *rho, 0, 0, 1, rho->nGrowVect() );
-        for (int ic=1 ; ic < rho->nComp() ; ic += 2) {
-            // Real part of all modes > 0
-            amrex::MultiFab::Add( mf_dst_stag, *rho, ic, 0, 1, rho->nGrowVect() );
-        }
-        ablastr::coarsen::sample::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0, m_crse_ratio );
-    } else {
-        ablastr::coarsen::sample::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), 0, m_crse_ratio );
-    }
-#else
-    // In Cartesian geometry, coarsen and interpolate from temporary MultiFab rho
-    // to output diagnostic MultiFab mf_dst
-    ablastr::coarsen::sample::Coarsen(mf_dst, *rho, dcomp, 0, nComp(), mf_dst.nGrowVect(), m_crse_ratio );
-    amrex::ignore_unused(m_convertRZmodes2cartesian);
-#endif
+    InterpolateMFForDiag(mf_dst, *rho, dcomp, warpx.DistributionMap(m_lev),
+                         m_convertRZmodes2cartesian);
 }

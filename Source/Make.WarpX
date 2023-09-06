@@ -293,6 +293,7 @@ AMReX_buildInfo.cpp:
           --link_flags "$(LDFLAGS)" --libraries "$(libraries)" \
           --GIT ". $(AMREX_HOME) $(PICSAR_HOME)"
 
+# Generate WarpXVersion.H
 vpath WarpXVersion.H $(srcTempDir)/Utils
 
 AUTO_BUILD_SOURCES += $(srcTempDir)/Utils/WarpXVersion.H
@@ -301,6 +302,32 @@ $(srcTempDir)/Utils/WarpXVersion.H:
 	@echo Generating WarpXVersion.H ...
 	@if [ ! -d $(srcTempDir)/Utils ]; then mkdir -p $(srcTempDir)/Utils; fi
 	@ $(MKVERSIONHEADER) --code="WARPX" --defines="$(WARPX_DEFINES)" > $@
+
+# Generate ablastr/export.H
+vpath export.H $(srcTempDir)/ablastr
+
+AUTO_BUILD_SOURCES += $(srcTempDir)/ablastr/export.H
+
+$(srcTempDir)/ablastr/export.H:
+	@echo Generating ablastr/export.H ...
+	@if [ ! -d $(srcTempDir)/ablastr ]; then mkdir -p $(srcTempDir)/ablastr; fi
+	@echo "#ifndef ABLASTR_EXPORT_H_" > $@
+	@echo "#define ABLASTR_EXPORT_H_" >> $@
+	@echo "#define ABLASTR_EXPORT" >> $@
+	@echo "#endif" >> $@
+
+# Generate Utils/export.H
+vpath export.H $(srcTempDir)/Utils
+
+AUTO_BUILD_SOURCES += $(srcTempDir)/Utils/export.H
+
+$(srcTempDir)/Utils/export.H:
+	@echo Generating Utils/export.H ...
+	@if [ ! -d $(srcTempDir)/Utils ]; then mkdir -p $(srcTempDir)/Utils; fi
+	@echo "#ifndef WARPX_EXPORT_H_" > $@
+	@echo "#define WARPX_EXPORT_H_" >> $@
+	@echo "#define WARPX_EXPORT" >> $@
+	@echo "#endif" >> $@
 
 cleanconfig::
 	$(SILENT) $(RM) -r $(srcTempDir)/Utils
