@@ -332,7 +332,7 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
             species.ux = self.centroid_velocity[0]/constants.c
             species.uy = self.centroid_velocity[1]/constants.c
             species.uz = self.centroid_velocity[2]/constants.c
-        
+
         species.do_symmetrize = self.do_symmetrize
         species.symmetrization_order = self.symmetrization_order
 
