@@ -2198,8 +2198,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
     for more information.
 
-    This will by default write out both field and particle data. This can be changed by setting warpx_write_species.
-
     Parameters
     ----------
     warpx_format: string, optional
@@ -2222,9 +2220,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
     warpx_upper_bound: vector of floats, optional
         Passed to <diagnostic name>.upper_bound
-
-    warpx_write_species: bool, optional, default=True
-        Whether the species will also be written out.
     """
     def init(self, kw):
         self.format = kw.pop('warpx_format', None)
@@ -2234,7 +2229,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.buffer_size = kw.pop('warpx_buffer_size', None)
         self.lower_bound = kw.pop('warpx_lower_bound', None)
         self.upper_bound = kw.pop('warpx_upper_bound', None)
-        self.write_species = kw.pop('warpx_write_species', None)
 
     def initialize_inputs(self):
 
@@ -2300,8 +2294,6 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
     for more information.
 
-    This will by default write out both field and particle data. This can be changed by setting warpx_write_fields.
-
     Parameters
     ----------
     warpx_format: string, optional
@@ -2318,9 +2310,6 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
 
     warpx_buffer_size: integer, optional
         Passed to <diagnostic name>.buffer_size
-
-    warpx_write_fields: bool, optional, default=True
-        Whether the fields will also be written out.
     """
     def init(self, kw):
         self.format = kw.pop('warpx_format', None)
@@ -2328,7 +2317,6 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.buffer_size = kw.pop('warpx_buffer_size', None)
-        self.write_fields = kw.pop('warpx_write_fields', None)
 
     def initialize_inputs(self):
 
@@ -2344,7 +2332,9 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
 
-        self.diagnostic.do_back_transformed_fields = self.write_fields
+        self.diagnostic.set_or_replace_attr('write_species', True)
+        if 'fields_to_plot' not in self.diagnostic.argvattrs:
+            self.diagnostic.fields_to_plot = 'none'
 
         self.set_write_dir()
 
