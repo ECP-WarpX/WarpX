@@ -2029,6 +2029,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.diagnostic.plot_crsepatch = self.plot_crsepatch
         if 'write_species' not in self.diagnostic.argvattrs:
             self.diagnostic.write_species = False
+            self.diagnostic.do_back_transformed_particles = False
         self.set_write_dir()
 
 
