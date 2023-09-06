@@ -46,7 +46,7 @@ extern "C" {
 
     amrex::Real warpx_getCellSize(int dir, int lev);
 
-    amrex::Real warpx_sumParticleCharge(const char* char_species_name, const bool local);
+    amrex::Real warpx_sumParticleCharge(const char* char_species_name, bool local);
 
   void warpx_ComputeDt ();
   void warpx_MoveWindow (int step, bool move_j);

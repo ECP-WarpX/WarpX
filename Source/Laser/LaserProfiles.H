@@ -91,11 +91,11 @@ public:
      */
     virtual void
     fill_amplitude (
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const = 0;
+        amrex::Real* AMREX_RESTRICT amplitude) const = 0;
 
     virtual ~ILaserProfile(){}
 };
@@ -118,11 +118,11 @@ public:
 
     void
     fill_amplitude (
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT amplitude) const override final;
 
 private:
     struct {
@@ -160,11 +160,11 @@ public:
 
     void
     fill_amplitude (
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT amplitude) const override final;
 
 private:
     struct{
@@ -211,11 +211,11 @@ public:
     */
     void
     fill_amplitude (
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT amplitude) const override final;
 
     /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format in 3D Cartesian.
     * This function cannot be private due to restrictions related to
@@ -229,12 +229,12 @@ public:
     * \param amplitude: pointer to array of field amplitude.
     */
     void internal_fill_amplitude_uniform_cartesian(
-        const int idx_t_left,
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int idx_t_left,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const;
+        amrex::Real * AMREX_RESTRICT amplitude) const;
 
     /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format in RZ geometry.
     * This function cannot be private due to restrictions related to
@@ -248,12 +248,12 @@ public:
     * \param amplitude: pointer to array of field amplitude.
     */
     void internal_fill_amplitude_uniform_cylindrical(
-        const int idx_t_left,
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int idx_t_left,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const;
+        amrex::Real * AMREX_RESTRICT amplitude) const;
 
 
 
@@ -269,12 +269,12 @@ public:
     * \param amplitude: pointer to array of field amplitude.
     */
         void internal_fill_amplitude_uniform_binary(
-        const int idx_t_left,
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int idx_t_left,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const;
+        amrex::Real * AMREX_RESTRICT amplitude) const;
 
 private:
     /** \brief parse a field file in the HDF5 'lasy' format

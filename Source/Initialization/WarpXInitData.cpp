@@ -807,6 +807,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        WARPX_ABORT_WITH_MESSAGE(
            "E and B parser for external fields does not work with RZ -- TO DO");
 #endif
+
+       //! Strings storing parser function to initialize the components of the magnetic field on the grid
+       std::string str_Bx_ext_grid_function;
+       std::string str_By_ext_grid_function;
+       std::string str_Bz_ext_grid_function;
+
        utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
           str_Bx_ext_grid_function);
        utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
@@ -865,6 +871,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        WARPX_ABORT_WITH_MESSAGE(
            "E and B parser for external fields does not work with RZ -- TO DO");
 #endif
+
+       //! Strings storing parser function to initialize the components of the electric field on the grid
+       std::string str_Ex_ext_grid_function;
+       std::string str_Ey_ext_grid_function;
+       std::string str_Ez_ext_grid_function;
+
        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
            str_Ex_ext_grid_function);
        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
