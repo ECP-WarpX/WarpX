@@ -1697,7 +1697,7 @@ void WarpXFluidContainer::DepositCurrent(
                     Uy = NUy_arr(i, j, k)/N_arr(i, j, k);
                     Uz = NUz_arr(i, j, k)/N_arr(i, j, k);
                     gamma = std::sqrt(1.0 + ( Ux*Ux + Uy*Uy + Uz*Uz) * inv_clight_sq ) ;
-                } 
+                }
                 tmp_jx_fluid_arr(i, j, k) = q * (NUx_arr(i, j, k) / gamma);
                 tmp_jy_fluid_arr(i, j, k) = q * (NUy_arr(i, j, k) / gamma);
                 tmp_jz_fluid_arr(i, j, k) = q * (NUz_arr(i, j, k) / gamma);

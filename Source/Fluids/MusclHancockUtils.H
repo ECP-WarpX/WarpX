@@ -130,7 +130,7 @@ amrex::Real ave_high_diff (amrex::Real a, amrex::Real b)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real ave_adjustable_diff (amrex::Real a, amrex::Real b)
 {
-    amrex::Real sigma = 2.0*0.732050807568877; 
+    amrex::Real sigma = 2.0*0.732050807568877;
     if (a*b > 0.0)
         return minmod3( (a+b)/2.0, sigma*a, sigma*b );
     else
@@ -159,7 +159,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real ave_stage2 (amrex::Real dQ, amrex::Real a, amrex::Real b, amrex::Real c)
 {
     // sigma = sqrt(3) -1
-    amrex::Real sigma = 0.732050807568877; 
+    amrex::Real sigma = 0.732050807568877;
     amrex::Real dq_min = 2.0*std::min( b - min3(a,b,c), max3(a,b,c) - b);
     return ( std::abs(dQ)/dQ ) * std::min( std::abs(dQ) , sigma*std::abs(dq_min) );
 }
