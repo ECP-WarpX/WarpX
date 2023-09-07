@@ -1938,6 +1938,14 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
     warpx_dump_rz_modes: bool, optional
         Flag whether to dump the data for all RZ modes
+
+    warpx_lower_bound: vector of floats, optional
+        Lower corner of output fields
+        that is passed to <diagnostic name>.lower_bound
+
+    warpx_upper_bound: vector of floats, optional
+        Upper corner of output fields
+        that is passed to <diagnostic name>.upper_bound
     """
     def init(self, kw):
 
