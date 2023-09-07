@@ -63,14 +63,26 @@ amrex::Real minmod (amrex::Real a, amrex::Real b)
     else
         return 0.0;
 }
+// Min of 3 inputs
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real min3 (amrex::Real a, amrex::Real b, amrex::Real c)
+{
+    return std::min(a, std::min(b, c) );
+}
+// Max of 3 inputs
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real max3 (amrex::Real a, amrex::Real b, amrex::Real c)
+{
+    return std::max(a, std::max(b, c) );
+}
 // mindmod
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real minmod3 (amrex::Real a, amrex::Real b , amrex::Real c)
 {
     if (a > 0.0 && b > 0.0 && c > 0.0)
-        return std::min(a, std::min(b, c) );
+        return min3(a,b,c);
     else if (a < 0.0 && b < 0.0 && c < 0.0)
-        return std::max(a, std::max(b, c) );
+        return max3(a,b,c);
     else
         return 0.0;
 }
@@ -89,7 +101,7 @@ amrex::Real maxmod (amrex::Real a, amrex::Real b)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real flux (amrex::Real Qm, amrex::Real Qp, amrex::Real Vm, amrex::Real Vp)
 {
-    auto c = std::max( std::abs(Vm) , std::abs(Vp) );
+    amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
     return 0.5*(Vm*Qm + Vp*Qp) - (0.5*c)*(Qp - Qm);
 }
 // ave_epsilon
@@ -101,10 +113,26 @@ amrex::Real ave_epsilon (amrex::Real a, amrex::Real b, amrex::Real dx)
 }
 // ave_minmod high diffusivity
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real ave_simple (amrex::Real a, amrex::Real b)
+{
+    return (a+b)/2.0;
+}
+// ave_minmod high diffusivity
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real ave_high_diff (amrex::Real a, amrex::Real b)
 {
     if (a*b > 0.0)
         return minmod3( (a+b)/2.0, a, b );
+    else
+        return 0.0;
+}
+// ave_minmod high diffusivity
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real ave_adjustable_diff (amrex::Real a, amrex::Real b)
+{
+    amrex::Real sigma = 2.0*0.732050807568877; 
+    if (a*b > 0.0)
+        return minmod3( (a+b)/2.0, sigma*a, sigma*b );
     else
         return 0.0;
 }
@@ -126,5 +154,15 @@ amrex::Real ave_superbee (amrex::Real a, amrex::Real b)
     else
         return 0.0;
 }
+// stage2 slope limiting
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real ave_stage2 (amrex::Real dQ, amrex::Real a, amrex::Real b, amrex::Real c)
+{
+    // sigma = sqrt(3) -1
+    amrex::Real sigma = 0.732050807568877; 
+    amrex::Real dq_min = 2.0*std::min( b - min3(a,b,c), max3(a,b,c) - b);
+    return ( std::abs(dQ)/dQ ) * std::min( std::abs(dQ) , sigma*std::abs(dq_min) );
+}
+
 
 #endif /*WARPX_MusclHancock_H_*/

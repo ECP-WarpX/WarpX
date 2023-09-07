@@ -1691,10 +1691,13 @@ void WarpXFluidContainer::DepositCurrent(
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
                 // Calculate J from fluid quantities
-                amrex::Real gamma = 1.0;
-                if (N_arr(i, j, k)>0.0) gamma = std::sqrt(N_arr(i, j, k) * N_arr(i, j, k) + (NUx_arr(i, j, k) * NUx_arr(i, j, k) + NUy_arr(i, j, k) * NUy_arr(i, j, k) + NUz_arr(i, j, k) * NUz_arr(i, j, k)) * inv_clight_sq) / N_arr(i, j, k);
-                // If density is too small, the result can be undefined, so we need to correct gamma
-                if (gamma < 1.0) gamma = 1.0;
+                amrex::Real gamma = 1.0, Ux = 0.0, Uy = 0.0, Uz = 0.0;
+                if (N_arr(i, j, k)>0.0){
+                    Ux = NUx_arr(i, j, k)/N_arr(i, j, k);
+                    Uy = NUy_arr(i, j, k)/N_arr(i, j, k);
+                    Uz = NUz_arr(i, j, k)/N_arr(i, j, k);
+                    gamma = std::sqrt(1.0 + ( Ux*Ux + Uy*Uy + Uz*Uz) * inv_clight_sq ) ;
+                } 
                 tmp_jx_fluid_arr(i, j, k) = q * (NUx_arr(i, j, k) / gamma);
                 tmp_jy_fluid_arr(i, j, k) = q * (NUy_arr(i, j, k) / gamma);
                 tmp_jz_fluid_arr(i, j, k) = q * (NUz_arr(i, j, k) / gamma);
