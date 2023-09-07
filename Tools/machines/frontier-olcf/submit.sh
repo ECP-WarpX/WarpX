@@ -31,6 +31,12 @@
 # or, less invasive:
 export FI_MR_CACHE_MONITOR=memhooks  # alternative cache monitor
 
+# Seen since August 2023
+# OLCFDEV-1597: OFI Poll Failed UNDELIVERABLE Errors
+# https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#olcfdev-1597-ofi-poll-failed-undeliverable-errors
+export MPICH_SMP_SINGLE_COPY_MODE=NONE
+export FI_CXI_RX_MATCH_MODE=software
+
 # note (9-2-22, OLCFDEV-1079)
 # this environment setting is needed to avoid that rocFFT writes a cache in
 # the home directory, which does not scale.

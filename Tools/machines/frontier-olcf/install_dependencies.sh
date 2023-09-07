@@ -48,7 +48,7 @@ python3 -m pip uninstall -qqq -y mpi4py 2>/dev/null || true
 if [ -d $HOME/src/blaspp ]
 then
   cd $HOME/src/blaspp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -
@@ -64,7 +64,7 @@ rm -rf $HOME/src/blaspp-frontier-gpu-build
 if [ -d $HOME/src/lapackpp ]
 then
   cd $HOME/src/lapackpp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -

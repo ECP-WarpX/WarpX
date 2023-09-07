@@ -45,11 +45,11 @@ public:
      * \param[in] varnames_fields base names of field-components for the RZ modes
      * \param[in] crse_ratio the coarsening ratio for fields
      */
-    BackTransformFunctor ( const amrex::MultiFab * const mf_src, const int lev,
-                           const int ncomp, const int num_buffers,
+    BackTransformFunctor ( const amrex::MultiFab * mf_src, int lev,
+                           int ncomp, int num_buffers,
                            amrex::Vector< std::string > varnames,
                            amrex::Vector< std::string > varnames_fields,
-                           const amrex::IntVect crse_ratio= amrex::IntVect(1));
+                           amrex::IntVect crse_ratio= amrex::IntVect(1));
 
     /** \brief Lorentz-transform mf_src for the ith buffer and write the result in mf_dst.
      *
@@ -64,7 +64,7 @@ public:
      *            lab-frame data for the user-request fields is written.
      * \param[in] i_buffer buffer index for which the data is transformed.
      */
-    void operator ()(amrex::MultiFab& mf_dst, int dcomp, const int i_buffer) const override;
+    void operator ()(amrex::MultiFab& mf_dst, int dcomp, int i_buffer) const override;
 
     /** \brief Prepare data required to back-transform fields for lab-frame snapshot, i_buffer
      *
@@ -82,8 +82,8 @@ public:
      */
     void PrepareFunctorData ( int i_buffer, bool z_slice_in_domain,
                               amrex::Real current_z_boost,
-                              amrex::Box buffer_box, const int k_index_zlab,
-                              const int snapshot_full ) override;
+                              amrex::Box buffer_box, int k_index_zlab,
+                              int snapshot_full ) override;
     /** Allocate and initialize member variables and arrays required to back-transform
      *  field-data from boosted-frame to lab-frame.
      */

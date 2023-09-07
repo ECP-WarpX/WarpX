@@ -2,6 +2,9 @@ macro(find_amrex)
     if(WarpX_amrex_src)
         message(STATUS "Compiling local AMReX ...")
         message(STATUS "AMReX source path: ${WarpX_amrex_src}")
+        if(NOT IS_DIRECTORY ${WarpX_amrex_src})
+            message(FATAL_ERROR "Specified directory WarpX_amrex_src='${WarpX_amrex_src}' does not exist!")
+        endif()
     elseif(WarpX_amrex_internal)
         message(STATUS "Downloading AMReX ...")
         message(STATUS "AMReX repository: ${WarpX_amrex_repo} (${WarpX_amrex_branch})")
@@ -254,7 +257,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "dda0d979ca2ec912f7dd2eb630399f33ee7990e0"
+set(WarpX_amrex_branch "c45770c9f9b2c5fa98c675a439c502e78912bf47"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

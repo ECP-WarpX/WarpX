@@ -98,10 +98,10 @@ public:
     * @param[in] a_offset offset to apply to the particle indices
     */
     PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
-                                const bool store_chi_at_creation_ele,
-                                const int chi_at_creation_runtime_comp_ele,
-                                const bool store_chi_at_creation_pos,
-                                const int chi_at_creation_runtime_comp_pos,
+                                bool store_chi_at_creation_ele,
+                                int chi_at_creation_runtime_comp_ele,
+                                bool store_chi_at_creation_pos,
+                                int chi_at_creation_runtime_comp_pos,
                                 const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
                                 amrex::FArrayBox const& exfab,
                                 amrex::FArrayBox const& eyfab,
