@@ -290,7 +290,7 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
     domain.surroundingNodes();
 
     // H&C push the momentum
-    #ifdef AMREX_USE_OMP 
+    #ifdef AMREX_USE_OMP
     #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
     #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -809,7 +809,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                             Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
                         }
 
-                    // Positivity and Monotonicty Limiter for density N, 
+                    // Positivity and Monotonicty Limiter for density N,
                     // This sets the slope (dQ) to zero for all quantities
                         if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) )) {
                             if ((Q_minus_x(i,j,k,0) < 0.0) || (Q_plus_x(i-1,j,k,0) < 0.0)){
@@ -882,7 +882,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                     #else
 
-                        // Compute the cell slopes z 
+                        // Compute the cell slopes z
                         amrex::Real  dQ0z = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
                         amrex::Real  dQ1z = ave( NUx_arr(i,j,k) - NUx_arr(i-1,j,k) , NUx_arr(i+1,j,k) - NUx_arr(i,j,k) );
                         amrex::Real  dQ2z = ave( NUy_arr(i,j,k) - NUy_arr(i-1,j,k) , NUy_arr(i+1,j,k) - NUy_arr(i,j,k) );
@@ -914,7 +914,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                             Q_plus_z(i-1,j,k,3) = Q_tilde3 - dQ3z/2.0;
                         }
 
-                        // Positivity and Monotonicty Limiter for density N, 
+                        // Positivity and Monotonicty Limiter for density N,
                         // This sets the slope (dQ) to zero for all quantities
                         if (( box_z.contains(i,j,k) ) && ( box_z.contains(i-1,j,k) )) {
                             if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i-1,j,k,0) < 0.0)) {
@@ -945,7 +945,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                     #endif
                 // If N<= 0 then set the boundaries to zero
-                } else { 
+                } else {
                     #if defined(WARPX_DIM_3D) // 3D:
                     if ( box_x.contains(i,j,k) ) {
                         Q_minus_x(i,j,k,0) = 0.0;
@@ -1066,8 +1066,8 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real Vx_L_minus = 0.0, Vx_I_minus = 0.0, Vx_L_plus = 0.0, Vx_I_plus = 0.0;
                     amrex::Real Vy_L_minus = 0.0, Vy_I_minus = 0.0, Vy_L_plus = 0.0, Vy_I_plus = 0.0;
                     amrex::Real Vz_L_minus = 0.0, Vz_I_minus = 0.0, Vz_L_plus = 0.0, Vz_I_plus = 0.0;
-                    
-                    // Verify positive density, then compute velocity 
+
+                    // Verify positive density, then compute velocity
                     if (Q_minus_x(i-1,j,k,0)>0.0) Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,0),Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
                     if (Q_minus_x(i,j,k,0)>0.0)   Vx_I_minus = V_calc(Q_minus_x(i,j,k,0),Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
                     if (Q_plus_x(i-1,j,k,0)>0.0)   Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
@@ -1131,7 +1131,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real Vx_L_minus = 0.0, Vx_I_minus = 0.0, Vx_L_plus = 0.0, Vx_I_plus = 0.0;
                     amrex::Real Vz_L_minus = 0.0, Vz_I_minus = 0.0, Vz_L_plus = 0.0, Vz_I_plus = 0.0;
 
-                    // Verify positive density, then compute velocity 
+                    // Verify positive density, then compute velocity
                     if (Q_minus_x(i-1,j,k,0)>0.0) Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,0),Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
                     if (Q_minus_x(i,j,k,0)>0.0)   Vx_I_minus = V_calc(Q_minus_x(i,j,k,0),Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
                     if (Q_plus_x(i-1,j,k,0)>0.0)   Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
@@ -1410,7 +1410,7 @@ void WarpXFluidContainer::GatherAndPush (
         m_Byfield_parser = m_By_parser->compile<num_arguments>();
         m_Bzfield_parser = m_Bz_parser->compile<num_arguments>();
     }
-    
+
 
     // H&C push the momentum
     #ifdef AMREX_USE_OMP
@@ -1484,7 +1484,7 @@ void WarpXFluidContainer::GatherAndPush (
                             // Get the lab frame E and B
                             // Transform (boosted to lab)
                             amrex::Real t_lab = WarpX::gamma_boost*(t + WarpX::beta_boost*z/PhysConst::c);
-                            amrex::Real z_lab = WarpX::gamma_boost*(z + WarpX::beta_boost*PhysConst::c*t);                        
+                            amrex::Real z_lab = WarpX::gamma_boost*(z + WarpX::beta_boost*PhysConst::c*t);
 
                             // Grab the external fields in the lab frame:
                             if ( external_e_fields ) {
@@ -1510,15 +1510,15 @@ void WarpXFluidContainer::GatherAndPush (
                             // (Require both to for the lorentz transform)
                             // RHS m_parser
                             Ez_ext_boost = Ez_ext_lab;
-                            Bz_ext_boost = Bz_ext_lab;  
-                            Ex_ext_boost = WarpX::gamma_boost*(Ex_ext_lab - WarpX::beta_boost*PhysConst::c*By_ext_lab); 
+                            Bz_ext_boost = Bz_ext_lab;
+                            Ex_ext_boost = WarpX::gamma_boost*(Ex_ext_lab - WarpX::beta_boost*PhysConst::c*By_ext_lab);
                             Ey_ext_boost = WarpX::gamma_boost*(Ey_ext_lab + WarpX::beta_boost*PhysConst::c*Bx_ext_lab);
-                            Bx_ext_boost = WarpX::gamma_boost*(Bx_ext_lab + WarpX::beta_boost*Ey_ext_lab/PhysConst::c); 
+                            Bx_ext_boost = WarpX::gamma_boost*(Bx_ext_lab + WarpX::beta_boost*Ey_ext_lab/PhysConst::c);
                             By_ext_boost = WarpX::gamma_boost*(By_ext_lab - WarpX::beta_boost*Ex_ext_lab/PhysConst::c);
 
                             // Then add to Nodal quantities in the boosted frame:
                             Ex_Nodal += Ex_ext_boost;
-                            Ey_Nodal += Ey_ext_boost; 
+                            Ey_Nodal += Ey_ext_boost;
                             Ez_Nodal += Ez_ext_boost;
                             Bx_Nodal += Bx_ext_boost;
                             By_Nodal += By_ext_boost;
@@ -1543,7 +1543,7 @@ void WarpXFluidContainer::GatherAndPush (
                             #endif
 
                             Ex_Nodal += m_Exfield_parser(x, y, z, t);
-                            Ey_Nodal += m_Eyfield_parser(x, y, z, t); 
+                            Ey_Nodal += m_Eyfield_parser(x, y, z, t);
                             Ez_Nodal += m_Ezfield_parser(x, y, z, t);
                         }
 
@@ -1567,7 +1567,7 @@ void WarpXFluidContainer::GatherAndPush (
                             By_Nodal += m_Byfield_parser(x, y, z, t);
                             Bz_Nodal += m_Bzfield_parser(x, y, z, t);
                         }
-                    } 
+                    }
 
                     // Isolate U from NU
                     amrex::Real tmp_Ux = (NUx_arr(i, j, k) / N_arr(i,j,k));
@@ -1693,8 +1693,8 @@ void WarpXFluidContainer::DepositCurrent(
                 // Calculate J from fluid quantities
                 amrex::Real gamma = 1.0;
                 if (N_arr(i, j, k)>0.0) gamma = std::sqrt(N_arr(i, j, k) * N_arr(i, j, k) + (NUx_arr(i, j, k) * NUx_arr(i, j, k) + NUy_arr(i, j, k) * NUy_arr(i, j, k) + NUz_arr(i, j, k) * NUz_arr(i, j, k)) * inv_clight_sq) / N_arr(i, j, k);
-                // If density is too small, the result can be undefined, so we need to correct gamma                
-                if (gamma < 1.0) gamma = 1.0; 
+                // If density is too small, the result can be undefined, so we need to correct gamma
+                if (gamma < 1.0) gamma = 1.0;
                 tmp_jx_fluid_arr(i, j, k) = q * (NUx_arr(i, j, k) / gamma);
                 tmp_jy_fluid_arr(i, j, k) = q * (NUy_arr(i, j, k) / gamma);
                 tmp_jz_fluid_arr(i, j, k) = q * (NUz_arr(i, j, k) / gamma);

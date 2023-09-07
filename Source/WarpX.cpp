@@ -2227,7 +2227,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     myfl->AllocateLevelMFs(lev, ba, dm);
     auto & warpx = GetInstance();
     const amrex::Real cur_time = warpx.gett_new(lev);
-    myfl->InitData(lev, geom[lev].Domain(),cur_time); 
+    myfl->InitData(lev, geom[lev].Domain(),cur_time);
 
     if (fft_do_time_averaging)
     {

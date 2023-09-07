@@ -40,7 +40,7 @@ amrex::Real V_calc (amrex::Real Q0, amrex::Real Q1, amrex::Real Q2, amrex::Real 
     amrex::Real Uy = Q2/Q0;
     amrex::Real Uz = Q3/Q0;
 
-    // Gamma Calc 
+    // Gamma Calc
     amrex::Real gamma = sqrt(1.0 + (Ux*Ux + Uy*Uy + Uz*Uz)/(c*c));
 
     // Return the proper component
