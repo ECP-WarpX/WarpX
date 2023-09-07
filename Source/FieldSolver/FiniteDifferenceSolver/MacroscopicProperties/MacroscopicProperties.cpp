@@ -207,7 +207,7 @@ void
 MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                        amrex::MultiFab *macro_mf,
                        amrex::ParserExecutor<3> const& macro_parser,
-                       const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev,
+                       const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx_lev,
                        const amrex::RealBox& prob_domain_lev)
 {
     const amrex::IntVect iv = macro_mf->ixType().toIntVect();
