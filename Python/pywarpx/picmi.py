@@ -277,6 +277,10 @@ class MultiSpecies(picmistandard.PICMI_MultiSpecies):
 
 
 class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
+    def init(self, kw):
+        self.do_symmetrize = kw.pop('warpx_do_symmetrize', None)
+        self.symmetrization_order = kw.pop('warpx_symmetrization_order', None)
+
     def initialize_inputs(self, species_number, layout, species, density_scale):
         species.injection_style = "gaussian_beam"
         species.x_m = self.centroid_position[0]
@@ -328,6 +332,9 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
             species.ux = self.centroid_velocity[0]/constants.c
             species.uy = self.centroid_velocity[1]/constants.c
             species.uz = self.centroid_velocity[2]/constants.c
+
+        species.do_symmetrize = self.do_symmetrize
+        species.symmetrization_order = self.symmetrization_order
 
 
 class DensityDistributionBase(object):
