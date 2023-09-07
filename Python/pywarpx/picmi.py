@@ -128,6 +128,16 @@ class Species(picmistandard.PICMI_Species):
 
     warpx_save_particles_at_eb: bool, default=False
         Whether to save particles lost at the embedded boundary
+
+    warpx_do_resampling: bool, default=False
+        Whether particles will be resampled
+
+    warpx_resampling_trigger_intervals: bool, default=0
+        Timesteps at which to resample
+
+    warpx_resampling_trigger_max_avg_ppc: int, default=infinity
+        Resampling will be done when the average number of
+        particles per cell exceeds this number
     """
     def init(self, kw):
 
@@ -203,6 +213,11 @@ class Species(picmistandard.PICMI_Species):
         self.save_particles_at_zhi = kw.pop('warpx_save_particles_at_zhi', None)
         self.save_particles_at_eb = kw.pop('warpx_save_particles_at_eb', None)
 
+        # Resampling settings
+        self.do_resampling = kw.pop('warpx_do_resampling', None)
+        self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
+        self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
+
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
                           injection_plane_position = None,
@@ -238,7 +253,10 @@ class Species(picmistandard.PICMI_Species):
                                              do_not_deposit = self.do_not_deposit,
                                              do_not_push = self.do_not_push,
                                              do_not_gather = self.do_not_gather,
-                                             random_theta = self.random_theta)
+                                             random_theta = self.random_theta,
+                                             do_resampling=self.do_resampling,
+                                             resampling_trigger_intervals=self.resampling_trigger_intervals,
+                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
