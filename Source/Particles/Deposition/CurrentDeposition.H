@@ -19,6 +19,8 @@
 #   include "Utils/WarpX_Complex.H"
 #endif
 
+#include "WarpX.H" // todo: remove include and pass globals as args
+
 #include <AMReX.H>
 #include <AMReX_Arena.H>
 #include <AMReX_Array4.H>
@@ -56,19 +58,19 @@ void doDepositionShapeN (const GetParticlePosition& GetPosition,
                          const amrex::ParticleReal * const uxp,
                          const amrex::ParticleReal * const uyp,
                          const amrex::ParticleReal * const uzp,
-                         const int * const ion_lev,
+                         const int* ion_lev,
                          amrex::FArrayBox& jx_fab,
                          amrex::FArrayBox& jy_fab,
                          amrex::FArrayBox& jz_fab,
-                         const long np_to_depose,
-                         const amrex::Real relative_time,
+                         long np_to_depose,
+                         amrex::Real relative_time,
                          const std::array<amrex::Real,3>& dx,
                          const std::array<amrex::Real,3>& xyzmin,
-                         const amrex::Dim3 lo,
-                         const amrex::Real q,
-                         const int n_rz_azimuthal_modes,
+                         amrex::Dim3 lo,
+                         amrex::Real q,
+                         int n_rz_azimuthal_modes,
                          amrex::Real* cost,
-                         const long load_balance_costs_update_algo)
+                         long load_balance_costs_update_algo)
 {
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
@@ -368,19 +370,19 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                                const amrex::ParticleReal * const uxp,
                                const amrex::ParticleReal * const uyp,
                                const amrex::ParticleReal * const uzp,
-                               const int * const ion_lev,
+                               const int*  ion_lev,
                                amrex::FArrayBox& jx_fab,
                                amrex::FArrayBox& jy_fab,
                                amrex::FArrayBox& jz_fab,
-                               const long np_to_depose,
+                               long np_to_depose,
                                const amrex::Real relative_time,
                                const std::array<amrex::Real,3>& dx,
                                const std::array<amrex::Real,3>& xyzmin,
-                               const amrex::Dim3 lo,
-                               const amrex::Real q,
-                               const int n_rz_azimuthal_modes,
+                               amrex::Dim3 lo,
+                               amrex::Real q,
+                               int n_rz_azimuthal_modes,
                                amrex::Real* cost,
-                               const long load_balance_costs_update_algo,
+                               long load_balance_costs_update_algo,
                                const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
                                const amrex::Box& box,
                                const amrex::Geometry& geom,
@@ -578,20 +580,20 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                                   const amrex::ParticleReal * const uxp,
                                   const amrex::ParticleReal * const uyp,
                                   const amrex::ParticleReal * const uzp,
-                                  const int * const ion_lev,
+                                  const int* ion_lev,
                                   const amrex::Array4<amrex::Real>& Jx_arr,
                                   const amrex::Array4<amrex::Real>& Jy_arr,
                                   const amrex::Array4<amrex::Real>& Jz_arr,
-                                  const long np_to_depose,
-                                  const amrex::Real dt,
-                                  const amrex::Real relative_time,
+                                  long np_to_depose,
+                                  amrex::Real dt,
+                                  amrex::Real relative_time,
                                   const std::array<amrex::Real,3>& dx,
-                                  const std::array<amrex::Real, 3> xyzmin,
-                                  const amrex::Dim3 lo,
-                                  const amrex::Real q,
-                                  const int n_rz_azimuthal_modes,
+                                  std::array<amrex::Real, 3> xyzmin,
+                                  amrex::Dim3 lo,
+                                  amrex::Real q,
+                                  int n_rz_azimuthal_modes,
                                   amrex::Real * const cost,
-                                  const long load_balance_costs_update_algo)
+                                  long load_balance_costs_update_algo)
 {
     using namespace amrex;
 #if !defined(WARPX_DIM_RZ)
@@ -960,16 +962,16 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                             amrex::FArrayBox& Dx_fab,
                             amrex::FArrayBox& Dy_fab,
                             amrex::FArrayBox& Dz_fab,
-                            const long np_to_depose,
-                            const amrex::Real dt,
-                            const amrex::Real relative_time,
+                            long np_to_depose,
+                            amrex::Real dt,
+                            amrex::Real relative_time,
                             const std::array<amrex::Real,3>& dx,
                             const std::array<amrex::Real,3>& xyzmin,
-                            const amrex::Dim3 lo,
-                            const amrex::Real q,
-                            const int n_rz_azimuthal_modes,
+                            amrex::Dim3 lo,
+                            amrex::Real q,
+                            int n_rz_azimuthal_modes,
                             amrex::Real* cost,
-                            const long load_balance_costs_update_algo)
+                            long load_balance_costs_update_algo)
 {
 #if defined(WARPX_DIM_RZ)
     amrex::ignore_unused(GetPosition,

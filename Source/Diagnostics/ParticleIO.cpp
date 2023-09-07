@@ -17,7 +17,8 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
-#include "WarpX.H"
+
+#include <ablastr/utils/text/StreamUtils.H>
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Config.H>
@@ -48,7 +49,7 @@ LaserParticleContainer::ReadHeader (std::istream& is)
         m_updated_position.resize(3);
         for (int i = 0; i < 3; ++i) {
             is >> m_updated_position[i];
-            WarpX::GotoNextLine(is);
+            ablastr::utils::text::goto_next_line(is);
         }
     }
 }
@@ -72,7 +73,7 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
     // Read quantities that are specific to rigid-injected species
     int nlevs;
     is >> nlevs;
-    WarpX::GotoNextLine(is);
+    ablastr::utils::text::goto_next_line(is);
 
     AMREX_ASSERT(zinject_plane_levels.size() == 0);
 
@@ -81,10 +82,10 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
         amrex::Real zinject_plane_tmp;
         is >> zinject_plane_tmp;
         zinject_plane_levels.push_back(zinject_plane_tmp);
-        WarpX::GotoNextLine(is);
+        ablastr::utils::text::goto_next_line(is);
     }
     is >> vzbeam_ave_boosted;
-    WarpX::GotoNextLine(is);
+    ablastr::utils::text::goto_next_line(is);
 }
 
 void
@@ -107,7 +108,7 @@ void
 PhysicalParticleContainer::ReadHeader (std::istream& is)
 {
     is >> charge >> mass;
-    WarpX::GotoNextLine(is);
+    ablastr::utils::text::goto_next_line(is);
 }
 
 void

@@ -277,6 +277,10 @@ class MultiSpecies(picmistandard.PICMI_MultiSpecies):
 
 
 class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
+    def init(self, kw):
+        self.do_symmetrize = kw.pop('warpx_do_symmetrize', None)
+        self.symmetrization_order = kw.pop('warpx_symmetrization_order', None)
+
     def initialize_inputs(self, species_number, layout, species, density_scale):
         species.injection_style = "gaussian_beam"
         species.x_m = self.centroid_position[0]
@@ -328,6 +332,9 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
             species.ux = self.centroid_velocity[0]/constants.c
             species.uy = self.centroid_velocity[1]/constants.c
             species.uz = self.centroid_velocity[2]/constants.c
+
+        species.do_symmetrize = self.do_symmetrize
+        species.symmetrization_order = self.symmetrization_order
 
 
 class DensityDistributionBase(object):
@@ -414,7 +421,7 @@ class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Densi
         # --- Use specific attributes for flux injection
         species.injection_style = "nfluxpercell"
         assert (isinstance(layout, PseudoRandomLayout)), Exception('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
-        if species.momentum_distribution_type == "gaussian":
+        if self.gaussian_flux_momentum_distribution:
             species.momentum_distribution_type = "gaussianflux"
 
 
@@ -1673,6 +1680,12 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     warpx_checkpoint_signals: list of strings
         Signals on which to write out a checkpoint
+
+    warpx_numprocs: list of ints (1 in 1D, 2 in 2D, 3 in 3D)
+        Domain decomposition on the coarsest level.
+        The domain will be chopped into the exact number of pieces in each dimension as specified by this parameter.
+        https://warpx.readthedocs.io/en/latest/usage/parameters.html#distribution-across-mpi-ranks-and-parallelization
+        https://warpx.readthedocs.io/en/latest/usage/domain_decomposition.html#simple-method
     """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
@@ -1716,6 +1729,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         self.break_signals = kw.pop('warpx_break_signals', None)
         self.checkpoint_signals = kw.pop('warpx_checkpoint_signals', None)
+        self.numprocs = kw.pop('warpx_numprocs', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -1765,6 +1779,8 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.break_signals = self.break_signals
         pywarpx.warpx.checkpoint_signals = self.checkpoint_signals
+
+        pywarpx.warpx.numprocs = self.numprocs
 
         particle_shape = self.particle_shape
         for s in self.species:
@@ -1991,7 +2007,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                     fields_to_plot.add(dataname)
                 elif dataname in A_fields_list:
                     fields_to_plot.add(dataname)
-                elif dataname in ['rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+                elif dataname in ['rho', 'phi', 'F', 'G', 'divE', 'divB', 'proc_number', 'part_per_cell']:
                     fields_to_plot.add(dataname)
                 elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
@@ -2161,6 +2177,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
             variables = list(variables)
             variables.sort()
 
+        # species list
         if np.iterable(self.species):
             species_list = self.species
         else:
@@ -2188,7 +2205,10 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
 class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
                               WarpXDiagnosticBase):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
+    for more information.
+
+    This will by default write out both field and particle data. This can be changed by setting warpx_write_species.
 
     Parameters
     ----------
@@ -2212,9 +2232,11 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
     warpx_upper_bound: vector of floats, optional
         Passed to <diagnostic name>.upper_bound
+
+    warpx_write_species: bool, optional, default=True
+        Whether the species will also be written out.
     """
     def init(self, kw):
-        # The user is using the new BTD
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
@@ -2222,6 +2244,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.buffer_size = kw.pop('warpx_buffer_size', None)
         self.lower_bound = kw.pop('warpx_lower_bound', None)
         self.upper_bound = kw.pop('warpx_upper_bound', None)
+        self.write_species = kw.pop('warpx_write_species', None)
 
     def initialize_inputs(self):
 
@@ -2238,6 +2261,8 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.diagnostic.num_snapshots_lab = self.num_snapshots
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
+
+        self.diagnostic.do_back_transformed_particles = self.write_species
 
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
@@ -2278,6 +2303,102 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             self.diagnostic.fields_to_plot = fields_to_plot
 
         self.set_write_dir()
+
+
+class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
+                                 WarpXDiagnosticBase):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
+    for more information.
+
+    This will by default write out both field and particle data. This can be changed by setting warpx_write_fields.
+
+    Parameters
+    ----------
+    warpx_format: string, optional
+        Passed to <diagnostic name>.format
+
+    warpx_openpmd_backend: string, optional
+        Passed to <diagnostic name>.openpmd_backend
+
+    warpx_file_prefix: string, optional
+        Passed to <diagnostic name>.file_prefix
+
+    warpx_file_min_digits: integer, optional
+        Passed to <diagnostic name>.file_min_digits
+
+    warpx_buffer_size: integer, optional
+        Passed to <diagnostic name>.buffer_size
+
+    warpx_write_fields: bool, optional, default=True
+        Whether the fields will also be written out.
+    """
+    def init(self, kw):
+        self.format = kw.pop('warpx_format', None)
+        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
+        self.buffer_size = kw.pop('warpx_buffer_size', None)
+        self.write_fields = kw.pop('warpx_write_fields', None)
+
+    def initialize_inputs(self):
+
+        self.add_diagnostic()
+
+        self.diagnostic.diag_type = 'BackTransformed'
+        self.diagnostic.format = self.format
+        self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.file_min_digits = self.file_min_digits
+
+        self.diagnostic.do_back_transformed_particles = 1
+        self.diagnostic.num_snapshots_lab = self.num_snapshots
+        self.diagnostic.dt_snapshots_lab = self.dt_snapshots
+        self.diagnostic.buffer_size = self.buffer_size
+
+        self.diagnostic.do_back_transformed_fields = self.write_fields
+
+        self.set_write_dir()
+
+        # --- Use a set to ensure that fields don't get repeated.
+        variables = set()
+
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'position':
+                    # --- The positions are alway written out anyway
+                    pass
+                elif dataname == 'momentum':
+                    variables.add('ux')
+                    variables.add('uy')
+                    variables.add('uz')
+                elif dataname == 'weighting':
+                    variables.add('w')
+                elif dataname == 'fields':
+                    variables.add('Ex')
+                    variables.add('Ey')
+                    variables.add('Ez')
+                    variables.add('Bx')
+                    variables.add('By')
+                    variables.add('Bz')
+                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                    variables.add(dataname)
+
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            variables = list(variables)
+            variables.sort()
+
+        # species list
+        if np.iterable(self.species):
+            species_list = self.species
+        else:
+            species_list = [self.species]
+
+        for specie in species_list:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + specie.name,
+                                         variables = variables)
+            self.diagnostic._species_dict[specie.name] = diag
+
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     """

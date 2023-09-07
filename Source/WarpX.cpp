@@ -86,20 +86,11 @@ using namespace amrex;
 Vector<Real> WarpX::E_external_grid(3, 0.0);
 Vector<Real> WarpX::B_external_grid(3, 0.0);
 
-std::string WarpX::authors = "";
+std::string WarpX::authors;
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
 bool WarpX::add_external_E_field = false;
 bool WarpX::add_external_B_field = false;
-
-// Parser for B_external on the grid
-std::string WarpX::str_Bx_ext_grid_function;
-std::string WarpX::str_By_ext_grid_function;
-std::string WarpX::str_Bz_ext_grid_function;
-// Parser for E_external on the grid
-std::string WarpX::str_Ex_ext_grid_function;
-std::string WarpX::str_Ey_ext_grid_function;
-std::string WarpX::str_Ez_ext_grid_function;
 
 int WarpX::do_moving_window = 0;
 int WarpX::start_moving_window_step = 0;
@@ -232,11 +223,25 @@ bool WarpX::do_device_synchronize = false;
 
 WarpX* WarpX::m_instance = nullptr;
 
+void WarpX::MakeWarpX ()
+{
+    ParseGeometryInput();
+
+    ConvertLabParamsToBoost();
+    ReadBCParams();
+
+#ifdef WARPX_DIM_RZ
+    CheckGriddingForRZSpectral();
+#endif
+
+    m_instance = new WarpX();
+}
+
 WarpX&
 WarpX::GetInstance ()
 {
     if (!m_instance) {
-        m_instance = new WarpX();
+        MakeWarpX();
     }
     return *m_instance;
 }
@@ -244,14 +249,20 @@ WarpX::GetInstance ()
 void
 WarpX::ResetInstance ()
 {
-    delete m_instance;
-    m_instance = nullptr;
+    if (m_instance){
+        delete m_instance;
+        m_instance = nullptr;
+    }
+}
+
+void
+WarpX::Finalize()
+{
+    WarpX::ResetInstance();
 }
 
 WarpX::WarpX ()
 {
-    m_instance = this;
-
     ReadParameters();
 
     BackwardCompatibility();
@@ -279,10 +290,11 @@ WarpX::WarpX ()
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
-    // Loop over species and set current injection position per species
+    // Loop over species (particles and lasers)
+    // and set current injection position per species
     mypc = std::make_unique<MultiParticleContainer>(this);
-    const int n_species = mypc->nSpecies();
-    for (int i=0; i<n_species; i++)
+    const int n_containers = mypc->nContainers();
+    for (int i=0; i<n_containers; i++)
     {
         WarpXParticleContainer& pc = mypc->GetParticleContainer(i);
 
@@ -303,12 +315,6 @@ WarpX::WarpX ()
 
     // Particle Boundary Buffer (i.e., scraped particles on boundary)
     m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
-
-    // Diagnostics
-    multi_diags = std::make_unique<MultiDiagnostics>();
-
-    /** create object for reduced diagnostics */
-    reduced_diags = std::make_unique<MultiReducedDiags>();
 
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
@@ -532,7 +538,7 @@ WarpX::ReadParameters ()
         ablastr::warn_manager::GetWMInstance().SetAlwaysWarnImmediately(always_warn_immediately);
 
         // Set the WarnPriority threshold to decide if WarpX has to abort when a warning is recorded
-        if(std::string str_abort_on_warning_threshold = "";
+        if(std::string str_abort_on_warning_threshold;
             pp_warpx.query("abort_on_warning_threshold", str_abort_on_warning_threshold)){
             std::optional<ablastr::warn_manager::WarnPriority> abort_on_warning_threshold = std::nullopt;
             if (str_abort_on_warning_threshold == "high")
@@ -602,6 +608,8 @@ WarpX::ReadParameters ()
                 break;
             }
         }
+
+        pp_warpx.query("write_diagonstics_on_restart", write_diagonstics_on_restart);
 
         pp_warpx.queryarr("checkpoint_signals", signals_in);
 #if defined(__linux__) || defined(__APPLE__)
@@ -1022,6 +1030,12 @@ WarpX::ReadParameters ()
             current_centering_noz = 8;
         }
 
+#ifdef WARPX_DIM_RZ
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            grid_type != GridType::Hybrid,
+            "warpx.grid_type=hybrid is not implemented in RZ geometry");
+#endif
+
         // If true, the current is deposited on a nodal grid and centered onto
         // a staggered grid. Setting warpx.do_current_centering=1 makes sense
         // only if warpx.grid_type=hybrid. Instead, if warpx.grid_type=nodal or
@@ -1130,7 +1144,7 @@ WarpX::ReadParameters ()
         // - field_gathering_algo set to "default" above
         //   (default defined in Utils/WarpXAlgorithmSelection.cpp)
         // - reset default value here for hybrid grids
-        if (pp_algo.query("field_gathering", tmp_algo) == false)
+        if (!pp_algo.query("field_gathering", tmp_algo))
         {
             if (grid_type == GridType::Hybrid)
             {
@@ -1198,7 +1212,7 @@ WarpX::ReadParameters ()
         // In that case we should throw a specific warning since
         // representation of a laser pulse in cylindrical coordinates
         // requires at least 2 azimuthal modes
-        if (lasers_names.size() > 0 && n_rz_azimuthal_modes < 2) {
+        if (!lasers_names.empty() && n_rz_azimuthal_modes < 2) {
             ablastr::warn_manager::WMRecordWarning("Laser",
             "Laser pulse representation in RZ requires at least 2 azimuthal modes",
             ablastr::warn_manager::WarnPriority::high);
@@ -1357,7 +1371,7 @@ WarpX::ReadParameters ()
         J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
         rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
 
-        if (psatd_solution_type != PSATDSolutionType::FirstOrder || do_multi_J == false)
+        if (psatd_solution_type != PSATDSolutionType::FirstOrder || !do_multi_J)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 rho_in_time == RhoInTime::Linear,
@@ -1382,7 +1396,7 @@ WarpX::ReadParameters ()
 
         pp_psatd.query("current_correction", current_correction);
 
-        if (current_correction == false &&
+        if (!current_correction &&
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov &&
             current_deposition_algo != CurrentDepositionAlgo::Vay)
         {
@@ -1401,18 +1415,18 @@ WarpX::ReadParameters ()
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                fft_periodic_single_box == false,
+                !fft_periodic_single_box,
                 "Option algo.current_deposition=vay must be used with psatd.periodic_single_box_fft=0.");
         }
 
         if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                current_correction == false,
+                !current_correction,
                 "Options algo.current_deposition=vay and psatd.current_correction=1 cannot be combined together.");
         }
 
-        // Auxiliary: boosted_frame = true if warpx.gamma_boost is set in the inputs
+        // Auxiliary: boosted_frame = true if WarpX::gamma_boost is set in the inputs
         const amrex::ParmParse pp_warpx("warpx");
         const bool boosted_frame = pp_warpx.query("gamma_boost", gamma_boost);
 
@@ -1422,10 +1436,10 @@ WarpX::ReadParameters ()
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !use_default_v_galilean || boosted_frame,
-            "psatd.use_default_v_galilean = 1 can be used only if warpx.gamma_boost is also set"
+            "psatd.use_default_v_galilean = 1 can be used only if WarpX::gamma_boost is also set"
         );
 
-        if (use_default_v_galilean == true && boosted_frame == true)
+        if (use_default_v_galilean && boosted_frame)
         {
             m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
         }
@@ -1441,10 +1455,10 @@ WarpX::ReadParameters ()
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !use_default_v_comoving || boosted_frame,
-            "psatd.use_default_v_comoving = 1 can be used only if warpx.gamma_boost is also set"
+            "psatd.use_default_v_comoving = 1 can be used only if WarpX::gamma_boost is also set"
         );
 
-        if (use_default_v_comoving == true && boosted_frame == true)
+        if (use_default_v_comoving && boosted_frame)
         {
             m_v_comoving[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
         }
@@ -1495,7 +1509,7 @@ WarpX::ReadParameters ()
 #   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
-            update_with_rho = (do_dive_cleaning) ? true : false; // standard PSATD
+            update_with_rho = do_dive_cleaning; // standard PSATD
         }
         else {
             update_with_rho = true;  // Galilean PSATD or comoving PSATD
@@ -1569,7 +1583,7 @@ WarpX::ReadParameters ()
 
         // Without periodic single box, fill guard cells with backward FFTs,
         // with current correction or Vay deposition
-        if (fft_periodic_single_box == false)
+        if (!fft_periodic_single_box)
         {
             if (current_correction ||
                 current_deposition_algo == CurrentDepositionAlgo::Vay)
@@ -2332,7 +2346,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.enclosedCells(); // Make it cell-centered
         // Define spectral solver
 #   ifdef WARPX_DIM_RZ
-        if ( fft_periodic_single_box == false ) {
+        if ( !fft_periodic_single_box ) {
             realspace_ba.grow(1, ngEB[1]); // add guard cells only in z
         }
         if (field_boundary_hi[0] == FieldBoundaryType::PML && !do_pml_in_domain) {
@@ -2346,7 +2360,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                                    dm,
                                    dx);
 #   else
-        if ( fft_periodic_single_box == false ) {
+        if ( !fft_periodic_single_box ) {
             realspace_ba.grow(ngEB);   // add guard cells
         }
         bool const pml_flag_false = false;
@@ -3152,7 +3166,7 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMultiFabMap(name_with_suffix, mf);
+    multifab_map[name_with_suffix] = mf.get();
 }
 
 void
@@ -3172,7 +3186,7 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMultiFabMap(name_with_suffix, mf);
+    imultifab_map[name_with_suffix] = mf.get();
 }
 
 void
@@ -3190,5 +3204,5 @@ WarpX::AliasInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMultiFabMap(name_with_suffix, mf);
+    multifab_map[name_with_suffix] = mf.get();
 }

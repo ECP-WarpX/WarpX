@@ -102,7 +102,7 @@ def do_analysis(fname, compname, steps):
 
     pos_max = np.unravel_index(np.abs(fft_F_laser).argmax(), fft_F_laser.shape)
 
-    freq = freq_z[pos_max[0]]
+    freq = np.abs(freq_z[pos_max[0]])
     exp_freq = c/wavelength
     relative_error_freq = np.abs(freq-exp_freq)/exp_freq
     print("Relative error frequency: ", relative_error_freq)

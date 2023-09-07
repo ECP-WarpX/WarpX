@@ -37,7 +37,7 @@ LorentzTransformParticles::LorentzTransformParticles ( const WarpXParIter& a_pti
 {
     using namespace amrex::literals;
 
-    if (tmp_particle_data.size() == 0) return;
+    if (tmp_particle_data.empty()) return;
     m_get_position = GetParticlePosition(a_pti, a_offset);
 
     auto& attribs = a_pti.GetAttribs();
@@ -71,7 +71,7 @@ BackTransformParticleFunctor::BackTransformParticleFunctor (
                               WarpXParticleContainer *pc_src,
                               std::string species_name,
                               int num_buffers)
-    : m_pc_src(pc_src), m_species_name(species_name), m_num_buffers(num_buffers)
+    : m_pc_src{pc_src}, m_species_name{std::move(species_name)}, m_num_buffers{num_buffers}
 {
     InitData();
 }
@@ -171,5 +171,5 @@ BackTransformParticleFunctor::PrepareFunctorData ( int i_buffer, bool z_slice_in
     m_current_z_boost.at(i_buffer) = current_z_boost;
     m_t_lab.at(i_buffer) = t_lab;
     m_perform_backtransform.at(i_buffer) = 0;
-    if (z_slice_in_domain == true and snapshot_full == 0) m_perform_backtransform.at(i_buffer) = 1;
+    if (z_slice_in_domain && (snapshot_full == 0)) m_perform_backtransform.at(i_buffer) = 1;
 }

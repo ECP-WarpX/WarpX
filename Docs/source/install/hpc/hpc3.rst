@@ -88,19 +88,25 @@ Finally, since HPC3 does not yet provide software modules for some of our depend
 Compilation
 -----------
 
-Use the following :ref:`cmake commands <building-cmake>` to compile:
+Use the following :ref:`cmake commands <building-cmake>` to compile the application executable:
 
 .. code-block:: bash
 
    cd $HOME/src/warpx
    rm -rf build
 
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
-   cmake --build build -j 16
-   cmake --build build -j 16 --target pip_install
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build -j 12
 
-**That's it!**
-The WarpX application executables are now in ``$HOME/src/warpx/build/bin/`` and we installed the ``pywarpx`` Python module.
+The WarpX application executables are now in ``$HOME/src/warpx/build/bin/``.
+Additionally, the following commands will install WarpX as a Python module:
+
+.. code-block:: bash
+
+   rm -rf build_py
+
+   cmake -S . -B build_py -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build_py -j 12 --target pip_install
 
 Now, you can :ref:`submit HPC3 compute jobs <running-cpp-hpc3>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
 Or, you can use the WarpX executables to submit HPC3 jobs (:ref:`example inputs <usage-examples>`).

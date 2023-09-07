@@ -50,7 +50,7 @@ public:
      * @param[in] collision_name the name of the collision
      * @param[in] mypc pointer to the MultiParticleContainer
      */
-    ParticleCreationFunc (const std::string collision_name, MultiParticleContainer const * const mypc);
+    ParticleCreationFunc (std::string collision_name, MultiParticleContainer const * mypc);
 
     /**
      * \brief operator() of the ParticleCreationFunc class. It creates new particles from binary
@@ -99,7 +99,7 @@ public:
     AMREX_INLINE
     amrex::Vector<int> operator() (
                     const index_type& n_total_pairs,
-                    const SoaData_type soa_1, const SoaData_type soa_2,
+                    const SoaData_type& soa_1, const SoaData_type& soa_2,
                     ParticleTileType** AMREX_RESTRICT tile_products,
                     ParticleType* particle_ptr_1, ParticleType*  particle_ptr_2,
                     const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
@@ -113,7 +113,7 @@ public:
                     const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight
                     ) const
     {
-        if (n_total_pairs == 0) return amrex::Vector<int>(m_num_product_species, 0);
+        if (n_total_pairs == 0) return {m_num_product_species, 0};
 
         // Compute offset array and allocate memory for the produced species
         amrex::Gpu::DeviceVector<index_type> offsets(n_total_pairs);
@@ -286,7 +286,7 @@ public:
     AMREX_INLINE
     amrex::Vector<int> operator() (
                     const index_type& /*n_total_pairs*/,
-                    const SoaData_type /*soa_1*/, const SoaData_type /*soa_2*/,
+                    const SoaData_type& /*soa_1*/, const SoaData_type& /*soa_2*/,
                     ParticleTileType** /*tile_products*/,
                     ParticleType* /*particle_ptr_1*/, ParticleType* /*particle_ptr_2*/,
                     const amrex::ParticleReal& /*m1*/, const amrex::ParticleReal& /*m2*/,
@@ -297,7 +297,7 @@ public:
                     const amrex::ParticleReal* /*p_pair_reaction_weight*/
                     ) const
     {
-        return amrex::Vector<int>();
+        return {};
     }
 };
 

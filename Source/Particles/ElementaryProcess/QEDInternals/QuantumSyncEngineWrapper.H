@@ -312,14 +312,14 @@ public:
      * @return true if it succeeds, false if it cannot parse raw_data
      */
     bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data,
-        const amrex::ParticleReal qs_minimum_chi_part);
+        amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * Init lookup tables using built-in (low resolution) tables
      *
      * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
-    void init_builtin_tables(const amrex::ParticleReal qs_minimum_chi_part);
+    void init_builtin_tables(amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
@@ -328,7 +328,7 @@ public:
      * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
     void compute_lookup_tables (PicsarQuantumSyncCtrl ctrl,
-        const amrex::ParticleReal qs_minimum_chi_part);
+        amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * gets default values for the control parameters
