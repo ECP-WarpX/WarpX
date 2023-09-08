@@ -75,7 +75,7 @@ Conda (Linux/macOS/Windows)
 
       .. code-block:: bash
 
-         conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba ninja mpich pip virtualenv
+         conda create -n warpx-cpu-mpich-dev -c conda-forge blaspp boost ccache cmake compilers git lapackpp "openpmd-api=*=mpi_mpich*" python numpy pandas scipy yt "fftw=*=mpi_mpich*" pkg-config matplotlib mamba mpich mpi4py ninja pip virtualenv
          conda activate warpx-cpu-mpich-dev
 
          # compile WarpX with -DWarpX_MPI=ON
@@ -214,7 +214,7 @@ The `Advanced Package Tool (APT) <https://en.wikipedia.org/wiki/APT_(software)>`
       .. code-block:: bash
 
          sudo apt update
-         sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-numpy python3-pandas python3-pip python3-scipy python3-venv
+         sudo apt install build-essential ccache cmake g++ git libfftw3-mpi-dev libfftw3-dev libhdf5-openmpi-dev libopenmpi-dev pkg-config python3 python3-matplotlib python3-mpi4py python3-numpy python3-pandas python3-pip python3-scipy python3-venv
 
          # optional:
          # for CUDA, either install
