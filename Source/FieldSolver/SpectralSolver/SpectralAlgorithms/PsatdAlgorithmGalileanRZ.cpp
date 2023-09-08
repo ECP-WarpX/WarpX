@@ -15,7 +15,6 @@
 
 using namespace amrex::literals;
 
-
 /* \brief Initialize coefficients for the update equation */
 PsatdAlgorithmGalileanRZ::PsatdAlgorithmGalileanRZ (SpectralKSpaceRZ const & spectral_kspace,
                                                     amrex::DistributionMapping const & dm,

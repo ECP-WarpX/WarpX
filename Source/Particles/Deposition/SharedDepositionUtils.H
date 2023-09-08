@@ -43,6 +43,8 @@ void addLocalToGlobal (const amrex::Box& bx,
                        const amrex::Array4<amrex::Real>& global,
                        const amrex::Array4<amrex::Real>& local) noexcept
 {
+    using namespace amrex::literals;
+
     const auto lo  = amrex::lbound(bx);
     const auto len = amrex::length(bx);
     for (int icell = threadIdx.x; icell < bx.numPts(); icell += blockDim.x)
@@ -80,6 +82,8 @@ void depositComponent (const GetParticlePosition& GetPosition,
                        const unsigned int ip,
                        const int zdir, const int NODE, const int CELL, const int dir)
 {
+    using namespace amrex::literals;
+
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
