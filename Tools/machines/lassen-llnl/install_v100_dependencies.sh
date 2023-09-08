@@ -20,8 +20,7 @@ if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in yo
 
 # Remove old dependencies #####################################################
 #
-SW_DIR="${HOME}/sw/lassen/gpu/"
-# better, but needs a request: /usr/WS2/${USER}/
+SW_DIR="/usr/workspace/${USER}/lassen/gpu"
 rm -rf ${SW_DIR}
 mkdir -p ${SW_DIR}
 

@@ -40,7 +40,7 @@ then
   git checkout v2.0.1
   cd -
 else
-  git clone -b v2.0.1 --recurse-submodules https://github.com/pytorch/pytorch.git /ccs/proj/${proj}/${USER}/src/pytorch
+  git clone -b v2.0.1 --recurse-submodules https://github.com/pytorch/pytorch.git ${HOME}/src/pytorch
 fi
 cd ${HOME}/src/pytorch
 rm -rf build
