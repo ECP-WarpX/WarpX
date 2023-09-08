@@ -501,6 +501,246 @@ WarpX::~WarpX ()
     }
 }
 
+int WarpX::Verbose () const
+{
+    return verbose;
+}
+
+MultiParticleContainer& WarpX::GetPartContainer ()
+{
+     return *mypc;
+}
+
+MacroscopicProperties& WarpX::GetMacroscopicProperties ()
+{
+    return *m_macroscopic_properties;
+}
+
+HybridPICModel& WarpX::GetHybridPICModel ()
+{
+    return *m_hybrid_pic_model;
+}
+
+MultiDiagnostics& WarpX::GetMultiDiags ()
+{
+    return *multi_diags;
+}
+
+ParticleBoundaryBuffer& WarpX::GetParticleBoundaryBuffer ()
+{
+    return *m_particle_boundary_buffer;
+}
+
+std::array<const amrex::MultiFab* const, 3>
+WarpX::get_array_Bfield_aux  (const int lev) const
+{
+    return {
+        Bfield_aux[lev][0].get(),
+        Bfield_aux[lev][1].get(),
+        Bfield_aux[lev][2].get()
+    };
+}
+
+std::array<const amrex::MultiFab* const, 3>
+WarpX::get_array_Efield_aux  (const int lev) const
+{
+    return {
+        Efield_aux[lev][0].get(),
+        Efield_aux[lev][1].get(),
+        Efield_aux[lev][2].get()
+    };
+}
+
+amrex::MultiFab * WarpX::get_pointer_Efield_aux (const int lev,  const int direction) const
+{
+    return Efield_aux[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_Bfield_aux (const int lev,  const int direction) const
+{
+    return Bfield_aux[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_Efield_fp (const int lev,  const int direction) const
+{
+    return Efield_fp[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_Bfield_fp (const int lev,  const int direction) const
+{
+    return Bfield_fp[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_current_fp (const int lev,  const int direction) const
+{
+    return current_fp[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_current_fp_nodal (const int lev,  const int direction) const
+{
+    return current_fp_nodal[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_rho_fp (const int lev) const
+{
+    return rho_fp[lev].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_F_fp (const int lev) const
+{
+    return F_fp[lev].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_G_fp (const int lev) const
+{
+    return G_fp[lev].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_phi_fp (const int lev) const
+{
+    return phi_fp[lev].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_vector_potential_fp (const int lev,  const int direction) const
+{
+    return vector_potential_fp_nodal[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_Efield_cp (const int lev,  const int direction) const
+{
+    return Efield_cp[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_Bfield_cp (const int lev,  const int direction) const
+{
+    return Bfield_cp[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_current_cp (const int lev,  const int direction) const
+{
+    return current_cp[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_rho_cp (const int lev) const
+{
+    return rho_cp[lev].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_F_cp (const int lev) const
+{
+    return F_cp[lev].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_G_cp (const int lev) const
+{
+    return G_cp[lev].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_edge_lengths (const int lev,  const int direction) const
+{
+    return m_edge_lengths[lev][direction].get();
+}
+
+amrex::MultiFab * WarpX::get_pointer_face_areas (const int lev,  const int direction) const
+{
+    return m_face_areas[lev][direction].get();
+}
+
+const amrex::MultiFab& WarpX::getEfield (const int lev,  const int direction) const
+{
+    return *Efield_aux[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getBfield (const int lev,  const int direction) const
+{
+    return *Bfield_aux[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getcurrent_cp (const int lev,  const int direction) const
+{
+    return *current_cp[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getEfield_cp (const int lev,  const int direction) const
+{
+    return  *Efield_cp[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getBfield_cp (const int lev,  const int direction) const
+{
+    return  *Bfield_cp[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getrho_cp (const int lev) const
+{
+    return  *rho_cp[lev];
+}
+
+const amrex::MultiFab& WarpX::getF_cp (const int lev) const
+{
+    return *F_cp[lev];
+}
+
+const amrex::MultiFab& WarpX::getG_cp (const int lev) const
+{
+    return *G_cp[lev];
+}
+
+const amrex::MultiFab& WarpX::getcurrent_fp (const int lev,  const int direction) const
+{
+    return *current_fp[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getEfield_fp (const int lev,  const int direction) const
+{
+    return *Efield_fp[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getBfield_fp (const int lev,  const int direction) const
+{
+    return *Bfield_fp[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getrho_fp (const int lev) const
+{
+    return *rho_fp[lev];
+}
+
+const amrex::MultiFab& WarpX::getphi_fp (const int lev) const
+{
+    return *phi_fp[lev];
+}
+
+const amrex::MultiFab& WarpX::getF_fp (const int lev) const
+{
+    return *F_fp[lev];
+}
+
+const amrex::MultiFab& WarpX::getG_fp (const int lev) const
+{
+    return *G_fp[lev];
+}
+
+const amrex::MultiFab& WarpX::getEfield_avg_fp (const int lev,  const int direction) const
+{
+    return *Efield_avg_fp[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getBfield_avg_fp (const int lev,  const int direction) const
+{
+    return *Bfield_avg_fp[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getEfield_avg_cp (const int lev,  const int direction) const
+{
+    return *Efield_avg_cp[lev][direction];
+}
+
+const amrex::MultiFab& WarpX::getBfield_avg_cp (const int lev,  const int direction) const
+{
+    return *Bfield_avg_cp[lev][direction];
+}
+
 void
 WarpX::ReadParameters ()
 {
@@ -1875,6 +2115,24 @@ WarpX::BackwardCompatibility ()
     }
 }
 
+bool WarpX::DoPML () const
+{
+    return do_pml;
+}
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    const PML_RZ* WarpX::getPMLRZ() const
+    {
+        return pml_rz[0].get();
+    }
+#endif
+
+
+utils::parser::IntervalsParser WarpX::get_load_balance_intervals () const
+{
+    return load_balance_intervals;
+}
+
 // This is a virtual function.
 void
 WarpX::MakeNewLevelFromScratch (int lev, Real time, const BoxArray& new_grids,
@@ -3205,4 +3463,182 @@ WarpX::AliasInitMultiFab (
         mf->setVal(*initial_value);
     }
     multifab_map[name_with_suffix] = mf.get();
+}
+
+amrex::Vector<int> WarpX::getnsubsteps () const
+{
+    return nsubsteps;
+}
+
+int WarpX::getnsubsteps (const int lev) const
+{
+    return nsubsteps[lev];
+}
+
+amrex::Vector<int> WarpX::getistep () const
+{
+    return istep;
+}
+
+int WarpX::getistep (const int lev) const
+{
+    return istep[lev];
+}
+
+void WarpX::setistep (const int lev, const int ii)
+{
+    istep[lev] = ii;
+}
+
+amrex::Vector<amrex::Real> WarpX::gett_old () const
+{
+    return t_old;
+}
+
+amrex::Real WarpX::gett_old (const int lev) const
+{
+    return t_old[lev];
+}
+
+amrex::Vector<amrex::Real> WarpX::gett_new () const
+{
+    return t_new;
+}
+
+amrex::Real WarpX::gett_new (const int lev) const
+{
+    return t_new[lev];
+}
+
+void WarpX::sett_new (const int lev, amrex::Real time)
+{
+    t_new[lev] = time;
+}
+
+amrex::Vector<amrex::Real> WarpX::getdt () const
+{
+    return dt;
+}
+
+amrex::Real WarpX::getdt (const int lev) const
+{
+    return dt.at(lev);
+}
+
+int WarpX::getdo_moving_window() const
+{
+    return do_moving_window;
+}
+
+amrex::Real WarpX::getmoving_window_x() const
+{
+    return moving_window_x;
+}
+
+bool WarpX::getis_synchronized() const
+{
+    return is_synchronized;
+}
+
+int WarpX::maxStep () const
+{
+    return max_step;
+}
+
+void WarpX::updateMaxStep (const int new_max_step)
+{
+    max_step = new_max_step;
+}
+
+amrex::Real WarpX::stopTime () const
+{
+    return stop_time;
+}
+
+void WarpX::updateStopTime (const amrex::Real new_stop_time)
+{
+    stop_time = new_stop_time;
+}
+
+int WarpX::moving_window_active (int const step)
+{
+    bool const step_before_end = (step < end_moving_window_step) || (end_moving_window_step < 0);
+    bool const step_after_start = (step >= start_moving_window_step);
+    return do_moving_window && step_before_end && step_after_start;
+}
+
+amrex::IntVect WarpX::getngEB() const
+{
+    return guard_cells.ng_alloc_EB;
+}
+
+amrex::IntVect WarpX::getngF() const
+{
+    return guard_cells.ng_alloc_F;
+}
+
+amrex::IntVect WarpX::getngUpdateAux() const
+{
+    return guard_cells.ng_UpdateAux;
+}
+
+amrex::IntVect WarpX::get_ng_depos_J() const
+{
+    return guard_cells.ng_depos_J;
+}
+
+amrex::IntVect WarpX::get_ng_depos_rho() const
+{
+    return guard_cells.ng_depos_rho;
+}
+
+amrex::IntVect WarpX::get_ng_fieldgather () const
+{
+    return guard_cells.ng_FieldGather;
+}
+
+amrex::IntVect WarpX::get_numprocs() const
+{
+    return numprocs;
+}
+
+#ifdef AMREX_USE_EB
+amrex::EBFArrayBoxFactory const& WarpX::fieldEBFactory (const int lev) const noexcept
+{
+    return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
+}
+#endif
+
+#ifdef WARPX_USE_PSATD
+
+#   ifdef WARPX_DIM_RZ
+        SpectralSolverRZ&
+#   else
+        SpectralSolver&
+#   endif
+        get_spectral_solver_fp (const int lev)
+        {
+            return *spectral_solver_fp[lev];
+        }
+#endif
+
+FiniteDifferenceSolver * WarpX::get_pointer_fdtd_solver_fp (const int lev)
+{
+    return m_fdtd_solver_fp[lev].get();
+}
+
+
+const amrex::iMultiFab* WarpX::getCurrentBufferMasks (const int lev) const
+{
+        return current_buffer_masks[lev].get();
+}
+
+const amrex::iMultiFab* WarpX::getGatherBufferMasks (const int lev) const
+{
+    return gather_buffer_masks[lev].get();
+}
+
+amrex::FabFactory<amrex::FArrayBox> const& WarpX::fieldFactory (const int lev) const noexcept
+{
+    return *m_field_factory[lev];
 }

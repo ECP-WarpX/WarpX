@@ -110,18 +110,18 @@ public:
     static std::string Version (); //!< Version of WarpX executable
     static std::string PicsarVersion (); //!< Version of PICSAR dependency
 
-    int Verbose () const { return verbose; }
+    int Verbose () const;
 
     void InitData ();
 
     void Evolve (int numsteps = -1);
 
-    MultiParticleContainer& GetPartContainer () { return *mypc; }
-    MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
-    HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
-    MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
+    MultiParticleContainer& GetPartContainer ();
+    MacroscopicProperties& GetMacroscopicProperties ();
+    HybridPICModel& GetHybridPICModel ();
+    MultiDiagnostics& GetMultiDiags ();
 
-    ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
+    ParticleBoundaryBuffer& GetParticleBoundaryBuffer ();
 
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, int lev, bool update_cost_flag,
@@ -440,72 +440,61 @@ public:
     static std::map<std::string, amrex::iMultiFab *> imultifab_map;
 
     std::array<const amrex::MultiFab* const, 3>
-    get_array_Bfield_aux  (const int lev) const {
-        return {
-            Bfield_aux[lev][0].get(),
-            Bfield_aux[lev][1].get(),
-            Bfield_aux[lev][2].get()
-        };
-    }
+    get_array_Bfield_aux  (const int lev) const;
+
     std::array<const amrex::MultiFab* const, 3>
-    get_array_Efield_aux  (const int lev) const {
-        return {
-            Efield_aux[lev][0].get(),
-            Efield_aux[lev][1].get(),
-            Efield_aux[lev][2].get()
-        };
-    }
+    get_array_Efield_aux  (const int lev) const;
 
-    amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const { return Efield_aux[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_aux[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const;
+    amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const;
 
-    amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const { return current_fp_nodal[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
-    amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
-    amrex::MultiFab * get_pointer_G_fp  (int lev) const { return G_fp[lev].get(); }
-    amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
-    amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const { return vector_potential_fp_nodal[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const;
+    amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const;
+    amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const;
+    amrex::MultiFab * get_pointer_current_fp_nodal  (int lev, int direction) const;
+    amrex::MultiFab * get_pointer_rho_fp  (int lev) const;
+    amrex::MultiFab * get_pointer_F_fp  (int lev) const;
+    amrex::MultiFab * get_pointer_G_fp  (int lev) const;
+    amrex::MultiFab * get_pointer_phi_fp  (int lev) const;
+    amrex::MultiFab * get_pointer_vector_potential_fp  (int lev, int direction) const;
 
-    amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_current_cp  (int lev, int direction) const { return current_cp[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_rho_cp  (int lev) const { return rho_cp[lev].get(); }
-    amrex::MultiFab * get_pointer_F_cp  (int lev) const { return F_cp[lev].get(); }
-    amrex::MultiFab * get_pointer_G_cp  (int lev) const { return G_cp[lev].get(); }
+    amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const;
+    amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const;
+    amrex::MultiFab * get_pointer_current_cp  (int lev, int direction) const;
+    amrex::MultiFab * get_pointer_rho_cp  (int lev) const;
+    amrex::MultiFab * get_pointer_F_cp  (int lev) const;
+    amrex::MultiFab * get_pointer_G_cp  (int lev) const;
 
-    amrex::MultiFab * get_pointer_edge_lengths  (int lev, int direction) const { return m_edge_lengths[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_face_areas  (int lev, int direction) const { return m_face_areas[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_edge_lengths  (int lev, int direction) const;
+    amrex::MultiFab * get_pointer_face_areas  (int lev, int direction) const;
 
-    const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
-    const amrex::MultiFab& getBfield  (int lev, int direction) {return *Bfield_aux[lev][direction];}
+    const amrex::MultiFab& getEfield  (int lev, int direction) const;
+    const amrex::MultiFab& getBfield  (int lev, int direction) const;
 
-    const amrex::MultiFab& getcurrent_cp (int lev, int direction) {return *current_cp[lev][direction];}
-    const amrex::MultiFab& getEfield_cp  (int lev, int direction) {return  *Efield_cp[lev][direction];}
-    const amrex::MultiFab& getBfield_cp  (int lev, int direction) {return  *Bfield_cp[lev][direction];}
-    const amrex::MultiFab& getrho_cp (int lev) {return  *rho_cp[lev];}
-    const amrex::MultiFab& getF_cp (int lev) {return *F_cp[lev];}
-    const amrex::MultiFab& getG_cp (int lev) {return *G_cp[lev];}
+    const amrex::MultiFab& getcurrent_cp (int lev, int direction) const;
+    const amrex::MultiFab& getEfield_cp  (int lev, int direction) const;
+    const amrex::MultiFab& getBfield_cp  (int lev, int direction) const;
+    const amrex::MultiFab& getrho_cp (int lev) const;
+    const amrex::MultiFab& getF_cp (int lev) const;
+    const amrex::MultiFab& getG_cp (int lev) const;
 
-    const amrex::MultiFab& getcurrent_fp (int lev, int direction) {return *current_fp[lev][direction];}
-    const amrex::MultiFab& getEfield_fp  (int lev, int direction) {return *Efield_fp[lev][direction];}
-    const amrex::MultiFab& getBfield_fp  (int lev, int direction) {return *Bfield_fp[lev][direction];}
-    const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
-    const amrex::MultiFab& getphi_fp (int lev) {return *phi_fp[lev];}
-    const amrex::MultiFab& getF_fp (int lev) {return *F_fp[lev];}
-    const amrex::MultiFab& getG_fp (int lev) {return *G_fp[lev];}
+    const amrex::MultiFab& getcurrent_fp (int lev, int direction) const;
+    const amrex::MultiFab& getEfield_fp  (int lev, int direction) const;
+    const amrex::MultiFab& getBfield_fp  (int lev, int direction) const;
+    const amrex::MultiFab& getrho_fp (int lev) const;
+    const amrex::MultiFab& getphi_fp (int lev) const;
+    const amrex::MultiFab& getF_fp (int lev) const;
+    const amrex::MultiFab& getG_fp (int lev) const;
 
-    const amrex::MultiFab& getEfield_avg_fp (int lev, int direction) {return *Efield_avg_fp[lev][direction];}
-    const amrex::MultiFab& getBfield_avg_fp (int lev, int direction) {return *Bfield_avg_fp[lev][direction];}
-    const amrex::MultiFab& getEfield_avg_cp (int lev, int direction) {return *Efield_avg_cp[lev][direction];}
-    const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
+    const amrex::MultiFab& getEfield_avg_fp (int lev, int direction) const;
+    const amrex::MultiFab& getBfield_avg_fp (int lev, int direction) const;
+    const amrex::MultiFab& getEfield_avg_cp (int lev, int direction) const;
+    const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) const;
 
-    bool DoPML () const {return do_pml;}
+    bool DoPML () const;
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-    const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
+    const PML_RZ* getPMLRZ() const;
 #endif
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
@@ -644,10 +633,7 @@ public:
 
     /** \brief returns the load balance interval
      */
-    utils::parser::IntervalsParser get_load_balance_intervals () const
-    {
-        return load_balance_intervals;
-    }
+    utils::parser::IntervalsParser get_load_balance_intervals () const;
 
     /**
      * \brief Private function for spectral solver
@@ -826,26 +812,26 @@ public:
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_cp,
         const amrex::Vector<std::unique_ptr<amrex::MultiFab>>& charge_buffer);
 
-    amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
-    int getnsubsteps (int lev) const {return nsubsteps[lev];}
-    amrex::Vector<int> getistep () const {return istep;}
-    int getistep (int lev) const {return istep[lev];}
-    void setistep (int lev, int ii) {istep[lev] = ii;}
-    amrex::Vector<amrex::Real> gett_old () const {return t_old;}
-    amrex::Real gett_old (int lev) const {return t_old[lev];}
-    amrex::Vector<amrex::Real> gett_new () const {return t_new;}
-    amrex::Real gett_new (int lev) const {return t_new[lev];}
-    void sett_new (int lev, amrex::Real time) {t_new[lev] = time;}
-    amrex::Vector<amrex::Real> getdt () const {return dt;}
-    amrex::Real getdt (int lev) const {return dt.at(lev);}
-    int getdo_moving_window() const {return do_moving_window;}
-    amrex::Real getmoving_window_x() const {return moving_window_x;}
-    bool getis_synchronized() const {return is_synchronized;}
+    amrex::Vector<int> getnsubsteps () const;
+    int getnsubsteps (int lev) const;
+    amrex::Vector<int> getistep () const;
+    int getistep (int lev) const;
+    void setistep (int lev, int ii);
+    amrex::Vector<amrex::Real> gett_old () const;
+    amrex::Real gett_old (int lev) const;
+    amrex::Vector<amrex::Real> gett_new () const;
+    amrex::Real gett_new (int lev) const;
+    void sett_new (int lev, amrex::Real time);
+    amrex::Vector<amrex::Real> getdt () const;
+    amrex::Real getdt (int lev) const;
+    int getdo_moving_window() const;
+    amrex::Real getmoving_window_x() const;
+    bool getis_synchronized() const;
 
-    int maxStep () const {return max_step;}
-    void updateMaxStep (const int new_max_step) {max_step = new_max_step;}
-    amrex::Real stopTime () const {return stop_time;}
-    void updateStopTime (const amrex::Real new_stop_time) {stop_time = new_stop_time;}
+    int maxStep () const;
+    void updateMaxStep (int new_max_step);
+    amrex::Real stopTime () const;
+    void updateStopTime (amrex::Real new_stop_time);
 
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, amrex::IntVect ngrow) const;
@@ -898,11 +884,7 @@ public:
      * @param step time step
      * @return true if active, else false
      */
-    static int moving_window_active (int const step) {
-        bool const step_before_end = (step < end_moving_window_step) || (end_moving_window_step < 0);
-        bool const step_after_start = (step >= start_moving_window_step);
-        return do_moving_window && step_before_end && step_after_start;
-    }
+    static int moving_window_active (int step);
     static int moving_window_dir;
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
@@ -918,12 +900,12 @@ public:
 
     void ComputeDivE(amrex::MultiFab& divE, int lev);
 
-    amrex::IntVect getngEB() const { return guard_cells.ng_alloc_EB; }
-    amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
-    amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
-    amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
-    amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
-    amrex::IntVect get_ng_fieldgather () const {return guard_cells.ng_FieldGather;}
+    amrex::IntVect getngEB() const;
+    amrex::IntVect getngF() const;
+    amrex::IntVect getngUpdateAux() const;
+    amrex::IntVect get_ng_depos_J() const;
+    amrex::IntVect get_ng_depos_rho() const;
+    amrex::IntVect get_ng_fieldgather () const;
 
     /** Coarsest-level Domain Decomposition
      *
@@ -932,7 +914,7 @@ public:
      *
      * @return the number of MPI processes per dimension if specified, otherwise a 0-vector
      */
-    amrex::IntVect get_numprocs() const {return numprocs;}
+    amrex::IntVect get_numprocs() const;
 
     ElectrostaticSolver::PoissonBoundaryHandler m_poisson_boundary_handler;
     void ComputeSpaceChargeField (bool reset_fields);
@@ -1051,6 +1033,107 @@ public:
 
     // Return the accelerator lattice instance defined at the given refinement level
     const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}
+
+    // for cuda
+    void BuildBufferMasksInBox ( amrex::Box tbx, amrex::IArrayBox &buffer_mask,
+                                 const amrex::IArrayBox &guard_mask, int ng );
+
+    void InitEB ();
+
+#ifdef AMREX_USE_EB
+    amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept;
+
+    /**
+    * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
+    *        An edge of length 0 is fully covered.
+    */
+    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                                    const amrex::EBFArrayBoxFactory& eb_fact);
+    /**
+    * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
+    *        An edge of area 0 is fully covered.
+    */
+    static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                                  const amrex::EBFArrayBoxFactory& eb_fact);
+
+    /**
+    * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
+    */
+    static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                            const std::array<amrex::Real,3>& cell_size);
+    /**
+    * \brief Scale the edges areas by the mesh width to obtain the real areas.
+    */
+    static void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                            const std::array<amrex::Real,3>& cell_size);
+    /**
+    * \brief Initialize information for cell extensions.
+    *        The flags convention for m_flag_info_face is as follows
+    *          - 0 for unstable cells
+    *          - 1 for stable cells which have not been intruded
+    *          - 2 for stable cells which have been intruded
+    *        Here we cannot know if a cell is intruded or not so we initialize all stable cells with 1
+    */
+    void MarkCells();
+    /**
+    * \brief Compute the level set function used for particle-boundary interaction.
+    */
+#endif
+
+    void ComputeDistanceToEB ();
+    /**
+    * \brief Auxiliary function to count the amount of faces which still need to be extended
+    */
+    amrex::Array1D<int, 0, 2> CountExtFaces();
+    /**
+    * \brief Main function computing the cell extension. Where possible it computes one-way
+    *       extensions and, when this is not possible, it does eight-ways extensions.
+    */
+    void ComputeFaceExtensions();
+    /**
+    * \brief Initialize the memory for the FaceInfoBoxes
+    */
+    void InitBorrowing();
+    /**
+    * \brief Shrink the vectors in the FaceInfoBoxes
+    */
+    void ShrinkBorrowing();
+    /**
+    * \brief Do the one-way extension
+    */
+    void ComputeOneWayExtensions();
+    /**
+    * \brief Do the eight-ways extension
+    */
+    void ComputeEightWaysExtensions();
+    /**
+    * \brief Whenever an unstable cell cannot be extended we increase its area to be the minimal for stability.
+    *        This is the method Benkler-Chavannes-Kuster method and it is less accurate than the regular ECT but it
+    *        still works better than staircasing. (see https://ieeexplore.ieee.org/document/1638381)
+    *
+    * @param idim Integer indicating the dimension (x->0, y->1, z->2) for which the BCK correction is done
+    *
+    */
+    void ApplyBCKCorrection(int idim);
+
+    /**
+     * \brief Subtract the average of the cumulative sums of the preliminary current D
+     *        from the current J (computed from D according to the Vay deposition scheme)
+     */
+    void PSATDSubtractCurrentPartialSumsAvg ();
+
+#ifdef WARPX_USE_PSATD
+
+#   ifdef WARPX_DIM_RZ
+        SpectralSolverRZ&
+#   else
+        SpectralSolver&
+#   endif
+        get_spectral_solver_fp (int lev);
+
+#endif
+
+    FiniteDifferenceSolver * get_pointer_fdtd_solver_fp (int lev);
 
 protected:
 
@@ -1251,16 +1334,9 @@ private:
     void PerformanceHints ();
 
     void BuildBufferMasks ();
-public: // for cuda
-    void BuildBufferMasksInBox ( amrex::Box tbx, amrex::IArrayBox &buffer_mask,
-                                 const amrex::IArrayBox &guard_mask, int ng );
-private:
-    const amrex::iMultiFab* getCurrentBufferMasks (int lev) const {
-        return current_buffer_masks[lev].get();
-    }
-    const amrex::iMultiFab* getGatherBufferMasks (int lev) const {
-        return gather_buffer_masks[lev].get();
-    }
+
+    const amrex::iMultiFab* getCurrentBufferMasks (int lev) const;
+    const amrex::iMultiFab* getGatherBufferMasks (int lev) const;
 
     /**
      * \brief Re-orders the Fornberg coefficients so that they can be used more conveniently for
@@ -1568,100 +1644,8 @@ private:
     // Factory for field data
     amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox> > > m_field_factory;
 
-    amrex::FabFactory<amrex::FArrayBox> const& fieldFactory (int lev) const noexcept {
-        return *m_field_factory[lev];
-    }
-#ifdef AMREX_USE_EB
-public:
-    amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
-        return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
-    }
-#endif
+    amrex::FabFactory<amrex::FArrayBox> const& fieldFactory (int lev) const noexcept;
 
-public:
-    void InitEB ();
-    /**
-    * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
-    *        An edge of length 0 is fully covered.
-    */
-
-public:
-#ifdef AMREX_USE_EB
-    static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
-                                    const amrex::EBFArrayBoxFactory& eb_fact);
-    /**
-    * \brief Compute the area of the mesh faces. Here the area is a value in [0, 1].
-    *        An edge of area 0 is fully covered.
-    */
-    static void ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
-                                  const amrex::EBFArrayBoxFactory& eb_fact);
-
-    /**
-    * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
-    */
-    static void ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
-                            const std::array<amrex::Real,3>& cell_size);
-    /**
-    * \brief Scale the edges areas by the mesh width to obtain the real areas.
-    */
-    static void ScaleAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
-                            const std::array<amrex::Real,3>& cell_size);
-    /**
-    * \brief Initialize information for cell extensions.
-    *        The flags convention for m_flag_info_face is as follows
-    *          - 0 for unstable cells
-    *          - 1 for stable cells which have not been intruded
-    *          - 2 for stable cells which have been intruded
-    *        Here we cannot know if a cell is intruded or not so we initialize all stable cells with 1
-    */
-    void MarkCells();
-    /**
-    * \brief Compute the level set function used for particle-boundary interaction.
-    */
-#endif
-    void ComputeDistanceToEB ();
-    /**
-    * \brief Auxiliary function to count the amount of faces which still need to be extended
-    */
-    amrex::Array1D<int, 0, 2> CountExtFaces();
-    /**
-    * \brief Main function computing the cell extension. Where possible it computes one-way
-    *       extensions and, when this is not possible, it does eight-ways extensions.
-    */
-    void ComputeFaceExtensions();
-    /**
-    * \brief Initialize the memory for the FaceInfoBoxes
-    */
-    void InitBorrowing();
-    /**
-    * \brief Shrink the vectors in the FaceInfoBoxes
-    */
-    void ShrinkBorrowing();
-    /**
-    * \brief Do the one-way extension
-    */
-    void ComputeOneWayExtensions();
-    /**
-    * \brief Do the eight-ways extension
-    */
-    void ComputeEightWaysExtensions();
-    /**
-    * \brief Whenever an unstable cell cannot be extended we increase its area to be the minimal for stability.
-    *        This is the method Benkler-Chavannes-Kuster method and it is less accurate than the regular ECT but it
-    *        still works better than staircasing. (see https://ieeexplore.ieee.org/document/1638381)
-    *
-    * @param idim Integer indicating the dimension (x->0, y->1, z->2) for which the BCK correction is done
-    *
-    */
-    void ApplyBCKCorrection(int idim);
-
-    /**
-     * \brief Subtract the average of the cumulative sums of the preliminary current D
-     *        from the current J (computed from D according to the Vay deposition scheme)
-     */
-    void PSATDSubtractCurrentPartialSumsAvg ();
-
-private:
     void ScrapeParticles ();
 
     void PushPSATD ();
@@ -1832,22 +1816,11 @@ private:
         amrex::Vector<std::unique_ptr<SpectralSolver>> spectral_solver_cp;
 #   endif
 
-public:
-
-#   ifdef WARPX_DIM_RZ
-        SpectralSolverRZ&
-#   else
-        SpectralSolver&
-#   endif
-            get_spectral_solver_fp (int lev) {return *spectral_solver_fp[lev];}
 #endif
 
-public:
-    FiniteDifferenceSolver * get_pointer_fdtd_solver_fp (int lev) { return m_fdtd_solver_fp[lev].get(); }
-
-private:
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
+
 };
 
-#endif
+#endif // WARPX_H
