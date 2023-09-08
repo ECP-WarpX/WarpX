@@ -9,6 +9,7 @@
 #include <cmath>
 
 using namespace amrex;
+using namespace amrex::literals;
 
 /**
  * \brief Compute spectral divergence of E
