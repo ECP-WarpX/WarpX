@@ -123,7 +123,7 @@ python3 -m pip install --upgrade pandas
 python3 -m pip install --upgrade -Ccompile-args="-j10" scipy
 python3 -m pip install --upgrade mpi4py --no-cache-dir --no-build-isolation --no-binary mpi4py
 python3 -m pip install --upgrade openpmd-api
-python3 -m pip install --upgrade matplotlib==3.2.2  # does not try to build freetype itself
+MPLLOCALFREETYPE=1 python3 -m pip install --upgrade matplotlib==3.2.2  # does not try to build freetype itself
 python3 -m pip install --upgrade yt
 
 # install or update WarpX dependencies such as picmistandard
