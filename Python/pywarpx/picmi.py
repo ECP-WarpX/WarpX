@@ -1946,7 +1946,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         "do_average" (0 or 1, optional, default 1), and "filter" (parser string, optional).
 
     warpx_particle_fields_species: list of strings, optional
-        Species for which to calcualte particle_fields_to_plot functions. Fields will
+        Species for which to calculate particle_fields_to_plot functions. Fields will
         be calculated separately for each specified species. If not passed, default is
         all of the available particle species.
     """
@@ -1962,7 +1962,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
-        self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', None)
+        self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', {})
         self.particle_fields_species = kw.pop('warpx_particle_fields_species', None)
 
     def initialize_inputs(self):
@@ -2041,37 +2041,34 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             fields_to_plot.sort()
             self.diagnostic.fields_to_plot = fields_to_plot
 
-        particle_fields_to_plot = set()
-        if self.particle_fields_to_plot is not None:
-            for dataname, params in self.particle_fields_to_plot.items():
+        particle_fields_to_plot = list()
+        for dataname, params in self.particle_fields_to_plot.items():
+            if dataname in particle_fields_to_plot:
+                raise Exception('A particle fields data name can not be repeated!')
+            else:
                 particle_fields_to_plot.add(dataname)
-                if "func" not in params:
-                    raise ValueError("A function must be provided for a particle field!")
-                else:
-                    self.diagnostic.__setattr__(
-                        f'particle_fields.{dataname}(x,y,z,ux,uy,uz)', params['func']
-                    )
-                    params.pop('func', None)
-                if "do_average" in params:
-                    self.diagnostic.__setattr__(
-                        f'particle_fields.{dataname}.do_average', params['do_average']
-                    )
-                    params.pop('do_average', None)
-                if "filter" in params:
-                    self.diagnostic.__setattr__(
-                        f'particle_fields.{dataname}.filter(x,y,z,ux,uy,uz)', params['filter']
-                    )
-                    params.pop('filter', None)
-                # catches unexpected keywords
-                if params:
-                    raise TypeError(f"Unexpected keyword argument for particle field {dataname} - {list(params)}")
+            try:
+                self.diagnostic.__setattr__(
+                    f'particle_fields.{dataname}(x,y,z,ux,uy,uz)', params.pop('func')
+                )
+            except KeyError:
+                raise Exception("A function must be provided for a particle field!")
+            self.diagnostic.__setattr__(
+                f'particle_fields.{dataname}.do_average', params.pop('do_average', None)
+            )
+            self.diagnostic.__setattr__(
+                f'particle_fields.{dataname}.filter(x,y,z,ux,uy,uz)', params.pop('filter', None)
+            )
 
-            # --- Convert the set to a sorted list so that the order
-            # --- is the same on all processors.
-            particle_fields_to_plot = list(particle_fields_to_plot)
-            particle_fields_to_plot.sort()
-            self.diagnostic.particle_fields_to_plot = particle_fields_to_plot
-            self.diagnostic.particle_fields_species = self.particle_fields_species
+            # catches unexpected keywords
+            if params:
+                raise TypeError(f"Unexpected keyword argument for particle field {dataname} - {list(params)}")
+
+        # --- Convert the set to a sorted list so that the order
+        # --- is the same on all processors.
+        particle_fields_to_plot.sort()
+        self.diagnostic.particle_fields_to_plot = particle_fields_to_plot
+        self.diagnostic.particle_fields_species = self.particle_fields_species
 
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
