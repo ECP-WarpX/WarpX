@@ -7,15 +7,15 @@
 
 /**
  * \brief A set of MultiFabs usually made for input/output into multi-component linear operators such as MLLinOpMFSet.
- *  
+ *
  * While the MultiFab class allows for multiple components, each component is required to live at exactly the same location (IndexType) on the grid. Specifically, each component in a MultiFab shares the same BoxArray and thus IndexType. Unfortunately, differential forms such as 1-forms (vector fields) and 2-forms (psuedovector fields) are ideally used by finite difference methods when each component has a distinct IndexType. In particular, 1-form components live on the lines between nodes (i.e., the edges of the grid cells), and 2-form components live on the faces of grid cells. This requires each component to have slightly different BoxArray's and associated Array4's.
- * 
+ *
  * There are two possible solutions to this. The first category involves modifying MultiFab or inheriting from it such that the distinct IndexType's of each component are tracked relative to some common BoxArray. Each FArrayBox would have slightly different Box's that are related to the common box by their respective IndexType. It's not clear to the author how complicated this would be to implement.
- * 
+ *
  * The second possibility is creating a separate MultiFab for each individual component. The latter is currently used by WarpX when representing all multi-component fields such as the E and B fields. An example of the distinct IndexType's for each component can be found in WarpX.cpp in the definitions of Ex_nodal_flag, Ey_nodal_flag, etc. Note that the nodal flag flags for B are different because the magnetic field is a 2-form while the E field is a 1-form. This is also often described as stating that B lives on a staggered grid from E. MultiFabSet is intended to be a generalization of this approach.
- * 
+ *
  * In summary, MultiFabSet is intended to be an extension of how E and B have been represented in WarpX thus far, which is a collection of single component MultiFab's that live on slightly different FAB's with distinct IndexType's (nodal flags).
- * 
+ *
  * Inheritances from amrex::Vector<amrex::MultiFab>.
  */
 // class MultiFabSet : public amrex::Vector<amrex::MultiFab> {
@@ -33,7 +33,7 @@
 //     MultiFabSet (const MultiFabSet& mfs, MFInfo info, IntVect ngrow);
 //     MultiFabSet (const MultiFabSet& mfs, MFInfo info, IxTypes ixtype_set);
 //     MultiFabSet (const MultiFabSet& mfs, MFInfo info, FABFactory factory);
-    
+
 
 //     MultiFabSet (const MultiFabSet&, MFInfo, int, IntVect);
 //     MultiFabSet (const MultiFabSet&, MFInfo, int, IxTypes);
@@ -41,9 +41,9 @@
 //     // MultiFabSet (const MultiFabSet&, MFInfo, IntVect, IxTypes);
 //     MultiFabSet (const MultiFabSet&, MFInfo, IntVect, FABFactory);
 //     // MultiFabSet (const MultiFabSet&, MFInfo, IntVect, IxTypes);
-    
+
 //     MultiFabSet (const MultiFabSet&, MFInfo);
-    
+
 //     MultiFabSet (const MultiFabSet&, MFInfo, FABFactory);
 //     MultiFabSet (const MultiFabSet&, MFInfo, IntVect, FABFactory);
 //     // MultiFabSet (const MultiFabSet&, MFInfo, int, IntVect, FABFactory);
@@ -55,7 +55,7 @@
 //     /// @param mfv Vector<MultiFab>
 //     MultiFabSet (amrex::Vector<MF> mfv);
 
-//     MultiFabSet (const amrex::BoxArray& bxs, const amrex::DistributionMapping dm, int ncomps_in_set, IntVect ngrow, 
+//     MultiFabSet (const amrex::BoxArray& bxs, const amrex::DistributionMapping dm, int ncomps_in_set, IntVect ngrow,
 //                 MFInfo info = MFInfo(), FABFactory factory = amrex::FArrayBoxFactory(), int ncomps_in_mf = 1);
 
 //     MultiFabSet (const amrex::BoxArray& bxs, const amrex::DistributionMapping dm, IxTypes ixtype_set, IntVect ngrow,
@@ -63,7 +63,7 @@
 
 //     /**
 //      * \brief Set all MultiFabs to a constant value
-//      * 
+//      *
 //      * \param val The value to be set
 //      */
 //     void
@@ -71,7 +71,7 @@
 
 //     /**
 //      * \brief Set constant value for selected Multifabs
-//      * 
+//      *
 //      * \param val The value to be set
 //      * \param start_index The starting index in the MultiFabSet
 //      * \param num_of_MF The number of MultiFabs affected starting from `start_index`
@@ -86,7 +86,7 @@
 
 //     /**
 //      * \brief Finds the largest norminf amongst the set of MultiFabs
-//      * 
+//      *
 //      * \return The L_infinity norm, i.e. the supremum of the absolute value.
 //      */
 //     amrex::Real
@@ -100,10 +100,10 @@
 
 //     /**
 //      * \brief Find the largest norminf amongst the selected MultiFabs
-//      * 
+//      *
 //      * \param start_index The starting index in the MultiFabSet
 //      * \param num_of_MF The number of MultiFabs affected starting from `start_index`
-//      * 
+//      *
 //      * \return The L_infinity norm, i.e. the supremum of the absolute value.
 //      */
 //     amrex::Real
@@ -119,7 +119,7 @@
 
 //     /**
 //      * \brief Copies each MultiFab from the source MultiFabSet using nGrowVect
-//      * 
+//      *
 //      * \param mfs Source MultiFabSet
 //      */
 //     void
@@ -129,10 +129,10 @@
 //             (*this)[i].LocalCopy(mfs[i], 0, 0, mfs[i].nComp(), mfs[i].nGrowVect());
 //         }
 //     }
-    
+
 //     /**
 //      * \brief Copies each MultiFab from the source MultiFabSet
-//      * 
+//      *
 //      * \param mfs Source MultiFabSet
 //      * \param ngrow Manual grow parameter
 //      */
@@ -154,7 +154,7 @@
 //         return result;
 //     }
 
-    
+
 
 //     // void
 //     // InitializeAndAddMultiFab(const MF& mf, IntVect ngrow, MFInfo mfinfo) {
@@ -186,7 +186,7 @@ public:
     using Real = typename amrex::Real;
 
     using IxTypes = typename amrex::Vector<amrex::IndexType>;
-    
+
     void
     LocalAdd(const MultiFabSet& srcSet, IntVect nghost) {
         for (int i = 0; i < this->size(); ++i) {

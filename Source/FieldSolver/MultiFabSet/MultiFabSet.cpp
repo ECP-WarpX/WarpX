@@ -24,7 +24,7 @@ MultiFabSet::MultiFabSet (const MultiFabSet& mfs, MFInfo mfinfo, const IntVect n
 MultiFabSet::MultiFabSet (const MultiFabSet& mfs, MFInfo mfinfo, const IxTypes ixtypes) {
     this->clear();
     for (int i = 0; i < ixtypes.size(); ++i) {
-        this->push_back(MF(amrex::convert(mfs[i].boxArray(), ixtypes[i]), mfs[i].DistributionMap(), 
+        this->push_back(MF(amrex::convert(mfs[i].boxArray(), ixtypes[i]), mfs[i].DistributionMap(),
                             mfs[i].nComp(), mfs[i].nGrowVect(), mfinfo, mfs[i].Factory()));
     };
 };
@@ -46,7 +46,7 @@ MultiFabSet::MultiFabSet (const MultiFabSet& mfs, MFInfo mfinfo, int ncomps_in_m
 MultiFabSet::MultiFabSet (const MultiFabSet& mfs, MFInfo mfinfo, int ncomps_in_mf, IxTypes ixtypes) {
     this->clear();
     for (int i = 0; i < ixtypes.size(); ++i) {
-        this->push_back(MF(amrex::convert(mfs[i].boxArray(), ixtypes[i]), mfs[i].DistributionMap(), 
+        this->push_back(MF(amrex::convert(mfs[i].boxArray(), ixtypes[i]), mfs[i].DistributionMap(),
                            ncomps_in_mf, mfs[i].nGrowVect(), mfinfo, mfs[i].Factory()));
     };
 };
@@ -65,7 +65,7 @@ MultiFabSet::MultiFabSet (const MultiFabSet& mfs, MFInfo mfinfo, IntVect ngrow, 
     }
 }
 
-MultiFabSet::MultiFabSet (const MultiFabSet& mfs, MFInfo mfinfo, int ncomps_in_mf, 
+MultiFabSet::MultiFabSet (const MultiFabSet& mfs, MFInfo mfinfo, int ncomps_in_mf,
                           IntVect ngrow, IxTypes ixtypes, FABFactory factory) {
     this->clear();
     for (int i = 0; i < ixtypes.size(); ++i) {
@@ -74,11 +74,11 @@ MultiFabSet::MultiFabSet (const MultiFabSet& mfs, MFInfo mfinfo, int ncomps_in_m
 };
 
 MultiFabSet::MultiFabSet (
-    const amrex::BoxArray& bxs, 
-    const amrex::DistributionMapping dm, 
-    int ncomps_in_set, 
-    IntVect ngrow, 
-    MFInfo info = MFInfo(), 
+    const amrex::BoxArray& bxs,
+    const amrex::DistributionMapping dm,
+    int ncomps_in_set,
+    IntVect ngrow,
+    MFInfo info = MFInfo(),
     const FABFactory factory = amrex::FArrayBoxFactory(),
     int ncomps_in_mf = 1
 ) {
@@ -89,9 +89,9 @@ MultiFabSet::MultiFabSet (
 };
 
 MultiFabSet::MultiFabSet (
-    const amrex::BoxArray& bxs, 
-    const amrex::DistributionMapping dm, 
-    IxTypes ixtype_set, 
+    const amrex::BoxArray& bxs,
+    const amrex::DistributionMapping dm,
+    IxTypes ixtype_set,
     IntVect ngrow,
     const MFInfo& info = MFInfo(),
     const FABFactory factory = amrex::FArrayBoxFactory(),
