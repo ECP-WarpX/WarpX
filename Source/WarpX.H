@@ -440,10 +440,10 @@ public:
     static std::map<std::string, amrex::iMultiFab *> imultifab_map;
 
     std::array<const amrex::MultiFab* const, 3>
-    get_array_Bfield_aux  (const int lev) const;
+    get_array_Bfield_aux  (int lev) const;
 
     std::array<const amrex::MultiFab* const, 3>
-    get_array_Efield_aux  (const int lev) const;
+    get_array_Efield_aux  (int lev) const;
 
     amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const;
     amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const;
