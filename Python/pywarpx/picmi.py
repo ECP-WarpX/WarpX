@@ -2043,10 +2043,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
         particle_fields_to_plot = list()
         for dataname, params in self.particle_fields_to_plot.items():
-            if dataname in particle_fields_to_plot:
-                raise Exception('A particle fields data name can not be repeated!')
-            else:
-                particle_fields_to_plot.add(dataname)
+            particle_fields_to_plot.append(dataname)
             try:
                 self.diagnostic.__setattr__(
                     f'particle_fields.{dataname}(x,y,z,ux,uy,uz)', params.pop('func')
