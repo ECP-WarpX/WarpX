@@ -10,6 +10,7 @@
 
 #ifdef ABLASTR_USE_FFT
 #   include <AMReX_Config.H>
+#   include <AMReX_GpuComplex.H>
 #   include <AMReX_LayoutData.H>
 
 #   if defined(AMREX_USE_CUDA)
@@ -20,6 +21,8 @@
 #       else
 #           include <rocfft.h>
 #       endif
+#   elif defined(AMREX_USE_SYCL)
+#       include <oneapi/mkl/dfti.hpp>
 #   else
 #       include <fftw3.h>
 #   endif
@@ -62,6 +65,8 @@ namespace ablastr::math::anyfft
 #       else
             using Complex = double2;
 #       endif
+#   elif defined(AMREX_USE_SYCL)
+        using Complex = amrex::GpuComplex<amrex::Real>;
 #   else
 #       ifdef AMREX_USE_FLOAT
             using Complex = fftwf_complex;
@@ -77,6 +82,15 @@ namespace ablastr::math::anyfft
         using VendorFFTPlan = cufftHandle;
 #   elif defined(AMREX_USE_HIP)
         using VendorFFTPlan = rocfft_plan;
+#   elif defined(AMREX_USE_SYCL)
+        using VendorFFTPlan = oneapi::mkl::dft::descriptor<
+#       ifdef AMREX_USE_FLOAT
+            oneapi::mkl::dft::precision::SINGLE,
+#       else
+            oneapi::mkl::dft::precision::DOUBLE,
+#       endif
+            oneapi::mkl::dft::domain::REAL> *;
+        // dft::descriptor has no default ctor, so we have to use ptr.
 #   else
 #       ifdef AMREX_USE_FLOAT
             using VendorFFTPlan = fftwf_plan;
@@ -99,6 +113,9 @@ namespace ablastr::math::anyfft
         VendorFFTPlan m_plan; /**< Vendor FFT plan */
         direction m_dir;  /**< direction (C2R or R2C) */
         int m_dim; /**< Dimensionality of the FFT plan */
+#ifdef AMREX_USE_SYCL
+        amrex::gpuStream_t m_stream;
+#endif
     };
 
     /** Collection of FFT plans, one FFTplan per box */
