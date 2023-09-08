@@ -3616,7 +3616,7 @@ amrex::EBFArrayBoxFactory const& WarpX::fieldEBFactory (const int lev) const noe
 #   else
         SpectralSolver&
 #   endif
-        get_spectral_solver_fp (const int lev)
+        WarpX::get_spectral_solver_fp (const int lev)
         {
             return *spectral_solver_fp[lev];
         }
