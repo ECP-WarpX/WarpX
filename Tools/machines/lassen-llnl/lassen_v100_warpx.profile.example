@@ -50,4 +50,4 @@ export CC=$(which clang)
 export CXX=$(which clang++)
 export FC=$(which gfortran)
 export CUDACXX=$(which nvcc)
-export CUDAHOSTCXX=$(which clang++)
+export CUDAHOSTCXX=${CXX}
