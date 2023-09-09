@@ -103,9 +103,6 @@ fi
 CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S ${HOME}/src/lapackpp -B ${build_dir}/lapackpp-lassen-build -Duse_cmake_find_lapack=ON -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master -DLAPACK_LIBRARIES=/usr/lib64/liblapack.so
 cmake --build ${build_dir}/lapackpp-lassen-build --target install --parallel 10
 
-# remove build temporary directory
-rm -rf ${build_dir}
-
 
 # Python ######################################################################
 #
@@ -124,9 +121,14 @@ python3 -m pip install --upgrade -Ccompile-args="-j10" scipy
 python3 -m pip install --upgrade mpi4py --no-cache-dir --no-build-isolation --no-binary mpi4py
 python3 -m pip install --upgrade openpmd-api
 MPLLOCALFREETYPE=1 python3 -m pip install --upgrade matplotlib==3.2.2  # does not try to build freetype itself
-python3 -m pip install --upgrade yt
+echo "matplotlib==3.2.2" > ${build_dir}/constraints.txt
+python3 -m pip install --upgrade -c ${build_dir}/constraints.txt yt
 
 # install or update WarpX dependencies such as picmistandard
 python3 -m pip install --upgrade -r $HOME/src/warpx/requirements.txt
 
 # for ML dependencies, see install_v100_ml.sh
+
+
+# remove build temporary directory
+rm -rf ${build_dir}
