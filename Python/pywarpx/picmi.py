@@ -2251,7 +2251,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
     warpx_intervals: integer or string
         Selects the snapshots to be made, instead of using "num_snapshots" which
-        makes all snapshots. When set, "num_snapshots" is ignored.
+        makes all snapshots. "num_snapshots" is ignored.
 
     warpx_file_min_digits: integer, optional
         Passed to <diagnostic name>.file_min_digits
@@ -2362,6 +2362,10 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
 
+    warpx_intervals: integer or string
+        Selects the snapshots to be made, instead of using "num_snapshots" which
+        makes all snapshots. "num_snapshots" is ignored.
+
     warpx_file_min_digits: integer, optional
         Passed to <diagnostic name>.file_min_digits
 
@@ -2375,6 +2379,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.buffer_size = kw.pop('warpx_buffer_size', None)
         self.write_fields = kw.pop('warpx_write_fields', None)
@@ -2389,9 +2394,14 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.file_min_digits = self.file_min_digits
 
         self.diagnostic.do_back_transformed_particles = 1
-        self.diagnostic.num_snapshots_lab = self.num_snapshots
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
+
+        # intervals and num_snapshots_lab cannot both be set
+        if self.intervals is not None:
+            self.diagnostic.intervals = self.intervals
+        else:
+            self.diagnostic.num_snapshots_lab = self.num_snapshots
 
         self.diagnostic.do_back_transformed_fields = self.write_fields
 
