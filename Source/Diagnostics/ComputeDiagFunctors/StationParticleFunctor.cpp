@@ -33,6 +33,16 @@ RecordParticles::RecordParticles (const WarpXParIter &a_pti, TmpParticles& tmp_p
     zp_old = tmp_particle_data[lev][index][TmpIdx::zold].dataPtr();
 }
 
+PlaneCrossingTime::PlaneCrossingTime (const WarpXParIter& a_pti, amrex::Real current_time,
+                                      amrex::Real z_station_location, int index, int a_offset)
+    : m_z_station(z_station_location), m_current_time(current_time), m_index(index)
+{
+    m_get_position = GetParticlePosition(a_pti, a_offset);
+
+    auto& attribs = a_pti.GetAttribs();
+    m_uznew = attribs[PIdx::uz].dataPtr();
+}
+
 StationParticleFunctor::StationParticleFunctor (
                         WarpXParticleContainer *pc_src, std::string species_name, int num_station_buffers)
     : m_pc_src(pc_src), m_species_name(species_name), m_num_station_buffers(num_station_buffers)
@@ -81,16 +91,21 @@ StationParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int 
                 {
                     Flag[i] = GetParticleFilter(src_data, i);                    
                 });
-              
+
                 const int total_partdiag_size = amrex::Scan::ExclusiveSum(np, Flag, IndexLocation);
                 auto& ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
                 auto old_size = ptile_dst.numParticles();
                 ptile_dst.resize(old_size + total_partdiag_size);
                 auto dst_data = ptile_dst.getParticleTileData();
+                int timecross_index = ptile_src.NumRuntimeRealComps() - 1;
+                const auto GetPlaneCrossingTime = PlaneCrossingTime(pti, warpx.gett_new(0), m_z_location, timecross_index);
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE (int i)
                 {
-                    if (Flag[i]) amrex::copyParticle(dst_data, src_data, i, old_size+IndexLocation[i]);
+                    if (Flag[i]) {
+                         amrex::copyParticle(dst_data, src_data, i, old_size+IndexLocation[i]);
+                         GetPlaneCrossingTime(dst_data, src_data, i, old_size+IndexLocation[i]);
+                    }
                 });
                 amrex::Gpu::synchronize();
             }

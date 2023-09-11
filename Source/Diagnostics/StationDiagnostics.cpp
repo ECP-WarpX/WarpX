@@ -82,6 +82,19 @@ StationDiagnostics::ReadParameters ()
         m_station_normal = StationNormalDir::z;
     }
 
+    // Do a few checks
+#ifndef WARPX_USE_OPENPMD
+    WARPX_ABORT_WITH_MESSAGE("You need to compile WarpX with openPMD support, in order to use StationDiagnostic: -DWarpX_OPENPMD=ON");
+#endif
+
+    // Check that the output format is openPMD
+    const std::string error_string = std::string("You need to set `")
+        .append(m_diag_name)
+        .append(".format=openpmd` for the StationDiagnostic.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_format == "openpmd",
+        error_string);
+
     pp_diag_name.get("station_location",m_station_loc);
 
     // If station recordings are used to restart simulations, then raw fields are needed
@@ -245,6 +258,7 @@ StationDiagnostics::InitializeParticleBuffer ()
         m_particles_buffer[i].resize(m_output_species_names.size());
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
             m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(warpx.GetParGDB());
+            m_particles_buffer[i][isp]->AddRealComp("time");
             const int idx = mpc.getSpeciesID(m_output_species_names[isp]);
             m_output_species[i].push_back(ParticleDiag(m_diag_name,
                                                        m_output_species_names[isp],
@@ -311,8 +325,41 @@ StationDiagnostics::Flush (int i_buffer)
 
     for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
         FlushParticleBuffer(filename, m_output_species_names[isp], isp, i_buffer);
+    }
+
+    int nparticles = 0;
+    for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
+        nparticles += m_totalParticles_in_buffer[i_buffer][isp];
+    }
+
+    // Initializing variables needed for compatibility with WriteToFile
+    bool const isBTD = false;
+    bool const isLastBTD = false;
+    int const maxBTDBuffers = 0;
+    // particles buffer is saved in pinned particle container
+    bool const use_pinned_pc = true;
+    const amrex::Geometry& geom = warpx.Geom(0); // not used in WriteToFile
+    bool const plot_raw_fields = false;
+    bool const plot_raw_fields_guards = false;
+
+    if (nparticles > 0) {
+        m_flush_format->WriteToFile(m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer],
+            warpx.getistep(), warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
+            m_file_min_digits, plot_raw_fields, plot_raw_fields_guards, use_pinned_pc,
+            isBTD, i_buffer, m_flush_counter, maxBTDBuffers, geom,
+            isLastBTD, m_totalParticles_flushed_already[i_buffer]);
+    }
+
+    for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
+        m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
         m_totalParticles_in_buffer[i_buffer][isp] = 0;
     }
+
+    if (m_output_species_names.size() > 0)
+    {
+        ClearParticlesBuffer(i_buffer);
+    }
+
 
     // reset counter
     m_slice_counter = 0;
@@ -555,4 +602,13 @@ StationDiagnostics::WriteParticleData (std::string pdir, amrex::Vector<std::stri
 
         }
     }
+}
+
+void
+StationDiagnostics::ClearParticlesBuffer (int i_buffer)
+{
+    std::for_each(
+        m_particles_buffer[i_buffer].begin(),
+        m_particles_buffer[i_buffer].end(),
+        [](auto& pb){pb->clearParticles();});
 }

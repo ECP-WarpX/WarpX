@@ -61,5 +61,30 @@ private:
     amrex::Real m_z_location;
     bool m_record_particles;
 };
+
+struct PlaneCrossingTime
+{
+    PlaneCrossingTime (const WarpXParIter& a_pti, amrex::Real current_time,
+                       amrex::Real z_station_location, int m_index, int a_offset = 0);
+
+    template <typename DstData, typename SrcData>
+    AMREX_GPU_HOST_DEVICE
+    void operator () (const DstData& dst, const SrcData& src, int i_src, int i_dst) const noexcept
+    {
+        using namespace amrex::literals;
+        amrex::ParticleReal xpnew, ypnew, zpnew;
+        m_get_position(i_src, xpnew, ypnew, zpnew);
+
+        amrex::Real time_to_plane = amrex::Math::abs(zpnew - m_z_station)/m_uznew[i_src];
+        dst.m_runtime_rdata[m_index][i_dst] = m_current_time - time_to_plane;
+    }
+
+    GetParticlePosition m_get_position;
+    const amrex::ParticleReal* AMREX_RESTRICT m_uznew = nullptr;
+    amrex::Real m_z_station;
+    amrex::Real m_current_time;
+    int m_index;
+
+};
 #endif
 

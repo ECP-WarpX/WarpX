@@ -78,6 +78,8 @@ private:
                             amrex::Vector<std::string> int_names,
                             amrex::Vector<int> real_flags, amrex::Vector<int> int_flags, int isp);
 
+    void ClearParticlesBuffer (int i_buffer);
+
     int m_buffer_size = 256;
     int m_slice_counter = 0;
     amrex::Real m_tmin;
