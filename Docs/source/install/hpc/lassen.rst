@@ -29,8 +29,10 @@ Login
    Lassen is currently transitioning to RHEL8.
    During this transition, first SSH into lassen and then ``ssh eatoss4`` next to work with the updated RHEL8/TOSS4 nodes.
 
-   Approximately September 2023, the new software environment on these nodes will be the new default.
+   Approximately October 2023, the new software environment on these nodes will be the new default.
 
+
+.. _building-lassen-preparation:
 
 Preparation
 -----------
@@ -79,7 +81,7 @@ Finally, since lassen does not yet provide software modules for some of our depe
 .. code-block:: bash
 
    bash $HOME/src/warpx/Tools/machines/lassen-llnl/install_v100_dependencies.sh
-   source $HOME/sw/lassen/gpu/venvs/warpx-lassen/bin/activate
+   source /usr/workspace/${USER}/lassen/gpu/venvs/warpx-lassen/bin/activate
 
 .. dropdown:: Script Details
    :color: light

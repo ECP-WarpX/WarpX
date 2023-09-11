@@ -14,7 +14,7 @@ set -eu -o pipefail
 
 # Check: ######################################################################
 #
-#   Was perlmutter_gpu_warpx.profile sourced and configured correctly?
+#   Was lassen_v100_warpx.profile sourced and configured correctly?
 if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in your lassen_v100_warpx.profile file! Please edit its line 2 to continue!"; exit 1; fi
 
 
