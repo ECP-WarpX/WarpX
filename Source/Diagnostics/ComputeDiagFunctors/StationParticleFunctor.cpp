@@ -61,7 +61,7 @@ StationParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int 
         for (WarpXParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
             auto ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
         }
-        
+
         auto& particles = m_pc_src->GetParticles(lev);
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
@@ -79,7 +79,7 @@ StationParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int 
                 long const np = pti.numParticles();
                 FlagForPartCopy.resize(np);
                 IndexForPartCopy.resize(np);
-                
+
                 int* const AMREX_RESTRICT Flag = FlagForPartCopy.dataPtr();
                 int* const AMREX_RESTRICT IndexLocation = IndexForPartCopy.dataPtr();
 
@@ -89,7 +89,7 @@ StationParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int 
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE (int i)
                 {
-                    Flag[i] = GetParticleFilter(src_data, i);                    
+                    Flag[i] = GetParticleFilter(src_data, i);
                 });
 
                 const int total_partdiag_size = amrex::Scan::ExclusiveSum(np, Flag, IndexLocation);
@@ -111,12 +111,12 @@ StationParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int 
             }
         }
     }
-    TotalParticleCounter = pc_dst.TotalNumberOfParticles(); 
+    TotalParticleCounter = pc_dst.TotalNumberOfParticles();
     amrex::Print() << " end of operator : " << TotalParticleCounter << "\n";
 }
 
 void
-StationParticleFunctor::PrepareFunctorData (const int i_buffer, bool record_particles, 
+StationParticleFunctor::PrepareFunctorData (const int i_buffer, bool record_particles,
                                             amrex::Real z_location, amrex::Real current_z_boost, amrex::Real tlab, int snapshot_full)
 {
     amrex::ignore_unused(current_z_boost, tlab, snapshot_full);
