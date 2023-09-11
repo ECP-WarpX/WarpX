@@ -128,8 +128,6 @@ Diagnostics::BaseReadParameters ()
     const amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
 
-        amrex::Print() << var << std::endl;
-
         bool do_average = true;
         pp_diag_pfield.query((var + ".do_average").c_str(), do_average);
         m_pfield_do_average.push_back(do_average);
@@ -167,9 +165,6 @@ Diagnostics::BaseReadParameters ()
         // Loop over all species
         for (int i = 0, n = int(m_all_species_names.size()); i < n; i++) {
             if (species == m_all_species_names[i]) {
-
-                amrex::Print() << i << std::endl;
-
                 // Store species index: will be used in ParticleReductionFunctor to calculate
                 // averages for this species
                 m_pfield_species_index.push_back(i);
@@ -192,9 +187,6 @@ Diagnostics::BaseReadParameters ()
     // Generate names of averaged particle fields and append to m_varnames
     for (const auto& fname : m_pfield_varnames) {
         for (const auto& sname : m_pfield_species) {
-
-            amrex::Print() << fname << sname << std::endl;
-
             auto varname = fname;
             varname.append("_").append(sname);
             m_varnames.push_back(varname);
@@ -255,10 +247,6 @@ Diagnostics::BaseReadParameters ()
     const bool species_specified =
         pp_diag_name.queryarr("species", m_output_species_names);
 
-    amrex::Print() << "printing out all vars" << std::endl;
-    for (const auto& var : m_varnames) {
-        amrex::Print() << var << " ";
-    }
 
     // Loop over all fields stored in m_varnames
     for (const auto& var : m_varnames) {

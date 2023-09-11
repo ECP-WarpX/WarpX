@@ -187,7 +187,6 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     const int ncomp = ncomp_multimodefab;
     // This function is called multiple times, for different values of `lev`
     // but the `varnames` need only be updated once.
-    amrex::Print() << "printing out all vars Full Diagnostic" << std::endl;
     for (const auto& var : m_varnames) {
         amrex::Print() << var << " ";
     }
@@ -339,10 +338,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
                     lev, m_crse_ratio, m_pfield_strings[pcomp], m_pfield_species_index[ispec], m_pfield_do_average[pcomp],
                     m_pfield_dofilter[pcomp], m_pfield_filter_strings[pcomp]);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string(m_pfield_varnames[pcomp]) + std::to_string(m_pfield_species_index[ispec]), ncomp);
-                // amrex::Print() << "varname " << m_pfield_varnames[pcomp] << std::endl;
-                // amrex::Print() << "string " << m_pfield_strings[pcomp] << std::endl;
-                // amrex::Print() << "m_varnames.size() " << m_varnames.size() << std::endl;
+                AddRZModesToOutputNames(std::string(m_pfield_varnames[pcomp]) + "_" + std::string(m_pfield_species[ispec]), ncomp);
             }
         }
     }
@@ -354,8 +350,6 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     for (int jj=0; jj<m_all_field_functors[0].size(); jj++){
         ncomp_from_src += m_all_field_functors[lev][jj]->nComp();
     }
-    // amrex::Print() << std::endl << "ncomp_from_src " << ncomp_from_src << std::endl;
-    // amrex::Print() << "m_varnames.size() " << m_varnames.size() << std::endl;
 
     AMREX_ALWAYS_ASSERT( ncomp_from_src == m_varnames.size() );
 #else
