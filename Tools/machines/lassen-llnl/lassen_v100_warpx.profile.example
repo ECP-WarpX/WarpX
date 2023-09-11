@@ -3,7 +3,7 @@
 
 # required dependencies
 module load cmake/3.23.1
-module load clang/12.0.1-gcc-8.3.1
+module load gcc/11.2.1
 module load cuda/12.0.0
 
 # optional: for QED lookup table generation support
@@ -46,8 +46,8 @@ export AMREX_CUDA_ARCH=7.0
 export CUDAARCHS=70
 
 # compiler environment hints
-export CC=$(which clang)
-export CXX=$(which clang++)
+export CC=$(which gcc)
+export CXX=$(which g++)
 export FC=$(which gfortran)
 export CUDACXX=$(which nvcc)
 export CUDAHOSTCXX=${CXX}

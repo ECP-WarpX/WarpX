@@ -37,21 +37,24 @@ then
   cd ${HOME}/src/pytorch
   git fetch
   git checkout .
-  git checkout v2.1.0-rc3
+  git checkout v2.0.1
   git submodule update --init --recursive
   cd -
 else
-  git clone -b v2.1.0-rc3 --recurse-submodules https://github.com/pytorch/pytorch.git ${HOME}/src/pytorch
+  git clone -b v2.0.1 --recurse-submodules https://github.com/pytorch/pytorch.git ${HOME}/src/pytorch
 fi
 cd ${HOME}/src/pytorch
 rm -rf build
 
-# see https://github.com/pytorch/pytorch/issues/108931
-#     https://github.com/pytorch/pytorch/pull/108932
-wget -q -O - https://github.com/pytorch/pytorch/pull/108932.patch | git apply
+# see https://github.com/pytorch/pytorch/issues/97497#issuecomment-1499069641
+#     https://github.com/pytorch/pytorch/pull/98511
+wget -q -O - https://github.com/pytorch/pytorch/pull/98511.patch | git apply
 
 python3 -m pip install -r requirements.txt
-CXX=g++ CC=gcc USE_CUDA=1 BLAS=OpenBLAS MAX_JOBS=64 ATEN_AVX512_256=OFF BUILD_TEST=0 python3 setup.py develop
+
+# see https://github.com/pytorch/pytorch/issues/108984#issuecomment-1712938737
+LDFLAGS="-L${CUDA_HOME}/nvidia/targets/ppc64le-linux/lib/" \
+USE_CUDA=1 BLAS=OpenBLAS MAX_JOBS=64 ATEN_AVX512_256=OFF BUILD_TEST=0 python3 setup.py develop
 #   (optional) If using torch.compile with inductor/triton, install the matching version of triton
 #make triton
 rm -rf build
