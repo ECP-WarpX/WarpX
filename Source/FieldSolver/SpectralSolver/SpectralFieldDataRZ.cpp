@@ -14,6 +14,7 @@
 
 #include <AMReX_Config.H>
 
+using namespace amrex::literals;
 
 /* \brief Initialize fields in spectral space, and FFT plans
  *
