@@ -256,6 +256,14 @@ class EMModes(object):
             self.output_file_name = 'perp_field_data.txt'
 
         if self.test:
+            particle_diag = picmi.ParticleDiagnostic(
+                name='field_diag',
+                period=self.total_steps,
+                write_dir='.',
+                warpx_file_prefix='Python_ohms_law_solver_EM_modes_1d_plt',
+                # warpx_format = 'openpmd',
+                # warpx_openpmd_backend = 'h5'
+            )
             field_diag = picmi.FieldDiagnostic(
                 name='field_diag',
                 grid=self.grid,

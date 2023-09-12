@@ -249,6 +249,15 @@ class ForceFreeSheetReconnection(object):
         callbacks.installafterEsolve(self.check_fields)
 
         if self.test:
+            particle_diag = picmi.ParticleDiagnostic(
+                name='field_diag',
+                period=self.total_steps,
+                write_dir='.',
+                warpx_file_prefix='Python_ohms_law_solver_magnetic_reconnection_2d_plt',
+                # warpx_format='openpmd',
+                # warpx_openpmd_backend='h5',
+                warpx_write_species=True
+            )
             field_diag = picmi.FieldDiagnostic(
                 name='field_diag',
                 grid=self.grid,

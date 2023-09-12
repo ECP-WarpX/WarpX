@@ -84,6 +84,11 @@ solver = picmi.ElectromagneticSolver(
     cfl = 0.999)
 
 # Diagnostics
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 10000,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_ionization_plt')
 diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -115,6 +120,7 @@ sim.add_laser(
     injection_method = laser_antenna)
 
 # Add diagnostics
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(diag)
 
 # Write input file that can be used to run with the compiled version

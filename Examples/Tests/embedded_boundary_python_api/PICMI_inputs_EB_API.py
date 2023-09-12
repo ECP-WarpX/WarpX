@@ -58,6 +58,12 @@ embedded_boundary = picmi.EmbeddedBoundary(
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 1,
+    write_dir = '.',
+    warpx_file_prefix = "embedded_boundary_python_API_plt"
+)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -78,6 +84,7 @@ sim = picmi.Simulation(
     verbose = 1
 )
 
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 
 sim.initialize_inputs()
