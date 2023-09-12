@@ -2385,11 +2385,10 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
 
-<<<<<<< HEAD
         self.diagnostic.set_or_replace_attr('write_species', True)
         if 'fields_to_plot' not in self.diagnostic.argvattrs:
             self.diagnostic.fields_to_plot = 'none'
-=======
+
         # intervals and num_snapshots_lab cannot both be set
         if self.intervals is not None:
             self.diagnostic.intervals = self.intervals
@@ -2397,7 +2396,6 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
             self.diagnostic.num_snapshots_lab = self.num_snapshots
 
         self.diagnostic.do_back_transformed_fields = self.write_fields
->>>>>>> development
 
         self.set_write_dir()
 
