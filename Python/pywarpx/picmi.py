@@ -2292,8 +2292,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         else:
             self.diagnostic.num_snapshots_lab = self.num_snapshots
 
-        self.diagnostic.do_back_transformed_particles = self.write_species
-
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
 
@@ -2394,8 +2392,6 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
             self.diagnostic.intervals = self.intervals
         else:
             self.diagnostic.num_snapshots_lab = self.num_snapshots
-
-        self.diagnostic.do_back_transformed_fields = self.write_fields
 
         self.set_write_dir()
 
