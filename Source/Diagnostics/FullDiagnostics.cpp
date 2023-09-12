@@ -187,9 +187,6 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     const int ncomp = ncomp_multimodefab;
     // This function is called multiple times, for different values of `lev`
     // but the `varnames` need only be updated once.
-    for (const auto& var : m_varnames) {
-        amrex::Print() << var << " ";
-    }
 
     const bool update_varnames = (lev==0);
     if (update_varnames) {
