@@ -86,12 +86,6 @@ field_diag = picmi.FieldDiagnostic(
     data_list = diag_field_list,
     write_dir = '.',
     warpx_file_prefix = 'Python_LaserAcceleration_1d_plt')
-particle_diag = picmi.ParticleDiagnostic(
-    species = [electrons],
-    name = 'diag1',
-    period = 100,
-    write_dir = '.',
-    warpx_file_prefix = 'Python_LaserAcceleration_1d_plt')
 
 # Set up simulation
 sim = picmi.Simulation(
@@ -115,7 +109,6 @@ sim.add_laser(
 
 # Add diagnostics
 sim.add_diagnostic(field_diag)
-sim.add_diagnostic(particle_diag)
 
 # Write input file that can be used to run with the compiled version
 sim.write_input_file(file_name = 'inputs_1d_picmi')
