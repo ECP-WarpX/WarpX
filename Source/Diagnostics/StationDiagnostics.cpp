@@ -204,7 +204,7 @@ StationDiagnostics::PrepareFieldDataForOutput ()
             // number of slices = 1
             const bool ZSliceInDomain = GetZSliceInDomain(lev);
             m_all_field_functors[lev][i]->PrepareFunctorData(0, ZSliceInDomain, m_station_loc, m_buffer_box,
-                                                             m_slice_counter, m_buffer_size, 0);
+                                                             m_slice_counter, m_buffer_size);
         }
     }
 }

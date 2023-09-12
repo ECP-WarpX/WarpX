@@ -20,7 +20,7 @@ public:
                     const int lev, amrex::IntVect crse_ratio, const int ncomp = 1);
     virtual void operator () (amrex::MultiFab & mf_dst, const int dcomp, const int i_buffer) const override;
     void PrepareFunctorData (int i_station, bool slice_in_domain, amrex::Real zlocation, amrex::Box buffer_box,
-                             int k_index, const int max_box_size, const int buffer_full) override;
+                             int k_index, const int max_box_size) override;
     std::unique_ptr<amrex::MultiFab> AllocateSlice(amrex::Vector<int>& slice_to_full_ba_map) const;
 private:
     std::array<const amrex::MultiFab * const, 6> m_arr_mf_src;

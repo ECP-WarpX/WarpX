@@ -71,19 +71,34 @@ struct PlaneCrossingTime
     AMREX_GPU_HOST_DEVICE
     void operator () (const DstData& dst, const SrcData& src, int i_src, int i_dst) const noexcept
     {
+
+        amrex::ignore_unused(src, i_src);
         using namespace amrex::literals;
         amrex::ParticleReal xpnew, ypnew, zpnew;
         m_get_position(i_src, xpnew, ypnew, zpnew);
 
-        amrex::Real time_to_plane = amrex::Math::abs(zpnew - m_z_station)/m_uznew[i_src];
+        amrex::Real gamma = std::sqrt(1._rt + m_inv_c2 *
+                            ( m_uxnew[i_src] * m_uxnew[i_src]
+                            + m_uynew[i_src] * m_uynew[i_src]
+                            + m_uznew[i_src] * m_uznew[i_src]));
+
+        amrex::Real vz = m_uznew[i_src] * m_Phys_c / gamma;
+
+        amrex::Real time_to_plane = amrex::Math::abs(zpnew - m_z_station)/vz;
         dst.m_runtime_rdata[m_index][i_dst] = m_current_time - time_to_plane;
+        // z-position of particles that cross the plane are set equal to the location of the plane
+        dst.m_aos[i_dst].pos(2) = m_z_station;
     }
 
     GetParticlePosition m_get_position;
+    const amrex::ParticleReal* AMREX_RESTRICT m_uxnew = nullptr;
+    const amrex::ParticleReal* AMREX_RESTRICT m_uynew = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uznew = nullptr;
     amrex::Real m_z_station;
     amrex::Real m_current_time;
     int m_index;
+    amrex::Real m_Phys_c;
+    amrex::Real m_inv_c2;
 
 };
 #endif

@@ -115,10 +115,9 @@ StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int 
 
 void
 StationFunctor::PrepareFunctorData (int i_station, bool slice_in_domain, amrex::Real zlocation,
-                                    amrex::Box buffer_box, int k_index, const int max_box_size,
-                                    const int buffer_full)
+                                    amrex::Box buffer_box, int k_index, const int max_box_size)
 {
-    amrex::ignore_unused(i_station, slice_in_domain, zlocation, buffer_full);
+    amrex::ignore_unused(i_station, slice_in_domain, zlocation);
     m_buffer_box = buffer_box;
     m_k_index = k_index;
     m_max_box_size = max_box_size;

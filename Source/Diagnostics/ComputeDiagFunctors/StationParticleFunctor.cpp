@@ -37,10 +37,16 @@ PlaneCrossingTime::PlaneCrossingTime (const WarpXParIter& a_pti, amrex::Real cur
                                       amrex::Real z_station_location, int index, int a_offset)
     : m_z_station(z_station_location), m_current_time(current_time), m_index(index)
 {
+    using namespace amrex::literals;
     m_get_position = GetParticlePosition(a_pti, a_offset);
 
     auto& attribs = a_pti.GetAttribs();
+    m_uxnew = attribs[PIdx::ux].dataPtr();
+    m_uynew = attribs[PIdx::uy].dataPtr();
     m_uznew = attribs[PIdx::uz].dataPtr();
+
+    m_Phys_c = PhysConst::c;
+    m_inv_c2 = 1._rt/(m_Phys_c * m_Phys_c);
 }
 
 StationParticleFunctor::StationParticleFunctor (
