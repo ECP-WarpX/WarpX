@@ -33,17 +33,29 @@ RecordParticles::RecordParticles (const WarpXParIter &a_pti, TmpParticles& tmp_p
     zp_old = tmp_particle_data[lev][index][TmpIdx::zold].dataPtr();
 }
 
-PlaneCrossingTime::PlaneCrossingTime (const WarpXParIter& a_pti, amrex::Real current_time,
-                                      amrex::Real z_station_location, int index, int a_offset)
-    : m_z_station(z_station_location), m_current_time(current_time), m_index(index)
+PlaneCrossingTime::PlaneCrossingTime (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
+                                      amrex::Real current_time,
+                                      amrex::Real z_station_location, int a_index, int a_offset)
+    : m_z_station(z_station_location), m_current_time(current_time), m_index(a_index)
 {
     using namespace amrex::literals;
     m_get_position = GetParticlePosition(a_pti, a_offset);
 
     auto& attribs = a_pti.GetAttribs();
+    m_wpnew = attribs[PIdx::w].dataPtr();
     m_uxnew = attribs[PIdx::ux].dataPtr();
     m_uynew = attribs[PIdx::uy].dataPtr();
     m_uznew = attribs[PIdx::uz].dataPtr();
+
+    const auto lev = a_pti.GetLevel();
+    const auto index = a_pti.GetPairIndex();
+
+    m_xpold = tmp_particle_data[lev][index][TmpIdx::xold].dataPtr();
+    m_ypold = tmp_particle_data[lev][index][TmpIdx::yold].dataPtr();
+    m_zpold = tmp_particle_data[lev][index][TmpIdx::zold].dataPtr();
+    m_uxpold = tmp_particle_data[lev][index][TmpIdx::uxold].dataPtr();
+    m_uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr();
+    m_uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
 
     m_Phys_c = PhysConst::c;
     m_inv_c2 = 1._rt/(m_Phys_c * m_Phys_c);
@@ -104,7 +116,8 @@ StationParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int 
                 ptile_dst.resize(old_size + total_partdiag_size);
                 auto dst_data = ptile_dst.getParticleTileData();
                 int timecross_index = ptile_src.NumRuntimeRealComps() - 1;
-                const auto GetPlaneCrossingTime = PlaneCrossingTime(pti, warpx.gett_new(0), m_z_location, timecross_index);
+                const auto GetPlaneCrossingTime = PlaneCrossingTime(pti, tmp_particle_data,
+                                                  warpx.gett_new(0), m_z_location, timecross_index);
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE (int i)
                 {
