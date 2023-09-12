@@ -2245,6 +2245,10 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
 
+    warpx_intervals: integer or string
+        Selects the snapshots to be made, instead of using "num_snapshots" which
+        makes all snapshots. "num_snapshots" is ignored.
+
     warpx_file_min_digits: integer, optional
         Passed to <diagnostic name>.file_min_digits
 
@@ -2261,6 +2265,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.buffer_size = kw.pop('warpx_buffer_size', None)
         self.lower_bound = kw.pop('warpx_lower_bound', None)
@@ -2278,9 +2283,16 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.diagnostic.diag_hi = self.upper_bound
 
         self.diagnostic.do_back_transformed_fields = 1
-        self.diagnostic.num_snapshots_lab = self.num_snapshots
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
+
+        # intervals and num_snapshots_lab cannot both be set
+        if self.intervals is not None:
+            self.diagnostic.intervals = self.intervals
+        else:
+            self.diagnostic.num_snapshots_lab = self.num_snapshots
+
+        self.diagnostic.do_back_transformed_particles = self.write_species
 
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
@@ -2342,6 +2354,10 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
 
+    warpx_intervals: integer or string
+        Selects the snapshots to be made, instead of using "num_snapshots" which
+        makes all snapshots. "num_snapshots" is ignored.
+
     warpx_file_min_digits: integer, optional
         Passed to <diagnostic name>.file_min_digits
 
@@ -2352,6 +2368,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.buffer_size = kw.pop('warpx_buffer_size', None)
 
@@ -2365,13 +2382,22 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.file_min_digits = self.file_min_digits
 
         self.diagnostic.do_back_transformed_particles = 1
-        self.diagnostic.num_snapshots_lab = self.num_snapshots
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
 
+<<<<<<< HEAD
         self.diagnostic.set_or_replace_attr('write_species', True)
         if 'fields_to_plot' not in self.diagnostic.argvattrs:
             self.diagnostic.fields_to_plot = 'none'
+=======
+        # intervals and num_snapshots_lab cannot both be set
+        if self.intervals is not None:
+            self.diagnostic.intervals = self.intervals
+        else:
+            self.diagnostic.num_snapshots_lab = self.num_snapshots
+
+        self.diagnostic.do_back_transformed_fields = self.write_fields
+>>>>>>> development
 
         self.set_write_dir()
 
