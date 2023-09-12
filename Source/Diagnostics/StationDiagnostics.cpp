@@ -323,10 +323,6 @@ StationDiagnostics::Flush (int i_buffer)
         amrex::VisMF::Write(m_mf_output[i_buffer][lev], prefix);
     }
 
-    for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
-        FlushParticleBuffer(filename, m_output_species_names[isp], isp, i_buffer);
-    }
-
     int nparticles = 0;
     for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
         nparticles += m_totalParticles_in_buffer[i_buffer][isp];
