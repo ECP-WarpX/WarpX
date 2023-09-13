@@ -493,7 +493,8 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         //    }
         //field_mf_copy[mfi].copy<amrex::RunOn::Device>(field_mf[mfi], i_comp*m_ncomps, 0, m_ncomps);
 
-        realspace_bx.enclosedCells(); // discard last point in nodal directions
+        // TODO discard last point in nodal directions?
+        //realspace_bx.enclosedCells();
         const amrex::Array4<amrex::Real> field_mf_copy_arr = (*field_mf_copy)[mfi].array();
         const amrex::Array4<const amrex::Real> field_mf_arr = field_mf[mfi].const_array();
         const int ncomps = m_ncomps;
@@ -582,7 +583,8 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         //field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 1, 2, ncomps_left);
         //field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 1, 2, ncomps_left);
 
-        realspace_bx.enclosedCells(); // discard last point in nodal directions
+        // TODO discard last point in nodal directions?
+        //realspace_bx.enclosedCells();
         const amrex::Array4<amrex::Real> field_mf_r_copy_arr = (*field_mf_r_copy)[mfi].array();
         const amrex::Array4<amrex::Real> field_mf_t_copy_arr = (*field_mf_t_copy)[mfi].array();
         const amrex::Array4<const amrex::Real> field_mf_r_arr = field_mf_r[mfi].const_array();

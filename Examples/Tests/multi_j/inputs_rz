@@ -23,6 +23,7 @@ algo.particle_shape = 3
 
 # Numerics
 warpx.do_moving_window = 1
+warpx.grid_type = collocated
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1.
 warpx.n_rz_azimuthal_modes = 1

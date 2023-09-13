@@ -25,6 +25,7 @@ algo.maxwell_solver = psatd
 algo.particle_pusher = vay
 
 warpx.cfl = 1.
+warpx.grid_type = collocated
 
 # Order of particle shape factors
 algo.particle_shape = 3
