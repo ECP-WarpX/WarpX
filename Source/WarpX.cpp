@@ -1034,7 +1034,7 @@ WarpX::ReadParameters ()
                                    + " * ( x < " + std::to_string(fine_tag_hi[0]) + " )"
                                    + " * ( z > " + std::to_string(fine_tag_lo[1]) + " )"
                                    + " * ( z < " + std::to_string(fine_tag_hi[1]) + " )";
-#elif defined (WARPX_DIM_1D)
+#elif defined (WARPX_DIM_1D_Z)
                 ref_patch_function =   " ( z > " + std::to_string(fine_tag_lo[0]) + " ) "
                                    + " * ( z < " + std::to_string(fine_tag_hi[0]) + " )";
 #endif
