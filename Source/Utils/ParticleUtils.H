@@ -94,6 +94,8 @@ namespace ParticleUtils {
                               amrex::ParticleReal const Vx, amrex::ParticleReal const Vy,
                               amrex::ParticleReal const Vz )
     {
+        using namespace amrex::literals;
+
         // precompute repeatedly used quantities
         constexpr auto c2 = PhysConst::c * PhysConst::c;
         const auto V2 = (Vx*Vx + Vy*Vy + Vz*Vz);

@@ -200,7 +200,7 @@ public:
 
     void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                                     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
-                                    amrex::Real t_lab = 0._prt);
+                                    amrex::Real t_lab = 0.);
 
     void AddGaussianBeam (
         amrex::Real x_m, amrex::Real y_m, amrex::Real z_m,
@@ -226,7 +226,7 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uy,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uz,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w,
-        amrex::Real t_lab= 0._prt);
+        amrex::Real t_lab= 0.);
 
     /**
      * \brief Default initialize runtime attributes in a tile. This routine does not initialize the

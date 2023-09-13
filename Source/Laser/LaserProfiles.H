@@ -328,14 +328,14 @@ private:
      */
     struct{
 
-        /** Name of the lasy file geometry ("cartesian" for 3D cartesian or "thetaMode" for RZ) */
-        std::string fileGeom;
         /** Name of the binary file containing the data */
         std::string binary_file_name;
         /** Name of the lasy file containing the data */
         std::string lasy_file_name;
         /** true if the file is in the lasy format, false if it is in the binary format */
         bool file_in_lasy_format;
+        /** lasy file geometry ("cartesian" for 3D cartesian or "thetaMode" for RZ) */
+        int file_in_cartesian_geom;
         /** Dimensions of E_binary_data or E_lasy_data. nt, nx must be >=2.
          * If DIM=3, ny must be >=2 as well.
          * If DIM=2, ny must be 1 */
