@@ -874,10 +874,11 @@ WarpX::ReadParameters ()
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 !(
-                    ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
-                    WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ) ||
-                    ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML &&
-                     WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller )
+                    std::any_of(WarpX::field_boundary_lo.begin(), WarpX::field_boundary_lo.end(),
+                        [](const auto& cc){return cc == FieldBoundaryType::PML;})
+                    &&
+                    std::any_of(WarpX::field_boundary_lo.begin(), WarpX::field_boundary_lo.end(),
+                        [](const auto& cc){return cc == FieldBoundaryType::Absorbing_SilverMueller;})
                 ),
                 "PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
 
