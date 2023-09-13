@@ -47,10 +47,10 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
                                        (k+0.5_rt)*dx[2]+problo[2])};
 #if defined (WARPX_DIM_3D)
             amrex::Real tag_val = ref_parser(pos[0], pos[1], pos[2]);
-#elif defined (WARPX_DIM_XZ)
+#elif defined (WARPX_DIM_XZ) || defined (WARPX_DIM_RZ)
             amrex::Real unused = 0.0;
             amrex::Real tag_val = ref_parser(pos[0], unused, pos[1]);
-#elif defined (WARPX_DIM_1D)
+#elif defined (WARPX_DIM_1D_Z)
             amrex::Real unused = 0.0;
             amrex::Real tag_val = ref_parser(unused, unused, pos[0]);
 #endif
