@@ -65,9 +65,8 @@ class _MultiFABWrapper(object):
 
     Parameters
     ----------
-     mf_name: string
-         The name of the MultiFab to be accessed, the tag specified when the
-         MultiFab is allocated
+     mf: MultiFab
+         The Multifab that is wrapped.
 
      level: int
          The refinement level
@@ -77,8 +76,8 @@ class _MultiFABWrapper(object):
          Note that when True, the first n-ghost negative indices will refer to the lower
          ghost cells.
     """
-    def __init__(self, mf_name, level, include_ghosts=False):
-        self.mf_name = mf_name
+    def __init__(self, mf, level, include_ghosts=False):
+        self.mf = mf
         self.level = level
         self.include_ghosts = include_ghosts
 
@@ -96,13 +95,6 @@ class _MultiFABWrapper(object):
     def __iter__(self):
         "The iteration is over the MultiFab"
         return self.mf.__iter__()
-
-    @property
-    def mf(self):
-        # Always fetch this anew in case the C++ MultiFab is recreated
-        warpx = libwarpx.libwarpx_so.get_instance()
-        # All MultiFab names have the level suffix
-        return warpx.multifab(f'{self.mf_name}[level={self.level}]')
 
     @property
     def shape(self):
@@ -544,206 +536,246 @@ class _MultiFABWrapper(object):
     def norm0(self, *args):
         return self.mf.norm0(*args)
 
+
+class _WarpXMultiFABWrapper(_MultiFABWrapper):
+    """Wrapper around WarpX MultiFabs
+    This provides a convenient way to query and set data in the MultiFabs.
+    The indexing is based on global indices.
+
+    Parameters
+    ----------
+     mf_name: string
+         The name of the MultiFab to be accessed, the tag specified when the
+         MultiFab is allocated
+
+     level: int
+         The refinement level
+
+     include_ghosts: bool, default=False
+         Whether to include the ghost cells.
+         Note that when True, the first n-ghost negative indices will refer to the lower
+         ghost cells.
+    """
+    def __init__(self, mf_name, level, include_ghosts=False):
+        self.mf_name = mf_name
+        self.level = level
+        self.include_ghosts = include_ghosts
+
+        self.dim = libwarpx.dim
+
+        # The overlaps list is one along the axes where the grid boundaries overlap the neighboring grid,
+        # which is the case with node centering.
+        ix_type = self.mf.box_array().ix_type()
+        self.overlaps = self._get_indices([int(ix_type.node_centered(i)) for i in range(self.dim)], 0)
+
+    @property
+    def mf(self):
+        # Always fetch this anew in case the C++ MultiFab is recreated
+        warpx = libwarpx.libwarpx_so.get_instance()
+        # All MultiFab names have the level suffix
+        return warpx.multifab(f'{self.mf_name}[level={self.level}]')
+
+
 def ExWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Efield_aux[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Efield_aux[x]', level=level, include_ghosts=include_ghosts)
 
 def EyWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Efield_aux[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Efield_aux[y]', level=level, include_ghosts=include_ghosts)
 
 def EzWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Efield_aux[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Efield_aux[z]', level=level, include_ghosts=include_ghosts)
 
 def BxWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Bfield_aux[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Bfield_aux[x]', level=level, include_ghosts=include_ghosts)
 
 def ByWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Bfield_aux[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Bfield_aux[y]', level=level, include_ghosts=include_ghosts)
 
 def BzWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Bfield_aux[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Bfield_aux[z]', level=level, include_ghosts=include_ghosts)
 
 def JxWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_fp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_fp[x]', level=level, include_ghosts=include_ghosts)
 
 def JyWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_fp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_fp[y]', level=level, include_ghosts=include_ghosts)
 
 def JzWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def ExFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Efield_fp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Efield_fp[x]', level=level, include_ghosts=include_ghosts)
 
 def EyFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Efield_fp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Efield_fp[y]', level=level, include_ghosts=include_ghosts)
 
 def EzFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Efield_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Efield_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def BxFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Bfield_fp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Bfield_fp[x]', level=level, include_ghosts=include_ghosts)
 
 def ByFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Bfield_fp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Bfield_fp[y]', level=level, include_ghosts=include_ghosts)
 
 def BzFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Bfield_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Bfield_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def JxFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_fp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_fp[x]', level=level, include_ghosts=include_ghosts)
 
 def JyFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_fp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_fp[y]', level=level, include_ghosts=include_ghosts)
 
 def JzFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def RhoFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'rho_fp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'rho_fp', level=level, include_ghosts=include_ghosts)
 
 def PhiFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'phi_fp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'phi_fp', level=level, include_ghosts=include_ghosts)
 
 def FFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'F_fp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'F_fp', level=level, include_ghosts=include_ghosts)
 
 def GFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'G_fp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'G_fp', level=level, include_ghosts=include_ghosts)
 
 def AxFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'vector_potential_fp_nodal[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'vector_potential_fp_nodal[x]', level=level, include_ghosts=include_ghosts)
 
 def AyFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'vector_potential_fp_nodal[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'vector_potential_fp_nodal[y]', level=level, include_ghosts=include_ghosts)
 
 def AzFPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'vector_potential_fp_nodal[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'vector_potential_fp_nodal[z]', level=level, include_ghosts=include_ghosts)
 
 def ExCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Efield_cp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Efield_cp[x]', level=level, include_ghosts=include_ghosts)
 
 def EyCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Efield_cp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Efield_cp[y]', level=level, include_ghosts=include_ghosts)
 
 def EzCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Efield_cp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Efield_cp[z]', level=level, include_ghosts=include_ghosts)
 
 def BxCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Bfield_cp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Bfield_cp[x]', level=level, include_ghosts=include_ghosts)
 
 def ByCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Bfield_cp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Bfield_cp[y]', level=level, include_ghosts=include_ghosts)
 
 def BzCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'Bfield_cp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'Bfield_cp[z]', level=level, include_ghosts=include_ghosts)
 
 def JxCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_cp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_cp[x]', level=level, include_ghosts=include_ghosts)
 
 def JyCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_cp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_cp[y]', level=level, include_ghosts=include_ghosts)
 
 def JzCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_cp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_cp[z]', level=level, include_ghosts=include_ghosts)
 
 def RhoCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'rho_cp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'rho_cp', level=level, include_ghosts=include_ghosts)
 
 def FCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'F_cp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'F_cp', level=level, include_ghosts=include_ghosts)
 
 def GCPWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'G_cp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'G_cp', level=level, include_ghosts=include_ghosts)
 
 def EdgeLengthsxWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'm_edge_lengths[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'm_edge_lengths[x]', level=level, include_ghosts=include_ghosts)
 
 def EdgeLengthsyWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'm_edge_lengths[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'm_edge_lengths[y]', level=level, include_ghosts=include_ghosts)
 
 def EdgeLengthszWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'm_edge_lengths[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'm_edge_lengths[z]', level=level, include_ghosts=include_ghosts)
 
 def FaceAreasxWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'm_face_areas[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'm_face_areas[x]', level=level, include_ghosts=include_ghosts)
 
 def FaceAreasyWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'm_face_areas[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'm_face_areas[y]', level=level, include_ghosts=include_ghosts)
 
 def FaceAreaszWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'm_face_areas[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'm_face_areas[z]', level=level, include_ghosts=include_ghosts)
 
 def JxFPAmpereWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_fp_ampere[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_fp_ampere[x]', level=level, include_ghosts=include_ghosts)
 
 def JyFPAmpereWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_fp_ampere[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_fp_ampere[y]', level=level, include_ghosts=include_ghosts)
 
 def JzFPAmpereWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name=f'current_fp_ampere[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name=f'current_fp_ampere[z]', level=level, include_ghosts=include_ghosts)
 
 def ExFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_E_fp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_E_fp[x]', level=level, include_ghosts=include_ghosts)
 
 def EyFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_E_fp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_E_fp[y]', level=level, include_ghosts=include_ghosts)
 
 def EzFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_E_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_E_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def BxFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_B_fp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_B_fp[x]', level=level, include_ghosts=include_ghosts)
 
 def ByFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_B_fp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_B_fp[y]', level=level, include_ghosts=include_ghosts)
 
 def BzFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_B_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_B_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def JxFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_j_fp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_j_fp[x]', level=level, include_ghosts=include_ghosts)
 
 def JyFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_j_fp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_j_fp[y]', level=level, include_ghosts=include_ghosts)
 
 def JzFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_j_fp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_j_fp[z]', level=level, include_ghosts=include_ghosts)
 
 def FFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_F_fp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_F_fp', level=level, include_ghosts=include_ghosts)
 
 def GFPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_G_fp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_G_fp', level=level, include_ghosts=include_ghosts)
 
 def ExCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_E_cp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_E_cp[x]', level=level, include_ghosts=include_ghosts)
 
 def EyCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_E_cp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_E_cp[y]', level=level, include_ghosts=include_ghosts)
 
 def EzCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_E_cp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_E_cp[z]', level=level, include_ghosts=include_ghosts)
 
 def BxCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_B_cp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_B_cp[x]', level=level, include_ghosts=include_ghosts)
 
 def ByCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_B_cp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_B_cp[y]', level=level, include_ghosts=include_ghosts)
 
 def BzCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_B_cp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_B_cp[z]', level=level, include_ghosts=include_ghosts)
 
 def JxCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_j_cp[x]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_j_cp[x]', level=level, include_ghosts=include_ghosts)
 
 def JyCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_j_cp[y]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_j_cp[y]', level=level, include_ghosts=include_ghosts)
 
 def JzCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_j_cp[z]', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_j_cp[z]', level=level, include_ghosts=include_ghosts)
 
 def FCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_F_cp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_F_cp', level=level, include_ghosts=include_ghosts)
 
 def GCPPMLWrapper(level=0, include_ghosts=False):
-    return _MultiFABWrapper(mf_name='pml_G_cp', level=level, include_ghosts=include_ghosts)
+    return _WarpXMultiFABWrapper(mf_name='pml_G_cp', level=level, include_ghosts=include_ghosts)
