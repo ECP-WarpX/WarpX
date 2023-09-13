@@ -457,7 +457,16 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
     // the transformed array does not.
     // Note that the copy will not include the imaginary part of mode 0 as
     // PhysicalToSpectral_Scalar expects.
-    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), field_mf.DistributionMap(), m_ncomps, 0);
+    std::unique_ptr<amrex::MultiFab> field_mf_copy;
+    WarpX::AllocInitMultiFab(
+        field_mf_copy,
+        tempHTransformed.boxArray(),
+        field_mf.DistributionMap(),
+        m_ncomps,
+        amrex::IntVect(0),
+        lev,
+        "field_mf_copy",
+        0._rt);
 
     // This will hold the Hankel transformed data, with the real and imaginary parts split.
     // A full multifab is created so that each GPU stream has its own temp space.
@@ -475,15 +484,25 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         // Perform the Hankel transform first.
         // tempHTransformedSplit includes the imaginary component of mode 0.
         // field_mf does not.
-        amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
+        amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
-        if ( !(field_mf[mfi].box().contains(field_mf_copy[mfi].box())) ) {
-            // If field_mf[mfi] is smaller than field_mf_copy[mfi], then fill field_mf_copy[mfi] with
-            // zeros so that all of it is initialized.
-            field_mf_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, m_ncomps);
-            }
-        field_mf_copy[mfi].copy<amrex::RunOn::Device>(field_mf[mfi], i_comp*m_ncomps, 0, m_ncomps);
-        multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Scalar(field_mf_copy[mfi], tempHTransformedSplit[mfi]);
+        //if ( !(field_mf[mfi].box().contains(field_mf_copy[mfi].box())) ) {
+        //    // If field_mf[mfi] is smaller than field_mf_copy[mfi], then fill field_mf_copy[mfi] with
+        //    // zeros so that all of it is initialized.
+        //    field_mf_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, m_ncomps);
+        //    }
+        //field_mf_copy[mfi].copy<amrex::RunOn::Device>(field_mf[mfi], i_comp*m_ncomps, 0, m_ncomps);
+
+        realspace_bx.enclosedCells(); // discard last point in nodal directions
+        const amrex::Array4<amrex::Real> field_mf_copy_arr = (*field_mf_copy)[mfi].array();
+        const amrex::Array4<const amrex::Real> field_mf_arr = field_mf[mfi].const_array();
+        const int ncomps = m_ncomps;
+        amrex::ParallelFor(realspace_bx, ncomps, [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept
+        {
+            field_mf_copy_arr(i,j,k,n) = field_mf_arr(i,j,k,i_comp*ncomps+n);
+        });
+
+        multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Scalar((*field_mf_copy)[mfi], tempHTransformedSplit[mfi]);
 
         FABZForwardTransform(mfi, realspace_bx, tempHTransformedSplit, field_index, is_nodal_z);
 
@@ -514,8 +533,26 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
     // Create copies of the input multifabs. The copies will include the imaginary part of mode 0.
     // Also note that the Hankel transform will overwrite the copies.
     // Full multifabs are created for the temps so that each GPU stream has its own temp space.
-    amrex::MultiFab field_mf_r_copy(tempHTransformed.boxArray(), field_mf_r.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
-    amrex::MultiFab field_mf_t_copy(tempHTransformed.boxArray(), field_mf_t.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
+    std::unique_ptr<amrex::MultiFab> field_mf_r_copy;
+    std::unique_ptr<amrex::MultiFab> field_mf_t_copy;
+    WarpX::AllocInitMultiFab(
+        field_mf_r_copy,
+        tempHTransformed.boxArray(),
+        field_mf_r.DistributionMap(),
+        2*n_rz_azimuthal_modes,
+        amrex::IntVect(0),
+        lev,
+        "field_mf_r_copy",
+        0._rt);
+    WarpX::AllocInitMultiFab(
+        field_mf_t_copy,
+        tempHTransformed.boxArray(),
+        field_mf_t.DistributionMap(),
+        2*n_rz_azimuthal_modes,
+        amrex::IntVect(0),
+        lev,
+        "field_mf_t_copy",
+        0._rt);
 
     amrex::MultiFab tempHTransformedSplit_p(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
     amrex::MultiFab tempHTransformedSplit_m(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
@@ -529,25 +566,48 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         }
         amrex::Real wt = amrex::second();
 
-        amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
+        amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
-        if ( !(field_mf_r[mfi].box().contains(field_mf_r_copy[mfi].box())) ) {
-            // If field_mf_r[mfi] is smaller than field_mf_r_copy[mfi], then fill field_mf_r_copy[mfi] with
-            // zeros so that all of it is initialized.
-            field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, 2*n_rz_azimuthal_modes);
-            field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, 2*n_rz_azimuthal_modes);
+        //if ( !(field_mf_r[mfi].box().contains(field_mf_r_copy[mfi].box())) ) {
+        //    // If field_mf_r[mfi] is smaller than field_mf_r_copy[mfi], then fill field_mf_r_copy[mfi] with
+        //    // zeros so that all of it is initialized.
+        //    field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, 2*n_rz_azimuthal_modes);
+        //    field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, 2*n_rz_azimuthal_modes);
+        //    }
+        //field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 0, 0, 1); // Real part of mode 0
+        //field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 0, 0, 1); // Real part of mode 0
+        //field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0 (all zero)
+        //field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0 (all zero)
+        //const int ncomps_left = 2 * (n_rz_azimuthal_modes - 1);  // mode zero with an additional imaginary part already handled
+        //field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 1, 2, ncomps_left);
+        //field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 1, 2, ncomps_left);
+
+        realspace_bx.enclosedCells(); // discard last point in nodal directions
+        const amrex::Array4<amrex::Real> field_mf_r_copy_arr = (*field_mf_r_copy)[mfi].array();
+        const amrex::Array4<amrex::Real> field_mf_t_copy_arr = (*field_mf_t_copy)[mfi].array();
+        const amrex::Array4<const amrex::Real> field_mf_r_arr = field_mf_r[mfi].const_array();
+        const amrex::Array4<const amrex::Real> field_mf_t_arr = field_mf_t[mfi].const_array();
+        amrex::ParallelFor(realspace_bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            // Real part of mode 0
+            field_mf_r_copy_arr(i,j,k,0) = field_mf_r_arr(i,j,k,0);
+            field_mf_t_copy_arr(i,j,k,0) = field_mf_t_arr(i,j,k,0);
+
+            // Imaginary part of mode 0 (all zero)
+            field_mf_r_copy_arr(i,j,k,1) = 0._rt;
+            field_mf_t_copy_arr(i,j,k,1) = 0._rt;
+
+            const int ncomps_left = 2*(n_rz_azimuthal_modes-1);
+            for (int n=0; n<ncomps_left; n++)
+            {
+                field_mf_r_copy_arr(i,j,k,2+n) = field_mf_r_arr(i,j,k,1+n);
+                field_mf_t_copy_arr(i,j,k,2+n) = field_mf_t_arr(i,j,k,1+n);
             }
-        field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 0, 0, 1); // Real part of mode 0
-        field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 0, 0, 1); // Real part of mode 0
-        field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0 (all zero)
-        field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0 (all zero)
-        const int ncomps_left = 2 * (n_rz_azimuthal_modes - 1);  // mode zero with an additional imaginary part already handled
-        field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 1, 2, ncomps_left);
-        field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 1, 2, ncomps_left);
+        });
 
         // Perform the Hankel transform first.
         multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Vector(realspace_bx,
-                                                           field_mf_r_copy[mfi], field_mf_t_copy[mfi],
+                                                           (*field_mf_r_copy)[mfi], (*field_mf_t_copy)[mfi],
                                                            tempHTransformedSplit_p[mfi], tempHTransformedSplit_m[mfi]);
 
         FABZForwardTransform(mfi, realspace_bx, tempHTransformedSplit_p, field_index_r, is_nodal_z);
