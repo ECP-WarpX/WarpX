@@ -1004,10 +1004,47 @@ WarpX::ReadParameters ()
 
         if (maxLevel() > 0) {
             Vector<Real> lo, hi;
-            utils::parser::getArrWithParser(pp_warpx, "fine_tag_lo", lo);
-            utils::parser::getArrWithParser(pp_warpx, "fine_tag_hi", hi);
-            fine_tag_lo = RealVect{lo};
-            fine_tag_hi = RealVect{hi};
+            bool fine_tag_lo_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_lo", lo);
+            bool fine_tag_hi_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_hi", hi);
+            std::string ref_patch_function;
+            bool parser_specified = pp_warpx.query("ref_patch_function(x,y,z)",ref_patch_function);
+            const std::string error_string = std::string( "For max_level > 0, you need to either set\
+                                             warpx.fine_tag_lo and warpx.fine_tag_hi\
+                                             or warpx.ref_patch_function(x,y,z)");
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ((fine_tag_lo_specified && fine_tag_hi_specified) ||
+                                                parser_specified ),
+                                                error_string);
+            if (fine_tag_lo_specified && fine_tag_hi_specified) {
+                fine_tag_lo = RealVect{lo};
+                fine_tag_hi = RealVect{hi};
+#if defined (WARPX_DIM_3D)
+                ref_patch_function =   " ( x > " + std::to_string(fine_tag_lo[0]) + " ) "
+                                   + " * ( x < " + std::to_string(fine_tag_hi[0]) + " )"
+                                   + " * ( y > " + std::to_string(fine_tag_lo[1]) + " )"
+                                   + " * ( y < " + std::to_string(fine_tag_hi[1]) + " )"
+                                   + " * ( z > " + std::to_string(fine_tag_lo[2]) + " )"
+                                   + " * ( z < " + std::to_string(fine_tag_hi[2]) + " )";
+#elif defined (WARPX_DIM_RZ)
+                ref_patch_function =   " ( x > " + std::to_string(fine_tag_lo[0]) + " ) "
+                                   + " * ( x < " + std::to_string(fine_tag_hi[0]) + " )"
+                                   + " * ( z > " + std::to_string(fine_tag_lo[1]) + " )"
+                                   + " * ( z < " + std::to_string(fine_tag_hi[1]) + " )";
+#elif defined (WARPX_DIM_XZ)
+                ref_patch_function =   " ( x > " + std::to_string(fine_tag_lo[0]) + " ) "
+                                   + " * ( x < " + std::to_string(fine_tag_hi[0]) + " )"
+                                   + " * ( z > " + std::to_string(fine_tag_lo[1]) + " )"
+                                   + " * ( z < " + std::to_string(fine_tag_hi[1]) + " )";
+#elif defined (WARPX_DIM_1D)
+                ref_patch_function =   " ( z > " + std::to_string(fine_tag_lo[0]) + " ) "
+                                   + " * ( z < " + std::to_string(fine_tag_hi[0]) + " )";
+#endif
+                amrex::Print() << " ref patch func " << ref_patch_function << "\n";
+            } else {
+                utils::parser::Store_parserString(pp_warpx, "ref_patch_function(x,y,z)",
+                    ref_patch_function);
+            }
+            ref_patch_parser = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(ref_patch_function,{"x","y","z"}));
         }
 
         pp_warpx.query("do_dynamic_scheduling", do_dynamic_scheduling);

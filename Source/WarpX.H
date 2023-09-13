@@ -1615,6 +1615,8 @@ private:
 
     amrex::RealVect fine_tag_lo;
     amrex::RealVect fine_tag_hi;
+    //! User-defined parser to define refinement patches
+    std::unique_ptr<amrex::Parser> ref_patch_parser;
 
     bool is_synchronized = true;
 
