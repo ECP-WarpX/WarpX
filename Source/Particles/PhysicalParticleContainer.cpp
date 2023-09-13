@@ -751,6 +751,16 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                     attr_temp[i] = breit_wheeler_get_opt(engine);
                 }
             }
+
+            // Current runtime comp is chi at creation, which is set to -1 for particles not
+            // created by a QED process.
+            if (particle_comps.find(m_store_chi_at_creation_attrib) != particle_comps.end() &&
+                particle_comps[m_store_chi_at_creation_attrib] == j)
+            {
+                for (int i = 0; i < np; ++i) {
+                    attr_temp[i] = -1._prt;
+                }
+            }
 #endif
 
             for (int ia = 0; ia < n_user_real_attribs; ++ia)
@@ -1166,20 +1176,14 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         }
 
 #ifdef WARPX_QED
-        //Pointer to the optical depth component
-        amrex::ParticleReal* p_optical_depth_QSR = nullptr;
-        amrex::ParticleReal* p_optical_depth_BW  = nullptr;
 
-        // If a QED effect is enabled, the corresponding optical depth
-        // has to be initialized
+        // If a QED effect is enabled, the corresponding optical depth has to be initialized
         const bool loc_has_quantum_sync = has_quantum_sync();
         const bool loc_has_breit_wheeler = has_breit_wheeler();
-        if (loc_has_quantum_sync)
-            p_optical_depth_QSR = soa.GetRealData(
-                particle_comps["opticalDepthQSR"]).data() + old_size;
-        if(loc_has_breit_wheeler)
-            p_optical_depth_BW = soa.GetRealData(
-                particle_comps["opticalDepthBW"]).data() + old_size;
+        amrex::ParticleReal* const p_optical_depth_QSR = (loc_has_quantum_sync)?
+            soa.GetRealData(particle_comps["opticalDepthQSR"]).data() + old_size : nullptr;
+        amrex::ParticleReal* const p_optical_depth_BW = (loc_has_breit_wheeler)?
+            soa.GetRealData(particle_comps["opticalDepthBW"]).data() + old_size : nullptr;
 
         //If needed, get the appropriate functors from the engines
         QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
@@ -1192,6 +1196,13 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             breit_wheeler_get_opt =
                 m_shr_p_bw_engine->build_optical_depth_functor();
         }
+
+        // If chi at creation is stored, get the pointer to the attribute data, which will be
+        // initialized to -1 below.
+        const bool loc_has_chi_at_creation = m_store_chi_at_creation;
+        amrex::ParticleReal* const p_chi_at_creation = (loc_has_chi_at_creation)?
+            soa.GetRealData(particle_comps[m_store_chi_at_creation_attrib]).data() + old_size :
+             nullptr;
 #endif
 
         const bool loc_do_field_ionization = do_field_ionization;
@@ -1379,6 +1390,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
                 if(loc_has_breit_wheeler){
                     p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
+                }
+                // Chi at creation is only relevant when particles are created from a QED process,
+                // so we set this attribute to -1 here.
+                if(loc_has_chi_at_creation){
+                    p_chi_at_creation[ip] = -1._prt;
                 }
 #endif
                 // Initialize user-defined integers with user-defined parser
@@ -1716,20 +1732,13 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         }
 
 #ifdef WARPX_QED
-        //Pointer to the optical depth component
-        amrex::ParticleReal* p_optical_depth_QSR = nullptr;
-        amrex::ParticleReal* p_optical_depth_BW  = nullptr;
-
-        // If a QED effect is enabled, the corresponding optical depth
-        // has to be initialized
+        // If a QED effect is enabled, the corresponding optical depth has to be initialized
         const bool loc_has_quantum_sync = has_quantum_sync();
         const bool loc_has_breit_wheeler = has_breit_wheeler();
-        if (loc_has_quantum_sync)
-            p_optical_depth_QSR = soa.GetRealData(
-                particle_comps["opticalDepthQSR"]).data() + old_size;
-        if(loc_has_breit_wheeler)
-            p_optical_depth_BW = soa.GetRealData(
-                particle_comps["opticalDepthBW"]).data() + old_size;
+        amrex::ParticleReal* const p_optical_depth_QSR = (loc_has_quantum_sync)?
+            soa.GetRealData(particle_comps["opticalDepthQSR"]).data() + old_size : nullptr;
+        amrex::ParticleReal* const p_optical_depth_BW = (loc_has_breit_wheeler)?
+            soa.GetRealData(particle_comps["opticalDepthBW"]).data() + old_size : nullptr;
 
         //If needed, get the appropriate functors from the engines
         QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
@@ -1742,6 +1751,13 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
             breit_wheeler_get_opt =
                 m_shr_p_bw_engine->build_optical_depth_functor();
         }
+
+        // If chi at creation is stored, get the pointer to the attribute data, which will be
+        // initialized to -1 below.
+        const bool loc_has_chi_at_creation = m_store_chi_at_creation;
+        amrex::ParticleReal* const p_chi_at_creation = (loc_has_chi_at_creation)?
+            soa.GetRealData(particle_comps[m_store_chi_at_creation_attrib]).data() + old_size :
+             nullptr;
 #endif
 
         const bool loc_do_field_ionization = do_field_ionization;
@@ -1859,6 +1875,11 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
                 if(loc_has_breit_wheeler){
                     p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
+                }
+                // Chi at creation is only relevant when particles are created from a QED process,
+                // so we set this attribute to -1 here.
+                if(loc_has_chi_at_creation){
+                    p_chi_at_creation[ip] = -1._prt;
                 }
 #endif
                 // Initialize user-defined integers with user-defined parser
@@ -3023,6 +3044,19 @@ PhysicalParticleContainer::getPairGenerationFilterFunc ()
 {
     WARPX_PROFILE("PhysicalParticleContainer::getPairGenerationFunc()");
     return PairGenerationFilterFunc{particle_runtime_comps["opticalDepthBW"]};
+}
+
+void PhysicalParticleContainer::initChiAtCreation (const std::string& attribute_name)
+{
+    const ParmParse pp_species_name(species_name);
+    pp_species_name.query("store_chi_at_creation", m_store_chi_at_creation);
+    if (m_store_chi_at_creation)
+        AddRealComp(attribute_name);
+}
+
+bool PhysicalParticleContainer::store_chi_at_creation () const
+{
+    return m_store_chi_at_creation;
 }
 
 #endif

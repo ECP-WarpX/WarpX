@@ -989,11 +989,17 @@ void MultiParticleContainer::InitQED ()
             pc->set_quantum_sync_engine_ptr
                 (m_shr_p_qs_engine);
             m_nspecies_quantum_sync++;
+            allcontainers[pc->m_qed_quantum_sync_phot_product]->initChiAtCreation(
+                                                                    "chiAtCreationQSR");
         }
         if(pc->has_breit_wheeler()){
             pc->set_breit_wheeler_engine_ptr
                 (m_shr_p_bw_engine);
             m_nspecies_breit_wheeler++;
+            allcontainers[pc->m_qed_breit_wheeler_ele_product]->initChiAtCreation(
+                                                                    "chiAtCreationBW");
+            allcontainers[pc->m_qed_breit_wheeler_pos_product]->initChiAtCreation(
+                                                                    "chiAtCreationBW");
         }
     }
 
@@ -1531,6 +1537,13 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
         pc_product_pos->defineAllParticleTiles();
         pc_product_ele->defineAllParticleTiles();
 
+        const bool store_chi_at_creation_pos = pc_product_pos->store_chi_at_creation();
+        const bool store_chi_at_creation_ele = pc_product_ele->store_chi_at_creation();
+        const int chi_at_creation_runtime_comp_pos = (store_chi_at_creation_pos)?
+                        pc_product_pos->particle_runtime_comps["chiAtCreationBW"] : 0;
+        const int chi_at_creation_runtime_comp_ele = (store_chi_at_creation_ele)?
+                        pc_product_ele->particle_runtime_comps["chiAtCreationBW"] : 0;
+
         auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
 
 #ifdef AMREX_USE_OMP
@@ -1545,6 +1558,10 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             Real wt = amrex::second();
 
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
+                                                         store_chi_at_creation_ele,
+                                                         chi_at_creation_runtime_comp_ele,
+                                                         store_chi_at_creation_pos,
+                                                         chi_at_creation_runtime_comp_pos,
                                                          pti, lev, Ex.nGrowVect(),
                                                          Ex[pti], Ey[pti], Ez[pti],
                                                          Bx[pti], By[pti], Bz[pti]);
@@ -1606,6 +1623,10 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
         pc_source ->defineAllParticleTiles();
         pc_product_phot->defineAllParticleTiles();
 
+        const bool store_chi_at_creation = pc_product_phot->store_chi_at_creation();
+        const int chi_at_creation_runtime_comp = (store_chi_at_creation)?
+                        pc_product_phot->particle_runtime_comps["chiAtCreationQSR"] : 0;
+
         auto info = getMFItInfo(*pc_source, *pc_product_phot);
 
 #ifdef AMREX_USE_OMP
@@ -1623,6 +1644,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                   m_shr_p_qs_engine->build_optical_depth_functor(),
                   pc_source->particle_runtime_comps["opticalDepthQSR"],
                   m_shr_p_qs_engine->build_phot_em_functor(),
+                  store_chi_at_creation, chi_at_creation_runtime_comp,
                   pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],
                   Bx[pti], By[pti], Bz[pti]);

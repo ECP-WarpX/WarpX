@@ -95,24 +95,28 @@ qsp_1.injection_style = "none"
 qsp_1.do_qed_breit_wheeler = 1
 qsp_1.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_1.qed_breit_wheeler_pos_product_species = dummy_pos
+qsp_1.store_chi_at_creation = 1
 
 qsp_2.species_type = "photon"
 qsp_2.injection_style = "none"
 qsp_2.do_qed_breit_wheeler = 1
 qsp_2.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_2.qed_breit_wheeler_pos_product_species = dummy_pos
+qsp_2.store_chi_at_creation = 1
 
 qsp_3.species_type = "photon"
 qsp_3.injection_style = "none"
 qsp_3.do_qed_breit_wheeler = 1
 qsp_3.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_3.qed_breit_wheeler_pos_product_species = dummy_pos
+qsp_3.store_chi_at_creation = 1
 
 qsp_4.species_type = "photon"
 qsp_4.injection_style = "none"
 qsp_4.do_qed_breit_wheeler = 1
 qsp_4.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_4.qed_breit_wheeler_pos_product_species = dummy_pos
+qsp_4.store_chi_at_creation = 1
 
 #################################
 
@@ -183,7 +187,7 @@ diag1.p2.variables = ux uy uz w opticalDepthQSR
 diag1.p3.variables = ux uy uz w opticalDepthQSR
 diag1.p4.variables = ux uy uz w opticalDepthQSR
 
-diag1.qsp_1.variables = ux uy uz w opticalDepthBW
-diag1.qsp_2.variables = ux uy uz w opticalDepthBW
-diag1.qsp_3.variables = ux uy uz w opticalDepthBW
-diag1.qsp_4.variables = ux uy uz w opticalDepthBW
+diag1.qsp_1.variables = ux uy uz w opticalDepthBW chiAtCreationQSR
+diag1.qsp_2.variables = ux uy uz w opticalDepthBW chiAtCreationQSR
+diag1.qsp_3.variables = ux uy uz w opticalDepthBW chiAtCreationQSR
+diag1.qsp_4.variables = ux uy uz w opticalDepthBW chiAtCreationQSR

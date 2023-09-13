@@ -438,6 +438,10 @@ protected:
     virtual void
     set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){}
 
+    /** Species which can be the product of a QED process should override these functions.*/
+    virtual void initChiAtCreation(const std::string& /*attribute_name*/){}
+    virtual bool store_chi_at_creation() const {return false;}
+
     int m_qed_breit_wheeler_ele_product;
     std::string m_qed_breit_wheeler_ele_product_name;
     int m_qed_breit_wheeler_pos_product;

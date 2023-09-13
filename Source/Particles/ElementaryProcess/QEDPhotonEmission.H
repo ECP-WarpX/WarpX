@@ -12,6 +12,7 @@
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "QEDInternals/QedChiFunctions.H"
 #include "QEDInternals/QuantumSyncEngineWrapper.H"
 #include "Utils/WarpXConst.H"
 
@@ -109,8 +110,10 @@ public:
     */
     PhotonEmissionTransformFunc (
         QuantumSynchrotronGetOpticalDepth opt_depth_functor,
-        int opt_depth_runtime_comp,
-        QuantumSynchrotronPhotonEmission emission_functor,
+        int const opt_depth_runtime_comp,
+        QuantumSynchrotronPhotonEmission const emission_functor,
+        bool store_chi_at_creation,
+        int chi_at_creation_runtime_comp,
         const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
         amrex::FArrayBox const& exfab,
         amrex::FArrayBox const& eyfab,
@@ -131,7 +134,7 @@ public:
     * @param[in] engine random number generator engine
     */
     template <typename DstData, typename SrcData>
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void operator() (DstData& dst, SrcData& src, int i_src, int i_dst,
         amrex::RandomEngine const& engine) const noexcept
     {
@@ -157,6 +160,16 @@ public:
         auto& g_ux = dst.m_rdata[PIdx::ux][i_dst];
         auto& g_uy = dst.m_rdata[PIdx::uy][i_dst];
         auto& g_uz = dst.m_rdata[PIdx::uz][i_dst];
+
+        // This needs to be done before calling m_emission_functor because the latter modifies ux,
+        // uy and uz.
+        if (m_store_chi_at_creation){
+            constexpr ParticleReal me = PhysConst::m_e;
+            const amrex::Real& chi_at_creation = QedUtils::chi_ele_pos(me*ux, me*uy, me*uz,
+                                                                    ex, ey, ez, bx, by, bz);
+            dst.m_runtime_rdata[m_chi_at_creation_runtime_comp][i_dst] = chi_at_creation;
+        }
+
         m_emission_functor(
             ux, uy, uz,
             ex, ey, ez,
@@ -177,6 +190,10 @@ private:
 
     const QuantumSynchrotronPhotonEmission
         m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/
+
+    bool m_store_chi_at_creation;
+
+    int m_chi_at_creation_runtime_comp;
 
     GetParticlePosition m_get_position;
     GetExternalEBField m_get_externalEB;
