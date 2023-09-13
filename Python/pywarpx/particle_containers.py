@@ -311,11 +311,13 @@ class ParticleContainerWrapper(object):
         positions on each tile.
 
         '''
+        xp, cupy_status = load_cupy()
+
         structs = self.get_particle_structs(level)
         if libwarpx.geometry_dim == '3d' or libwarpx.geometry_dim == '2d':
             return [struct['x'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
-            return [struct['x']*cnp.cos(theta) for struct, theta in zip(structs, self.get_particle_theta())]
+            return [struct['x']*xp.cos(theta) for struct, theta in zip(structs, self.get_particle_theta())]
         elif libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_x: There is no x coordinate with 1D Cartesian')
     xp = property(get_particle_x)
@@ -327,11 +329,13 @@ class ParticleContainerWrapper(object):
         positions on each tile.
 
         '''
+        xp, cupy_status = load_cupy()
+
         structs = self.get_particle_structs(level)
         if libwarpx.geometry_dim == '3d':
             return [struct['y'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
-            return [struct['x']*cnp.sin(theta) for struct, theta in zip(structs, self.get_particle_theta())]
+            return [struct['x']*xp.sin(theta) for struct, theta in zip(structs, self.get_particle_theta())]
         elif libwarpx.geometry_dim == '1d' or libwarpx.geometry_dim == '2d':
             raise Exception('get_particle_y: There is no y coordinate with 1D or 2D Cartesian')
     yp = property(get_particle_y)
@@ -343,11 +347,13 @@ class ParticleContainerWrapper(object):
         positions on each tile.
 
         '''
+        xp, cupy_status = load_cupy()
+
         structs = self.get_particle_structs(level)
         if libwarpx.geometry_dim == 'rz':
             return [struct['x'] for struct in structs]
         elif libwarpx.geometry_dim == '3d':
-            return [cnp.sqrt(struct['x']**2 + struct['y']**2) for struct in structs]
+            return [xp.sqrt(struct['x']**2 + struct['y']**2) for struct in structs]
         elif libwarpx.geometry_dim == '2d' or libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_r: There is no r coordinate with 1D or 2D Cartesian')
     rp = property(get_particle_r)
@@ -359,11 +365,13 @@ class ParticleContainerWrapper(object):
         theta on each tile.
 
         '''
+        xp, cupy_status = load_cupy()
+
         if libwarpx.geometry_dim == 'rz':
             return self.get_particle_arrays('theta', level)
         elif libwarpx.geometry_dim == '3d':
             structs = self.get_particle_structs(level)
-            return [cnp.arctan2(struct['y'], struct['x']) for struct in structs]
+            return [xp.arctan2(struct['y'], struct['x']) for struct in structs]
         elif libwarpx.geometry_dim == '2d' or libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_theta: There is no theta coordinate with 1D or 2D Cartesian')
     thetap = property(get_particle_theta)
@@ -567,6 +575,8 @@ class ParticleBoundaryBufferWrapper(object):
             level          : int
                 Which AMR level to retrieve scraped particle data from.
         '''
+        xp, cupy_status = load_cupy()
+
         part_container = self.particle_buffer.get_particle_container(
             species_name, self._get_boundary_number(boundary)
         )
@@ -576,14 +586,14 @@ class ParticleBoundaryBufferWrapper(object):
             comp_idx = part_container.num_int_comps() - 1
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
-                data_array.append(cnp.array(soa.GetIntData(comp_idx), copy=False))
+                data_array.append(xp.array(soa.GetIntData(comp_idx), copy=False))
         else:
             mypc = libwarpx.warpx.multi_particle_container()
             sim_part_container_wrapper = mypc.get_particle_container_from_name(species_name)
             comp_idx = sim_part_container_wrapper.get_comp_index(comp_name)
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
-                data_array.append(cnp.array(soa.GetRealData(comp_idx), copy=False))
+                data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
 
         return data_array
 
