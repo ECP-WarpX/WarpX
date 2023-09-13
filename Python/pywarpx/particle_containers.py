@@ -656,7 +656,7 @@ class ParticleContainerWrapper(object):
 
     def deposit_charge_density(self, level, clear_rho=True, sync_rho=True):
         '''
-        Deposit the specified species' charge density in rho_fp in order to
+        Deposit this species' charge density in rho_fp in order to
         access that data via pywarpx.fields.RhoFPWrapper().
         Parameters
         ----------

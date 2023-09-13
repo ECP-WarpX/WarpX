@@ -305,8 +305,7 @@ class ForceFreeSheetReconnection(object):
 
     def check_fields(self):
 
-        warpx = simulation.extension.warpx
-        step = warpx.getistep(lev=0)
+        step = simulation.extension.warpx.getistep(lev=0) - 1
 
         if not (step == 1 or step%self.diag_steps == 0):
             return

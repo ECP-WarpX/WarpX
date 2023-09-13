@@ -316,8 +316,7 @@ class EMModes(object):
         similar format as the reduced diagnostic so that the same analysis
         script can be used regardless of the simulation dimension.
         """
-        warpx = simulation.extension.warpx
-        step = warpx.getistep(lev=0) - 1
+        step = simulation.extension.warpx.getistep(lev=0) - 1
 
         if step % self.diag_steps != 0:
             return

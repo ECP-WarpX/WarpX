@@ -341,8 +341,8 @@ class HybridPICBeamInstability(object):
 
     def text_diag(self):
         """Diagnostic function to print out timing data and particle numbers."""
-        warpx = simulation.extension.warpx
-        step = warpx.getistep(lev=0)
+        step = simulation.extension.warpx.getistep(lev=0) - 1
+
         if step % (self.total_steps // 10) != 0:
             return
 
@@ -377,8 +377,8 @@ class HybridPICBeamInstability(object):
     def energy_diagnostic(self):
         """Diangostic to get the total, magnetic and kinetic energies in the
         simulation."""
-        warpx = simulation.extension.warpx
-        step = warpx.getistep(lev=0)
+        step = simulation.extension.warpx.getistep(lev=0) - 1
+
         if step % self.diag_steps != 1:
             return
 
@@ -426,8 +426,7 @@ class HybridPICBeamInstability(object):
         similar format as the reduced diagnostic so that the same analysis
         script can be used regardless of the simulation dimension.
         """
-        warpx = simulation.extension.warpx
-        step = warpx.getistep(lev=0) - 1
+        step = simulation.extension.warpx.getistep(lev=0) - 1
 
         if step % self.diag_steps != 0:
             return
