@@ -1680,6 +1680,9 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_amrex_the_arena_init_size: long int, optional
         The amount of memory in bytes to allocate in the Arena.
 
+    warpx_amrex_use_gpu_aware_mpi: bool, optional
+        Whether to use GPU-aware MPI communications
+
     warpx_zmax_plasma_to_compute_max_step: float, optional
         Sets the simulation run time based on the maximum z value
 
@@ -1739,6 +1742,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.amr_restart = kw.pop('warpx_amr_restart', None)
         self.amrex_the_arena_is_managed = kw.pop('warpx_amrex_the_arena_is_managed', None)
         self.amrex_the_arena_init_size = kw.pop('warpx_amrex_the_arena_init_size', None)
+        self.amrex_use_gpu_aware_mpi = kw.pop('warpx_amrex_use_gpu_aware_mpi', None)
         self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
         self.compute_max_step_from_btd = kw.pop('warpx_compute_max_step_from_btd', None)
 
@@ -1869,6 +1873,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         if self.amrex_the_arena_init_size is not None:
             pywarpx.amrex.the_arena_init_size = self.amrex_the_arena_init_size
 
+        if self.amrex_use_gpu_aware_mpi is not None:
+            pywarpx.amrex.use_gpu_aware_mpi = self.amrex_use_gpu_aware_mpi
+
     def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:
             return
@@ -1960,14 +1967,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
     warpx_dump_rz_modes: bool, optional
         Flag whether to dump the data for all RZ modes
-
-    warpx_lower_bound: vector of floats, optional
-        Lower corner of output fields
-        that is passed to <diagnostic name>.lower_bound
-
-    warpx_upper_bound: vector of floats, optional
-        Upper corner of output fields
-        that is passed to <diagnostic name>.upper_bound
     """
     def init(self, kw):
 
@@ -1980,8 +1979,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
-        self.lower_bound = kw.pop('warpx_lower_bound', None)
-        self.upper_bound = kw.pop('warpx_upper_bound', None)
 
     def initialize_inputs(self):
 
