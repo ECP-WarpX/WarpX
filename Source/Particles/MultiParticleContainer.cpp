@@ -252,28 +252,48 @@ MultiParticleContainer::ReadParameters ()
                        h_repeated_plasma_lens_lengths.begin(), h_repeated_plasma_lens_lengths.end(),
                        d_repeated_plasma_lens_lengths.begin());
 
-            h_repeated_plasma_lens_strengths_E.resize(n_lenses);
-            h_repeated_plasma_lens_strengths_B.resize(n_lenses);
+            h_repeated_plasma_lens_strengths_Ex.resize(n_lenses);
+            h_repeated_plasma_lens_strengths_Ey.resize(n_lenses);
+            h_repeated_plasma_lens_strengths_Bx.resize(n_lenses);
+            h_repeated_plasma_lens_strengths_By.resize(n_lenses);
 
-            if (m_E_ext_particle_s == "repeated_plasma_lens") {
+            if (m_Ex_ext_particle_s == "repeated_plasma_lens") {
                 utils::parser::getArrWithParser(
-                    pp_particles, "repeated_plasma_lens_strengths_E",
-                    h_repeated_plasma_lens_strengths_E);
+                    pp_particles, "repeated_plasma_lens_strengths_Ex",
+                    h_repeated_plasma_lens_strengths_Ex);
             }
-            if (m_B_ext_particle_s == "repeated_plasma_lens") {
+            if (m_Ey_ext_particle_s == "repeated_plasma_lens") {
                 utils::parser::getArrWithParser(
-                    pp_particles, "repeated_plasma_lens_strengths_B",
-                    h_repeated_plasma_lens_strengths_B);
+                    pp_particles, "repeated_plasma_lens_strengths_Ey",
+                    h_repeated_plasma_lens_strengths_Ey);
+            }
+            if (m_Bx_ext_particle_s == "repeated_plasma_lens") {
+                utils::parser::getArrWithParser(
+                    pp_particles, "repeated_plasma_lens_strengths_Bx",
+                    h_repeated_plasma_lens_strengths_Bx);
+            }
+            if (m_By_ext_particle_s == "repeated_plasma_lens") {
+                utils::parser::getArrWithParser(
+                    pp_particles, "repeated_plasma_lens_strengths_By",
+                    h_repeated_plasma_lens_strengths_By);
             }
 
             d_repeated_plasma_lens_strengths_E.resize(n_lenses);
+            d_repeated_plasma_lens_strengths_Ex.resize(n_lenses);
+            d_repeated_plasma_lens_strengths_By.resize(n_lenses);
             d_repeated_plasma_lens_strengths_B.resize(n_lenses);
             amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                       h_repeated_plasma_lens_strengths_E.begin(), h_repeated_plasma_lens_strengths_E.end(),
-                       d_repeated_plasma_lens_strengths_E.begin());
+                       h_repeated_plasma_lens_strengths_Ex.begin(), h_repeated_plasma_lens_strengths_Ex.end(),
+                       d_repeated_plasma_lens_strengths_Ex.begin());
             amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                       h_repeated_plasma_lens_strengths_B.begin(), h_repeated_plasma_lens_strengths_B.end(),
-                       d_repeated_plasma_lens_strengths_B.begin());
+                       h_repeated_plasma_lens_strengths_Ey.begin(), h_repeated_plasma_lens_strengths_Ey.end(),
+                       d_repeated_plasma_lens_strengths_Ey.begin());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_strengths_Bx.begin(), h_repeated_plasma_lens_strengths_Bx.end(),
+                       d_repeated_plasma_lens_strengths_Bx.begin());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                       h_repeated_plasma_lens_strengths_By.begin(), h_repeated_plasma_lens_strengths_By.end(),
+                       d_repeated_plasma_lens_strengths_By.begin());
 
             amrex::Gpu::synchronize();
         }
