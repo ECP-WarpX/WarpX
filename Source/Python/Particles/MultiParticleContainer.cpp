@@ -22,10 +22,10 @@ void init_MultiParticleContainer (py::module& m)
         )
 
         .def("set_plasma_lens_strength",
-             [](MultiParticleContainer& mpc, 
-             int i_lens, 
-             amrex::Real strength_Ex, 
-             amrex::Real strength_Ey, 
+             [](MultiParticleContainer& mpc,
+             int i_lens,
+             amrex::Real strength_Ex,
+             amrex::Real strength_Ey,
              amrex::Real strength_Bx,
              amrex::Real strength_By
              ) {

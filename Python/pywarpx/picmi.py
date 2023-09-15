@@ -1552,7 +1552,7 @@ class PlasmaLens(picmistandard.base._ClassWithInit):
     - By = -x*stengths_B
 
     """
-    def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, 
+    def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None,
                  warpx_strengths_Ex=None, warpx_strengths_Ey=None, warpx_strengths_Bx=None,
                  warpx_strengths_By=None, **kw):
         self.period = period
