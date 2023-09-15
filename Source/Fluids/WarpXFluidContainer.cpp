@@ -837,8 +837,13 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         amrex::Real  dQ1z = ave( Ux - Ux_mz , Ux_pz - Ux );
                         amrex::Real  dQ2z = ave( Uy - Uy_mz , Uy_pz - Uy );
                         amrex::Real  dQ3z = ave( Uz - Uz_mz , Uz_pz - Uz );
+                        amrex::Real N_source = 0.0;
+                        amrex::Real Ur_source = 0.0;
+                        amrex::Real Utheta_source = 0.0;
 
                         #if defined(WARPX_DIM_RZ)
+                        amrex::Real dr = dx[0];
+                        amrex::Real r = problo[0] + i * dr;
                         // TODO: Generalize this condition
                         // Impose "none" boundaries
                         // Condition: dQx = 0 at r = 0
@@ -859,6 +864,13 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                             dQ2z = ave( Uy - Uy_mz , 0.0 );
                             dQ3z = ave( Uz - Uz_mz , 0.0 );
                         }
+
+                        // RZ sources:
+                        if  (i != domain.smallEnd(0)) {
+                            N_source = N_arr(i,j,k)*Vx/r;
+                            Ur_source = N_arr(i,j,k)*Uy*Uy/(gamma*r);
+                            Utheta_source = N_arr(i,j,k)*Vx*Uy/r;
+                        }
                         #endif
 
                         // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
@@ -870,9 +882,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         amrex::Real  AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
                         amrex::Real  AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
                         amrex::Real  AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
-                        amrex::Real  Q_tilde0 = N_arr(i,j,k)   - cx_half*AdQ0x - cz_half*AdQ0z;
-                        amrex::Real  Q_tilde1 = Ux - cx_half*AdQ1x - cz_half*AdQ1z;
-                        amrex::Real  Q_tilde2 = Uy - cx_half*AdQ2x - cz_half*AdQ2z;
+                        amrex::Real  Q_tilde0 = N_arr(i,j,k)   - cx_half*AdQ0x - cz_half*AdQ0z - (dt/2.0)*N_source;
+                        amrex::Real  Q_tilde1 = Ux - cx_half*AdQ1x - cz_half*AdQ1z - (dt/2.0)*Ur_source;
+                        amrex::Real  Q_tilde2 = Uy - cx_half*AdQ2x - cz_half*AdQ2z - (dt/2.0)*Utheta_source;
                         amrex::Real  Q_tilde3 = Uz - cx_half*AdQ3x - cz_half*AdQ3z;
 
                         // Predict Q at the cell edges (x)
@@ -1405,18 +1417,18 @@ void WarpXFluidContainer::centrifugal_source (int lev)
                     amrex::Real r = problo[0] + i * dx[0];
 
                     // Isolate U from NU
-                    auto u_r =     (NUx_arr(i, j, k) / (N_arr(i,j,k) * clight ));
-                    auto u_theta = (NUy_arr(i, j, k) / (N_arr(i,j,k) * clight ));
-                    auto u_z =     (NUz_arr(i, j, k) / (N_arr(i,j,k) * clight ));
+                    amrex::Real u_r =     (NUx_arr(i, j, k) / (N_arr(i,j,k) * clight ));
+                    amrex::Real u_theta = (NUy_arr(i, j, k) / (N_arr(i,j,k) * clight ));
+                    amrex::Real u_z =     (NUz_arr(i, j, k) / (N_arr(i,j,k) * clight ));
 
                     // (SSP-RK3) Push the fluid momentum (R and Theta)
                     // F_r, F_theta are first order euler pushes of our rhs operator
                     // TODO: only do this if (r != 0)
                     if (i != domain.smallEnd(0)) {
-                        auto u_r_1     = F_r(r,u_r,u_theta,u_z,dt);
-                        auto u_theta_1 = F_theta(r,u_r,u_theta,u_z,dt);
-                        auto u_r_2     = (0.75)*(u_r)     + (0.25)*F_r(r,u_r_1,u_theta_1,u_z,dt);
-                        auto u_theta_2 = (0.75)*(u_theta) + (0.25)*F_theta(r,u_r_1,u_theta_1,u_z,dt);
+                        amrex::Real u_r_1     = F_r(r,u_r,u_theta,u_z,dt);
+                        amrex::Real u_theta_1 = F_theta(r,u_r,u_theta,u_z,dt);
+                        amrex::Real u_r_2     = (0.75)*(u_r)     + (0.25)*F_r(r,u_r_1,u_theta_1,u_z,dt);
+                        amrex::Real u_theta_2 = (0.75)*(u_theta) + (0.25)*F_theta(r,u_r_1,u_theta_1,u_z,dt);
                         u_r            = (1.0/3.0)*(u_r)     + (2.0/3.0)*F_r(r,u_r_2,u_theta_2,u_z,dt);
                         u_theta        = (1.0/3.0)*(u_theta) + (2.0/3.0)*F_theta(r,u_r_2,u_theta_2,u_z,dt);
 
