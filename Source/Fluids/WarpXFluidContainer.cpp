@@ -585,9 +585,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         amrex::Real Vx = Ux/gamma;
                         // Compute the Flux-Jacobian Elements in x
                         amrex::Real A00x = Vx;
-                        amrex::Real A01x = c_sq/a;
-                        amrex::Real A02x = -Uy*Ux/a;
-                        amrex::Real A03x = -Uz*Ux/a;
+                        amrex::Real A01x = N_arr(i,j,k)*c_sq/a;
+                        amrex::Real A02x = -N_arr(i,j,k)*Uy*Ux/a;
+                        amrex::Real A03x = -N_arr(i,j,k)*Uz*Ux/a;
 
                         amrex::Real A10x = 0.0;
                         amrex::Real A11x = Vx;
@@ -611,9 +611,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         amrex::Real Vy = Uy/gamma;
                         // Compute the Flux-Jacobian Elements in y
                         amrex::Real A00y = Vy;
-                        amrex::Real A01y = -Ux*Uy/a;
-                        amrex::Real A02y = c_sq/a;
-                        amrex::Real A03y = -Uz*Uy/a;
+                        amrex::Real A01y = -N_arr(i,j,k)*Ux*Uy/a;
+                        amrex::Real A02y = N_arr(i,j,k)*c_sq/a;
+                        amrex::Real A03y = -N_arr(i,j,k)*Uz*Uy/a;
 
                         amrex::Real A10y = 0.0;
                         amrex::Real A11y = Vy;
@@ -636,9 +636,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         // Calc Az: (needed for all)
                         // Compute the Flux-Jacobian Elements in z
                         amrex::Real A00z = Vz;
-                        amrex::Real A01z = -Ux*Uz/a;
-                        amrex::Real A02z = -Uy*Uz/a;
-                        amrex::Real A03z = c_sq/a;
+                        amrex::Real A01z = -N_arr(i,j,k)*Ux*Uz/a;
+                        amrex::Real A02z = -N_arr(i,j,k)*Uy*Uz/a;
+                        amrex::Real A03z = N_arr(i,j,k)*c_sq/a;
 
                         amrex::Real A10z = 0.0;
                         amrex::Real A11z = Vz;
