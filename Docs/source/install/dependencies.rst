@@ -107,6 +107,14 @@ For OpenMP support, you will further need:
 
          conda install -c conda-forge llvm-openmp
 
+For Nvidia CUDA GPU support, you will need to have `a recent CUDA driver installed <https://developer.nvidia.com/cuda-downloads>`__ or you can lower the CUDA version of `the Nvidia cuda package <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#conda-installation>`__ and `conda-forge to match your drivers <https://docs.cupy.dev/en/stable/install.html#install-cupy-from-conda-forge>`__ and then add these packages:
+
+.. code-block:: bash
+
+   conda install -c nvidia -c conda-forge cuda cupy
+
+More info for `CUDA-enabled ML packages <https://twitter.com/jeremyphoward/status/1697435241152127369>`__.
+
 
 Spack (Linux/macOS)
 -------------------
