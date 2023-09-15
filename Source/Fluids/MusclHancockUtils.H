@@ -31,15 +31,9 @@ amrex::Real F_theta (amrex::Real r, amrex::Real u_r, amrex::Real u_theta, amrex:
 
 // Velocity at the half step
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::Real V_calc (amrex::Real Q0, amrex::Real Q1, amrex::Real Q2, amrex::Real Q3,
+amrex::Real V_calc (amrex::Real Ux, amrex::Real Uy, amrex::Real Uz,
     amrex::Real c, int comp)
 {
-
-    // Compute Ux, Uy, Uz:
-    amrex::Real Ux = Q1/Q0;
-    amrex::Real Uy = Q2/Q0;
-    amrex::Real Uz = Q3/Q0;
-
     // Gamma Calc
     amrex::Real gamma = sqrt(1.0 + (Ux*Ux + Uy*Uy + Uz*Uz)/(c*c));
 
