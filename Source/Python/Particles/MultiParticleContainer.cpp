@@ -27,7 +27,7 @@ void init_MultiParticleContainer (py::module& m)
              amrex::Real strength_Ex, 
              amrex::Real strength_Ey, 
              amrex::Real strength_Bx,
-             amrex::Real strength_By,
+             amrex::Real strength_By
              ) {
                  mpc.h_repeated_plasma_lens_strengths_Ex.at(i_lens) = strength_Ex;
                  mpc.h_repeated_plasma_lens_strengths_Ey.at(i_lens) = strength_Ey;

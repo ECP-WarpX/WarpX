@@ -51,8 +51,10 @@ struct GetExternalEBField
     amrex::ParticleReal m_repeated_plasma_lens_period;
     const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_starts = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_lengths = nullptr;
-    const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_strengths_E = nullptr;
-    const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_strengths_B = nullptr;
+    const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_strengths_Ex = nullptr;
+    const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_strengths_Ey = nullptr;
+    const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_strengths_Bx = nullptr;
+    const amrex::ParticleReal* AMREX_RESTRICT m_repeated_plasma_lens_strengths_By = nullptr;
     int m_n_lenses;
     amrex::Real m_dt;
     const amrex::ParticleReal* AMREX_RESTRICT m_ux = nullptr;
@@ -173,10 +175,10 @@ struct GetExternalEBField
 
                     // Note that "+=" is used since the fields may have been set above
                     // if a different E or Btype was specified.
-                    Ex += x*frac*m_repeated_plasma_lens_strengths_E[i_lens];
-                    Ey += y*frac*m_repeated_plasma_lens_strengths_E[i_lens];
-                    Bx += +y*frac*m_repeated_plasma_lens_strengths_B[i_lens];
-                    By += -x*frac*m_repeated_plasma_lens_strengths_B[i_lens];
+                    Ex += x*frac*m_repeated_plasma_lens_strengths_Ex[i_lens];
+                    Ey += y*frac*m_repeated_plasma_lens_strengths_Ey[i_lens];
+                    Bx += +y*frac*m_repeated_plasma_lens_strengths_Bx[i_lens];
+                    By += -x*frac*m_repeated_plasma_lens_strengths_By[i_lens];
                 }
             }
 

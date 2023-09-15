@@ -1552,14 +1552,22 @@ class PlasmaLens(picmistandard.base._ClassWithInit):
     - By = -x*stengths_B
 
     """
-    def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, **kw):
+    def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, 
+                 warpx_strengths_Ex=None, warpx_strengths_Ey=None, warpx_strengths_Bx=None,
+                 warpx_strengths_By=None, **kw):
         self.period = period
         self.starts = starts
         self.lengths = lengths
         self.strengths_E = strengths_E
         self.strengths_B = strengths_B
+        self.warpx_strengths_Ex = warpx_strengths_Ex
+        self.warpx_strengths_Ey = warpx_strengths_Ey
+        self.warpx_strengths_Bx = warpx_strengths_Bx
+        self.warpx_strengths_By = warpx_strengths_By
 
-        assert (self.strengths_E is not None) or (self.strengths_B is not None),\
+        assert (self.strengths_E is not None) or (self.strengths_B is not None)\
+            or (warpx_strengths_Ex is not None) or (warpx_strengths_Ex is not None)\
+            or (warpx_strengths_Bx is not None) or (warpx_strengths_By is not None),\
                Exception('One of strengths_E or strengths_B must be supplied')
 
         self.handle_init(kw)
@@ -1571,8 +1579,18 @@ class PlasmaLens(picmistandard.base._ClassWithInit):
         pywarpx.particles.repeated_plasma_lens_period = self.period
         pywarpx.particles.repeated_plasma_lens_starts = self.starts
         pywarpx.particles.repeated_plasma_lens_lengths = self.lengths
-        pywarpx.particles.repeated_plasma_lens_strengths_E = self.strengths_E
-        pywarpx.particles.repeated_plasma_lens_strengths_B = self.strengths_B
+        if self.warpx_strengths_Ex is not None or self.warpx_strengths_Ey is not None:
+            print('Using Ex and Ey, ignoring \'strengths_E\' if provided',flush=True)
+            pywarpx.particles.repeated_plasma_lens_strengths_Ex = self.warpx_strengths_Ex
+            pywarpx.particles.repeated_plasma_lens_strengths_Ey = self.warpx_strengths_Ey
+        else:
+            pywarpx.particles.repeated_plasma_lens_strengths_E = self.strengths_E
+        if self.warpx_strengths_Bx is not None or self.warpx_strengths_By is not None:
+            print('Using Bx and By, ignoring \'strengths_B\' if provided',flush=True)
+            pywarpx.particles.repeated_plasma_lens_strengths_Bx = self.warpx_strengths_Bx
+            pywarpx.particles.repeated_plasma_lens_strengths_By = self.warpx_strengths_By
+        else:
+            pywarpx.particles.repeated_plasma_lens_strengths_B = self.strengths_B
 
 
 class Simulation(picmistandard.PICMI_Simulation):

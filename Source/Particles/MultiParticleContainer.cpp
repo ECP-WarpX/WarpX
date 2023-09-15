@@ -257,31 +257,51 @@ MultiParticleContainer::ReadParameters ()
             h_repeated_plasma_lens_strengths_Bx.resize(n_lenses);
             h_repeated_plasma_lens_strengths_By.resize(n_lenses);
 
-            if (m_Ex_ext_particle_s == "repeated_plasma_lens") {
-                utils::parser::getArrWithParser(
-                    pp_particles, "repeated_plasma_lens_strengths_Ex",
-                    h_repeated_plasma_lens_strengths_Ex);
+            if (m_E_ext_particle_s == "repeated_plasma_lens") {
+                if (pp_particles.contains("repeated_plasma_lens_strengths_Ex") ||
+                    pp_particles.contains("repeated_plasma_lens_strengths_Ey")  ) {
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!pp_particles.contains("repeated_plasma_lens_strengths_E"),
+                        "Must specify either E or both Ex and Ey, but not all three.");
+                    utils::parser::getArrWithParser(
+                        pp_particles, "repeated_plasma_lens_strengths_Ex",
+                        h_repeated_plasma_lens_strengths_Ex);
+                    utils::parser::getArrWithParser(
+                        pp_particles, "repeated_plasma_lens_strengths_Ey",
+                        h_repeated_plasma_lens_strengths_Ey);
+                } else {
+                    utils::parser::getArrWithParser(
+                        pp_particles, "repeated_plasma_lens_strengths_E",
+                        h_repeated_plasma_lens_strengths_Ex);
+                    utils::parser::getArrWithParser(
+                        pp_particles, "repeated_plasma_lens_strengths_E",
+                        h_repeated_plasma_lens_strengths_Ey);
+                }
             }
-            if (m_Ey_ext_particle_s == "repeated_plasma_lens") {
-                utils::parser::getArrWithParser(
-                    pp_particles, "repeated_plasma_lens_strengths_Ey",
-                    h_repeated_plasma_lens_strengths_Ey);
-            }
-            if (m_Bx_ext_particle_s == "repeated_plasma_lens") {
-                utils::parser::getArrWithParser(
-                    pp_particles, "repeated_plasma_lens_strengths_Bx",
-                    h_repeated_plasma_lens_strengths_Bx);
-            }
-            if (m_By_ext_particle_s == "repeated_plasma_lens") {
-                utils::parser::getArrWithParser(
-                    pp_particles, "repeated_plasma_lens_strengths_By",
-                    h_repeated_plasma_lens_strengths_By);
+            if (m_B_ext_particle_s == "repeated_plasma_lens") {
+                if (pp_particles.contains("repeated_plasma_lens_strengths_Bx") ||
+                    pp_particles.contains("repeated_plasma_lens_strengths_By")  ) {
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!pp_particles.contains("repeated_plasma_lens_strengths_B"),
+                        "Must specify either B or both Bx and By, but not all three.");
+                    utils::parser::getArrWithParser(
+                        pp_particles, "repeated_plasma_lens_strengths_Bx",
+                        h_repeated_plasma_lens_strengths_Bx);
+                    utils::parser::getArrWithParser(
+                        pp_particles, "repeated_plasma_lens_strengths_By",
+                        h_repeated_plasma_lens_strengths_By);
+                } else {
+                    utils::parser::getArrWithParser(
+                        pp_particles, "repeated_plasma_lens_strengths_B",
+                        h_repeated_plasma_lens_strengths_Bx);
+                    utils::parser::getArrWithParser(
+                        pp_particles, "repeated_plasma_lens_strengths_B",
+                        h_repeated_plasma_lens_strengths_By);
+                }
             }
 
-            d_repeated_plasma_lens_strengths_E.resize(n_lenses);
             d_repeated_plasma_lens_strengths_Ex.resize(n_lenses);
+            d_repeated_plasma_lens_strengths_Ey.resize(n_lenses);
+            d_repeated_plasma_lens_strengths_Bx.resize(n_lenses);
             d_repeated_plasma_lens_strengths_By.resize(n_lenses);
-            d_repeated_plasma_lens_strengths_B.resize(n_lenses);
             amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                        h_repeated_plasma_lens_strengths_Ex.begin(), h_repeated_plasma_lens_strengths_Ex.end(),
                        d_repeated_plasma_lens_strengths_Ex.begin());

@@ -91,8 +91,10 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
         m_n_lenses = static_cast<int>(mypc.h_repeated_plasma_lens_starts.size());
         m_repeated_plasma_lens_starts = mypc.d_repeated_plasma_lens_starts.data();
         m_repeated_plasma_lens_lengths = mypc.d_repeated_plasma_lens_lengths.data();
-        m_repeated_plasma_lens_strengths_E = mypc.d_repeated_plasma_lens_strengths_E.data();
-        m_repeated_plasma_lens_strengths_B = mypc.d_repeated_plasma_lens_strengths_B.data();
+        m_repeated_plasma_lens_strengths_Ex = mypc.d_repeated_plasma_lens_strengths_Ex.data();
+        m_repeated_plasma_lens_strengths_Ey = mypc.d_repeated_plasma_lens_strengths_Ey.data();
+        m_repeated_plasma_lens_strengths_Bx = mypc.d_repeated_plasma_lens_strengths_Bx.data();
+        m_repeated_plasma_lens_strengths_By = mypc.d_repeated_plasma_lens_strengths_By.data();
     }
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Etype != Unknown, "Unknown E_ext_particle_init_style");
