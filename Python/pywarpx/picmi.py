@@ -2201,24 +2201,26 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
             variables.sort()
 
         # species list
-        if np.iterable(self.species):
-            species_list = self.species
+        if self.species is None:
+            species_names = pywarpx.particles.species_names
+        elif np.iterable(self.species):
+            species_names = [specie.name for specie in self.species]
         else:
-            species_list = [self.species]
+            species_names = [species.name]
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution
             # is used multiple times
             self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-        for specie in species_list:
-            diag = pywarpx.Bucket.Bucket(self.name + '.' + specie.name,
+        for name in species_names:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables,
                                          random_fraction = self.random_fraction,
                                          uniform_stride = self.uniform_stride)
             expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
-            self.diagnostic._species_dict[specie.name] = diag
+            self.diagnostic._species_dict[name] = diag
 
 # ----------------------------
 # Lab frame diagnostics
@@ -2422,15 +2424,17 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
             variables.sort()
 
         # species list
-        if np.iterable(self.species):
-            species_list = self.species
+        if self.species is None:
+            species_names = pywarpx.particles.species_names
+        elif np.iterable(self.species):
+            species_names = [specie.name for specie in self.species]
         else:
-            species_list = [self.species]
+            species_names = [species.name]
 
-        for specie in species_list:
-            diag = pywarpx.Bucket.Bucket(self.name + '.' + specie.name,
+        for name in species_names:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables)
-            self.diagnostic._species_dict[specie.name] = diag
+            self.diagnostic._species_dict[name] = diag
 
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
