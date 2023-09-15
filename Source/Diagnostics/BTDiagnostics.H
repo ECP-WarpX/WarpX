@@ -190,7 +190,7 @@ private:
     amrex::Vector<amrex::Box> m_snapshot_box;
     /** Vector of Box-dimension in boosted-frame index space corresponding to the
      *  buffer that covers a part of the full backtransformed snapshot */
-    amrex::Vector<amrex::Box> m_buffer_box;
+    amrex::Vector< amrex::Vector <amrex::Box> > m_buffer_box;
     /** Vector of lab-frame z co-ordinate of each back-transformed snapshot
      *  at the current timestep */
     amrex::Vector<amrex::Real> m_current_z_lab;
@@ -307,8 +307,8 @@ private:
      * returns bool = true is buffer is full, that is,
                when buffer counter is equal to m_buffer_size
      */
-    bool buffer_full (int i_buffer) {
-        return (k_index_zlab(i_buffer,0) == m_buffer_box[i_buffer].smallEnd(m_moving_window_dir));
+    bool buffer_full (int i_buffer, const int lev) {
+        return (k_index_zlab(i_buffer,0) == m_buffer_box[i_buffer][lev].smallEnd(m_moving_window_dir));
     }
 
     /** whether field buffer is empty.

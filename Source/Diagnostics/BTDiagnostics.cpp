@@ -93,6 +93,7 @@ void BTDiagnostics::DerivedInitData ()
     m_field_buffer_multifab_defined.resize(m_num_buffers);
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
+	m_buffer_box[i].resize(nmax_lev);
         m_snapshot_full[i] = 0;
         m_lastValidZSlice[i] = 0;
         m_buffer_flush_counter[i] = 0;
@@ -298,8 +299,13 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 
         // If buffer for this lab snapshot is full then dump it and continue to collect
         // slices afterwards
-        const auto is_buffer_full = buffer_full(i_buffer);
-        // or
+	auto is_buffer_full = false;
+	const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
+        for (int lev = 0 ; lev < nlevels; ++lev) {
+            is_buffer_full = buffer_full(i_buffer, lev);
+	}
+
+	// or
         // If last z-slice in the lab-frame snapshot is filled, call dump to
         // write the buffer and close the file.
         const auto last_z_slice_filled = (m_lastValidZSlice[i_buffer] == 1);
@@ -383,7 +389,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
         }
     }
     const amrex::Box diag_box( lo, hi );
-    m_buffer_box[i_buffer] = diag_box;
+    m_buffer_box[i_buffer][lev] = diag_box;
     m_snapshot_box[i_buffer] = diag_box;
     // Define box array
     amrex::BoxArray diag_ba(diag_box);
@@ -844,7 +850,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                 m_all_field_functors[lev][i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
-                                             m_buffer_box[i_buffer],
+                                             m_buffer_box[i_buffer][lev],
                                              k_index_zlab(i_buffer, lev),
                                              m_snapshot_full[i_buffer] );
 
@@ -888,13 +894,13 @@ BTDiagnostics::SetSnapshotFullStatus (const int i_buffer)
 void
 BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
 {
-    if (m_field_buffer_multifab_defined[i_buffer] == 1) return;
+    if (lev == nlev_output && m_field_buffer_multifab_defined[i_buffer] == 1) return;
     auto & warpx = WarpX::GetInstance();
 
     const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
-    m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
-    m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
-    amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
+    m_buffer_box[i_buffer][lev].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
+    m_buffer_box[i_buffer][lev].setBig( m_moving_window_dir, hi_k_lab );
+    amrex::BoxArray buffer_ba( m_buffer_box[i_buffer][lev] );
     // Generate a new distribution map for the back-transformed buffer multifab
     const amrex::DistributionMapping buffer_dmap(buffer_ba);
     // Number of guard cells for the output buffer is zero.
@@ -902,6 +908,8 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     const int ngrow = 0;
     m_mf_output[i_buffer][lev] = amrex::MultiFab( buffer_ba, buffer_dmap,
                                               m_varnames.size(), ngrow );
+    //amrex::Print() << "buffer_ba = " << buffer_ba << "\n";
+    //amrex::Print() << "buffer_dmap = " << buffer_dmap << "\n";
     m_mf_output[i_buffer][lev].setVal(0.);
 
     amrex::IntVect ref_ratio = amrex::IntVect(1);
@@ -934,10 +942,12 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         m_geom_output[i_buffer][lev].define( domain, &m_buffer_domain_lab[i_buffer],
                                              amrex::CoordSys::cartesian,
                                              BTdiag_periodicity.data() );
+       //amrex::Print() << "DefineFieldBufferMultiFab lev == 0 : m_geom_output[i_buffer][lev] = " << m_geom_output[i_buffer][lev] << "\n";
     } else if (lev > 0 ) {
         // Refine the geometry object defined at the previous level, lev-1
         m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
                                                       WarpX::RefRatio(lev-1) );
+       //amrex::Print() << "DefineFieldBufferMultiFab lev == 1 : m_geom_output[i_buffer][lev] = " << m_geom_output[i_buffer][lev] << "\n";
     }
     m_field_buffer_multifab_defined[i_buffer] = 1;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_mf_output[i_buffer][lev].boxArray().size() == 1,
@@ -948,7 +958,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
 void
 BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 {
-    if (m_snapshot_geometry_defined[i_buffer] == 1) return;
+    if (lev == nlev_output &&  m_snapshot_geometry_defined[i_buffer] == 1) return;
 
     if (lev == 0) {
         // Default non-periodic geometry for diags
@@ -960,10 +970,12 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
                                                &m_snapshot_domain_lab[i_buffer],
                                                amrex::CoordSys::cartesian,
                                                BTdiag_periodicity.data() );
+       //amrex::Print() << "DefineSnapshotGeometry lev == 0 : m_geom_snapshot[i_buffer][lev] = " << m_geom_snapshot[i_buffer][lev] << "\n";
     } else if (lev > 0) {
         // Refine the geometry object defined at the previous level, lev-1
         m_geom_snapshot[i_buffer][lev] = amrex::refine( m_geom_snapshot[i_buffer][lev-1],
                                                         WarpX::RefRatio(lev-1) );
+       //amrex::Print() << "DefineSnapshotGeometry lev == 1 : m_geom_snapshot[i_buffer][lev] = " << m_geom_snapshot[i_buffer][lev] << "\n";
     }
     m_snapshot_geometry_defined[i_buffer] = 1;
 }
@@ -1022,39 +1034,43 @@ BTDiagnostics::Flush (int i_buffer)
             if (lev < nlevels - 1) {
                 vrefratio.push_back(m_particles_buffer[i_buffer][0]->GetParGDB()->refRatio(lev));
             }
-        }
-        // Redistribute particles in the lab frame box arrays that correspond to the buffer
-        // Prior to redistribute, increase buffer box and Box in ParticleBoxArray by 1 index in the
-        // lo and hi-end, so particles can be binned in the boxes correctly.
-        // For BTD, we may have particles that are out of the domain by half a cell-size or one cell size.
-        // As a result, the index they correspond to may be out of the box by one index
-        // As a work around to the locateParticle error in Redistribute, we increase the box size before
-        // redistribute and shrink it after the call to redistribute.
-        m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1) );
-        m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) + 1) );
-        const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
-        amrex::BoxArray buffer_ba( particle_buffer_box );
-        m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
-        for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
-            // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
-            m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], buffer_ba);
-        }
+
+            // Redistribute particles in the lab frame box arrays that correspond to the buffer
+            // Prior to redistribute, increase buffer box and Box in ParticleBoxArray by 1 index in the
+            // lo and hi-end, so particles can be binned in the boxes correctly.
+            // For BTD, we may have particles that are out of the domain by half a cell-size or one cell size.
+            // As a result, the index they correspond to may be out of the box by one index
+            // As a work around to the locateParticle error in Redistribute, we increase the box size before
+            // redistribute and shrink it after the call to redistribute.
+            m_buffer_box[i_buffer][lev].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer][lev].smallEnd(m_moving_window_dir) - 1) );
+            m_buffer_box[i_buffer][lev].setBig(m_moving_window_dir, (m_buffer_box[i_buffer][lev].bigEnd(m_moving_window_dir) + 1) );
+            const amrex::Box particle_buffer_box = m_buffer_box[i_buffer][lev];
+            amrex::BoxArray buffer_ba( particle_buffer_box );
+            m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
+            for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+                // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
+                m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], buffer_ba);
+            }
+       	}
     }
     RedistributeParticleBuffer(i_buffer);
 
     // Reset buffer box and particle box array
     if (m_format == "openpmd") {
         if (m_particles_buffer.at(i_buffer).size() > 0 ) {
-            m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
-            m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
-            m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
-            for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
-                // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
-                m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
-                    "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
-            }
-        }
+           const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
+           for (int lev = 0 ; lev < nlevels; ++lev) {
+               m_buffer_box[i_buffer][lev].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer][lev].smallEnd(m_moving_window_dir) + 1) );
+               m_buffer_box[i_buffer][lev].setBig(m_moving_window_dir, (m_buffer_box[i_buffer][lev].bigEnd(m_moving_window_dir) - 1) );
+               m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
+               for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+                   // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
+                   m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+                   WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
+                       "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
+               }
+           }
+	}
     }
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
@@ -1067,15 +1083,18 @@ BTDiagnostics::Flush (int i_buffer)
     // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
         if (m_particles_buffer.at(i_buffer).size() > 0 ) {
-            m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
-            m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
-            m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
-            for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
-                // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
-                m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
-                    "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
-            }
+           const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
+           for (int lev = 0 ; lev < nlevels; ++lev) {
+               m_buffer_box[i_buffer][lev].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer][lev].smallEnd(m_moving_window_dir) + 1) );
+               m_buffer_box[i_buffer][lev].setBig(m_moving_window_dir, (m_buffer_box[i_buffer][lev].bigEnd(m_moving_window_dir) - 1) );
+               m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
+               for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+                   // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
+                   m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+                   WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
+                       "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
+               }
+	   }
         }
     }
 
@@ -1103,7 +1122,10 @@ BTDiagnostics::Flush (int i_buffer)
     // Setting hi k-index for the next buffer, such that, the index is one less than the lo-index of previous buffer
     // For example, for buffer size of 256, if the first buffer extent was [256,511]
     // then the next buffer will be from [0,255]. That is, the hi-index of the following buffer is 256-1
-    m_buffer_k_index_hi[i_buffer] = m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) - 1;
+    const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
+    for (int lev = 0 ; lev < nlevels; ++lev) {
+        m_buffer_k_index_hi[i_buffer] = m_buffer_box[i_buffer][lev].smallEnd(m_moving_window_dir) - 1;
+    }
 }
 
 void BTDiagnostics::RedistributeParticleBuffer (const int i_buffer)
@@ -1458,7 +1480,7 @@ BTDiagnostics::PrepareParticleDataForOutput()
                             }
                             DefineFieldBufferMultiFab(i_buffer, lev);
                         }
-                        const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
+                        const amrex::Box particle_buffer_box = m_buffer_box[i_buffer][lev];
                         amrex::BoxArray buffer_ba( particle_buffer_box );
                         const amrex::DistributionMapping buffer_dmap(buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
