@@ -47,6 +47,7 @@ zmin = -20e-6; zmax = 100.e-6; Nz = 5120
 import numpy as np
 from scipy.integrate import odeint
 
+
 # ODE Function
 def odefcn(phi, xi, kp, a0, c, tau, xi_0):
     phi1, phi2 = phi
@@ -81,7 +82,7 @@ n = n0 * (gamma_perp_sq + (1 + phi2)**2) / (2 * (1 + phi2)**2)
 uz = (gamma_perp_sq - (1 + phi2)**2) / (2 * (1 + phi2))
 gamma = (gamma_perp_sq + (1 + phi2)**2) / (2 * (1 + phi2))
 
-# Theory Components [convert to si] 
+# Theory Components [convert to si]
 uz *= c
 J_th = np.multiply( np.divide(uz,gamma), n )
 J_th *= e
@@ -141,18 +142,18 @@ ylabel = ['Ez', 'rho', 'Jz', 'Vz/c']
 # Plotting loop
 for i in range(3):
     ax = axes[i // 2, i % 2]  # Get the current subplot
-    
+
     # Plot theoretical data
     ax.plot(xi, [E_th, rho_th, J_th, V_th][i], label='Theoretical')
-    
+
     # Plot simulated data
     ax.plot(xi, [E_sim, rho_sim, J_sim, V_sim][i], label='Simulated')
-    
+
     # Set titles and labels
     ax.set_title(f'{titles[i]} vs Xi')
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel[i])
-    
+
     # Add legend
     ax.legend()
 

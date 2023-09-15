@@ -29,7 +29,7 @@ warpx.moving_window_v = 1.0 # units of speed of light
 warpx.do_dynamic_scheduling = 0
 warpx.serialize_initial_conditions = 1
 
-### BOOST ### 
+### BOOST ###
 #warpx.gamma_boost = 5.0
 #warpx.boost_direction = z
 
@@ -46,7 +46,7 @@ electrons.injection_style = "NUniformPerCell"
 electrons.num_particles_per_cell_each_dim = 10
 electrons.zmin =  10.e-6
 electrons.profile = parse_density_function
-electrons.density_function(x,y,z) = "1.0e10 + 20.e23*((z*5.e4 + -0.5)*(z>10.e-6)*(z<30.e-6)) + 20.e23*((z>30.e-6))" 
+electrons.density_function(x,y,z) = "1.0e10 + 20.e23*((z*5.e4 + -0.5)*(z>10.e-6)*(z<30.e-6)) + 20.e23*((z>30.e-6))"
 electrons.momentum_distribution_type = "at_rest"
 electrons.do_continuous_injection = 1
 
@@ -56,7 +56,7 @@ ions.injection_style = "NUniformPerCell"
 ions.num_particles_per_cell_each_dim = 10
 ions.zmin =  10.e-6
 ions.profile = parse_density_function
-ions.density_function(x,y,z) = "1.0e10 + 20.e23*((z*5.e4 + -0.5)*(z>10.e-6)*(z<30.e-6)) + 20.e23*((z>30.e-6))" 
+ions.density_function(x,y,z) = "1.0e10 + 20.e23*((z*5.e4 + -0.5)*(z>10.e-6)*(z<30.e-6)) + 20.e23*((z>30.e-6))"
 ions.momentum_distribution_type = "at_rest"
 ions.do_continuous_injection = 1
 
