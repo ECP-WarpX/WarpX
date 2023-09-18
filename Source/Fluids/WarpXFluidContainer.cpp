@@ -161,6 +161,7 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
     const auto dx = geom.CellSizeArray();
     const auto problo = geom.ProbLoArray();
     const amrex::Real clight = PhysConst::c;
+    const amrex::Real gamma_boost = WarpX::gamma_boost;
 
     // Loop through cells and initialize their value
 #ifdef AMREX_USE_OMP
@@ -197,8 +198,8 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
 #endif
 
                 // Lorentz transform z (from boosted to lab frame)
-                if (WarpX::gamma_boost > 1._rt){
-                    z = WarpX::gamma_boost*(z + WarpX::beta_boost*clight*cur_time);
+                if (gamma_boost > 1._rt){
+                    z = gamma_boost*(z + WarpX::beta_boost*clight*cur_time);
                 }
 
                 amrex::Real n = inj_rho->getDensity(x, y, z);
@@ -212,13 +213,10 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
                 // Check if n > 0 and if not, don't compute the boost
                 // Lorentz transform n, u (from lab to boosted frame)
                 if (n > 0.0){
-                    if (WarpX::gamma_boost > 1._rt){
-                        //amrex::Real n_boosted = WarpX::gamma_boost*(n - WarpX::beta_boost*n*u.z/clight);
-                        //amrex::Real nuz_boosted = WarpX::gamma_boost*(n*u.z - WarpX::beta_boost*n*clight);
-                        //u.z = nuz_boosted/n_boosted;
+                    if (gamma_boost > 1._rt){
                         amrex::Real gamma = sqrt(1.0 + (u.x*u.x + u.y*u.y + u.z*u.z)/(clight*clight));
-                        amrex::Real n_boosted = WarpX::gamma_boost*n*( 1.0 - WarpX::beta_boost*u.z/(gamma*clight) );
-                        amrex::Real uz_boosted = WarpX::gamma_boost*(u.z - WarpX::beta_boost*clight*gamma);
+                        amrex::Real n_boosted = gamma_boost*n*( 1.0 - WarpX::beta_boost*u.z/(gamma*clight) );
+                        amrex::Real uz_boosted = gamma_boost*(u.z - WarpX::beta_boost*clight*gamma);
                         u.z = uz_boosted;
                         n = n_boosted;
                     }
@@ -1459,6 +1457,7 @@ void WarpXFluidContainer::GatherAndPush (
     const amrex::Geometry &geom = warpx.Geom(lev);
     const auto dx = geom.CellSizeArray();
     const auto problo = geom.ProbLoArray();
+    const amrex::Real gamma_boost = WarpX::gamma_boost;
     //Check whether m_E_ext_s is "none"
     bool external_e_fields; // Needs intializing
     bool external_b_fields; // Needs intializing
@@ -1546,7 +1545,7 @@ void WarpXFluidContainer::GatherAndPush (
                     amrex::Real Bz_Nodal = ablastr::coarsen::sample::Interp(Bz_arr,
                         Bz_type, Nodal_type, coarsening_ratio, i, j, k, 0);
 
-                    if (WarpX::gamma_boost > 1._rt) { // Lorentz transform fields due to moving frame
+                    if (gamma_boost > 1._rt) { // Lorentz transform fields due to moving frame
                         if ( ( external_b_fields ) || ( external_e_fields ) ){
 
                             // Lorentz transform z (from boosted to lab frame)
@@ -1572,8 +1571,8 @@ void WarpXFluidContainer::GatherAndPush (
 
                             // Get the lab frame E and B
                             // Transform (boosted to lab)
-                            amrex::Real t_lab = WarpX::gamma_boost*(t + WarpX::beta_boost*z/PhysConst::c);
-                            amrex::Real z_lab = WarpX::gamma_boost*(z + WarpX::beta_boost*PhysConst::c*t);
+                            amrex::Real t_lab = gamma_boost*(t + WarpX::beta_boost*z/PhysConst::c);
+                            amrex::Real z_lab = gamma_boost*(z + WarpX::beta_boost*PhysConst::c*t);
 
                             // Grab the external fields in the lab frame:
                             if ( external_e_fields ) {
@@ -1600,10 +1599,10 @@ void WarpXFluidContainer::GatherAndPush (
                             // RHS m_parser
                             Ez_ext_boost = Ez_ext_lab;
                             Bz_ext_boost = Bz_ext_lab;
-                            Ex_ext_boost = WarpX::gamma_boost*(Ex_ext_lab - WarpX::beta_boost*PhysConst::c*By_ext_lab);
-                            Ey_ext_boost = WarpX::gamma_boost*(Ey_ext_lab + WarpX::beta_boost*PhysConst::c*Bx_ext_lab);
-                            Bx_ext_boost = WarpX::gamma_boost*(Bx_ext_lab + WarpX::beta_boost*Ey_ext_lab/PhysConst::c);
-                            By_ext_boost = WarpX::gamma_boost*(By_ext_lab - WarpX::beta_boost*Ex_ext_lab/PhysConst::c);
+                            Ex_ext_boost = gamma_boost*(Ex_ext_lab - WarpX::beta_boost*PhysConst::c*By_ext_lab);
+                            Ey_ext_boost = gamma_boost*(Ey_ext_lab + WarpX::beta_boost*PhysConst::c*Bx_ext_lab);
+                            Bx_ext_boost = gamma_boost*(Bx_ext_lab + WarpX::beta_boost*Ey_ext_lab/PhysConst::c);
+                            By_ext_boost = gamma_boost*(By_ext_lab - WarpX::beta_boost*Ex_ext_lab/PhysConst::c);
 
                             // Then add to Nodal quantities in the boosted frame:
                             Ex_Nodal += Ex_ext_boost;
