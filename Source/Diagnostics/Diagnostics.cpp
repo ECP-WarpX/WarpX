@@ -115,11 +115,15 @@ Diagnostics::BaseReadParameters ()
     if (!pfield_varnames_specified){
         m_pfield_varnames = {};
     }
+
 #ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        (WarpX::ncomps == 1),
-        "particle_fields_to_plot only work for m=0 RZ modes."
-    );
+    if (pfield_varnames_specified){
+        ablastr::warn_manager::WMRecordWarning(
+            "Diagnostics",
+            "Particle field diagnostics will output the 0th mode only.",
+            ablastr::warn_manager::WarnPriority::low
+        )
+    }
 #endif
 
     // Get parser strings for particle fields and generate map of parsers

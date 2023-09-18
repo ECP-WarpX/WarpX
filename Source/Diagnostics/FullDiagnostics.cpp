@@ -329,6 +329,8 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
         }
     }
 
+    // Generate field functors for every particle field diagnostic for every species in m_pfield_species.
+    // The names of the diagnostics are output in the `[varname]_[species]` format.
     for (int pcomp=0; pcomp<int(m_pfield_varnames.size()); pcomp++) {
         for (int ispec=0; ispec<int(m_pfield_species.size()); ispec++) {
             m_all_field_functors[lev][nvar + pcomp * nspec + ispec] = std::make_unique<ParticleReductionFunctor>(nullptr,
