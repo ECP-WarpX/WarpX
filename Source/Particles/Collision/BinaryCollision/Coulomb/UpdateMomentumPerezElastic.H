@@ -102,34 +102,36 @@ void UpdateMomentumPerezElastic (
     T_PR const g1s = ( T_PR(1.0) - vcDv1*inv_c2 )*gc*g1;
     T_PR const g2s = ( T_PR(1.0) - vcDv2*inv_c2 )*gc*g2;
 
-    // Compute the Coulomb log lnLmd
-    T_PR lnLmd;
-    if ( L > T_PR(0.0) ) { lnLmd = L; }
-    else
-    {
-        // Compute b0 according to eq (22) from Perez et al., Phys.Plasmas.19.083104 (2012)
-        // Note: there is a typo in the equation, the last square is incorrect!
-        // See the SMILEI documentation: https://smileipic.github.io/Smilei/Understand/collisions.html
-        // and https://github.com/ECP-WarpX/WarpX/files/3799803/main.pdf from GitHub #429
-        T_PR const b0 = amrex::Math::abs(q1*q2) * inv_c2 /
-               (T_PR(4.0)*MathConst::pi*PhysConst::ep0) * gc/mass_g *
-               ( m1*g1s*m2*g2s/(p1sm*p1sm*inv_c2) + T_PR(1.0) );
-
-        // Compute the minimal impact parameter
-        constexpr T_PR hbar_pi = static_cast<T_PR>(PhysConst::hbar*MathConst::pi);
-        const T_PR bmin = amrex::max(hbar_pi/p1sm, b0);
-
-        // Compute the Coulomb log lnLmd
-        lnLmd = amrex::max( T_PR(2.0),
-                T_PR(0.5)*std::log(T_PR(1.0)+lmdD*lmdD/(bmin*bmin)) );
-    }
-
     // Compute s
     T_PR s = 0;
     if (p1sm > std::numeric_limits<T_PR>::min()) {
+
         // s is non-zero (i.e. particles scatter) only if the relative
         // motion between particles is not negligible (p1sm non-zero)
 
+        // Compute the Coulomb log lnLmd first
+        T_PR lnLmd;
+        if ( L > T_PR(0.0) ) { lnLmd = L; }
+        else
+        {
+            // Compute b0 according to eq (22) from Perez et al., Phys.Plasmas.19.083104 (2012)
+            // Note: there is a typo in the equation, the last square is incorrect!
+            // See the SMILEI documentation: https://smileipic.github.io/Smilei/Understand/collisions.html
+            // and https://github.com/ECP-WarpX/WarpX/files/3799803/main.pdf from GitHub #429
+            T_PR const b0 = amrex::Math::abs(q1*q2) * inv_c2 /
+                (T_PR(4.0)*MathConst::pi*PhysConst::ep0) * gc/mass_g *
+                ( m1*g1s*m2*g2s/(p1sm*p1sm*inv_c2) + T_PR(1.0) );
+
+            // Compute the minimal impact parameter
+            constexpr T_PR hbar_pi = static_cast<T_PR>(PhysConst::hbar*MathConst::pi);
+            const T_PR bmin = amrex::max(hbar_pi/p1sm, b0);
+
+            // Compute the Coulomb log lnLmd
+            lnLmd = amrex::max( T_PR(2.0),
+                    T_PR(0.5)*std::log(T_PR(1.0)+lmdD*lmdD/(bmin*bmin)) );
+        }
+
+        // Compute s
         const auto tts = m1*g1s*m2*g2s/(inv_c2*p1sm*p1sm) + T_PR(1.0);
         const auto tts2 = tts*tts;
         s = n1*n2/n12 * dt*lnLmd*q1*q1*q2*q2 /
