@@ -16,6 +16,7 @@
 #include <blas.hh>
 #include <lapack.hh>
 
+using namespace amrex::literals;
 
 HankelTransform::HankelTransform (int const hankel_order,
                                   int const azimuthal_mode,
