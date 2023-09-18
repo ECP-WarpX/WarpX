@@ -122,7 +122,7 @@ Diagnostics::BaseReadParameters ()
             "Diagnostics",
             "Particle field diagnostics will output the 0th mode only.",
             ablastr::warn_manager::WarnPriority::low
-        )
+        );
     }
 #endif
 
