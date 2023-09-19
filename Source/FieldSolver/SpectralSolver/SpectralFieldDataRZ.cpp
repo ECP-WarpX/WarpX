@@ -498,7 +498,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         const amrex::Array4<amrex::Real> field_mf_copy_arr = (*field_mf_copy)[mfi].array();
         const amrex::Array4<const amrex::Real> field_mf_arr = field_mf[mfi].const_array();
         const int ncomps = m_ncomps;
-        amrex::ParallelFor(realspace_bx, ncomps, [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept
+        amrex::ParallelFor(mfi.tilebox(), ncomps, [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept
         {
             field_mf_copy_arr(i,j,k,n) = field_mf_arr(i,j,k,i_comp*ncomps+n);
         });
@@ -589,7 +589,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         const amrex::Array4<amrex::Real> field_mf_t_copy_arr = (*field_mf_t_copy)[mfi].array();
         const amrex::Array4<const amrex::Real> field_mf_r_arr = field_mf_r[mfi].const_array();
         const amrex::Array4<const amrex::Real> field_mf_t_arr = field_mf_t[mfi].const_array();
-        amrex::ParallelFor(realspace_bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Real part of mode 0
             field_mf_r_copy_arr(i,j,k,0) = field_mf_r_arr(i,j,k,0);
