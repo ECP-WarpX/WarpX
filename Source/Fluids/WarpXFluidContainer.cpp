@@ -1487,6 +1487,12 @@ void WarpXFluidContainer::GatherAndPush (
     // External field parsers
     external_e_fields = (m_E_ext_s == "parse_e_ext_function");
     external_b_fields = (m_B_ext_s == "parse_b_ext_function");
+    amrex::ParserExecutor<4> m_Exfield_parser;
+    amrex::ParserExecutor<4> m_Eyfield_parser;
+    amrex::ParserExecutor<4> m_Ezfield_parser;
+    amrex::ParserExecutor<4> m_Bxfield_parser;
+    amrex::ParserExecutor<4> m_Byfield_parser;
+    amrex::ParserExecutor<4> m_Bzfield_parser;
     if (external_e_fields){
         constexpr auto num_arguments = 4; //x,y,z,t
         m_Exfield_parser = m_Ex_parser->compile<num_arguments>();
