@@ -204,7 +204,7 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
                 }
 
                 amrex::Real n = inj_rho->getDensity(x, y, z);
-                auto u = inj_mom->getBulkMomentum(x, y, z);
+                amrex::XDim3 u = inj_mom->getBulkMomentum(x, y, z);
 
                 // Give u the right dimensions of m/s
                 u.x = u.x * clight;
@@ -391,25 +391,25 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const auto dx = geom.CellSizeArray();
     const amrex::Real clight = PhysConst::c;
     #if defined(WARPX_DIM_3D)
-        auto cx = (dt/dx[0]);
-        auto cy = (dt/dx[1]);
-        auto cz = (dt/dx[2]);
-        auto cx_half = 0.5*(dt/dx[0]);
-        auto cy_half = 0.5*(dt/dx[1]);
-        auto cz_half = 0.5*(dt/dx[2]);
+        amrex::Real cx = (dt/dx[0]);
+        amrex::Real cy = (dt/dx[1]);
+        amrex::Real cz = (dt/dx[2]);
+        amrex::Real cx_half = 0.5*(dt/dx[0]);
+        amrex::Real cy_half = 0.5*(dt/dx[1]);
+        amrex::Real cz_half = 0.5*(dt/dx[2]);
     #elif defined(WARPX_DIM_XZ)
-        auto cx_half = 0.5*(dt/dx[0]);
-        auto cz_half = 0.5*(dt/dx[1]);
-        auto cx = (dt/dx[0]);
-        auto cz = (dt/dx[1]);
+        amrex::Real cx_half = 0.5*(dt/dx[0]);
+        amrex::Real cz_half = 0.5*(dt/dx[1]);
+        amrex::Real cx = (dt/dx[0]);
+        amrex::Real cz = (dt/dx[1]);
     #elif defined(WARPX_DIM_RZ)
         const auto problo = geom.ProbLoArray();
-        auto cx_half = 0.5*(dt/dx[0]);
-        auto cz_half = 0.5*(dt/dx[1]);
+        amrex::Real cx_half = 0.5*(dt/dx[0]);
+        amrex::Real cz_half = 0.5*(dt/dx[1]);
         amrex::Box const& domain = geom.Domain();
     #else
-        auto cz = (dt/dx[0]);
-        auto cz_half = 0.5*(dt/dx[0]);
+        amrex::Real cz = (dt/dx[0]);
+        amrex::Real cz_half = 0.5*(dt/dx[0]);
     #endif
 
     amrex::BoxArray ba = N[lev]->boxArray();
@@ -1466,13 +1466,13 @@ void WarpXFluidContainer::GatherAndPush (
 
 
    // Prepare interpolation of current components to cell center
-    auto Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    auto Ex_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    auto Ey_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    auto Ez_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    auto Bx_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    auto By_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    auto Bz_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> Ex_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> Ey_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> Ez_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> Bx_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> By_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> Bz_type = amrex::GpuArray<int, 3>{0, 0, 0};
     for (int i = 0; i < AMREX_SPACEDIM; ++i)
     {
         Nodal_type[i] = N[lev]->ixType()[i];
@@ -1494,14 +1494,14 @@ void WarpXFluidContainer::GatherAndPush (
     amrex::ParserExecutor<4> Byfield_parser;
     amrex::ParserExecutor<4> Bzfield_parser;
     if (external_e_fields){
-        constexpr auto num_arguments = 4; //x,y,z,t
+        constexpr int num_arguments = 4; //x,y,z,t
         Exfield_parser = m_Ex_parser->compile<num_arguments>();
         Eyfield_parser = m_Ey_parser->compile<num_arguments>();
         Ezfield_parser = m_Ez_parser->compile<num_arguments>();
     }
 
     if (external_b_fields){
-        constexpr auto num_arguments = 4; //x,y,z,t
+        constexpr int num_arguments = 4; //x,y,z,t
         Bxfield_parser = m_Bx_parser->compile<num_arguments>();
         Byfield_parser = m_By_parser->compile<num_arguments>();
         Bzfield_parser = m_Bz_parser->compile<num_arguments>();
@@ -1718,7 +1718,7 @@ void WarpXFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho, int icom
         amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
         amrex::Array4<amrex::Real> rho_arr = rho.array(mfi);
-        auto owner_mask_rho_arr = owner_mask_rho->array(mfi);
+        amrex::Array4<int> owner_mask_rho_arr = owner_mask_rho->array(mfi);
 
         // Deposit Rho
         amrex::ParallelFor(tile_box,
@@ -1746,10 +1746,10 @@ void WarpXFluidContainer::DepositCurrent(
     const amrex::Real q = getCharge();
 
     // Prepare interpolation of current components to cell center
-    auto j_nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    auto jx_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    auto jy_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    auto jz_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> j_nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> jx_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> jy_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    amrex::GpuArray<int, 3> jz_type = amrex::GpuArray<int, 3>{0, 0, 0};
     for (int i = 0; i < AMREX_SPACEDIM; ++i)
     {
         j_nodal_type[i] = tmp_jx_fluid.ixType()[i];
@@ -1819,9 +1819,9 @@ void WarpXFluidContainer::DepositCurrent(
         amrex::Array4<amrex::Real> tmp_jy_fluid_arr = tmp_jy_fluid.array(mfi);
         amrex::Array4<amrex::Real> tmp_jz_fluid_arr = tmp_jz_fluid.array(mfi);
 
-        auto owner_mask_x_arr = owner_mask_x->array(mfi);
-        auto owner_mask_y_arr = owner_mask_y->array(mfi);
-        auto owner_mask_z_arr = owner_mask_z->array(mfi);
+        amrex::Array4<int> owner_mask_x_arr = owner_mask_x->array(mfi);
+        amrex::Array4<int> owner_mask_y_arr = owner_mask_y->array(mfi);
+        amrex::Array4<int> owner_mask_z_arr = owner_mask_z->array(mfi);
 
         // When using the `Interp` function, one needs to specify whether coarsening is desired.
         // Here, we do not perform any coarsening.
