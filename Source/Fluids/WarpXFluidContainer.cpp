@@ -251,9 +251,9 @@ void WarpXFluidContainer::Evolve(
     GatherAndPush(lev, Ex, Ey, Ez, Bx, By, Bz, cur_time);
 
     // Cylindrical centrifugal term
-    #if defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_RZ)
         centrifugal_source(lev);
-    #endif
+#endif
 
     // Apply (non-periodic) BC on the fluids (needed for spatial derivative),
     // and communicate N, NU at boundaries
@@ -288,9 +288,9 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
     domain.surroundingNodes();
 
     // H&C push the momentum
-    #ifdef AMREX_USE_OMP
-    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    #endif
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
@@ -310,63 +310,62 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
 
                 // If the cell is is first gaurd cell & the dimension is non
                 // periodic, then copy Q_{i+1} = Q_{i-1}.
-
                 // Don't check r-dir in Z:
-                #if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D)
 
-                    // Upper end (index 2)
-                    if ( (periodic_directions[2] != 1) && (k==domain.bigEnd(2)+1) ){
-                        N_arr(i,j,k) = N_arr(i,j,k-2);
-                        NUx_arr(i,j,k) = NUx_arr(i,j,k-2);
-                        NUy_arr(i,j,k) = NUy_arr(i,j,k-2);
-                        NUz_arr(i,j,k) = NUz_arr(i,j,k-2);
+                // Upper end (index 2)
+                if ( (periodic_directions[2] != 1) && (k==domain.bigEnd(2)+1) ){
+                    N_arr(i,j,k) = N_arr(i,j,k-2);
+                    NUx_arr(i,j,k) = NUx_arr(i,j,k-2);
+                    NUy_arr(i,j,k) = NUy_arr(i,j,k-2);
+                    NUz_arr(i,j,k) = NUz_arr(i,j,k-2);
 
-                    // Lower end (index 2)
-                    } else if ( (periodic_directions[2] != 1) && (k==domain.smallEnd(2)-1) ) {
-                        N_arr(i,j,k) = N_arr(i,j,k+2);
-                        NUx_arr(i,j,k) = NUx_arr(i,j,k+2);
-                        NUy_arr(i,j,k) = NUy_arr(i,j,k+2);
-                        NUz_arr(i,j,k) = NUz_arr(i,j,k+2);
-                    }
+                // Lower end (index 2)
+                } else if ( (periodic_directions[2] != 1) && (k==domain.smallEnd(2)-1) ) {
+                    N_arr(i,j,k) = N_arr(i,j,k+2);
+                    NUx_arr(i,j,k) = NUx_arr(i,j,k+2);
+                    NUy_arr(i,j,k) = NUy_arr(i,j,k+2);
+                    NUz_arr(i,j,k) = NUz_arr(i,j,k+2);
+                }
 
-                #elif ( defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D) )
+#elif ( defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D) )
 
-                    // Upper end (index 1)
-                    if ( (periodic_directions[1] != 1) && (j==domain.bigEnd(1)+1) ){
-                        N_arr(i,j,k) = N_arr(i,j-2,k);
-                        NUx_arr(i,j,k) = NUx_arr(i,j-2,k);
-                        NUy_arr(i,j,k) = NUy_arr(i,j-2,k);
-                        NUz_arr(i,j,k) = NUz_arr(i,j-2,k);
+                // Upper end (index 1)
+                if ( (periodic_directions[1] != 1) && (j==domain.bigEnd(1)+1) ){
+                    N_arr(i,j,k) = N_arr(i,j-2,k);
+                    NUx_arr(i,j,k) = NUx_arr(i,j-2,k);
+                    NUy_arr(i,j,k) = NUy_arr(i,j-2,k);
+                    NUz_arr(i,j,k) = NUz_arr(i,j-2,k);
 
-                    // Lower end (index 1`)
-                    } else if ( (periodic_directions[1] != 1) && (j==domain.smallEnd(1)-1) ) {
-                        N_arr(i,j,k) = N_arr(i,j+2,k);
-                        NUx_arr(i,j,k) = NUx_arr(i,j+2,k);
-                        NUy_arr(i,j,k) = NUy_arr(i,j+2,k);
-                        NUz_arr(i,j,k) = NUz_arr(i,j+2,k);
+                // Lower end (index 1`)
+                } else if ( (periodic_directions[1] != 1) && (j==domain.smallEnd(1)-1) ) {
+                    N_arr(i,j,k) = N_arr(i,j+2,k);
+                    NUx_arr(i,j,k) = NUx_arr(i,j+2,k);
+                    NUy_arr(i,j,k) = NUy_arr(i,j+2,k);
+                    NUz_arr(i,j,k) = NUz_arr(i,j+2,k);
 
-                    }
+                }
 
-                #elif ( defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D) )
+#elif ( defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D) )
 
-                    // Upper end (index 0)
-                    if ( (periodic_directions[0] != 1) && (i==domain.bigEnd(0)+1) ){
-                        N_arr(i,j,k) = N_arr(i-2,j,k);
-                        NUx_arr(i,j,k) = NUx_arr(i-2,j,k);
-                        NUy_arr(i,j,k) = NUy_arr(i-2,j,k);
-                        NUz_arr(i,j,k) = NUz_arr(i-2,j,k);
+                // Upper end (index 0)
+                if ( (periodic_directions[0] != 1) && (i==domain.bigEnd(0)+1) ){
+                    N_arr(i,j,k) = N_arr(i-2,j,k);
+                    NUx_arr(i,j,k) = NUx_arr(i-2,j,k);
+                    NUy_arr(i,j,k) = NUy_arr(i-2,j,k);
+                    NUz_arr(i,j,k) = NUz_arr(i-2,j,k);
 
-                    // Lower end (index 0)
-                    } else if ( (periodic_directions[0] != 1) && (i==domain.smallEnd(0)-1) ) {
-                        N_arr(i,j,k) = N_arr(i+2,j,k);
-                        NUx_arr(i,j,k) = NUx_arr(i+2,j,k);
-                        NUy_arr(i,j,k) = NUy_arr(i+2,j,k);
-                        NUz_arr(i,j,k) = NUz_arr(i+2,j,k);
-                    }
+                // Lower end (index 0)
+                } else if ( (periodic_directions[0] != 1) && (i==domain.smallEnd(0)-1) ) {
+                    N_arr(i,j,k) = N_arr(i+2,j,k);
+                    NUx_arr(i,j,k) = NUx_arr(i+2,j,k);
+                    NUy_arr(i,j,k) = NUy_arr(i+2,j,k);
+                    NUz_arr(i,j,k) = NUz_arr(i+2,j,k);
+                }
 
-                #else
+#else
 
-                #endif
+#endif
             }
         );
     }
@@ -389,52 +388,52 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const amrex::Geometry &geom = warpx.Geom(lev);
     const auto dx = geom.CellSizeArray();
     const amrex::Real clight = PhysConst::c;
-    #if defined(WARPX_DIM_3D)
-        amrex::Real cx = (dt/dx[0]);
-        amrex::Real cy = (dt/dx[1]);
-        amrex::Real cz = (dt/dx[2]);
-        amrex::Real cx_half = 0.5*(dt/dx[0]);
-        amrex::Real cy_half = 0.5*(dt/dx[1]);
-        amrex::Real cz_half = 0.5*(dt/dx[2]);
-    #elif defined(WARPX_DIM_XZ)
-        amrex::Real cx_half = 0.5*(dt/dx[0]);
-        amrex::Real cz_half = 0.5*(dt/dx[1]);
-        amrex::Real cx = (dt/dx[0]);
-        amrex::Real cz = (dt/dx[1]);
-    #elif defined(WARPX_DIM_RZ)
-        const auto problo = geom.ProbLoArray();
-        amrex::Real cx_half = 0.5*(dt/dx[0]);
-        amrex::Real cz_half = 0.5*(dt/dx[1]);
-        amrex::Box const& domain = geom.Domain();
-    #else
-        amrex::Real cz = (dt/dx[0]);
-        amrex::Real cz_half = 0.5*(dt/dx[0]);
-    #endif
+#if defined(WARPX_DIM_3D)
+    amrex::Real cx = (dt/dx[0]);
+    amrex::Real cy = (dt/dx[1]);
+    amrex::Real cz = (dt/dx[2]);
+    amrex::Real cx_half = 0.5*(dt/dx[0]);
+    amrex::Real cy_half = 0.5*(dt/dx[1]);
+    amrex::Real cz_half = 0.5*(dt/dx[2]);
+#elif defined(WARPX_DIM_XZ)
+    amrex::Real cx_half = 0.5*(dt/dx[0]);
+    amrex::Real cz_half = 0.5*(dt/dx[1]);
+    amrex::Real cx = (dt/dx[0]);
+    amrex::Real cz = (dt/dx[1]);
+#elif defined(WARPX_DIM_RZ)
+    const auto problo = geom.ProbLoArray();
+    amrex::Real cx_half = 0.5*(dt/dx[0]);
+    amrex::Real cz_half = 0.5*(dt/dx[1]);
+    amrex::Box const& domain = geom.Domain();
+#else
+    amrex::Real cz = (dt/dx[0]);
+    amrex::Real cz_half = 0.5*(dt/dx[0]);
+#endif
 
     amrex::BoxArray ba = N[lev]->boxArray();
 
     // Temporary Half-step values
-    #if defined(WARPX_DIM_3D)
-        amrex::MultiFab tmp_Q_minus_x( amrex::convert(ba, IntVect(0,1,1)), N[lev]->DistributionMap(), 4, 1);
-        amrex::MultiFab tmp_Q_plus_x( amrex::convert(ba, IntVect(0,1,1)), N[lev]->DistributionMap(), 4, 1);
-        amrex::MultiFab tmp_Q_minus_y( amrex::convert(ba, IntVect(1,0,1)), N[lev]->DistributionMap(), 4, 1);
-        amrex::MultiFab tmp_Q_plus_y( amrex::convert(ba, IntVect(1,0,1)), N[lev]->DistributionMap(), 4, 1);
-        amrex::MultiFab tmp_Q_minus_z( amrex::convert(ba, IntVect(1,1,0)), N[lev]->DistributionMap(), 4, 1);
-        amrex::MultiFab tmp_Q_plus_z( amrex::convert(ba, IntVect(1,1,0)), N[lev]->DistributionMap(), 4, 1);
-    #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::MultiFab tmp_Q_minus_x( amrex::convert(ba, IntVect(0,1)), N[lev]->DistributionMap(), 4, 1);
-        amrex::MultiFab tmp_Q_plus_x( amrex::convert(ba, IntVect(0,1)), N[lev]->DistributionMap(), 4, 1);
-        amrex::MultiFab tmp_Q_minus_z( amrex::convert(ba, IntVect(1,0)), N[lev]->DistributionMap(), 4, 1);
-        amrex::MultiFab tmp_Q_plus_z( amrex::convert(ba, IntVect(1,0)), N[lev]->DistributionMap(), 4, 1);
-    #else
-        amrex::MultiFab tmp_Q_minus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
-        amrex::MultiFab tmp_Q_plus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
-    #endif
+#if defined(WARPX_DIM_3D)
+    amrex::MultiFab tmp_Q_minus_x( amrex::convert(ba, IntVect(0,1,1)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_plus_x( amrex::convert(ba, IntVect(0,1,1)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_minus_y( amrex::convert(ba, IntVect(1,0,1)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_plus_y( amrex::convert(ba, IntVect(1,0,1)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_minus_z( amrex::convert(ba, IntVect(1,1,0)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_plus_z( amrex::convert(ba, IntVect(1,1,0)), N[lev]->DistributionMap(), 4, 1);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    amrex::MultiFab tmp_Q_minus_x( amrex::convert(ba, IntVect(0,1)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_plus_x( amrex::convert(ba, IntVect(0,1)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_minus_z( amrex::convert(ba, IntVect(1,0)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_plus_z( amrex::convert(ba, IntVect(1,0)), N[lev]->DistributionMap(), 4, 1);
+#else
+    amrex::MultiFab tmp_Q_minus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
+    amrex::MultiFab tmp_Q_plus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
+#endif
 
     // Advection push
-    #ifdef AMREX_USE_OMP
-    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    #endif
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
@@ -447,12 +446,12 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Box tile_box = mfi.growntilebox(1);
 
         // Limit the grown box for RZ at r = 0, r_max
-        #if defined (WARPX_DIM_RZ)
-            const int idir = 0;
-            const int n_cell = -1;
-            tile_box.growLo(idir, n_cell);
-            tile_box.growHi(idir, n_cell);
-        #endif
+#if defined (WARPX_DIM_RZ)
+        const int idir = 0;
+        const int n_cell = -1;
+        tile_box.growLo(idir, n_cell);
+        tile_box.growHi(idir, n_cell);
+#endif
 
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
         amrex::Array4<Real> const &NUx_arr = NU[lev][0]->array(mfi);
@@ -460,28 +459,28 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
 
         // Only select tiles within the grown grid
-        #if defined(WARPX_DIM_3D)
-            amrex::Box const box_x = amrex::convert( box, tmp_Q_minus_x.ixType() );
-            amrex::Box const box_y = amrex::convert( box, tmp_Q_minus_y.ixType() );
-            amrex::Box const box_z = amrex::convert( box, tmp_Q_minus_z.ixType() );
-            amrex::Array4<amrex::Real> Q_minus_x = tmp_Q_minus_x.array(mfi);
-            amrex::Array4<amrex::Real> Q_plus_x = tmp_Q_plus_x.array(mfi);
-            amrex::Array4<amrex::Real> Q_minus_y = tmp_Q_minus_y.array(mfi);
-            amrex::Array4<amrex::Real> Q_plus_y = tmp_Q_plus_y.array(mfi);
-            amrex::Array4<amrex::Real> Q_minus_z = tmp_Q_minus_z.array(mfi);
-            amrex::Array4<amrex::Real> Q_plus_z = tmp_Q_plus_z.array(mfi);
-        #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            amrex::Box const box_x = amrex::convert( box, tmp_Q_minus_x.ixType() );
-            amrex::Box const box_z = amrex::convert( box, tmp_Q_minus_z.ixType() );
-            amrex::Array4<amrex::Real> Q_minus_x = tmp_Q_minus_x.array(mfi);
-            amrex::Array4<amrex::Real> Q_plus_x = tmp_Q_plus_x.array(mfi);
-            amrex::Array4<amrex::Real> Q_minus_z = tmp_Q_minus_z.array(mfi);
-            amrex::Array4<amrex::Real> Q_plus_z = tmp_Q_plus_z.array(mfi);
-        #else
-            amrex::Box const box_z = amrex::convert( box, tmp_Q_minus_z.ixType() );
-            amrex::Array4<amrex::Real> Q_minus_z = tmp_Q_minus_z.array(mfi);
-            amrex::Array4<amrex::Real> Q_plus_z = tmp_Q_plus_z.array(mfi);
-        #endif
+#if defined(WARPX_DIM_3D)
+        amrex::Box const box_x = amrex::convert( box, tmp_Q_minus_x.ixType() );
+        amrex::Box const box_y = amrex::convert( box, tmp_Q_minus_y.ixType() );
+        amrex::Box const box_z = amrex::convert( box, tmp_Q_minus_z.ixType() );
+        amrex::Array4<amrex::Real> Q_minus_x = tmp_Q_minus_x.array(mfi);
+        amrex::Array4<amrex::Real> Q_plus_x = tmp_Q_plus_x.array(mfi);
+        amrex::Array4<amrex::Real> Q_minus_y = tmp_Q_minus_y.array(mfi);
+        amrex::Array4<amrex::Real> Q_plus_y = tmp_Q_plus_y.array(mfi);
+        amrex::Array4<amrex::Real> Q_minus_z = tmp_Q_minus_z.array(mfi);
+        amrex::Array4<amrex::Real> Q_plus_z = tmp_Q_plus_z.array(mfi);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        amrex::Box const box_x = amrex::convert( box, tmp_Q_minus_x.ixType() );
+        amrex::Box const box_z = amrex::convert( box, tmp_Q_minus_z.ixType() );
+        amrex::Array4<amrex::Real> Q_minus_x = tmp_Q_minus_x.array(mfi);
+        amrex::Array4<amrex::Real> Q_plus_x = tmp_Q_plus_x.array(mfi);
+        amrex::Array4<amrex::Real> Q_minus_z = tmp_Q_minus_z.array(mfi);
+        amrex::Array4<amrex::Real> Q_plus_z = tmp_Q_plus_z.array(mfi);
+#else
+        amrex::Box const box_z = amrex::convert( box, tmp_Q_minus_z.ixType() );
+        amrex::Array4<amrex::Real> Q_minus_z = tmp_Q_minus_z.array(mfi);
+        amrex::Array4<amrex::Real> Q_plus_z = tmp_Q_plus_z.array(mfi);
+#endif
 
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -496,81 +495,81 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
 
                     // Compute U_{x,y,z} at +/- 1 cell
-                    #if defined(WARPX_DIM_3D)
-                        amrex::Real Ux_px = 0.0, Ux_mx = 0.0, Uy_px = 0.0, Uy_mx = 0.0, Uz_px = 0.0, Uz_mx = 0.0;
-                        if (N_arr(i+1,j,k) > 0.0) {
-                            Ux_px = (NUx_arr(i+1, j, k) / N_arr(i+1,j,k));
-                            Uy_px = (NUy_arr(i+1, j, k) / N_arr(i+1,j,k));
-                            Uz_px = (NUz_arr(i+1, j, k) / N_arr(i+1,j,k));
-                        }
-                        if (N_arr(i-1,j,k) > 0.0) {
-                            Ux_mx = (NUx_arr(i-1, j, k) / N_arr(i-1,j,k));
-                            Uy_mx = (NUy_arr(i-1, j, k) / N_arr(i-1,j,k));
-                            Uz_mx = (NUz_arr(i-1, j, k) / N_arr(i-1,j,k));
-                        }
-                      amrex::Real Ux_py = 0.0, Ux_my = 0.0, Uy_py = 0.0, Uy_my = 0.0, Uz_py = 0.0, Uz_my = 0.0;
-                        if (N_arr(i,j+1,k) > 0.0) {
-                            Ux_py = (NUx_arr(i, j+1, k) / N_arr(i,j+1,k));
-                            Uy_py = (NUy_arr(i, j+1, k) / N_arr(i,j+1,k));
-                            Uz_py = (NUz_arr(i, j+1, k) / N_arr(i,j+1,k));
-                        }
-                        if (N_arr(i,j-1,k) > 0.0) {
-                            Ux_my = (NUx_arr(i, j-1, k) / N_arr(i,j-1,k));
-                            Uy_my = (NUy_arr(i, j-1, k) / N_arr(i,j-1,k));
-                            Uz_my = (NUz_arr(i, j-1, k) / N_arr(i,j-1,k));
-                        }
-                        amrex::Real Ux_pz = 0.0, Ux_mz = 0.0, Uy_pz = 0.0, Uy_mz = 0.0, Uz_pz = 0.0, Uz_mz = 0.0;
-                        if (N_arr(i,j,k+1) > 0.0) {
-                            Ux_pz = (NUx_arr(i, j, k+1) / N_arr(i,j,k+1));
-                            Uy_pz = (NUy_arr(i, j, k+1) / N_arr(i,j,k+1));
-                            Uz_pz = (NUz_arr(i, j, k+1) / N_arr(i,j,k+1));
-                        }
-                        if (N_arr(i,j,k-1) > 0.0) {
-                            Ux_mz = (NUx_arr(i, j, k-1) / N_arr(i,j,k-1));
-                            Uy_mz = (NUy_arr(i, j, k-1) / N_arr(i,j,k-1));
-                            Uz_mz = (NUz_arr(i, j, k-1) / N_arr(i,j,k-1));
-                        }
+#if defined(WARPX_DIM_3D)
+                    amrex::Real Ux_px = 0.0, Ux_mx = 0.0, Uy_px = 0.0, Uy_mx = 0.0, Uz_px = 0.0, Uz_mx = 0.0;
+                    if (N_arr(i+1,j,k) > 0.0) {
+                        Ux_px = (NUx_arr(i+1, j, k) / N_arr(i+1,j,k));
+                        Uy_px = (NUy_arr(i+1, j, k) / N_arr(i+1,j,k));
+                        Uz_px = (NUz_arr(i+1, j, k) / N_arr(i+1,j,k));
+                    }
+                    if (N_arr(i-1,j,k) > 0.0) {
+                        Ux_mx = (NUx_arr(i-1, j, k) / N_arr(i-1,j,k));
+                        Uy_mx = (NUy_arr(i-1, j, k) / N_arr(i-1,j,k));
+                        Uz_mx = (NUz_arr(i-1, j, k) / N_arr(i-1,j,k));
+                    }
+                    amrex::Real Ux_py = 0.0, Ux_my = 0.0, Uy_py = 0.0, Uy_my = 0.0, Uz_py = 0.0, Uz_my = 0.0;
+                    if (N_arr(i,j+1,k) > 0.0) {
+                        Ux_py = (NUx_arr(i, j+1, k) / N_arr(i,j+1,k));
+                        Uy_py = (NUy_arr(i, j+1, k) / N_arr(i,j+1,k));
+                        Uz_py = (NUz_arr(i, j+1, k) / N_arr(i,j+1,k));
+                    }
+                    if (N_arr(i,j-1,k) > 0.0) {
+                        Ux_my = (NUx_arr(i, j-1, k) / N_arr(i,j-1,k));
+                        Uy_my = (NUy_arr(i, j-1, k) / N_arr(i,j-1,k));
+                        Uz_my = (NUz_arr(i, j-1, k) / N_arr(i,j-1,k));
+                    }
+                    amrex::Real Ux_pz = 0.0, Ux_mz = 0.0, Uy_pz = 0.0, Uy_mz = 0.0, Uz_pz = 0.0, Uz_mz = 0.0;
+                    if (N_arr(i,j,k+1) > 0.0) {
+                        Ux_pz = (NUx_arr(i, j, k+1) / N_arr(i,j,k+1));
+                        Uy_pz = (NUy_arr(i, j, k+1) / N_arr(i,j,k+1));
+                        Uz_pz = (NUz_arr(i, j, k+1) / N_arr(i,j,k+1));
+                    }
+                    if (N_arr(i,j,k-1) > 0.0) {
+                        Ux_mz = (NUx_arr(i, j, k-1) / N_arr(i,j,k-1));
+                        Uy_mz = (NUy_arr(i, j, k-1) / N_arr(i,j,k-1));
+                        Uz_mz = (NUz_arr(i, j, k-1) / N_arr(i,j,k-1));
+                    }
 
-                    #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
-                        amrex::Real Ux_px = 0.0, Ux_mx = 0.0, Uy_px = 0.0, Uy_mx = 0.0, Uz_px = 0.0, Uz_mx = 0.0;
-                        if (N_arr(i+1,j,k) > 0.0) {
-                            Ux_px = (NUx_arr(i+1, j, k) / N_arr(i+1,j,k));
-                            Uy_px = (NUy_arr(i+1, j, k) / N_arr(i+1,j,k));
-                            Uz_px = (NUz_arr(i+1, j, k) / N_arr(i+1,j,k));
-                        }
-                        if (N_arr(i-1,j,k) > 0.0) {
-                            Ux_mx = (NUx_arr(i-1, j, k) / N_arr(i-1,j,k));
-                            Uy_mx = (NUy_arr(i-1, j, k) / N_arr(i-1,j,k));
-                            Uz_mx = (NUz_arr(i-1, j, k) / N_arr(i-1,j,k));
-                        }
+                    amrex::Real Ux_px = 0.0, Ux_mx = 0.0, Uy_px = 0.0, Uy_mx = 0.0, Uz_px = 0.0, Uz_mx = 0.0;
+                    if (N_arr(i+1,j,k) > 0.0) {
+                        Ux_px = (NUx_arr(i+1, j, k) / N_arr(i+1,j,k));
+                        Uy_px = (NUy_arr(i+1, j, k) / N_arr(i+1,j,k));
+                        Uz_px = (NUz_arr(i+1, j, k) / N_arr(i+1,j,k));
+                    }
+                    if (N_arr(i-1,j,k) > 0.0) {
+                        Ux_mx = (NUx_arr(i-1, j, k) / N_arr(i-1,j,k));
+                        Uy_mx = (NUy_arr(i-1, j, k) / N_arr(i-1,j,k));
+                        Uz_mx = (NUz_arr(i-1, j, k) / N_arr(i-1,j,k));
+                    }
 
-                        amrex::Real Ux_pz = 0.0, Ux_mz = 0.0, Uy_pz = 0.0, Uy_mz = 0.0, Uz_pz = 0.0, Uz_mz = 0.0;
-                        if (N_arr(i,j+1,k) > 0.0) {
-                            Ux_pz = (NUx_arr(i, j+1, k) / N_arr(i,j+1,k));
-                            Uy_pz = (NUy_arr(i, j+1, k) / N_arr(i,j+1,k));
-                            Uz_pz = (NUz_arr(i, j+1, k) / N_arr(i,j+1,k));
-                        }
-                        if (N_arr(i,j-1,k) > 0.0) {
-                            Ux_mz = (NUx_arr(i, j-1, k) / N_arr(i,j-1,k));
-                            Uy_mz = (NUy_arr(i, j-1, k) / N_arr(i,j-1,k));
-                            Uz_mz = (NUz_arr(i, j-1, k) / N_arr(i,j-1,k));
-                        }
+                    amrex::Real Ux_pz = 0.0, Ux_mz = 0.0, Uy_pz = 0.0, Uy_mz = 0.0, Uz_pz = 0.0, Uz_mz = 0.0;
+                    if (N_arr(i,j+1,k) > 0.0) {
+                        Ux_pz = (NUx_arr(i, j+1, k) / N_arr(i,j+1,k));
+                        Uy_pz = (NUy_arr(i, j+1, k) / N_arr(i,j+1,k));
+                        Uz_pz = (NUz_arr(i, j+1, k) / N_arr(i,j+1,k));
+                    }
+                    if (N_arr(i,j-1,k) > 0.0) {
+                        Ux_mz = (NUx_arr(i, j-1, k) / N_arr(i,j-1,k));
+                        Uy_mz = (NUy_arr(i, j-1, k) / N_arr(i,j-1,k));
+                        Uz_mz = (NUz_arr(i, j-1, k) / N_arr(i,j-1,k));
+                    }
 
-                    // 1D
-                    #else
-                        amrex::Real Ux_pz = 0.0, Ux_mz = 0.0, Uy_pz = 0.0, Uy_mz = 0.0, Uz_pz = 0.0, Uz_mz = 0.0;
-                        if (N_arr(i+1,j,k) > 0.0) {
-                            Ux_pz = (NUx_arr(i+1, j, k) / N_arr(i+1,j,k));
-                            Uy_pz = (NUy_arr(i+1, j, k) / N_arr(i+1,j,k));
-                            Uz_pz = (NUz_arr(i+1, j, k) / N_arr(i+1,j,k));
-                        }
-                        if (N_arr(i-1,j,k) > 0.0) {
-                            Ux_mz = (NUx_arr(i-1, j, k) / N_arr(i-1,j,k));
-                            Uy_mz = (NUy_arr(i-1, j, k) / N_arr(i-1,j,k));
-                            Uz_mz = (NUz_arr(i-1, j, k) / N_arr(i-1,j,k));
-                        }
-                    #endif
+                // 1D
+#else
+                    amrex::Real Ux_pz = 0.0, Ux_mz = 0.0, Uy_pz = 0.0, Uy_mz = 0.0, Uz_pz = 0.0, Uz_mz = 0.0;
+                    if (N_arr(i+1,j,k) > 0.0) {
+                        Ux_pz = (NUx_arr(i+1, j, k) / N_arr(i+1,j,k));
+                        Uy_pz = (NUy_arr(i+1, j, k) / N_arr(i+1,j,k));
+                        Uz_pz = (NUz_arr(i+1, j, k) / N_arr(i+1,j,k));
+                    }
+                    if (N_arr(i-1,j,k) > 0.0) {
+                        Ux_mz = (NUx_arr(i-1, j, k) / N_arr(i-1,j,k));
+                        Uy_mz = (NUy_arr(i-1, j, k) / N_arr(i-1,j,k));
+                        Uz_mz = (NUz_arr(i-1, j, k) / N_arr(i-1,j,k));
+                    }
+#endif
 
 
                     amrex::Real Uz_sq = Uz*Uz; amrex::Real Uy_sq = Uy*Uy; amrex::Real Ux_sq = Ux*Ux;
@@ -579,459 +578,459 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real a = c_sq*gamma*gamma*gamma;
 
                     // Calc Ax: (Needed for 2D, 3D, Rz)
-                    #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
-                        amrex::Real Vx = Ux/gamma;
-                        // Compute the Flux-Jacobian Elements in x
-                        amrex::Real A00x = Vx;
-                        amrex::Real A01x = N_arr(i,j,k)*c_sq/a;
-                        amrex::Real A02x = -N_arr(i,j,k)*Uy*Ux/a;
-                        amrex::Real A03x = -N_arr(i,j,k)*Uz*Ux/a;
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+                    amrex::Real Vx = Ux/gamma;
+                    // Compute the Flux-Jacobian Elements in x
+                    amrex::Real A00x = Vx;
+                    amrex::Real A01x = N_arr(i,j,k)*c_sq/a;
+                    amrex::Real A02x = -N_arr(i,j,k)*Uy*Ux/a;
+                    amrex::Real A03x = -N_arr(i,j,k)*Uz*Ux/a;
 
-                        amrex::Real A10x = 0.0;
-                        amrex::Real A11x = Vx;
-                        amrex::Real A12x = 0.0;
-                        amrex::Real A13x = 0.0;
+                    amrex::Real A10x = 0.0;
+                    amrex::Real A11x = Vx;
+                    amrex::Real A12x = 0.0;
+                    amrex::Real A13x = 0.0;
 
-                        amrex::Real A20x = 0.0;
-                        amrex::Real A21x = 0.0;
-                        amrex::Real A22x = Vx;
-                        amrex::Real A23x = 0.0;
+                    amrex::Real A20x = 0.0;
+                    amrex::Real A21x = 0.0;
+                    amrex::Real A22x = Vx;
+                    amrex::Real A23x = 0.0;
 
-                        amrex::Real A30x = 0.0;
-                        amrex::Real A31x = 0.0;
-                        amrex::Real A32x = 0.0;
-                        amrex::Real A33x = Vx;
+                    amrex::Real A30x = 0.0;
+                    amrex::Real A31x = 0.0;
+                    amrex::Real A32x = 0.0;
+                    amrex::Real A33x = Vx;
 
-                    #endif
+#endif
 
-                    // Calc Ay: (Needed for 3d)
-                    #if defined(WARPX_DIM_3D)
-                        amrex::Real Vy = Uy/gamma;
-                        // Compute the Flux-Jacobian Elements in y
-                        amrex::Real A00y = Vy;
-                        amrex::Real A01y = -N_arr(i,j,k)*Ux*Uy/a;
-                        amrex::Real A02y = N_arr(i,j,k)*c_sq/a;
-                        amrex::Real A03y = -N_arr(i,j,k)*Uz*Uy/a;
+                // Calc Ay: (Needed for 3d)
+#if defined(WARPX_DIM_3D)
+                    amrex::Real Vy = Uy/gamma;
+                    // Compute the Flux-Jacobian Elements in y
+                    amrex::Real A00y = Vy;
+                    amrex::Real A01y = -N_arr(i,j,k)*Ux*Uy/a;
+                    amrex::Real A02y = N_arr(i,j,k)*c_sq/a;
+                    amrex::Real A03y = -N_arr(i,j,k)*Uz*Uy/a;
 
-                        amrex::Real A10y = 0.0;
-                        amrex::Real A11y = Vy;
-                        amrex::Real A12y = 0.0;
-                        amrex::Real A13y = 0.0;
+                    amrex::Real A10y = 0.0;
+                    amrex::Real A11y = Vy;
+                    amrex::Real A12y = 0.0;
+                    amrex::Real A13y = 0.0;
 
-                        amrex::Real A20y = 0.0;
-                        amrex::Real A21y = 0.0;
-                        amrex::Real A22y = Vy;
-                        amrex::Real A23y = 0.0;
+                    amrex::Real A20y = 0.0;
+                    amrex::Real A21y = 0.0;
+                    amrex::Real A22y = Vy;
+                    amrex::Real A23y = 0.0;
 
-                        amrex::Real A30y = 0.0;
-                        amrex::Real A31y = 0.0;
-                        amrex::Real A32y = 0.0;
-                        amrex::Real A33y = Vy;
-
-
-                    #endif
-                        amrex::Real Vz = Uz/gamma;
-                        // Calc Az: (needed for all)
-                        // Compute the Flux-Jacobian Elements in z
-                        amrex::Real A00z = Vz;
-                        amrex::Real A01z = -N_arr(i,j,k)*Ux*Uz/a;
-                        amrex::Real A02z = -N_arr(i,j,k)*Uy*Uz/a;
-                        amrex::Real A03z = N_arr(i,j,k)*c_sq/a;
-
-                        amrex::Real A10z = 0.0;
-                        amrex::Real A11z = Vz;
-                        amrex::Real A12z = 0.0;
-                        amrex::Real A13z = 0.0;
-
-                        amrex::Real A20z = 0.0;
-                        amrex::Real A21z = 0.0;
-                        amrex::Real A22z = Vz;
-                        amrex::Real A23z = 0.0;
-
-                        amrex::Real A30z = 0.0;
-                        amrex::Real A31z = 0.0;
-                        amrex::Real A32z = 0.0;
-                        amrex::Real A33z = Vz;
+                    amrex::Real A30y = 0.0;
+                    amrex::Real A31y = 0.0;
+                    amrex::Real A32y = 0.0;
+                    amrex::Real A33y = Vy;
 
 
-                    // Select the specific implmentation depending on dimensionality
-                    #if defined(WARPX_DIM_3D)
+#endif
+                    amrex::Real Vz = Uz/gamma;
+                    // Calc Az: (needed for all)
+                    // Compute the Flux-Jacobian Elements in z
+                    amrex::Real A00z = Vz;
+                    amrex::Real A01z = -N_arr(i,j,k)*Ux*Uz/a;
+                    amrex::Real A02z = -N_arr(i,j,k)*Uy*Uz/a;
+                    amrex::Real A03z = N_arr(i,j,k)*c_sq/a;
 
-                        // Compute the cell slopes x
-                        amrex::Real dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
-                        amrex::Real dQ1x = ave( Ux - Ux_mx , Ux_px - Ux );
-                        amrex::Real dQ2x = ave( Uy - Uy_mx , Uy_px - Uy );
-                        amrex::Real dQ3x = ave( Uz - Uz_mx , Uz_px - Uz );
+                    amrex::Real A10z = 0.0;
+                    amrex::Real A11z = Vz;
+                    amrex::Real A12z = 0.0;
+                    amrex::Real A13z = 0.0;
 
-                        // Compute the cell slopes y
-                        amrex::Real dQ0y = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , N_arr(i,j+1,k) - N_arr(i,j,k) );
-                        amrex::Real dQ1y = ave( Ux - Ux_my , Ux_py - Ux );
-                        amrex::Real dQ2y = ave( Uy - Uy_my , Uy_py - Uy );
-                        amrex::Real dQ3y = ave( Uz - Uz_my , Uz_py - Uz );
+                    amrex::Real A20z = 0.0;
+                    amrex::Real A21z = 0.0;
+                    amrex::Real A22z = Vz;
+                    amrex::Real A23z = 0.0;
 
-                        // Compute the cell slopes z
-                        amrex::Real dQ0z = ave( N_arr(i,j,k) - N_arr(i,j,k-1) , N_arr(i,j,k+1) - N_arr(i,j,k) );
-                        amrex::Real dQ1z = ave( Ux - Ux_mz , Ux_pz - Ux );
-                        amrex::Real dQ2z = ave( Uy - Uy_mz , Uy_pz - Uy );
-                        amrex::Real dQ3z = ave( Uz - Uz_mz , Uz_pz - Uz );
-
-                        // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
-                        amrex::Real AdQ0x = A00x*dQ0x + A01x*dQ1x + A02x*dQ2x + A03x*dQ3x;
-                        amrex::Real AdQ1x = A10x*dQ0x + A11x*dQ1x + A12x*dQ2x + A13x*dQ3x;
-                        amrex::Real AdQ2x = A20x*dQ0x + A21x*dQ1x + A22x*dQ2x + A23x*dQ3x;
-                        amrex::Real AdQ3x = A30x*dQ0x + A31x*dQ1x + A32x*dQ2x + A33x*dQ3x;
-                        amrex::Real AdQ0y = A00y*dQ0y + A01y*dQ1y + A02y*dQ2y + A03y*dQ3y;
-                        amrex::Real AdQ1y = A10y*dQ0y + A11y*dQ1y + A12y*dQ2y + A13y*dQ3y;
-                        amrex::Real AdQ2y = A20y*dQ0y + A21y*dQ1y + A22y*dQ2y + A23y*dQ3y;
-                        amrex::Real AdQ3y = A30y*dQ0y + A31y*dQ1y + A32y*dQ2y + A33y*dQ3y;
-                        amrex::Real AdQ0z = A00z*dQ0z + A01z*dQ1z + A02z*dQ2z + A03z*dQ3z;
-                        amrex::Real AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
-                        amrex::Real AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
-                        amrex::Real AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
-                        amrex::Real Q_tilde0 = N_arr(i,j,k)   - cx_half*AdQ0x - cy_half*AdQ0y - cz_half*AdQ0z;
-                        amrex::Real Q_tilde1 = Ux - cx_half*AdQ1x - cy_half*AdQ1y - cz_half*AdQ1z;
-                        amrex::Real Q_tilde2 = Uy - cx_half*AdQ2x - cy_half*AdQ2y - cz_half*AdQ2z;
-                        amrex::Real Q_tilde3 = Uz - cx_half*AdQ3x - cy_half*AdQ3y - cz_half*AdQ3z;
+                    amrex::Real A30z = 0.0;
+                    amrex::Real A31z = 0.0;
+                    amrex::Real A32z = 0.0;
+                    amrex::Real A33z = Vz;
 
 
-                        // Predict Q at the cell edges (x)
-                        // (note that _plus is shifted due to grid location)
-                        if ( box_x.contains(i,j,k) ) {
-                            Q_minus_x(i,j,k,0) = Q_tilde0 + dQ0x/2.0;
-                            Q_minus_x(i,j,k,1) = Q_tilde1 + dQ1x/2.0;
-                            Q_minus_x(i,j,k,2) = Q_tilde2 + dQ2x/2.0;
-                            Q_minus_x(i,j,k,3) = Q_tilde3 + dQ3x/2.0;
+                // Select the specific implmentation depending on dimensionality
+#if defined(WARPX_DIM_3D)
+
+                    // Compute the cell slopes x
+                    amrex::Real dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
+                    amrex::Real dQ1x = ave( Ux - Ux_mx , Ux_px - Ux );
+                    amrex::Real dQ2x = ave( Uy - Uy_mx , Uy_px - Uy );
+                    amrex::Real dQ3x = ave( Uz - Uz_mx , Uz_px - Uz );
+
+                    // Compute the cell slopes y
+                    amrex::Real dQ0y = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , N_arr(i,j+1,k) - N_arr(i,j,k) );
+                    amrex::Real dQ1y = ave( Ux - Ux_my , Ux_py - Ux );
+                    amrex::Real dQ2y = ave( Uy - Uy_my , Uy_py - Uy );
+                    amrex::Real dQ3y = ave( Uz - Uz_my , Uz_py - Uz );
+
+                    // Compute the cell slopes z
+                    amrex::Real dQ0z = ave( N_arr(i,j,k) - N_arr(i,j,k-1) , N_arr(i,j,k+1) - N_arr(i,j,k) );
+                    amrex::Real dQ1z = ave( Ux - Ux_mz , Ux_pz - Ux );
+                    amrex::Real dQ2z = ave( Uy - Uy_mz , Uy_pz - Uy );
+                    amrex::Real dQ3z = ave( Uz - Uz_mz , Uz_pz - Uz );
+
+                    // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
+                    amrex::Real AdQ0x = A00x*dQ0x + A01x*dQ1x + A02x*dQ2x + A03x*dQ3x;
+                    amrex::Real AdQ1x = A10x*dQ0x + A11x*dQ1x + A12x*dQ2x + A13x*dQ3x;
+                    amrex::Real AdQ2x = A20x*dQ0x + A21x*dQ1x + A22x*dQ2x + A23x*dQ3x;
+                    amrex::Real AdQ3x = A30x*dQ0x + A31x*dQ1x + A32x*dQ2x + A33x*dQ3x;
+                    amrex::Real AdQ0y = A00y*dQ0y + A01y*dQ1y + A02y*dQ2y + A03y*dQ3y;
+                    amrex::Real AdQ1y = A10y*dQ0y + A11y*dQ1y + A12y*dQ2y + A13y*dQ3y;
+                    amrex::Real AdQ2y = A20y*dQ0y + A21y*dQ1y + A22y*dQ2y + A23y*dQ3y;
+                    amrex::Real AdQ3y = A30y*dQ0y + A31y*dQ1y + A32y*dQ2y + A33y*dQ3y;
+                    amrex::Real AdQ0z = A00z*dQ0z + A01z*dQ1z + A02z*dQ2z + A03z*dQ3z;
+                    amrex::Real AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
+                    amrex::Real AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
+                    amrex::Real AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
+                    amrex::Real Q_tilde0 = N_arr(i,j,k)   - cx_half*AdQ0x - cy_half*AdQ0y - cz_half*AdQ0z;
+                    amrex::Real Q_tilde1 = Ux - cx_half*AdQ1x - cy_half*AdQ1y - cz_half*AdQ1z;
+                    amrex::Real Q_tilde2 = Uy - cx_half*AdQ2x - cy_half*AdQ2y - cz_half*AdQ2z;
+                    amrex::Real Q_tilde3 = Uz - cx_half*AdQ3x - cy_half*AdQ3y - cz_half*AdQ3z;
+
+
+                    // Predict Q at the cell edges (x)
+                    // (note that _plus is shifted due to grid location)
+                    if ( box_x.contains(i,j,k) ) {
+                        Q_minus_x(i,j,k,0) = Q_tilde0 + dQ0x/2.0;
+                        Q_minus_x(i,j,k,1) = Q_tilde1 + dQ1x/2.0;
+                        Q_minus_x(i,j,k,2) = Q_tilde2 + dQ2x/2.0;
+                        Q_minus_x(i,j,k,3) = Q_tilde3 + dQ3x/2.0;
+                    }
+                    if ( box_x.contains(i-1,j,k) ) {
+                        Q_plus_x(i-1,j,k,0) = Q_tilde0 - dQ0x/2.0;
+                        Q_plus_x(i-1,j,k,1) = Q_tilde1 - dQ1x/2.0;
+                        Q_plus_x(i-1,j,k,2) = Q_tilde2 - dQ2x/2.0;
+                        Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
+                    }
+
+                    // Positivity and Monotonicty Limiter for density N:
+                    if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) )) {
+                        if ((Q_minus_x(i,j,k,0) < 0.0) || (Q_plus_x(i-1,j,k,0) < 0.0)){
+                            Q_minus_x(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_x(i,j,k,1) = Ux;
+                            Q_minus_x(i,j,k,2) = Uy;
+                            Q_minus_x(i,j,k,3) = Uz;
+                            Q_plus_x(i-1,j,k,0) = N_arr(i,j,k);
+                            Q_plus_x(i-1,j,k,1) = Ux;
+                            Q_plus_x(i-1,j,k,2) = Uy;
+                            Q_plus_x(i-1,j,k,3) = Uz;
                         }
-                        if ( box_x.contains(i-1,j,k) ) {
-                            Q_plus_x(i-1,j,k,0) = Q_tilde0 - dQ0x/2.0;
-                            Q_plus_x(i-1,j,k,1) = Q_tilde1 - dQ1x/2.0;
-                            Q_plus_x(i-1,j,k,2) = Q_tilde2 - dQ2x/2.0;
-                            Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
-                        }
-
-                        // Positivity and Monotonicty Limiter for density N:
-                        if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) )) {
-                            if ((Q_minus_x(i,j,k,0) < 0.0) || (Q_plus_x(i-1,j,k,0) < 0.0)){
+                    } else if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) != 1)) {
+                        if (Q_minus_x(i,j,k,0) < 0.0) {
                                 Q_minus_x(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_x(i,j,k,1) = Ux;
-                                Q_minus_x(i,j,k,2) = Uy;
-                                Q_minus_x(i,j,k,3) = Uz;
-                                Q_plus_x(i-1,j,k,0) = N_arr(i,j,k);
-                                Q_plus_x(i-1,j,k,1) = Ux;
-                                Q_plus_x(i-1,j,k,2) = Uy;
-                                Q_plus_x(i-1,j,k,3) = Uz;
-                            }
-                        } else if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) != 1)) {
-                            if (Q_minus_x(i,j,k,0) < 0.0) {
-                                 Q_minus_x(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_x(i,j,k,1) = Ux;
-                                Q_minus_x(i,j,k,2) = Uy;
-                                Q_minus_x(i,j,k,3) = Uz;
-                            }
-                        } else if (( box_x.contains(i,j,k) != 1 ) && ( box_x.contains(i-1,j,k) )) {
-                            if (Q_plus_x(i-1,j,k,0) < 0.0){
-                                Q_plus_x(i-1,j,k,0) = N_arr(i,j,k);
-                                Q_plus_x(i-1,j,k,1) = Ux;
-                                Q_plus_x(i-1,j,k,2) = Uy;
-                                Q_plus_x(i-1,j,k,3) = Uz;
-                            }
+                            Q_minus_x(i,j,k,1) = Ux;
+                            Q_minus_x(i,j,k,2) = Uy;
+                            Q_minus_x(i,j,k,3) = Uz;
                         }
+                    } else if (( box_x.contains(i,j,k) != 1 ) && ( box_x.contains(i-1,j,k) )) {
+                        if (Q_plus_x(i-1,j,k,0) < 0.0){
+                            Q_plus_x(i-1,j,k,0) = N_arr(i,j,k);
+                            Q_plus_x(i-1,j,k,1) = Ux;
+                            Q_plus_x(i-1,j,k,2) = Uy;
+                            Q_plus_x(i-1,j,k,3) = Uz;
+                        }
+                    }
 
-                        // Predict Q at the cell edges (y)
-                        if ( box_y.contains(i,j,k) ) {
-                            Q_minus_y(i,j,k,0) = Q_tilde0 + dQ0y/2.0;
-                            Q_minus_y(i,j,k,1) = Q_tilde1 + dQ1y/2.0;
-                            Q_minus_y(i,j,k,2) = Q_tilde2 + dQ2y/2.0;
-                            Q_minus_y(i,j,k,3) = Q_tilde3 + dQ3y/2.0;
-                        }
-                        if ( box_y.contains(i,j-1,k) ) {
-                            Q_plus_y(i,j-1,k,0) = Q_tilde0 - dQ0y/2.0;
-                            Q_plus_y(i,j-1,k,1) = Q_tilde1 - dQ1y/2.0;
-                            Q_plus_y(i,j-1,k,2) = Q_tilde2 - dQ2y/2.0;
-                            Q_plus_y(i,j-1,k,3) = Q_tilde3 - dQ3y/2.0;
-                        }
+                    // Predict Q at the cell edges (y)
+                    if ( box_y.contains(i,j,k) ) {
+                        Q_minus_y(i,j,k,0) = Q_tilde0 + dQ0y/2.0;
+                        Q_minus_y(i,j,k,1) = Q_tilde1 + dQ1y/2.0;
+                        Q_minus_y(i,j,k,2) = Q_tilde2 + dQ2y/2.0;
+                        Q_minus_y(i,j,k,3) = Q_tilde3 + dQ3y/2.0;
+                    }
+                    if ( box_y.contains(i,j-1,k) ) {
+                        Q_plus_y(i,j-1,k,0) = Q_tilde0 - dQ0y/2.0;
+                        Q_plus_y(i,j-1,k,1) = Q_tilde1 - dQ1y/2.0;
+                        Q_plus_y(i,j-1,k,2) = Q_tilde2 - dQ2y/2.0;
+                        Q_plus_y(i,j-1,k,3) = Q_tilde3 - dQ3y/2.0;
+                    }
 
-                        // Positivity and Monotonicty Limiter for density N:
-                        if (( box_y.contains(i,j,k) ) && ( box_y.contains(i,j-1,k) )) {
-                            if ((Q_minus_y(i,j,k,0) < 0.0) || (Q_plus_y(i,j-1,k,0) < 0.0)){
-                                Q_minus_y(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_y(i,j,k,1) = Ux;
-                                Q_minus_y(i,j,k,2) = Uy;
-                                Q_minus_y(i,j,k,3) = Uz;
+                    // Positivity and Monotonicty Limiter for density N:
+                    if (( box_y.contains(i,j,k) ) && ( box_y.contains(i,j-1,k) )) {
+                        if ((Q_minus_y(i,j,k,0) < 0.0) || (Q_plus_y(i,j-1,k,0) < 0.0)){
+                            Q_minus_y(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_y(i,j,k,1) = Ux;
+                            Q_minus_y(i,j,k,2) = Uy;
+                            Q_minus_y(i,j,k,3) = Uz;
+                            Q_plus_y(i,j-1,k,0) = N_arr(i,j,k);
+                            Q_plus_y(i,j-1,k,1) = Ux;
+                            Q_plus_y(i,j-1,k,2) = Uy;
+                            Q_plus_y(i,j-1,k,3) = Uz;
+                        }
+                    } else if (( box_y.contains(i,j,k) ) && ( box_y.contains(i,j-1,k) != 1)) {
+                        if (Q_minus_y(i,j,k,0) < 0.0) {
+                            Q_minus_y(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_y(i,j,k,1) = Ux;
+                            Q_minus_y(i,j,k,2) = Uy;
+                            Q_minus_y(i,j,k,3) = Uz;
+                        }
+                    } else if (( box_y.contains(i,j,k) != 1 ) && ( box_y.contains(i,j-1,k) )) {
+                        if (Q_plus_y(i,j-1,k,0) < 0.0){
                                 Q_plus_y(i,j-1,k,0) = N_arr(i,j,k);
-                                Q_plus_y(i,j-1,k,1) = Ux;
-                                Q_plus_y(i,j-1,k,2) = Uy;
-                                Q_plus_y(i,j-1,k,3) = Uz;
-                            }
-                        } else if (( box_y.contains(i,j,k) ) && ( box_y.contains(i,j-1,k) != 1)) {
-                            if (Q_minus_y(i,j,k,0) < 0.0) {
-                                Q_minus_y(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_y(i,j,k,1) = Ux;
-                                Q_minus_y(i,j,k,2) = Uy;
-                                Q_minus_y(i,j,k,3) = Uz;
-                            }
-                        } else if (( box_y.contains(i,j,k) != 1 ) && ( box_y.contains(i,j-1,k) )) {
-                            if (Q_plus_y(i,j-1,k,0) < 0.0){
-                                 Q_plus_y(i,j-1,k,0) = N_arr(i,j,k);
-                                Q_plus_y(i,j-1,k,1) = Ux;
-                                Q_plus_y(i,j-1,k,2) = Uy;
-                                Q_plus_y(i,j-1,k,3) = Uz;
-                            }
+                            Q_plus_y(i,j-1,k,1) = Ux;
+                            Q_plus_y(i,j-1,k,2) = Uy;
+                            Q_plus_y(i,j-1,k,3) = Uz;
                         }
+                    }
 
-                        if ( box_z.contains(i,j,k) ) {
-                        // Predict Q at the cell edges (z)
-                            Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
-                            Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
-                            Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
-                            Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
+                    if ( box_z.contains(i,j,k) ) {
+                    // Predict Q at the cell edges (z)
+                        Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
+                        Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
+                        Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
+                        Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
+                    }
+                    if ( box_z.contains(i,j,k-1) ) {
+                        Q_plus_z(i,j,k-1,0) = Q_tilde0 - dQ0z/2.0;
+                        Q_plus_z(i,j,k-1,1) = Q_tilde1 - dQ1z/2.0;
+                        Q_plus_z(i,j,k-1,2) = Q_tilde2 - dQ2z/2.0;
+                        Q_plus_z(i,j,k-1,3) = Q_tilde3 - dQ3z/2.0;
+                    }
+
+
+                    // Positivity and Monotonicty Limiter for density N: z
+                    if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j,k-1) )) {
+                        if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i,j,k-1,0) < 0.0)){
+                            Q_minus_z(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_z(i,j,k,1) = Ux;
+                            Q_minus_z(i,j,k,2) = Uy;
+                            Q_minus_z(i,j,k,3) = Uz;
+                            Q_plus_z(i,j,k-1,0) = N_arr(i,j,k);
+                            Q_plus_z(i,j,k-1,1) = Ux;
+                            Q_plus_z(i,j,k-1,2) = Uy;
+                            Q_plus_z(i,j,k-1,3) = Uz;
                         }
-                        if ( box_z.contains(i,j,k-1) ) {
-                            Q_plus_z(i,j,k-1,0) = Q_tilde0 - dQ0z/2.0;
-                            Q_plus_z(i,j,k-1,1) = Q_tilde1 - dQ1z/2.0;
-                            Q_plus_z(i,j,k-1,2) = Q_tilde2 - dQ2z/2.0;
-                            Q_plus_z(i,j,k-1,3) = Q_tilde3 - dQ3z/2.0;
+                    } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j,k-1) != 1)) {
+                        if (Q_minus_z(i,j,k,0) < 0.0) {
+                            Q_minus_z(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_z(i,j,k,1) = Ux;
+                            Q_minus_z(i,j,k,2) = Uy;
+                            Q_minus_z(i,j,k,3) = Uz;
                         }
-
-
-                        // Positivity and Monotonicty Limiter for density N: z
-                        if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j,k-1) )) {
-                            if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i,j,k-1,0) < 0.0)){
-                                Q_minus_z(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_z(i,j,k,1) = Ux;
-                                Q_minus_z(i,j,k,2) = Uy;
-                                Q_minus_z(i,j,k,3) = Uz;
-                                Q_plus_z(i,j,k-1,0) = N_arr(i,j,k);
-                                Q_plus_z(i,j,k-1,1) = Ux;
-                                Q_plus_z(i,j,k-1,2) = Uy;
-                                Q_plus_z(i,j,k-1,3) = Uz;
-                            }
-                        } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j,k-1) != 1)) {
-                            if (Q_minus_z(i,j,k,0) < 0.0) {
-                                Q_minus_z(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_z(i,j,k,1) = Ux;
-                                Q_minus_z(i,j,k,2) = Uy;
-                                Q_minus_z(i,j,k,3) = Uz;
-                            }
-                        } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i,j,k-1) )) {
-                            if (Q_plus_z(i,j,k-1,0) < 0.0){
-                                Q_plus_z(i,j,k-1,0) = N_arr(i,j,k);
-                                Q_plus_z(i,j,k-1,1) = Ux;
-                                Q_plus_z(i,j,k-1,2) = Uy;
-                                Q_plus_z(i,j,k-1,3) = Uz;
-                            }
+                    } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i,j,k-1) )) {
+                        if (Q_plus_z(i,j,k-1,0) < 0.0){
+                            Q_plus_z(i,j,k-1,0) = N_arr(i,j,k);
+                            Q_plus_z(i,j,k-1,1) = Ux;
+                            Q_plus_z(i,j,k-1,2) = Uy;
+                            Q_plus_z(i,j,k-1,3) = Uz;
                         }
+                    }
 
-                    #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
 
-                        // Compute the cell slopes x
-                        amrex::Real  dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
-                        amrex::Real  dQ1x = ave( Ux - Ux_mx , Ux_px - Ux );
-                        amrex::Real  dQ2x = ave( Uy - Uy_mx , Uy_px - Uy );
-                        amrex::Real  dQ3x = ave( Uz - Uz_mx , Uz_px - Uz );
+                    // Compute the cell slopes x
+                    amrex::Real  dQ0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
+                    amrex::Real  dQ1x = ave( Ux - Ux_mx , Ux_px - Ux );
+                    amrex::Real  dQ2x = ave( Uy - Uy_mx , Uy_px - Uy );
+                    amrex::Real  dQ3x = ave( Uz - Uz_mx , Uz_px - Uz );
 
-                        // Compute the cell slopes z
-                        amrex::Real  dQ0z = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , N_arr(i,j+1,k) - N_arr(i,j,k) );
-                        amrex::Real  dQ1z = ave( Ux - Ux_mz , Ux_pz - Ux );
-                        amrex::Real  dQ2z = ave( Uy - Uy_mz , Uy_pz - Uy );
-                        amrex::Real  dQ3z = ave( Uz - Uz_mz , Uz_pz - Uz );
-                        amrex::Real N_source = 0.0;
+                    // Compute the cell slopes z
+                    amrex::Real  dQ0z = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , N_arr(i,j+1,k) - N_arr(i,j,k) );
+                    amrex::Real  dQ1z = ave( Ux - Ux_mz , Ux_pz - Ux );
+                    amrex::Real  dQ2z = ave( Uy - Uy_mz , Uy_pz - Uy );
+                    amrex::Real  dQ3z = ave( Uz - Uz_mz , Uz_pz - Uz );
+                    amrex::Real N_source = 0.0;
 
-                        #if defined(WARPX_DIM_RZ)
-                        amrex::Real dr = dx[0];
-                        amrex::Real r = problo[0] + i * dr;
-                        // Impose "none" boundaries
-                        // Condition: dQx = 0 at r = 0
-                        if  (i == domain.smallEnd(0)) {
-                            // R|_{0+} -> L|_{0-}
-                            // N -> N (N_arr(i-1,j,k) -> N_arr(i+1,j,k))
-                            // NUr -> -NUr (NUx_arr(i-1,j,k) -> -NUx_arr(i+1,j,k))
-                            // NUt -> -NUt (NUy_arr(i-1,j,k) -> -NUy_arr(i+1,j,k))
-                            // NUz -> -NUz (NUz_arr(i-1,j,k) -> NUz_arr(i+1,j,k))
-                            dQ0x = ave( N_arr(i,j,k) - N_arr(i+1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
-                            dQ1x = ave( Ux + Ux_px , Ux_px - Ux );
-                            dQ2x = ave( Uy + Uy_px , Uy_px - Uy );
-                            dQ3x = ave( Uz - Uz_px , Uz_px - Uz );
-                        } else if (i == domain.bigEnd(0)+1) {
-                            dQ0z = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , 0.0 );
-                            dQ1z = ave( Ux - Ux_mz , 0.0 );
-                            dQ2z = ave( Uy - Uy_mz , 0.0 );
-                            dQ3z = ave( Uz - Uz_mz , 0.0 );
+#if defined(WARPX_DIM_RZ)
+                    amrex::Real dr = dx[0];
+                    amrex::Real r = problo[0] + i * dr;
+                    // Impose "none" boundaries
+                    // Condition: dQx = 0 at r = 0
+                    if  (i == domain.smallEnd(0)) {
+                        // R|_{0+} -> L|_{0-}
+                        // N -> N (N_arr(i-1,j,k) -> N_arr(i+1,j,k))
+                        // NUr -> -NUr (NUx_arr(i-1,j,k) -> -NUx_arr(i+1,j,k))
+                        // NUt -> -NUt (NUy_arr(i-1,j,k) -> -NUy_arr(i+1,j,k))
+                        // NUz -> -NUz (NUz_arr(i-1,j,k) -> NUz_arr(i+1,j,k))
+                        dQ0x = ave( N_arr(i,j,k) - N_arr(i+1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
+                        dQ1x = ave( Ux + Ux_px , Ux_px - Ux );
+                        dQ2x = ave( Uy + Uy_px , Uy_px - Uy );
+                        dQ3x = ave( Uz - Uz_px , Uz_px - Uz );
+                    } else if (i == domain.bigEnd(0)+1) {
+                        dQ0z = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , 0.0 );
+                        dQ1z = ave( Ux - Ux_mz , 0.0 );
+                        dQ2z = ave( Uy - Uy_mz , 0.0 );
+                        dQ3z = ave( Uz - Uz_mz , 0.0 );
+                    }
+
+                    // RZ sources:
+                    if  (i != domain.smallEnd(0)) {
+                        N_source = N_arr(i,j,k)*Vx/r;
+                    }
+#endif
+
+                    // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
+                    amrex::Real  AdQ0x = A00x*dQ0x + A01x*dQ1x + A02x*dQ2x + A03x*dQ3x;
+                    amrex::Real  AdQ1x = A10x*dQ0x + A11x*dQ1x + A12x*dQ2x + A13x*dQ3x;
+                    amrex::Real  AdQ2x = A20x*dQ0x + A21x*dQ1x + A22x*dQ2x + A23x*dQ3x;
+                    amrex::Real  AdQ3x = A30x*dQ0x + A31x*dQ1x + A32x*dQ2x + A33x*dQ3x;
+                    amrex::Real  AdQ0z = A00z*dQ0z + A01z*dQ1z + A02z*dQ2z + A03z*dQ3z;
+                    amrex::Real  AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
+                    amrex::Real  AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
+                    amrex::Real  AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
+                    amrex::Real  Q_tilde0 = N_arr(i,j,k)   - cx_half*AdQ0x - cz_half*AdQ0z - (dt/2.0)*N_source;
+                    amrex::Real  Q_tilde1 = Ux - cx_half*AdQ1x - cz_half*AdQ1z;
+                    amrex::Real  Q_tilde2 = Uy - cx_half*AdQ2x - cz_half*AdQ2z;
+                    amrex::Real  Q_tilde3 = Uz - cx_half*AdQ3x - cz_half*AdQ3z;
+
+                    // Predict Q at the cell edges (x)
+                    // (note that _plus is shifted due to grid location)
+                    if ( box_x.contains(i,j,k) ) {
+                        Q_minus_x(i,j,k,0) = Q_tilde0 + dQ0x/2.0;
+                        Q_minus_x(i,j,k,1) = Q_tilde1 + dQ1x/2.0;
+                        Q_minus_x(i,j,k,2) = Q_tilde2 + dQ2x/2.0;
+                        Q_minus_x(i,j,k,3) = Q_tilde3 + dQ3x/2.0;
+                    }
+                    if ( box_x.contains(i-1,j,k) ) {
+                        Q_plus_x(i-1,j,k,0) = Q_tilde0 - dQ0x/2.0;
+                        Q_plus_x(i-1,j,k,1) = Q_tilde1 - dQ1x/2.0;
+                        Q_plus_x(i-1,j,k,2) = Q_tilde2 - dQ2x/2.0;
+                        Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
+                    }
+
+                // Positivity and Monotonicty Limiter for density N,
+                // This sets the slope (dQ) to zero for all quantities
+                    if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) )) {
+                        if ((Q_minus_x(i,j,k,0) < 0.0) || (Q_plus_x(i-1,j,k,0) < 0.0)){
+                            Q_minus_x(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_x(i,j,k,1) = Ux;
+                            Q_minus_x(i,j,k,2) = Uy;
+                            Q_minus_x(i,j,k,3) = Uz;
+                            Q_plus_x(i-1,j,k,0) = N_arr(i,j,k);
+                            Q_plus_x(i-1,j,k,1) = Ux;
+                            Q_plus_x(i-1,j,k,2) = Uy;
+                            Q_plus_x(i-1,j,k,3) = Uz;
                         }
-
-                        // RZ sources:
-                        if  (i != domain.smallEnd(0)) {
-                            N_source = N_arr(i,j,k)*Vx/r;
+                    } else if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) != 1)) {
+                        if (Q_minus_x(i,j,k,0) < 0.0) {
+                            Q_minus_x(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_x(i,j,k,1) = Ux;
+                            Q_minus_x(i,j,k,2) = Uy;
+                            Q_minus_x(i,j,k,3) = Uz;
                         }
-                        #endif
-
-                        // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
-                        amrex::Real  AdQ0x = A00x*dQ0x + A01x*dQ1x + A02x*dQ2x + A03x*dQ3x;
-                        amrex::Real  AdQ1x = A10x*dQ0x + A11x*dQ1x + A12x*dQ2x + A13x*dQ3x;
-                        amrex::Real  AdQ2x = A20x*dQ0x + A21x*dQ1x + A22x*dQ2x + A23x*dQ3x;
-                        amrex::Real  AdQ3x = A30x*dQ0x + A31x*dQ1x + A32x*dQ2x + A33x*dQ3x;
-                        amrex::Real  AdQ0z = A00z*dQ0z + A01z*dQ1z + A02z*dQ2z + A03z*dQ3z;
-                        amrex::Real  AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
-                        amrex::Real  AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
-                        amrex::Real  AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
-                        amrex::Real  Q_tilde0 = N_arr(i,j,k)   - cx_half*AdQ0x - cz_half*AdQ0z - (dt/2.0)*N_source;
-                        amrex::Real  Q_tilde1 = Ux - cx_half*AdQ1x - cz_half*AdQ1z;
-                        amrex::Real  Q_tilde2 = Uy - cx_half*AdQ2x - cz_half*AdQ2z;
-                        amrex::Real  Q_tilde3 = Uz - cx_half*AdQ3x - cz_half*AdQ3z;
-
-                        // Predict Q at the cell edges (x)
-                        // (note that _plus is shifted due to grid location)
-                        if ( box_x.contains(i,j,k) ) {
-                            Q_minus_x(i,j,k,0) = Q_tilde0 + dQ0x/2.0;
-                            Q_minus_x(i,j,k,1) = Q_tilde1 + dQ1x/2.0;
-                            Q_minus_x(i,j,k,2) = Q_tilde2 + dQ2x/2.0;
-                            Q_minus_x(i,j,k,3) = Q_tilde3 + dQ3x/2.0;
+                    } else if (( box_x.contains(i,j,k) != 1 ) && ( box_x.contains(i-1,j,k) )) {
+                        if (Q_plus_x(i-1,j,k,0) < 0.0){
+                            Q_plus_x(i-1,j,k,0) = N_arr(i,j,k);
+                            Q_plus_x(i-1,j,k,1) = Ux;
+                            Q_plus_x(i-1,j,k,2) = Uy;
+                            Q_plus_x(i-1,j,k,3) = Uz;
                         }
-                        if ( box_x.contains(i-1,j,k) ) {
-                            Q_plus_x(i-1,j,k,0) = Q_tilde0 - dQ0x/2.0;
-                            Q_plus_x(i-1,j,k,1) = Q_tilde1 - dQ1x/2.0;
-                            Q_plus_x(i-1,j,k,2) = Q_tilde2 - dQ2x/2.0;
-                            Q_plus_x(i-1,j,k,3) = Q_tilde3 - dQ3x/2.0;
+                    }
+
+                    if ( box_z.contains(i,j,k) ) {
+                    // Predict Q at the cell edges (z)
+                        Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
+                        Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
+                        Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
+                        Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
+                    }
+                    if ( box_z.contains(i,j-1,k) ) {
+                        Q_plus_z(i,j-1,k,0) = Q_tilde0 - dQ0z/2.0;
+                        Q_plus_z(i,j-1,k,1) = Q_tilde1 - dQ1z/2.0;
+                        Q_plus_z(i,j-1,k,2) = Q_tilde2 - dQ2z/2.0;
+                        Q_plus_z(i,j-1,k,3) = Q_tilde3 - dQ3z/2.0;
+                    }
+
+                    // Positivity and Monotonicty Limiter for density N: z
+                    if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j-1,k) )) {
+                        if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i,j-1,k,0) < 0.0)){
+                            Q_minus_z(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_z(i,j,k,1) = Ux;
+                            Q_minus_z(i,j,k,2) = Uy;
+                            Q_minus_z(i,j,k,3) = Uz;
+                            Q_plus_z(i,j-1,k,0) = N_arr(i,j,k);
+                            Q_plus_z(i,j-1,k,1) = Ux;
+                            Q_plus_z(i,j-1,k,2) = Uy;
+                            Q_plus_z(i,j-1,k,3) = Uz;
                         }
+                    } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j-1,k) != 1)) {
+                        if (Q_minus_z(i,j,k,0) < 0.0) {
+                            Q_minus_z(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_z(i,j,k,1) = Ux;
+                            Q_minus_z(i,j,k,2) = Uy;
+                            Q_minus_z(i,j,k,3) = Uz;
+                        }
+                    } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i,j-1,k) )) {
+                        if (Q_plus_z(i,j-1,k,0) < 0.0){
+                            Q_plus_z(i,j-1,k,0) = N_arr(i,j,k);
+                            Q_plus_z(i,j-1,k,1) = Ux;
+                            Q_plus_z(i,j-1,k,2) = Uy;
+                            Q_plus_z(i,j-1,k,3) = Uz;
+                        }
+                    }
+
+#else
+
+                    // Compute the cell slopes z
+                    amrex::Real  dQ0z = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
+                    amrex::Real  dQ1z = ave( Ux - Ux_mz , Ux_pz - Ux );
+                    amrex::Real  dQ2z = ave( Uy - Uy_mz , Uy_pz - Uy );
+                    amrex::Real  dQ3z = ave( Uz - Uz_mz , Uz_pz - Uz );
+
+                    // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
+                    amrex::Real  AdQ0z = A00z*dQ0z + A01z*dQ1z + A02z*dQ2z + A03z*dQ3z;
+                    amrex::Real  AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
+                    amrex::Real  AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
+                    amrex::Real  AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
+                    amrex::Real  Q_tilde0 = N_arr(i,j,k)   - cz_half*AdQ0z;
+                    amrex::Real  Q_tilde1 = Ux - cz_half*AdQ1z;
+                    amrex::Real  Q_tilde2 = Uy - cz_half*AdQ2z;
+                    amrex::Real  Q_tilde3 = Uz - cz_half*AdQ3z;
+
+                    // Predict Q at the cell edges (z)
+                    // (note that _plus is shifted due to grid location)
+                    if ( box_z.contains(i,j,k) ) {
+                    // Predict Q at the cell edges (z)
+                        Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
+                        Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
+                        Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
+                        Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
+                    }
+                    if ( box_z.contains(i-1,j,k) ) {
+                        Q_plus_z(i-1,j,k,0) = Q_tilde0 - dQ0z/2.0;
+                        Q_plus_z(i-1,j,k,1) = Q_tilde1 - dQ1z/2.0;
+                        Q_plus_z(i-1,j,k,2) = Q_tilde2 - dQ2z/2.0;
+                        Q_plus_z(i-1,j,k,3) = Q_tilde3 - dQ3z/2.0;
+                    }
 
                     // Positivity and Monotonicty Limiter for density N,
                     // This sets the slope (dQ) to zero for all quantities
-                        if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) )) {
-                            if ((Q_minus_x(i,j,k,0) < 0.0) || (Q_plus_x(i-1,j,k,0) < 0.0)){
-                                Q_minus_x(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_x(i,j,k,1) = Ux;
-                                Q_minus_x(i,j,k,2) = Uy;
-                                Q_minus_x(i,j,k,3) = Uz;
-                                Q_plus_x(i-1,j,k,0) = N_arr(i,j,k);
-                                Q_plus_x(i-1,j,k,1) = Ux;
-                                Q_plus_x(i-1,j,k,2) = Uy;
-                                Q_plus_x(i-1,j,k,3) = Uz;
-                            }
-                        } else if (( box_x.contains(i,j,k) ) && ( box_x.contains(i-1,j,k) != 1)) {
-                            if (Q_minus_x(i,j,k,0) < 0.0) {
-                                Q_minus_x(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_x(i,j,k,1) = Ux;
-                                Q_minus_x(i,j,k,2) = Uy;
-                                Q_minus_x(i,j,k,3) = Uz;
-                            }
-                        } else if (( box_x.contains(i,j,k) != 1 ) && ( box_x.contains(i-1,j,k) )) {
-                            if (Q_plus_x(i-1,j,k,0) < 0.0){
-                                Q_plus_x(i-1,j,k,0) = N_arr(i,j,k);
-                                Q_plus_x(i-1,j,k,1) = Ux;
-                                Q_plus_x(i-1,j,k,2) = Uy;
-                                Q_plus_x(i-1,j,k,3) = Uz;
-                            }
+                    if (( box_z.contains(i,j,k) ) && ( box_z.contains(i-1,j,k) )) {
+                        if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i-1,j,k,0) < 0.0)) {
+                            Q_minus_z(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_z(i,j,k,1) = Ux;
+                            Q_minus_z(i,j,k,2) = Uy;
+                            Q_minus_z(i,j,k,3) = Uz;
+                            Q_plus_z(i-1,j,k,0) = N_arr(i,j,k);
+                            Q_plus_z(i-1,j,k,1) = Ux;
+                            Q_plus_z(i-1,j,k,2) = Uy;
+                            Q_plus_z(i-1,j,k,3) = Uz;
                         }
-
-                        if ( box_z.contains(i,j,k) ) {
-                        // Predict Q at the cell edges (z)
-                            Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
-                            Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
-                            Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
-                            Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
+                    } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i-1,j,k) != 1)) {
+                        if (Q_minus_z(i,j,k,0) < 0.0) {
+                            Q_minus_z(i,j,k,0) = N_arr(i,j,k);
+                            Q_minus_z(i,j,k,1) = Ux;
+                            Q_minus_z(i,j,k,2) = Uy;
+                            Q_minus_z(i,j,k,3) = Uz;
                         }
-                        if ( box_z.contains(i,j-1,k) ) {
-                            Q_plus_z(i,j-1,k,0) = Q_tilde0 - dQ0z/2.0;
-                            Q_plus_z(i,j-1,k,1) = Q_tilde1 - dQ1z/2.0;
-                            Q_plus_z(i,j-1,k,2) = Q_tilde2 - dQ2z/2.0;
-                            Q_plus_z(i,j-1,k,3) = Q_tilde3 - dQ3z/2.0;
+                    } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i-1,j,k) )) {
+                        if (Q_plus_z(i-1,j,k,0) < 0.0){
+                            Q_plus_z(i-1,j,k,0) = N_arr(i,j,k);
+                            Q_plus_z(i-1,j,k,1) = Ux;
+                            Q_plus_z(i-1,j,k,2) = Uy;
+                            Q_plus_z(i-1,j,k,3) = Uz;
                         }
+                    }
 
-                        // Positivity and Monotonicty Limiter for density N: z
-                        if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j-1,k) )) {
-                            if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i,j-1,k,0) < 0.0)){
-                                Q_minus_z(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_z(i,j,k,1) = Ux;
-                                Q_minus_z(i,j,k,2) = Uy;
-                                Q_minus_z(i,j,k,3) = Uz;
-                                Q_plus_z(i,j-1,k,0) = N_arr(i,j,k);
-                                Q_plus_z(i,j-1,k,1) = Ux;
-                                Q_plus_z(i,j-1,k,2) = Uy;
-                                Q_plus_z(i,j-1,k,3) = Uz;
-                            }
-                        } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i,j-1,k) != 1)) {
-                            if (Q_minus_z(i,j,k,0) < 0.0) {
-                                Q_minus_z(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_z(i,j,k,1) = Ux;
-                                Q_minus_z(i,j,k,2) = Uy;
-                                Q_minus_z(i,j,k,3) = Uz;
-                            }
-                        } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i,j-1,k) )) {
-                            if (Q_plus_z(i,j-1,k,0) < 0.0){
-                                Q_plus_z(i,j-1,k,0) = N_arr(i,j,k);
-                                Q_plus_z(i,j-1,k,1) = Ux;
-                                Q_plus_z(i,j-1,k,2) = Uy;
-                                Q_plus_z(i,j-1,k,3) = Uz;
-                            }
-                        }
-
-                    #else
-
-                        // Compute the cell slopes z
-                        amrex::Real  dQ0z = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
-                        amrex::Real  dQ1z = ave( Ux - Ux_mz , Ux_pz - Ux );
-                        amrex::Real  dQ2z = ave( Uy - Uy_mz , Uy_pz - Uy );
-                        amrex::Real  dQ3z = ave( Uz - Uz_mz , Uz_pz - Uz );
-
-                        // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
-                        amrex::Real  AdQ0z = A00z*dQ0z + A01z*dQ1z + A02z*dQ2z + A03z*dQ3z;
-                        amrex::Real  AdQ1z = A10z*dQ0z + A11z*dQ1z + A12z*dQ2z + A13z*dQ3z;
-                        amrex::Real  AdQ2z = A20z*dQ0z + A21z*dQ1z + A22z*dQ2z + A23z*dQ3z;
-                        amrex::Real  AdQ3z = A30z*dQ0z + A31z*dQ1z + A32z*dQ2z + A33z*dQ3z;
-                        amrex::Real  Q_tilde0 = N_arr(i,j,k)   - cz_half*AdQ0z;
-                        amrex::Real  Q_tilde1 = Ux - cz_half*AdQ1z;
-                        amrex::Real  Q_tilde2 = Uy - cz_half*AdQ2z;
-                        amrex::Real  Q_tilde3 = Uz - cz_half*AdQ3z;
-
-                        // Predict Q at the cell edges (z)
-                        // (note that _plus is shifted due to grid location)
-                        if ( box_z.contains(i,j,k) ) {
-                        // Predict Q at the cell edges (z)
-                            Q_minus_z(i,j,k,0) = Q_tilde0 + dQ0z/2.0;
-                            Q_minus_z(i,j,k,1) = Q_tilde1 + dQ1z/2.0;
-                            Q_minus_z(i,j,k,2) = Q_tilde2 + dQ2z/2.0;
-                            Q_minus_z(i,j,k,3) = Q_tilde3 + dQ3z/2.0;
-                        }
-                        if ( box_z.contains(i-1,j,k) ) {
-                            Q_plus_z(i-1,j,k,0) = Q_tilde0 - dQ0z/2.0;
-                            Q_plus_z(i-1,j,k,1) = Q_tilde1 - dQ1z/2.0;
-                            Q_plus_z(i-1,j,k,2) = Q_tilde2 - dQ2z/2.0;
-                            Q_plus_z(i-1,j,k,3) = Q_tilde3 - dQ3z/2.0;
-                        }
-
-                        // Positivity and Monotonicty Limiter for density N,
-                        // This sets the slope (dQ) to zero for all quantities
-                        if (( box_z.contains(i,j,k) ) && ( box_z.contains(i-1,j,k) )) {
-                            if ((Q_minus_z(i,j,k,0) < 0.0) || (Q_plus_z(i-1,j,k,0) < 0.0)) {
-                                Q_minus_z(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_z(i,j,k,1) = Ux;
-                                Q_minus_z(i,j,k,2) = Uy;
-                                Q_minus_z(i,j,k,3) = Uz;
-                                Q_plus_z(i-1,j,k,0) = N_arr(i,j,k);
-                                Q_plus_z(i-1,j,k,1) = Ux;
-                                Q_plus_z(i-1,j,k,2) = Uy;
-                                Q_plus_z(i-1,j,k,3) = Uz;
-                            }
-                        } else if (( box_z.contains(i,j,k) ) && ( box_z.contains(i-1,j,k) != 1)) {
-                            if (Q_minus_z(i,j,k,0) < 0.0) {
-                                Q_minus_z(i,j,k,0) = N_arr(i,j,k);
-                                Q_minus_z(i,j,k,1) = Ux;
-                                Q_minus_z(i,j,k,2) = Uy;
-                                Q_minus_z(i,j,k,3) = Uz;
-                            }
-                        } else if (( box_z.contains(i,j,k) != 1 ) && ( box_z.contains(i-1,j,k) )) {
-                            if (Q_plus_z(i-1,j,k,0) < 0.0){
-                                Q_plus_z(i-1,j,k,0) = N_arr(i,j,k);
-                                Q_plus_z(i-1,j,k,1) = Ux;
-                                Q_plus_z(i-1,j,k,2) = Uy;
-                                Q_plus_z(i-1,j,k,3) = Uz;
-                            }
-                        }
-
-                    #endif
+#endif
                 // If N<= 0 then set the boundaries to zero
                 } else {
-                    #if defined(WARPX_DIM_3D) // 3D:
+#if defined(WARPX_DIM_3D) // 3D:
                     if ( box_x.contains(i,j,k) ) {
                         Q_minus_x(i,j,k,0) = 0.0;
                         Q_minus_x(i,j,k,1) = 0.0;
@@ -1068,7 +1067,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_z(i,j,k-1,2) = 0.0;
                         Q_plus_z(i,j,k-1,3) = 0.0;
                     }
-                    #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ) // 2D:
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ) // 2D:
                     if ( box_x.contains(i,j,k) ) {
                         Q_minus_x(i,j,k,0) = 0.0;
                         Q_minus_x(i,j,k,1) = 0.0;
@@ -1093,7 +1092,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_z(i,j-1,k,2) = 0.0;
                         Q_plus_z(i,j-1,k,3) = 0.0;
                     }
-                    #else // 1D:
+#else // 1D:
                     if ( box_z.contains(i,j,k) ) {
                         Q_minus_z(i,j,k,0) = 0.0;
                         Q_minus_z(i,j,k,1) = 0.0;
@@ -1106,16 +1105,16 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Q_plus_z(i-1,j,k,2) = 0.0;
                         Q_plus_z(i-1,j,k,3) = 0.0;
                     }
-                    #endif
+#endif
                 }
             }
         );
     }
 
     // Advection push
-    #ifdef AMREX_USE_OMP
-    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    #endif
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
@@ -1124,246 +1123,246 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
         amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
 
-        #if defined(WARPX_DIM_3D)
-            amrex::Array4<amrex::Real> const &Q_minus_x = tmp_Q_minus_x.array(mfi);
-            amrex::Array4<amrex::Real> const &Q_plus_x = tmp_Q_plus_x.array(mfi);
-            amrex::Array4<amrex::Real> const &Q_minus_y = tmp_Q_minus_y.array(mfi);
-            amrex::Array4<amrex::Real> const &Q_plus_y = tmp_Q_plus_y.array(mfi);
-            amrex::Array4<amrex::Real> const &Q_minus_z = tmp_Q_minus_z.array(mfi);
-            amrex::Array4<amrex::Real> const &Q_plus_z = tmp_Q_plus_z.array(mfi);
-        #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            amrex::Array4<amrex::Real> const &Q_minus_x = tmp_Q_minus_x.array(mfi);
-            amrex::Array4<amrex::Real> const &Q_plus_x = tmp_Q_plus_x.array(mfi);
-            amrex::Array4<amrex::Real> const &Q_minus_z = tmp_Q_minus_z.array(mfi);
-            amrex::Array4<amrex::Real> const &Q_plus_z = tmp_Q_plus_z.array(mfi);
-        #else
-            amrex::Array4<amrex::Real> const &Q_minus_z = tmp_Q_minus_z.array(mfi);
-            amrex::Array4<amrex::Real> const &Q_plus_z = tmp_Q_plus_z.array(mfi);
-        #endif
+#if defined(WARPX_DIM_3D)
+        amrex::Array4<amrex::Real> const &Q_minus_x = tmp_Q_minus_x.array(mfi);
+        amrex::Array4<amrex::Real> const &Q_plus_x = tmp_Q_plus_x.array(mfi);
+        amrex::Array4<amrex::Real> const &Q_minus_y = tmp_Q_minus_y.array(mfi);
+        amrex::Array4<amrex::Real> const &Q_plus_y = tmp_Q_plus_y.array(mfi);
+        amrex::Array4<amrex::Real> const &Q_minus_z = tmp_Q_minus_z.array(mfi);
+        amrex::Array4<amrex::Real> const &Q_plus_z = tmp_Q_plus_z.array(mfi);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        amrex::Array4<amrex::Real> const &Q_minus_x = tmp_Q_minus_x.array(mfi);
+        amrex::Array4<amrex::Real> const &Q_plus_x = tmp_Q_plus_x.array(mfi);
+        amrex::Array4<amrex::Real> const &Q_minus_z = tmp_Q_minus_z.array(mfi);
+        amrex::Array4<amrex::Real> const &Q_plus_z = tmp_Q_plus_z.array(mfi);
+#else
+        amrex::Array4<amrex::Real> const &Q_minus_z = tmp_Q_minus_z.array(mfi);
+        amrex::Array4<amrex::Real> const &Q_plus_z = tmp_Q_plus_z.array(mfi);
+#endif
 
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
 
                 // Select the specific implmentation depending on dimensionality
-                #if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D)
 
-                    amrex::Real Vx_L_minus = 0.0, Vx_I_minus = 0.0, Vx_L_plus = 0.0, Vx_I_plus = 0.0;
-                    amrex::Real Vy_L_minus = 0.0, Vy_I_minus = 0.0, Vy_L_plus = 0.0, Vy_I_plus = 0.0;
-                    amrex::Real Vz_L_minus = 0.0, Vz_I_minus = 0.0, Vz_L_plus = 0.0, Vz_I_plus = 0.0;
+                amrex::Real Vx_L_minus = 0.0, Vx_I_minus = 0.0, Vx_L_plus = 0.0, Vx_I_plus = 0.0;
+                amrex::Real Vy_L_minus = 0.0, Vy_I_minus = 0.0, Vy_L_plus = 0.0, Vy_I_plus = 0.0;
+                amrex::Real Vz_L_minus = 0.0, Vz_I_minus = 0.0, Vz_L_plus = 0.0, Vz_I_plus = 0.0;
 
-                    // Verify positive density, then compute velocity
+                // Verify positive density, then compute velocity
+                if (Q_minus_x(i-1,j,k,0)>0.0) Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
+                if (Q_minus_x(i,j,k,0)>0.0)   Vx_I_minus = V_calc(Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
+                if (Q_plus_x(i-1,j,k,0)>0.0)   Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
+                if (Q_plus_x(i,j,k,0)>0.0) Vx_I_plus = V_calc(Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
+
+                if (Q_minus_y(i,j-1,k,0)>0.0) Vy_L_minus = V_calc(Q_minus_y(i,j-1,k,1),Q_minus_y(i,j-1,k,2),Q_minus_y(i,j-1,k,3),clight,1);
+                if (Q_minus_y(i,j,k,0)>0.0)   Vy_I_minus = V_calc(Q_minus_y(i,j,k,1),Q_minus_y(i,j,k,2),Q_minus_y(i,j,k,3),clight,1);
+                if (Q_plus_y(i,j-1,k,0)>0.0)   Vy_L_plus = V_calc(Q_plus_y(i,j-1,k,1),Q_plus_y(i,j-1,k,2),Q_plus_y(i,j-1,k,3),clight,1);
+                if (Q_plus_y(i,j,k,0)>0.0)Vy_I_plus = V_calc(Q_plus_y(i,j,k,1),Q_plus_y(i,j,k,2),Q_plus_y(i,j,k,3),clight,1);
+
+                if (Q_minus_z(i,j,k-1,0)>0.0) Vz_L_minus = V_calc(Q_minus_z(i,j,k-1,1),Q_minus_z(i,j,k-1,2),Q_minus_z(i,j,k-1,3),clight,2);
+                if (Q_minus_z(i,j,k,0)>0.0)   Vz_I_minus = V_calc(Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
+                if (Q_plus_z(i,j,k-1,0)>0.0)   Vz_L_plus = V_calc(Q_plus_z(i,j,k-1,1),Q_plus_z(i,j,k-1,2),Q_plus_z(i,j,k-1,3),clight,2);
+                if (Q_plus_z(i,j,k,0)>0.0) Vz_I_plus = V_calc(Q_plus_z(i,j,k,1),Q_plus_z(i,j,k,2),Q_plus_z(i,j,k,3),clight,2);
+
+                // compute the fluxes:
+                // (note that _plus is shifted due to grid location)
+                amrex::Real F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
+                amrex::Real F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
+                amrex::Real F1_minusx = flux(Q_minus_x(i-1,j,k,1)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
+                amrex::Real F1_plusx =  flux(Q_minus_x(i,j,k,1)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,1)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
+                amrex::Real F2_minusx = flux(Q_minus_x(i-1,j,k,2)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,2)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
+                amrex::Real F2_plusx =  flux(Q_minus_x(i,j,k,2)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,2)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
+                amrex::Real F3_minusx = flux(Q_minus_x(i-1,j,k,3)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,3)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
+                amrex::Real F3_plusx =  flux(Q_minus_x(i,j,k,3)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,3)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
+
+                amrex::Real F0_minusy = flux(Q_minus_y(i,j-1,k,0),Q_plus_y(i,j-1,k,0),  Vy_L_minus,Vy_L_plus);
+                amrex::Real F0_plusy =  flux(Q_minus_y(i,j,k,0),  Q_plus_y(i,j,k,0),    Vy_I_minus,Vy_I_plus);
+                amrex::Real F1_minusy = flux(Q_minus_y(i,j-1,k,1)*Q_minus_y(i,j-1,k,0),Q_plus_y(i,j-1,k,1)*Q_plus_y(i,j-1,k,0),  Vy_L_minus,Vy_L_plus);
+                amrex::Real F1_plusy =  flux(Q_minus_y(i,j,k,1)*Q_minus_y(i,j,k,0),  Q_plus_y(i,j,k,1)*Q_plus_y(i,j,k,0),    Vy_I_minus,Vy_I_plus);
+                amrex::Real F2_minusy = flux(Q_minus_y(i,j-1,k,2)*Q_minus_y(i,j-1,k,0),Q_plus_y(i,j-1,k,2)*Q_plus_y(i,j-1,k,0),  Vy_L_minus,Vy_L_plus);
+                amrex::Real F2_plusy =  flux(Q_minus_y(i,j,k,2)*Q_minus_y(i,j,k,0),  Q_plus_y(i,j,k,2)*Q_plus_y(i,j,k,0),    Vy_I_minus,Vy_I_plus);
+                amrex::Real F3_minusy = flux(Q_minus_y(i,j-1,k,3)*Q_minus_y(i,j-1,k,0),Q_plus_y(i,j-1,k,3)*Q_plus_y(i,j-1,k,0),  Vy_L_minus,Vy_L_plus);
+                amrex::Real F3_plusy =  flux(Q_minus_y(i,j,k,3)*Q_minus_y(i,j,k,0),  Q_plus_y(i,j,k,3)*Q_plus_y(i,j,k,0),    Vy_I_minus,Vy_I_plus);
+
+                amrex::Real F0_minusz = flux(Q_minus_z(i,j,k-1,0),Q_plus_z(i,j,k-1,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+                amrex::Real F1_minusz = flux(Q_minus_z(i,j,k-1,1)*Q_minus_z(i,j,k-1,0),Q_plus_z(i,j,k-1,1)*Q_plus_z(i,j,k-1,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F1_plusz =  flux(Q_minus_z(i,j,k,1)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,1)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+                amrex::Real F2_minusz = flux(Q_minus_z(i,j,k-1,2)*Q_minus_z(i,j,k-1,0),Q_plus_z(i,j,k-1,2)*Q_plus_z(i,j,k-1,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F2_plusz =  flux(Q_minus_z(i,j,k,2)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,2)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+                amrex::Real F3_minusz = flux(Q_minus_z(i,j,k-1,3)*Q_minus_z(i,j,k-1,0),Q_plus_z(i,j,k-1,3)*Q_plus_z(i,j,k-1,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F3_plusz =  flux(Q_minus_z(i,j,k,3)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,3)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+
+                // Update Q from tn -> tn + dt
+                N_arr(i,j,k) = N_arr(i,j,k) - cx*(F0_plusx - F0_minusx)
+                                            - cy*(F0_plusy - F0_minusy)
+                                            - cz*(F0_plusz - F0_minusz);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - cx*(F1_plusx - F1_minusx)
+                                                - cy*(F1_plusy - F1_minusy)
+                                                - cz*(F1_plusz - F1_minusz);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - cx*(F2_plusx - F2_minusx)
+                                                - cy*(F2_plusy - F2_minusy)
+                                                - cz*(F2_plusz - F2_minusz);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - cx*(F3_plusx - F3_minusx)
+                                                - cy*(F3_plusy - F3_minusy)
+                                                - cz*(F3_plusz - F3_minusz);
+
+#elif defined(WARPX_DIM_XZ)
+
+                amrex::Real Vx_L_minus = 0.0, Vx_I_minus = 0.0, Vx_L_plus = 0.0, Vx_I_plus = 0.0;
+                amrex::Real Vz_L_minus = 0.0, Vz_I_minus = 0.0, Vz_L_plus = 0.0, Vz_I_plus = 0.0;
+
+                // Verify positive density, then compute velocity
+                if (Q_minus_x(i-1,j,k,0)>0.0) Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
+                if (Q_minus_x(i,j,k,0)>0.0)   Vx_I_minus = V_calc(Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
+                if (Q_plus_x(i-1,j,k,0)>0.0)   Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
+                if (Q_plus_x(i,j,k,0)>0.0) Vx_I_plus = V_calc(Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
+
+                if (Q_minus_z(i,j-1,k,0)>0.0) Vz_L_minus = V_calc(Q_minus_z(i,j-1,k,1),Q_minus_z(i,j-1,k,2),Q_minus_z(i,j-1,k,3),clight,2);
+                if (Q_minus_z(i,j,k,0)>0.0)   Vz_I_minus = V_calc(Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
+                if (Q_plus_z(i,j-1,k,0)>0.0)   Vz_L_plus = V_calc(Q_plus_z(i,j-1,k,1),Q_plus_z(i,j-1,k,2),Q_plus_z(i,j-1,k,3),clight,2);
+                if (Q_plus_z(i,j,k,0)>0.0) Vz_I_plus = V_calc(Q_plus_z(i,j,k,1),Q_plus_z(i,j,k,2),Q_plus_z(i,j,k,3),clight,2);
+
+
+                // compute the fluxes:
+                // (note that _plus is shifted due to grid location)
+                amrex::Real F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
+                amrex::Real F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
+                amrex::Real F1_minusx = flux(Q_minus_x(i-1,j,k,1)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
+                amrex::Real F1_plusx =  flux(Q_minus_x(i,j,k,1)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,1)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
+                amrex::Real F2_minusx = flux(Q_minus_x(i-1,j,k,2)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,2)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
+                amrex::Real F2_plusx =  flux(Q_minus_x(i,j,k,2)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,2)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
+                amrex::Real F3_minusx = flux(Q_minus_x(i-1,j,k,3)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,3)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
+                amrex::Real F3_plusx =  flux(Q_minus_x(i,j,k,3)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,3)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
+
+                amrex::Real F0_minusz = flux(Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+                amrex::Real F1_minusz = flux(Q_minus_z(i,j-1,k,1)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,1)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F1_plusz =  flux(Q_minus_z(i,j,k,1)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,1)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+                amrex::Real F2_minusz = flux(Q_minus_z(i,j-1,k,2)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,2)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F2_plusz =  flux(Q_minus_z(i,j,k,2)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,2)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+                amrex::Real F3_minusz = flux(Q_minus_z(i,j-1,k,3)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,3)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F3_plusz =  flux(Q_minus_z(i,j,k,3)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,3)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+
+                // Update Q from tn -> tn + dt
+                N_arr(i,j,k) = N_arr(i,j,k) - cx*(F0_plusx - F0_minusx)
+                                            - cz*(F0_plusz - F0_minusz);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - cx*(F1_plusx - F1_minusx)
+                                                - cz*(F1_plusz - F1_minusz);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - cx*(F2_plusx - F2_minusx)
+                                                - cz*(F2_plusz - F2_minusz);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - cx*(F3_plusx - F3_minusx)
+                                                - cz*(F3_plusz - F3_minusz);
+
+#elif defined(WARPX_DIM_RZ)
+
+                // Compute the flux areas for RZ
+                amrex::Real pi = 3.1415926535897932;
+                // Cell-centered radius
+                amrex::Real dr = dx[0];
+                amrex::Real dz = dx[1]; // Must be 1
+                amrex::Real r = problo[0] + i * dr;
+                amrex::Real Vij = 0.0;
+                amrex::Real S_Az = 0.0;
+
+                // Volume element and z-facing surfaces
+                if (i == domain.smallEnd(0)) {
+                    Vij = 2.0*pi*(dr/2.0)*(dr/4.0)*dz;
+                    S_Az = 2.0*pi*(dr/4.0)*(dr/2.0);
+                } else if (i == domain.bigEnd(0)+1) {
+                    Vij = 2.0*pi*(r - dr/4.0)*(dr/2.0)*dz;
+                    S_Az = 2.0*pi*(r - dr/4.0)*(dr/2.0);
+                }  else {
+                    Vij = 2.0*pi*r*dr*dz;
+                    S_Az = 2.0*pi*(r)*dr;
+                }
+
+                // Radial Surfaces
+                amrex::Real S_Ar_plus = 2.0*pi*(r + dr/2.0)*dz;
+                amrex::Real S_Ar_minus = 2.0*pi*(r - dr/2.0)*dz;
+                if (i == domain.smallEnd(0))
+                    S_Ar_minus = 0.0;
+                if (i == domain.bigEnd(0)+1)
+                    S_Ar_plus = 2.0*pi*(r)*dz;
+
+                // Impose "none" boundaries
+                // Condition: Vx(r) = 0 at boundaries
+                amrex::Real Vx_L_minus = 0.0, Vx_I_minus = 0.0, Vx_L_plus = 0.0, Vx_I_plus = 0.0;
+                amrex::Real Vz_L_minus = 0.0, Vz_I_minus = 0.0, Vz_L_plus = 0.0, Vz_I_plus = 0.0;
+                if (Q_minus_x(i,j,k,0)>0.0) Vx_I_minus = V_calc(Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
+                if (Q_plus_x(i-1,j,k,0)>0.0) Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
+
+                if (Q_minus_z(i,j-1,k,0)>0.0) Vz_L_minus = V_calc(Q_minus_z(i,j-1,k,1),Q_minus_z(i,j-1,k,2),Q_minus_z(i,j-1,k,3),clight,2);
+                if (Q_minus_z(i,j,k,0)>0.0)   Vz_I_minus = V_calc(Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
+                if (Q_plus_z(i,j-1,k,0)>0.0)   Vz_L_plus = V_calc(Q_plus_z(i,j-1,k,1),Q_plus_z(i,j-1,k,2),Q_plus_z(i,j-1,k,3),clight,2);
+                if (Q_plus_z(i,j,k,0)>0.0) Vz_I_plus = V_calc(Q_plus_z(i,j,k,1),Q_plus_z(i,j,k,2),Q_plus_z(i,j,k,3),clight,2);
+
+
+                // compute the fluxes:
+                // (note that _plus is shifted due to grid location)
+                amrex::Real F0_minusx = 0.0, F1_minusx = 0.0, F2_minusx = 0.0, F3_minusx = 0.0;
+                amrex::Real F0_plusx = 0.0, F1_plusx = 0.0, F2_plusx = 0.0, F3_plusx = 0.0;
+                if (i != domain.smallEnd(0)) {
                     if (Q_minus_x(i-1,j,k,0)>0.0) Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
-                    if (Q_minus_x(i,j,k,0)>0.0)   Vx_I_minus = V_calc(Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
-                    if (Q_plus_x(i-1,j,k,0)>0.0)   Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
+                    F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
+                    F1_minusx = flux(Q_minus_x(i-1,j,k,1)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
+                    F2_minusx = flux(Q_minus_x(i-1,j,k,2)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,2)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
+                    F3_minusx = flux(Q_minus_x(i-1,j,k,3)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,3)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
+                }
+                if (i < domain.bigEnd(0)) {
                     if (Q_plus_x(i,j,k,0)>0.0) Vx_I_plus = V_calc(Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
+                    F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
+                    F1_plusx =  flux(Q_minus_x(i,j,k,1)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,1)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
+                    F2_plusx =  flux(Q_minus_x(i,j,k,2)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,2)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
+                    F3_plusx =  flux(Q_minus_x(i,j,k,3)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,3)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
+                }
 
-                    if (Q_minus_y(i,j-1,k,0)>0.0) Vy_L_minus = V_calc(Q_minus_y(i,j-1,k,1),Q_minus_y(i,j-1,k,2),Q_minus_y(i,j-1,k,3),clight,1);
-                    if (Q_minus_y(i,j,k,0)>0.0)   Vy_I_minus = V_calc(Q_minus_y(i,j,k,1),Q_minus_y(i,j,k,2),Q_minus_y(i,j,k,3),clight,1);
-                    if (Q_plus_y(i,j-1,k,0)>0.0)   Vy_L_plus = V_calc(Q_plus_y(i,j-1,k,1),Q_plus_y(i,j-1,k,2),Q_plus_y(i,j-1,k,3),clight,1);
-                    if (Q_plus_y(i,j,k,0)>0.0)Vy_I_plus = V_calc(Q_plus_y(i,j,k,1),Q_plus_y(i,j,k,2),Q_plus_y(i,j,k,3),clight,1);
+                amrex::Real F0_minusz = flux(Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus)*S_Az;
+                amrex::Real F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus)*S_Az;
+                amrex::Real F1_minusz = flux(Q_minus_z(i,j-1,k,1)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,1)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus)*S_Az;
+                amrex::Real F1_plusz =  flux(Q_minus_z(i,j,k,1)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,1)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus)*S_Az;
+                amrex::Real F2_minusz = flux(Q_minus_z(i,j-1,k,2)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,2)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus)*S_Az;
+                amrex::Real F2_plusz =  flux(Q_minus_z(i,j,k,2)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,2)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus)*S_Az;
+                amrex::Real F3_minusz = flux(Q_minus_z(i,j-1,k,3)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,3)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus)*S_Az;
+                amrex::Real F3_plusz =  flux(Q_minus_z(i,j,k,3)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,3)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus)*S_Az;
 
-                    if (Q_minus_z(i,j,k-1,0)>0.0) Vz_L_minus = V_calc(Q_minus_z(i,j,k-1,1),Q_minus_z(i,j,k-1,2),Q_minus_z(i,j,k-1,3),clight,2);
-                    if (Q_minus_z(i,j,k,0)>0.0)   Vz_I_minus = V_calc(Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
-                    if (Q_plus_z(i,j,k-1,0)>0.0)   Vz_L_plus = V_calc(Q_plus_z(i,j,k-1,1),Q_plus_z(i,j,k-1,2),Q_plus_z(i,j,k-1,3),clight,2);
-                    if (Q_plus_z(i,j,k,0)>0.0) Vz_I_plus = V_calc(Q_plus_z(i,j,k,1),Q_plus_z(i,j,k,2),Q_plus_z(i,j,k,3),clight,2);
+                // Update Q from tn -> tn + dt
+                N_arr(i,j,k) = N_arr(i,j,k)     - (dt/Vij)*(F0_plusx - F0_minusx + F0_plusz - F0_minusz);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - (dt/Vij)*(F1_plusx - F1_minusx + F1_plusz - F1_minusz);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - (dt/Vij)*(F2_plusx - F2_minusx + F2_plusz - F2_minusz);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - (dt/Vij)*(F3_plusx - F3_minusx + F3_plusz - F3_minusz);
 
-                    // compute the fluxes:
-                    // (note that _plus is shifted due to grid location)
-                    amrex::Real F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
-                    amrex::Real F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
-                    amrex::Real F1_minusx = flux(Q_minus_x(i-1,j,k,1)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
-                    amrex::Real F1_plusx =  flux(Q_minus_x(i,j,k,1)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,1)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
-                    amrex::Real F2_minusx = flux(Q_minus_x(i-1,j,k,2)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,2)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
-                    amrex::Real F2_plusx =  flux(Q_minus_x(i,j,k,2)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,2)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
-                    amrex::Real F3_minusx = flux(Q_minus_x(i-1,j,k,3)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,3)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
-                    amrex::Real F3_plusx =  flux(Q_minus_x(i,j,k,3)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,3)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
+#else
 
-                    amrex::Real F0_minusy = flux(Q_minus_y(i,j-1,k,0),Q_plus_y(i,j-1,k,0),  Vy_L_minus,Vy_L_plus);
-                    amrex::Real F0_plusy =  flux(Q_minus_y(i,j,k,0),  Q_plus_y(i,j,k,0),    Vy_I_minus,Vy_I_plus);
-                    amrex::Real F1_minusy = flux(Q_minus_y(i,j-1,k,1)*Q_minus_y(i,j-1,k,0),Q_plus_y(i,j-1,k,1)*Q_plus_y(i,j-1,k,0),  Vy_L_minus,Vy_L_plus);
-                    amrex::Real F1_plusy =  flux(Q_minus_y(i,j,k,1)*Q_minus_y(i,j,k,0),  Q_plus_y(i,j,k,1)*Q_plus_y(i,j,k,0),    Vy_I_minus,Vy_I_plus);
-                    amrex::Real F2_minusy = flux(Q_minus_y(i,j-1,k,2)*Q_minus_y(i,j-1,k,0),Q_plus_y(i,j-1,k,2)*Q_plus_y(i,j-1,k,0),  Vy_L_minus,Vy_L_plus);
-                    amrex::Real F2_plusy =  flux(Q_minus_y(i,j,k,2)*Q_minus_y(i,j,k,0),  Q_plus_y(i,j,k,2)*Q_plus_y(i,j,k,0),    Vy_I_minus,Vy_I_plus);
-                    amrex::Real F3_minusy = flux(Q_minus_y(i,j-1,k,3)*Q_minus_y(i,j-1,k,0),Q_plus_y(i,j-1,k,3)*Q_plus_y(i,j-1,k,0),  Vy_L_minus,Vy_L_plus);
-                    amrex::Real F3_plusy =  flux(Q_minus_y(i,j,k,3)*Q_minus_y(i,j,k,0),  Q_plus_y(i,j,k,3)*Q_plus_y(i,j,k,0),    Vy_I_minus,Vy_I_plus);
+                amrex::Real Vz_L_minus = 0.0, Vz_I_minus = 0.0, Vz_L_plus = 0.0, Vz_I_plus = 0.0;
 
-                    amrex::Real F0_minusz = flux(Q_minus_z(i,j,k-1,0),Q_plus_z(i,j,k-1,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-                    amrex::Real F1_minusz = flux(Q_minus_z(i,j,k-1,1)*Q_minus_z(i,j,k-1,0),Q_plus_z(i,j,k-1,1)*Q_plus_z(i,j,k-1,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F1_plusz =  flux(Q_minus_z(i,j,k,1)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,1)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-                    amrex::Real F2_minusz = flux(Q_minus_z(i,j,k-1,2)*Q_minus_z(i,j,k-1,0),Q_plus_z(i,j,k-1,2)*Q_plus_z(i,j,k-1,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F2_plusz =  flux(Q_minus_z(i,j,k,2)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,2)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-                    amrex::Real F3_minusz = flux(Q_minus_z(i,j,k-1,3)*Q_minus_z(i,j,k-1,0),Q_plus_z(i,j,k-1,3)*Q_plus_z(i,j,k-1,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F3_plusz =  flux(Q_minus_z(i,j,k,3)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,3)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+                // Compute the half-timestep velocities
+                if (Q_minus_z(i-1,j,k,0)>0.0) Vz_L_minus = V_calc(Q_minus_z(i-1,j,k,1),Q_minus_z(i-1,j,k,2),Q_minus_z(i-1,j,k,3),clight,2);
+                if (Q_minus_z(i,j,k,0)>0.0)   Vz_I_minus = V_calc(Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
+                if (Q_plus_z(i-1,j,k,0)>0.0)  Vz_L_plus =  V_calc(Q_plus_z(i-1,j,k,1),Q_plus_z(i-1,j,k,2),Q_plus_z(i-1,j,k,3),clight,2);
+                if (Q_plus_z(i,j,k,0)>0.0)    Vz_I_plus =  V_calc(Q_plus_z(i,j,k,1),Q_plus_z(i,j,k,2),Q_plus_z(i,j,k,3),clight,2);
 
-                    // Update Q from tn -> tn + dt
-                    N_arr(i,j,k) = N_arr(i,j,k) - cx*(F0_plusx - F0_minusx)
-                                                - cy*(F0_plusy - F0_minusy)
-                                                - cz*(F0_plusz - F0_minusz);
-                    NUx_arr(i,j,k) = NUx_arr(i,j,k) - cx*(F1_plusx - F1_minusx)
-                                                    - cy*(F1_plusy - F1_minusy)
-                                                    - cz*(F1_plusz - F1_minusz);
-                    NUy_arr(i,j,k) = NUy_arr(i,j,k) - cx*(F2_plusx - F2_minusx)
-                                                    - cy*(F2_plusy - F2_minusy)
-                                                    - cz*(F2_plusz - F2_minusz);
-                    NUz_arr(i,j,k) = NUz_arr(i,j,k) - cx*(F3_plusx - F3_minusx)
-                                                    - cy*(F3_plusy - F3_minusy)
-                                                    - cz*(F3_plusz - F3_minusz);
-
-                #elif defined(WARPX_DIM_XZ)
-
-                    amrex::Real Vx_L_minus = 0.0, Vx_I_minus = 0.0, Vx_L_plus = 0.0, Vx_I_plus = 0.0;
-                    amrex::Real Vz_L_minus = 0.0, Vz_I_minus = 0.0, Vz_L_plus = 0.0, Vz_I_plus = 0.0;
-
-                    // Verify positive density, then compute velocity
-                    if (Q_minus_x(i-1,j,k,0)>0.0) Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
-                    if (Q_minus_x(i,j,k,0)>0.0)   Vx_I_minus = V_calc(Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
-                    if (Q_plus_x(i-1,j,k,0)>0.0)   Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
-                    if (Q_plus_x(i,j,k,0)>0.0) Vx_I_plus = V_calc(Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
-
-                    if (Q_minus_z(i,j-1,k,0)>0.0) Vz_L_minus = V_calc(Q_minus_z(i,j-1,k,1),Q_minus_z(i,j-1,k,2),Q_minus_z(i,j-1,k,3),clight,2);
-                    if (Q_minus_z(i,j,k,0)>0.0)   Vz_I_minus = V_calc(Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
-                    if (Q_plus_z(i,j-1,k,0)>0.0)   Vz_L_plus = V_calc(Q_plus_z(i,j-1,k,1),Q_plus_z(i,j-1,k,2),Q_plus_z(i,j-1,k,3),clight,2);
-                    if (Q_plus_z(i,j,k,0)>0.0) Vz_I_plus = V_calc(Q_plus_z(i,j,k,1),Q_plus_z(i,j,k,2),Q_plus_z(i,j,k,3),clight,2);
+                // compute the fluxes:
+                // (note that _plus is shifted due to grid location)
+                amrex::Real F0_minusz = flux(Q_minus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+                amrex::Real F1_minusz = flux(Q_minus_z(i-1,j,k,1)*Q_minus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,1)*Q_plus_z(i-1,j,k,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F1_plusz =  flux(Q_minus_z(i,j,k,1)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,1)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+                amrex::Real F2_minusz = flux(Q_minus_z(i-1,j,k,2)*Q_minus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,2)*Q_plus_z(i-1,j,k,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F2_plusz =  flux(Q_minus_z(i,j,k,2)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,2)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
+                amrex::Real F3_minusz = flux(Q_minus_z(i-1,j,k,3)*Q_minus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,3)*Q_plus_z(i-1,j,k,0),  Vz_L_minus,Vz_L_plus);
+                amrex::Real F3_plusz =  flux(Q_minus_z(i,j,k,3)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,3)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
 
 
-                    // compute the fluxes:
-                    // (note that _plus is shifted due to grid location)
-                    amrex::Real F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
-                    amrex::Real F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
-                    amrex::Real F1_minusx = flux(Q_minus_x(i-1,j,k,1)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
-                    amrex::Real F1_plusx =  flux(Q_minus_x(i,j,k,1)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,1)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
-                    amrex::Real F2_minusx = flux(Q_minus_x(i-1,j,k,2)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,2)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
-                    amrex::Real F2_plusx =  flux(Q_minus_x(i,j,k,2)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,2)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
-                    amrex::Real F3_minusx = flux(Q_minus_x(i-1,j,k,3)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,3)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus);
-                    amrex::Real F3_plusx =  flux(Q_minus_x(i,j,k,3)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,3)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus);
-
-                    amrex::Real F0_minusz = flux(Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-                    amrex::Real F1_minusz = flux(Q_minus_z(i,j-1,k,1)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,1)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F1_plusz =  flux(Q_minus_z(i,j,k,1)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,1)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-                    amrex::Real F2_minusz = flux(Q_minus_z(i,j-1,k,2)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,2)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F2_plusz =  flux(Q_minus_z(i,j,k,2)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,2)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-                    amrex::Real F3_minusz = flux(Q_minus_z(i,j-1,k,3)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,3)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F3_plusz =  flux(Q_minus_z(i,j,k,3)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,3)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-
-                    // Update Q from tn -> tn + dt
-                    N_arr(i,j,k) = N_arr(i,j,k) - cx*(F0_plusx - F0_minusx)
-                                                - cz*(F0_plusz - F0_minusz);
-                    NUx_arr(i,j,k) = NUx_arr(i,j,k) - cx*(F1_plusx - F1_minusx)
-                                                    - cz*(F1_plusz - F1_minusz);
-                    NUy_arr(i,j,k) = NUy_arr(i,j,k) - cx*(F2_plusx - F2_minusx)
-                                                    - cz*(F2_plusz - F2_minusz);
-                    NUz_arr(i,j,k) = NUz_arr(i,j,k) - cx*(F3_plusx - F3_minusx)
-                                                    - cz*(F3_plusz - F3_minusz);
-
-                #elif defined(WARPX_DIM_RZ)
-
-                    // Compute the flux areas for RZ
-                    amrex::Real pi = 3.1415926535897932;
-                    // Cell-centered radius
-                    amrex::Real dr = dx[0];
-                    amrex::Real dz = dx[1]; // Must be 1
-                    amrex::Real r = problo[0] + i * dr;
-                    amrex::Real Vij = 0.0;
-                    amrex::Real S_Az = 0.0;
-
-                    // Volume element and z-facing surfaces
-                    if (i == domain.smallEnd(0)) {
-                        Vij = 2.0*pi*(dr/2.0)*(dr/4.0)*dz;
-                        S_Az = 2.0*pi*(dr/4.0)*(dr/2.0);
-                    } else if (i == domain.bigEnd(0)+1) {
-                        Vij = 2.0*pi*(r - dr/4.0)*(dr/2.0)*dz;
-                        S_Az = 2.0*pi*(r - dr/4.0)*(dr/2.0);
-                    }  else {
-                        Vij = 2.0*pi*r*dr*dz;
-                        S_Az = 2.0*pi*(r)*dr;
-                    }
-
-                    // Radial Surfaces
-                    amrex::Real S_Ar_plus = 2.0*pi*(r + dr/2.0)*dz;
-                    amrex::Real S_Ar_minus = 2.0*pi*(r - dr/2.0)*dz;
-                    if (i == domain.smallEnd(0))
-                        S_Ar_minus = 0.0;
-                    if (i == domain.bigEnd(0)+1)
-                        S_Ar_plus = 2.0*pi*(r)*dz;
-
-                    // Impose "none" boundaries
-                    // Condition: Vx(r) = 0 at boundaries
-                    amrex::Real Vx_L_minus = 0.0, Vx_I_minus = 0.0, Vx_L_plus = 0.0, Vx_I_plus = 0.0;
-                    amrex::Real Vz_L_minus = 0.0, Vz_I_minus = 0.0, Vz_L_plus = 0.0, Vz_I_plus = 0.0;
-                    if (Q_minus_x(i,j,k,0)>0.0) Vx_I_minus = V_calc(Q_minus_x(i,j,k,1),Q_minus_x(i,j,k,2),Q_minus_x(i,j,k,3),clight,0);
-                    if (Q_plus_x(i-1,j,k,0)>0.0) Vx_L_plus = V_calc(Q_plus_x(i-1,j,k,1),Q_plus_x(i-1,j,k,2),Q_plus_x(i-1,j,k,3),clight,0);
-
-                    if (Q_minus_z(i,j-1,k,0)>0.0) Vz_L_minus = V_calc(Q_minus_z(i,j-1,k,1),Q_minus_z(i,j-1,k,2),Q_minus_z(i,j-1,k,3),clight,2);
-                    if (Q_minus_z(i,j,k,0)>0.0)   Vz_I_minus = V_calc(Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
-                    if (Q_plus_z(i,j-1,k,0)>0.0)   Vz_L_plus = V_calc(Q_plus_z(i,j-1,k,1),Q_plus_z(i,j-1,k,2),Q_plus_z(i,j-1,k,3),clight,2);
-                    if (Q_plus_z(i,j,k,0)>0.0) Vz_I_plus = V_calc(Q_plus_z(i,j,k,1),Q_plus_z(i,j,k,2),Q_plus_z(i,j,k,3),clight,2);
-
-
-                    // compute the fluxes:
-                    // (note that _plus is shifted due to grid location)
-                    amrex::Real F0_minusx = 0.0, F1_minusx = 0.0, F2_minusx = 0.0, F3_minusx = 0.0;
-                    amrex::Real F0_plusx = 0.0, F1_plusx = 0.0, F2_plusx = 0.0, F3_plusx = 0.0;
-                    if (i != domain.smallEnd(0)) {
-                        if (Q_minus_x(i-1,j,k,0)>0.0) Vx_L_minus = V_calc(Q_minus_x(i-1,j,k,1),Q_minus_x(i-1,j,k,2),Q_minus_x(i-1,j,k,3),clight,0);
-                        F0_minusx = flux(Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
-                        F1_minusx = flux(Q_minus_x(i-1,j,k,1)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,1)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
-                        F2_minusx = flux(Q_minus_x(i-1,j,k,2)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,2)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
-                        F3_minusx = flux(Q_minus_x(i-1,j,k,3)*Q_minus_x(i-1,j,k,0),Q_plus_x(i-1,j,k,3)*Q_plus_x(i-1,j,k,0),  Vx_L_minus,Vx_L_plus)*S_Ar_minus;
-                    }
-                    if (i < domain.bigEnd(0)) {
-                        if (Q_plus_x(i,j,k,0)>0.0) Vx_I_plus = V_calc(Q_plus_x(i,j,k,1),Q_plus_x(i,j,k,2),Q_plus_x(i,j,k,3),clight,0);
-                        F0_plusx =  flux(Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
-                        F1_plusx =  flux(Q_minus_x(i,j,k,1)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,1)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
-                        F2_plusx =  flux(Q_minus_x(i,j,k,2)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,2)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
-                        F3_plusx =  flux(Q_minus_x(i,j,k,3)*Q_minus_x(i,j,k,0),  Q_plus_x(i,j,k,3)*Q_plus_x(i,j,k,0),    Vx_I_minus,Vx_I_plus)*S_Ar_plus;
-                    }
-
-                    amrex::Real F0_minusz = flux(Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus)*S_Az;
-                    amrex::Real F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus)*S_Az;
-                    amrex::Real F1_minusz = flux(Q_minus_z(i,j-1,k,1)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,1)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus)*S_Az;
-                    amrex::Real F1_plusz =  flux(Q_minus_z(i,j,k,1)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,1)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus)*S_Az;
-                    amrex::Real F2_minusz = flux(Q_minus_z(i,j-1,k,2)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,2)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus)*S_Az;
-                    amrex::Real F2_plusz =  flux(Q_minus_z(i,j,k,2)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,2)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus)*S_Az;
-                    amrex::Real F3_minusz = flux(Q_minus_z(i,j-1,k,3)*Q_minus_z(i,j-1,k,0),Q_plus_z(i,j-1,k,3)*Q_plus_z(i,j-1,k,0),  Vz_L_minus,Vz_L_plus)*S_Az;
-                    amrex::Real F3_plusz =  flux(Q_minus_z(i,j,k,3)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,3)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus)*S_Az;
-
-                    // Update Q from tn -> tn + dt
-                    N_arr(i,j,k) = N_arr(i,j,k)     - (dt/Vij)*(F0_plusx - F0_minusx + F0_plusz - F0_minusz);
-                    NUx_arr(i,j,k) = NUx_arr(i,j,k) - (dt/Vij)*(F1_plusx - F1_minusx + F1_plusz - F1_minusz);
-                    NUy_arr(i,j,k) = NUy_arr(i,j,k) - (dt/Vij)*(F2_plusx - F2_minusx + F2_plusz - F2_minusz);
-                    NUz_arr(i,j,k) = NUz_arr(i,j,k) - (dt/Vij)*(F3_plusx - F3_minusx + F3_plusz - F3_minusz);
-
-                #else
-
-                    amrex::Real Vz_L_minus = 0.0, Vz_I_minus = 0.0, Vz_L_plus = 0.0, Vz_I_plus = 0.0;
-
-                    // Compute the half-timestep velocities
-                    if (Q_minus_z(i-1,j,k,0)>0.0) Vz_L_minus = V_calc(Q_minus_z(i-1,j,k,1),Q_minus_z(i-1,j,k,2),Q_minus_z(i-1,j,k,3),clight,2);
-                    if (Q_minus_z(i,j,k,0)>0.0)   Vz_I_minus = V_calc(Q_minus_z(i,j,k,1),Q_minus_z(i,j,k,2),Q_minus_z(i,j,k,3),clight,2);
-                    if (Q_plus_z(i-1,j,k,0)>0.0)  Vz_L_plus =  V_calc(Q_plus_z(i-1,j,k,1),Q_plus_z(i-1,j,k,2),Q_plus_z(i-1,j,k,3),clight,2);
-                    if (Q_plus_z(i,j,k,0)>0.0)    Vz_I_plus =  V_calc(Q_plus_z(i,j,k,1),Q_plus_z(i,j,k,2),Q_plus_z(i,j,k,3),clight,2);
-
-                    // compute the fluxes:
-                    // (note that _plus is shifted due to grid location)
-                    amrex::Real F0_minusz = flux(Q_minus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F0_plusz =  flux(Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-                    amrex::Real F1_minusz = flux(Q_minus_z(i-1,j,k,1)*Q_minus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,1)*Q_plus_z(i-1,j,k,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F1_plusz =  flux(Q_minus_z(i,j,k,1)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,1)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-                    amrex::Real F2_minusz = flux(Q_minus_z(i-1,j,k,2)*Q_minus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,2)*Q_plus_z(i-1,j,k,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F2_plusz =  flux(Q_minus_z(i,j,k,2)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,2)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-                    amrex::Real F3_minusz = flux(Q_minus_z(i-1,j,k,3)*Q_minus_z(i-1,j,k,0),Q_plus_z(i-1,j,k,3)*Q_plus_z(i-1,j,k,0),  Vz_L_minus,Vz_L_plus);
-                    amrex::Real F3_plusz =  flux(Q_minus_z(i,j,k,3)*Q_minus_z(i,j,k,0),  Q_plus_z(i,j,k,3)*Q_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
-
-
-                    // Update Q from tn -> tn + dt
-                    N_arr(i,j,k) = N_arr(i,j,k)     - cz*(F0_plusz - F0_minusz);
-                    NUx_arr(i,j,k) = NUx_arr(i,j,k) - cz*(F1_plusz - F1_minusz);
-                    NUy_arr(i,j,k) = NUy_arr(i,j,k) - cz*(F2_plusz - F2_minusz);
-                    NUz_arr(i,j,k) = NUz_arr(i,j,k) - cz*(F3_plusz - F3_minusz);
-                #endif
+                // Update Q from tn -> tn + dt
+                N_arr(i,j,k) = N_arr(i,j,k)     - cz*(F0_plusz - F0_minusz);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - cz*(F1_plusz - F1_minusz);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - cz*(F2_plusz - F2_minusz);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - cz*(F3_plusz - F3_minusz);
+#endif
             }
         );
     }
@@ -1384,9 +1383,9 @@ void WarpXFluidContainer::centrifugal_source (int lev)
     amrex::Box const& domain = geom.Domain();
 
     // H&C push the momentum
-    #ifdef AMREX_USE_OMP
-    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    #endif
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
@@ -1504,9 +1503,9 @@ void WarpXFluidContainer::GatherAndPush (
 
 
     // H&C push the momentum
-    #ifdef AMREX_USE_OMP
-    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    #endif
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
@@ -1558,19 +1557,19 @@ void WarpXFluidContainer::GatherAndPush (
                             amrex::Real Bx_ext_lab, By_ext_lab, Bz_ext_lab;
 
                             // Grab the location
-                            #if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D)
                             amrex::Real x = problo[0] + i * dx[0];
                             amrex::Real y = problo[1] + j * dx[1];
                             amrex::Real z = problo[2] + k * dx[2];
-                            #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                             amrex::Real x = problo[0] + i * dx[0];
                             amrex::Real y = 0.0_rt;
                             amrex::Real z = problo[1] + j * dx[1];
-                            #else
+#else
                             amrex::Real x = 0.0_rt;
                             amrex::Real y = 0.0_rt;
                             amrex::Real z = problo[0] + i * dx[0];
-                            #endif
+#endif
 
                             // Get the lab frame E and B
                             // Transform (boosted to lab)
@@ -1619,19 +1618,19 @@ void WarpXFluidContainer::GatherAndPush (
 
                         // Added external e fields:
                         if ( external_e_fields ){
-                            #if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D)
                             amrex::Real x = problo[0] + i * dx[0];
                             amrex::Real y = problo[1] + j * dx[1];
                             amrex::Real z = problo[2] + k * dx[2];
-                            #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                             amrex::Real x = problo[0] + i * dx[0];
                             amrex::Real y = 0.0_rt;
                             amrex::Real z = problo[1] + j * dx[1];
-                            #else
+#else
                             amrex::Real x = 0.0_rt;
                             amrex::Real y = 0.0_rt;
                             amrex::Real z = problo[0] + i * dx[0];
-                            #endif
+#endif
 
                             Ex_Nodal += Exfield_parser(x, y, z, t);
                             Ey_Nodal += Eyfield_parser(x, y, z, t);
@@ -1640,19 +1639,19 @@ void WarpXFluidContainer::GatherAndPush (
 
                         // Added external b fields:
                         if ( external_b_fields ){
-                            #if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D)
                             amrex::Real x = problo[0] + i * dx[0];
                             amrex::Real y = problo[1] + j * dx[1];
                             amrex::Real z = problo[2] + k * dx[2];
-                            #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                             amrex::Real x = problo[0] + i * dx[0];
                             amrex::Real y = 0.0_rt;
                             amrex::Real z = problo[1] + j * dx[1];
-                            #else
+#else
                             amrex::Real x = 0.0_rt;
                             amrex::Real y = 0.0_rt;
                             amrex::Real z = problo[0] + i * dx[0];
-                            #endif
+#endif
 
                             Bx_Nodal += Bxfield_parser(x, y, z, t);
                             By_Nodal += Byfield_parser(x, y, z, t);
@@ -1666,14 +1665,14 @@ void WarpXFluidContainer::GatherAndPush (
                     amrex::Real tmp_Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
 
                     // Enforce RZ boundary conditions
-                    #if defined(WARPX_DIM_RZ)
-                        if  ( i == 0 ){
-                            Ex_Nodal = 0.0;
-                            Ey_Nodal = 0.0;
-                            By_Nodal = 0.0;
-                            Bx_Nodal = 0.0;
-                        }
-                    #endif
+#if defined(WARPX_DIM_RZ)
+                    if  ( i == 0 ){
+                        Ex_Nodal = 0.0;
+                        Ey_Nodal = 0.0;
+                        By_Nodal = 0.0;
+                        Bx_Nodal = 0.0;
+                    }
+#endif
 
                     // Push the fluid momentum
                     UpdateMomentumHigueraCary(tmp_Ux, tmp_Uy, tmp_Uz,
@@ -1704,9 +1703,9 @@ void WarpXFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho, int icom
     AMREX_ALWAYS_ASSERT(rho.ixType().nodeCentered());
 
     // Loop over and deposit charge density
-    #ifdef AMREX_USE_OMP
-    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    #endif
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
@@ -1762,9 +1761,9 @@ void WarpXFluidContainer::DepositCurrent(
     auto const &owner_mask_z = amrex::OwnerMask(jz, period);
 
     // Calculate j at the nodes
-    #ifdef AMREX_USE_OMP
-    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    #endif
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         amrex::Box const &tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
@@ -1797,9 +1796,9 @@ void WarpXFluidContainer::DepositCurrent(
     }
 
     // Interpolate j from the nodes to the simulation mesh (typically Yee mesh)
-    #ifdef AMREX_USE_OMP
-    #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-    #endif
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         amrex::Box const &tile_box_x = mfi.tilebox(jx.ixType().toIntVect());
