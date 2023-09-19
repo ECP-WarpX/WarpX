@@ -16,7 +16,6 @@
 
 #include <string>
 
-using namespace amrex::literals;
 
 /**
  * WarpXFluidContainer is the base polymorphic class from which all concrete
