@@ -203,11 +203,11 @@ class ParticleContainerWrapper(object):
         ----------
 
         level        : int
-            The refinement level to reference
+            The refinement level to reference (default=0)
 
         copy_to_host : bool
             For GPU-enabled runs, one can either return the GPU
-            arrays or force a device-to-host copy.
+            arrays (the default) or force a device-to-host copy.
 
         Returns
         -------
@@ -252,11 +252,11 @@ class ParticleContainerWrapper(object):
             The component of the array data that will be returned
 
         level          : int
-            The refinement level to reference
+            The refinement level to reference (default=0)
 
         copy_to_host   : bool
             For GPU-enabled runs, one can either return the GPU
-            arrays or force a device-to-host copy.
+            arrays (the default) or force a device-to-host copy.
 
         Returns
         -------
@@ -286,30 +286,72 @@ class ParticleContainerWrapper(object):
 
     def get_particle_id(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle 'id'
         numbers on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle ids
         '''
         structs = self.get_particle_structs(level, copy_to_host)
         return [libwarpx.amr.unpack_ids(struct['cpuid']) for struct in structs]
 
     def get_particle_cpu(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle 'cpu'
         numbers on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle cpus
         '''
         structs = self.get_particle_structs(level, copy_to_host)
         return [libwarpx.amr.unpack_cpus(struct['cpuid']) for struct in structs]
 
     def get_particle_x(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle 'x'
         positions on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle x position
         '''
         xp, cupy_status = load_cupy()
 
@@ -324,10 +366,24 @@ class ParticleContainerWrapper(object):
 
     def get_particle_y(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle 'y'
         positions on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle y position
         '''
         xp, cupy_status = load_cupy()
 
@@ -342,10 +398,24 @@ class ParticleContainerWrapper(object):
 
     def get_particle_r(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle 'r'
         positions on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle r position
         '''
         xp, cupy_status = load_cupy()
 
@@ -360,10 +430,24 @@ class ParticleContainerWrapper(object):
 
     def get_particle_theta(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle
         theta on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle theta position
         '''
         xp, cupy_status = load_cupy()
 
@@ -378,10 +462,24 @@ class ParticleContainerWrapper(object):
 
     def get_particle_z(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle 'z'
         positions on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle z position
         '''
         structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == '3d':
@@ -394,40 +492,96 @@ class ParticleContainerWrapper(object):
 
     def get_particle_weight(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle
         weight on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle weight
         '''
         return self.get_particle_arrays('w', level, copy_to_host=copy_to_host)
     wp = property(get_particle_weight)
 
     def get_particle_ux(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle
         x momentum on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle x momentum
         '''
         return self.get_particle_arrays('ux', level, copy_to_host=copy_to_host)
     uxp = property(get_particle_ux)
 
     def get_particle_uy(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle
         y momentum on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle y momentum
         '''
         return self.get_particle_arrays('uy', level, copy_to_host=copy_to_host)
     uyp = property(get_particle_uy)
 
     def get_particle_uz(self, level=0, copy_to_host=False):
         '''
-
         Return a list of numpy or cupy arrays containing the particle
         z momentum on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle z momentum
         '''
 
         return self.get_particle_arrays('uz', level, copy_to_host=copy_to_host)
