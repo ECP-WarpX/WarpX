@@ -20,6 +20,9 @@ if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in yo
 
 # Remove old dependencies #####################################################
 #
+SRC_DIR="/usr/workspace/${USER}/lassen/src"
+mkdir -p ${SRC_DIR}
+
 # remove common user mistakes in python, located in .local instead of a venv
 python3 -m pip uninstall -qqq -y torch 2>/dev/null || true
 
@@ -29,21 +32,21 @@ python3 -m pip uninstall -qqq -y torch 2>/dev/null || true
 # for basic python dependencies, see install_v100_dependencies.sh
 
 # optional: for libEnsemble - WIP: issues with nlopt
-# python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
+# python3 -m pip install -r ${SRC_DIR}/warpx/Tools/LibEnsemble/requirements.txt
 
 # optional: for pytorch
-if [ -d ${HOME}/src/pytorch ]
+if [ -d ${SRC_DIR}/pytorch ]
 then
-  cd ${HOME}/src/pytorch
+  cd ${SRC_DIR}/pytorch
   git fetch
   git checkout .
   git checkout v2.0.1
   git submodule update --init --recursive
   cd -
 else
-  git clone -b v2.0.1 --recurse-submodules https://github.com/pytorch/pytorch.git ${HOME}/src/pytorch
+  git clone -b v2.0.1 --recurse-submodules https://github.com/pytorch/pytorch.git ${SRC_DIR}/pytorch
 fi
-cd ${HOME}/src/pytorch
+cd ${SRC_DIR}/pytorch
 rm -rf build
 
 # see https://github.com/pytorch/pytorch/issues/97497#issuecomment-1499069641
@@ -63,4 +66,4 @@ cd -
 # optional: optimas dependencies (based on libEnsemble & ax->botorch->gpytorch->pytorch)
 #   commented because scikit-learn et al. compile > 2 hrs
 #   please run manually on a login node if needed
-#python3 -m pip install -r $HOME/src/warpx/Tools/optimas/requirements.txt
+#python3 -m pip install -r ${SRC_DIR}/warpx/Tools/optimas/requirements.txt

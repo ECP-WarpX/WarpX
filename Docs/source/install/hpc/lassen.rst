@@ -41,14 +41,14 @@ Use the following commands to download the WarpX source code:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   git clone https://github.com/ECP-WarpX/WarpX.git /usr/workspace/${USER}/lassen/src/warpx
 
 We use system software modules, add environment hints and further dependencies via the file ``$HOME/lassen_v100_warpx.profile``.
 Create it now:
 
 .. code-block:: bash
 
-   cp $HOME/src/warpx/Tools/machines/lassen-llnl/lassen_v100_warpx.profile.example $HOME/lassen_v100_warpx.profile
+   cp /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/lassen_v100_warpx.profile.example $HOME/lassen_v100_warpx.profile
 
 .. dropdown:: Script Details
    :color: light
@@ -80,7 +80,7 @@ Finally, since lassen does not yet provide software modules for some of our depe
 
 .. code-block:: bash
 
-   bash $HOME/src/warpx/Tools/machines/lassen-llnl/install_v100_dependencies.sh
+   bash /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/install_v100_dependencies.sh
    source /usr/workspace/${USER}/lassen/gpu/venvs/warpx-lassen/bin/activate
 
 .. dropdown:: Script Details
@@ -99,7 +99,7 @@ Finally, since lassen does not yet provide software modules for some of our depe
 
    .. code-block:: bash
 
-      runNode bash $HOME/src/warpx/Tools/machines/lassen-llnl/install_v100_ml.sh
+      runNode bash /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/install_v100_ml.sh
 
    .. dropdown:: Script Details
       :color: light
@@ -113,7 +113,7 @@ Finally, since lassen does not yet provide software modules for some of our depe
 
    .. code-block:: bash
 
-      python3 -m pip install -r $HOME/src/warpx/Tools/optimas/requirements.txt
+      python3 -m pip install -r /usr/workspace/${USER}/lassen/src/warpx/Tools/optimas/requirements.txt
 
 
 .. _building-lassen-compilation:
@@ -125,13 +125,13 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   cd /usr/workspace/${USER}/lassen/src/warpx
    rm -rf build_lassen
 
    cmake -S . -B build_lassen -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_lassen -j 8
 
-The WarpX application executables are now in ``$HOME/src/warpx/build_lassen/bin/``.
+The WarpX application executables are now in ``/usr/workspace/${USER}/lassen/src/warpx/build_lassen/bin/``.
 Additionally, the following commands will install WarpX as a Python module:
 
 .. code-block:: bash
@@ -155,7 +155,7 @@ If you already installed WarpX in the past and want to update it, start by getti
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   cd /usr/workspace/${USER}/lassen/src/warpx
 
    # read the output of this command - does it look ok?
    git status
@@ -174,7 +174,7 @@ And, if needed,
 - log out and into the system, activate the now updated environment profile as usual,
 - :ref:`execute the dependency install scripts <building-lassen-preparation>`.
 
-As a last step, clean the build directory ``rm -rf $HOME/src/warpx/build_lassen`` and rebuild WarpX.
+As a last step, clean the build directory ``rm -rf /usr/workspace/${USER}/lassen/src/warpx/build_lassen`` and rebuild WarpX.
 
 
 .. _running-cpp-lassen:
