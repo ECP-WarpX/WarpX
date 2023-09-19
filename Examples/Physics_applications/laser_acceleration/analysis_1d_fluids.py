@@ -44,7 +44,6 @@ zmin = -20e-6; zmax = 100.e-6; Nz = 5120
 # Compute the theory
 
 # Call the ode solver
-import numpy as np
 from scipy.integrate import odeint
 
 

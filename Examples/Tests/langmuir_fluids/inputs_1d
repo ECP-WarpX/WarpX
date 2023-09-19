@@ -26,7 +26,6 @@ warpx.serialize_initial_conditions = 1
 warpx.verbose = 1
 
 # Algorithms
-algo.field_gathering = energy-conserving
 warpx.use_filter = 0
 
 # CFL
