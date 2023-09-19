@@ -19,7 +19,6 @@ import sys
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-
 import matplotlib
 
 matplotlib.use('Agg')
