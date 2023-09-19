@@ -1273,7 +1273,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     if (i == domain.smallEnd(0)) {
                         Vij = 2.0*pi*(dr/2.0)*(dr/4.0)*dz;
                         S_Az = 2.0*pi*(dr/4.0)*(dr/2.0);
-                    } else if (i == domain.bigEnd(0)+1) { 
+                    } else if (i == domain.bigEnd(0)+1) {
                         Vij = 2.0*pi*(r - dr/4.0)*(dr/2.0)*dz;
                         S_Az = 2.0*pi*(r - dr/4.0)*(dr/2.0);
                     }  else {
