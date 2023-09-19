@@ -170,7 +170,6 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        // TODO: Only run the code below if this cell overlaps is in `init_box`
 
         amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
@@ -841,11 +840,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         #if defined(WARPX_DIM_RZ)
                         amrex::Real dr = dx[0];
                         amrex::Real r = problo[0] + i * dr;
-                        // TODO: Generalize this condition
                         // Impose "none" boundaries
                         // Condition: dQx = 0 at r = 0
                         if  (i == domain.smallEnd(0)) {
-                            // TODO BC: Reflected across r = 0:
                             // R|_{0+} -> L|_{0-}
                             // N -> N (N_arr(i-1,j,k) -> N_arr(i+1,j,k))
                             // NUr -> -NUr (NUx_arr(i-1,j,k) -> -NUx_arr(i+1,j,k))
@@ -1276,7 +1273,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     if (i == domain.smallEnd(0)) {
                         Vij = 2.0*pi*(dr/2.0)*(dr/4.0)*dz;
                         S_Az = 2.0*pi*(dr/4.0)*(dr/2.0);
-                    } else if (i == domain.bigEnd(0)+1) { // TODO: Fix domain? off by one
+                    } else if (i == domain.bigEnd(0)+1) { 
                         Vij = 2.0*pi*(r - dr/4.0)*(dr/2.0)*dz;
                         S_Az = 2.0*pi*(r - dr/4.0)*(dr/2.0);
                     }  else {
@@ -1292,7 +1289,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     if (i == domain.bigEnd(0)+1)
                         S_Ar_plus = 2.0*pi*(r)*dz;
 
-                    // TODO: Generalize this condition
                     // Impose "none" boundaries
                     // Condition: Vx(r) = 0 at boundaries
                     amrex::Real Vx_L_minus = 0.0, Vx_I_minus = 0.0, Vx_L_plus = 0.0, Vx_I_plus = 0.0;
@@ -1418,7 +1414,6 @@ void WarpXFluidContainer::centrifugal_source (int lev)
 
                     // (SSP-RK3) Push the fluid momentum (R and Theta)
                     // F_r, F_theta are first order euler pushes of our rhs operator
-                    // TODO: only do this if (r != 0)
                     if (i != domain.smallEnd(0)) {
                         amrex::Real u_r_1     = F_r(r,u_r,u_theta,u_z,dt);
                         amrex::Real u_theta_1 = F_theta(r,u_r,u_theta,u_z,dt);
@@ -1431,7 +1426,7 @@ void WarpXFluidContainer::centrifugal_source (int lev)
                         NUx_arr(i,j,k) = N_arr(i,j,k)*u_r*clight;
                         NUy_arr(i,j,k) = N_arr(i,j,k)*u_theta*clight;
 
-                    // TODO FIX: BC r = 0, u_theta = 0, and there is no extra source terms
+                    // BC r = 0, u_theta = 0, and there is no extra source terms
                     } else {
                         NUx_arr(i,j,k) = 0.0;
                         NUy_arr(i,j,k) = 0.0;

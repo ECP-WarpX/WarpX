@@ -87,8 +87,9 @@ Step 5: **Current and Charge Deposition**
 
 *Some extra notes:* The algorithm is safe with zero fluid density. It also implements a 
 positivity limiter on the density to prevent negative density regions from forming.
-There is currently no ability to mode-decompose in RZ. More details of the computations 
-are given in an extended writeup (contact: grj@princeton.edu). 
+There is currently no ability to mode-decompose in RZ, and none boundaries are handled by
+default. 
+More details of the computations are given in an extended writeup (contact: grj@princeton.edu). 
 
 .. raw:: html
 

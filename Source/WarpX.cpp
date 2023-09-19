@@ -320,6 +320,12 @@ WarpX::WarpX ()
 
     // Fluid Container
     myfl = std::make_unique<MultiFluidContainer>(nlevs_max, geom[0]);
+#ifdef WARPX_DIM_RZ
+    if (myfl->nSpecies() > 0) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes > 1,
+            "Fluid species do not support more than 1 azimuthal mode.");
+    }
+#endif
 
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);

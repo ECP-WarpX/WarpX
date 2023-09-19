@@ -17,7 +17,7 @@ MultiFluidContainer::MultiFluidContainer (int nlevs_max, const amrex::Geometry& 
 {
     ReadParameters();
 
-    auto const nspecies = static_cast<int>(species_names.size());
+    const int nspecies = static_cast<int>(species_names.size());
 
     allcontainers.resize(nspecies);
     for (int i = 0; i < nspecies; ++i) {
