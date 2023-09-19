@@ -284,27 +284,27 @@ class ParticleContainerWrapper(object):
 
         return data_array
 
-    def get_particle_id(self, level=0):
+    def get_particle_id(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle 'id'
         numbers on each tile.
 
         '''
-        structs = self.get_particle_structs(level)
+        structs = self.get_particle_structs(level, copy_to_host)
         return [libwarpx.amr.unpack_ids(struct['cpuid']) for struct in structs]
 
-    def get_particle_cpu(self, level=0):
+    def get_particle_cpu(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle 'cpu'
         numbers on each tile.
 
         '''
-        structs = self.get_particle_structs(level)
+        structs = self.get_particle_structs(level, copy_to_host)
         return [libwarpx.amr.unpack_cpus(struct['cpuid']) for struct in structs]
 
-    def get_particle_x(self, level=0):
+    def get_particle_x(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle 'x'
@@ -313,7 +313,7 @@ class ParticleContainerWrapper(object):
         '''
         xp, cupy_status = load_cupy()
 
-        structs = self.get_particle_structs(level)
+        structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == '3d' or libwarpx.geometry_dim == '2d':
             return [struct['x'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
@@ -322,7 +322,7 @@ class ParticleContainerWrapper(object):
             raise Exception('get_particle_x: There is no x coordinate with 1D Cartesian')
     xp = property(get_particle_x)
 
-    def get_particle_y(self, level=0):
+    def get_particle_y(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle 'y'
@@ -331,7 +331,7 @@ class ParticleContainerWrapper(object):
         '''
         xp, cupy_status = load_cupy()
 
-        structs = self.get_particle_structs(level)
+        structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == '3d':
             return [struct['y'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
@@ -340,7 +340,7 @@ class ParticleContainerWrapper(object):
             raise Exception('get_particle_y: There is no y coordinate with 1D or 2D Cartesian')
     yp = property(get_particle_y)
 
-    def get_particle_r(self, level=0):
+    def get_particle_r(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle 'r'
@@ -349,7 +349,7 @@ class ParticleContainerWrapper(object):
         '''
         xp, cupy_status = load_cupy()
 
-        structs = self.get_particle_structs(level)
+        structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == 'rz':
             return [struct['x'] for struct in structs]
         elif libwarpx.geometry_dim == '3d':
@@ -358,7 +358,7 @@ class ParticleContainerWrapper(object):
             raise Exception('get_particle_r: There is no r coordinate with 1D or 2D Cartesian')
     rp = property(get_particle_r)
 
-    def get_particle_theta(self, level=0):
+    def get_particle_theta(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle
@@ -368,22 +368,22 @@ class ParticleContainerWrapper(object):
         xp, cupy_status = load_cupy()
 
         if libwarpx.geometry_dim == 'rz':
-            return self.get_particle_arrays('theta', level)
+            return self.get_particle_arrays('theta', level, copy_to_host)
         elif libwarpx.geometry_dim == '3d':
-            structs = self.get_particle_structs(level)
+            structs = self.get_particle_structs(level, copy_to_host)
             return [xp.arctan2(struct['y'], struct['x']) for struct in structs]
         elif libwarpx.geometry_dim == '2d' or libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_theta: There is no theta coordinate with 1D or 2D Cartesian')
     thetap = property(get_particle_theta)
 
-    def get_particle_z(self, level=0):
+    def get_particle_z(self, level=0, copy_to_host=False):
         '''
 
         Return a list of numpy or cupy arrays containing the particle 'z'
         positions on each tile.
 
         '''
-        structs = self.get_particle_structs(level)
+        structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == '3d':
             return [struct['z'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz' or libwarpx.geometry_dim == '2d':
