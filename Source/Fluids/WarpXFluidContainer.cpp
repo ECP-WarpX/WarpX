@@ -1487,24 +1487,24 @@ void WarpXFluidContainer::GatherAndPush (
     // External field parsers
     external_e_fields = (m_E_ext_s == "parse_e_ext_function");
     external_b_fields = (m_B_ext_s == "parse_b_ext_function");
-    amrex::ParserExecutor<4> m_Exfield_parser;
-    amrex::ParserExecutor<4> m_Eyfield_parser;
-    amrex::ParserExecutor<4> m_Ezfield_parser;
-    amrex::ParserExecutor<4> m_Bxfield_parser;
-    amrex::ParserExecutor<4> m_Byfield_parser;
-    amrex::ParserExecutor<4> m_Bzfield_parser;
+    amrex::ParserExecutor<4> Exfield_parser;
+    amrex::ParserExecutor<4> Eyfield_parser;
+    amrex::ParserExecutor<4> Ezfield_parser;
+    amrex::ParserExecutor<4> Bxfield_parser;
+    amrex::ParserExecutor<4> Byfield_parser;
+    amrex::ParserExecutor<4> Bzfield_parser;
     if (external_e_fields){
         constexpr auto num_arguments = 4; //x,y,z,t
-        m_Exfield_parser = m_Ex_parser->compile<num_arguments>();
-        m_Eyfield_parser = m_Ey_parser->compile<num_arguments>();
-        m_Ezfield_parser = m_Ez_parser->compile<num_arguments>();
+        Exfield_parser = m_Ex_parser->compile<num_arguments>();
+        Eyfield_parser = m_Ey_parser->compile<num_arguments>();
+        Ezfield_parser = m_Ez_parser->compile<num_arguments>();
     }
 
     if (external_b_fields){
         constexpr auto num_arguments = 4; //x,y,z,t
-        m_Bxfield_parser = m_Bx_parser->compile<num_arguments>();
-        m_Byfield_parser = m_By_parser->compile<num_arguments>();
-        m_Bzfield_parser = m_Bz_parser->compile<num_arguments>();
+        Bxfield_parser = m_Bx_parser->compile<num_arguments>();
+        Byfield_parser = m_By_parser->compile<num_arguments>();
+        Bzfield_parser = m_Bz_parser->compile<num_arguments>();
     }
 
 
@@ -1584,18 +1584,18 @@ void WarpXFluidContainer::GatherAndPush (
 
                             // Grab the external fields in the lab frame:
                             if ( external_e_fields ) {
-                                Ex_ext_lab = m_Exfield_parser(x, y, z_lab, t_lab);
-                                Ey_ext_lab = m_Eyfield_parser(x, y, z_lab, t_lab);
-                                Ez_ext_lab = m_Ezfield_parser(x, y, z_lab, t_lab);
+                                Ex_ext_lab = Exfield_parser(x, y, z_lab, t_lab);
+                                Ey_ext_lab = Eyfield_parser(x, y, z_lab, t_lab);
+                                Ez_ext_lab = Ezfield_parser(x, y, z_lab, t_lab);
                             }else{
                                 Ex_ext_lab = 0.0;
                                 Ey_ext_lab = 0.0;
                                 Ez_ext_lab = 0.0;
                             }
                             if ( external_b_fields ) {
-                                Bx_ext_lab = m_Bxfield_parser(x, y, z_lab, t_lab);
-                                By_ext_lab = m_Byfield_parser(x, y, z_lab, t_lab);
-                                Bz_ext_lab = m_Bzfield_parser(x, y, z_lab, t_lab);
+                                Bx_ext_lab = Bxfield_parser(x, y, z_lab, t_lab);
+                                By_ext_lab = Byfield_parser(x, y, z_lab, t_lab);
+                                Bz_ext_lab = Bzfield_parser(x, y, z_lab, t_lab);
                             }else{
                                 Bx_ext_lab = 0.0;
                                 By_ext_lab = 0.0;
@@ -1638,9 +1638,9 @@ void WarpXFluidContainer::GatherAndPush (
                             amrex::Real z = problo[0] + i * dx[0];
                             #endif
 
-                            Ex_Nodal += m_Exfield_parser(x, y, z, t);
-                            Ey_Nodal += m_Eyfield_parser(x, y, z, t);
-                            Ez_Nodal += m_Ezfield_parser(x, y, z, t);
+                            Ex_Nodal += Exfield_parser(x, y, z, t);
+                            Ey_Nodal += Eyfield_parser(x, y, z, t);
+                            Ez_Nodal += Ezfield_parser(x, y, z, t);
                         }
 
                         // Added external b fields:
@@ -1659,9 +1659,9 @@ void WarpXFluidContainer::GatherAndPush (
                             amrex::Real z = problo[0] + i * dx[0];
                             #endif
 
-                            Bx_Nodal += m_Bxfield_parser(x, y, z, t);
-                            By_Nodal += m_Byfield_parser(x, y, z, t);
-                            Bz_Nodal += m_Bzfield_parser(x, y, z, t);
+                            Bx_Nodal += Bxfield_parser(x, y, z, t);
+                            By_Nodal += Byfield_parser(x, y, z, t);
+                            Bz_Nodal += Bzfield_parser(x, y, z, t);
                         }
                     }
 
