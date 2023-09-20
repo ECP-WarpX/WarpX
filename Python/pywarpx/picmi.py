@@ -1912,11 +1912,26 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ParticleFieldDiagnostic(object):
-    def __init__(self, name, func, do_average=1, filter=None):
-        self.name = name
-        self.func = func
-        self.do_average = do_average
-        self.filter = filter
+    """
+    Parameters
+    ----------
+    name: str
+        Name of particle field diagnostic. If a component of a vector field, the coordinate
+        (i.e x, y, z) should be the last character.
+    func: parser str
+        Parser function to be calculated for each particle per cell. Should be of the form
+        f(x,y,z,ux,uy,uz)
+    do_average: (0 or 1) optional, default 1
+        Whether the diagnostic is averaged by the sum of particle weights in each cell
+    filter: parser str, optional
+        Parser function returning a boolean for whether to include a particle in the diagnostic.
+        If not specified, all particles will be included. The function arguments are the same
+        as the `func` above.
+    """
+    name: str
+    func: str
+    do_average: int = 1
+    filter: str = None
 
 
 class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
@@ -1953,12 +1968,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         List of ParticleFieldDiagnostic classes to install in the simulation. Error
         checking is handled in the class itself.
 
-    # warpx_particle_fields_to_plot: dict, optional
-    #     Keys: particle field diagnostic name (string)
-    #     Values: Dictionaries with key/value pairs of corresponding parser function
-    #     and parameters. The keys must be "func" (parser string, mandatory),
-    #     "do_average" (0 or 1, optional, default 1), and "filter" (parser string, optional).
-
     warpx_particle_fields_species: list of strings, optional
         Species for which to calculate particle_fields_to_plot functions. Fields will
         be calculated separately for each specified species. If not passed, default is
@@ -1977,7 +1986,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
         self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', None)
-        # self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', {})
         self.particle_fields_species = kw.pop('warpx_particle_fields_species', None)
 
     def initialize_inputs(self):
@@ -2057,7 +2065,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             self.diagnostic.fields_to_plot = fields_to_plot
 
         particle_fields_to_plot = list()
-        ####### list of ParticleFieldDiagnostics implementation
         if self.particle_fields_to_plot is not None:
             for pfd in self.particle_fields_to_plot:
                 particle_fields_to_plot.append(pfd.name)
@@ -2070,26 +2077,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                 self.diagnostic.__setattr__(
                     f'particle_fields.{dataname}.filter(x,y,z,ux,uy,uz)', pfd.filter
                 )
-
-        # ####### dictionary implementation
-        # for dataname, params in self.particle_fields_to_plot.items():
-        #     particle_fields_to_plot.append(dataname)
-        #     try:
-        #         self.diagnostic.__setattr__(
-        #             f'particle_fields.{dataname}(x,y,z,ux,uy,uz)', params.pop('func')
-        #         )
-        #     except KeyError:
-        #         raise Exception("A function must be provided for a particle field!")
-        #     self.diagnostic.__setattr__(
-        #         f'particle_fields.{dataname}.do_average', params.pop('do_average', None)
-        #     )
-        #     self.diagnostic.__setattr__(
-        #         f'particle_fields.{dataname}.filter(x,y,z,ux,uy,uz)', params.pop('filter', None)
-        #     )
-
-        #     # catches unexpected keywords
-        #     if params:
-        #         raise TypeError(f"Unexpected keyword argument for particle field {dataname} - {list(params)}")
 
         # --- Convert to a sorted list so that the order
         # --- is the same on all processors.
