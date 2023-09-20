@@ -68,6 +68,12 @@ class _MultiFABWrapper(object):
      mf: MultiFab
          The Multifab that is wrapped.
 
+     mf_name: string
+         The name of the MultiFab to be accessed, the tag specified when the
+         MultiFab is allocated. The Multifab will be accessed anew from WarpX
+         everytime it is called if this argument is given instead of directly
+         providing the Multifab.
+
      level: int
          The refinement level
 
