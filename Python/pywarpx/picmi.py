@@ -10,6 +10,7 @@
 """
 import os
 import re
+from dataclasses import dataclass
 
 import numpy as np
 import periodictable
@@ -1908,22 +1909,25 @@ class WarpXDiagnosticBase(object):
             file_prefix = (self.file_prefix or self.name)
             self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
-from dataclasses import dataclass
-
 
 @dataclass(frozen=True)
-class ParticleFieldDiagnostic(object):
+class ParticleFieldDiagnostic:
     """
+    Class holding particle field diagnostic information to be processed in FieldDiagnostic below.
+
     Parameters
     ----------
     name: str
-        Name of particle field diagnostic. If a component of a vector field, the coordinate
-        (i.e x, y, z) should be the last character.
+        Name of particle field diagnostic. If a component of a vector field, for the openPMD viewer
+        to treat it as a vector, the coordinate (i.e x, y, z) should be the last character.
+
     func: parser str
         Parser function to be calculated for each particle per cell. Should be of the form
         f(x,y,z,ux,uy,uz)
+
     do_average: (0 or 1) optional, default 1
         Whether the diagnostic is averaged by the sum of particle weights in each cell
+
     filter: parser str, optional
         Parser function returning a boolean for whether to include a particle in the diagnostic.
         If not specified, all particles will be included. The function arguments are the same
@@ -1986,7 +1990,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
-        self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', None)
+        self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', [])
         self.particle_fields_species = kw.pop('warpx_particle_fields_species', None)
 
     def initialize_inputs(self):
@@ -2065,26 +2069,25 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             fields_to_plot.sort()
             self.diagnostic.fields_to_plot = fields_to_plot
 
-        particle_fields_to_plot = list()
-        if self.particle_fields_to_plot is not None:
-            for pfd in self.particle_fields_to_plot:
-                if pfd.name in particle_fields_to_plot:
-                    raise Exception('A particle fields data name can not be repeated.')
-                particle_fields_to_plot.append(pfd.name)
-                self.diagnostic.__setattr__(
-                    f'particle_fields.{pfd.name}(x,y,z,ux,uy,uz)', pfd.func
-                )
-                self.diagnostic.__setattr__(
-                    f'particle_fields.{pfd.name}.do_average', pfd.do_average
-                )
-                self.diagnostic.__setattr__(
-                    f'particle_fields.{dataname}.filter(x,y,z,ux,uy,uz)', pfd.filter
-                )
+        particle_fields_to_plot_names = list()
+        for pfd in self.particle_fields_to_plot:
+            if pfd.name in particle_fields_to_plot_names:
+                raise Exception('A particle fields name can not be repeated.')
+            particle_fields_to_plot_names.append(pfd.name)
+            self.diagnostic.__setattr__(
+                f'particle_fields.{pfd.name}(x,y,z,ux,uy,uz)', pfd.func
+            )
+            self.diagnostic.__setattr__(
+                f'particle_fields.{pfd.name}.do_average', pfd.do_average
+            )
+            self.diagnostic.__setattr__(
+                f'particle_fields.{pfd.name}.filter(x,y,z,ux,uy,uz)', pfd.filter
+            )
 
         # --- Convert to a sorted list so that the order
         # --- is the same on all processors.
-        particle_fields_to_plot.sort()
-        self.diagnostic.particle_fields_to_plot = particle_fields_to_plot
+        particle_fields_to_plot_names.sort()
+        self.diagnostic.particle_fields_to_plot = particle_fields_to_plot_names
         self.diagnostic.particle_fields_species = self.particle_fields_species
 
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
