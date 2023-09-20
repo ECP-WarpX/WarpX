@@ -256,6 +256,13 @@ class HybridPICBeamInstability(object):
         callbacks.installafterstep(self.text_diag)
 
         if self.test:
+            part_diag = picmi.ParticleDiagnostic(
+                name='field_diag',
+                period=1250,
+                write_dir='.',
+                warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
+            )
+            simulation.add_diagnostic(part_diag)
             field_diag = picmi.FieldDiagnostic(
                 name='field_diag',
                 grid=self.grid,

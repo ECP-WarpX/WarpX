@@ -79,13 +79,18 @@ reduced_diags.append(picmi.ReducedDiagnostic(
 
 # Diagnostic
 particle_diag = picmi.ParticleDiagnostic(
+    name='diag1',
     period=3,
+    species=[electrons],
+    data_list = ['ux', 'uy', 'uz', 'x', 'y', 'z', 'weighting'],
     write_dir='.',
     warpx_file_prefix='Python_reduced_diags_loadbalancecosts_timers_plt'
 )
-diag = picmi.FieldDiagnostic(
+field_diag = picmi.FieldDiagnostic(
+    name='diag1',
     grid=grid,
     period=3,
+    data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
     write_dir='.',
     warpx_file_prefix='Python_reduced_diags_loadbalancecosts_timers_plt'
 )
@@ -110,7 +115,7 @@ for reduced_diag in reduced_diags:
 
 # Add diagnostics
 sim.add_diagnostic(particle_diag)
-sim.add_diagnostic(diag)
+sim.add_diagnostic(field_diag)
 
 # Advance simulation until last time step
 # sim.write_input_file("test_input")

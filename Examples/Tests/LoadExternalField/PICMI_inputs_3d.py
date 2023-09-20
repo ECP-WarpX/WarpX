@@ -90,6 +90,8 @@ solver = picmi.ElectrostaticSolver(grid=grid)
 particle_diag = picmi.ParticleDiagnostic(
         name='diag1',
         period=300,
+        species=[ions],
+        data_list = ['ux', 'uy', 'uz', 'x', 'y', 'z', 'weighting'],
         write_dir='.',
         warpx_file_prefix='Python_LoadExternalField3D_plt'
         )
@@ -97,6 +99,7 @@ field_diag = picmi.FieldDiagnostic(
         name='diag1',
         grid=grid,
         period=300,
+        data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
         write_dir='.',
         warpx_file_prefix='Python_LoadExternalField3D_plt'
         )
@@ -126,8 +129,8 @@ sim.add_species(
             )
         )
 
-sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
+sim.add_diagnostic(particle_diag)
 
 #################################
 ##### SIMULATION EXECUTION ######
