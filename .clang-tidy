@@ -76,5 +76,7 @@ Checks: '-*,
 CheckOptions:
 - key:          modernize-pass-by-value.ValuesOnly
   value:        'true'
+- key:          misc-definitions-in-headers.HeaderFileExtensions
+  value:        "H,"
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'

@@ -94,6 +94,7 @@ namespace {
       * @param u_th Momentum spread
       * @param engine Object used to generate random numbers
       */
+    AMREX_FORCE_INLINE
     AMREX_GPU_HOST_DEVICE
     amrex::Real
     generateGaussianFluxDist( amrex::Real u_m, amrex::Real u_th, amrex::RandomEngine const& engine ) {
