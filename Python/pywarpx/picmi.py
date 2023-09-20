@@ -8,9 +8,9 @@
 
 """Classes following the PICMI standard
 """
+from dataclasses import dataclass
 import os
 import re
-from dataclasses import dataclass
 
 import numpy as np
 import periodictable
