@@ -1142,15 +1142,15 @@ Particle initialization
 Cold Relativistic Fluid initialization
 --------------------------------------
 
-When configuring fluid parameters in WarpX, you can utilize the same parsers as those used for particles. 
+When configuring fluid parameters in WarpX, you can utilize the same parsers as those used for particles.
 
 * ``fluids.species_names`` (`strings`, separated by spaces)
-    Defines the names of each fluid species. It is a required input to create and evolve fluid species using the cold relativistic fluid equations. 
+    Defines the names of each fluid species. It is a required input to create and evolve fluid species using the cold relativistic fluid equations.
     This input is used similarly to `particle.species_names`, but it is specifically tailored for fluids.
     For fluid-specific inputs we use `<fluid_pecies_name>` as a placeholder. Also see external fields
     for how to specify these for fluids as the function names differ.
-    
-    Note: Currently ``<fluid_species_name>.num_particles_per_cell_each_dim`` is required to run the fluids because of the inheirance of the parser. 
+
+    Note: Currently ``<fluid_species_name>.num_particles_per_cell_each_dim`` is required to run the fluids because of the inheirance of the parser.
     It does not have any effect.
 
 .. _running-cpp-parameters-laser:
