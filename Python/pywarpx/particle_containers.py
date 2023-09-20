@@ -353,13 +353,18 @@ class ParticleContainerWrapper(object):
         List of arrays
             The requested particle x position
         '''
-        xp, cupy_status = load_cupy()
+        if copy_to_host:
+            # Use the numpy version of cosine
+            xp = np
+        else:
+            xp, cupy_status = load_cupy()
 
         structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == '3d' or libwarpx.geometry_dim == '2d':
             return [struct['x'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
-            return [struct['x']*xp.cos(theta) for struct, theta in zip(structs, self.get_particle_theta())]
+            theta = self.get_particle_theta(level, copy_to_host)
+            return [struct['x']*xp.cos(theta) for struct, theta in zip(structs, theta)]
         elif libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_x: There is no x coordinate with 1D Cartesian')
     xp = property(get_particle_x)
@@ -385,13 +390,18 @@ class ParticleContainerWrapper(object):
         List of arrays
             The requested particle y position
         '''
-        xp, cupy_status = load_cupy()
+        if copy_to_host:
+            # Use the numpy version of sine
+            xp = np
+        else:
+            xp, cupy_status = load_cupy()
 
         structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == '3d':
             return [struct['y'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
-            return [struct['x']*xp.sin(theta) for struct, theta in zip(structs, self.get_particle_theta())]
+            theta = self.get_particle_theta(level, copy_to_host)
+            return [struct['x']*xp.sin(theta) for struct, theta in zip(structs, theta)]
         elif libwarpx.geometry_dim == '1d' or libwarpx.geometry_dim == '2d':
             raise Exception('get_particle_y: There is no y coordinate with 1D or 2D Cartesian')
     yp = property(get_particle_y)
