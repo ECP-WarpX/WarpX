@@ -1136,6 +1136,23 @@ Particle initialization
     Resampling is performed everytime the number of macroparticles per cell of the species
     averaged over the whole simulation domain exceeds this parameter.
 
+
+.. _running-cpp-parameters-fluids:
+
+Cold Relativistic Fluid initialization
+--------------------------------------
+
+When configuring fluid parameters in WarpX, you can utilize the same parsers as those used for particles. 
+
+* ``fluids.species_names`` (`strings`, separated by spaces)
+    Defines the names of each fluid species. It is a required input to create and evolve fluid species using the cold relativistic fluid equations. 
+    This input is used similarly to `particle.species_names`, but it is specifically tailored for fluids.
+    For fluid-specific inputs we use `<fluid_pecies_name>` as a placeholder. Also see external fields
+    for how to specify these for fluids as the function names differ.
+    
+    Note: Currently ``<fluid_species_name>.num_particles_per_cell_each_dim`` is required to run the fluids because of the inheirance of the parser. 
+    It does not have any effect.
+
 .. _running-cpp-parameters-laser:
 
 Laser initialization
@@ -1498,6 +1515,37 @@ Applied to Particles
       The fields are of the form :math:`E_x = \mathrm{strength} \cdot x`, :math:`E_y = \mathrm{strength} \cdot y`,
       and :math:`E_z = 0`, and
       :math:`B_x = \mathrm{strength} \cdot y`, :math:`B_y = -\mathrm{strength} \cdot x`, and :math:`B_z = 0`.
+
+
+Applied to Cold Relativistic Fluids
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``<fluid_species_name>.E_ext_init_style`` & ``<fluid_species_name>.B_ext_init_style`` (string) optional (default "none")
+    These parameters determine the type of the external electric and
+    magnetic fields respectively that are applied directly to the cold relativistic fluids at every timestep.
+    The field values are specified in the lab frame.
+    With the default ``none`` style, no field is applied.
+    Possible values are ``parse_E_ext_function`` or ``parse_B_ext_function``.
+
+    * ``parse_E_ext_function`` or ``parse_B_ext_function``: the field is specified as an analytic
+      expression that is a function of space (x,y,z) and time (t), relative to the lab frame.
+      The E-field is specified by the input parameters:
+
+        * ``<fluid_species_name>.Ex_external_function(x,y,z,t)``
+
+        * ``<fluid_species_name>.Ey_external_function(x,y,z,t)``
+
+        * ``<fluid_species_name>.Ez_external_function(x,y,z,t)``
+
+      The B-field is specified by the input parameters:
+
+        * ``<fluid_species_name>.Bx_external_function(x,y,z,t)``
+
+        * ``<fluid_species_name>.By_external_function(x,y,z,t)``
+
+        * ``<fluid_species_name>.Bz_external_function(x,y,z,t)``
+
+      Note that the position is defined in Cartesian coordinates, as a function of (x,y,z), even for RZ.
 
 Accelerator Lattice
 ^^^^^^^^^^^^^^^^^^^
