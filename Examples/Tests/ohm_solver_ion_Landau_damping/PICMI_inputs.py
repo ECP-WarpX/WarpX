@@ -222,6 +222,7 @@ class IonLandauDamping(object):
                 write_dir='.',
                 warpx_file_prefix=f'Python_ohms_law_solver_landau_damping_{self.dim}d_plt',
             )
+            simulation.add_diagnostic(particle_diag)
             field_diag = picmi.FieldDiagnostic(
                 name='field_diag',
                 grid=self.grid,

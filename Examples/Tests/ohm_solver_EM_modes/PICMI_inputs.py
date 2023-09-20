@@ -264,6 +264,7 @@ class EMModes(object):
                 # warpx_format = 'openpmd',
                 # warpx_openpmd_backend = 'h5'
             )
+            simulation.add_diagnostic(particle_diag)
             field_diag = picmi.FieldDiagnostic(
                 name='field_diag',
                 grid=self.grid,

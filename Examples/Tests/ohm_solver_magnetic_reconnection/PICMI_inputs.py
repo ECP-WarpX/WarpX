@@ -258,6 +258,7 @@ class ForceFreeSheetReconnection(object):
                 # warpx_openpmd_backend='h5',
                 warpx_write_species=True
             )
+            simulation.add_diagnostic(particle_diag)
             field_diag = picmi.FieldDiagnostic(
                 name='field_diag',
                 grid=self.grid,
