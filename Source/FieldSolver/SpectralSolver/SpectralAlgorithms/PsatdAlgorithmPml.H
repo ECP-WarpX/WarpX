@@ -48,14 +48,14 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
-            const int norder_x,
-            const int norder_y,
-            const int norder_z,
-            const short grid_type,
+            int norder_x,
+            int norder_y,
+            int norder_z,
+            short grid_type,
             const amrex::Vector<amrex::Real>& v_galilean,
-            const amrex::Real dt,
-            const bool dive_cleaning,
-            const bool divb_cleaning);
+            amrex::Real dt,
+            bool dive_cleaning,
+            bool divb_cleaning);
 
         /**
          * \brief Initializes the coefficients used in \c pushSpectralFields

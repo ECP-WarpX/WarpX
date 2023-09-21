@@ -34,14 +34,14 @@ PsatdAlgorithmPml::PsatdAlgorithmPml(
         const SpectralKSpace& spectral_kspace,
         const DistributionMapping& dm,
         const SpectralFieldIndex& spectral_index,
-        const int norder_x,
-        const int norder_y,
-        const int norder_z,
-        const short grid_type,
+        int norder_x,
+        int norder_y,
+        int norder_z,
+        short grid_type,
         const amrex::Vector<amrex::Real>& v_galilean,
-        const Real dt,
-        const bool dive_cleaning,
-        const bool divb_cleaning) :
+        Real dt,
+        bool dive_cleaning,
+        bool divb_cleaning) :
     SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
     // Initialize the centered finite-order modified k vectors:
     // these are computed always with the assumption of centered grids
