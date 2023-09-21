@@ -29,8 +29,20 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
 {
     public:
 
-        /*
-         * TODO Add Doxygen
+        /**
+         * \brief Constructor of the class PsatdAlgorithmPml
+         *
+         * \param[in] spectral_kspace Spectral space
+         * \param[in] dm Distribution mapping
+         * \param[in] spectral_index Object containing indices to access data in spectral space
+         * \param[in] norder_x Order of the spectral solver along x
+         * \param[in] norder_y Order of the spectral solver along y
+         * \param[in] norder_z Order of the spectral solver along z
+         * \param[in] grid_type Type of grid (collocated or not)
+         * \param[in] v_galilean Galilean velocity
+         * \param[in] dt Time step of the simulation
+         * \param[in] dive_cleaning Whether to use divergence correction for E (F term)
+         * \param[in] divb_cleaning Whether to use divergence correction for B (G term)
          */
         PsatdAlgorithmPml(
             const SpectralKSpace& spectral_kspace,
@@ -45,15 +57,22 @@ class PsatdAlgorithmPml : public SpectralBaseAlgorithm
             const bool dive_cleaning,
             const bool divb_cleaning);
 
-        /*
-         * TODO Add Doxygen
+        /**
+         * \brief Initializes the coefficients used in \c pushSpectralFields
+         *        to update the E and B fields
+         *
+         * \param[in] spectral_kspace Spectral space
+         * \param[in] dm Distribution mapping
          */
         void InitializeSpectralCoefficients(
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm);
 
-        /*
-         * TODO Add Doxygen
+        /**
+         * \brief Updates the E and B fields in spectral space,
+         *        according to the relevant PSATD equations
+         *
+         * \param[in,out] f All fields in spectral space
          */
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
 
