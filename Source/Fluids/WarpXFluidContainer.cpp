@@ -588,7 +588,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real Vx = Ux/gamma;
                     // Compute the Flux-Jacobian Elements in x
                     amrex::Real A00x = Vx;
-                    amrex::Real A01x = N_arr(i,j,k)*c_sq/a;
+                    amrex::Real A01x = N_arr(i,j,k)*(1/gamma)*(1-Vx*Vx/c_sq);
                     amrex::Real A02x = -N_arr(i,j,k)*Uy*Ux/a;
                     amrex::Real A03x = -N_arr(i,j,k)*Uz*Ux/a;
 
@@ -615,7 +615,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     // Compute the Flux-Jacobian Elements in y
                     amrex::Real A00y = Vy;
                     amrex::Real A01y = -N_arr(i,j,k)*Ux*Uy/a;
-                    amrex::Real A02y = N_arr(i,j,k)*c_sq/a;
+                    amrex::Real A02y = N_arr(i,j,k)*(1/gamma)*(1-Vy*Vy/c_sq);
                     amrex::Real A03y = -N_arr(i,j,k)*Uz*Uy/a;
 
                     amrex::Real A10y = 0.0;
@@ -641,7 +641,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real A00z = Vz;
                     amrex::Real A01z = -N_arr(i,j,k)*Ux*Uz/a;
                     amrex::Real A02z = -N_arr(i,j,k)*Uy*Uz/a;
-                    amrex::Real A03z = N_arr(i,j,k)*c_sq/a;
+                    amrex::Real A03z = N_arr(i,j,k)*(1/gamma)*(1-Vz*Vz/c_sq);
 
                     amrex::Real A10z = 0.0;
                     amrex::Real A11z = Vz;
