@@ -127,6 +127,7 @@ python3 -m pip install --upgrade matplotlib
 python3 -m pip install --upgrade yt
 # install or update WarpX dependencies such as picmistandard
 python3 -m pip install --upgrade -r $HOME/src/warpx/requirements.txt
+python3 -m pip install cupy-cuda11x  # CUDA 11.7 compatible wheel
 # optional: for libEnsemble
 python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 # optional: for optimas (based on libEnsemble & ax->botorch->gpytorch->pytorch)
