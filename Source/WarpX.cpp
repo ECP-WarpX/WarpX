@@ -892,7 +892,7 @@ WarpX::ReadParameters ()
             "PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            at_least_one_boundary_is_silver_mueller &&
+            (!at_least_one_boundary_is_silver_mueller) ||
             (electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee),
             "The Silver-Mueller boundary condition can only be used with the Yee solver.");
 
