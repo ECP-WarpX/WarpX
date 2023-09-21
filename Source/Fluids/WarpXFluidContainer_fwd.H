@@ -6,7 +6,6 @@
  */
 
 #ifndef WARPX_WarpXFluidContainer_fwd_H_
-#define WARPX_WarpXFluidContainer_fwd_H_
 
 class WarpXFluidContainer;
 

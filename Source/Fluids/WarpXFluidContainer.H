@@ -18,12 +18,12 @@
 
 
 /**
- * WarpXFluidContainer is the base polymorphic class from which all concrete
+ * WarpXFluidContainer is the base class from which all concrete
  * fluid container classes derive.
  *
  * WarpXFluidContainer contains the main functions for initialization,
  * interaction with the grid (field gather and current deposition), fluid
- * source and push.
+ * source and push, advective update and updates for non-intertial terms.
  */
 class WarpXFluidContainer
 {
@@ -38,6 +38,7 @@ public:
     void InitData (int lev, amrex::Box init_box, amrex::Real cur_time);
 
     void ReadParameters ();
+
     /**
      * Evolve updates a single timestep (dt) of the cold relativistic fluid eqautions
      */
@@ -50,8 +51,7 @@ public:
     /**
      * AdvectivePush_Muscl takes a single timestep (dt) of the cold relativistic fluid equations
      * using a Muscl-Handcock scheme
-     */
-    /**
+     * 
      * \brief Advective term, cold-rel. fluids
      *
      * \param[in] lev refinement level
@@ -60,10 +60,9 @@ public:
 
 
     /**
-    * Apply (non-periodic) BC on the fluids (needed for spatial derivative),
-    * and communicate N, NU at boundaries
-    */
-    /**
+     * Apply (non-periodic) BC on the fluids (needed for spatial derivative),
+     * and communicate N, NU at boundaries
+     * 
      * \brief Apply non-periodic BC to fluids and communicate boundaries
      *
      * \param[in] lev refinement level
@@ -71,21 +70,19 @@ public:
     void ApplyBcFluidsAndComms (int lev);
 
     /**
-     * centrifugal_source adds contributions due to curvature acceleration for a
-     * single timestep using an SSP-RK3 timestep
-    */
-    /**
+     * centrifugal_source_rz adds contributions due to curvature acceleration for a
+     * single timestep using an SSP-RK3 timestep for RZ specifically
+     * 
      * \brief Centrifugal source term
      *
      * \param[in] lev refinement level
      */
-    void centrifugal_source (int lev);
+    void centrifugal_source_rz (int lev);
 
     /**
-     * GatherAndPush introduces the lorentz term in the cold relativistic fluid
+     * GatherAndPush introduces the Lorentz term in the cold relativistic fluid
      * equations for a single timestep (dt) using Higuera and Cary Push
-     */
-    /**
+     * 
      * \brief Lorentz Momentum Source
      *
      * \param[in] lev refinement level
@@ -105,8 +102,7 @@ public:
     /**
      * DepositCurrent interpolates the fluid current density comps. onto the Yee grid and
      * sums the contributions to the particle current density
-     */
-    /**
+     * 
      * \brief Deposit fluid current density.
      *
      * \param[in] lev refinement level
@@ -118,9 +114,9 @@ public:
         amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz);
 
     /**
-     * DepositCharge deposits density onto rho
-     */
-    /**
+     * DepositCharge interpolates the fluid charge density onto the Yee grid and
+     * sums the contributions to the particle charge density
+     * 
      * \brief Deposit fluid charge density.
      *
      * \param[in] lev refinement level
@@ -146,10 +142,15 @@ protected:
     // Parser for external fields
     std::string m_B_ext_s = "none";
     std::string m_E_ext_s = "none";
+    
     // Parser for B_external on the particle
     std::unique_ptr<amrex::Parser> m_Bx_parser;
     std::unique_ptr<amrex::Parser> m_By_parser;
     std::unique_ptr<amrex::Parser> m_Bz_parser;
+    amrex::ParserExecutor<4> m_Bxfield_parser;
+    amrex::ParserExecutor<4> m_Byfield_parser;
+    amrex::ParserExecutor<4> m_Bzfield_parser;
+
     // Parser for E_external on the particle
     std::unique_ptr<amrex::Parser> m_Ex_parser;
     std::unique_ptr<amrex::Parser> m_Ey_parser;
@@ -157,13 +158,13 @@ protected:
     amrex::ParserExecutor<4> m_Exfield_parser;
     amrex::ParserExecutor<4> m_Eyfield_parser;
     amrex::ParserExecutor<4> m_Ezfield_parser;
-    amrex::ParserExecutor<4> m_Bxfield_parser;
-    amrex::ParserExecutor<4> m_Byfield_parser;
-    amrex::ParserExecutor<4> m_Bzfield_parser;
+
 
     std::unique_ptr<PlasmaInjector> plasma_injector;
 
 public:
+
+   // MultiFabs that contain the density (N) and momentum density (NU) of this fluid species, for each refinement level
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > N;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > NU;
 

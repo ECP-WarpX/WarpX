@@ -242,25 +242,31 @@ void WarpXFluidContainer::Evolve(
     amrex::Real cur_time, bool skip_deposition)
 {
 
+    WARPX_PROFILE("WarpXFluidContainer::Evolve");
+
     if (rho && ! skip_deposition && ! do_not_deposit) {
          // Deposit charge before particle push, in component 0 of MultiFab rho.
          DepositCharge(lev, *rho, 0);
     }
 
     // Step the Lorentz Term
-    GatherAndPush(lev, Ex, Ey, Ez, Bx, By, Bz, cur_time);
+    if(!do_not_gather){
+        GatherAndPush(lev, Ex, Ey, Ez, Bx, By, Bz, cur_time);
+    }
 
     // Cylindrical centrifugal term
+    if(!do_not_push){
 #if defined(WARPX_DIM_RZ)
-        centrifugal_source(lev);
+        centrifugal_source_rz(lev);
 #endif
 
-    // Apply (non-periodic) BC on the fluids (needed for spatial derivative),
-    // and communicate N, NU at boundaries
-    ApplyBcFluidsAndComms(lev);
+        // Apply (non-periodic) BC on the fluids (needed for spatial derivative),
+        // and communicate N, NU at boundaries
+        ApplyBcFluidsAndComms(lev);
 
-    // Step the Advective term
-    AdvectivePush_Muscl(lev);
+        // Step the Advective term
+        AdvectivePush_Muscl(lev);
+    }
 
     // Deposit rho to the simulation mesh
     // Deposit charge (end of the step)
@@ -269,7 +275,7 @@ void WarpXFluidContainer::Evolve(
     }
 
     // Deposit J to the simulation mesh
-    if (!skip_deposition) {
+    if (!skip_deposition && ! do_not_deposit) {
         DepositCurrent(lev, jx, jy, jz);
     }
 }
@@ -1370,9 +1376,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
 // Momentum source due to curvature
-void WarpXFluidContainer::centrifugal_source (int lev)
+void WarpXFluidContainer::centrifugal_source_rz (int lev)
 {
-    WARPX_PROFILE("WarpXFluidContainer::centrifugal_source");
+    WARPX_PROFILE("WarpXFluidContainer::centrifugal_source_rz");
 
     WarpX &warpx = WarpX::GetInstance();
     const Real dt = warpx.getdt(lev);

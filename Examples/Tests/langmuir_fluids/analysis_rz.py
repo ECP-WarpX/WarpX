@@ -164,7 +164,7 @@ plt.savefig(test_name+'_analysis.png')
 
 error_rel = overall_max_error
 
-tolerance_rel = 0.16
+tolerance_rel = 0.08
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
