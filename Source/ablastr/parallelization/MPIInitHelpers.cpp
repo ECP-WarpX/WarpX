@@ -1,7 +1,6 @@
-/* Copyright 2020 Axel Huebl
+/* This file is part of ABLASTR.
  *
- * This file is part of WarpX.
- *
+ * Authors: Axel Huebl
  * License: BSD-3-Clause-LBNL
  */
 #include "MPIInitHelpers.H"
@@ -10,20 +9,28 @@
 
 #include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
-#include <AMReX_Print.H>
 
 #if defined(AMREX_USE_MPI)
 #   include <mpi.h>
 #endif
 
+// OLCFDEV-1655: Segfault during MPI_Init & in PMI_Allgather
+// https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#olcfdev-1655-occasional-seg-fault-during-mpi-init
+#if defined(AMREX_USE_HIP)
+#include <hip/hip_runtime.h>
+#endif
+
+#include <iostream>
 #include <string>
 #include <utility>
+#include <stdexcept>
 #include <sstream>
 
-namespace utils
+
+namespace ablastr::parallelization
 {
     int
-    warpx_mpi_thread_required ()
+    mpi_thread_required ()
     {
         int thread_required = -1;
 #ifdef AMREX_USE_MPI
@@ -39,9 +46,19 @@ namespace utils
     }
 
     std::pair< int, int >
-    warpx_mpi_init (int argc, char* argv[])
+    mpi_init (int argc, char* argv[])
     {
-        const int thread_required = warpx_mpi_thread_required();
+        // OLCFDEV-1655: Segfault during MPI_Init & in PMI_Allgather
+        // https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#olcfdev-1655-occasional-seg-fault-during-mpi-init
+#if defined(AMREX_USE_HIP) && defined(AMREX_USE_MPI)
+        hipError_t hip_ok = hipInit(0);
+        if (hip_ok != hipSuccess) {
+            std::cerr << "hipInit failed with error code " << hip_ok << "! Aborting now.\n";
+            throw std::runtime_error("hipInit failed. Did not proceeding with MPI_Init_thread.");
+        }
+#endif
+
+        const int thread_required = mpi_thread_required();
 #ifdef AMREX_USE_MPI
         int thread_provided = -1;
         MPI_Init_thread(&argc, &argv, thread_required, &thread_provided);
@@ -54,7 +71,7 @@ namespace utils
 
 
     void
-    warpx_mpi_finalize ()
+    mpi_finalize ()
     {
 #ifdef AMREX_USE_MPI
         MPI_Finalize();
@@ -62,10 +79,10 @@ namespace utils
     }
 
     void
-    warpx_check_mpi_thread_level ()
+    check_mpi_thread_level ()
     {
 #ifdef AMREX_USE_MPI
-        const int thread_required = warpx_mpi_thread_required();
+        const int thread_required = mpi_thread_required();
         int thread_provided = -1;
         MPI_Query_thread(&thread_provided);
         auto mtn = amrex::ParallelDescriptor::mpi_level_to_string;
@@ -90,4 +107,4 @@ namespace utils
 #endif
     }
 
-} // namespace utils
+} // namespace ablastr::parallelization

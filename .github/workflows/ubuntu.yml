@@ -163,6 +163,8 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
     env:
+      CC: clang
+      CXX: clang++
       # On CI for this test, Ninja is slower than the default:
       #CMAKE_GENERATOR: Ninja
       # setuptools/mp4py work-around, see
@@ -189,14 +191,16 @@ jobs:
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
-        export WARPX_MPI=ON
-        export WARPX_OPENPMD=ON
-        export WARPX_PSATD=ON
-        export WARPX_QED_TABLE_GEN=ON
-        export CC=$(which clang)
-        export CXX=$(which clang++)
+
         export CXXFLAGS="-Werror -Wno-error=pass-failed"
-        python3 -m pip install -v .
+
+        cmake -S . -B build            \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_APP=OFF              \
+          -DWarpX_PSATD=ON             \
+          -DWarpX_PYTHON=ON            \
+          -DWarpX_QED_TABLE_GEN=ON
+        cmake --build build -j 2 --target pip_install
 
     - name: run pywarpx
       run: |

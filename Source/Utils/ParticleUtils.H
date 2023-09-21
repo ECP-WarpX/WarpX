@@ -29,7 +29,7 @@ namespace ParticleUtils {
      * @param[in] ptile the particle tile.
      */
     amrex::DenseBins<WarpXParticleContainer::ParticleType>
-    findParticlesInEachCell( int const lev, amrex::MFIter const& mfi,
+    findParticlesInEachCell(int lev, amrex::MFIter const& mfi,
                              WarpXParticleContainer::ParticleTileType const& ptile);
 
     /**
@@ -94,6 +94,8 @@ namespace ParticleUtils {
                               amrex::ParticleReal const Vx, amrex::ParticleReal const Vy,
                               amrex::ParticleReal const Vz )
     {
+        using namespace amrex::literals;
+
         // precompute repeatedly used quantities
         constexpr auto c2 = PhysConst::c * PhysConst::c;
         const auto V2 = (Vx*Vx + Vy*Vy + Vz*Vz);

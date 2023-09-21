@@ -51,12 +51,6 @@ FieldProbe::FieldProbe (std::string rd_name)
 : ReducedDiags{rd_name}, m_probe(&WarpX::GetInstance())
 {
 
-    // RZ coordinate is not working
-#if (defined WARPX_DIM_RZ)
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-        "FieldProbe reduced diagnostics does not work for RZ coordinate.");
-#endif
-
     // read number of levels
     int nLevel = 0;
     const amrex::ParmParse pp_amr("amr");
@@ -141,9 +135,14 @@ FieldProbe::FieldProbe (std::string rd_name)
         );
     }
     pp_rd_name.query("integrate", m_field_probe_integrate);
-    pp_rd_name.query("raw_fields", raw_fields);
     utils::parser::queryWithParser(pp_rd_name, "interp_order", interp_order);
     pp_rd_name.query("do_moving_window_FP", do_moving_window_FP);
+
+    bool raw_fields;
+    const bool raw_fields_specified = pp_rd_name.query("raw_fields", raw_fields);
+    if (raw_fields_specified) {
+        WARPX_ABORT_WITH_MESSAGE("The field probe raw_fields options is obsolete. To get the equivalent, set interp_order = 0");
+    }
 
     if (WarpX::gamma_boost > 1.0_rt)
     {
@@ -157,7 +156,7 @@ FieldProbe::FieldProbe (std::string rd_name)
                                      "Field probe interp_order should be less than or equal to algo.particle_shape");
     if (ParallelDescriptor::IOProcessor())
     {
-        if ( m_IsNotRestart )
+        if ( m_write_header )
         {
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -378,19 +377,17 @@ void FieldProbe::ComputeDiags (int step)
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
     {
-        const amrex::Geometry& gm = warpx.Geom(lev);
-        const auto prob_lo = gm.ProbLo();
         amrex::Real const dt = WarpX::GetInstance().getdt(lev);
         // Calculates particle movement in moving window sims
         amrex::Real move_dist = 0.0;
         bool const update_particles_moving_window =
             do_moving_window_FP &&
-            step > warpx.start_moving_window_step &&
-            step <= warpx.end_moving_window_step;
+            step > WarpX::start_moving_window_step &&
+            step <= WarpX::end_moving_window_step;
         if (update_particles_moving_window)
         {
             const int step_diff = step - m_last_compute_step;
-            move_dist = dt*warpx.moving_window_v*step_diff;
+            move_dist = dt*WarpX::moving_window_v*step_diff;
         }
 
         // get MultiFab data at lev
@@ -440,7 +437,7 @@ void FieldProbe::ComputeDiags (int step)
             auto const np = pti.numParticles();
             if (update_particles_moving_window)
             {
-                const auto temp_warpx_moving_window = warpx.moving_window_dir;
+                const auto temp_warpx_moving_window = WarpX::moving_window_dir;
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;
@@ -461,18 +458,6 @@ void FieldProbe::ComputeDiags (int step)
             }
             if( ProbeInDomain() )
             {
-                const auto cell_size = gm.CellSizeArray();
-                const int i_probe = static_cast<int>(amrex::Math::floor((x_probe - prob_lo[0]) / cell_size[0]));
-#if defined(WARPX_DIM_1D_Z)
-                const int j_probe = 0;
-                const int k_probe = 0;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const int j_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[1]) / cell_size[1]));
-                const int k_probe = 0;
-#elif defined(WARPX_DIM_3D)
-                const int j_probe = static_cast<int>(amrex::Math::floor((y_probe - prob_lo[1]) / cell_size[1]));
-                const int k_probe = static_cast<int>(amrex::Math::floor((z_probe - prob_lo[2]) / cell_size[2]));
-#endif
                 const auto &arrEx = Ex[pti].array();
                 const auto &arrEy = Ey[pti].array();
                 const auto &arrEz = Ez[pti].array();
@@ -507,7 +492,6 @@ void FieldProbe::ComputeDiags (int step)
                 // Temporarily defining modes and interp outside ParallelFor to avoid GPU compilation errors.
                 const int temp_modes = WarpX::n_rz_azimuthal_modes;
                 const int temp_interp_order = interp_order;
-                const bool temp_raw_fields = raw_fields;
                 const bool temp_field_probe_integrate = m_field_probe_integrate;
 
                 // Interpolating to the probe positions for each particle
@@ -520,17 +504,7 @@ void FieldProbe::ComputeDiags (int step)
                     amrex::ParticleReal Bxp = 0._prt, Byp = 0._prt, Bzp = 0._prt;
 
                     // first gather E and B to the particle positions
-                    if (temp_raw_fields)
-                    {
-                        Exp = arrEx(i_probe, j_probe, k_probe);
-                        Eyp = arrEy(i_probe, j_probe, k_probe);
-                        Ezp = arrEz(i_probe, j_probe, k_probe);
-                        Bxp = arrBx(i_probe, j_probe, k_probe);
-                        Byp = arrBy(i_probe, j_probe, k_probe);
-                        Bzp = arrBz(i_probe, j_probe, k_probe);
-                    }
-                    else
-                        doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                    doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    arrEx, arrEy, arrEz, arrBx, arrBy, arrBz,
                                    Extype, Eytype, Eztype, Bxtype, Bytype, Bztype,
                                    dx_arr, xyzmin_arr, lo, temp_modes,
@@ -630,8 +604,7 @@ void FieldProbe::ComputeDiags (int step)
             long total_data_size = 0;
             amrex::Vector<int> displs_vector;
             if (amrex::ParallelDescriptor::IOProcessor()) {
-                displs_vector.resize(mpisize, 0);
-                displs_vector[0] = 0;
+                displs_vector.assign(mpisize, 0);
                 total_data_size += length_vector[0];
                 for (int i=1; i<mpisize; i++) {
                     displs_vector[i] = (displs_vector[i-1] + length_vector[i-1]);
@@ -658,11 +631,11 @@ void FieldProbe::WriteToFile (int step) const
     if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) return;
 
     // loop over num valid particles to find the lowest particle ID for later sorting
-    long int first_id = m_data_out[0];
-    for (int i = 0; i < m_valid_particles; i++)
+    long int first_id = static_cast<long int>(m_data_out[0]);
+    for (long int i = 0; i < m_valid_particles; i++)
     {
         if (m_data_out[i*noutputs] < first_id)
-            first_id = m_data_out[i*noutputs];
+            first_id = static_cast<long int>(m_data_out[i*noutputs]);
     }
 
     // Create a new array to store probe data ordered by id, which will be printed to file.
@@ -671,10 +644,10 @@ void FieldProbe::WriteToFile (int step) const
 
     // loop over num valid particles and write data into the appropriately
     // sorted location
-    for (int i = 0; i < m_valid_particles; i++)
+    for (long int i = 0; i < m_valid_particles; i++)
     {
-        const int idx = m_data_out[i*noutputs] - first_id;
-        for (int k = 0; k < noutputs; k++)
+        const long int idx = static_cast<long int>(m_data_out[i*noutputs]) - first_id;
+        for (long int k = 0; k < noutputs; k++)
         {
             sorted_data[idx * noutputs + k] = m_data_out[i * noutputs + k];
         }
@@ -685,7 +658,7 @@ void FieldProbe::WriteToFile (int step) const
                         std::ofstream::out | std::ofstream::app};
 
     // loop over num valid particles and write
-    for (int i = 0; i < m_valid_particles; i++)
+    for (long int i = 0; i < m_valid_particles; i++)
     {
         ofs << std::fixed << std::defaultfloat;
         ofs << step + 1;

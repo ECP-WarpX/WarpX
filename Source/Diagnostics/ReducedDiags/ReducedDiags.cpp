@@ -9,6 +9,7 @@
 
 #include "WarpX.H"
 #include "Utils/Parser/IntervalsParser.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX.H>
@@ -23,9 +24,8 @@ using namespace amrex;
 
 // constructor
 ReducedDiags::ReducedDiags (std::string rd_name)
+    : m_rd_name(std::move(rd_name))
 {
-    m_rd_name = rd_name;
-
     BackwardCompatibility();
 
     const ParmParse pp_rd_name(m_rd_name);
@@ -37,22 +37,24 @@ ReducedDiags::ReducedDiags (std::string rd_name)
     pp_rd_name.query("extension", m_extension);
 
     // check if it is a restart run
-    std::string restart_chkfile = "";
+    std::string restart_chkfile;
     const ParmParse pp_amr("amr");
     pp_amr.query("restart", restart_chkfile);
-    m_IsNotRestart = restart_chkfile.empty();
+    bool IsNotRestart = restart_chkfile.empty();
 
     if (ParallelDescriptor::IOProcessor())
     {
         // create folder
         constexpr int permission_flag_rwxrxrx = 0755;
-        if (!UtilCreateDirectory(m_path, permission_flag_rwxrxrx))
-        { CreateDirectoryFailed(m_path); }
+        if (!amrex::UtilCreateDirectory(m_path, permission_flag_rwxrxrx))
+        { amrex::CreateDirectoryFailed(m_path); }
 
         // replace / create output file
-        if ( m_IsNotRestart ) // not a restart
+        std::string rd_full_file_name = m_path + m_rd_name + "." + m_extension;
+        m_write_header = IsNotRestart || !amrex::FileExists(rd_full_file_name); // not a restart or file doesn't exist
+        if (m_write_header)
         {
-            std::ofstream ofs{m_path+m_rd_name+"."+m_extension, std::ios::trunc};
+            std::ofstream ofs{rd_full_file_name, std::ios::trunc};
             ofs.close();
         }
     }
@@ -64,6 +66,9 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
     // read separator
     pp_rd_name.query("separator", m_sep);
+
+    // precision of data in the output file
+    utils::parser::queryWithParser(pp_rd_name, "precision", m_precision);
 }
 // end constructor
 
@@ -105,7 +110,7 @@ void ReducedDiags::WriteToFile (int step) const
     ofs << m_sep;
 
     // set precision
-    ofs << std::fixed << std::setprecision(14) << std::scientific;
+    ofs << std::fixed << std::setprecision(m_precision) << std::scientific;
 
     // write time
     ofs << WarpX::GetInstance().gett_new(0);

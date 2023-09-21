@@ -33,9 +33,9 @@ my_constants.mu_0 = 1.25663706212e-06
 warpx.B_ext_grid_init_style = parse_B_ext_grid_function
 
 warpx.Bx_external_grid_function(x,y,z) = 0
-warpx.By_external_grid_function(x,y,z) = mu_0 *
-                                         cos(m * pi / Lx * (x*cos(-theta)+z*sin(-theta) - Lx / 2 - x_cent)) *
-                                         cos(p * pi / Lz * (-x*sin(-theta)+z*cos(-theta) - Lz / 2 - z_cent))
+warpx.By_external_grid_function(x,y,z) = "mu_0 *
+                                          cos(m * pi / Lx * (x*cos(-theta)+z*sin(-theta) - Lx / 2 - x_cent)) *
+                                          cos(p * pi / Lz * (-x*sin(-theta)+z*cos(-theta) - Lz / 2 - z_cent))"
 warpx.Bz_external_grid_function(x,y,z) = 0
 
 diagnostics.diags_names = diag1

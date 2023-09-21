@@ -196,14 +196,8 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, HybridPICModel const* hybrid_model,
-    DtType a_dt_type )
+    const bool include_resistivity_term )
 {
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        WarpX::grid_type == GridType::Staggered,
-        "Ohm's law E-solve only works with a staggered (Yee) grid.");
-
-
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
     if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
@@ -211,14 +205,14 @@ void FiniteDifferenceSolver::HybridPICSolveE (
 
         HybridPICSolveECylindrical <CylindricalYeeAlgorithm> (
             Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
-            edge_lengths, lev, hybrid_model, a_dt_type
+            edge_lengths, lev, hybrid_model, include_resistivity_term
         );
 
 #else
 
         HybridPICSolveECartesian <CartesianYeeAlgorithm> (
             Efield, Jfield, Jifield, Bfield, rhofield, Pefield,
-            edge_lengths, lev, hybrid_model, a_dt_type
+            edge_lengths, lev, hybrid_model, include_resistivity_term
         );
 
 #endif
@@ -239,14 +233,14 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, HybridPICModel const* hybrid_model,
-    DtType a_dt_type )
+    const bool include_resistivity_term )
 {
 #ifndef AMREX_USE_EB
     amrex::ignore_unused(edge_lengths);
 #endif
     amrex::ignore_unused(
         Efield, Jfield, Jifield, Bfield, rhofield, Pefield, edge_lengths,
-        lev, hybrid_model, a_dt_type
+        lev, hybrid_model, include_resistivity_term
     );
     amrex::Abort(Utils::TextMsg::Err(
         "currently hybrid E-solve does not work for RZ"));
@@ -264,7 +258,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     std::unique_ptr<amrex::MultiFab> const& Pefield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev, HybridPICModel const* hybrid_model,
-    DtType a_dt_type )
+    const bool include_resistivity_term )
 {
 #ifndef AMREX_USE_EB
     amrex::ignore_unused(edge_lengths);
@@ -441,7 +435,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ex(i, j, k) = (enE_x - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (a_dt_type != DtType::Full) Ex(i, j, k) += eta(rho_val) * Jx(i, j, k);
+                if (include_resistivity_term) Ex(i, j, k) += eta(rho_val) * Jx(i, j, k);
             },
 
             // Ey calculation
@@ -471,7 +465,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ey(i, j, k) = (enE_y - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (a_dt_type != DtType::Full) Ey(i, j, k) += eta(rho_val) * Jy(i, j, k);
+                if (include_resistivity_term) Ey(i, j, k) += eta(rho_val) * Jy(i, j, k);
             },
 
             // Ez calculation
@@ -496,7 +490,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ez(i, j, k) = (enE_z - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (a_dt_type != DtType::Full) Ez(i, j, k) += eta(rho_val) * Jz(i, j, k);
+                if (include_resistivity_term) Ez(i, j, k) += eta(rho_val) * Jz(i, j, k);
             }
         );
 

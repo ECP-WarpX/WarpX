@@ -14,8 +14,7 @@
 
 #include <AMReX_Config.H>
 
-
-using amrex::operator""_rt;
+using namespace amrex::literals;
 
 /* \brief Initialize fields in spectral space, and FFT plans
  *
@@ -204,7 +203,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
 
 SpectralFieldDataRZ::~SpectralFieldDataRZ()
 {
-    if (fields.size() > 0){
+    if (!fields.empty()){
         for (amrex::MFIter mfi(fields); mfi.isValid(); ++mfi){
 #if defined(AMREX_USE_CUDA)
             // Destroy cuFFT plans.
@@ -326,7 +325,7 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
     [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
         Complex spectral_field_value = tmp_arr(i,j,k,mode);
         // Apply proper shift.
-        if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
+        if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
         // Copy field into the correct index.
         int const ic = field_index + mode*n_fields;
         fields_arr(i,j,k,ic) = spectral_field_value*inv_nz;
@@ -364,7 +363,7 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
         int const ic = field_index + mode*n_fields;
         Complex spectral_field_value = fields_arr(i,j,k,ic);
         // Apply proper shift.
-        if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
+        if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
         // Copy field into the right index.
         tmp_arr(i,j,k,mode) = spectral_field_value;
     });
