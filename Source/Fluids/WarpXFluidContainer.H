@@ -51,7 +51,7 @@ public:
     /**
      * AdvectivePush_Muscl takes a single timestep (dt) of the cold relativistic fluid equations
      * using a Muscl-Handcock scheme
-     * 
+     *
      * \brief Advective term, cold-rel. fluids
      *
      * \param[in] lev refinement level
@@ -62,7 +62,7 @@ public:
     /**
      * Apply (non-periodic) BC on the fluids (needed for spatial derivative),
      * and communicate N, NU at boundaries
-     * 
+     *
      * \brief Apply non-periodic BC to fluids and communicate boundaries
      *
      * \param[in] lev refinement level
@@ -72,7 +72,7 @@ public:
     /**
      * centrifugal_source_rz adds contributions due to curvature acceleration for a
      * single timestep using an SSP-RK3 timestep for RZ specifically
-     * 
+     *
      * \brief Centrifugal source term
      *
      * \param[in] lev refinement level
@@ -82,7 +82,7 @@ public:
     /**
      * GatherAndPush introduces the Lorentz term in the cold relativistic fluid
      * equations for a single timestep (dt) using Higuera and Cary Push
-     * 
+     *
      * \brief Lorentz Momentum Source
      *
      * \param[in] lev refinement level
@@ -102,7 +102,7 @@ public:
     /**
      * DepositCurrent interpolates the fluid current density comps. onto the Yee grid and
      * sums the contributions to the particle current density
-     * 
+     *
      * \brief Deposit fluid current density.
      *
      * \param[in] lev refinement level
@@ -116,7 +116,7 @@ public:
     /**
      * DepositCharge interpolates the fluid charge density onto the Yee grid and
      * sums the contributions to the particle charge density
-     * 
+     *
      * \brief Deposit fluid charge density.
      *
      * \param[in] lev refinement level
@@ -142,7 +142,7 @@ protected:
     // Parser for external fields
     std::string m_B_ext_s = "none";
     std::string m_E_ext_s = "none";
-    
+
     // Parser for B_external on the particle
     std::unique_ptr<amrex::Parser> m_Bx_parser;
     std::unique_ptr<amrex::Parser> m_By_parser;
