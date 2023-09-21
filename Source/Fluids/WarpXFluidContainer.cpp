@@ -1376,6 +1376,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
 // Momentum source due to curvature
+#if defined(WARPX_DIM_RZ)
 void WarpXFluidContainer::centrifugal_source_rz (int lev)
 {
     WARPX_PROFILE("WarpXFluidContainer::centrifugal_source_rz");
@@ -1441,6 +1442,7 @@ void WarpXFluidContainer::centrifugal_source_rz (int lev)
         );
     }
 }
+#endif
 
 // Momentum source from fields
 void WarpXFluidContainer::GatherAndPush (

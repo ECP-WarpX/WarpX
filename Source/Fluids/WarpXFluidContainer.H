@@ -69,6 +69,7 @@ public:
      */
     void ApplyBcFluidsAndComms (int lev);
 
+#if defined(WARPX_DIM_RZ)
     /**
      * centrifugal_source_rz adds contributions due to curvature acceleration for a
      * single timestep using an SSP-RK3 timestep for RZ specifically
@@ -78,6 +79,7 @@ public:
      * \param[in] lev refinement level
      */
     void centrifugal_source_rz (int lev);
+#endif
 
     /**
      * GatherAndPush introduces the Lorentz term in the cold relativistic fluid
