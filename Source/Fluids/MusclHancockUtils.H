@@ -206,18 +206,10 @@ amrex::Real dU0x, amrex::Real dU1x, amrex::Real dU2x, amrex::Real dU3x)
         U_edge(i,j,k,3) = U_tilde3 - dU3x/2.0;
     }
 }
-// Positivity Limiter
+// Returns the offset indices for the "plus" grid
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void positivity_limiter (const amrex::Array4<amrex::Real>& U_edge_plus, 
-const amrex::Array4<amrex::Real>& U_edge_minus, const amrex::Array4<amrex::Real>& N_arr,
-int i, int j, int k, amrex::Box box, amrex::Real Ux, amrex::Real Uy, amrex::Real Uz,
-int comp)
+void plus_index_offsets (int i, int j, int k, int& ip, int& jp, int& kp, int comp)
 {
-
-    // comp -> x, y, z -> 0, 1, 2
-    int ip, jp, kp;
-    //plus_index_offsets(i, j, k, ip, jp, kp, comp);
-
     // Find the correct offsets
 #if defined(WARPX_DIM_3D)
     if (comp == 0) { //x
@@ -238,6 +230,18 @@ int comp)
         ip =  i - 1; jp =  j; kp = k;
     }
 #endif
+}
+// Positivity Limiter
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void positivity_limiter (const amrex::Array4<amrex::Real>& U_edge_plus, 
+const amrex::Array4<amrex::Real>& U_edge_minus, const amrex::Array4<amrex::Real>& N_arr,
+int i, int j, int k, amrex::Box box, amrex::Real Ux, amrex::Real Uy, amrex::Real Uz,
+int comp)
+{
+
+    // comp -> x, y, z -> 0, 1, 2
+    int ip, jp, kp;
+    plus_index_offsets(i, j, k, ip, jp, kp, comp);
 
     // Set the edges to zero. If one edge in a cell is zero, we must self-consistently
     // set the slope to zero (hence why we have the three cases, the first is when
