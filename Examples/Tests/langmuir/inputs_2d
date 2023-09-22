@@ -51,6 +51,16 @@ particles.species_names = electrons positrons
 # The two sources s1 and s2 are identical except their zmin and zmax
 electrons.charge = -q_e
 electrons.mass = m_e
+
+electrons.injection_sources = s1 s2
+electrons.s1.injection_style = "NUniformPerCell"
+electrons.s1.zmin = -20.e-6
+electrons.s1.zmax = 0.e-6
+electrons.s2.injection_style = "NUniformPerCell"
+electrons.s2.zmin = 0.e-6
+electrons.s2.zmax = 20.e-6
+
+# These parameters are common to both sources
 electrons.num_particles_per_cell_each_dim = 2 2
 electrons.xmin = -20.e-6
 electrons.xmax =  20.e-6
@@ -63,14 +73,6 @@ electrons.momentum_distribution_type = parse_momentum_function
 electrons.momentum_function_ux(x,y,z) = "epsilon * k/kp * sin(k*x) * cos(k*y) * cos(k*z)"
 electrons.momentum_function_uy(x,y,z) = "epsilon * k/kp * cos(k*x) * sin(k*y) * cos(k*z)"
 electrons.momentum_function_uz(x,y,z) = "epsilon * k/kp * cos(k*x) * cos(k*y) * sin(k*z)"
-
-electrons.injection_sources = s1 s2
-electrons.s1.injection_style = "NUniformPerCell"
-electrons.s1.zmin = -20.e-6
-electrons.s1.zmax = 0.e-6
-electrons.s2.injection_style = "NUniformPerCell"
-electrons.s2.zmin = 0.e-6
-electrons.s2.zmax = 20.e-6
 
 positrons.charge = q_e
 positrons.mass = m_e
