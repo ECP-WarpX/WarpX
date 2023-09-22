@@ -46,8 +46,8 @@ struct ParmParseWithOptionalGroup
     void get (const char* name, amrex::Real& ref) const;
     void get (const char* name, std::string& ref) const;
     void get (const char* name, amrex::Vector<amrex::ParticleReal>& ref) const;
-    void get (const char* name, amrex::Vector<int>& ref, const int start_ix, const int num_val) const;
-    void get (const char* name, amrex::Vector<amrex::Real>& ref, const int start_ix, const int num_val) const;
+    void get (const char* name, amrex::Vector<int>& ref, int start_ix, int num_val) const;
+    void get (const char* name, amrex::Vector<amrex::Real>& ref, int start_ix, int num_val) const;
 
     void get_long_string (const char* name, std::string& ref) const;
 };

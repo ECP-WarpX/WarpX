@@ -74,7 +74,7 @@ public:
     /*
      * \brief Returns a pointer to the i'th plasma injector.
      */
-    virtual PlasmaInjector* GetPlasmaInjector (const int i) override;
+    virtual PlasmaInjector* GetPlasmaInjector (int i) override;
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that

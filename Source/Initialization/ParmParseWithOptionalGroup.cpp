@@ -149,7 +149,7 @@ void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<amrex::Par
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<int>& ref, const int start_ix, const int num_val) const
+void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<int>& ref, int start_ix, int num_val) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -161,7 +161,7 @@ void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<int>& ref,
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<amrex::Real>& ref, const int start_ix, const int num_val) const
+void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<amrex::Real>& ref, int start_ix, int num_val) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);

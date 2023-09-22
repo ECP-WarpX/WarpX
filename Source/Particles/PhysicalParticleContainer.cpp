@@ -3022,7 +3022,7 @@ int PhysicalParticleContainer::numberOfPlasmaInjectors ()
     return static_cast<int>(plasma_injectors.size());
 }
 
-PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector (const int i)
+PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector (int i)
 {
     if (i < 0 || i >= numberOfPlasmaInjectors()) {
         return nullptr;
