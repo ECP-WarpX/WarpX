@@ -19,7 +19,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #ifdef WARPX_USE_PSATD
-#   include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+//#   include "FieldSolver/SpectralSolver/"
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #       include "BoundaryConditions/PML_RZ.H"
@@ -29,6 +29,7 @@
 #endif // use PSATD ifdef
 #include "FieldSolver/WarpX_FDTD.H"
 #include "Filter/NCIGodfreyFilter.H"
+#include "Laser/LaserEnvelope.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "AcceleratorLattice/AcceleratorLattice.H"
@@ -373,6 +374,8 @@ WarpX::WarpX ()
         // Create hybrid-PIC model object if needed
         m_hybrid_pic_model = std::make_unique<HybridPICModel>(nlevs_max);
     }
+
+    m_laser_envelope = std::make_unique<LaserEnvelope>(nlevs_max);
 
     F_cp.resize(nlevs_max);
     G_cp.resize(nlevs_max);
@@ -1940,6 +1943,8 @@ WarpX::ClearLevel (int lev)
         m_hybrid_pic_model->ClearLevel(lev);
     }
 
+    m_laser_envelope->ClearLevel(lev);
+
     charge_buf[lev].reset();
 
     current_buffer_masks[lev].reset();
@@ -2221,6 +2226,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             jz_nodal_flag, rho_nodal_flag
         );
     }
+
+    const amrex::IntVect& ngA = ngEB;
+    const amrex::IntVect& A_nodal_flag = rho_nodal_flag;
+    const int ncomps_A = 2;
+    m_laser_envelope->AllocateLevelMFs(lev, ba, dm, ncomps_A, ngA, A_nodal_flag);
 
     if (fft_do_time_averaging)
     {

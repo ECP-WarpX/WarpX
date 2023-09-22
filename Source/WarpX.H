@@ -23,6 +23,7 @@
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
+#include "Laser/LaserEnvelope_fwd.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -1660,6 +1661,9 @@ public:
      *        from the current J (computed from D according to the Vay deposition scheme)
      */
     void PSATDSubtractCurrentPartialSumsAvg ();
+
+    // Laser Envelope Model parameters
+   std::unique_ptr<LaserEnvelope> m_laser_envelope;
 
 private:
     void ScrapeParticles ();

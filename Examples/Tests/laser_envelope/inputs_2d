@@ -1,0 +1,49 @@
+# amr
+amr.max_level = 0
+amr.n_cell = 256 1024
+
+# boundary
+boundary.field_hi = pml pml
+boundary.field_lo = pml pml
+
+# diag1
+diag1.diag_type = Full
+diag1.intervals = 50
+diag1.fields_to_plot = Ex Ey Ez A_laser_envelope
+
+# diagnostics
+diagnostics.diags_names = diag1
+
+# geometry
+geometry.dims = 2
+geometry.prob_hi =  100e-6  30e-6
+geometry.prob_lo = -100e-6 -30e-6
+
+# laser
+laser.direction = 0. 0. 1.
+laser.e_max = 4e12 # a_0=1
+laser.polarization = 0. 1. 0.
+laser.position = 0. 0. 10e-6
+laser.profile_duration = 15e-15 # tau_{fwhm}/sqrt(2*ln(2))
+laser.profile_focal_distance = 0.
+laser.profile = Gaussian
+laser.profile_z_peak = 15e-6 # not sure how to set this
+laser.profile_waist = 15e-6 # w_0
+laser.wavelength = 0.8e-6 # lambda_0
+
+# laser_envelopes
+laser_envelopes.names = laser
+
+# max_step
+max_step = 100
+
+# warpx
+warpx.cfl = 0.7
+warpx.do_dynamic_scheduling = 0
+warpx.do_moving_window = 1
+warpx.moving_window_dir = z
+warpx.moving_window_v = 1.0
+warpx.numprocs = 1 1
+warpx.serialize_initial_conditions = 1
+warpx.use_filter = 0
+warpx.verbose = 1
