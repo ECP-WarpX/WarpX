@@ -208,7 +208,7 @@ amrex::Real dU0x, amrex::Real dU1x, amrex::Real dU2x, amrex::Real dU3x)
 }
 // Positivity Limiter
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void positivity_limiter (const amrex::Array4<amrex::Real>& U_edge_plus, 
+void positivity_limiter (const amrex::Array4<amrex::Real>& U_edge_plus,
 const amrex::Array4<amrex::Real>& U_edge_minus, const amrex::Array4<amrex::Real>& N_arr,
 int i, int j, int k, amrex::Box box, amrex::Real Ux, amrex::Real Uy, amrex::Real Uz,
 int comp)
