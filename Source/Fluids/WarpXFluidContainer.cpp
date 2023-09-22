@@ -443,7 +443,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
-        // Loop over a box with one extra gridpoint in the ghost region to avoid 
+        // Loop over a box with one extra gridpoint in the ghost region to avoid
         // an extra MPI communication between the edge value computation loop and
         // the flux calculation loop
         amrex::Box tile_box = mfi.growntilebox(1);
@@ -476,8 +476,8 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Box const box_z = amrex::convert( box, tmp_U_minus_z.ixType() );
 #endif
 
-        //N and NU are always defined at the nodes, the tmp_Q_* are defined 
-        //inbetween the nodes (i.e. on the staggered Yee grid) and store the 
+        //N and NU are always defined at the nodes, the tmp_Q_* are defined
+        //inbetween the nodes (i.e. on the staggered Yee grid) and store the
         //values of N and U at these points.
         //(i.e. the 4 components correspond to N + the 3 components of U)
         // Extract the temporary arrays for edge values
@@ -592,8 +592,8 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real inv_c2_gamma3 = 1./(c_sq*gamma*gamma*gamma);
 
 
-                    // J represents are 4x4 matrices that show up in the advection 
-                    // equations written as a function of U = {N, Ux, Uy, Uz}: 
+                    // J represents are 4x4 matrices that show up in the advection
+                    // equations written as a function of U = {N, Ux, Uy, Uz}:
                     // \partial_t U + Jx \partial_x U + Jy \partial_y U + Jz \partial_z U = 0
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
                     amrex::Real Vx = Ux/gamma;

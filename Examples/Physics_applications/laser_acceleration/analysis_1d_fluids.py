@@ -93,7 +93,7 @@ rho_th = rho_th - e*n0
 # Dicate which region to compare solutions over
 # (Currently this is the full domain)
 min_i = 0
-max_i = 10240 
+max_i = 10240
 
 # Read the file
 ds = yt.load(fn)
