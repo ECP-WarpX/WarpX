@@ -395,25 +395,25 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const auto dx = geom.CellSizeArray();
     const amrex::Real clight = PhysConst::c;
 #if defined(WARPX_DIM_3D)
-    amrex::Real cx = (dt/dx[0]);
-    amrex::Real cy = (dt/dx[1]);
-    amrex::Real cz = (dt/dx[2]);
-    amrex::Real cx_half = 0.5*(dt/dx[0]);
-    amrex::Real cy_half = 0.5*(dt/dx[1]);
-    amrex::Real cz_half = 0.5*(dt/dx[2]);
+    amrex::Real dt_over_dx = (dt/dx[0]);
+    amrex::Real dt_over_dy = (dt/dx[1]);
+    amrex::Real dt_over_dz = (dt/dx[2]);
+    amrex::Real dt_over_dx_half = 0.5*(dt/dx[0]);
+    amrex::Real dt_over_dy_half = 0.5*(dt/dx[1]);
+    amrex::Real dt_over_dz_half = 0.5*(dt/dx[2]);
 #elif defined(WARPX_DIM_XZ)
-    amrex::Real cx_half = 0.5*(dt/dx[0]);
-    amrex::Real cz_half = 0.5*(dt/dx[1]);
-    amrex::Real cx = (dt/dx[0]);
-    amrex::Real cz = (dt/dx[1]);
+    amrex::Real dt_over_dx_half = 0.5*(dt/dx[0]);
+    amrex::Real dt_over_dz_half = 0.5*(dt/dx[1]);
+    amrex::Real dt_over_dx = (dt/dx[0]);
+    amrex::Real dt_over_dz = (dt/dx[1]);
 #elif defined(WARPX_DIM_RZ)
     const auto problo = geom.ProbLoArray();
-    amrex::Real cx_half = 0.5*(dt/dx[0]);
-    amrex::Real cz_half = 0.5*(dt/dx[1]);
+    amrex::Real dt_over_dx_half = 0.5*(dt/dx[0]);
+    amrex::Real dt_over_dz_half = 0.5*(dt/dx[1]);
     amrex::Box const& domain = geom.Domain();
 #else
-    amrex::Real cz = (dt/dx[0]);
-    amrex::Real cz_half = 0.5*(dt/dx[0]);
+    amrex::Real dt_over_dz = (dt/dx[0]);
+    amrex::Real dt_over_dz_half = 0.5*(dt/dx[0]);
 #endif
 
     amrex::BoxArray ba = N[lev]->boxArray();
@@ -693,10 +693,10 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real JdU1z = J10z*dU0z + J11z*dU1z + J12z*dU2z + J13z*dU3z;
                     amrex::Real JdU2z = J20z*dU0z + J21z*dU1z + J22z*dU2z + J23z*dU3z;
                     amrex::Real JdU3z = J30z*dU0z + J31z*dU1z + J32z*dU2z + J33z*dU3z;
-                    amrex::Real U_tilde0 = N_arr(i,j,k)   - cx_half*JdU0x - cy_half*JdU0y - cz_half*JdU0z;
-                    amrex::Real U_tilde1 = Ux - cx_half*JdU1x - cy_half*JdU1y - cz_half*JdU1z;
-                    amrex::Real U_tilde2 = Uy - cx_half*JdU2x - cy_half*JdU2y - cz_half*JdU2z;
-                    amrex::Real U_tilde3 = Uz - cx_half*JdU3x - cy_half*JdU3y - cz_half*JdU3z;
+                    amrex::Real U_tilde0 = N_arr(i,j,k)   - dt_over_dx_half*JdU0x - dt_over_dy_half*JdU0y - dt_over_dz_half*JdU0z;
+                    amrex::Real U_tilde1 = Ux - dt_over_dx_half*JdU1x - dt_over_dy_half*JdU1y - dt_over_dz_half*JdU1z;
+                    amrex::Real U_tilde2 = Uy - dt_over_dx_half*JdU2x - dt_over_dy_half*JdU2y - dt_over_dz_half*JdU2z;
+                    amrex::Real U_tilde3 = Uz - dt_over_dx_half*JdU3x - dt_over_dy_half*JdU3y - dt_over_dz_half*JdU3z;
 
 
                     // Predict Q at the cell edges (x)
@@ -879,10 +879,10 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real  JdU1z = J10z*dU0z + J11z*dU1z + J12z*dU2z + J13z*dU3z;
                     amrex::Real  JdU2z = J20z*dU0z + J21z*dU1z + J22z*dU2z + J23z*dU3z;
                     amrex::Real  JdU3z = J30z*dU0z + J31z*dU1z + J32z*dU2z + J33z*dU3z;
-                    amrex::Real  U_tilde0 = N_arr(i,j,k)   - cx_half*JdU0x - cz_half*JdU0z - (dt/2.0)*N_source;
-                    amrex::Real  U_tilde1 = Ux - cx_half*JdU1x - cz_half*JdU1z;
-                    amrex::Real  U_tilde2 = Uy - cx_half*JdU2x - cz_half*JdU2z;
-                    amrex::Real  U_tilde3 = Uz - cx_half*JdU3x - cz_half*JdU3z;
+                    amrex::Real  U_tilde0 = N_arr(i,j,k)   - dt_over_dx_half*JdU0x - dt_over_dz_half*JdU0z - (dt/2.0)*N_source;
+                    amrex::Real  U_tilde1 = Ux - dt_over_dx_half*JdU1x - dt_over_dz_half*JdU1z;
+                    amrex::Real  U_tilde2 = Uy - dt_over_dx_half*JdU2x - dt_over_dz_half*JdU2z;
+                    amrex::Real  U_tilde3 = Uz - dt_over_dx_half*JdU3x - dt_over_dz_half*JdU3z;
 
                     // Predict Q at the cell edges (x)
                     // (note that _plus is shifted due to grid location)
@@ -983,10 +983,10 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real  JdU1z = J10z*dU0z + J11z*dU1z + J12z*dU2z + J13z*dU3z;
                     amrex::Real  JdU2z = J20z*dU0z + J21z*dU1z + J22z*dU2z + J23z*dU3z;
                     amrex::Real  JdU3z = J30z*dU0z + J31z*dU1z + J32z*dU2z + J33z*dU3z;
-                    amrex::Real  U_tilde0 = N_arr(i,j,k)   - cz_half*JdU0z;
-                    amrex::Real  U_tilde1 = Ux - cz_half*JdU1z;
-                    amrex::Real  U_tilde2 = Uy - cz_half*JdU2z;
-                    amrex::Real  U_tilde3 = Uz - cz_half*JdU3z;
+                    amrex::Real  U_tilde0 = N_arr(i,j,k)   - dt_over_dz_half*JdU0z;
+                    amrex::Real  U_tilde1 = Ux - dt_over_dz_half*JdU1z;
+                    amrex::Real  U_tilde2 = Uy - dt_over_dz_half*JdU2z;
+                    amrex::Real  U_tilde3 = Uz - dt_over_dz_half*JdU3z;
 
                     // Predict Q at the cell edges (z)
                     // (note that _plus is shifted due to grid location)
@@ -1203,18 +1203,18 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 amrex::Real F3_plusz =  flux(U_minus_z(i,j,k,3)*U_minus_z(i,j,k,0),  U_plus_z(i,j,k,3)*U_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
 
                 // Update Q from tn -> tn + dt
-                N_arr(i,j,k) = N_arr(i,j,k) - cx*(F0_plusx - F0_minusx)
-                                            - cy*(F0_plusy - F0_minusy)
-                                            - cz*(F0_plusz - F0_minusz);
-                NUx_arr(i,j,k) = NUx_arr(i,j,k) - cx*(F1_plusx - F1_minusx)
-                                                - cy*(F1_plusy - F1_minusy)
-                                                - cz*(F1_plusz - F1_minusz);
-                NUy_arr(i,j,k) = NUy_arr(i,j,k) - cx*(F2_plusx - F2_minusx)
-                                                - cy*(F2_plusy - F2_minusy)
-                                                - cz*(F2_plusz - F2_minusz);
-                NUz_arr(i,j,k) = NUz_arr(i,j,k) - cx*(F3_plusx - F3_minusx)
-                                                - cy*(F3_plusy - F3_minusy)
-                                                - cz*(F3_plusz - F3_minusz);
+                N_arr(i,j,k) = N_arr(i,j,k) - dt_over_dx*(F0_plusx - F0_minusx)
+                                            - dt_over_dy*(F0_plusy - F0_minusy)
+                                            - dt_over_dz*(F0_plusz - F0_minusz);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - dt_over_dx*(F1_plusx - F1_minusx)
+                                                - dt_over_dy*(F1_plusy - F1_minusy)
+                                                - dt_over_dz*(F1_plusz - F1_minusz);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - dt_over_dx*(F2_plusx - F2_minusx)
+                                                - dt_over_dy*(F2_plusy - F2_minusy)
+                                                - dt_over_dz*(F2_plusz - F2_minusz);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - dt_over_dx*(F3_plusx - F3_minusx)
+                                                - dt_over_dy*(F3_plusy - F3_minusy)
+                                                - dt_over_dz*(F3_plusz - F3_minusz);
 
 #elif defined(WARPX_DIM_XZ)
 
@@ -1254,14 +1254,14 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 amrex::Real F3_plusz =  flux(U_minus_z(i,j,k,3)*U_minus_z(i,j,k,0),  U_plus_z(i,j,k,3)*U_plus_z(i,j,k,0),    Vz_I_minus,Vz_I_plus);
 
                 // Update Q from tn -> tn + dt
-                N_arr(i,j,k) = N_arr(i,j,k) - cx*(F0_plusx - F0_minusx)
-                                            - cz*(F0_plusz - F0_minusz);
-                NUx_arr(i,j,k) = NUx_arr(i,j,k) - cx*(F1_plusx - F1_minusx)
-                                                - cz*(F1_plusz - F1_minusz);
-                NUy_arr(i,j,k) = NUy_arr(i,j,k) - cx*(F2_plusx - F2_minusx)
-                                                - cz*(F2_plusz - F2_minusz);
-                NUz_arr(i,j,k) = NUz_arr(i,j,k) - cx*(F3_plusx - F3_minusx)
-                                                - cz*(F3_plusz - F3_minusz);
+                N_arr(i,j,k) = N_arr(i,j,k) - dt_over_dx*(F0_plusx - F0_minusx)
+                                            - dt_over_dz*(F0_plusz - F0_minusz);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - dt_over_dx*(F1_plusx - F1_minusx)
+                                                - dt_over_dz*(F1_plusz - F1_minusz);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - dt_over_dx*(F2_plusx - F2_minusx)
+                                                - dt_over_dz*(F2_plusz - F2_minusz);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - dt_over_dx*(F3_plusx - F3_minusx)
+                                                - dt_over_dz*(F3_plusz - F3_minusz);
 
 #elif defined(WARPX_DIM_RZ)
 
@@ -1364,10 +1364,10 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
                 // Update Q from tn -> tn + dt
-                N_arr(i,j,k) = N_arr(i,j,k)     - cz*(F0_plusz - F0_minusz);
-                NUx_arr(i,j,k) = NUx_arr(i,j,k) - cz*(F1_plusz - F1_minusz);
-                NUy_arr(i,j,k) = NUy_arr(i,j,k) - cz*(F2_plusz - F2_minusz);
-                NUz_arr(i,j,k) = NUz_arr(i,j,k) - cz*(F3_plusz - F3_minusz);
+                N_arr(i,j,k) = N_arr(i,j,k)     - dt_over_dz*(F0_plusz - F0_minusz);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - dt_over_dz*(F1_plusz - F1_minusz);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - dt_over_dz*(F2_plusz - F2_minusz);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - dt_over_dz*(F3_plusz - F3_minusz);
 #endif
             }
         );
