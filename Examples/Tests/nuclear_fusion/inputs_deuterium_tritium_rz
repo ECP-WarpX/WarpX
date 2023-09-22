@@ -74,18 +74,22 @@ neutron_1.do_not_deposit = 1
 my_constants.background_dens = 1.e26
 my_constants.beam_dens = 1.e20
 
-deuterium_2.species_type = deuterium
-deuterium_2.injection_style = "NRandomPerCell"
-deuterium_2.num_particles_per_cell = 8000
-deuterium_2.profile = "parse_density_function"
 ## A tenth of the macroparticles in each cell is made of immobile high-density background deuteriums.
 ## The other nine tenths are made of fast low-density beam deuteriums.
-deuterium_2.density_function(x,y,z) = if(y - floor(y) < 0.1, 10.*background_dens, 10./9.*beam_dens)
-deuterium_2.momentum_distribution_type = "parse_momentum_function"
-deuterium_2.momentum_function_ux(x,y,z) = 0.
-deuterium_2.momentum_function_uy(x,y,z) = 0.
-deuterium_2.momentum_function_uz(x,y,z) = "if(y - floor(y) < 0.1,
-                                          0., sqrt(2*m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight))"
+deuterium_2.species_type = deuterium
+deuterium_2.injection_sources = high_density low_density
+deuterium_2.profile = constant
+deuterium_2.high_density.injection_style = "NRandomPerCell"
+deuterium_2.high_density.num_particles_per_cell = 800
+deuterium_2.high_density.density = 10.*background_dens
+deuterium_2.high_density.momentum_distribution_type = at_rest
+deuterium_2.low_density.injection_style = "NRandomPerCell"
+deuterium_2.low_density.num_particles_per_cell = 7200
+deuterium_2.low_density.density = 10./9.*beam_dens
+deuterium_2.low_density.momentum_distribution_type = "parse_momentum_function"
+deuterium_2.low_density.momentum_function_ux(x,y,z) = 0.
+deuterium_2.low_density.momentum_function_uy(x,y,z) = 0.
+deuterium_2.low_density.momentum_function_uz(x,y,z) = sqrt(2*m_deuterium*Energy_step*(floor(z)**2))/(m_deuterium*clight)
 deuterium_2.do_not_push = 1
 deuterium_2.do_not_deposit = 1
 
