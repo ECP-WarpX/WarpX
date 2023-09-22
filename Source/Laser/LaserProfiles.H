@@ -122,7 +122,7 @@ public:
         amrex::Real const * AMREX_RESTRICT Xp,
         amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const final;
+        amrex::Real * AMREX_RESTRICT amplitude) const final;
 
 private:
     struct {
@@ -164,7 +164,7 @@ public:
         amrex::Real const * AMREX_RESTRICT Xp,
         amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const final;
+        amrex::Real * AMREX_RESTRICT amplitude) const final;
 
 private:
     struct{
@@ -215,7 +215,7 @@ public:
         amrex::Real const * AMREX_RESTRICT Xp,
         amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const final;
+        amrex::Real * AMREX_RESTRICT amplitude) const final;
 
     /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format in 3D Cartesian.
     * This function cannot be private due to restrictions related to

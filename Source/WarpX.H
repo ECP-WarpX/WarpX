@@ -94,7 +94,7 @@ public:
      */
     static void Finalize();
 
-    ~WarpX ();
+    ~WarpX () override;
 
     /** Copy constructor */
     WarpX ( WarpX const &) = delete;

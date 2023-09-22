@@ -23,12 +23,11 @@
 
 using namespace amrex;
 
-NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdtodz, bool nodal_gather){
-    // Store parameters into class data members
-    m_coeff_set = coeff_set;
-    m_cdtodz = cdtodz;
-    m_nodal_gather = nodal_gather;
-
+NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdtodz, bool nodal_gather):
+    m_coeff_set{coeff_set}, // Store parameters into class data members
+    m_cdtodz{cdtodz},
+    m_nodal_gather{nodal_gather}
+{
     // NCI Godfrey filter has fixed size, and is applied along z only.
 #if defined(WARPX_DIM_3D)
     stencil_length_each_dir = {1,1,5};

@@ -29,7 +29,7 @@ class FlushFormatAscent : public FlushFormat
 public:
     /** Do in-situ visualization for field and particle data */
     void WriteToFile (
-        const amrex::Vector<std::string> varnames,
+        const amrex::Vector<std::string>& varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,

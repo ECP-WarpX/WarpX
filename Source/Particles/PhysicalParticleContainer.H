@@ -244,8 +244,8 @@ public:
                     amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
                                         NArrayReal, NArrayInt,
                                         amrex::PinnedArenaAllocator>& pinned_tile,
-                    const int n_external_attr_real,
-                    const int n_external_attr_int,
+                    int n_external_attr_real,
+                    int n_external_attr_int,
                     const amrex::RandomEngine& engine) final;
 
 /**
@@ -307,7 +307,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void resample (const int timestep, bool verbose) final;
+    void resample (int timestep, bool verbose) final;
 
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H

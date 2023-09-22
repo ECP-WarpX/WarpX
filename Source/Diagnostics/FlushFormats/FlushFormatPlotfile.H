@@ -23,7 +23,7 @@ class FlushFormatPlotfile : public FlushFormat
 public:
     /** Flush fields and particles to plotfile */
     void WriteToFile (
-        const amrex::Vector<std::string> varnames,
+        const amrex::Vector<std::string>& varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,

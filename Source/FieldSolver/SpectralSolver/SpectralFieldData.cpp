@@ -122,12 +122,11 @@ SpectralFieldData::SpectralFieldData( const int lev,
                                       const SpectralKSpace& k_space,
                                       const amrex::DistributionMapping& dm,
                                       const int n_field_required,
-                                      const bool periodic_single_box)
+                                      const bool periodic_single_box):
+    m_periodic_single_box{periodic_single_box}
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     const bool do_costs = WarpXUtilLoadBalance::doCosts(cost, realspace_ba, dm);
-
-    m_periodic_single_box = periodic_single_box;
 
     const BoxArray& spectralspace_ba = k_space.spectralspace_ba;
 

@@ -80,7 +80,7 @@ public:
                      const amrex::IntVect& ncell, const amrex::IntVect& delta,
                      const amrex::Box& regular_domain, const amrex::Real v_sigma_sb)
         : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_regdomain(regular_domain), m_v_sigma_sb(v_sigma_sb) {}
-    ~SigmaBoxFactory () = default;
+    ~SigmaBoxFactory () override = default;
 
     SigmaBoxFactory (const SigmaBoxFactory&) = default;
     SigmaBoxFactory (SigmaBoxFactory&&) noexcept = default;

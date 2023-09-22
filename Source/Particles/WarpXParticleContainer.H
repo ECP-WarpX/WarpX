@@ -468,8 +468,7 @@ protected:
     TmpParticles tmp_particle_data;
 
 private:
-    void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,
-                                    const int lev) override;
+    void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld, int lev) override;
 
 };
 

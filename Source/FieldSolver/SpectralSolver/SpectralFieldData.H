@@ -75,6 +75,16 @@ class SpectralFieldIndex
          */
         ~SpectralFieldIndex () = default;
 
+        /**
+         * \brief Default Copy constructor
+         */
+        SpectralFieldIndex ( SpectralFieldIndex const &) = default;
+
+        /**
+         * \brief Default Copy operator
+         */
+        SpectralFieldIndex& operator= ( SpectralFieldIndex const & ) = default;
+
     // Total number of fields that are actually allocated
     int n_fields;
 
@@ -137,9 +147,9 @@ class SpectralFieldData
         SpectralFieldData(SpectralFieldData&&) = default;
         SpectralFieldData& operator=(SpectralFieldData&& field_data) = default;
 
-        void ForwardTransform (const int lev,
-                               const amrex::MultiFab& mf, const int field_index,
-                               const int i_comp);
+        void ForwardTransform (int lev,
+                               const amrex::MultiFab& mf, int field_index,
+                               int i_comp);
 
         void BackwardTransform (int lev, amrex::MultiFab& mf, int field_index,
                                 const amrex::IntVect& fill_guards, int i_comp);

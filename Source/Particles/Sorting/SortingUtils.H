@@ -84,13 +84,13 @@ class fillBufferFlag
     public:
         fillBufferFlag( WarpXParIter const& pti, amrex::iMultiFab const* bmasks,
                         amrex::Gpu::DeviceVector<int>& inexflag,
-                        amrex::Geometry const& geom ) {
-
+                        amrex::Geometry const& geom ):
             // Extract simple structure that can be used directly on the GPU
-            m_particles = pti.GetArrayOfStructs().data();
-            m_buffer_mask = (*bmasks)[pti].array();
-            m_inexflag_ptr = inexflag.dataPtr();
-            m_domain = geom.Domain();
+            m_particles{pti.GetArrayOfStructs().data()},
+            m_buffer_mask{(*bmasks)[pti].array()},
+            m_inexflag_ptr{inexflag.dataPtr()},
+            m_domain{geom.Domain()}
+        {
             for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
                 m_prob_lo[idim] = geom.ProbLo(idim);
                 m_inv_cell_size[idim] = geom.InvCellSize(idim);
@@ -143,14 +143,14 @@ class fillBufferFlagRemainingParticles
                         amrex::Geometry const& geom,
                         amrex::Gpu::DeviceVector<long> const& particle_indices,
                         long const start_index ) :
-                        m_start_index(start_index) {
-
+            m_start_index{start_index},
             // Extract simple structure that can be used directly on the GPU
-            m_particles = pti.GetArrayOfStructs().data();
-            m_buffer_mask = (*bmasks)[pti].array();
-            m_inexflag_ptr = inexflag.dataPtr();
-            m_indices_ptr = particle_indices.dataPtr();
-            m_domain = geom.Domain();
+            m_particles{pti.GetArrayOfStructs().data()},
+            m_buffer_mask{(*bmasks)[pti].array()},
+            m_inexflag_ptr{inexflag.dataPtr()},
+            m_indices_ptr{particle_indices.dataPtr()},
+            m_domain{geom.Domain()}
+        {
             for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
                 m_prob_lo[idim] = geom.ProbLo(idim);
                 m_inv_cell_size[idim] = geom.InvCellSize(idim);

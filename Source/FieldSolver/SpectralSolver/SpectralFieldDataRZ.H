@@ -43,6 +43,16 @@ class SpectralFieldDataRZ
         SpectralFieldDataRZ& operator=(SpectralFieldDataRZ&& field_data) = default;
         ~SpectralFieldDataRZ ();
 
+        /**
+         * \brief Default Copy constructor
+         */
+        SpectralFieldDataRZ ( SpectralFieldDataRZ const &) = default;
+
+        /**
+         * \brief Default Copy operator
+         */
+        SpectralFieldDataRZ& operator= ( SpectralFieldDataRZ const & ) = default;
+
         void ForwardTransform (int lev, const amrex::MultiFab& mf, int field_index,
                                int i_comp=0);
         void ForwardTransform (int lev, const amrex::MultiFab& mf_r, int field_index_r,

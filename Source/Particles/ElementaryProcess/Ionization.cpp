@@ -30,17 +30,18 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
                                             const amrex::Real* const AMREX_RESTRICT a_adk_power,
                                             int a_comp,
                                             int a_atomic_number,
-                                            int a_offset) noexcept
+                                            int a_offset) noexcept:
+    m_ionization_energies{a_ionization_energies},
+    m_adk_prefactor{a_adk_prefactor},
+    m_adk_exp_prefactor{a_adk_exp_prefactor},
+    m_adk_power{a_adk_power},
+    comp{a_comp},
+    m_atomic_number{a_atomic_number},
+    m_galerkin_interpolation{WarpX::galerkin_interpolation},
+    m_nox{WarpX::nox},
+    m_n_rz_azimuthal_modes{WarpX::n_rz_azimuthal_modes}
 {
-
     using namespace amrex::literals;
-
-    m_ionization_energies = a_ionization_energies;
-    m_adk_prefactor = a_adk_prefactor;
-    m_adk_exp_prefactor = a_adk_exp_prefactor;
-    m_adk_power = a_adk_power;
-    comp = a_comp;
-    m_atomic_number = a_atomic_number;
 
     m_get_position  = GetParticlePosition(a_pti, a_offset);
     m_get_externalEB = GetExternalEBField(a_pti, a_offset);
@@ -68,10 +69,6 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
     // Lower corner of tile box physical domain (take into account Galilean shift)
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
     m_xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
-
-    m_galerkin_interpolation = WarpX::galerkin_interpolation;
-    m_nox = WarpX::nox;
-    m_n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
     m_lo = amrex::lbound(box);
 }
