@@ -43,6 +43,8 @@
 #include <utility>
 #include <vector>
 
+using namespace amrex::literals;
+
 namespace {
     void StringParseAbortMessage(const std::string& var,
                                  const std::string& name) {
@@ -58,8 +60,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     const amrex::Geometry& geom):
     species_id{ispecies}, species_name{name}
 {
-    using namespace amrex::literals;
-
     const amrex::ParmParse pp_species_name(species_name);
 
 #ifdef AMREX_USE_GPU

@@ -47,8 +47,6 @@
 #include <utility>
 
 
-using namespace amrex::literals;
-
 class WarpXParIter
     : public amrex::ParIter<0,0,PIdx::nattribs>
 {

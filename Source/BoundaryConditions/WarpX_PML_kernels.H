@@ -14,17 +14,15 @@
 #include <AMReX.H>
 #include <AMReX_FArrayBox.H>
 
-using namespace amrex;
-
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
+void warpx_damp_pml_ex (int i, int j, int k, amrex::Array4<amrex::Real> const& Ex,
                         const amrex::IntVect& Ex_stag,
-                        const Real* const sigma_fac_x,
-                        const Real* const sigma_fac_y,
-                        const Real* const sigma_fac_z,
-                        const Real* const sigma_star_fac_x,
-                        const Real* const sigma_star_fac_y,
-                        const Real* const sigma_star_fac_z,
+                        const amrex::Real* const sigma_fac_x,
+                        const amrex::Real* const sigma_fac_y,
+                        const amrex::Real* const sigma_fac_z,
+                        const amrex::Real* const sigma_star_fac_x,
+                        const amrex::Real* const sigma_star_fac_y,
+                        const amrex::Real* const sigma_star_fac_z,
                         int xlo, int ylo, int zlo,
                         const bool dive_cleaning)
 {
@@ -94,14 +92,14 @@ void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_damp_pml_ey (int i, int j, int k, Array4<Real> const& Ey,
+void warpx_damp_pml_ey (int i, int j, int k, amrex::Array4<amrex::Real> const& Ey,
                         const amrex::IntVect& Ey_stag,
-                        const Real* const sigma_fac_x,
-                        const Real* const sigma_fac_y,
-                        const Real* const sigma_fac_z,
-                        const Real* const sigma_star_fac_x,
-                        const Real* const sigma_star_fac_y,
-                        const Real* const sigma_star_fac_z,
+                        const amrex::Real* const sigma_fac_x,
+                        const amrex::Real* const sigma_fac_y,
+                        const amrex::Real* const sigma_fac_z,
+                        const amrex::Real* const sigma_star_fac_x,
+                        const amrex::Real* const sigma_star_fac_y,
+                        const amrex::Real* const sigma_star_fac_z,
                         int xlo, int ylo, int zlo,
                         const bool dive_cleaning)
 {
@@ -168,14 +166,14 @@ void warpx_damp_pml_ey (int i, int j, int k, Array4<Real> const& Ey,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
+void warpx_damp_pml_ez (int i, int j, int k, amrex::Array4<amrex::Real> const& Ez,
                         const amrex::IntVect& Ez_stag,
-                        const Real* const sigma_fac_x,
-                        const Real* const sigma_fac_y,
-                        const Real* const sigma_fac_z,
-                        const Real* const sigma_star_fac_x,
-                        const Real* const sigma_star_fac_y,
-                        const Real* const sigma_star_fac_z,
+                        const amrex::Real* const sigma_fac_x,
+                        const amrex::Real* const sigma_fac_y,
+                        const amrex::Real* const sigma_fac_z,
+                        const amrex::Real* const sigma_star_fac_x,
+                        const amrex::Real* const sigma_star_fac_y,
+                        const amrex::Real* const sigma_star_fac_z,
                         int xlo, int ylo, int zlo,
                         const bool dive_cleaning)
 {
@@ -245,14 +243,14 @@ void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_damp_pml_bx (int i, int j, int k, Array4<Real> const& Bx,
+void warpx_damp_pml_bx (int i, int j, int k, amrex::Array4<amrex::Real> const& Bx,
                         const amrex::IntVect& Bx_stag,
-                        const Real* const sigma_fac_x,
-                        const Real* const sigma_fac_y,
-                        const Real* const sigma_fac_z,
-                        const Real* const sigma_star_fac_x,
-                        const Real* const sigma_star_fac_y,
-                        const Real* const sigma_star_fac_z,
+                        const amrex::Real* const sigma_fac_x,
+                        const amrex::Real* const sigma_fac_y,
+                        const amrex::Real* const sigma_fac_z,
+                        const amrex::Real* const sigma_star_fac_x,
+                        const amrex::Real* const sigma_star_fac_y,
+                        const amrex::Real* const sigma_star_fac_z,
                         int xlo, int ylo, int zlo,
                         const bool divb_cleaning)
 {
@@ -322,14 +320,14 @@ void warpx_damp_pml_bx (int i, int j, int k, Array4<Real> const& Bx,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_damp_pml_by (int i, int j, int k, Array4<Real> const& By,
+void warpx_damp_pml_by (int i, int j, int k, amrex::Array4<amrex::Real> const& By,
                         const amrex::IntVect& By_stag,
-                        const Real* const sigma_fac_x,
-                        const Real* const sigma_fac_y,
-                        const Real* const sigma_fac_z,
-                        const Real* const sigma_star_fac_x,
-                        const Real* const sigma_star_fac_y,
-                        const Real* const sigma_star_fac_z,
+                        const amrex::Real* const sigma_fac_x,
+                        const amrex::Real* const sigma_fac_y,
+                        const amrex::Real* const sigma_fac_z,
+                        const amrex::Real* const sigma_star_fac_x,
+                        const amrex::Real* const sigma_star_fac_y,
+                        const amrex::Real* const sigma_star_fac_z,
                         int xlo, int ylo, int zlo,
                         const bool divb_cleaning)
 {
@@ -396,14 +394,14 @@ void warpx_damp_pml_by (int i, int j, int k, Array4<Real> const& By,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_damp_pml_bz (int i, int j, int k, Array4<Real> const& Bz,
+void warpx_damp_pml_bz (int i, int j, int k, amrex::Array4<amrex::Real> const& Bz,
                         const amrex::IntVect& Bz_stag,
-                        const Real* const sigma_fac_x,
-                        const Real* const sigma_fac_y,
-                        const Real* const sigma_fac_z,
-                        const Real* const sigma_star_fac_x,
-                        const Real* const sigma_star_fac_y,
-                        const Real* const sigma_star_fac_z,
+                        const amrex::Real* const sigma_fac_x,
+                        const amrex::Real* const sigma_fac_y,
+                        const amrex::Real* const sigma_fac_z,
+                        const amrex::Real* const sigma_star_fac_x,
+                        const amrex::Real* const sigma_star_fac_y,
+                        const amrex::Real* const sigma_star_fac_z,
                         int xlo, int ylo, int zlo,
                         const bool divb_cleaning)
 {
@@ -473,14 +471,14 @@ void warpx_damp_pml_bz (int i, int j, int k, Array4<Real> const& Bz,
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_damp_pml_scalar (int i, int j, int k, Array4<Real> const& arr,
+void warpx_damp_pml_scalar (int i, int j, int k, amrex::Array4<amrex::Real> const& arr,
                             const amrex::IntVect& arr_stag,
-                            const Real* const sigma_fac_x,
-                            const Real* const sigma_fac_y,
-                            const Real* const sigma_fac_z,
-                            const Real* const sigma_star_fac_x,
-                            const Real* const sigma_star_fac_y,
-                            const Real* const sigma_star_fac_z,
+                            const amrex::Real* const sigma_fac_x,
+                            const amrex::Real* const sigma_fac_y,
+                            const amrex::Real* const sigma_fac_z,
+                            const amrex::Real* const sigma_star_fac_x,
+                            const amrex::Real* const sigma_star_fac_y,
+                            const amrex::Real* const sigma_star_fac_z,
                             int xlo, int ylo, int zlo)
 {
 #if defined(WARPX_DIM_1D_Z)

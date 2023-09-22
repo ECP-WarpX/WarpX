@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-using namespace amrex::literals;
-
 /**
  * This enumeration is used for assigning structural geometry levels (point vs line vs plane)
  */
@@ -69,16 +67,16 @@ public:
     static const int noutputs = 11;
 
 private:
-    amrex::Real x_probe = 0._rt;
-    amrex::Real y_probe = 0._rt;
-    amrex::Real x1_probe = 0._rt;
-    amrex::Real y1_probe = 0._rt;
-    amrex::Real target_normal_x = 0._rt;
-    amrex::Real target_normal_y = 1._rt;
-    amrex::Real target_normal_z = 0._rt;
-    amrex::Real target_up_x = 0._rt;
-    amrex::Real target_up_y = 0._rt;
-    amrex::Real target_up_z = 1._rt;
+    amrex::Real x_probe = 0.;
+    amrex::Real y_probe = 0.;
+    amrex::Real x1_probe = 0.;
+    amrex::Real y1_probe = 0.;
+    amrex::Real target_normal_x = 0.;
+    amrex::Real target_normal_y = 1.;
+    amrex::Real target_normal_z = 0.;
+    amrex::Real target_up_x = 0.;
+    amrex::Real target_up_y = 0.;
+    amrex::Real target_up_z = 1.;
     amrex::Real z_probe, z1_probe;
     amrex::Real detector_radius;
 

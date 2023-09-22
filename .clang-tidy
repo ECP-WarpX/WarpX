@@ -17,7 +17,11 @@ Checks: '-*,
         -cppcoreguidelines-non-private-member-variables-in-classes,
         -cppcoreguidelines-owning-memory,
         -cppcoreguidelines-pro-*,
+    google-build-explicit-make-pair,
+    google-build-namespaces,
+    google-global-names-in-headers,
     misc-const-correctness,
+    misc-definitions-in-headers,
     misc-misleading-bidirectional,
     misc-misleading-identifier,
     misc-misplaced-const,
@@ -25,7 +29,6 @@ Checks: '-*,
     misc-unused-alias-decls,
     misc-unused-parameters,
     misc-unused-using-decls,
-        -misc-definitions-in-headers,
     modernize-avoid-bind,
     modernize-concat-nested-namespaces,
     modernize-deprecated-headers,
@@ -82,5 +85,7 @@ Checks: '-*,
 CheckOptions:
 - key:          modernize-pass-by-value.ValuesOnly
   value:        'true'
+- key:          misc-definitions-in-headers.HeaderFileExtensions
+  value:        "H,"
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'
