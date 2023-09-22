@@ -436,19 +436,16 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     amrex::MultiFab tmp_U_plus_z( amrex::convert(ba, IntVect(0)), N[lev]->DistributionMap(), 4, 1);
 #endif
 
-    // Advection push
+    // Fill edge values of N and U at the half timestep for MUSCL
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
-        // Grow the entire domain
-        amrex::Box box = mfi.validbox();
-        box.grow(1);
-
-        // Loop over a box with one extra gridpoint to avoid needing to communicate
-        // the temporary arrays
+        // Loop over a box with one extra gridpoint in the ghost region to avoid 
+        // an extra MPI communication between the edge value computation loop and
+        // the flux calculation loop
         amrex::Box tile_box = mfi.growntilebox(1);
 
         // Limit the grown box for RZ at r = 0, r_max
@@ -464,11 +461,27 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
         amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
 
-        // Only select tiles within the grown grid
+        // Boxes are computed to avoid going out of bounds.
+        // Grow the entire domain
+        amrex::Box box = mfi.validbox();
+        box.grow(1);
 #if defined(WARPX_DIM_3D)
         amrex::Box const box_x = amrex::convert( box, tmp_U_minus_x.ixType() );
         amrex::Box const box_y = amrex::convert( box, tmp_U_minus_y.ixType() );
         amrex::Box const box_z = amrex::convert( box, tmp_U_minus_z.ixType() );
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        amrex::Box const box_x = amrex::convert( box, tmp_U_minus_x.ixType() );
+        amrex::Box const box_z = amrex::convert( box, tmp_U_minus_z.ixType() );
+#else
+        amrex::Box const box_z = amrex::convert( box, tmp_U_minus_z.ixType() );
+#endif
+
+        //N and NU are always defined at the nodes, the tmp_Q_* are defined 
+        //inbetween the nodes (i.e. on the staggered Yee grid) and store the 
+        //values of N and U at these points.
+        //(i.e. the 4 components correspond to N + the 3 components of U)
+        // Extract the temporary arrays for edge values
+#if defined(WARPX_DIM_3D)
         amrex::Array4<amrex::Real> U_minus_x = tmp_U_minus_x.array(mfi);
         amrex::Array4<amrex::Real> U_plus_x = tmp_U_plus_x.array(mfi);
         amrex::Array4<amrex::Real> U_minus_y = tmp_U_minus_y.array(mfi);
@@ -476,14 +489,11 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
         amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::Box const box_x = amrex::convert( box, tmp_U_minus_x.ixType() );
-        amrex::Box const box_z = amrex::convert( box, tmp_U_minus_z.ixType() );
         amrex::Array4<amrex::Real> U_minus_x = tmp_U_minus_x.array(mfi);
         amrex::Array4<amrex::Real> U_plus_x = tmp_U_plus_x.array(mfi);
         amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
         amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
 #else
-        amrex::Box const box_z = amrex::convert( box, tmp_U_minus_z.ixType() );
         amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
         amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
 #endif
@@ -562,7 +572,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         Uz_mz = (NUz_arr(i, j-1, k) / N_arr(i,j-1,k));
                     }
 
-                // 1D
 #else
                     amrex::Real Ux_pz = 0.0, Ux_mz = 0.0, Uy_pz = 0.0, Uy_mz = 0.0, Uz_pz = 0.0, Uz_mz = 0.0;
                     if (N_arr(i+1,j,k) > 0.0) {
@@ -577,20 +586,22 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     }
 #endif
 
-
-                    amrex::Real Uz_sq = Uz*Uz; amrex::Real Uy_sq = Uy*Uy; amrex::Real Ux_sq = Ux*Ux;
                     amrex::Real c_sq = clight*clight;
-                    amrex::Real gamma = sqrt(1.0 + (Ux_sq + Uy_sq + Uz_sq)/(c_sq) );
-                    amrex::Real a = c_sq*gamma*gamma*gamma;
+                    amrex::Real gamma = sqrt(1.0 + (Ux*Ux + Uy*Uy + Uz*Uz)/(c_sq) );
+                    //amrex::Real a = c_sq*gamma*gamma*gamma;
+                    amrex::Real inv_c2_gamma3 = 1./(c_sq*gamma*gamma*gamma);
 
-                    // Calc Ax: (Needed for 2D, 3D, Rz)
+
+                    // J represents are 4x4 matrices that show up in the advection 
+                    // equations written as a function of U = {N, Ux, Uy, Uz}: 
+                    // \partial_t U + Jx \partial_x U + Jy \partial_y U + Jz \partial_z U = 0
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
                     amrex::Real Vx = Ux/gamma;
                     // Compute the Flux-Jacobian Elements in x
                     amrex::Real J00x = Vx;
                     amrex::Real J01x = N_arr(i,j,k)*(1/gamma)*(1-Vx*Vx/c_sq);
-                    amrex::Real J02x = -N_arr(i,j,k)*Uy*Ux/a;
-                    amrex::Real J03x = -N_arr(i,j,k)*Uz*Ux/a;
+                    amrex::Real J02x = -N_arr(i,j,k)*Uy*Ux*inv_c2_gamma3;
+                    amrex::Real J03x = -N_arr(i,j,k)*Uz*Ux*inv_c2_gamma3;
 
                     amrex::Real J10x = 0.0;
                     amrex::Real J11x = Vx;
@@ -609,14 +620,13 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 #endif
 
-                // Calc Ay: (Needed for 3d)
 #if defined(WARPX_DIM_3D)
                     amrex::Real Vy = Uy/gamma;
                     // Compute the Flux-Jacobian Elements in y
                     amrex::Real J00y = Vy;
-                    amrex::Real J01y = -N_arr(i,j,k)*Ux*Uy/a;
+                    amrex::Real J01y = -N_arr(i,j,k)*Ux*Uy*inv_c2_gamma3;
                     amrex::Real J02y = N_arr(i,j,k)*(1/gamma)*(1-Vy*Vy/c_sq);
-                    amrex::Real J03y = -N_arr(i,j,k)*Uz*Uy/a;
+                    amrex::Real J03y = -N_arr(i,j,k)*Uz*Uy*inv_c2_gamma3;
 
                     amrex::Real J10y = 0.0;
                     amrex::Real J11y = Vy;
@@ -636,11 +646,10 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 #endif
                     amrex::Real Vz = Uz/gamma;
-                    // Calc Az: (needed for all)
                     // Compute the Flux-Jacobian Elements in z
                     amrex::Real J00z = Vz;
-                    amrex::Real J01z = -N_arr(i,j,k)*Ux*Uz/a;
-                    amrex::Real J02z = -N_arr(i,j,k)*Uy*Uz/a;
+                    amrex::Real J01z = -N_arr(i,j,k)*Ux*Uz*inv_c2_gamma3;
+                    amrex::Real J02z = -N_arr(i,j,k)*Uy*Uz*inv_c2_gamma3;
                     amrex::Real J03z = N_arr(i,j,k)*(1/gamma)*(1-Vz*Vz/c_sq);
 
                     amrex::Real J10z = 0.0;
@@ -659,7 +668,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real J33z = Vz;
 
 
-                // Select the specific implmentation depending on dimensionality
+                    // Select the specific implementation depending on dimensionality
 #if defined(WARPX_DIM_3D)
 
                     // Compute the cell slopes x
