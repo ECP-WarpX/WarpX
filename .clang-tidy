@@ -14,6 +14,9 @@ Checks: '-*,
         -cppcoreguidelines-narrowing-conversions,
         -cppcoreguidelines-no-malloc,
         -cppcoreguidelines-owning-memory,
+    google-build-explicit-make-pair,
+    google-build-namespaces,
+    google-global-names-in-headers,
     misc-*,
         -misc-no-recursion,
         -misc-non-private-member-variables-in-classes,
@@ -73,5 +76,7 @@ Checks: '-*,
 CheckOptions:
 - key:          modernize-pass-by-value.ValuesOnly
   value:        'true'
+- key:          misc-definitions-in-headers.HeaderFileExtensions
+  value:        "H,"
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'

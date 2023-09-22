@@ -128,6 +128,16 @@ class Species(picmistandard.PICMI_Species):
 
     warpx_save_particles_at_eb: bool, default=False
         Whether to save particles lost at the embedded boundary
+
+    warpx_do_resampling: bool, default=False
+        Whether particles will be resampled
+
+    warpx_resampling_trigger_intervals: bool, default=0
+        Timesteps at which to resample
+
+    warpx_resampling_trigger_max_avg_ppc: int, default=infinity
+        Resampling will be done when the average number of
+        particles per cell exceeds this number
     """
     def init(self, kw):
 
@@ -203,6 +213,11 @@ class Species(picmistandard.PICMI_Species):
         self.save_particles_at_zhi = kw.pop('warpx_save_particles_at_zhi', None)
         self.save_particles_at_eb = kw.pop('warpx_save_particles_at_eb', None)
 
+        # Resampling settings
+        self.do_resampling = kw.pop('warpx_do_resampling', None)
+        self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
+        self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
+
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
                           injection_plane_position = None,
@@ -238,7 +253,10 @@ class Species(picmistandard.PICMI_Species):
                                              do_not_deposit = self.do_not_deposit,
                                              do_not_push = self.do_not_push,
                                              do_not_gather = self.do_not_gather,
-                                             random_theta = self.random_theta)
+                                             random_theta = self.random_theta,
+                                             do_resampling=self.do_resampling,
+                                             resampling_trigger_intervals=self.resampling_trigger_intervals,
+                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
@@ -277,6 +295,10 @@ class MultiSpecies(picmistandard.PICMI_MultiSpecies):
 
 
 class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
+    def init(self, kw):
+        self.do_symmetrize = kw.pop('warpx_do_symmetrize', None)
+        self.symmetrization_order = kw.pop('warpx_symmetrization_order', None)
+
     def initialize_inputs(self, species_number, layout, species, density_scale):
         species.injection_style = "gaussian_beam"
         species.x_m = self.centroid_position[0]
@@ -328,6 +350,9 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
             species.ux = self.centroid_velocity[0]/constants.c
             species.uy = self.centroid_velocity[1]/constants.c
             species.uz = self.centroid_velocity[2]/constants.c
+
+        species.do_symmetrize = self.do_symmetrize
+        species.symmetrization_order = self.symmetrization_order
 
 
 class DensityDistributionBase(object):
@@ -1655,6 +1680,9 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_amrex_the_arena_init_size: long int, optional
         The amount of memory in bytes to allocate in the Arena.
 
+    warpx_amrex_use_gpu_aware_mpi: bool, optional
+        Whether to use GPU-aware MPI communications
+
     warpx_zmax_plasma_to_compute_max_step: float, optional
         Sets the simulation run time based on the maximum z value
 
@@ -1714,6 +1742,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.amr_restart = kw.pop('warpx_amr_restart', None)
         self.amrex_the_arena_is_managed = kw.pop('warpx_amrex_the_arena_is_managed', None)
         self.amrex_the_arena_init_size = kw.pop('warpx_amrex_the_arena_init_size', None)
+        self.amrex_use_gpu_aware_mpi = kw.pop('warpx_amrex_use_gpu_aware_mpi', None)
         self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
         self.compute_max_step_from_btd = kw.pop('warpx_compute_max_step_from_btd', None)
 
@@ -1843,6 +1872,9 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         if self.amrex_the_arena_init_size is not None:
             pywarpx.amrex.the_arena_init_size = self.amrex_the_arena_init_size
+
+        if self.amrex_use_gpu_aware_mpi is not None:
+            pywarpx.amrex.use_gpu_aware_mpi = self.amrex_use_gpu_aware_mpi
 
     def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:
@@ -2214,6 +2246,10 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
 
+    warpx_intervals: integer or string
+        Selects the snapshots to be made, instead of using "num_snapshots" which
+        makes all snapshots. "num_snapshots" is ignored.
+
     warpx_file_min_digits: integer, optional
         Passed to <diagnostic name>.file_min_digits
 
@@ -2233,6 +2269,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.buffer_size = kw.pop('warpx_buffer_size', None)
         self.lower_bound = kw.pop('warpx_lower_bound', None)
@@ -2251,9 +2288,14 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.diagnostic.diag_hi = self.upper_bound
 
         self.diagnostic.do_back_transformed_fields = 1
-        self.diagnostic.num_snapshots_lab = self.num_snapshots
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
+
+        # intervals and num_snapshots_lab cannot both be set
+        if self.intervals is not None:
+            self.diagnostic.intervals = self.intervals
+        else:
+            self.diagnostic.num_snapshots_lab = self.num_snapshots
 
         self.diagnostic.do_back_transformed_particles = self.write_species
 
@@ -2317,6 +2359,10 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
 
+    warpx_intervals: integer or string
+        Selects the snapshots to be made, instead of using "num_snapshots" which
+        makes all snapshots. "num_snapshots" is ignored.
+
     warpx_file_min_digits: integer, optional
         Passed to <diagnostic name>.file_min_digits
 
@@ -2330,6 +2376,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.buffer_size = kw.pop('warpx_buffer_size', None)
         self.write_fields = kw.pop('warpx_write_fields', None)
@@ -2344,9 +2391,14 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.file_min_digits = self.file_min_digits
 
         self.diagnostic.do_back_transformed_particles = 1
-        self.diagnostic.num_snapshots_lab = self.num_snapshots
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
+
+        # intervals and num_snapshots_lab cannot both be set
+        if self.intervals is not None:
+            self.diagnostic.intervals = self.intervals
+        else:
+            self.diagnostic.num_snapshots_lab = self.num_snapshots
 
         self.diagnostic.do_back_transformed_fields = self.write_fields
 

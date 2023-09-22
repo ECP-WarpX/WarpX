@@ -108,6 +108,8 @@ struct ParserFilter
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
+        using namespace amrex::literals;
+
         if (!m_is_active){
             return true;
         }
