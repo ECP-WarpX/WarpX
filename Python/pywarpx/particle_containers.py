@@ -215,25 +215,22 @@ class ParticleContainerWrapper(object):
         List of arrays
             The requested particle struct data
         '''
-        xp, cupy_status = load_cupy()
-        if cupy_status is not None:
-            libwarpx.amr.Print(cupy_status)
-
         particle_data = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
-            dt = np.array(pti.aos(), copy=False).dtype  # numpy gets the struct dtype right
-            aos_arr = xp.array(pti.aos(), copy=False)   # void blobs for cupy
             if copy_to_host:
-                if cupy_status is None:
-                    aos_arr = xp.asnumpy(aos_arr)  # explicit
-                else:
-                    aos_arr = aos_arr.copy()  # managed memory
-
-                # reinterpret void to numpy struct dtype
-                # DP
-                aos_arr.dtype = dt
-                # SP: TODO
-            particle_data.append(aos_arr)
+                particle_data.append(pti.aos().to_numpy(copy=True))
+            else:
+                if libwarpx.amr.Config.have_gpu:
+                    libwarpx.amr.Print(
+                        "get_particle_structs: cupy does not yet support structs. "
+                        "https://github.com/cupy/cupy/issues/2031"
+                        "Did you mean copy_to_host=True?"
+                    )
+                xp, cupy_status = load_cupy()
+                if cupy_status is not None:
+                    libwarpx.amr.Print(cupy_status)
+                aos_arr = xp.array(pti.aos(), copy=False)   # void blobs for cupy
+                particle_data.append(aos_arr)
         return particle_data
 
     def get_particle_arrays(self, comp_name, level, copy_to_host=False):
@@ -264,23 +261,20 @@ class ParticleContainerWrapper(object):
         List of arrays
             The requested particle array data
         '''
-        xp, cupy_status = load_cupy()
-        if cupy_status is not None:
-            libwarpx.amr.Print(cupy_status)
-
         comp_idx = self.particle_container.get_comp_index(comp_name)
 
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
             idx = soa.GetRealData(comp_idx)
-            idx_arr = xp.array(idx, copy=False)
             if copy_to_host:
-                if cupy_status is None:
-                    idx_arr = xp.asnumpy(idx_arr)  # explicit
-                else:
-                    idx_arr = idx_arr.copy()  # managed memory
-            data_array.append(idx_arr)
+                data_array.append(idx.to_numpy(copy=True))
+            else:
+                xp, cupy_status = load_cupy()
+                if cupy_status is not None:
+                    libwarpx.amr.Print(cupy_status)
+
+                data_array.append(xp.array(idx, copy=False))
 
         return data_array
 
