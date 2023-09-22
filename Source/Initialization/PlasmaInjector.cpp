@@ -43,6 +43,8 @@
 #include <utility>
 #include <vector>
 
+using namespace amrex::literals;
+
 namespace {
     void StringParseAbortMessage(const std::string& var,
                                  const std::string& name) {
@@ -59,7 +61,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     const amrex::Geometry& geom, const std::string& src_name):
     species_id{ispecies}, species_name{name}, source_name{src_name}
 {
-    using namespace amrex::literals;
 
 #ifdef AMREX_USE_GPU
     static_assert(std::is_trivially_copyable<InjectorPosition>::value,
@@ -456,8 +457,10 @@ void PlasmaInjector::setupExternalFile (ParmParseWithOptionalGroup& pp_species_d
             }
             else {
                 // TODO: Add ASSERT_WITH_MESSAGE to test if charge is a constant record
-                amrex::ParticleReal const p_q =
-                    ps["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+                auto p_q_ptr =
+                    ps["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>();
+                m_openpmd_input_series->flush();
+                amrex::ParticleReal const p_q = p_q_ptr.get()[0];
                 double const charge_unit = ps["charge"][openPMD::RecordComponent::SCALAR].unitSI();
                 charge = p_q * charge_unit;
             }
@@ -477,8 +480,10 @@ void PlasmaInjector::setupExternalFile (ParmParseWithOptionalGroup& pp_species_d
             }
             else {
                 // TODO: Add ASSERT_WITH_MESSAGE to test if mass is a constant record
-                amrex::ParticleReal const p_m =
-                    ps["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+                auto p_m_ptr =
+                    ps["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>();
+                m_openpmd_input_series->flush();
+                amrex::ParticleReal const p_m = p_m_ptr.get()[0];
                 double const mass_unit = ps["mass"][openPMD::RecordComponent::SCALAR].unitSI();
                 mass = p_m * mass_unit;
             }

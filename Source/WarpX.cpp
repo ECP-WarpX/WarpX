@@ -92,15 +92,6 @@ std::string WarpX::E_ext_grid_s = "default";
 bool WarpX::add_external_E_field = false;
 bool WarpX::add_external_B_field = false;
 
-// Parser for B_external on the grid
-std::string WarpX::str_Bx_ext_grid_function;
-std::string WarpX::str_By_ext_grid_function;
-std::string WarpX::str_Bz_ext_grid_function;
-// Parser for E_external on the grid
-std::string WarpX::str_Ex_ext_grid_function;
-std::string WarpX::str_Ey_ext_grid_function;
-std::string WarpX::str_Ez_ext_grid_function;
-
 int WarpX::do_moving_window = 0;
 int WarpX::start_moving_window_step = 0;
 int WarpX::end_moving_window_step = -1;
@@ -880,26 +871,30 @@ WarpX::ReadParameters ()
             quantum_xi_c2 = static_cast<amrex::Real>(quantum_xi * PhysConst::c * PhysConst::c);
         }
 
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                !(
-                    ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::PML &&
-                    WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ) ||
-                    ( WarpX::field_boundary_hi[idim] == FieldBoundaryType::PML &&
-                     WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller )
-                ),
-                "PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
+        const auto at_least_one_boundary_is_pml =
+            (std::any_of(WarpX::field_boundary_lo.begin(), WarpX::field_boundary_lo.end(),
+                [](const auto& cc){return cc == FieldBoundaryType::PML;})
+            ||
+            std::any_of(WarpX::field_boundary_hi.begin(), WarpX::field_boundary_hi.end(),
+                [](const auto& cc){return cc == FieldBoundaryType::PML;})
+            );
 
+        const auto at_least_one_boundary_is_silver_mueller =
+            (std::any_of(WarpX::field_boundary_lo.begin(), WarpX::field_boundary_lo.end(),
+                [](const auto& cc){return cc == FieldBoundaryType::Absorbing_SilverMueller;})
+            ||
+            std::any_of(WarpX::field_boundary_hi.begin(), WarpX::field_boundary_hi.end(),
+                [](const auto& cc){return cc == FieldBoundaryType::Absorbing_SilverMueller;})
+            );
 
-            if (WarpX::field_boundary_lo[idim] == FieldBoundaryType::Absorbing_SilverMueller ||
-                WarpX::field_boundary_hi[idim] == FieldBoundaryType::Absorbing_SilverMueller)
-            {
-                // SilverMueller is implemented for Yee
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee,
-                    "The Silver-Mueller boundary condition can only be used with the Yee solver.");
-            }
-        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !(at_least_one_boundary_is_pml && at_least_one_boundary_is_silver_mueller),
+            "PML and Silver-Mueller boundary conditions cannot be activated at the same time.");
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            (!at_least_one_boundary_is_silver_mueller) ||
+            (electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee),
+            "The Silver-Mueller boundary condition can only be used with the Yee solver.");
 
         utils::parser::queryWithParser(pp_warpx, "pml_ncell", pml_ncell);
         utils::parser::queryWithParser(pp_warpx, "pml_delta", pml_delta);
@@ -1038,6 +1033,12 @@ WarpX::ReadParameters ()
             current_centering_noy = 8;
             current_centering_noz = 8;
         }
+
+#ifdef WARPX_DIM_RZ
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            grid_type != GridType::Hybrid,
+            "warpx.grid_type=hybrid is not implemented in RZ geometry");
+#endif
 
         // If true, the current is deposited on a nodal grid and centered onto
         // a staggered grid. Setting warpx.do_current_centering=1 makes sense
@@ -1215,7 +1216,7 @@ WarpX::ReadParameters ()
         // In that case we should throw a specific warning since
         // representation of a laser pulse in cylindrical coordinates
         // requires at least 2 azimuthal modes
-        if (lasers_names.size() > 0 && n_rz_azimuthal_modes < 2) {
+        if (!lasers_names.empty() && n_rz_azimuthal_modes < 2) {
             ablastr::warn_manager::WMRecordWarning("Laser",
             "Laser pulse representation in RZ requires at least 2 azimuthal modes",
             ablastr::warn_manager::WarnPriority::high);
@@ -3169,7 +3170,7 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMultiFabMap(name_with_suffix, mf);
+    multifab_map[name_with_suffix] = mf.get();
 }
 
 void
@@ -3189,7 +3190,7 @@ WarpX::AllocInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMultiFabMap(name_with_suffix, mf);
+    imultifab_map[name_with_suffix] = mf.get();
 }
 
 void
@@ -3207,5 +3208,5 @@ WarpX::AliasInitMultiFab (
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMultiFabMap(name_with_suffix, mf);
+    multifab_map[name_with_suffix] = mf.get();
 }

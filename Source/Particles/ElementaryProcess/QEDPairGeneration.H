@@ -96,7 +96,7 @@ public:
     * @param[in] bzfab constant reference to the FArrayBox of the z component of the magnetic field
     * @param[in] a_offset offset to apply to the particle indices
     */
-    PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
+    PairGenerationTransformFunc(BreitWheelerGeneratePairs generate_functor,
                                 const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
                                 amrex::FArrayBox const& exfab,
                                 amrex::FArrayBox const& eyfab,

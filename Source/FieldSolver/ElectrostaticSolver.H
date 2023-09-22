@@ -7,8 +7,6 @@
 #ifndef ELECTROSTATICSOLVER_H_
 #define ELECTROSTATICSOLVER_H_
 
-#include "Utils/export.H"
-
 #include <AMReX_Array.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
@@ -40,7 +38,7 @@ namespace ElectrostaticSolver {
         }
     };
 
-    class WARPX_EXPORT PoissonBoundaryHandler {
+    class PoissonBoundaryHandler {
     public:
 
         amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM> lobc, hibc;

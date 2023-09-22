@@ -49,7 +49,7 @@ public:
       */
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
                                   amrex::ParserExecutor<3> const& macro_parser,
-                                  const int lev);
+                                  int lev);
 
      /** Gpu Vector with index type of the conductivity multifab */
      amrex::GpuArray<int, 3> sigma_IndexType;

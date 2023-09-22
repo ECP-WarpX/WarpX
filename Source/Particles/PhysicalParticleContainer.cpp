@@ -3031,7 +3031,7 @@ PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector (const int i)
     }
 }
 
-void PhysicalParticleContainer::resample (const int timestep)
+void PhysicalParticleContainer::resample (const int timestep, const bool verbose)
 {
     // In heavily load imbalanced simulations, MPI processes with few particles will spend most of
     // the time at the MPI synchronization in TotalNumberOfParticles(). Having two profiler entries
@@ -3049,7 +3049,11 @@ void PhysicalParticleContainer::resample (const int timestep)
     WARPX_PROFILE_VAR_START(blp_resample_actual);
     if (m_resampler.triggered(timestep, global_numparts))
     {
-        amrex::Print() << Utils::TextMsg::Info("Resampling " + species_name);
+        if (verbose) {
+            amrex::Print() << Utils::TextMsg::Info(
+                "Resampling " + species_name + " at step " + std::to_string(timestep)
+            );
+        }
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -3059,7 +3063,6 @@ void PhysicalParticleContainer::resample (const int timestep)
         }
     }
     WARPX_PROFILE_VAR_STOP(blp_resample_actual);
-
 }
 
 
