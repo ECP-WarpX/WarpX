@@ -7,6 +7,8 @@
 #ifndef DISTANCETOEB_H_
 #define DISTANCETOEB_H_
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealVect.H>
@@ -81,7 +83,7 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
 #else
     amrex::RealVect normal{0.0, 0.0};
     amrex::ignore_unused(i, j, k, W, phi, dxi);
-    amrex::Abort("Error: interp_distance not yet implemented in 1D");
+    WARPX_ABORT_WITH_MESSAGE("Error: interp_distance not yet implemented in 1D");
 #endif
     return normal;
 }

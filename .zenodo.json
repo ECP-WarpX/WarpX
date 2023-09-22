@@ -34,9 +34,19 @@
         "name": "Blelly, Aurore"
       },
       {
+        "affiliation": "Lawrence Livermore National Laboratory",
+        "name": "Clark, Stephen Eric",
+        "orcid": "0000-0002-0117-776X"
+      },
+      {
         "affiliation": "LIDYL, CEA-Universit\u00e9 Paris-Saclay, CEA Saclay",
         "name": "Fedeli, Luca",
         "orcid": "0000-0002-7215-4178"
+      },
+      {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Formenti, Arianna",
+        "orcid": "0000-0002-7887-9313"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
@@ -69,7 +79,7 @@
         "orcid": "0000-0002-1750-9757"
       },
       {
-        "affiliation": "Modern Electron",
+        "affiliation": "TAE Technologies Inc.",
         "name": "Groenewald, Roelof E.",
         "orcid": "0000-0002-5282-7152"
       },
@@ -144,14 +154,14 @@
         "orcid": "0000-0003-2406-1273"
       },
       {
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Sandberg, Ryan T.",
+        "orcid": "0000-0001-7680-8733"
+      },
+      {
         "affiliation": "Modern Electron",
         "name": "Scherpelz, Peter",
         "orcid": "0000-0001-8185-3387"
-      },
-      {
-        "affiliation": "Lawrence Berkeley National Laboratory",
-        "name": "Weber, Gunther H.",
-        "orcid": "0000-0002-1794-1398"
       },
       {
         "affiliation": "Lawrence Berkeley National Laboratory",
@@ -185,6 +195,12 @@
       }
     ],
     "contributors": [
+      {
+        "type": "Other",
+        "affiliation": "Lawrence Berkeley National Laboratory",
+        "name": "Weber, Gunther H.",
+        "orcid": "0000-0002-1794-1398"
+      },
       {
         "type": "Other",
         "affiliation": "Intel",

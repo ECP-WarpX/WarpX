@@ -9,8 +9,9 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDREDUCTION_H_
 
 #include "ReducedDiags.H"
-#include "Utils/CoarsenIO.H"
 #include "WarpX.H"
+
+#include <ablastr/coarsen/sample.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Box.H>
@@ -59,10 +60,16 @@ public:
      */
     virtual void ComputeDiags(int step) override final;
 
+    /**
+     * This function queries deprecated input parameters and aborts
+     * the run if one of them is specified.
+     */
+    void BackwardCompatibility();
+
 private:
     /// Parser to read expression to be reduced from the input file.
-    /// 9 elements are x, y, z, Ex, Ey, Ez, Bx, By, Bz
-    static constexpr int m_nvars = 9;
+    /// 12 elements are x, y, z, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz
+    static constexpr int m_nvars = 12;
     std::unique_ptr<amrex::Parser> m_parser;
 
     // Type of reduction (e.g. Maximum, Minimum or Sum)
@@ -98,6 +105,10 @@ public:
         const amrex::MultiFab & Bx = warpx.getBfield(lev,0);
         const amrex::MultiFab & By = warpx.getBfield(lev,1);
         const amrex::MultiFab & Bz = warpx.getBfield(lev,2);
+        const amrex::MultiFab & jx = warpx.getcurrent_fp(lev,0);
+        const amrex::MultiFab & jy = warpx.getcurrent_fp(lev,1);
+        const amrex::MultiFab & jz = warpx.getcurrent_fp(lev,2);
+
 
         // General preparation of interpolation and reduction operations
         const amrex::GpuArray<int,3> cellCenteredtype{0,0,0};
@@ -117,6 +128,9 @@ public:
         auto Bxtype = amrex::GpuArray<int,3>{0,0,0};
         auto Bytype = amrex::GpuArray<int,3>{0,0,0};
         auto Bztype = amrex::GpuArray<int,3>{0,0,0};
+        auto jxtype = amrex::GpuArray<int,3>{0,0,0};
+        auto jytype = amrex::GpuArray<int,3>{0,0,0};
+        auto jztype = amrex::GpuArray<int,3>{0,0,0};
         for (int i = 0; i < AMREX_SPACEDIM; ++i){
             Extype[i] = Ex.ixType()[i];
             Eytype[i] = Ey.ixType()[i];
@@ -124,6 +138,10 @@ public:
             Bxtype[i] = Bx.ixType()[i];
             Bytype[i] = By.ixType()[i];
             Bztype[i] = Bz.ixType()[i];
+            jxtype[i] = jx.ixType()[i];
+            jytype[i] = jy.ixType()[i];
+            jztype[i] = jz.ixType()[i];
+
         }
 
         // get parser
@@ -144,33 +162,50 @@ public:
             const auto& arrBx = Bx[mfi].array();
             const auto& arrBy = By[mfi].array();
             const auto& arrBz = Bz[mfi].array();
+            const auto& arrjx = jx[mfi].array();
+            const auto& arrjy = jy[mfi].array();
+            const auto& arrjz = jz[mfi].array();
 
             reduce_op.eval(box, reduce_data,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
             {
                  // 0.5 is here because position are computed on the cell centers
+
+#if defined(WARPX_DIM_1D_Z)
+                const amrex::Real x = 0._rt;
+                const amrex::Real y = 0._rt;
+                const amrex::Real z = (k + 0.5_rt)*dx[0] + real_box.lo(0);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 const amrex::Real x = (i + 0.5_rt)*dx[0] + real_box.lo(0);
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 const amrex::Real y = 0._rt;
                 const amrex::Real z = (j + 0.5_rt)*dx[1] + real_box.lo(1);
 #else
+                const amrex::Real x = (i + 0.5_rt)*dx[0] + real_box.lo(0);
                 const amrex::Real y = (j + 0.5_rt)*dx[1] + real_box.lo(1);
                 const amrex::Real z = (k + 0.5_rt)*dx[2] + real_box.lo(2);
 #endif
-                const amrex::Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Ey_interp = CoarsenIO::Interp(arrEy, Eytype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Ez_interp = CoarsenIO::Interp(arrEz, Eztype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Bx_interp = CoarsenIO::Interp(arrBx, Bxtype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real By_interp = CoarsenIO::Interp(arrBy, Bytype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
-                const amrex::Real Bz_interp = CoarsenIO::Interp(arrBz, Bztype, cellCenteredtype,
-                                        reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Ex_interp = ablastr::coarsen::sample::Interp(arrEx, Extype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Ey_interp = ablastr::coarsen::sample::Interp(arrEy, Eytype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Ez_interp = ablastr::coarsen::sample::Interp(arrEz, Eztype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Bx_interp = ablastr::coarsen::sample::Interp(arrBx, Bxtype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real By_interp = ablastr::coarsen::sample::Interp(arrBy, Bytype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real Bz_interp = ablastr::coarsen::sample::Interp(arrBz, Bztype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real jx_interp = ablastr::coarsen::sample::Interp(arrjx, jxtype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real jy_interp = ablastr::coarsen::sample::Interp(arrjy, jytype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+                const amrex::Real jz_interp = ablastr::coarsen::sample::Interp(arrjz, jztype, cellCenteredtype,
+                                                                               reduction_coarsening_ratio, i, j, k, reduction_comp);
+
                 return reduction_function_parser(x, y, z, Ex_interp, Ey_interp, Ez_interp,
-                                                          Bx_interp, By_interp, Bz_interp);
+                        Bx_interp, By_interp, Bz_interp,
+                        jx_interp, jy_interp, jz_interp);
             });
         }
 
@@ -190,7 +225,9 @@ public:
             amrex::ParallelDescriptor::ReduceRealSum(reduce_value);
         // If reduction operation is a sum, multiply the value by the cell volume so that the
         // result is the integral of the function over the simulation domain.
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#if defined(WARPX_DIM_1D_Z)
+            reduce_value *= dx[0];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             reduce_value *= dx[0]*dx[1];
 #else
             reduce_value *= dx[0]*dx[1]*dx[2];

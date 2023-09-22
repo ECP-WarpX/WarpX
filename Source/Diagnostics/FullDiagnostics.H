@@ -22,6 +22,10 @@ private:
     bool m_plot_raw_fields_guards = false;
     /** Whether to dump the RZ modes */
     bool m_dump_rz_modes = false;
+    /** Whether the field solver deposits current density, if not it will be done
+     * before writing the diagnostic.
+     */
+    bool m_solver_deposits_current = true;
     /** Flush m_mf_output and particles to file for the i^th buffer */
     void Flush (int i_buffer) override;
     /** Flush raw data */
@@ -52,9 +56,9 @@ private:
       * \param[in] i_buffer index of a back-transformed snapshot
       * \param[in] lev level on which source multifabs are defined
       */
-    void InitializeBufferData ( int i_buffer, int lev ) override;
+    void InitializeBufferData ( int i_buffer, int lev, bool restart=false ) override;
     /** Initialize functors that store pointers to the RZ fields requested by the user.
-     * \parm[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     void InitializeFieldFunctorsRZopenPMD (int lev) override;
     /** Append m_all_field_functors[lev] with all modes of all components of E B and j

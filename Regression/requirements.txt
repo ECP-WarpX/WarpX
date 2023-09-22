@@ -1,3 +1,5 @@
+dill
+lasy
 matplotlib
 mpi4py
 numpy

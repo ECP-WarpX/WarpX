@@ -10,6 +10,8 @@
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
 
+#include <memory>
+
 namespace {
     /** Overwrite defaults in AMReX Inputs
      *
@@ -24,12 +26,15 @@ namespace {
         bool abort_on_out_of_gpu_memory = true; // AMReX' default: false
         pp_amrex.queryAdd("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
 
+        bool the_arena_is_managed = false; // AMReX' default: true
+        pp_amrex.queryAdd("the_arena_is_managed", the_arena_is_managed);
+
         // Work-around:
         // If warpx.numprocs is used for the domain decomposition, we will not use blocking factor
         // to generate grids. Nonetheless, AMReX has asserts in place that validate that the
         // number of cells is a multiple of blocking factor. We set the blocking factor to 1 so those
         // AMReX asserts will always pass.
-        amrex::ParmParse pp_warpx("warpx");
+        const amrex::ParmParse pp_warpx("warpx");
         if (pp_warpx.contains("numprocs"))
         {
             amrex::ParmParse pp_amr("amr");
@@ -51,14 +56,19 @@ namespace {
     }
 }
 
-amrex::AMReX*
-warpx_amrex_init (int& argc, char**& argv, bool const build_parm_parse, MPI_Comm const mpi_comm)
+namespace warpx::initialization
 {
-    return amrex::Initialize(
-        argc,
-        argv,
-        build_parm_parse,
-        mpi_comm,
-        overwrite_amrex_parser_defaults
-    );
+
+    amrex::AMReX*
+    amrex_init (int& argc, char**& argv, bool build_parm_parse)
+    {
+        return amrex::Initialize(
+            argc,
+            argv,
+            build_parm_parse,
+            MPI_COMM_WORLD,
+            ::overwrite_amrex_parser_defaults
+        );
+    }
+
 }

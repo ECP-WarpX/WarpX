@@ -61,7 +61,7 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
 
-    ParmParse pp_species_name(species_name);
+    const ParmParse pp_species_name(species_name);
 
     utils::parser::getWithParser(
         pp_species_name, "zinject_plane", zinject_plane);
@@ -71,7 +71,11 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
 
 void RigidInjectedParticleContainer::InitData()
 {
-    zinject_plane_levels.resize(finestLevel()+1, zinject_plane/WarpX::gamma_boost);
+    // Perform Lorentz transform of `z_inject_plane`
+    const amrex::Real t_boost = WarpX::GetInstance().gett_new(0);
+    amrex::Real zinject_plane_boost = zinject_plane/WarpX::gamma_boost
+                                    - WarpX::beta_boost*PhysConst::c*t_boost;
+    zinject_plane_levels.resize(finestLevel()+1, zinject_plane_boost);
 
     AddParticles(0); // Note - add on level 0
 
@@ -361,12 +365,12 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             const Dim3 lo = lbound(box);
 
-            bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            int nox = WarpX::nox;
-            int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+            const bool galerkin_interpolation = WarpX::galerkin_interpolation;
+            const int nox = WarpX::nox;
+            const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
-            amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-            amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+            const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+            const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
             amrex::Array4<const amrex::Real> const& ex_arr = exfab.array();
             amrex::Array4<const amrex::Real> const& ey_arr = eyfab.array();
@@ -407,7 +411,13 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const auto pusher_algo = WarpX::particle_pusher_algo;
             const auto do_crr = do_classical_radiation_reaction;
 
-            amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
+            enum exteb_flags : int { no_exteb, has_exteb };
+
+            const int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+
+            amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
+                               {exteb_runtime_flag},
+                               np, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control)
             {
                 ux_save[ip] = uxpp[ip];
                 uy_save[ip] = uypp[ip];
@@ -425,7 +435,11 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
-                getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+
+                [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
+                if constexpr (exteb_control == has_exteb) {
+                    getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+                }
 
                 amrex::ParticleReal qp = q;
                 if (ion_lev) { qp *= ion_lev[ip]; }

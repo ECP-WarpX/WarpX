@@ -40,7 +40,7 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
          * \param[in] norder_x order of the spectral solver along x
          * \param[in] norder_y order of the spectral solver along y
          * \param[in] norder_z order of the spectral solver along z
-         * \param[in] nodal whether the E and B fields are defined on a fully nodal grid or a Yee grid
+         * \param[in] grid_type type of grid (collocated or not)
          * \param[in] dt time step of the simulation
          * \param[in] time_averaging whether to use time averaging for large time steps
          * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
@@ -50,14 +50,14 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
-            const int norder_x,
-            const int norder_y,
-            const int norder_z,
-            const bool nodal,
-            const amrex::Real dt,
-            const bool time_averaging,
-            const bool dive_cleaning,
-            const bool divb_cleaning);
+            int norder_x,
+            int norder_y,
+            int norder_z,
+            short grid_type,
+            amrex::Real dt,
+            bool time_averaging,
+            bool dive_cleaning,
+            bool divb_cleaning);
 
         /**
          * \brief Updates the E and B fields in spectral space, according to the multi-J PSATD equations
@@ -76,7 +76,7 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
         void InitializeSpectralCoefficients (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
-            const amrex::Real dt);
+            amrex::Real dt);
 
         /**
          * \brief Initialize additional coefficients used in \c pushSpectralFields to update E,B,
@@ -89,7 +89,7 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
         void InitializeSpectralCoefficientsAveraging (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
-            const amrex::Real dt);
+            amrex::Real dt);
 
         /**
          * \brief Virtual function for current correction in Fourier space
@@ -118,8 +118,6 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
         // These real and complex coefficients are always allocated
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralRealCoefficients X1_coef, X2_coef, X3_coef, X5_coef, X6_coef;
-
-        SpectralFieldIndex m_spectral_index;
 
         // Other member variables
         amrex::Real m_dt;

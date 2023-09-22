@@ -10,44 +10,49 @@
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/PinnedMemoryParticleContainer.H"
+#include "Utils/export.H"
 
 #include <vector>
+
 
 /**
  *  This stores particles that have left / been absorbed by domain and embedded boundaries.
  */
-class ParticleBoundaryBuffer
+class WARPX_EXPORT ParticleBoundaryBuffer
 {
 public:
     ParticleBoundaryBuffer ();
 
+    ~ParticleBoundaryBuffer() {}
+
+    /** Copy constructor for ParticleBoundaryBuffer */
+    ParticleBoundaryBuffer ( const ParticleBoundaryBuffer &) = delete;
+    /** Copy operator for ParticleBoundaryBuffer */
+    ParticleBoundaryBuffer& operator= ( const ParticleBoundaryBuffer & ) = delete;
+
+    /** Move constructor for NamedComponentParticleContainer */
+    ParticleBoundaryBuffer ( ParticleBoundaryBuffer && ) = default;
+    /** Move operator for NamedComponentParticleContainer */
+    ParticleBoundaryBuffer& operator= ( ParticleBoundaryBuffer && ) = default;
+
     int numSpecies() const { return getSpeciesNames().size(); }
 
-    const std::vector<std::string>& getSpeciesNames() const {
-        static bool initialized = false;
-        if (!initialized)
-        {
-            amrex::ParmParse pp_particles("particles");
-            pp_particles.queryarr("species_names", m_species_names);
-            initialized = true;
-        }
-        return m_species_names;
-    }
+    const std::vector<std::string>& getSpeciesNames() const;
 
     void gatherParticles (MultiParticleContainer& mypc,
                           const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
     void redistribute ();
     void clearParticles ();
-    void clearParticles (int const i);
+    void clearParticles (int i);
 
     void printNumParticles () const;
 
-    int getNumParticlesInContainer(const std::string species_name, int boundary);
+    int getNumParticlesInContainer(std::string species_name, int boundary, bool local);
 
-    PinnedMemoryParticleContainer& getParticleBuffer(const std::string species_name, int boundary);
+    PinnedMemoryParticleContainer& getParticleBuffer(std::string species_name, int boundary);
 
-    PinnedMemoryParticleContainer* getParticleBufferPointer(const std::string species_name, int boundary);
+    PinnedMemoryParticleContainer* getParticleBufferPointer(std::string species_name, int boundary);
 
     static constexpr int numBoundaries () {
         return AMREX_SPACEDIM*2

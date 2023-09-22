@@ -6,10 +6,12 @@
 # License: BSD-3-Clause-LBNL
 
 import re
+import sys
 
 from . import Particles
 from .Algo import algo
 from .Amr import amr
+from .Amrex import amrex
 from .Boundary import boundary
 from .Bucket import Bucket
 from .Collisions import collisions, collisions_list
@@ -17,8 +19,8 @@ from .Constants import my_constants
 from .Diagnostics import diagnostics, reduced_diagnostics
 from .EB2 import eb2
 from .Geometry import geometry
+from .HybridPICModel import hybridpicmodel
 from .Interpolation import interpolation
-from .Langmuirwave import langmuirwave
 from .Lasers import lasers, lasers_list
 from .PSATD import psatd
 from .Particles import particles, particles_list
@@ -30,15 +32,21 @@ class WarpX(Bucket):
     A Python wrapper for the WarpX C++ class
     """
 
-    def create_argv_list(self):
+    def create_argv_list(self, **kw):
         argv = []
+
+        for k, v in kw.items():
+            if v is not None:
+                argv.append(f'{k} = {v}')
+
         argv += warpx.attrlist()
         argv += my_constants.attrlist()
         argv += amr.attrlist()
+        argv += amrex.attrlist()
         argv += geometry.attrlist()
+        argv += hybridpicmodel.attrlist()
         argv += boundary.attrlist()
         argv += algo.attrlist()
-        argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
         argv += psatd.attrlist()
         argv += eb2.attrlist()
@@ -79,15 +87,14 @@ class WarpX(Bucket):
         reduced_diagnostics.reduced_diags_names = reduced_diagnostics._diagnostics_dict.keys()
         argv += reduced_diagnostics.attrlist()
         for diagnostic in reduced_diagnostics._diagnostics_dict.values():
-            diagnostic.species = diagnostic._species_dict.keys()
             argv += diagnostic.attrlist()
-            for species_diagnostic in diagnostic._species_dict.values():
-                argv += species_diagnostic.attrlist()
 
         return argv
 
-    def init(self, mpi_comm=None):
-        argv = ['warpx'] + self.create_argv_list()
+    def init(self, mpi_comm=None, **kw):
+        # note: argv[0] needs to be an absolute path so it works with AMReX backtraces
+        # https://github.com/AMReX-Codes/amrex/issues/3435
+        argv = [sys.executable] + self.create_argv_list(**kw)
         libwarpx.initialize(argv, mpi_comm=mpi_comm)
 
     def evolve(self, nsteps=-1):
@@ -103,10 +110,7 @@ class WarpX(Bucket):
         return libwarpx.libwarpx_so.warpx_getProbHi(direction)
 
     def write_inputs(self, filename='inputs', **kw):
-        argv = self.create_argv_list()
-
-        for k, v in kw.items():
-            argv.append(f'{k} = {v}')
+        argv = self.create_argv_list(**kw)
 
         # Sort the argv list to make it more human readable
         argv.sort()

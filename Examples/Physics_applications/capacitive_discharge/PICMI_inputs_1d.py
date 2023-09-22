@@ -11,7 +11,7 @@ import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse import linalg as sla
 
-from pywarpx import callbacks, fields, picmi
+from pywarpx import callbacks, fields, particle_containers, picmi
 
 constants = picmi.constants
 
@@ -97,11 +97,11 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         """Function run on every step to perform the required steps to solve
         Poisson's equation."""
         # get rho from WarpX
-        self.rho_data = fields.RhoFPWrapper(0, False)[...][:,0]
+        self.rho_data = fields.RhoFPWrapper(0, False)[...]
         # run superLU solver to get phi
         self.solve()
         # write phi to WarpX
-        fields.PhiFPWrapper(0, True)[...] = self.phi
+        fields.PhiFPWrapper(0, True)[...] = self.phi[:]
 
     def solve(self):
         """The solution step. Includes getting the boundary potentials and
@@ -338,7 +338,7 @@ class CapacitiveDischargeExample(object):
         # deposit the ion density in rho_fp
         self.sim.extension.depositChargeDensity('he_ions', 0)
 
-        rho_data = self.rho_wrapper[...][:,0]
+        rho_data = self.rho_wrapper[...]
         self.ion_density_array += rho_data / constants.q_e / self.diag_steps
 
     def run_sim(self):
@@ -356,12 +356,9 @@ class CapacitiveDischargeExample(object):
         # query the particle z-coordinates if this is run during CI testing
         # to cover that functionality
         if self.test:
-            nparts = self.sim.extension.get_particle_count(
-                'he_ions', local=True
-            )
-            z_coords = np.concatenate(
-                self.sim.extension.get_particle_z('he_ions')
-            )
+            he_ions_wrapper = particle_containers.ParticleContainerWrapper('he_ions')
+            nparts = he_ions_wrapper.get_particle_count(local=True)
+            z_coords = np.concatenate(he_ions_wrapper.zp)
             assert len(z_coords) == nparts
             assert np.all(z_coords >= 0.0) and np.all(z_coords <= self.gap)
 

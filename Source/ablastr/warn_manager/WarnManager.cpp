@@ -8,12 +8,17 @@
 #include "WarnManager.H"
 
 #include "ablastr/utils/msg_logger/MsgLogger.H"
+#include "ablastr/utils/text/StringUtils.H"
 #include "ablastr/utils/TextMsg.H"
 
+#include <AMReX.H>
+#include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 
 #include <algorithm>
 #include <sstream>
+#include <vector>
 
 namespace abl_msg_logger = ablastr::utils::msg_logger;
 using namespace ablastr::warn_manager;
@@ -31,7 +36,7 @@ namespace
         else if (priority == Priority::high)
             return WarnPriority::high;
         else
-            ablastr::utils::TextMsg::Err(
+            ABLASTR_ABORT_WITH_MESSAGE(
                 "Parsing Priority to WarnPriority has failed");
 
         return WarnPriority::high;
@@ -171,13 +176,13 @@ std::optional<WarnPriority> WarnManager::GetAbortThreshold() const
     return m_abort_on_warning_threshold;
 }
 
-void WarnManager::debug_read_warnings_from_input(amrex::ParmParse& params)
+void WarnManager::debug_read_warnings_from_input(const amrex::ParmParse& params)
 {
     std::vector<std::string> warnings;
     params.queryarr("test_warnings", warnings);
 
     for (const auto& warn : warnings){
-        amrex::ParmParse pp_warn(warn);
+        const amrex::ParmParse pp_warn(warn);
 
         std::string topic;
         pp_warn.query("topic", topic);
@@ -287,7 +292,7 @@ WarnManager::MsgFormatter(
     const auto prefix = "*" + std::string(tab_size, ' ');
     const auto prefix_length = static_cast<int>(prefix.length());
 
-    const auto wrapped_text = ablastr::utils::automatic_text_wrap(
+    const auto wrapped_text = ablastr::utils::text::automatic_text_wrap(
         msg, line_size-prefix_length);
 
     std::stringstream ss_out;

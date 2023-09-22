@@ -49,7 +49,7 @@ struct CopyParticleAttribs
     CopyParticleAttribs (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
                          int a_offset = 0) noexcept
     {
-        if (tmp_particle_data.size() == 0) return;
+        if (tmp_particle_data.empty()) return;
 
         auto& attribs = a_pti.GetAttribs();
 

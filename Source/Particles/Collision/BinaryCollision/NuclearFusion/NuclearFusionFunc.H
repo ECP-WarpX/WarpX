@@ -59,39 +59,12 @@ public:
         using namespace amrex::literals;
 
 #ifdef AMREX_SINGLE_PRECISION_PARTICLES
-        amrex::Abort("Nuclear fusion module does not currently work with single precision");
+        WARPX_ABORT_WITH_MESSAGE("Nuclear fusion module does not currently work with single precision");
 #endif
 
         m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);
 
-        amrex::ParmParse pp_collision_name(collision_name);
-        amrex::Vector<std::string> product_species_name;
-        pp_collision_name.getarr("product_species", product_species_name);
-
-        if (m_fusion_type == NuclearFusionType::DeuteriumTritium)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                product_species_name.size() == 2u,
-                "ERROR: Deuterium-tritium fusion must contain exactly two product species");
-            auto& product_species1 = mypc->GetParticleContainerFromName(product_species_name[0]);
-            auto& product_species2 = mypc->GetParticleContainerFromName(product_species_name[1]);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                (product_species1.AmIA<PhysicalSpecies::helium4>() && product_species2.AmIA<PhysicalSpecies::neutron>())
-                ||
-                (product_species1.AmIA<PhysicalSpecies::neutron>() && product_species2.AmIA<PhysicalSpecies::helium4>()),
-                "ERROR: Product species of deuterium-tritium fusion must be of type neutron and helium4");
-        }
-        if (m_fusion_type == NuclearFusionType::ProtonBoron)
-        {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                product_species_name.size() == 1,
-                "ERROR: Proton-boron must contain exactly one product species");
-            auto& product_species = mypc->GetParticleContainerFromName(product_species_name[0]);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                product_species.AmIA<PhysicalSpecies::helium>(),
-                "ERROR: Product species of proton-boron fusion must be of type alpha");
-        }
-
+        const amrex::ParmParse pp_collision_name(collision_name);
         // default fusion multiplier
         m_fusion_multiplier = 1.0_prt;
         utils::parser::queryWithParser(
@@ -188,15 +161,7 @@ public:
             const int c2 = amrex::max(NI1/NI2,1);
 
             // multiplier ratio to take into account unsampled pairs
-            int multiplier_ratio;
-            if (m_isSameSpecies)
-            {
-                multiplier_ratio = 2*max_N - 1;
-            }
-            else
-            {
-                multiplier_ratio = max_N;
-            }
+            const int multiplier_ratio = (m_isSameSpecies)?(2*max_N - 1):(max_N);
 
 #if (defined WARPX_DIM_RZ)
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];

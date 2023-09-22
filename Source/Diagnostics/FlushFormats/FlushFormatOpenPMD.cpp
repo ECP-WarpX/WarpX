@@ -2,6 +2,7 @@
 
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Diagnostics/OpenPMDHelpFunction.H"
 #include "WarpX.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
@@ -24,18 +25,23 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     ParmParse pp_diag_name(diag_name);
     // Which backend to use (ADIOS, ADIOS2 or HDF5). Default depends on what is available
     std::string openpmd_backend {"default"};
+    pp_diag_name.query("openpmd_backend", openpmd_backend);
+    // pick first available backend if default is chosen
+    if( openpmd_backend == "default" )
+        openpmd_backend = WarpXOpenPMDFileType();
+    pp_diag_name.add("openpmd_backend", openpmd_backend);
+
 
     // one file per timestep (or one file for all steps)
     std::string  openpmd_encoding {"f"};
-    pp_diag_name.query("openpmd_backend", openpmd_backend);
-    bool encodingDefined = pp_diag_name.query("openpmd_encoding", openpmd_encoding);
+    const bool encodingDefined = pp_diag_name.query("openpmd_encoding", openpmd_encoding);
 
     openPMD::IterationEncoding encoding = openPMD::IterationEncoding::groupBased;
-    if ( 0 == openpmd_encoding.compare("v") )
+    if ( openpmd_encoding == "v" )
       encoding = openPMD::IterationEncoding::variableBased;
-    else if ( 0 == openpmd_encoding.compare("g") )
+    else if ( openpmd_encoding == "g" )
       encoding = openPMD::IterationEncoding::groupBased;
-    else if ( 0 == openpmd_encoding.compare("f") )
+    else if ( openpmd_encoding == "f" )
       encoding = openPMD::IterationEncoding::fileBased;
 
     std::string diag_type_str;
@@ -45,7 +51,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
       if ( ( openPMD::IterationEncoding::fileBased != encoding ) &&
            ( openPMD::IterationEncoding::groupBased != encoding ) )
       {
-        std::string warnMsg = diag_name+" Unable to support BTD with streaming. Using GroupBased ";
+        const std::string warnMsg = diag_name+" Unable to support BTD with streaming. Using GroupBased ";
         ablastr::warn_manager::WMRecordWarning("Diagnostics", warnMsg);
         encoding = openPMD::IterationEncoding::groupBased;
       }
@@ -58,7 +64,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   if ( !encodingDefined )
     {
       bool openpmd_tspf = false;
-      bool tspfDefined = pp_diag_name.query("openpmd_tspf", openpmd_tspf);
+      const bool tspfDefined = pp_diag_name.query("openpmd_tspf", openpmd_tspf);
       if ( tspfDefined && openpmd_tspf )
           encoding = openPMD::IterationEncoding::fileBased;
     }
@@ -67,8 +73,8 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   std::string operator_type;
   pp_diag_name.query("adios2_operator.type", operator_type);
   std::string const prefix = diag_name + ".adios2_operator.parameters";
-  ParmParse pp;
-  auto entr = pp.getEntries(prefix);
+  const ParmParse pp;
+  auto entr = amrex::ParmParse::getEntries(prefix);
 
   std::map< std::string, std::string > operator_parameters;
   auto const prefix_len = prefix.size() + 1;
@@ -83,8 +89,8 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
   std::string engine_type;
   pp_diag_name.query("adios2_engine.type", engine_type);
   std::string const engine_prefix = diag_name + ".adios2_engine.parameters";
-  ParmParse ppe;
-  auto eng_entr = ppe.getEntries(engine_prefix);
+  const ParmParse ppe;
+  auto eng_entr = amrex::ParmParse::getEntries(engine_prefix);
 
   std::map< std::string, std::string > engine_parameters;
   auto const prefixlen = engine_prefix.size() + 1;
@@ -114,10 +120,24 @@ FlushFormatOpenPMD::WriteToFile (
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
     const bool use_pinned_pc,
-    bool isBTD, int snapshotID, const amrex::Geometry& full_BTD_snapshot,
+    bool isBTD, int snapshotID, int bufferID, int numBuffers,
+    const amrex::Geometry& full_BTD_snapshot,
     bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready) const
 {
     WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
+    if (!isBTD)
+    {
+      amrex::Print() << Utils::TextMsg::Info("Writing openPMD file " + filename);
+    } else
+    {
+      amrex::Print() << Utils::TextMsg::Info("Writing buffer " + std::to_string(bufferID+1) + " of " + std::to_string(numBuffers)
+                         + " to snapshot " + std::to_string(snapshotID) +  " to openPMD BTD " + prefix);
+      if (isLastBTDFlush)
+      {
+        amrex::Print() << Utils::TextMsg::Info("Finished writing snapshot " + std::to_string(snapshotID) + " in openPMD BTD " + prefix);
+      }
+    }
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !plot_raw_fields && !plot_raw_fields_guards,
@@ -138,7 +158,7 @@ FlushFormatOpenPMD::WriteToFile (
         varnames, mf, geom, output_levels, output_iteration, time, isBTD, full_BTD_snapshot);
 
     // particles: all (reside only on locally finest level)
-    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, use_pinned_pc, isBTD, isLastBTDFlush, totalParticlesFlushedAlready);
+    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, time, use_pinned_pc, isBTD, isLastBTDFlush, totalParticlesFlushedAlready);
 
     // signal that no further updates will be written to this iteration
     m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);

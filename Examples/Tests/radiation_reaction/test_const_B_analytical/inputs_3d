@@ -27,35 +27,35 @@ particles.species_names =  ele_para0 ele_perp0 ele_perp1 ele_perp2 pos_perp2
 ele_para0.species_type = "electron"
 ele_para0.injection_style = "SingleParticle"
 ele_para0.single_particle_pos = 0.0 0.0 0.0
-ele_para0.single_particle_vel = 285.7142857142856 428.5714285714285 857.142857142857
+ele_para0.single_particle_u = 285.7142857142856 428.5714285714285 857.142857142857
 ele_para0.single_particle_weight = 1e-08
 ele_para0.do_classical_radiation_reaction = 1
 
 ele_perp0.species_type = "electron"
 ele_perp0.injection_style = "SingleParticle"
 ele_perp0.single_particle_pos = 0.0 0.0 0.0
-ele_perp0.single_particle_vel = -47.91574237499548 6.388765649999412 12.777531299998806
+ele_perp0.single_particle_u = -47.91574237499548 6.388765649999412 12.777531299998806
 ele_perp0.single_particle_weight = 1e-08
 ele_perp0.do_classical_radiation_reaction = 1
 
 ele_perp1.species_type = "electron"
 ele_perp1.injection_style = "SingleParticle"
 ele_perp1.single_particle_pos = 0.0 0.0 0.0
-ele_perp1.single_particle_vel = 1.4274296030894868e-14 178.88543819998318 -89.44271909999159
+ele_perp1.single_particle_u = 1.4274296030894868e-14 178.88543819998318 -89.44271909999159
 ele_perp1.single_particle_weight = 1e-08
 ele_perp1.do_classical_radiation_reaction = 1
 
 ele_perp2.species_type = "electron"
 ele_perp2.injection_style = "SingleParticle"
 ele_perp2.single_particle_pos = 0.0 0.0 0.0
-ele_perp2.single_particle_vel = -958.3148474999095 127.77531299998823 255.55062599997612
+ele_perp2.single_particle_u = -958.3148474999095 127.77531299998823 255.55062599997612
 ele_perp2.single_particle_weight = 1e-08
 ele_perp2.do_classical_radiation_reaction = 1
 
 pos_perp2.species_type = "positron"
 pos_perp2.injection_style = "SingleParticle"
 pos_perp2.single_particle_pos = 0.0 0.0 0.0
-pos_perp2.single_particle_vel = -958.3148474999095 127.77531299998823 255.55062599997612
+pos_perp2.single_particle_u = -958.3148474999095 127.77531299998823 255.55062599997612
 pos_perp2.single_particle_weight = 1e-08
 pos_perp2.do_classical_radiation_reaction = 1
 

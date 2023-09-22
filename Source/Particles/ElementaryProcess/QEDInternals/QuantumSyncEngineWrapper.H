@@ -14,11 +14,9 @@
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_Extension.H>
-#include <AMReX_GpuContainers.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Random.H>
-#include <AMReX_Vector.H>
 
 #include <picsar_qed/containers/picsar_array.hpp>
 #include <picsar_qed/math/cmath_overloads.hpp>
@@ -42,7 +40,7 @@ using QS_dndt_table =
     picsar::multi_physics::phys::quantum_sync::
     dndt_lookup_table<
     amrex::ParticleReal,
-    amrex::Gpu::DeviceVector<amrex::ParticleReal>>;
+    PicsarQedVector<amrex::ParticleReal>>;
 
 using QS_dndt_table_view = QS_dndt_table::view_type;
 
@@ -54,7 +52,7 @@ using QS_phot_em_table =
     picsar::multi_physics::phys::quantum_sync::
     photon_emission_lookup_table<
     amrex::ParticleReal,
-    amrex::Gpu::DeviceVector<amrex::ParticleReal>>;
+    PicsarQedVector<amrex::ParticleReal>>;
 
 using QS_phot_em_table_view = QS_phot_em_table::view_type;
 
@@ -314,14 +312,14 @@ public:
      * @return true if it succeeds, false if it cannot parse raw_data
      */
     bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data,
-        const amrex::ParticleReal qs_minimum_chi_part);
+        amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * Init lookup tables using built-in (low resolution) tables
      *
      * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
-    void init_builtin_tables(const amrex::ParticleReal qs_minimum_chi_part);
+    void init_builtin_tables(amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
@@ -330,7 +328,7 @@ public:
      * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
     void compute_lookup_tables (PicsarQuantumSyncCtrl ctrl,
-        const amrex::ParticleReal qs_minimum_chi_part);
+        amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * gets default values for the control parameters

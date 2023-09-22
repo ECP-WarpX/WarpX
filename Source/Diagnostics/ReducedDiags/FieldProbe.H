@@ -63,14 +63,21 @@ public:
      * Define constants used throughout FieldProbe
      */
 
-    //! noutputs is 10 (x, y, z, Ex, Ey, Ez, Bx, By, Bz, S)
-    static constexpr int noutputs = FieldProbePIdx::nattribs + 3;
+    //! noutputs is 11 for particle id + (x, y, z, Ex, Ey, Ez, Bx, By, Bz, S)
+    static const int noutputs = 11;
 
 private:
-    amrex::Real x_probe, y_probe, z_probe;
-    amrex::Real x1_probe, y1_probe, z1_probe;
-    amrex::Real target_normal_x, target_normal_y, target_normal_z;
-    amrex::Real target_up_x, target_up_y, target_up_z;
+    amrex::Real x_probe = 0.;
+    amrex::Real y_probe = 0.;
+    amrex::Real x1_probe = 0.;
+    amrex::Real y1_probe = 0.;
+    amrex::Real target_normal_x = 0.;
+    amrex::Real target_normal_y = 1.;
+    amrex::Real target_normal_z = 0.;
+    amrex::Real target_up_x = 0.;
+    amrex::Real target_up_y = 0.;
+    amrex::Real target_up_z = 1.;
+    amrex::Real z_probe, z1_probe;
     amrex::Real detector_radius;
 
     //! counts number of particles for all MPI ranks
@@ -100,9 +107,6 @@ private:
     //! particle shape used for field gather
     int interp_order = 1;
 
-    //! Judges whether to gather raw fields or interpolated data
-    bool raw_fields = false;
-
     //! Judges whether to follow a moving window
     bool do_moving_window_FP = false;
 
@@ -114,6 +118,17 @@ private:
     /** Check if the probe is in the simulation domain boundary
      */
     bool ProbeInDomain () const;
+
+    /**
+     * Simple utility function to normalize the components of a "vector"
+     */
+    void normalize(amrex::Real &AMREX_RESTRICT x, amrex::Real &AMREX_RESTRICT y,
+                   amrex::Real &AMREX_RESTRICT z){
+        const amrex::Real mag = std::sqrt(x*x + y*y + z*z);
+        x /= mag;
+        y /= mag;
+        z /= mag;
+    }
 };
 
 #endif // WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDPROBE_H_

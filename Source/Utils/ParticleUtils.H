@@ -29,7 +29,7 @@ namespace ParticleUtils {
      * @param[in] ptile the particle tile.
      */
     amrex::DenseBins<WarpXParticleContainer::ParticleType>
-    findParticlesInEachCell( int const lev, amrex::MFIter const& mfi,
+    findParticlesInEachCell(int lev, amrex::MFIter const& mfi,
                              WarpXParticleContainer::ParticleTileType const& ptile);
 
     /**
@@ -60,6 +60,7 @@ namespace ParticleUtils {
      *
      * @param[in] u2 square of particle speed (i.e. u dot u where u = gamma*v)
      * @param[in] m, M mass of projectile and target, respectively
+     * @param[out] gamma relativistic factor of the particle
      * @param[out] energy particle energy in eV
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -82,7 +83,7 @@ namespace ParticleUtils {
      * \brief Perform a Lorentz transformation of the given velocity
      * to a frame moving with velocity (Vx, Vy, Vz) relative to the present one.
      *
-     * @param[in/out] ux,uy,uz components of velocity vector in the current
+     * @param[in,out] ux,uy,uz components of velocity vector in the current
                       frame - importantly these quantities are gamma * velocity
      * @param[in] Vx,Vy,Vz velocity of the new frame relative to the current one,
                       NOT gamma*velocity!
@@ -93,6 +94,8 @@ namespace ParticleUtils {
                               amrex::ParticleReal const Vx, amrex::ParticleReal const Vy,
                               amrex::ParticleReal const Vz )
     {
+        using namespace amrex::literals;
+
         // precompute repeatedly used quantities
         constexpr auto c2 = PhysConst::c * PhysConst::c;
         const auto V2 = (Vx*Vx + Vy*Vy + Vz*Vz);
@@ -150,7 +153,7 @@ namespace ParticleUtils {
      * random velocity vector with given magnitude. This is used in isotropic
      * collision events.
      *
-     * @param[in/out] ux, uy, uz colliding particle's velocity
+     * @param[in,out] ux, uy, uz colliding particle's velocity
      * @param[in] vp velocity magnitude of the colliding particle after collision.
      * @param[in] engine the random-engine
      */
@@ -169,6 +172,22 @@ namespace ParticleUtils {
         uy = y * vp;
         uz = z * vp;
     }
+
+    /* \brief Determines whether the point is within the tilebox, inclusive of the boundaries.
+     *        Note that this routine is needed since tilebox.contains excludes the boundaries.
+     * \param[in] tilebox The tilebox being checked
+     * \param[in] point The point being checked
+     * \result true if the point with within the boundary, otherwise false
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_INLINE
+    bool containsInclusive (amrex::RealBox const& tilebox, amrex::XDim3 const point) {
+        const auto xlo = tilebox.lo();
+        const auto xhi = tilebox.hi();
+        return  AMREX_D_TERM((xlo[0] <= point.x) && (point.x <= xhi[0]),
+                          && (xlo[1] <= point.y) && (point.y <= xhi[1]),
+                          && (xlo[2] <= point.z) && (point.z <= xhi[2]));
+    }
+
 }
 
 #endif // WARPX_PARTICLE_UTILS_H_

@@ -128,7 +128,7 @@ And install ADIOS2, BLAS++ and LAPACK++:
    cmake --build src/blaspp-haswell-build --target install --parallel 16
 
    # LAPACK++ (for PSATD+RZ)
-   git clone https://github.com/icl-utk-edu/blaspp.git src/lapackpp
+   git clone https://github.com/icl-utk-edu/lapackpp.git src/lapackpp
    rm -rf src/lapackpp-haswell-build
    CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S src/lapackpp -B src/lapackpp-haswell-build -Duse_cmake_find_lapack=ON -DBLAS_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DLAPACK_LIBRARIES=${CRAY_LIBSCI_PREFIX_DIR}/lib/libsci_gnu.a -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/sw/haswell/lapackpp-master-install
    cmake --build src/lapackpp-haswell-build --target install --parallel 16
@@ -246,6 +246,12 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
    cmake -S . -B build -DWarpX_DIMS=3
    cmake --build build -j 16
 
+The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
+
+**That's it!**
+A 3D WarpX executable is now in ``build/bin/`` and :ref:`can be run <running-cpp-cori>` with a :ref:`3D example inputs file <usage-examples>`.
+Most people execute the binary directly or copy it out to a location in ``$SCRATCH``.
+
 The general :ref:`cmake compile-time options and instructions for Python (PICMI) bindings <building-cmake-python>` apply as usual:
 
 .. code-block:: bash
@@ -256,7 +262,7 @@ The general :ref:`cmake compile-time options and instructions for Python (PICMI)
    # install or update dependencies
    python3 -m pip install -r requirements.txt
 
-   # compile parallel PICMI interfaces with openPMD support and 3D, 2D and RZ
+   # compile parallel PICMI interfaces with openPMD support and 3D, 2D, 1D and RZ
    WARPX_MPI=ON BUILD_PARALLEL=16 python3 -m pip install --force-reinstall --no-deps -v .
 
 
@@ -384,6 +390,15 @@ In this manual, we often use this ``conda create`` line over the officially docu
    conda create -n myenv -c conda-forge python mamba ipykernel ipympl==0.8.6 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram dask dask-jobqueue pyarrow
 
 We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
+
+``kernel_helper.sh`` should read:
+
+.. code-block:: bash
+
+   #!/bin/bash
+   module load python
+   source activate myenv
+   exec "$@"
 
 When opening a Jupyter notebook, just select the name you picked for your custom kernel on the top right of the notebook.
 

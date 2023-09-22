@@ -31,6 +31,7 @@ namespace utils::parser
         * Any of these integers may be omitted in which case it will be equal to their default value
         * (0 for the starting point, std::numeric_limits<int>::max() for the stopping point and 1 for
         * the period). For example SliceParser(":1000:") is equivalent to SliceParser("0:1000:1").
+        * @param[in] isBTD whether this is a back-transformed diagnostic
         */
         SliceParser (const std::string& instr, bool isBTD=false);
 
@@ -41,7 +42,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        bool contains (const int n) const;
+        bool contains (int n) const;
 
         /**
         * \brief A method that returns the smallest integer strictly greater than n such that
@@ -49,7 +50,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int nextContains (const int n) const;
+        int nextContains (int n) const;
 
         /**
         * \brief A method that returns the greatest integer strictly smaller than n such that
@@ -57,7 +58,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int previousContains (const int n) const;
+        int previousContains (int n) const;
 
         /**
         * \brief A method that returns the slice period.
@@ -121,7 +122,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        bool contains (const int n) const;
+        bool contains (int n) const;
 
         /**
         * \brief A method that returns the smallest integer strictly greater than n such that
@@ -129,7 +130,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int nextContains (const int n) const;
+        int nextContains (int n) const;
 
         /**
         * \brief A method that returns the greatest integer strictly smaller than n such that
@@ -137,7 +138,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int previousContains (const int n) const;
+        int previousContains (int n) const;
 
         /**
         * \brief A method that returns the greatest integer smaller than or equal to n such that
@@ -145,7 +146,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int previousContainsInclusive (const int n) const;
+        int previousContainsInclusive (int n) const;
 
         /**
         * \brief A method the local period (in timesteps) of the IntervalsParser at timestep n.
@@ -153,7 +154,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int localPeriod (const int n) const;
+        int localPeriod (int n) const;
 
         /**
         * \brief A method that returns true if any of the slices contained by the IntervalsParser
@@ -192,14 +193,20 @@ namespace utils::parser
         /**
          * @brief Return the total number of unique labframe snapshots
          */
-        int NumSnapshots ();
+        int NumSnapshots () const;
 
         /**
          * @brief Return the iteration number stored at index i_buffer
          *
          * @param i_buffer buffer or iteration index, between 0 and NumSnapshots
          */
-        int GetBTDIteration(int i_buffer);
+        int GetBTDIteration(int i_buffer) const;
+
+        /**
+         * @brief Return the final BTD iteration
+         *
+         */
+        int GetFinalIteration() const;
 
         /**
         * \brief A method that returns true if any of the slices contained by the IntervalsParser
@@ -211,7 +218,6 @@ namespace utils::parser
         std::vector<int> m_btd_iterations;
         std::vector<SliceParser> m_slices;
         std::vector<int> m_slice_starting_i_buffer;
-        int m_n_snapshots;
         static constexpr char m_separator = ',';
         bool m_activated = false;
     };

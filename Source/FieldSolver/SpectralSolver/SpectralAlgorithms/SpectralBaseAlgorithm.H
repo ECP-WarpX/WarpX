@@ -64,7 +64,7 @@ class SpectralBaseAlgorithm
         /**
          * \brief Compute spectral divergence of E
          */
-        void ComputeSpectralDivE ( const int lev,
+        void ComputeSpectralDivE ( int lev,
                                    SpectralFieldData& field_data,
                                    const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                    amrex::MultiFab& divE );
@@ -82,8 +82,8 @@ class SpectralBaseAlgorithm
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
                               const amrex::DistributionMapping& dm,
                               const SpectralFieldIndex& spectral_index,
-                              const int norder_x, const int norder_y,
-                              const int norder_z, const bool nodal);
+                              int norder_x, int norder_y,
+                              int norder_z, short grid_type);
 
         SpectralFieldIndex m_spectral_index;
 

@@ -47,14 +47,12 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
 
     int c = 0;
 
-    if (pml == false)
+    if (!pml)
     {
         Ex = c++; Ey = c++; Ez = c++;
         Bx = c++; By = c++; Bz = c++;
-        Jx = c++; Jy = c++; Jz = c++;
 
         // TODO Allocate rho_old and rho_new only when needed
-        rho_old = c++; rho_new = c++;
 
         // Reuse data corresponding to index Bx = 3 to avoid storing extra memory
         divE = 3;
@@ -69,16 +67,24 @@ SpectralFieldIndex::SpectralFieldIndex (const bool update_with_rho,
 
         if (divb_cleaning) G = c++;
 
-        if (J_in_time == JInTime::Linear)
+        if (J_in_time == JInTime::Constant)
         {
-            Jx_new = c++;
-            Jy_new = c++;
-            Jz_new = c++;
+            Jx_mid = c++; Jy_mid = c++; Jz_mid = c++;
+        }
+        else if (J_in_time == JInTime::Linear)
+        {
+            Jx_old = c++; Jy_old = c++; Jz_old = c++;
+            Jx_new = c++; Jy_new = c++; Jz_new = c++;
         }
 
-        if (rho_in_time == RhoInTime::Quadratic)
+        if (rho_in_time == RhoInTime::Constant)
         {
             rho_mid = c++;
+        }
+        else if (rho_in_time == RhoInTime::Linear)
+        {
+            rho_old = c++;
+            rho_new = c++;
         }
 
         if (pml_rz)
@@ -119,7 +125,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
                                       const bool periodic_single_box)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, realspace_ba, dm);
+    const bool do_costs = WarpXUtilLoadBalance::doCosts(cost, realspace_ba, dm);
 
     m_periodic_single_box = periodic_single_box;
 
@@ -172,7 +178,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
         // the FFT plan, the valid dimensions are those of the real-space box.
-        IntVect fft_size = realspace_ba[mfi].length();
+        const IntVect fft_size = realspace_ba[mfi].length();
 
         forward_plan[mfi] = AnyFFT::CreatePlan(
             fft_size, tmpRealField[mfi].dataPtr(),
@@ -213,7 +219,7 @@ SpectralFieldData::ForwardTransform (const int lev,
                                      const int i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
+    const bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space
 #if (AMREX_SPACEDIM >= 2)
@@ -252,8 +258,8 @@ SpectralFieldData::ForwardTransform (const int lev,
             }
             realspace_bx.enclosedCells(); // Discard last point in nodal direction
             AMREX_ALWAYS_ASSERT( realspace_bx.contains(tmpRealField[mfi].box()) );
-            Array4<const Real> mf_arr = mf[mfi].array();
-            Array4<Real> tmp_arr = tmpRealField[mfi].array();
+            const Array4<const Real> mf_arr = mf[mfi].array();
+            const Array4<Real> tmp_arr = tmpRealField[mfi].array();
             ParallelFor( tmpRealField[mfi].box(),
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
                 tmp_arr(i,j,k) = mf_arr(i,j,k,i_comp);
@@ -268,8 +274,8 @@ SpectralFieldData::ForwardTransform (const int lev,
         // and apply correcting shift factor if the real space data comes
         // from a cell-centered grid in real space instead of a nodal grid.
         {
-            Array4<Complex> fields_arr = SpectralFieldData::fields[mfi].array();
-            Array4<const Complex> tmp_arr = tmpSpectralField[mfi].array();
+            const Array4<Complex> fields_arr = SpectralFieldData::fields[mfi].array();
+            const Array4<const Complex> tmp_arr = tmpSpectralField[mfi].array();
 #if (AMREX_SPACEDIM >= 2)
             const Complex* xshift_arr = xshift_FFTfromCell[mfi].dataPtr();
 #endif
@@ -285,15 +291,15 @@ SpectralFieldData::ForwardTransform (const int lev,
                 Complex spectral_field_value = tmp_arr(i,j,k);
                 // Apply proper shift in each dimension
 #if (AMREX_SPACEDIM >= 2)
-                if (is_nodal_x==false) spectral_field_value *= xshift_arr[i];
+                if (!is_nodal_x) spectral_field_value *= xshift_arr[i];
 #endif
 #if defined(WARPX_DIM_3D)
-                if (is_nodal_y==false) spectral_field_value *= yshift_arr[j];
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[k];
+                if (!is_nodal_y) spectral_field_value *= yshift_arr[j];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[k];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
 #elif defined(WARPX_DIM_1D_Z)
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[i];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[i];
 #endif
                 // Copy field into the right index
                 fields_arr(i,j,k,field_index) = spectral_field_value;
@@ -320,7 +326,7 @@ SpectralFieldData::BackwardTransform (const int lev,
                                       const int i_comp)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
+    const bool do_costs = WarpXUtilLoadBalance::doCosts(cost, mf.boxArray(), mf.DistributionMap());
 
     // Check field index type, in order to apply proper shift in spectral space
 #if (AMREX_SPACEDIM >= 2)
@@ -368,8 +374,8 @@ SpectralFieldData::BackwardTransform (const int lev,
         // and apply correcting shift factor if the field is to be transformed
         // to a cell-centered grid in real space instead of a nodal grid.
         {
-            Array4<const Complex> field_arr = SpectralFieldData::fields[mfi].array();
-            Array4<Complex> tmp_arr = tmpSpectralField[mfi].array();
+            const Array4<const Complex> field_arr = SpectralFieldData::fields[mfi].array();
+            const Array4<Complex> tmp_arr = tmpSpectralField[mfi].array();
 #if (AMREX_SPACEDIM >= 2)
             const Complex* xshift_arr = xshift_FFTtoCell[mfi].dataPtr();
 #endif
@@ -385,15 +391,15 @@ SpectralFieldData::BackwardTransform (const int lev,
                 Complex spectral_field_value = field_arr(i,j,k,field_index);
                 // Apply proper shift in each dimension
 #if (AMREX_SPACEDIM >= 2)
-                if (is_nodal_x==false) spectral_field_value *= xshift_arr[i];
+                if (!is_nodal_x) spectral_field_value *= xshift_arr[i];
 #endif
 #if defined(WARPX_DIM_3D)
-                if (is_nodal_y==false) spectral_field_value *= yshift_arr[j];
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[k];
+                if (!is_nodal_y) spectral_field_value *= yshift_arr[j];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[k];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
 #elif defined(WARPX_DIM_1D_Z)
-                if (is_nodal_z==false) spectral_field_value *= zshift_arr[i];
+                if (!is_nodal_z) spectral_field_value *= zshift_arr[i];
 #endif
                 // Copy field into temporary array
                 tmp_arr(i,j,k) = spectral_field_value;
@@ -407,8 +413,8 @@ SpectralFieldData::BackwardTransform (const int lev,
         // normalize, dividing by N, since (FFT + inverse FFT) results in a factor N
         {
             amrex::Box mf_box = (m_periodic_single_box) ? mfi.validbox() : mfi.fabbox();
-            amrex::Array4<amrex::Real> mf_arr = mf[mfi].array();
-            amrex::Array4<const amrex::Real> tmp_arr = tmpRealField[mfi].array();
+            const amrex::Array4<amrex::Real> mf_arr = mf[mfi].array();
+            const amrex::Array4<const amrex::Real> tmp_arr = tmpRealField[mfi].array();
 
             const amrex::Real inv_N = 1._rt / tmpRealField[mfi].box().numPts();
 
@@ -438,11 +444,11 @@ SpectralFieldData::BackwardTransform (const int lev,
 #endif
             // If necessary, do not fill the guard cells
             // (shrink box by passing negative number of cells)
-            if (m_periodic_single_box == false)
+            if (!m_periodic_single_box)
             {
                 for (int dir = 0; dir < AMREX_SPACEDIM; dir++)
                 {
-                    if (static_cast<bool>(fill_guards[dir]) == false) mf_box.grow(dir, -mf_ng[dir]);
+                    if ((fill_guards[dir]) == 0) mf_box.grow(dir, -mf_ng[dir]);
                 }
             }
 
