@@ -95,6 +95,7 @@ void WarpX::HybridPICEvolveFields ()
     // momentum equation
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
+        m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
         m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
         m_hybrid_pic_model->HybridPICSolveE(
             Efield_fp, current_fp_temp, Bfield_fp, rho_fp_temp, m_edge_lengths,
@@ -123,6 +124,7 @@ void WarpX::HybridPICEvolveFields ()
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
+        m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
         m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
         m_hybrid_pic_model->HybridPICSolveE(
             Efield_fp, current_fp, Bfield_fp, rho_fp_temp, m_edge_lengths,
@@ -155,6 +157,7 @@ void WarpX::HybridPICEvolveFields ()
     m_hybrid_pic_model->CalculateElectronPressure(DtType::Full);
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
+    m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
     m_hybrid_pic_model->HybridPICSolveE(
         Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths,
