@@ -70,6 +70,11 @@ public:
 
     ~MultiParticleContainer() {}
 
+    /** Delete Copy constructor */
+    MultiParticleContainer ( MultiParticleContainer const &) = delete;
+    /** Delete Copy operator */
+    MultiParticleContainer& operator= ( MultiParticleContainer const & ) = delete;
+
     WarpXParticleContainer&
     GetParticleContainer (int index) const {return *allcontainers[index];}
 

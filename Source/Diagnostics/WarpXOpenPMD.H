@@ -99,6 +99,11 @@ public:
 
   ~WarpXOpenPMDPlot ();
 
+  /** Delete Copy constructor */
+  WarpXOpenPMDPlot ( WarpXOpenPMDPlot const &) = delete;
+  /** Delete Copy operator */
+  WarpXOpenPMDPlot& operator= ( WarpXOpenPMDPlot const & ) = delete;
+
   /** Set Iteration Step for the series
    *
    * @note If an iteration has been written, then it will give a warning

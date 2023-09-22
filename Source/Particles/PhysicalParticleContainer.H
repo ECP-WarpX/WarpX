@@ -58,6 +58,11 @@ public:
 
     ~PhysicalParticleContainer () override {}
 
+    /** Delete Copy constructor */
+    PhysicalParticleContainer ( PhysicalParticleContainer const &) = delete;
+    /** Delete Copy operator */
+    PhysicalParticleContainer& operator= ( PhysicalParticleContainer const & ) = delete;
+
     void InitData () override;
 
     void ReadHeader (std::istream& is) override;

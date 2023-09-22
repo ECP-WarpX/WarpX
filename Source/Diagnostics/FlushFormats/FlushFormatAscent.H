@@ -54,6 +54,13 @@ public:
 #endif
 
     ~FlushFormatAscent() override = default;
+
+    /** Default constructor */
+    FlushFormatAscent () = default;
+    /** Default Copy constructor */
+    FlushFormatAscent ( FlushFormatAscent const &) = default;
+    /** Default Copy operator */
+    FlushFormatAscent& operator= ( FlushFormatAscent const & ) = default;
 };
 
 #endif // WARPX_FLUSHFORMATASCENT_H_

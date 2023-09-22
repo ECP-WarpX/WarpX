@@ -45,6 +45,11 @@ public:
 
     ~FlushFormatOpenPMD () override = default;
 
+    /** Delete Copy constructor */
+    FlushFormatOpenPMD ( FlushFormatOpenPMD const &) = delete;
+    /** Delete Copy operator */
+    FlushFormatOpenPMD& operator= ( FlushFormatOpenPMD const & ) = delete;
+
 private:
     /** This is responsible for dumping to file */
     std::unique_ptr< WarpXOpenPMDPlot > m_OpenPMDPlotWriter;

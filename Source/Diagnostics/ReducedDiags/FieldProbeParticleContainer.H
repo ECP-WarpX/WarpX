@@ -50,6 +50,11 @@ public:
     FieldProbeParticleContainer (amrex::AmrCore* amr_core);
     ~FieldProbeParticleContainer() override = default;
 
+    /** Delete Copy constructor */
+    FieldProbeParticleContainer ( FieldProbeParticleContainer const &) = delete;
+    /** Delete Copy operator */
+    FieldProbeParticleContainer& operator= ( FieldProbeParticleContainer const & ) = delete;
+
     //! amrex iterator for our number of attributes
     using iterator = amrex::ParIter<0, 0, FieldProbePIdx::nattribs, 0>;
     //! amrex iterator for our number of attributes (read-only)

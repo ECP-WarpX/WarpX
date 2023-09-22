@@ -30,6 +30,13 @@ struct ResamplingAlgorithm
      * \brief Virtual destructor of the abstract ResamplingAlgorithm class
      */
     virtual ~ResamplingAlgorithm () =  default;
+
+    /** Default constructor */
+    ResamplingAlgorithm () = default;
+    /** Default Copy constructor */
+    ResamplingAlgorithm ( ResamplingAlgorithm const &) = default;
+    /** Default Copy operator */
+    ResamplingAlgorithm& operator= ( ResamplingAlgorithm const & ) = default;
 };
 
 /**

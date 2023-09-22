@@ -44,6 +44,11 @@ public:
     LaserParticleContainer (amrex::AmrCore* amr_core, int ispecies, const std::string& name);
     ~LaserParticleContainer () override = default;
 
+    /** Delete Copy constructor */
+    LaserParticleContainer ( LaserParticleContainer const &) = delete;
+    /** Delete Copy operator */
+    LaserParticleContainer& operator= ( LaserParticleContainer const & ) = delete;
+
     void InitData () final;
 
     /**

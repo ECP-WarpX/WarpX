@@ -57,6 +57,13 @@ public:
                         bool isBTD = false) const;
 
     ~FlushFormatPlotfile() override {}
+
+    /** Default constructor */
+    FlushFormatPlotfile () = default;
+    /** Default Copy constructor */
+    FlushFormatPlotfile ( FlushFormatPlotfile const &) = default;
+    /** Default Copy operator */
+    FlushFormatPlotfile& operator= ( FlushFormatPlotfile const & ) = default;
 };
 
 #endif // WARPX_FLUSHFORMATPLOTFILE_H_

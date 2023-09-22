@@ -98,6 +98,13 @@ public:
         amrex::Real* AMREX_RESTRICT amplitude) const = 0;
 
     virtual ~ILaserProfile(){}
+
+    /** Default constructor */
+    ILaserProfile () = default;
+    /** Default Copy constructor */
+    ILaserProfile ( ILaserProfile const &) = default;
+    /** Default Copy operator */
+    ILaserProfile& operator= ( ILaserProfile const & ) = default;
 };
 
 /**

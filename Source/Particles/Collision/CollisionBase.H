@@ -25,6 +25,7 @@ public:
     CollisionBase(CollisionBase const &) = delete;
     CollisionBase(CollisionBase &&) = delete;
     CollisionBase & operator=(CollisionBase const &) = delete;
+    CollisionBase & operator=(CollisionBase const &&) = delete;
 
     virtual ~CollisionBase() = default;
 

@@ -31,12 +31,12 @@ class SpectralBaseAlgorithmRZ
         /**
          * \brief Default Copy constructor
          */
-        virtual SpectralBaseAlgorithmRZ ( SpectralBaseAlgorithmRZ const &) = default;
+        SpectralBaseAlgorithmRZ ( SpectralBaseAlgorithmRZ const &) = default;
 
         /**
          * \brief Default Copy operator
          */
-        virtual  SpectralBaseAlgorithmRZ& operator= ( SpectralBaseAlgorithmRZ const & ) = default;
+        SpectralBaseAlgorithmRZ& operator= ( SpectralBaseAlgorithmRZ const & ) = default;
 
         /**
          * \brief Virtual function for current correction in Fourier space
