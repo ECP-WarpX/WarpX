@@ -36,10 +36,11 @@ n0 = 20.e23
 wp = np.sqrt((n0*e**2)/(m_e*epsilon_0))
 kp = wp/c
 tau = 15.e-15
-a0 = 1.73 #2.66 #2.71 #1.0 #1.3 #2.66
+a0 = 2.491668
 e = -e #Electrons
+lambda_laser = 0.8e-6
 
-zmin = -20e-6; zmax = 100.e-6; Nz = 5120
+zmin = -20e-6; zmax = 100.e-6; Nz = 10240
 
 # Compute the theory
 
@@ -48,34 +49,30 @@ from scipy.integrate import odeint
 
 
 # ODE Function
-def odefcn(phi, xi, kp, a0, c, tau, xi_0):
+def odefcn(phi, xi, kp, a0, c, tau, xi_0, lambda_laser):
     phi1, phi2 = phi
-    a_sq = a0**2 * np.exp(-2 * (xi - xi_0)**2 / (c**2 * tau**2))
+    a_sq = a0**2 * np.exp(-2 * (xi - xi_0)**2 / (c**2 * tau**2))*np.sin(2*np.pi*(xi - xi_0)/lambda_laser)**2
     dphi1_dxi = phi2
     dphi2_dxi = kp**2 * ((1 + a_sq) / (2 * (1 + phi1)**2) - 0.5)
     return [dphi1_dxi, dphi2_dxi]
 
 # Call odeint to solve the ODE
-dz = 0.0# (zmax - zmin)/Nz
 xi_span = [-20e-6, 100e-6]
-xi_0 = 1e-6
+xi_0 = 0e-6
 phi0 = [0.0, 0.0]
 dxi = (zmax-zmin)/Nz
 xi = zmin + dxi*( 0.5 + np.arange(Nz) )
-#xi = np.linspace(xi_span[0], xi_span[1], Nz)
-phi = odeint(odefcn, phi0, xi, args=(kp, a0, c, tau, xi_0))
+phi = odeint(odefcn, phi0, xi, args=(kp, a0, c, tau, xi_0, lambda_laser))
 
 # Change array direction to match the simulations
 xi = -xi[::-1]
 phi = phi[::-1]
-xi_0 = -1e-6
+xi_0 = -0e-6
 phi2 = phi[:, 0]
-
-# E = -phi2  (phi2 = dphi/dz)
 Ez = -phi[:, 1]
 
 # Compute the derived quantities
-a_sq = a0**2 * np.exp(-2 * (xi - xi_0)**2 / (c**2 * tau**2))
+a_sq = a0**2 * np.exp(-2 * (xi - xi_0)**2 / (c**2 * tau**2)) *np.sin(2*np.pi*(xi - xi_0)/lambda_laser)**2
 gamma_perp_sq = 1 + a_sq
 n = n0 * (gamma_perp_sq + (1 + phi2)**2) / (2 * (1 + phi2)**2)
 uz = (gamma_perp_sq - (1 + phi2)**2) / (2 * (1 + phi2))
@@ -93,9 +90,10 @@ V_th /= c
 # Remove the ions
 rho_th = rho_th - e*n0
 
-# Remove the comparison at the envelope
+# Dicate which region to compare solutions over
+# (Currently this is the full domain)
 min_i = 0
-max_i = 3840 # Remove the comparison at the envelope
+max_i = 10240 
 
 # Read the file
 ds = yt.load(fn)

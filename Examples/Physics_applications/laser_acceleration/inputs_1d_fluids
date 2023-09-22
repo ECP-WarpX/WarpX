@@ -1,8 +1,8 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 20000 #10000
-amr.n_cell = 5120 #5120
+max_step = 40000
+amr.n_cell = 10240
 amr.max_grid_size = 512  # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 512 # minimum size of each AMReX box, used to decompose the domain
 geometry.dims = 1
@@ -28,10 +28,6 @@ warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # units of speed of light
 warpx.do_dynamic_scheduling = 0
 warpx.serialize_initial_conditions = 1
-
-### BOOST ###
-#warpx.gamma_boost = 5.0
-#warpx.boost_direction = z
 
 # Order of particle shape factors
 algo.particle_shape = 3
