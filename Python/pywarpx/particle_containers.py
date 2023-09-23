@@ -195,7 +195,7 @@ class ParticleContainerWrapper(object):
         arrays are fully writeable.
 
         Note that cupy does not support structs:
-        ...
+        https://github.com/cupy/cupy/issues/2031
         and will return arrays of binary blobs for the AoS (DP: "|V24"). If copied
         to host via copy_to_host, we correct for the right numpy AoS type.
 
