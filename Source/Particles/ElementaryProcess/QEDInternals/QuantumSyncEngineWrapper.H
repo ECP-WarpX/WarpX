@@ -279,22 +279,22 @@ public:
     /**
      * Builds the functor to initialize the optical depth
      */
-    QuantumSynchrotronGetOpticalDepth build_optical_depth_functor ();
+    [[nodiscard]] QuantumSynchrotronGetOpticalDepth build_optical_depth_functor ();
 
     /**
      * Builds the functor to evolve the optical depth
      */
-    QuantumSynchrotronEvolveOpticalDepth build_evolve_functor ();
+    [[nodiscard]] QuantumSynchrotronEvolveOpticalDepth build_evolve_functor ();
 
     /**
      * Builds the functor to generate photons
      */
-    QuantumSynchrotronPhotonEmission build_phot_em_functor ();
+    [[nodiscard]] QuantumSynchrotronPhotonEmission build_phot_em_functor ();
 
     /**
      * Checks if the optical tables are properly initialized
      */
-    bool are_lookup_tables_initialized () const;
+    [[nodiscard]] bool are_lookup_tables_initialized () const;
 
     /**
      * Export lookup tables data into a raw binary Vector
@@ -302,7 +302,7 @@ public:
      * @return the data in binary format. The Vector is empty if tables were
      * not previously initialized.
      */
-    std::vector<char> export_lookup_tables_data () const;
+    [[nodiscard]] std::vector<char> export_lookup_tables_data () const;
 
     /**
      * Init lookup tables from raw binary data.
@@ -335,9 +335,9 @@ public:
      *
      * @return default control params to generate the tables
      */
-    PicsarQuantumSyncCtrl get_default_ctrl() const;
+    [[nodiscard]] PicsarQuantumSyncCtrl get_default_ctrl() const;
 
-    amrex::ParticleReal get_minimum_chi_part() const;
+    [[nodiscard]] amrex::ParticleReal get_minimum_chi_part() const;
 
 private:
     bool m_lookup_tables_initialized = false;

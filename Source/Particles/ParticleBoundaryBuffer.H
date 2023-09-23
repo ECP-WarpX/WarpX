@@ -23,7 +23,7 @@ class WARPX_EXPORT ParticleBoundaryBuffer
 public:
     ParticleBoundaryBuffer ();
 
-    ~ParticleBoundaryBuffer() {}
+    ~ParticleBoundaryBuffer() = default;
 
     /** Copy constructor for ParticleBoundaryBuffer */
     ParticleBoundaryBuffer ( const ParticleBoundaryBuffer &) = delete;

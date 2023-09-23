@@ -24,6 +24,7 @@ struct InjectorFluxConstant
 {
     InjectorFluxConstant (amrex::Real a_flux) noexcept : m_flux(a_flux) {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::Real
     getFlux (amrex::Real, amrex::Real, amrex::Real, amrex::Real) const noexcept
@@ -41,6 +42,7 @@ struct InjectorFluxParser
     InjectorFluxParser (amrex::ParserExecutor<4> const& a_parser) noexcept
         : m_parser(a_parser) {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::Real
     getFlux (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t) const noexcept
@@ -93,6 +95,7 @@ struct InjectorFlux
 
     // call getFlux from the object stored in the union
     // (the union is called Object, and the instance is called object).
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::Real
     getFlux (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t) const noexcept

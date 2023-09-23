@@ -18,9 +18,9 @@ class ParticleDiag
 {
 public:
     ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc, PinnedMemoryParticleContainer *pinned_pc = nullptr);
-    WarpXParticleContainer* getParticleContainer() const { return m_pc; }
-    PinnedMemoryParticleContainer* getPinnedParticleContainer() const { return m_pinned_pc; }
-    std::string getSpeciesName() const { return m_name; }
+    [[nodiscard]] WarpXParticleContainer* getParticleContainer() const { return m_pc; }
+    [[nodiscard]] PinnedMemoryParticleContainer* getPinnedParticleContainer() const { return m_pinned_pc; }
+    [[nodiscard]] std::string getSpeciesName() const { return m_name; }
     amrex::Vector<int> m_plot_flags;
 
     bool m_do_random_filter  = false;

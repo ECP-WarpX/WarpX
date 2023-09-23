@@ -50,11 +50,11 @@ public:
                                     const std::string& name);
     virtual ~RigidInjectedParticleContainer () {}
 
-    virtual void InitData() override;
+    void InitData() override;
 
     virtual void RemapParticles();
 
-    virtual void Evolve (int lev,
+    void Evolve (int lev,
                          const amrex::MultiFab& Ex,
                          const amrex::MultiFab& Ey,
                          const amrex::MultiFab& Ez,
@@ -80,7 +80,7 @@ public:
                          DtType a_dt_type=DtType::Full,
                          bool skip_deposition=false ) override;
 
-    virtual void PushPX (WarpXParIter& pti,
+    void PushPX (WarpXParIter& pti,
                          amrex::FArrayBox const * exfab,
                          amrex::FArrayBox const * eyfab,
                          amrex::FArrayBox const * ezfab,
@@ -94,7 +94,7 @@ public:
                          amrex::Real dt, ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full) override;
 
-    virtual void PushP (int lev, amrex::Real dt,
+    void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,
                         const amrex::MultiFab& Ey,
                         const amrex::MultiFab& Ez,
@@ -102,9 +102,9 @@ public:
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) override;
 
-    virtual void ReadHeader (std::istream& is) override;
+    void ReadHeader (std::istream& is) override;
 
-    virtual void WriteHeader (std::ostream& os) const override;
+    void WriteHeader (std::ostream& os) const override;
 
 private:
 

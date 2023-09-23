@@ -28,7 +28,7 @@ class FlushFormatAscent : public FlushFormat
 {
 public:
     /** Do in-situ visualization for field and particle data */
-    virtual void WriteToFile (
+    void WriteToFile (
         amrex::Vector<std::string> varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
@@ -53,7 +53,7 @@ public:
     void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const;
 #endif
 
-    ~FlushFormatAscent() {}
+    ~FlushFormatAscent() override = default;
 };
 
 #endif // WARPX_FLUSHFORMATASCENT_H_

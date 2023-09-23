@@ -34,8 +34,8 @@
 
 struct Sigma : amrex::Gpu::DeviceVector<amrex::Real>
 {
-    int lo() const { return m_lo; }
-    int hi() const { return m_hi; }
+    [[nodiscard]] int lo() const { return m_lo; }
+    [[nodiscard]] int hi() const { return m_hi; }
     int m_lo, m_hi;
 };
 
@@ -80,7 +80,7 @@ public:
                      const amrex::IntVect& ncell, const amrex::IntVect& delta,
                      const amrex::Box& regular_domain, const amrex::Real v_sigma_sb)
         : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_regdomain(regular_domain), m_v_sigma_sb(v_sigma_sb) {}
-    virtual ~SigmaBoxFactory () = default;
+    ~SigmaBoxFactory () override = default;
 
     SigmaBoxFactory (const SigmaBoxFactory&) = default;
     SigmaBoxFactory (SigmaBoxFactory&&) noexcept = default;
@@ -89,15 +89,23 @@ public:
     SigmaBoxFactory& operator= (const SigmaBoxFactory&) = delete;
     SigmaBoxFactory& operator= (SigmaBoxFactory&&) = delete;
 
-    virtual SigmaBox* create (const amrex::Box& box, int /*ncomps*/,
-                              const amrex::FabInfo& /*info*/, int /*box_index*/) const final
-        { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta, m_regdomain, m_v_sigma_sb); }
-    virtual void destroy (SigmaBox* fab) const final {
+    [[nodiscard]] SigmaBox* create (const amrex::Box& box, int /*ncomps*/,
+        const amrex::FabInfo& /*info*/, int /*box_index*/) const final
+    {
+        return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta, m_regdomain, m_v_sigma_sb);
+    }
+
+    void destroy (SigmaBox* fab) const final
+    {
         delete fab;
     }
-    virtual SigmaBoxFactory* clone () const final {
+
+    [[nodiscard]] SigmaBoxFactory*
+    clone () const final
+    {
         return new SigmaBoxFactory(*this);
     }
+
 private:
     const amrex::BoxArray& m_grids;
     const amrex::Real* m_dx;
@@ -160,11 +168,15 @@ public:
     amrex::MultiFab* GetG_fp ();
     amrex::MultiFab* GetG_cp ();
 
-    const MultiSigmaBox& GetMultiSigmaBox_fp () const
-        { return *sigba_fp; }
+    [[nodiscard]] const MultiSigmaBox& GetMultiSigmaBox_fp () const
+    {
+        return *sigba_fp;
+    }
 
-    const MultiSigmaBox& GetMultiSigmaBox_cp () const
-        { return *sigba_cp; }
+    [[nodiscard]] const MultiSigmaBox& GetMultiSigmaBox_cp () const
+    {
+        return *sigba_cp;
+    }
 
 #ifdef WARPX_USE_PSATD
     void PushPSATD (int lev);
@@ -197,7 +209,7 @@ public:
     void FillBoundaryF (PatchType patch_type);
     void FillBoundaryG (PatchType patch_type);
 
-    bool ok () const { return m_ok; }
+    [[nodiscard]] bool ok () const { return m_ok; }
 
     void CheckPoint (const std::string& dir) const;
     void Restart (const std::string& dir);
@@ -247,9 +259,11 @@ private:
     // Factory for field data
     std::unique_ptr<amrex::FabFactory<amrex::FArrayBox> > pml_field_factory;
 
-    amrex::FabFactory<amrex::FArrayBox> const& fieldFactory () const noexcept {
+    [[nodiscard]] amrex::FabFactory<amrex::FArrayBox> const& fieldFactory () const noexcept
+    {
         return *pml_field_factory;
     }
+
 #ifdef AMREX_USE_EB
     amrex::EBFArrayBoxFactory const& fieldEBFactory () const noexcept {
         return static_cast<amrex::EBFArrayBoxFactory const&>(*pml_field_factory);

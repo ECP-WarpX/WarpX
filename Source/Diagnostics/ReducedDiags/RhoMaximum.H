@@ -36,7 +36,7 @@ public:
      *
      * @param[in] step current time step
      */
-    virtual void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) final;
 
 private:
     /** Vector of (pointers to) functors to compute rho, per level, per species. We reuse here the

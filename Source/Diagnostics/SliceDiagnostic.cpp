@@ -103,7 +103,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
        // Flag for interpolation if required //
        if ( interp_lo[idim] == 1) {
-          interpolate = 1;
+          interpolate = true;
        }
 
        // For the case when a dimension is reduced //

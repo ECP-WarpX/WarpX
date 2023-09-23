@@ -37,40 +37,40 @@ public:
     /** Returns the Header file version for plotfile */
     std::string fileVersion () const noexcept {return m_file_version; }
     /** Returns the number of components written in the Headerfile */
-    int ncomp () const noexcept {return m_nComp; }
+    [[nodiscard]] int ncomp () const noexcept {return m_nComp; }
     /** Returns the names of components in the Headerfile */
     const amrex::Vector<std::string>& varnames () const noexcept {return m_varnames; }
     /** Returns the number of dimensions in the Headerfile */
-    int spaceDim () const noexcept {return m_spacedim; }
+    [[nodiscard]] int spaceDim () const noexcept {return m_spacedim; }
     /** Returns the physical time in the simulation in the boosted-frame */
     amrex::Real time () const noexcept {return m_time; }
     /** Returns finest level output in the Headerfile */
-    int finestLevel () const noexcept { return m_finest_level; }
+    [[nodiscard]] int finestLevel () const noexcept { return m_finest_level; }
     /** Returns the physical co-ordinates of the lower corner in dimension, idim,
      *  that corresponds the to the respective plotfile data
      */
-    amrex::Real problo (int dim) const noexcept {return m_prob_lo[dim]; }
+    [[nodiscard]] amrex::Real problo (int dim) const noexcept {return m_prob_lo[dim]; }
     /** Returns the physical co-ordinates of the upper corner in dimension, idim,
      *  that corresponds the to the respective plotfile data.
      */
-    amrex::Real probhi (int dim) const noexcept {return m_prob_hi[dim]; }
+    [[nodiscard]] amrex::Real probhi (int dim) const noexcept {return m_prob_hi[dim]; }
 
     /** Returns the bounding box of the domain spanned in the plotfile */
-    amrex::Box probDomain () const noexcept {return m_prob_domain; }
+    [[nodiscard]] amrex::Box probDomain () const noexcept {return m_prob_domain; }
     /** Returns timestep at which the plotfile was written */
-    int timestep () const noexcept {return m_timestep; }
-    int numFabs () const noexcept {return m_numFabs; }
+    [[nodiscard]] int timestep () const noexcept {return m_timestep; }
+    [[nodiscard]] int numFabs () const noexcept {return m_numFabs; }
 
     /** Returns physical co-ordinates of the lower-corner for the i-th Fab.
      *  \param[in] iFab id of the ith Fab in the list of Multifabs
      *  \returns   Array of lower-corner physical co-ordinates corresponding to the ith Fab
      */
-    amrex::Array<amrex::Real, AMREX_SPACEDIM> FabLo (int iFab) const noexcept {return m_glo[iFab]; }
+    [[nodiscard]] amrex::Array<amrex::Real, AMREX_SPACEDIM> FabLo (int iFab) const noexcept {return m_glo[iFab]; }
     /** Returns physical co-ordinates of the lower-corner for the i-th Fab.
      *  \param[in] iFab id of the ith Fab in the list of Multifabs
      *  \returns   Array of lower-corner physical co-ordinates corresponding to the ith Fab
      */
-    amrex::Array<amrex::Real, AMREX_SPACEDIM> FabHi (int iFab) const noexcept {return m_ghi[iFab]; }
+    [[nodiscard]] amrex::Array<amrex::Real, AMREX_SPACEDIM> FabHi (int iFab) const noexcept {return m_ghi[iFab]; }
     /** Returns path to location of multifabs */
     std::string CellPath () const noexcept {return m_CellPath; }
 

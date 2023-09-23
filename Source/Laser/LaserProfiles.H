@@ -97,7 +97,7 @@ public:
         amrex::Real t,
         amrex::Real* AMREX_RESTRICT amplitude) const = 0;
 
-    virtual ~ILaserProfile(){}
+    virtual ~ILaserProfile() = default;
 };
 
 /**
@@ -110,11 +110,11 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters params) final;
 
     //No update needed
     void
-    update (amrex::Real /*t */) override final {}
+    update (amrex::Real /*t */) final {}
 
     void
     fill_amplitude (
@@ -122,7 +122,7 @@ public:
         amrex::Real const * AMREX_RESTRICT Xp,
         amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT amplitude) const final;
 
 private:
     struct {
@@ -152,11 +152,11 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters params) final;
 
     //No update needed
     void
-    update (amrex::Real /*t */) override final {}
+    update (amrex::Real /*t */) final {}
 
     void
     fill_amplitude (
@@ -164,7 +164,7 @@ public:
         amrex::Real const * AMREX_RESTRICT Xp,
         amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT amplitude) const final;
 
 private:
     struct{
@@ -187,14 +187,14 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters params) final;
 
     /** \brief Reads new field data chunk from file if needed
     *
     * @param[in] t simulation time (seconds)
     */
     void
-    update (amrex::Real t) override final;
+    update (amrex::Real t) final;
 
     /** \brief compute field amplitude at particles' position for a laser beam
     * loaded from an E(x,y,t) file.
@@ -215,7 +215,7 @@ public:
         amrex::Real const * AMREX_RESTRICT Xp,
         amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT amplitude) const final;
 
     /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format in 3D Cartesian.
     * This function cannot be private due to restrictions related to

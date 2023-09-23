@@ -68,15 +68,15 @@ public:
 
     MultiParticleContainer (amrex::AmrCore* amr_core);
 
-    ~MultiParticleContainer() {}
+    ~MultiParticleContainer() = default;
 
-    WarpXParticleContainer&
+    [[nodiscard]] WarpXParticleContainer&
     GetParticleContainer (int index) const {return *allcontainers[index];}
 
-    WarpXParticleContainer*
+    [[nodiscard]] WarpXParticleContainer*
     GetParticleContainerPtr (int index) const {return allcontainers[index].get();}
 
-    WarpXParticleContainer&
+    [[nodiscard]] WarpXParticleContainer&
     GetParticleContainerFromName (const std::string& name) const;
 
 #ifdef WARPX_USE_OPENPMD
@@ -195,7 +195,7 @@ public:
      * defined by m_qed_schwinger_xmin/xmax/ymin/ymax/zmin/zmax and the warpx level 0 geometry
      * object (to make the link between Real and int quatities).
      */
-    amrex::Box ComputeSchwingerGlobalBox () const;
+    [[nodiscard]] amrex::Box ComputeSchwingerGlobalBox () const;
 #endif
 
     void Restart (const std::string& dir);
@@ -225,18 +225,18 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(int lev) const;
+    [[nodiscard]] amrex::Vector<amrex::Long> GetZeroParticlesInGrid(int lev) const;
 
-    amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
+    [[nodiscard]] amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
 
     void Increment (amrex::MultiFab& mf, int lev);
 
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies () const {return species_names.size();}
-    int nLasers () const {return lasers_names.size();}
-    int nContainers () const {return allcontainers.size();}
+    [[nodiscard]] int nSpecies () const {return species_names.size();}
+    [[nodiscard]] int nLasers () const {return lasers_names.size();}
+    [[nodiscard]] int nContainers () const {return allcontainers.size();}
 
     /** Whether back-transformed diagnostics need to be performed for any plasma species.
      *
@@ -250,13 +250,15 @@ public:
      */
     void SetDoBackTransformedParticles (std::string species_name, bool do_back_transformed_particles);
 
-    int nSpeciesDepositOnMainGrid () const {
+    [[nodiscard]] int nSpeciesDepositOnMainGrid () const
+    {
         bool const onMainGrid = true;
         auto const & v = m_deposit_on_main_grid;
         return std::count( v.begin(), v.end(), onMainGrid );
     }
 
-    int nSpeciesGatherFromMainGrid() const {
+    [[nodiscard]] int nSpeciesGatherFromMainGrid() const
+    {
         bool const fromMainGrid = true;
         auto const & v = m_gather_from_main_grid;
         return std::count( v.begin(), v.end(), fromMainGrid );
@@ -273,16 +275,17 @@ public:
      */
     void UpdateAntennaPosition(amrex::Real dt) const;
 
-    int doContinuousInjection() const;
+    [[nodiscard]] int doContinuousInjection() const;
 
     // Inject particles from a surface during the simulation
     void ContinuousFluxInjection(amrex::Real t, amrex::Real dt) const;
 
-    std::vector<std::string> GetSpeciesNames() const { return species_names; }
+    [[nodiscard]] std::vector<std::string> GetSpeciesNames() const { return species_names; }
 
-    std::vector<std::string> GetLasersNames() const { return lasers_names; }
+    [[nodiscard]] std::vector<std::string> GetLasersNames() const { return lasers_names; }
 
-    std::vector<std::string> GetSpeciesAndLasersNames() const {
+    [[nodiscard]] std::vector<std::string> GetSpeciesAndLasersNames() const
+    {
         std::vector<std::string> tmp = species_names;
         tmp.insert(tmp.end(), lasers_names.begin(), lasers_names.end());
         return tmp;
@@ -329,7 +332,7 @@ public:
                       const amrex::MultiFab& Bz);
 #endif
 
-    int getSpeciesID (std::string product_str) const;
+    [[nodiscard]] int getSpeciesID (std::string product_str) const;
 
 protected:
 
@@ -423,12 +426,12 @@ protected:
     /**
      * Returns the number of species having Quantum Synchrotron process enabled
      */
-    int NSpeciesQuantumSync() const { return  m_nspecies_quantum_sync;}
+    [[nodiscard]] int NSpeciesQuantumSync() const { return  m_nspecies_quantum_sync;}
 
     /**
      * Returns the number of species having Breit Wheeler process enabled
      */
-    int NSpeciesBreitWheeler() const { return m_nspecies_breit_wheeler;}
+    [[nodiscard]] int NSpeciesBreitWheeler() const { return m_nspecies_breit_wheeler;}
 
     /**
      * Initializes the Quantum Synchrotron engine
@@ -453,7 +456,7 @@ protected:
     void BreitWheelerGenerateTable();
 
     /** Whether or not to activate Schwinger process */
-    bool m_do_qed_schwinger = 0;
+    bool m_do_qed_schwinger = false;
     /** Name of Schwinger electron product species */
     std::string m_qed_schwinger_ele_product_name;
     /** Name of Schwinger positron product species */

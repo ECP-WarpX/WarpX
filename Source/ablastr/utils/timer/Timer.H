@@ -25,7 +25,7 @@ namespace ablastr::utils::timer
         /**
         * \brief The constructor.
         */
-        Timer();
+        Timer() = default;
 
 
         /**

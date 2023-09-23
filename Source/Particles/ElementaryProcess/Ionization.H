@@ -110,7 +110,7 @@ struct IonizationFilterFunc
             const amrex::ParticleReal uy = ptd.m_rdata[PIdx::uy][i];
             const amrex::ParticleReal uz = ptd.m_rdata[PIdx::uz][i];
 
-            const amrex::Real ga = static_cast<amrex::Real>(
+            const auto ga = static_cast<amrex::Real>(
                 std::sqrt(1. + (ux*ux + uy*uy + uz*uz) * c2_inv));
             const amrex::Real E = std::sqrt(
                                - ( ux*ex + uy*ey + uz*ez ) * ( ux*ex + uy*ey + uz*ez ) * c2_inv

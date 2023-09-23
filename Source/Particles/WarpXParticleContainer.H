@@ -57,23 +57,28 @@ public:
 
     WarpXParIter (ContainerType& pc, int level, amrex::MFItInfo& info);
 
-    const std::array<RealVector, PIdx::nattribs>& GetAttribs () const {
+    [[nodiscard]] const std::array<RealVector, PIdx::nattribs>& GetAttribs () const
+    {
         return GetStructOfArrays().GetRealData();
     }
 
-    std::array<RealVector, PIdx::nattribs>& GetAttribs () {
+    [[nodiscard]] std::array<RealVector, PIdx::nattribs>& GetAttribs ()
+    {
         return GetStructOfArrays().GetRealData();
     }
 
-    const RealVector& GetAttribs (int comp) const {
+    [[nodiscard]] const RealVector& GetAttribs (int comp) const
+    {
         return GetStructOfArrays().GetRealData(comp);
     }
 
-    RealVector& GetAttribs (int comp) {
+    [[nodiscard]] RealVector& GetAttribs (int comp)
+    {
         return GetStructOfArrays().GetRealData(comp);
     }
 
-    IntVector& GetiAttribs (int comp) {
+    [[nodiscard]] IntVector& GetiAttribs (int comp)
+    {
         return GetStructOfArrays().GetIntData(comp);
     }
 };
@@ -115,7 +120,7 @@ public:
     using DiagnosticParticles = amrex::Vector<std::map<std::pair<int, int>, DiagnosticParticleData> >;
 
     WarpXParticleContainer (amrex::AmrCore* amr_core, int ispecies);
-    virtual ~WarpXParticleContainer() {}
+    ~WarpXParticleContainer() override = default;
 
     virtual void InitData () = 0;
 
@@ -462,7 +467,7 @@ protected:
     TmpParticles tmp_particle_data;
 
 private:
-    virtual void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,
+    void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,
                                     int lev) override;
 
 };

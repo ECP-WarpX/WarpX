@@ -23,7 +23,7 @@ class SpectralBinomialFilter
         // implements the filter.
         using KFilterArray = amrex::Gpu::DeviceVector<amrex::Real>;
 
-        SpectralBinomialFilter () {}
+        SpectralBinomialFilter () = default;
         void InitFilterArray (RealKVector const & kvec,
                               amrex::Real dels,
                               int npasses,

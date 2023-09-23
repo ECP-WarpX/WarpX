@@ -27,7 +27,7 @@ public:
         bool isLastBTDFlush = false,
         const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const = 0;
 
-     virtual ~FlushFormat() {}
+     virtual ~FlushFormat() = default;
 };
 
 #endif // WARPX_FLUSHFORMAT_H_

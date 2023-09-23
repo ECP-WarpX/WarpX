@@ -25,7 +25,7 @@ class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
                                   amrex::Real dt_step,
                                   bool update_with_rho);
         // Redefine functions from base class
-        virtual void pushSpectralFields (SpectralFieldDataRZ & f) override final;
+        void pushSpectralFields (SpectralFieldDataRZ & f) final;
 
         void InitializeSpectralCoefficients (SpectralFieldDataRZ const & f);
 
@@ -37,7 +37,7 @@ class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
          *
          * \param[in,out] field_data all fields in Fourier space
          */
-        virtual void CurrentCorrection (SpectralFieldDataRZ& field_data) override final;
+        void CurrentCorrection (SpectralFieldDataRZ& field_data) final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -47,7 +47,7 @@ class PsatdAlgorithmGalileanRZ : public SpectralBaseAlgorithmRZ
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void VayDeposition (SpectralFieldDataRZ& field_data) override final;
+        void VayDeposition (SpectralFieldDataRZ& field_data) final;
 
     private:
 

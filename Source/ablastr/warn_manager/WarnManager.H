@@ -80,7 +80,7 @@ namespace ablastr::warn_manager
         * @param[in] when a string to mark when the warnings are printed out (it appears in the warning list)
         * @return a string containing the "local" warning list
         */
-        std::string PrintLocalWarnings(
+        [[nodiscard]] std::string PrintLocalWarnings(
             const std::string& when) const;
 
         /**
@@ -90,7 +90,7 @@ namespace ablastr::warn_manager
         * @param[in] when a string to mark when the warnings are printed out (it appears in the warning list)
         * @return a string containing the "global" warning list
         */
-        std::string PrintGlobalWarnings(
+        [[nodiscard]] std::string PrintGlobalWarnings(
             const std::string& when) const;
 
         /**
@@ -105,7 +105,7 @@ namespace ablastr::warn_manager
         *
         * @return the m_always_warn_immediately flag
         */
-        bool GetAlwaysWarnImmediatelyFlag() const;
+        [[nodiscard]] bool GetAlwaysWarnImmediatelyFlag() const;
 
         /**
         * \brief Setter for the m_abort_on_warning_threshold flag
@@ -120,7 +120,7 @@ namespace ablastr::warn_manager
         *
         * @return the m_abort_on_warning_threshold flag
         */
-        std::optional<WarnPriority> GetAbortThreshold() const;
+        [[nodiscard]] std::optional<WarnPriority> GetAbortThreshold() const;
 
         /**
         * \brief This function reads warning messages from the inputfile. It is intended for
@@ -148,7 +148,7 @@ namespace ablastr::warn_manager
         * @param[in] msg_with_counter a MessageWithCounter
         * @return a string containing the warning message
         */
-        std::string PrintWarnMsg(
+        [[nodiscard]] std::string PrintWarnMsg(
             const ablastr::utils::msg_logger::MsgWithCounter& msg_with_counter) const;
 
         /**
@@ -159,7 +159,7 @@ namespace ablastr::warn_manager
         * @param[in] msg_with_counter_and_ranks a MsgWithCounterAndRanks
         * @return a string containing the warning message
         */
-        std::string PrintWarnMsg(
+        [[nodiscard]] std::string PrintWarnMsg(
             const ablastr::utils::msg_logger::MsgWithCounterAndRanks& msg_with_counter_and_ranks) const;
 
         /**

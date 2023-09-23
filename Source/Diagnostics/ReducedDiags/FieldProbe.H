@@ -113,7 +113,7 @@ private:
     /**
      * Built-in function in ReducedDiags to write out test data
      */
-    virtual void WriteToFile (int step) const override;
+    void WriteToFile (int step) const override;
 
     /** Check if the probe is in the simulation domain boundary
      */

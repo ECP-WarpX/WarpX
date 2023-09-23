@@ -31,7 +31,7 @@ public:
     virtual void operator() (amrex::MultiFab& mf_dst, int dcomp, int i_buffer = 0) const = 0;
     /** Number of component from the input multifab to write to the output
      * multifab */
-    int nComp () const { return m_ncomp; }
+    [[nodiscard]] int nComp () const { return m_ncomp; }
 
     /** \brief Prepare data required to process fields in the operator()
      *         Note that this function has parameters that are specific to

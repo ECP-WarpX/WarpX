@@ -79,6 +79,7 @@ struct GetVelocity
      *        1: y
      *        2: z
      */
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     int direction () const noexcept
     {

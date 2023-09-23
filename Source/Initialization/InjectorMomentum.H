@@ -34,6 +34,7 @@ struct InjectorMomentumConstant
     InjectorMomentumConstant (amrex::Real a_ux, amrex::Real a_uy, amrex::Real a_uz) noexcept
         : m_ux(a_ux), m_uy(a_uy), m_uz(a_uz) {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real, amrex::Real, amrex::Real,
@@ -42,6 +43,7 @@ struct InjectorMomentumConstant
         return amrex::XDim3{m_ux,m_uy,m_uz};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real, amrex::Real, amrex::Real) const noexcept
@@ -64,6 +66,7 @@ struct InjectorMomentumGaussian
           m_ux_th(a_ux_th), m_uy_th(a_uy_th), m_uz_th(a_uz_th)
         {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
@@ -74,6 +77,7 @@ struct InjectorMomentumGaussian
                             amrex::RandomNormal(m_uz_m, m_uz_th, engine)};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
@@ -94,6 +98,7 @@ namespace {
       * @param u_th Momentum spread
       * @param engine Object used to generate random numbers
       */
+    [[nodiscard]]
     AMREX_FORCE_INLINE
     AMREX_GPU_HOST_DEVICE
     amrex::Real
@@ -175,6 +180,7 @@ struct InjectorMomentumGaussianFlux
             "When using the `gaussianflux` distribution, the central momentum along the flux axis must be positive or zero." );
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
@@ -206,6 +212,7 @@ struct InjectorMomentumGaussianFlux
         return amrex::XDim3{ux, uy, uz};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
@@ -239,6 +246,7 @@ struct InjectorMomentumUniform
             m_uz_h = 0.5 * (m_uz_max + m_uz_min);
         }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
@@ -249,6 +257,7 @@ struct InjectorMomentumUniform
                             m_uz_min + amrex::Random(engine) * m_Duz};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
@@ -274,6 +283,7 @@ struct InjectorMomentumBoltzmann
         : velocity(b), temperature(t)
         {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z,
@@ -326,6 +336,7 @@ struct InjectorMomentumBoltzmann
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z) const noexcept
@@ -335,7 +346,7 @@ struct InjectorMomentumBoltzmann
         for (auto& el : u) el = 0.0_rt;
         const amrex::Real beta = velocity(x,y,z);
         int const dir = velocity.direction();
-        const amrex::Real gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
+        const auto gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
         u[dir] = gamma*beta;
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
@@ -357,6 +368,7 @@ struct InjectorMomentumJuttner
         : velocity(b), temperature(t)
         {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z,
@@ -427,6 +439,7 @@ struct InjectorMomentumJuttner
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z) const noexcept
@@ -436,7 +449,7 @@ struct InjectorMomentumJuttner
         for (auto& el : u) el = 0.0_rt;
         amrex::Real const beta = velocity(x,y,z);
         int const dir = velocity.direction();
-        amrex::Real const gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
+        auto const gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
         u[dir] = gamma*beta;
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
@@ -459,6 +472,7 @@ struct InjectorMomentumRadialExpansion
         : u_over_r(a_u_over_r)
         {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
@@ -467,6 +481,7 @@ struct InjectorMomentumRadialExpansion
         return {x*u_over_r, y*u_over_r, z*u_over_r};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -487,6 +502,7 @@ struct InjectorMomentumParser
         : m_ux_parser(a_ux_parser), m_uy_parser(a_uy_parser),
           m_uz_parser(a_uz_parser) {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
@@ -495,6 +511,7 @@ struct InjectorMomentumParser
         return amrex::XDim3{m_ux_parser(x,y,z),m_uy_parser(x,y,z),m_uz_parser(x,y,z)};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -589,6 +606,7 @@ struct InjectorMomentum
 
     // call getMomentum from the object stored in the union
     // (the union is called Object, and the instance is called object).
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
@@ -638,6 +656,7 @@ struct InjectorMomentum
 
     // call getBulkMomentum from the object stored in the union
     // (the union is called Object, and the instance is called object).
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept

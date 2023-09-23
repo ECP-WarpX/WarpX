@@ -28,7 +28,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
                          bool dive_cleaning,
                          bool divb_cleaning);
         // Redefine functions from base class
-        virtual void pushSpectralFields(SpectralFieldDataRZ & f) override final;
+        virtual void pushSpectralFields(SpectralFieldDataRZ & f) final;
 
         void InitializeSpectralCoefficients(SpectralFieldDataRZ const & f);
 
@@ -41,7 +41,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void CurrentCorrection (SpectralFieldDataRZ& field_data) override final;
+        virtual void CurrentCorrection (SpectralFieldDataRZ& field_data) final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -52,7 +52,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void VayDeposition (SpectralFieldDataRZ& field_data) override final;
+        virtual void VayDeposition (SpectralFieldDataRZ& field_data) final;
 
     private:
 

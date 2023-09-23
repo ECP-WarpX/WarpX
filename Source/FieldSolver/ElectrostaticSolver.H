@@ -61,7 +61,9 @@ namespace ElectrostaticSolver {
             buildParsersEB();
         }
 
-        PhiCalculatorEB getPhiEB(amrex::Real t) const noexcept {
+        [[nodiscard]] PhiCalculatorEB
+        getPhiEB(amrex::Real t) const noexcept
+        {
             return PhiCalculatorEB{t, potential_eb};
         }
 

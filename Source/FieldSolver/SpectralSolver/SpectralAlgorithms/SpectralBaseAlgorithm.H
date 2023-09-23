@@ -41,7 +41,7 @@ class SpectralBaseAlgorithm
         // The destructor should also be a virtual function, so that
         // a pointer to subclass of `SpectraBaseAlgorithm` actually
         // calls the subclass's destructor.
-        virtual ~SpectralBaseAlgorithm() {}
+        virtual ~SpectralBaseAlgorithm() = default;
 
         /**
          * \brief Virtual function for current correction in Fourier space

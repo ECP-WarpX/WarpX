@@ -55,7 +55,7 @@ struct HardEdgedPlasmaLens
     /**
      * \brief Returns the device level instance with the lattice information
      */
-    HardEdgedPlasmaLensDevice GetDeviceInstance () const;
+    [[nodiscard]] HardEdgedPlasmaLensDevice GetDeviceInstance () const;
 
 
 };

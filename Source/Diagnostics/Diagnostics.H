@@ -105,7 +105,7 @@ public:
      */
     void FilterComputePackFlush (int step, bool force_flush=false);
     /** Whether the last timestep is always dumped */
-    bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
+    [[nodiscard]] bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
     /** Returns the number of snapshots used in BTD. For Full-Diagnostics, the value is 1*/
     int getnumbuffers() {return m_num_buffers;}
     /** Time in lab-frame associated with the ith snapshot

@@ -49,10 +49,12 @@ public:
     ~PlasmaInjector ();
 
     // bool: whether the point (x, y, z) is inside the plasma region
-    bool insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
+    [[nodiscard]] bool insideBounds (
+        amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
 
     // bool: whether the region defined by lo and hi overlaps with the plasma region
-    bool overlapsWith (const amrex::XDim3& lo, const amrex::XDim3& hi) const noexcept;
+    [[nodiscard]] bool overlapsWith (
+        const amrex::XDim3& lo, const amrex::XDim3& hi) const noexcept;
 
     int num_particles_per_cell;
     amrex::Real num_particles_per_cell_real;
@@ -60,18 +62,19 @@ public:
     amrex::Vector<int> num_particles_per_cell_each_dim;
 
     // gamma * beta
-    amrex::XDim3 getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
+    [[nodiscard]] amrex::XDim3 getMomentum (
+        amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
 
-    amrex::Real getCharge () {return charge;}
-    amrex::Real getMass () {return mass;}
-    PhysicalSpecies getPhysicalSpecies() const {return physical_species;}
+    [[nodiscard]] amrex::Real getCharge () {return charge;}
+    [[nodiscard]] amrex::Real getMass () {return mass;}
+    [[nodiscard]] PhysicalSpecies getPhysicalSpecies() const {return physical_species;}
 
     // bool: whether the initial injection of particles should be done
     // This routine is called during initialization of the plasma.
-    bool doInjection () const noexcept { return h_inj_pos != nullptr;}
+    [[nodiscard]] bool doInjection () const noexcept { return h_inj_pos != nullptr;}
 
     // bool: whether the flux injection of particles should be done.
-    bool doFluxInjection () const noexcept { return h_flux_pos != nullptr;}
+    [[nodiscard]] bool doFluxInjection () const noexcept { return h_flux_pos != nullptr;}
 
     bool add_single_particle = false;
     amrex::Vector<amrex::ParticleReal> single_particle_pos;
