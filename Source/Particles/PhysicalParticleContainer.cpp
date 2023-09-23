@@ -593,11 +593,21 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         // assumption asserts: see PlasmaInjector
         openPMD::Iteration it = series->iterations.begin()->second;
         const ParmParse pp_species_name(species_name);
-        pp_species_name.query("impose_t_lab_from_file", impose_t_lab_from_file);
         double t_lab = 0._prt;
-        if (impose_t_lab_from_file) {
+        pp_species_name.query("t_lab_from_file", t_lab_from_file);
+        if (t_lab_from_file) {
             // Impose t_lab as being the time stored in the openPMD file
             t_lab = it.time<double>() * it.timeUnitSI();
+        }
+        const bool t_lab_from_input =
+            utils::parser::queryWithParser(pp_species_name, "t_lab", t_lab);
+        if ( t_lab_from_input && t_lab_from_file ){
+            std::stringstream warnMsg;
+                warnMsg << "Both '" + species_name +  ".t_lab' and '" +
+                    species_name + ".t_lab_from_file = 1' are specified.\n '" +
+                    species_name + ".t_lab = " << std::scientific << std::setprecision(3) << t_lab << "' will take precedence.\n" ;
+            ablastr::warn_manager::WMRecordWarning("AddPlasmaFromFile",
+                warnMsg.str());
         }
         std::string const ps_name = it.particles.begin()->first;
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
