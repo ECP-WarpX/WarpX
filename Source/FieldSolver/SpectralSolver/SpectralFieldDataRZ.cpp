@@ -470,7 +470,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto amrex::Real wt = static_cast<amrex::Real>(amrex::second());
 
         // Perform the Hankel transform first.
         // tempHTransformedSplit includes the imaginary component of mode 0.
@@ -527,7 +527,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
 
@@ -589,7 +589,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
@@ -674,7 +674,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         amrex::Box realspace_bx = tempHTransformed[mfi].box();
 
@@ -773,7 +773,7 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index)
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
         auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
@@ -818,7 +818,7 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index1,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
         auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();

@@ -634,7 +634,7 @@ void FieldProbe::WriteToFile (int step) const
     long int first_id = static_cast<long int>(m_data_out[0]);
     for (long int i = 0; i < m_valid_particles; i++)
     {
-        if (m_data_out[i*noutputs] < first_id)
+        if (static_cast<long int>(m_data_out[i*noutputs]) < first_id)
             first_id = static_cast<long int>(m_data_out[i*noutputs]);
     }
 

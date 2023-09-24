@@ -169,8 +169,8 @@ WarpX::MoveWindow (const int step, bool move_j)
         new_lo[i] = current_lo[i];
         new_hi[i] = current_hi[i];
     }
-    new_lo[dir] = current_lo[dir] + num_shift_base * cdx[dir];
-    new_hi[dir] = current_hi[dir] + num_shift_base * cdx[dir];
+    new_lo[dir] = current_lo[dir] + static_cast<amrex::Real>(num_shift_base) * cdx[dir];
+    new_hi[dir] = current_hi[dir] + static_cast<amrex::Real>(num_shift_base) * cdx[dir];
 
     ResetProbDomain(amrex::RealBox(new_lo, new_hi));
 
@@ -188,8 +188,8 @@ WarpX::MoveWindow (const int step, bool move_j)
        }
        const int num_shift_base_slice = static_cast<int> ((moving_window_x -
                                   current_slice_lo[dir]) / cdx[dir]);
-       new_slice_lo[dir] = current_slice_lo[dir] + num_shift_base_slice*cdx[dir];
-       new_slice_hi[dir] = current_slice_hi[dir] + num_shift_base_slice*cdx[dir];
+       new_slice_lo[dir] = current_slice_lo[dir] + static_cast<amrex::Real>(num_shift_base_slice)*cdx[dir];
+       new_slice_hi[dir] = current_slice_hi[dir] + static_cast<amrex::Real>(num_shift_base_slice)*cdx[dir];
        slice_realbox.setLo(new_slice_lo);
        slice_realbox.setHi(new_slice_hi);
     }
@@ -486,7 +486,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
@@ -507,6 +507,17 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                     mf_type[idim] = mf_IndexType.nodeCentered(idim);
                 }
 
+#if defined(WARPX_DIM_1D_Z)
+                const auto fac_z = static_cast<amrex::Real>(1 - mf_type[0]) * dx[0]*0.5_rt;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                const auto fac_x = static_cast<amrex::Real>(1 - mf_type[0]) * dx[0]*0.5_rt;
+                const auto fac_z = static_cast<amrex::Real>(1 - mf_type[1]) * dx[1]*0.5_rt;
+#else
+                const auto fac_x = static_cast<amrex::Real>(1 - mf_type[0]) * dx[0]*0.5_rt;
+                const auto fac_y = static_cast<amrex::Real>(1 - mf_type[1]) * dx[1]*0.5_rt;
+                const auto fac_z = static_cast<amrex::Real>(1 - mf_type[2]) * dx[2]*0.5_rt;
+#endif
+
                 amrex::ParallelFor (outbox, nc,
                       [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) noexcept
                 {
@@ -514,21 +525,15 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 #if defined(WARPX_DIM_1D_Z)
                       const amrex::Real x = 0.0_rt;
                       const amrex::Real y = 0.0_rt;
-                      const amrex::Real fac_z = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
-                      const amrex::Real z = i*dx[0] + real_box.lo(0) + fac_z;
+                      const amrex::Real z = static_cast<amrex::Real>(i)*dx[0] + real_box.lo(0) + fac_z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                      const amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
-                      const amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
+                      const amrex::Real x = static_cast<amrex::Real>(i)*dx[0] + real_box.lo(0) + fac_x;
                       const amrex::Real y = 0.0;
-                      const amrex::Real fac_z = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
-                      const amrex::Real z = j*dx[1] + real_box.lo(1) + fac_z;
+                      const amrex::Real z = static_cast<amrex::Real>(j)*dx[1] + real_box.lo(1) + fac_z;
 #else
-                      const amrex::Real fac_x = (1.0_rt - mf_type[0]) * dx[0]*0.5_rt;
-                      const amrex::Real x = i*dx[0] + real_box.lo(0) + fac_x;
-                      const amrex::Real fac_y = (1.0_rt - mf_type[1]) * dx[1]*0.5_rt;
-                      const amrex::Real y = j*dx[1] + real_box.lo(1) + fac_y;
-                      const amrex::Real fac_z = (1.0_rt - mf_type[2]) * dx[2]*0.5_rt;
-                      const amrex::Real z = k*dx[2] + real_box.lo(2) + fac_z;
+                      const amrex::Real x = static_cast<amrex::Real>(i)*dx[0] + real_box.lo(0) + fac_x;
+                      const amrex::Real y = static_cast<amrex::Real>(j)*dx[1] + real_box.lo(1) + fac_y;
+                      const amrex::Real z = static_cast<amrex::Real>(k)*dx[2] + real_box.lo(2) + fac_z;
 #endif
                       srcfab(i,j,k,n) = field_parser(x,y,z);
                 });

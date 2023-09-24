@@ -1252,7 +1252,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = amrex::second();
+            auto wt = static_cast<amrex::Real>(amrex::second());
 
             //
             // Particle Push

@@ -174,7 +174,7 @@ public:
                 {
                     amrex::Gpu::synchronize();
                 }
-                amrex::Real wt = amrex::second();
+                auto wt = static_cast<amrex::Real>(amrex::second());
 
                 doCollisionsWithinTile( dt, lev, mfi, species1, species2, product_species_vector,
                                          copy_species1_data, copy_species2_data);

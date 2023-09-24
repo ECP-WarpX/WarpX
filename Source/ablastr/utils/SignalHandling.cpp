@@ -90,7 +90,7 @@ SignalHandling::parseSignalNameToNumber (const std::string &str)
         std::string name_upper = sp.abbrev;
         std::string name_lower = name_upper;
         for (char &c : name_lower) {
-            c = std::tolower(c);
+            c =  static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
         }
 
         signals_parser.setConstant(name_upper, sp.value);

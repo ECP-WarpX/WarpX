@@ -1140,7 +1140,7 @@ WarpX::ReadParameters ()
 
         // Query algo.field_gathering from input, set field_gathering_algo to
         // "default" if not found (default defined in Utils/WarpXAlgorithmSelection.cpp)
-        field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
+        field_gathering_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "field_gathering"));
 
         // Set default field gathering algorithm for hybrid grids (momentum-conserving)
         std::string tmp_algo;
@@ -1188,7 +1188,7 @@ WarpX::ReadParameters ()
             pp_algo.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
         utils::parser::queryWithParser(pp_algo, "load_balance_efficiency_ratio_threshold",
                         load_balance_efficiency_ratio_threshold);
-        load_balance_costs_update_algo = GetAlgorithmInteger(pp_algo, "load_balance_costs_update");
+        load_balance_costs_update_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "load_balance_costs_update"));
         if (WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic) {
             utils::parser::queryWithParser(
                 pp_algo, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
@@ -1368,12 +1368,12 @@ WarpX::ReadParameters ()
         // Integer that corresponds to the order of the PSATD solution
         // (whether the PSATD equations are derived from first-order or
         // second-order solution)
-        psatd_solution_type = GetAlgorithmInteger(pp_psatd, "solution_type");
+        psatd_solution_type = static_cast<short>(GetAlgorithmInteger(pp_psatd, "solution_type"));
 
         // Integers that correspond to the time dependency of J (constant, linear)
         // and rho (linear, quadratic) for the PSATD algorithm
-        J_in_time = GetAlgorithmInteger(pp_psatd, "J_in_time");
-        rho_in_time = GetAlgorithmInteger(pp_psatd, "rho_in_time");
+        J_in_time = static_cast<short>(GetAlgorithmInteger(pp_psatd, "J_in_time"));
+        rho_in_time = static_cast<short>(GetAlgorithmInteger(pp_psatd, "rho_in_time"));
 
         if (psatd_solution_type != PSATDSolutionType::FirstOrder || !do_multi_J)
         {
@@ -3004,11 +3004,11 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
     if (a_grid_type == GridType::Collocated)
     {
        // First coefficient
-       coeffs.at(0) = m * 2._rt / (m+1);
+       coeffs.at(0) = static_cast<amrex::Real>(m * 2) / static_cast<amrex::Real>(m+1);
        // Other coefficients by recurrence
        for (int n = 1; n < m; n++)
        {
-           coeffs.at(n) = - (m-n) * 1._rt / (m+n+1) * coeffs.at(n-1);
+           coeffs.at(n) = - static_cast<amrex::Real>(m-n) / static_cast<amrex::Real>(m+n+1) * coeffs.at(n-1);
        }
     }
     // Coefficients for staggered finite-difference approximation
@@ -3017,14 +3017,14 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
        Real prod = 1.;
        for (int k = 1; k < m+1; k++)
        {
-           prod *= (m + k) / (4._rt * k);
+           prod *= static_cast<amrex::Real>(m + k) / static_cast<amrex::Real>(4 * k);
        }
        // First coefficient
-       coeffs.at(0) = 4_rt * m * prod * prod;
+       coeffs.at(0) = 4_rt * static_cast<amrex::Real>(m) * prod * prod;
        // Other coefficients by recurrence
        for (int n = 1; n < m; n++)
        {
-           coeffs.at(n) = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coeffs.at(n-1);
+           coeffs.at(n) = - static_cast<amrex::Real>((2*n-1) * (m-n))  / static_cast<amrex::Real>((2*n+1) * (m+n)) * coeffs.at(n-1);
        }
     }
 

@@ -373,14 +373,14 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
         }
     }
 
-    amrex::Real denom = local_avail(0, 1) * GetNeigh(S, i, j, k, -1, 0, idim) +
-                        local_avail(2, 1) * GetNeigh(S, i, j, k, 1, 0, idim) +
-                        local_avail(1, 0) * GetNeigh(S, i, j, k, 0, -1, idim) +
-                        local_avail(1, 2) * GetNeigh(S, i, j, k, 0, 1, idim) +
-                        local_avail(0, 0) * GetNeigh(S, i, j, k, -1, -1, idim) +
-                        local_avail(2, 0) * GetNeigh(S, i, j, k, 1, -1, idim) +
-                        local_avail(0, 2) * GetNeigh(S, i, j, k, -1, 1, idim) +
-                        local_avail(2, 2) * GetNeigh(S, i, j, k, 1, 1, idim);
+    amrex::Real denom = static_cast<amrex::Real>(local_avail(0, 1)) * GetNeigh(S, i, j, k, -1, 0, idim) +
+                        static_cast<amrex::Real>(local_avail(2, 1)) * GetNeigh(S, i, j, k, 1, 0, idim) +
+                        static_cast<amrex::Real>(local_avail(1, 0)) * GetNeigh(S, i, j, k, 0, -1, idim) +
+                        static_cast<amrex::Real>(local_avail(1, 2)) * GetNeigh(S, i, j, k, 0, 1, idim) +
+                        static_cast<amrex::Real>(local_avail(0, 0)) * GetNeigh(S, i, j, k, -1, -1, idim) +
+                        static_cast<amrex::Real>(local_avail(2, 0)) * GetNeigh(S, i, j, k, 1, -1, idim) +
+                        static_cast<amrex::Real>(local_avail(0, 2)) * GetNeigh(S, i, j, k, -1, 1, idim) +
+                        static_cast<amrex::Real>(local_avail(2, 2)) * GetNeigh(S, i, j, k, 1, 1, idim);
 
     bool neg_face = true;
 
@@ -398,14 +398,14 @@ ComputeNBorrowEightFacesExtension(const amrex::Dim3 cell, const amrex::Real S_ex
             }
         }
 
-        denom = local_avail(0, 1) * GetNeigh(S, i, j, k, -1, 0, idim) +
-                local_avail(2, 1) * GetNeigh(S, i, j, k, 1, 0, idim) +
-                local_avail(1, 0) * GetNeigh(S, i, j, k, 0, -1, idim) +
-                local_avail(1, 2) * GetNeigh(S, i, j, k, 0, 1, idim) +
-                local_avail(0, 0) * GetNeigh(S, i, j, k, -1, -1, idim) +
-                local_avail(2, 0) * GetNeigh(S, i, j, k, 1, -1, idim) +
-                local_avail(0, 2) * GetNeigh(S, i, j, k, -1, 1, idim) +
-                local_avail(2, 2) * GetNeigh(S, i, j, k, 1, 1, idim);
+        denom = static_cast<amrex::Real>(local_avail(0, 1)) * GetNeigh(S, i, j, k, -1, 0, idim) +
+                static_cast<amrex::Real>(local_avail(2, 1)) * GetNeigh(S, i, j, k, 1, 0, idim) +
+                static_cast<amrex::Real>(local_avail(1, 0)) * GetNeigh(S, i, j, k, 0, -1, idim) +
+                static_cast<amrex::Real>(local_avail(1, 2)) * GetNeigh(S, i, j, k, 0, 1, idim) +
+                static_cast<amrex::Real>(local_avail(0, 0)) * GetNeigh(S, i, j, k, -1, -1, idim) +
+                static_cast<amrex::Real>(local_avail(2, 0)) * GetNeigh(S, i, j, k, 1, -1, idim) +
+                static_cast<amrex::Real>(local_avail(0, 2)) * GetNeigh(S, i, j, k, -1, 1, idim) +
+                static_cast<amrex::Real>(local_avail(2, 2)) * GetNeigh(S, i, j, k, 1, 1, idim);
     }
 
     // We count the number of entries in local_avail which are still True, this is the number of

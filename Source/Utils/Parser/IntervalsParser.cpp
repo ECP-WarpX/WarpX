@@ -256,19 +256,19 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
 
 int utils::parser::BTDIntervalsParser::NumSnapshots () const
 {
-    return m_btd_iterations.size();
+    return static_cast<int>(m_btd_iterations.size());
 }
 
 
 int utils::parser::BTDIntervalsParser::GetBTDIteration (int i_buffer) const
 {
-    return m_btd_iterations[i_buffer];
+    return static_cast<int>(m_btd_iterations[i_buffer]);
 }
 
 
 int utils::parser::BTDIntervalsParser::GetFinalIteration () const
 {
-    return m_btd_iterations.back();
+    return static_cast<int>(m_btd_iterations.back());
 }
 
 

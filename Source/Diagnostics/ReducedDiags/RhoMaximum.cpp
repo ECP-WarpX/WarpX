@@ -133,7 +133,7 @@ void RhoMaximum::ComputeDiags (int step)
     // get number of levels
     const auto nLevel = warpx.finestLevel() + 1;
 
-    const int n_charged_species = m_rho_functors[0].size() - 1;
+    const int n_charged_species = static_cast<int>(m_rho_functors[0].size() - 1);
     // Min and max of total rho + max of |rho| for each species
     const int noutputs_per_level = 2+n_charged_species;
 

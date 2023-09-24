@@ -132,7 +132,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
             const Box& tbx = mfi.tilebox();
             m_data[shift_m_data + mfi.index()*m_nDataFields + 0] = (*costs[lev])[mfi.index()];
             m_data[shift_m_data + mfi.index()*m_nDataFields + 1] = dm[mfi.index()];
-            m_data[shift_m_data + mfi.index()*m_nDataFields + 2] = lev;
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 2] = static_cast<amrex::Real>(lev);
             m_data[shift_m_data + mfi.index()*m_nDataFields + 3] = tbx.loVect()[0];
 #if (AMREX_SPACEDIM >= 2)
             m_data[shift_m_data + mfi.index()*m_nDataFields + 4] = tbx.loVect()[1];
@@ -367,7 +367,11 @@ void LoadBalanceCosts::WriteToFile (int step) const
         ofstmp.close();
 
         // remove the original, rename tmp file
-        std::remove(fileDataName.c_str());
-        std::rename(fileTmpName.c_str(), fileDataName.c_str());
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            std::remove(fileDataName.c_str()) == EXIT_SUCCESS,
+            "Failed to remove " + fileDataName);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            std::rename(fileTmpName.c_str(), fileDataName.c_str()) == EXIT_SUCCESS,
+            "Failed to rename " + fileTmpName + " to " + fileDataName);
     }
 }

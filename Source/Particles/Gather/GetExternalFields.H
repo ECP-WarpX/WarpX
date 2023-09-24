@@ -159,7 +159,8 @@ struct GetExternalEBField
                 // find which is the next lens
                 int i_lens = static_cast<int>(std::floor(zl/m_repeated_plasma_lens_period));
                 if (i_lens < m_n_lenses) {
-                    amrex::ParticleReal const lens_start = m_repeated_plasma_lens_starts[i_lens] + i_lens*m_repeated_plasma_lens_period;
+                    amrex::ParticleReal const lens_start = m_repeated_plasma_lens_starts[i_lens] +
+                        static_cast<amrex::ParticleReal>(i_lens)*m_repeated_plasma_lens_period;
                     amrex::ParticleReal const lens_end = lens_start + m_repeated_plasma_lens_lengths[i_lens];
 
                     // Calculate the residence correction

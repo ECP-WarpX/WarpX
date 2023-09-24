@@ -159,22 +159,22 @@ namespace
     {
         XDim3 pos;
 #if defined(WARPX_DIM_3D)
-        pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
-        pos.y = lo_corner[1] + (iv[1]+r.y)*dx[1];
-        pos.z = lo_corner[2] + (iv[2]+r.z)*dx[2];
+        pos.x = lo_corner[0] + static_cast<Real>(iv[0]+r.x)*dx[0];
+        pos.y = lo_corner[1] + static_cast<Real>(iv[1]+r.y)*dx[1];
+        pos.z = lo_corner[2] + static_cast<Real>(iv[2]+r.z)*dx[2];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
+        pos.x = lo_corner[0] + static_cast<Real>(iv[0]+r.x)*dx[0];
         pos.y = 0.0_rt;
 #if   defined WARPX_DIM_XZ
-        pos.z = lo_corner[1] + (iv[1]+r.y)*dx[1];
+        pos.z = lo_corner[1] + static_cast<Real>(iv[1]+r.y)*dx[1];
 #elif defined WARPX_DIM_RZ
         // Note that for RZ, r.y will be theta
-        pos.z = lo_corner[1] + (iv[1]+r.z)*dx[1];
+        pos.z = lo_corner[1] + static_cast<Real>(iv[1]+r.z)*dx[1];
 #endif
 #else
         pos.x = 0.0_rt;
         pos.y = 0.0_rt;
-        pos.z = lo_corner[0] + (iv[0]+r.x)*dx[0];
+        pos.z = lo_corner[0] + static_cast<Real>(iv[0]+r.x)*dx[0];
 #endif
         return pos;
     }
@@ -319,7 +319,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     // User-defined real attributes
     pp_species_name.queryarr("addRealAttributes", m_user_real_attribs);
-    const int n_user_real_attribs = m_user_real_attribs.size();
+    const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
     std::vector< std::string > str_real_attrib_function;
     str_real_attrib_function.resize(n_user_real_attribs);
     m_user_real_attrib_parser.resize(n_user_real_attribs);
@@ -711,8 +711,8 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
         const int np = pinned_tile.numParticles();
 
         // Preparing data needed for user defined attributes
-        const int n_user_real_attribs = m_user_real_attribs.size();
-        const int n_user_int_attribs = m_user_int_attribs.size();
+        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
+        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
         const auto get_position = GetParticlePosition(pinned_tile);
         const auto soa = pinned_tile.getParticleTileData();
         const amrex::ParticleReal* AMREX_RESTRICT ux = soa.m_rdata[PIdx::ux];
@@ -984,7 +984,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, lev);
@@ -1120,8 +1120,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
         // user-defined integer and real attributes
-        const int n_user_int_attribs = m_user_int_attribs.size();
-        const int n_user_real_attribs = m_user_real_attribs.size();
+        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
         amrex::Gpu::PinnedVector<int*> pa_user_int_pinned(n_user_int_attribs);
         amrex::Gpu::PinnedVector<ParticleReal*> pa_user_real_pinned(n_user_real_attribs);
         amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec_pinned(n_user_int_attribs);
@@ -1525,7 +1525,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
@@ -1670,8 +1670,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         }
 
         // user-defined integer and real attributes
-        const int n_user_int_attribs = m_user_int_attribs.size();
-        const int n_user_real_attribs = m_user_real_attribs.size();
+        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
         amrex::Gpu::PinnedVector<int*> pa_user_int_pinned(n_user_int_attribs);
         amrex::Gpu::PinnedVector<ParticleReal*> pa_user_real_pinned(n_user_real_attribs);
         amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec_pinned(n_user_int_attribs);
@@ -2011,7 +2011,7 @@ PhysicalParticleContainer::Evolve (int lev,
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = amrex::second();
+            auto wt = static_cast<amrex::Real>(amrex::second());
 
             const Box& box = pti.validbox();
 
@@ -2310,9 +2310,9 @@ PhysicalParticleContainer::SplitParticles (int lev)
             // offset for split particles is computed as a function of cell size
             // and number of particles per cell, so that a uniform distribution
             // before splitting results in a uniform distribution after splitting
-            split_offset[0] /= ppc_nd[0];
-            split_offset[1] /= ppc_nd[1];
-            split_offset[2] /= ppc_nd[2];
+            split_offset[0] /= static_cast<amrex::Real>(ppc_nd[0]);
+            split_offset[1] /= static_cast<amrex::Real>(ppc_nd[1]);
+            split_offset[2] /= static_cast<amrex::Real>(ppc_nd[2]);
         }
         // particle Array Of Structs data
         auto& particles = pti.GetArrayOfStructs();

@@ -110,7 +110,7 @@ namespace {
         // Factor 0.5 is here because each alpha only gets half of the decay energy
         constexpr amrex::ParticleReal gamma_Bestar = (1._prt + 0.5_prt*E_decay/(m_alpha*c_sq));
         constexpr amrex::ParticleReal gamma_Bestar_sq_minus_one = gamma_Bestar*gamma_Bestar - 1._prt;
-        const amrex::ParticleReal p_Bestar = m_alpha*PhysConst::c*std::sqrt(gamma_Bestar_sq_minus_one);
+        const amrex::ParticleReal p_Bestar = static_cast<amrex::ParticleReal>(m_alpha)*PhysConst::c*std::sqrt(gamma_Bestar_sq_minus_one);
 
         // Compute momentum of second alpha in Beryllium rest frame, assuming isotropic distribution
         amrex::ParticleReal px_Bestar, py_Bestar, pz_Bestar;

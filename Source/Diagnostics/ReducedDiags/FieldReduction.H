@@ -174,15 +174,15 @@ public:
 #if defined(WARPX_DIM_1D_Z)
                 const amrex::Real x = 0._rt;
                 const amrex::Real y = 0._rt;
-                const amrex::Real z = (k + 0.5_rt)*dx[0] + real_box.lo(0);
+                const amrex::Real z = (static_cast<amrex::Real>(k) + 0.5_rt)*dx[0] + real_box.lo(0);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const amrex::Real x = (i + 0.5_rt)*dx[0] + real_box.lo(0);
+                const amrex::Real x = (static_cast<amrex::Real>(i) + 0.5_rt)*dx[0] + real_box.lo(0);
                 const amrex::Real y = 0._rt;
-                const amrex::Real z = (j + 0.5_rt)*dx[1] + real_box.lo(1);
+                const amrex::Real z = (static_cast<amrex::Real>(j) + 0.5_rt)*dx[1] + real_box.lo(1);
 #else
-                const amrex::Real x = (i + 0.5_rt)*dx[0] + real_box.lo(0);
-                const amrex::Real y = (j + 0.5_rt)*dx[1] + real_box.lo(1);
-                const amrex::Real z = (k + 0.5_rt)*dx[2] + real_box.lo(2);
+                const amrex::Real x = (static_cast<amrex::Real>(i) + 0.5_rt)*dx[0] + real_box.lo(0);
+                const amrex::Real y = (static_cast<amrex::Real>(j) + 0.5_rt)*dx[1] + real_box.lo(1);
+                const amrex::Real z = (static_cast<amrex::Real>(k) + 0.5_rt)*dx[2] + real_box.lo(2);
 #endif
                 const amrex::Real Ex_interp = ablastr::coarsen::sample::Interp(arrEx, Extype, cellCenteredtype,
                                                                                reduction_coarsening_ratio, i, j, k, reduction_comp);
