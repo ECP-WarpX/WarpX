@@ -70,7 +70,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
     // algorithm.
     auto bins = ParticleUtils::findParticlesInEachCell(lev, pti, ptile);
 
-    const int n_cells = bins.numBins();
+    const auto n_cells = static_cast<int>(bins.numBins());
     const auto indices = bins.permutationPtr();
     const auto cell_offsets = bins.offsetsPtr();
 

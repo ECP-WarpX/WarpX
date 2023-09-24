@@ -97,20 +97,20 @@ namespace {
             soa_2.m_rdata[PIdx::ux][idx_2],
             soa_2.m_rdata[PIdx::uy][idx_2],
             soa_2.m_rdata[PIdx::uz][idx_2], m2,
-            ux_alpha1, uy_alpha1, uz_alpha1, m_alpha,
-            ux_Be, uy_Be, uz_Be, m_beryllium,
+            ux_alpha1, uy_alpha1, uz_alpha1, static_cast<amrex::ParticleReal>(m_alpha),
+            ux_Be, uy_Be, uz_Be, static_cast<amrex::ParticleReal>(m_beryllium),
             E_fusion, engine);
 
         // Compute momentum of beryllium in lab frame
-        const amrex::ParticleReal px_Be = m_beryllium * ux_Be;
-        const amrex::ParticleReal py_Be = m_beryllium * uy_Be;
-        const amrex::ParticleReal pz_Be = m_beryllium * uz_Be;
+        const amrex::ParticleReal px_Be = static_cast<amrex::ParticleReal>(m_beryllium) * ux_Be;
+        const amrex::ParticleReal py_Be = static_cast<amrex::ParticleReal>(m_beryllium) * uy_Be;
+        const amrex::ParticleReal pz_Be = static_cast<amrex::ParticleReal>(m_beryllium) * uz_Be;
 
         // Compute momentum norm of second and third alphas in Beryllium rest frame
         // Factor 0.5 is here because each alpha only gets half of the decay energy
-        constexpr amrex::ParticleReal gamma_Bestar = (1._prt + 0.5_prt*E_decay/(m_alpha*c_sq));
+        constexpr amrex::ParticleReal gamma_Bestar = (1._prt + 0.5_prt*E_decay/(static_cast<amrex::ParticleReal>(m_alpha)*c_sq));
         constexpr amrex::ParticleReal gamma_Bestar_sq_minus_one = gamma_Bestar*gamma_Bestar - 1._prt;
-        const amrex::ParticleReal p_Bestar = m_alpha*PhysConst::c*std::sqrt(gamma_Bestar_sq_minus_one);
+        const amrex::ParticleReal p_Bestar = static_cast<amrex::ParticleReal>(m_alpha)*PhysConst::c*std::sqrt(gamma_Bestar_sq_minus_one);
 
         // Compute momentum of second alpha in Beryllium rest frame, assuming isotropic distribution
         amrex::ParticleReal px_Bestar, py_Bestar, pz_Bestar;
@@ -120,8 +120,8 @@ namespace {
         amrex::ParticleReal px_alpha2, py_alpha2, pz_alpha2;
         // Preliminary calculation: compute Beryllium velocity v_Be
         const amrex::ParticleReal p_Be_sq   = px_Be*px_Be + py_Be*py_Be + pz_Be*pz_Be;
-        const amrex::ParticleReal g_Be      = std::sqrt(1._prt + p_Be_sq / (mBe_sq*c_sq));
-        const amrex::ParticleReal mg_Be     = m_beryllium*g_Be;
+        const amrex::ParticleReal g_Be      = std::sqrt(1._prt + p_Be_sq / (static_cast<amrex::ParticleReal>(mBe_sq)*c_sq));
+        const amrex::ParticleReal mg_Be     = static_cast<amrex::ParticleReal>(m_beryllium)*g_Be;
         const amrex::ParticleReal v_Bex     = px_Be / mg_Be;
         const amrex::ParticleReal v_Bey     = py_Be / mg_Be;
         const amrex::ParticleReal v_Bez     = pz_Be / mg_Be;
@@ -133,7 +133,7 @@ namespace {
         {
             const amrex::ParticleReal vcDps = v_Bex*px_Bestar + v_Bey*py_Bestar + v_Bez*pz_Bestar;
             const amrex::ParticleReal factor0 = (g_Be-1._prt)/v_Be_sq;
-            const amrex::ParticleReal factor = factor0*vcDps + m_alpha*gamma_Bestar*g_Be;
+            const amrex::ParticleReal factor = factor0*vcDps + static_cast<amrex::ParticleReal>(m_alpha)*gamma_Bestar*g_Be;
             px_alpha2 = px_Bestar + v_Bex * factor;
             py_alpha2 = py_Bestar + v_Bey * factor;
             pz_alpha2 = pz_Bestar + v_Bez * factor;
@@ -159,18 +159,18 @@ namespace {
         soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 1] = ux_alpha1;
         soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 1] = uy_alpha1;
         soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 1] = uz_alpha1;
-        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 2] = px_alpha2/m_alpha;
-        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 2] = py_alpha2/m_alpha;
-        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 2] = pz_alpha2/m_alpha;
-        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 3] = px_alpha2/m_alpha;
-        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 3] = py_alpha2/m_alpha;
-        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 3] = pz_alpha2/m_alpha;
-        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 4] = px_alpha3/m_alpha;
-        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 4] = py_alpha3/m_alpha;
-        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 4] = pz_alpha3/m_alpha;
-        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 5] = px_alpha3/m_alpha;
-        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 5] = py_alpha3/m_alpha;
-        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 5] = pz_alpha3/m_alpha;
+        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 2] = px_alpha2/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 2] = py_alpha2/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 2] = pz_alpha2/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 3] = px_alpha2/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 3] = py_alpha2/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 3] = pz_alpha2/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 4] = px_alpha3/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 4] = py_alpha3/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 4] = pz_alpha3/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::ux][idx_alpha_start + 5] = px_alpha3/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::uy][idx_alpha_start + 5] = py_alpha3/static_cast<amrex::ParticleReal>(m_alpha);
+        soa_alpha.m_rdata[PIdx::uz][idx_alpha_start + 5] = pz_alpha3/static_cast<amrex::ParticleReal>(m_alpha);
     }
 
 }

@@ -89,7 +89,7 @@ public:
                 const int idx_2 = static_cast<int>(ceil(temp));
 
                 // linearly interpolate to the given energy value
-                temp -= idx_1;
+                temp -= static_cast<amrex::ParticleReal>(idx_1);
                 return m_sigmas_data[idx_1] + (m_sigmas_data[idx_2] - m_sigmas_data[idx_1]) * temp;
             }
         }

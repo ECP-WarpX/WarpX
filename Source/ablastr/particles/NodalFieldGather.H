@@ -47,9 +47,9 @@ void compute_weights_nodal (const amrex::ParticleReal xp,
     j = static_cast<int>(amrex::Math::floor(y));
     k = static_cast<int>(amrex::Math::floor(z));
 
-    W[0][1] = x - i;
-    W[1][1] = y - j;
-    W[2][1] = z - k;
+    W[0][1] = x - static_cast<amrex::Real>(i);
+    W[1][1] = y - static_cast<amrex::Real>(j);
+    W[2][1] = z - static_cast<amrex::Real>(k);
 
     W[0][0] = 1.0_rt - W[0][1];
     W[1][0] = 1.0_rt - W[1][1];

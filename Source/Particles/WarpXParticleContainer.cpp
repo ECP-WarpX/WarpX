@@ -1189,9 +1189,9 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
 
     std::array<amrex::ParticleReal, 3> mean_v;
     if (np_total > 0) {
-        mean_v[0] = vx_total / np_total;
-        mean_v[1] = vy_total / np_total;
-        mean_v[2] = vz_total / np_total;
+        mean_v[0] = vx_total / static_cast<amrex::ParticleReal>(np_total);
+        mean_v[1] = vy_total / static_cast<amrex::ParticleReal>(np_total);
+        mean_v[2] = vz_total / static_cast<amrex::ParticleReal>(np_total);
     }
 
     return mean_v;
@@ -1280,7 +1280,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             if (costs && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*costs)[pti.index()], wt);
             }
         }

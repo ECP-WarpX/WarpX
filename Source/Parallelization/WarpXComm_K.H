@@ -58,11 +58,14 @@ void warpx_interp (int j, int k, int l,
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-                const amrex::Real wj = static_cast<amrex::Real>(rj - std::abs(j + hj - (jc + jj + hj) * rj))
+                const amrex::Real wj = static_cast<amrex::Real>(
+                    rj - amrex::Math::abs(j + hj - (jc + jj + hj) * rj))
                     / static_cast<amrex::Real>(rj);
-                const amrex::Real wk = static_cast<amrex::Real>(rk - std::abs(k + hk - (kc + kk + hk) * rk))
+                const amrex::Real wk = static_cast<amrex::Real>(
+                    rk - amrex::Math::abs(k + hk - (kc + kk + hk) * rk))
                     / static_cast<amrex::Real>(rk);
-                const amrex::Real wl = static_cast<amrex::Real>(rl - std::abs(l + hl - (lc + ll + hl) * rl))
+                const amrex::Real wl = static_cast<amrex::Real>(
+                    rl - amrex::Math::abs(l + hl - (lc + ll + hl) * rl))
                     / static_cast<amrex::Real>(rl);
                 res += wj * wk * wl * arr_coarse_zeropad(jc+jj,kc+kk,lc+ll);
             }

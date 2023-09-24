@@ -69,7 +69,7 @@ namespace detail
     snakeToCamel (const std::string& snake_string)
     {
         std::string camelString = snake_string;
-        const int n = camelString.length();
+        const auto n = static_cast<int>(camelString.length());
         for (int x = 0; x < n; x++)
         {
             if (x == 0)
@@ -783,7 +783,9 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                         [](uint64_t const *p) { delete[] p; }
                 );
                 for (auto i = 0; i < numParticleOnTile; i++) {
-                    ids.get()[i] = ablastr::particles::localIDtoGlobal(aos[i].id(), aos[i].cpu());
+                    ids.get()[i] = ablastr::particles::localIDtoGlobal(
+                        static_cast<int>(aos[i].id()),
+                        static_cast<int>(aos[i].cpu()));
                 }
                 auto const scalar = openPMD::RecordComponent::SCALAR;
                 currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
@@ -1148,11 +1150,11 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
       fieldBoundary.resize(AMREX_SPACEDIM * 2);
       particleBoundary.resize(AMREX_SPACEDIM * 2);
 
-      for (auto i = 0u; i < fieldBoundary.size() / 2u; ++i)
+      for (int i = 0; i < static_cast<int>(fieldBoundary.size()) / 2; ++i)
           if (m_fieldPMLdirections.at(i))
               fieldBoundary.at(i) = "open";
 
-      for (auto i = 0u; i < fieldBoundary.size() / 2u; ++i)
+      for (int i = 0; i < static_cast<int>(fieldBoundary.size()) / 2; ++i)
           if (period.isPeriodic(i)) {
               fieldBoundary.at(2u * i) = "periodic";
               fieldBoundary.at(2u * i + 1u) = "periodic";

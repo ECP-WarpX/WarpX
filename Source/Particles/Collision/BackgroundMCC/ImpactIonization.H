@@ -177,7 +177,7 @@ public:
         // get references to the particle to get its position
         const auto& p = src.getSuperParticle(i_src);
         ParticleReal x, y, z;
-        double E_coll;
+        amrex::ParticleReal E_coll;
         get_particle_position(p, x, y, z);
 
         // calculate standard deviation in neutral velocity distribution using

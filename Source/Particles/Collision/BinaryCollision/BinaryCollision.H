@@ -182,7 +182,7 @@ public:
                 if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
                     amrex::Gpu::synchronize();
-                    wt = amrex::second() - wt;
+                    wt = static_cast<amrex::Real>(amrex::second()) - wt;
                     amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
                 }
             }
@@ -243,7 +243,7 @@ public:
             // Loop over cells, and collide the particles in each cell
 
             // Extract low-level data
-            int const n_cells = bins_1.numBins();
+            int const n_cells = static_cast<int>(bins_1.numBins());
             // - Species 1
             const auto soa_1 = ptile_1.getParticleTileData();
             index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
@@ -383,7 +383,7 @@ public:
             // Loop over cells, and collide the particles in each cell
 
             // Extract low-level data
-            int const n_cells = bins_1.numBins();
+            int const n_cells = static_cast<int>(bins_1.numBins());
             // - Species 1
             const auto soa_1 = ptile_1.getParticleTileData();
             index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
