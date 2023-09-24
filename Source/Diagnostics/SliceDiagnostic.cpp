@@ -376,7 +376,7 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
                 // If modified index.hi is > baselinebox.hi, move the point  //
                 // to the previous coarsenable point                         //
                 const auto small_number = 0.01;
-                if ( (hi_new * dom_geom[0].CellSize(idim))
+                if ( (static_cast<amrex::Real>(hi_new) * dom_geom[0].CellSize(idim))
                       > real_box.hi(idim) - real_box.lo(idim) + dom_geom[0].CellSize(idim)*small_number)
                 {
                    hi_new = index_hi - mod_hi;
@@ -401,9 +401,9 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
                 slice_lo[idim] = index_lo;
                 slice_hi[idim] = index_hi - 1; // since default is cell-centered
             }
-            slice_realbox.setLo( idim, index_lo * dom_geom[0].CellSize(idim)
+            slice_realbox.setLo( idim, static_cast<amrex::Real>(index_lo) * dom_geom[0].CellSize(idim)
                                  + real_box.lo(idim) );
-            slice_realbox.setHi( idim, index_hi * dom_geom[0].CellSize(idim)
+            slice_realbox.setHi( idim, static_cast<amrex::Real>(index_hi) * dom_geom[0].CellSize(idim)
                                  + real_box.lo(idim) );
             slice_cc_nd_box.setLo( idim, slice_realbox.lo(idim) + Real(fac) );
             slice_cc_nd_box.setHi( idim, slice_realbox.hi(idim) - Real(fac) );
@@ -449,8 +449,8 @@ InterpolateLo(const Box& bx, FArrayBox &fabox, IntVect slice_lo,
     const auto hi = amrex::ubound(bx);
     const double fac = ( 1.0-IndType[idir] )*geom[0].CellSize(idir) * 0.5;
     const int imin = slice_lo[idir];
-    const double minpos = imin*geom[0].CellSize(idir) + fac + real_box.lo(idir);
-    const double maxpos = (imin+1)*geom[0].CellSize(idir) + fac + real_box.lo(idir);
+    const double minpos = static_cast<amrex::Real>(imin)*geom[0].CellSize(idir) + fac + real_box.lo(idir);
+    const double maxpos = static_cast<amrex::Real>(imin+1)*geom[0].CellSize(idir) + fac + real_box.lo(idir);
     const double slice_minpos = slice_realbox.lo(idir) ;
 
     switch (idir) {

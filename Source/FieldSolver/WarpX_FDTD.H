@@ -40,8 +40,9 @@ void warpx_computedivb(int i, int j, int k, int dcomp,
     amrex::ignore_unused(j, Bx, dxinv);
     amrex::ignore_unused(k, By, dyinv);
 #elif defined WARPX_DIM_RZ
-    const amrex::Real ru = 1._rt + 0.5_rt/(rmin*dxinv + i + 0.5_rt);
-    const amrex::Real rd = 1._rt - 0.5_rt/(rmin*dxinv + i + 0.5_rt);
+    const auto rcc = 0.5_rt/(rmin*dxinv + static_cast<amrex::Real>(i) + 0.5_rt);
+    const amrex::Real ru = 1._rt + rcc;
+    const amrex::Real rd = 1._rt - rcc;
     divB(i,j,0,dcomp) = (ru*Bx(i+1,j,0) - rd*Bx(i,j,0))*dxinv
                        + (Bz(i,j+1,0) - Bz(i,j,0))*dzinv;
     amrex::ignore_unused(k, By, dyinv);

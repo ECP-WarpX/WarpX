@@ -416,7 +416,7 @@ SpectralFieldData::BackwardTransform (const int lev,
             const amrex::Array4<amrex::Real> mf_arr = mf[mfi].array();
             const amrex::Array4<const amrex::Real> tmp_arr = tmpRealField[mfi].array();
 
-            const amrex::Real inv_N = 1._rt / tmpRealField[mfi].box().numPts();
+            const amrex::Real inv_N = 1._rt / static_cast<amrex::Real>(tmpRealField[mfi].box().numPts());
 
             // Total number of cells, including ghost cells (nj represents ny in 3D and nz in 2D)
             const int ni = mf_box.length(0);

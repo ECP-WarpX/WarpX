@@ -95,11 +95,10 @@ RigidInjectedParticleContainer::WriteHeader (std::ostream& os) const
     PhysicalParticleContainer::WriteHeader( os );
 
     // Write quantities that are specific to the rigid-injected species
-    const int nlevs = zinject_plane_levels.size();
-    os << nlevs << "\n";
-    for (int i = 0; i < nlevs; ++i)
+    os << zinject_plane_levels.size() << "\n";
+    for (const auto& el : zinject_plane_levels)
     {
-        os << zinject_plane_levels[i] << "\n";
+        os << el << "\n";
     }
     os << vzbeam_ave_boosted << "\n";
 }

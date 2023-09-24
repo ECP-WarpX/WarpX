@@ -219,7 +219,7 @@ void ParticleHistogram::ComputeDiags (int step)
 
                     // don't count a particle if it is filtered out
                     if (do_parser_filter)
-                        if (!fun_filterparser(t, x, y, z, ux, uy, uz))
+                        if (fun_filterparser(t, x, y, z, ux, uy, uz) <= 0.0)
                             return;
                     // continue function if particle is not filtered out
                     auto const f = fun_partparser(t, x, y, z, ux, uy, uz);

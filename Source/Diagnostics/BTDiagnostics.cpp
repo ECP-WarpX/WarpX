@@ -163,7 +163,7 @@ void BTDiagnostics::DerivedInitData ()
     // j >= i / gamma / (1+beta) * dt_snapshot / dt_boosted_frame
     const int final_snapshot_starting_step = static_cast<int>(std::ceil(final_snapshot_iteration / WarpX::gamma_boost / (1._rt+WarpX::beta_boost) * m_dt_snapshots_lab / dt_boosted_frame));
     const int final_snapshot_fill_iteration = final_snapshot_starting_step + num_buffers * m_buffer_size - 1;
-    const amrex::Real final_snapshot_fill_time = final_snapshot_fill_iteration * dt_boosted_frame;
+    const amrex::Real final_snapshot_fill_time = static_cast<amrex::Real>(final_snapshot_fill_iteration) * dt_boosted_frame;
     if (WarpX::compute_max_step_from_btd) {
         if (final_snapshot_fill_iteration > warpx.maxStep()) {
             warpx.updateMaxStep(final_snapshot_fill_iteration);
@@ -392,9 +392,9 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     // from the coarsenable, cell-centered BoxArray, ba.
     for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) +
-            diag_ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
+            static_cast<amrex::Real>(diag_ba.getCellCenteredBox(0).smallEnd(idim)) * warpx.Geom(lev).CellSize(idim));
         diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) +
-            (diag_ba.getCellCenteredBox( diag_ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
+            static_cast<amrex::Real>(diag_ba.getCellCenteredBox( diag_ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
     }
 
     // Define buffer_domain in lab-frame for the i^th snapshot.

@@ -182,7 +182,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
         amrex::ParallelFor(tf,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
-                Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
+                Real const r = rmin + static_cast<Real>(i)*dr; // r on a nodal grid (F is nodal in r)
                 if (r != 0) { // Off-axis, regular equations
                     F(i, j, 0, 0) += dt * (
                         - rho(i, j, 0, rho_shift) * inv_epsilon0

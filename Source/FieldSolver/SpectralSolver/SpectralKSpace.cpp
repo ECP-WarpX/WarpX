@@ -239,10 +239,10 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                 for (int n=0; n<nstencil; n++){
                     if (grid_type == GridType::Collocated){
                         p_modified_k[i] += p_stencil_coef[n]*
-                            std::sin( p_k[i]*(n+1)*delta_x )/( (n+1)*delta_x );
+                            std::sin( p_k[i]*static_cast<Real>(n+1)*delta_x )/( static_cast<Real>(n+1)*delta_x );
                     } else {
                         p_modified_k[i] += p_stencil_coef[n]* \
-                            std::sin( p_k[i]*(n+0.5)*delta_x )/( (n+0.5)*delta_x );
+                            std::sin( p_k[i]*(static_cast<Real>(n)+0.5_rt)*delta_x )/( static_cast<Real>(static_cast<Real>(n)+0.5_rt)*delta_x );
                     }
                 }
 

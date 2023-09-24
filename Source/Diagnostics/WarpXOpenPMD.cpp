@@ -1540,7 +1540,7 @@ WarpXParticleCounter::GetParticleOffsetOfProcessor (
     amrex::ParallelGather::Gather (numParticles, result.data(), -1, amrex::ParallelDescriptor::Communicator());
 
     sum = 0;
-    int const num_results = result.size();
+    int const num_results = static_cast<int>(result.size());
     for (int i=0; i<num_results; i++) {
         sum += result[i];
         if (i<m_MPIRank)

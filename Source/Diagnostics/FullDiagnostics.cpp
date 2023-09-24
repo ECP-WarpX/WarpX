@@ -782,8 +782,8 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
             new_lo[idim] = cur_lo[idim];
             new_hi[idim] = cur_hi[idim];
         }
-        new_lo[moving_dir] = cur_lo[moving_dir] + num_shift_base*geom_dx[moving_dir];
-        new_hi[moving_dir] = cur_hi[moving_dir] + num_shift_base*geom_dx[moving_dir];
+        new_lo[moving_dir] = cur_lo[moving_dir] + static_cast<amrex::Real>(num_shift_base)*geom_dx[moving_dir];
+        new_hi[moving_dir] = cur_hi[moving_dir] + static_cast<amrex::Real>(num_shift_base)*geom_dx[moving_dir];
         // Update RealBox of geometry with shifted domain geometry for moving-window
         for (int lev = 0; lev < nmax_lev; ++lev) {
             // Note that Full diagnostics has only one snapshot, m_num_buffers = 1

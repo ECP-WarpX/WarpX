@@ -508,14 +508,14 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                 }
 
 #if defined(WARPX_DIM_1D_Z)
-                const auto fac_z = static_cast<amrex::Real>(1 - mf_type[0]) * dx[0]*0.5_rt;
+                const auto fac_z = (mf_type[0] == 1) ? 0.0_rt : dx[0]*0.5_rt;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const auto fac_x = static_cast<amrex::Real>(1 - mf_type[0]) * dx[0]*0.5_rt;
-                const auto fac_z = static_cast<amrex::Real>(1 - mf_type[1]) * dx[1]*0.5_rt;
+                const auto fac_x = (mf_type[0] == 1) ? 0.0_rt : dx[0]*0.5_rt;
+                const auto fac_z = (mf_type[1] == 1) ? 0.0_rt : dx[1]*0.5_rt;
 #else
-                const auto fac_x = static_cast<amrex::Real>(1 - mf_type[0]) * dx[0]*0.5_rt;
-                const auto fac_y = static_cast<amrex::Real>(1 - mf_type[1]) * dx[1]*0.5_rt;
-                const auto fac_z = static_cast<amrex::Real>(1 - mf_type[2]) * dx[2]*0.5_rt;
+                const auto fac_x = (mf_type[0] == 1) ? 0.0_rt : dx[0]*0.5_rt;
+                const auto fac_y = (mf_type[1] == 1) ? 0.0_rt : dx[1]*0.5_rt;
+                const auto fac_z = (mf_type[2] == 1) ? 0.0_rt : dx[2]*0.5_rt;
 #endif
 
                 amrex::ParallelFor (outbox, nc,

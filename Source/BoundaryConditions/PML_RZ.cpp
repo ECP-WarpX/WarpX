@@ -96,7 +96,7 @@ PML_RZ::ApplyDamping (amrex::MultiFab* Et_fp, amrex::MultiFab* Ez_fp,
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
             {
                 const amrex::Real rr = static_cast<amrex::Real>(i - nr_damp_min);
-                const amrex::Real wr = rr/nr_damp;
+                const amrex::Real wr = rr/ static_cast<amrex::Real>(nr_damp);
                 const amrex::Real damp_factor = std::exp( -4._rt * cdt_over_dr * wr*wr );
 
                 // Substract the theta PML fields from the regular theta fields

@@ -156,7 +156,7 @@ void FiniteDifferenceSolver::ComputeDivECylindrical (
         amrex::ParallelFor(tdive,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
-                Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
+                Real const r = rmin + static_cast<Real>(i)*dr; // r on a nodal grid (F is nodal in r)
                 if (r != 0) { // Off-axis, regular equations
                     divE(i, j, 0, 0) =
                           T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 0)

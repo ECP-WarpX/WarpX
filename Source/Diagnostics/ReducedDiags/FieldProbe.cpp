@@ -252,9 +252,9 @@ void FieldProbe::InitData ()
 
             // Final - initial / steps. Array contains dx, dy, dz
             const amrex::Real DetLineStepSize[3]{
-                    (x1_probe - x_probe) / (m_resolution - 1),
-                    (y1_probe - y_probe) / (m_resolution - 1),
-                    (z1_probe - z_probe) / (m_resolution - 1)};
+                    (x1_probe - x_probe) / static_cast<amrex::Real>(m_resolution - 1),
+                    (y1_probe - y_probe) / static_cast<amrex::Real>(m_resolution - 1),
+                    (z1_probe - z_probe) / static_cast<amrex::Real>(m_resolution - 1)};
             for ( int step = 0; step < m_resolution; step++)
             {
                 xpos.push_back(x_probe + (DetLineStepSize[0] * step));
@@ -300,13 +300,13 @@ void FieldProbe::InitData ()
 
             // create array containing point-to-point step size
             const amrex::Real SideStepSize[3]{
-                (loweropposite[0] - lowercorner[0]) / (m_resolution - 1),
-                (loweropposite[1] - lowercorner[1]) / (m_resolution - 1),
-                (loweropposite[2] - lowercorner[2]) / (m_resolution - 1)};
+                (loweropposite[0] - lowercorner[0]) / static_cast<amrex::Real>(m_resolution - 1),
+                (loweropposite[1] - lowercorner[1]) / static_cast<amrex::Real>(m_resolution - 1),
+                (loweropposite[2] - lowercorner[2]) / static_cast<amrex::Real>(m_resolution - 1)};
             const amrex::Real UpStepSize[3]{
-                (uppercorner[0] - lowercorner[0]) / (m_resolution - 1),
-                (uppercorner[1] - lowercorner[1]) / (m_resolution - 1),
-                (uppercorner[2] - lowercorner[2]) / (m_resolution - 1)};
+                (uppercorner[0] - lowercorner[0]) / static_cast<amrex::Real>(m_resolution - 1),
+                (uppercorner[1] - lowercorner[1]) / static_cast<amrex::Real>(m_resolution - 1),
+                (uppercorner[2] - lowercorner[2]) / static_cast<amrex::Real>(m_resolution - 1)};
 
             amrex::Real temp_pos[3]{};
             // Starting at the lowercorner point, step sideways and up to form
@@ -556,7 +556,7 @@ void FieldProbe::ComputeDiags (int step)
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
                         long idx = ip*noutputs;
-                        dvp[idx++] = m_structs[ip].id();
+                        dvp[idx++] = static_cast<amrex::Real>(m_structs[ip].id());
                         dvp[idx++] = xp;
                         dvp[idx++] = yp;
                         dvp[idx++] = zp;
