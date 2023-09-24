@@ -57,11 +57,11 @@ struct GetVelocity
         {
             case (VelConstantValue):
             {
-                return m_sign_dir * m_velocity;
+                return static_cast<amrex::Real>(m_sign_dir) * m_velocity;
             }
             case (VelParserFunction):
             {
-                return m_sign_dir * m_velocity_parser(x,y,z);
+                return static_cast<amrex::Real>(m_sign_dir) * m_velocity_parser(x,y,z);
             }
             default:
             {

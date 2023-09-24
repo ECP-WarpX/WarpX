@@ -522,7 +522,7 @@ WarpX::ReadParameters ()
 
     {
         const ParmParse pp_algo("algo");
-        electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
+        electromagnetic_solver_id = static_cast<short>(GetAlgorithmInteger(pp_algo, "maxwell_solver"));
     }
 
     {
@@ -1007,7 +1007,7 @@ WarpX::ReadParameters ()
 
         // Integer that corresponds to the type of grid used in the simulation
         // (collocated, staggered, hybrid)
-        grid_type = GetAlgorithmInteger(pp_warpx, "grid_type");
+        grid_type =static_cast<short>(GetAlgorithmInteger(pp_warpx, "grid_type"));
 
         // Use same shape factors in all directions, for gathering
         if (grid_type == GridType::Collocated) galerkin_interpolation = false;
@@ -1106,9 +1106,9 @@ WarpX::ReadParameters ()
 
         // note: current_deposition must be set after maxwell_solver is already determined,
         //       because its default depends on the solver selection
-        current_deposition_algo = GetAlgorithmInteger(pp_algo, "current_deposition");
-        charge_deposition_algo = GetAlgorithmInteger(pp_algo, "charge_deposition");
-        particle_pusher_algo = GetAlgorithmInteger(pp_algo, "particle_pusher");
+        current_deposition_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "current_deposition"));
+        charge_deposition_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "charge_deposition"));
+        particle_pusher_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "particle_pusher"));
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||
@@ -3004,11 +3004,11 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
     if (a_grid_type == GridType::Collocated)
     {
        // First coefficient
-       coeffs.at(0) = m * 2. / (m+1);
+       coeffs.at(0) = m * 2._rt / (m+1);
        // Other coefficients by recurrence
        for (int n = 1; n < m; n++)
        {
-           coeffs.at(n) = - (m-n) * 1. / (m+n+1) * coeffs.at(n-1);
+           coeffs.at(n) = - (m-n) * 1._rt / (m+n+1) * coeffs.at(n-1);
        }
     }
     // Coefficients for staggered finite-difference approximation
@@ -3017,10 +3017,10 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
        Real prod = 1.;
        for (int k = 1; k < m+1; k++)
        {
-           prod *= (m + k) / (4. * k);
+           prod *= (m + k) / (4._rt * k);
        }
        // First coefficient
-       coeffs.at(0) = 4 * m * prod * prod;
+       coeffs.at(0) = 4_rt * m * prod * prod;
        // Other coefficients by recurrence
        for (int n = 1; n < m; n++)
        {

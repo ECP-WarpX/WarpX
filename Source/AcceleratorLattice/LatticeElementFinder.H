@@ -110,7 +110,7 @@ struct LatticeElementFinder
             [=] AMREX_GPU_DEVICE (int iz) {
 
                 // Get the location of the grid node
-                amrex::Real z_node = zmin + iz*dz;
+                amrex::Real z_node = zmin + static_cast<amrex::Real>(iz)*dz;
 
                 if (gamma_boost > 1._prt) {
                     // Transform to lab frame

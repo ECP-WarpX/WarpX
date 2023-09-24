@@ -111,6 +111,24 @@ namespace ablastr::coarsen::average
             return arr_src.contains(ix, iy, iz) ? arr_src(ix, iy, iz, n) : 0.0_rt;
         };
 
+        // if cell-centered
+        const auto if_cc_wx = static_cast<amrex::Real>((1 - sfx) * (1 - scx));
+        const auto if_cc_wy = static_cast<amrex::Real>((1 - sfy) * (1 - scy));
+        const auto if_cc_wz = static_cast<amrex::Real>((1 - sfz) * (1 - scz));
+
+        // if nodal
+        const auto if_nd_wx = static_cast<amrex::Real>(sfx * scx);
+        const auto if_nd_wy = static_cast<amrex::Real>(sfy * scy);
+        const auto if_nd_wz = static_cast<amrex::Real>(sfz * scz);
+
+        // Auxiliary real variables
+        const auto crx2 = static_cast<amrex::Real>(crx * crx);
+        const auto cry2 = static_cast<amrex::Real>(cry * cry);
+        const auto crz2 = static_cast<amrex::Real>(crz * crz);
+        const auto one_over_numx = (1.0_rt / static_cast<amrex::Real>(numx));
+        const auto one_over_numy = (1.0_rt / static_cast<amrex::Real>(numy));
+        const auto one_over_numz = (1.0_rt / static_cast<amrex::Real>(numz));
+
         // Interpolate over points computed above. Weights are computed in order
         // to guarantee total charge conservation for both cell-centered data
         // (equal weights) and nodal data (weights depend on distance between
@@ -126,15 +144,18 @@ namespace ablastr::coarsen::average
                     const int ii = imin + iref;
                     const int jj = jmin + jref;
                     const int kk = kmin + kref;
-                    const amrex::Real wx = (1.0_rt / static_cast<amrex::Real>(numx)) * (1 - sfx) * (1 - scx) // if cell-centered
-                         + ((amrex::Math::abs(crx - amrex::Math::abs(ii - i * crx))) /
-                            static_cast<amrex::Real>(crx * crx)) * sfx * scx; // if nodal
-                    const amrex::Real wy = (1.0_rt / static_cast<amrex::Real>(numy)) * (1 - sfy) * (1 - scy) // if cell-centered
-                         + ((amrex::Math::abs(cry - amrex::Math::abs(jj - j * cry))) /
-                            static_cast<amrex::Real>(cry * cry)) * sfy * scy; // if nodal
-                    const amrex::Real wz = (1.0_rt / static_cast<amrex::Real>(numz)) * (1 - sfz) * (1 - scz) // if cell-centered
-                         + ((amrex::Math::abs(crz - amrex::Math::abs(kk - k * crz))) /
-                            static_cast<amrex::Real>(crz * crz)) * sfz * scz; // if nodal
+
+                    const auto c_nd_x = (static_cast<amrex::Real>(
+                        (amrex::Math::abs(crx - amrex::Math::abs(ii - i * crx)))) / crx2);
+                    const auto c_nd_y = (static_cast<amrex::Real>(
+                        (amrex::Math::abs(cry - amrex::Math::abs(jj - j * cry)))) / cry2);
+                    const auto c_nd_z = (static_cast<amrex::Real>(
+                        (amrex::Math::abs(crz - amrex::Math::abs(kk - k * crz)))) / crz2);
+
+                    const amrex::Real wx = one_over_numx * if_cc_wx + c_nd_x * if_nd_wx;
+                    const amrex::Real wy = one_over_numy * if_cc_wy + c_nd_y * if_nd_wy;
+                    const amrex::Real wz = one_over_numz * if_cc_wz + c_nd_z * if_nd_wz;
+
                     c += wx * wy * wz * arr_src_safe(ii, jj, kk, comp);
                 }
             }
