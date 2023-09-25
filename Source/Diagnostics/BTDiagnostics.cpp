@@ -301,8 +301,8 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
         // If buffer for this lab snapshot is full then dump it and continue to collect
         // slices afterwards
 	auto is_buffer_full = false;
-	const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
-        for (int lev = 0 ; lev < nlevels; ++lev) {
+	//const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
+        for (int lev = 0 ; lev < nmax_lev; ++lev) {
             is_buffer_full = buffer_full(i_buffer, lev);
 	}
 
