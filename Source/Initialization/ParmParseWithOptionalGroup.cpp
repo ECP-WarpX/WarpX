@@ -48,7 +48,20 @@ bool ParmParseWithOptionalGroup::query (const char* name, int& ref) const
     return is_specified;
 }
 
-bool ParmParseWithOptionalGroup::query (const char* name, amrex::Real& ref) const
+bool ParmParseWithOptionalGroup::query (const char* name, double& ref) const
+{
+    // First, query name with the group name
+    const amrex::ParmParse pp_with_group(prefix_dot_group);
+    bool is_specified = utils::parser::queryWithParser(pp_with_group, name, ref);
+    if (!is_specified && !group.empty()) {
+        // If it wasn't found, query it with only the prefix
+        const amrex::ParmParse pp_prefix(prefix);
+        is_specified = utils::parser::queryWithParser(pp_prefix, name, ref);
+    }
+    return is_specified;
+}
+
+bool ParmParseWithOptionalGroup::query (const char* name, float& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -113,7 +126,19 @@ void ParmParseWithOptionalGroup::get (const char* name, long& ref) const
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, amrex::Real& ref) const
+void ParmParseWithOptionalGroup::get (const char* name, double& ref) const
+{
+    // First, query name with the group name
+    const amrex::ParmParse pp_with_group(prefix_dot_group);
+    bool is_specified = utils::parser::queryWithParser(pp_with_group, name, ref);
+    if (!is_specified) {
+        // If it wasn't found, get it with only the prefix
+        const amrex::ParmParse pp_prefix(prefix);
+        utils::parser::getWithParser(pp_prefix, name, ref);
+    }
+}
+
+void ParmParseWithOptionalGroup::get (const char* name, float& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -137,7 +162,19 @@ void ParmParseWithOptionalGroup::get (const char* name, std::string& ref) const
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<amrex::ParticleReal>& ref) const
+void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<double>& ref) const
+{
+    // First, query name with the group name
+    const amrex::ParmParse pp_with_group(prefix_dot_group);
+    bool is_specified = utils::parser::queryArrWithParser(pp_with_group, name, ref);
+    if (!is_specified) {
+        // If it wasn't found, get it with only the prefix
+        const amrex::ParmParse pp_prefix(prefix);
+        utils::parser::getArrWithParser(pp_prefix, name, ref);
+    }
+}
+
+void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<float>& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -161,7 +198,19 @@ void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<int>& ref,
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<amrex::Real>& ref, int start_ix, int num_val) const
+void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<double>& ref, int start_ix, int num_val) const
+{
+    // First, query name with the group name
+    const amrex::ParmParse pp_with_group(prefix_dot_group);
+    bool is_with_suffix = utils::parser::queryArrWithParser(pp_with_group, name, ref, start_ix, num_val);
+    if (!is_with_suffix) {
+        // If it wasn't found, get it with only the prefix
+        const amrex::ParmParse pp_prefix(prefix);
+        utils::parser::getArrWithParser(pp_prefix, name, ref, start_ix, num_val);
+    }
+}
+
+void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<float>& ref, int start_ix, int num_val) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
