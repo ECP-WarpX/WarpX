@@ -425,9 +425,11 @@ WarpX::InitData ()
     }
     if (restart_chkfile.empty())
     {
+       //finest_level is initialized now to use it in ComputeDt instead of max_level for simulation max_level != finest_level
+        SetFinestLevel(max_level);
         ComputeDt();
-        WarpX::PrintDtDxDyDz();
         InitFromScratch();
+        WarpX::PrintDtDxDyDz();
         InitDiagnostics();
     }
     else
@@ -458,6 +460,7 @@ WarpX::InitData ()
 
     if (ParallelDescriptor::IOProcessor()) {
         std::cout << "\nGrids Summary:\n";
+
         printGridSummary(std::cout, 0, finestLevel());
     }
 

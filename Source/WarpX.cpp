@@ -98,6 +98,8 @@ int WarpX::end_moving_window_step = -1;
 int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
+int WarpX::end_fine_patch_step=-1;
+
 bool WarpX::fft_do_time_averaging = false;
 
 amrex::IntVect WarpX::m_fill_guards_fields  = amrex::IntVect(0);
@@ -506,7 +508,7 @@ WarpX::ReadParameters ()
 {
     // Ensure that geometry.dims is set properly.
     CheckDims();
-
+    auto has_max_step=false;
     {
         const ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         utils::parser::queryWithParser(pp, "max_step", max_step);
@@ -716,6 +718,17 @@ WarpX::ReadParameters ()
             utils::parser::getWithParser(
                 pp_warpx, "moving_window_v", moving_window_v);
             moving_window_v *= PhysConst::c;
+        }
+
+        if(max_level>0){
+            const auto end_fine_patch_defined=queryWithParser(pp_warpx,"end_fine_patch_step", end_fine_patch_step);
+            if(has_max_step && end_fine_patch_defined && do_subcycling==0){
+                auto ss = std::stringstream{};
+                if(max_step>=end_fine_patch_step){
+                    ss << "When the fine patch is removed, the max step will be " << end_fine_patch_step + std::floor(0.5*(max_step-end_fine_patch_step)) << ", users are advised to use stop time instead";
+                    ablastr::warn_manager::WMRecordWarning("Mesh Refinement", ss.str(), ablastr::warn_manager::WarnPriority::high);
+                }
+            }
         }
 
         pp_warpx.query("B_ext_grid_init_style", WarpX::B_ext_grid_s);

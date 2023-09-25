@@ -1966,7 +1966,6 @@ PhysicalParticleContainer::Evolve (int lev,
                                    const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
                                    Real /*t*/, Real dt, DtType a_dt_type, bool skip_deposition)
 {
-
     WARPX_PROFILE("PhysicalParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("PhysicalParticleContainer::Evolve::GatherAndPush", blp_fg);
 

@@ -242,6 +242,11 @@ Setting up the field mesh
 
     Example: for three levels, a value of ``2 2 4 8 8 16`` refines the first level by 2-fold in x and y and 4-fold in z compared to the coarsest level (level 0/mother grid); compared to the first level, the second level is refined 8-fold in x and y and 16-fold in z.
 
+* ``warpx.end_fine_patch_step`` (`integer`, default: ``-1``)
+    When using mesh refinement, this can be used to remove the finest level at a given timestep.
+
+    Note: in development; currently, only working on CPU. Moreover, as soon as the fine patch is removed, ``max_step`` is modified so that the final step corresponds to the physical time calculated with the initial timestep duration. Therefore, users are advised to use ``stop_time`` instead.
+
 * ``geometry.dims`` (`string`)
     The dimensions of the simulation geometry.
     Supported values are ``1``, ``2``, ``3``, ``RZ``.
