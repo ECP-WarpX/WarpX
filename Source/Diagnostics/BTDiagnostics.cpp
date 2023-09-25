@@ -94,7 +94,8 @@ void BTDiagnostics::DerivedInitData ()
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
 	m_buffer_box[i].resize(nmax_lev);
-        m_snapshot_full[i] = 0;
+        m_snapshot_box[i].resize(nmax_lev);
+    	m_snapshot_full[i] = 0;
         m_lastValidZSlice[i] = 0;
         m_buffer_flush_counter[i] = 0;
         m_first_flush_after_restart[i] = 1;
@@ -390,7 +391,9 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     }
     const amrex::Box diag_box( lo, hi );
     m_buffer_box[i_buffer][lev] = diag_box;
-    m_snapshot_box[i_buffer] = diag_box;
+    m_snapshot_box[i_buffer][lev] = diag_box;
+    //amrex::Print() << " m_buffer_box[i_buffer][" << lev << "]" <<  m_buffer_box[i_buffer][lev] << "\n";
+    //amrex::Print() << " m_snapshot_box[i_buffer][" << lev << "]" <<  m_snapshot_box[i_buffer][lev] << "\n";
     // Define box array
     amrex::BoxArray diag_ba(diag_box);
     diag_ba.maxSize( warpx.maxGridSize( lev ) );
@@ -460,7 +463,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
 #else
     m_snapshot_ncells_lab[i_buffer] = amrex::IntVect(Nz_lab);
 #endif
-
+ 
     // Box covering the extent of the user-defined diag in the back-transformed frame
     // for the ith snapshot
     // estimating the maximum number of buffer multifabs needed to obtain the
@@ -496,12 +499,12 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
                                  + 0.5*dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir])
                                  )
                              ) / dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]) ));
-    m_snapshot_box[i_buffer].setBig( m_moving_window_dir, snapshot_kindex_hi);
-    m_snapshot_box[i_buffer].setSmall( m_moving_window_dir,
+    m_snapshot_box[i_buffer][lev].setBig( m_moving_window_dir, snapshot_kindex_hi);
+    m_snapshot_box[i_buffer][lev].setSmall( m_moving_window_dir,
                                        snapshot_kindex_hi - (num_z_cells_in_snapshot-1) );
     // Setting hi k-index for the first buffer
     if (!restart) {
-        m_buffer_k_index_hi[i_buffer] = m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir);
+        m_buffer_k_index_hi[i_buffer] = m_snapshot_box[i_buffer][lev].bigEnd(m_moving_window_dir);
     }
 }
 
@@ -773,7 +776,7 @@ BTDiagnostics::UpdateBufferData ()
                 const bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
                 // when the z-index is equal to the smallEnd of the snapshot box, then set lastValidZSlice to 1
-                if (k_index_zlab(i_buffer, lev) == m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir))
+                if (k_index_zlab(i_buffer, lev) == m_snapshot_box[i_buffer][lev].smallEnd(m_moving_window_dir))
                     m_lastValidZSlice[i_buffer] = 1;
             }
         }
@@ -877,7 +880,7 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
                           ( m_current_z_lab[i_buffer]
                             - (prob_domain_zmin_lab  ) )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
-                      ) ) + m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir);
+                      ) ) + m_snapshot_box[i_buffer][lev].smallEnd(m_moving_window_dir);
     return k_lab;
 }
 
@@ -920,11 +923,11 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
             dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
         const amrex::Real buffer_lo = m_snapshot_domain_lab[i_buffer].lo(idim)
                                 + ( buffer_ba.getCellCenteredBox(0).smallEnd(idim)
-                                  - m_snapshot_box[i_buffer].smallEnd(idim)
+                                  - m_snapshot_box[i_buffer][lev].smallEnd(idim)
                                   ) * cellsize;
         const amrex::Real buffer_hi = m_snapshot_domain_lab[i_buffer].lo(idim)
                                 + ( buffer_ba.getCellCenteredBox( buffer_ba.size()-1 ).bigEnd(idim)
-                                  - m_snapshot_box[i_buffer].smallEnd(idim)
+                                  - m_snapshot_box[i_buffer][lev].smallEnd(idim)
                                   + 1 ) * cellsize;
         m_buffer_domain_lab[i_buffer].setLo(idim, buffer_lo);
         m_buffer_domain_lab[i_buffer].setHi(idim, buffer_hi);
@@ -966,7 +969,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
         // Define the geometry object for the ith snapshot using Physical co-ordinates
         // of m_snapshot_domain_lab[i_buffer], that corresponds to the full snapshot
         // in the back-transformed frame
-        m_geom_snapshot[i_buffer][lev].define( m_snapshot_box[i_buffer],
+        m_geom_snapshot[i_buffer][lev].define( m_snapshot_box[i_buffer][lev],
                                                &m_snapshot_domain_lab[i_buffer],
                                                amrex::CoordSys::cartesian,
                                                BTdiag_periodicity.data() );
@@ -1001,8 +1004,8 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 bool
 BTDiagnostics::GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev)
 {
-    return (k_index_zlab(i_buffer, lev) >= m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir) &&
-        k_index_zlab(i_buffer, lev) <= m_snapshot_box[i_buffer].bigEnd(m_moving_window_dir));
+    return (k_index_zlab(i_buffer, lev) >= m_snapshot_box[i_buffer][lev].smallEnd(m_moving_window_dir) &&
+        k_index_zlab(i_buffer, lev) <= m_snapshot_box[i_buffer][lev].bigEnd(m_moving_window_dir));
 }
 
 void

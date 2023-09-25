@@ -187,7 +187,7 @@ private:
     amrex::Vector<amrex::IntVect> m_snapshot_ncells_lab;
     /** Vector of Box-dimension in boosted-frame index space
      *  for each back-transformed snapshot */
-    amrex::Vector<amrex::Box> m_snapshot_box;
+    amrex::Vector< amrex::Vector <amrex::Box> > m_snapshot_box;
     /** Vector of Box-dimension in boosted-frame index space corresponding to the
      *  buffer that covers a part of the full backtransformed snapshot */
     amrex::Vector< amrex::Vector <amrex::Box> > m_buffer_box;
