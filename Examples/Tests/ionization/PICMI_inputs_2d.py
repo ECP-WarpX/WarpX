@@ -87,12 +87,15 @@ solver = picmi.ElectromagneticSolver(
 particle_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
     period = 10000,
+    species = [electrons, ions],
+    data_list = ['ux', 'uy', 'uz', 'x', 'y', 'weighting'],
     write_dir = '.',
     warpx_file_prefix = 'Python_ionization_plt')
-diag = picmi.FieldDiagnostic(
+field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
     period = 10000,
+    data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
     write_dir = '.',
     warpx_file_prefix = 'Python_ionization_plt')
 
@@ -121,7 +124,7 @@ sim.add_laser(
 
 # Add diagnostics
 sim.add_diagnostic(particle_diag)
-sim.add_diagnostic(diag)
+sim.add_diagnostic(field_diag)
 
 # Write input file that can be used to run with the compiled version
 sim.write_input_file(file_name = 'inputs_2d_picmi')

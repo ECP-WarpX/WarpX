@@ -257,16 +257,19 @@ class HybridPICBeamInstability(object):
 
         if self.test:
             part_diag = picmi.ParticleDiagnostic(
-                name='field_diag',
+                name='diag1',
                 period=1250,
+                species=[self.ions, self.beam_ions],
+                data_list = ['ux', 'uy', 'uz', 'x', 'weighting'],
                 write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
             )
             simulation.add_diagnostic(part_diag)
             field_diag = picmi.FieldDiagnostic(
-                name='field_diag',
+                name='diag1',
                 grid=self.grid,
                 period=1250,
+                data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'jx', 'jy', 'jz'],
                 write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
             )
