@@ -1078,11 +1078,11 @@ BTDiagnostics::Flush (int i_buffer)
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
-        m_plot_raw_fields, m_plot_raw_fields_guards,
+        m_plot_raw_fields, m_plot_raw_fields_guards, m_geom_snapshot[i_buffer],
         use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter[i_buffer],
-        m_max_buffer_multifabs[i_buffer], m_geom_snapshot[i_buffer][0], isLastBTDFlush,
+        m_max_buffer_multifabs[i_buffer], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
-
+    
     // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
         if (m_particles_buffer.at(i_buffer).size() > 0 ) {
@@ -1125,9 +1125,11 @@ BTDiagnostics::Flush (int i_buffer)
     // Setting hi k-index for the next buffer, such that, the index is one less than the lo-index of previous buffer
     // For example, for buffer size of 256, if the first buffer extent was [256,511]
     // then the next buffer will be from [0,255]. That is, the hi-index of the following buffer is 256-1
-    const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
-    for (int lev = 0 ; lev < nlevels; ++lev) {
-        m_buffer_k_index_hi[i_buffer] = m_buffer_box[i_buffer][lev].smallEnd(m_moving_window_dir) - 1;
+    if (m_particles_buffer.at(i_buffer).size() > 0 ) {
+       const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
+       for (int lev = 0 ; lev < nlevels; ++lev) {
+           m_buffer_k_index_hi[i_buffer] = m_buffer_box[i_buffer][lev].smallEnd(m_moving_window_dir) - 1;
+       }
     }
 }
 

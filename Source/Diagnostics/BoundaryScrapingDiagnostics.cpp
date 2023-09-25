@@ -151,7 +151,8 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
     int const numBTDBuffers = 0;
     // The data being written out is saved in a pinned particle container
     bool const use_pinned_pc = true;
-    const amrex::Geometry& geom = warpx.Geom(0); // For compatibility with `WriteToFile` ; not used
+    //const amrex::Vector<amrex::Geometry>& geom = warpx.Geom(0); // For compatibility with `WriteToFile` ; not used
+    amrex::Vector<amrex::Geometry> geom; // For compatibility with `WriteToFile` ; not used
 
     // The data for each boundary is written out to a separate directory with the boundary name
     const std::string file_prefix = m_file_prefix + "/particles_at_" + particle_buffer.boundaryName(i_buffer);
@@ -159,8 +160,8 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         warpx.gett_new(0), m_output_species[i_buffer], nlev_output, file_prefix,
-        m_file_min_digits, false, false, use_pinned_pc, isBTD,
-        warpx.getistep(0), bufferID, numBTDBuffers, geom,
+        m_file_min_digits, false, false, geom, use_pinned_pc, isBTD,
+        warpx.getistep(0), bufferID, numBTDBuffers,
         isLastBTD, m_totalParticles_flushed_already[i_buffer]);
 
     // Now that the data has been written out, clear out the buffer

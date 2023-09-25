@@ -140,8 +140,8 @@ public:
               int output_levels,
               const int iteration,
               const double time,
-              bool isBTD = false,
-              const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
+	      const amrex::Vector<amrex::Geometry>& full_BTD_snapshot,
+              bool isBTD = false) const;
 
   /** Return OpenPMD File type ("bp" or "h5" or "json")*/
   std::string OpenPMDFileType () { return m_OpenPMDFileType; }

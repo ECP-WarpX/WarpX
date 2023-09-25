@@ -137,7 +137,7 @@ FullDiagnostics::Flush ( int i_buffer )
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
-        m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
+        m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards, m_geom_output[i_buffer]);
 
     FlushRaw();
 }

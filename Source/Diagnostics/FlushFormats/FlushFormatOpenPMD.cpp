@@ -119,9 +119,9 @@ FlushFormatOpenPMD::WriteToFile (
     const amrex::Vector<ParticleDiag>& particle_diags, int output_levels,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
+    const amrex::Vector< amrex::Geometry>& full_BTD_snapshot,
     const bool use_pinned_pc,
     bool isBTD, int snapshotID, int bufferID, int numBuffers,
-    const amrex::Geometry& full_BTD_snapshot,
     bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready) const
 {
     WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
@@ -155,7 +155,7 @@ FlushFormatOpenPMD::WriteToFile (
 
     // fields: only dumped for coarse level
     m_OpenPMDPlotWriter->WriteOpenPMDFieldsAll(
-        varnames, mf, geom, output_levels, output_iteration, time, isBTD, full_BTD_snapshot);
+        varnames, mf, geom, output_levels, output_iteration, time, full_BTD_snapshot, isBTD);
 
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, time, use_pinned_pc, isBTD, isLastBTDFlush, totalParticlesFlushedAlready);

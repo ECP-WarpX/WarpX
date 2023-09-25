@@ -1317,8 +1317,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                       int output_levels,
                       const int iteration,
                       const double time,
-                      bool isBTD,
-                      const amrex::Geometry& full_BTD_snapshot ) const
+		      const amrex::Vector<amrex::Geometry>& full_BTD_snapshot, 
+                      bool isBTD ) const
 {
     //This is AMReX's tiny profiler. Possibly will apply it later
     WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
@@ -1349,7 +1349,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
     for (int lev=0; lev < output_levels; lev++) {
         amrex::Geometry full_geom = geom[lev];
         if( isBTD )
-            full_geom = full_BTD_snapshot;
+            full_geom = full_BTD_snapshot[lev];
 
         // setup is called once. So it uses property "period" from first
         // geometry for <all> field levels.
