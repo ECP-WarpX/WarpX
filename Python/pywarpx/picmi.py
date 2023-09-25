@@ -1707,6 +1707,28 @@ class Simulation(picmistandard.PICMI_Simulation):
         The domain will be chopped into the exact number of pieces in each dimension as specified by this parameter.
         https://warpx.readthedocs.io/en/latest/usage/parameters.html#distribution-across-mpi-ranks-and-parallelization
         https://warpx.readthedocs.io/en/latest/usage/domain_decomposition.html#simple-method
+
+    warpx_sort_intervals: string, optional (defaults: -1 on CPU; 4 on GPU)
+        Using the Intervals parser syntax, this string defines the timesteps at which particles are sorted. If <=0, do not sort particles.
+        It is turned on on GPUs for performance reasons (to improve memory locality).
+
+    warpx_sort_particles_for_deposition: bool, optional (default: true for the CUDA backend, otherwise false)
+        This option controls the type of sorting used if particle sorting is turned on, i.e. if sort_intervals is not <=0.
+        If `true`, particles will be sorted by cell to optimize deposition with many particles per cell, in the order `x` -> `y` -> `z` -> `ppc`.
+        If `false`, particles will be sorted by bin, using the sort_bin_size parameter below, in the order `ppc` -> `x` -> `y` -> `z`.
+        `true` is recommended for best performance on NVIDIA GPUs, especially if there are many particles per cell.
+
+    warpx_sort_idx_type: list of int, optional (default: 0 0 0)
+        This controls the type of grid used to sort the particles when sort_particles_for_deposition is true.
+        Possible values are:
+            idx_type = {0, 0, 0}: Sort particles to a cell centered grid,
+            idx_type = {1, 1, 1}: Sort particles to a node centered grid,
+            idx_type = {2, 2, 2}: Compromise between a cell and node centered grid.
+        In 2D (XZ and RZ), only the first two elements are read. In 1D, only the first element is read.
+
+    warpx_sort_bin_size: list of int, optional (default 1 1 1)
+        If `sort_intervals` is activated and `sort_particles_for_deposition` is false, particles are sorted in bins of `sort_bin_size` cells.
+        In 2D, only the first two elements are read.
     """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
@@ -1745,6 +1767,10 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.amrex_use_gpu_aware_mpi = kw.pop('warpx_amrex_use_gpu_aware_mpi', None)
         self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
         self.compute_max_step_from_btd = kw.pop('warpx_compute_max_step_from_btd', None)
+        self.sort_intervals = kw.pop('warpx_sort_intervals', None)
+        self.sort_particles_for_deposition = kw.pop('warpx_sort_particles_for_deposition', None)
+        self.sort_idx_type = kw.pop('warpx_sort_idx_type', None)
+        self.sort_bin_size = kw.pop('warpx_sort_bin_size', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -1772,6 +1798,11 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.zmax_plasma_to_compute_max_step = self.zmax_plasma_to_compute_max_step
         pywarpx.warpx.compute_max_step_from_btd = self.compute_max_step_from_btd
+
+        pywarpx.warpx.sort_intervals = self.sort_intervals
+        pywarpx.warpx.sort_particles_for_deposition = self.sort_particles_for_deposition
+        pywarpx.warpx.sort_idx_type = self.sort_idx_type
+        pywarpx.warpx.sort_bin_size = self.sort_bin_size
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
