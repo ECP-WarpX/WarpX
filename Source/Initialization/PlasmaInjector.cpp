@@ -738,7 +738,7 @@ bool PlasmaInjector::overlapsWith (const amrex::XDim3& lo,
 }
 
 bool
-PlasmaInjector::queryCharge (amrex::Real& a_charge) const
+PlasmaInjector::queryCharge (amrex::ParticleReal& a_charge) const
 {
     if (charge_from_source) {
         a_charge = charge;
@@ -747,7 +747,7 @@ PlasmaInjector::queryCharge (amrex::Real& a_charge) const
 }
 
 bool
-PlasmaInjector::queryMass (amrex::Real& a_mass) const
+PlasmaInjector::queryMass (amrex::ParticleReal& a_mass) const
 {
     if (mass_from_source) {
         a_mass = mass;

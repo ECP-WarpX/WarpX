@@ -64,8 +64,8 @@ public:
     // gamma * beta
     amrex::XDim3 getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
 
-    bool queryCharge (amrex::Real& a_charge) const;
-    bool queryMass (amrex::Real& a_mass) const;
+    bool queryCharge (amrex::ParticleReal& a_charge) const;
+    bool queryMass (amrex::ParticleReal& a_mass) const;
 
     // bool: whether the initial injection of particles should be done
     // This routine is called during initialization of the plasma.
@@ -145,7 +145,7 @@ protected:
 
     bool mass_from_source = false;
     bool charge_from_source = false;
-    amrex::Real mass, charge;
+    amrex::ParticleReal mass, charge;
 
     PhysicalSpecies physical_species = PhysicalSpecies::unspecified;
 
