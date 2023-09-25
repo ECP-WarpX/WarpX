@@ -88,7 +88,7 @@ struct GetParticlePosition
      *         located at index `i + a_offset` and store them in the variables
      *         `x`, `y`, `z` */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (const int i, RType& x, RType& y, RType& z) const noexcept
+    void operator() (const long i, RType& x, RType& y, RType& z) const noexcept
     {
         const PType& p = m_structs[i];
 #ifdef WARPX_DIM_RZ
@@ -117,7 +117,7 @@ struct GetParticlePosition
      *         This is only different for RZ since this returns (r, theta, z)
      *         in that case. */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void AsStored (const int i, RType& x, RType& y, RType& z) const noexcept
+    void AsStored (const long i, RType& x, RType& y, RType& z) const noexcept
     {
         const PType& p = m_structs[i];
 #ifdef WARPX_DIM_RZ
@@ -170,7 +170,7 @@ struct SetParticlePosition
     /** \brief Set the position of the particle at index `i + a_offset`
      *         to `x`, `y`, `z` */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (const int i, RType x, RType y, RType z) const noexcept
+    void operator() (const long i, RType x, RType y, RType z) const noexcept
     {
 #if defined(WARPX_DIM_XZ)
         amrex::ignore_unused(y);
@@ -199,7 +199,7 @@ struct SetParticlePosition
      *         This is only different for RZ since the input should
      *         be (r, theta, z) in that case. */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void AsStored (const int i, RType x, RType y, RType z) const noexcept
+    void AsStored (const long i, RType x, RType y, RType z) const noexcept
     {
 #if defined(WARPX_DIM_XZ)
         amrex::ignore_unused(y);

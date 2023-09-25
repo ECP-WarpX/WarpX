@@ -81,7 +81,7 @@ namespace details
 
         AMREX_GPU_DEVICE AMREX_FORCE_INLINE
         void
-        operator() (long i, long j, long k) const noexcept
+        operator() (int i, int j, int k) const noexcept
         {
             amrex::mf_nodebilin_interp(i, j, k, 0, m_phi_fp_arr, 0, m_phi_cp_arr,
                                        0, m_refratio);

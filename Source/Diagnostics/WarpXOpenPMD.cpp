@@ -69,7 +69,7 @@ namespace detail
     snakeToCamel (const std::string& snake_string)
     {
         std::string camelString = snake_string;
-        const int n = camelString.length();
+        const int n = static_cast<int>(camelString.length());
         for (int x = 0; x < n; x++)
         {
             if (x == 0)
@@ -217,10 +217,8 @@ namespace detail
     getParticlePositionComponentLabels (bool ignore_dims=false)
     {
         using vs = std::vector< std::string >;
-        vs positionComponents;
-        if (ignore_dims) {
-            positionComponents = vs{"x", "y", "z"};
-        } else {
+        auto positionComponents = vs{"x", "y", "z"};
+        if (!ignore_dims) {
 #if defined(WARPX_DIM_1D_Z)
             positionComponents = vs{"z"};
 #elif defined(WARPX_DIM_XZ)
@@ -783,7 +781,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                         [](uint64_t const *p) { delete[] p; }
                 );
                 for (auto i = 0; i < numParticleOnTile; i++) {
-                    ids.get()[i] = ablastr::particles::localIDtoGlobal(aos[i].id(), aos[i].cpu());
+                    ids.get()[i] = ablastr::particles::localIDtoGlobal(static_cast<int>(aos[i].id()), static_cast<int>(aos[i].cpu()));
                 }
                 auto const scalar = openPMD::RecordComponent::SCALAR;
                 currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
@@ -1148,11 +1146,13 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
       fieldBoundary.resize(AMREX_SPACEDIM * 2);
       particleBoundary.resize(AMREX_SPACEDIM * 2);
 
-      for (auto i = 0u; i < fieldBoundary.size() / 2u; ++i)
+      const auto fieldBoundarySize = static_cast<int>(fieldBoundary.size() / 2u);
+
+      for (auto i = 0; i < fieldBoundarySize; ++i)
           if (m_fieldPMLdirections.at(i))
               fieldBoundary.at(i) = "open";
 
-      for (auto i = 0u; i < fieldBoundary.size() / 2u; ++i)
+      for (int i = 0; i < fieldBoundarySize; ++i)
           if (period.isPeriodic(i)) {
               fieldBoundary.at(2u * i) = "periodic";
               fieldBoundary.at(2u * i + 1u) = "periodic";
@@ -1540,7 +1540,7 @@ WarpXParticleCounter::GetParticleOffsetOfProcessor (
     amrex::ParallelGather::Gather (numParticles, result.data(), -1, amrex::ParallelDescriptor::Communicator());
 
     sum = 0;
-    int const num_results = result.size();
+    auto const num_results = static_cast<int>(result.size());
     for (int i=0; i<num_results; i++) {
         sum += result[i];
         if (i<m_MPIRank)

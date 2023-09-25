@@ -600,7 +600,7 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
 
     const bool update_varnames = true;
     if (update_varnames) {
-        const int n_rz = ncomp * m_varnames_fields.size();
+        const int n_rz = ncomp * static_cast<int>(m_varnames_fields.size());
         m_varnames.clear();
         m_varnames.reserve(n_rz);
     }
@@ -901,7 +901,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     // Unlike FullDiagnostics, "m_format == sensei" option is not included here.
     const int ngrow = 0;
     m_mf_output[i_buffer][lev] = amrex::MultiFab( buffer_ba, buffer_dmap,
-                                              m_varnames.size(), ngrow );
+                                              static_cast<int>(m_varnames.size()), ngrow );
     m_mf_output[i_buffer][lev].setVal(0.);
 
     amrex::IntVect ref_ratio = amrex::IntVect(1);

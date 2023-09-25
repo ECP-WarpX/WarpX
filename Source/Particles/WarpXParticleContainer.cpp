@@ -615,7 +615,7 @@ WarpXParticleContainer::DepositCurrent (
     const amrex::Real dt, const amrex::Real relative_time)
 {
     // Loop over the refinement levels
-    int const finest_level = J.size() - 1;
+    auto const finest_level = static_cast<int>(J.size() - 1);
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         // Loop over particle tiles and deposit current on each level

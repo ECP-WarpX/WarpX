@@ -1411,7 +1411,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
-        const Real rminr = xyzmin[0] + (tb.type(0) == NODE ? 0. : 0.5*dx[0]);
+        const Real rminr = xyzmin[0] + (tb.type(0) == NODE ? 0._rt : 0.5_rt*dx[0]);
         const int irmin = lo.x;
         const int ishift = (rminr > rmin ? 1 : 0);
 
@@ -1453,7 +1453,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             if (r == 0.) {
                 Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr*axis_volume_factor);
             } else {
-                Rho_arr(i,j,0,icomp) /= (2.*MathConst::pi*r);
+                Rho_arr(i,j,0,icomp) /= (2._rt*MathConst::pi*r);
             }
         });
     }

@@ -367,7 +367,11 @@ void LoadBalanceCosts::WriteToFile (int step) const
         ofstmp.close();
 
         // remove the original, rename tmp file
-        std::remove(fileDataName.c_str());
-        std::rename(fileTmpName.c_str(), fileDataName.c_str());
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            std::remove(fileDataName.c_str()) == EXIT_SUCCESS,
+            "Failed to remove " + fileDataName);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            std::rename(fileTmpName.c_str(), fileDataName.c_str()) == EXIT_SUCCESS,
+            "Failed to rename " + fileTmpName + " into " + fileDataName);
     }
 }
