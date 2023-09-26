@@ -7,7 +7,7 @@ An alternate to the representation of the plasma as macroparticles, is the cold 
 The cold relativistic fluid model is typically faster to compute than
 particles and useful to replace particles when kinetic effects are negligible. This
 can be done for certain parts of the plasma, such as the background plasma, while still
-representing particle beams as a group of macroparticles. The two models then couple through 
+representing particle beams as a group of macroparticles. The two models then couple through
 Maxwell's equations.
 
 In the cold limit (zero internal temperature and pressure) of a relativistic plasma, the Maxwell-Fluid
@@ -55,7 +55,7 @@ Step 0: **Preparation**
     Before the fluid loop begins, it is assumed that the program is in the state where fields :math:`\mathbf{E}`
     and :math:`\mathbf{B}` are available integer timestep. The
     fluids themselves are represented by arrays of fluid quantities (density and
-    momentum density, :math:`\mathbf{Q} \equiv \{ N, NU_x, NU_y, NU_z \}`) known 
+    momentum density, :math:`\mathbf{Q} \equiv \{ N, NU_x, NU_y, NU_z \}`) known
     on a nodal grid and at half-integer timestep.
 
 Step 1: **Higuera and Cary Push**
@@ -70,7 +70,7 @@ Step 2: **Non-inertial Terms**
     which is the SSP-RK3 integrator.
 
 Step 3: **Boundary Conditions and Communications**
-    At this point, the code applies boundary conditions (assuming Neumann boundary conditions 
+    At this point, the code applies boundary conditions (assuming Neumann boundary conditions
     for the fluid quantities) and exchanges guard cells between
     MPI ranks in preparation of derivative terms in the next step.
 
@@ -78,7 +78,7 @@ Step 4: **Advective Push**
     For the advective term, a MUSCL scheme with a low-diffusion minmod slope
     limiting is used. We further simplify the conservative equations in terms of primitive
     variables, :math:`\{ N, U_x, U_y, U_z \}`. Which we found to be
-    more stable than conservative variables for the MUSCL reconstruction. Details of 
+    more stable than conservative variables for the MUSCL reconstruction. Details of
     the scheme can be found here (Van Leer et al, 1984).
 
 Step 5: **Current and Charge Deposition**
@@ -87,7 +87,7 @@ Step 5: **Current and Charge Deposition**
     densities.
 
 .. note::
-   The algorithm is safe with zero fluid density. 
+   The algorithm is safe with zero fluid density.
 
    It also implements a positivity limiter on the density to prevent negative density regions from forming.
 
