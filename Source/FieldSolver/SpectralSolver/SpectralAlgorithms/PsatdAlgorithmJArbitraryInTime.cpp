@@ -33,16 +33,16 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
-    const int norder_x,
-    const int norder_y,
-    const int norder_z,
-    const short grid_type,
-    const amrex::Real dt,
-    const bool time_averaging,
-    const bool dive_cleaning,
-    const bool divb_cleaning,
-    const int J_in_time,
-    const int rho_in_time)
+    int norder_x,
+    int norder_y,
+    int norder_z,
+    short grid_type,
+    amrex::Real dt,
+    bool time_averaging,
+    bool dive_cleaning,
+    bool divb_cleaning,
+    int J_in_time,
+    int rho_in_time)
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
     m_dt(dt),
@@ -167,7 +167,6 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex a_rho = (rho_quadratic) ? (rho_new - 2._rt * rho_mid + rho_old) : 0._rt;
             const Complex b_rho = (rho_linear || rho_quadratic) ? (rho_new - rho_old) : 0._rt;
             const Complex c_rho = (rho_linear) ? (rho_new + rho_old)/2._rt : rho_mid;
-
 
             Complex F_old, G_old;
             if (dive_cleaning) F_old = fields(i,j,k,Idx.F);
@@ -318,7 +317,7 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
 void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
-    const amrex::Real dt)
+    amrex::Real dt)
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -397,7 +396,7 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
                 X2(i,j,k) = - dt2 / (12._rt * ep0);
             }
 
-            // a0 (multiplies rho_old in the update equation for E)
+            // a0
             if (om_s != 0.)
             {
                 a0(i,j,k) = ( (1._rt - C(i,j,k)) * (8._rt - om2_s*dt2) - 4._rt * S_ck(i,j,k) * om2_s * dt) / (2._rt * ep0 * dt2 * om2_s * om2_s);
@@ -406,7 +405,8 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
             {
                 a0(i,j,k) = - dt2 / (12._rt * ep0);
             }
-            // a0 (multiplies rho_old in the update equation for E)
+
+            // b0
             if (om_s != 0.)
             {
                 b0(i,j,k) = ( 2._rt * (C(i,j,k) - 1._rt) + S_ck(i,j,k) * om2_s * dt) / (2._rt * ep0 * dt * om2_s);
@@ -415,6 +415,8 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
             {
                 b0(i,j,k) = 0._rt;
             }
+
+            // g0
             if (om_s != 0.)
             {
                 g0(i,j,k) = ( S_ck(i,j,k) * om_s * (8._rt - om2_s*dt2) - 4._rt * (1._rt + C(i,j,k)) * om_s * dt) / (2._rt * ep0 * dt2 * om2_s * om_s);
@@ -430,7 +432,7 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
 void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficientsAveraging (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
-    const amrex::Real dt)
+    amrex::Real dt)
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
 
