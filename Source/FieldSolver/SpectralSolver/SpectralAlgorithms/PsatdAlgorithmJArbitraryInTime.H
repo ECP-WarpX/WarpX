@@ -119,7 +119,7 @@ class PsatdAlgorithmJArbitraryInTime : public SpectralBaseAlgorithm
 
         // These real and complex coefficients are always allocated
         SpectralRealCoefficients C_coef, S_ck_coef;
-        SpectralRealCoefficients X1_coef, X2_coef, X3_coef, X5_coef, X6_coef, X7_coef;
+        SpectralRealCoefficients X1_coef, X2_coef, X5_coef, X6_coef, X7_coef;
         SpectralRealCoefficients a0_coef, b0_coef, g0_coef;
 
         // Other member variables

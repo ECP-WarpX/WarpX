@@ -59,7 +59,6 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
     S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     X1_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     X2_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-    X3_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     a0_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     b0_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     g0_coef = SpectralRealCoefficients(ba, dm, 1, 0);
@@ -84,14 +83,10 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
-    const bool J_constant = (m_J_in_time == JInTime::Constant) ? true : false;
     const bool J_linear   = (m_J_in_time == JInTime::Linear  ) ? true : false;
     const bool J_quadratic = (m_J_in_time == JInTime::Quadratic) ? true : false;
-    const bool rho_constant = (m_rho_in_time == RhoInTime::Constant) ? true : false;
     const bool rho_linear   = (m_rho_in_time == RhoInTime::Linear  ) ? true : false;
     const bool rho_quadratic  = (m_rho_in_time == RhoInTime::Quadratic  ) ? true : false;
-
-    const amrex::Real dt = m_dt;
 
     const SpectralFieldIndex& Idx = m_spectral_index;
 
@@ -108,7 +103,6 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
         const amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
         const amrex::Array4<const amrex::Real> X1_arr = X1_coef[mfi].array();
         const amrex::Array4<const amrex::Real> X2_arr = X2_coef[mfi].array();
-        const amrex::Array4<const amrex::Real> X3_arr = X3_coef[mfi].array();
         const amrex::Array4<const amrex::Real> a0_arr = a0_coef[mfi].array();
         const amrex::Array4<const amrex::Real> b0_arr = b0_coef[mfi].array();
         const amrex::Array4<const amrex::Real> g0_arr = g0_coef[mfi].array();
@@ -191,7 +185,6 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             // Physical constants and imaginary unit
             constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
-            constexpr amrex::Real inv_ep0 = 1._rt / PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
 
             // These coefficients are initialized in the function InitializeSpectralCoefficients
@@ -199,8 +192,6 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             const amrex::Real S_ck = S_ck_arr(i,j,k);
             const amrex::Real X1 = X1_arr(i,j,k);
             const amrex::Real X2 = X2_arr(i,j,k);
-            const amrex::Real X3 = X3_arr(i,j,k);
-            const amrex::Real X4 = - S_ck / PhysConst::ep0;
             const amrex::Real a0 = a0_arr(i,j,k);
             const amrex::Real b0 = b0_arr(i,j,k);
             const amrex::Real g0 = g0_arr(i,j,k);
@@ -348,7 +339,6 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
         const amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
         const amrex::Array4<amrex::Real> X1 = X1_coef[mfi].array();
         const amrex::Array4<amrex::Real> X2 = X2_coef[mfi].array();
-        const amrex::Array4<amrex::Real> X3 = X3_coef[mfi].array();
         const amrex::Array4<amrex::Real> a0 = a0_coef[mfi].array();
         const amrex::Array4<amrex::Real> b0 = b0_coef[mfi].array();
         const amrex::Array4<amrex::Real> g0 = g0_coef[mfi].array();
@@ -368,7 +358,6 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
             constexpr amrex::Real c = PhysConst::c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
 
-            const amrex::Real c2 = amrex::Math::powi<2>(c);
             const amrex::Real dt2 = amrex::Math::powi<2>(dt);
 
             const amrex::Real om_s = c * knorm_s;
@@ -477,7 +466,6 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficientsAveraging (
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
-            constexpr amrex::Real c2 = c*c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
 
             // Auxiliary coefficients
