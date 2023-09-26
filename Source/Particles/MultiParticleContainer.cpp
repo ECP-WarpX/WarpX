@@ -294,7 +294,7 @@ MultiParticleContainer::ReadParameters ()
                     it != species_names.end(),
                     "species '" + name
                     + "' in particles.deposit_on_main_grid must be part of particles.species_names");
-                const int i = std::distance(species_names.begin(), it);
+                const auto i = static_cast<int>(std::distance(species_names.begin(), it));
                 m_deposit_on_main_grid[i] = true;
             }
 
@@ -307,7 +307,7 @@ MultiParticleContainer::ReadParameters ()
                     it != species_names.end(),
                     "species '" + name
                         + "' in particles.gather_from_main_grid must be part of particles.species_names");
-                const int i = std::distance(species_names.begin(), it);
+                const auto i = static_cast<int>(std::distance(species_names.begin(), it));
                 m_gather_from_main_grid.at(i) = true;
             }
 
@@ -323,7 +323,7 @@ MultiParticleContainer::ReadParameters ()
                         it != species_names.end(),
                         "species '" + name
                         + "' in particles.rigid_injected_species must be part of particles.species_names");
-                    const int i = std::distance(species_names.begin(), it);
+                    const auto i = static_cast<int>(std::distance(species_names.begin(), it));
                     species_types[i] = PCTypes::RigidInjected;
                 }
             }
@@ -337,7 +337,7 @@ MultiParticleContainer::ReadParameters ()
                         it != species_names.end(),
                         "species '" + name
                         + "' in particles.photon_species must be part of particles.species_names");
-                    const int i = std::distance(species_names.begin(), it);
+                    const auto i = static_cast<int>(std::distance(species_names.begin(), it));
                     species_types[i] = PCTypes::Photon;
                 }
             }
@@ -413,7 +413,7 @@ MultiParticleContainer::GetParticleContainerFromName (const std::string& name) c
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         it != species_names.end(),
         "unknown species name");
-    const int i = std::distance(species_names.begin(), it);
+    const auto i = static_cast<int>(std::distance(species_names.begin(), it));
     return *allcontainers[i];
 }
 
@@ -694,7 +694,7 @@ MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
                 r[j] += ri[j];
             }
         }
-        ParallelDescriptor::ReduceLongSum(r.data(),r.size());
+        ParallelDescriptor::ReduceLongSum(r.data(),static_cast<int>(r.size()));
         return r;
     }
 }
@@ -928,7 +928,7 @@ MultiParticleContainer::doFieldIonization (int lev,
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
@@ -1566,7 +1566,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
@@ -1645,7 +1645,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }

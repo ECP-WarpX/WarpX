@@ -144,21 +144,21 @@ public:
             amrex::ParticleReal * const AMREX_RESTRICT u2z = soa_2.m_rdata[PIdx::uz];
 
             // Number of macroparticles of each species
-            const int NI1 = I1e - I1s;
-            const int NI2 = I2e - I2s;
-            const int max_N = amrex::max(NI1,NI2);
+            const index_type NI1 = I1e - I1s;
+            const index_type NI2 = I2e - I2s;
+            const index_type max_N = amrex::max(NI1,NI2);
 
-            int i1 = I1s;
-            int i2 = I2s;
-            int pair_index = cell_start_pair;
+            index_type i1 = I1s;
+            index_type i2 = I2s;
+            index_type pair_index = cell_start_pair;
 
             // Because the number of particles of each species is not always equal (NI1 != NI2
             // in general), some macroparticles will be paired with multiple macroparticles of the
             // other species and we need to decrease their weight accordingly.
             // c1 corresponds to the minimum number of times a particle of species 1 will be paired
             // with a particle of species 2. Same for c2.
-            const int c1 = amrex::max(NI2/NI1,1);
-            const int c2 = amrex::max(NI1/NI2,1);
+            const index_type c1 = amrex::max(NI2/NI1,1u);
+            const index_type c2 = amrex::max(NI1/NI2,1u);
 
             // multiplier ratio to take into account unsampled pairs
             const int multiplier_ratio = (m_isSameSpecies)?(2*max_N - 1):(max_N);
@@ -168,12 +168,12 @@ public:
             amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
 #endif
 
-            for (int k = 0; k < max_N; ++k)
+            for (index_type k = 0; k < max_N; ++k)
             {
                 // c1k : how many times the current particle of species 1 is paired with a particle
                 // of species 2. Same for c2k.
-                const int c1k = (k%NI1 < max_N%NI1) ? c1 + 1: c1;
-                const int c2k = (k%NI2 < max_N%NI2) ? c2 + 1: c2;
+                const index_type c1k = (k%NI1 < max_N%NI1) ? c1 + 1: c1;
+                const index_type c2k = (k%NI2 < max_N%NI2) ? c2 + 1: c2;
 
 #if (defined WARPX_DIM_RZ)
                 /* In RZ geometry, macroparticles can collide with other macroparticles
@@ -208,8 +208,8 @@ public:
 
                 p_pair_indices_1[pair_index] = I1[i1];
                 p_pair_indices_2[pair_index] = I2[i2];
-                ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
-                ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
+                ++i1; if ( i1 == I1e ) { i1 = I1s; }
+                ++i2; if ( i2 == I2e ) { i2 = I2s; }
                 ++pair_index;
             }
 

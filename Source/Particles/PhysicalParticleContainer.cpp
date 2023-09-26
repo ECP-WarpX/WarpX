@@ -304,7 +304,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     // User-defined integer attributes
     pp_species_name.queryarr("addIntegerAttributes", m_user_int_attribs);
-    const int n_user_int_attribs = m_user_int_attribs.size();
+    const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
     std::vector< std::string > str_int_attrib_function;
     str_int_attrib_function.resize(n_user_int_attribs);
     m_user_int_attrib_parser.resize(n_user_int_attribs);
@@ -319,7 +319,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     // User-defined real attributes
     pp_species_name.queryarr("addRealAttributes", m_user_real_attribs);
-    const int n_user_real_attribs = m_user_real_attribs.size();
+    const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
     std::vector< std::string > str_real_attrib_function;
     str_real_attrib_function.resize(n_user_real_attribs);
     m_user_real_attrib_parser.resize(n_user_real_attribs);
@@ -711,8 +711,8 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
         const int np = pinned_tile.numParticles();
 
         // Preparing data needed for user defined attributes
-        const int n_user_real_attribs = m_user_real_attribs.size();
-        const int n_user_int_attribs = m_user_int_attribs.size();
+        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
+        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
         const auto get_position = GetParticlePosition(pinned_tile);
         const auto soa = pinned_tile.getParticleTileData();
         const amrex::ParticleReal* AMREX_RESTRICT ux = soa.m_rdata[PIdx::ux];
@@ -877,7 +877,7 @@ PhysicalParticleContainer::AddParticles (int lev)
         amrex::Vector<amrex::Vector<ParticleReal>> attr;
         attr.push_back(plasma_injector->multiple_particles_weight);
         amrex::Vector<amrex::Vector<int>> attr_int;
-        AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
+        AddNParticles(lev, static_cast<int>(plasma_injector->multiple_particles_pos_x.size()),
                       plasma_injector->multiple_particles_pos_x,
                       plasma_injector->multiple_particles_pos_y,
                       plasma_injector->multiple_particles_pos_z,
@@ -1120,8 +1120,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
         // user-defined integer and real attributes
-        const int n_user_int_attribs = m_user_int_attribs.size();
-        const int n_user_real_attribs = m_user_real_attribs.size();
+        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
         amrex::Gpu::PinnedVector<int*> pa_user_int_pinned(n_user_int_attribs);
         amrex::Gpu::PinnedVector<ParticleReal*> pa_user_real_pinned(n_user_real_attribs);
         amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec_pinned(n_user_int_attribs);
@@ -1670,8 +1670,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         }
 
         // user-defined integer and real attributes
-        const int n_user_int_attribs = m_user_int_attribs.size();
-        const int n_user_real_attribs = m_user_real_attribs.size();
+        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
+        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
         amrex::Gpu::PinnedVector<int*> pa_user_int_pinned(n_user_int_attribs);
         amrex::Gpu::PinnedVector<ParticleReal*> pa_user_real_pinned(n_user_real_attribs);
         amrex::Gpu::PinnedVector< amrex::ParserExecutor<7> > user_int_attrib_parserexec_pinned(n_user_int_attribs);

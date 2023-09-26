@@ -376,7 +376,7 @@ WarpX::Evolve (int numsteps)
         }
 
         // create ending time stamp for calculating elapsed time each iteration
-        const Real evolve_time_end_step = amrex::second();
+        const auto evolve_time_end_step = static_cast<Real>(amrex::second());
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
         HandleSignals();

@@ -205,7 +205,7 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
         }
         else
         {
-            btd_iter_ind = m_btd_iterations.size() - 1;
+            btd_iter_ind = static_cast<int>(m_btd_iterations.size() - 1);
             while (start < m_btd_iterations.at(btd_iter_ind) and btd_iter_ind>0)
             {
                 btd_iter_ind--;

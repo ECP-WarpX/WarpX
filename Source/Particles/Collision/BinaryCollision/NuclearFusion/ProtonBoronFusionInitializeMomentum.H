@@ -102,9 +102,9 @@ namespace {
             E_fusion, engine);
 
         // Compute momentum of beryllium in lab frame
-        const amrex::ParticleReal px_Be = m_beryllium * ux_Be;
-        const amrex::ParticleReal py_Be = m_beryllium * uy_Be;
-        const amrex::ParticleReal pz_Be = m_beryllium * uz_Be;
+        const amrex::ParticleReal px_Be = static_cast<amrex::ParticleReal>(m_beryllium) * ux_Be;
+        const amrex::ParticleReal py_Be = static_cast<amrex::ParticleReal>(m_beryllium) * uy_Be;
+        const amrex::ParticleReal pz_Be = static_cast<amrex::ParticleReal>(m_beryllium) * uz_Be;
 
         // Compute momentum norm of second and third alphas in Beryllium rest frame
         // Factor 0.5 is here because each alpha only gets half of the decay energy
@@ -133,7 +133,7 @@ namespace {
         {
             const amrex::ParticleReal vcDps = v_Bex*px_Bestar + v_Bey*py_Bestar + v_Bez*pz_Bestar;
             const amrex::ParticleReal factor0 = (g_Be-1._prt)/v_Be_sq;
-            const amrex::ParticleReal factor = factor0*vcDps + m_alpha*gamma_Bestar*g_Be;
+            const amrex::ParticleReal factor = factor0*vcDps + static_cast<amrex::ParticleReal>(m_alpha)*gamma_Bestar*g_Be;
             px_alpha2 = px_Bestar + v_Bex * factor;
             py_alpha2 = py_Bestar + v_Bey * factor;
             pz_alpha2 = pz_Bestar + v_Bez * factor;

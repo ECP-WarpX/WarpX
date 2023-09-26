@@ -74,7 +74,7 @@ struct GetParticlePosition
      * \param a_offset offset to apply to the particle indices
      */
     template <typename ptiType>
-    GetParticlePosition (const ptiType& a_pti, int a_offset = 0) noexcept
+    GetParticlePosition (const ptiType& a_pti, long a_offset = 0) noexcept
     {
         const auto& aos = a_pti.GetArrayOfStructs();
         m_structs = aos().dataPtr() + a_offset;
@@ -157,7 +157,7 @@ struct SetParticlePosition
 #endif
 
     template <typename ptiType>
-    SetParticlePosition (const ptiType& a_pti, int a_offset = 0) noexcept
+    SetParticlePosition (const ptiType& a_pti, long a_offset = 0) noexcept
     {
         auto& aos = a_pti.GetArrayOfStructs();
         m_structs = aos().dataPtr() + a_offset;

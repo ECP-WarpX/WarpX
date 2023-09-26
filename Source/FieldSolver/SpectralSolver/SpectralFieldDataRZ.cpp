@@ -490,7 +490,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         if (do_costs)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -556,7 +556,7 @@ SpectralFieldDataRZ::ForwardTransform (const int lev,
         if (do_costs)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -640,7 +640,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         if (do_costs)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -736,7 +736,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
         if (do_costs)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -798,7 +798,7 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index)
         if (do_costs)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -847,7 +847,7 @@ SpectralFieldDataRZ::ApplyFilter (const int lev, int const field_index1,
         if (do_costs)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }

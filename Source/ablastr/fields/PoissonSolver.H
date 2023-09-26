@@ -196,10 +196,10 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
                               geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
         int max_semicoarsening_level = 0;
         int semicoarsening_direction = -1;
-        const int min_dir = std::distance(dx_scaled.begin(),
-                                    std::min_element(dx_scaled.begin(),dx_scaled.end()));
-        const int max_dir = std::distance(dx_scaled.begin(),
-                                    std::max_element(dx_scaled.begin(),dx_scaled.end()));
+        const auto min_dir = static_cast<int>(std::distance(dx_scaled.begin(),
+                                    std::min_element(dx_scaled.begin(),dx_scaled.end())));
+        const auto max_dir = static_cast<int>(std::distance(dx_scaled.begin(),
+                                    std::max_element(dx_scaled.begin(),dx_scaled.end())));
         if (dx_scaled[max_dir] > dx_scaled[min_dir]) {
             semicoarsening_direction = max_dir;
             max_semicoarsening_level = static_cast<int>

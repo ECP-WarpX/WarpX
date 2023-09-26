@@ -75,7 +75,7 @@ BreitWheelerEngine::init_lookup_tables_from_raw_data (
         raw_iter, raw_iter+size_first};
 
     const auto raw_pair_prod_table = vector<char>{
-        raw_iter+size_first, raw_data.end()};
+        raw_iter+static_cast<long>(size_first), raw_data.end()};
 
     m_dndt_table = BW_dndt_table{raw_dndt_table};
     m_pair_prod_table = BW_pair_prod_table{raw_pair_prod_table};

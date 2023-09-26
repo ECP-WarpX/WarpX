@@ -184,7 +184,7 @@ public:
                         const auto product_index = products_np_data[j] +
                                                    2*(p_offsets[i]*p_num_products_device[j] + k);
                         // Create product particle at position of particle 1
-                        copy_species1[j](soa_products_data[j], soa_1, p_pair_indices_1[i],
+                        copy_species1[j](soa_products_data[j], soa_1, static_cast<int>(p_pair_indices_1[i]),
                                       product_index, engine);
                         // Create another product particle at position of particle 2
                         copy_species2[j](soa_products_data[j], soa_2, p_pair_indices_2[i],
