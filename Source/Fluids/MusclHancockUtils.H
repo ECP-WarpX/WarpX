@@ -28,24 +28,30 @@ amrex::Real F_theta (amrex::Real r, amrex::Real u_r, amrex::Real u_theta, amrex:
 {
     return dt*(u_theta*u_r/r)/sqrt(1.0 + u_r*u_r + u_theta*u_theta + u_z*u_z) + u_theta;
 }
-
-// Velocity at the half step
+// Velocity (x) at the half step
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::Real V_calc (amrex::Real Ux, amrex::Real Uy, amrex::Real Uz,
-    amrex::Real c, int comp)
+amrex::Real Vx_calc (const amrex::Array4<amrex::Real>& U, int i, int j, int k, amrex::Real c)
 {
     // Gamma Calc
-    amrex::Real gamma = sqrt(1.0 + (Ux*Ux + Uy*Uy + Uz*Uz)/(c*c));
-
-    // Return the proper component
-    if (comp == 0) // x
-        return Ux/gamma;
-    else if (comp == 1) // y
-        return Uy/gamma;
-    else // (comp == 2) // z
-        return Uz/gamma;
+    amrex::Real gamma = std::sqrt(1.0 + (U(i,j,k,1)*U(i,j,k,1) + U(i,j,k,2)*U(i,j,k,2) + U(i,j,k,3)*U(i,j,k,3))/(c*c));
+    return U(i,j,k,1)/gamma;
 }
-
+// Velocity (x) at the half step
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real Vy_calc (const amrex::Array4<amrex::Real>& U, int i, int j, int k, amrex::Real c)
+{
+    // Gamma Calc
+    amrex::Real gamma = std::sqrt(1.0 + (U(i,j,k,1)*U(i,j,k,1) + U(i,j,k,2)*U(i,j,k,2) + U(i,j,k,3)*U(i,j,k,3))/(c*c));
+    return U(i,j,k,2)/gamma;
+}
+// Velocity (x) at the half step
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real Vz_calc (const amrex::Array4<amrex::Real>& U, int i, int j, int k, amrex::Real c)
+{
+    // Gamma Calc
+    amrex::Real gamma = std::sqrt(1.0 + (U(i,j,k,1)*U(i,j,k,1) + U(i,j,k,2)*U(i,j,k,2) + U(i,j,k,3)*U(i,j,k,3))/(c*c));
+    return U(i,j,k,3)/gamma;
+}
 // mindmod
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real minmod (amrex::Real a, amrex::Real b)
@@ -91,12 +97,40 @@ amrex::Real maxmod (amrex::Real a, amrex::Real b)
     else
         return 0.0;
 }
-// Rusanov Flux
+// Rusanov Flux (density)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::Real flux (amrex::Real Qm, amrex::Real Qp, amrex::Real Vm, amrex::Real Vp)
+amrex::Real flux_N (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4<amrex::Real>& Up,
+int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
 {
     amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
-    return 0.5*(Vm*Qm + Vp*Qp) - (0.5*c)*(Qp - Qm);
+    return 0.5*(Vm*Um(i,j,k,0) + Vp*Up(i,j,k,0)) - (0.5*c)*(Up(i,j,k,0) - Um(i,j,k,0));
+}
+// Rusanov Flux (Momentum density x)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real flux_NUx (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4<amrex::Real>& Up,
+int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
+{
+    amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
+    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,1) + Vp*Up(i,j,k,0)*Up(i,j,k,1)) 
+        - (0.5*c)*(Up(i,j,k,0)*Up(i,j,k,1) -    Um(i,j,k,0)*Um(i,j,k,1));
+}
+// Rusanov Flux (Momentum density y)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real flux_NUy (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4<amrex::Real>& Up,
+int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
+{
+    amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
+    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,2) + Vp*Up(i,j,k,0)*Up(i,j,k,2)) 
+        - (0.5*c)*(Up(i,j,k,0)*Up(i,j,k,2) -    Um(i,j,k,0)*Um(i,j,k,2));
+}
+// Rusanov Flux (Momentum density z)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real flux_NUz (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4<amrex::Real>& Up,
+int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
+{
+    amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
+    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,3) + Vp*Up(i,j,k,0)*Up(i,j,k,3)) 
+        - (0.5*c)*(Up(i,j,k,0)*Up(i,j,k,3) -    Um(i,j,k,0)*Um(i,j,k,3));
 }
 // ave_epsilon
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
