@@ -111,7 +111,7 @@ amrex::Real flux_NUx (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4
 int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
 {
     amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
-    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,1) + Vp*Up(i,j,k,0)*Up(i,j,k,1)) 
+    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,1) + Vp*Up(i,j,k,0)*Up(i,j,k,1))
         - (0.5*c)*(Up(i,j,k,0)*Up(i,j,k,1) -    Um(i,j,k,0)*Um(i,j,k,1));
 }
 // Rusanov Flux (Momentum density y)
@@ -120,7 +120,7 @@ amrex::Real flux_NUy (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4
 int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
 {
     amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
-    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,2) + Vp*Up(i,j,k,0)*Up(i,j,k,2)) 
+    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,2) + Vp*Up(i,j,k,0)*Up(i,j,k,2))
         - (0.5*c)*(Up(i,j,k,0)*Up(i,j,k,2) -    Um(i,j,k,0)*Um(i,j,k,2));
 }
 // Rusanov Flux (Momentum density z)
@@ -129,7 +129,7 @@ amrex::Real flux_NUz (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4
 int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
 {
     amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
-    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,3) + Vp*Up(i,j,k,0)*Up(i,j,k,3)) 
+    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,3) + Vp*Up(i,j,k,0)*Up(i,j,k,3))
         - (0.5*c)*(Up(i,j,k,0)*Up(i,j,k,3) -    Um(i,j,k,0)*Um(i,j,k,3));
 }
 // ave_epsilon
