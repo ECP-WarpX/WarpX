@@ -746,7 +746,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     positivity_limiter (U_plus_z, U_minus_z,  N_arr, i, j, k, box_z, Ux, Uy, Uz, 2);
 
 #endif
-                // If N<= 0 then set the edge values of U to zero
+                // If N<= 0 then set the edge values (U_minus/U_plus) to zero
                 } else {
 #if defined(WARPX_DIM_3D)
                     set_U_edges_to_zero(U_minus_x, i, j, k, box_x);
@@ -769,7 +769,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         );
     }
 
-    // Advection push
+    // Given the values of `Q_minus` and `Q_plus`, compute fluxes inbetween nodes, and update N, NU accordingly
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -802,7 +802,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
 
-                // Select the specific implmentation depending on dimensionality
+                // Select the specific implementation depending on dimensionality
 #if defined(WARPX_DIM_3D)
 
                 // Verify positive density, then compute velocity
@@ -911,33 +911,32 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #elif defined(WARPX_DIM_RZ)
 
                 // Compute the flux areas for RZ
-                amrex::Real pi = 3.1415926535897932;
                 // Cell-centered radius
                 amrex::Real dr = dx[0];
-                amrex::Real dz = dx[1]; // Must be 1
+                amrex::Real dz = dx[1];
                 amrex::Real r = problo[0] + i * dr;
                 amrex::Real Vij = 0.0;
                 amrex::Real S_Az = 0.0;
 
                 // Volume element and z-facing surfaces
                 if (i == domain.smallEnd(0)) {
-                    Vij = 2.0*pi*(dr/2.0)*(dr/4.0)*dz;
-                    S_Az = 2.0*pi*(dr/4.0)*(dr/2.0);
+                    Vij = 2.0*MathConst::pi*(dr/2.0)*(dr/4.0)*dz;
+                    S_Az = 2.0*MathConst::pi*(dr/4.0)*(dr/2.0);
                 } else if (i == domain.bigEnd(0)+1) {
-                    Vij = 2.0*pi*(r - dr/4.0)*(dr/2.0)*dz;
-                    S_Az = 2.0*pi*(r - dr/4.0)*(dr/2.0);
+                    Vij = 2.0*MathConst::pi*(r - dr/4.0)*(dr/2.0)*dz;
+                    S_Az = 2.0*MathConst::pi*(r - dr/4.0)*(dr/2.0);
                 }  else {
-                    Vij = 2.0*pi*r*dr*dz;
-                    S_Az = 2.0*pi*(r)*dr;
+                    Vij = 2.0*MathConst::pi*r*dr*dz;
+                    S_Az = 2.0*MathConst::pi*(r)*dr;
                 }
 
                 // Radial Surfaces
-                amrex::Real S_Ar_plus = 2.0*pi*(r + dr/2.0)*dz;
-                amrex::Real S_Ar_minus = 2.0*pi*(r - dr/2.0)*dz;
+                amrex::Real S_Ar_plus = 2.0*MathConst::pi*(r + dr/2.0)*dz;
+                amrex::Real S_Ar_minus = 2.0*MathConst::pi*(r - dr/2.0)*dz;
                 if (i == domain.smallEnd(0))
                     S_Ar_minus = 0.0;
                 if (i == domain.bigEnd(0)+1)
-                    S_Ar_plus = 2.0*pi*(r)*dz;
+                    S_Ar_plus = 2.0*MathConst::pi*(r)*dz;
 
                 // Impose "none" boundaries
                 // Condition: Vx(r) = 0 at boundaries

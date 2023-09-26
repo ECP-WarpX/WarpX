@@ -232,6 +232,7 @@ void plus_index_offsets (int i, int j, int k, int& ip, int& jp, int& kp, int com
 #endif
 }
 // Positivity Limiter
+// if Q_minus or Q_plus is zero for the density (i.e. component 0 of Q_minus/Q_plus), set dQ to 0 and recompute Q_minus / Q_plus
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void positivity_limiter (const amrex::Array4<amrex::Real>& U_edge_plus,
 const amrex::Array4<amrex::Real>& U_edge_minus, const amrex::Array4<amrex::Real>& N_arr,

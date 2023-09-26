@@ -30,8 +30,6 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 #include "Python/WarpX_py.H"
-#include "Fluids/MultiFluidContainer.H"
-#include "Fluids/WarpXFluidContainer.H"
 
 #include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/Communication.H>
