@@ -120,7 +120,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Extract field data for this grid/tile
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
@@ -233,7 +233,7 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             // Extract field data for this grid/tile
@@ -385,7 +385,7 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Extract field data for this grid/tile
         Array4<Real> const& Br = Bfield[0]->array(mfi);
@@ -462,7 +462,7 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
-                Real const r = rmin + (i + 0.5)*dr; // r on a cell-centered grid (Bz is cell-centered in r)
+                Real const r = rmin + (i + 0.5_rt)*dr; // r on a cell-centered grid (Bz is cell-centered in r)
                 Bz(i, j, 0, 0) += dt*( - T_Algo::UpwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 0));
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
                     Bz(i, j, 0, 2*m-1) += dt*( m * Er(i, j, 0, 2*m  )/r

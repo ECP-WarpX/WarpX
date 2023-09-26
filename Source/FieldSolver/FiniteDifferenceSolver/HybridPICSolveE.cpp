@@ -98,7 +98,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCartesian (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Extract field data for this grid/tile
         Array4<Real> const& Jx = Jfield[0]->array(mfi);
@@ -316,7 +316,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         Array4<Real> const& enE_nodal = enE_nodal_mf.array(mfi);
         Array4<Real const> const& Jx = Jfield[0]->const_array(mfi);
@@ -380,7 +380,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Extract field data for this grid/tile
         Array4<Real> const& Ex = Efield[0]->array(mfi);

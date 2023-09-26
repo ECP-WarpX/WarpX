@@ -190,7 +190,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     const bool update_varnames = (lev==0);
     if (update_varnames) {
         m_varnames.clear();
-        const int n_rz = ncomp * m_varnames.size();
+        const int n_rz = ncomp * static_cast<int>(m_varnames.size());
         m_varnames.reserve(n_rz);
     }
 
@@ -203,7 +203,8 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     bool deposit_current = !m_solver_deposits_current;
 
     // Fill vector of functors for all components except individual cylindrical modes.
-    for (int comp=0, n=m_varnames_fields.size(); comp<n; comp++){
+    const auto m_varname_fields_size = static_cast<int>(m_varnames_fields.size());
+    for (int comp=0; comp<m_varname_fields_size; comp++){
         if        ( m_varnames_fields[comp] == "Er" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio,
                                                         false, ncomp);
@@ -371,7 +372,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     bool deposit_current = !m_solver_deposits_current;
 
     // First index of m_all_field_functors[lev] where RZ modes are stored
-    int icomp = m_all_field_functors[0].size();
+    int icomp =static_cast<int>(m_all_field_functors[0].size());
     const std::array<std::string, 3> coord {"r", "theta", "z"};
 
     // Er, Etheta, Ez, Br, Btheta, Bz, jr, jtheta, jz

@@ -155,7 +155,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         rel_ref_ratio = amrex::Vector<amrex::IntVect>{{amrex::IntVect(AMREX_D_DECL(1, 1, 1))}};
     }
 
-    int const finest_level = rho.size() - 1u;
+    int const finest_level = static_cast<int>(rho.size()) - 1;
 
     // scale rho appropriately; also determine if rho is zero everywhere
     amrex::Real max_norm_b = 0.0;

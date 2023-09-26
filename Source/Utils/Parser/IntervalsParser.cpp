@@ -256,7 +256,7 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
 
 int utils::parser::BTDIntervalsParser::NumSnapshots () const
 {
-    return m_btd_iterations.size();
+    return static_cast<int>(m_btd_iterations.size());
 }
 
 

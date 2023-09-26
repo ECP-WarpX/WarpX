@@ -984,7 +984,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, lev);
@@ -1432,7 +1432,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -1525,7 +1525,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
@@ -1923,7 +1923,7 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
 
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -2011,7 +2011,7 @@ PhysicalParticleContainer::Evolve (int lev,
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = amrex::second();
+            auto wt = static_cast<amrex::Real>(amrex::second());
 
             const Box& box = pti.validbox();
 
@@ -2180,7 +2180,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }

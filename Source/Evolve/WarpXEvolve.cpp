@@ -77,7 +77,7 @@ WarpX::Evolve (int numsteps)
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         WARPX_PROFILE("WarpX::Evolve::step");
-        const Real evolve_time_beg_step = amrex::second();
+        const auto evolve_time_beg_step = static_cast<Real>(amrex::second());
 
         //Check and clear signal flags and asynchronously broadcast them from process 0
         SignalHandling::CheckSignals();

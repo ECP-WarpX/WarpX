@@ -117,7 +117,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Extract field data for this grid/tile
         Array4<Real> const& Ex = Efield[0]->array(mfi);
@@ -249,7 +249,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Extract field data for this grid/tile
         Array4<Real> const& Er = Efield[0]->array(mfi);
@@ -284,7 +284,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         amrex::ParallelFor(ter, tet, tez,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
-                Real const r = rmin + (i + 0.5)*dr; // r on cell-centered point (Er is cell-centered in r)
+                Real const r = rmin + (i + 0.5_rt)*dr; // r on cell-centered point (Er is cell-centered in r)
                 Er(i, j, 0, 0) +=  c2 * dt*(
                     - T_Algo::DownwardDz(Bt, coefs_z, n_coefs_z, i, j, 0, 0)
                     - PhysConst::mu0 * jr(i, j, 0, 0) ); // Mode m=0

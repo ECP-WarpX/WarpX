@@ -927,7 +927,8 @@ PML::MakeBoxArray_multiple (const amrex::Geometry& geom, const amrex::BoxArray& 
         }
     }
     BoxList bl;
-    for (int i = 0, N = grid_ba.size(); i < N; ++i)
+    const auto grid_ba_size = static_cast<int>(grid_ba.size());
+    for (int i = 0; i < grid_ba_size; ++i)
     {
         const Box& grid_bx = grid_ba[i];
         const IntVect& grid_bx_sz = grid_bx.size();

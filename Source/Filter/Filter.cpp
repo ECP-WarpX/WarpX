@@ -47,7 +47,7 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         const auto& src = srcmf.array(mfi);
         const auto& dst = dstmf.array(mfi);
@@ -218,7 +218,7 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
             {
                 amrex::Gpu::synchronize();
             }
-            amrex::Real wt = amrex::second();
+            auto wt = static_cast<amrex::Real>(amrex::second());
 
             const auto& srcfab = srcmf[mfi];
             auto& dstfab = dstmf[mfi];

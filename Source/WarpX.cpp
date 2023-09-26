@@ -1140,7 +1140,7 @@ WarpX::ReadParameters ()
 
         // Query algo.field_gathering from input, set field_gathering_algo to
         // "default" if not found (default defined in Utils/WarpXAlgorithmSelection.cpp)
-        field_gathering_algo = GetAlgorithmInteger(pp_algo, "field_gathering");
+        field_gathering_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "field_gathering"));
 
         // Set default field gathering algorithm for hybrid grids (momentum-conserving)
         std::string tmp_algo;
