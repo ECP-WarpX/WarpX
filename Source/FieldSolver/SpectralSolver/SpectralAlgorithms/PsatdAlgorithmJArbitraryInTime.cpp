@@ -83,10 +83,10 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
-    const bool J_linear   = (m_J_in_time == JInTime::Linear  ) ? true : false;
-    const bool J_quadratic = (m_J_in_time == JInTime::Quadratic) ? true : false;
-    const bool rho_linear   = (m_rho_in_time == RhoInTime::Linear  ) ? true : false;
-    const bool rho_quadratic  = (m_rho_in_time == RhoInTime::Quadratic  ) ? true : false;
+    const bool J_linear = (m_J_in_time == JInTime::Linear);
+    const bool J_quadratic = (m_J_in_time == JInTime::Quadratic);
+    const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);
+    const bool rho_quadratic = (m_rho_in_time == RhoInTime::Quadratic);
 
     const SpectralFieldIndex& Idx = m_spectral_index;
 
