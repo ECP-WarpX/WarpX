@@ -124,11 +124,11 @@ namespace ablastr::coarsen::sample
      */
     void Loop ( amrex::MultiFab& mf_dst,
                 const amrex::MultiFab& mf_src,
-                const int dcomp,
-                const int scomp,
-                const int ncomp,
-                const amrex::IntVect ngrow,
-                const amrex::IntVect crse_ratio=amrex::IntVect(1) );
+                int dcomp,
+                int scomp,
+                int ncomp,
+                amrex::IntVect ngrow,
+                amrex::IntVect crse_ratio=amrex::IntVect(1) );
 
     /**
      * \brief Stores in the coarsened MultiFab \c mf_dst the values obtained by
@@ -151,18 +151,18 @@ namespace ablastr::coarsen::sample
      */
     void Coarsen ( amrex::MultiFab& mf_dst,
                    const amrex::MultiFab& mf_src,
-                   const int dcomp,
-                   const int scomp,
-                   const int ncomp,
-                   const int ngrow,
-                   const amrex::IntVect crse_ratio=amrex::IntVect(1) );
+                   int dcomp,
+                   int scomp,
+                   int ncomp,
+                   int ngrow,
+                   amrex::IntVect crse_ratio=amrex::IntVect(1) );
     void Coarsen ( amrex::MultiFab& mf_dst,
                    const amrex::MultiFab& mf_src,
-                   const int dcomp,
-                   const int scomp,
-                   const int ncomp,
-                   const amrex::IntVect ngrowvect,
-                   const amrex::IntVect crse_ratio=amrex::IntVect(1) );
+                   int dcomp,
+                   int scomp,
+                   int ncomp,
+                   amrex::IntVect ngrowvect,
+                   amrex::IntVect crse_ratio=amrex::IntVect(1) );
 
 } // namespace ablastr::coarsen::sample
 

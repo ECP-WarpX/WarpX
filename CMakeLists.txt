@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 23.08)
+project(WarpX VERSION 23.09)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -125,6 +125,9 @@ option(WarpX_PYTHON_IPO
     "Compile Python bindings with interprocedural optimization (IPO) / link-time optimization (LTO)"
     ON
 )
+
+set(pyWarpX_VERSION_INFO "" CACHE STRING
+    "PEP-440 conformant version (set by distutils)")
 
 # enforce consistency of dependent options
 if(WarpX_APP OR WarpX_PYTHON)
@@ -497,7 +500,7 @@ foreach(D IN LISTS WarpX_DIMS)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_PSATD)
     endif()
 
-    if(WarpX_PYTHON)
+    if(WarpX_PYTHON AND pyWarpX_VERSION_INFO)
         # for module __version__
         target_compile_definitions(pyWarpX_${SD} PRIVATE
             PYWARPX_VERSION_INFO=${pyWarpX_VERSION_INFO})
@@ -534,6 +537,7 @@ set_cxx_warnings()
 # Generate Configuration and .pc Files ########################################
 #
 get_source_version(WarpX_${WarpX_DIMS_LAST} ${WarpX_SOURCE_DIR})
+set(WarpX_GIT_VERSION ${WarpX_${WarpX_DIMS_LAST}_GIT_VERSION})
 configure_file(
     ${WarpX_SOURCE_DIR}/Source/Utils/WarpXVersion.H.in
     ${WarpX_BINARY_DIR}/Source/Utils/WarpXVersion.H

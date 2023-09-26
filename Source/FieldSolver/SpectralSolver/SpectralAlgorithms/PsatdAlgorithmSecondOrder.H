@@ -50,17 +50,17 @@ class PsatdAlgorithmSecondOrder : public SpectralBaseAlgorithm
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
-            const int norder_x,
-            const int norder_y,
-            const int norder_z,
-            const short grid_type,
-            const amrex::Real dt,
-            const bool update_with_rho,
-            const bool time_averaging,
-            const bool dive_cleaning,
-            const bool divb_cleaning,
-            const int J_in_time,
-            const int rho_in_time);
+            int norder_x,
+            int norder_y,
+            int norder_z,
+            short grid_type,
+            amrex::Real dt,
+            bool update_with_rho,
+            bool time_averaging,
+            bool dive_cleaning,
+            bool divb_cleaning,
+            int J_in_time,
+            int rho_in_time);
 
         /**
          * \brief Updates the E and B fields in spectral space, according to the multi-J PSATD equations
@@ -79,7 +79,7 @@ class PsatdAlgorithmSecondOrder : public SpectralBaseAlgorithm
         void InitializeSpectralCoefficients (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
-            const amrex::Real dt);
+            amrex::Real dt);
 
         /**
          * \brief Initialize additional coefficients used in \c pushSpectralFields to update E,B,
@@ -92,7 +92,7 @@ class PsatdAlgorithmSecondOrder : public SpectralBaseAlgorithm
         void InitializeSpectralCoefficientsAveraging (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
-            const amrex::Real dt);
+            amrex::Real dt);
 
         /**
          * \brief Virtual function for current correction in Fourier space

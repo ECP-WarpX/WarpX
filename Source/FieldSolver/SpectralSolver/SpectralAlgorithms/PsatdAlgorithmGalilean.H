@@ -49,16 +49,16 @@ class PsatdAlgorithmGalilean : public SpectralBaseAlgorithm
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
-            const int norder_x,
-            const int norder_y,
-            const int norder_z,
-            const short grid_type,
+            int norder_x,
+            int norder_y,
+            int norder_z,
+            short grid_type,
             const amrex::Vector<amrex::Real>& v_galilean,
-            const amrex::Real dt,
-            const bool update_with_rho,
-            const bool time_averaging,
-            const bool dive_cleaning,
-            const bool divb_cleaning);
+            amrex::Real dt,
+            bool update_with_rho,
+            bool time_averaging,
+            bool dive_cleaning,
+            bool divb_cleaning);
 
         /**
          * \brief Updates the E and B fields in spectral space, according to the relevant PSATD equations
@@ -77,7 +77,7 @@ class PsatdAlgorithmGalilean : public SpectralBaseAlgorithm
         void InitializeSpectralCoefficients (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
-            const amrex::Real dt);
+            amrex::Real dt);
 
         /**
          * \brief Initializes additional coefficients used in \c pushSpectralFields to update the E and B fields,
@@ -90,7 +90,7 @@ class PsatdAlgorithmGalilean : public SpectralBaseAlgorithm
         void InitializeSpectralCoefficientsAveraging (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
-            const amrex::Real dt);
+            amrex::Real dt);
 
         /**
          * \brief Virtual function for current correction in Fourier space

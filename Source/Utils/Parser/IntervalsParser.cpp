@@ -166,7 +166,7 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
     {
         const bool isBTD = true;
         const SliceParser temp_slice(inslc, isBTD);
-        if (m_slices.size() > 0)
+        if (!m_slices.empty())
         {
             // find the last index i_slice where
             // the start value of m_slices[i_slice] is greater than temp_slices' start_value
@@ -199,7 +199,7 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
         //
         // for Slice temp_slice in m_slices,
         // determine the largest index in m_btd_iterations smaller than start
-        if (m_btd_iterations.size() == 0)
+        if (m_btd_iterations.empty())
         {
             btd_iter_ind = 0;
         }

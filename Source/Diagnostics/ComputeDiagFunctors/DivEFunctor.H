@@ -22,8 +22,8 @@ public:
      * \param[in] convertRZmodes2cartesian if true, all RZ modes are averaged into one component
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, const amrex::IntVect crse_ratio,
-                bool convertRZmodes2cartesian=true, const int ncomp=1);
+    DivEFunctor(std::array<const amrex::MultiFab* const, 3> arr_mf_src, int lev, amrex::IntVect crse_ratio,
+                bool convertRZmodes2cartesian=true, int ncomp=1);
 
     /** \brief Compute DivE directly into mf_dst.
      *
@@ -31,7 +31,7 @@ public:
      * \param[in] dcomp first component of mf_dst in which cell-centered
      *            data is stored
      */
-    virtual void operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer=0*/) const override;
+    virtual void operator()(amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer=0*/) const override;
 private:
     /** Vector of pointer to source multifab Bx, By, Bz */
     std::array<const amrex::MultiFab * const, 3> m_arr_mf_src;
