@@ -309,4 +309,187 @@ int comp)
     }
 }
 
+// Compute the difference in N (down-x)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real DownDx_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
+{
+    // Write the correct differences
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    return N(i,j,k) -  N(i-1,j,k);
+#else
+    amrex::ignore_unused(N, i, j, k);
+    return 0.0;
+#endif
+}
+// Compute the difference in N (up-x)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real UpDx_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
+{
+    // Write the correct differences
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    return N(i+1,j,k) -  N(i,j,k);
+#else
+    amrex::ignore_unused(N, i, j, k);
+    return 0.0;
+#endif
+}
+// Compute the difference in N (down-y)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real DownDy_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
+{
+    // Write the correct differences
+#if defined(WARPX_DIM_3D)
+    return N(i,j,k) -  N(i,j-1,k);
+#else
+    amrex::ignore_unused(N, i, j, k);
+    return 0.0;
+#endif
+}
+// Compute the difference in N (up-y)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real UpDy_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
+{
+    // Write the correct differences
+#if defined(WARPX_DIM_3D)
+    return N(i,j+1,k) -  N(i,j,k);
+#else
+    amrex::ignore_unused(N, i, j, k);
+    return 0.0;
+#endif
+}
+// Compute the difference in N (down-z)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real DownDz_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
+{
+    // Write the correct differences
+#if defined(WARPX_DIM_3D) 
+    return N(i,j,k) -  N(i,j,k-1);
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    return N(i,j,k) -  N(i,j-1,k);
+#else
+    return N(i,j,k) -  N(i-1,j,k);
+#endif
+}
+// Compute the difference in N (up-z)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real UpDz_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
+{
+    // Write the correct differences
+#if defined(WARPX_DIM_3D) 
+    return N(i,j,k+1) -  N(i,j,k);
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    return N(i,j+1,k) -  N(i,j,k);
+#else
+    return N(i+1,j,k) -  N(i,j,k);
+#endif
+}
+
+
+// Compute the difference in U (down-x)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE 
+amrex::Real DownDx_U (const amrex::Array4<amrex::Real>& N, 
+const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
+{
+    // Write the correct differences
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    // U is zero if N is zero, Check positivity before dividing 
+    amrex::Real U_m = 0;
+    if (N(i-1,j,k) > 0) U_m = NU(i-1,j,k)/N(i-1,j,k);
+    return U - U_m;
+#else
+    amrex::ignore_unused(N, NU, U, i, j, k);
+    return 0.0;
+#endif
+}
+// Compute the difference in U (up-x)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real UpDx_U (const amrex::Array4<amrex::Real>& N, 
+const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
+{
+    // Write the correct differences
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    // U is zero if N is zero, Check positivity before dividing 
+    amrex::Real U_p = 0;
+    if (N(i+1,j,k) > 0) U_p = NU(i+1,j,k)/N(i+1,j,k);
+    return U_p - U;
+#else
+    amrex::ignore_unused(N, NU, U, i, j, k);
+    return 0.0;
+#endif
+}
+
+// Compute the difference in U (down-y)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE 
+amrex::Real DownDy_U (const amrex::Array4<amrex::Real>& N, 
+const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
+{
+    // Write the correct differences
+#if defined(WARPX_DIM_3D)
+    // U is zero if N is zero, Check positivity before dividing 
+    amrex::Real U_m = 0;
+    if (N(i,j-1,k) > 0) U_m = NU(i,j-1,k)/N(i,j-1,k);
+    return U - U_m;
+#else
+    amrex::ignore_unused(N, NU, U, i, j, k);
+    return 0.0;
+#endif
+}
+// Compute the difference in U (up-y)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real UpDy_U (const amrex::Array4<amrex::Real>& N, 
+const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
+{
+    // Write the correct differences
+#if defined(WARPX_DIM_3D)
+    // U is zero if N is zero, Check positivity before dividing 
+    amrex::Real U_p = 0;
+    if (N(i,j+1,k) > 0) U_p = NU(i,j+1,k)/N(i,j+1,k);
+    return U_p - U;
+#else
+    amrex::ignore_unused(N, NU, U, i, j, k);
+    return 0.0;
+#endif
+}
+
+// Compute the difference in U (down-z)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE 
+amrex::Real DownDz_U (const amrex::Array4<amrex::Real>& N, 
+const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
+{
+    // Write the correct differences
+    amrex::Real U_m = 0; 
+
+    // U is zero if N is zero, Check positivity before dividing 
+#if defined(WARPX_DIM_3D)
+    if (N(i,j,k-1) > 0) U_m = NU(i,j,k-1)/N(i,j,k-1);
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    if (N(i,j-1,k) > 0) U_m = NU(i,j-1,k)/N(i,j-1,k);
+#else
+    if (N(i-1,j,k) > 0) U_m = NU(i-1,j,k)/N(i-1,j,k);
+#endif
+
+    // Return the difference
+    return U - U_m;
+}
+// Compute the difference in U (up-z)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real UpDz_U (const amrex::Array4<amrex::Real>& N, 
+const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
+{
+    // Write the correct differences
+    amrex::Real U_p = 0;
+
+    // U is zero if N is zero, Check positivity before dividing 
+#if defined(WARPX_DIM_3D)
+    if (N(i,j,k+1) > 0) U_p = NU(i,j,k+1)/N(i,j,k+1);
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+    if (N(i,j+1,k) > 0) U_p = NU(i,j+1,k)/N(i,j+1,k);
+#else
+    if (N(i+1,j,k) > 0) U_p = NU(i+1,j,k)/N(i+1,j,k);
+#endif
+
+    // Return the difference
+    return U_p - U;
+}
+
 #endif /*WARPX_MusclHancock_H_*/

@@ -502,6 +502,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
 
+                // Density positivity check (Makes the algorithm safe from divide by zeros)
                 if( N_arr(i,j,k) > 0.0){
 
                     // - Grab local Uz Uy Ux gamma
@@ -509,30 +510,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real Ux = (NUx_arr(i, j, k) / N_arr(i,j,k));
                     amrex::Real Uy = (NUy_arr(i, j, k) / N_arr(i,j,k));
                     amrex::Real Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
-
-                    // Compute U_{x,y,z} at +/- 1 cell
-#if defined(WARPX_DIM_3D)
-                    amrex::Real Ux_px = 0.0, Ux_mx = 0.0, Uy_px = 0.0, Uy_mx = 0.0, Uz_px = 0.0, Uz_mx = 0.0;
-                    amrex::Real Ux_py = 0.0, Ux_my = 0.0, Uy_py = 0.0, Uy_my = 0.0, Uz_py = 0.0, Uz_my = 0.0;
-                    amrex::Real Ux_pz = 0.0, Ux_mz = 0.0, Uy_pz = 0.0, Uy_mz = 0.0, Uz_pz = 0.0, Uz_mz = 0.0;
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i+1, j, k, Ux_px, Uy_px, Uz_px);
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i-1, j, k, Ux_mx, Uy_mx, Uz_mx);
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i, j+1, k, Ux_py, Uy_py, Uz_py);
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i, j-1, k, Ux_my, Uy_my, Uz_my);
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i, j, k+1, Ux_pz, Uy_pz, Uz_pz);
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i, j, k-1, Ux_mz, Uy_mz, Uz_mz);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                    amrex::Real Ux_px = 0.0, Ux_mx = 0.0, Uy_px = 0.0, Uy_mx = 0.0, Uz_px = 0.0, Uz_mx = 0.0;
-                    amrex::Real Ux_pz = 0.0, Ux_mz = 0.0, Uy_pz = 0.0, Uy_mz = 0.0, Uz_pz = 0.0, Uz_mz = 0.0;
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i+1, j, k, Ux_px, Uy_px, Uz_px);
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i-1, j, k, Ux_mx, Uy_mx, Uz_mx);
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i, j+1, k, Ux_pz, Uy_pz, Uz_pz);
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i, j-1, k, Ux_mz, Uy_mz, Uz_mz);
-#else
-                    amrex::Real Ux_pz = 0.0, Ux_mz = 0.0, Uy_pz = 0.0, Uy_mz = 0.0, Uz_pz = 0.0, Uz_mz = 0.0;
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i+1, j, k, Ux_pz, Uy_pz, Uz_pz);
-                    isolate_momentum(N_arr, NUx_arr, NUy_arr, NUz_arr, i-1, j, k, Ux_mz, Uy_mz, Uz_mz);
-#endif
 
                     // Compute useful quantities for J
                     amrex::Real c_sq = clight*clight;
@@ -582,24 +559,24 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #if defined(WARPX_DIM_3D)
 
                     // Compute the cell slopes x
-                    amrex::Real dU0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
-                    amrex::Real dU1x = ave( Ux - Ux_mx , Ux_px - Ux );
-                    amrex::Real dU2x = ave( Uy - Uy_mx , Uy_px - Uy );
-                    amrex::Real dU3x = ave( Uz - Uz_mx , Uz_px - Uz );
+                    amrex::Real dU0x = ave( DownDx_N(N_arr,i,j,k), UpDx_N(N_arr,i,j,k) );
+                    amrex::Real dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k), UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    amrex::Real dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k), UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    amrex::Real dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k), UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
 
                     // Compute the cell slopes y
-                    amrex::Real dU0y = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , N_arr(i,j+1,k) - N_arr(i,j,k) );
-                    amrex::Real dU1y = ave( Ux - Ux_my , Ux_py - Ux );
-                    amrex::Real dU2y = ave( Uy - Uy_my , Uy_py - Uy );
-                    amrex::Real dU3y = ave( Uz - Uz_my , Uz_py - Uz );
+                    amrex::Real dU0y = ave( DownDy_N(N_arr,i,j,k), UpDy_N(N_arr,i,j,k) );
+                    amrex::Real dU1y = ave( DownDy_U(N_arr,NUx_arr,Ux,i,j,k), UpDy_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    amrex::Real dU2y = ave( DownDy_U(N_arr,NUy_arr,Uy,i,j,k), UpDy_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    amrex::Real dU3y = ave( DownDy_U(N_arr,NUz_arr,Uz,i,j,k), UpDy_U(N_arr,NUz_arr,Uz,i,j,k) );
 
                     // Compute the cell slopes z
-                    amrex::Real dU0z = ave( N_arr(i,j,k) - N_arr(i,j,k-1) , N_arr(i,j,k+1) - N_arr(i,j,k) );
-                    amrex::Real dU1z = ave( Ux - Ux_mz , Ux_pz - Ux );
-                    amrex::Real dU2z = ave( Uy - Uy_mz , Uy_pz - Uy );
-                    amrex::Real dU3z = ave( Uz - Uz_mz , Uz_pz - Uz );
+                    amrex::Real dU0z = ave( DownDz_N(N_arr,i,j,k), UpDz_N(N_arr,i,j,k) );
+                    amrex::Real dU1z = ave( DownDz_U(N_arr,NUx_arr,Ux,i,j,k), UpDz_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    amrex::Real dU2z = ave( DownDz_U(N_arr,NUy_arr,Uy,i,j,k), UpDz_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    amrex::Real dU3z = ave( DownDz_U(N_arr,NUz_arr,Uz,i,j,k), UpDz_U(N_arr,NUz_arr,Uz,i,j,k) );
 
-                    // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
+                    // Compute U ([ N, U]) at the halfsteps (U_tidle) using the slopes (dU)
                     amrex::Real JdU0x = J00x*dU0x + J01x*dU1x + J02x*dU2x + J03x*dU3x;
                     amrex::Real JdU1x = J11x*dU1x ;
                     amrex::Real JdU2x = J22x*dU2x ;
@@ -618,7 +595,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real U_tilde3 = Uz - dt_over_dx_half*JdU3x - dt_over_dy_half*JdU3y - dt_over_dz_half*JdU3z;
 
 
-                    // Predict Q at the cell edges (x)
+                    // Predict U at the cell edges (x)
                     // (note that _plus is shifted due to grid location)
                     compute_U_edges_minus (U_minus_x, i, j, k, box_x, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0x, dU1x, dU2x, dU3x);
                     compute_U_edges_plus (U_plus_x, i-1, j, k, box_x, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0x, dU1x, dU2x, dU3x);
@@ -627,7 +604,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     // then set the slope (dU) to to zero in that cell/direction
                     positivity_limiter (U_plus_x, U_minus_x,  N_arr, i, j, k, box_x, Ux, Uy, Uz, 0);
 
-                    // Predict Q at the cell edges (y)
+                    // Predict U at the cell edges (y)
                     compute_U_edges_minus (U_minus_y, i, j, k, box_y, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0y, dU1y, dU2y, dU3y);
                     compute_U_edges_plus (U_plus_y, i, j-1, k, box_y, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0y, dU1y, dU2y, dU3y);
 
@@ -635,7 +612,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     // then set the slope (dU) to to zero in that cell/direction
                     positivity_limiter (U_plus_y, U_minus_y,  N_arr, i, j, k, box_y, Ux, Uy, Uz, 1);
 
-                    // Predict Q at the cell edges (z)
+                    // Predict U at the cell edges (z)
                     compute_U_edges_minus (U_minus_z, i, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
                     compute_U_edges_plus (U_plus_z, i, j, k-1, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
 
@@ -646,38 +623,40 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
 
                     // Compute the cell slopes x
-                    amrex::Real  dU0x = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
-                    amrex::Real  dU1x = ave( Ux - Ux_mx , Ux_px - Ux );
-                    amrex::Real  dU2x = ave( Uy - Uy_mx , Uy_px - Uy );
-                    amrex::Real  dU3x = ave( Uz - Uz_mx , Uz_px - Uz );
+                    amrex::Real dU0x = ave( DownDx_N(N_arr,i,j,k), UpDx_N(N_arr,i,j,k) );
+                    amrex::Real dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k), UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    amrex::Real dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k), UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    amrex::Real dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k), UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
 
                     // Compute the cell slopes z
-                    amrex::Real  dU0z = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , N_arr(i,j+1,k) - N_arr(i,j,k) );
-                    amrex::Real  dU1z = ave( Ux - Ux_mz , Ux_pz - Ux );
-                    amrex::Real  dU2z = ave( Uy - Uy_mz , Uy_pz - Uy );
-                    amrex::Real  dU3z = ave( Uz - Uz_mz , Uz_pz - Uz );
+                    amrex::Real dU0z = ave( DownDz_N(N_arr,i,j,k), UpDz_N(N_arr,i,j,k) );
+                    amrex::Real dU1z = ave( DownDz_U(N_arr,NUx_arr,Ux,i,j,k), UpDz_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    amrex::Real dU2z = ave( DownDz_U(N_arr,NUy_arr,Uy,i,j,k), UpDz_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    amrex::Real dU3z = ave( DownDz_U(N_arr,NUz_arr,Uz,i,j,k), UpDz_U(N_arr,NUz_arr,Uz,i,j,k) );
                     amrex::Real N_source = 0.0;
 
 #if defined(WARPX_DIM_RZ)
                     amrex::Real dr = dx[0];
                     amrex::Real r = problo[0] + i * dr;
                     // Impose "none" boundaries
-                    // Condition: dQx = 0 at r = 0
+                    // Condition: dUx = 0 at r = 0
                     if  (i == domain.smallEnd(0)) {
                         // R|_{0+} -> L|_{0-}
                         // N -> N (N_arr(i-1,j,k) -> N_arr(i+1,j,k))
                         // NUr -> -NUr (NUx_arr(i-1,j,k) -> -NUx_arr(i+1,j,k))
                         // NUt -> -NUt (NUy_arr(i-1,j,k) -> -NUy_arr(i+1,j,k))
                         // NUz -> -NUz (NUz_arr(i-1,j,k) -> NUz_arr(i+1,j,k))
-                        dU0x = ave( N_arr(i,j,k) - N_arr(i+1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
-                        dU1x = ave( Ux + Ux_px , Ux_px - Ux );
-                        dU2x = ave( Uy + Uy_px , Uy_px - Uy );
-                        dU3x = ave( Uz - Uz_px , Uz_px - Uz );
+                        dU0x = ave( -UpDx_N(N_arr,i,j,k) , UpDx_N(N_arr,i,j,k) );
+                        // First term in the ave is: U_{x,y} + U_{x,y}_p,
+                        // which can be writen as 2*U_{x,y} + UpDx_U(U_{x,y}) 
+                        dU1x = ave( 2.0*Ux + UpDx_U(N_arr,NUx_arr,Ux,i,j,k) , UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
+                        dU2x = ave( 2.0*Uy + UpDx_U(N_arr,NUy_arr,Uy,i,j,k) , UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
+                        dU3x = ave( -UpDx_U(N_arr,NUz_arr,Uz,i,j,k) , UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
                     } else if (i == domain.bigEnd(0)+1) {
-                        dU0z = ave( N_arr(i,j,k) - N_arr(i,j-1,k) , 0.0 );
-                        dU1z = ave( Ux - Ux_mz , 0.0 );
-                        dU2z = ave( Uy - Uy_mz , 0.0 );
-                        dU3z = ave( Uz - Uz_mz , 0.0 );
+                        dU0x = ave( DownDx_N(N_arr,i,j,k) , 0.0 );
+                        dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k) , 0.0 );
+                        dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k) , 0.0 );
+                        dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k) , 0.0 );
                     }
 
                     // RZ sources:
@@ -686,7 +665,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     }
 #endif
 
-                    // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
+                    // Compute U ([ N, U]) at the halfsteps (U_tidle) using the slopes (dU)
                     amrex::Real  JdU0x = J00x*dU0x + J01x*dU1x + J02x*dU2x + J03x*dU3x;
                     amrex::Real  JdU1x = J11x*dU1x;
                     amrex::Real  JdU2x = J22x*dU2x;
@@ -700,7 +679,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real  U_tilde2 = Uy - dt_over_dx_half*JdU2x - dt_over_dz_half*JdU2z;
                     amrex::Real  U_tilde3 = Uz - dt_over_dx_half*JdU3x - dt_over_dz_half*JdU3z;
 
-                    // Predict Q at the cell edges (x)
+                    // Predict U at the cell edges (x)
                     // (note that _plus is shifted due to grid location)
                     compute_U_edges_minus (U_minus_x, i, j, k, box_x, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0x, dU1x, dU2x, dU3x);
                     compute_U_edges_plus (U_plus_x, i-1, j, k, box_x, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0x, dU1x, dU2x, dU3x);
@@ -709,7 +688,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     // then set the slope (dU) to to zero in that cell/direction
                     positivity_limiter (U_plus_x, U_minus_x,  N_arr, i, j, k, box_x, Ux, Uy, Uz, 0);
 
-                    // Predict Q at the cell edges (z)
+                    // Predict U at the cell edges (z)
                     compute_U_edges_minus (U_minus_z, i, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
                     compute_U_edges_plus (U_plus_z, i, j-1, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
 
@@ -720,12 +699,12 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #else
 
                     // Compute the cell slopes z
-                    amrex::Real  dU0z = ave( N_arr(i,j,k) - N_arr(i-1,j,k) , N_arr(i+1,j,k) - N_arr(i,j,k) );
-                    amrex::Real  dU1z = ave( Ux - Ux_mz , Ux_pz - Ux );
-                    amrex::Real  dU2z = ave( Uy - Uy_mz , Uy_pz - Uy );
-                    amrex::Real  dU3z = ave( Uz - Uz_mz , Uz_pz - Uz );
+                    amrex::Real dU0z = ave( DownDz_N(N_arr,i,j,k), UpDz_N(N_arr,i,j,k) );
+                    amrex::Real dU1z = ave( DownDz_U(N_arr,NUx_arr,Ux,i,j,k), UpDz_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    amrex::Real dU2z = ave( DownDz_U(N_arr,NUy_arr,Uy,i,j,k), UpDz_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    amrex::Real dU3z = ave( DownDz_U(N_arr,NUz_arr,Uz,i,j,k), UpDz_U(N_arr,NUz_arr,Uz,i,j,k) );
 
-                    // Compute Q ([ N, NU]) at the halfsteps (Q_tidle) using the slopes (dQ)
+                    // Compute U ([ N, U]) at the halfsteps (U_tidle) using the slopes (dU)
                     amrex::Real  JdU0z = J00z*dU0z + J01z*dU1z + J02z*dU2z + J03z*dU3z;
                     amrex::Real  JdU1z = J11z*dU1z;
                     amrex::Real  JdU2z = J22z*dU2z;
@@ -735,9 +714,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real  U_tilde2 = Uy - dt_over_dz_half*JdU2z;
                     amrex::Real  U_tilde3 = Uz - dt_over_dz_half*JdU3z;
 
-                    // Predict Q at the cell edges (z)
+                    // Predict U at the cell edges (z)
                     // (note that _plus is shifted due to grid location)
-                    // Predict Q at the cell edges (z)
+                    // Predict U at the cell edges (z)
                     compute_U_edges_minus (U_minus_z, i, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
                     compute_U_edges_plus (U_plus_z, i-1, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
 
@@ -769,7 +748,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         );
     }
 
-    // Given the values of `Q_minus` and `Q_plus`, compute fluxes inbetween nodes, and update N, NU accordingly
+    // Given the values of `U_minus` and `U_plus`, compute fluxes inbetween nodes, and update N, NU accordingly
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
