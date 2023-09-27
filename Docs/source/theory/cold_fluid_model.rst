@@ -95,7 +95,7 @@ Step 5: **Current and Charge Deposition**
 
    The implemented MUSCL scheme has a simplifed slope averaging, see the extended writeup for details.
 
-   More details of the computations are given in an extended writeup (contact: grj@princeton.edu).
+   More details on the precise implementation will be made available online soon.
 
 .. raw:: html
 
