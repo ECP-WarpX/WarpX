@@ -1473,6 +1473,17 @@ Grid initialization
     the field solver. In particular, do not use any other boundary condition
     than periodic.
 
+* ``warpx.maxlevel_extEMfield_init`` (default is maximum number of levels in the simulation)
+    With this parameter, the externally applied electric and magnetic fields with paramters
+    ``warpx.E_ext_grid_init_style="constant"``,
+    ``warpx.B_ext_grid_init_style="constant"``,
+    ``warpx.E_ext_grid_init_style="parse_E_ext_grid_function"`` and
+    ``warpx.B_ext_grid_init_style="parse_B_ext_grid_function"`` will not be initialized with the external field
+    for levels strictly greater than ``warpx.maxlevel_extEMfield_init``. For some mesh-refinement simulations,
+    the external fields are only applied to the parent grid and not the refined patches. In such cases,
+    ``warpx.maxlevel_extEMfield_init`` can be set to 0. Note that the other levels will be initialized to
+    a default value of 0.
+
 Applied to Particles
 ^^^^^^^^^^^^^^^^^^^^
 

@@ -167,6 +167,12 @@ public:
     //! User-defined parser to initialize z-component of the electric field on the grid
     std::unique_ptr<amrex::Parser> Ezfield_parser;
 
+    /** Maximum level upto which the externally defined electric and magnetic fields are initialized.
+     *  The default value is set to the max levels in the simulation.
+     *  if lev > maxlevel_extEMfield_init, the fields on those levels will have a default value of 0
+     */
+    int maxlevel_extEMfield_init;
+
     // Algorithms
     //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay)
     static short current_deposition_algo;

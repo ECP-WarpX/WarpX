@@ -740,6 +740,9 @@ WarpX::ReadParameters ()
             add_external_E_field = true;
         }
 
+        maxlevel_extEMfield_init = maxLevel();
+        pp_warpx.query("maxlevel_extEMfield_init", maxlevel_extEMfield_init);
+
         electrostatic_solver_id = GetAlgorithmInteger(pp_warpx, "do_electrostatic");
         // if an electrostatic solver is used, set the Maxwell solver to None
         if (electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
