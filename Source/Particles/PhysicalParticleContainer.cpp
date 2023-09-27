@@ -455,7 +455,6 @@ PhysicalParticleContainer::AddGaussianBeam (
     Gpu::HostVector<ParticleReal> particle_uy;
     Gpu::HostVector<ParticleReal> particle_uz;
     Gpu::HostVector<ParticleReal> particle_w;
-    int np = 0;
 
     if (ParallelDescriptor::IOProcessor()) {
         // If do_symmetrize, create either 4x or 8x fewer particles, and
@@ -551,7 +550,7 @@ PhysicalParticleContainer::AddGaussianBeam (
         }
     }
     // Add the temporary CPU vectors to the particle structure
-    np = particle_z.size();
+    auto const np = static_cast<long>(particle_z.size());
     amrex::Vector<ParticleReal> xp(particle_x.data(), particle_x.data() + np);
     amrex::Vector<ParticleReal> yp(particle_y.data(), particle_y.data() + np);
     amrex::Vector<ParticleReal> zp(particle_z.data(), particle_z.data() + np);
@@ -666,7 +665,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                 CheckAndAddParticle(x, y, z, ux, uy, uz, weight,
                                     particle_x,  particle_y,  particle_z,
                                     particle_ux, particle_uy, particle_uz,
-                                    particle_w, t_lab);
+                                    particle_w, static_cast<amrex::Real>(t_lab));
             }
         }
         auto const np = particle_z.size();

@@ -313,17 +313,15 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_
 {
 #ifdef WARPX_USE_OPENPMD
     //Indices of the first and last timestep to read
-    std::uint64_t const i_first = max(0, t_begin);
-    std::uint64_t const i_last = min(t_end-1, m_params.nt-1);
+    auto const i_first = static_cast<long unsigned int>(max(0, t_begin));
+    auto const i_last = static_cast<long unsigned int>(min(t_end-1, m_params.nt-1));
     amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(i_first) + ", " + std::to_string(i_last) +
             "] data chunk from " + m_params.lasy_file_name);
-    long data_size;
-    if (m_params.file_in_cartesian_geom==0) {
-        data_size = m_params.n_rz_azimuthal_components*(i_last-i_first+1)*m_params.nr;
-    } else {
-        data_size = (i_last-i_first+1)*m_params.nx*m_params.ny;
-    }
+    const auto data_size =
+        (m_params.file_in_cartesian_geom==0)?
+        (m_params.n_rz_azimuthal_components*(i_last-i_first+1)*m_params.nr) :
+        (i_last-i_first+1)*m_params.nx*m_params.ny;
     m_params.E_lasy_data.resize(data_size);
     Vector<Complex> h_E_lasy_data(m_params.E_lasy_data.size());
     if(ParallelDescriptor::IOProcessor()){
@@ -335,10 +333,10 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_
         if (m_params.file_in_cartesian_geom==0) {
             const openPMD::Extent read_extent = { full_extent[0], (i_last - i_first + 1), full_extent[2]};
             auto r_data = E_laser.loadChunk< std::complex<double> >(io::Offset{ 0, i_first,  0}, read_extent);
-            const int read_size = (i_last - i_first + 1)*m_params.nr;
+            const auto read_size = (i_last - i_first + 1)*m_params.nr;
             series.flush();
             for (int m=0; m<m_params.n_rz_azimuthal_components; m++){
-                for (int j=0; j<read_size; j++) {
+                for (auto j=0u; j<read_size; j++) {
                     h_E_lasy_data[j+m*read_size] = Complex{
                         static_cast<amrex::Real>(r_data.get()[j+m*read_size].real()),
                         static_cast<amrex::Real>(r_data.get()[j+m*read_size].imag())};
@@ -347,9 +345,9 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_
         } else{
             const openPMD::Extent read_extent = {(i_last - i_first + 1), full_extent[1], full_extent[2]};
             auto x_data = E_laser.loadChunk< std::complex<double> >(io::Offset{i_first, 0, 0}, read_extent);
-            const int read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
+            const auto read_size = (i_last - i_first + 1)*m_params.nx*m_params.ny;
             series.flush();
-            for (int j=0; j<read_size; j++) {
+            for (auto j=0u; j<read_size; j++) {
                 h_E_lasy_data[j] = Complex{
                     static_cast<amrex::Real>(x_data.get()[j].real()),
                     static_cast<amrex::Real>(x_data.get()[j].imag())};
@@ -362,8 +360,8 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_
     Gpu::copyAsync(Gpu::hostToDevice,h_E_lasy_data.begin(),h_E_lasy_data.end(),m_params.E_lasy_data.begin());
     Gpu::synchronize();
     //Update first and last indices
-    m_params.first_time_index = i_first;
-    m_params.last_time_index = i_last;
+    m_params.first_time_index = static_cast<int>(i_first);
+    m_params.last_time_index = static_cast<int>(i_last);
 #else
     amrex::ignore_unused(t_begin, t_end);
 #endif
@@ -402,12 +400,12 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk (int t_begin,
         1*sizeof(double) +
         sizeof(double)*t_begin*m_params.nx*m_params.ny;
 #endif
-        inp.seekg(skip_amount);
+        inp.seekg(static_cast<std::streamoff>(skip_amount));
         if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read field data from binary file");
         const int read_size = (i_last - i_first + 1)*
             m_params.nx*m_params.ny;
         Vector<double> buf_e(read_size);
-        inp.read(reinterpret_cast<char*>(buf_e.dataPtr()), read_size*sizeof(double));
+        inp.read(reinterpret_cast<char*>(buf_e.dataPtr()), static_cast<std::streamsize>(read_size*sizeof(double)));
         if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read field data from binary file");
         std::transform(buf_e.begin(), buf_e.end(), h_E_binary_data.begin(),
             [](auto x) {return static_cast<amrex::Real>(x);} );
@@ -421,8 +419,8 @@ WarpXLaserProfiles::FromFileLaserProfile::read_binary_data_t_chunk (int t_begin,
     Gpu::synchronize();
 
     //Update first and last indices
-    m_params.first_time_index = i_first;
-    m_params.last_time_index = i_last;
+    m_params.first_time_index = static_cast<int>(i_first);
+    m_params.last_time_index = static_cast<int>(i_last);
 }
 
 void

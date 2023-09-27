@@ -325,7 +325,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
     // get collision parameters
     auto scattering_processes = m_scattering_processes_exe.data();
-    int const process_count   = m_scattering_processes_exe.size();
+    auto const process_count  = static_cast<int>(m_scattering_processes_exe.size());
 
     auto const total_collision_prob = m_total_collision_prob;
     auto const nu_max = m_nu_max;
@@ -382,7 +382,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               vy = uy[ip] - ua_y;
                               vz = uz[ip] - ua_z;
                               v_coll2 = (vx*vx + vy*vy + vz*vz);
-                              v_coll = sqrt(v_coll2);
+                              v_coll = std::sqrt(v_coll2);
 
                               // calculate the collision energy in eV
                               ParticleUtils::getCollisionEnergy(v_coll2, m, M, gamma, E_coll);
@@ -392,7 +392,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                   auto const& scattering_process = *(scattering_processes + i);
 
                                   // get collision cross-section
-                                  sigma_E = scattering_process.getCrossSection(E_coll);
+                                  sigma_E = static_cast<amrex::ParticleReal>(scattering_process.getCrossSection(E_coll));
 
                                   // calculate normalized collision frequency
                                   nu_i += n_a * sigma_E * v_coll / nu_max;

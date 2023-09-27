@@ -1415,27 +1415,27 @@ WarpX::ReadExternalFieldFromFile (
 #endif
 
     const auto offset = F.gridGlobalOffset();
-    const amrex::Real offset0 = offset[0];
-    const amrex::Real offset1 = offset[1];
+    const auto offset0 = static_cast<amrex::Real>(offset[0]);
+    const auto offset1 = static_cast<amrex::Real>(offset[1]);
 #if defined(WARPX_DIM_3D)
-    const amrex::Real offset2 = offset[2];
+    const auto offset2 = static_cast<amrex::Real>(offset[2]);
 #endif
     const auto d = F.gridSpacing<long double>();
 
 #if defined(WARPX_DIM_RZ)
-    const amrex::Real file_dr = d[0];
-    const amrex::Real file_dz = d[1];
+    const auto file_dr = static_cast<amrex::Real>(d[0]);
+    const auto file_dz = static_cast<amrex::Real>(d[1]);
 #elif defined(WARPX_DIM_3D)
-    const amrex::Real file_dx = d[0];
-    const amrex::Real file_dy = d[1];
-    const amrex::Real file_dz = d[2];
+    const auto file_dx = static_cast<amrex::Real>(d[0]);
+    const auto file_dy = static_cast<amrex::Real>(d[1]);
+    const auto file_dz = static_cast<amrex::Real>(d[2]);
 #endif
 
     auto FC = F[F_component];
     const auto extent = FC.getExtent();
-    const int extent0 = extent[0];
-    const int extent1 = extent[1];
-    const int extent2 = extent[2];
+    const auto extent0 = static_cast<int>(extent[0]);
+    const auto extent1 = static_cast<int>(extent[1]);
+    const auto extent2 = static_cast<int>(extent[2]);
 
     // Determine the chunk data that will be loaded.
     // Now, the full range of data is loaded.
@@ -1482,11 +1482,11 @@ WarpX::ReadExternalFieldFromFile (
                 // 0,1 denote r,z in 2D rz.
                 amrex::Real x0, x1;
                 if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
-                     { x0 = real_box.lo(0) + ii*dx[0]; }
-                else { x0 = real_box.lo(0) + ii*dx[0] + 0.5*dx[0]; }
+                     { x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0]; }
+                else { x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0] + 0.5_rt*dx[0]; }
                 if ( box.type(1)==amrex::IndexType::CellIndex::NODE )
                      { x1 = real_box.lo(1) + j*dx[1]; }
-                else { x1 = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
+                else { x1 = real_box.lo(1) + j*dx[1] + 0.5_rt*dx[1]; }
 
 #if defined(WARPX_DIM_RZ)
                 // Get index of the external field array
@@ -1501,7 +1501,7 @@ WarpX::ReadExternalFieldFromFile (
                 amrex::Real x2;
                 if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
                      { x2 = real_box.lo(2) + k*dx[2]; }
-                else { x2 = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
+                else { x2 = real_box.lo(2) + k*dx[2] + 0.5_rt*dx[2]; }
 
                 // Get index of the external field array
                 int const ix = floor( (x0-offset0)/file_dx );
@@ -1521,10 +1521,10 @@ WarpX::ReadExternalFieldFromFile (
                     f01 = fc_array(0, iz  , ir+1),
                     f10 = fc_array(0, iz+1, ir  ),
                     f11 = fc_array(0, iz+1, ir+1);
-                mffab(i,j,k) = utils::algorithms::bilinear_interp<double>
+                mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::bilinear_interp<double>
                     (xx0, xx0+file_dr, xx1, xx1+file_dz,
                      f00, f01, f10, f11,
-                     x0, x1);
+                     x0, x1));
 #elif defined(WARPX_DIM_3D)
                 const amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
                 const double
@@ -1536,10 +1536,10 @@ WarpX::ReadExternalFieldFromFile (
                     f101 = fc_array(iz+1, iy  , ix+1),
                     f110 = fc_array(iz  , iy+1, ix+1),
                     f111 = fc_array(iz+1, iy+1, ix+1);
-                mffab(i,j,k) = utils::algorithms::trilinear_interp<double>
+                mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::trilinear_interp<double>
                     (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
                      f000, f001, f010, f011, f100, f101, f110, f111,
-                     x0, x1, x2);
+                     x0, x1, x2));
 #endif
 
             }

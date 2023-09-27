@@ -144,7 +144,7 @@ WarpXParticleContainer::AllocData ()
 }
 
 void
-WarpXParticleContainer::AddNParticles (int /*lev*/, int n,
+WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
                                        amrex::Vector<amrex::ParticleReal> const & x,
                                        amrex::Vector<amrex::ParticleReal> const & y,
                                        amrex::Vector<amrex::ParticleReal> const & z,
@@ -164,13 +164,13 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, int n,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(nattr_int <= NumIntComps(),
                                      "Too many integer attributes specified");
 
-    int ibegin = 0;
-    int iend = n;
+    long ibegin = 0;
+    long iend = n;
     if (!uniqueparticles) {
         const int myproc = amrex::ParallelDescriptor::MyProc();
         const int nprocs = amrex::ParallelDescriptor::NProcs();
-        const int navg = n/nprocs;
-        const int nleft = n - navg * nprocs;
+        const auto navg = n/nprocs;
+        const auto nleft = n - navg * nprocs;
         if (myproc < nleft) {
             ibegin = myproc*(navg+1);
             iend = ibegin + navg+1;
@@ -196,7 +196,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, int n,
     amrex::Vector<amrex::ParticleReal> theta(np);
 #endif
 
-    for (int i = ibegin; i < iend; ++i)
+    for (auto i = ibegin; i < iend; ++i)
     {
         ParticleType p;
         if (id==-1)
@@ -824,8 +824,8 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
             auto permutation = bins.permutationPtr();
             amrex::ParallelFor(bins.numBins(),
                                [=] AMREX_GPU_DEVICE (int ibin) {
-                                   const int bin_start = offsets_ptr[ibin];
-                                   const int bin_stop = offsets_ptr[ibin+1];
+                                   const auto bin_start = offsets_ptr[ibin];
+                                   const auto bin_stop = offsets_ptr[ibin+1];
                                    if (bin_start < bin_stop) {
                                        auto p = pstruct_ptr[permutation[bin_start]];
                                        Box tbx;

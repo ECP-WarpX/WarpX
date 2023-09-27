@@ -68,7 +68,7 @@ HankelTransform::HankelTransform (int const hankel_order,
 
     amrex::Vector<amrex::Real> denom(m_nk);
     for (int ik=0 ; ik < m_nk ; ik++) {
-        const amrex::Real jna = jn(p_denom, alphas[ik]);
+        const amrex::Real jna = std::cyl_bessel_j(p_denom, alphas[ik]);
         denom[ik] = MathConst::pi*rmax*rmax*jna*jna;
     }
 
@@ -76,7 +76,7 @@ HankelTransform::HankelTransform (int const hankel_order,
     for (int ir=0 ; ir < m_nr ; ir++) {
         for (int ik=0 ; ik < m_nk ; ik++) {
             int const ii = ik + ir*m_nk;
-            num[ii] = jn(hankel_order, rmesh[ir]*kr[ik]);
+            num[ii] = std::cyl_bessel_j(hankel_order, rmesh[ir]*kr[ik]);
         }
     }
 
@@ -99,7 +99,8 @@ HankelTransform::HankelTransform (int const hankel_order,
         if (hankel_order == azimuthal_mode-1) {
             for (int ir=0 ; ir < m_nr ; ir++) {
                 int const ii = ir*m_nk;
-                invM[ii] = std::pow(rmesh[ir], (azimuthal_mode-1))/(MathConst::pi*std::pow(rmax, (azimuthal_mode+1)));
+                invM[ii] = static_cast<amrex::Real>(
+                    std::pow(rmesh[ir], (azimuthal_mode-1))/(MathConst::pi*std::pow(rmax, (azimuthal_mode+1))));
             }
         } else {
             for (int ir=0 ; ir < m_nr ; ir++) {

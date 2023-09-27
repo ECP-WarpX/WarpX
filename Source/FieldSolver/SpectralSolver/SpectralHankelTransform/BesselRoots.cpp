@@ -55,8 +55,8 @@ namespace{
             p0 = c[ntry]*(*zeroj);
 
             p1 = *zeroj;
-            q0 = jn(n, p0);
-            q1 = jn(n, p1);
+            q0 = std::cyl_bessel_j(n, p0);
+            q1 = std::cyl_bessel_j(n, p1);
             for (int it=1; it <= nitmx; it++) {
                 if (q1 == q0) break;
                 p = p1 - q1*(p1 - p0)/(q1 - q0);
@@ -68,7 +68,7 @@ namespace{
                 p0 = p1;
                 q0 = q1;
                 p1 = p;
-                q1 = jn(n, p1);
+                q1 = std::cyl_bessel_j(n, p1);
             }
         }
         *ier = 3;
@@ -84,7 +84,7 @@ void GetBesselRoots(int n, int nk, amrex::Vector<amrex::Real>& roots, amrex::Vec
     int ierror, ik, k;
 
     const amrex::Real tol = 1e-14_rt;
-    const amrex::Real nitmx = 10;
+    const int nitmx = 10;
 
     const amrex::Real c1 = 1.8557571_rt;
     const amrex::Real c2 = 1.033150_rt;
@@ -113,9 +113,9 @@ void GetBesselRoots(int n, int nk, amrex::Vector<amrex::Real>& roots, amrex::Vec
         // Include the trivial root
         ier[0] = 0;
         roots[0] = 0.;
-        const amrex::Real f1 = std::pow(n, (1.0_rt/3.0_rt));
-        const amrex::Real f2 = f1*f1*n;
-        const amrex::Real f3 = f1*n*n;
+        const auto f1 = static_cast<amrex::Real>(std::pow(n, (1.0_rt/3.0_rt)));
+        const auto f2 = f1*f1*n;
+        const auto f3 = f1*n*n;
         zeroj = n + c1*f1 + (c2/f1) - (c3/n) - (c4/f2) + (c5/f3);
         ::SecantRootFinder(n, nitmx, tol, &zeroj, &ierror);
         ier[1] = ierror;
@@ -139,7 +139,7 @@ void GetBesselRoots(int n, int nk, amrex::Vector<amrex::Real>& roots, amrex::Vec
 
         zeroj = b0 - (t1/b1) - (t3/b3) - (t5/b5) - (t7/b7);
 
-        const amrex::Real errj = std::abs(jn(n, zeroj));
+        const amrex::Real errj = std::abs(std::cyl_bessel_j(n, zeroj));
 
         // improve solution using procedure SecantRootFinder
         if (errj > tol) ::SecantRootFinder(n, nitmx, tol, &zeroj, &ierror);

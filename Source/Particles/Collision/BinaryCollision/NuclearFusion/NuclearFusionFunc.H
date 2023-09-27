@@ -161,7 +161,8 @@ public:
             const index_type c2 = amrex::max(NI1/NI2,1u);
 
             // multiplier ratio to take into account unsampled pairs
-            const int multiplier_ratio = (m_isSameSpecies)?(2*max_N - 1):(max_N);
+            const auto multiplier_ratio = static_cast<int>(
+                (m_isSameSpecies)?(2u*max_N - 1):(max_N));
 
 #if (defined WARPX_DIM_RZ)
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
@@ -194,7 +195,7 @@ public:
                     u1x[ I1[i1] ], u1y[ I1[i1] ], u1z[ I1[i1] ],
                     u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
                     m1, m2, w1[ I1[i1] ]/c1k, w2[ I2[i2] ]/c2k,
-                    dt, dV, pair_index, p_mask, p_pair_reaction_weight,
+                    dt, dV, static_cast<int>(pair_index), p_mask, p_pair_reaction_weight,
                     m_fusion_multiplier, multiplier_ratio,
                     m_probability_threshold,
                     m_probability_target_value,

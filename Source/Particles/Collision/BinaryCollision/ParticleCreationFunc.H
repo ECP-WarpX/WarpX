@@ -130,7 +130,7 @@ public:
             // one electron, we create two electrons, one at the position of each particle that
             // collided. This allows for exact charge conservation.
             const index_type num_added = total * m_num_products_host[i] * 2;
-            num_added_vec[i] = num_added;
+            num_added_vec[i] = static_cast<int>(num_added);
             tile_products[i]->resize(products_np[i] + num_added);
         }
 
@@ -185,10 +185,10 @@ public:
                                                    2*(p_offsets[i]*p_num_products_device[j] + k);
                         // Create product particle at position of particle 1
                         copy_species1[j](soa_products_data[j], soa_1, static_cast<int>(p_pair_indices_1[i]),
-                                      product_index, engine);
+                                      static_cast<int>(product_index), engine);
                         // Create another product particle at position of particle 2
-                        copy_species2[j](soa_products_data[j], soa_2, p_pair_indices_2[i],
-                                      product_index + 1, engine);
+                        copy_species2[j](soa_products_data[j], soa_2, static_cast<int>(p_pair_indices_2[i]),
+                                      static_cast<int>(product_index + 1), engine);
 
                         // Set the weight of the new particles to p_pair_reaction_weight[i]/2
                         soa_products_data[j].m_rdata[PIdx::w][product_index] =

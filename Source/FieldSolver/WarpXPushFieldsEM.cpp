@@ -1291,8 +1291,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
                 if (rmin == 0._rt && 1-ishift_r <= i && i < ngJ[0]-ishift_r) {
-                    Jr_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode-1);
-                    Jr_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode);
+                    Jr_arr(i,j,0,2*imode-1) += static_cast<amrex::Real>(std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode-1));
+                    Jr_arr(i,j,0,2*imode) += static_cast<amrex::Real>(std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode));
                 }
                 // Apply the inverse volume scaling
                 // Jr is forced to zero on axis.
@@ -1328,8 +1328,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
                 if (rmin == 0._rt && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
-                    Jt_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode-1);
-                    Jt_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode);
+                    Jt_arr(i,j,0,2*imode-1) += static_cast<amrex::Real>(std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode-1));
+                    Jt_arr(i,j,0,2*imode) += static_cast<amrex::Real>(std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode));
                 }
 
                 // Apply the inverse volume scaling
@@ -1365,8 +1365,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
                 if (rmin == 0._rt && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
-                    Jz_arr(i,j,0,2*imode-1) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode-1);
-                    Jz_arr(i,j,0,2*imode) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode);
+                    Jz_arr(i,j,0,2*imode-1) -= static_cast<amrex::Real>(std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode-1));
+                    Jz_arr(i,j,0,2*imode) -= static_cast<amrex::Real>(std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode));
                 }
 
                 // Apply the inverse volume scaling
@@ -1445,7 +1445,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
                 else {
                     imode = (icomp - ncomp/2 + 1)/2;
                 }
-                Rho_arr(i,j,0,icomp) -= std::pow(-1, imode+1)*Rho_arr(-ishift-i,j,0,icomp);
+                Rho_arr(i,j,0,icomp) -= static_cast<amrex::Real>(std::pow(-1, imode+1)*Rho_arr(-ishift-i,j,0,icomp));
             }
 
             // Apply the inverse volume scaling

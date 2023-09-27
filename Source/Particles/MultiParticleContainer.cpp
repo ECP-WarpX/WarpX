@@ -366,7 +366,7 @@ MultiParticleContainer::ReadParameters ()
                 it != lasers_names.end(),
                 "laser '" + name
                 + "' in lasers.deposit_on_main_grid must be part of lasers.lasers_names");
-            const int i = std::distance(lasers_names.begin(), it);
+            const auto i = static_cast<int>(std::distance(lasers_names.begin(), it));
             m_laser_deposit_on_main_grid[i] = true;
         }
 
@@ -671,7 +671,7 @@ Vector<Long>
 MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
 {
     const WarpX& warpx = WarpX::GetInstance();
-    const int num_boxes = warpx.boxArray(lev).size();
+    const auto num_boxes = static_cast<int>(warpx.boxArray(lev).size());
     Vector<Long> r(num_boxes, 0);
     return r;
 }

@@ -367,7 +367,7 @@ public:
 
             for (int i = 0; i < n_product_species; i++)
             {
-                setNewParticleIDs(*(tile_products_data[i]), products_np[i], num_added[i]);
+                setNewParticleIDs(*(tile_products_data[i]), static_cast<int>(products_np[i]), num_added[i]);
             }
         }
         else // species_1 != species_2
@@ -528,7 +528,7 @@ public:
 
             for (int i = 0; i < n_product_species; i++)
             {
-                setNewParticleIDs(*(tile_products_data[i]), products_np[i], num_added[i]);
+                setNewParticleIDs(*(tile_products_data[i]), static_cast<int>(products_np[i]), num_added[i]);
             }
 
         } // end if ( m_isSameSpecies)

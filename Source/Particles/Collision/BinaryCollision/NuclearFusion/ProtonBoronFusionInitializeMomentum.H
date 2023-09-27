@@ -121,7 +121,7 @@ namespace {
         // Preliminary calculation: compute Beryllium velocity v_Be
         const amrex::ParticleReal p_Be_sq   = px_Be*px_Be + py_Be*py_Be + pz_Be*pz_Be;
         const amrex::ParticleReal g_Be      = std::sqrt(1._prt + p_Be_sq / (static_cast<amrex::ParticleReal>(mBe_sq)*c_sq));
-        const amrex::ParticleReal mg_Be     = m_beryllium*g_Be;
+        const amrex::ParticleReal mg_Be     = static_cast<amrex::ParticleReal>(m_beryllium)*g_Be;
         const amrex::ParticleReal v_Bex     = px_Be / mg_Be;
         const amrex::ParticleReal v_Bey     = py_Be / mg_Be;
         const amrex::ParticleReal v_Bez     = pz_Be / mg_Be;

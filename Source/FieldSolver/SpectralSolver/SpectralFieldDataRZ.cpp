@@ -629,11 +629,11 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                     sign = +1._rt;
                 } else {
                     // Odd modes are anti-symmetric
-                    int imode = (icomp + 1)/2;
-                    sign = std::pow(-1._rt, imode);
+                    const auto imode = (icomp + 1)/2;
+                    sign = static_cast<amrex::Real>(std::pow(-1._rt, imode));
                 }
             }
-            int ic = icomp + i_comp;
+            const auto ic = icomp + i_comp;
             field_mf_array(i,j,k,ic) = sign*field_mf_copy_array(ii,j,k,icomp);
         });
 

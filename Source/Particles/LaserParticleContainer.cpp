@@ -487,7 +487,8 @@ LaserParticleContainer::InitData (int lev)
 
     const DistributionMapping plane_dm {plane_ba, nprocs};
     const Vector<int>& procmap = plane_dm.ProcessorMap();
-    for (int i = 0, n = plane_ba.size(); i < n; ++i)
+    const auto plane_ba_size = static_cast<int>(plane_ba.size());
+    for (int i = 0; i < plane_ba_size; ++i)
     {
         if (procmap[i] == myproc)
         {
@@ -535,7 +536,7 @@ LaserParticleContainer::InitData (int lev)
             }
         }
     }
-    const int np = particle_z.size();
+    const auto np = static_cast<int>(particle_z.size());
     amrex::Vector<amrex::ParticleReal> particle_ux(np, 0.0);
     amrex::Vector<amrex::ParticleReal> particle_uy(np, 0.0);
     amrex::Vector<amrex::ParticleReal> particle_uz(np, 0.0);
@@ -637,18 +638,18 @@ LaserParticleContainer::Evolve (int lev,
             //
             WARPX_PROFILE_VAR_START(blp_pp);
             // Find the coordinates of the particles in the emission plane
-            calculate_laser_plane_coordinates(pti, np,
+            calculate_laser_plane_coordinates(pti, static_cast<int>(np),
                                               plane_Xp.dataPtr(),
                                               plane_Yp.dataPtr());
 
             // Calculate the laser amplitude to be emitted,
             // at the position of the emission plane
             m_up_laser_profile->fill_amplitude(
-                np, plane_Xp.dataPtr(), plane_Yp.dataPtr(),
+                static_cast<int>(np), plane_Xp.dataPtr(), plane_Yp.dataPtr(),
                 t_lab, amplitude_E.dataPtr());
 
             // Calculate the corresponding momentum and position for the particles
-            update_laser_particle(pti, np, uxp.dataPtr(), uyp.dataPtr(),
+            update_laser_particle(pti, static_cast<int>(np), uxp.dataPtr(), uyp.dataPtr(),
                                   uzp.dataPtr(), wp.dataPtr(),
                                   amplitude_E.dataPtr(), dt);
             WARPX_PROFILE_VAR_STOP(blp_pp);
