@@ -720,7 +720,7 @@ SpectralFieldDataRZ::BackwardTransform (const int lev,
                 } else {
                     // Even modes are anti-symmetric
                     int imode = (icomp + 1)/2;
-                    sign = std::pow(-1._rt, imode+1);
+                    sign = static_cast<amrex::Real>(std::pow(-1._rt, imode+1));
                 }
             }
             if (icomp == 0) {

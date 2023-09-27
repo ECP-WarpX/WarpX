@@ -98,7 +98,7 @@ public:
         ParticleUtils::getEnergy(u_coll2, m_mass, E_coll);
 
         // get collision cross-section
-        const ParticleReal sigma_E = m_mcc_process.getCrossSection(E_coll);
+        const ParticleReal sigma_E = m_mcc_process.getCrossSection(static_cast<amrex::ParticleReal>(E_coll));
 
         // calculate normalized collision frequency
         const ParticleReal nu_i = n_a * sigma_E * sqrt(u_coll2) / m_nu_max;

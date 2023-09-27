@@ -675,7 +675,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                 ablastr::warn_manager::WarnPriority::high);
         }
     } // IO Processor
-    auto const np = particle_z.size();
+    auto const np = static_cast<long>(particle_z.size());
     amrex::Vector<ParticleReal> xp(particle_x.data(), particle_x.data() + np);
     amrex::Vector<ParticleReal> yp(particle_y.data(), particle_y.data() + np);
     amrex::Vector<ParticleReal> zp(particle_z.data(), particle_z.data() + np);
