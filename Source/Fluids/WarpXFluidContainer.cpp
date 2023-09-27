@@ -820,8 +820,8 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                 // Impose "none" boundaries
                 // Condition: Vx(r) = 0 at boundaries
-                amrex::Real Vx_I_minus = Vx_calc(U_minus_x,i,j,k,clight);
-                amrex::Real Vx_L_plus = Vx_calc(U_plus_x,i-1,j,k,clight);
+                amrex::Real Vx_I_minus = V_calc(U_minus_x,i,j,k,0,clight);
+                amrex::Real Vx_L_plus = V_calc(U_plus_x,i-1,j,k,0,clight);
 
                 // compute the fluxes:
                 // (note that _plus is shifted due to grid location)
@@ -829,14 +829,14 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 amrex::Real F0_minusx = 0.0, F1_minusx = 0.0, F2_minusx = 0.0, F3_minusx = 0.0;
                 amrex::Real F0_plusx = 0.0, F1_plusx = 0.0, F2_plusx = 0.0, F3_plusx = 0.0;
                 if (i != domain.smallEnd(0)) {
-                    Vx_L_minus = Vx_calc(U_minus_x,i-1,j,k,clight);
+                    Vx_L_minus = V_calc(U_minus_x,i-1,j,k,0,clight);
                     F0_minusx = flux_N(  U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus)*S_Ar_minus;
                     F1_minusx = flux_NUx(U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus)*S_Ar_minus;
                     F2_minusx = flux_NUy(U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus)*S_Ar_minus;
                     F3_minusx = flux_NUz(U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus)*S_Ar_minus;
                 }
                 if (i < domain.bigEnd(0)) {
-                    Vx_I_plus = Vx_calc(U_plus_x,i,j,k,clight);
+                    Vx_I_plus = V_calc(U_plus_x,i,j,k,0,clight);
                     F0_plusx  = flux_N(  U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus)*S_Ar_plus;
                     F1_plusx  = flux_NUx(U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus)*S_Ar_plus;
                     F2_plusx  = flux_NUy(U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus)*S_Ar_plus;

@@ -36,30 +36,6 @@ amrex::Real V_calc (const amrex::Array4<amrex::Real>& U, int i, int j, int k, in
     amrex::Real gamma = std::sqrt(1.0 + (U(i,j,k,1)*U(i,j,k,1) + U(i,j,k,2)*U(i,j,k,2) + U(i,j,k,3)*U(i,j,k,3))/(c*c));
     return U(i,j,k,comp+1)/gamma;
 }
-// Velocity (x) at the half step
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::Real Vx_calc (const amrex::Array4<amrex::Real>& U, int i, int j, int k, amrex::Real c)
-{
-    // Gamma Calc
-    amrex::Real gamma = std::sqrt(1.0 + (U(i,j,k,1)*U(i,j,k,1) + U(i,j,k,2)*U(i,j,k,2) + U(i,j,k,3)*U(i,j,k,3))/(c*c));
-    return U(i,j,k,1)/gamma;
-}
-// Velocity (x) at the half step
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::Real Vy_calc (const amrex::Array4<amrex::Real>& U, int i, int j, int k, amrex::Real c)
-{
-    // Gamma Calc
-    amrex::Real gamma = std::sqrt(1.0 + (U(i,j,k,1)*U(i,j,k,1) + U(i,j,k,2)*U(i,j,k,2) + U(i,j,k,3)*U(i,j,k,3))/(c*c));
-    return U(i,j,k,2)/gamma;
-}
-// Velocity (x) at the half step
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::Real Vz_calc (const amrex::Array4<amrex::Real>& U, int i, int j, int k, amrex::Real c)
-{
-    // Gamma Calc
-    amrex::Real gamma = std::sqrt(1.0 + (U(i,j,k,1)*U(i,j,k,1) + U(i,j,k,2)*U(i,j,k,2) + U(i,j,k,3)*U(i,j,k,3))/(c*c));
-    return U(i,j,k,3)/gamma;
-}
 // mindmod
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real minmod (amrex::Real a, amrex::Real b)
@@ -140,29 +116,7 @@ int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
     return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,3) + Vp*Up(i,j,k,0)*Up(i,j,k,3))
         - (0.5*c)*(Up(i,j,k,0)*Up(i,j,k,3) -    Um(i,j,k,0)*Um(i,j,k,3));
 }
-// ave_epsilon
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::Real ave_epsilon (amrex::Real a, amrex::Real b, amrex::Real dx)
-{
-    amrex::Real epsilon_sq = 10.0*dx*dx*dx;
-    return ((b*b + epsilon_sq)*a + (a*a + epsilon_sq)*b)/(a*a + b*b + 2.0*epsilon_sq);
-}
-// ave_minmod high diffusivity
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::Real ave_simple (amrex::Real a, amrex::Real b)
-{
-    return (a+b)/2.0;
-}
-// ave_minmod high diffusivity
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::Real ave_high_diff (amrex::Real a, amrex::Real b)
-{
-    if (a*b > 0.0)
-        return minmod3( (a+b)/2.0, a, b );
-    else
-        return 0.0;
-}
-// ave_minmod high diffusivity
+// ave_minmod high diffusivity, sigma can be between [1,2]
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real ave_adjustable_diff (amrex::Real a, amrex::Real b)
 {
