@@ -153,32 +153,6 @@ amrex::Real ave_stage2 (amrex::Real dQ, amrex::Real a, amrex::Real b, amrex::Rea
     amrex::Real dq_min = 2.0*std::min( b - min3(a,b,c), max3(a,b,c) - b);
     return ( std::abs(dQ)/dQ ) * std::min( std::abs(dQ) , sigma*std::abs(dq_min) );
 }
-// Compute the zero edges (minus)
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void compute_U_edges_minus (const amrex::Array4<amrex::Real>& U_edge, int i, int j, int k, amrex::Box box,
-amrex::Real U_tilde0, amrex::Real U_tilde1, amrex::Real U_tilde2, amrex::Real U_tilde3,
-amrex::Real dU0x, amrex::Real dU1x, amrex::Real dU2x, amrex::Real dU3x)
-{
-    if ( box.contains(i,j,k) ) {
-        U_edge(i,j,k,0) = U_tilde0 + dU0x/2.0;
-        U_edge(i,j,k,1) = U_tilde1 + dU1x/2.0;
-        U_edge(i,j,k,2) = U_tilde2 + dU2x/2.0;
-        U_edge(i,j,k,3) = U_tilde3 + dU3x/2.0;
-    }
-}
-// Compute the zero edges (plus)
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void compute_U_edges_plus (const amrex::Array4<amrex::Real>& U_edge, int i, int j, int k, amrex::Box box,
-amrex::Real U_tilde0, amrex::Real U_tilde1, amrex::Real U_tilde2, amrex::Real U_tilde3,
-amrex::Real dU0x, amrex::Real dU1x, amrex::Real dU2x, amrex::Real dU3x)
-{
-    if ( box.contains(i,j,k) ) {
-        U_edge(i,j,k,0) = U_tilde0 - dU0x/2.0;
-        U_edge(i,j,k,1) = U_tilde1 - dU1x/2.0;
-        U_edge(i,j,k,2) = U_tilde2 - dU2x/2.0;
-        U_edge(i,j,k,3) = U_tilde3 - dU3x/2.0;
-    }
-}
 // Returns the offset indices for the "plus" grid
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void plus_index_offsets (int i, int j, int k, int& ip, int& jp, int& kp, int comp)
@@ -203,6 +177,31 @@ void plus_index_offsets (int i, int j, int k, int& ip, int& jp, int& kp, int com
         ip =  i - 1; jp =  j; kp = k;
     }
 #endif
+}
+// Compute the zero edges
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void compute_U_edges (const amrex::Array4<amrex::Real>& Um, const amrex::Array4<amrex::Real>& Up, int i, int j, int k, amrex::Box box,
+amrex::Real U_tilde0, amrex::Real U_tilde1, amrex::Real U_tilde2, amrex::Real U_tilde3,
+amrex::Real dU0x, amrex::Real dU1x, amrex::Real dU2x, amrex::Real dU3x, int comp)
+{
+
+    // comp -> x, y, z -> 0, 1, 2
+    int ip, jp, kp;
+    plus_index_offsets(i, j, k, ip, jp, kp, comp);
+
+    if ( box.contains(i,j,k) ) {
+        Um(i,j,k,0) = U_tilde0 + dU0x/2.0;
+        Um(i,j,k,1) = U_tilde1 + dU1x/2.0;
+        Um(i,j,k,2) = U_tilde2 + dU2x/2.0;
+        Um(i,j,k,3) = U_tilde3 + dU3x/2.0;
+    }
+
+    if ( box.contains(ip,jp,kp) ) {
+        Up(ip,jp,kp,0) = U_tilde0 - dU0x/2.0;
+        Up(ip,jp,kp,1) = U_tilde1 - dU1x/2.0;
+        Up(ip,jp,kp,2) = U_tilde2 - dU2x/2.0;
+        Up(ip,jp,kp,3) = U_tilde3 - dU3x/2.0;
+    }
 }
 // Compute the zero edges
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE

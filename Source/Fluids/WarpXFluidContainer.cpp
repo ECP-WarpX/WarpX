@@ -596,25 +596,21 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 
                     // Predict U at the cell edges (x)
-                    // (note that _plus is shifted due to grid location)
-                    compute_U_edges_minus (U_minus_x, i, j, k, box_x, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0x, dU1x, dU2x, dU3x);
-                    compute_U_edges_plus (U_plus_x, i-1, j, k, box_x, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0x, dU1x, dU2x, dU3x);
+                    compute_U_edges(U_minus_x, U_plus_x, i, j, k, box_x, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0x, dU1x, dU2x, dU3x,0);
 
                     // Positivity Limiter for density N, if N_edge < 0,
                     // then set the slope (dU) to to zero in that cell/direction
                     positivity_limiter (U_plus_x, U_minus_x,  N_arr, i, j, k, box_x, Ux, Uy, Uz, 0);
 
                     // Predict U at the cell edges (y)
-                    compute_U_edges_minus (U_minus_y, i, j, k, box_y, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0y, dU1y, dU2y, dU3y);
-                    compute_U_edges_plus (U_plus_y, i, j-1, k, box_y, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0y, dU1y, dU2y, dU3y);
+                    compute_U_edges(U_minus_y, U_plus_y, i, j, k, box_y, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0y, dU1y, dU2y, dU3y,1);
 
                     // Positivity Limiter for density N, if N_edge < 0,
                     // then set the slope (dU) to to zero in that cell/direction
                     positivity_limiter (U_plus_y, U_minus_y,  N_arr, i, j, k, box_y, Ux, Uy, Uz, 1);
 
                     // Predict U at the cell edges (z)
-                    compute_U_edges_minus (U_minus_z, i, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
-                    compute_U_edges_plus (U_plus_z, i, j, k-1, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
+                    compute_U_edges(U_minus_z, U_plus_z, i, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z,2);
 
                     // Positivity Limiter for density N, if N_edge < 0,
                     // then set the slope (dU) to to zero in that cell/direction
@@ -670,17 +666,14 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real  U_tilde3 = Uz - dt_over_dx_half*JdU3x - dt_over_dz_half*JdU3z;
 
                     // Predict U at the cell edges (x)
-                    // (note that _plus is shifted due to grid location)
-                    compute_U_edges_minus (U_minus_x, i, j, k, box_x, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0x, dU1x, dU2x, dU3x);
-                    compute_U_edges_plus (U_plus_x, i-1, j, k, box_x, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0x, dU1x, dU2x, dU3x);
+                    compute_U_edges(U_minus_x, U_plus_x, i, j, k, box_x, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0x, dU1x, dU2x, dU3x,0);
 
                     // Positivity Limiter for density N, if N_edge < 0,
                     // then set the slope (dU) to to zero in that cell/direction
                     positivity_limiter (U_plus_x, U_minus_x,  N_arr, i, j, k, box_x, Ux, Uy, Uz, 0);
 
                     // Predict U at the cell edges (z)
-                    compute_U_edges_minus (U_minus_z, i, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
-                    compute_U_edges_plus (U_plus_z, i, j-1, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
+                    compute_U_edges(U_minus_z, U_plus_z, i, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z,2);
 
                     // Positivity Limiter for density N, if N_edge < 0,
                     // then set the slope (dU) to to zero in that cell/direction
@@ -699,10 +692,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real  U_tilde3 = Uz - dt_over_dz_half*JdU3z;
 
                     // Predict U at the cell edges (z)
-                    // (note that _plus is shifted due to grid location)
-                    // Predict U at the cell edges (z)
-                    compute_U_edges_minus (U_minus_z, i, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
-                    compute_U_edges_plus (U_plus_z, i-1, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z);
+                    compute_U_edges(U_minus_z, U_plus_z, i, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z,2);
 
                     // Positivity Limiter for density N, if N_edge < 0,
                     // then set the slope (dU) to to zero in that cell/direction
