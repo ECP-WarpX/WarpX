@@ -1146,13 +1146,13 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
       fieldBoundary.resize(AMREX_SPACEDIM * 2);
       particleBoundary.resize(AMREX_SPACEDIM * 2);
 
-      const auto fieldBoundarySize = static_cast<int>(fieldBoundary.size() / 2u);
+      const auto HalfFieldBoundarySize = static_cast<int>(fieldBoundary.size() / 2u);
 
-      for (auto i = 0; i < fieldBoundarySize; ++i)
+      for (auto i = 0; i < HalfFieldBoundarySize; ++i)
           if (m_fieldPMLdirections.at(i))
               fieldBoundary.at(i) = "open";
 
-      for (int i = 0; i < fieldBoundarySize; ++i)
+      for (int i = 0; i < HalfFieldBoundarySize; ++i)
           if (period.isPeriodic(i)) {
               fieldBoundary.at(2u * i) = "periodic";
               fieldBoundary.at(2u * i + 1u) = "periodic";
