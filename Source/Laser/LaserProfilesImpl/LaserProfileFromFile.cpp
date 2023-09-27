@@ -183,33 +183,33 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
             //Dimensions of lasy file data: {m,t,r}
             amrex::Print() << Utils::TextMsg::Info( "Found lasy file in RZ geometry" );
             m_params.file_in_cartesian_geom = 0;
-            m_params.n_rz_azimuthal_components = extent[0];
-            m_params.nt = extent[1];
-            m_params.nr = extent[2];
+            m_params.n_rz_azimuthal_components = static_cast<int>(extent[0]);
+            m_params.nt = static_cast<int>(extent[1]);
+            m_params.nr = static_cast<int>(extent[2]);
             if(m_params.nt <= 1) WARPX_ABORT_WITH_MESSAGE("nt in lasy file must be >=2");
             if(m_params.nr <= 1) WARPX_ABORT_WITH_MESSAGE("nr in lasy file must be >=2");
             // Calculate the min and max of the grid
-            m_params.t_min = offset[0] + position[0]*spacing[0];
-            m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
-            m_params.r_min = offset[1] + position[1]*spacing[1];
-            m_params.r_max = m_params.r_min + (m_params.nr-1)*spacing[1];
+            m_params.t_min = static_cast<amrex::Real>(offset[0] + position[0]*spacing[0]);
+            m_params.t_max = static_cast<amrex::Real>(m_params.t_min + (m_params.nt-1)*spacing[0]);
+            m_params.r_min = static_cast<amrex::Real>(offset[1] + position[1]*spacing[1]);
+            m_params.r_max = static_cast<amrex::Real>(m_params.r_min + (m_params.nr-1)*spacing[1]);
         } else if (fileGeom=="cartesian"){
             //Dimensions of lasy file data: {t,y,x}
             amrex::Print() << Utils::TextMsg::Info( "Found lasy file in 3D cartesian geometry");
             m_params.file_in_cartesian_geom = 1;
-            m_params.nt = extent[0];
-            m_params.ny = extent[1];
-            m_params.nx = extent[2];
+            m_params.nt = static_cast<int>(extent[0]);
+            m_params.ny = static_cast<int>(extent[1]);
+            m_params.nx = static_cast<int>(extent[2]);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nt > 1, "nt in lasy file must be >=2");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.nx > 1, "nx in lasy file must be >=2");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_params.ny > 1, "ny in lasy file must be >=2 in 3D");
             // Calculate the min and max of the grid
-            m_params.t_min = offset[0] + position[0]*spacing[0];
-            m_params.t_max = m_params.t_min + (m_params.nt-1)*spacing[0];
-            m_params.y_min = offset[1] + position[1]*spacing[1];
-            m_params.y_max = m_params.y_min + (m_params.ny-1)*spacing[1];
-            m_params.x_min = offset[2] + position[2]*spacing[2];
-            m_params.x_max = m_params.x_min + (m_params.nx-1)*spacing[2];
+            m_params.t_min = static_cast<amrex::Real>(offset[0] + position[0]*spacing[0]);
+            m_params.t_max = static_cast<amrex::Real>(m_params.t_min + (m_params.nt-1)*spacing[0]);
+            m_params.y_min = static_cast<amrex::Real>(offset[1] + position[1]*spacing[1]);
+            m_params.y_max = static_cast<amrex::Real>(m_params.y_min + (m_params.ny-1)*spacing[1]);
+            m_params.x_min = static_cast<amrex::Real>(offset[2] + position[2]*spacing[2]);
+            m_params.x_max = static_cast<amrex::Real>(m_params.x_min + (m_params.nx-1)*spacing[2]);
         } else{
             WARPX_ABORT_WITH_MESSAGE("The lasy file's geometry has to be in either RZ or 3D cartesian coordinates");
         }
@@ -269,11 +269,11 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file (std::string binary_
         dbuf_y.resize(1);
 #endif
         inp.read(reinterpret_cast<char*>(dbuf_t.dataPtr()),
-            dbuf_t.size()*sizeof(double));
+            static_cast<std::streamsize>(dbuf_t.size()*sizeof(double)));
         inp.read(reinterpret_cast<char*>(dbuf_x.dataPtr()),
-            dbuf_x.size()*sizeof(double));
+            static_cast<std::streamsize>(dbuf_x.size()*sizeof(double)));
         inp.read(reinterpret_cast<char*>(dbuf_y.dataPtr()),
-            dbuf_y.size()*sizeof(double));
+            static_cast<std::streamsize>(dbuf_y.size()*sizeof(double)));
         if(!inp) WARPX_ABORT_WITH_MESSAGE("Failed to read coords from binary file");
 
         m_params.t_min = static_cast<amrex::Real>(dbuf_t[0]);
@@ -318,7 +318,7 @@ WarpXLaserProfiles::FromFileLaserProfile::read_data_t_chunk (int t_begin, int t_
     amrex::Print() << Utils::TextMsg::Info(
         "Reading [" + std::to_string(i_first) + ", " + std::to_string(i_last) +
             "] data chunk from " + m_params.lasy_file_name);
-    int data_size;
+    long data_size;
     if (m_params.file_in_cartesian_geom==0) {
         data_size = m_params.n_rz_azimuthal_components*(i_last-i_first+1)*m_params.nr;
     } else {
@@ -434,7 +434,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cartes
 {
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
-    const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
+    const amrex::Real omega_t = 2._rt*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
     const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
     const auto tmp_x_min = m_params.x_min;
     const auto tmp_x_max = m_params.x_max;
@@ -519,7 +519,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylind
 {
     // Copy member variables to tmp copies
     // and get pointers to underlying data for GPU.
-    const amrex::Real omega_t = 2.*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
+    const amrex::Real omega_t = 2._rt*MathConst::pi*PhysConst::c*t/m_common_params.wavelength;
     const Complex exp_omega_t = Complex{ std::cos(-omega_t), std::sin(-omega_t) };
     const auto tmp_r_min = m_params.r_min;
     const auto tmp_r_max = m_params.r_max;

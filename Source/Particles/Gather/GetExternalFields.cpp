@@ -13,7 +13,7 @@
 
 using namespace amrex::literals;
 
-GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset) noexcept
+GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset) noexcept
 {
     auto& warpx = WarpX::GetInstance();
     auto& mypc = warpx.GetPartContainer();

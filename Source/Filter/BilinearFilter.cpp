@@ -63,8 +63,8 @@ namespace {
 void BilinearFilter::ComputeStencils(){
     WARPX_PROFILE("BilinearFilter::ComputeStencils()");
     int i = 0;
-    for (auto el : npass_each_dir )
-        stencil_length_each_dir[i++] = el;
+    for (const auto& el : npass_each_dir )
+        stencil_length_each_dir[i++] = static_cast<int>(el);
     stencil_length_each_dir += 1.;
 #if defined(WARPX_DIM_3D)
     // npass_each_dir = npass_x npass_y npass_z

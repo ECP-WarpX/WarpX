@@ -606,30 +606,30 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 #if !defined(WARPX_DIM_1D_Z)  // 2D, 3D, and RZ
         const std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
         const std::shared_ptr<ParticleReal> ptr_offset_x = ps["positionOffset"]["x"].loadChunk<ParticleReal>();
-        double const position_unit_x = ps["position"]["x"].unitSI();
-        double const position_offset_unit_x = ps["positionOffset"]["x"].unitSI();
+        auto const position_unit_x = static_cast<ParticleReal>(ps["position"]["x"].unitSI());
+        auto const position_offset_unit_x = static_cast<ParticleReal>(ps["positionOffset"]["x"].unitSI());
 #endif
 #if !(defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z))
         const std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
         const std::shared_ptr<ParticleReal> ptr_offset_y = ps["positionOffset"]["y"].loadChunk<ParticleReal>();
-        double const position_unit_y = ps["position"]["y"].unitSI();
-        double const position_offset_unit_y = ps["positionOffset"]["y"].unitSI();
+        auto const position_unit_y = static_cast<ParticleReal>(ps["position"]["y"].unitSI());
+        auto const position_offset_unit_y = static_cast<ParticleReal>(ps["positionOffset"]["y"].unitSI());
 #endif
         const std::shared_ptr<ParticleReal> ptr_z = ps["position"]["z"].loadChunk<ParticleReal>();
         const std::shared_ptr<ParticleReal> ptr_offset_z = ps["positionOffset"]["z"].loadChunk<ParticleReal>();
-        double const position_unit_z = ps["position"]["z"].unitSI();
-        double const position_offset_unit_z = ps["positionOffset"]["z"].unitSI();
+        auto const position_unit_z = static_cast<ParticleReal>(ps["position"]["z"].unitSI());
+        auto const position_offset_unit_z = static_cast<ParticleReal>(ps["positionOffset"]["z"].unitSI());
         const std::shared_ptr<ParticleReal> ptr_ux = ps["momentum"]["x"].loadChunk<ParticleReal>();
-        double const momentum_unit_x = ps["momentum"]["x"].unitSI();
+        auto const momentum_unit_x = static_cast<ParticleReal>(ps["momentum"]["x"].unitSI());
         const std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
-        double const momentum_unit_z = ps["momentum"]["z"].unitSI();
+        auto const momentum_unit_z = static_cast<ParticleReal>(ps["momentum"]["z"].unitSI());
         const std::shared_ptr<ParticleReal> ptr_w = ps["weighting"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>();
-        double const w_unit = ps["weighting"][openPMD::RecordComponent::SCALAR].unitSI();
+        auto const w_unit = static_cast<ParticleReal>(ps["weighting"][openPMD::RecordComponent::SCALAR].unitSI());
         std::shared_ptr<ParticleReal> ptr_uy = nullptr;
-        double momentum_unit_y = 1.0;
+        auto momentum_unit_y = 1.0_prt;
         if (ps["momentum"].contains("y")) {
             ptr_uy = ps["momentum"]["y"].loadChunk<ParticleReal>();
-            momentum_unit_y = ps["momentum"]["y"].unitSI();
+            momentum_unit_y = static_cast<ParticleReal>(ps["momentum"]["y"].unitSI());
         }
         series->flush();  // shared_ptr data can be read now
 
