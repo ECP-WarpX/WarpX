@@ -648,7 +648,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         // NUz -> -NUz (NUz_arr(i-1,j,k) -> NUz_arr(i+1,j,k))
                         dU0x = ave( -UpDx_N(N_arr,i,j,k) , UpDx_N(N_arr,i,j,k) );
                         // First term in the ave is: U_{x,y} + U_{x,y}_p,
-                        // which can be writen as 2*U_{x,y} + UpDx_U(U_{x,y}) 
+                        // which can be writen as 2*U_{x,y} + UpDx_U(U_{x,y})
                         dU1x = ave( 2.0*Ux + UpDx_U(N_arr,NUx_arr,Ux,i,j,k) , UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
                         dU2x = ave( 2.0*Uy + UpDx_U(N_arr,NUy_arr,Uy,i,j,k) , UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
                         dU3x = ave( -UpDx_U(N_arr,NUz_arr,Uz,i,j,k) , UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
