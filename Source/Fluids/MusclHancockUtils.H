@@ -525,7 +525,7 @@ const amrex::Array4<amrex::Real>& U_plus,int i,int j,int k,amrex::Real clight, i
         return flux_NUy(  U_minus, U_plus, i, j, k, V_I_minus, V_I_plus) - flux_NUy(  U_minus, U_plus, ip, jp, kp, V_L_minus, V_L_plus);
     } else { //if (comp == 3)
         return flux_NUz(  U_minus, U_plus, i, j, k, V_I_minus, V_I_plus) - flux_NUz(  U_minus, U_plus, ip, jp, kp, V_L_minus, V_L_plus);
-    }          
+    }
 }
 
 #endif /*WARPX_MusclHancock_H_*/
