@@ -85,6 +85,3 @@ diag1.do_back_transformed_fields = 1
 diag1.num_snapshots_lab = 2
 diag1.dt_snapshots_lab = 6.e-13
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-
-
-
