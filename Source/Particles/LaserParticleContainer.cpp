@@ -519,15 +519,16 @@ LaserParticleContainer::InitData (int lev)
                     particle_w.push_back(-m_weight);
 #else
                     // Particles are laid out in radial spokes
-                    const int n_spokes = (WarpX::n_rz_azimuthal_modes - 1)*m_min_particles_per_mode;
+                    const auto n_spokes =
+                        static_cast<int>((WarpX::n_rz_azimuthal_modes - 1)*m_min_particles_per_mode);
                     for (int spoke = 0 ; spoke < n_spokes ; spoke++) {
-                        const Real phase = 2.*MathConst::pi*spoke/n_spokes;
+                        const Real phase = 2._rt*MathConst::pi*spoke/n_spokes;
                         for (int k = 0; k<2; ++k) {
                             particle_x.push_back(pos[0]*std::cos(phase));
                             particle_y.push_back(pos[0]*std::sin(phase));
                             particle_z.push_back(pos[2]);
                         }
-                        const Real r_weight = m_weight*2.*MathConst::pi*pos[0]/n_spokes;
+                        const Real r_weight = m_weight*2._rt*MathConst::pi*pos[0]/n_spokes;
                         particle_w.push_back( r_weight);
                         particle_w.push_back(-r_weight);
                     }
