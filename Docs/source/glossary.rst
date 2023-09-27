@@ -18,7 +18,7 @@ Abbreviations
 * **BC:** boundary condition (of a simulation)
 * **BCK:** `Benkler-Chavannes-Kuster <https://ieeexplore.ieee.org/document/1638381>`__ method, a stabilization technique for small cells in the electromagnetic solver
 * **BTD:** backtransformed diagnosics, a method to collect data for analysis from a *boosted frame* simulation
-* **CEX:** charge-exchange collision
+* **CEX:** charge-exchange collisions
 * **CFL:** the Courant-Friedrichs-Lewy condition, a numerical parameter for the numerical convergence of PDE solvers
 * **CI:** continuous integration, automated tests that we perform before a proposed code-change is accepted; see PR
 * **CPU:** `central processing unit <https://en.wikipedia.org/wiki/Central_processing_unit>`__, we usual mean a socket or generally the host-side of a computer (compared to the accelerator, e.g. GPU)
