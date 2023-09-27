@@ -530,6 +530,12 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real J22x = Vx;
                     amrex::Real J33x = Vx;
 
+                    // Compute the cell slopes x
+                    amrex::Real dU0x = ave( DownDx_N(N_arr,i,j,k), UpDx_N(N_arr,i,j,k) );
+                    amrex::Real dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k), UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    amrex::Real dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k), UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    amrex::Real dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k), UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
+
 #endif
 
 #if defined(WARPX_DIM_3D)
@@ -543,6 +549,12 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real J22y = Vy;
                     amrex::Real J33y = Vy;
 
+                    // Compute the cell slopes y
+                    amrex::Real dU0y = ave( DownDy_N(N_arr,i,j,k), UpDy_N(N_arr,i,j,k) );
+                    amrex::Real dU1y = ave( DownDy_U(N_arr,NUx_arr,Ux,i,j,k), UpDy_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    amrex::Real dU2y = ave( DownDy_U(N_arr,NUy_arr,Uy,i,j,k), UpDy_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    amrex::Real dU3y = ave( DownDy_U(N_arr,NUz_arr,Uz,i,j,k), UpDy_U(N_arr,NUz_arr,Uz,i,j,k) );
+
 #endif
                     amrex::Real Vz = Uz/gamma;
                     // Compute the non-zero element of Jz
@@ -554,27 +566,15 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real J22z = Vz;
                     amrex::Real J33z = Vz;
 
-
-                    // Select the specific implementation depending on dimensionality
-#if defined(WARPX_DIM_3D)
-
-                    // Compute the cell slopes x
-                    amrex::Real dU0x = ave( DownDx_N(N_arr,i,j,k), UpDx_N(N_arr,i,j,k) );
-                    amrex::Real dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k), UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
-                    amrex::Real dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k), UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
-                    amrex::Real dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k), UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
-
-                    // Compute the cell slopes y
-                    amrex::Real dU0y = ave( DownDy_N(N_arr,i,j,k), UpDy_N(N_arr,i,j,k) );
-                    amrex::Real dU1y = ave( DownDy_U(N_arr,NUx_arr,Ux,i,j,k), UpDy_U(N_arr,NUx_arr,Ux,i,j,k) );
-                    amrex::Real dU2y = ave( DownDy_U(N_arr,NUy_arr,Uy,i,j,k), UpDy_U(N_arr,NUy_arr,Uy,i,j,k) );
-                    amrex::Real dU3y = ave( DownDy_U(N_arr,NUz_arr,Uz,i,j,k), UpDy_U(N_arr,NUz_arr,Uz,i,j,k) );
-
                     // Compute the cell slopes z
                     amrex::Real dU0z = ave( DownDz_N(N_arr,i,j,k), UpDz_N(N_arr,i,j,k) );
                     amrex::Real dU1z = ave( DownDz_U(N_arr,NUx_arr,Ux,i,j,k), UpDz_U(N_arr,NUx_arr,Ux,i,j,k) );
                     amrex::Real dU2z = ave( DownDz_U(N_arr,NUy_arr,Uy,i,j,k), UpDz_U(N_arr,NUy_arr,Uy,i,j,k) );
                     amrex::Real dU3z = ave( DownDz_U(N_arr,NUz_arr,Uz,i,j,k), UpDz_U(N_arr,NUz_arr,Uz,i,j,k) );
+
+
+                    // Select the specific implementation depending on dimensionality
+#if defined(WARPX_DIM_3D)
 
                     // Compute U ([ N, U]) at the halfsteps (U_tidle) using the slopes (dU)
                     amrex::Real JdU0x = J00x*dU0x + J01x*dU1x + J02x*dU2x + J03x*dU3x;
@@ -622,17 +622,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
 
-                    // Compute the cell slopes x
-                    amrex::Real dU0x = ave( DownDx_N(N_arr,i,j,k), UpDx_N(N_arr,i,j,k) );
-                    amrex::Real dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k), UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
-                    amrex::Real dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k), UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
-                    amrex::Real dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k), UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
-
-                    // Compute the cell slopes z
-                    amrex::Real dU0z = ave( DownDz_N(N_arr,i,j,k), UpDz_N(N_arr,i,j,k) );
-                    amrex::Real dU1z = ave( DownDz_U(N_arr,NUx_arr,Ux,i,j,k), UpDz_U(N_arr,NUx_arr,Ux,i,j,k) );
-                    amrex::Real dU2z = ave( DownDz_U(N_arr,NUy_arr,Uy,i,j,k), UpDz_U(N_arr,NUy_arr,Uy,i,j,k) );
-                    amrex::Real dU3z = ave( DownDz_U(N_arr,NUz_arr,Uz,i,j,k), UpDz_U(N_arr,NUz_arr,Uz,i,j,k) );
+                    // Have no RZ-intertial source for primative vars if in XZ
                     amrex::Real N_source = 0.0;
 
 #if defined(WARPX_DIM_RZ)
@@ -698,12 +688,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 #else
 
-                    // Compute the cell slopes z
-                    amrex::Real dU0z = ave( DownDz_N(N_arr,i,j,k), UpDz_N(N_arr,i,j,k) );
-                    amrex::Real dU1z = ave( DownDz_U(N_arr,NUx_arr,Ux,i,j,k), UpDz_U(N_arr,NUx_arr,Ux,i,j,k) );
-                    amrex::Real dU2z = ave( DownDz_U(N_arr,NUy_arr,Uy,i,j,k), UpDz_U(N_arr,NUy_arr,Uy,i,j,k) );
-                    amrex::Real dU3z = ave( DownDz_U(N_arr,NUz_arr,Uz,i,j,k), UpDz_U(N_arr,NUz_arr,Uz,i,j,k) );
-
                     // Compute U ([ N, U]) at the halfsteps (U_tidle) using the slopes (dU)
                     amrex::Real  JdU0z = J00z*dU0z + J01z*dU1z + J02z*dU2z + J03z*dU3z;
                     amrex::Real  JdU1z = J11z*dU1z;
@@ -728,20 +712,14 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 // If N<= 0 then set the edge values (U_minus/U_plus) to zero
                 } else {
 #if defined(WARPX_DIM_3D)
-                    set_U_edges_to_zero(U_minus_x, i, j, k, box_x);
-                    set_U_edges_to_zero(U_plus_x, i-1, j, k, box_x);
-                    set_U_edges_to_zero(U_minus_y, i, j, k, box_y);
-                    set_U_edges_to_zero(U_plus_y, i, j-1, k, box_y);
-                    set_U_edges_to_zero(U_minus_z, i, j, k, box_z);
-                    set_U_edges_to_zero(U_plus_z, i, j, k-1, box_z);
+                    set_U_edges_to_zero(U_minus_x, U_plus_x, i, j, k, box_x, 0);
+                    set_U_edges_to_zero(U_minus_y, U_plus_y, i, j, k, box_y, 1);
+                    set_U_edges_to_zero(U_minus_z, U_plus_z, i, j, k, box_z, 2);
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
-                    set_U_edges_to_zero(U_minus_x, i, j, k, box_x);
-                    set_U_edges_to_zero(U_plus_x, i-1, j, k, box_x);
-                    set_U_edges_to_zero(U_minus_z, i, j, k, box_z);
-                    set_U_edges_to_zero(U_plus_z, i, j-1, k, box_z);
+                    set_U_edges_to_zero(U_minus_x, U_plus_x, i, j, k, box_x, 0);
+                    set_U_edges_to_zero(U_minus_z, U_plus_z, i, j, k, box_z, 2);
 #else
-                    set_U_edges_to_zero(U_minus_z, i, j, k, box_z);
-                    set_U_edges_to_zero(U_plus_z, i-1, j, k, box_z);
+                    set_U_edges_to_zero(U_minus_z, U_plus_z, i, j, k, box_z, 2);
 #endif
                 }
             }
@@ -784,108 +762,31 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 // Select the specific implementation depending on dimensionality
 #if defined(WARPX_DIM_3D)
 
-                // Compute velocity at the half step
-                amrex::Real Vx_L_minus = Vx_calc(U_minus_x,i-1,j,k,clight);
-                amrex::Real Vx_I_minus = Vx_calc(U_minus_x,i,j,k,clight);
-                amrex::Real Vx_L_plus = Vx_calc(U_plus_x,i-1,j,k,clight);
-                amrex::Real Vx_I_plus = Vx_calc(U_plus_x,i,j,k,clight);
-
-                amrex::Real Vy_L_minus = Vy_calc(U_minus_y,i,j-1,k,clight);
-                amrex::Real Vy_I_minus = Vy_calc(U_minus_y,i,j,k,clight);
-                amrex::Real Vy_L_plus = Vy_calc(U_plus_y,i,j-1,k,clight);
-                amrex::Real Vy_I_plus = Vy_calc(U_plus_y,i,j,k,clight);
-
-                amrex::Real Vz_L_minus = Vz_calc(U_minus_z,i,j,k-1,clight);
-                amrex::Real Vz_I_minus = Vz_calc(U_minus_z,i,j,k,clight);
-                amrex::Real Vz_L_plus = Vz_calc(U_plus_z,i,j,k-1,clight);
-                amrex::Real Vz_I_plus = Vz_calc(U_plus_z,i,j,k,clight);
-
-                // compute the fluxes:
-                // (note that _plus is shifted due to grid location)
-                amrex::Real F0_minusx = flux_N(  U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus);
-                amrex::Real F0_plusx  = flux_N(  U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus);
-                amrex::Real F1_minusx = flux_NUx(U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus);
-                amrex::Real F1_plusx  = flux_NUx(U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus);
-                amrex::Real F2_minusx = flux_NUy(U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus);
-                amrex::Real F2_plusx  = flux_NUy(U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus);
-                amrex::Real F3_minusx = flux_NUz(U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus);
-                amrex::Real F3_plusx  = flux_NUz(U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus);
-
-                amrex::Real F0_minusy = flux_N(  U_minus_y, U_plus_y, i, j-1, k, Vy_L_minus, Vy_L_plus);
-                amrex::Real F0_plusy  = flux_N(  U_minus_y, U_plus_y, i  , j, k, Vy_I_minus, Vy_I_plus);
-                amrex::Real F1_minusy = flux_NUx(U_minus_y, U_plus_y, i, j-1, k, Vy_L_minus, Vy_L_plus);
-                amrex::Real F1_plusy  = flux_NUx(U_minus_y, U_plus_y, i  , j, k, Vy_I_minus, Vy_I_plus);
-                amrex::Real F2_minusy = flux_NUy(U_minus_y, U_plus_y, i, j-1, k, Vy_L_minus, Vy_L_plus);
-                amrex::Real F2_plusy  = flux_NUy(U_minus_y, U_plus_y, i  , j, k, Vy_I_minus, Vy_I_plus);
-                amrex::Real F3_minusy = flux_NUz(U_minus_y, U_plus_y, i, j-1, k, Vy_L_minus, Vy_L_plus);
-                amrex::Real F3_plusy  = flux_NUz(U_minus_y, U_plus_y, i  , j, k, Vy_I_minus, Vy_I_plus);
-
-                amrex::Real F0_minusz = flux_N(  U_minus_z, U_plus_z, i, j, k-1, Vz_L_minus, Vz_L_plus);
-                amrex::Real F0_plusz  = flux_N(  U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-                amrex::Real F1_minusz = flux_NUx(U_minus_z, U_plus_z, i, j, k-1, Vz_L_minus, Vz_L_plus);
-                amrex::Real F1_plusz  = flux_NUx(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-                amrex::Real F2_minusz = flux_NUy(U_minus_z, U_plus_z, i, j, k-1, Vz_L_minus, Vz_L_plus);
-                amrex::Real F2_plusz  = flux_NUy(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-                amrex::Real F3_minusz = flux_NUz(U_minus_z, U_plus_z, i, j, k-1, Vz_L_minus, Vz_L_plus);
-                amrex::Real F3_plusz  = flux_NUz(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-
-                // Update Q from tn -> tn + dt
-                N_arr(i,j,k) = N_arr(i,j,k) - dt_over_dx*(F0_plusx - F0_minusx)
-                                            - dt_over_dy*(F0_plusy - F0_minusy)
-                                            - dt_over_dz*(F0_plusz - F0_minusz);
-                NUx_arr(i,j,k) = NUx_arr(i,j,k) - dt_over_dx*(F1_plusx - F1_minusx)
-                                                - dt_over_dy*(F1_plusy - F1_minusy)
-                                                - dt_over_dz*(F1_plusz - F1_minusz);
-                NUy_arr(i,j,k) = NUy_arr(i,j,k) - dt_over_dx*(F2_plusx - F2_minusx)
-                                                - dt_over_dy*(F2_plusy - F2_minusy)
-                                                - dt_over_dz*(F2_plusz - F2_minusz);
-                NUz_arr(i,j,k) = NUz_arr(i,j,k) - dt_over_dx*(F3_plusx - F3_minusx)
-                                                - dt_over_dy*(F3_plusy - F3_minusy)
-                                                - dt_over_dz*(F3_plusz - F3_minusz);
+                // Update the conserved variables Q = [N, NU] from tn -> tn + dt
+                N_arr(i,j,k) = N_arr(i,j,k)  - dt_over_dx*dF(U_minus_x,U_plus_x,i,j,k,clight,0,0)
+                                             - dt_over_dy*dF(U_minus_y,U_plus_y,i,j,k,clight,0,1)
+                                             - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,0,2);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - dt_over_dx*dF(U_minus_x,U_plus_x,i,j,k,clight,1,0)
+                                                - dt_over_dy*dF(U_minus_y,U_plus_y,i,j,k,clight,1,1)
+                                                - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,1,2);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - dt_over_dx*dF(U_minus_x,U_plus_x,i,j,k,clight,2,0)
+                                                - dt_over_dy*dF(U_minus_y,U_plus_y,i,j,k,clight,2,1)
+                                                - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,2,2);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - dt_over_dx*dF(U_minus_x,U_plus_x,i,j,k,clight,3,0)
+                                                - dt_over_dy*dF(U_minus_y,U_plus_y,i,j,k,clight,3,1)
+                                                - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,3,2);
 
 #elif defined(WARPX_DIM_XZ)
 
-                // Verify positive density, then compute velocity
-                amrex::Real Vx_L_minus = Vx_calc(U_minus_x,i-1,j,k,clight);
-                amrex::Real Vx_I_minus = Vx_calc(U_minus_x,i,j,k,clight);
-                amrex::Real Vx_L_plus = Vx_calc(U_plus_x,i-1,j,k,clight);
-                amrex::Real Vx_I_plus = Vx_calc(U_plus_x,i,j,k,clight);
-
-                amrex::Real Vz_L_minus = Vz_calc(U_minus_z,i,j-1,k,clight);
-                amrex::Real Vz_I_minus = Vz_calc(U_minus_z,i,j,k,clight);
-                amrex::Real Vz_L_plus = Vz_calc(U_plus_z,i,j-1,k,clight);
-                amrex::Real Vz_I_plus = Vz_calc(U_plus_z,i,j,k,clight);
-
-
-                // compute the fluxes:
-                // (note that _plus is shifted due to grid location)
-                amrex::Real F0_minusx = flux_N(  U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus);
-                amrex::Real F0_plusx  = flux_N(  U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus);
-                amrex::Real F1_minusx = flux_NUx(U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus);
-                amrex::Real F1_plusx  = flux_NUx(U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus);
-                amrex::Real F2_minusx = flux_NUy(U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus);
-                amrex::Real F2_plusx  = flux_NUy(U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus);
-                amrex::Real F3_minusx = flux_NUz(U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus);
-                amrex::Real F3_plusx  = flux_NUz(U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus);
-
-                amrex::Real F0_minusz = flux_N(  U_minus_z, U_plus_z, i, j-1, k, Vz_L_minus, Vz_L_plus);
-                amrex::Real F0_plusz  = flux_N(  U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-                amrex::Real F1_minusz = flux_NUx(U_minus_z, U_plus_z, i, j-1, k, Vz_L_minus, Vz_L_plus);
-                amrex::Real F1_plusz  = flux_NUx(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-                amrex::Real F2_minusz = flux_NUy(U_minus_z, U_plus_z, i, j-1, k, Vz_L_minus, Vz_L_plus);
-                amrex::Real F2_plusz  = flux_NUy(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-                amrex::Real F3_minusz = flux_NUz(U_minus_z, U_plus_z, i, j-1, k, Vz_L_minus, Vz_L_plus);
-                amrex::Real F3_plusz  = flux_NUz(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-
-                // Update the conserved variables from tn -> tn + dt
-                N_arr(i,j,k) = N_arr(i,j,k) - dt_over_dx*(F0_plusx - F0_minusx)
-                                            - dt_over_dz*(F0_plusz - F0_minusz);
-                NUx_arr(i,j,k) = NUx_arr(i,j,k) - dt_over_dx*(F1_plusx - F1_minusx)
-                                                - dt_over_dz*(F1_plusz - F1_minusz);
-                NUy_arr(i,j,k) = NUy_arr(i,j,k) - dt_over_dx*(F2_plusx - F2_minusx)
-                                                - dt_over_dz*(F2_plusz - F2_minusz);
-                NUz_arr(i,j,k) = NUz_arr(i,j,k) - dt_over_dx*(F3_plusx - F3_minusx)
-                                                - dt_over_dz*(F3_plusz - F3_minusz);
+                // Update the conserved variables Q = [N, NU] from tn -> tn + dt
+                N_arr(i,j,k) = N_arr(i,j,k)  - dt_over_dx*dF(U_minus_x,U_plus_x,i,j,k,clight,0,0)
+                                             - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,0,2);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - dt_over_dx*dF(U_minus_x,U_plus_x,i,j,k,clight,1,0)
+                                                - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,1,2);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - dt_over_dx*dF(U_minus_x,U_plus_x,i,j,k,clight,2,0)
+                                                - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,2,2);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - dt_over_dx*dF(U_minus_x,U_plus_x,i,j,k,clight,3,0)
+                                                - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,3,2);
 
 #elif defined(WARPX_DIM_RZ)
 
@@ -922,11 +823,6 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 amrex::Real Vx_I_minus = Vx_calc(U_minus_x,i,j,k,clight);
                 amrex::Real Vx_L_plus = Vx_calc(U_plus_x,i-1,j,k,clight);
 
-                amrex::Real Vz_L_minus = Vz_calc(U_minus_z,i,j-1,k,clight);
-                amrex::Real Vz_I_minus = Vz_calc(U_minus_z,i,j,k,clight);
-                amrex::Real Vz_L_plus = Vz_calc(U_plus_z,i,j-1,k,clight);
-                amrex::Real Vz_I_plus = Vz_calc(U_plus_z,i,j,k,clight);
-
                 // compute the fluxes:
                 // (note that _plus is shifted due to grid location)
                 amrex::Real Vx_L_minus = 0.0, Vx_I_plus = 0.0;
@@ -947,46 +843,19 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     F3_plusx  = flux_NUz(U_minus_x, U_plus_x, i  , j, k, Vx_I_minus, Vx_I_plus)*S_Ar_plus;
                 }
 
-                // compute the fluxes:
-                amrex::Real F0_minusz = flux_N(  U_minus_z, U_plus_z, i, j-1, k, Vz_L_minus, Vz_L_plus)*S_Az;
-                amrex::Real F0_plusz  = flux_N(  U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus)*S_Az;
-                amrex::Real F1_minusz = flux_NUx(U_minus_z, U_plus_z, i, j-1, k, Vz_L_minus, Vz_L_plus)*S_Az;
-                amrex::Real F1_plusz  = flux_NUx(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus)*S_Az;
-                amrex::Real F2_minusz = flux_NUy(U_minus_z, U_plus_z, i, j-1, k, Vz_L_minus, Vz_L_plus)*S_Az;
-                amrex::Real F2_plusz  = flux_NUy(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus)*S_Az;
-                amrex::Real F3_minusz = flux_NUz(U_minus_z, U_plus_z, i, j-1, k, Vz_L_minus, Vz_L_plus)*S_Az;
-                amrex::Real F3_plusz  = flux_NUz(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus)*S_Az;
-
                 // Update the conserved variables from tn -> tn + dt
-                N_arr(i,j,k) = N_arr(i,j,k)     - (dt/Vij)*(F0_plusx - F0_minusx + F0_plusz - F0_minusz);
-                NUx_arr(i,j,k) = NUx_arr(i,j,k) - (dt/Vij)*(F1_plusx - F1_minusx + F1_plusz - F1_minusz);
-                NUy_arr(i,j,k) = NUy_arr(i,j,k) - (dt/Vij)*(F2_plusx - F2_minusx + F2_plusz - F2_minusz);
-                NUz_arr(i,j,k) = NUz_arr(i,j,k) - (dt/Vij)*(F3_plusx - F3_minusx + F3_plusz - F3_minusz);
+                N_arr(i,j,k) = N_arr(i,j,k)     - (dt/Vij)*(F0_plusx - F0_minusx + dF(U_minus_z,U_plus_z,i,j,k,clight,0,2)*S_Az);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - (dt/Vij)*(F1_plusx - F1_minusx + dF(U_minus_z,U_plus_z,i,j,k,clight,1,2)*S_Az);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - (dt/Vij)*(F2_plusx - F2_minusx + dF(U_minus_z,U_plus_z,i,j,k,clight,2,2)*S_Az);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - (dt/Vij)*(F3_plusx - F3_minusx + dF(U_minus_z,U_plus_z,i,j,k,clight,3,2)*S_Az);
 
 #else
 
-                // Compute the half-timestep velocities
-                amrex::Real Vz_L_minus = Vz_calc(U_minus_z,i-1,j,k,clight);
-                amrex::Real Vz_I_minus = Vz_calc(U_minus_z,i,j,k,clight);
-                amrex::Real Vz_L_plus = Vz_calc(U_plus_z,i-1,j,k,clight);
-                amrex::Real Vz_I_plus = Vz_calc(U_plus_z,i,j,k,clight);
-
-                // compute the fluxes:
-                // (note that _plus is shifted due to grid location)
-                amrex::Real F0_minusz = flux_N(  U_minus_z, U_plus_z, i-1, j, k, Vz_L_minus, Vz_L_plus);
-                amrex::Real F0_plusz  = flux_N(  U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-                amrex::Real F1_minusz = flux_NUx(U_minus_z, U_plus_z, i-1, j, k, Vz_L_minus, Vz_L_plus);
-                amrex::Real F1_plusz  = flux_NUx(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-                amrex::Real F2_minusz = flux_NUy(U_minus_z, U_plus_z, i-1, j, k, Vz_L_minus, Vz_L_plus);
-                amrex::Real F2_plusz  = flux_NUy(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-                amrex::Real F3_minusz = flux_NUz(U_minus_z, U_plus_z, i-1, j, k, Vz_L_minus, Vz_L_plus);
-                amrex::Real F3_plusz  = flux_NUz(U_minus_z, U_plus_z, i  , j, k, Vz_I_minus, Vz_I_plus);
-
-                // Update the conserved variables from tn -> tn + dt
-                N_arr(i,j,k) = N_arr(i,j,k)     - dt_over_dz*(F0_plusz - F0_minusz);
-                NUx_arr(i,j,k) = NUx_arr(i,j,k) - dt_over_dz*(F1_plusz - F1_minusz);
-                NUy_arr(i,j,k) = NUy_arr(i,j,k) - dt_over_dz*(F2_plusz - F2_minusz);
-                NUz_arr(i,j,k) = NUz_arr(i,j,k) - dt_over_dz*(F3_plusz - F3_minusz);
+                // Update the conserved variables Q = [N, NU] from tn -> tn + dt
+                N_arr(i,j,k) = N_arr(i,j,k) - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,0,2);
+                NUx_arr(i,j,k) = NUx_arr(i,j,k) - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,1,2);
+                NUy_arr(i,j,k) = NUy_arr(i,j,k) - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,2,2);
+                NUz_arr(i,j,k) = NUz_arr(i,j,k) - dt_over_dz*dF(U_minus_z,U_plus_z,i,j,k,clight,3,2);
 #endif
             }
         );

@@ -28,6 +28,14 @@ amrex::Real F_theta (amrex::Real r, amrex::Real u_r, amrex::Real u_theta, amrex:
 {
     return dt*(u_theta*u_r/r)/sqrt(1.0 + u_r*u_r + u_theta*u_theta + u_z*u_z) + u_theta;
 }
+// Velocity at the half step
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real V_calc (const amrex::Array4<amrex::Real>& U, int i, int j, int k, int comp, amrex::Real c)
+{
+    // comp -> x, y, z -> 0, 1, 2, return Vx, Vy, or Vz:
+    amrex::Real gamma = std::sqrt(1.0 + (U(i,j,k,1)*U(i,j,k,1) + U(i,j,k,2)*U(i,j,k,2) + U(i,j,k,3)*U(i,j,k,3))/(c*c));
+    return U(i,j,k,comp+1)/gamma;
+}
 // Velocity (x) at the half step
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real Vx_calc (const amrex::Array4<amrex::Real>& U, int i, int j, int k, amrex::Real c)
@@ -191,29 +199,6 @@ amrex::Real ave_stage2 (amrex::Real dQ, amrex::Real a, amrex::Real b, amrex::Rea
     amrex::Real dq_min = 2.0*std::min( b - min3(a,b,c), max3(a,b,c) - b);
     return ( std::abs(dQ)/dQ ) * std::min( std::abs(dQ) , sigma*std::abs(dq_min) );
 }
-// Compute the momentum
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void isolate_momentum (const amrex::Array4<amrex::Real>& N_arr, const amrex::Array4<amrex::Real>& NUx_arr,
-const amrex::Array4<amrex::Real>& NUy_arr, const amrex::Array4<amrex::Real>& NUz_arr, int i, int j, int k,
-amrex::Real& Ux_p_or_m, amrex::Real& Uy_p_or_m, amrex::Real& Uz_p_or_m)
-{
-    if (N_arr(i,j,k) > 0.0) {
-        Ux_p_or_m = (NUx_arr(i, j, k) / N_arr(i,j,k));
-        Uy_p_or_m = (NUy_arr(i, j, k) / N_arr(i,j,k));
-        Uz_p_or_m = (NUz_arr(i, j, k) / N_arr(i,j,k));
-    }
-}
-// Compute the zero edges
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void set_U_edges_to_zero (const amrex::Array4<amrex::Real>& U_edge, int i, int j, int k, amrex::Box box)
-{
-    if ( box.contains(i,j,k) ) {
-        U_edge(i,j,k,0) = 0.0;
-        U_edge(i,j,k,1) = 0.0;
-        U_edge(i,j,k,2) = 0.0;
-        U_edge(i,j,k,3) = 0.0;
-    }
-}
 // Compute the zero edges (minus)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void compute_U_edges_minus (const amrex::Array4<amrex::Real>& U_edge, int i, int j, int k, amrex::Box box,
@@ -264,6 +249,30 @@ void plus_index_offsets (int i, int j, int k, int& ip, int& jp, int& kp, int com
         ip =  i - 1; jp =  j; kp = k;
     }
 #endif
+}
+// Compute the zero edges
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void set_U_edges_to_zero (const amrex::Array4<amrex::Real>& Um,
+const amrex::Array4<amrex::Real>& Up, int i, int j, int k, amrex::Box box, int comp)
+{
+
+    // comp -> x, y, z -> 0, 1, 2
+    int ip, jp, kp;
+    plus_index_offsets(i, j, k, ip, jp, kp, comp);
+
+    if ( box.contains(i,j,k) ) {
+        Um(i,j,k,0) = 0.0;
+        Um(i,j,k,1) = 0.0;
+        Um(i,j,k,2) = 0.0;
+        Um(i,j,k,3) = 0.0;
+    }
+
+    if ( box.contains(ip,jp,kp) ) {
+        Up(ip,jp,kp,0) = 0.0;
+        Up(ip,jp,kp,1) = 0.0;
+        Up(ip,jp,kp,2) = 0.0;
+        Up(ip,jp,kp,3) = 0.0;
+    }
 }
 // Positivity Limiter
 // if Q_minus or Q_plus is zero for the density (i.e. component 0 of Q_minus/Q_plus), set dQ to 0 and recompute Q_minus / Q_plus
@@ -490,6 +499,33 @@ const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
 
     // Return the difference
     return U_p - U;
+}
+
+
+// Flux difference calculation
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real dF (const amrex::Array4<amrex::Real>& U_minus,
+const amrex::Array4<amrex::Real>& U_plus,int i,int j,int k,amrex::Real clight, int comp, int dir)
+{
+    // dir -> x, y, z -> 0, 1, 2
+    int ip, jp, kp;
+    plus_index_offsets(i, j, k, ip, jp, kp, dir);
+
+    amrex::Real V_L_minus = V_calc(U_minus,ip,jp,kp,dir,clight);
+    amrex::Real V_I_minus = V_calc(U_minus,i,j,k,dir,clight);
+    amrex::Real V_L_plus = V_calc(U_plus,ip,jp,kp,dir,clight);
+    amrex::Real V_I_plus = V_calc(U_plus,i,j,k,dir,clight);
+
+    // Flux differences depending on the component to compute
+    if (comp == 0){
+        return flux_N(  U_minus, U_plus, i, j, k, V_I_minus, V_I_plus) - flux_N(  U_minus, U_plus, ip, jp, kp, V_L_minus, V_L_plus);
+    } else if (comp == 1){
+        return flux_NUx(  U_minus, U_plus, i, j, k, V_I_minus, V_I_plus) - flux_NUx(  U_minus, U_plus, ip, jp, kp, V_L_minus, V_L_plus);
+    } else if (comp == 2){
+        return flux_NUy(  U_minus, U_plus, i, j, k, V_I_minus, V_I_plus) - flux_NUy(  U_minus, U_plus, ip, jp, kp, V_L_minus, V_L_plus);
+    } else { //if (comp == 3)
+        return flux_NUz(  U_minus, U_plus, i, j, k, V_I_minus, V_I_plus) - flux_NUz(  U_minus, U_plus, ip, jp, kp, V_L_minus, V_L_plus);
+    }          
 }
 
 #endif /*WARPX_MusclHancock_H_*/
