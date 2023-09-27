@@ -11,7 +11,7 @@ module load cmake/3.22.0
 module load cray-fftw/3.3.10.3
 
 # optional: for QED support with detailed tables
-export BOOST_ROOT=/global/common/software/spackecp/perlmutter/e4s-22.11/83104/spack/opt/spack/linux-sles15-zen3/gcc-11.2.0/boost-1.80.0-ute7nbx4wmfrw53q7hyh6wyezub5ljry
+export BOOST_ROOT=/global/common/software/spackecp/perlmutter/e4s-23.05/default/spack/opt/spack/linux-sles15-zen3/gcc-11.2.0/boost-1.82.0-ow5r5qrgslcwu33grygouajmuluzuzv3
 
 # optional: for openPMD and PSATD+RZ support
 module load cray-hdf5-parallel/1.12.2.1
@@ -26,7 +26,7 @@ export LD_LIBRARY_PATH=${CFS}/${proj}/${USER}/sw/perlmutter/cpu/blaspp-master/li
 export LD_LIBRARY_PATH=${CFS}/${proj}/${USER}/sw/perlmutter/cpu/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
 # optional: CCache
-export PATH=/global/common/software/spackecp/perlmutter/e4s-22.05/78535/spack/opt/spack/cray-sles15-zen3/gcc-11.2.0/ccache-4.5.1-ybl7xefvggn6hov4dsdxxnztji74tolj/bin:$PATH
+export PATH=/global/common/software/spackecp/perlmutter/e4s-23.05/default/spack/opt/spack/linux-sles15-zen3/gcc-11.2.0/ccache-4.8-eqk2d3bipbpkgwxq7ujlp6mckwal4dwz/bin:$PATH
 
 # optional: for Python bindings or libEnsemble
 module load cray-python/3.9.13.1

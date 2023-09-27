@@ -1456,8 +1456,9 @@ BTDiagnostics::PrepareParticleDataForOutput()
             {
                 // Check if the zslice is in domain
                 const bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
-                if (ZSliceInDomain) {
-                    if ( m_totalParticles_in_buffer[i_buffer][i] == 0) {
+                const bool kindexInSnapshotBox = GetKIndexInSnapshotBoxFlag (i_buffer, lev);
+                if (kindexInSnapshotBox) {
+                    if ( buffer_empty(i_buffer) ) {
                         if (!m_do_back_transformed_fields || m_varnames_fields.empty()) {
                             if ( m_buffer_flush_counter[i_buffer] == 0) {
                                 DefineSnapshotGeometry(i_buffer, lev);
