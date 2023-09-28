@@ -22,10 +22,14 @@ namespace SpeciesUtils {
         PhysicalSpecies& physical_species);
 
     void parseDensity (std::string const& species_name,
-        std::unique_ptr<InjectorDensity,InjectorDensityDeleter>& h_inj_rho);
+        std::unique_ptr<InjectorDensity,InjectorDensityDeleter>& h_inj_rho,
+        std::unique_ptr<amrex::Parser>& density_parser);
 
     void parseMomentum (std::string const& species_name, const std::string& style,
         std::unique_ptr<InjectorMomentum,InjectorMomentumDeleter>& h_inj_mom,
+        std::unique_ptr<amrex::Parser>& ux_parser,
+        std::unique_ptr<amrex::Parser>& uy_parser,
+        std::unique_ptr<amrex::Parser>& uz_parser,
         int flux_normal_axis=0, int flux_direction=0);
 
 }

@@ -28,8 +28,9 @@ WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std:
 
     // Initialize injection objects
     const ParmParse pp_species_name(species_name);
-    SpeciesUtils::parseDensity(species_name, h_inj_rho);
-    SpeciesUtils::parseMomentum(species_name, "none", h_inj_mom);
+    SpeciesUtils::parseDensity(species_name, h_inj_rho, density_parser);
+    SpeciesUtils::parseMomentum(species_name, "none", h_inj_mom,
+        ux_parser, uy_parser, uz_parser);
     if (h_inj_rho) {
 #ifdef AMREX_USE_GPU
         d_inj_rho = static_cast<InjectorDensity*>

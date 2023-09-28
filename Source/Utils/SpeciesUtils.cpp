@@ -70,7 +70,8 @@ namespace SpeciesUtils {
     // so that inj_rho->getDensity calls
     // InjectorPosition[Constant or Predefined or etc.].getDensity.
     void parseDensity (std::string const& species_name,
-        std::unique_ptr<InjectorDensity,InjectorDensityDeleter>& h_inj_rho)
+        std::unique_ptr<InjectorDensity,InjectorDensityDeleter>& h_inj_rho,
+        std::unique_ptr<amrex::Parser>& density_parser)
     {
         const amrex::ParmParse pp_species_name(species_name);
 
@@ -92,7 +93,7 @@ namespace SpeciesUtils {
             utils::parser::Store_parserString(
                 pp_species_name, "density_function(x,y,z)", str_density_function);
             // Construct InjectorDensity with InjectorDensityParser.
-            std::unique_ptr<amrex::Parser> density_parser = std::make_unique<amrex::Parser>(
+            density_parser = std::make_unique<amrex::Parser>(
                 utils::parser::makeParser(str_density_function,{"x","y","z"}));
             h_inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
                 density_parser->compile<3>()));
@@ -106,6 +107,9 @@ namespace SpeciesUtils {
     // InjectorMomentum[Constant or Gaussian or etc.].getMomentum.
     void parseMomentum (std::string const& species_name, const std::string& style,
         std::unique_ptr<InjectorMomentum,InjectorMomentumDeleter>& h_inj_mom,
+        std::unique_ptr<amrex::Parser>& ux_parser,
+        std::unique_ptr<amrex::Parser>& uy_parser,
+        std::unique_ptr<amrex::Parser>& uz_parser,
         int flux_normal_axis, int flux_direction)
     {
         using namespace amrex::literals;
@@ -216,11 +220,11 @@ namespace SpeciesUtils {
             utils::parser::Store_parserString(pp_species_name, "momentum_function_uz(x,y,z)",
                 str_momentum_function_uz);
             // Construct InjectorMomentum with InjectorMomentumParser.
-            std::unique_ptr<amrex::Parser> ux_parser = std::make_unique<amrex::Parser>(
+            ux_parser = std::make_unique<amrex::Parser>(
                 utils::parser::makeParser(str_momentum_function_ux, {"x","y","z"}));
-            std::unique_ptr<amrex::Parser> uy_parser = std::make_unique<amrex::Parser>(
+            uy_parser = std::make_unique<amrex::Parser>(
                 utils::parser::makeParser(str_momentum_function_uy, {"x","y","z"}));
-            std::unique_ptr<amrex::Parser> uz_parser = std::make_unique<amrex::Parser>(
+            uz_parser = std::make_unique<amrex::Parser>(
                 utils::parser::makeParser(str_momentum_function_uz, {"x","y","z"}));
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumParser*)nullptr,
                                                 ux_parser->compile<3>(),
