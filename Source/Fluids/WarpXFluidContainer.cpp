@@ -9,7 +9,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include "MusclHancockUtils.H"
-#include "WarpXFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "WarpX.H"
 #include <ablastr/utils/Communication.H>
 #include "Utils/Parser/ParserUtils.H"

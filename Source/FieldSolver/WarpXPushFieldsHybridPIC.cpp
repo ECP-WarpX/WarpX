@@ -10,6 +10,8 @@
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -29,6 +31,16 @@ void WarpX::HybridPICEvolveFields ()
     mypc->DepositCharge(rho_fp, 0._rt);
     // Perform current deposition at t_{n+1/2}.
     mypc->DepositCurrent(current_fp, dt[0], -0.5_rt * dt[0]);
+
+    // Deposit cold-relativistic fluid Charge and current at t_{n+1}
+    const int n_fluid_species = myfl->nSpecies();
+    for (int i=0; i<n_fluid_species; i++) {
+        WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
+        int lev = 0;
+        fl.DepositCharge(lev, *rho_fp[lev].get(), 1);
+        fl.DepositCurrent(lev, *current_fp[lev][0].get(), *current_fp[lev][1].get()
+            , *current_fp[lev][2].get());
+    }
 
     // Synchronize J and rho:
     // filter (if used), exchange guard cells, interpolate across MR levels
