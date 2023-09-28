@@ -110,6 +110,8 @@ namespace SpeciesUtils {
         std::unique_ptr<amrex::Parser>& ux_parser,
         std::unique_ptr<amrex::Parser>& uy_parser,
         std::unique_ptr<amrex::Parser>& uz_parser,
+        std::unique_ptr<TemperatureProperties>& h_mom_temp,
+        std::unique_ptr<VelocityProperties>& h_mom_vel,
         int flux_normal_axis, int flux_direction)
     {
         using namespace amrex::literals;
@@ -190,16 +192,16 @@ namespace SpeciesUtils {
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumUniform*)nullptr,
                                                 ux_min, uy_min, uz_min, ux_max, uy_max, uz_max));
         } else if (mom_dist_s == "maxwell_boltzmann"){
-            std::unique_ptr<TemperatureProperties> h_mom_temp = std::make_unique<TemperatureProperties>(pp_species_name);
+            h_mom_temp = std::make_unique<TemperatureProperties>(pp_species_name);
             const GetTemperature getTemp(*h_mom_temp);
-            std::unique_ptr<VelocityProperties> h_mom_vel = std::make_unique<VelocityProperties>(pp_species_name);
+            h_mom_vel = std::make_unique<VelocityProperties>(pp_species_name);
             const GetVelocity getVel(*h_mom_vel);
             // Construct InjectorMomentum with InjectorMomentumBoltzmann.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, getTemp, getVel));
         } else if (mom_dist_s == "maxwell_juttner"){
-            std::unique_ptr<TemperatureProperties> h_mom_temp = std::make_unique<TemperatureProperties>(pp_species_name);
+            h_mom_temp = std::make_unique<TemperatureProperties>(pp_species_name);
             const GetTemperature getTemp(*h_mom_temp);
-            std::unique_ptr<VelocityProperties> h_mom_vel = std::make_unique<VelocityProperties>(pp_species_name);
+            h_mom_vel = std::make_unique<VelocityProperties>(pp_species_name);
             const GetVelocity getVel(*h_mom_vel);
             // Construct InjectorMomentum with InjectorMomentumJuttner.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, getTemp, getVel));

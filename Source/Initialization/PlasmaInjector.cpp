@@ -248,7 +248,7 @@ void PlasmaInjector::setupGaussianBeam (const amrex::ParmParse& pp_species_name)
         "Error: Symmetrization only supported to orders 4 or 8 ");
     gaussian_beam = true;
     SpeciesUtils::parseMomentum(species_name, "gaussian_beam", h_inj_mom,
-        ux_parser, uy_parser, uz_parser);
+        ux_parser, uy_parser, uz_parser, h_mom_temp, h_mom_vel);
 #if defined(WARPX_DIM_XZ)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
         "Error: Gaussian beam y_rms must be strictly greater than 0 in 2D "
@@ -288,7 +288,8 @@ void PlasmaInjector::setupNRandomPerCell (const amrex::ParmParse& pp_species_nam
     d_inj_pos = h_inj_pos.get();
 #endif
     SpeciesUtils::parseDensity(species_name, h_inj_rho, density_parser);
-    SpeciesUtils::parseMomentum(species_name, "nrandompercell", h_inj_mom, ux_parser, uy_parser, uz_parser);
+    SpeciesUtils::parseMomentum(species_name, "nrandompercell", h_inj_mom,
+        ux_parser, uy_parser, uz_parser, h_mom_temp, h_mom_vel);
 }
 
 void PlasmaInjector::setupNFluxPerCell (const amrex::ParmParse& pp_species_name)
@@ -366,7 +367,7 @@ void PlasmaInjector::setupNFluxPerCell (const amrex::ParmParse& pp_species_name)
 
     parseFlux(pp_species_name);
     SpeciesUtils::parseMomentum(species_name, "nfluxpercell", h_inj_mom,
-        ux_parser, uy_parser, uz_parser, flux_normal_axis, flux_direction);
+        ux_parser, uy_parser, uz_parser, h_mom_temp, h_mom_vel, flux_normal_axis, flux_direction);
 }
 
 void PlasmaInjector::setupNuniformPerCell (const amrex::ParmParse& pp_species_name)
@@ -419,7 +420,7 @@ void PlasmaInjector::setupNuniformPerCell (const amrex::ParmParse& pp_species_na
                              num_particles_per_cell_each_dim[2];
     SpeciesUtils::parseDensity(species_name, h_inj_rho, density_parser);
     SpeciesUtils::parseMomentum(species_name, "nuniformpercell", h_inj_mom,
-        ux_parser, uy_parser, uz_parser);
+        ux_parser, uy_parser, uz_parser, h_mom_temp, h_mom_vel);
 }
 
 void PlasmaInjector::setupExternalFile (const amrex::ParmParse& pp_species_name)
