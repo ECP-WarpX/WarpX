@@ -175,6 +175,10 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
     // Convert initialization box to nodal box
     init_box.surroundingNodes();
 
+    // Create local copies of pointers for GPU kernels
+    InjectorDensity* inj_rho = d_inj_rho;
+    InjectorMomentum* inj_mom = d_inj_mom;
+
     // Extract grid geometry properties
     WarpX &warpx = WarpX::GetInstance();
     const amrex::Geometry &geom = warpx.Geom(lev);
@@ -222,8 +226,8 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
                     z = gamma_boost*(z + beta_boost*clight*cur_time);
                 }
 
-                amrex::Real n = d_inj_rho->getDensity(x, y, z);
-                amrex::XDim3 u = d_inj_mom->getBulkMomentum(x, y, z);
+                amrex::Real n = inj_rho->getDensity(x, y, z);
+                amrex::XDim3 u = inj_mom->getBulkMomentum(x, y, z);
 
                 // Give u the right dimensions of m/s
                 u.x = u.x * clight;
