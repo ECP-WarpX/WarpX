@@ -49,7 +49,8 @@ ions.profile = parse_density_function
 ions.density_function(x,y,z) = "1.0e10 + 20.e23*((z*5.e4 + -0.5)*(z>10.e-6)*(z<30.e-6)) + 20.e23*((z>30.e-6))"
 ions.momentum_distribution_type = "at_rest"
 
-
+# Order of particle shape factors
+algo.particle_shape = 3
 
 #################################
 ############ LASER ##############

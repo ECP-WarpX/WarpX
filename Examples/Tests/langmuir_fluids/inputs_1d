@@ -45,7 +45,6 @@ fluids.species_names = electrons positrons
 
 electrons.charge = -q_e
 electrons.mass = m_e
-
 electrons.profile = constant
 electrons.density = n0   # number of electrons per m^3
 electrons.momentum_distribution_type = parse_momentum_function
@@ -55,7 +54,6 @@ electrons.momentum_function_uz(x,y,z) = "epsilon * k/kp * cos(k*x) * cos(k*y) * 
 
 positrons.charge = q_e
 positrons.mass = m_e
-
 positrons.profile = constant
 positrons.density = n0   # number of positrons per m^3
 positrons.momentum_distribution_type = parse_momentum_function

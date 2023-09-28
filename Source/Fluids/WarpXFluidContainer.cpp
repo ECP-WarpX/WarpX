@@ -61,87 +61,80 @@ WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std:
 
 void WarpXFluidContainer::ReadParameters()
 {
-    static bool initialized = false;
-    if (!initialized)
-    {
-        const ParmParse pp_species_name(species_name);
-        pp_species_name.query("do_not_deposit", do_not_deposit);
-        pp_species_name.query("do_not_gather", do_not_gather);
-        pp_species_name.query("do_not_push", do_not_push);
+    const ParmParse pp_species_name(species_name);
+    pp_species_name.query("do_not_deposit", do_not_deposit);
+    pp_species_name.query("do_not_gather", do_not_gather);
+    pp_species_name.query("do_not_push", do_not_push);
 
-        // default values of E_external and B_external
-        // are used to set the E and B field when "constant" or "parser"
-        // is not explicitly used in the input
-        pp_species_name.query("B_ext_init_style", m_B_ext_s);
-        std::transform(m_B_ext_s.begin(),
-                       m_B_ext_s.end(),
-                       m_B_ext_s.begin(),
-                       ::tolower);
-        pp_species_name.query("E_ext_init_style", m_E_ext_s);
-        std::transform(m_E_ext_s.begin(),
-                       m_E_ext_s.end(),
-                       m_E_ext_s.begin(),
-                       ::tolower);
+    // default values of E_external and B_external
+    // are used to set the E and B field when "constant" or "parser"
+    // is not explicitly used in the input
+    pp_species_name.query("B_ext_init_style", m_B_ext_s);
+    std::transform(m_B_ext_s.begin(),
+                    m_B_ext_s.end(),
+                    m_B_ext_s.begin(),
+                    ::tolower);
+    pp_species_name.query("E_ext_init_style", m_E_ext_s);
+    std::transform(m_E_ext_s.begin(),
+                    m_E_ext_s.end(),
+                    m_E_ext_s.begin(),
+                    ::tolower);
 
-        // Parse external fields:
-        // if the input string for B_ext_s is
-        // "parse_b_ext_function" then the mathematical expression
-        // for the Bx_, By_, Bz_external_function(x,y,z)
-        // must be provided in the input file.
-        if (m_B_ext_s == "parse_b_ext_function") {
-           // store the mathematical expression as string
-           std::string str_Bx_ext_function;
-           std::string str_By_ext_function;
-           std::string str_Bz_ext_function;
-           utils::parser::Store_parserString(
-                pp_species_name, "Bx_external_function(x,y,z,t)",
-                str_Bx_ext_function);
-           utils::parser::Store_parserString(
-                pp_species_name, "By_external_function(x,y,z,t)",
-                str_By_ext_function);
-           utils::parser::Store_parserString(
-                pp_species_name, "Bz_external_function(x,y,z,t)",
-                str_Bz_ext_function);
+    // Parse external fields:
+    // if the input string for B_ext_s is
+    // "parse_b_ext_function" then the mathematical expression
+    // for the Bx_, By_, Bz_external_function(x,y,z)
+    // must be provided in the input file.
+    if (m_B_ext_s == "parse_b_ext_function") {
+        // store the mathematical expression as string
+        std::string str_Bx_ext_function;
+        std::string str_By_ext_function;
+        std::string str_Bz_ext_function;
+        utils::parser::Store_parserString(
+            pp_species_name, "Bx_external_function(x,y,z,t)",
+            str_Bx_ext_function);
+        utils::parser::Store_parserString(
+            pp_species_name, "By_external_function(x,y,z,t)",
+            str_By_ext_function);
+        utils::parser::Store_parserString(
+            pp_species_name, "Bz_external_function(x,y,z,t)",
+            str_Bz_ext_function);
 
-           // Parser for B_external on the fluid
-           m_Bx_parser = std::make_unique<amrex::Parser>(
-               utils::parser::makeParser(str_Bx_ext_function,{"x","y","z","t"}));
-           m_By_parser = std::make_unique<amrex::Parser>(
-               utils::parser::makeParser(str_By_ext_function,{"x","y","z","t"}));
-           m_Bz_parser = std::make_unique<amrex::Parser>(
-               utils::parser::makeParser(str_Bz_ext_function,{"x","y","z","t"}));
+        // Parser for B_external on the fluid
+        m_Bx_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bx_ext_function,{"x","y","z","t"}));
+        m_By_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_By_ext_function,{"x","y","z","t"}));
+        m_Bz_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bz_ext_function,{"x","y","z","t"}));
 
-        }
+    }
 
-        // if the input string for E_ext_s is
-        // "parse_e_ext_function" then the mathematical expression
-        // for the Ex_, Ey_, Ez_external_function(x,y,z)
-        // must be provided in the input file.
-        if (m_E_ext_s == "parse_e_ext_function") {
-           // store the mathematical expression as string
-           std::string str_Ex_ext_function;
-           std::string str_Ey_ext_function;
-           std::string str_Ez_ext_function;
-           utils::parser::Store_parserString(
-               pp_species_name, "Ex_external_function(x,y,z,t)",
-               str_Ex_ext_function);
-           utils::parser::Store_parserString(
-               pp_species_name, "Ey_external_function(x,y,z,t)",
-               str_Ey_ext_function);
-           utils::parser::Store_parserString(
-               pp_species_name, "Ez_external_function(x,y,z,t)",
-               str_Ez_ext_function);
-           // Parser for E_external on the fluid
-           m_Ex_parser = std::make_unique<amrex::Parser>(
-               utils::parser::makeParser(str_Ex_ext_function,{"x","y","z","t"}));
-           m_Ey_parser = std::make_unique<amrex::Parser>(
-               utils::parser::makeParser(str_Ey_ext_function,{"x","y","z","t"}));
-           m_Ez_parser = std::make_unique<amrex::Parser>(
-               utils::parser::makeParser(str_Ez_ext_function,{"x","y","z","t"}));
-
-        }
-
-        initialized = true;
+    // if the input string for E_ext_s is
+    // "parse_e_ext_function" then the mathematical expression
+    // for the Ex_, Ey_, Ez_external_function(x,y,z)
+    // must be provided in the input file.
+    if (m_E_ext_s == "parse_e_ext_function") {
+        // store the mathematical expression as string
+        std::string str_Ex_ext_function;
+        std::string str_Ey_ext_function;
+        std::string str_Ez_ext_function;
+        utils::parser::Store_parserString(
+            pp_species_name, "Ex_external_function(x,y,z,t)",
+            str_Ex_ext_function);
+        utils::parser::Store_parserString(
+            pp_species_name, "Ey_external_function(x,y,z,t)",
+            str_Ey_ext_function);
+        utils::parser::Store_parserString(
+            pp_species_name, "Ez_external_function(x,y,z,t)",
+            str_Ez_ext_function);
+        // Parser for E_external on the fluid
+        m_Ex_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ex_ext_function,{"x","y","z","t"}));
+        m_Ey_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ey_ext_function,{"x","y","z","t"}));
+        m_Ez_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ez_ext_function,{"x","y","z","t"}));
     }
 }
 
