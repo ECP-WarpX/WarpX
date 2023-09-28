@@ -182,7 +182,7 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     for (int i=0; i<n_fluid_species; i++) {
         WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
         int lev = 0;
-        fl.DepositCharge(lev, *rho[lev].get(), 1);
+        fl.DepositCharge(lev, *rho[lev], 1);
     }
 
     // Get the particle beta vector
@@ -225,7 +225,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
     for (int i=0; i<n_fluid_species; i++) {
         WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
         int lev = 0;
-        fl.DepositCharge(lev, *rho_fp[lev].get(), 1);
+        fl.DepositCharge(lev, *rho_fp[lev], 1);
     }
 
     SyncRho(rho_fp, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels

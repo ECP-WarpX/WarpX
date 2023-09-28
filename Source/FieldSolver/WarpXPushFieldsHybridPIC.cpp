@@ -37,9 +37,9 @@ void WarpX::HybridPICEvolveFields ()
     for (int i=0; i<n_fluid_species; i++) {
         WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
         int lev = 0;
-        fl.DepositCharge(lev, *rho_fp[lev].get(), 1);
-        fl.DepositCurrent(lev, *current_fp[lev][0].get(), *current_fp[lev][1].get()
-            , *current_fp[lev][2].get());
+        fl.DepositCharge(lev, *rho_fp[lev], 1);
+        fl.DepositCurrent(lev, *current_fp[lev][0], *current_fp[lev][1]
+            , *current_fp[lev][2]);
     }
 
     // Synchronize J and rho:

@@ -97,6 +97,10 @@ Step 5: **Current and Charge Deposition**
 
    More details on the precise implementation will be made available online soon.
 
+.. warning::
+      If using the fluid model with the Kinetic-Fluid Hybrid model or the electrostatic solver, there is a known 
+      issue that the fluids deposit at a half-timestep offset in the charge-density.
+
 .. raw:: html
 
    <div id="refs" class="references">
