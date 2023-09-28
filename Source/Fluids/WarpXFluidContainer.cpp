@@ -24,10 +24,6 @@ WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std:
     species_id = ispecies;
     species_name = name;
 
-    // Extract charge, mass, species type
-    std::string injection_style = "none";
-    SpeciesUtils::extractSpeciesProperties(species_name, injection_style, charge, mass, physical_species);
-
     ReadParameters();
 
     // Initialize injection objects
@@ -61,6 +57,11 @@ WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std:
 
 void WarpXFluidContainer::ReadParameters()
 {
+
+    // Extract charge, mass, species type
+    std::string injection_style = "none";
+    SpeciesUtils::extractSpeciesProperties(species_name, injection_style, charge, mass, physical_species);
+
     const ParmParse pp_species_name(species_name);
     pp_species_name.query("do_not_deposit", do_not_deposit);
     pp_species_name.query("do_not_gather", do_not_gather);
