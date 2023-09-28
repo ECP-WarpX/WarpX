@@ -1031,7 +1031,7 @@ WarpX::ReadParameters ()
             const ParmParse pp_fluids("fluids");
             std::vector<std::string> fluid_species_names = {};
             pp_fluids.queryarr("species_names", fluid_species_names);
-            if ( fluid_species_names.size() > 0) do_fluid_species = 1;
+            if (  !fluid_species_names.empty() ) do_fluid_species = 1;
 #ifdef WARPX_DIM_RZ
             if (do_fluid_species) {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes <= 1,
