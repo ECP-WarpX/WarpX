@@ -19,14 +19,14 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         PsatdAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                          amrex::DistributionMapping const & dm,
                          const SpectralFieldIndex& spectral_index,
-                         int const n_rz_azimuthal_modes, int const norder_z,
-                         short const grid_type, amrex::Real const dt_step,
-                         bool const update_with_rho,
-                         const bool time_averaging,
-                         const int J_in_time,
-                         const int rho_in_time,
-                         const bool dive_cleaning,
-                         const bool divb_cleaning);
+                         int n_rz_azimuthal_modes, int norder_z,
+                         short grid_type, amrex::Real dt_step,
+                         bool update_with_rho,
+                         bool time_averaging,
+                         int J_in_time,
+                         int rho_in_time,
+                         bool dive_cleaning,
+                         bool divb_cleaning);
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldDataRZ & f) override final;
 

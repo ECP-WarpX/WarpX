@@ -195,8 +195,7 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
    The ``TSTP`` (terminal stop) command is sent interactively from ``Ctrl+Z`` to temporarily send a process to sleep (until send in the background with commands such as ``bg`` or continued with ``fg``), overwriting it would thus disable that functionality.
    The signals ``KILL`` and ``STOP`` cannot be used.
 
-   The ``FPE`` signal should not be overwritten in WarpX, as it is `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
-
+   The ``FPE`` and ``ILL`` signals should not be overwritten in WarpX, as they are `controlled by AMReX <https://amrex-codes.github.io/amrex/docs_html/Debugging.html#breaking-into-debuggers>`__ for :ref:`debug workflows that catch invalid floating-point operations <debugging_warpx>`.
 .. tip::
 
    For example, the following logic can be added to `Slurm batch scripts <https://docs.gwdg.de/doku.php?id=en:services:application_services:high_performance_computing:running_jobs_slurm:signals>`__ (`signal name to number mapping here <https://en.wikipedia.org/wiki/Signal_(IPC)#Default_action>`__) to gracefully shut down 6 min prior to walltime.
@@ -718,6 +717,7 @@ Particle initialization
       ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
+      ``<species_name>.impose_t_lab_from_file`` (`bool`) optional (default is false) only read if warpx.gamma_boost > 1., it allows to set t_lab for the Lorentz Transform as being the time stored in the openPMD file.
       Warning: ``q_tot!=0`` is not supported with the ``external_file`` injection style. If a value is provided, it is ignored and no re-scaling is done.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
@@ -1276,7 +1276,7 @@ Laser initialization
 
         E(\boldsymbol{x},t) \propto \exp\left( -\frac{(t-t_{peak})^2}{\tau^2} \right)
 
-    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.174`.
+    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.1774`.
 
     When running a **boosted-frame simulation**, provide the value of
     ``<laser_name>.profile_duration`` in the laboratory frame, and use ``warpx.gamma_boost``
@@ -1474,8 +1474,8 @@ Applied to Particles
 
       Note that the position is defined in Cartesian coordinates, as a function of (x,y,z), even for RZ.
 
-    * ``repeated_plasma_lens``: apply a series of plasma lenses. The properties of the lenses are defined in the
-      lab frame by the input parameters:
+    * ``repeated_plasma_lens``: apply a series of plasma lenses.
+      The properties of the lenses are defined in the lab frame by the input parameters:
 
         * ``repeated_plasma_lens_period``, the period length of the repeat, a single float number,
 
@@ -1488,6 +1488,9 @@ Applied to Particles
 
         * ``repeated_plasma_lens_strengths_B``, the magnetic focusing strength of each lens, an array of floats, when
           ``particles.B_ext_particle_init_style`` is set to ``repeated_plasma_lens``.
+
+      The repeated lenses are only defined for :math:`z > 0`.
+      Once the number of lenses specified in the input are exceeded, the repeated lens stops.
 
       The applied field is uniform longitudinally (along z) with a hard edge,
       where residence corrections are used for more accurate field calculation. On the time step when a particle enters
@@ -2064,6 +2067,7 @@ Grid types (collocated, staggered, hybrid)
     and currents are interpolated back and forth between a staggered grid and a
     nodal grid, must be used with momentum-conserving field gathering algorithm,
     ``algo.field_gathering = momentum-conserving``).
+    The option ``hybrid`` is currently not supported in RZ geometry.
 
     Default: ``warpx.grid_type = staggered``.
 
@@ -2468,7 +2472,10 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 BackTransformed Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. Note that this diagnostic is not currently supported for RZ.  Additional options for this diagnostic include:
+``BackTransformed`` diag type are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame. This option can be set using ``<diag_name>.diag_type = BackTransformed``. We support the following list of options from `Full Diagnostics`_
+    ``<diag_name>.format``, ``<diag_name>.openpmd_backend``, ``<diag_name>.dump_rz_modes``, ``<diag_name>.file_prefix``, ``<diag_name>.diag_lo``, ``<diag_name>.diag_hi``, ``<diag_name>.write_species``, ``<diag_name>.species``.
+
+    Additional options for this diagnostic include:
 
 * ``<diag_name>.num_snapshots_lab`` (`integer`)
     Only used when ``<diag_name>.diag_type`` is ``BackTransformed``.
@@ -2511,6 +2518,20 @@ BackTransformed Diagnostics
     to frequent flushes of the lab-frame data. The other option is to keep the default
     value for buffer size and use slices to reduce the memory footprint and maintain
     optimum I/O performance.
+
+* ``<diag_name>.do_back_transformed_fields`` (`0` or `1`) optional (default `1`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``
+    Whether to back transform the fields or not.
+    Note that for ``BackTransformed`` diagnostics, at least one of the options
+    ``<diag_name>.do_back_transformed_fields`` or ``<diag_name>.do_back_transformed_particles`` must be 1.
+
+* ``<diag_name>.do_back_transformed_particles`` (`0` or `1`) optional (default `1`)
+    Only used when ``<diag_name>.diag_type`` is ``BackTransformed``
+    Whether to back transform the particle data or not.
+    Note that for ``BackTransformed`` diagnostics, at least one of the options
+    ``<diag_name>.do_back_transformed_fields`` or ``<diag_name>.do_back_transformed_particles`` must be 1.
+    If ``diag_name.write_species = 0``, then ``<diag_name>.do_back_transformed_particles`` will be set
+    to 0 in the simulation and particles will not be backtransformed.
 
 Boundary Scraping Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2655,13 +2676,11 @@ Reduced Diagnostics
         the value of the Poynting Vector :math:`|S|` of the electromagnetic fields,
         at mesh refinement levels from  0 to :math:`n`, at point (:math:`x`, :math:`y`, :math:`z`).
 
-        Note: the norms are always interpolated to the measurement point before they are written
-        to file. The electromagnetic field components are interpolated to the measurement point
-        by default, but can they be saved as non-averaged by setting
-        ``<reduced_diags_name>.raw_fields = true``, in which case the raw fields for the cell
-        containing the measurement point are saved.
+        The fields are always interpolated to the measurement point.
         The interpolation order can be set by specifying ``<reduced_diags_name>.interp_order``,
-        otherwise it is set to ``1``.
+        defaulting to ``1``.
+        In RZ geometry, this only saves the
+        0'th azimuthal mode component of the fields.
         Integrated electric and magnetic field components can instead be obtained by specifying
         ``<reduced_diags_name>.integrate == true``.
         In a *moving window* simulation, the FieldProbe can be set to follow the moving frame by specifying ``<reduced_diags_name>.do_moving_window_FP = 1`` (default 0).
@@ -2969,6 +2988,57 @@ Reduced Diagnostics
         1 or 0, it is possible to compute the charge on only some part of the
         embedded boundary.
 
+    * ``ColliderRelevant``
+        This diagnostics computes properties of two colliding beams that are relevant for particle colliders.
+        Two species must be specified. Photon species are not supported yet.
+        It is assumed that the two species propagate and collide along the ``z`` direction.
+        The output columns (for 3D-XYZ) are the following, where the minimum, average and maximum
+        are done over the whole species:
+
+        [0]: simulation step (iteration).
+
+        [1]: time (s).
+
+        [2]: time derivative of the luminosity (:math:`m^{-2}s^{-1}`) defined as:
+
+        .. math::
+
+            \frac{dL}{dt} = 2 c \iiint  n_1(x,y,z) n_2(x,y,z) dx dy dz
+
+        where :math:`n_1`, :math:`n_2` are the number densities of the two colliding species.
+
+        [3], [4], [5]: If, QED is enabled, the minimum, average and maximum values of the quantum parameter :math:`\chi` of species 1:
+        :math:`\chi_{min}`,
+        :math:`\langle \chi \rangle`,
+        :math:`\chi_{max}`.
+        If QED is not enabled, these numbers are not computed.
+
+        [6], [7]: The average and standard deviation of the values of the transverse coordinate :math:`x` (m) of species 1:
+        :math:`\langle x \rangle`,
+        :math:`\sqrt{\langle x- \langle x \rangle \rangle^2}`.
+
+        [8], [9]: The average and standard deviation of the values of the transverse coordinate :math:`y` (m) of species 1:
+        :math:`\langle y \rangle`,
+        :math:`\sqrt{\langle y- \langle y \rangle \rangle^2}`.
+
+        [10], [11], [12], [13]: The minimum, average, maximum and standard deviation of the angle :math:`\theta_x = \angle (u_x, u_z)` (rad) of species 1:
+        :math:`{\theta_x}_{min}`,
+        :math:`\langle \theta_x \rangle`,
+        :math:`{\theta_x}_{max}`,
+        :math:`\sqrt{\langle \theta_x- \langle \theta_x \rangle \rangle^2}`.
+
+        [14], [15], [16], [17]:  The minimum, average, maximum and standard deviation of the angle :math:`\theta_y = \angle (u_y, u_z)` (rad) of species 1:
+        :math:`{\theta_y}_{min}`,
+        :math:`\langle \theta_y \rangle`,
+        :math:`{\theta_y}_{max}`,
+        :math:`\sqrt{\langle \theta_y- \langle \theta_y \rangle \rangle^2}`.
+
+        [18], ..., [32]: Analogous quantities for species 2.
+
+        For 2D-XZ, :math:`y`-related quantities are not outputted.
+        For 1D-Z, :math:`x`-related and :math:`y`-related quantities are not outputted.
+        RZ geometry is not supported yet.
+
 * ``<reduced_diags_name>.intervals`` (`string`)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
     diagnostics are written to file.
@@ -2982,6 +3052,9 @@ Reduced Diagnostics
 * ``<reduced_diags_name>.separator`` (`string`) optional (default a `whitespace`)
     The separator between row values in the output file.
     The default separator is a whitespace.
+
+* ``<reduced_diags_name>.precision`` (`integer`) optional (default `14`)
+    The precision used when writing out the data to the text files.
 
 Lookup tables and other settings for QED modules
 ------------------------------------------------
@@ -3114,6 +3187,9 @@ The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.
 * ``amr.restart`` (`string`)
     Name of the checkpoint file to restart from. Returns an error if the folder does not exist
     or if it is not properly formatted.
+
+* ``warpx.write_diagonstics_on_restart`` (`bool`) optional (default `false`)
+    When `true`, write the diagnostics after restart at the time of the restart.
 
 Intervals parser
 ----------------

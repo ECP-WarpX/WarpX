@@ -11,7 +11,6 @@
 #include "Initialization/WarpXAMReXInit.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXrocfftUtil.H"
-#include "Utils/WarpXUtil.H"
 
 #include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/timer/Timer.H>
@@ -19,22 +18,14 @@
 
 #include <AMReX_Print.H>
 
+
 int main(int argc, char* argv[])
 {
     ablastr::parallelization::mpi_init(argc, argv);
 
-    warpx_amrex_init(argc, argv);
+    warpx::initialization::amrex_init(argc, argv);
 
     utils::rocfft::setup();
-
-    ParseGeometryInput();
-
-    ConvertLabParamsToBoost();
-    ReadBCParams();
-
-#ifdef WARPX_DIM_RZ
-    CheckGriddingForRZSpectral();
-#endif
 
     {
         WARPX_PROFILE_VAR("main()", pmain);
@@ -42,14 +33,15 @@ int main(int argc, char* argv[])
         auto timer = ablastr::utils::timer::Timer{};
         timer.record_start_time();
 
-        WarpX warpx;
+        auto& warpx = WarpX::GetInstance();
 
         warpx.InitData();
 
         warpx.Evolve();
 
         //Print warning messages at the end of the simulation
-        ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
+        amrex::Print() <<
+            ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("THE END");
 
         timer.record_stop_time();
         if (warpx.Verbose()) {
@@ -58,6 +50,8 @@ int main(int argc, char* argv[])
         }
 
         WARPX_PROFILE_VAR_STOP(pmain);
+
+        WarpX::Finalize();
     }
 
     utils::rocfft::cleanup();

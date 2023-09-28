@@ -42,6 +42,9 @@ public:
     /// separator in the output file
     std::string m_sep = " ";
 
+    /// precision for data in the output file
+    int m_precision = 14;
+
     /// output data
     std::vector<amrex::Real> m_data;
 

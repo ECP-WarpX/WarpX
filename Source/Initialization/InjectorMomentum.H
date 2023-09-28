@@ -94,6 +94,7 @@ namespace {
       * @param u_th Momentum spread
       * @param engine Object used to generate random numbers
       */
+    AMREX_FORCE_INLINE
     AMREX_GPU_HOST_DEVICE
     amrex::Real
     generateGaussianFluxDist( amrex::Real u_m, amrex::Real u_th, amrex::RandomEngine const& engine ) {
@@ -331,7 +332,7 @@ struct InjectorMomentumBoltzmann
     {
         using namespace amrex::literals;
         amrex::Real u[3];
-        for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
+        for (auto& el : u) el = 0.0_rt;
         const amrex::Real beta = velocity(x,y,z);
         int const dir = velocity.direction();
         const amrex::Real gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
@@ -432,7 +433,7 @@ struct InjectorMomentumJuttner
     {
         using namespace amrex::literals;
         amrex::Real u[3];
-        for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
+        for (auto& el : u) el = 0.0_rt;
         amrex::Real const beta = velocity(x,y,z);
         int const dir = velocity.direction();
         amrex::Real const gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));

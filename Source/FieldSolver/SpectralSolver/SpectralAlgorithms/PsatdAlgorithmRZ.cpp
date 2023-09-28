@@ -13,8 +13,7 @@
 
 #include <cmath>
 
-using amrex::operator""_rt;
-
+using namespace amrex::literals;
 
 /* \brief Initialize coefficients for the update equation */
 PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
@@ -82,7 +81,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 
     const bool update_with_rho = m_update_with_rho;
     const bool time_averaging = m_time_averaging;
-    const bool J_linear = (m_J_in_time == JInTime::Linear) ? true : false;
+    const bool J_linear = (m_J_in_time == JInTime::Linear);
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
@@ -337,7 +336,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
     const bool time_averaging = m_time_averaging;
-    const bool J_linear = (m_J_in_time == JInTime::Linear) ? true : false;
+    const bool J_linear = (m_J_in_time == JInTime::Linear);
 
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients

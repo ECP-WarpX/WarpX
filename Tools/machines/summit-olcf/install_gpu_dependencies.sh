@@ -62,7 +62,7 @@ build_dir=$(mktemp -d)
 if [ -d $HOME/src/blaspp ]
 then
   cd $HOME/src/blaspp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -
@@ -76,7 +76,7 @@ cmake --build ${build_dir}/blaspp-summit-build --target install --parallel 10
 if [ -d $HOME/src/lapackpp ]
 then
   cd $HOME/src/lapackpp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -

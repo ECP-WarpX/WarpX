@@ -11,10 +11,14 @@
 #include "ablastr/utils/text/StringUtils.H"
 #include "ablastr/utils/TextMsg.H"
 
+#include <AMReX.H>
+#include <AMReX_Config.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_ParmParse.H>
 
 #include <algorithm>
 #include <sstream>
+#include <vector>
 
 namespace abl_msg_logger = ablastr::utils::msg_logger;
 using namespace ablastr::warn_manager;

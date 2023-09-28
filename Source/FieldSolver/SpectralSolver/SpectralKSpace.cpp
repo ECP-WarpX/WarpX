@@ -68,14 +68,9 @@ SpectralKSpace::SpectralKSpace( const BoxArray& realspace_ba,
     spectralspace_ba.define( spectral_bl );
 
     // Allocate the components of the k vector: kx, ky (only in 3D), kz
-    bool only_positive_k;
     for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++) {
-        if (i_dim==0) {
-            // Real-to-complex FFTs: first axis contains only the positive k
-            only_positive_k = true;
-        } else {
-            only_positive_k = false;
-        }
+        // Real-to-complex FFTs: first axis contains only the positive k
+        const auto only_positive_k = (i_dim==0);
         k_vec[i_dim] = getKComponent(dm, realspace_ba, i_dim, only_positive_k);
     }
 }

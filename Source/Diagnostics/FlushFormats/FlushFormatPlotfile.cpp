@@ -99,7 +99,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
-    WriteParticles(filename, particle_diags, isBTD);
+    WriteParticles(filename, particle_diags, time, isBTD);
 
     WriteJobInfo(filename);
 
@@ -302,7 +302,12 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         warpx.GetPartContainer().WriteHeader(HeaderFile);
 
-        HeaderFile << warpx.getcurrent_injection_position() << "\n";
+        MultiParticleContainer& mypc = warpx.GetPartContainer();
+        const int n_species = mypc.nSpecies();
+        for (int i=0; i<n_species; i++)
+        {
+             HeaderFile << mypc.GetParticleContainer(i).m_current_injection_position << "\n";
+        }
 
         HeaderFile << warpx.getdo_moving_window() << "\n";
 
@@ -334,13 +339,14 @@ FlushFormatPlotfile::WriteWarpXHeader(
 void
 FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                     const amrex::Vector<ParticleDiag>& particle_diags,
-                                    bool isBTD) const
+                                    const amrex::Real time, bool isBTD) const
 {
 
     for (auto& part_diag : particle_diags) {
         WarpXParticleContainer* pc = part_diag.getParticleContainer();
+        PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
         auto tmp = isBTD ?
-            part_diag.getPinnedParticleContainer()->make_alike<amrex::PinnedArenaAllocator>() :
+            pinned_pc->make_alike<amrex::PinnedArenaAllocator>() :
             pc->make_alike<amrex::PinnedArenaAllocator>();
 
         Vector<std::string> real_names;
@@ -359,21 +365,21 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 #endif
 
         // get the names of the real comps
-        real_names.resize(pc->NumRealComps());
-        auto runtime_rnames = pc->getParticleRuntimeComps();
+        real_names.resize(tmp.NumRealComps());
+        auto runtime_rnames = tmp.getParticleRuntimeComps();
         for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
         // plot any "extra" fields by default
         real_flags = part_diag.m_plot_flags;
-        real_flags.resize(pc->NumRealComps(), 1);
+        real_flags.resize(tmp.NumRealComps(), 1);
 
         // and the names
-        int_names.resize(pc->NumIntComps());
-        auto runtime_inames = pc->getParticleRuntimeiComps();
+        int_names.resize(tmp.NumIntComps());
+        auto runtime_inames = tmp.getParticleRuntimeiComps();
         for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
 
         // plot by default
-        int_flags.resize(pc->NumIntComps(), 1);
+        int_flags.resize(tmp.NumIntComps(), 1);
 
         const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
         RandomFilter const random_filter(part_diag.m_do_random_filter,
@@ -383,7 +389,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         ParserFilter parser_filter(part_diag.m_do_parser_filter,
                                    utils::parser::compileParser<ParticleDiag::m_nvars>
                                        (part_diag.m_particle_filter_parser.get()),
-                                   pc->getMass());
+                                   pc->getMass(), time);
         parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(part_diag.m_do_geom_filter,
                                              part_diag.m_diag_domain);
@@ -392,7 +398,9 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
             using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
             tmp.copyParticles(*pc,
-                              [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+                              [random_filter,uniform_filter,parser_filter,geometry_filter]
+                              AMREX_GPU_HOST_DEVICE
+                              (const SrcData& src, int ip, const amrex::RandomEngine& engine)
             {
                 const SuperParticleType& p = src.getSuperParticle(ip);
                 return random_filter(p, engine) * uniform_filter(p, engine)
@@ -400,7 +408,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             }, true);
             particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
         } else {
-            PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
             tmp.copyParticles(*pinned_pc, true);
             particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
         }
@@ -570,9 +577,10 @@ FlushFormatPlotfile::WriteAllRawFields(
         }
         if (warpx.get_pointer_rho_fp(lev))
         {
-            // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
-            // If nComp > 1, this is the upper half of the list of components.
-            const MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, warpx.getrho_fp(lev).nComp()/2, warpx.getrho_fp(lev).nComp()/2);
+            // rho_fp will have either ncomps or 2*ncomps (2 being the old and new). When 2, return the new so
+            // there is time synchronization.
+            const int nstart = warpx.getrho_fp(lev).nComp() - WarpX::ncomps;
+            const MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, nstart, WarpX::ncomps);
             WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
         }
         if (warpx.get_pointer_phi_fp(lev) != nullptr) {
@@ -580,7 +588,7 @@ FlushFormatPlotfile::WriteAllRawFields(
         }
 
         // Averaged fields on fine patch
-        if (warpx.fft_do_time_averaging)
+        if (WarpX::fft_do_time_averaging)
         {
             WriteRawMF(warpx.getEfield_avg_fp(lev, 0) , dm, raw_pltname, default_level_prefix,
                        "Ex_avg_fp", lev, plot_raw_fields_guards);
