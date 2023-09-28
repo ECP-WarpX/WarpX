@@ -964,7 +964,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
     WARPX_PROFILE("WarpXParticleContainer::DepositCharge");
 
     // Loop over the refinement levels
-    int const finest_level = static_cast<int>(rho.size()) - 1;
+    auto const finest_level = static_cast<int>(rho.size() - 1);
     for (int lev = 0; lev <= finest_level; ++lev)
     {
         DepositCharge (

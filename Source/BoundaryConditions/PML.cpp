@@ -878,7 +878,7 @@ PML::MakeBoxArray_single (const amrex::Box& regular_domain, const amrex::BoxArra
 {
     BoxList bl;
     const auto grid_ba_size = static_cast<int>(grid_ba.size());
-    for (int i = 0, N = grid_ba_size; i < N; ++i) {
+    for (int i = 0; i < grid_ba_size; ++i) {
         Box const& b = grid_ba[i];
         for (OrientationIter oit; oit.isValid(); ++oit) {
             // In 3d, a Box has 6 faces.  This iterates over the 6 faces.

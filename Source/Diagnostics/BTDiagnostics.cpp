@@ -602,7 +602,7 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
 
     const bool update_varnames = true;
     if (update_varnames) {
-        const int n_rz = ncomp * static_cast<int>(m_varnames_fields.size());
+        const auto n_rz = ncomp * static_cast<int>(m_varnames_fields.size());
         m_varnames.clear();
         m_varnames.reserve(n_rz);
     }
@@ -628,7 +628,7 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
     // but the `varnames` need only be updated once.
     const bool update_cellcenter_varnames = true;
     if (update_cellcenter_varnames) {
-        const int n_rz = ncomp * static_cast<int>(m_cellcenter_varnames.size());
+        const auto n_rz = ncomp * static_cast<int>(m_cellcenter_varnames.size());
         m_cellcenter_varnames.clear();
         m_cellcenter_varnames.reserve(n_rz);
         const auto m_cellcenter_varnames_fields_size = static_cast<int>(m_cellcenter_varnames_fields.size());

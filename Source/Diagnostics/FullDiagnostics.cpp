@@ -190,7 +190,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     const bool update_varnames = (lev==0);
     if (update_varnames) {
         m_varnames.clear();
-        const int n_rz = ncomp * static_cast<int>(m_varnames.size());
+        const auto n_rz = ncomp * static_cast<int>(m_varnames.size());
         m_varnames.reserve(n_rz);
     }
 
@@ -372,7 +372,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     bool deposit_current = !m_solver_deposits_current;
 
     // First index of m_all_field_functors[lev] where RZ modes are stored
-    int icomp =static_cast<int>(m_all_field_functors[0].size());
+    auto icomp =static_cast<int>(m_all_field_functors[0].size());
     const std::array<std::string, 3> coord {"r", "theta", "z"};
 
     // Er, Etheta, Ez, Br, Btheta, Bz, jr, jtheta, jz

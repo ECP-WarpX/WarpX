@@ -69,7 +69,7 @@ namespace detail
     snakeToCamel (const std::string& snake_string)
     {
         std::string camelString = snake_string;
-        const int n = static_cast<int>(camelString.length());
+        const auto n = static_cast<int>(camelString.length());
         for (int x = 0; x < n; x++)
         {
             if (x == 0)
