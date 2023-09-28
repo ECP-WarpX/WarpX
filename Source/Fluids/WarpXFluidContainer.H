@@ -138,7 +138,6 @@ protected:
     int do_not_push = 0;
     int do_not_gather = 0;
     int do_not_deposit = 0;
-    std::string physical_element;
     PhysicalSpecies physical_species;
 
     // Parser for external fields

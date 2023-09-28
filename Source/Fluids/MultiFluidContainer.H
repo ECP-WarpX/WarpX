@@ -41,12 +41,6 @@ public:
     WarpXFluidContainer&
     GetFluidContainer (int ispecies) const {return *allcontainers[ispecies];}
 
-    WarpXFluidContainer*
-    GetFluidContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
-
-    WarpXFluidContainer&
-    GetFluidContainerFromName (const std::string& name) const;
-
 #ifdef WARPX_USE_OPENPMD
     std::unique_ptr<WarpXFluidContainer>& GetUniqueContainer(int ispecies) {
       return  allcontainers[ispecies];
@@ -69,23 +63,16 @@ public:
 
     int nSpecies() const {return species_names.size();}
 
-    std::vector<std::string> GetSpeciesNames() const { return species_names; }
-
     void DepositCharge (int lev, amrex::MultiFab &rho);
     void DepositCurrent (int lev,
         amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz);
 
-protected:
+private:
 
     std::vector<std::string> species_names;
 
-private:
-
     // Vector of fluid species
     amrex::Vector<std::unique_ptr<WarpXFluidContainer>> allcontainers;
-
-    void ReadParameters ();
-
 
 };
 #endif /*WARPX_MultiFluidContainer_H_*/

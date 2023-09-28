@@ -15,7 +15,8 @@ using namespace amrex;
 
 MultiFluidContainer::MultiFluidContainer (int nlevs_max)
 {
-    ReadParameters();
+    const ParmParse pp_fluids("fluids");
+    pp_fluids.queryarr("species_names", species_names);
 
     const int nspecies = static_cast<int>(species_names.size());
 
@@ -23,30 +24,6 @@ MultiFluidContainer::MultiFluidContainer (int nlevs_max)
     for (int i = 0; i < nspecies; ++i) {
         allcontainers[i] = std::make_unique<WarpXFluidContainer>(nlevs_max, i, species_names[i]);
     }
-}
-
-void
-MultiFluidContainer::ReadParameters ()
-{
-    static bool initialized = false;
-    if (!initialized)
-    {
-        const ParmParse pp_fluids("fluids");
-        pp_fluids.queryarr("species_names", species_names);
-
-        initialized = true;
-    }
-}
-
-WarpXFluidContainer&
-MultiFluidContainer::GetFluidContainerFromName (const std::string& name) const
-{
-    auto it = std::find(species_names.begin(), species_names.end(), name);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        it != species_names.end(),
-        "unknown species name");
-    const int i = std::distance(species_names.begin(), it);
-    return *allcontainers[i];
 }
 
 void

@@ -1031,13 +1031,18 @@ WarpX::ReadParameters ()
             const ParmParse pp_fluids("fluids");
             std::vector<std::string> fluid_species_names = {};
             pp_fluids.queryarr("species_names", fluid_species_names);
-            if ( fluid_species_names.size() > 0) do_fluid_species = 1;
-#ifdef WARPX_DIM_RZ
+            if ( fluid_species_names.empty() == false ) do_fluid_species = 1;
             if (do_fluid_species) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level <= 1,
+                    "Fluid species cannot currently be used with mesh refinement.");
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    electrostatic_solver_id != ElectrostaticSolverAlgo::Relativistic,
+                    "Fluid species cannot currently be used with the relativistic electrostatic solver.");
+#ifdef WARPX_DIM_RZ
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes <= 1,
-                    "Fluid species do not support more than 1 azimuthal mode.");
-            }
+                    "Fluid species cannot be used with more than 1 azimuthal mode.");
 #endif
+            }
         }
 
         // Set default parameters with hybrid grid (parsed later below)
