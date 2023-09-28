@@ -93,6 +93,8 @@ Step 5: **Current and Charge Deposition**
 
    There is currently no ability to perform azimuthal mode decomposition in RZ.
 
+   Mesh refinement is not supported for the fluids.
+
    The implemented MUSCL scheme has a simplifed slope averaging, see the extended writeup for details.
 
    More details on the precise implementation will be made available online soon.
