@@ -1150,9 +1150,6 @@ When configuring fluid parameters in WarpX, you can utilize the same parsers as 
     For fluid-specific inputs we use `<fluid_pecies_name>` as a placeholder. Also see external fields
     for how to specify these for fluids as the function names differ.
 
-    Note: Currently ``<fluid_species_name>.num_particles_per_cell_each_dim`` is required to run the fluids because of the inheirance of the parser.
-    It does not have any effect.
-
 .. _running-cpp-parameters-laser:
 
 Laser initialization

@@ -28,8 +28,26 @@ WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std:
 
     // Initialize injection objects
     const ParmParse pp_species_name(species_name);
-    SpeciesUtils::parseDensity(species_name, h_inj_rho, d_inj_rho);
-    SpeciesUtils::parseMomentum(species_name, "none", h_inj_mom, d_inj_mom);
+    SpeciesUtils::parseDensity(species_name, h_inj_rho);
+    SpeciesUtils::parseMomentum(species_name, "none", h_inj_mom);
+    if (h_inj_rho) {
+#ifdef AMREX_USE_GPU
+        d_inj_rho = static_cast<InjectorDensity*>
+            (amrex::The_Arena()->alloc(sizeof(InjectorDensity)));
+        amrex::Gpu::htod_memcpy_async(d_inj_rho, h_inj_rho.get(), sizeof(InjectorDensity));
+#else
+        d_inj_rho = h_inj_rho.get();
+#endif
+    }
+    if (h_inj_mom) {
+#ifdef AMREX_USE_GPU
+        d_inj_mom = static_cast<InjectorMomentum*>
+            (amrex::The_Arena()->alloc(sizeof(InjectorMomentum)));
+        amrex::Gpu::htod_memcpy_async(d_inj_mom, h_inj_mom.get(), sizeof(InjectorMomentum));
+#else
+        d_inj_mom = h_inj_mom.get();
+#endif
+    }
     amrex::Gpu::synchronize();
 
     // Resize the list of MultiFabs for the right number of levels

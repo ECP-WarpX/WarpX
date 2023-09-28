@@ -45,17 +45,6 @@
 
 using namespace amrex::literals;
 
-namespace {
-    void StringParseAbortMessage(const std::string& var,
-                                 const std::string& name) {
-        std::stringstream stringstream;
-        std::string string;
-        stringstream << var << " string '" << name << "' not recognized.";
-        string = stringstream.str();
-        WARPX_ABORT_WITH_MESSAGE(string);
-    }
-}
-
 PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     const amrex::Geometry& geom):
     species_id{ispecies}, species_name{name}
@@ -151,9 +140,27 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     } else if (injection_style == "external_file") {
         setupExternalFile(pp_species_name);
     } else if (injection_style != "none") {
-        StringParseAbortMessage("Injection style", injection_style);
+        SpeciesUtils::StringParseAbortMessage("Injection style", injection_style);
     }
 
+    if (h_inj_rho) {
+#ifdef AMREX_USE_GPU
+        d_inj_rho = static_cast<InjectorDensity*>
+            (amrex::The_Arena()->alloc(sizeof(InjectorDensity)));
+        amrex::Gpu::htod_memcpy_async(d_inj_rho, h_inj_rho.get(), sizeof(InjectorDensity));
+#else
+        d_inj_rho = h_inj_rho.get();
+#endif
+    }
+    if (h_inj_mom) {
+#ifdef AMREX_USE_GPU
+        d_inj_mom = static_cast<InjectorMomentum*>
+            (amrex::The_Arena()->alloc(sizeof(InjectorMomentum)));
+        amrex::Gpu::htod_memcpy_async(d_inj_mom, h_inj_mom.get(), sizeof(InjectorMomentum));
+#else
+        d_inj_mom = h_inj_mom.get();
+#endif
+    }
     amrex::Gpu::synchronize();
 }
 
@@ -240,7 +247,7 @@ void PlasmaInjector::setupGaussianBeam (const amrex::ParmParse& pp_species_name)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
         "Error: Symmetrization only supported to orders 4 or 8 ");
     gaussian_beam = true;
-    SpeciesUtils::parseMomentum(species_name, "gaussian_beam", h_inj_mom, d_inj_mom);
+    SpeciesUtils::parseMomentum(species_name, "gaussian_beam", h_inj_mom);
 #if defined(WARPX_DIM_XZ)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
         "Error: Gaussian beam y_rms must be strictly greater than 0 in 2D "
@@ -279,8 +286,8 @@ void PlasmaInjector::setupNRandomPerCell (const amrex::ParmParse& pp_species_nam
 #else
     d_inj_pos = h_inj_pos.get();
 #endif
-    SpeciesUtils::parseDensity(species_name, h_inj_rho, d_inj_rho);
-    SpeciesUtils::parseMomentum(species_name, "nrandompercell", h_inj_mom, d_inj_mom);
+    SpeciesUtils::parseDensity(species_name, h_inj_rho);
+    SpeciesUtils::parseMomentum(species_name, "nrandompercell", h_inj_mom);
 }
 
 void PlasmaInjector::setupNFluxPerCell (const amrex::ParmParse& pp_species_name)
@@ -357,7 +364,7 @@ void PlasmaInjector::setupNFluxPerCell (const amrex::ParmParse& pp_species_name)
 #endif
 
     parseFlux(pp_species_name);
-    SpeciesUtils::parseMomentum(species_name, "nfluxpercell", h_inj_mom, d_inj_mom);
+    SpeciesUtils::parseMomentum(species_name, "nfluxpercell", h_inj_mom, flux_normal_axis, flux_direction);
 }
 
 void PlasmaInjector::setupNuniformPerCell (const amrex::ParmParse& pp_species_name)
@@ -408,8 +415,8 @@ void PlasmaInjector::setupNuniformPerCell (const amrex::ParmParse& pp_species_na
     num_particles_per_cell = num_particles_per_cell_each_dim[0] *
                              num_particles_per_cell_each_dim[1] *
                              num_particles_per_cell_each_dim[2];
-    SpeciesUtils::parseDensity(species_name, h_inj_rho, d_inj_rho);
-    SpeciesUtils::parseMomentum(species_name, "nuniformpercell", h_inj_mom, d_inj_mom);
+    SpeciesUtils::parseDensity(species_name, h_inj_rho);
+    SpeciesUtils::parseMomentum(species_name, "nuniformpercell", h_inj_mom);
 }
 
 void PlasmaInjector::setupExternalFile (const amrex::ParmParse& pp_species_name)
@@ -539,7 +546,7 @@ void PlasmaInjector::parseFlux (const amrex::ParmParse& pp_species_name)
         h_inj_flux.reset(new InjectorFlux((InjectorFluxParser*)nullptr,
             flux_parser->compile<4>()));
     } else {
-        StringParseAbortMessage("Flux profile type", flux_prof_s);
+        SpeciesUtils::StringParseAbortMessage("Flux profile type", flux_prof_s);
     }
     if (h_inj_flux) {
 #ifdef AMREX_USE_GPU
