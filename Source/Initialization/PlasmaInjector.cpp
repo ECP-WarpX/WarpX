@@ -14,8 +14,8 @@
 #include "Initialization/InjectorDensity.H"
 #include "Initialization/InjectorMomentum.H"
 #include "Initialization/InjectorPosition.H"
-#include "Particles/SpeciesPhysicalProperties.H"
 #include "Utils/Parser/ParserUtils.H"
+#include "Utils/SpeciesUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
@@ -123,60 +123,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     utils::parser::queryWithParser(pp_species_name, "density_min", density_min);
     utils::parser::queryWithParser(pp_species_name, "density_max", density_max);
 
-    std::string physical_species_s;
-    const bool species_is_specified = pp_species_name.query("species_type", physical_species_s);
-    if (species_is_specified){
-        const auto physical_species_from_string = species::from_string( physical_species_s );
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(physical_species_from_string,
-            physical_species_s + " does not exist!");
-        physical_species = physical_species_from_string.value();
-        charge = species::get_charge( physical_species );
-        mass = species::get_mass( physical_species );
-    }
-
-    // Parse injection style
     std::string injection_style = "none";
-    pp_species_name.query("injection_style", injection_style);
-    std::transform(injection_style.begin(),
-                   injection_style.end(),
-                   injection_style.begin(),
-                   ::tolower);
-
-    // parse charge and mass
-    const bool charge_is_specified =
-        utils::parser::queryWithParser(pp_species_name, "charge", charge);
-    const bool mass_is_specified =
-        utils::parser::queryWithParser(pp_species_name, "mass", mass);
-
-    if ( charge_is_specified && species_is_specified ){
-        ablastr::warn_manager::WMRecordWarning("Species",
-            "Both '" + species_name +  ".charge' and " +
-                species_name + ".species_type' are specified.\n" +
-                species_name + ".charge' will take precedence.\n");
-
-    }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        charge_is_specified ||
-        species_is_specified ||
-        (injection_style == "external_file"),
-        "Need to specify at least one of species_type or charge for species '" +
-        species_name + "'."
-    );
-
-    if ( mass_is_specified && species_is_specified ){
-        ablastr::warn_manager::WMRecordWarning("Species",
-            "Both '" + species_name +  ".mass' and " +
-                species_name + ".species_type' are specified.\n" +
-                species_name + ".mass' will take precedence.\n");
-    }
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        mass_is_specified ||
-        species_is_specified ||
-        (injection_style == "external_file"),
-        "Need to specify at least one of species_type or mass for species '" +
-        species_name + "'."
-    );
+    SpeciesUtils::extractSpeciesProperties(species_name, charge, mass, physical_species, injection_style);
 
     num_particles_per_cell_each_dim.assign(3, 0);
 

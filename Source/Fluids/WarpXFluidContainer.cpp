@@ -14,6 +14,8 @@
 #include <ablastr/utils/Communication.H>
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXUtil.H"
+#include "Utils/SpeciesUtils.H"
+
 using namespace ablastr::utils::communication;
 using namespace amrex;
 
@@ -22,10 +24,11 @@ WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std:
     species_id = ispecies;
     species_name = name;
 
+    // Extract charge, mass, species type
+    std::string injection_style = "none";
+    SpeciesUtils::extractSpeciesProperties(species_name, charge, mass, physical_species, injection_style);
+
     plasma_injector = std::make_unique<PlasmaInjector>(species_id, species_name, geom);
-    physical_species = plasma_injector->getPhysicalSpecies();
-    charge = plasma_injector->getCharge();
-    mass = plasma_injector->getMass();
 
     ReadParameters();
 
