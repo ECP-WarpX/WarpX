@@ -26,7 +26,7 @@ WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std:
 
     // Extract charge, mass, species type
     std::string injection_style = "none";
-    SpeciesUtils::extractSpeciesProperties(species_name, charge, mass, physical_species, injection_style);
+    SpeciesUtils::extractSpeciesProperties(species_name, injection_style, charge, mass, physical_species);
 
     plasma_injector = std::make_unique<PlasmaInjector>(species_id, species_name, geom);
 
