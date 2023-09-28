@@ -72,6 +72,8 @@ public:
     std::vector<std::string> GetSpeciesNames() const { return species_names; }
 
     void DepositCharge (int lev, amrex::MultiFab &rho);
+    void DepositCurrent (int lev,
+        amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz);
 
 protected:
 

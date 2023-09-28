@@ -32,14 +32,11 @@ void WarpX::HybridPICEvolveFields ()
     // Perform current deposition at t_{n+1/2}.
     mypc->DepositCurrent(current_fp, dt[0], -0.5_rt * dt[0]);
 
-    // Deposit cold-relativistic fluid Charge and current at t_{n+1}
-    const int n_fluid_species = myfl->nSpecies();
-    for (int i=0; i<n_fluid_species; i++) {
-        WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-        int lev = 0;
-        fl.DepositCharge(lev, *rho_fp[lev], 1);
-        fl.DepositCurrent(lev, *current_fp[lev][0], *current_fp[lev][1]
-            , *current_fp[lev][2]);
+    // Deposit cold-relativistic fluid charge and current
+    if (do_fluid_species) {
+        int const lev = 0;
+        myfl->DepositCharge(lev, *rho_fp[lev]);
+        myfl->DepositCurrent(lev, *current_fp[lev][0], *current_fp[lev][1], *current_fp[lev][2]);
     }
 
     // Synchronize J and rho:

@@ -75,6 +75,15 @@ MultiFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho)
 }
 
 void
+MultiFluidContainer::DepositCurrent (int lev,
+    amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz)
+{
+    for (auto& fl : allcontainers) {
+        fl->DepositCurrent(lev,jx,jy,jz);
+    }
+}
+
+void
 MultiFluidContainer::Evolve (int lev,
                             const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                             const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,

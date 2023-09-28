@@ -177,14 +177,6 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
         pc.DepositCharge(rho, local, reset, apply_boundary_and_scale_volume);
     }
 
-   // Deposit cold-relativistic fluid Charge and current at t_{n+1}
-    const int n_fluid_species = myfl->nSpecies();
-    for (int i=0; i<n_fluid_species; i++) {
-        WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-        int lev = 0;
-        fl.DepositCharge(lev, *rho[lev], 1);
-    }
-
     // Get the particle beta vector
     bool const local_average = false; // Average across all MPI ranks
     std::array<ParticleReal, 3> beta_pr = pc.meanParticleVelocity(local_average);
@@ -219,13 +211,9 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
     // Deposit particle charge density (source of Poisson solver)
     mypc->DepositCharge(rho_fp, 0.0_rt);
-
-    // Deposit cold-relativistic fluid Charge and current at t_{n+1}
-    const int n_fluid_species = myfl->nSpecies();
-    for (int i=0; i<n_fluid_species; i++) {
-        WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-        int lev = 0;
-        fl.DepositCharge(lev, *rho_fp[lev], 1);
+    if (do_fluid_species) {
+        int const lev = 0;
+        myfl->DepositCharge( lev, *rho_fp[lev] );
     }
 
     SyncRho(rho_fp, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels

@@ -319,13 +319,9 @@ WarpX::WarpX ()
     m_particle_boundary_buffer = std::make_unique<ParticleBoundaryBuffer>();
 
     // Fluid Container
-    myfl = std::make_unique<MultiFluidContainer>(nlevs_max, geom[0]);
-#ifdef WARPX_DIM_RZ
-    if (myfl->nSpecies() > 0) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes <= 1,
-            "Fluid species do not support more than 1 azimuthal mode.");
+    if (do_fluid_species) {
+        myfl = std::make_unique<MultiFluidContainer>(nlevs_max, geom[0]);
     }
-#endif
 
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
@@ -1029,6 +1025,20 @@ WarpX::ReadParameters ()
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes > 0,
             "The number of azimuthal modes (n_rz_azimuthal_modes) must be at least 1");
 #endif
+
+        // Check whether fluid species will be used
+        {
+            const ParmParse pp_fluids("fluids");
+            std::vector<std::string> fluid_species_names = {};
+            pp_fluids.queryarr("species_names", fluid_species_names);
+            if ( fluid_species_names.size() > 0) do_fluid_species = 1;
+#ifdef WARPX_DIM_RZ
+            if (do_fluid_species) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( n_rz_azimuthal_modes <= 1,
+                    "Fluid species do not support more than 1 azimuthal mode.");
+            }
+#endif
+        }
 
         // Set default parameters with hybrid grid (parsed later below)
         if (grid_type == GridType::Hybrid)
@@ -2234,10 +2244,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     // Allocate extra multifabs needed for fluids
-    myfl->AllocateLevelMFs(lev, ba, dm);
-    auto & warpx = GetInstance();
-    const amrex::Real cur_time = warpx.gett_new(lev);
-    myfl->InitData(lev, geom[lev].Domain(),cur_time);
+    if (do_fluid_species) {
+        myfl->AllocateLevelMFs(lev, ba, dm);
+        auto & warpx = GetInstance();
+        const amrex::Real cur_time = warpx.gett_new(lev);
+        myfl->InitData(lev, geom[lev].Domain(),cur_time);
+    }
 
     if (fft_do_time_averaging)
     {

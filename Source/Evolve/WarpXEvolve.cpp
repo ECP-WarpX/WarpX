@@ -1033,10 +1033,12 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         // of the filter to avoid incorrect results (moved to `SyncCurrentAndRho()`).
         // Might this be related to issue #1943?
 #endif
-    myfl->Evolve(lev,
+        if (do_fluid_species) {
+            myfl->Evolve(lev,
                 *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                 *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
                 rho_fp[lev].get(),*current_x, *current_y, *current_z, cur_time, skip_deposition);
+        }
     }
 }
 

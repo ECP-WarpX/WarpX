@@ -1332,6 +1332,7 @@ private:
     std::unique_ptr<MultiDiagnostics> multi_diags;
 
     // Fluid container
+    bool do_fluid_species = 0;
     std::unique_ptr<MultiFluidContainer> myfl;
 
     //

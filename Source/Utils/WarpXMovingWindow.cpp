@@ -361,13 +361,15 @@ WarpX::MoveWindow (const int step, bool move_j)
         }
 
         // Shift values of N, NU for each fluid species
-        const int n_fluid_species = myfl->nSpecies();
-        for (int i=0; i<n_fluid_species; i++) {
-            WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-            shiftMF( *fl.N[lev], geom[lev], num_shift, dir, lev, do_update_cost );
-            shiftMF( *fl.NU[lev][0], geom[lev], num_shift, dir, lev, do_update_cost );
-            shiftMF( *fl.NU[lev][1], geom[lev], num_shift, dir, lev, do_update_cost );
-            shiftMF( *fl.NU[lev][2], geom[lev], num_shift, dir, lev, do_update_cost );
+        if (do_fluid_species) {
+            const int n_fluid_species = myfl->nSpecies();
+            for (int i=0; i<n_fluid_species; i++) {
+                WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
+                shiftMF( *fl.N[lev], geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *fl.NU[lev][0], geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *fl.NU[lev][1], geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *fl.NU[lev][2], geom[lev], num_shift, dir, lev, do_update_cost );
+            }
         }
     }
 
@@ -437,11 +439,13 @@ WarpX::MoveWindow (const int step, bool move_j)
         injection_box.setBig( dir, injection_box.smallEnd(dir) + num_shift_base - 1 );
     }
     // Loop over fluid species, and fill the values of the new cells
-    const int n_fluid_species = myfl->nSpecies();
-    const amrex::Real cur_time = t_new[0];
-    for (int i=0; i<n_fluid_species; i++) {
-        WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
-        fl.InitData( lev, injection_box, cur_time );
+    if (do_fluid_species) {
+        const int n_fluid_species = myfl->nSpecies();
+        const amrex::Real cur_time = t_new[0];
+        for (int i=0; i<n_fluid_species; i++) {
+            WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
+            fl.InitData( lev, injection_box, cur_time );
+        }
     }
 
     return num_shift_base;
