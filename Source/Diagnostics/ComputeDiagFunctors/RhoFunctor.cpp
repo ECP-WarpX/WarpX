@@ -43,8 +43,10 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     if (m_species_index == -1) {
         auto& mypc = warpx.GetPartContainer();
         rho = mypc.GetChargeDensity(m_lev, true);
-        auto& myfl = warpx.GetFluidContainer();
-        myfl.DepositCharge(m_lev,*rho);
+        if (warpx.DoFluidSpecies()) {
+            auto& myfl = warpx.GetFluidContainer();
+            myfl.DepositCharge(m_lev, *rho);
+        }
     }
     // Dump rho per species
     else {

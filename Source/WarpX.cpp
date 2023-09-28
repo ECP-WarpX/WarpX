@@ -320,7 +320,7 @@ WarpX::WarpX ()
 
     // Fluid Container
     if (do_fluid_species) {
-        myfl = std::make_unique<MultiFluidContainer>(nlevs_max, geom[0]);
+        myfl = std::make_unique<MultiFluidContainer>(nlevs_max);
     }
 
     Efield_aux.resize(nlevs_max);

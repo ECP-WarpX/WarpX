@@ -34,7 +34,7 @@ class MultiFluidContainer
 
 public:
 
-    MultiFluidContainer (int nlevs_max, const amrex::Geometry& geom);
+    MultiFluidContainer (int nlevs_max);
 
     ~MultiFluidContainer() {}
 

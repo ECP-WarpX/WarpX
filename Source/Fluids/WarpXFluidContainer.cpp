@@ -19,18 +19,18 @@
 using namespace ablastr::utils::communication;
 using namespace amrex;
 
-WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std::string &name, const amrex::Geometry& geom)
+WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std::string &name)
 {
     species_id = ispecies;
     species_name = name;
 
-    // Extract charge, mass, species type
-    std::string injection_style = "none";
-    SpeciesUtils::extractSpeciesProperties(species_name, injection_style, charge, mass, physical_species);
-
-    plasma_injector = std::make_unique<PlasmaInjector>(species_id, species_name, geom);
-
     ReadParameters();
+
+    // Initialize injection objects
+    const ParmParse pp_species_name(species_name);
+    SpeciesUtils::parseDensity(species_name, h_inj_rho, d_inj_rho);
+    SpeciesUtils::parseMomentum(species_name, "none", h_inj_mom, d_inj_mom);
+    amrex::Gpu::synchronize();
 
     // Resize the list of MultiFabs for the right number of levels
     N.resize(nlevs_max);
@@ -42,6 +42,10 @@ void WarpXFluidContainer::ReadParameters()
     static bool initialized = false;
     if (!initialized)
     {
+        // Extract charge, mass, species type
+        std::string injection_style = "none";
+        SpeciesUtils::extractSpeciesProperties(species_name, injection_style, charge, mass, physical_species);
+
         const ParmParse pp_species_name(species_name);
         pp_species_name.query("do_not_deposit", do_not_deposit);
         pp_species_name.query("do_not_gather", do_not_gather);
@@ -119,7 +123,6 @@ void WarpXFluidContainer::ReadParameters()
 
         }
 
-
         initialized = true;
     }
 }
@@ -153,10 +156,6 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
 
     // Convert initialization box to nodal box
     init_box.surroundingNodes();
-
-    // Extract objects that give the initial density and momentum
-    InjectorDensity *inj_rho = plasma_injector->getInjectorDensity();
-    InjectorMomentum *inj_mom = plasma_injector->getInjectorMomentumDevice();
 
     // Extract grid geometry properties
     WarpX &warpx = WarpX::GetInstance();
@@ -205,8 +204,8 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
                     z = gamma_boost*(z + beta_boost*clight*cur_time);
                 }
 
-                amrex::Real n = inj_rho->getDensity(x, y, z);
-                amrex::XDim3 u = inj_mom->getBulkMomentum(x, y, z);
+                amrex::Real n = d_inj_rho->getDensity(x, y, z);
+                amrex::XDim3 u = d_inj_mom->getBulkMomentum(x, y, z);
 
                 // Give u the right dimensions of m/s
                 u.x = u.x * clight;

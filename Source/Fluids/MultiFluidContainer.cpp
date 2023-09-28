@@ -13,7 +13,7 @@
 
 using namespace amrex;
 
-MultiFluidContainer::MultiFluidContainer (int nlevs_max, const amrex::Geometry& geom)
+MultiFluidContainer::MultiFluidContainer (int nlevs_max)
 {
     ReadParameters();
 
@@ -21,7 +21,7 @@ MultiFluidContainer::MultiFluidContainer (int nlevs_max, const amrex::Geometry& 
 
     allcontainers.resize(nspecies);
     for (int i = 0; i < nspecies; ++i) {
-        allcontainers[i] = std::make_unique<WarpXFluidContainer>(nlevs_max, i, species_names[i], geom);
+        allcontainers[i] = std::make_unique<WarpXFluidContainer>(nlevs_max, i, species_names[i]);
     }
 }
 

@@ -30,7 +30,7 @@ class WarpXFluidContainer
 public:
     friend MultiFluidContainer;
 
-    WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name, const amrex::Geometry& geom);
+    WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name);
     ~WarpXFluidContainer() {}
 
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);
@@ -161,8 +161,15 @@ protected:
     amrex::ParserExecutor<4> m_Eyfield_parser;
     amrex::ParserExecutor<4> m_Ezfield_parser;
 
+    std::unique_ptr<InjectorDensity,InjectorDensityDeleter> h_inj_rho;
+    InjectorDensity* d_inj_rho = nullptr;
+    std::unique_ptr<amrex::Parser> density_parser;
 
-    std::unique_ptr<PlasmaInjector> plasma_injector;
+    std::unique_ptr<InjectorMomentum,InjectorMomentumDeleter> h_inj_mom;
+    InjectorMomentum* d_inj_mom = nullptr;
+    std::unique_ptr<amrex::Parser> ux_parser;
+    std::unique_ptr<amrex::Parser> uy_parser;
+    std::unique_ptr<amrex::Parser> uz_parser;
 
 public:
 
