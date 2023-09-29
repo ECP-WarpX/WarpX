@@ -1031,7 +1031,9 @@ WarpX::ReadParameters ()
             const ParmParse pp_fluids("fluids");
             std::vector<std::string> fluid_species_names = {};
             pp_fluids.queryarr("species_names", fluid_species_names);
-            if ( !fluid_species_names.empty() ) do_fluid_species = 1;
+
+            if (!fluid_species_names.empty()) do_fluid_species = 1;
+
             if (do_fluid_species) {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level <= 1,
                     "Fluid species cannot currently be used with mesh refinement.");
