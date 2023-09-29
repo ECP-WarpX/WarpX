@@ -327,6 +327,30 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             WARPX_ABORT_WITH_MESSAGE(
                 "Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry");
         }
+        // Check for electron current diagnostic output if HybridPIC algorithm is used.
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
+        {
+            if ( m_varnames[comp] == "jer" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio, deposit_current);
+                deposit_current = false;
+                if (update_varnames) {
+                    AddRZModesToOutputNames(std::string("jer"), ncomp);
+                }
+            } else if ( m_varnames[comp] == "jet" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio, deposit_current);
+                deposit_current = false;
+                if (update_varnames) {
+                    AddRZModesToOutputNames(std::string("jet"), ncomp);
+                }
+            } else if ( m_varnames[comp] == "jez" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(2, lev, m_crse_ratio, deposit_current);
+                deposit_current = false;
+                if (update_varnames) {
+                    AddRZModesToOutputNames(std::string("jez"), ncomp);
+                }
+            }
+
+        }
     }
 
     // Generate field functors for every particle field diagnostic for every species in m_pfield_species.
@@ -708,7 +732,31 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             }
 #endif
         }
-    }
+        // Check for electron current diagnostic output if HybridPIC algorithm is used
+        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
+        {
+            if ( m_varnames[comp] == "jez" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(2, lev, m_crse_ratio, deposit_current);
+                deposit_current = false;
+            }
+#ifdef WARPX_DIM_RZ
+            if ( m_varnames[comp] == "jer" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio, deposit_current);
+                deposit_current = false;
+            } else if ( m_varnames[comp] == "jet" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio, deposit_current);
+                deposit_current = false;
+            }
+#else
+            if ( m_varnames[comp] == "jex" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio, deposit_current);
+                deposit_current = false;
+            } else if ( m_varnames[comp] == "jey" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio, deposit_current);
+                deposit_current = false;
+            }
+        }
+#endif
     // Add functors for average particle data for each species
     for (int pcomp=0; pcomp<int(m_pfield_varnames.size()); pcomp++) {
         for (int ispec=0; ispec<int(m_pfield_species.size()); ispec++) {
