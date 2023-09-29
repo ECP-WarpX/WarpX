@@ -18,7 +18,7 @@
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real F_r (amrex::Real r, amrex::Real u_r, amrex::Real u_theta, amrex::Real u_z, amrex::Real dt)
 {
-    return dt*(-u_theta*u_theta/r)/sqrt(1.0 + u_r*u_r + u_theta*u_theta + u_z*u_z) + u_r;
+    return dt*(-u_theta*u_theta/r)/std::sqrt(1.0_rt + u_r*u_r + u_theta*u_theta + u_z*u_z) + u_r;
 }
 
 // Euler push for momentum source (theta-direction)
@@ -26,14 +26,14 @@ amrex::Real F_r (amrex::Real r, amrex::Real u_r, amrex::Real u_theta, amrex::Rea
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real F_theta (amrex::Real r, amrex::Real u_r, amrex::Real u_theta, amrex::Real u_z, amrex::Real dt)
 {
-    return dt*(u_theta*u_r/r)/sqrt(1.0 + u_r*u_r + u_theta*u_theta + u_z*u_z) + u_theta;
+    return dt*(u_theta*u_r/r)/std::sqrt(1.0_rt + u_r*u_r + u_theta*u_theta + u_z*u_z) + u_theta;
 }
 // Velocity at the half step
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real V_calc (const amrex::Array4<amrex::Real>& U, int i, int j, int k, int comp, amrex::Real c)
 {
     // comp -> x, y, z -> 0, 1, 2, return Vx, Vy, or Vz:
-    amrex::Real gamma = std::sqrt(1.0 + (U(i,j,k,1)*U(i,j,k,1) + U(i,j,k,2)*U(i,j,k,2) + U(i,j,k,3)*U(i,j,k,3))/(c*c));
+    amrex::Real gamma = std::sqrt(1.0_rt + (U(i,j,k,1)*U(i,j,k,1) + U(i,j,k,2)*U(i,j,k,2) + U(i,j,k,3)*U(i,j,k,3))/(c*c));
     return U(i,j,k,comp+1)/gamma;
 }
 // mindmod
@@ -87,7 +87,7 @@ amrex::Real flux_N (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4<a
 int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
 {
     amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
-    return 0.5*(Vm*Um(i,j,k,0) + Vp*Up(i,j,k,0)) - (0.5*c)*(Up(i,j,k,0) - Um(i,j,k,0));
+    return 0.5_rt*(Vm*Um(i,j,k,0) + Vp*Up(i,j,k,0)) - (0.5_rt*c)*(Up(i,j,k,0) - Um(i,j,k,0));
 }
 // Rusanov Flux (Momentum density x)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -95,8 +95,8 @@ amrex::Real flux_NUx (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4
 int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
 {
     amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
-    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,1) + Vp*Up(i,j,k,0)*Up(i,j,k,1))
-        - (0.5*c)*(Up(i,j,k,0)*Up(i,j,k,1) -    Um(i,j,k,0)*Um(i,j,k,1));
+    return 0.5_rt*(Vm*Um(i,j,k,0)*Um(i,j,k,1) + Vp*Up(i,j,k,0)*Up(i,j,k,1))
+        - (0.5_rt*c)*(Up(i,j,k,0)*Up(i,j,k,1) -    Um(i,j,k,0)*Um(i,j,k,1));
 }
 // Rusanov Flux (Momentum density y)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -104,8 +104,8 @@ amrex::Real flux_NUy (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4
 int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
 {
     amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
-    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,2) + Vp*Up(i,j,k,0)*Up(i,j,k,2))
-        - (0.5*c)*(Up(i,j,k,0)*Up(i,j,k,2) -    Um(i,j,k,0)*Um(i,j,k,2));
+    return 0.5_rt*(Vm*Um(i,j,k,0)*Um(i,j,k,2) + Vp*Up(i,j,k,0)*Up(i,j,k,2))
+        - (0.5_rt*c)*(Up(i,j,k,0)*Up(i,j,k,2) -    Um(i,j,k,0)*Um(i,j,k,2));
 }
 // Rusanov Flux (Momentum density z)
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -113,44 +113,44 @@ amrex::Real flux_NUz (const amrex::Array4<amrex::Real>& Um,  const amrex::Array4
 int i, int j, int k, amrex::Real Vm, amrex::Real Vp)
 {
     amrex::Real c = std::max( std::abs(Vm) , std::abs(Vp) );
-    return 0.5*(Vm*Um(i,j,k,0)*Um(i,j,k,3) + Vp*Up(i,j,k,0)*Up(i,j,k,3))
-        - (0.5*c)*(Up(i,j,k,0)*Up(i,j,k,3) -    Um(i,j,k,0)*Um(i,j,k,3));
+    return 0.5_rt*(Vm*Um(i,j,k,0)*Um(i,j,k,3) + Vp*Up(i,j,k,0)*Up(i,j,k,3))
+        - (0.5_rt*c)*(Up(i,j,k,0)*Up(i,j,k,3) -    Um(i,j,k,0)*Um(i,j,k,3));
 }
 // ave_minmod high diffusivity, sigma can be between [1,2]
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real ave_adjustable_diff (amrex::Real a, amrex::Real b)
 {
-    amrex::Real sigma = 2.0*0.732050807568877;
-    if (a*b > 0.0)
-        return minmod3( (a+b)/2.0, sigma*a, sigma*b );
+    constexpr auto sigma = static_cast<amrex::Real>(2.0*0.732050807568877);
+    if (a*b > 0.0_rt)
+        return minmod3( (a+b)/2.0_rt, sigma*a, sigma*b );
     else
-        return 0.0;
+        return 0.0_rt;
 }
 // ave_minmod Low diffusivity
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real ave (amrex::Real a, amrex::Real b)
 {
-    if (a*b > 0.0)
-        return minmod3( (a+b)/2.0, 2.0*a, 2.0*b );
+    if (a*b > 0.0_rt)
+        return minmod3( (a+b)/2.0_rt, 2.0_rt*a, 2.0_rt*b );
     else
-        return 0.0;
+        return 0.0_rt;
 }
 // ave_superbee
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real ave_superbee (amrex::Real a, amrex::Real b)
 {
-    if (a*b > 0.0)
-        return minmod( maxmod(a,b), minmod(2.0*a,2.0*b));
+    if (a*b > 0.0_rt)
+        return minmod( maxmod(a,b), minmod(2.0_rt*a,2.0_rt*b));
     else
-        return 0.0;
+        return 0.0_rt;
 }
 // stage2 slope limiting
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real ave_stage2 (amrex::Real dQ, amrex::Real a, amrex::Real b, amrex::Real c)
 {
     // sigma = sqrt(3) -1
-    amrex::Real sigma = 0.732050807568877;
-    amrex::Real dq_min = 2.0*std::min( b - min3(a,b,c), max3(a,b,c) - b);
+    constexpr auto sigma = 0.732050807568877_rt;
+    amrex::Real dq_min = 2.0_rt*std::min( b - min3(a,b,c), max3(a,b,c) - b);
     return ( std::abs(dQ)/dQ ) * std::min( std::abs(dQ) , sigma*std::abs(dq_min) );
 }
 // Returns the offset indices for the "plus" grid
@@ -190,17 +190,17 @@ amrex::Real dU0x, amrex::Real dU1x, amrex::Real dU2x, amrex::Real dU3x, int comp
     plus_index_offsets(i, j, k, ip, jp, kp, comp);
 
     if ( box.contains(i,j,k) ) {
-        Um(i,j,k,0) = U_tilde0 + dU0x/2.0;
-        Um(i,j,k,1) = U_tilde1 + dU1x/2.0;
-        Um(i,j,k,2) = U_tilde2 + dU2x/2.0;
-        Um(i,j,k,3) = U_tilde3 + dU3x/2.0;
+        Um(i,j,k,0) = U_tilde0 + dU0x/2.0_rt;
+        Um(i,j,k,1) = U_tilde1 + dU1x/2.0_rt;
+        Um(i,j,k,2) = U_tilde2 + dU2x/2.0_rt;
+        Um(i,j,k,3) = U_tilde3 + dU3x/2.0_rt;
     }
 
     if ( box.contains(ip,jp,kp) ) {
-        Up(ip,jp,kp,0) = U_tilde0 - dU0x/2.0;
-        Up(ip,jp,kp,1) = U_tilde1 - dU1x/2.0;
-        Up(ip,jp,kp,2) = U_tilde2 - dU2x/2.0;
-        Up(ip,jp,kp,3) = U_tilde3 - dU3x/2.0;
+        Up(ip,jp,kp,0) = U_tilde0 - dU0x/2.0_rt;
+        Up(ip,jp,kp,1) = U_tilde1 - dU1x/2.0_rt;
+        Up(ip,jp,kp,2) = U_tilde2 - dU2x/2.0_rt;
+        Up(ip,jp,kp,3) = U_tilde3 - dU3x/2.0_rt;
     }
 }
 // Compute the zero edges
@@ -214,17 +214,17 @@ const amrex::Array4<amrex::Real>& Up, int i, int j, int k, amrex::Box box, int c
     plus_index_offsets(i, j, k, ip, jp, kp, comp);
 
     if ( box.contains(i,j,k) ) {
-        Um(i,j,k,0) = 0.0;
-        Um(i,j,k,1) = 0.0;
-        Um(i,j,k,2) = 0.0;
-        Um(i,j,k,3) = 0.0;
+        Um(i,j,k,0) = 0.0_rt;
+        Um(i,j,k,1) = 0.0_rt;
+        Um(i,j,k,2) = 0.0_rt;
+        Um(i,j,k,3) = 0.0_rt;
     }
 
     if ( box.contains(ip,jp,kp) ) {
-        Up(ip,jp,kp,0) = 0.0;
-        Up(ip,jp,kp,1) = 0.0;
-        Up(ip,jp,kp,2) = 0.0;
-        Up(ip,jp,kp,3) = 0.0;
+        Up(ip,jp,kp,0) = 0.0_rt;
+        Up(ip,jp,kp,1) = 0.0_rt;
+        Up(ip,jp,kp,2) = 0.0_rt;
+        Up(ip,jp,kp,3) = 0.0_rt;
     }
 }
 // Positivity Limiter
@@ -244,7 +244,7 @@ int comp)
     // set the slope to zero (hence why we have the three cases, the first is when
     // both points exist, and the second two are are edge cases)
     if (( box.contains(i,j,k) ) && ( box.contains(ip,jp,kp) )) {
-        if ((U_edge_minus(i,j,k,0) < 0.0) || (U_edge_plus(ip,jp,kp,0) < 0.0)) {
+        if ((U_edge_minus(i,j,k,0) < 0.0_rt) || (U_edge_plus(ip,jp,kp,0) < 0.0_rt)) {
             U_edge_minus(i,j,k,0) = N_arr(i,j,k);
             U_edge_minus(i,j,k,1) = Ux;
             U_edge_minus(i,j,k,2) = Uy;
@@ -255,14 +255,14 @@ int comp)
             U_edge_plus(ip,jp,kp,3) = Uz;
         }
     } else if (( box.contains(i,j,k) ) && ( box.contains(ip,jp,kp) != 1)) {
-        if (U_edge_minus(i,j,k,0) < 0.0) {
+        if (U_edge_minus(i,j,k,0) < 0.0_rt) {
             U_edge_minus(i,j,k,0) = N_arr(i,j,k);
             U_edge_minus(i,j,k,1) = Ux;
             U_edge_minus(i,j,k,2) = Uy;
             U_edge_minus(i,j,k,3) = Uz;
         }
     } else if (( box.contains(i,j,k) != 1 ) && ( box.contains(ip,jp,kp) )) {
-        if (U_edge_plus(ip,jp,kp,0) < 0.0){
+        if (U_edge_plus(ip,jp,kp,0) < 0.0_rt){
             U_edge_plus(ip,jp,kp,0) = N_arr(i,j,k);
             U_edge_plus(ip,jp,kp,1) = Ux;
             U_edge_plus(ip,jp,kp,2) = Uy;
@@ -280,7 +280,7 @@ amrex::Real DownDx_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
     return N(i,j,k) -  N(i-1,j,k);
 #else
     amrex::ignore_unused(N, i, j, k);
-    return 0.0;
+    return 0.0_rt;
 #endif
 }
 // Compute the difference in N (up-x)
@@ -292,7 +292,7 @@ amrex::Real UpDx_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
     return N(i+1,j,k) -  N(i,j,k);
 #else
     amrex::ignore_unused(N, i, j, k);
-    return 0.0;
+    return 0.0_rt;
 #endif
 }
 // Compute the difference in N (down-y)
@@ -304,7 +304,7 @@ amrex::Real DownDy_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
     return N(i,j,k) -  N(i,j-1,k);
 #else
     amrex::ignore_unused(N, i, j, k);
-    return 0.0;
+    return 0.0_rt;
 #endif
 }
 // Compute the difference in N (up-y)
@@ -316,7 +316,7 @@ amrex::Real UpDy_N (const amrex::Array4<amrex::Real>& N, int i, int j, int k)
     return N(i,j+1,k) -  N(i,j,k);
 #else
     amrex::ignore_unused(N, i, j, k);
-    return 0.0;
+    return 0.0_rt;
 #endif
 }
 // Compute the difference in N (down-z)
@@ -360,7 +360,7 @@ const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
     return U - U_m;
 #else
     amrex::ignore_unused(N, NU, U, i, j, k);
-    return 0.0;
+    return 0.0_rt;
 #endif
 }
 // Compute the difference in U (up-x)
@@ -376,7 +376,7 @@ const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
     return U_p - U;
 #else
     amrex::ignore_unused(N, NU, U, i, j, k);
-    return 0.0;
+    return 0.0_rt;
 #endif
 }
 
@@ -393,7 +393,7 @@ const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
     return U - U_m;
 #else
     amrex::ignore_unused(N, NU, U, i, j, k);
-    return 0.0;
+    return 0.0_rt;
 #endif
 }
 // Compute the difference in U (up-y)
@@ -409,7 +409,7 @@ const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
     return U_p - U;
 #else
     amrex::ignore_unused(N, NU, U, i, j, k);
-    return 0.0;
+    return 0.0_rt;
 #endif
 }
 
@@ -419,7 +419,7 @@ amrex::Real DownDz_U (const amrex::Array4<amrex::Real>& N,
 const amrex::Array4<amrex::Real>& NU, amrex::Real& U, int i, int j, int k)
 {
     // Write the correct differences
-    amrex::Real U_m = 0;
+    amrex::Real U_m = 0_rt;
 
     // U is zero if N is zero, Check positivity before dividing
 #if defined(WARPX_DIM_3D)
