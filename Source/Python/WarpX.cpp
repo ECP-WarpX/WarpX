@@ -26,6 +26,8 @@
 #include <FieldSolver/WarpX_FDTD.H>
 #include <Filter/NCIGodfreyFilter.H>
 #include <Particles/MultiParticleContainer.H>
+#include <Fluids/MultiFluidContainer.H>
+#include <Fluids/WarpXFluidContainer.H>
 #include <Particles/ParticleBoundaryBuffer.H>
 #include <AcceleratorLattice/AcceleratorLattice.H>
 #include <Utils/TextMsg.H>
