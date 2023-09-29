@@ -96,7 +96,7 @@ SpectralSolver::SpectralSolver(
         {
             algorithm = std::make_unique<PsatdAlgorithmJArbitraryInTime>(
               k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
-              dt, fft_do_time_averaging, dive_cleaning, divb_cleaning, J_in_time, rho_in_time);
+              dt, update_with_rho, fft_do_time_averaging, dive_cleaning, divb_cleaning, J_in_time, rho_in_time);
         }
     }
 

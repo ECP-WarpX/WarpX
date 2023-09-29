@@ -1528,13 +1528,15 @@ WarpX::ReadParameters ()
                 "Multi-J algorithm not implemented with Galilean PSATD"
             );
         }
+        if (update_with_rho==0)
+        {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                J_in_time == JInTime::Constant && rho_in_time == RhoInTime::Linear,
+                "psatd.update_with_rho = 0 only implemented when psatd.J_in_time=constant and psatd.rho_in_time=linear");
+        }
 
         if (J_in_time == JInTime::Linear)
         {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                update_with_rho,
-                "psatd.update_with_rho must be set to 1 when psatd.J_in_time=linear");
-
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 v_galilean_is_zero,
                 "psatd.J_in_time=linear not implemented with Galilean PSATD");

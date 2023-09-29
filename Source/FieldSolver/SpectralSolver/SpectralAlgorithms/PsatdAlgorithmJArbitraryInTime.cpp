@@ -38,6 +38,7 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
     int norder_z,
     short grid_type,
     amrex::Real dt,
+    bool update_with_rho,
     bool time_averaging,
     bool dive_cleaning,
     bool divb_cleaning,
@@ -46,6 +47,7 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
     // Initializer list
     : SpectralBaseAlgorithm(spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type),
     m_dt(dt),
+    m_update_with_rho(update_with_rho),
     m_time_averaging(time_averaging),
     m_dive_cleaning(dive_cleaning),
     m_divb_cleaning(divb_cleaning),
@@ -65,6 +67,9 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 
+    const bool J_constant = (m_J_in_time == JInTime::Constant);
+    const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);
+
     // Allocate these coefficients only with time averaging
     if (time_averaging)
     {
@@ -73,6 +78,10 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
         X7_coef = SpectralRealCoefficients(ba, dm, 1, 0);
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !time_averaging || update_with_rho,
+        "PSATD: psatd.time_averaging = 1 implemented only with psatd.update_with_rho = 1"
+    );
 }
 
 void
@@ -82,10 +91,13 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
+    const bool J_constant = (m_J_in_time == JInTime::Constant);
     const bool J_linear = (m_J_in_time == JInTime::Linear);
     const bool J_quadratic = (m_J_in_time == JInTime::Quadratic);
+    const bool rho_constant = (m_rho_in_time == RhoInTime::Constant);
     const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);
     const bool rho_quadratic = (m_rho_in_time == RhoInTime::Quadratic);
+    const amrex::Real dt = m_dt;
 
     const SpectralFieldIndex& Idx = m_spectral_index;
 
@@ -134,38 +146,36 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex By_old = fields(i,j,k,Idx.By);
             const Complex Bz_old = fields(i,j,k,Idx.Bz);
 
-            // Shortcuts for the values of J and rho
-            const Complex Jx_old = fields(i,j,k,Idx.Jx_old);
-            const Complex Jy_old = fields(i,j,k,Idx.Jy_old);
-            const Complex Jz_old = fields(i,j,k,Idx.Jz_old);
+            // Shortcuts for the values of rho
+            Complex rho_old, rho_mid, rho_new;
+            if (rho_constant || rho_quadratic) rho_mid = fields(i,j,k,Idx.rho_mid);
+            if (rho_linear || rho_quadratic)
+                {
+                rho_old = fields(i,j,k,Idx.rho_old);
+                rho_new = fields(i,j,k,Idx.rho_new);
+                }
 
-            const Complex Jx_new = fields(i,j,k,Idx.Jx_new);
-            const Complex Jy_new = fields(i,j,k,Idx.Jy_new);
-            const Complex Jz_new = fields(i,j,k,Idx.Jz_new);
+            // Shortcuts for the values of J
+            Complex Jx_old, Jx_mid, Jx_new;
+            Complex Jy_old, Jy_mid, Jy_new;
+            Complex Jz_old, Jz_mid, Jz_new;
 
-            const Complex Jx_mid = fields(i,j,k,Idx.Jx_mid);
-            const Complex Jy_mid = fields(i,j,k,Idx.Jy_mid);
-            const Complex Jz_mid = fields(i,j,k,Idx.Jz_mid);
+            if (J_constant || J_quadratic)
+                {
+                Jx_mid = fields(i,j,k,Idx.Jx_mid);
+                Jy_mid = fields(i,j,k,Idx.Jy_mid);
+                Jz_mid = fields(i,j,k,Idx.Jz_mid);
+                }
+            if (J_linear || J_quadratic)
+                {
+                Jx_old = fields(i,j,k,Idx.Jx_old);
+                Jy_old = fields(i,j,k,Idx.Jy_old);
+                Jz_old = fields(i,j,k,Idx.Jz_old);
 
-            const Complex rho_old = fields(i,j,k,Idx.rho_old);
-            const Complex rho_new = fields(i,j,k,Idx.rho_new);
-            const Complex rho_mid = fields(i,j,k,Idx.rho_mid);
-
-            const Complex a_jx = (J_quadratic) ? (Jx_new - 2._rt * Jx_mid + Jx_old) : 0._rt;
-            const Complex a_jy = (J_quadratic) ? (Jy_new - 2._rt * Jy_mid + Jy_old) : 0._rt;
-            const Complex a_jz = (J_quadratic) ? (Jz_new - 2._rt * Jz_mid + Jz_old) : 0._rt;
-
-            const Complex b_jx = (J_linear || J_quadratic) ? (Jx_new - Jx_old) : 0._rt;
-            const Complex b_jy = (J_linear || J_quadratic) ? (Jy_new - Jy_old) : 0._rt;
-            const Complex b_jz = (J_linear || J_quadratic) ? (Jz_new - Jz_old) : 0._rt;
-
-            const Complex c_jx = (J_linear) ? (Jx_new + Jx_old)/2._rt : Jx_mid;
-            const Complex c_jy = (J_linear) ? (Jy_new + Jy_old)/2._rt : Jy_mid;
-            const Complex c_jz = (J_linear) ? (Jz_new + Jz_old)/2._rt : Jz_mid;
-
-            const Complex a_rho = (rho_quadratic) ? (rho_new - 2._rt * rho_mid + rho_old) : 0._rt;
-            const Complex b_rho = (rho_linear || rho_quadratic) ? (rho_new - rho_old) : 0._rt;
-            const Complex c_rho = (rho_linear) ? (rho_new + rho_old)/2._rt : rho_mid;
+                Jx_new = fields(i,j,k,Idx.Jx_new);
+                Jy_new = fields(i,j,k,Idx.Jy_new);
+                Jz_new = fields(i,j,k,Idx.Jz_new);
+                }
 
             Complex F_old, G_old;
             if (dive_cleaning) F_old = fields(i,j,k,Idx.F);
@@ -193,6 +203,32 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             const amrex::Real a0 = a0_arr(i,j,k);
             const amrex::Real b0 = b0_arr(i,j,k);
             const amrex::Real g0 = g0_arr(i,j,k);
+
+            const Complex a_jx = (J_quadratic) ? (Jx_new - 2._rt * Jx_mid + Jx_old) : 0._rt;
+            const Complex a_jy = (J_quadratic) ? (Jy_new - 2._rt * Jy_mid + Jy_old) : 0._rt;
+            const Complex a_jz = (J_quadratic) ? (Jz_new - 2._rt * Jz_mid + Jz_old) : 0._rt;
+
+            const Complex b_jx = (J_linear || J_quadratic) ? (Jx_new - Jx_old) : 0._rt;
+            const Complex b_jy = (J_linear || J_quadratic) ? (Jy_new - Jy_old) : 0._rt;
+            const Complex b_jz = (J_linear || J_quadratic) ? (Jz_new - Jz_old) : 0._rt;
+
+            const Complex c_jx = (J_linear) ? (Jx_new + Jx_old)/2._rt : Jx_mid;
+            const Complex c_jy = (J_linear) ? (Jy_new + Jy_old)/2._rt : Jy_mid;
+            const Complex c_jz = (J_linear) ? (Jz_new + Jz_old)/2._rt : Jz_mid;
+
+            if (J_constant && rho_linear && !update_with_rho)
+            {
+                // J is constant in time, so J_old = J_new = J_mid
+                const Complex k_dot_E = kx*Ex_old + ky*Ey_old + kz*Ez_old;
+                const Complex k_dot_J = kx*Jx_old + ky*Jy_old + kz*Jz_old;
+
+                rho_old = I*ep0*k_dot_E;
+                rho_new = rho_old - I*k_dot_J*dt;
+            }
+
+            const Complex a_rho = (rho_quadratic) ? (rho_new - 2._rt * rho_mid + rho_old) : 0._rt;
+            const Complex b_rho = (rho_linear || rho_quadratic) ? (rho_new - rho_old) : 0._rt;
+            const Complex c_rho = (rho_linear) ? (rho_new + rho_old)/2._rt : rho_mid;
 
             const Complex sum_rho = a0 * a_rho - X2 * b_rho - X1 * c_rho;
 

@@ -42,6 +42,7 @@ class PsatdAlgorithmJArbitraryInTime : public SpectralBaseAlgorithm
          * \param[in] norder_z order of the spectral solver along z
          * \param[in] grid_type type of grid (collocated or not)
          * \param[in] dt time step of the simulation
+         * \param[in] update_with_rho whether the update equation for E uses rho or not
          * \param[in] time_averaging whether to use time averaging for large time steps
          * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
          * \param[in] divb_cleaning Update G as part of the field update, so that errors in divB=0 propagate away at the speed of light
@@ -55,6 +56,7 @@ class PsatdAlgorithmJArbitraryInTime : public SpectralBaseAlgorithm
             int norder_z,
             short grid_type,
             amrex::Real dt,
+            bool update_with_rho,
             bool time_averaging,
             bool dive_cleaning,
             bool divb_cleaning,
@@ -124,6 +126,7 @@ class PsatdAlgorithmJArbitraryInTime : public SpectralBaseAlgorithm
 
         // Other member variables
         amrex::Real m_dt;
+        bool m_update_with_rho;
         bool m_time_averaging;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
