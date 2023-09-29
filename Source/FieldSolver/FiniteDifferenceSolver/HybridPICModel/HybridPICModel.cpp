@@ -277,6 +277,11 @@ void HybridPICModel::GetCurrentExternal (
     const amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
     const amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
 
+    // avoid implicit lambda capture
+    auto Jx_external = m_J_external[0];
+    auto Jy_external = m_J_external[1];
+    auto Jz_external = m_J_external[2];
+
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
@@ -326,7 +331,7 @@ void HybridPICModel::GetCurrentExternal (
                 const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the x-component of the field.
-                mfxfab(i,j,k) = m_J_external[0](x,y,z,t);
+                mfxfab(i,j,k) = Jx_external(x,y,z,t);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
@@ -353,7 +358,7 @@ void HybridPICModel::GetCurrentExternal (
                 const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the y-component of the field.
-                mfyfab(i,j,k)  = m_J_external[1](x,y,z,t);
+                mfyfab(i,j,k)  = Jy_external(x,y,z,t);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // skip if node is covered by an embedded boundary
@@ -380,7 +385,7 @@ void HybridPICModel::GetCurrentExternal (
                 const amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the z-component of the field.
-                mfzfab(i,j,k) = m_J_external[2](x,y,z,t);
+                mfzfab(i,j,k) = Jz_external(x,y,z,t);
             }
         );
     }
