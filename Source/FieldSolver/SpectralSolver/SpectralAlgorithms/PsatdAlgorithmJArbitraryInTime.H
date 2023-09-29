@@ -123,6 +123,7 @@ class PsatdAlgorithmJArbitraryInTime : public SpectralBaseAlgorithm
         SpectralRealCoefficients a0_coef, b0_coef, g0_coef;
 
         // Other member variables
+        amrex::Real m_dt;
         bool m_time_averaging;
         bool m_dive_cleaning;
         bool m_divb_cleaning;
