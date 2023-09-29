@@ -67,9 +67,6 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 
-    const bool J_constant = (m_J_in_time == JInTime::Constant);
-    const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);
-
     // Allocate these coefficients only with time averaging
     if (time_averaging)
     {
@@ -80,24 +77,26 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         !time_averaging || update_with_rho,
-        "PSATD: psatd.time_averaging = 1 implemented only with psatd.update_with_rho = 1"
+        "psatd.time_averaging=1 implemented only with psatd.update_with_rho=1"
     );
 }
 
 void
 PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
 {
+    const amrex::Real dt = m_dt;
+    const bool update_with_rho = m_update_with_rho;
     const bool time_averaging = m_time_averaging;
     const bool dive_cleaning = m_dive_cleaning;
     const bool divb_cleaning = m_divb_cleaning;
 
-    const bool J_constant = (m_J_in_time == JInTime::Constant);
-    const bool J_linear = (m_J_in_time == JInTime::Linear);
+    const bool J_constant  = (m_J_in_time == JInTime::Constant);
+    const bool J_linear    = (m_J_in_time == JInTime::Linear);
     const bool J_quadratic = (m_J_in_time == JInTime::Quadratic);
-    const bool rho_constant = (m_rho_in_time == RhoInTime::Constant);
-    const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);
+
+    const bool rho_constant  = (m_rho_in_time == RhoInTime::Constant);
+    const bool rho_linear    = (m_rho_in_time == RhoInTime::Linear);
     const bool rho_quadratic = (m_rho_in_time == RhoInTime::Quadratic);
-    const amrex::Real dt = m_dt;
 
     const SpectralFieldIndex& Idx = m_spectral_index;
 
