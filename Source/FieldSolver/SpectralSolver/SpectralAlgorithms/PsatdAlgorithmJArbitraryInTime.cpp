@@ -149,10 +149,10 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             Complex rho_old, rho_mid, rho_new;
             if (rho_constant || rho_quadratic) rho_mid = fields(i,j,k,Idx.rho_mid);
             if (rho_linear || rho_quadratic)
-                {
+            {
                 rho_old = fields(i,j,k,Idx.rho_old);
                 rho_new = fields(i,j,k,Idx.rho_new);
-                }
+            }
 
             // Shortcuts for the values of J
             Complex Jx_old, Jx_mid, Jx_new;
@@ -160,13 +160,13 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             Complex Jz_old, Jz_mid, Jz_new;
 
             if (J_constant || J_quadratic)
-                {
+            {
                 Jx_mid = fields(i,j,k,Idx.Jx_mid);
                 Jy_mid = fields(i,j,k,Idx.Jy_mid);
                 Jz_mid = fields(i,j,k,Idx.Jz_mid);
-                }
+            }
             if (J_linear || J_quadratic)
-                {
+            {
                 Jx_old = fields(i,j,k,Idx.Jx_old);
                 Jy_old = fields(i,j,k,Idx.Jy_old);
                 Jz_old = fields(i,j,k,Idx.Jz_old);
@@ -174,7 +174,7 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
                 Jx_new = fields(i,j,k,Idx.Jx_new);
                 Jy_new = fields(i,j,k,Idx.Jy_new);
                 Jz_new = fields(i,j,k,Idx.Jz_new);
-                }
+            }
 
             Complex F_old, G_old;
             if (dive_cleaning) F_old = fields(i,j,k,Idx.F);
@@ -217,12 +217,11 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
 
             if (J_constant && rho_linear && !update_with_rho)
             {
-                // J is constant in time, so J_old = J_new = J_mid
-                const Complex k_dot_E = kx*Ex_old + ky*Ey_old + kz*Ez_old;
-                const Complex k_dot_J = kx*Jx_old + ky*Jy_old + kz*Jz_old;
+                const Complex k_dot_E_old = kx*Ex_old + ky*Ey_old + kz*Ez_old;
+                const Complex k_dot_J_mid = kx*Jx_mid + ky*Jy_mid + kz*Jz_mid;
 
-                rho_old = I*ep0*k_dot_E;
-                rho_new = rho_old - I*k_dot_J*dt;
+                rho_old = I*ep0*k_dot_E_old;
+                rho_new = rho_old - I*k_dot_J_mid*dt;
             }
 
             const Complex a_rho = (rho_quadratic) ? (rho_new - 2._rt * rho_mid + rho_old) : 0._rt;
