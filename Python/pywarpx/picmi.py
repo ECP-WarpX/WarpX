@@ -1894,7 +1894,10 @@ class Simulation(picmistandard.PICMI_Simulation):
             applied_field.initialize_inputs()
 
         for diagnostic in self.diagnostics:
-            diagnostic.initialize_inputs()
+            if type(diagnostic) == FieldDiagnostic:
+                diagnostic.initialize_inputs(self.solver)
+            else:
+                diagnostic.initialize_inputs()
 
         if self.amr_restart:
             pywarpx.amr.restart = self.amr_restart
@@ -2056,7 +2059,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', [])
         self.particle_fields_species = kw.pop('warpx_particle_fields_species', None)
 
-    def initialize_inputs(self):
+    def initialize_inputs(self, solver=None):
 
         self.add_diagnostic()
 
@@ -2084,6 +2087,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             B_fields_list = ['Bx', 'By', 'Bz']
             J_fields_list = ['Jx', 'Jy', 'Jz']
             A_fields_list = ['Ax', 'Ay', 'Az']
+        # Je fields list if Hybrid solver is used.
+        if type(solver) == HybridPICSolver:
+            Je_fields_list = ['Jer', 'Jet', 'Jez']
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'E':
@@ -2094,6 +2100,9 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                         fields_to_plot.add(field_name)
                 elif dataname == 'J':
                     for field_name in J_fields_list:
+                        fields_to_plot.add(field_name.lower())
+                elif dataname == 'Je':
+                    for field_name in Je_fields_list:
                         fields_to_plot.add(field_name.lower())
                 elif dataname == 'A':
                     for field_name in A_fields_list:
@@ -2107,6 +2116,8 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                 elif dataname in ['rho', 'phi', 'F', 'G', 'divE', 'divB', 'proc_number', 'part_per_cell']:
                     fields_to_plot.add(dataname)
                 elif dataname in J_fields_list:
+                    fields_to_plot.add(dataname.lower())
+                elif dataname in Je_fields_list:
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic
