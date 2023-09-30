@@ -4,6 +4,7 @@
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
 #include "ComputeDiagFunctors/JFunctor.H"
+#include "ComputeDiagFunctors/JeFunctor.H"
 #include "ComputeDiagFunctors/PartPerCellFunctor.H"
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/ParticleReductionFunctor.H"
@@ -755,8 +756,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio, deposit_current);
                 deposit_current = false;
             }
-        }
 #endif
+        }
+    }
     // Add functors for average particle data for each species
     for (int pcomp=0; pcomp<int(m_pfield_varnames.size()); pcomp++) {
         for (int ispec=0; ispec<int(m_pfield_species.size()); ispec++) {

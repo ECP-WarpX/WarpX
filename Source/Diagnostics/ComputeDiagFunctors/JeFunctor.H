@@ -3,7 +3,7 @@
 
 #include "ComputeDiagFunctor.H"
 
-#include <AMReX_Base_Fwd.H>
+#include <AMReX_BaseFwd.H>
 
 /**
  * \brief Functor to cell-center MF for electron current density from Kinetic-Fluid

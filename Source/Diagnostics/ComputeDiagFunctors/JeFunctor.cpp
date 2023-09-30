@@ -6,7 +6,7 @@
 #include "JeFunctor.H"
 
 #include "WarpX.H"
-#include "HybridPICModel.H"
+#include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Particles/MultiParticleContainer.H"
 
 #include <AMReX.H>
