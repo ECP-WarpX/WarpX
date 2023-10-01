@@ -22,7 +22,9 @@ constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(verbose=0)
+simulation = picmi.Simulation(
+    warpx_serialize_initial_conditions=True,
+    verbose=0)
 # make a shorthand for simulation.extension since we use it a lot
 sim_ext = simulation.extension
 
@@ -250,27 +252,28 @@ class ForceFreeSheetReconnection(object):
 
         if self.test:
             particle_diag = picmi.ParticleDiagnostic(
-                name='field_diag',
+                name='diag1',
                 period=self.total_steps,
                 write_dir='.',
+                species=[self.ions],
+                data_list=['ux', 'uy', 'uz', 'x', 'y', 'weighting'],
                 warpx_file_prefix='Python_ohms_law_solver_magnetic_reconnection_2d_plt',
                 # warpx_format='openpmd',
                 # warpx_openpmd_backend='h5',
-                warpx_write_species=True
             )
             simulation.add_diagnostic(particle_diag)
             field_diag = picmi.FieldDiagnostic(
-                name='field_diag',
+                name='diag1',
                 grid=self.grid,
                 period=self.total_steps,
-                data_list=['B', 'E', 'j'],
+                data_list=['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez'],
                 write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_magnetic_reconnection_2d_plt',
                 # warpx_format='openpmd',
                 # warpx_openpmd_backend='h5',
-                warpx_write_species=True
             )
             simulation.add_diagnostic(field_diag)
+
 
         # reduced diagnostics for reconnection rate calculation
         # create a 2 l_i box around the X-point on which to measure

@@ -21,7 +21,10 @@ constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(verbose=0)
+simulation = picmi.Simulation(
+    warpx_serialize_initial_conditions=True,
+    verbose=0
+)
 # make a shorthand for simulation.extension since we use it a lot
 sim_ext = simulation.extension
 

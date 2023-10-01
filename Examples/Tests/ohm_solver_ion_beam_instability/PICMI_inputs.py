@@ -21,7 +21,9 @@ constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(verbose=0)
+simulation = picmi.Simulation(
+    warpx_serialize_initial_conditions=True,
+    verbose=0)
 # make a shorthand for simulation.extension since we use it a lot
 sim_ext = simulation.extension
 
@@ -269,7 +271,7 @@ class HybridPICBeamInstability(object):
                 name='diag1',
                 grid=self.grid,
                 period=1250,
-                data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez'],
+                data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
                 write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
             )

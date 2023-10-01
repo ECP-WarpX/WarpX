@@ -20,7 +20,9 @@ constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(verbose=0)
+simulation = picmi.Simulation(
+    warpx_serialize_initial_conditions=True,
+    verbose=0)
 # make a shorthand for simulation.extension since we use it a lot
 sim_ext = simulation.extension
 
@@ -217,17 +219,20 @@ class IonLandauDamping(object):
 
         if self.test:
             particle_diag = picmi.ParticleDiagnostic(
-                name='field_diag',
+                name='diag1',
                 period=100,
                 write_dir='.',
+                species=[self.ions],
+                data_list = ['ux', 'uy', 'uz', 'x', 'y', 'weighting'],
                 warpx_file_prefix=f'Python_ohms_law_solver_landau_damping_{self.dim}d_plt',
             )
             simulation.add_diagnostic(particle_diag)
             field_diag = picmi.FieldDiagnostic(
-                name='field_diag',
+                name='diag1',
                 grid=self.grid,
                 period=100,
                 write_dir='.',
+                data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
                 warpx_file_prefix=f'Python_ohms_law_solver_landau_damping_{self.dim}d_plt',
             )
             simulation.add_diagnostic(field_diag)

@@ -78,8 +78,7 @@ particle_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
     period = 10,
     write_dir = '.',
-    warpx_file_prefix = 'Python_particle_reflection_plt',
-    warpx_write_species=False
+    warpx_file_prefix = 'Python_particle_reflection_plt'
 )
 field_diag = picmi.FieldDiagnostic(
     grid=grid,
@@ -87,8 +86,7 @@ field_diag = picmi.FieldDiagnostic(
     data_list=['E'],
     period = 10,
     write_dir = '.',
-    warpx_file_prefix = 'Python_particle_reflection_plt',
-    warpx_write_species=False
+    warpx_file_prefix = 'Python_particle_reflection_plt'
 )
 
 ##########################
