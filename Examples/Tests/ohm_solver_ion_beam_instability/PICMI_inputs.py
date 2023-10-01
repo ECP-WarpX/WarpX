@@ -269,7 +269,7 @@ class HybridPICBeamInstability(object):
                 name='diag1',
                 grid=self.grid,
                 period=1250,
-                data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'jx', 'jy', 'jz'],
+                data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez'],
                 write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
             )
