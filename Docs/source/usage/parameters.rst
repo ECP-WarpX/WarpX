@@ -1474,7 +1474,7 @@ Grid initialization
     than periodic.
 
 * ``warpx.maxlevel_extEMfield_init`` (default is maximum number of levels in the simulation)
-    With this parameter, the externally applied electric and magnetic fields with paramters
+    With this parameter, the externally applied electric and magnetic fields with parameters
     ``warpx.E_ext_grid_init_style="constant"``,
     ``warpx.B_ext_grid_init_style="constant"``,
     ``warpx.E_ext_grid_init_style="parse_E_ext_grid_function"`` and
