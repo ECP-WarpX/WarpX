@@ -1339,7 +1339,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                       int output_levels,
                       const int iteration,
                       const double time,
-		      const amrex::Vector<amrex::Geometry>& full_BTD_snapshot, 
+              const amrex::Vector<amrex::Geometry>& full_BTD_snapshot,
                       bool isBTD ) const
 {
     //This is AMReX's tiny profiler. Possibly will apply it later

@@ -93,9 +93,9 @@ void BTDiagnostics::DerivedInitData ()
     m_field_buffer_multifab_defined.resize(m_num_buffers);
     for (int i = 0; i < m_num_buffers; ++i) {
         m_geom_snapshot[i].resize(nmax_lev);
-	m_buffer_box[i].resize(nmax_lev);
+    m_buffer_box[i].resize(nmax_lev);
         m_snapshot_box[i].resize(nmax_lev);
-    	m_snapshot_full[i] = 0;
+        m_snapshot_full[i] = 0;
         m_lastValidZSlice[i] = 0;
         m_buffer_flush_counter[i] = 0;
         m_first_flush_after_restart[i] = 1;
@@ -300,13 +300,13 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 
         // If buffer for this lab snapshot is full then dump it and continue to collect
         // slices afterwards
-	auto is_buffer_full = false;
-	//const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
+    auto is_buffer_full = false;
+    //const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
         for (int lev = 0 ; lev < nmax_lev; ++lev) {
             is_buffer_full = buffer_full(i_buffer, lev);
-	}
+    }
 
-	// or
+    // or
         // If last z-slice in the lab-frame snapshot is filled, call dump to
         // write the buffer and close the file.
         const auto last_z_slice_filled = (m_lastValidZSlice[i_buffer] == 1);
@@ -463,7 +463,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
 #else
     m_snapshot_ncells_lab[i_buffer] = amrex::IntVect(Nz_lab);
 #endif
- 
+
     // Box covering the extent of the user-defined diag in the back-transformed frame
     // for the ith snapshot
     // estimating the maximum number of buffer multifabs needed to obtain the
@@ -1056,7 +1056,7 @@ BTDiagnostics::Flush (int i_buffer)
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], buffer_ba);
             }
-       	}
+        }
     }
     RedistributeParticleBuffer(i_buffer);
 
@@ -1075,7 +1075,7 @@ BTDiagnostics::Flush (int i_buffer)
                        "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
                }
            }
-	}
+    }
     }
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
@@ -1084,7 +1084,7 @@ BTDiagnostics::Flush (int i_buffer)
         use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter[i_buffer],
         m_max_buffer_multifabs[i_buffer], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
-    
+
     // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
         if (m_particles_buffer.at(i_buffer).size() > 0 ) {
@@ -1099,7 +1099,7 @@ BTDiagnostics::Flush (int i_buffer)
                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
                        "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
                }
-	   }
+       }
         }
     }
 
