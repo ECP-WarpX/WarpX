@@ -86,6 +86,8 @@ public:
         amrex::ParticleReal* /*p_pair_reaction_weight*/,
         amrex::RandomEngine const& engine) const
         {
+            using namespace amrex::literals;
+
             ElasticCollisionPerez(
                     I1s, I1e, I2s, I2e, I1, I2,
                     soa_1, soa_2,

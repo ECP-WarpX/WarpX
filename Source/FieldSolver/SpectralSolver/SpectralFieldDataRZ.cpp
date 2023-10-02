@@ -14,6 +14,7 @@
 
 #include <AMReX_Config.H>
 
+using namespace amrex::literals;
 
 /* \brief Initialize fields in spectral space, and FFT plans
  *
@@ -202,7 +203,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
 
 SpectralFieldDataRZ::~SpectralFieldDataRZ()
 {
-    if (fields.size() > 0){
+    if (!fields.empty()){
         for (amrex::MFIter mfi(fields); mfi.isValid(); ++mfi){
 #if defined(AMREX_USE_CUDA)
             // Destroy cuFFT plans.

@@ -13,6 +13,8 @@
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Particles/MultiParticleContainer.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -357,6 +359,18 @@ WarpX::MoveWindow (const int step, bool move_j)
                 }
             }
         }
+
+        // Shift values of N, NU for each fluid species
+        if (do_fluid_species) {
+            const int n_fluid_species = myfl->nSpecies();
+            for (int i=0; i<n_fluid_species; i++) {
+                WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
+                shiftMF( *fl.N[lev], geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *fl.NU[lev][0], geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *fl.NU[lev][1], geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *fl.NU[lev][2], geom[lev], num_shift, dir, lev, do_update_cost );
+            }
+        }
     }
 
     // Loop over species (particles and lasers)
@@ -407,6 +421,30 @@ WarpX::MoveWindow (const int step, bool move_j)
                 pc.ContinuousInjection(particleBox);
                 pc.m_current_injection_position = new_injection_position;
             }
+        }
+    }
+
+    // Continuously inject fluid species in new cells (by default only on level 0)
+    const int lev = 0;
+    // Find box in which to initialize new fluid cells
+    amrex::Box injection_box = geom[lev].Domain();
+    injection_box.surroundingNodes(); // get nodal box
+    // Restrict box in the direction of the moving window, to only include the new cells
+    if (moving_window_v > 0._rt)
+    {
+        injection_box.setSmall( dir, injection_box.bigEnd(dir) - num_shift_base + 1 );
+    }
+    else if (moving_window_v < 0._rt)
+    {
+        injection_box.setBig( dir, injection_box.smallEnd(dir) + num_shift_base - 1 );
+    }
+    // Loop over fluid species, and fill the values of the new cells
+    if (do_fluid_species) {
+        const int n_fluid_species = myfl->nSpecies();
+        const amrex::Real cur_time = t_new[0];
+        for (int i=0; i<n_fluid_species; i++) {
+            WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
+            fl.InitData( lev, injection_box, cur_time );
         }
     }
 

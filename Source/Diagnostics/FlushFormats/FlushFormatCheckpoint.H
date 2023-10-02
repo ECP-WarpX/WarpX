@@ -16,12 +16,12 @@ class FlushFormatCheckpoint final : public FlushFormatPlotfile
 {
     /** Flush fields and particles to plotfile */
     virtual void WriteToFile (
-        const amrex::Vector<std::string> varnames,
+        amrex::Vector<std::string> varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
-        const amrex::Vector<int> iteration, const double time,
+        amrex::Vector<int> iteration, double time,
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-        const std::string prefix, int file_min_digits,
+        std::string prefix, int file_min_digits,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,
         const amrex::Vector<amrex::Geometry>& full_BTD_snapshot,

@@ -92,7 +92,7 @@ private:
      * \param[in] cellcenter_data if true, m_cellcenter_varnames are updated
                                   if false, m_varnames is updated
      */
-    void AddRZModesToOutputNames (const std::string& field, const int ncomp, bool cellcenter_data);
+    void AddRZModesToOutputNames (const std::string& field, int ncomp, bool cellcenter_data);
     /** This function allocates and initializes particle buffers for all the snapshots.
      * This is currently an empty function:
      * The particle containers required for this must be added to populate this function.
@@ -123,7 +123,7 @@ private:
      *            are within the bounds of the boosted-frame and lab-frame domain.
      * \param[in] lev the mesh-refinement level
      */
-    bool GetZSliceInDomainFlag (const int i_buffer, const int lev);
+    bool GetZSliceInDomainFlag (int i_buffer, int lev);
 
     /** whether the k-index corresponding to the z-slice for the ith buffer, i_buffer,
      *  is within the bounds of the box in index-space
@@ -131,7 +131,7 @@ private:
      * \param[in] lev mesh-refinement level using which the k-index for the z-slice being filled in the ith buffer is computed
      *            Return true if the k-index of the z-slice is within the bounds of the box for the buffer being filled
      */
-    bool GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev);
+    bool GetKIndexInSnapshotBoxFlag (int i_buffer, int lev);
 
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
@@ -262,7 +262,7 @@ private:
      * \param[in] i_buffer buffer-id of the back-transformed snapshot
      * \param[in] lev      mesh-refinement level at which the output buffer MultiFab is defined
      */
-    void DefineFieldBufferMultiFab (const int i_buffer, const int lev);
+    void DefineFieldBufferMultiFab (int i_buffer, int lev);
 
     /** Define the geometry object that spans the user-defined region for the
      *  ith snapshot, i_buffer, at level, lev.
@@ -270,7 +270,7 @@ private:
      * \param[in] i_buffer id of the back-transformed snapshot
      * \param[in] lev      level at which the geometry object is defined
      */
-    void DefineSnapshotGeometry (const int i_buffer, const int lev);
+    void DefineSnapshotGeometry (int i_buffer, int lev);
 
     /** Compute and return z-position in the boosted-frame at the current timestep
       * \param[in] t_lab   lab-frame time of the snapshot
@@ -349,7 +349,7 @@ private:
      *
      *  \param[in] i_buffer snapshot index
      */
-    void SetSnapshotFullStatus (const int i_buffer);
+    void SetSnapshotFullStatus (int i_buffer);
     /** Vector of field-data stored in the cell-centered multifab, m_cell_centered_data.
      *  All the fields are stored regardless of the specific fields to plot selected
      *  by the user.
@@ -389,7 +389,7 @@ private:
      */
     void InterleaveSpeciesHeader(std::string buffer_species_Header_path,
                                  std::string snapshot_species_Header_path,
-                                 std::string species_name, const int new_data_index);
+                                 std::string species_name, int new_data_index);
 
     /** Interleave lab-frame metadata of the particle header file in the buffers to
      *  be consistent with the merged plotfile lab-frame data
@@ -407,7 +407,7 @@ private:
     /** Clear particle data stored in the particle buffer */
     void ClearParticleBuffer(int i_buffer);
     /** Redistributes particles to the buffer box array in the lab-frame */
-    void RedistributeParticleBuffer (const int i_buffer);
+    void RedistributeParticleBuffer (int i_buffer);
     void UpdateVarnamesForRZopenPMD();
 
     amrex::Real gettlab (int i_buffer) override {return m_t_lab[i_buffer];}

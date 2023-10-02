@@ -34,16 +34,23 @@ from .Geometry import geometry
 from .HybridPICModel import hybridpicmodel
 from .Interpolation import interpolation
 from .Lasers import lasers
+from .LoadThirdParty import load_cupy
 from .PSATD import psatd
 from .Particles import newspecies, particles
 from .WarpX import warpx
 from ._libwarpx import libwarpx
 
 # This is a circular import and must happen after the import of libwarpx
-from . import picmi # isort:skip
+from . import picmi  # isort:skip
+
+# intentionally query the value - only set once sim dimension is known
+def __getattr__(name):
+    # https://stackoverflow.com/a/57263518/2719194
+    if name == '__version__':
+        return libwarpx.__version__
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 # TODO
-#__version__ = cxx.__version__
 #__doc__ = cxx.__doc__
 #__license__ = cxx.__license__
 #__author__ = cxx.__author__

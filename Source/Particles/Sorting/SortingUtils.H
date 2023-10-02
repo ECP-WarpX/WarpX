@@ -19,18 +19,7 @@
  *
  * \param[inout] v Vector of integers, to be filled by this routine
  */
-void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v )
-{
-#ifdef AMREX_USE_GPU
-    // On GPU: Use amrex
-    auto data = v.data();
-    auto N = v.size();
-    AMREX_FOR_1D( N, i, {data[i] = i;});
-#else
-    // On CPU: Use std library
-    std::iota( v.begin(), v.end(), 0L );
-#endif
-}
+void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v );
 
 /** \brief Find the indices that would reorder the elements of `predicate`
  * so that the elements with non-zero value precede the other elements
@@ -98,7 +87,7 @@ class fillBufferFlag
                         amrex::Geometry const& geom ) {
 
             // Extract simple structure that can be used directly on the GPU
-            m_particles = &(pti.GetArrayOfStructs()[0]);
+            m_particles = pti.GetArrayOfStructs().data();
             m_buffer_mask = (*bmasks)[pti].array();
             m_inexflag_ptr = inexflag.dataPtr();
             m_domain = geom.Domain();
@@ -157,7 +146,7 @@ class fillBufferFlagRemainingParticles
                         m_start_index(start_index) {
 
             // Extract simple structure that can be used directly on the GPU
-            m_particles = &(pti.GetArrayOfStructs()[0]);
+            m_particles = pti.GetArrayOfStructs().data();
             m_buffer_mask = (*bmasks)[pti].array();
             m_inexflag_ptr = inexflag.dataPtr();
             m_indices_ptr = particle_indices.dataPtr();

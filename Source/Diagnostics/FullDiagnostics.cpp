@@ -187,6 +187,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     const int ncomp = ncomp_multimodefab;
     // This function is called multiple times, for different values of `lev`
     // but the `varnames` need only be updated once.
+
     const bool update_varnames = (lev==0);
     if (update_varnames) {
         m_varnames.clear();
@@ -194,9 +195,14 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
         m_varnames.reserve(n_rz);
     }
 
-    // Reser field functors
+    // Add functors for average particle data for each species
+    const auto nvar = static_cast<int>(m_varnames_fields.size());
+    const auto nspec = static_cast<int>(m_pfield_species.size());
+    const auto ntot = static_cast<int>(nvar + m_pfield_varnames.size() * nspec);
+
+    // Reset field functors
     m_all_field_functors[lev].clear();
-    m_all_field_functors[lev].resize(m_varnames_fields.size());
+    m_all_field_functors[lev].resize(ntot);
 
     // Boolean flag for whether the current density should be deposited before
     // diagnostic output
@@ -322,6 +328,20 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
                 "Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry");
         }
     }
+
+    // Generate field functors for every particle field diagnostic for every species in m_pfield_species.
+    // The names of the diagnostics are output in the `[varname]_[species]` format.
+    for (int pcomp=0; pcomp<int(m_pfield_varnames.size()); pcomp++) {
+        for (int ispec=0; ispec<int(m_pfield_species.size()); ispec++) {
+            m_all_field_functors[lev][nvar + pcomp * nspec + ispec] = std::make_unique<ParticleReductionFunctor>(nullptr,
+                    lev, m_crse_ratio, m_pfield_strings[pcomp], m_pfield_species_index[ispec], m_pfield_do_average[pcomp],
+                    m_pfield_dofilter[pcomp], m_pfield_filter_strings[pcomp]);
+            if (update_varnames) {
+                AddRZModesToOutputNames(std::string(m_pfield_varnames[pcomp]) + "_" + std::string(m_pfield_species[ispec]), ncomp);
+            }
+        }
+    }
+
     // Sum the number of components in input vector m_all_field_functors
     // and check that it corresponds to the number of components in m_varnames
     // and m_mf_output
@@ -329,6 +349,7 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     for (int jj=0; jj<m_all_field_functors[0].size(); jj++){
         ncomp_from_src += m_all_field_functors[lev][jj]->nComp();
     }
+
     AMREX_ALWAYS_ASSERT( ncomp_from_src == m_varnames.size() );
 #else
     amrex::ignore_unused(lev);

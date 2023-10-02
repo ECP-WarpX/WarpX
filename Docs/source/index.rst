@@ -116,6 +116,7 @@ Theory
    theory/input_output
    theory/collisions
    theory/kinetic_fluid_hybrid_model
+   theory/cold_fluid_model
 
 Development
 -----------

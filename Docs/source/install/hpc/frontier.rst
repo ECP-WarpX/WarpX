@@ -92,19 +92,25 @@ Finally, since Frontier does not yet provide software modules for some of our de
 Compilation
 -----------
 
-Use the following :ref:`cmake commands <building-cmake>` to compile:
+Use the following :ref:`cmake commands <building-cmake>` to compile the application executable:
 
 .. code-block:: bash
 
    cd $HOME/src/warpx
    rm -rf build_frontier
 
-   cmake -S . -B build_frontier -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake -S . -B build_frontier -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_frontier -j 16
-   cmake --build build_frontier -j 16 --target pip_install
 
-**That's it!**
-The WarpX application executables are now in ``$HOME/src/warpx/build_frontier/bin/`` and we installed the ``pywarpx`` Python module.
+The WarpX application executables are now in ``$HOME/src/warpx/build_frontier/bin/``.
+Additionally, the following commands will install WarpX as a Python module:
+
+.. code-block:: bash
+
+   rm -rf build_frontier_py
+
+   cmake -S . -B build_frontier_py -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build_frontier_py -j 16 --target pip_install
 
 Now, you can :ref:`submit Frontier compute jobs <running-cpp-frontier>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
 Or, you can use the WarpX executables to submit Frontier jobs (:ref:`example inputs <usage-examples>`).
@@ -214,6 +220,17 @@ Known System Issues
 
 .. warning::
 
+   August, 2023 (OLCFDEV-1597, OLCFHELP-12850, OLCFHELP-14253):
+   With runs above 500 nodes, we observed issues in ``MPI_Waitall`` calls of the kind ``OFI Poll Failed UNDELIVERABLE``.
+   According to the system known issues entry `OLCFDEV-1597 <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#olcfdev-1597-ofi-poll-failed-undeliverable-errors>`__, we work around this by setting this environment variable in job scripts:
+
+   .. code-block:: bash
+
+      export MPICH_SMP_SINGLE_COPY_MODE=NONE
+      export FI_CXI_RX_MATCH_MODE=software
+
+.. warning::
+
    Checkpoints and I/O at scale seem to be slow with the default Lustre filesystem configuration.
    Please test checkpointing and I/O with short ``#SBATCH -q debug`` runs before running the full simulation.
    Execute ``lfs getstripe -d <dir>`` to show the default progressive file layout.
@@ -228,3 +245,11 @@ Known System Issues
       # change striping for new files before you submit the simulation
       #   this is an example, striping 10 MB blocks onto 32 nodes
       lfs setstripe -S 10M -c 32 diags
+
+   Additionally, other AMReX users reported good performance for plotfile checkpoint/restart when using
+
+   .. code-block:: ini
+
+      amr.plot_nfiles = -1
+      amr.checkpoint_nfiles = -1
+      amrex.async_out_nfiles = 4096  # set to number of GPUs used
