@@ -392,8 +392,8 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     const amrex::Box diag_box( lo, hi );
     m_buffer_box[i_buffer][lev] = diag_box;
     m_snapshot_box[i_buffer][lev] = diag_box;
-    //amrex::Print() << " m_buffer_box[i_buffer][" << lev << "]" <<  m_buffer_box[i_buffer][lev] << "\n";
-    //amrex::Print() << " m_snapshot_box[i_buffer][" << lev << "]" <<  m_snapshot_box[i_buffer][lev] << "\n";
+    amrex::Print() << " m_buffer_box[i_buffer][" << lev << "]" <<  m_buffer_box[i_buffer][lev] << "\n";
+    amrex::Print() << " m_snapshot_box[i_buffer][" << lev << "]" <<  m_snapshot_box[i_buffer][lev] << "\n";
     // Define box array
     amrex::BoxArray diag_ba(diag_box);
     diag_ba.maxSize( warpx.maxGridSize( lev ) );
@@ -847,7 +847,8 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                         std::to_string(m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir)) +
                         " to " +
                         std::to_string(m_buffer_domain_lab[i_buffer].hi(m_moving_window_dir)) +
-                        ")."
+                        "). (lev, i_buffer) = (" + std::to_string(lev) + ", " + std::to_string(i_buffer) +
+                        " k_index_zlab(i_buffer, lev) = " + std::to_string(k_index_zlab(i_buffer, lev))
                     );
                 }
                 m_all_field_functors[lev][i]->PrepareFunctorData (
@@ -945,7 +946,8 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         m_geom_output[i_buffer][lev].define( domain, &m_buffer_domain_lab[i_buffer],
                                              amrex::CoordSys::cartesian,
                                              BTdiag_periodicity.data() );
-       //amrex::Print() << "DefineFieldBufferMultiFab lev == 0 : m_geom_output[i_buffer][lev] = " << m_geom_output[i_buffer][lev] << "\n";
+       amrex::Print() << "DefineFieldBufferMultiFab lev == 0 : m_geom_output[i_buffer][lev] = " << m_geom_output[i_buffer][lev] << "\n";
+       amrex::Print() << "DefineFieldBufferMultiFab lev == 0 : m_buffer_box[i_buffer][lev] = " << m_buffer_box[i_buffer][lev] << "\n";
     } else if (lev > 0 ) {
         // Refine the geometry object defined at the previous level, lev-1
         m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
@@ -973,7 +975,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
                                                &m_snapshot_domain_lab[i_buffer],
                                                amrex::CoordSys::cartesian,
                                                BTdiag_periodicity.data() );
-       //amrex::Print() << "DefineSnapshotGeometry lev == 0 : m_geom_snapshot[i_buffer][lev] = " << m_geom_snapshot[i_buffer][lev] << "\n";
+       amrex::Print() << "DefineSnapshotGeometry lev == 0 : m_geom_snapshot[i_buffer][lev] = " << m_geom_snapshot[i_buffer][lev] << "\n";
     } else if (lev > 0) {
         // Refine the geometry object defined at the previous level, lev-1
         m_geom_snapshot[i_buffer][lev] = amrex::refine( m_geom_snapshot[i_buffer][lev-1],
