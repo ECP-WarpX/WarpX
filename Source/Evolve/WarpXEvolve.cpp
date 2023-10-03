@@ -24,6 +24,8 @@
 #endif
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
 #include "Utils/TextMsg.H"
@@ -79,7 +81,8 @@ WarpX::Evolve (int numsteps)
         WARPX_PROFILE("WarpX::Evolve::step");
         const Real evolve_time_beg_step = amrex::second();
 
-        CheckSignals();
+        //Check and clear signal flags and asynchronously broadcast them from process 0
+        SignalHandling::CheckSignals();
 
         multi_diags->NewIteration();
 
@@ -215,7 +218,7 @@ WarpX::Evolve (int numsteps)
         // Resample particles
         // +1 is necessary here because value of step seen by user (first step is 1) is different than
         // value of step in code (first step is 0)
-        mypc->doResampling(istep[0]+1);
+        mypc->doResampling(istep[0]+1, verbose);
 
         if (num_mirrors>0){
             applyMirrors(cur_time);
@@ -1030,6 +1033,12 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         // of the filter to avoid incorrect results (moved to `SyncCurrentAndRho()`).
         // Might this be related to issue #1943?
 #endif
+        if (do_fluid_species) {
+            myfl->Evolve(lev,
+                *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+                rho_fp[lev].get(),*current_x, *current_y, *current_z, cur_time, skip_deposition);
+        }
     }
 }
 
@@ -1106,12 +1115,6 @@ WarpX::applyMirrors(Real time)
             }
         }
     }
-}
-
-void
-WarpX::CheckSignals()
-{
-    SignalHandling::CheckSignals();
 }
 
 void

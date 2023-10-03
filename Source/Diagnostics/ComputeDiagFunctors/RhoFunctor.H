@@ -26,11 +26,11 @@ public:
      * \param[in] ncomp optional number of component of source MultiFab mf_src
      *                  to be cell-centered in output MultiFab mf_dst
      */
-    RhoFunctor (const int lev,
-                const amrex::IntVect crse_ratio,
-                const int species_index = -1,
+    RhoFunctor (int lev,
+                amrex::IntVect crse_ratio,
+                int species_index = -1,
                 bool convertRZmodes2cartesian = true,
-                const int ncomp = 1);
+                int ncomp = 1);
 
     /**
      * \brief Compute rho directly into mf_dst
@@ -38,7 +38,7 @@ public:
      * \param[out] mf_dst output MultiFab where the result is written
      * \param[in]  dcomp  first component of mf_dst in which cell-centered data are stored
      */
-    virtual void operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer=0*/ ) const override;
+    virtual void operator() ( amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer=0*/ ) const override;
 
 private:
 
