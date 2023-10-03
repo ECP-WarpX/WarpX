@@ -465,8 +465,8 @@ void ColliderRelevant::ComputeDiags (int step)
                 // declare external fields
                 const int offset = 0;
                 const auto getExternalEB = GetExternalEBField(pti, offset);
-                amrex::Vector<amrex::ParticleReal> E_external_particle = myspc.m_E_external_particle;
-                amrex::Vector<amrex::ParticleReal> B_external_particle = myspc.m_B_external_particle;
+                const amrex::Vector<amrex::ParticleReal> E_external_particle = myspc.m_E_external_particle;
+                const amrex::Vector<amrex::ParticleReal> B_external_particle = myspc.m_B_external_particle;
 
                 // define variables in preparation for field gathering
                 amrex::Box box = pti.tilebox();

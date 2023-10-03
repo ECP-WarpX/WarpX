@@ -2499,8 +2499,8 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const auto getExternalEB = GetExternalEBField(pti);
 
-            amrex::Vector<amrex::ParticleReal> E_external_particle = m_E_external_particle;
-            amrex::Vector<amrex::ParticleReal> B_external_particle = m_B_external_particle;
+            const amrex::Vector<amrex::ParticleReal> E_external_particle = m_E_external_particle;
+            const amrex::Vector<amrex::ParticleReal> B_external_particle = m_B_external_particle;
 
             const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
 
@@ -2683,8 +2683,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto getExternalEB = GetExternalEBField(pti, offset);
 
-    amrex::Vector<amrex::ParticleReal> E_external_particle = m_E_external_particle;
-    amrex::Vector<amrex::ParticleReal> B_external_particle = m_B_external_particle;
+    const amrex::Vector<amrex::ParticleReal> E_external_particle = m_E_external_particle;
+    const amrex::Vector<amrex::ParticleReal> B_external_particle = m_B_external_particle;
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
