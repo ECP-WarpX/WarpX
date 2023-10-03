@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PSATD_ALGORITHM_J_ARBITRARY_IN_TIME_H_
-#define WARPX_PSATD_ALGORITHM_J_ARBITRARY_IN_TIME_H_
+#ifndef WARPX_PSATD_ALGORITHM_JRM_H_
+#define WARPX_PSATD_ALGORITHM_JRM_H_
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
@@ -27,12 +27,12 @@
  *        linear in time and two currents, deposited at the beginning and the end of the time step,
  *        are used for the PSATD update equations, instead of only one current deposited at half time.
  */
-class PsatdAlgorithmJArbitraryInTime : public SpectralBaseAlgorithm
+class PsatdAlgorithmJRm : public SpectralBaseAlgorithm
 {
     public:
 
         /**
-         * \brief Constructor of the class PsatdAlgorithmJArbitraryInTime
+         * \brief Constructor of the class PsatdAlgorithmJRm
          *
          * \param[in] spectral_kspace spectral space
          * \param[in] dm distribution mapping
@@ -47,7 +47,7 @@ class PsatdAlgorithmJArbitraryInTime : public SpectralBaseAlgorithm
          * \param[in] dive_cleaning Update F as part of the field update, so that errors in divE=rho propagate away at the speed of light
          * \param[in] divb_cleaning Update G as part of the field update, so that errors in divB=0 propagate away at the speed of light
          */
-        PsatdAlgorithmJArbitraryInTime (
+        PsatdAlgorithmJRm (
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
@@ -133,4 +133,4 @@ class PsatdAlgorithmJArbitraryInTime : public SpectralBaseAlgorithm
         int m_rho_in_time;
 };
 #endif // WARPX_USE_PSATD
-#endif // WARPX_PSATD_ALGORITHM_J_ARBITRARY_IN_TIME_H_
+#endif // WARPX_PSATD_ALGORITHM_JRM_H_

@@ -11,7 +11,7 @@
 #include "SpectralAlgorithms/PsatdAlgorithmFirstOrder.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJConstantInTime.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"
-#include "SpectralAlgorithms/PsatdAlgorithmJArbitraryInTime.H"
+#include "SpectralAlgorithms/PsatdAlgorithmJRm.H"
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
 #include "Utils/TextMsg.H"
@@ -94,7 +94,7 @@ SpectralSolver::SpectralSolver(
         }
         else if (psatd_solution_type == PSATDSolutionType::SecondOrder)
         {
-            algorithm = std::make_unique<PsatdAlgorithmJArbitraryInTime>(
+            algorithm = std::make_unique<PsatdAlgorithmJRm>(
               k_space, dm, m_spectral_index, norder_x, norder_y, norder_z, grid_type,
               dt, update_with_rho, fft_do_time_averaging, dive_cleaning, divb_cleaning, J_in_time, rho_in_time);
         }

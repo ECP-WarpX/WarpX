@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PsatdAlgorithmJArbitraryInTime.H"
+#include "PsatdAlgorithmJRm.H"
 
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -29,7 +29,7 @@
 
 using namespace amrex::literals;
 
-PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
+PsatdAlgorithmJRm::PsatdAlgorithmJRm(
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
@@ -85,7 +85,7 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
 }
 
 void
-PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
+PsatdAlgorithmJRm::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool time_averaging = m_time_averaging;
     const bool dive_cleaning = m_dive_cleaning;
@@ -349,7 +349,7 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
     }
 }
 
-void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
+void PsatdAlgorithmJRm::InitializeSpectralCoefficients (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     amrex::Real dt)
@@ -463,7 +463,7 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
     }
 }
 
-void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficientsAveraging (
+void PsatdAlgorithmJRm::InitializeSpectralCoefficientsAveraging (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     amrex::Real dt)
@@ -542,10 +542,10 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficientsAveraging (
     }
 }
 
-void PsatdAlgorithmJArbitraryInTime::CurrentCorrection (SpectralFieldData& field_data)
+void PsatdAlgorithmJRm::CurrentCorrection (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithmJArbitraryInTime::CurrentCorrection");
+    BL_PROFILE("PsatdAlgorithmJRm::CurrentCorrection");
 
     const bool J_constant = (m_J_in_time   == JInTime::Constant);
     const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);
@@ -611,10 +611,10 @@ void PsatdAlgorithmJArbitraryInTime::CurrentCorrection (SpectralFieldData& field
 }
 
 void
-PsatdAlgorithmJArbitraryInTime::VayDeposition (SpectralFieldData& field_data)
+PsatdAlgorithmJRm::VayDeposition (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithmJArbitraryInTime::VayDeposition()");
+    BL_PROFILE("PsatdAlgorithmJRm::VayDeposition()");
 
     const bool J_constant = (m_J_in_time   == JInTime::Constant);
     const bool rho_linear = (m_rho_in_time == RhoInTime::Linear);
