@@ -59,11 +59,11 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
     // Always allocate these coefficients
     C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-    X1_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-    X2_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-    a0_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-    b0_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-    g0_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    Y1_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    Y2_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    Y3_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    Y4_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    Y5_coef = SpectralRealCoefficients(ba, dm, 1, 0);
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 
@@ -73,9 +73,9 @@ PsatdAlgorithmJArbitraryInTime::PsatdAlgorithmJArbitraryInTime(
     // Allocate these coefficients only with time averaging
     if (time_averaging)
     {
-        X5_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-        X6_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-        X7_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        Y6_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        Y7_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+        Y8_coef = SpectralRealCoefficients(ba, dm, 1, 0);
         InitializeSpectralCoefficientsAveraging(spectral_kspace, dm, dt);
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -112,20 +112,20 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
         // These coefficients are always allocated
         const amrex::Array4<const amrex::Real> C_arr = C_coef[mfi].array();
         const amrex::Array4<const amrex::Real> S_ck_arr = S_ck_coef[mfi].array();
-        const amrex::Array4<const amrex::Real> X1_arr = X1_coef[mfi].array();
-        const amrex::Array4<const amrex::Real> X2_arr = X2_coef[mfi].array();
-        const amrex::Array4<const amrex::Real> a0_arr = a0_coef[mfi].array();
-        const amrex::Array4<const amrex::Real> b0_arr = b0_coef[mfi].array();
-        const amrex::Array4<const amrex::Real> g0_arr = g0_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> Y1_arr = Y1_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> Y2_arr = Y2_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> Y3_arr = Y3_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> Y4_arr = Y4_coef[mfi].array();
+        const amrex::Array4<const amrex::Real> Y5_arr = Y5_coef[mfi].array();
 
-        amrex::Array4<const amrex::Real> X5_arr;
-        amrex::Array4<const amrex::Real> X6_arr;
-        amrex::Array4<const amrex::Real> X7_arr;
+        amrex::Array4<const amrex::Real> Y6_arr;
+        amrex::Array4<const amrex::Real> Y7_arr;
+        amrex::Array4<const amrex::Real> Y8_arr;
         if (time_averaging)
         {
-            X5_arr = X5_coef[mfi].array();
-            X6_arr = X6_coef[mfi].array();
-            X7_arr = X7_coef[mfi].array();
+            Y6_arr = Y6_coef[mfi].array();
+            Y7_arr = Y7_coef[mfi].array();
+            Y8_arr = Y8_coef[mfi].array();
         }
 
         // Extract pointers for the k vectors
@@ -198,11 +198,11 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             // These coefficients are initialized in the function InitializeSpectralCoefficients
             const amrex::Real C = C_arr(i,j,k);
             const amrex::Real S_ck = S_ck_arr(i,j,k);
-            const amrex::Real X1 = X1_arr(i,j,k);
-            const amrex::Real X2 = X2_arr(i,j,k);
-            const amrex::Real a0 = a0_arr(i,j,k);
-            const amrex::Real b0 = b0_arr(i,j,k);
-            const amrex::Real g0 = g0_arr(i,j,k);
+            const amrex::Real Y1 = Y1_arr(i,j,k);
+            const amrex::Real Y2 = Y2_arr(i,j,k);
+            const amrex::Real Y3 = Y3_arr(i,j,k);
+            const amrex::Real Y4 = Y4_arr(i,j,k);
+            const amrex::Real Y5 = Y5_arr(i,j,k);
 
             const Complex a_jx = (J_quadratic) ? (Jx_new - 2._rt * Jx_mid + Jx_old) : 0._rt;
             const Complex a_jy = (J_quadratic) ? (Jy_new - 2._rt * Jy_mid + Jy_old) : 0._rt;
@@ -230,42 +230,42 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex b_rho = (rho_linear || rho_quadratic) ? (rho_new - rho_old) : 0._rt;
             const Complex c_rho = (rho_linear) ? (rho_new + rho_old)/2._rt : rho_mid;
 
-            const Complex sum_rho = a0 * a_rho - X2 * b_rho - X1 * c_rho;
+            const Complex sum_rho = Y1 * a_rho - Y5 * b_rho - Y4 * c_rho;
 
             // Update equations for E in the formulation with rho
             fields(i,j,k,Idx.Ex) = C * Ex_old
                 + I * c2 * S_ck * (ky * Bz_old - kz * By_old)
-                + g0 * a_jx + b0 * b_jx - S_ck/ep0 * c_jx
+                + Y3 * a_jx + Y2 * b_jx - S_ck/ep0 * c_jx
                 + I * c2 * kx * sum_rho;
 
             fields(i,j,k,Idx.Ey) = C * Ey_old
                 + I * c2 * S_ck * (kz * Bx_old - kx * Bz_old)
-                + g0 * a_jy + b0 * b_jy - S_ck/ep0 * c_jy
+                + Y3 * a_jy + Y2 * b_jy - S_ck/ep0 * c_jy
                 + I * c2 * ky * sum_rho;
 
             fields(i,j,k,Idx.Ez) = C * Ez_old
                 + I * c2 * S_ck * (kx * By_old - ky * Bx_old)
-                + g0 * a_jz + b0 * b_jz - S_ck/ep0 * c_jz
+                + Y3 * a_jz + Y2 * b_jz - S_ck/ep0 * c_jz
                 + I * c2 * kz * sum_rho;
 
             // Update equations for B
             fields(i,j,k,Idx.Bx) = C * Bx_old
                 - I * S_ck * (ky * Ez_old - kz * Ey_old)
-                - I * a0 * (ky * a_jz - kz * a_jy)
-                + I * X2 * (ky * b_jz - kz * b_jy)
-                + I * X1 * (ky * c_jz - kz * c_jy );
+                - I * Y1 * (ky * a_jz - kz * a_jy)
+                + I * Y5 * (ky * b_jz - kz * b_jy)
+                + I * Y4 * (ky * c_jz - kz * c_jy );
 
             fields(i,j,k,Idx.By) = C * By_old
                 - I * S_ck * (kz * Ex_old - kx * Ez_old)
-                - I * a0 * (kz * a_jx - kx * a_jz)
-                + I * X2 * (kz * b_jx - kx * b_jz)
-                + I * X1 * (kz * c_jx - kx * c_jz);
+                - I * Y1 * (kz * a_jx - kx * a_jz)
+                + I * Y5 * (kz * b_jx - kx * b_jz)
+                + I * Y4 * (kz * c_jx - kx * c_jz);
 
             fields(i,j,k,Idx.Bz) = C * Bz_old
                 - I * S_ck * (kx * Ey_old - ky * Ex_old)
-                - I * a0 * (kx * a_jy - ky * a_jx)
-                + I * X2 * (kx * b_jy - ky * b_jx)
-                + I * X1 * (kx * c_jy - ky * c_jx);
+                - I * Y1 * (kx * a_jy - ky * a_jx)
+                + I * Y5 * (kx * b_jy - ky * b_jx)
+                + I * Y4 * (kx * c_jy - ky * c_jx);
 
             if (dive_cleaning)
             {
@@ -279,8 +279,8 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
                 fields(i,j,k,Idx.Ez) += I * c2 * S_ck * F_old * kz;
 
                 fields(i,j,k,Idx.F) = C * F_old + S_ck * I * k_dot_E
-                    + I * ( a0 * k_dot_ddJ - X2 * k_dot_dJ - X1 * k_dot_J_mid )
-                    +  g0 * a_rho + b0 * b_rho - S_ck/ep0 * c_rho;
+                    + I * ( Y1 * k_dot_ddJ - Y5 * k_dot_dJ - Y4 * k_dot_J_mid )
+                    +  Y3 * a_rho + Y2 * b_rho - S_ck/ep0 * c_rho;
             }
 
             if (divb_cleaning)
@@ -305,44 +305,44 @@ PsatdAlgorithmJArbitraryInTime::pushSpectralFields (SpectralFieldData& f) const
                 // maybe this should be made more generic
                 // To be changed
                 fields(i,j,k,Idx.Ex_avg) += S_ck * Ex_old
-                    + I * c2 * ep0 * X1 * (ky * Bz_old - kz * By_old)
-                    - I * c2 * kx * (X5 * a_rho + X6 * b_rho + X7 * c_rho)
-                    + ( a0 * a_jx - X2 * b_jx - X1 * c_jx);
+                    + I * c2 * ep0 * Y4 * (ky * Bz_old - kz * By_old)
+                    - I * c2 * kx * (Y6 * a_rho + Y7 * b_rho + Y8 * c_rho)
+                    + ( Y1 * a_jx - Y5 * b_jx - Y4 * c_jx);
 
                 fields(i,j,k,Idx.Ey_avg) += S_ck * Ey_old
-                    + I * c2 * ep0 * X1 * (kz * Bx_old - kx * Bz_old)
-                    - I * c2 * ky * (X5 * a_rho + X6 * b_rho + X7 * c_rho)
-                    + ( a0 * a_jy - X2 * b_jy - X1 * c_jy);
+                    + I * c2 * ep0 * Y4 * (kz * Bx_old - kx * Bz_old)
+                    - I * c2 * ky * (Y6 * a_rho + Y7 * b_rho + Y8 * c_rho)
+                    + ( Y1 * a_jy - Y5 * b_jy - Y4 * c_jy);
 
                 fields(i,j,k,Idx.Ez_avg) += S_ck * Ez_old
-                    + I * c2 * ep0 * X1 * (kx * By_old - ky * Bx_old)
-                    - I * c2 * kz * (X5 * a_rho + X6 * b_rho + X7 * c_rho)
-                    + ( a0 * a_jz - X2 * b_jz - X1 * c_jz);
+                    + I * c2 * ep0 * Y4 * (kx * By_old - ky * Bx_old)
+                    - I * c2 * kz * (Y6 * a_rho + Y7 * b_rho + Y8 * c_rho)
+                    + ( Y1 * a_jz - Y5 * b_jz - Y4 * c_jz);
 
                 fields(i,j,k,Idx.Bx_avg) += S_ck * Bx_old
-                    - I * ep0 * X1 * (ky * Ez_old - kz * Ey_old)
-                    + I * (ky * (X5 * a_jz + X6 * b_jz + X7 * c_jz) - kz * (X5 * a_jy + X6 * b_jy + X7 * c_jy));
+                    - I * ep0 * Y4 * (ky * Ez_old - kz * Ey_old)
+                    + I * (ky * (Y6 * a_jz + Y7 * b_jz + Y8 * c_jz) - kz * (Y6 * a_jy + Y7 * b_jy + Y8 * c_jy));
 
                 fields(i,j,k,Idx.By_avg) += S_ck * By_old
-                    - I * ep0 * X1 * (kz * Ex_old - kx * Ez_old)
-                    + I * (kz * (X5 * a_jx + X6 * b_jx + X7 * c_jx) - kx * (X5 * a_jz + X6 * b_jz + X7 * c_jz));
+                    - I * ep0 * Y4 * (kz * Ex_old - kx * Ez_old)
+                    + I * (kz * (Y6 * a_jx + Y7 * b_jx + Y8 * c_jx) - kx * (Y6 * a_jz + Y7 * b_jz + Y8 * c_jz));
 
                 fields(i,j,k,Idx.Bz_avg) += S_ck * Bz_old
-                    - I * ep0 * X1 * (kx * Ey_old - ky * Ex_old)
-                    + I * (kx * (X5 * a_jy + X6 * b_jy + X7 * c_jy) - ky * (X5 * a_jx + X6 * b_jx + X7 * c_jx));
+                    - I * ep0 * Y4 * (kx * Ey_old - ky * Ex_old)
+                    + I * (kx * (Y6 * a_jy + Y7 * b_jy + Y8 * c_jy) - ky * (Y6 * a_jx + Y7 * b_jx + Y8 * c_jx));
 
                 if (dive_cleaning)
                 {
-                    fields(i,j,k,Idx.Ex_avg) += I * c2 * ep0 * X1 * F_old * kx;
-                    fields(i,j,k,Idx.Ey_avg) += I * c2 * ep0 * X1 * F_old * ky;
-                    fields(i,j,k,Idx.Ez_avg) += I * c2 * ep0 * X1 * F_old * kz;
+                    fields(i,j,k,Idx.Ex_avg) += I * c2 * ep0 * Y4 * F_old * kx;
+                    fields(i,j,k,Idx.Ey_avg) += I * c2 * ep0 * Y4 * F_old * ky;
+                    fields(i,j,k,Idx.Ez_avg) += I * c2 * ep0 * Y4 * F_old * kz;
                 }
 
                 if (divb_cleaning)
                 {
-                    fields(i,j,k,Idx.Bx_avg) += I * ep0 * X1 * G_old * kx;
-                    fields(i,j,k,Idx.By_avg) += I * ep0 * X1 * G_old * ky;
-                    fields(i,j,k,Idx.Bz_avg) += I * ep0 * X1 * G_old * kz;
+                    fields(i,j,k,Idx.Bx_avg) += I * ep0 * Y4 * G_old * kx;
+                    fields(i,j,k,Idx.By_avg) += I * ep0 * Y4 * G_old * ky;
+                    fields(i,j,k,Idx.Bz_avg) += I * ep0 * Y4 * G_old * kz;
                 }
             }
         });
@@ -371,11 +371,11 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
         // Coefficients always allocated
         const amrex::Array4<amrex::Real> C = C_coef[mfi].array();
         const amrex::Array4<amrex::Real> S_ck = S_ck_coef[mfi].array();
-        const amrex::Array4<amrex::Real> X1 = X1_coef[mfi].array();
-        const amrex::Array4<amrex::Real> X2 = X2_coef[mfi].array();
-        const amrex::Array4<amrex::Real> a0 = a0_coef[mfi].array();
-        const amrex::Array4<amrex::Real> b0 = b0_coef[mfi].array();
-        const amrex::Array4<amrex::Real> g0 = g0_coef[mfi].array();
+        const amrex::Array4<amrex::Real> Y1 = Y1_coef[mfi].array();
+        const amrex::Array4<amrex::Real> Y2 = Y2_coef[mfi].array();
+        const amrex::Array4<amrex::Real> Y3 = Y3_coef[mfi].array();
+        const amrex::Array4<amrex::Real> Y4 = Y4_coef[mfi].array();
+        const amrex::Array4<amrex::Real> Y5 = Y5_coef[mfi].array();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -410,55 +410,54 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficients (
                 S_ck(i,j,k) = dt;
             }
 
-            // X1 (multiplies i*([k] \times J) in the update equation for update B)
-
+            // Y1
             if (om_s != 0.)
             {
-                X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * om2_s);
+                Y1(i,j,k) = ( (1._rt - C(i,j,k)) * (8._rt - om2_s*dt2) - 4._rt * S_ck(i,j,k) * om2_s * dt) / (2._rt * ep0 * dt2 * om2_s * om2_s);
             }
             else // om_s = 0
             {
-                X1(i,j,k) = 0.5_rt * dt2 / ep0;
+                Y1(i,j,k) = - dt2 / (12._rt * ep0);
             }
 
-            // X2 (multiplies rho_new in the update equation for E)
+            // Y2
             if (om_s != 0.)
             {
-                X2(i,j,k) = ((1._rt + C(i,j,k))*dt - 2._rt*S_ck(i,j,k)) / (2._rt * ep0 * dt * om2_s);
+                Y2(i,j,k) = ( 2._rt * (C(i,j,k) - 1._rt) + S_ck(i,j,k) * om2_s * dt) / (2._rt * ep0 * dt * om2_s);
             }
             else // om_s = 0
             {
-                X2(i,j,k) = - dt2 / (12._rt * ep0);
+                Y2(i,j,k) = 0._rt;
             }
 
-            // a0
+            // Y3
             if (om_s != 0.)
             {
-                a0(i,j,k) = ( (1._rt - C(i,j,k)) * (8._rt - om2_s*dt2) - 4._rt * S_ck(i,j,k) * om2_s * dt) / (2._rt * ep0 * dt2 * om2_s * om2_s);
+                Y3(i,j,k) = ( S_ck(i,j,k) * om_s * (8._rt - om2_s*dt2) - 4._rt * (1._rt + C(i,j,k)) * om_s * dt) / (2._rt * ep0 * dt2 * om2_s * om_s);
             }
             else // om_s = 0
             {
-                a0(i,j,k) = - dt2 / (12._rt * ep0);
+                Y3(i,j,k) = - dt / (6._rt * ep0);
             }
 
-            // b0
+            // Y4 (multiplies i*([k] \times J) in the update equation for update B)
             if (om_s != 0.)
             {
-                b0(i,j,k) = ( 2._rt * (C(i,j,k) - 1._rt) + S_ck(i,j,k) * om2_s * dt) / (2._rt * ep0 * dt * om2_s);
+                Y4(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * om2_s);
             }
             else // om_s = 0
             {
-                b0(i,j,k) = 0._rt;
+                Y4(i,j,k) = 0.5_rt * dt2 / ep0;
             }
 
-            // g0
+            // Y5 (multiplies rho_new in the update equation for E)
             if (om_s != 0.)
             {
-                g0(i,j,k) = ( S_ck(i,j,k) * om_s * (8._rt - om2_s*dt2) - 4._rt * (1._rt + C(i,j,k)) * om_s * dt) / (2._rt * ep0 * dt2 * om2_s * om_s);
+                Y5(i,j,k) = ((1._rt + C(i,j,k))*dt - 2._rt*S_ck(i,j,k)) / (2._rt * ep0 * dt * om2_s);
             }
             else // om_s = 0
             {
-                g0(i,j,k) = - dt / (6._rt * ep0);
+                Y5(i,j,k) = - dt2 / (12._rt * ep0);
             }
         });
     }
@@ -486,9 +485,9 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficientsAveraging (
         const amrex::Array4<amrex::Real const> C = C_coef[mfi].array();
         const amrex::Array4<amrex::Real const> S_ck = S_ck_coef[mfi].array();
 
-        const amrex::Array4<amrex::Real> X5 = X5_coef[mfi].array();
-        const amrex::Array4<amrex::Real> X6 = X6_coef[mfi].array();
-        const amrex::Array4<amrex::Real> X7 = X7_coef[mfi].array();
+        const amrex::Array4<amrex::Real> Y6 = Y6_coef[mfi].array();
+        const amrex::Array4<amrex::Real> Y7 = Y7_coef[mfi].array();
+        const amrex::Array4<amrex::Real> Y8 = Y8_coef[mfi].array();
 
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -516,28 +515,28 @@ void PsatdAlgorithmJArbitraryInTime::InitializeSpectralCoefficientsAveraging (
 
             if (om_s != 0.)
             {
-                X5(i,j,k) = (dt3*om3_s - 3._rt*dt2*om3_s*S_ck(i,j,k) - 12._rt*dt*om_s*(1._rt+C(i,j,k)) + 24._rt*om_s*S_ck(i,j,k)) / (6._rt*ep0*dt2*om4_s*om_s);
+                Y6(i,j,k) = (dt3*om3_s - 3._rt*dt2*om3_s*S_ck(i,j,k) - 12._rt*dt*om_s*(1._rt+C(i,j,k)) + 24._rt*om_s*S_ck(i,j,k)) / (6._rt*ep0*dt2*om4_s*om_s);
             }
             else
             {
-                X5(i,j,k) = dt3 / (30._rt * ep0);
+                Y6(i,j,k) = dt3 / (30._rt * ep0);
             }
 
             if (om_s != 0.)
             {
-                X6(i,j,k) =  ( dt*om2_s*S_ck(i,j,k) + 2._rt*C(i,j,k) - 2._rt) / (2._rt*ep0*dt*om4_s);
+                Y7(i,j,k) =  ( dt*om2_s*S_ck(i,j,k) + 2._rt*C(i,j,k) - 2._rt) / (2._rt*ep0*dt*om4_s);
             }
             else
             {
-                X6(i,j,k) = - dt3 / (24._rt * ep0);
+                Y7(i,j,k) = - dt3 / (24._rt * ep0);
             }
             if (om_s != 0.)
             {
-                X7(i,j,k) =  ( dt - S_ck(i,j,k) ) / (ep0*om2_s);
+                Y8(i,j,k) =  ( dt - S_ck(i,j,k) ) / (ep0*om2_s);
             }
             else
             {
-                X7(i,j,k) = dt3 / (6._rt * ep0);
+                Y8(i,j,k) = dt3 / (6._rt * ep0);
             }
         });
     }

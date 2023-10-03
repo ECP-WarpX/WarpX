@@ -121,8 +121,7 @@ class PsatdAlgorithmJArbitraryInTime : public SpectralBaseAlgorithm
 
         // These real and complex coefficients are always allocated
         SpectralRealCoefficients C_coef, S_ck_coef;
-        SpectralRealCoefficients X1_coef, X2_coef, X5_coef, X6_coef, X7_coef;
-        SpectralRealCoefficients a0_coef, b0_coef, g0_coef;
+        SpectralRealCoefficients Y1_coef, Y2_coef, Y3_coef, Y4_coef, Y5_coef, Y6_coef, Y7_coef, Y8_coef;
 
         // Other member variables
         amrex::Real m_dt;
