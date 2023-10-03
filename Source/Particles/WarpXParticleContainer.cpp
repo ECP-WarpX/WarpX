@@ -99,8 +99,8 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     m_E_external_particle.resize(3, 0.);
     m_B_external_particle.resize(3, 0.);
 
-    utils::parser::getArrWithParser(pp_particles, "E_external_particle", m_E_external_particle);
-    utils::parser::getArrWithParser(pp_particles, "B_external_particle", m_B_external_particle);
+    utils::parser::queryArrWithParser(pp_particles, "E_external_particle", m_E_external_particle);
+    utils::parser::queryArrWithParser(pp_particles, "B_external_particle", m_B_external_particle);
 
     // Initialize temporary local arrays for charge/current deposition
 #ifdef AMREX_USE_OMP
