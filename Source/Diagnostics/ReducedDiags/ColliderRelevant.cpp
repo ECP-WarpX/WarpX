@@ -465,8 +465,12 @@ void ColliderRelevant::ComputeDiags (int step)
                 // declare external fields
                 const int offset = 0;
                 const auto getExternalEB = GetExternalEBField(pti, offset);
-                const amrex::Vector<amrex::ParticleReal> E_external_particle = myspc.m_E_external_particle;
-                const amrex::Vector<amrex::ParticleReal> B_external_particle = myspc.m_B_external_particle;
+                const amrex::ParticleReal Ex_external_particle = myspc.m_E_external_particle[0];
+                const amrex::ParticleReal Ey_external_particle = myspc.m_E_external_particle[0];
+                const amrex::ParticleReal Ez_external_particle = myspc.m_E_external_particle[0];
+                const amrex::ParticleReal Bx_external_particle = myspc.m_B_external_particle[0];
+                const amrex::ParticleReal By_external_particle = myspc.m_B_external_particle[0];
+                const amrex::ParticleReal Bz_external_particle = myspc.m_B_external_particle[0];
 
                 // define variables in preparation for field gathering
                 amrex::Box box = pti.tilebox();
@@ -494,12 +498,12 @@ void ColliderRelevant::ComputeDiags (int step)
                     // get external fields
                     amrex::ParticleReal xp, yp, zp;
                     GetPosition(i, xp, yp, zp);
-                    amrex::ParticleReal ex = E_external_particle[0];
-                    amrex::ParticleReal ey = E_external_particle[1];
-                    amrex::ParticleReal ez = E_external_particle[2];
-                    amrex::ParticleReal bx = B_external_particle[0];
-                    amrex::ParticleReal by = B_external_particle[1];
-                    amrex::ParticleReal bz = B_external_particle[2];
+                    amrex::ParticleReal ex = Ex_external_particle;
+                    amrex::ParticleReal ey = Ey_external_particle;
+                    amrex::ParticleReal ez = Ez_external_particle;
+                    amrex::ParticleReal bx = Bx_external_particle;
+                    amrex::ParticleReal by = By_external_particle;
+                    amrex::ParticleReal bz = Bz_external_particle;
 
                     getExternalEB(i, ex, ey, ez, bx, by, bz);
 

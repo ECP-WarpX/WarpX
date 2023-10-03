@@ -39,8 +39,12 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
 
     m_get_position  = GetParticlePosition(a_pti, a_offset);
     m_get_externalEB = GetExternalEBField(a_pti, a_offset);
-    m_E_external_particle = E_external_particle;
-    m_B_external_particle = B_external_particle;
+    m_Ex_external_particle = E_external_particle[0];
+    m_Ey_external_particle = E_external_particle[1];
+    m_Ez_external_particle = E_external_particle[2];
+    m_Bx_external_particle = B_external_particle[0];
+    m_By_external_particle = B_external_particle[1];
+    m_Bz_external_particle = B_external_particle[2];
 
     m_ex_arr = exfab.array();
     m_ey_arr = eyfab.array();

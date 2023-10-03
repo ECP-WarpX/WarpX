@@ -39,8 +39,12 @@ struct IonizationFilterFunc
 
     GetParticlePosition m_get_position;
     GetExternalEBField m_get_externalEB;
-    amrex::Vector<amrex::ParticleReal> m_E_external_particle;
-    amrex::Vector<amrex::ParticleReal> m_B_external_particle;
+    amrex::ParticleReal m_Ex_external_particle;
+    amrex::ParticleReal m_Ey_external_particle;
+    amrex::ParticleReal m_Ez_external_particle;
+    amrex::ParticleReal m_Bx_external_particle;
+    amrex::ParticleReal m_By_external_particle;
+    amrex::ParticleReal m_Bz_external_particle;
 
     amrex::Array4<const amrex::Real> m_ex_arr;
     amrex::Array4<const amrex::Real> m_ey_arr;
@@ -98,12 +102,12 @@ struct IonizationFilterFunc
             amrex::ParticleReal xp, yp, zp;
             m_get_position(i, xp, yp, zp);
 
-            amrex::ParticleReal ex = m_E_external_particle[0];
-            amrex::ParticleReal ey = m_E_external_particle[1];
-            amrex::ParticleReal ez = m_E_external_particle[2];
-            amrex::ParticleReal bx = m_B_external_particle[0];
-            amrex::ParticleReal by = m_B_external_particle[1];
-            amrex::ParticleReal bz = m_B_external_particle[2];
+            amrex::ParticleReal ex = m_Ex_external_particle;
+            amrex::ParticleReal ey = m_Ey_external_particle;
+            amrex::ParticleReal ez = m_Ez_external_particle;
+            amrex::ParticleReal bx = m_Bx_external_particle;
+            amrex::ParticleReal by = m_By_external_particle;
+            amrex::ParticleReal bz = m_Bz_external_particle;
             m_get_externalEB(i, ex, ey, ez, bx, by, bz);
 
             doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
