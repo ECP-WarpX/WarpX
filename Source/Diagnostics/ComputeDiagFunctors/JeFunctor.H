@@ -1,5 +1,5 @@
-#ifndef WARPX_JEFUNCTOR_H
-#define WARPX_JEFUNCTOR_H
+#ifndef WARPX_JEFUNCTOR_H_
+#define WARPX_JEFUNCTOR_H_
 
 #include "ComputeDiagFunctor.H"
 
