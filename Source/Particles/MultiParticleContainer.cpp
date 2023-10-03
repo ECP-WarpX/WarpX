@@ -133,14 +133,6 @@ MultiParticleContainer::ReadParameters ()
     {
         const ParmParse pp_particles("particles");
 
-        // allocating and initializing default values of external fields for particles
-        m_E_external_particle.resize(3);
-        m_B_external_particle.resize(3);
-        // initialize E and B fields to 0.0
-        for (int idim = 0; idim < 3; ++idim) {
-            m_E_external_particle[idim] = 0.0;
-            m_B_external_particle[idim] = 0.0;
-        }
         // default values of E_external_particle and B_external_particle
         // are used to set the E and B field when "constant" or "parser"
         // is not explicitly used in the input
@@ -154,19 +146,6 @@ MultiParticleContainer::ReadParameters ()
                        m_E_ext_particle_s.end(),
                        m_E_ext_particle_s.begin(),
                        ::tolower);
-        // if the input string for B_external on particles is "constant"
-        // then the values for the external B on particles must
-        // be provided in the input file.
-        if (m_B_ext_particle_s == "constant")
-            utils::parser::getArrWithParser(
-                pp_particles, "B_external_particle", m_B_external_particle);
-
-        // if the input string for E_external on particles is "constant"
-        // then the values for the external E on particles must
-        // be provided in the input file.
-        if (m_E_ext_particle_s == "constant")
-            utils::parser::getArrWithParser(
-                pp_particles, "E_external_particle", m_E_external_particle);
 
         // if the input string for B_ext_particle_s is
         // "parse_b_ext_particle_function" then the mathematical expression

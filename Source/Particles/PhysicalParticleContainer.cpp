@@ -2499,6 +2499,9 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const auto getExternalEB = GetExternalEBField(pti);
 
+            amrex::Vector<amrex::ParticleReal> E_external_particle = m_E_external_particle;
+            amrex::Vector<amrex::ParticleReal> B_external_particle = m_B_external_particle;
+
             const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
 
             const Dim3 lo = lbound(box);
@@ -2554,8 +2557,12 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
-                amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-                amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
+                amrex::ParticleReal Exp = E_external_particle[0];
+                amrex::ParticleReal Eyp = E_external_particle[1];
+                amrex::ParticleReal Ezp = E_external_particle[2];
+                amrex::ParticleReal Bxp = B_external_particle[0];
+                amrex::ParticleReal Byp = B_external_particle[1];
+                amrex::ParticleReal Bzp = B_external_particle[2];
 
                 if (!t_do_not_gather){
                     // first gather E and B to the particle positions
@@ -2676,6 +2683,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto getExternalEB = GetExternalEBField(pti, offset);
 
+    amrex::Vector<amrex::ParticleReal> E_external_particle = m_E_external_particle;
+    amrex::Vector<amrex::ParticleReal> B_external_particle = m_B_external_particle;
+
     // Lower corner of tile box physical domain (take into account Galilean shift)
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
 
@@ -2790,8 +2800,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
             z_old[ip] = zp;
         }
 
-        amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-        amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
+        amrex::ParticleReal Exp = E_external_particle[0];
+        amrex::ParticleReal Eyp = E_external_particle[1];
+        amrex::ParticleReal Ezp = E_external_particle[2];
+        amrex::ParticleReal Bxp = B_external_particle[0];
+        amrex::ParticleReal Byp = B_external_particle[1];
+        amrex::ParticleReal Bzp = B_external_particle[2];
 
         if(!t_do_not_gather){
             // first gather E and B to the particle positions
@@ -2936,6 +2950,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
     WARPX_PROFILE("PhysicalParticleContainer::getIonizationFunc()");
 
     return {pti, lev, ngEB, Ex, Ey, Ez, Bx, By, Bz,
+                                m_E_external_particle, m_B_external_particle,
                                 ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),

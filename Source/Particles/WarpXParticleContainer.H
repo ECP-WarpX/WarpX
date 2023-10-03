@@ -329,6 +329,10 @@ public:
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
 
+    // External fields added to particle fields.
+    amrex::Vector<amrex::ParticleReal> m_B_external_particle;
+    amrex::Vector<amrex::ParticleReal> m_E_external_particle;
+
     //! Current injection position
     amrex::Real m_current_injection_position;
 

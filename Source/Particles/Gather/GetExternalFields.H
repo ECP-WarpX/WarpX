@@ -23,7 +23,7 @@
 */
 struct GetExternalEBField
 {
-    enum ExternalFieldInitType { None, Constant, Parser, RepeatedPlasmaLens, Unknown };
+    enum ExternalFieldInitType { None, Parser, RepeatedPlasmaLens, Unknown };
 
     GetExternalEBField () = default;
 
@@ -34,9 +34,6 @@ struct GetExternalEBField
 
     amrex::ParticleReal m_gamma_boost;
     amrex::ParticleReal m_uz_boost;
-
-    amrex::GpuArray<amrex::ParticleReal, 3> m_Efield_value;
-    amrex::GpuArray<amrex::ParticleReal, 3> m_Bfield_value;
 
     amrex::ParserExecutor<4> m_Exfield_partparser;
     amrex::ParserExecutor<4> m_Eyfield_partparser;
@@ -92,13 +89,7 @@ struct GetExternalEBField
 
         constexpr amrex::ParticleReal inv_c2 = 1._prt/(PhysConst::c*PhysConst::c);
 
-        if (m_Etype == Constant)
-        {
-            Ex = m_Efield_value[0];
-            Ey = m_Efield_value[1];
-            Ez = m_Efield_value[2];
-        }
-        else if (m_Etype == ExternalFieldInitType::Parser)
+        if (m_Etype == ExternalFieldInitType::Parser)
         {
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
@@ -112,13 +103,7 @@ struct GetExternalEBField
             Ez = m_Ezfield_partparser((amrex::ParticleReal) x, (amrex::ParticleReal) y, (amrex::ParticleReal) z, lab_time);
         }
 
-        if (m_Btype == Constant)
-        {
-            Bx = m_Bfield_value[0];
-            By = m_Bfield_value[1];
-            Bz = m_Bfield_value[2];
-        }
-        else if (m_Btype == ExternalFieldInitType::Parser)
+        if (m_Btype == ExternalFieldInitType::Parser)
         {
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);

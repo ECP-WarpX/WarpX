@@ -134,6 +134,9 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto getExternalEB = GetExternalEBField(pti, offset);
 
+    amrex::Vector<amrex::ParticleReal> E_external_particle = m_E_external_particle;
+    amrex::Vector<amrex::ParticleReal> B_external_particle = m_B_external_particle;
+
     // Lower corner of tile box physical domain (take into account Galilean shift)
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
 
@@ -182,8 +185,12 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
 
-            amrex::ParticleReal Exp=0, Eyp=0, Ezp=0;
-            amrex::ParticleReal Bxp=0, Byp=0, Bzp=0;
+            amrex::ParticleReal Exp = E_external_particle[0];
+            amrex::ParticleReal Eyp = E_external_particle[1];
+            amrex::ParticleReal Ezp = E_external_particle[2];
+            amrex::ParticleReal Bxp = B_external_particle[0];
+            amrex::ParticleReal Byp = B_external_particle[1];
+            amrex::ParticleReal Bzp = B_external_particle[2];
 
             if(!t_do_not_gather){
                 // first gather E and B to the particle positions

@@ -27,6 +27,8 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
                              amrex::FArrayBox const& bxfab,
                              amrex::FArrayBox const& byfab,
                              amrex::FArrayBox const& bzfab,
+                             amrex::Vector<amrex::ParticleReal>& E_external_particle,
+                             amrex::Vector<amrex::ParticleReal>& B_external_particle,
                              int a_offset)
 :m_opt_depth_functor{opt_depth_functor},
  m_opt_depth_runtime_comp{opt_depth_runtime_comp},
@@ -37,6 +39,8 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
 
     m_get_position  = GetParticlePosition(a_pti, a_offset);
     m_get_externalEB = GetExternalEBField(a_pti, a_offset);
+    m_E_external_particle = E_external_particle;
+    m_B_external_particle = B_external_particle;
 
     m_ex_arr = exfab.array();
     m_ey_arr = eyfab.array();

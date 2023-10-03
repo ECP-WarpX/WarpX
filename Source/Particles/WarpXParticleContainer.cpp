@@ -20,6 +20,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "WarpX.H"
 
 #include <ablastr/coarsen/average.H>
@@ -89,6 +90,17 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 {
     SetParticleSize();
     ReadParameters();
+
+    // This needs to be here since ReadParameters is static but the m_E_external_particle and B are not
+    // Should they be declared static?
+    const ParmParse pp_particles("particles");
+
+    // allocating and initializing default values of external fields for particles
+    m_E_external_particle.resize(3, 0.);
+    m_B_external_particle.resize(3, 0.);
+
+    utils::parser::getArrWithParser(pp_particles, "E_external_particle", m_E_external_particle);
+    utils::parser::getArrWithParser(pp_particles, "B_external_particle", m_B_external_particle);
 
     // Initialize temporary local arrays for charge/current deposition
 #ifdef AMREX_USE_OMP

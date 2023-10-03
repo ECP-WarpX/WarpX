@@ -396,6 +396,9 @@ void ParticleExtrema::ComputeDiags (int step)
                     // declare external fields
                     const int offset = 0;
                     const auto getExternalEB = GetExternalEBField(pti, offset);
+                    amrex::Vector<amrex::ParticleReal> E_external_particle = myspc.m_E_external_particle;
+                    amrex::Vector<amrex::ParticleReal> B_external_particle = myspc.m_B_external_particle;
+
                     // define variables in preparation for field gathering
                     amrex::Box box = pti.tilebox();
                     box.grow(ngEB);
@@ -422,8 +425,13 @@ void ParticleExtrema::ComputeDiags (int step)
                         // get external fields
                         ParticleReal xp, yp, zp;
                         GetPosition(i, xp, yp, zp);
-                        ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
-                        ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
+                        amrex::ParticleReal ex = E_external_particle[0];
+                        amrex::ParticleReal ey = E_external_particle[1];
+                        amrex::ParticleReal ez = E_external_particle[2];
+                        amrex::ParticleReal bx = B_external_particle[0];
+                        amrex::ParticleReal by = B_external_particle[1];
+                        amrex::ParticleReal bz = B_external_particle[2];
+
                         getExternalEB(i, ex, ey, ez, bx, by, bz);
 
                         // gather E and B

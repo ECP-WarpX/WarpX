@@ -34,21 +34,9 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     if (mypc.m_E_ext_particle_s == "none") m_Etype = None;
     if (mypc.m_B_ext_particle_s == "none") m_Btype = None;
 
-    if (mypc.m_E_ext_particle_s == "constant")
-    {
-        m_Etype = Constant;
-        m_Efield_value[0] = mypc.m_E_external_particle[0];
-        m_Efield_value[1] = mypc.m_E_external_particle[1];
-        m_Efield_value[2] = mypc.m_E_external_particle[2];
-    }
-
-    if (mypc.m_B_ext_particle_s == "constant")
-    {
-        m_Btype = Constant;
-        m_Bfield_value[0] = mypc.m_B_external_particle[0];
-        m_Bfield_value[1] = mypc.m_B_external_particle[1];
-        m_Bfield_value[2] = mypc.m_B_external_particle[2];
-    }
+    // These lines will be removed once the user interface is redefined and the CI tests updated
+    if (mypc.m_E_ext_particle_s == "constant") m_Etype = None;
+    if (mypc.m_B_ext_particle_s == "constant") m_Btype = None;
 
     if (mypc.m_E_ext_particle_s == "parse_e_ext_particle_function" ||
         mypc.m_B_ext_particle_s == "parse_b_ext_particle_function" ||

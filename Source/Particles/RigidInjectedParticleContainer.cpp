@@ -361,6 +361,9 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             const auto getExternalEB = GetExternalEBField(pti);
 
+            amrex::Vector<amrex::ParticleReal> E_external_particle = m_E_external_particle;
+            amrex::Vector<amrex::ParticleReal> B_external_particle = m_B_external_particle;
+
             const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
 
             const Dim3 lo = lbound(box);
@@ -426,8 +429,12 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
-                amrex::ParticleReal Exp = 0._prt, Eyp = 0._prt, Ezp = 0._prt;
-                amrex::ParticleReal Bxp = 0._prt, Byp = 0._prt, Bzp = 0._prt;
+                amrex::ParticleReal Exp = E_external_particle[0];
+                amrex::ParticleReal Eyp = E_external_particle[1];
+                amrex::ParticleReal Ezp = E_external_particle[2];
+                amrex::ParticleReal Bxp = B_external_particle[0];
+                amrex::ParticleReal Byp = B_external_particle[1];
+                amrex::ParticleReal Bzp = B_external_particle[2];
 
                 // first gather E and B to the particle positions
                 doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
