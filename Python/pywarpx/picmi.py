@@ -1894,10 +1894,7 @@ class Simulation(picmistandard.PICMI_Simulation):
             applied_field.initialize_inputs()
 
         for diagnostic in self.diagnostics:
-            if type(diagnostic) == FieldDiagnostic:
-                diagnostic.initialize_inputs(self.solver)
-            else:
-                diagnostic.initialize_inputs()
+            diagnostic.initialize_inputs()
 
         if self.amr_restart:
             pywarpx.amr.restart = self.amr_restart
@@ -2059,7 +2056,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', [])
         self.particle_fields_species = kw.pop('warpx_particle_fields_species', None)
 
-    def initialize_inputs(self, solver=None):
+    def initialize_inputs(self):
 
         self.add_diagnostic()
 
@@ -2081,15 +2078,14 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             E_fields_list = ['Er', 'Et', 'Ez']
             B_fields_list = ['Br', 'Bt', 'Bz']
             J_fields_list = ['Jr', 'Jt', 'Jz']
+            Je_fields_list = ['Jer', 'Jet', 'Jez']
             A_fields_list = ['Ar', 'At', 'Az']
         else:
             E_fields_list = ['Ex', 'Ey', 'Ez']
             B_fields_list = ['Bx', 'By', 'Bz']
             J_fields_list = ['Jx', 'Jy', 'Jz']
+            Je_fields_list = ['Jex', 'Jey', 'Jez']
             A_fields_list = ['Ax', 'Ay', 'Az']
-        # Je fields list if Hybrid solver is used.
-        if type(solver) == HybridPICSolver:
-            Je_fields_list = ['Jer', 'Jet', 'Jez']
         if self.data_list is not None:
             for dataname in self.data_list:
                 if dataname == 'E':
