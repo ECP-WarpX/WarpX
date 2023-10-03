@@ -71,11 +71,11 @@ electrons = picmi.Species(
 # diagnostics
 ##########################
 
-field_diag = picmi.ParticleDiagnostic(
-    species=electrons,
+part_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
     data_list=['previous_positions'],
     period = 10,
+    species=[electrons],
     write_dir = '.',
     warpx_file_prefix = 'Python_prev_positions_plt'
 )
@@ -97,7 +97,7 @@ sim.add_species(
         n_macroparticle_per_cell=[1, 1], grid=grid
     )
 )
-sim.add_diagnostic(field_diag)
+sim.add_diagnostic(part_diag)
 
 ##########################
 # simulation run
