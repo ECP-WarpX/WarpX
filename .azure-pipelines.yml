@@ -14,6 +14,7 @@ jobs:
     CEI_SUDO: 'sudo'
     CEI_TMP: '/tmp/cei'
     CMAKE_GENERATOR: 'Ninja'
+    CXXFLAGS: '-g'
     FFTW_HOME: '/usr'
     LAPACKPP_HOME: '/usr/local'
     OMP_NUM_THREADS: 1
@@ -80,7 +81,7 @@ jobs:
         openmpi-bin libopenmpi-dev \
         libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make \
         python3 python3-pandas python3-pip python3-venv python3-setuptools libblas-dev liblapack-dev
-      ccache --set-config=max_size=10.0G
+      ccache --set-config=max_size=5.0G
       python3 -m pip install --upgrade pip
       python3 -m pip install --upgrade setuptools
       python3 -m pip install --upgrade wheel
