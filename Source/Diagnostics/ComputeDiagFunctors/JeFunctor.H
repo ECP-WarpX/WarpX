@@ -9,9 +9,9 @@
  * \brief Functor to cell-center MF for electron current density from Kinetic-Fluid
  * Hybrid model and store result in mf_out.
  */
- class
- JeFunctor final: public ComputeDiagFunctor
- {
+class
+JeFunctor final: public ComputeDiagFunctor
+{
 public:
     /**
      *
