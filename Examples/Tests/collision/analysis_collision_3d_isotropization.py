@@ -36,8 +36,10 @@ A = 1.0 - T_per/T_par
 mu = (e**4*ne*log/(8.0*pi**1.5*ep0**2*m**0.5*T_par**1.5)
      *A**(-2)*(-3.0+(3.0-A)*np.arctanh(A**0.5)/A**0.5))
 
-fn = sys.argv[1]
-ds = yt.load(fn)
+plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
+
+ds = yt.load(plotfile)
 ad = ds.all_data()
 vx = ad['electron', 'particle_momentum_x'].to_ndarray()/m
 vy = ad['electron', 'particle_momentum_y'].to_ndarray()/m
@@ -59,4 +61,5 @@ print(f'tolerance = {tolerance}')
 assert(error < tolerance)
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

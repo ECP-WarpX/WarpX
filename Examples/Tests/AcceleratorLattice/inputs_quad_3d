@@ -46,6 +46,10 @@ quad2.ds = 0.4
 quad2.dEdx = -1.e4
 
 # Diagnostics
-diagnostics.diags_names = diag1
-diag1.intervals = 50
+diagnostics.diags_names = diag1 diag2
 diag1.diag_type = Full
+diag1.format = plotfile
+diag1.intervals = 50
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.intervals = 50

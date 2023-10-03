@@ -23,7 +23,8 @@ import yt ; yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-filename = sys.argv[1]
+plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
 
 # Parse some input arguments from output file 'warpx_used_inputs'
 current_correction = False
@@ -43,7 +44,7 @@ if re.search('psatd.do_time_averaging\s*=\s*1', warpx_used_inputs):
 if re.search('psatd.periodic_single_box_fft\s*=\s*1', warpx_used_inputs):
     periodic_single_box = True
 
-ds = yt.load(filename)
+ds = yt.load(plotfile)
 
 # yt 4.0+ has rounding issues with our domain data:
 # RuntimeError: yt attempted to read outside the boundaries
@@ -113,4 +114,5 @@ if current_correction:
     assert(err_charge < tol_charge)
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename, rtol=1.e-8)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile', rtol=1.e-8)
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd', rtol=1.e-8)

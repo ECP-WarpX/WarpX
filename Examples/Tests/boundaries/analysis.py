@@ -29,14 +29,16 @@ import checksumAPI
 dmin = -1.
 dmax = +1.
 
+plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
+
 # Open plotfile specified in command line
-filename = sys.argv[1]
-ds = yt.load( filename )
+ds = yt.load(plotfile)
 ad = ds.all_data()
 time = ds.current_time.to_value()
 
-filename0 = filename[:-5] + '00000'
-ds0 = yt.load( filename0 )
+plotfile0 = plotfile[:-5] + '00000'
+ds0 = yt.load(plotfile0)
 ad0 = ds0.all_data()
 
 # Read in the particle initial values and the current values.
@@ -105,4 +107,5 @@ assert (np.all(np.abs((xx - xxa)/xx) < 1.e-15)), 'Reflecting particle position n
 assert (np.all(np.abs((zz - zza)/zz) < 1.e-15)), 'Periodic particle position not correct'
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

@@ -49,7 +49,12 @@ beam.uy = 0.0
 beam.uz = 0.5
 
 # Diagnostics
-diagnostics.diags_names = diag1
-diag1.intervals = 0, 398:400:1
+diagnostics.diags_names = diag1 diag2
 diag1.diag_type = Full
+diag1.format = plotfile
+diag1.intervals = 0, 398:400:1
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz divE divB G
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.intervals = 0, 398:400:1
+diag2.fields_to_plot = Ex Ey Ez Bx By Bz divE divB G

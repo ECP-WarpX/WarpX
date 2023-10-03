@@ -82,6 +82,10 @@ ions.uy_th = 0.0001
 ions.uz_th = 0.0001
 
 # Diagnostics
-diagnostics.diags_names = diag1
-diag1.intervals = 160
+diagnostics.diags_names = diag1 diag2
 diag1.diag_type = Full
+diag1.format = plotfile
+diag1.intervals = 160
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.intervals = 160

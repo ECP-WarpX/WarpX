@@ -35,6 +35,7 @@ def fit_function(z, z0_phase):
                             z0_b+Lprop_b, ctau0, lambda0 ) )
 
 plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
 
 # The values must be consistent with the values provided in the simulation input
 t_current = 80e-15   # Time of the snapshot1
@@ -62,4 +63,5 @@ assert np.allclose( Ex, Ex_fit, atol=0.18*Ex.max() )
 
 # Checksum regression analysis
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, plotfile)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

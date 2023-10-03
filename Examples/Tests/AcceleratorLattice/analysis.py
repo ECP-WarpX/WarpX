@@ -26,8 +26,10 @@ yt.funcs.mylog.setLevel(0)
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-filename = sys.argv[1]
-ds = yt.load( filename )
+plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
+
+ds = yt.load(plotfile)
 ad = ds.all_data()
 
 gamma_boost = float(ds.parameters.get('warpx.gamma_boost', 1.))
@@ -113,4 +115,5 @@ assert abs(np.abs((xx - xx_sim)/xx)) < 0.01, Exception('error in x particle posi
 assert abs(np.abs((ux - ux_sim)/ux)) < 0.002, Exception('error in x particle velocity')
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

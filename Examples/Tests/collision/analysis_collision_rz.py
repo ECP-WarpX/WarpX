@@ -28,22 +28,23 @@ import checksumAPI
 
 tolerance = 1.0e-15
 
-last_fn = sys.argv[1]
-if (last_fn[-1] == "/"): last_fn = last_fn[:-1]
-fn_list = glob(last_fn[:-5] + "?????")
+last_plotfile = sys.argv[1]
+if (last_plotfile[-1] == "/"): last_plotfile = last_plotfile[:-1]
+plotfile_list = glob(last_plotfile[:-5] + "?????")
+opmdfile = './diags/diag2'
 
-for fn in fn_list:
+for plotfile in plotfile_list:
     # get time index j
-    j = int(fn[-5:])
+    j = int(plotfile[-5:])
     if j==0:
         # load file
-        ds = yt.load( fn )
+        ds = yt.load(plotfile)
         ad = ds.all_data()
         px1 = ad['particle_momentum_x'].to_ndarray()
         py1 = ad['particle_momentum_y'].to_ndarray()
     if j==150:
         # load file
-        ds = yt.load( fn )
+        ds = yt.load(plotfile)
         ad = ds.all_data()
         px2 = ad['particle_momentum_x'].to_ndarray()
         py2 = ad['particle_momentum_y'].to_ndarray()
@@ -55,4 +56,5 @@ print('tolerance = ', tolerance)
 assert(error < tolerance)
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile', do_particles=False)
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd', do_particles=False)

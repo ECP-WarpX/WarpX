@@ -30,8 +30,9 @@ import checksumAPI
 yt.funcs.mylog.setLevel(0)
 
 # Open plotfile specified in command line
-filename = sys.argv[1]
-ds = yt.load( filename )
+plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
+ds = yt.load(plotfile)
 t_max = ds.current_time.item()  # time of simulation
 
 ndims = np.count_nonzero(ds.domain_dimensions > 1)
@@ -139,4 +140,5 @@ assert L2_error_z < 0.05
 
 # Checksum regression analysis
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')

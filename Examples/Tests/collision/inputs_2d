@@ -69,10 +69,15 @@ collision2.CoulombLog = 15.9
 collision3.CoulombLog = 15.9
 
 # Diagnostics
-diagnostics.diags_names = diag1 diag_parser_filter diag_uniform_filter diag_random_filter
-diag1.intervals = 10
+diagnostics.diags_names = diag1 diag2 diag_parser_filter diag_uniform_filter diag_random_filter
 diag1.diag_type = Full
+diag1.format = plotfile
+diag1.intervals = 10
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.intervals = 10
+diag2.fields_to_plot = Ex Ey Ez Bx By Bz
 
 ## diag_parser_filter is a diag used to test the particle filter function.
 diag_parser_filter.intervals = 150:150:

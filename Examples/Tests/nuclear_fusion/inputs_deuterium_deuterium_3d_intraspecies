@@ -53,13 +53,20 @@ deuterium.ymin = -1e-3
 deuterium.zmax =  1e-3
 deuterium.zmin = -1e-3
 
-# diag
+# diag1
 diag1.diag_type = Full
+diag1.format = plotfile
 diag1.fields_to_plot = rho rho_deuterium rho_helium3
 diag1.intervals = 1
 
+# diag2
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.fields_to_plot = rho rho_deuterium rho_helium3
+diag2.intervals = 1
+
 # diagnostics
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 diag2
 
 # geometry
 geometry.dims = 3

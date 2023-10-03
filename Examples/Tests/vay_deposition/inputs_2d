@@ -13,13 +13,20 @@ amr.n_cell = 128 128
 boundary.field_hi = periodic periodic
 boundary.field_lo = periodic periodic
 
-# diag
+# diag1
 diag1.diag_type = Full
+diag1.format = plotfile
 diag1.intervals = 50
 diag1.fields_to_plot = By Ex Ez jx jz rho divE
 
+# diag2
+diag2.diag_type = Full
+diag2.format = openpmd
+diag2.intervals = 50
+diag2.fields_to_plot = By Ex Ez jx jz rho divE
+
 # diagnostics
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 diag2
 
 # electron
 electron.charge = -q_e

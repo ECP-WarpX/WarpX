@@ -20,13 +20,14 @@ import re
 import checksumAPI
 from scipy.constants import c
 
-# Name of the last plotfile
-fn = sys.argv[1]
+# Name of the output files
+plotfile = sys.argv[1]
+opmdfile = './diags/diag2'
 
 # Load yt data
 ds_old = yt.load('divb_cleaning_3d_plt000398')
 ds_mid = yt.load('divb_cleaning_3d_plt000399')
-ds_new = yt.load(fn) # this is the last plotfile
+ds_new = yt.load(plotfile) # this is the last plotfile
 
 ad_old = ds_old.covering_grid(level = 0, left_edge = ds_old.domain_left_edge, dims = ds_old.domain_dimensions)
 ad_mid = ds_mid.covering_grid(level = 0, left_edge = ds_mid.domain_left_edge, dims = ds_mid.domain_dimensions)
@@ -49,7 +50,9 @@ assert(rel_error < tolerance)
 
 test_name = os.path.split(os.getcwd())[1]
 
-if re.search('single_precision', fn):
-    checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)
+if re.search('single_precision', plotfile):
+    checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile', rtol=1.e-3)
+    checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd', rtol=1.e-3)
 else:
-    checksumAPI.evaluate_checksum(test_name, fn)
+    checksumAPI.evaluate_checksum(test_name, output_file=plotfile, output_format='plotfile')
+    checksumAPI.evaluate_checksum(test_name, output_file=opmdfile, output_format='openpmd')
