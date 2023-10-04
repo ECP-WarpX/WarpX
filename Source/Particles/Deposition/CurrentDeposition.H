@@ -797,10 +797,11 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
 #if defined(WARPX_DIM_3D)
 
-            amrex::Real sd = 0._rt;
+
 
             for (int k=dkl; k<=depos_order+2-dku; k++) {
-                for (int j=djl; j<=depos_order+2-dju; j++, sd=0._rt) {
+                for (int j=djl; j<=depos_order+2-dju; j++) {
+                    amrex::Real sd = 0._rt;
 #pragma unroll
                     for (int i=dil; i<=depos_order+1-diu; i++) {
                         sd += wqx*(sx_old[i] - sx_new[i])*(
@@ -811,9 +812,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 }
             }
 
-            sd = 0._rt;
             for (int k=dkl; k<=depos_order+2-dku; k++) {
-                for (int i=dil; i<=depos_order+2-diu; i++, sd=0._rt) {
+                for (int i=dil; i<=depos_order+2-diu; i++) {
+                    amrex::Real sd = 0._rt;
 #pragma unroll
                     for (int j=djl; j<=depos_order+1-dju; j++) {
                         sd += wqy*(sy_old[j] - sy_new[j])*(
@@ -824,9 +825,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 }
             }
 
-            sd = 0._rt;
             for (int j=djl; j<=depos_order+2-dju; j++) {
-                for (int i=dil; i<=depos_order+2-diu; i++, sd=0._rt) {
+                for (int i=dil; i<=depos_order+2-diu; i++) {
+                    amrex::Real sd = 0._rt;
 #pragma unroll
                     for (int k=dkl; k<=depos_order+1-dku; k++) {
                         sd += wqz*(sz_old[k] - sz_new[k])*(
