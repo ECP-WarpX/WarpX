@@ -294,9 +294,9 @@ PsatdAlgorithmJRm::pushSpectralFields (SpectralFieldData& f) const
 
             if (time_averaging)
             {
-                const amrex::Real X5 = X5_arr(i,j,k);
-                const amrex::Real X6 = X6_arr(i,j,k);
-                const amrex::Real X7 = X7_arr(i,j,k);
+                const amrex::Real Y6 = Y6_arr(i,j,k);
+                const amrex::Real Y7 = Y7_arr(i,j,k);
+                const amrex::Real Y8 = Y8_arr(i,j,k);
 
                 // TODO: Here the code is *accumulating* the average,
                 // because it is meant to be used with sub-cycling
