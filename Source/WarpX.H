@@ -23,6 +23,9 @@
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
+#include "Fluids/MultiFluidContainer_fwd.H"
+#include "Fluids/WarpXFluidContainer_fwd.H"
+
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ_fwd.H"
@@ -117,6 +120,7 @@ public:
     void Evolve (int numsteps = -1);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
+    MultiFluidContainer& GetFluidContainer () { return *myfl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
     HybridPICModel& GetHybridPICModel () { return *m_hybrid_pic_model; }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
@@ -503,6 +507,7 @@ public:
     const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
     bool DoPML () const {return do_pml;}
+    bool DoFluidSpecies () const {return do_fluid_species;}
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     const PML_RZ* getPMLRZ() {return pml_rz[0].get();}
@@ -720,21 +725,6 @@ public:
 
     void CopyJPML ();
     bool isAnyBoundaryPML();
-
-    /**
-     * \brief Synchronize the nodal points of the PML MultiFabs
-     */
-    void NodalSyncPML ();
-
-    /**
-     * \brief Synchronize the nodal points of the PML MultiFabs for given MR level
-     */
-    void NodalSyncPML (int lev);
-
-    /**
-     * \brief Synchronize the nodal points of the PML MultiFabs for given MR level and patch
-     */
-    void NodalSyncPML (int lev, PatchType patch_type);
 
     PML* GetPML (int lev);
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
@@ -1326,6 +1316,10 @@ private:
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
     std::unique_ptr<MultiDiagnostics> multi_diags;
+
+    // Fluid container
+    bool do_fluid_species = 0;
+    std::unique_ptr<MultiFluidContainer> myfl;
 
     //
     // Fields: First array for level, second for direction

@@ -34,6 +34,7 @@ from .Geometry import geometry
 from .HybridPICModel import hybridpicmodel
 from .Interpolation import interpolation
 from .Lasers import lasers
+from .LoadThirdParty import load_cupy
 from .PSATD import psatd
 from .Particles import newspecies, particles
 from .WarpX import warpx

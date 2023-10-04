@@ -7,6 +7,8 @@
 #include "WarpX.H"
 
 #include "FieldSolver/ElectrostaticSolver.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -209,6 +211,10 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 
     // Deposit particle charge density (source of Poisson solver)
     mypc->DepositCharge(rho_fp, 0.0_rt);
+    if (do_fluid_species) {
+        int const lev = 0;
+        myfl->DepositCharge( lev, *rho_fp[lev] );
+    }
 
     SyncRho(rho_fp, rho_cp, charge_buf); // Apply filter, perform MPI exchange, interpolate across levels
 #ifndef WARPX_DIM_RZ

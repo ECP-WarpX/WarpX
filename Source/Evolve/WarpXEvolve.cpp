@@ -24,6 +24,8 @@
 #endif
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Python/WarpX_py.H"
 #include "Utils/TextMsg.H"
@@ -470,10 +472,6 @@ WarpX::OneStep_nosub (Real cur_time)
             if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
                 FillBoundaryG(guard_cells.ng_alloc_G, WarpX::sync_nodal_points);
         }
-
-        if (do_pml) {
-            NodalSyncPML();
-        }
     } else {
         EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
         EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
@@ -500,11 +498,10 @@ WarpX::OneStep_nosub (Real cur_time)
 
         if (do_pml) {
             DampPML();
-            NodalSyncPML();
-            FillBoundaryE(guard_cells.ng_MovingWindow);
-            FillBoundaryB(guard_cells.ng_MovingWindow);
-            FillBoundaryF(guard_cells.ng_MovingWindow);
-            FillBoundaryG(guard_cells.ng_MovingWindow);
+            FillBoundaryE(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryB(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryF(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryG(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
         }
 
         // E and B are up-to-date in the domain, but all guard cells are
@@ -744,11 +741,6 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
         FillBoundaryG(guard_cells.ng_alloc_G, WarpX::sync_nodal_points);
 
-    // Synchronize fields on nodal points in PML
-    if (do_pml)
-    {
-        NodalSyncPML();
-    }
 #else
     amrex::ignore_unused(cur_time);
     WARPX_ABORT_WITH_MESSAGE(
@@ -925,9 +917,6 @@ WarpX::OneStep_sub1 (Real curtime)
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
                       WarpX::sync_nodal_points);
-
-    // Synchronize nodal points at the end of the time step
-    if (do_pml) NodalSyncPML();
 }
 
 void
@@ -1031,6 +1020,12 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         // of the filter to avoid incorrect results (moved to `SyncCurrentAndRho()`).
         // Might this be related to issue #1943?
 #endif
+        if (do_fluid_species) {
+            myfl->Evolve(lev,
+                *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+                rho_fp[lev].get(),*current_x, *current_y, *current_z, cur_time, skip_deposition);
+        }
     }
 }
 
