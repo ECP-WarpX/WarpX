@@ -801,39 +801,39 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 for (int j=djl; j<=depos_order+2-dju; j++) {
-                    amrex::Real sd = 0._rt;
+                    amrex::Real sdxi = 0._rt;
 #pragma unroll
                     for (int i=dil; i<=depos_order+1-diu; i++) {
-                        sd += wqx*(sx_old[i] - sx_new[i])*(
+                        sdxi += wqx*(sx_old[i] - sx_new[i])*(
                             one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
                            +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
-                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sd);
+                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
                     }
                 }
             }
 
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 for (int i=dil; i<=depos_order+2-diu; i++) {
-                    amrex::Real sd = 0._rt;
+                    amrex::Real sdyj = 0._rt;
 #pragma unroll
                     for (int j=djl; j<=depos_order+1-dju; j++) {
-                        sd += wqy*(sy_old[j] - sy_new[j])*(
+                        sdyj += wqy*(sy_old[j] - sy_new[j])*(
                             one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
                            +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
-                        amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sd);
+                        amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyj);
                     }
                 }
             }
 
             for (int j=djl; j<=depos_order+2-dju; j++) {
                 for (int i=dil; i<=depos_order+2-diu; i++) {
-                    amrex::Real sd = 0._rt;
+                    amrex::Real sdzk = 0._rt;
 #pragma unroll
                     for (int k=dkl; k<=depos_order+1-dku; k++) {
-                        sd += wqz*(sz_old[k] - sz_new[k])*(
+                        sdzk += wqz*(sz_old[k] - sz_new[k])*(
                             one_third*(sx_new[i]*sy_new[j] + sx_old[i]*sy_old[j])
                            +one_sixth*(sx_new[i]*sy_old[j] + sx_old[i]*sy_new[j]));
-                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sd);
+                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzk);
                     }
                 }
             }
