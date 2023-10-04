@@ -466,11 +466,11 @@ void ColliderRelevant::ComputeDiags (int step)
                 const int offset = 0;
                 const auto getExternalEB = GetExternalEBField(pti, offset);
                 const amrex::ParticleReal Ex_external_particle = myspc.m_E_external_particle[0];
-                const amrex::ParticleReal Ey_external_particle = myspc.m_E_external_particle[0];
-                const amrex::ParticleReal Ez_external_particle = myspc.m_E_external_particle[0];
+                const amrex::ParticleReal Ey_external_particle = myspc.m_E_external_particle[1];
+                const amrex::ParticleReal Ez_external_particle = myspc.m_E_external_particle[2];
                 const amrex::ParticleReal Bx_external_particle = myspc.m_B_external_particle[0];
-                const amrex::ParticleReal By_external_particle = myspc.m_B_external_particle[0];
-                const amrex::ParticleReal Bz_external_particle = myspc.m_B_external_particle[0];
+                const amrex::ParticleReal By_external_particle = myspc.m_B_external_particle[1];
+                const amrex::ParticleReal Bz_external_particle = myspc.m_B_external_particle[2];
 
                 // define variables in preparation for field gathering
                 amrex::Box box = pti.tilebox();
