@@ -726,21 +726,6 @@ public:
     void CopyJPML ();
     bool isAnyBoundaryPML();
 
-    /**
-     * \brief Synchronize the nodal points of the PML MultiFabs
-     */
-    void NodalSyncPML ();
-
-    /**
-     * \brief Synchronize the nodal points of the PML MultiFabs for given MR level
-     */
-    void NodalSyncPML (int lev);
-
-    /**
-     * \brief Synchronize the nodal points of the PML MultiFabs for given MR level and patch
-     */
-    void NodalSyncPML (int lev, PatchType patch_type);
-
     PML* GetPML (int lev);
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     PML_RZ* GetPML_RZ (int lev);
