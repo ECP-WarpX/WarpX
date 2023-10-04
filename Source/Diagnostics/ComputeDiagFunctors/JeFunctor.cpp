@@ -21,7 +21,7 @@ JeFunctor::JeFunctor (const int dir, int lev,
 { }
 
 void
-JeFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const in t /*i_buffer*/) const
+JeFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
 {
     auto& warpx = WarpX::GetInstance();
     /** pointer to source1 multifab */
