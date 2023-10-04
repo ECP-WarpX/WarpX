@@ -194,6 +194,7 @@ class Species(picmistandard.PICMI_Species):
         self.do_not_deposit = kw.pop('warpx_do_not_deposit', None)
         self.do_not_push = kw.pop('warpx_do_not_push', None)
         self.do_not_gather = kw.pop('warpx_do_not_gather', None)
+        self.radially_weighted = kw.pop('warpx_radially_weighted', None)
         self.random_theta = kw.pop('warpx_random_theta', None)
 
         # For particle reflection
@@ -254,6 +255,7 @@ class Species(picmistandard.PICMI_Species):
                                              do_not_deposit = self.do_not_deposit,
                                              do_not_push = self.do_not_push,
                                              do_not_gather = self.do_not_gather,
+                                             radially_weighted = self.radially_weighted,
                                              random_theta = self.random_theta,
                                              do_resampling=self.do_resampling,
                                              resampling_trigger_intervals=self.resampling_trigger_intervals,
