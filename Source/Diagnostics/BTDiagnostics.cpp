@@ -95,6 +95,7 @@ void BTDiagnostics::DerivedInitData ()
         m_geom_snapshot[i].resize(nmax_lev);
 	m_buffer_box[i].resize(nmax_lev);
         m_snapshot_box[i].resize(nmax_lev);
+        m_buffer_k_index_hi[i].resize(nmax_lev);
     	m_snapshot_full[i] = 0;
         m_lastValidZSlice[i] = 0;
         m_buffer_flush_counter[i] = 0;
@@ -504,7 +505,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
                                        snapshot_kindex_hi - (num_z_cells_in_snapshot-1) );
     // Setting hi k-index for the first buffer
     if (!restart) {
-        m_buffer_k_index_hi[i_buffer] = m_snapshot_box[i_buffer][lev].bigEnd(m_moving_window_dir);
+        m_buffer_k_index_hi[i_buffer][lev] = m_snapshot_box[i_buffer][lev].bigEnd(m_moving_window_dir);
     }
 }
 
@@ -834,9 +835,12 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                             // and box-indices
                             DefineSnapshotGeometry(i_buffer, lev);
                         }
+                        //amrex::Print() << "lev = " << lev << " : DefineFieldBufferMultiFab called  -- " << "\n";
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
                 }
+                amrex::Print() << "lev = " << lev << ", k_index_zlab(i_buffer, lev) = " << k_index_zlab(i_buffer, lev) << "\n";
+                amrex::Print() << "lev = " << lev << ", m_buffer_box[i_buffer] = " << m_buffer_box[i_buffer][lev] << "\n";
                 if (ZSliceInDomain) {
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         m_current_z_lab[i_buffer] >= m_buffer_domain_lab[i_buffer].lo(m_moving_window_dir) and
@@ -901,7 +905,8 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     if (lev == nlev_output && m_field_buffer_multifab_defined[i_buffer] == 1) return;
     auto & warpx = WarpX::GetInstance();
 
-    const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
+    const int hi_k_lab = m_buffer_k_index_hi[i_buffer][lev];
+    amrex::Print() << "hi_k_lab = " << hi_k_lab << "\n";
     m_buffer_box[i_buffer][lev].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
     m_buffer_box[i_buffer][lev].setBig( m_moving_window_dir, hi_k_lab );
     amrex::BoxArray buffer_ba( m_buffer_box[i_buffer][lev] );
@@ -1127,12 +1132,13 @@ BTDiagnostics::Flush (int i_buffer)
     // Setting hi k-index for the next buffer, such that, the index is one less than the lo-index of previous buffer
     // For example, for buffer size of 256, if the first buffer extent was [256,511]
     // then the next buffer will be from [0,255]. That is, the hi-index of the following buffer is 256-1
-    if (m_particles_buffer.at(i_buffer).size() > 0 ) {
-       const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
-       for (int lev = 0 ; lev < nlevels; ++lev) {
-           m_buffer_k_index_hi[i_buffer] = m_buffer_box[i_buffer][lev].smallEnd(m_moving_window_dir) - 1;
+    //if (m_particles_buffer.at(i_buffer).size() > 0 ) {
+       //const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
+       for (int lev = 0 ; lev < nmax_lev; ++lev) {
+           m_buffer_k_index_hi[i_buffer][lev] = m_buffer_box[i_buffer][lev].smallEnd(m_moving_window_dir) - 1;
+           amrex::Print() << "m_buffer_k_index_hi[i_buffer][lev] = " << m_buffer_k_index_hi[i_buffer][lev] << "\n";
        }
-    }
+    //}
 }
 
 void BTDiagnostics::RedistributeParticleBuffer (const int i_buffer)

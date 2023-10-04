@@ -236,8 +236,9 @@ WarpX::InitFromCheckpoint ()
                         diag.settlab(i_buffer, tlab);
                         int kindex_hi;
                         is >> kindex_hi;
-                        diag.set_buffer_k_index_hi(i_buffer, kindex_hi);
-
+                        for (int lev = 0; lev < nlevs; ++lev) {
+                            diag.set_buffer_k_index_hi(i_buffer, kindex_hi, lev);
+                        }
                         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                             amrex::Real snapshot_lo;
                             is >> snapshot_lo;

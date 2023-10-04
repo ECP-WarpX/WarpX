@@ -120,12 +120,12 @@ public:
     /** Returns k-index in big end of the buffer box currently being filled for the ith snapshot in BTD
      * \param[in] i_buffer index of the buffer
      */
-    virtual int get_buffer_k_index_hi ( [[maybe_unused]] int i_buffer) {return 0; }
+    virtual int get_buffer_k_index_hi ( [[maybe_unused]] int i_buffer, [[maybe_unused]] const int lev) {return 0; }
     /** Set k-index of the buffer in the moving window direction currently being filled for the ith snapshot
      * \param[in] i_buffer index of the buffer
      * \param[in] kindex value used to set the k-index for the big end of the buffer box
      */
-    virtual void set_buffer_k_index_hi ( [[maybe_unused]] int i_buffer, [[maybe_unused]] int kindex) { }
+    virtual void set_buffer_k_index_hi ( [[maybe_unused]] int i_buffer, [[maybe_unused]] int kindex, [[maybe_unused]] const int lev) { }
     /** Returns lo-end of the lab-frame physical domain for the ith snapshot in BTD
      * \param[in] i_buffer index of the buffer
      * \param[in] idim dimension along which the lo-end of the lab-frame physical domain is returned

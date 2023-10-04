@@ -238,7 +238,7 @@ private:
     /** Vector of k-indices in the hi-end along the moving window direction for the buffer being filled
      *  for each snapshot.
      */
-    amrex::Vector<int> m_buffer_k_index_hi;
+    amrex::Vector< amrex::Vector<int> > m_buffer_k_index_hi;
     /** Multi-level cell-centered multifab with all field-data components, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
      *  This cell-centered data extending over the entire domain
@@ -412,8 +412,8 @@ private:
 
     amrex::Real gettlab (int i_buffer) override {return m_t_lab[i_buffer];}
     void settlab (int i_buffer, amrex::Real tlab) override {m_t_lab[i_buffer] = tlab; }
-    int get_buffer_k_index_hi (int i_buffer) override {return m_buffer_k_index_hi[i_buffer]; }
-    void set_buffer_k_index_hi (int i_buffer, int kindex) override {m_buffer_k_index_hi[i_buffer] = kindex;}
+    int get_buffer_k_index_hi (int i_buffer, const int lev) override {return m_buffer_k_index_hi[i_buffer][lev]; }
+    void set_buffer_k_index_hi (int i_buffer, int kindex, const int lev) override {m_buffer_k_index_hi[i_buffer][lev] = kindex;}
     amrex::Real get_snapshot_domain_lo (int i_buffer, int idim) override {return m_snapshot_domain_lab[i_buffer].lo(idim); }
     amrex::Real get_snapshot_domain_hi (int i_buffer, int idim) override {return m_snapshot_domain_lab[i_buffer].hi(idim); }
     int get_flush_counter (int i_buffer) override {return m_buffer_flush_counter[i_buffer]; }

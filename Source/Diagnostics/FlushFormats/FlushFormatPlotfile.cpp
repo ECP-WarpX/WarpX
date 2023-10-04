@@ -320,7 +320,9 @@ FlushFormatPlotfile::WriteWarpXHeader(
                 auto& diag = warpx.GetMultiDiags().GetDiag(idiag);
                 for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
                     HeaderFile << diag.gettlab(i_buffer) << "\n";
-                    HeaderFile << diag.get_buffer_k_index_hi(i_buffer) << "\n";
+                    for (int lev = 0; lev < nlevels; ++lev) {
+                        HeaderFile << diag.get_buffer_k_index_hi(i_buffer, lev) << "\n";
+                    }
                     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                         HeaderFile << diag.get_snapshot_domain_lo(i_buffer, idim) << "\n";
                     }
