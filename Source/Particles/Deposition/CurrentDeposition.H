@@ -797,8 +797,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
 #if defined(WARPX_DIM_3D)
 
-
-
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 for (int j=djl; j<=depos_order+2-dju; j++) {
                     amrex::Real sdxi = 0._rt;
@@ -811,7 +809,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                     }
                 }
             }
-
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 for (int i=dil; i<=depos_order+2-diu; i++) {
                     amrex::Real sdyj = 0._rt;
@@ -824,7 +821,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                     }
                 }
             }
-
             for (int j=djl; j<=depos_order+2-dju; j++) {
                 for (int i=dil; i<=depos_order+2-diu; i++) {
                     amrex::Real sdzk = 0._rt;
