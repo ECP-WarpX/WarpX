@@ -1275,8 +1275,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
                 // Save the x and y values to use in the insideBounds checks.
                 // This is needed with WARPX_DIM_RZ since x and y are modified.
-                const Real xb = pos.x;
-                const Real yb = pos.y;
+                Real xb = pos.x;
+                Real yb = pos.y;
 
 #ifdef WARPX_DIM_RZ
                 // Replace the x and y, setting an angle theta.
@@ -1403,7 +1403,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 } else {
                     // This is not correct since it might shift the particle
                     // out of the local grid
-                    pos.x = std::sqrt(xb*rmax);
+                    xb = std::sqrt(xb*rmax);
                     weight *= dx[0];
                 }
 #endif
@@ -1884,7 +1884,8 @@ PhysicalParticleContainer::AddPlasmaFlux (amrex::Real dt)
                     } else {
                          // This is not correct since it might shift the particle
                          // out of the local grid
-                         ppos.x = std::sqrt(radial_position*rmax);
+                         ppos.x *= std::sqrt(radial_position/rmax);
+                         ppos.y *= std::sqrt(radial_position/rmax);
                          t_weight *= dx[0];
                     }
                 }
