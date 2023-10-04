@@ -5,6 +5,7 @@ foreach(D IN LISTS WarpX_DIMS)
         PsatdAlgorithmFirstOrder.cpp
         PsatdAlgorithmJConstantInTime.cpp
         PsatdAlgorithmJLinearInTime.cpp
+        PsatdAlgorithmGalilean.cpp
         PsatdAlgorithmJRm.cpp
         PsatdAlgorithmPml.cpp
         SpectralBaseAlgorithm.cpp
