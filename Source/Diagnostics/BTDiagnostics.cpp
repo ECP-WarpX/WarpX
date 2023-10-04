@@ -96,7 +96,7 @@ void BTDiagnostics::DerivedInitData ()
         m_buffer_box[i].resize(nmax_lev);
         m_snapshot_box[i].resize(nmax_lev);
         m_buffer_k_index_hi[i].resize(nmax_lev);
-    	m_snapshot_full[i] = 0;
+        m_snapshot_full[i] = 0;
         m_lastValidZSlice[i] = 0;
         m_buffer_flush_counter[i] = 0;
         m_first_flush_after_restart[i] = 1;
