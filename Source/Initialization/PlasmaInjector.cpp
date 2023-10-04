@@ -61,7 +61,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
 #endif
 
     pp_species_name.query("radially_weighted", radially_weighted);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
 
     // Unlimited boundaries
     xmin = std::numeric_limits<amrex::Real>::lowest();
