@@ -85,7 +85,8 @@ void warpx_interp (int j, int k, int l,
 /**
  * \brief Interpolation function called within WarpX::UpdateAuxilaryDataStagToNodal
  * to interpolate data from the coarse and fine grids to the fine aux grid,
- * with momentum-conserving field gathering, hence between grids with different staggering.
+ * with momentum-conserving field gathering, hence between grids with different staggering,
+ * and assuming that the aux grid is collocated.
  *
  * \param[in] j index along x of the output array
  * \param[in] k index along y (in 3D) or z (in 2D) of the output array
