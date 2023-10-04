@@ -10,6 +10,20 @@
 #include <AMReX.H>
 #include <AMReX_FArrayBox.H>
 
+/**
+ * \brief Interpolation function called within WarpX::UpdateAuxilaryDataSameType
+ * to interpolate data from the coarse and fine grids to the fine aux grid,
+ * assuming that all grids have the same staggering (either collocated or staggered).
+ *
+ * \param[in] j index along x of the output array
+ * \param[in] k index along y (in 3D) or z (in 2D) of the output array
+ * \param[in] l index along z (in 3D, l=0 in 2D) of the output array
+ * \param[in,out] arr_aux output array where interpolated values are stored
+ * \param[in] arr_fine input fine-patch array storing the values to interpolate
+ * \param[in] arr_coarse input coarse-patch array storing the values to interpolate
+ * \param[in] arr_stag IndexType of the arrays
+ * \param[in] rr mesh refinement ratios along each direction
+ */
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp (int j, int k, int l,
                    amrex::Array4<amrex::Real      > const& arr_aux,
@@ -68,6 +82,21 @@ void warpx_interp (int j, int k, int l,
     arr_aux(j,k,l) = arr_fine(j,k,l) + res;
 }
 
+/**
+ * \brief Interpolation function called within WarpX::UpdateAuxilaryDataStagToNodal
+ * to interpolate data from the coarse and fine grids to the fine aux grid,
+ * with momentum-conserving field gathering, hence between grids with different staggering.
+ *
+ * \param[in] j index along x of the output array
+ * \param[in] k index along y (in 3D) or z (in 2D) of the output array
+ * \param[in] l index along z (in 3D, l=0 in 2D) of the output array
+ * \param[in,out] arr_aux output array where interpolated values are stored
+ * \param[in] arr_fine input fine-patch array storing the values to interpolate
+ * \param[in] arr_coarse input coarse-patch array storing the values to interpolate
+ * \param[in] arr_fine_stag IndexType of the fine-patch arrays
+ * \param[in] arr_coarse_stag IndexType of the coarse-patch arrays
+ * \param[in] rr mesh refinement ratios along each direction
+ */
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp (int j, int k, int l,
                    amrex::Array4<amrex::Real      > const& arr_aux,
@@ -117,7 +146,7 @@ void warpx_interp (int j, int k, int l,
     // Staggering of fine array (0: cell-centered; 1: nodal)
     const int sj_fp = arr_fine_stag[0];
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    const     int sk_fp = arr_fine_stag[1];
+    const int sk_fp = arr_fine_stag[1];
 #elif defined(WARPX_DIM_3D)
     const int sk_fp = arr_fine_stag[1];
     const int sl_fp = arr_fine_stag[2];
