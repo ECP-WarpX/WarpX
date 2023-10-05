@@ -561,6 +561,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // If not doing shared memory deposition, call normal kernels
     else {
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+            WARPX_PROFILE_VAR_START(esirkepov_current_dep_kernel);
             if        (WarpX::nox == 1){
                 doEsirkepovDepositionShapeN<1>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -583,6 +584,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     WarpX::n_rz_azimuthal_modes, cost,
                     WarpX::load_balance_costs_update_algo);
             }
+            WARPX_PROFILE_VAR_STOP(esirkepov_current_dep_kernel);
         } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
             if        (WarpX::nox == 1){
                 doVayDepositionShapeN<1>(
@@ -607,6 +609,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     WarpX::load_balance_costs_update_algo);
             }
         } else { // Direct deposition
+            WARPX_PROFILE_VAR_START(direct_current_dep_kernel);
             if        (WarpX::nox == 1){
                 doDepositionShapeN<1>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -629,6 +632,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                     WarpX::load_balance_costs_update_algo);
             }
+            WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
         }
     }
     WARPX_PROFILE_VAR_STOP(blp_deposit);
