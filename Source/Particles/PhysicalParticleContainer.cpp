@@ -1404,7 +1404,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // This is not correct since it might shift the particle
                     // out of the local grid
                     xb = std::sqrt(xb*rmax);
-                    weight *= dx[0];
+                    weight *= MathConst::pi * rmax;
                 }
 #endif
                 pa[PIdx::w ][ip] = weight;
