@@ -22,6 +22,7 @@
 #include <AMReX_BaseFwd.H>
 
 #include <array>
+#include <optional>
 #include <string>
 
 enum struct PatchType : int;
@@ -45,8 +46,8 @@ public:
 
     void FillBoundaryE ();
     void FillBoundaryB ();
-    void FillBoundaryE (PatchType patch_type);
-    void FillBoundaryB (PatchType patch_type);
+    void FillBoundaryE (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
+    void FillBoundaryB (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
 
     void CheckPoint (const std::string& dir) const;
     void Restart (const std::string& dir);
