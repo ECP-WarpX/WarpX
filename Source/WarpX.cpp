@@ -1200,6 +1200,18 @@ WarpX::ReadParameters ()
         // Use same shape factors in all directions, for gathering
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) galerkin_interpolation = false;
 
+        // With the PSATD solver, momentum-conserving field gathering
+        // combined with mesh refinement does not seem to work correctly
+        // TODO Needs debugging
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD &&
+            field_gathering_algo == GatheringAlgo::MomentumConserving &&
+            maxLevel() > 0)
+        {
+            WARPX_ABORT_WITH_MESSAGE(
+                "With the PSATD solver, momentum-conserving field gathering"
+                " combined with mesh refinement is currently not implemented");
+        }
+
         em_solver_medium = GetAlgorithmInteger(pp_algo, "em_solver_medium");
         if (em_solver_medium == MediumForEM::Macroscopic ) {
             macroscopic_solver_algo = GetAlgorithmInteger(pp_algo,"macroscopic_sigma_method");
