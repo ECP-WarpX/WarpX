@@ -14,6 +14,11 @@ Plasma-Based Acceleration
 
 Scientific works in laser-plasma and beam-plasma acceleration.
 
+#. Peng, H. and Huang, T. W. and Jiang, K. and Li, R. and Wu, C. N. and Yu, M. Y. and Riconda, C. and Weber, S. and Zhou, C. T. and Ruan, S. C.
+   **Coherent Subcycle Optical Shock from a Superluminal Plasma Wake**.
+   Phys. Rev. Lett. **131**, 145003, 2023
+   `DOI:10.1103/PhysRevLett.131.145003 <https://doi.org/10.1103/PhysRevLett.131.145003>`__
+
 #. Mewes SM, Boyle GJ, Ferran Pousa A, Shalloo RJ, Osterhoff J, Arran C, Corner L, Walczak R, Hooker SM, Thévenet M.
    **Demonstration of tunability of HOFI waveguides via start-to-end simulations**.
    Phys. Rev. Research **5**, 033112, 2023
