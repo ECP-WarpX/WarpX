@@ -28,9 +28,9 @@ export LD_LIBRARY_PATH=${SW_DIR}/lapackpp-master/lib64:$LD_LIBRARY_PATH
 # optional: for Python bindings
 module load python/3.8.2
 
-if [ -d "${SW_DIR}/venvs/warpx-lassen" ]
+if [ -d "${SW_DIR}/venvs/warpx-lassen-toss3" ]
 then
-    source ${SW_DIR}/venvs/warpx-lassen/bin/activate
+    source ${SW_DIR}/venvs/warpx-lassen-toss3/bin/activate
 fi
 
 # optional: an alias to request an interactive node for two hours
