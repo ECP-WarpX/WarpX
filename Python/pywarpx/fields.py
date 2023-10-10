@@ -533,7 +533,7 @@ class _MultiFABWrapper(object):
                     slice_value = value3d[global_slices]
                     if libwarpx.libwarpx_so.Config.have_gpu:
                         # Copy data from host to device
-                        slice_value = slice_value.to_numpy(copy=True)
+                        slice_value = cp.asarray(slice_value)
                     mf_arr[block_slices] = slice_value
                 else:
                     mf_arr[block_slices] = value
