@@ -347,8 +347,8 @@ class _MultiFABWrapper(object):
             ng = self._get_indices(self.mf.n_grow_vect(),0)
         else:
             ng=[0]*3
-        
-            
+
+
         ilo = self._get_indices(box.small_end, 0)
         ihi = self._get_indices(box.big_end, 0)
 
