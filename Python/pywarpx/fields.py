@@ -361,8 +361,8 @@ class _MultiFABWrapper(object):
             block_slices = []
             global_slices = []
             for i in range(3):
-                block_slices.append(slice(i1[i] - ilo[i], i2[i] - ilo[i]))
-                global_slices.append(slice(i1[i] - starts[i], i2[i] - starts[i]))
+                block_slices.append(slice(i1[i] - ilo[i] + ng[i], i2[i] - ilo[i] + ng[i]))
+                global_slices.append(slice(i1[i] - starts[i] + ng[i], i2[i] - starts[i] + ng[i]))
 
             block_slices.append(slice(icstart, icstop))
             global_slices.append(slice(0, icstop - icstart))
