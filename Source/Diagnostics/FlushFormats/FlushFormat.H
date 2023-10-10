@@ -27,7 +27,10 @@ public:
         bool isLastBTDFlush = false,
         const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const = 0;
 
-     virtual ~FlushFormat() {}
+    virtual ~FlushFormat() {}
+
+    /** Write general info of the run into the plotfile */
+    void WriteJobInfo(const std::string& dir) const;
 };
 
 #endif // WARPX_FLUSHFORMAT_H_

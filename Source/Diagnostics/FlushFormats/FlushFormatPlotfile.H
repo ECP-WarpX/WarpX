@@ -38,8 +38,6 @@ public:
         bool isLastBTDFlush = false,
         const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
 
-    /** Write general info of the run into the plotfile */
-    void WriteJobInfo(const std::string& dir) const;
     /** Write WarpX-specific plotfile header */
     void WriteWarpXHeader(const std::string& name, amrex::Vector<amrex::Geometry>& geom) const;
     void WriteAllRawFields (bool plot_raw_fields, int nlevels,

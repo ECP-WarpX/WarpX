@@ -162,4 +162,6 @@ FlushFormatOpenPMD::WriteToFile (
 
     // signal that no further updates will be written to this iteration
     m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);
+
+    WriteJobInfo(filename);
 }
