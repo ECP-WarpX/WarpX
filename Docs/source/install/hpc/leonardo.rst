@@ -52,7 +52,7 @@ Create it now:
 
    .. literalinclude:: ../../../../Tools/machines/leonardo-cineca/leonardo_gpu_warpx.profile.example
       :language: bash
-      
+
 .. important::
 
    Now, and as the first step on future logins to Leonardo, activate these environment settings:
@@ -155,6 +155,6 @@ For post-processing, activate the environment settings:
 
 .. code-block:: bash
 
-  source $HOME/leonardo_gpu_warpx.profile 
-  
+  source $HOME/leonardo_gpu_warpx.profile
+
 and run python scripts.
