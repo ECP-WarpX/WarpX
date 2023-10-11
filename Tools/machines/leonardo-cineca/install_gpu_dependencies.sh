@@ -1,4 +1,12 @@
 #!/bin/bash
+#
+# Copyright 2023 The WarpX Community
+#
+# This file is part of WarpX.
+#
+# Author: Axel Huebl, Marta Galbiati
+# License: BSD-3-Clause-LBNL
+
 set -eu -o pipefail
 
 
