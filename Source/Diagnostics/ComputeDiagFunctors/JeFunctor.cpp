@@ -27,7 +27,8 @@ JeFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*
     /** pointer to source1 multifab */
     amrex::MultiFab* m_mf_j = warpx.get_pointer_current_fp(m_lev, m_dir);
     /** pointer to source2 multifab */
-    amrex::MultiFab* m_mf_j_ampere = warpx.m_hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);
+    auto& m_hybrid_pic_model = warpx.GetHybridPICModel()
+    amrex::MultiFab* m_mf_j_ampere = m_hybrid_pic_model.get_pointer_current_fp_ampere(m_lev, m_dir);
 
     // Deposit current if no solver is being used
     if (m_deposit_current)
