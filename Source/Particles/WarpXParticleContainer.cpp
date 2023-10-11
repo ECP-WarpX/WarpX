@@ -359,9 +359,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
     // what is the length of the smallest cell edge?
 #if defined(WARPX_DIM_3D)
-    const Real min_dx = dx[0] < dx[1] ? dx[0] : (dx[1] < dx[2] ? dx[1] : dx[2]);
+    const Real min_dx = std::min({dx[0],dx[1],dx[2]});
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    const Real min_dx = dx[0] < dx[2] ? dx[0] : dx[2];
+    const Real min_dx = std::min(dx[0],dx[2]);
 #else
     const Real min_dx = dx[2];
 #endif
