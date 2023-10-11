@@ -67,5 +67,5 @@ JeFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*
         -1, (*m_mf_j_ampere)[lev], 0, 0, 1, ng
     );
 
-    InterpolateMFForDiag(mf_dst, Je, dcomp, warpx.DistributionMap(m_lev));
+    InterpolateMFForDiag(mf_dst, Je, dcomp, warpx.DistributionMap(m_lev), false);
 }
