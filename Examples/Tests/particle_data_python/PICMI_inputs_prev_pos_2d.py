@@ -73,7 +73,6 @@ electrons = picmi.Species(
 
 part_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
-    data_list=['ux', 'uy', 'uz', 'x', 'y', 'prev_x', 'prev_z', 'weighting'],
     period = 10,
     species=[electrons],
     write_dir = '.',
