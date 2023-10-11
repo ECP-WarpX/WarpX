@@ -25,9 +25,9 @@ JeFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*
 {
     auto& warpx = WarpX::GetInstance();
     /** pointer to source1 multifab */
-    amrex::MultiFab* m_mf_j = warpx.m_hybrid_pic_model->get_pointer_current_fp(m_lev, m_dir);
+    amrex::MultiFab* m_mf_j = warpx.get_pointer_current_fp(m_lev, m_dir);
     /** pointer to source2 multifab */
-    amrex::MultiFab* m_mf_j_ampere = warpx.get_pointer_current_fp_ampere(m_lev, m_dir);
+    amrex::MultiFab* m_mf_j_ampere = warpx.m_hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);
 
     // Deposit current if no solver is being used
     if (m_deposit_current)
@@ -62,12 +62,10 @@ JeFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*
     amrex::MultiFab Je( warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng );
 
     // Subtract ampere current from ion current and store result Je multifab.
-    for (int idim = 0; idim < 3; ++idim) {
-        MultiFab::LinComb(
-            Je[m_lev][idim], 1, (*m_mf_j)[m_lev][idim], 0,
-            -1, (*m_mf_j_ampere)[m_lev][idim], 0, 0, 1, ng
-        );
-    }
+    amrex::MultiFab::LinComb(
+        Je[m_lev], 1, (*m_mf_j)[m_lev][m_dir], 0,
+        -1, (*m_mf_j_ampere)[m_lev][m_dir], 0, 0, 1, ng
+    );
 
 
     InterpolateMFForDiag(mf_dst, Je, dcomp, warpx.DistributionMap(m_lev), false);
