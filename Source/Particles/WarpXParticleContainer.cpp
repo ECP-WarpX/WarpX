@@ -354,12 +354,33 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // Jx, Jy and Jz have the same number of guard cells, hence it is sufficient to check for Jx
     const amrex::IntVect range = jx->nGrowVect() - shape_extent;
 #endif
+
+    const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
+
+    // what is the length of the smallest cell edge?
+#if defined(WARPX_DIM_3D)
+    const Real min_dx = dx[0] < dx[1] ? dx[0] : (dx[1] < dx[2] ? dx[1] : dx[2]);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    const Real min_dx = dx[0] < dx[2] ? dx[0] : dx[2];
+#else
+    const Real min_dx = dx[2];
+#endif
+
+    // dt shift would be out-of-range?
+    // We also deposit the current for diagnostics reasons, e.g., in ES simulations that have no CFL
+    // Esirkepov's current deposition algorithm assumes that dt*c does not cross a cell boundary,
+    // let's ensure that.
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(dt * PhysConst::c < min_dx,
+                                         "Time step to large for Esirkepov deposition (for diagnostics, use direct deposition?)");
+    }
+
+    // Are there initial particle positions that are out-of-range for guard cells?
     amrex::ignore_unused(range); // for release builds
     AMREX_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, range) == 0,
         "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for current deposition");
 
-    const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     const amrex::ParticleReal q = this->charge;
 
     WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Sorting", blp_sort);
