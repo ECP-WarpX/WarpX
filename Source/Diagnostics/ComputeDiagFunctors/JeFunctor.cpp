@@ -13,7 +13,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 
-JeFunctor::JeFunctor (const int dir, int lev,
+JeFunctor::JeFunctor (int dir, int lev,
                      amrex::IntVect crse_ratio,
                      bool deposit_current, int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_dir(dir), m_lev(lev),
