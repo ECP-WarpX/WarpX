@@ -64,8 +64,8 @@ JeFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*
 
     // Subtract ampere current from ion current and store result Je multifab.
     amrex::MultiFab::LinComb(
-        Je[m_lev], 1, (*m_mf_j)[m_lev][m_dir], 0,
-        -1, (*m_mf_j_ampere)[m_lev][m_dir], 0, 0, 1, ng
+        Je[m_lev], 1, *m_mf_j, 0,
+        -1, *m_mf_j_ampere, 0, 0, 1, ng
     );
 
 
