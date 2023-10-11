@@ -39,6 +39,8 @@ private:
     const int m_dir;
     /** level on which mf_src is defined */
     int m_lev;
+    /** whether to deposit current density before saving */
+    bool m_deposit_current;
 };
 
 #endif // WARPX_JEFUNCTOR_H_
