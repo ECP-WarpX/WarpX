@@ -324,6 +324,12 @@ class CapacitiveDischargeExample(object):
         else:
             file_prefix = 'Python_background_mcc_1d_tridiag_plt'
 
+        particle_diag = picmi.ParticleDiagnostic(
+            name='diag1',
+            period=0,
+            write_dir='.',
+            warpx_file_prefix=file_prefix
+        )
         field_diag = picmi.FieldDiagnostic(
             name='diag1',
             grid=self.grid,
@@ -332,6 +338,7 @@ class CapacitiveDischargeExample(object):
             write_dir='.',
             warpx_file_prefix=file_prefix
         )
+        self.sim.add_diagnostic(particle_diag)
         self.sim.add_diagnostic(field_diag)
 
     def _get_rho_ions(self):
