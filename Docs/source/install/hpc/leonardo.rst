@@ -5,7 +5,7 @@ Leonardo (CINECA)
 
 The `Leonardo cluster <https://leonardo-supercomputer.cineca.eu/>`_ is hosted at `CINECA <https://www.cineca.it/en>`_.
 
-On Leonardo, each one of the 3456 compute nodes features a custom Atos Bull Sequana XH21355 “Da Vinci” blade, composed of:
+On Leonardo, each one of the 3456 compute nodes features a custom Atos Bull Sequana XH21355 "Da Vinci" blade, composed of:
 
 * 1 x CPU Intel Ice Lake Xeon 8358 32 cores 2.60 GHz
 * 512 (8 x 64) GB RAM DDR4 3200 MHz
