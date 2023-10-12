@@ -135,7 +135,7 @@ And, if needed,
 - log out and into the system, activate the now updated environment profile as usual,
 - :ref:`execute the dependency install scripts <building-leonardo-preparation>`.
 
-As a last step, clean the build directory ``rm -rf $HOME/src/warpx/build_gpu`` and rebuild WarpX.
+As a last step, clean the build directories ``rm -rf $HOME/src/warpx/build_gpu*`` and rebuild WarpX.
 
 
 .. _running-leonardo:
