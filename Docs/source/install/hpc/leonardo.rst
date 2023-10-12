@@ -1,7 +1,7 @@
 .. _building-leonardo:
 
 Leonardo (CINECA)
-===============
+=================
 
 The `Leonardo cluster <https://leonardo-supercomputer.cineca.eu/>`_ is hosted at `CINECA <https://www.cineca.it/en>`_.
 
