@@ -590,7 +590,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
           tmp.copyParticles(*pinned_pc, true);
           particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
       } else if (use_pinned_pc) {
-	// pinned pc, but not BTD (i.e., boundary scraping diagnostic)
+          // pinned pc, but not BTD (i.e., boundary scraping diagnostic)
           particlesConvertUnits(ConvertDirection::WarpX_to_SI, pinned_pc, mass);
           using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
           tmp.copyParticles(*pinned_pc,
