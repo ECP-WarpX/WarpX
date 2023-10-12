@@ -89,11 +89,23 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
    cd $HOME/src/warpx
    rm -rf build_gpu
 
-   cmake -S . -B build_gpu -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake -S . -B build_gpu -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_gpu -j 16
-   cmake --build build_gpu -j 16 --target pip_install
 
 The WarpX application executables are now in ``$HOME/src/warpx/build_gpu/bin/``.
+Additionally, the following commands will install WarpX as a Python module:
+
+.. code-block:: bash
+
+   cd $HOME/src/warpx
+   rm -rf build_gpu_py
+
+   cmake -S . -B build_gpu_py -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_PYTHON=ON -DWarpX_APP=OFF -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build_gpu_py -j 16 --target pip_install
+
+Now, you can :ref:`submit Leonardo compute jobs <running-cpp-leonardo>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
+Or, you can use the WarpX executables to submit Leonardo jobs (:ref:`example inputs <usage-examples>`).
+For executables, you can reference their location in your :ref:`job script <running-cpp-leonardo>` or copy them to a location in ``$CINECA_SCRATCH``.
 
 .. _building-leonardo-update:
 
