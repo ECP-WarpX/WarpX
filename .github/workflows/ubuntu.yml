@@ -188,6 +188,7 @@ jobs:
         restore-keys: |
           ccache-openmp-pyfull-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
           ccache-openmp-pyfull-
+
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
@@ -201,6 +202,11 @@ jobs:
           -DWarpX_PYTHON=ON            \
           -DWarpX_QED_TABLE_GEN=ON
         cmake --build build -j 2 --target pip_install
+
+    - name: check WarpX python code
+      run: |
+        python3 -m pip install pyflakes
+        pyflakes Python/pywarpx
 
     - name: run pywarpx
       run: |
