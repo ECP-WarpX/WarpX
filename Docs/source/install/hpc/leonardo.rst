@@ -10,7 +10,7 @@ On Leonardo, each one of the 3456 compute nodes features a custom Atos Bull Sequ
 * 1 x CPU Intel Ice Lake Xeon 8358 32 cores 2.60 GHz
 * 512 (8 x 64) GB RAM DDR4 3200 MHz
 * 4 x NVidia custom Ampere A100 GPU 64GB HBM2
-* 2 x NVidia HDR 2×100 Gb/s cards
+* 2 x NVidia HDR 2×100 GB/s cards
 
 Introduction
 ------------
