@@ -586,9 +586,23 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
       GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                            particle_diags[i].m_diag_domain);
 
-      if (isBTD || use_pinned_pc) {
+      if (isBTD) {
           tmp.copyParticles(*pinned_pc, true);
           particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
+      } else if (use_pinned_pc) {
+	// pinned pc, but not BTD (i.e., boundary scraping diagnostic)
+          particlesConvertUnits(ConvertDirection::WarpX_to_SI, pinned_pc, mass);
+          using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+          tmp.copyParticles(*pinned_pc,
+                            [random_filter,uniform_filter,parser_filter,geometry_filter]
+                            AMREX_GPU_HOST_DEVICE
+                            (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+          {
+              const SuperParticleType& p = src.getSuperParticle(ip);
+              return random_filter(p, engine) * uniform_filter(p, engine)
+                     * parser_filter(p, engine) * geometry_filter(p, engine);
+          }, true);
+          particlesConvertUnits(ConvertDirection::SI_to_WarpX, pinned_pc, mass);
       } else {
           particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
           using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
