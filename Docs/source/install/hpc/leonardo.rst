@@ -142,7 +142,7 @@ To run a simulation, copy the lines above to a file ``job.sh`` and run
 
 .. code-block:: bash
 
- sbatch job.sh
+   sbatch job.sh
 
 to submit the job.
 
