@@ -24,9 +24,8 @@ using namespace amrex;
 
 // constructor
 ReducedDiags::ReducedDiags (std::string rd_name)
+    : m_rd_name(std::move(rd_name))
 {
-    m_rd_name = rd_name;
-
     BackwardCompatibility();
 
     const ParmParse pp_rd_name(m_rd_name);
@@ -38,7 +37,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
     pp_rd_name.query("extension", m_extension);
 
     // check if it is a restart run
-    std::string restart_chkfile = "";
+    std::string restart_chkfile;
     const ParmParse pp_amr("amr");
     pp_amr.query("restart", restart_chkfile);
     bool IsNotRestart = restart_chkfile.empty();

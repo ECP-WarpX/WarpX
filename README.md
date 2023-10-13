@@ -2,10 +2,10 @@
 
 [![Code Status development](https://dev.azure.com/ECP-WarpX/WarpX/_apis/build/status/ECP-WarpX.WarpX?branchName=development)](https://dev.azure.com/ECP-WarpX/WarpX/_build/latest?definitionId=1&branchName=development)
 [![Nightly Installation Tests](https://dev.azure.com/ECP-WarpX/WarpX/_apis/build/status/ECP-WarpX.Nightly?branchName=nightly&label=nightly%20packages)](https://dev.azure.com/ECP-WarpX/WarpX/_build?definitionId=2)
-[![Documentation Status](https://readthedocs.org/projects/warpx/badge/?version=latest)](https://warpx.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/warpx/badge/?version=latest)](https://warpx.readthedocs.io)
 [![Spack Version](https://img.shields.io/spack/v/warpx)](https://spack.readthedocs.io/en/latest/package_list.html#warpx)
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/warpx)](https://anaconda.org/conda-forge/warpx)
-[![Gitter](https://badges.gitter.im/ECP-WarpX/community.svg)](https://gitter.im/ECP-WarpX/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)  
+[![Discussions](https://img.shields.io/badge/chat-discussions-turquoise.svg)](https://github.com/ECP-WarpX/WarpX/discussions)  
 [![Supported Platforms](https://img.shields.io/badge/platforms-linux%20|%20osx%20|%20win-blue)](https://warpx.readthedocs.io/en/latest/install/users.html)
 [![GitHub commits since last release](https://img.shields.io/github/commits-since/ECP-WarpX/WarpX/latest/development.svg)](https://github.com/ECP-WarpX/WarpX/compare/development)
 [![Exascale Computing Project](https://img.shields.io/badge/supported%20by-ECP-orange)](https://www.exascaleproject.org/research/)
@@ -32,7 +32,7 @@ WarpX scales to the world's largest supercomputers and was awarded the [2022 ACM
 In order to learn how to install and run the code, please see the online documentation:
 https://warpx.readthedocs.io
 
-To contact the developers, feel free to open an issue on this repo, or visit our Gitter room at https://gitter.im/ECP-WarpX/community
+To contact the developers, feel free to open an issue on this repo, or visit our discussions page at https://github.com/ECP-WarpX/WarpX/discussions
 
 ## Contributing
 
@@ -46,9 +46,9 @@ To contact the developers, feel free to open an issue on this repo, or visit our
 
 Our workflow is described in [CONTRIBUTING.rst](CONTRIBUTING.rst).
 
-## License
+## Copyright Notice
 
-WarpX Copyright (c) 2018-2023, The Regents of the University of California,
+WarpX Copyright (c) 2018, The Regents of the University of California,
 through Lawrence Berkeley National Laboratory (subject to receipt of any
 required approvals from the U.S. Dept. of Energy).  All rights reserved.
 
@@ -64,4 +64,5 @@ Software to reproduce, distribute copies to the public, prepare derivative
 works, and perform publicly and display publicly, and to permit other to do
 so.
 
-License for WarpX can be found at [LICENSE.txt](LICENSE.txt).
+Please see the full license agreement in [LICENSE.txt](LICENSE.txt).
+The SPDX license identifier is `BSD-3-Clause-LBNL`.

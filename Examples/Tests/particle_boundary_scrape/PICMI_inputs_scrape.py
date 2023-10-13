@@ -3,7 +3,9 @@
 # --- Input file to test the particle scraper and the Python wrappers
 # --- to access the buffer of scraped particles.
 
-from pywarpx import picmi
+import numpy as np
+
+from pywarpx import particle_containers, picmi
 
 ##########################
 # numerics parameters
@@ -71,6 +73,12 @@ embedded_boundary = picmi.EmbeddedBoundary(
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = diagnostic_intervals,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_particle_scrape_plt'
+)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -100,6 +108,7 @@ sim.add_species(
     )
 )
 
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 
 ##########################
@@ -118,23 +127,24 @@ from mpi4py import MPI as mpi
 
 my_id = sim.extension.getMyProc()
 
-n = sim.extension.get_particle_boundary_buffer_size("electrons", 'eb')
+particle_buffer = particle_containers.ParticleBoundaryBufferWrapper()
+
+n = particle_buffer.get_particle_boundary_buffer_size("electrons", 'eb')
 print(f"Number of electrons in buffer (proc #{my_id}): {n}")
 assert n == 612
 
-scraped_steps = sim.extension.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0)
+scraped_steps = particle_buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0)
 for arr in scraped_steps:
-    assert all(arr > 40)
+    assert all(np.array(arr, copy=False) > 40)
 
-weights = sim.extension.get_particle_boundary_buffer("electrons", 'eb', 'w', 0)
+weights = particle_buffer.get_particle_boundary_buffer("electrons", 'eb', 'w', 0)
 n = sum(len(arr) for arr in weights)
 print(f"Number of electrons in this proc's buffer (proc #{my_id}): {n}")
 n_sum =  mpi.COMM_WORLD.allreduce(n, op=mpi.SUM)
 assert n_sum == 612
 
-# clear the particle buffer
-sim.extension.clearParticleBoundaryBuffer()
+particle_buffer.clear_buffer()
 # confirm that the buffer was cleared
-n = sim.extension.get_particle_boundary_buffer_size("electrons", 'eb')
+n = particle_buffer.get_particle_boundary_buffer_size("electrons", 'eb')
 print(f"Number of electrons in buffer (proc #{my_id}): {n}")
 assert n == 0

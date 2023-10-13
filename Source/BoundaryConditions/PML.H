@@ -29,6 +29,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -43,15 +44,15 @@ struct SigmaBox
 {
     SigmaBox (const amrex::Box& box, const amrex::BoxArray& grids,
               const amrex::Real* dx, const amrex::IntVect& ncell, const amrex::IntVect& delta,
-              const amrex::Box& regdomain, const amrex::Real v_sigma);
+              const amrex::Box& regdomain, amrex::Real v_sigma);
 
     void define_single (const amrex::Box& regdomain, const amrex::IntVect& ncell,
                         const amrex::Array<amrex::Real,AMREX_SPACEDIM>& fac,
-                        const amrex::Real v_sigma);
+                        amrex::Real v_sigma);
     void define_multiple (const amrex::Box& box, const amrex::BoxArray& grids,
                           const amrex::IntVect& ncell,
                           const amrex::Array<amrex::Real,AMREX_SPACEDIM>& fac,
-                          const amrex::Real v_sigma);
+                          amrex::Real v_sigma);
 
     void ComputePMLFactorsB (const amrex::Real* dx, amrex::Real dt);
     void ComputePMLFactorsE (const amrex::Real* dx, amrex::Real dt);
@@ -114,7 +115,7 @@ public:
     MultiSigmaBox(const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                   const amrex::BoxArray& grid_ba, const amrex::Real* dx,
                   const amrex::IntVect& ncell, const amrex::IntVect& delta,
-                  const amrex::Box& regular_domain, const amrex::Real v_sigma_sb);
+                  const amrex::Box& regular_domain, amrex::Real v_sigma_sb);
     void ComputePMLFactorsB (const amrex::Real* dx, amrex::Real dt);
     void ComputePMLFactorsE (const amrex::Real* dx, amrex::Real dt);
 private:
@@ -127,19 +128,19 @@ enum struct PatchType : int;
 class PML
 {
 public:
-    PML (const int lev,
+    PML (int lev,
          const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
          const amrex::Geometry* geom, const amrex::Geometry* cgeom,
          int ncell, int delta, amrex::IntVect ref_ratio,
          amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, short grid_type,
          int do_moving_window, int pml_has_particles, int do_pml_in_domain,
-         const int psatd_solution_type, const int J_in_time, const int rho_in_time,
-         const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
+         int psatd_solution_type, int J_in_time, int rho_in_time,
+         bool do_pml_dive_cleaning, bool do_pml_divb_cleaning,
          const amrex::IntVect& fill_guards_fields,
          const amrex::IntVect& fill_guards_current,
          int max_guard_EB, amrex::Real v_sigma_sb,
-         const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
-         const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
+         amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
+         amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
 
     void ComputePMLFactors (amrex::Real dt);
 
@@ -167,7 +168,7 @@ public:
         { return *sigba_cp; }
 
 #ifdef WARPX_USE_PSATD
-    void PushPSATD (const int lev);
+    void PushPSATD (int lev);
 #endif
 
     void CopyJtoPMLs (const std::array<amrex::MultiFab*,3>& j_fp,
@@ -176,7 +177,7 @@ public:
     void Exchange (const std::array<amrex::MultiFab*,3>& mf_pml,
                    const std::array<amrex::MultiFab*,3>& mf,
                    const PatchType& patch_type,
-                   const int do_pml_in_domain);
+                   int do_pml_in_domain);
 
     void CopyJtoPMLs (PatchType patch_type,
                     const std::array<amrex::MultiFab*,3>& jp);
@@ -187,15 +188,10 @@ public:
     void ExchangeG (amrex::MultiFab* G_fp, amrex::MultiFab* G_cp, int do_pml_in_domain);
     void ExchangeG (PatchType patch_type, amrex::MultiFab* Gp, int do_pml_in_domain);
 
-    void FillBoundary ();
-    void FillBoundaryE ();
-    void FillBoundaryB ();
-    void FillBoundaryF ();
-    void FillBoundaryG ();
-    void FillBoundaryE (PatchType patch_type);
-    void FillBoundaryB (PatchType patch_type);
-    void FillBoundaryF (PatchType patch_type);
-    void FillBoundaryG (PatchType patch_type);
+    void FillBoundaryE (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
+    void FillBoundaryB (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
+    void FillBoundaryF (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
+    void FillBoundaryG (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
 
     bool ok () const { return m_ok; }
 
@@ -282,7 +278,7 @@ private:
 };
 
 #ifdef WARPX_USE_PSATD
-void PushPMLPSATDSinglePatch( const int lev,
+void PushPMLPSATDSinglePatch( int lev,
     SpectralSolver& solver,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B,

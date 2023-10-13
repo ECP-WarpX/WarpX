@@ -60,7 +60,8 @@ void ParallelAdd (amrex::MultiFab &dst,
 
 void FillBoundary (amrex::MultiFab &mf,
                    bool do_single_precision_comms,
-                   const amrex::Periodicity &period = amrex::Periodicity::NonPeriodic());
+                   const amrex::Periodicity &period = amrex::Periodicity::NonPeriodic(),
+                   std::optional<bool> nodal_sync=std::nullopt);
 
 void FillBoundary (amrex::MultiFab &mf,
                    amrex::IntVect ng,
@@ -77,17 +78,7 @@ void FillBoundary (amrex::iMultiFab&         mf,
 
 void
 FillBoundary(amrex::Vector<amrex::MultiFab *> const &mf, bool do_single_precision_comms,
-             const amrex::Periodicity &period);
-
-void SumBoundary (amrex::MultiFab &mf,
-                  bool do_single_precision_comms,
-                  const amrex::Periodicity &period = amrex::Periodicity::NonPeriodic());
-
-void SumBoundary (amrex::MultiFab &mf,
-                  int start_comp,
-                  int num_comps, amrex::IntVect ng,
-                  bool do_single_precision_comms,
-                  const amrex::Periodicity &period = amrex::Periodicity::NonPeriodic());
+             const amrex::Periodicity &period, std::optional<bool> nodal_sync=std::nullopt);
 
 void
 SumBoundary (amrex::MultiFab &mf,

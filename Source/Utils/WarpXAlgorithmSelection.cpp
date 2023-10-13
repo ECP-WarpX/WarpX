@@ -166,7 +166,8 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
     } else if (0 == std::strcmp(pp_search_key, "current_deposition")) {
         algo_to_int = current_deposition_algo_to_int;
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ||
-            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
+            WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ||
+            WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None)
             algo_to_int["default"] = CurrentDepositionAlgo::Direct;
     } else if (0 == std::strcmp(pp_search_key, "charge_deposition")) {
         algo_to_int = charge_deposition_algo_to_int;

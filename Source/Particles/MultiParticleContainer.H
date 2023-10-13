@@ -72,21 +72,16 @@ public:
     ~MultiParticleContainer() {}
 
     WarpXParticleContainer&
-    GetParticleContainer (int ispecies) const {return *allcontainers[ispecies];}
+    GetParticleContainer (int index) const {return *allcontainers[index];}
 
     WarpXParticleContainer*
-    GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
+    GetParticleContainerPtr (int index) const {return allcontainers[index].get();}
 
     WarpXParticleContainer&
     GetParticleContainerFromName (const std::string& name) const;
 
-#ifdef WARPX_USE_OPENPMD
-    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
-      return  allcontainers[ispecies];
-    }
-#endif
-    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int ispecies) {
-        return allcontainers[ispecies]->meanParticleVelocity();
+    std::array<amrex::ParticleReal, 3> meanParticleVelocity(int index) {
+        return allcontainers[index]->meanParticleVelocity();
     }
 
     void AllocData ();
@@ -134,7 +129,7 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
+    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(int lev);
 
     /**
      * \brief Deposit charge density.
@@ -147,7 +142,7 @@ public:
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   const amrex::Real relative_time);
+                   amrex::Real relative_time);
 
     /**
      * \brief Deposit current density.
@@ -162,7 +157,7 @@ public:
      */
     void
     DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                    const amrex::Real dt, const amrex::Real relative_time);
+                    amrex::Real dt, amrex::Real relative_time);
 
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
@@ -181,7 +176,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void doResampling (const int timestep);
+    void doResampling (int timestep, bool verbose);
 
 #ifdef WARPX_QED
     /** If Schwinger process is activated, this function is called at every
@@ -214,7 +209,7 @@ public:
 
     void defineAllParticleTiles ();
 
-    void RedistributeLocal (const int num_ghost);
+    void RedistributeLocal (int num_ghost);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless
      *  of the whole simulation BC. */
@@ -227,7 +222,7 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(const int lev) const;
+    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(int lev) const;
 
     amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
 
@@ -236,19 +231,21 @@ public:
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies() const {return species_names.size();}
+    int nSpecies () const {return species_names.size();}
+    int nLasers () const {return lasers_names.size();}
+    int nContainers () const {return allcontainers.size();}
 
     /** Whether back-transformed diagnostics need to be performed for any plasma species.
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (bool do_back_transformed_particles);
     /** Whether back-transformed diagnostics is set for species with species_name.
      *
      * \param[in] species_name The species for which back-transformed particles is set.
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (std::string species_name, bool do_back_transformed_particles);
 
     int nSpeciesDepositOnMainGrid () const {
         bool const onMainGrid = true;
@@ -266,8 +263,13 @@ public:
     // simulation domain after some iterations, due to flowing plasma and/or
     // moving window).
     void ContinuousInjection(const amrex::RealBox& injection_box) const;
-    // Update injection position for continuously-injected species.
-    void UpdateContinuousInjectionPosition(amrex::Real dt) const;
+
+    /**
+     * \brief  Update antenna position for continuous injection of lasers
+     *         in a boosted frame. Empty function for containers other than lasers.
+     */
+    void UpdateAntennaPosition(amrex::Real dt) const;
+
     int doContinuousInjection() const;
 
     // Inject particles from a surface during the simulation
@@ -381,8 +383,8 @@ protected:
 
         MFItInfoCheckTiling(pc_src, pc_dsts...);
 
-        if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
-            info.EnableTiling(pc_src.tile_size);
+        if (WarpXParticleContainer::do_tiling && amrex::Gpu::notInLaunchRegion()) {
+            info.EnableTiling(WarpXParticleContainer::tile_size);
         }
 
 #ifdef AMREX_USE_OMP
@@ -493,15 +495,13 @@ private:
     bool m_do_back_transformed_particles = false;
 
     void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
-    {
-        return;
-    }
+    {}
 
     template<typename First, typename ...Args>
     void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src,
                              First const& pc_dst, Args const&... others) const noexcept
     {
-        if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
+        if (WarpXParticleContainer::do_tiling && amrex::Gpu::notInLaunchRegion()) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
                 "For particle creation processes, either all or none of the "
                 "particle species must use tiling.");

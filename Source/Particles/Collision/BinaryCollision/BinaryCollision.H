@@ -90,16 +90,17 @@ public:
         if(m_species_names.size() != 2)
             WARPX_ABORT_WITH_MESSAGE("Binary collision " + collision_name + " must have exactly two species.");
 
-        if (m_species_names[0] == m_species_names[1])
-            m_isSameSpecies = true;
-        else
-            m_isSameSpecies = false;
+        m_isSameSpecies = (m_species_names[0] == m_species_names[1]);
 
         m_binary_collision_functor = CollisionFunctorType(collision_name, mypc, m_isSameSpecies);
 
         const amrex::ParmParse pp_collision_name(collision_name);
         pp_collision_name.queryarr("product_species", m_product_species);
-        m_have_product_species = m_product_species.size() > 0;
+        m_have_product_species = !m_product_species.empty();
+        if ((std::is_same<CopyTransformFunctorType, NoParticleCreationFunc>::value) & (m_have_product_species)) {
+            WARPX_ABORT_WITH_MESSAGE( "Binary collision " + collision_name +
+                " does not produce species. Thus, `product_species` should not be specified in the input script." );
+        }
         m_copy_transform_functor = CopyTransformFunctorType(collision_name, mypc);
     }
 

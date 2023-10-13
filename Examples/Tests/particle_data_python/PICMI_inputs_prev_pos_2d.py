@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pywarpx import picmi
+from pywarpx import particle_containers, picmi
 
 constants = picmi.constants
 
@@ -71,15 +71,21 @@ electrons = picmi.Species(
 # diagnostics
 ##########################
 
-field_diag = picmi.ParticleDiagnostic(
-    species=electrons,
+part_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
-    data_list=['previous_positions'],
     period = 10,
+    species=[electrons],
     write_dir = '.',
     warpx_file_prefix = 'Python_prev_positions_plt'
 )
-
+field_diag = picmi.FieldDiagnostic(
+    name = 'diag1',
+    data_list=['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
+    period = 10,
+    grid=grid,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_prev_positions_plt'
+)
 ##########################
 # simulation setup
 ##########################
@@ -97,8 +103,8 @@ sim.add_species(
         n_macroparticle_per_cell=[1, 1], grid=grid
     )
 )
+sim.add_diagnostic(part_diag)
 sim.add_diagnostic(field_diag)
-
 ##########################
 # simulation run
 ##########################
@@ -110,14 +116,23 @@ sim.step(max_steps - 1)
 # exist
 ##########################
 
-assert (sim.extension.get_particle_comp_index('electrons', 'prev_x') > 0)
-assert (sim.extension.get_particle_comp_index('electrons', 'prev_z') > 0)
+elec_wrapper = particle_containers.ParticleContainerWrapper('electrons')
+elec_count = elec_wrapper.nps
 
-prev_z_vals = sim.extension.get_particle_arrays(
-    'electrons', 'prev_z', 0
-)
+# check that the runtime attributes have the right indices
+assert (elec_wrapper.particle_container.get_comp_index('prev_x') == 4)
+assert (elec_wrapper.particle_container.get_comp_index('prev_z') == 5)
+
+# sanity check that the prev_z values are reasonable and
+# that the correct number of values are returned
+prev_z_vals = elec_wrapper.get_particle_arrays('prev_z', 0)
+running_count = 0
+
 for z_vals in prev_z_vals:
+    running_count += len(z_vals)
     assert np.all(z_vals < zmax)
+
+assert running_count == elec_wrapper.get_particle_count(True)
 
 ##########################
 # take the final sim step

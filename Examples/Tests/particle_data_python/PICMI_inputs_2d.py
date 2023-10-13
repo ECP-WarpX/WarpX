@@ -4,7 +4,7 @@ import sys
 
 import numpy as np
 
-from pywarpx import callbacks, picmi
+from pywarpx import callbacks, particle_containers, picmi
 
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
@@ -70,6 +70,12 @@ electrons = picmi.Species(
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 10,
+    write_dir = '.',
+    warpx_file_prefix = f"Python_particle_attr_access_{'unique_' if args.unique else ''}plt"
+)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -96,6 +102,7 @@ sim.add_species(
         n_macroparticle_per_cell=[0, 0], grid=grid
     )
 )
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 
 sim.initialize_inputs()
@@ -109,7 +116,8 @@ sim.initialize_warpx()
 # below will be reproducible from run to run
 np.random.seed(30025025)
 
-sim.extension.add_real_comp('electrons', 'newPid')
+elec_wrapper = particle_containers.ParticleContainerWrapper('electrons')
+elec_wrapper.add_real_comp('newPid')
 
 my_id = sim.extension.getMyProc()
 
@@ -125,9 +133,10 @@ def add_particles():
     w = np.ones(nps) * 2.0
     newPid = 5.0
 
-    sim.extension.add_particles(
-        species_name='electrons', x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
-        w=w, newPid=newPid, unique_particles=args.unique
+    elec_wrapper.add_particles(
+        x=x, y=y, z=z, ux=ux, uy=uy, uz=uz,
+        w=w, newPid=newPid,
+        unique_particles=args.unique
     )
 
 callbacks.installbeforestep(add_particles)
@@ -143,13 +152,11 @@ sim.step(max_steps - 1)
 # are properly set
 ##########################
 
-assert (sim.extension.get_particle_count('electrons') == 270 / (2 - args.unique))
-assert (sim.extension.get_particle_comp_index('electrons', 'w') == 0)
-assert (sim.extension.get_particle_comp_index('electrons', 'newPid') == 4)
+assert (elec_wrapper.nps == 270 / (2 - args.unique))
+assert (elec_wrapper.particle_container.get_comp_index('w') == 0)
+assert (elec_wrapper.particle_container.get_comp_index('newPid') == 4)
 
-new_pid_vals = sim.extension.get_particle_arrays(
-    'electrons', 'newPid', 0
-)
+new_pid_vals = elec_wrapper.get_particle_arrays('newPid', 0)
 for vals in new_pid_vals:
     assert np.allclose(vals, 5)
 

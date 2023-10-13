@@ -58,7 +58,7 @@ using namespace amrex;
 
 namespace
 {
-    static void FillLo (Sigma& sigma, Sigma& sigma_cumsum,
+    void FillLo (Sigma& sigma, Sigma& sigma_cumsum,
                         Sigma& sigma_star, Sigma& sigma_star_cumsum,
                         const int olo, const int ohi, const int glo, Real fac,
                         const amrex::Real v_sigma)
@@ -87,7 +87,7 @@ namespace
         });
     }
 
-    static void FillHi (Sigma& sigma, Sigma& sigma_cumsum,
+    void FillHi (Sigma& sigma, Sigma& sigma_cumsum,
                         Sigma& sigma_star, Sigma& sigma_star_cumsum,
                         const int olo, const int ohi, const int ghi, Real fac,
                         const amrex::Real v_sigma)
@@ -115,7 +115,7 @@ namespace
     }
 
 #if (AMREX_SPACEDIM != 1)
-    static void FillZero (Sigma& sigma, Sigma& sigma_cumsum,
+    void FillZero (Sigma& sigma, Sigma& sigma_cumsum,
                           Sigma& sigma_star, Sigma& sigma_star_cumsum,
                           const int olo, const int ohi)
     {
@@ -738,11 +738,11 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
         // Get the cell-centered box, with guard cells
         BoxArray realspace_ba = ba; // Copy box
-        amrex::Vector<amrex::Real> const v_galilean_zero = {0., 0., 0.};
+        amrex::Vector<amrex::Real> const v_galilean = WarpX::GetInstance().m_v_galilean;
         amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(lev, realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, grid_type, v_galilean_zero,
+            nox_fft, noy_fft, noz_fft, grid_type, v_galilean,
             v_comoving_zero, dx, dt, in_pml, periodic_single_box, update_with_rho,
             fft_do_time_averaging, psatd_solution_type, J_in_time, rho_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
@@ -846,11 +846,11 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
             const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
             // Get the cell-centered box, with guard cells
             BoxArray realspace_cba = cba; // Copy box
-            amrex::Vector<amrex::Real> const v_galilean_zero = {0., 0., 0.};
+            amrex::Vector<amrex::Real> const v_galilean = WarpX::GetInstance().m_v_galilean;
             amrex::Vector<amrex::Real> const v_comoving_zero = {0., 0., 0.};
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(lev, realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, grid_type, v_galilean_zero,
+                nox_fft, noy_fft, noz_fft, grid_type, v_galilean,
                 v_comoving_zero, cdx, dt, in_pml, periodic_single_box, update_with_rho,
                 fft_do_time_averaging, psatd_solution_type, J_in_time, rho_in_time, m_dive_cleaning, m_divb_cleaning);
 #endif
@@ -1229,103 +1229,66 @@ PML::CopyToPML (MultiFab& pml, MultiFab& reg, const Geometry& geom)
 }
 
 void
-PML::FillBoundary ()
-{
-    FillBoundaryE();
-    FillBoundaryB();
-    FillBoundaryF();
-    FillBoundaryG();
-}
-
-void
-PML::FillBoundaryE ()
-{
-    FillBoundaryE(PatchType::fine);
-    FillBoundaryE(PatchType::coarse);
-}
-
-void
-PML::FillBoundaryE (PatchType patch_type)
+PML::FillBoundaryE (PatchType patch_type, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine && pml_E_fp[0] && pml_E_fp[0]->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
         const Vector<MultiFab*> mf{pml_E_fp[0].get(),pml_E_fp[1].get(),pml_E_fp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
     }
     else if (patch_type == PatchType::coarse && pml_E_cp[0] && pml_E_cp[0]->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
         const Vector<MultiFab*> mf{pml_E_cp[0].get(),pml_E_cp[1].get(),pml_E_cp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
     }
 }
 
 void
-PML::FillBoundaryB ()
-{
-    FillBoundaryB(PatchType::fine);
-    FillBoundaryB(PatchType::coarse);
-}
-
-void
-PML::FillBoundaryB (PatchType patch_type)
+PML::FillBoundaryB (PatchType patch_type, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine && pml_B_fp[0])
     {
         const auto& period = m_geom->periodicity();
         const Vector<MultiFab*> mf{pml_B_fp[0].get(),pml_B_fp[1].get(),pml_B_fp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
     }
     else if (patch_type == PatchType::coarse && pml_B_cp[0])
     {
         const auto& period = m_cgeom->periodicity();
         const Vector<MultiFab*> mf{pml_B_cp[0].get(),pml_B_cp[1].get(),pml_B_cp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
     }
 }
 
 void
-PML::FillBoundaryF ()
-{
-    FillBoundaryF(PatchType::fine);
-    FillBoundaryF(PatchType::coarse);
-}
-
-void
-PML::FillBoundaryF (PatchType patch_type)
+PML::FillBoundaryF (PatchType patch_type, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine && pml_F_fp && pml_F_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_F_fp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_F_fp, WarpX::do_single_precision_comms, period, nodal_sync);
     }
     else if (patch_type == PatchType::coarse && pml_F_cp && pml_F_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_F_cp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_F_cp, WarpX::do_single_precision_comms, period, nodal_sync);
     }
 }
 
 void
-PML::FillBoundaryG ()
-{
-    FillBoundaryG(PatchType::fine);
-    FillBoundaryG(PatchType::coarse);
-}
-
-void
-PML::FillBoundaryG (PatchType patch_type)
+PML::FillBoundaryG (PatchType patch_type, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine && pml_G_fp && pml_G_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_G_fp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_G_fp, WarpX::do_single_precision_comms, period, nodal_sync);
     }
     else if (patch_type == PatchType::coarse && pml_G_cp && pml_G_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_G_cp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_G_cp, WarpX::do_single_precision_comms, period, nodal_sync);
     }
 }
 

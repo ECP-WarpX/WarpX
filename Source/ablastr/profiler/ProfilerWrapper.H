@@ -12,8 +12,8 @@
 #include <AMReX_GpuDevice.H>
 
 
-namespace ablastr {
-namespace profiler {
+namespace ablastr::profiler
+{
     /** Conditionally synchronizes active GPU operations
      *
      * @param do_device_synchronize perform amrex::Gpu::synchronize() if true
@@ -41,8 +41,7 @@ namespace profiler {
         bool m_do_device_synchronize = false;
     };
 
-} // namespace profiler
-} // namespace ablastr
+} // namespace ablastr::profiler
 
 // `BL_PROFILE_PASTE(SYNC_SCOPE_, __COUNTER__)` and `SYNC_V_##vname` used to make unique names for
 // synchronizeOnDestruct objects, like `SYNC_SCOPE_0` and `SYNC_V_pmain`

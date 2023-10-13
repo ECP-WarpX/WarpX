@@ -382,12 +382,12 @@ void FieldProbe::ComputeDiags (int step)
         amrex::Real move_dist = 0.0;
         bool const update_particles_moving_window =
             do_moving_window_FP &&
-            step > warpx.start_moving_window_step &&
-            step <= warpx.end_moving_window_step;
+            step > WarpX::start_moving_window_step &&
+            step <= WarpX::end_moving_window_step;
         if (update_particles_moving_window)
         {
             const int step_diff = step - m_last_compute_step;
-            move_dist = dt*warpx.moving_window_v*step_diff;
+            move_dist = dt*WarpX::moving_window_v*step_diff;
         }
 
         // get MultiFab data at lev
@@ -437,7 +437,7 @@ void FieldProbe::ComputeDiags (int step)
             auto const np = pti.numParticles();
             if (update_particles_moving_window)
             {
-                const auto temp_warpx_moving_window = warpx.moving_window_dir;
+                const auto temp_warpx_moving_window = WarpX::moving_window_dir;
                 amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
                 {
                     amrex::ParticleReal xp, yp, zp;

@@ -46,7 +46,7 @@ public:
      * \param lev   The refinement level
      * \return The integral
      */
-    amrex::Real ComputeNorm2RZ(const amrex::MultiFab& field, const int lev);
+    amrex::Real ComputeNorm2RZ(const amrex::MultiFab& field, int lev);
 
 };
 

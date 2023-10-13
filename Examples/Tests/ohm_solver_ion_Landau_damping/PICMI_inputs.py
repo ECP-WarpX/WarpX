@@ -14,13 +14,15 @@ import dill
 from mpi4py import MPI as mpi
 import numpy as np
 
-from pywarpx import callbacks, fields, picmi
+from pywarpx import callbacks, fields, particle_containers, picmi
 
 constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(verbose=0)
+simulation = picmi.Simulation(
+    warpx_serialize_initial_conditions=True,
+    verbose=0)
 # make a shorthand for simulation.extension since we use it a lot
 sim_ext = simulation.extension
 
@@ -216,11 +218,21 @@ class IonLandauDamping(object):
         callbacks.installafterstep(self.text_diag)
 
         if self.test:
+            particle_diag = picmi.ParticleDiagnostic(
+                name='diag1',
+                period=100,
+                write_dir='.',
+                species=[self.ions],
+                data_list = ['ux', 'uy', 'uz', 'x', 'y', 'weighting'],
+                warpx_file_prefix=f'Python_ohms_law_solver_landau_damping_{self.dim}d_plt',
+            )
+            simulation.add_diagnostic(particle_diag)
             field_diag = picmi.FieldDiagnostic(
-                name='field_diag',
+                name='diag1',
                 grid=self.grid,
                 period=100,
                 write_dir='.',
+                data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
                 warpx_file_prefix=f'Python_ohms_law_solver_landau_damping_{self.dim}d_plt',
             )
             simulation.add_diagnostic(field_diag)
@@ -247,6 +259,11 @@ class IonLandauDamping(object):
         simulation.initialize_inputs()
         simulation.initialize_warpx()
 
+        # get ion particle container wrapper
+        self.ion_part_container = particle_containers.ParticleContainerWrapper(
+            'ions'
+        )
+
     def text_diag(self):
         """Diagnostic function to print out timing data and particle numbers."""
         step = sim_ext.getistep(0)
@@ -259,7 +276,7 @@ class IonLandauDamping(object):
 
         status_dict = {
             'step': step,
-            'nplive ions': sim_ext.get_particle_count('ions', False),
+            'nplive ions': self.ion_part_container.nps,
             'wall_time': wall_time,
             'step_rate': step_rate,
             "diag_steps": self.diag_steps,

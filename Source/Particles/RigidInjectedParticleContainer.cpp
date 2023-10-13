@@ -74,7 +74,7 @@ void RigidInjectedParticleContainer::InitData()
     // Perform Lorentz transform of `z_inject_plane`
     const amrex::Real t_boost = WarpX::GetInstance().gett_new(0);
     amrex::Real zinject_plane_boost = zinject_plane/WarpX::gamma_boost
-                                    - WarpX::beta_boost*t_boost;
+                                    - WarpX::beta_boost*PhysConst::c*t_boost;
     zinject_plane_levels.resize(finestLevel()+1, zinject_plane_boost);
 
     AddParticles(0); // Note - add on level 0

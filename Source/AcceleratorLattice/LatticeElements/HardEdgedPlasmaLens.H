@@ -12,7 +12,6 @@
 
 #include <AMReX_REAL.H>
 #include <AMReX_ParmParse.H>
-#include <AMReX_Vector.H>
 #include <AMReX_GpuContainers.H>
 
 #include <string>

@@ -15,13 +15,15 @@ import dill
 from mpi4py import MPI as mpi
 import numpy as np
 
-from pywarpx import callbacks, fields, picmi
+from pywarpx import callbacks, fields, particle_containers, picmi
 
 constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(verbose=0)
+simulation = picmi.Simulation(
+    warpx_serialize_initial_conditions=True,
+    verbose=0)
 # make a shorthand for simulation.extension since we use it a lot
 sim_ext = simulation.extension
 
@@ -256,10 +258,20 @@ class HybridPICBeamInstability(object):
         callbacks.installafterstep(self.text_diag)
 
         if self.test:
+            part_diag = picmi.ParticleDiagnostic(
+                name='diag1',
+                period=1250,
+                species=[self.ions, self.beam_ions],
+                data_list = ['ux', 'uy', 'uz', 'x', 'weighting'],
+                write_dir='.',
+                warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
+            )
+            simulation.add_diagnostic(part_diag)
             field_diag = picmi.FieldDiagnostic(
-                name='field_diag',
+                name='diag1',
                 grid=self.grid,
                 period=1250,
+                data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
                 write_dir='.',
                 warpx_file_prefix='Python_ohms_law_solver_ion_beam_1d_plt',
             )
@@ -310,6 +322,15 @@ class HybridPICBeamInstability(object):
         simulation.initialize_inputs()
         simulation.initialize_warpx()
 
+        # create particle container wrapper for the ion species to access
+        # particle data
+        self.ion_container_wrapper = particle_containers.ParticleContainerWrapper(
+            self.ions.name
+        )
+        self.beam_ion_container_wrapper = particle_containers.ParticleContainerWrapper(
+            self.beam_ions.name
+        )
+
     def _create_data_arrays(self):
         self.prev_time = time.time()
         self.start_time = self.prev_time
@@ -331,8 +352,8 @@ class HybridPICBeamInstability(object):
 
         status_dict = {
             'step': step,
-            'nplive beam ions': sim_ext.get_particle_count('beam_ions', False),
-            'nplive ions': sim_ext.get_particle_count('ions', False),
+            'nplive beam ions': self.ion_container_wrapper.nps,
+            'nplive ions': self.beam_ion_container_wrapper.nps,
             'wall_time': wall_time,
             'step_rate': step_rate,
             "diag_steps": self.diag_steps,
@@ -367,8 +388,8 @@ class HybridPICBeamInstability(object):
             self._create_data_arrays()
 
         # get the simulation energies
-        Ec_par, Ec_perp = self._get_kinetic_energy(self.ions)
-        Eb_par, Eb_perp = self._get_kinetic_energy(self.beam_ions)
+        Ec_par, Ec_perp = self._get_kinetic_energy(self.ion_container_wrapper)
+        Eb_par, Eb_perp = self._get_kinetic_energy(self.beam_ion_container_wrapper)
 
         if sim_ext.getMyProc() != 0:
             return
@@ -381,14 +402,14 @@ class HybridPICBeamInstability(object):
         if step == self.total_steps:
             np.save('diags/energies.npy', run.energy_vals)
 
-    def _get_kinetic_energy(self, species):
+    def _get_kinetic_energy(self, container_wrapper):
         """Utility function to retrieve the total kinetic energy in the
         simulation."""
         try:
-            ux = np.concatenate(sim_ext.get_particle_ux(species.name))
-            uy = np.concatenate(sim_ext.get_particle_uy(species.name))
-            uz = np.concatenate(sim_ext.get_particle_uz(species.name))
-            w = np.concatenate(sim_ext.get_particle_weight(species.name))
+            ux = np.concatenate(container_wrapper.get_particle_ux())
+            uy = np.concatenate(container_wrapper.get_particle_uy())
+            uz = np.concatenate(container_wrapper.get_particle_uz())
+            w = np.concatenate(container_wrapper.get_particle_weight())
         except ValueError:
             return 0.0, 0.0
 

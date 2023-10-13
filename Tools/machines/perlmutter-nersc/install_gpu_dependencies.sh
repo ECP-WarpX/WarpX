@@ -48,7 +48,7 @@ python3 -m pip uninstall -qqq -y mpi4py 2>/dev/null || true
 if [ -d $HOME/src/c-blosc ]
 then
   cd $HOME/src/c-blosc
-  git fetch
+  git fetch --prune
   git checkout v1.21.1
   cd -
 else
@@ -63,7 +63,7 @@ rm -rf $HOME/src/c-blosc-pm-gpu-build
 if [ -d $HOME/src/adios2 ]
 then
   cd $HOME/src/adios2
-  git fetch
+  git fetch --prune
   git checkout v2.8.3
   cd -
 else
@@ -78,7 +78,7 @@ rm -rf $HOME/src/adios2-pm-gpu-build
 if [ -d $HOME/src/blaspp ]
 then
   cd $HOME/src/blaspp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -
@@ -94,7 +94,7 @@ rm -rf $HOME/src/blaspp-pm-gpu-build
 if [ -d $HOME/src/lapackpp ]
 then
   cd $HOME/src/lapackpp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -
@@ -127,6 +127,7 @@ python3 -m pip install --upgrade matplotlib
 python3 -m pip install --upgrade yt
 # install or update WarpX dependencies such as picmistandard
 python3 -m pip install --upgrade -r $HOME/src/warpx/requirements.txt
+python3 -m pip install cupy-cuda11x  # CUDA 11.7 compatible wheel
 # optional: for libEnsemble
 python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 # optional: for optimas (based on libEnsemble & ax->botorch->gpytorch->pytorch)

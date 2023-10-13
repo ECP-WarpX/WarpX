@@ -12,7 +12,7 @@ jobs:
 #   https://github.com/ComputationalRadiationPhysics/picongpu/blob/0.5.0/share/picongpu/dockerfiles/ubuntu-1604/Dockerfile
 #   https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/
   build_nvcc:
-    name: NVCC 11.0.3 SP
+    name: NVCC 11.3 SP
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
     env:
@@ -30,7 +30,7 @@ jobs:
         python-version: '3.x'
     - name: install dependencies
       run: |
-        .github/workflows/dependencies/nvcc11-0.sh
+        .github/workflows/dependencies/nvcc11-3.sh
     - name: CCache Cache
       uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
@@ -65,7 +65,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=CUDA         \
           -DWarpX_EB=ON                \
-          -DWarpX_LIB=ON               \
+          -DWarpX_PYTHON=ON            \
           -DAMReX_CUDA_ARCH=6.0        \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
@@ -77,7 +77,8 @@ jobs:
 
         python3 -m pip install --upgrade pip setuptools wheel
         export WARPX_MPI=ON
-        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+        export PYWARPX_LIB_DIR=$PWD/build_sp/lib/site-packages/pywarpx/
+        python3 -m pip wheel .
         python3 -m pip install *.whl
 
   # make sure legacy build system continues to build, i.e., that we don't forget
@@ -110,7 +111,7 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex
-        cd ../amrex && git checkout --detach 23.07 && cd -
+        cd ../amrex && git checkout --detach 23.10 && cd -
         make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE USE_CCACHE=TRUE -j 2
 
   build_nvhpc21-11-nvcc:
@@ -161,7 +162,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=CUDA         \
           -DWarpX_EB=ON                \
-          -DWarpX_LIB=ON               \
+          -DWarpX_PYTHON=ON            \
           -DAMReX_CUDA_ARCH=8.0        \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PSATD=ON             \
@@ -172,9 +173,10 @@ jobs:
         # work-around for mpi4py 3.1.1 build system issue with using
         # a GNU-built Python executable with non-GNU Python modules
         #   https://github.com/mpi4py/mpi4py/issues/114
-        export CFLAGS="-noswitcherror"
+        #export CFLAGS="-noswitcherror"
 
-        python3 -m pip install --upgrade pip setuptools wheel
-        export WARPX_MPI=ON
-        PYWARPX_LIB_DIR=$PWD/build/lib python3 -m pip wheel .
-        python3 -m pip install *.whl
+        #python3 -m pip install --upgrade pip setuptools wheel
+        #export WARPX_MPI=ON
+        #export PYWARPX_LIB_DIR=$PWD/build/lib/site-packages/pywarpx/
+        #python3 -m pip wheel .
+        #python3 -m pip install *.whl

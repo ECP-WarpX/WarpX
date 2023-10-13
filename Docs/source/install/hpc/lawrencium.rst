@@ -92,7 +92,7 @@ Optionally, download and install Python packages for :ref:`PICMI <usage-picmi>` 
    # optional: for libEnsemble
    python3 -m pip install -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile the application executable:
 
 .. code-block:: bash
 
@@ -126,7 +126,7 @@ Or, if you are *developing*, do a quick PICMI install of a *single geometry* (se
 .. code-block:: bash
 
    # find dependencies & configure
-   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_LIB=ON -DWarpX_DIMS=RZ
+   cmake -S . -B build -DWarpX_COMPUTE=CUDA -DWarpX_PSATD=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS=RZ
 
    # build and then call "python3 -m pip install ..."
    cmake --build build --target pip_install -j 12
