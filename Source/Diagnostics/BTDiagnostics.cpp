@@ -994,7 +994,7 @@ BTDiagnostics::GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev)
 }
 
 void
-BTDiagnostics::Flush (int i_buffer)
+BTDiagnostics::Flush (int i_buffer, bool force_flush)
 {
     auto & warpx = WarpX::GetInstance();
     std::string file_name = m_file_prefix;
@@ -1003,7 +1003,7 @@ BTDiagnostics::Flush (int i_buffer)
         file_name = file_name+"/buffer";
     }
     SetSnapshotFullStatus(i_buffer);
-    const bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 );
+    const bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) || force_flush;
     bool const use_pinned_pc = true;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];

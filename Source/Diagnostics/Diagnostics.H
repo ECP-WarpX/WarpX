@@ -58,8 +58,10 @@ public:
      *   multiple times yet.
      *  When these are fixed, the implementation of Flush should be in Diagnostics.cpp
      * \param[in] i_buffer index of the buffer data to be flushed.
+     * \param[in] force_flush only used for BTD, whether to do a complete flush of the data
+     * (including metadata listing the total number of particles) even if the snapshot is incomplete
      */
-    virtual void Flush (int i_buffer) = 0;
+    virtual void Flush (int i_buffer, bool force_flush) = 0;
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     void InitData ();
     void InitDataBeforeRestart ();
