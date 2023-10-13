@@ -98,6 +98,10 @@ public:
         const amrex::ParmParse pp_collision_name(collision_name);
         pp_collision_name.queryarr("product_species", m_product_species);
         m_have_product_species = !m_product_species.empty();
+        if ((std::is_same<CopyTransformFunctorType, NoParticleCreationFunc>::value) & (m_have_product_species)) {
+            WARPX_ABORT_WITH_MESSAGE( "Binary collision " + collision_name +
+                " does not produce species. Thus, `product_species` should not be specified in the input script." );
+        }
         m_copy_transform_functor = CopyTransformFunctorType(collision_name, mypc);
     }
 

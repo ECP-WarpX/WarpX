@@ -73,6 +73,12 @@ embedded_boundary = picmi.EmbeddedBoundary(
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = diagnostic_intervals,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_particle_scrape_plt'
+)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -102,6 +108,7 @@ sim.add_species(
     )
 )
 
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 
 ##########################

@@ -42,14 +42,6 @@ namespace SpeciesUtils {
         const bool mass_is_specified =
             utils::parser::queryWithParser(pp_species_name, "mass", mass);
 
-        if ( charge_is_specified && species_is_specified ){
-            ablastr::warn_manager::WMRecordWarning("Species",
-                "Both '" + species_name +  ".charge' and " +
-                    species_name + ".species_type' are specified.\n" +
-                    species_name + ".charge' will take precedence.\n");
-
-        }
-
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             charge_is_specified ||
             species_is_specified ||
@@ -57,6 +49,22 @@ namespace SpeciesUtils {
             "Need to specify at least one of species_type or charge for species '" +
             species_name + "'."
         );
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            mass_is_specified ||
+            species_is_specified ||
+            (injection_style == "external_file"),
+            "Need to specify at least one of species_type or mass for species '" +
+            species_name + "'."
+        );
+
+        if ( charge_is_specified && species_is_specified ){
+            ablastr::warn_manager::WMRecordWarning("Species",
+                "Both '" + species_name +  ".charge' and " +
+                    species_name + ".species_type' are specified.\n" +
+                    species_name + ".charge' will take precedence.\n");
+
+        }
 
         if ( mass_is_specified && species_is_specified ){
             ablastr::warn_manager::WMRecordWarning("Species",
