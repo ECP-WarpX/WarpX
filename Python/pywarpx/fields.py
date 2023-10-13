@@ -350,22 +350,26 @@ class _MultiFABWrapper(object):
             The slice of the intersection relative to the global array where the data from individual block will go
         """
         box = mfi.tilebox()
-        if self.include_ghosts and with_internal_ghosts:
-            box.grow(self.mf.n_grow_vect())
+        box_small_end = box.small_end
+        box_big_end = box.big_end
+        if self.include_ghosts:
+            nghosts = self.mf.n_grow_vect()
+            if with_internal_ghosts:
+                box.grow(self.mf.n_grow_vect())
+                box_small_end = box.small_end
+                box_big_end = box.big_end
+            else:
+                # When available, this could be somewhat simplified by using box.grow_low and box.grow_high,
+                # which would remove the need of the temporary copies of small_end and big_end.
+                min_box = self.mf.box_array().minimal_box()
+                for i in range(self.dim):
+                    if box_small_end[i] == min_box.small_end[i]:
+                        box_small_end[i] -= nghosts[i]
+                    if box_big_end[i] == min_box.big_end[i]:
+                        box_big_end[i] += nghosts[i]
 
-        ilo = self._get_indices(box.small_end, 0)
-        ihi = self._get_indices(box.big_end, 0)
-
-        if self.include_ghosts and not with_internal_ghosts:
-            # Only include the ghost cells on the outer edge of the full domain.
-            # Note that this could be done above, but needs box.growLo and box.growHi.
-            nghosts = self._get_indices(self.mf.n_grow_vect(), 0)
-            min_box = self.mf.box_array().minimal_box()
-            for i in range(3):
-                if ilo[i] == min_box.small_end[i]:
-                    ilo[i] -= nghosts[i]
-                if ihi[i] == min_box.big_end[i]:
-                    ihi[i] += nghosts[i]
+        ilo = self._get_indices(box_small_end, 0)
+        ihi = self._get_indices(box_big_end, 0)
 
         # Add 1 to the upper end to be consistent with the slicing notation
         ihi_p1 = [i + 1 for i in ihi]
