@@ -15,7 +15,7 @@ import dill
 from mpi4py import MPI as mpi
 import numpy as np
 
-from pywarpx import callbacks, fields, particle_containers, picmi
+from pywarpx import callbacks, fields, libwarpx, particle_containers, picmi
 
 constants = picmi.constants
 
@@ -23,9 +23,8 @@ comm = mpi.COMM_WORLD
 
 simulation = picmi.Simulation(
     warpx_serialize_initial_conditions=True,
-    verbose=0)
-# make a shorthand for simulation.extension since we use it a lot
-sim_ext = simulation.extension
+    verbose=0
+)
 
 
 class HybridPICBeamInstability(object):
@@ -336,13 +335,17 @@ class HybridPICBeamInstability(object):
         self.start_time = self.prev_time
         self.prev_step = 0
 
-        if sim_ext.getMyProc() == 0:
+        if libwarpx.amr.ParallelDescriptor.MyProc() == 0:
             # allocate arrays for storing energy values
             self.energy_vals = np.zeros((self.total_steps//self.diag_steps, 4))
 
     def text_diag(self):
         """Diagnostic function to print out timing data and particle numbers."""
-        step = sim_ext.getistep(0)
+        step = simulation.extension.warpx.getistep(lev=0) - 1
+
+        if not hasattr(self, "prev_time"):
+            self._create_data_arrays()
+
         if step % (self.total_steps // 10) != 0:
             return
 
@@ -368,7 +371,7 @@ class HybridPICBeamInstability(object):
             "{step_rate:4.2f} steps/s"
         )
 
-        if sim_ext.getMyProc() == 0:
+        if libwarpx.amr.ParallelDescriptor.MyProc() == 0:
             print(diag_string.format(**status_dict))
 
         self.prev_time = time.time()
@@ -377,8 +380,8 @@ class HybridPICBeamInstability(object):
     def energy_diagnostic(self):
         """Diangostic to get the total, magnetic and kinetic energies in the
         simulation."""
+        step = simulation.extension.warpx.getistep(lev=0) - 1
 
-        step = sim_ext.getistep(0)
         if step % self.diag_steps != 1:
             return
 
@@ -391,7 +394,7 @@ class HybridPICBeamInstability(object):
         Ec_par, Ec_perp = self._get_kinetic_energy(self.ion_container_wrapper)
         Eb_par, Eb_perp = self._get_kinetic_energy(self.beam_ion_container_wrapper)
 
-        if sim_ext.getMyProc() != 0:
+        if libwarpx.amr.ParallelDescriptor.MyProc() != 0:
             return
 
         self.energy_vals[idx, 0] = Ec_par
@@ -426,14 +429,14 @@ class HybridPICBeamInstability(object):
         similar format as the reduced diagnostic so that the same analysis
         script can be used regardless of the simulation dimension.
         """
-        step = sim_ext.getistep() - 1
+        step = simulation.extension.warpx.getistep(lev=0) - 1
 
         if step % self.diag_steps != 0:
             return
 
         By_warpx = fields.BxWrapper()[...]
 
-        if sim_ext.getMyProc() != 0:
+        if libwarpx.amr.ParallelDescriptor.MyProc() != 0:
             return
 
         t = step * self.dt
