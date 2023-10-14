@@ -3273,14 +3273,16 @@ void
 WarpX::AllocInitMultiFabFromModel (
     std::unique_ptr<amrex::MultiFab>& mf,
     amrex::MultiFab& mf_model,
+    const int level,
     const std::string& name,
     std::optional<const amrex::Real> initial_value)
 {
-    const auto tag = amrex::MFInfo().SetTag(name);
+    const auto name_with_suffix = TagWithLevelSuffix(name, level);
+    const auto tag = amrex::MFInfo().SetTag(name_with_suffix);
     mf = std::make_unique<amrex::MultiFab>(mf_model.boxArray(), mf_model.DistributionMap(),
                                            mf_model.nComp(), mf_model.nGrowVect(), tag);
     if (initial_value) {
         mf->setVal(*initial_value);
     }
-    WarpX::AddToMultiFabMap(name, mf);
+    multifab_map[name_with_suffix] = mf.get();
 }

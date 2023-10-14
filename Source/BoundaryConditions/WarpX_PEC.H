@@ -192,6 +192,7 @@ using namespace amrex;
                         GuardCell = true;
                         // tangential components are inverted across PEC boundary
                         if (is_tangent_to_PEC) sign *= -1._rt;
+#if (defined WARPX_DIM_RZ)
                         if (icomp == 0 && idim == 0 && iside == 1) {
                             // Add radial scale so that drEr/dr = 0.
                             // This only works for the first guard cell and with

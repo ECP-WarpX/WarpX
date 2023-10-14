@@ -84,19 +84,19 @@ WarpX::EvolveImplicitPicardInit (const int lev)
     // Strange, the WarpX::DistributionMap(0) is not consistent with Ex_fp.DistributionMap()???
 
     // Note that the *_fp will be the n+theta and n+1 time level
-    AllocInitMultiFabFromModel(Efield_n[lev][0], *Efield_fp[0][0], "Efield_n[0]");
-    AllocInitMultiFabFromModel(Efield_n[lev][1], *Efield_fp[0][1], "Efield_n[1]");
-    AllocInitMultiFabFromModel(Efield_n[lev][2], *Efield_fp[0][2], "Efield_n[2]");
-    AllocInitMultiFabFromModel(Bfield_n[lev][0], *Bfield_fp[0][0], "Bfield_n[0]");
-    AllocInitMultiFabFromModel(Bfield_n[lev][1], *Bfield_fp[0][1], "Bfield_n[1]");
-    AllocInitMultiFabFromModel(Bfield_n[lev][2], *Bfield_fp[0][2], "Bfield_n[2]");
+    AllocInitMultiFabFromModel(Efield_n[lev][0], *Efield_fp[0][0], lev, "Efield_n[0]");
+    AllocInitMultiFabFromModel(Efield_n[lev][1], *Efield_fp[0][1], lev, "Efield_n[1]");
+    AllocInitMultiFabFromModel(Efield_n[lev][2], *Efield_fp[0][2], lev, "Efield_n[2]");
+    AllocInitMultiFabFromModel(Bfield_n[lev][0], *Bfield_fp[0][0], lev, "Bfield_n[0]");
+    AllocInitMultiFabFromModel(Bfield_n[lev][1], *Bfield_fp[0][1], lev, "Bfield_n[1]");
+    AllocInitMultiFabFromModel(Bfield_n[lev][2], *Bfield_fp[0][2], lev, "Bfield_n[2]");
 
-    AllocInitMultiFabFromModel(Efield_save[lev][0], *Efield_fp[0][0], "Efield_save[0]");
-    AllocInitMultiFabFromModel(Efield_save[lev][1], *Efield_fp[0][1], "Efield_save[1]");
-    AllocInitMultiFabFromModel(Efield_save[lev][2], *Efield_fp[0][2], "Efield_save[2]");
-    AllocInitMultiFabFromModel(Bfield_save[lev][0], *Bfield_fp[0][0], "Bfield_save[0]");
-    AllocInitMultiFabFromModel(Bfield_save[lev][1], *Bfield_fp[0][1], "Bfield_save[1]");
-    AllocInitMultiFabFromModel(Bfield_save[lev][2], *Bfield_fp[0][2], "Bfield_save[2]");
+    AllocInitMultiFabFromModel(Efield_save[lev][0], *Efield_fp[0][0], lev, "Efield_save[0]");
+    AllocInitMultiFabFromModel(Efield_save[lev][1], *Efield_fp[0][1], lev, "Efield_save[1]");
+    AllocInitMultiFabFromModel(Efield_save[lev][2], *Efield_fp[0][2], lev, "Efield_save[2]");
+    AllocInitMultiFabFromModel(Bfield_save[lev][0], *Bfield_fp[0][0], lev, "Bfield_save[0]");
+    AllocInitMultiFabFromModel(Bfield_save[lev][1], *Bfield_fp[0][1], lev, "Bfield_save[1]");
+    AllocInitMultiFabFromModel(Bfield_save[lev][2], *Bfield_fp[0][2], lev, "Bfield_save[2]");
 
 }
 
@@ -125,7 +125,7 @@ WarpX::EvolveImplicitPicard (int numsteps)
         WARPX_PROFILE("WarpX::EvolveImplicitPicard::step");
         Real evolve_time_beg_step = amrex::second();
 
-        CheckSignals();
+        SignalHandling::CheckSignals();
 
         multi_diags->NewIteration();
 

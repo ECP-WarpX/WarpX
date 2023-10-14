@@ -467,6 +467,7 @@ public:
     static void AllocInitMultiFabFromModel (
         std::unique_ptr<amrex::MultiFab>& mf,
         amrex::MultiFab& mf_model,
+        int level,
         const std::string& name,
         std::optional<const amrex::Real> initial_value = {});
 

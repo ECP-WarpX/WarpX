@@ -70,6 +70,7 @@ void doDepositionShapeNKernel(const amrex::ParticleReal xp,
                               const amrex::Dim3 lo,
                               const int n_rz_azimuthal_modes)
 {
+    using namespace amrex::literals;
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
@@ -446,6 +447,7 @@ void doDepositionShapeNImplicit(const GetParticlePosition& GetPosition,
                                 amrex::Real* cost,
                                 const long load_balance_costs_update_algo)
 {
+    using namespace amrex::literals;
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
