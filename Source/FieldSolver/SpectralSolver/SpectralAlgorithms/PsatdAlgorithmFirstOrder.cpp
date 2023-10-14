@@ -28,7 +28,7 @@
 
 using namespace amrex::literals;
 
-PsatdAlgorithmFirstOrder::PsatdAlgorithmFirstOrder(
+PsatdAlgorithmFirstOrder::PsatdAlgorithmFirstOrder (
     const SpectralKSpace& spectral_kspace,
     const amrex::DistributionMapping& dm,
     const SpectralFieldIndex& spectral_index,
@@ -48,8 +48,7 @@ PsatdAlgorithmFirstOrder::PsatdAlgorithmFirstOrder(
     m_rho_in_time(rho_in_time)
 {}
 
-void
-PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
+void PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
 {
     const bool div_cleaning = m_div_cleaning;
 
@@ -360,8 +359,7 @@ void PsatdAlgorithmFirstOrder::CurrentCorrection (SpectralFieldData& field_data)
         "Current correction not implemented for first-order PSATD equations");
 }
 
-void
-PsatdAlgorithmFirstOrder::VayDeposition (SpectralFieldData& field_data)
+void PsatdAlgorithmFirstOrder::VayDeposition (SpectralFieldData& field_data)
 {
     // Profiling
     BL_PROFILE("PsatdAlgorithmFirstOrder::VayDeposition()");
