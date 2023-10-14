@@ -108,7 +108,8 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         calculating phi from rho."""
 
         left_voltage = 0.0
-        right_voltage = eval(self.right_voltage, {'t':sim.extension.warpx.gett_new(0)})
+        t = self.sim.extension.warpx.gett_new(0)
+        right_voltage = eval(self.right_voltage)
 
         # Construct b vector
         rho = -self.rho_data / constants.ep0
@@ -299,6 +300,7 @@ class CapacitiveDischargeExample(object):
             warpx_load_balance_intervals=self.max_steps//5000,
             verbose=self.test
         )
+        self.solver.sim = self.sim
 
         self.sim.add_species(
             self.electrons,
@@ -312,7 +314,6 @@ class CapacitiveDischargeExample(object):
                 n_macroparticle_per_cell=[self.seed_nppc], grid=self.grid
             )
         )
-        self.solver.sim_ext = self.sim.extension
 
         #######################################################################
         # Add diagnostics for the CI test to be happy                         #
@@ -324,6 +325,7 @@ class CapacitiveDischargeExample(object):
             file_prefix = 'Python_background_mcc_1d_tridiag_plt'
 
         particle_diag = picmi.ParticleDiagnostic(
+            species=[self.electrons, self.ions],
             name='diag1',
             period=0,
             write_dir='.',

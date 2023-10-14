@@ -343,6 +343,9 @@ class HybridPICBeamInstability(object):
         """Diagnostic function to print out timing data and particle numbers."""
         step = simulation.extension.warpx.getistep(lev=0) - 1
 
+        if not hasattr(self, "prev_time"):
+            self._create_data_arrays()
+
         if step % (self.total_steps // 10) != 0:
             return
 
