@@ -319,13 +319,13 @@ with scraped particle data.
 
 .. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.deposit_charge_density
 
-.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.get_particle_boundary_buffer_size
+.. autofunction:: pywarpx.particle_containers.ParticleBoundaryBufferWrapper.get_particle_boundary_buffer_size
 
-.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.get_particle_boundary_buffer_structs
+.. autofunction:: pywarpx.particle_containers.ParticleBoundaryBufferWrapper.get_particle_boundary_buffer_structs
 
-.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.get_particle_boundary_buffer
+.. autofunction:: pywarpx.particle_containers.ParticleBoundaryBufferWrapper.get_particle_boundary_buffer
 
-.. autofunction:: pywarpx.particle_containers.ParticleContainerWrapper.clearParticleBoundaryBuffer
+.. autofunction:: pywarpx.particle_containers.ParticleBoundaryBufferWrapper.clearParticleBoundaryBuffer
 
 The embedded boundary conditions can be modified when using the electrostatic solver.
 
