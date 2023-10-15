@@ -29,6 +29,7 @@ class ParticleContainerWrapper(object):
         mypc = libwarpx.warpx.multi_particle_container()
         self.particle_container = mypc.get_particle_container_from_name(self.name)
 
+
     def add_particles(self, x=None, y=None, z=None, ux=None, uy=None,
                       uz=None, w=None, unique_particles=True, **kwargs):
         '''
@@ -149,6 +150,7 @@ class ParticleContainerWrapper(object):
             nattr, attr, nattr_int, attr_int, unique_particles
         )
 
+
     def get_particle_count(self, local=False):
         '''
         Get the number of particles of this species in the simulation.
@@ -169,6 +171,7 @@ class ParticleContainerWrapper(object):
         return self.particle_container.total_number_of_particles(True, local)
     nps = property(get_particle_count)
 
+
     def add_real_comp(self, pid_name, comm=True):
         '''
         Add a real component to the particle data array.
@@ -183,6 +186,7 @@ class ParticleContainerWrapper(object):
             Should the component be communicated
         '''
         self.particle_container.add_real_comp(pid_name, comm)
+
 
     def get_particle_structs(self, level, copy_to_host=False):
         '''
@@ -233,6 +237,7 @@ class ParticleContainerWrapper(object):
                 particle_data.append(aos_arr)
         return particle_data
 
+
     def get_particle_arrays(self, comp_name, level, copy_to_host=False):
         '''
         This returns a list of numpy or cupy arrays containing the particle array data
@@ -278,6 +283,7 @@ class ParticleContainerWrapper(object):
 
         return data_array
 
+
     def get_particle_id(self, level=0, copy_to_host=False):
         '''
         Return a list of numpy or cupy arrays containing the particle 'id'
@@ -302,6 +308,7 @@ class ParticleContainerWrapper(object):
         structs = self.get_particle_structs(level, copy_to_host)
         return [libwarpx.amr.unpack_ids(struct['cpuid']) for struct in structs]
 
+
     def get_particle_cpu(self, level=0, copy_to_host=False):
         '''
         Return a list of numpy or cupy arrays containing the particle 'cpu'
@@ -325,6 +332,7 @@ class ParticleContainerWrapper(object):
         '''
         structs = self.get_particle_structs(level, copy_to_host)
         return [libwarpx.amr.unpack_cpus(struct['cpuid']) for struct in structs]
+
 
     def get_particle_x(self, level=0, copy_to_host=False):
         '''
@@ -363,6 +371,7 @@ class ParticleContainerWrapper(object):
             raise Exception('get_particle_x: There is no x coordinate with 1D Cartesian')
     xp = property(get_particle_x)
 
+
     def get_particle_y(self, level=0, copy_to_host=False):
         '''
         Return a list of numpy or cupy arrays containing the particle 'y'
@@ -400,6 +409,7 @@ class ParticleContainerWrapper(object):
             raise Exception('get_particle_y: There is no y coordinate with 1D or 2D Cartesian')
     yp = property(get_particle_y)
 
+
     def get_particle_r(self, level=0, copy_to_host=False):
         '''
         Return a list of numpy or cupy arrays containing the particle 'r'
@@ -431,6 +441,7 @@ class ParticleContainerWrapper(object):
         elif libwarpx.geometry_dim == '2d' or libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_r: There is no r coordinate with 1D or 2D Cartesian')
     rp = property(get_particle_r)
+
 
     def get_particle_theta(self, level=0, copy_to_host=False):
         '''
@@ -464,6 +475,7 @@ class ParticleContainerWrapper(object):
             raise Exception('get_particle_theta: There is no theta coordinate with 1D or 2D Cartesian')
     thetap = property(get_particle_theta)
 
+
     def get_particle_z(self, level=0, copy_to_host=False):
         '''
         Return a list of numpy or cupy arrays containing the particle 'z'
@@ -494,6 +506,7 @@ class ParticleContainerWrapper(object):
             return [struct['x'] for struct in structs]
     zp = property(get_particle_z)
 
+
     def get_particle_weight(self, level=0, copy_to_host=False):
         '''
         Return a list of numpy or cupy arrays containing the particle
@@ -517,6 +530,7 @@ class ParticleContainerWrapper(object):
         '''
         return self.get_particle_arrays('w', level, copy_to_host=copy_to_host)
     wp = property(get_particle_weight)
+
 
     def get_particle_ux(self, level=0, copy_to_host=False):
         '''
@@ -542,6 +556,7 @@ class ParticleContainerWrapper(object):
         return self.get_particle_arrays('ux', level, copy_to_host=copy_to_host)
     uxp = property(get_particle_ux)
 
+
     def get_particle_uy(self, level=0, copy_to_host=False):
         '''
         Return a list of numpy or cupy arrays containing the particle
@@ -565,6 +580,7 @@ class ParticleContainerWrapper(object):
         '''
         return self.get_particle_arrays('uy', level, copy_to_host=copy_to_host)
     uyp = property(get_particle_uy)
+
 
     def get_particle_uz(self, level=0, copy_to_host=False):
         '''
@@ -591,6 +607,7 @@ class ParticleContainerWrapper(object):
         return self.get_particle_arrays('uz', level, copy_to_host=copy_to_host)
     uzp = property(get_particle_uz)
 
+
     def get_species_charge_sum(self, local=False):
         '''
         Returns the total charge in the simulation due to the given species.
@@ -606,29 +623,68 @@ class ParticleContainerWrapper(object):
             ctypes.c_char_p(species_name.encode('utf-8')), local
         )
 
+
     def getex(self):
         raise NotImplementedError('Particle E fields not supported')
     ex = property(getex)
+
 
     def getey(self):
         raise NotImplementedError('Particle E fields not supported')
     ey = property(getey)
 
+
     def getez(self):
         raise NotImplementedError('Particle E fields not supported')
     ez = property(getez)
+
 
     def getbx(self):
         raise NotImplementedError('Particle B fields not supported')
     bx = property(getbx)
 
+
     def getby(self):
         raise NotImplementedError('Particle B fields not supported')
     by = property(getby)
 
+
     def getbz(self):
         raise NotImplementedError('Particle B fields not supported')
     bz = property(getbz)
+
+
+    def deposit_charge_density(self, level, clear_rho=True, sync_rho=True):
+        '''
+        Deposit this species' charge density in rho_fp in order to
+        access that data via pywarpx.fields.RhoFPWrapper().
+        Parameters
+        ----------
+        species_name   : str
+            The species name that will be deposited.
+        level          : int
+            Which AMR level to retrieve scraped particle data from.
+        clear_rho      : bool
+            If True, zero out rho_fp before deposition.
+        sync_rho       : bool
+            If True, perform MPI exchange and properly set boundary cells for rho_fp.
+        '''
+        rho_fp = libwarpx.warpx.multifab(f'rho_fp[level={level}]')
+
+        if rho_fp is None:
+            raise RuntimeError("Multifab `rho_fp` is not allocated.")
+
+        if clear_rho:
+            rho_fp.set_val(0.0)
+
+        # deposit the charge density from the desired species
+        self.particle_container.deposit_charge(rho_fp, level)
+
+        if libwarpx.geometry_dim == 'rz':
+            libwarpx.warpx.apply_inverse_volume_scaling_to_charge_density(rho_fp, level)
+
+        if sync_rho:
+            libwarpx.warpx.sync_rho()
 
 
 class ParticleBoundaryBufferWrapper(object):
@@ -639,6 +695,7 @@ class ParticleBoundaryBufferWrapper(object):
 
     def __init__(self):
         self.particle_buffer = libwarpx.warpx.get_particle_boundary_buffer()
+
 
     def get_particle_boundary_buffer_size(self, species_name, boundary, local=False):
         '''
@@ -663,6 +720,7 @@ class ParticleBoundaryBufferWrapper(object):
             species_name, self._get_boundary_number(boundary),
             local=local
         )
+
 
     def get_particle_boundary_buffer_structs(self, species_name, boundary, level):
         '''
@@ -706,6 +764,7 @@ class ParticleBoundaryBufferWrapper(object):
         _libc.free(particles_per_tile)
         _libc.free(data)
         return particle_data
+
 
     def get_particle_boundary_buffer(self, species_name, boundary, comp_name, level):
         '''
@@ -755,6 +814,7 @@ class ParticleBoundaryBufferWrapper(object):
 
         return data_array
 
+
     def clear_buffer(self):
         '''
 
@@ -762,6 +822,7 @@ class ParticleBoundaryBufferWrapper(object):
 
         '''
         self.particle_buffer.clear_particles()
+
 
     def _get_boundary_number(self, boundary):
         '''

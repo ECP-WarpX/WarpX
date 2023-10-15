@@ -8,9 +8,6 @@ foreach(D IN LISTS WarpX_DIMS)
       PRIVATE
         # callback hooks
         WarpX_py.cpp
-
-        # legacy C wrapper APIs
-        WarpXWrappers.cpp
     )
     if(WarpX_PYTHON)
         target_sources(pyWarpX_${SD}

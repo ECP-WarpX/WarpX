@@ -1130,7 +1130,8 @@ WarpX::ReadParameters ()
         }
 #endif
 
-        // note: current_deposition must be set after maxwell_solver is already determined,
+        // note: current_deposition must be set after maxwell_solver (electromagnetic_solver_id) or
+        //       do_electrostatic (electrostatic_solver_id) are already determined,
         //       because its default depends on the solver selection
         current_deposition_algo = GetAlgorithmInteger(pp_algo, "current_deposition");
         charge_deposition_algo = GetAlgorithmInteger(pp_algo, "charge_deposition");
