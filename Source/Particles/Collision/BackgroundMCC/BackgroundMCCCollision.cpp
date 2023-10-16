@@ -181,7 +181,8 @@ BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processe
         E_step = (energy_step < E_step) ? energy_step : E_step;
     }
 
-    for (amrex::ParticleReal E = E_start; E < E_end; E+=E_step) {
+    amrex::ParticleReal E = E_start;
+    while(E < E_end){
         amrex::ParticleReal sigma_E = 0.0;
 
         // loop through all collision pathways
@@ -199,6 +200,8 @@ BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processe
         if (nu > nu_max) {
             nu_max = nu;
         }
+
+        E+=E_step;
     }
     return nu_max;
 }
@@ -285,14 +288,14 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
             {
                 amrex::Gpu::synchronize();
             }
-            amrex::Real wt = amrex::second();
+            auto wt = static_cast<amrex::Real>(amrex::second());
 
             doBackgroundCollisionsWithinTile(pti, cur_time);
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
@@ -322,7 +325,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
     // get collision parameters
     auto scattering_processes = m_scattering_processes_exe.data();
-    int const process_count   = m_scattering_processes_exe.size();
+    auto const process_count  = static_cast<int>(m_scattering_processes_exe.size());
 
     auto const total_collision_prob = m_total_collision_prob;
     auto const nu_max = m_nu_max;
@@ -379,7 +382,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               vy = uy[ip] - ua_y;
                               vz = uz[ip] - ua_z;
                               v_coll2 = (vx*vx + vy*vy + vz*vz);
-                              v_coll = sqrt(v_coll2);
+                              v_coll = std::sqrt(v_coll2);
 
                               // calculate the collision energy in eV
                               ParticleUtils::getCollisionEnergy(v_coll2, m, M, gamma, E_coll);
@@ -389,7 +392,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                   auto const& scattering_process = *(scattering_processes + i);
 
                                   // get collision cross-section
-                                  sigma_E = scattering_process.getCrossSection(E_coll);
+                                  sigma_E = scattering_process.getCrossSection(static_cast<amrex::ParticleReal>(E_coll));
 
                                   // calculate normalized collision frequency
                                   nu_i += n_a * sigma_E * v_coll / nu_max;
@@ -411,16 +414,17 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                   // At this point the given particle has been chosen for a collision
                                   // and so we perform the needed calculations to transform to the
                                   // COM frame.
-                                  uCOM_x = m * vx / (gamma * m + M);
-                                  uCOM_y = m * vy / (gamma * m + M);
-                                  uCOM_z = m * vz / (gamma * m + M);
+                                  uCOM_x = static_cast<amrex::ParticleReal>(m * vx / (gamma * m + M));
+                                  uCOM_y = static_cast<amrex::ParticleReal>(m * vy / (gamma * m + M));
+                                  uCOM_z = static_cast<amrex::ParticleReal>(m * vz / (gamma * m + M));
 
                                   // subtract any energy penalty of the collision from the
                                   // projectile energy
                                   if (scattering_process.m_energy_penalty > 0.0_prt) {
                                       ParticleUtils::getEnergy(v_coll2, m, E_coll);
                                       E_coll = (E_coll - scattering_process.m_energy_penalty) * PhysConst::q_e;
-                                      auto scale_fac = sqrt(E_coll * (E_coll + 2.0_prt*mc2) / c2) / m / v_coll;
+                                      const auto scale_fac = static_cast<amrex::ParticleReal>(
+                                        std::sqrt(E_coll * (E_coll + 2.0_prt*mc2) / c2) / m / v_coll);
                                       vx *= scale_fac;
                                       vy *= scale_fac;
                                       vz *= scale_fac;
@@ -484,7 +488,7 @@ void BackgroundMCCCollision::doBackgroundIonization
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         auto& elec_tile = species1.ParticlesAt(lev, pti);
         auto& ion_tile = species2.ParticlesAt(lev, pti);
@@ -508,7 +512,7 @@ void BackgroundMCCCollision::doBackgroundIonization
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
         }
     }

@@ -178,7 +178,7 @@ public:
                 {
                     amrex::Gpu::synchronize();
                 }
-                amrex::Real wt = amrex::second();
+                auto wt = static_cast<amrex::Real>(amrex::second());
 
                 doCollisionsWithinTile( dt, lev, mfi, species1, species2, product_species_vector,
                                          copy_species1_data, copy_species2_data);
@@ -186,7 +186,7 @@ public:
                 if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
                     amrex::Gpu::synchronize();
-                    wt = amrex::second() - wt;
+                    wt = static_cast<amrex::Real>(amrex::second()) - wt;
                     amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
                 }
             }
@@ -247,7 +247,7 @@ public:
             // Loop over cells, and collide the particles in each cell
 
             // Extract low-level data
-            int const n_cells = bins_1.numBins();
+            auto const n_cells = static_cast<int>(bins_1.numBins());
             // - Species 1
             const auto soa_1 = ptile_1.getParticleTileData();
             index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
@@ -371,7 +371,7 @@ public:
 
             for (int i = 0; i < n_product_species; i++)
             {
-                setNewParticleIDs(*(tile_products_data[i]), products_np[i], num_added[i]);
+                setNewParticleIDs(*(tile_products_data[i]), static_cast<int>(products_np[i]), num_added[i]);
             }
         }
         else // species_1 != species_2
@@ -387,7 +387,7 @@ public:
             // Loop over cells, and collide the particles in each cell
 
             // Extract low-level data
-            int const n_cells = bins_1.numBins();
+            auto const n_cells = static_cast<int>(bins_1.numBins());
             // - Species 1
             const auto soa_1 = ptile_1.getParticleTileData();
             index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
@@ -532,7 +532,7 @@ public:
 
             for (int i = 0; i < n_product_species; i++)
             {
-                setNewParticleIDs(*(tile_products_data[i]), products_np[i], num_added[i]);
+                setNewParticleIDs(*(tile_products_data[i]), static_cast<int>(products_np[i]), num_added[i]);
             }
 
         } // end if ( m_isSameSpecies)

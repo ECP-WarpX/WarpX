@@ -1,10 +1,11 @@
-Checks: '-*,
-    bugprone-*
+Checks: '
+    -*,
+    bugprone-*,
         -bugprone-easily-swappable-parameters,
         -bugprone-implicit-widening-of-multiplication-result,
         -bugprone-misplaced-widening-cast,
         -bugprone-unchecked-optional-access,
-    cert-*
+    cert-*,
         -cert-err58-cpp,
     cppcoreguidelines-avoid-goto,
     cppcoreguidelines-interfaces-global-init,
@@ -74,9 +75,12 @@ Checks: '-*,
     '
 
 CheckOptions:
-- key:          modernize-pass-by-value.ValuesOnly
-  value:        'true'
+- key:          bugprone-narrowing-conversions.WarnOnIntegerToFloatingPointNarrowingConversion
+  value:        "false"
 - key:          misc-definitions-in-headers.HeaderFileExtensions
   value:        "H,"
+- key:          modernize-pass-by-value.ValuesOnly
+  value:        "true"
+
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'

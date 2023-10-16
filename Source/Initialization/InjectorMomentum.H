@@ -231,12 +231,14 @@ struct InjectorMomentumUniform
         : m_ux_min(a_ux_min), m_uy_min(a_uy_min), m_uz_min(a_uz_min),
           m_ux_max(a_ux_max), m_uy_max(a_uy_max), m_uz_max(a_uz_max)
         {
+            using namespace amrex;
+
             m_Dux = m_ux_max - m_ux_min;
             m_Duy = m_uy_max - m_uy_min;
             m_Duz = m_uz_max - m_uz_min;
-            m_ux_h = 0.5 * (m_ux_max + m_ux_min);
-            m_uy_h = 0.5 * (m_uy_max + m_uy_min);
-            m_uz_h = 0.5 * (m_uz_max + m_uz_min);
+            m_ux_h = 0.5_rt * (m_ux_max + m_ux_min);
+            m_uy_h = 0.5_rt * (m_uy_max + m_uy_min);
+            m_uz_h = 0.5_rt * (m_uz_max + m_uz_min);
         }
 
     AMREX_GPU_HOST_DEVICE

@@ -35,7 +35,7 @@ public:
     /** Move operator for NamedComponentParticleContainer */
     ParticleBoundaryBuffer& operator= ( ParticleBoundaryBuffer && ) = default;
 
-    int numSpecies() const { return getSpeciesNames().size(); }
+    int numSpecies() const { return static_cast<int>(getSpeciesNames().size()); }
 
     const std::vector<std::string>& getSpeciesNames() const;
 
