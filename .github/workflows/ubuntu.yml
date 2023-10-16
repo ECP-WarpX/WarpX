@@ -199,6 +199,7 @@ jobs:
           -DWarpX_APP=OFF              \
           -DWarpX_PSATD=ON             \
           -DWarpX_PYTHON=ON            \
+          -DWarpX_QED_TOOLS=ON         \
           -DWarpX_QED_TABLE_GEN=ON
         cmake --build build -j 2 --target pip_install
 
@@ -207,34 +208,6 @@ jobs:
         export OMP_NUM_THREADS=1
         mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
 
-  build_qed_table_tools:
-    name: Clang QED table tools
-    runs-on: ubuntu-20.04
-    if: github.event.pull_request.draft == false
-    env:
-      # On CI for this test, Ninja is slower than the default:
-      #CMAKE_GENERATOR: Ninja
-      # setuptools/mp4py work-around, see
-      #   https://github.com/mpi4py/mpi4py/pull/159
-      #   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
-      SETUPTOOLS_USE_DISTUTILS: stdlib
-    steps:
-    - uses: actions/checkout@v2
-    - name: install dependencies
-      run: |
-        .github/workflows/dependencies/pyfull.sh
-    - name: build WarpX & QED tools
-      run: |
-        export CC=$(which clang)
-        export CXX=$(which clang++)
-        cmake -S . -B build_qed \
-         -DWarpX_APP=ON \
-         -DWarpX_LIB=OFF \
-         -DWarpX_MPI=ON \
-         -DWarpX_QED_TOOLS=ON \
-         -DWarpX_QED_TABLE_GEN=ON
-        cmake --build build_qed -j 6
-
     - name: run table_generator_tool
       run: |
-        ./.github/workflows/scripts/checkQEDTableGenerator.sh
+        .github/workflows/scripts/checkQEDTableGenerator.sh

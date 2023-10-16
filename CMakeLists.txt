@@ -58,21 +58,24 @@ set_default_install_dirs()
 # Options and Variants ########################################################
 #
 include(CMakeDependentOption)
-option(WarpX_APP           "Build the WarpX executable application"                                         ON)
-option(WarpX_ASCENT        "Ascent in situ diagnostics"                                                    OFF)
-option(WarpX_EB            "Embedded boundary support"                                                     OFF)
+option(WarpX_APP           "Build the WarpX executable application"     ON)
+option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
+option(WarpX_EB            "Embedded boundary support"                  OFF)
 cmake_dependent_option(WarpX_GPUCLOCK
                            "Add GPU kernel timers (cost function)"      ON
-                           "WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP" OFF)
+                           "WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP"
+                                                                        OFF)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
 option(WarpX_PYTHON        "Python bindings"                            OFF)
 option(WarpX_SENSEI        "SENSEI in situ diagnostics"                 OFF)
-option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
-option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
-option(WarpX_QED_TOOLS     "Build external tool to generate QED lookup tables (requires PICSAR and Boost)" OFF)
+option(WarpX_QED           "QED support (requires PICSAR)"              ON)
+option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)"
+                                                                        OFF)
+option(WarpX_QED_TOOLS     "Build external tool to generate QED lookup tables (requires PICSAR and Boost)"
+                                                                        OFF)
 
 set(WarpX_DIMS_VALUES 1 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality <1;2;3;RZ>")
@@ -391,6 +394,9 @@ if(WarpX_LIB)
     add_subdirectory(Source/Particles)
     add_subdirectory(Source/Python)
     add_subdirectory(Source/Utils)
+endif()
+if(WarpX_QED_TOOLS)
+    add_subdirectory(Tools/QedTablesUtils)
 endif()
 
 # Interprocedural optimization (IPO) / Link-Time Optimization (LTO)

@@ -17,15 +17,10 @@ function(find_picsar)
             set(PXRMP_QED_TABLEGEN OFF CACHE INTERNAL "")
         endif()
 
-        # Add QED tools folder
-        if(WarpX_QED_TOOLS)
-            add_subdirectory(Tools/QedTablesUtils)
-        endif()
-
         # Enable or disable OpenMP for lookup tables generation
         if(PXRMP_QED_TABLEGEN)
             if(WarpX_QED_TABLES_GEN_OMP STREQUAL AUTO)
-                find_package(OpenMP)
+                find_package(OpenMP REQUIRED CXX)
                 if(OpenMP_CXX_FOUND)
                     set(PXRMP_QED_OMP ON CACHE INTERNAL "")
                 else()
@@ -96,7 +91,7 @@ function(find_picsar)
         #message(STATUS "PICSAR: Using version '${PICSAR_VERSION}'")
     else()
         # not supported by PICSAR (yet)
-        #find_package(PICSAR 23.08 CONFIG REQUIRED QED)
+        #find_package(PICSAR 23.08 CONFIG REQUIRED QED OMP)
         #message(STATUS "PICSAR: Found version '${PICSAR_VERSION}'")
         message(FATAL_ERROR "PICSAR: Cannot be used as externally installed "
             "library yet. "
@@ -125,5 +120,4 @@ if(WarpX_QED)
         ON "WarpX_QED" OFF)
 
     find_picsar()
-
 endif()
