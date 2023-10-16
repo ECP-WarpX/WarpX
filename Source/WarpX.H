@@ -1052,12 +1052,12 @@ public:
 #endif
 
     void InitEB ();
+
+#ifdef AMREX_USE_EB
     /**
     * \brief Compute the length of the mesh edges. Here the length is a value in [0, 1].
     *        An edge of length 0 is fully covered.
     */
-
-#ifdef AMREX_USE_EB
     static void ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
                                     const amrex::EBFArrayBoxFactory& eb_fact);
     /**
@@ -1086,10 +1086,11 @@ public:
     *        Here we cannot know if a cell is intruded or not so we initialize all stable cells with 1
     */
     void MarkCells();
+#endif
+
     /**
     * \brief Compute the level set function used for particle-boundary interaction.
     */
-#endif
     void ComputeDistanceToEB ();
     /**
     * \brief Auxiliary function to count the amount of faces which still need to be extended
