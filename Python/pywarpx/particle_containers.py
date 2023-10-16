@@ -722,15 +722,23 @@ class ParticleBoundaryBufferWrapper(object):
         )
 
 
-    def get_particle_boundary_buffer_structs(self, species_name, boundary, level):
+    def get_particle_boundary_buffer_structs(
+            self, species_name, boundary, level, copy_to_host=False
+        ):
         '''
         This returns a list of numpy or cupy arrays containing the particle struct data
         for a species that has been scraped by a specific simulation boundary. The
         particle data is represented as a structured array and contains the
         particle 'x', 'y', 'z', and 'idcpu'.
 
-        The data for the arrays are not copied, but share the underlying
-        memory buffer with WarpX. The arrays are fully writeable.
+        Unless copy_to_host is specified, the data for the structs are
+        not copied, but share the underlying memory buffer with WarpX. The
+        arrays are fully writeable.
+
+        Note that cupy does not support structs:
+        https://github.com/cupy/cupy/issues/2031
+        and will return arrays of binary blobs for the AoS (DP: "|V24"). If copied
+        to host via copy_to_host, we correct for the right numpy AoS type.
 
         Parameters
         ----------
@@ -743,26 +751,38 @@ class ParticleBoundaryBufferWrapper(object):
             form x/y/z_hi/lo or eb.
 
         level        : int
-            Which AMR level to retrieve scraped particle data from.
-        '''
+            The refinement level to reference (default=0)
 
-        particles_per_tile = _LP_c_int()
-        num_tiles = ctypes.c_int(0)
-        data = self.libwarpx_so.warpx_getParticleBoundaryBufferStructs(
-                ctypes.c_char_p(species_name.encode('utf-8')),
-                self._get_boundary_number(boundary), level,
-                ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle struct data
+        '''
+        particle_container = self.particle_buffer.get_particle_container(
+            species_name, self._get_boundary_number(boundary)
         )
 
         particle_data = []
-        for i in range(num_tiles.value):
-            if particles_per_tile[i] == 0:
-                continue
-            arr = self._array1d_from_pointer(data[i], self._p_dtype, particles_per_tile[i])
-            particle_data.append(arr)
-
-        _libc.free(particles_per_tile)
-        _libc.free(data)
+        for pti in libwarpx.libwarpx_so.BoundaryBufferParIter(particle_container, level):
+            if copy_to_host:
+                particle_data.append(pti.aos().to_numpy(copy=True))
+            else:
+                if libwarpx.amr.Config.have_gpu:
+                    libwarpx.amr.Print(
+                        "get_particle_structs: cupy does not yet support structs. "
+                        "https://github.com/cupy/cupy/issues/2031"
+                        "Did you mean copy_to_host=True?"
+                    )
+                xp, cupy_status = load_cupy()
+                if cupy_status is not None:
+                    libwarpx.amr.Print(cupy_status)
+                aos_arr = xp.array(pti.aos(), copy=False)   # void blobs for cupy
+                particle_data.append(aos_arr)
         return particle_data
 
 
@@ -805,13 +825,11 @@ class ParticleBoundaryBufferWrapper(object):
                 soa = pti.soa()
                 data_array.append(xp.array(soa.GetIntData(comp_idx), copy=False))
         else:
-            mypc = libwarpx.warpx.multi_particle_container()
-            sim_part_container_wrapper = mypc.get_particle_container_from_name(species_name)
-            comp_idx = sim_part_container_wrapper.get_comp_index(comp_name)
+            container_wrapper = ParticleContainerWrapper(species_name)
+            comp_idx = container_wrapper.particle_container.get_comp_index(comp_name)
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
                 data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
-
         return data_array
 
 
