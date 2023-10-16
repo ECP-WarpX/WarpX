@@ -316,6 +316,7 @@ def astrophysical_factor(E):
 def pb_cross_section(E):
     ## E is in keV
     ## Returns cross section in b using the fits described in A. Tentori and F. Belloni,
+    ## Nucl. Fusion, 63, 086001 (2023)
     E_MeV = E/1.e3
     return astrophysical_factor(E)/E_MeV * np.exp(-np.sqrt(E_Gamow_MeV / E_MeV))
 
