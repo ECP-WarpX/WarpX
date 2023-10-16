@@ -115,11 +115,15 @@ Diagnostics::BaseReadParameters ()
     if (!pfield_varnames_specified){
         m_pfield_varnames = {};
     }
+
 #ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_pfield_varnames.size() == 0,
-        "Input error: cannot use particle_fields_to_plot with RZ"
-    );
+    if (pfield_varnames_specified){
+        ablastr::warn_manager::WMRecordWarning(
+            "Diagnostics",
+            "Particle field diagnostics will output the 0th mode only.",
+            ablastr::warn_manager::WarnPriority::low
+        );
+    }
 #endif
 
     // Get parser strings for particle fields and generate map of parsers
@@ -127,6 +131,7 @@ Diagnostics::BaseReadParameters ()
     std::string filter_parser_str;
     const amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
+
         bool do_average = true;
         pp_diag_pfield.query((var + ".do_average").c_str(), do_average);
         m_pfield_do_average.push_back(do_average);
@@ -134,7 +139,7 @@ Diagnostics::BaseReadParameters ()
             pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)"), parser_str);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            parser_str != "",
+            !parser_str.empty(),
             std::string("Input error: cannot find parser string for ").append(var).append(" in file. ").append(
                 m_diag_name).append(".particle_fields.").append(var).append("(x,y,z,ux,uy,uz) is required"));
 

@@ -2,12 +2,13 @@
 #
 # This file is part of WarpX.
 #
-# Authors: David Grote, Roelof Groenewald
+# Authors: David Grote, Roelof Groenewald, Axel Huebl
 #
 # License: BSD-3-Clause-LBNL
 
 import numpy as np
 
+from .LoadThirdParty import load_cupy
 from ._libwarpx import libwarpx
 
 
@@ -27,6 +28,7 @@ class ParticleContainerWrapper(object):
         # grab the desired particle container
         mypc = libwarpx.warpx.multi_particle_container()
         self.particle_container = mypc.get_particle_container_from_name(self.name)
+
 
     def add_particles(self, x=None, y=None, z=None, ux=None, uy=None,
                       uz=None, w=None, unique_particles=True, **kwargs):
@@ -148,6 +150,7 @@ class ParticleContainerWrapper(object):
             nattr, attr, nattr_int, attr_int, unique_particles
         )
 
+
     def get_particle_count(self, local=False):
         '''
         Get the number of particles of this species in the simulation.
@@ -168,6 +171,7 @@ class ParticleContainerWrapper(object):
         return self.particle_container.total_number_of_particles(True, local)
     nps = property(get_particle_count)
 
+
     def add_real_comp(self, pid_name, comm=True):
         '''
         Add a real component to the particle data array.
@@ -183,40 +187,65 @@ class ParticleContainerWrapper(object):
         '''
         self.particle_container.add_real_comp(pid_name, comm)
 
-    def get_particle_structs(self, level):
-        '''
-        This returns a list of numpy arrays containing the particle struct data
-        on each tile for this process. The particle data is represented as a structured
-        numpy array and contains the particle 'x', 'y', 'z', and 'idcpu'.
 
-        The data for the numpy arrays are not copied, but share the underlying
-        memory buffer with WarpX. The numpy arrays are fully writeable.
+    def get_particle_structs(self, level, copy_to_host=False):
+        '''
+        This returns a list of numpy or cupy arrays containing the particle struct data
+        on each tile for this process. The particle data is represented as a structured
+        array and contains the particle 'x', 'y', 'z', and 'idcpu'.
+
+        Unless copy_to_host is specified, the data for the structs are
+        not copied, but share the underlying memory buffer with WarpX. The
+        arrays are fully writeable.
+
+        Note that cupy does not support structs:
+        https://github.com/cupy/cupy/issues/2031
+        and will return arrays of binary blobs for the AoS (DP: "|V24"). If copied
+        to host via copy_to_host, we correct for the right numpy AoS type.
 
         Parameters
         ----------
 
         level        : int
-            The refinement level to reference
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
 
         Returns
         -------
 
-        List of numpy arrays
+        List of arrays
             The requested particle struct data
         '''
         particle_data = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
-            aos_arr = np.array(pti.aos(), copy=False)
-            particle_data.append(aos_arr)
+            if copy_to_host:
+                particle_data.append(pti.aos().to_numpy(copy=True))
+            else:
+                if libwarpx.amr.Config.have_gpu:
+                    libwarpx.amr.Print(
+                        "get_particle_structs: cupy does not yet support structs. "
+                        "https://github.com/cupy/cupy/issues/2031"
+                        "Did you mean copy_to_host=True?"
+                    )
+                xp, cupy_status = load_cupy()
+                if cupy_status is not None:
+                    libwarpx.amr.Print(cupy_status)
+                aos_arr = xp.array(pti.aos(), copy=False)   # void blobs for cupy
+                particle_data.append(aos_arr)
         return particle_data
 
-    def get_particle_arrays(self, comp_name, level):
+
+    def get_particle_arrays(self, comp_name, level, copy_to_host=False):
         '''
-        This returns a list of numpy arrays containing the particle array data
+        This returns a list of numpy or cupy arrays containing the particle array data
         on each tile for this process.
 
-        The data for the numpy arrays are not copied, but share the underlying
-        memory buffer with WarpX. The numpy arrays are fully writeable.
+        Unless copy_to_host is specified, the data for the arrays are not
+        copied, but share the underlying memory buffer with WarpX. The
+        arrays are fully writeable.
 
         Parameters
         ----------
@@ -224,13 +253,17 @@ class ParticleContainerWrapper(object):
         comp_name      : str
             The component of the array data that will be returned
 
-        level        : int
-            The refinement level to reference
+        level          : int
+            The refinement level to reference (default=0)
+
+        copy_to_host   : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
 
         Returns
         -------
 
-        List of numpy arrays
+        List of arrays
             The requested particle array data
         '''
         comp_idx = self.particle_container.get_comp_index(comp_name)
@@ -238,101 +271,233 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            data_array.append(np.array(soa.GetRealData(comp_idx), copy=False))
+            idx = soa.GetRealData(comp_idx)
+            if copy_to_host:
+                data_array.append(idx.to_numpy(copy=True))
+            else:
+                xp, cupy_status = load_cupy()
+                if cupy_status is not None:
+                    libwarpx.amr.Print(cupy_status)
+
+                data_array.append(xp.array(idx, copy=False))
+
         return data_array
 
-    def get_particle_id(self, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle 'id'
+    def get_particle_id(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle 'id'
         numbers on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle ids
         '''
-        structs = self.get_particle_structs(level)
+        structs = self.get_particle_structs(level, copy_to_host)
         return [libwarpx.amr.unpack_ids(struct['cpuid']) for struct in structs]
 
-    def get_particle_cpu(self, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle 'cpu'
+    def get_particle_cpu(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle 'cpu'
         numbers on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle cpus
         '''
-        structs = self.get_particle_structs(level)
+        structs = self.get_particle_structs(level, copy_to_host)
         return [libwarpx.amr.unpack_cpus(struct['cpuid']) for struct in structs]
 
-    def get_particle_x(self, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle 'x'
+    def get_particle_x(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle 'x'
         positions on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle x position
         '''
-        structs = self.get_particle_structs(level)
+        if copy_to_host:
+            # Use the numpy version of cosine
+            xp = np
+        else:
+            xp, cupy_status = load_cupy()
+
+        structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == '3d' or libwarpx.geometry_dim == '2d':
             return [struct['x'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
-            return [struct['x']*np.cos(theta) for struct, theta in zip(structs, self.get_particle_theta(species_name))]
+            theta = self.get_particle_theta(level, copy_to_host)
+            return [struct['x']*xp.cos(theta) for struct, theta in zip(structs, theta)]
         elif libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_x: There is no x coordinate with 1D Cartesian')
     xp = property(get_particle_x)
 
-    def get_particle_y(self, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle 'y'
+    def get_particle_y(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle 'y'
         positions on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle y position
         '''
-        structs = self.get_particle_structs(level)
+        if copy_to_host:
+            # Use the numpy version of sine
+            xp = np
+        else:
+            xp, cupy_status = load_cupy()
+
+        structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == '3d':
             return [struct['y'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz':
-            return [struct['x']*np.sin(theta) for struct, theta in zip(structs, self.get_particle_theta(species_name))]
+            theta = self.get_particle_theta(level, copy_to_host)
+            return [struct['x']*xp.sin(theta) for struct, theta in zip(structs, theta)]
         elif libwarpx.geometry_dim == '1d' or libwarpx.geometry_dim == '2d':
             raise Exception('get_particle_y: There is no y coordinate with 1D or 2D Cartesian')
     yp = property(get_particle_y)
 
-    def get_particle_r(self, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle 'r'
+    def get_particle_r(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle 'r'
         positions on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle r position
         '''
-        structs = self.get_particle_structs(level)
+        xp, cupy_status = load_cupy()
+
+        structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == 'rz':
             return [struct['x'] for struct in structs]
         elif libwarpx.geometry_dim == '3d':
-            return [np.sqrt(struct['x']**2 + struct['y']**2) for struct in structs]
+            return [xp.sqrt(struct['x']**2 + struct['y']**2) for struct in structs]
         elif libwarpx.geometry_dim == '2d' or libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_r: There is no r coordinate with 1D or 2D Cartesian')
     rp = property(get_particle_r)
 
-    def get_particle_theta(self, species_name, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle
+    def get_particle_theta(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle
         theta on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle theta position
         '''
+        xp, cupy_status = load_cupy()
+
         if libwarpx.geometry_dim == 'rz':
-            return self.get_particle_arrays('theta', level)
+            return self.get_particle_arrays('theta', level, copy_to_host)
         elif libwarpx.geometry_dim == '3d':
-            structs = self.get_particle_structs(level)
-            return [np.arctan2(struct['y'], struct['x']) for struct in structs]
+            structs = self.get_particle_structs(level, copy_to_host)
+            return [xp.arctan2(struct['y'], struct['x']) for struct in structs]
         elif libwarpx.geometry_dim == '2d' or libwarpx.geometry_dim == '1d':
             raise Exception('get_particle_theta: There is no theta coordinate with 1D or 2D Cartesian')
     thetap = property(get_particle_theta)
 
-    def get_particle_z(self, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle 'z'
+    def get_particle_z(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle 'z'
         positions on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle z position
         '''
-        structs = self.get_particle_structs(level)
+        structs = self.get_particle_structs(level, copy_to_host)
         if libwarpx.geometry_dim == '3d':
             return [struct['z'] for struct in structs]
         elif libwarpx.geometry_dim == 'rz' or libwarpx.geometry_dim == '2d':
@@ -341,46 +506,107 @@ class ParticleContainerWrapper(object):
             return [struct['x'] for struct in structs]
     zp = property(get_particle_z)
 
-    def get_particle_weight(self, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle
+    def get_particle_weight(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle
         weight on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle weight
         '''
-        return self.get_particle_arrays('w', level)
+        return self.get_particle_arrays('w', level, copy_to_host=copy_to_host)
     wp = property(get_particle_weight)
 
-    def get_particle_ux(self, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle
+    def get_particle_ux(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle
         x momentum on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle x momentum
         '''
-        return self.get_particle_arrays('ux', level)
+        return self.get_particle_arrays('ux', level, copy_to_host=copy_to_host)
     uxp = property(get_particle_ux)
 
-    def get_particle_uy(self, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle
+    def get_particle_uy(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle
         y momentum on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle y momentum
         '''
-        return self.get_particle_arrays('uy', level)
+        return self.get_particle_arrays('uy', level, copy_to_host=copy_to_host)
     uyp = property(get_particle_uy)
 
-    def get_particle_uz(self, level=0):
-        '''
 
-        Return a list of numpy arrays containing the particle
+    def get_particle_uz(self, level=0, copy_to_host=False):
+        '''
+        Return a list of numpy or cupy arrays containing the particle
         z momentum on each tile.
 
+        Parameters
+        ----------
+
+        level        : int
+            The refinement level to reference (default=0)
+
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle z momentum
         '''
 
-        return self.get_particle_arrays('uz', level)
+        return self.get_particle_arrays('uz', level, copy_to_host=copy_to_host)
     uzp = property(get_particle_uz)
+
 
     def get_species_charge_sum(self, local=False):
         '''
@@ -397,29 +623,68 @@ class ParticleContainerWrapper(object):
             ctypes.c_char_p(species_name.encode('utf-8')), local
         )
 
+
     def getex(self):
         raise NotImplementedError('Particle E fields not supported')
     ex = property(getex)
+
 
     def getey(self):
         raise NotImplementedError('Particle E fields not supported')
     ey = property(getey)
 
+
     def getez(self):
         raise NotImplementedError('Particle E fields not supported')
     ez = property(getez)
+
 
     def getbx(self):
         raise NotImplementedError('Particle B fields not supported')
     bx = property(getbx)
 
+
     def getby(self):
         raise NotImplementedError('Particle B fields not supported')
     by = property(getby)
 
+
     def getbz(self):
         raise NotImplementedError('Particle B fields not supported')
     bz = property(getbz)
+
+
+    def deposit_charge_density(self, level, clear_rho=True, sync_rho=True):
+        '''
+        Deposit this species' charge density in rho_fp in order to
+        access that data via pywarpx.fields.RhoFPWrapper().
+        Parameters
+        ----------
+        species_name   : str
+            The species name that will be deposited.
+        level          : int
+            Which AMR level to retrieve scraped particle data from.
+        clear_rho      : bool
+            If True, zero out rho_fp before deposition.
+        sync_rho       : bool
+            If True, perform MPI exchange and properly set boundary cells for rho_fp.
+        '''
+        rho_fp = libwarpx.warpx.multifab(f'rho_fp[level={level}]')
+
+        if rho_fp is None:
+            raise RuntimeError("Multifab `rho_fp` is not allocated.")
+
+        if clear_rho:
+            rho_fp.set_val(0.0)
+
+        # deposit the charge density from the desired species
+        self.particle_container.deposit_charge(rho_fp, level)
+
+        if libwarpx.geometry_dim == 'rz':
+            libwarpx.warpx.apply_inverse_volume_scaling_to_charge_density(rho_fp, level)
+
+        if sync_rho:
+            libwarpx.warpx.sync_rho()
 
 
 class ParticleBoundaryBufferWrapper(object):
@@ -430,6 +695,7 @@ class ParticleBoundaryBufferWrapper(object):
 
     def __init__(self):
         self.particle_buffer = libwarpx.warpx.get_particle_boundary_buffer()
+
 
     def get_particle_boundary_buffer_size(self, species_name, boundary, local=False):
         '''
@@ -455,15 +721,24 @@ class ParticleBoundaryBufferWrapper(object):
             local=local
         )
 
-    def get_particle_boundary_buffer_structs(self, species_name, boundary, level):
+
+    def get_particle_boundary_buffer_structs(
+            self, species_name, boundary, level, copy_to_host=False
+        ):
         '''
-        This returns a list of numpy arrays containing the particle struct data
+        This returns a list of numpy or cupy arrays containing the particle struct data
         for a species that has been scraped by a specific simulation boundary. The
-        particle data is represented as a structured numpy array and contains the
+        particle data is represented as a structured array and contains the
         particle 'x', 'y', 'z', and 'idcpu'.
 
-        The data for the numpy arrays are not copied, but share the underlying
-        memory buffer with WarpX. The numpy arrays are fully writeable.
+        Unless copy_to_host is specified, the data for the structs are
+        not copied, but share the underlying memory buffer with WarpX. The
+        arrays are fully writeable.
+
+        Note that cupy does not support structs:
+        https://github.com/cupy/cupy/issues/2031
+        and will return arrays of binary blobs for the AoS (DP: "|V24"). If copied
+        to host via copy_to_host, we correct for the right numpy AoS type.
 
         Parameters
         ----------
@@ -476,35 +751,48 @@ class ParticleBoundaryBufferWrapper(object):
             form x/y/z_hi/lo or eb.
 
         level        : int
-            Which AMR level to retrieve scraped particle data from.
-        '''
+            The refinement level to reference (default=0)
 
-        particles_per_tile = _LP_c_int()
-        num_tiles = ctypes.c_int(0)
-        data = self.libwarpx_so.warpx_getParticleBoundaryBufferStructs(
-                ctypes.c_char_p(species_name.encode('utf-8')),
-                self._get_boundary_number(boundary), level,
-                ctypes.byref(num_tiles), ctypes.byref(particles_per_tile)
+        copy_to_host : bool
+            For GPU-enabled runs, one can either return the GPU
+            arrays (the default) or force a device-to-host copy.
+
+        Returns
+        -------
+
+        List of arrays
+            The requested particle struct data
+        '''
+        particle_container = self.particle_buffer.get_particle_container(
+            species_name, self._get_boundary_number(boundary)
         )
 
         particle_data = []
-        for i in range(num_tiles.value):
-            if particles_per_tile[i] == 0:
-                continue
-            arr = self._array1d_from_pointer(data[i], self._p_dtype, particles_per_tile[i])
-            particle_data.append(arr)
-
-        _libc.free(particles_per_tile)
-        _libc.free(data)
+        for pti in libwarpx.libwarpx_so.BoundaryBufferParIter(particle_container, level):
+            if copy_to_host:
+                particle_data.append(pti.aos().to_numpy(copy=True))
+            else:
+                if libwarpx.amr.Config.have_gpu:
+                    libwarpx.amr.Print(
+                        "get_particle_structs: cupy does not yet support structs. "
+                        "https://github.com/cupy/cupy/issues/2031"
+                        "Did you mean copy_to_host=True?"
+                    )
+                xp, cupy_status = load_cupy()
+                if cupy_status is not None:
+                    libwarpx.amr.Print(cupy_status)
+                aos_arr = xp.array(pti.aos(), copy=False)   # void blobs for cupy
+                particle_data.append(aos_arr)
         return particle_data
+
 
     def get_particle_boundary_buffer(self, species_name, boundary, comp_name, level):
         '''
-        This returns a list of numpy arrays containing the particle array data
+        This returns a list of numpy or cupy arrays containing the particle array data
         for a species that has been scraped by a specific simulation boundary.
 
-        The data for the numpy arrays are not copied, but share the underlying
-        memory buffer with WarpX. The numpy arrays are fully writeable.
+        The data for the arrays are not copied, but share the underlying
+        memory buffer with WarpX. The arrays are fully writeable.
 
         Parameters
         ----------
@@ -524,6 +812,8 @@ class ParticleBoundaryBufferWrapper(object):
             level          : int
                 Which AMR level to retrieve scraped particle data from.
         '''
+        xp, cupy_status = load_cupy()
+
         part_container = self.particle_buffer.get_particle_container(
             species_name, self._get_boundary_number(boundary)
         )
@@ -533,16 +823,15 @@ class ParticleBoundaryBufferWrapper(object):
             comp_idx = part_container.num_int_comps() - 1
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
-                data_array.append(np.array(soa.GetIntData(comp_idx), copy=False))
+                data_array.append(xp.array(soa.GetIntData(comp_idx), copy=False))
         else:
-            mypc = libwarpx.warpx.multi_particle_container()
-            sim_part_container_wrapper = mypc.get_particle_container_from_name(species_name)
-            comp_idx = sim_part_container_wrapper.get_comp_index(comp_name)
+            container_wrapper = ParticleContainerWrapper(species_name)
+            comp_idx = container_wrapper.particle_container.get_comp_index(comp_name)
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
-                data_array.append(np.array(soa.GetRealData(comp_idx), copy=False))
-
+                data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
         return data_array
+
 
     def clear_buffer(self):
         '''
@@ -551,6 +840,7 @@ class ParticleBoundaryBufferWrapper(object):
 
         '''
         self.particle_buffer.clear_particles()
+
 
     def _get_boundary_number(self, boundary):
         '''

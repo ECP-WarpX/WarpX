@@ -79,11 +79,6 @@ public:
     WarpXParticleContainer&
     GetParticleContainerFromName (const std::string& name) const;
 
-#ifdef WARPX_USE_OPENPMD
-    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int index) {
-      return  allcontainers[index];
-    }
-#endif
     std::array<amrex::ParticleReal, 3> meanParticleVelocity(int index) {
         return allcontainers[index]->meanParticleVelocity();
     }
@@ -132,7 +127,7 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
+    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(int lev);
 
     /**
      * \brief Deposit charge density.
@@ -145,7 +140,7 @@ public:
      */
     void
     DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                   const amrex::Real relative_time);
+                   amrex::Real relative_time);
 
     /**
      * \brief Deposit current density.
@@ -160,7 +155,7 @@ public:
      */
     void
     DepositCurrent (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& J,
-                    const amrex::Real dt, const amrex::Real relative_time);
+                    amrex::Real dt, amrex::Real relative_time);
 
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
@@ -179,7 +174,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void doResampling (const int timestep);
+    void doResampling (int timestep, bool verbose);
 
 #ifdef WARPX_QED
     /** If Schwinger process is activated, this function is called at every
@@ -212,7 +207,7 @@ public:
 
     void defineAllParticleTiles ();
 
-    void RedistributeLocal (const int num_ghost);
+    void RedistributeLocal (int num_ghost);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless
      *  of the whole simulation BC. */
@@ -225,7 +220,7 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(const int lev) const;
+    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(int lev) const;
 
     amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
 
@@ -234,32 +229,32 @@ public:
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies () const {return species_names.size();}
-    int nLasers () const {return lasers_names.size();}
-    int nContainers () const {return allcontainers.size();}
+    int nSpecies () const {return static_cast<int>(species_names.size());}
+    int nLasers () const {return static_cast<int>(lasers_names.size());}
+    int nContainers () const {return static_cast<int>(allcontainers.size());}
 
     /** Whether back-transformed diagnostics need to be performed for any plasma species.
      *
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (bool do_back_transformed_particles);
     /** Whether back-transformed diagnostics is set for species with species_name.
      *
      * \param[in] species_name The species for which back-transformed particles is set.
      * \param[in] do_back_transformed_particles The parameter to set if back-transformed particles are set to true/false
      */
-    void SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles);
+    void SetDoBackTransformedParticles (std::string species_name, bool do_back_transformed_particles);
 
     int nSpeciesDepositOnMainGrid () const {
         bool const onMainGrid = true;
         auto const & v = m_deposit_on_main_grid;
-        return std::count( v.begin(), v.end(), onMainGrid );
+        return static_cast<int>(std::count( v.begin(), v.end(), onMainGrid ));
     }
 
     int nSpeciesGatherFromMainGrid() const {
         bool const fromMainGrid = true;
         auto const & v = m_gather_from_main_grid;
-        return std::count( v.begin(), v.end(), fromMainGrid );
+        return static_cast<int>(std::count( v.begin(), v.end(), fromMainGrid ));
     }
 
     // Inject particles during the simulation (for particles entering the
@@ -271,7 +266,7 @@ public:
      * \brief  Update antenna position for continuous injection of lasers
      *         in a boosted frame. Empty function for containers other than lasers.
      */
-    void UpdateAntennaPosition(const amrex::Real dt) const;
+    void UpdateAntennaPosition(amrex::Real dt) const;
 
     int doContinuousInjection() const;
 

@@ -8,6 +8,7 @@
 
 """Classes following the PICMI standard
 """
+from dataclasses import dataclass
 import os
 import re
 
@@ -128,6 +129,16 @@ class Species(picmistandard.PICMI_Species):
 
     warpx_save_particles_at_eb: bool, default=False
         Whether to save particles lost at the embedded boundary
+
+    warpx_do_resampling: bool, default=False
+        Whether particles will be resampled
+
+    warpx_resampling_trigger_intervals: bool, default=0
+        Timesteps at which to resample
+
+    warpx_resampling_trigger_max_avg_ppc: int, default=infinity
+        Resampling will be done when the average number of
+        particles per cell exceeds this number
     """
     def init(self, kw):
 
@@ -203,6 +214,11 @@ class Species(picmistandard.PICMI_Species):
         self.save_particles_at_zhi = kw.pop('warpx_save_particles_at_zhi', None)
         self.save_particles_at_eb = kw.pop('warpx_save_particles_at_eb', None)
 
+        # Resampling settings
+        self.do_resampling = kw.pop('warpx_do_resampling', None)
+        self.resampling_trigger_intervals = kw.pop('warpx_resampling_trigger_intervals', None)
+        self.resampling_triggering_max_avg_ppc = kw.pop('warpx_resampling_trigger_max_avg_ppc', None)
+
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
                           injection_plane_position = None,
@@ -238,7 +254,10 @@ class Species(picmistandard.PICMI_Species):
                                              do_not_deposit = self.do_not_deposit,
                                              do_not_push = self.do_not_push,
                                              do_not_gather = self.do_not_gather,
-                                             random_theta = self.random_theta)
+                                             random_theta = self.random_theta,
+                                             do_resampling=self.do_resampling,
+                                             resampling_trigger_intervals=self.resampling_trigger_intervals,
+                                             resampling_trigger_max_avg_ppc=self.resampling_triggering_max_avg_ppc)
 
         # add reflection models
         self.species.add_new_attr("reflection_model_xlo(E)", self.reflection_model_xlo)
@@ -277,6 +296,10 @@ class MultiSpecies(picmistandard.PICMI_MultiSpecies):
 
 
 class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
+    def init(self, kw):
+        self.do_symmetrize = kw.pop('warpx_do_symmetrize', None)
+        self.symmetrization_order = kw.pop('warpx_symmetrization_order', None)
+
     def initialize_inputs(self, species_number, layout, species, density_scale):
         species.injection_style = "gaussian_beam"
         species.x_m = self.centroid_position[0]
@@ -328,6 +351,9 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
             species.ux = self.centroid_velocity[0]/constants.c
             species.uy = self.centroid_velocity[1]/constants.c
             species.uz = self.centroid_velocity[2]/constants.c
+
+        species.do_symmetrize = self.do_symmetrize
+        species.symmetrization_order = self.symmetrization_order
 
 
 class DensityDistributionBase(object):
@@ -1655,6 +1681,9 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_amrex_the_arena_init_size: long int, optional
         The amount of memory in bytes to allocate in the Arena.
 
+    warpx_amrex_use_gpu_aware_mpi: bool, optional
+        Whether to use GPU-aware MPI communications
+
     warpx_zmax_plasma_to_compute_max_step: float, optional
         Sets the simulation run time based on the maximum z value
 
@@ -1673,6 +1702,34 @@ class Simulation(picmistandard.PICMI_Simulation):
 
     warpx_checkpoint_signals: list of strings
         Signals on which to write out a checkpoint
+
+    warpx_numprocs: list of ints (1 in 1D, 2 in 2D, 3 in 3D)
+        Domain decomposition on the coarsest level.
+        The domain will be chopped into the exact number of pieces in each dimension as specified by this parameter.
+        https://warpx.readthedocs.io/en/latest/usage/parameters.html#distribution-across-mpi-ranks-and-parallelization
+        https://warpx.readthedocs.io/en/latest/usage/domain_decomposition.html#simple-method
+
+    warpx_sort_intervals: string, optional (defaults: -1 on CPU; 4 on GPU)
+        Using the Intervals parser syntax, this string defines the timesteps at which particles are sorted. If <=0, do not sort particles.
+        It is turned on on GPUs for performance reasons (to improve memory locality).
+
+    warpx_sort_particles_for_deposition: bool, optional (default: true for the CUDA backend, otherwise false)
+        This option controls the type of sorting used if particle sorting is turned on, i.e. if sort_intervals is not <=0.
+        If `true`, particles will be sorted by cell to optimize deposition with many particles per cell, in the order `x` -> `y` -> `z` -> `ppc`.
+        If `false`, particles will be sorted by bin, using the sort_bin_size parameter below, in the order `ppc` -> `x` -> `y` -> `z`.
+        `true` is recommended for best performance on NVIDIA GPUs, especially if there are many particles per cell.
+
+    warpx_sort_idx_type: list of int, optional (default: 0 0 0)
+        This controls the type of grid used to sort the particles when sort_particles_for_deposition is true.
+        Possible values are:
+            idx_type = {0, 0, 0}: Sort particles to a cell centered grid,
+            idx_type = {1, 1, 1}: Sort particles to a node centered grid,
+            idx_type = {2, 2, 2}: Compromise between a cell and node centered grid.
+        In 2D (XZ and RZ), only the first two elements are read. In 1D, only the first element is read.
+
+    warpx_sort_bin_size: list of int, optional (default 1 1 1)
+        If `sort_intervals` is activated and `sort_particles_for_deposition` is false, particles are sorted in bins of `sort_bin_size` cells.
+        In 2D, only the first two elements are read.
     """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
@@ -1708,14 +1765,20 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.amr_restart = kw.pop('warpx_amr_restart', None)
         self.amrex_the_arena_is_managed = kw.pop('warpx_amrex_the_arena_is_managed', None)
         self.amrex_the_arena_init_size = kw.pop('warpx_amrex_the_arena_init_size', None)
+        self.amrex_use_gpu_aware_mpi = kw.pop('warpx_amrex_use_gpu_aware_mpi', None)
         self.zmax_plasma_to_compute_max_step = kw.pop('warpx_zmax_plasma_to_compute_max_step', None)
         self.compute_max_step_from_btd = kw.pop('warpx_compute_max_step_from_btd', None)
+        self.sort_intervals = kw.pop('warpx_sort_intervals', None)
+        self.sort_particles_for_deposition = kw.pop('warpx_sort_particles_for_deposition', None)
+        self.sort_idx_type = kw.pop('warpx_sort_idx_type', None)
+        self.sort_bin_size = kw.pop('warpx_sort_bin_size', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
 
         self.break_signals = kw.pop('warpx_break_signals', None)
         self.checkpoint_signals = kw.pop('warpx_checkpoint_signals', None)
+        self.numprocs = kw.pop('warpx_numprocs', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -1736,6 +1799,11 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.zmax_plasma_to_compute_max_step = self.zmax_plasma_to_compute_max_step
         pywarpx.warpx.compute_max_step_from_btd = self.compute_max_step_from_btd
+
+        pywarpx.warpx.sort_intervals = self.sort_intervals
+        pywarpx.warpx.sort_particles_for_deposition = self.sort_particles_for_deposition
+        pywarpx.warpx.sort_idx_type = self.sort_idx_type
+        pywarpx.warpx.sort_bin_size = self.sort_bin_size
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
@@ -1765,6 +1833,8 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.break_signals = self.break_signals
         pywarpx.warpx.checkpoint_signals = self.checkpoint_signals
+
+        pywarpx.warpx.numprocs = self.numprocs
 
         particle_shape = self.particle_shape
         for s in self.species:
@@ -1835,6 +1905,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         if self.amrex_the_arena_init_size is not None:
             pywarpx.amrex.the_arena_init_size = self.amrex_the_arena_init_size
 
+        if self.amrex_use_gpu_aware_mpi is not None:
+            pywarpx.amrex.use_gpu_aware_mpi = self.amrex_use_gpu_aware_mpi
+
     def initialize_warpx(self, mpi_comm=None):
         if self.warpx_initialized:
             return
@@ -1900,6 +1973,35 @@ class WarpXDiagnosticBase(object):
             self.diagnostic.file_prefix = os.path.join(write_dir, file_prefix)
 
 
+@dataclass(frozen=True)
+class ParticleFieldDiagnostic:
+    """
+    Class holding particle field diagnostic information to be processed in FieldDiagnostic below.
+
+    Parameters
+    ----------
+    name: str
+        Name of particle field diagnostic. If a component of a vector field, for the openPMD viewer
+        to treat it as a vector, the coordinate (i.e x, y, z) should be the last character.
+
+    func: parser str
+        Parser function to be calculated for each particle per cell. Should be of the form
+        f(x,y,z,ux,uy,uz)
+
+    do_average: (0 or 1) optional, default 1
+        Whether the diagnostic is averaged by the sum of particle weights in each cell
+
+    filter: parser str, optional
+        Parser function returning a boolean for whether to include a particle in the diagnostic.
+        If not specified, all particles will be included. The function arguments are the same
+        as the `func` above.
+    """
+    name: str
+    func: str
+    do_average: int = 1
+    filter: str = None
+
+
 class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
     """
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
@@ -1911,9 +2013,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
     warpx_plot_raw_fields_guards: bool, optional
         Flag whether the raw fields should include the guard cells
-
-    warpx_write_species: bool, optional
-        Flag whether to output particle data with the diagnostic
 
     warpx_format: {plotfile, checkpoint, openpmd, ascent, sensei}, optional
         Diagnostic file format
@@ -1929,6 +2028,15 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
 
     warpx_dump_rz_modes: bool, optional
         Flag whether to dump the data for all RZ modes
+
+    warpx_particle_fields_to_plot: list of ParticleFieldDiagnostics
+        List of ParticleFieldDiagnostic classes to install in the simulation. Error
+        checking is handled in the class itself.
+
+    warpx_particle_fields_species: list of strings, optional
+        Species for which to calculate particle_fields_to_plot functions. Fields will
+        be calculated separately for each specified species. If not passed, default is
+        all of the available particle species.
     """
     def init(self, kw):
 
@@ -1936,12 +2044,13 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.plot_raw_fields_guards = kw.pop('warpx_plot_raw_fields_guards', None)
         self.plot_finepatch = kw.pop('warpx_plot_finepatch', None)
         self.plot_crsepatch = kw.pop('warpx_plot_crsepatch', None)
-        self.write_species = kw.pop('warpx_write_species', None)
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
+        self.particle_fields_to_plot = kw.pop('warpx_particle_fields_to_plot', [])
+        self.particle_fields_species = kw.pop('warpx_particle_fields_species', None)
 
     def initialize_inputs(self):
 
@@ -2017,14 +2126,35 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             # --- is the same on all processors.
             fields_to_plot = list(fields_to_plot)
             fields_to_plot.sort()
-            self.diagnostic.fields_to_plot = fields_to_plot
+            self.diagnostic.set_or_replace_attr('fields_to_plot', fields_to_plot)
+
+        particle_fields_to_plot_names = list()
+        for pfd in self.particle_fields_to_plot:
+            if pfd.name in particle_fields_to_plot_names:
+                raise Exception('A particle fields name can not be repeated.')
+            particle_fields_to_plot_names.append(pfd.name)
+            self.diagnostic.__setattr__(
+                f'particle_fields.{pfd.name}(x,y,z,ux,uy,uz)', pfd.func
+            )
+            self.diagnostic.__setattr__(
+                f'particle_fields.{pfd.name}.do_average', pfd.do_average
+            )
+            self.diagnostic.__setattr__(
+                f'particle_fields.{pfd.name}.filter(x,y,z,ux,uy,uz)', pfd.filter
+            )
+
+        # --- Convert to a sorted list so that the order
+        # --- is the same on all processors.
+        particle_fields_to_plot_names.sort()
+        self.diagnostic.particle_fields_to_plot = particle_fields_to_plot_names
+        self.diagnostic.particle_fields_species = self.particle_fields_species
 
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
         self.diagnostic.plot_finepatch = self.plot_finepatch
         self.diagnostic.plot_crsepatch = self.plot_crsepatch
-        self.diagnostic.write_species = self.write_species
-
+        if 'write_species' not in self.diagnostic.argvattrs:
+            self.diagnostic.write_species = False
         self.set_write_dir()
 
 
@@ -2129,7 +2259,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.intervals = self.period
-
+        self.diagnostic.set_or_replace_attr('write_species', True)
+        if 'fields_to_plot' not in self.diagnostic.argvattrs:
+            self.diagnostic.fields_to_plot = 'none'
         self.set_write_dir()
 
         # --- Use a set to ensure that fields don't get repeated.
@@ -2161,24 +2293,27 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
             variables = list(variables)
             variables.sort()
 
-        if np.iterable(self.species):
-            species_list = self.species
+        # species list
+        if self.species is None:
+            species_names = pywarpx.particles.species_names
+        elif np.iterable(self.species):
+            species_names = [specie.name for specie in self.species]
         else:
-            species_list = [self.species]
+            species_names = [species.name]
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution
             # is used multiple times
             self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-        for specie in species_list:
-            diag = pywarpx.Bucket.Bucket(self.name + '.' + specie.name,
+        for name in species_names:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables,
                                          random_fraction = self.random_fraction,
                                          uniform_stride = self.uniform_stride)
             expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
-            self.diagnostic._species_dict[specie.name] = diag
+            self.diagnostic._species_dict[name] = diag
 
 # ----------------------------
 # Lab frame diagnostics
@@ -2188,7 +2323,8 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
 class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
                               WarpXDiagnosticBase):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
+    for more information.
 
     Parameters
     ----------
@@ -2200,6 +2336,10 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
     warpx_file_prefix: string, optional
         Passed to <diagnostic name>.file_prefix
+
+    warpx_intervals: integer or string
+        Selects the snapshots to be made, instead of using "num_snapshots" which
+        makes all snapshots. "num_snapshots" is ignored.
 
     warpx_file_min_digits: integer, optional
         Passed to <diagnostic name>.file_min_digits
@@ -2214,10 +2354,12 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         Passed to <diagnostic name>.upper_bound
     """
     def init(self, kw):
-        # The user is using the new BTD
+        """The user is using the new BTD"""
+
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.buffer_size = kw.pop('warpx_buffer_size', None)
         self.lower_bound = kw.pop('warpx_lower_bound', None)
@@ -2234,10 +2376,15 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
 
-        self.diagnostic.do_back_transformed_fields = 1
-        self.diagnostic.num_snapshots_lab = self.num_snapshots
+        self.diagnostic.do_back_transformed_fields = True
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
+
+        # intervals and num_snapshots_lab cannot both be set
+        if self.intervals is not None:
+            self.diagnostic.intervals = self.intervals
+        else:
+            self.diagnostic.num_snapshots_lab = self.num_snapshots
 
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
@@ -2275,9 +2422,117 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             # --- is the same on all processors.
             fields_to_plot = list(fields_to_plot)
             fields_to_plot.sort()
-            self.diagnostic.fields_to_plot = fields_to_plot
+            self.diagnostic.set_or_replace_attr('fields_to_plot', fields_to_plot)
+
+        if 'write_species' not in self.diagnostic.argvattrs:
+            self.diagnostic.write_species = False
+        self.set_write_dir()
+
+
+class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
+                                 WarpXDiagnosticBase):
+    """
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
+    for more information.
+
+    Parameters
+    ----------
+    warpx_format: string, optional
+        Passed to <diagnostic name>.format
+
+    warpx_openpmd_backend: string, optional
+        Passed to <diagnostic name>.openpmd_backend
+
+    warpx_file_prefix: string, optional
+        Passed to <diagnostic name>.file_prefix
+
+    warpx_intervals: integer or string
+        Selects the snapshots to be made, instead of using "num_snapshots" which
+        makes all snapshots. "num_snapshots" is ignored.
+
+    warpx_file_min_digits: integer, optional
+        Passed to <diagnostic name>.file_min_digits
+
+    warpx_buffer_size: integer, optional
+        Passed to <diagnostic name>.buffer_size
+    """
+    def init(self, kw):
+        self.format = kw.pop('warpx_format', None)
+        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.intervals = kw.pop('warpx_intervals', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
+        self.buffer_size = kw.pop('warpx_buffer_size', None)
+
+    def initialize_inputs(self):
+
+        self.add_diagnostic()
+
+        self.diagnostic.diag_type = 'BackTransformed'
+        self.diagnostic.format = self.format
+        self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.file_min_digits = self.file_min_digits
+
+        self.diagnostic.do_back_transformed_particles = True
+        self.diagnostic.dt_snapshots_lab = self.dt_snapshots
+        self.diagnostic.buffer_size = self.buffer_size
+
+        # intervals and num_snapshots_lab cannot both be set
+        if self.intervals is not None:
+            self.diagnostic.intervals = self.intervals
+        else:
+            self.diagnostic.num_snapshots_lab = self.num_snapshots
+
+        self.diagnostic.do_back_transformed_fields = False
+
+        self.diagnostic.set_or_replace_attr('write_species', True)
+        if 'fields_to_plot' not in self.diagnostic.argvattrs:
+            self.diagnostic.fields_to_plot = 'none'
 
         self.set_write_dir()
+
+        # --- Use a set to ensure that fields don't get repeated.
+        variables = set()
+
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'position':
+                    # --- The positions are alway written out anyway
+                    pass
+                elif dataname == 'momentum':
+                    variables.add('ux')
+                    variables.add('uy')
+                    variables.add('uz')
+                elif dataname == 'weighting':
+                    variables.add('w')
+                elif dataname == 'fields':
+                    variables.add('Ex')
+                    variables.add('Ey')
+                    variables.add('Ez')
+                    variables.add('Bx')
+                    variables.add('By')
+                    variables.add('Bz')
+                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'Er', 'Et', 'Br', 'Bt']:
+                    variables.add(dataname)
+
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            variables = list(variables)
+            variables.sort()
+
+        # species list
+        if self.species is None:
+            species_names = pywarpx.particles.species_names
+        elif np.iterable(self.species):
+            species_names = [specie.name for specie in self.species]
+        else:
+            species_names = [species.name]
+
+        for name in species_names:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
+                                         variables = variables)
+            self.diagnostic._species_dict[name] = diag
+
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     """

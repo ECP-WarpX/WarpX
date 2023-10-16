@@ -111,7 +111,7 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex
-        cd ../amrex && git checkout --detach 3396b1df117532ec9a7eafdcaad4bdd18ac49a0f && cd -
+        cd ../amrex && git checkout --detach 23.10 && cd -
         make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE USE_CCACHE=TRUE -j 2
 
   build_nvhpc21-11-nvcc:
@@ -173,10 +173,10 @@ jobs:
         # work-around for mpi4py 3.1.1 build system issue with using
         # a GNU-built Python executable with non-GNU Python modules
         #   https://github.com/mpi4py/mpi4py/issues/114
-        export CFLAGS="-noswitcherror"
+        #export CFLAGS="-noswitcherror"
 
-        python3 -m pip install --upgrade pip setuptools wheel
-        export WARPX_MPI=ON
-        export PYWARPX_LIB_DIR=$PWD/build/lib/site-packages/pywarpx/
-        python3 -m pip wheel .
-        python3 -m pip install *.whl
+        #python3 -m pip install --upgrade pip setuptools wheel
+        #export WARPX_MPI=ON
+        #export PYWARPX_LIB_DIR=$PWD/build/lib/site-packages/pywarpx/
+        #python3 -m pip wheel .
+        #python3 -m pip install *.whl

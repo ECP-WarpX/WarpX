@@ -108,6 +108,8 @@ class CMakeBuild(build_ext):
             '-DWarpX_QED_TABLE_GEN:BOOL=' + WARPX_QED_TABLE_GEN,
             ## dependency control (developers & package managers)
             '-DWarpX_amrex_internal=' + WARPX_AMREX_INTERNAL,
+            # PEP-440 conformant version from package
+            "-DpyWarpX_VERSION_INFO=" + self.distribution.get_version(),
             #        see PICSAR and openPMD below
             ## static/shared libs
             '-DBUILD_SHARED_LIBS:BOOL=' + BUILD_SHARED_LIBS,
@@ -173,17 +175,11 @@ class CMakeBuild(build_ext):
 
         build_args += ['--parallel', BUILD_PARALLEL]
 
-        env = os.environ.copy()
-        env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(
-            env.get('CXXFLAGS', ''),
-            self.distribution.get_version()
-        )
         build_dir = os.path.join(self.build_temp, dims)
         os.makedirs(build_dir, exist_ok=True)
         subprocess.check_call(
             ['cmake', ext.sourcedir] + cmake_args,
-            cwd=build_dir,
-            env=env
+            cwd=build_dir
         )
         subprocess.check_call(
             ['cmake', '--build', '.'] + build_args,
@@ -287,7 +283,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '23.08',
+    version = '23.10',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',

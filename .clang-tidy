@@ -1,27 +1,26 @@
-Checks: '-*,
-    bugprone-*
-    -bugprone-easily-swappable-parameters,
-    -bugprone-implicit-widening-of-multiplication-result,
-    -bugprone-misplaced-widening-cast,
-    cert-*
-    -cert-err58-cpp,
+Checks: '
+    -*,
+    bugprone-*,
+        -bugprone-easily-swappable-parameters,
+        -bugprone-implicit-widening-of-multiplication-result,
+        -bugprone-misplaced-widening-cast,
+        -bugprone-unchecked-optional-access,
+    cert-*,
+        -cert-err58-cpp,
     cppcoreguidelines-avoid-goto,
     cppcoreguidelines-interfaces-global-init,
-    -cppcoreguidelines-avoid-non-const-global-variables,
-    -cppcoreguidelines-init-variables,
-    -cppcoreguidelines-macro-usage,
-    -cppcoreguidelines-narrowing-conversions,
-    -cppcoreguidelines-no-malloc,
-    -cppcoreguidelines-owning-memory,
-    misc-const-correctness,
-    misc-misleading-bidirectional,
-    misc-misleading-identifier,
-    misc-misplaced-const,
-    misc-uniqueptr-reset-release,
-    misc-unused-alias-decls,
-    misc-unused-parameters,
-    misc-unused-using-decls,
-    -misc-definitions-in-headers,
+        -cppcoreguidelines-avoid-non-const-global-variables,
+        -cppcoreguidelines-init-variables,
+        -cppcoreguidelines-macro-usage,
+        -cppcoreguidelines-narrowing-conversions,
+        -cppcoreguidelines-no-malloc,
+        -cppcoreguidelines-owning-memory,
+    google-build-explicit-make-pair,
+    google-build-namespaces,
+    google-global-names-in-headers,
+    misc-*,
+        -misc-no-recursion,
+        -misc-non-private-member-variables-in-classes,
     modernize-avoid-bind,
     modernize-concat-nested-namespaces,
     modernize-deprecated-headers,
@@ -35,10 +34,10 @@ Checks: '-*,
     modernize-replace-auto-ptr,
     modernize-replace-disallow-copy-and-assign-macro,
     modernize-replace-random-shuffle,
-    modernize-return-braced-init-list,
     modernize-shrink-to-fit,
     modernize-unary-static-assert,
     modernize-use-nullptr,
+        -modernize-return-braced-init-list,
     mpi-*,
     performance-faster-string-find,
     performance-for-range-copy,
@@ -50,6 +49,11 @@ Checks: '-*,
     performance-move-constructor-init,
     performance-no-automatic-move,
     performance-no-int-to-ptr,
+    readability-avoid-const-params-in-decls,
+    readability-const-return-type,
+    readability-container-contains,
+    readability-container-data-pointer,
+    readability-container-size-empty,
     readability-non-const-parameter,
     readability-redundant-control-flow,
     readability-redundant-declaration,
@@ -66,13 +70,17 @@ Checks: '-*,
     readability-string-compare,
     readability-suspicious-call-argument,
     readability-uniqueptr-delete-release,
-    -readability-uppercase-literal-suffix,
     readability-use-anyofallof,
-    readability-non-const-parameter
+        -readability-uppercase-literal-suffix
     '
 
 CheckOptions:
+- key:          bugprone-narrowing-conversions.WarnOnIntegerToFloatingPointNarrowingConversion
+  value:        "false"
+- key:          misc-definitions-in-headers.HeaderFileExtensions
+  value:        "H,"
 - key:          modernize-pass-by-value.ValuesOnly
-  value:        'true'
+  value:        "true"
+
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'

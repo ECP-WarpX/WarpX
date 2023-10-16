@@ -2,6 +2,9 @@ function(find_picsar)
     if(WarpX_picsar_src)
         message(STATUS "Compiling local PICSAR ...")
         message(STATUS "PICSAR source path: ${WarpX_picsar_src}")
+        if(NOT IS_DIRECTORY ${WarpX_picsar_src})
+            message(FATAL_ERROR "Specified directory WarpX_picsar_src='${WarpX_picsar_src}' does not exist!")
+        endif()
     elseif(WarpX_picsar_internal)
         message(STATUS "Downloading PICSAR ...")
         message(STATUS "PICSAR repository: ${WarpX_picsar_repo} (${WarpX_picsar_branch})")
@@ -91,7 +94,7 @@ function(find_picsar)
         #message(STATUS "PICSAR: Using version '${PICSAR_VERSION}'")
     else()
         # not supported by PICSAR (yet)
-        #find_package(PICSAR 23.08 CONFIG REQUIRED QED OMP)
+        #find_package(PICSAR 23.09 CONFIG REQUIRED QED OMP)
         #message(STATUS "PICSAR: Found version '${PICSAR_VERSION}'")
         message(FATAL_ERROR "PICSAR: Cannot be used as externally installed "
             "library yet. "
@@ -112,7 +115,7 @@ if(WarpX_QED)
     set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
         CACHE STRING
         "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
-    set(WarpX_picsar_branch "aa54e985398c1d575abc7e6737cdbc660a13765f"
+    set(WarpX_picsar_branch "23.09"
         CACHE STRING
         "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
 

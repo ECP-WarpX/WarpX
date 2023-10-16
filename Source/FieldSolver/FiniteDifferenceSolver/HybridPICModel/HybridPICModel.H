@@ -37,7 +37,7 @@ public:
     /** Allocate hybrid-PIC specific multifabs. Called in constructor. */
     void AllocateMFs (int nlevs_max);
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                           const int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
+                           int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
                            const amrex::IntVect& jx_nodal_flag, const amrex::IntVect& jy_nodal_flag,
                            const amrex::IntVect& jz_nodal_flag, const amrex::IntVect& rho_nodal_flag);
 
@@ -62,7 +62,7 @@ public:
     void CalculateCurrentAmpere (
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        const int lev
+        int lev
     );
 
     /**
@@ -75,21 +75,23 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        const bool include_resistivity_term);
+        bool include_resistivity_term);
+
     void HybridPICSolveE (
         std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        const int lev, const bool include_resistivity_term);
+        int lev, bool include_resistivity_term);
+
     void HybridPICSolveE (
         std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        const int lev, PatchType patch_type, const bool include_resistivity_term);
+        int lev, PatchType patch_type, bool include_resistivity_term);
 
     /**
      * \brief
@@ -97,8 +99,8 @@ public:
      * using the simulation charge density. Used in the Ohm's law solver
      * (kinetic-fluid hybrid model).
      */
-    void CalculateElectronPressure (                DtType a_dt_type);
-    void CalculateElectronPressure (const int lev,  DtType a_dt_type);
+    void CalculateElectronPressure (          DtType a_dt_type);
+    void CalculateElectronPressure (int lev,  DtType a_dt_type);
 
     /**
      * \brief Fill the electron pressure multifab given the kinetic particle
@@ -174,7 +176,7 @@ struct ElectronPressure {
                                      amrex::Real const T0,
                                      amrex::Real const gamma,
                                      amrex::Real const rho) {
-        return n0 * T0 * pow((rho/PhysConst::q_e)/n0, gamma);
+        return n0 * T0 * std::pow((rho/PhysConst::q_e)/n0, gamma);
     }
 };
 

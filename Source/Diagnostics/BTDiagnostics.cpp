@@ -112,11 +112,11 @@ void BTDiagnostics::DerivedInitData ()
     const amrex::ParmParse pp_diag_name(m_diag_name);
     int write_species = 1;
     pp_diag_name.query("write_species", write_species);
-    if ((m_output_species_names.size() == 0) && (write_species == 1))
+    if ((m_output_species_names.empty()) && (write_species == 1))
         m_output_species_names = mpc.GetSpeciesNames();
 
     m_do_back_transformed_particles =
-        ((m_output_species_names.size() > 0) && (write_species == 1));
+        ((!m_output_species_names.empty()) && (write_species == 1));
 
     // Turn on do_back_transformed_particles in the particle containers so that
     // the tmp_particle_data is allocated and the data of the corresponding species is
@@ -259,9 +259,7 @@ BTDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
-    if (utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
-        if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
-    }
+    utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size);
 #ifdef WARPX_DIM_RZ
     const amrex::Vector< std::string > BTD_varnames_supported = {"Er", "Et", "Ez",
                                                            "Br", "Bt", "Bz",
@@ -284,7 +282,7 @@ BTDiagnostics::ReadParameters ()
 
     const bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!particle_fields_to_plot_specified, "particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
-    if (m_varnames.size() == 0) {
+    if (m_varnames.empty()) {
         m_do_back_transformed_fields = false;
     }
 
@@ -396,7 +394,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
         diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) +
             diag_ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
         diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) +
-            (diag_ba.getCellCenteredBox( diag_ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
+            (diag_ba.getCellCenteredBox( static_cast<int>(diag_ba.size()-1) ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
     }
 
     // Define buffer_domain in lab-frame for the i^th snapshot.
@@ -563,7 +561,9 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // Fill vector of cell-center functors for all field-components, namely,
     // Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho are included in the
     // cell-center functors for BackTransform Diags
-    for (int comp=0, n=m_cell_center_functors.at(lev).size(); comp<n; comp++){
+    const auto m_cell_center_functors_at_lev_size = static_cast<int>(
+        m_cell_center_functors.at(lev).size());
+    for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames[comp] == "Ex" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Ey" ){
@@ -602,13 +602,14 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
 
     const bool update_varnames = true;
     if (update_varnames) {
-        const int n_rz = ncomp * m_varnames_fields.size();
+        const auto n_rz = ncomp * static_cast<int>(m_varnames_fields.size());
         m_varnames.clear();
         m_varnames.reserve(n_rz);
     }
     // AddRZ modes to output names for the back-transformed data
     if (update_varnames) {
-        for (int comp=0, n=m_varnames_fields.size(); comp<n; comp++)
+        const auto m_varnames_fields_size = static_cast<int>(m_varnames_fields.size());
+        for (int comp=0; comp<m_varnames_fields_size; comp++)
         {
             if (m_varnames_fields[comp] == "Er")  AddRZModesToOutputNames(std::string("Er"), ncomp, false);
             if (m_varnames_fields[comp] == "Et")  AddRZModesToOutputNames(std::string("Et"), ncomp, false);
@@ -627,10 +628,11 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
     // but the `varnames` need only be updated once.
     const bool update_cellcenter_varnames = true;
     if (update_cellcenter_varnames) {
-        const int n_rz = ncomp * m_cellcenter_varnames.size();
+        const auto n_rz = ncomp * static_cast<int>(m_cellcenter_varnames.size());
         m_cellcenter_varnames.clear();
         m_cellcenter_varnames.reserve(n_rz);
-        for (int comp=0, n=m_cellcenter_varnames_fields.size(); comp<n; comp++)
+        const auto m_cellcenter_varnames_fields_size = static_cast<int>(m_cellcenter_varnames_fields.size());
+        for (int comp=0; comp<m_cellcenter_varnames_fields_size; comp++)
         {
             if ( m_cellcenter_varnames_fields[comp] == "Er" ) AddRZModesToOutputNames(std::string("Er"), ncomp, true);
             if ( m_cellcenter_varnames_fields[comp] == "Et" ) AddRZModesToOutputNames(std::string("Et"), ncomp, true);
@@ -676,7 +678,8 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     m_cell_center_functors[lev].clear();
     m_cell_center_functors[lev].resize(m_cellcenter_varnames_fields.size());
 
-    for (int comp=0, n=m_cell_center_functors.at(lev).size(); comp<n; comp++){
+    const auto m_cell_center_functors_at_lev_size = static_cast<int>(m_cell_center_functors.at(lev).size());
+    for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames_fields[comp] == "Er" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Et" ){
@@ -788,7 +791,8 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     // Call m_cell_center_functors->operator
     for (int lev = 0; lev < nmax_lev; ++lev) {
         int icomp_dst = 0;
-        for (int icomp = 0, n=m_cell_center_functors.at(lev).size(); icomp<n; ++icomp) {
+        const auto m_cell_center_fuctors_at_lev_size = static_cast<int>(m_cell_center_functors.at(lev).size());
+        for (int icomp = 0; icomp<m_cell_center_fuctors_at_lev_size; ++icomp) {
             // Call all the cell-center functors in m_cell_center_functors.
             // Each of them computes cell-centered data for a field and
             // stores it in cell-centered MultiFab, m_cell_centered_data[lev].
@@ -806,7 +810,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
 
     for (int lev = warpx.finestLevel(); lev > 0; --lev) {
         ablastr::coarsen::sample::Coarsen(*m_cell_centered_data[lev - 1], *m_cell_centered_data[lev], 0, 0,
-                                          m_cellcenter_varnames.size(), 0, WarpX::RefRatio(lev-1) );
+                                          static_cast<int>(m_cellcenter_varnames.size()), 0, WarpX::RefRatio(lev-1) );
     }
 
     const int num_BT_functors = 1;
@@ -847,7 +851,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
                                              m_buffer_box[i_buffer],
-                                             k_index_zlab(i_buffer, lev), m_max_box_size,
+                                             k_index_zlab(i_buffer, lev),
                                              m_snapshot_full[i_buffer] );
 
             }
@@ -897,14 +901,13 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
     m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
     amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
-    buffer_ba.maxSize(m_max_box_size);
     // Generate a new distribution map for the back-transformed buffer multifab
     const amrex::DistributionMapping buffer_dmap(buffer_ba);
     // Number of guard cells for the output buffer is zero.
     // Unlike FullDiagnostics, "m_format == sensei" option is not included here.
     const int ngrow = 0;
     m_mf_output[i_buffer][lev] = amrex::MultiFab( buffer_ba, buffer_dmap,
-                                              m_varnames.size(), ngrow );
+                                              static_cast<int>(m_varnames.size()), ngrow );
     m_mf_output[i_buffer][lev].setVal(0.);
 
     amrex::IntVect ref_ratio = amrex::IntVect(1);
@@ -918,7 +921,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
                                   - m_snapshot_box[i_buffer].smallEnd(idim)
                                   ) * cellsize;
         const amrex::Real buffer_hi = m_snapshot_domain_lab[i_buffer].lo(idim)
-                                + ( buffer_ba.getCellCenteredBox( buffer_ba.size()-1 ).bigEnd(idim)
+                                + ( buffer_ba.getCellCenteredBox( static_cast<int>(buffer_ba.size()-1) ).bigEnd(idim)
                                   - m_snapshot_box[i_buffer].smallEnd(idim)
                                   + 1 ) * cellsize;
         m_buffer_domain_lab[i_buffer].setLo(idim, buffer_lo);
@@ -943,6 +946,8 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
                                                       WarpX::RefRatio(lev-1) );
     }
     m_field_buffer_multifab_defined[i_buffer] = 1;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_mf_output[i_buffer][lev].boxArray().size() == 1,
+        "BoxArray size must be 1 for back-transformed diagnostics multifab that stores buffers");
 }
 
 
@@ -1013,7 +1018,7 @@ BTDiagnostics::Flush (int i_buffer)
     amrex::Vector<amrex::DistributionMapping> vdmap;
     amrex::Vector<amrex::Geometry> vgeom;
     amrex::Vector<amrex::IntVect> vrefratio;
-    if (m_particles_buffer.at(i_buffer).size() > 0) {
+    if (!m_particles_buffer.at(i_buffer).empty()) {
         const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
         for (int lev = 0 ; lev < nlevels; ++lev) {
             // Store BoxArray, dmap, geometry, and refratio for every level
@@ -1035,7 +1040,6 @@ BTDiagnostics::Flush (int i_buffer)
         m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) + 1) );
         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
         amrex::BoxArray buffer_ba( particle_buffer_box );
-        buffer_ba.maxSize(m_max_box_size*2);
         m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
         for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
             // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
@@ -1046,13 +1050,15 @@ BTDiagnostics::Flush (int i_buffer)
 
     // Reset buffer box and particle box array
     if (m_format == "openpmd") {
-        if (m_particles_buffer.at(i_buffer).size() > 0 ) {
+        if (!m_particles_buffer.at(i_buffer).empty()) {
             m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
             m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
             m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
             for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
+                    "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
             }
         }
     }
@@ -1064,15 +1070,17 @@ BTDiagnostics::Flush (int i_buffer)
         m_max_buffer_multifabs[i_buffer], m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
 
-    // Note : test if this is needed before or after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. Hence rescaling the box after WriteToFile
+    // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
-        if (m_particles_buffer.at(i_buffer).size() > 0 ) {
+        if (!m_particles_buffer.at(i_buffer).empty()) {
             m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
             m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
             m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
             for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
+                    "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
             }
         }
     }
@@ -1093,7 +1101,7 @@ BTDiagnostics::Flush (int i_buffer)
     IncrementBufferFlushCounter(i_buffer);
     NullifyFirstFlush(i_buffer);
     // if particles are selected for output then update and reset counters
-    if (m_output_species_names.size() > 0) {
+    if (!m_output_species_names.empty()) {
         UpdateTotalParticlesFlushed(i_buffer);
         ResetTotalParticlesInBuffer(i_buffer);
         ClearParticleBuffer(i_buffer);
@@ -1448,9 +1456,10 @@ BTDiagnostics::PrepareParticleDataForOutput()
             {
                 // Check if the zslice is in domain
                 const bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
-                if (ZSliceInDomain) {
-                    if ( m_totalParticles_in_buffer[i_buffer][i] == 0) {
-                        if (!m_do_back_transformed_fields || m_varnames_fields.size()==0) {
+                const bool kindexInSnapshotBox = GetKIndexInSnapshotBoxFlag (i_buffer, lev);
+                if (kindexInSnapshotBox) {
+                    if ( buffer_empty(i_buffer) ) {
+                        if (!m_do_back_transformed_fields || m_varnames_fields.empty()) {
                             if ( m_buffer_flush_counter[i_buffer] == 0) {
                                 DefineSnapshotGeometry(i_buffer, lev);
                             }
@@ -1458,11 +1467,12 @@ BTDiagnostics::PrepareParticleDataForOutput()
                         }
                         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
                         amrex::BoxArray buffer_ba( particle_buffer_box );
-                        buffer_ba.maxSize(m_max_box_size);
                         const amrex::DistributionMapping buffer_dmap(buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
                         m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
+                        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][i]->ParticleBoxArray(lev).size() == 1,
+                            "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
                     }
                 }
                 m_all_particle_functors[i]->PrepareFunctorData (
@@ -1478,7 +1488,8 @@ void
 BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 {
     for (int isp = 0; isp < m_totalParticles_flushed_already[i_buffer].size(); ++isp) {
-        m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
+        m_totalParticles_flushed_already[i_buffer][isp] += static_cast<int>(
+            m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles());
     }
 }
 

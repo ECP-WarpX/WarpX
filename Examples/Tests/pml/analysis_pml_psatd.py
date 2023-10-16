@@ -8,6 +8,7 @@
 # License: BSD-3-Clause-LBNL
 
 import os
+import re
 import sys
 
 import numpy as np
@@ -19,13 +20,18 @@ import checksumAPI
 
 filename = sys.argv[1]
 
-############################
-### INITIAL LASER ENERGY ###
-############################
-energy_start = 7.282940107273505e-08 # electromagnetic energy at iteration 50
+galilean = True if re.search("galilean", filename) else False
+
+# Initial laser energy (at iteration 50)
+if galilean:
+    filename_init = 'pml_x_galilean_plt000050'
+    energy_start = 4.439376199524034e-08
+else:
+    filename_init = 'pml_x_psatd_plt000050'
+    energy_start = 7.282940107273505e-08
 
 # Check consistency of field energy diagnostics with initial energy above
-ds = yt.load('pml_x_psatd_plt000050')
+ds = yt.load(filename_init)
 all_data_level_0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 Bx = all_data_level_0['boxlib', 'Bx'].v.squeeze()
 By = all_data_level_0['boxlib', 'By'].v.squeeze()
@@ -43,10 +49,8 @@ print("energy_start_diags    = " + str(energy_start_diags))
 print("relative error    = " + str(error))
 assert (error < tolerance)
 
-##########################
-### FINAL LASER ENERGY ###
-##########################
-ds = yt.load( filename )
+# Final laser energy
+ds = yt.load(filename)
 all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 Bx = all_data_level_0['boxlib', 'Bx'].v.squeeze()
 By = all_data_level_0['boxlib', 'By'].v.squeeze()
@@ -58,8 +62,8 @@ energyE = np.sum(0.5 * scc.epsilon_0 * (Ex**2 + Ey**2 + Ez**2))
 energyB = np.sum(0.5 / scc.mu_0 * (Bx**2 + By**2 + Bz**2))
 energy_end = energyE + energyB
 
-reflectivity = energy_end / energy_start
-reflectivity_max = 1e-06
+reflectivity = energy_end / energy_start_diags
+reflectivity_max = 1e-6
 
 print("reflectivity     = " + str(reflectivity))
 print("reflectivity_max = " + str(reflectivity_max))
@@ -70,7 +74,8 @@ assert(reflectivity < reflectivity_max)
 sys.path.insert(0, '../../../../warpx/Examples/')
 from analysis_default_restart import check_restart
 
-check_restart(filename)
+if not galilean:
+    check_restart(filename)
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

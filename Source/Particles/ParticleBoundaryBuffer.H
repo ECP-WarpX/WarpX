@@ -35,7 +35,7 @@ public:
     /** Move operator for NamedComponentParticleContainer */
     ParticleBoundaryBuffer& operator= ( ParticleBoundaryBuffer && ) = default;
 
-    int numSpecies() const { return getSpeciesNames().size(); }
+    int numSpecies() const { return static_cast<int>(getSpeciesNames().size()); }
 
     const std::vector<std::string>& getSpeciesNames() const;
 
@@ -44,15 +44,15 @@ public:
 
     void redistribute ();
     void clearParticles ();
-    void clearParticles (int const i);
+    void clearParticles (int i);
 
     void printNumParticles () const;
 
-    int getNumParticlesInContainer(const std::string species_name, int boundary, bool local);
+    int getNumParticlesInContainer(std::string species_name, int boundary, bool local);
 
-    PinnedMemoryParticleContainer& getParticleBuffer(const std::string species_name, int boundary);
+    PinnedMemoryParticleContainer& getParticleBuffer(std::string species_name, int boundary);
 
-    PinnedMemoryParticleContainer* getParticleBufferPointer(const std::string species_name, int boundary);
+    PinnedMemoryParticleContainer* getParticleBufferPointer(std::string species_name, int boundary);
 
     static constexpr int numBoundaries () {
         return AMREX_SPACEDIM*2

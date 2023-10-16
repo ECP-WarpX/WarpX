@@ -1,4 +1,4 @@
-/* Copyright 2021-2022 The ImpactX Community
+/* Copyright 2021-2023 The WarpX Community
  *
  * Authors: Axel Huebl
  * License: BSD-3-Clause-LBNL
@@ -8,6 +8,7 @@
 
 #include <WarpX.H>  // todo: move this out to Python/WarpX.cpp
 #include <Utils/WarpXUtil.H>  // todo: move to its own Python/Utils.cpp
+#include <Utils/WarpXVersion.H>
 #include <Initialization/WarpXAMReXInit.H>
 
 #define STRINGIFY(x) #x
@@ -71,10 +72,11 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
 
     // API runtime version
     //   note PEP-440 syntax: x.y.zaN but x.y.z.devN
-#ifdef PYIMPACTX_VERSION_INFO
-    m.attr("__version__") = MACRO_STRINGIFY(PYIMPACTX_VERSION_INFO);
+#ifdef PYWARPX_VERSION_INFO
+    m.attr("__version__") = MACRO_STRINGIFY(PYWARPX_VERSION_INFO);
 #else
-    m.attr("__version__") = "dev";
+    // note: not necessarily PEP-440 compliant
+    m.attr("__version__") = WarpX::Version();
 #endif
 
     // authors
@@ -118,12 +120,6 @@ PYBIND11_MODULE(PYWARPX_MODULE_NAME, m) {
         "Initialize AMReX library");
     m.def("amrex_finalize", [] () { amrex::Finalize(); },
         "Close out the amrex related data");
-    m.def("convert_lab_params_to_boost",  &ConvertLabParamsToBoost,
-        "Convert input parameters from the lab frame to the boosted frame");
-    m.def("read_BC_params", &ReadBCParams,
-        "Read the boundary condition parametes and check for consistency");
-    m.def("check_gridding_for_RZ_spectral", &CheckGriddingForRZSpectral,
-        "Ensure that the grid is setup appropriately with using the RZ spectral solver");
 
     // Expose functions to get the processor number
     m.def("getNProcs", [](){return amrex::ParallelDescriptor::NProcs();} );
