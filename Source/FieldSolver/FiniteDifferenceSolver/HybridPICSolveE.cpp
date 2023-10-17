@@ -227,7 +227,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
                     // For m==0, Bt is linear in r, for small r
                     // Therefore, the formula below regularizes the singularity
                     Jz(i, j, 0, 0) = one_over_mu0 * 4 * Bt(i, j, 0, 0) / dr;
-                    // Ensure that Ez remains 0 for higher-order modes
+                    // Ensure that Jz remains 0 for higher-order modes
                     for (int m=1; m<nmodes; m++) {
                         Jz(i, j, 0, 2*m-1) = 0.;
                         Jz(i, j, 0, 2*m  ) = 0.;
@@ -566,7 +566,6 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
 
         // Extract cylindrical specific parameters
         Real const dr = m_dr;
-        // int const nmodes = m_nmodes;
         Real const rmin = m_rmin;
 
         Box const& ter  = mfi.tilebox(Efield[0]->ixType().toIntVect());

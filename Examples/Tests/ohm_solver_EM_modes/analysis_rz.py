@@ -3,7 +3,6 @@
 # --- Analysis script for the hybrid-PIC example producing EM modes.
 
 import dill
-import matplotlib
 from matplotlib import colors
 import matplotlib.pyplot as plt
 import numpy as np
@@ -117,7 +116,8 @@ for ii, m in enumerate([1, 3, 6, 8]):
     cb = fig.colorbar(pm1, ax=ax)
     cb.set_label(r'Normalized $E_\theta(k_z, m, \omega)$')
 
-    # Get dispersion relation
+    # Get dispersion relation - see for example
+    # T. Stix, Waves in Plasmas (American Inst. of Physics, 1992), Chap 6, Sec 2
     nu_m = jn_zeros(1, m+1)[-1] / sim.Lr
     R2 = 0.5 * (nu_m**2 * (1.0 + kappa**2) + k**2 * (kappa**2 + 2.0))
     P4 = k**2 * (nu_m**2 + k**2)

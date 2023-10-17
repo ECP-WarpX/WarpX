@@ -20,8 +20,6 @@ constants = picmi.constants
 comm = mpi.COMM_WORLD
 
 simulation = picmi.Simulation(verbose=0)
-# make a shorthand for simulation.extension since we use it a lot
-sim_ext = simulation.extension
 
 
 class CylindricalNormalModes(object):
@@ -230,13 +228,6 @@ class CylindricalNormalModes(object):
                 warpx_file_prefix='Python_ohms_law_solver_EM_modes_rz_plt'
             )
             simulation.add_diagnostic(part_diag)
-
-        #######################################################################
-        # Initialize simulation                                               #
-        #######################################################################
-
-        simulation.initialize_inputs()
-        simulation.initialize_warpx()
 
 
 ##########################
