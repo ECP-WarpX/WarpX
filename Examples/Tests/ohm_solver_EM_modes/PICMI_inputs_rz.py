@@ -213,7 +213,6 @@ class CylindricalNormalModes(object):
             warpx_file_prefix='field_diags',
             warpx_format='openpmd',
             warpx_openpmd_backend='h5',
-            warpx_write_species=False
         )
         simulation.add_diagnostic(field_diag)
 
