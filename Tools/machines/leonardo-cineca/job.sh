@@ -16,6 +16,5 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=<mail>
 
-source ~/leonardo_gpu_warpx.profile
 cd /leonardo_scratch/large/userexternal/<username>/<directory>
 srun /leonardo/home/userexternal/<username>/src/warpx/build_gpu/bin/warpx.2d <input file> > output.txt
