@@ -10,6 +10,7 @@
 
 #include <cstdlib>
 #include <exception>
+#include <iostream>
 
 
 std::map< std::string, std::function<void()> > warpx_callback_py_map;
