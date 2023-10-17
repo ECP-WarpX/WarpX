@@ -486,7 +486,7 @@ void PlasmaInjector::setupExternalFile (const amrex::ParmParse& pp_species_name)
                 ps["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>();
             m_openpmd_input_series->flush();
             amrex::ParticleReal const p_q = p_q_ptr.get()[0];
-            double const charge_unit = ps["charge"][openPMD::RecordComponent::SCALAR].unitSI();
+            auto const charge_unit = static_cast<amrex::Real>(ps["charge"][openPMD::RecordComponent::SCALAR].unitSI());
             charge = p_q * charge_unit;
         }
         if (mass_is_specified) {
@@ -507,7 +507,7 @@ void PlasmaInjector::setupExternalFile (const amrex::ParmParse& pp_species_name)
                 ps["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>();
             m_openpmd_input_series->flush();
             amrex::ParticleReal const p_m = p_m_ptr.get()[0];
-            double const mass_unit = ps["mass"][openPMD::RecordComponent::SCALAR].unitSI();
+            auto const mass_unit = static_cast<amrex::Real>(ps["mass"][openPMD::RecordComponent::SCALAR].unitSI());
             mass = p_m * mass_unit;
         }
     } // IOProcessor

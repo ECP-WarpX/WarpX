@@ -222,7 +222,7 @@ void ColliderRelevant::ComputeDiags (int step)
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
         num_dens[i_s] = myspc.GetChargeDensity(0);
-        num_dens[i_s]->mult(1./q);
+        num_dens[i_s]->mult(1._prt/q);
 
 #if defined(WARPX_DIM_1D_Z)
         // w_tot
@@ -542,7 +542,7 @@ void ColliderRelevant::ComputeDiags (int step)
 
     // compute luminosity
     amrex::Real const n1_dot_n2 = amrex::MultiFab::Dot(mf_dst1, 0, mf_dst2, 0, 1, 0);
-    amrex::Real const lumi = 2. * PhysConst::c * n1_dot_n2 * dV;
+    amrex::Real const lumi = 2._rt * PhysConst::c * n1_dot_n2 * dV;
     m_data[get_idx("dL_dt")] = lumi;
 #endif // not RZ
 }

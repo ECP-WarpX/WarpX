@@ -181,6 +181,16 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                                                             ng_src, ng, WarpX::do_single_precision_comms, cperiod);
             }
 
+            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+
+            const amrex::IntVect& Bx_fp_stag = Bfield_fp[lev][0]->ixType().toIntVect();
+            const amrex::IntVect& By_fp_stag = Bfield_fp[lev][1]->ixType().toIntVect();
+            const amrex::IntVect& Bz_fp_stag = Bfield_fp[lev][2]->ixType().toIntVect();
+
+            const amrex::IntVect& Bx_cp_stag = Bfield_cp[lev][0]->ixType().toIntVect();
+            const amrex::IntVect& By_cp_stag = Bfield_cp[lev][1]->ixType().toIntVect();
+            const amrex::IntVect& Bz_cp_stag = Bfield_cp[lev][2]->ixType().toIntVect();
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -203,9 +213,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 amrex::ParallelFor(bx,
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, bx_cp, bx_c);
-                    warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, by_cp, by_c);
-                    warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, bz_cp, bz_c);
+                    warpx_interp(j, k, l, bx_aux, bx_fp, bx_cp, bx_c, Bx_fp_stag, Bx_cp_stag, refinement_ratio);
+                    warpx_interp(j, k, l, by_aux, by_fp, by_cp, by_c, By_fp_stag, By_cp_stag, refinement_ratio);
+                    warpx_interp(j, k, l, bz_aux, bz_fp, bz_cp, bz_c, Bz_fp_stag, Bz_cp_stag, refinement_ratio);
                 });
             }
         }
@@ -239,6 +249,16 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                                                             ng_src, ng, WarpX::do_single_precision_comms, cperiod);
             }
 
+            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+
+            const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
+            const amrex::IntVect& Ey_fp_stag = Efield_fp[lev][1]->ixType().toIntVect();
+            const amrex::IntVect& Ez_fp_stag = Efield_fp[lev][2]->ixType().toIntVect();
+
+            const amrex::IntVect& Ex_cp_stag = Efield_cp[lev][0]->ixType().toIntVect();
+            const amrex::IntVect& Ey_cp_stag = Efield_cp[lev][1]->ixType().toIntVect();
+            const amrex::IntVect& Ez_cp_stag = Efield_cp[lev][2]->ixType().toIntVect();
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -261,9 +281,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 amrex::ParallelFor(bx,
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, ex_cp, ex_c);
-                    warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, ey_cp, ey_c);
-                    warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, ez_cp, ez_c);
+                    warpx_interp(j, k, l, ex_aux, ex_fp, ex_cp, ex_c, Ex_fp_stag, Ex_cp_stag, refinement_ratio);
+                    warpx_interp(j, k, l, ey_aux, ey_fp, ey_cp, ey_c, Ey_fp_stag, Ey_cp_stag, refinement_ratio);
+                    warpx_interp(j, k, l, ez_aux, ez_fp, ez_cp, ez_c, Ez_fp_stag, Ez_cp_stag, refinement_ratio);
                 });
             }
         }

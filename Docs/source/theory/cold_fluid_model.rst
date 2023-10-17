@@ -97,7 +97,8 @@ Step 5: **Current and Charge Deposition**
 
    The implemented MUSCL scheme has a simplifed slope averaging, see the extended writeup for details.
 
-   More details on the precise implementation will be made available online soon.
+   More details on the precise implementation are available here, `WarpX_Cold_Rel_Fluids.pdf`_.
+.. _WarpX_Cold_Rel_Fluids.pdf: https://github.com/ECP-WarpX/WarpX/files/12886437/WarpX_Cold_Rel_Fluids.pdf
 
 .. warning::
       If using the fluid model with the Kinetic-Fluid Hybrid model or the electrostatic solver, there is a known

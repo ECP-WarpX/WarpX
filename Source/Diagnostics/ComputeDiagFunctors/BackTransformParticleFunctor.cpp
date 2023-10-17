@@ -149,7 +149,7 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
             }
         }
     }
-    totalParticleCounter = pc_dst.TotalNumberOfParticles();
+    totalParticleCounter = static_cast<int>(pc_dst.TotalNumberOfParticles());
 }
 
 

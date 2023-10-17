@@ -143,4 +143,4 @@ sim.add_diagnostic(part_diag)
 
     # verify that amrex proc ranks are offset by -1 from
     # world comm proc ranks
-#    assert sim.extension.getMyProc() == rank - 1
+#    assert libwarpx.amr.ParallelDescriptor.MyProc() == rank - 1

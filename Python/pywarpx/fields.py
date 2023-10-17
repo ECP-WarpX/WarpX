@@ -298,10 +298,14 @@ class _MultiFABWrapper(object):
         # self.mf.array(mfi) is in C ordering.
         # Note: transposing creates a view and not a copy.
         device_arr4 = self.mf.array(mfi)
-        if cp is not None:
-            device_arr = cp.array(device_arr4, copy=False).T
+        if libwarpx.libwarpx_so.Config.have_gpu:
+            if cp is not None:
+                device_arr = device_arr4.to_cupy(copy=False)
+            else:
+                # Relies on managed memory
+                device_arr = device_arr4.to_numpy(copy=False)
         else:
-            device_arr = np.array(device_arr4, copy=False).T
+            device_arr = device_arr4.to_numpy(copy=False)
         if not self.include_ghosts:
             nghosts = self._get_n_ghosts()
             device_arr = device_arr[tuple([slice(ng, -ng) for ng in nghosts[:self.dim]])]
@@ -426,11 +430,10 @@ class _MultiFABWrapper(object):
             if global_slices is not None:
                 # Note that the array will always have 4 dimensions.
                 device_arr = self._get_field(mfi)
-                if cp is not None:
-                    # Copy the data from the device to the host
-                    slice_arr = cp.asnumpy(device_arr[block_slices])
-                else:
-                    slice_arr = device_arr[block_slices]
+                slice_arr = device_arr[block_slices]
+                if (cp is not None) and (type(slice_arr) is cp.ndarray):
+                    # Copy data from host to device using cupy syntax
+                    slice_arr = slice_arr.get()
                 datalist.append((global_slices, slice_arr))
 
         # Gather the data from all processors
@@ -531,9 +534,9 @@ class _MultiFABWrapper(object):
                 mf_arr = self._get_field(mfi)
                 if isinstance(value, np.ndarray):
                     slice_value = value3d[global_slices]
-                    if cp is not None:
+                    if libwarpx.libwarpx_so.Config.have_gpu:
                         # Copy data from host to device
-                        slice_value = cp.asarray(value3d[global_slices])
+                        slice_value = cp.asarray(slice_value)
                     mf_arr[block_slices] = slice_value
                 else:
                     mf_arr[block_slices] = value
