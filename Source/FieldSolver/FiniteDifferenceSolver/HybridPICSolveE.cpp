@@ -85,7 +85,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        Real wt = static_cast<Real>(amrex::second());
 
         // Extract field data for this grid/tile
         Array4<Real> const& Jr = Jfield[0]->array(mfi);
@@ -103,9 +103,9 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
-        int const n_coefs_r = m_stencil_coefs_r.size();
+        int const n_coefs_r = static_cast<int>(m_stencil_coefs_r.size());
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
+        int const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
 
         // Extract cylindrical specific parameters
         Real const dr = m_dr;
@@ -136,7 +136,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
 
                 // Higher-order modes
                 // r on cell-centered point (Jr is cell-centered in r)
-                Real const r = rmin + (i + 0.5)*dr;
+                Real const r = rmin + (i + 0.5_rt)*dr;
                 for (int m=1; m<nmodes; m++) {
                     Jr(i, j, 0, 2*m-1) = one_over_mu0 * (
                         - T_Algo::DownwardDz(Bt, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
@@ -239,7 +239,7 @@ void FiniteDifferenceSolver::CalculateCurrentAmpereCylindrical (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -475,7 +475,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        Real wt = static_cast<Real>(amrex::second());
 
         Array4<Real> const& enE_nodal = enE_nodal_mf.array(mfi);
         Array4<Real const> const& Jr = Jfield[0]->const_array(mfi);
@@ -524,7 +524,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -539,7 +539,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        Real wt = static_cast<Real>(amrex::second());
 
         // Extract field data for this grid/tile
         Array4<Real> const& Er = Efield[0]->array(mfi);
@@ -560,9 +560,9 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
-        int const n_coefs_r = m_stencil_coefs_r.size();
+        int const n_coefs_r = static_cast<int>(m_stencil_coefs_r.size());
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
+        int const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
 
         // Extract cylindrical specific parameters
         Real const dr = m_dr;
@@ -661,7 +661,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
