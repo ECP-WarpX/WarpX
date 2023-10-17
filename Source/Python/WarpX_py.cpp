@@ -8,6 +8,7 @@
  */
 #include "WarpX_py.H"
 
+#include <cstdlib>
 #include <exception>
 
 
