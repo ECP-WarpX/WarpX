@@ -2315,6 +2315,120 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
             self.diagnostic._species_dict[name] = diag
 
+
+class BoundaryScrapingDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnosticBase):
+    """
+    Diagnostic that collects the particles that are absorbed at the boundaries,
+    throughout the simulation.
+
+    Parameters
+    ----------
+    warpx_format: {plotfile, checkpoint, openpmd, ascent, sensei}, optional
+        Diagnostic file format
+
+    warpx_openpmd_backend: {bp, h5, json}, optional
+        Openpmd backend file format
+
+    warpx_file_prefix: string, optional
+        Prefix on the diagnostic file name
+
+    warpx_file_min_digits: integer, optional
+        Minimum number of digits for the time step number in the file name
+
+    warpx_random_fraction: float, optional
+        Random fraction of particles to include in the diagnostic
+
+    warpx_uniform_stride: integer, optional
+        Stride to down select to the particles to include in the diagnostic
+
+    warpx_plot_filter_function: string, optional
+        Analytic expression to down select the particles to in the diagnostic
+    """
+    def init(self, kw):
+
+        self.format = kw.pop('warpx_format', 'plotfile')
+        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.file_min_digits = kw.pop('warpx_file_min_digits', None)
+        self.random_fraction = kw.pop('warpx_random_fraction', None)
+        self.uniform_stride = kw.pop('warpx_uniform_stride', None)
+        self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
+
+        self.user_defined_kw = {}
+        if self.plot_filter_function is not None:
+            # This allows variables to be used in the plot_filter_function, but
+            # in order not to break other codes, the variables must begin with "warpx_"
+            for k in list(kw.keys()):
+                if k.startswith('warpx_') and re.search(r'\b%s\b'%k, self.plot_filter_function):
+                    self.user_defined_kw[k] = kw[k]
+                    del kw[k]
+
+        self.mangle_dict = None
+
+    def initialize_inputs(self):
+
+        self.add_diagnostic()
+
+        self.diagnostic.diag_type = 'BoundaryScraping'
+        self.diagnostic.format = self.format
+        self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.file_min_digits = self.file_min_digits
+        self.diagnostic.intervals = self.period
+        self.diagnostic.particles_at_eb = 1
+        self.set_write_dir()
+
+        # --- Use a set to ensure that fields don't get repeated.
+        variables = set()
+
+        if self.data_list is not None:
+            for dataname in self.data_list:
+                if dataname == 'position':
+                    # --- The positions are alway written out anyway
+                    pass
+                elif dataname == 'momentum':
+                    variables.add('ux')
+                    variables.add('uy')
+                    variables.add('uz')
+                elif dataname == 'weighting':
+                    variables.add('w')
+                elif dataname == 'fields':
+                    variables.add('Ex')
+                    variables.add('Ey')
+                    variables.add('Ez')
+                    variables.add('Bx')
+                    variables.add('By')
+                    variables.add('Bz')
+                elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
+                    variables.add(dataname)
+
+            # --- Convert the set to a sorted list so that the order
+            # --- is the same on all processors.
+            variables = list(variables)
+            variables.sort()
+
+        # species list
+        if self.species is None:
+            species_names = pywarpx.particles.species_names
+        elif np.iterable(self.species):
+            species_names = [specie.name for specie in self.species]
+        else:
+            species_names = [species.name]
+
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        for name in species_names:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
+                                         variables = variables,
+                                         random_fraction = self.random_fraction,
+                                         uniform_stride = self.uniform_stride)
+            expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
+            diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
+            self.diagnostic._species_dict[name] = diag
+
+
 # ----------------------------
 # Lab frame diagnostics
 # ----------------------------
