@@ -12,6 +12,7 @@
 #include "Utils/export.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
+#include <functional>
 #include <map>
 #include <string>
 
