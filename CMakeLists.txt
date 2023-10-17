@@ -686,6 +686,17 @@ if(WarpX_PYTHON)
             ${WarpX_CUSTOM_TARGET_PREFIX}pip_install_requirements
             ${_EXTRA_INSTALL_DEPENDS}
     )
+
+    # this is for package managers only
+    add_custom_target(${WarpX_CUSTOM_TARGET_PREFIX}pip_install_nodeps
+        ${CMAKE_COMMAND} -E env WARPX_MPI=${WarpX_MPI}
+            ${Python_EXECUTABLE} -m pip install --force-reinstall --no-index --no-deps ${PYINSTALLOPTIONS} --find-links=warpx-whl pywarpx
+        WORKING_DIRECTORY
+            ${WarpX_BINARY_DIR}
+        DEPENDS
+            pyWarpX_${WarpX_DIMS_LAST}
+            ${WarpX_CUSTOM_TARGET_PREFIX}pip_wheel
+    )
 endif()
 
 
