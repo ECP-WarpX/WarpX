@@ -8,6 +8,9 @@
  */
 #include "WarpX_py.H"
 
+#include <exception>
+
+
 std::map< std::string, std::function<void()> > warpx_callback_py_map;
 
 void InstallPythonCallback ( std::string name, std::function<void()> callback )
@@ -24,8 +27,21 @@ bool IsPythonCallbackInstalled ( std::string name )
 void ExecutePythonCallback ( std::string name )
 {
     if ( IsPythonCallbackInstalled(name) ) {
-        WARPX_PROFILE("warpx_py_"+name);
-        warpx_callback_py_map[name]();
+        WARPX_PROFILE("warpx_py_" + name);
+        try {
+            warpx_callback_py_map[name]();
+        } catch (std::exception &e) {
+            std::cerr << "Python callback '" << name << "' failed!" << std::endl;
+            std::cerr << e.what() << std::endl;
+            std::exit(3);  // note: NOT amrex::Abort(), to avoid hangs with MPI
+
+            // future note:
+            // if we want to rethrow/raise exceptions from Python callbacks through here (C++) and
+            // back the managing Python interpreter, we first need to discard and clear
+            // out the Python error in py::error_already_set. Otherwise, MPI-runs will hang
+            // (and Python will be in continued error state).
+            // https://pybind11.readthedocs.io/en/stable/advanced/exceptions.html#handling-unraisable-exceptions
+        }
     }
 }
 
