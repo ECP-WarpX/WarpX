@@ -589,7 +589,7 @@ def sigmav_thermal_fit_lowE_nonresonant(T):
     E0 = (E_Gamow_keV/4.)**(1./3.) * T**(2./3.)
     DE0 = 4.*np.sqrt(T*E0/3.)
     C0 = 197.*1.e3
-    C1 = 0.69*1.e3
+    C1 = 0.269*1.e3
     C2 = 2.54e-4*1.e3
     tau = 3.*E0/T
     Seff = C0*(1.+5./(12.*tau)) + C1*(E0+35./36.*T) + C2*(E0**2 + 89./36.*E0*T)
