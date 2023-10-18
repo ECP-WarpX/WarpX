@@ -144,7 +144,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
 #else
             m_data[shift_m_data + mfi.index()*m_nDataFields + 5] = 0.;
 #endif
-            m_data[shift_m_data + mfi.index()*m_nDataFields + 6] = tbx.d_numPts(); // note: difference to volume
+            m_data[shift_m_data + mfi.index()*m_nDataFields + 6] = static_cast<amrex::Real>(tbx.d_numPts()); // note: difference to volume
             m_data[shift_m_data + mfi.index()*m_nDataFields + 7] = countBoxMacroParticles(mfi, lev);
 #ifdef AMREX_USE_GPU
             m_data[shift_m_data + mfi.index()*m_nDataFields + 8] = amrex::Gpu::Device::deviceId();
@@ -158,7 +158,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
 
     // parallel reduce to IO proc and get data over all procs
     ParallelDescriptor::ReduceRealSum(m_data.data(),
-                                      m_data.size(),
+                                      static_cast<int>(m_data.size()),
                                       ParallelDescriptor::IOProcessorNumber());
 
 #ifdef AMREX_USE_MPI
@@ -367,7 +367,11 @@ void LoadBalanceCosts::WriteToFile (int step) const
         ofstmp.close();
 
         // remove the original, rename tmp file
-        std::remove(fileDataName.c_str());
-        std::rename(fileTmpName.c_str(), fileDataName.c_str());
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            std::remove(fileDataName.c_str()) == EXIT_SUCCESS,
+            "Failed to remove " + fileDataName);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            std::rename(fileTmpName.c_str(), fileDataName.c_str()) == EXIT_SUCCESS,
+            "Failed to rename " + fileTmpName + " into " + fileDataName);
     }
 }

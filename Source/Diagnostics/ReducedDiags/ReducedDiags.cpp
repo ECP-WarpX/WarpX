@@ -23,7 +23,8 @@
 using namespace amrex;
 
 // constructor
-ReducedDiags::ReducedDiags (const std::string& rd_name)
+ReducedDiags::ReducedDiags (const std::string& rd_name):
+m_rd_name{rd_name}
 {
     BackwardCompatibility();
 

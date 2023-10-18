@@ -219,7 +219,7 @@ void ParticleHistogram::ComputeDiags (int step)
 
                     // don't count a particle if it is filtered out
                     if (do_parser_filter)
-                        if (!fun_filterparser(t, x, y, z, ux, uy, uz))
+                        if (fun_filterparser(t, x, y, z, ux, uy, uz) == 0._rt)
                             return;
                     // continue function if particle is not filtered out
                     auto const f = fun_partparser(t, x, y, z, ux, uy, uz);
@@ -247,7 +247,7 @@ void ParticleHistogram::ComputeDiags (int step)
 
     // reduced sum over mpi ranks
     ParallelDescriptor::ReduceRealSum
-        (m_data.data(), m_data.size(), ParallelDescriptor::IOProcessorNumber());
+        (m_data.data(), static_cast<int>(m_data.size()), ParallelDescriptor::IOProcessorNumber());
 
     // normalize the maximum value to be one
     if ( m_norm == NormalizationType::max_to_unity )

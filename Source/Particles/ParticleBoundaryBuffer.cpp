@@ -149,7 +149,7 @@ void ParticleBoundaryBuffer::printNumParticles () const {
             auto& buffer = m_particle_containers[2*idim+iside];
             for (int i = 0; i < numSpecies(); ++i)
             {
-                const int np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
+                const auto np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
                 amrex::Print() << Utils::TextMsg::Info(
                     "Species " + getSpeciesNames()[i] + " has "
                     + std::to_string(np) + " particles in the boundary buffer "
@@ -162,7 +162,7 @@ void ParticleBoundaryBuffer::printNumParticles () const {
     auto& buffer = m_particle_containers[2*AMREX_SPACEDIM];
     for (int i = 0; i < numSpecies(); ++i)
     {
-        const int np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
+        const auto np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
         amrex::Print() << Utils::TextMsg::Info(
             "Species " + getSpeciesNames()[i] + " has "
             + std::to_string(np) + " particles in the EB boundary buffer"
@@ -370,8 +370,12 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
-    if (buffer[index].isDefined()) return buffer[index].TotalNumberOfParticles(false, local);
-    else return 0;
+    if (buffer[index].isDefined()){
+        return static_cast<int>(buffer[index].TotalNumberOfParticles(false, local));
+    }
+    else{
+        return 0;
+    }
 }
 
 PinnedMemoryParticleContainer &

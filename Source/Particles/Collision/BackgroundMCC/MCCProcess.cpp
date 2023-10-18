@@ -40,7 +40,7 @@ MCCProcess::init (const std::string& scattering_process, const amrex::ParticleRe
     m_exe_h.m_sigmas_data = m_sigmas_h.data();
 
     // save energy grid parameters for easy use
-    m_grid_size = m_energies.size();
+    m_grid_size = static_cast<int>(m_energies.size());
     m_exe_h.m_energy_lo = m_energies[0];
     m_exe_h.m_energy_hi = m_energies[m_grid_size-1];
     m_exe_h.m_sigma_lo = m_sigmas_h[0];
