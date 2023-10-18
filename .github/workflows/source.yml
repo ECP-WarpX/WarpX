@@ -13,8 +13,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  style:
+  lint:
+    runs-on: ubuntu-22.04
 
+    steps:
+    - name: check WarpX python code
+      run: |
+        python3 -m pip install pyflakes
+        pyflakes .
+
+  style:
     runs-on: ubuntu-22.04
 
     steps:
