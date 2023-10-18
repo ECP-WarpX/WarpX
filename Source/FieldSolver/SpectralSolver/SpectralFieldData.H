@@ -13,7 +13,7 @@
 #include "SpectralKSpace.H"
 #include "Utils/WarpX_Complex.H"
 
-#include <ablastr/fft/AnyFFT.H>
+#include <ablastr/math/fft/AnyFFT.H>
 
 #include <AMReX_BaseFab.H>
 #include <AMReX_Config.H>

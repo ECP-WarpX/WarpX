@@ -12,7 +12,7 @@
 #include "SpectralHankelTransform/SpectralHankelTransformer.H"
 #include "SpectralKSpaceRZ.H"
 
-#include <ablastr/fft/AnyFFT.H>
+#include <ablastr/math/fft/AnyFFT.H>
 
 #include <AMReX_MultiFab.H>
 

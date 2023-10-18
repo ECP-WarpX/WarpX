@@ -9,7 +9,7 @@
 #define WARPX_COMPLEX_H_
 
 #ifdef WARPX_USE_PSATD
-#  include <ablastr/fft/AnyFFT.H>
+#  include <ablastr/math/fft/AnyFFT.H>
 #endif
 
 #include <AMReX_Gpu.H>

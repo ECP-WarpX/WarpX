@@ -9,7 +9,7 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
-#include <ablastr/fft/AnyFFT.H>
+#include <ablastr/math/fft/AnyFFT.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Config.H>
