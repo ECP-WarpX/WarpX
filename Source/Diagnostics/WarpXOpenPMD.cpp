@@ -380,9 +380,9 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
   :m_Series(nullptr),
    m_Encoding(ie),
    m_OpenPMDFileType(std::move(openPMDFileType)),
-   m_fieldPMLdirections(std::move(fieldPMLdirections)),
    m_MPISize{1},
-   m_MPIRank{1}
+   m_MPIRank{1},
+   m_fieldPMLdirections(std::move(fieldPMLdirections))
 {
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
