@@ -20,7 +20,7 @@ jobs:
     - name: check WarpX python code
       run: |
         python3 -m pip install pyflakes
-        pyflakes .
+        python3 -m pyflakes .
 
   style:
     runs-on: ubuntu-22.04
