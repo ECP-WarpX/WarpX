@@ -86,10 +86,10 @@ class fillBufferFlag
                         amrex::Gpu::DeviceVector<int>& inexflag,
                         amrex::Geometry const& geom ):
             // Extract simple structure that can be used directly on the GPU
-            m_particles{pti.GetArrayOfStructs().data()},
-            m_buffer_mask{(*bmasks)[pti].array()},
+            m_domain{geom.Domain()},
             m_inexflag_ptr{inexflag.dataPtr()},
-            m_domain{geom.Domain()}
+            m_particles{pti.GetArrayOfStructs().data()},
+            m_buffer_mask{(*bmasks)[pti].array()}
         {
             for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
                 m_prob_lo[idim] = geom.ProbLo(idim);
@@ -143,13 +143,13 @@ class fillBufferFlagRemainingParticles
                         amrex::Geometry const& geom,
                         amrex::Gpu::DeviceVector<long> const& particle_indices,
                         long const start_index ) :
-            m_start_index{start_index},
+            m_domain{geom.Domain()},
             // Extract simple structure that can be used directly on the GPU
+            m_inexflag_ptr{inexflag.dataPtr()},
             m_particles{pti.GetArrayOfStructs().data()},
             m_buffer_mask{(*bmasks)[pti].array()},
-            m_inexflag_ptr{inexflag.dataPtr()},
-            m_indices_ptr{particle_indices.dataPtr()},
-            m_domain{geom.Domain()}
+            m_start_index{start_index},
+            m_indices_ptr{particle_indices.dataPtr()}
         {
             for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
                 m_prob_lo[idim] = geom.ProbLo(idim);
