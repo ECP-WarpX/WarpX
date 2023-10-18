@@ -173,7 +173,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
@@ -193,7 +193,7 @@ SpectralFieldData::SpectralFieldData( const int lev,
         if (do_costs)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -242,7 +242,7 @@ SpectralFieldData::ForwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Copy the real-space field `mf` to the temporary field `tmpRealField`
         // This ensures that all fields have the same number of points
@@ -309,7 +309,7 @@ SpectralFieldData::ForwardTransform (const int lev,
         if (do_costs)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -367,7 +367,7 @@ SpectralFieldData::BackwardTransform (const int lev,
         {
             amrex::Gpu::synchronize();
         }
-        Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Copy the spectral-space field `tmpSpectralField` to the appropriate
         // field (specified by the input argument field_index)
@@ -470,7 +470,7 @@ SpectralFieldData::BackwardTransform (const int lev,
         if (do_costs)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }

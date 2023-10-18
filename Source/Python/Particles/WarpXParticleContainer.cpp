@@ -115,5 +115,12 @@ void init_WarpXParticleContainer (py::module& m)
             },
             py::arg("rho"), py::arg("lev")
         )
+        .def("get_charge_density",
+            [](WarpXParticleContainer& pc, int lev, bool local)
+            {
+                return pc.GetChargeDensity(lev, local);
+            },
+            py::arg("lev"), py::arg("local")
+        )
     ;
 }
