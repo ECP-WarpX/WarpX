@@ -98,7 +98,7 @@ public:
         ParticleUtils::getEnergy(u_coll2, m_mass, E_coll);
 
         // get collision cross-section
-        const ParticleReal sigma_E = m_mcc_process.getCrossSection(E_coll);
+        const ParticleReal sigma_E = m_mcc_process.getCrossSection(static_cast<amrex::ParticleReal>(E_coll));
 
         // calculate normalized collision frequency
         const ParticleReal nu_i = n_a * sigma_E * sqrt(u_coll2) / m_nu_max;
@@ -182,7 +182,7 @@ public:
 
         // calculate standard deviation in neutral velocity distribution using
         // the local temperature
-        const ParticleReal ion_vel_std = m_sqrt_kb_m * sqrt(m_T_a_func(x, y, z, m_t));
+        const ParticleReal ion_vel_std = m_sqrt_kb_m * std::sqrt(m_T_a_func(x, y, z, m_t));
 
         // get references to the original particle's velocity
         auto& ux = src.m_rdata[PIdx::ux][i_src];
@@ -202,7 +202,7 @@ public:
         ParticleUtils::getEnergy(u_coll2, m_mass1, E_coll);
 
         // each electron gets half the energy (could change this later)
-        const amrex::ParticleReal E_out = (E_coll - m_energy_cost) / 2.0_prt * PhysConst::q_e;
+        const amrex::ParticleReal E_out = static_cast<amrex::ParticleReal>((E_coll - m_energy_cost) / 2.0_prt * PhysConst::q_e);
 
         // precalculate often used value
         constexpr auto c2 = PhysConst::c * PhysConst::c;

@@ -303,7 +303,7 @@ public:
      * @param[in] id if different than -1, this id will be assigned to the particles (used for
      * particle tagging in some routines, e.g. SplitParticle)
      */
-    void AddNParticles (int lev, int n,
+    void AddNParticles (int lev, long n,
                         amrex::Vector<amrex::ParticleReal> const & x,
                         amrex::Vector<amrex::ParticleReal> const & y,
                         amrex::Vector<amrex::ParticleReal> const & z,

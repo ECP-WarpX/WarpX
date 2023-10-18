@@ -394,7 +394,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
         diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) +
             diag_ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
         diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) +
-            (diag_ba.getCellCenteredBox( diag_ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
+            (diag_ba.getCellCenteredBox( static_cast<int>(diag_ba.size()-1) ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
     }
 
     // Define buffer_domain in lab-frame for the i^th snapshot.
@@ -561,7 +561,9 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // Fill vector of cell-center functors for all field-components, namely,
     // Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho are included in the
     // cell-center functors for BackTransform Diags
-    for (int comp=0, n=m_cell_center_functors.at(lev).size(); comp<n; comp++){
+    const auto m_cell_center_functors_at_lev_size = static_cast<int>(
+        m_cell_center_functors.at(lev).size());
+    for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames[comp] == "Ex" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Ey" ){
@@ -600,13 +602,14 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
 
     const bool update_varnames = true;
     if (update_varnames) {
-        const int n_rz = ncomp * m_varnames_fields.size();
+        const auto n_rz = ncomp * static_cast<int>(m_varnames_fields.size());
         m_varnames.clear();
         m_varnames.reserve(n_rz);
     }
     // AddRZ modes to output names for the back-transformed data
     if (update_varnames) {
-        for (int comp=0, n=m_varnames_fields.size(); comp<n; comp++)
+        const auto m_varnames_fields_size = static_cast<int>(m_varnames_fields.size());
+        for (int comp=0; comp<m_varnames_fields_size; comp++)
         {
             if (m_varnames_fields[comp] == "Er")  AddRZModesToOutputNames(std::string("Er"), ncomp, false);
             if (m_varnames_fields[comp] == "Et")  AddRZModesToOutputNames(std::string("Et"), ncomp, false);
@@ -625,10 +628,11 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
     // but the `varnames` need only be updated once.
     const bool update_cellcenter_varnames = true;
     if (update_cellcenter_varnames) {
-        const int n_rz = ncomp * m_cellcenter_varnames.size();
+        const auto n_rz = ncomp * static_cast<int>(m_cellcenter_varnames.size());
         m_cellcenter_varnames.clear();
         m_cellcenter_varnames.reserve(n_rz);
-        for (int comp=0, n=m_cellcenter_varnames_fields.size(); comp<n; comp++)
+        const auto m_cellcenter_varnames_fields_size = static_cast<int>(m_cellcenter_varnames_fields.size());
+        for (int comp=0; comp<m_cellcenter_varnames_fields_size; comp++)
         {
             if ( m_cellcenter_varnames_fields[comp] == "Er" ) AddRZModesToOutputNames(std::string("Er"), ncomp, true);
             if ( m_cellcenter_varnames_fields[comp] == "Et" ) AddRZModesToOutputNames(std::string("Et"), ncomp, true);
@@ -674,7 +678,8 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     m_cell_center_functors[lev].clear();
     m_cell_center_functors[lev].resize(m_cellcenter_varnames_fields.size());
 
-    for (int comp=0, n=m_cell_center_functors.at(lev).size(); comp<n; comp++){
+    const auto m_cell_center_functors_at_lev_size = static_cast<int>(m_cell_center_functors.at(lev).size());
+    for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames_fields[comp] == "Er" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Et" ){
@@ -786,7 +791,8 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     // Call m_cell_center_functors->operator
     for (int lev = 0; lev < nmax_lev; ++lev) {
         int icomp_dst = 0;
-        for (int icomp = 0, n=m_cell_center_functors.at(lev).size(); icomp<n; ++icomp) {
+        const auto m_cell_center_fuctors_at_lev_size = static_cast<int>(m_cell_center_functors.at(lev).size());
+        for (int icomp = 0; icomp<m_cell_center_fuctors_at_lev_size; ++icomp) {
             // Call all the cell-center functors in m_cell_center_functors.
             // Each of them computes cell-centered data for a field and
             // stores it in cell-centered MultiFab, m_cell_centered_data[lev].
@@ -804,7 +810,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
 
     for (int lev = warpx.finestLevel(); lev > 0; --lev) {
         ablastr::coarsen::sample::Coarsen(*m_cell_centered_data[lev - 1], *m_cell_centered_data[lev], 0, 0,
-                                          m_cellcenter_varnames.size(), 0, WarpX::RefRatio(lev-1) );
+                                          static_cast<int>(m_cellcenter_varnames.size()), 0, WarpX::RefRatio(lev-1) );
     }
 
     const int num_BT_functors = 1;
@@ -901,7 +907,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     // Unlike FullDiagnostics, "m_format == sensei" option is not included here.
     const int ngrow = 0;
     m_mf_output[i_buffer][lev] = amrex::MultiFab( buffer_ba, buffer_dmap,
-                                              m_varnames.size(), ngrow );
+                                              static_cast<int>(m_varnames.size()), ngrow );
     m_mf_output[i_buffer][lev].setVal(0.);
 
     amrex::IntVect ref_ratio = amrex::IntVect(1);
@@ -915,7 +921,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
                                   - m_snapshot_box[i_buffer].smallEnd(idim)
                                   ) * cellsize;
         const amrex::Real buffer_hi = m_snapshot_domain_lab[i_buffer].lo(idim)
-                                + ( buffer_ba.getCellCenteredBox( buffer_ba.size()-1 ).bigEnd(idim)
+                                + ( buffer_ba.getCellCenteredBox( static_cast<int>(buffer_ba.size()-1) ).bigEnd(idim)
                                   - m_snapshot_box[i_buffer].smallEnd(idim)
                                   + 1 ) * cellsize;
         m_buffer_domain_lab[i_buffer].setLo(idim, buffer_lo);
@@ -1450,8 +1456,9 @@ BTDiagnostics::PrepareParticleDataForOutput()
             {
                 // Check if the zslice is in domain
                 const bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
-                if (ZSliceInDomain) {
-                    if ( m_totalParticles_in_buffer[i_buffer][i] == 0) {
+                const bool kindexInSnapshotBox = GetKIndexInSnapshotBoxFlag (i_buffer, lev);
+                if (kindexInSnapshotBox) {
+                    if ( buffer_empty(i_buffer) ) {
                         if (!m_do_back_transformed_fields || m_varnames_fields.empty()) {
                             if ( m_buffer_flush_counter[i_buffer] == 0) {
                                 DefineSnapshotGeometry(i_buffer, lev);
@@ -1481,7 +1488,8 @@ void
 BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 {
     for (int isp = 0; isp < m_totalParticles_flushed_already[i_buffer].size(); ++isp) {
-        m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
+        m_totalParticles_flushed_already[i_buffer][isp] += static_cast<int>(
+            m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles());
     }
 }
 

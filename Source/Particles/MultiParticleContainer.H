@@ -84,11 +84,6 @@ public:
     WarpXParticleContainer&
     GetParticleContainerFromName (const std::string& name) const;
 
-#ifdef WARPX_USE_OPENPMD
-    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int index) {
-      return  allcontainers[index];
-    }
-#endif
     std::array<amrex::ParticleReal, 3> meanParticleVelocity(int index) {
         return allcontainers[index]->meanParticleVelocity();
     }
@@ -239,9 +234,9 @@ public:
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies () const {return species_names.size();}
-    int nLasers () const {return lasers_names.size();}
-    int nContainers () const {return allcontainers.size();}
+    int nSpecies () const {return static_cast<int>(species_names.size());}
+    int nLasers () const {return static_cast<int>(lasers_names.size());}
+    int nContainers () const {return static_cast<int>(allcontainers.size());}
 
     /** Whether back-transformed diagnostics need to be performed for any plasma species.
      *
@@ -258,13 +253,13 @@ public:
     int nSpeciesDepositOnMainGrid () const {
         bool const onMainGrid = true;
         auto const & v = m_deposit_on_main_grid;
-        return std::count( v.begin(), v.end(), onMainGrid );
+        return static_cast<int>(std::count( v.begin(), v.end(), onMainGrid ));
     }
 
     int nSpeciesGatherFromMainGrid() const {
         bool const fromMainGrid = true;
         auto const & v = m_gather_from_main_grid;
-        return std::count( v.begin(), v.end(), fromMainGrid );
+        return static_cast<int>(std::count( v.begin(), v.end(), fromMainGrid ));
     }
 
     // Inject particles during the simulation (for particles entering the

@@ -10,7 +10,7 @@
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Python/WarpX_py.H"
+#include "Python/callbacks.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"

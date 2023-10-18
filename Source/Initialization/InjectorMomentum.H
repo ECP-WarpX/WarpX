@@ -233,9 +233,9 @@ struct InjectorMomentumUniform
           m_Dux(m_ux_max - m_ux_min),
           m_Duy(m_uy_max - m_uy_min),
           m_Duz(m_uz_max - m_uz_min),
-          m_ux_h(0.5 * (m_ux_max + m_ux_min)),
-          m_uy_h(0.5 * (m_uy_max + m_uy_min)),
-          m_uz_h(0.5 * (m_uz_max + m_uz_min))
+          m_ux_h(amrex::Real(0.5) * (m_ux_max + m_ux_min)),
+          m_uy_h(amrex::Real(0.5) * (m_uy_max + m_uy_min)),
+          m_uz_h(amrex::Real(0.5) * (m_uz_max + m_uz_min))
         {}
 
     AMREX_GPU_HOST_DEVICE

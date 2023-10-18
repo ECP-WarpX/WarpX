@@ -1,10 +1,11 @@
-Checks: '-*,
-    bugprone-*
+Checks: '
+    -*,
+    bugprone-*,
         -bugprone-easily-swappable-parameters,
         -bugprone-implicit-widening-of-multiplication-result,
         -bugprone-misplaced-widening-cast,
         -bugprone-unchecked-optional-access,
-    cert-*
+    cert-*,
         -cert-err58-cpp,
     cppcoreguidelines-*,
         -cppcoreguidelines-avoid-c-arrays,
@@ -20,15 +21,9 @@ Checks: '-*,
     google-build-explicit-make-pair,
     google-build-namespaces,
     google-global-names-in-headers,
-    misc-const-correctness,
-    misc-definitions-in-headers,
-    misc-misleading-bidirectional,
-    misc-misleading-identifier,
-    misc-misplaced-const,
-    misc-uniqueptr-reset-release,
-    misc-unused-alias-decls,
-    misc-unused-parameters,
-    misc-unused-using-decls,
+    misc-*,
+        -misc-no-recursion,
+        -misc-non-private-member-variables-in-classes,
     modernize-avoid-bind,
     modernize-concat-nested-namespaces,
     modernize-deprecated-headers,
@@ -42,10 +37,10 @@ Checks: '-*,
     modernize-replace-auto-ptr,
     modernize-replace-disallow-copy-and-assign-macro,
     modernize-replace-random-shuffle,
-    modernize-return-braced-init-list,
     modernize-shrink-to-fit,
     modernize-unary-static-assert,
     modernize-use-nullptr,
+        -modernize-return-braced-init-list,
     mpi-*,
     performance-faster-string-find,
     performance-for-range-copy,
@@ -83,9 +78,12 @@ Checks: '-*,
     '
 
 CheckOptions:
-- key:          modernize-pass-by-value.ValuesOnly
-  value:        'true'
+- key:          bugprone-narrowing-conversions.WarnOnIntegerToFloatingPointNarrowingConversion
+  value:        "false"
 - key:          misc-definitions-in-headers.HeaderFileExtensions
   value:        "H,"
+- key:          modernize-pass-by-value.ValuesOnly
+  value:        "true"
+
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'

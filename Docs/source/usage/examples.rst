@@ -164,6 +164,18 @@ ion-Bernstein modes as indicated below.
 
       python3 PICMI_inputs.py -dim {1/2/3} --bdir {x/y/z}
 
+A RZ-geometry example case for normal modes propagating along an applied magnetic field in a cylinder is also available.
+The analytical solution for these modes are described in :cite:t:`ex-Stix1992` Chapter 6, Sec. 2.
+
+.. figure:: https://user-images.githubusercontent.com/40245517/259251824-33e78375-81d8-410d-a147-3fa0498c66be.png
+   :alt: Normal EM modes in a metallic cylinder
+   :width: 90%
+
+The input file for this example and corresponding analysis can be found at:
+
+* :download:`Cylinderical modes input <../../../Examples/Tests/ohm_solver_EM_modes/PICMI_inputs_rz.py>`
+* :download:`Analysis script <../../../Examples/Tests/ohm_solver_EM_modes/analysis_rz.py>`
+
 Ion beam R instability
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -243,7 +255,7 @@ The input file for this example and corresponding analysis can be found at:
 * :download:`Analysis script <../../../Examples/Tests/ohm_solver_magnetic_reconnection/analysis.py>`
 
 Many Further Examples, Demos and Tests
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------
 
 WarpX runs over 200 integration tests on a variety of modeling cases, which validate and demonstrate its functionality.
 Please see the `Examples/Tests/ <https://github.com/ECP-WarpX/WarpX/tree/development/Examples/Tests>`__ directory for many more examples.

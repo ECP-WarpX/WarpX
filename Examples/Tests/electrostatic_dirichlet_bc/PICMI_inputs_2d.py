@@ -58,6 +58,12 @@ solver = picmi.ElectrostaticSolver(
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 4,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_dirichletbc_plt'
+)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -79,6 +85,7 @@ sim = picmi.Simulation(
     verbose = 0
 )
 
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 
 ##########################
