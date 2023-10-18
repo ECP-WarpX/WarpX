@@ -7,7 +7,7 @@ foreach(D IN LISTS WarpX_DIMS)
     target_sources(lib_${SD}
       PRIVATE
         # callback hooks
-        WarpX_py.cpp
+        callbacks.cpp
     )
     if(WarpX_PYTHON)
         target_sources(pyWarpX_${SD}
