@@ -13,7 +13,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_REAL.H>
 
-namespace ablastr::anyfft
+namespace ablastr::math::anyfft
 {
 
     void setup(){/*nothing to do*/}

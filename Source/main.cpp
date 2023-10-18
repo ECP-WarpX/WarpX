@@ -11,7 +11,7 @@
 #include "Initialization/WarpXAMReXInit.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
-#include <ablastr/fft/AnyFFT.H>
+#include <ablastr/math/fft/AnyFFT.H>
 #include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/timer/Timer.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 
     warpx::initialization::amrex_init(argc, argv);
 
-    ablastr::anyfft::setup();
+    ablastr::math::anyfft::setup();
 
     {
         WARPX_PROFILE_VAR("main()", pmain);
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
         WarpX::Finalize();
     }
 
-    ablastr::anyfft::cleanup();
+    ablastr::math::anyfft::cleanup();
 
     amrex::Finalize();
 

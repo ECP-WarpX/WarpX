@@ -9,7 +9,7 @@
 
 #include "ablastr/utils/TextMsg.H"
 
-namespace ablastr::anyfft
+namespace ablastr::math::anyfft
 {
     void setup()
     {

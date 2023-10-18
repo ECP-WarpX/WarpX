@@ -32,7 +32,7 @@
  * done in different cpp files. This wrapper only depends on the underlying FFT library
  * AND on AMReX (There is no dependence on WarpX).
  */
-namespace ablastr::anyfft
+namespace ablastr::math::anyfft
 {
 
     /** This function is a wrapper around rocff_setup().

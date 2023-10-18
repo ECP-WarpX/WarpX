@@ -164,8 +164,8 @@ SpectralFieldData::SpectralFieldData( const int lev,
 #endif
 
     // Allocate and initialize the FFT plans
-    forward_plan = ablastr::anyfft::FFTplans(spectralspace_ba, dm);
-    backward_plan = ablastr::anyfft::FFTplans(spectralspace_ba, dm);
+    forward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
+    backward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
     // Loop over boxes and allocate the corresponding plan
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
@@ -180,15 +180,15 @@ SpectralFieldData::SpectralFieldData( const int lev,
         // the FFT plan, the valid dimensions are those of the real-space box.
         const IntVect fft_size = realspace_ba[mfi].length();
 
-        forward_plan[mfi] = ablastr::anyfft::CreatePlan(
+        forward_plan[mfi] = ablastr::math::anyfft::CreatePlan(
             fft_size, tmpRealField[mfi].dataPtr(),
-            reinterpret_cast<ablastr::anyfft::Complex*>( tmpSpectralField[mfi].dataPtr()),
-            ablastr::anyfft::direction::R2C, AMREX_SPACEDIM);
+            reinterpret_cast<ablastr::math::anyfft::Complex*>( tmpSpectralField[mfi].dataPtr()),
+            ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
 
-        backward_plan[mfi] = ablastr::anyfft::CreatePlan(
+        backward_plan[mfi] = ablastr::math::anyfft::CreatePlan(
             fft_size, tmpRealField[mfi].dataPtr(),
-            reinterpret_cast<ablastr::anyfft::Complex*>( tmpSpectralField[mfi].dataPtr()),
-            ablastr::anyfft::direction::C2R, AMREX_SPACEDIM);
+            reinterpret_cast<ablastr::math::anyfft::Complex*>( tmpSpectralField[mfi].dataPtr()),
+            ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM);
 
         if (do_costs)
         {
@@ -204,8 +204,8 @@ SpectralFieldData::~SpectralFieldData()
 {
     if (!tmpRealField.empty()){
         for ( MFIter mfi(tmpRealField); mfi.isValid(); ++mfi ){
-            ablastr::anyfft::DestroyPlan(forward_plan[mfi]);
-            ablastr::anyfft::DestroyPlan(backward_plan[mfi]);
+            ablastr::math::anyfft::DestroyPlan(forward_plan[mfi]);
+            ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
         }
     }
 }
@@ -267,7 +267,7 @@ SpectralFieldData::ForwardTransform (const int lev,
         }
 
         // Perform Fourier transform from `tmpRealField` to `tmpSpectralField`
-        ablastr::anyfft::Execute(forward_plan[mfi]);
+        ablastr::math::anyfft::Execute(forward_plan[mfi]);
 
         // Copy the spectral-space field `tmpSpectralField` to the appropriate
         // index of the FabArray `fields` (specified by `field_index`)
@@ -407,7 +407,7 @@ SpectralFieldData::BackwardTransform (const int lev,
         }
 
         // Perform Fourier transform from `tmpSpectralField` to `tmpRealField`
-        ablastr::anyfft::Execute(backward_plan[mfi]);
+        ablastr::math::anyfft::Execute(backward_plan[mfi]);
 
         // Copy the temporary field tmpRealField to the real-space field mf and
         // normalize, dividing by N, since (FFT + inverse FFT) results in a factor N

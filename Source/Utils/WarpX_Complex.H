@@ -22,7 +22,7 @@
 using Complex = amrex::GpuComplex<amrex::Real>;
 
 #ifdef WARPX_USE_PSATD
-static_assert(sizeof(Complex) == sizeof(ablastr::anyfft::Complex),
+static_assert(sizeof(Complex) == sizeof(ablastr::math::anyfft::Complex),
     "The complex type in WarpX and the FFT library do not match.");
 #endif
 
