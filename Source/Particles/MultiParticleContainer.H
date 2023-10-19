@@ -79,11 +79,6 @@ public:
     [[nodiscard]] WarpXParticleContainer&
     GetParticleContainerFromName (const std::string& name) const;
 
-#ifdef WARPX_USE_OPENPMD
-    std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int index) {
-      return  allcontainers[index];
-    }
-#endif
     std::array<amrex::ParticleReal, 3> meanParticleVelocity(int index) {
         return allcontainers[index]->meanParticleVelocity();
     }
