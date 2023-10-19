@@ -1062,12 +1062,6 @@ WarpX::ReadParameters ()
             current_centering_noz = 8;
         }
 
-#ifdef WARPX_DIM_RZ
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            grid_type != GridType::Hybrid,
-            "warpx.grid_type=hybrid is not implemented in RZ geometry");
-#endif
-
         // If true, the current is deposited on a nodal grid and centered onto
         // a staggered grid. Setting warpx.do_current_centering=1 makes sense
         // only if warpx.grid_type=hybrid. Instead, if warpx.grid_type=nodal or
@@ -1127,7 +1121,6 @@ WarpX::ReadParameters ()
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
             // Force grid_type=collocated (neither staggered nor hybrid)
             // and use same shape factors in all directions for gathering
-            grid_type = GridType::Collocated;
             galerkin_interpolation = false;
         }
 #endif
@@ -2159,20 +2152,46 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         G_nodal_flag = amrex::IntVect::TheNodeVector();
     }
 #ifdef WARPX_DIM_RZ
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
-        // Force cell-centered IndexType in r and z
-        Ex_nodal_flag  = IntVect::TheCellVector();
-        Ey_nodal_flag  = IntVect::TheCellVector();
-        Ez_nodal_flag  = IntVect::TheCellVector();
-        Bx_nodal_flag  = IntVect::TheCellVector();
-        By_nodal_flag  = IntVect::TheCellVector();
-        Bz_nodal_flag  = IntVect::TheCellVector();
-        jx_nodal_flag  = IntVect::TheCellVector();
-        jy_nodal_flag  = IntVect::TheCellVector();
-        jz_nodal_flag  = IntVect::TheCellVector();
-        rho_nodal_flag = IntVect::TheCellVector();
-        F_nodal_flag = IntVect::TheCellVector();
-        G_nodal_flag = IntVect::TheCellVector();
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
+    {
+        if (grid_type == GridType::Collocated)
+        {
+            // Force cell-centered index type in r and z
+            Ex_nodal_flag  = amrex::IntVect::TheCellVector();
+            Ey_nodal_flag  = amrex::IntVect::TheCellVector();
+            Ez_nodal_flag  = amrex::IntVect::TheCellVector();
+            Bx_nodal_flag  = amrex::IntVect::TheCellVector();
+            By_nodal_flag  = amrex::IntVect::TheCellVector();
+            Bz_nodal_flag  = amrex::IntVect::TheCellVector();
+            jx_nodal_flag  = amrex::IntVect::TheCellVector();
+            jy_nodal_flag  = amrex::IntVect::TheCellVector();
+            jz_nodal_flag  = amrex::IntVect::TheCellVector();
+            rho_nodal_flag = amrex::IntVect::TheCellVector();
+            F_nodal_flag = amrex::IntVect::TheCellVector();
+            G_nodal_flag = amrex::IntVect::TheCellVector();
+        }
+        else if (grid_type == GridType::Hybrid)
+        {
+            // Force cell-centered index type in r
+            Ex_nodal_flag = amrex::IntVect(0,1);
+            Ey_nodal_flag = amrex::IntVect(0,1);
+            Ez_nodal_flag = amrex::IntVect(0,0);
+            Bx_nodal_flag = amrex::IntVect(0,0);
+            By_nodal_flag = amrex::IntVect(0,0);
+            Bz_nodal_flag = amrex::IntVect(0,1);
+            jx_nodal_flag = amrex::IntVect(0,1);
+            jy_nodal_flag = amrex::IntVect(0,1);
+            jz_nodal_flag = amrex::IntVect(0,0);
+            rho_nodal_flag = amrex::IntVect(0,1);
+            F_nodal_flag = amrex::IntVect(0,1);
+            G_nodal_flag = amrex::IntVect(0,0);
+        }
+        else
+        {
+            WARPX_ABORT_WITH_MESSAGE(
+                "Please choose either warpx.grid_type=collocated or"
+                " warpx.grid_type=hybrid with PSATD in RZ geometry.");
+        }
     }
 
     // With RZ multimode, there is a real and imaginary component
