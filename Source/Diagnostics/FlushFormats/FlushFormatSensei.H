@@ -32,7 +32,7 @@ using AmrMeshParticleInSituBridge = void;
 class FlushFormatSensei : public FlushFormat
 {
 public:
-    FlushFormatSensei();
+    FlushFormatSensei() = default;
     ~FlushFormatSensei() override;
 
     FlushFormatSensei(const FlushFormatSensei &) = delete;

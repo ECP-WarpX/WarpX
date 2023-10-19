@@ -423,7 +423,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     // For the z-dimension, number of cells in the lab-frame is
     // computed using the coarsened cell-size in the lab-frame obtained using
     // the ref_ratio at level, lev-1.
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
+    auto ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     // Number of lab-frame cells in z-direction at level, lev
     const int num_zcells_lab = static_cast<int>( std::floor (
@@ -865,7 +865,7 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::Real prob_domain_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
+    auto ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     const int k_lab = static_cast<int>(floor (
                           ( m_current_z_lab[i_buffer]
@@ -904,7 +904,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
                                               m_varnames.size(), ngrow );
     m_mf_output[i_buffer][lev].setVal(0.);
 
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
+    auto ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         const amrex::Real cellsize = (idim < WARPX_ZINDEX)?

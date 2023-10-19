@@ -374,6 +374,7 @@ protected:
     std::vector<PCTypes> species_types;
 
     template<typename ...Args>
+    [[nodiscard]]
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
                                  Args const&... pc_dsts) const noexcept
     {

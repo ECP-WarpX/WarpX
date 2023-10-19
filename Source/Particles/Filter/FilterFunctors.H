@@ -97,8 +97,8 @@ struct ParserFilter
             m_is_active{a_is_active},
             m_function_partparser{a_filter_parser},
             m_mass{a_mass},
-            m_t{time},
-            m_units{InputUnits::WarpX}{}
+            m_t{time}
+    {}
 
     /**
      * \brief return 1 if the particle is selected by the parser
@@ -143,7 +143,7 @@ public:
     /** Store physical time on the coarsest level. */
     amrex::Real m_t;
     /** keep track of momentum units particles will come in with **/
-    InputUnits m_units;
+    InputUnits m_units{InputUnits::WarpX};
 };
 
 

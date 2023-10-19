@@ -48,7 +48,7 @@ class FieldProbeParticleContainer
 {
 public:
     FieldProbeParticleContainer (amrex::AmrCore* amr_core);
-    virtual ~FieldProbeParticleContainer() {}
+    ~FieldProbeParticleContainer() override = default;
 
     //! amrex iterator for our number of attributes
     using iterator = amrex::ParIter<0, 0, FieldProbePIdx::nattribs, 0>;

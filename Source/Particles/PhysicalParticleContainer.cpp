@@ -2460,7 +2460,8 @@ PhysicalParticleContainer::SplitParticles (int lev)
                               0, attr_int,
                               1, NoSplitParticleID);
     // Copy particles from tmp to current particle container
-    addParticles(pctmp_split,1);
+    constexpr bool local_flag = true;
+    addParticles(pctmp_split,local_flag);
     // Clear tmp container
     pctmp_split.clearParticles();
 }

@@ -18,6 +18,7 @@
 // random distribution inside a unit cell.
 struct InjectorPositionRandom
 {
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getPositionUnitBox (int /*i_part*/, amrex::IntVect const /*ref_fac*/,
@@ -33,6 +34,7 @@ struct InjectorPositionRandomPlane
 {
     InjectorPositionRandomPlane (int const& a_dir) noexcept : dir(a_dir) {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getPositionUnitBox (int /*i_part*/, amrex::IntVect const /*ref_fac*/,
@@ -70,6 +72,7 @@ struct InjectorPositionRegular
     // particles within the cell.
     // ref_fac: the number of particles evenly-spaced within a cell
     // is a_ppc*(ref_fac**AMREX_SPACEDIM).
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getPositionUnitBox (int const i_part, amrex::IntVect const ref_fac,
@@ -163,6 +166,7 @@ struct InjectorPosition
 
     // call getPositionUnitBox from the object stored in the union
     // (the union is called Object, and the instance is called object).
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getPositionUnitBox (int const i_part, amrex::IntVect const ref_fac,
@@ -190,6 +194,7 @@ struct InjectorPosition
      * \param x, y, z the point to check
      * \returns bool flag
      */
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     bool
     insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -204,6 +209,7 @@ struct InjectorPosition
      * \param x, y, z the point to check
      * \returns bool flag
      */
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     bool
     insideBoundsInclusive (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -214,6 +220,7 @@ struct InjectorPosition
     }
 
     // bool: whether the region defined by lo and hi overaps with the plasma region
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool
     overlapsWith (const amrex::XDim3& lo, const amrex::XDim3& hi) const noexcept

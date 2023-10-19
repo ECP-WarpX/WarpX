@@ -36,7 +36,7 @@ public:
     PhotonParticleContainer (amrex::AmrCore* amr_core,
                                     int ispecies,
                                     const std::string& name);
-    virtual ~PhotonParticleContainer () {}
+    ~PhotonParticleContainer () override = default;
 
     virtual void InitData() override;
 

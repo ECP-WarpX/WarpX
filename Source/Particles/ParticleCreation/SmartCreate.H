@@ -87,7 +87,7 @@ class SmartCreateFactory
 {
     PolicyVec m_policy_real;
     PolicyVec m_policy_int;
-    bool m_defined;
+    bool m_defined{false};
 
 public:
     template <class PartTileData>
@@ -106,7 +106,7 @@ public:
                          m_policy_int.dataPtr()};
     }
 
-    bool isDefined () const noexcept { return m_defined; }
+    [[nodiscard]] bool isDefined () const noexcept { return m_defined; }
 };
 
 #endif //SMART_CREATE_H_

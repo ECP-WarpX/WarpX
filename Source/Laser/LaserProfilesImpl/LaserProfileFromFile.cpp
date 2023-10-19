@@ -172,7 +172,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(std::string lasy_file_
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(E.getAttribute("dataOrder").get<std::string>() == "C",
                                          "Reading from files with non-C dataOrder is not implemented");
 
-        std::string fileGeom = E.getAttribute("geometry").get<std::string>();
+        auto fileGeom = E.getAttribute("geometry").get<std::string>();
         auto E_laser = E[io::RecordComponent::SCALAR];
         auto extent = E_laser.getExtent();
         // Extract grid offset and grid spacing

@@ -706,12 +706,12 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     // dump individual particles
     bool contributed_particles = false;  // did the local MPI rank contribute particles?
     for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++) {
-        uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
+        auto offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
         // For BTD, the offset include the number of particles already flushed
         if (isBTD) offset += ParticleFlushOffset;
         for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
             auto const numParticleOnTile = pti.numParticles();
-            uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
+            auto const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
 
             // Do not call storeChunk() with zero-sized particle tiles:
             //   https://github.com/openPMD/openPMD-api/issues/1147
@@ -943,7 +943,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 
 {
   auto const numParticleOnTile = pti.numParticles();
-  uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
+  auto const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
   auto const& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
   auto const& soa = pti.GetStructOfArrays();
   // first we concatinate the AoS into contiguous arrays

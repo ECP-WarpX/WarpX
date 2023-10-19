@@ -36,8 +36,6 @@ extern "C" {
 
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm);
 
-    typedef void(*WARPX_CALLBACK_PY_FUNC_0)();
-
     void warpx_ConvertLabParamsToBoost();
 
     void warpx_ReadBCParams();

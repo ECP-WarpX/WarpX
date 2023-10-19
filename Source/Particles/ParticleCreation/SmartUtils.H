@@ -31,7 +31,7 @@ struct SmartCopyTag
     amrex::Gpu::DeviceVector<int> src_comps;
     amrex::Gpu::DeviceVector<int> dst_comps;
 
-    int size () const noexcept { return common_names.size(); }
+    [[nodiscard]] int size () const noexcept { return common_names.size(); }
 };
 
 PolicyVec getPolicies (const NameMap& names) noexcept;

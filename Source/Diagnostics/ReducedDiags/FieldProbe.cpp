@@ -631,7 +631,7 @@ void FieldProbe::WriteToFile (int step) const
     if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) return;
 
     // loop over num valid particles to find the lowest particle ID for later sorting
-    long int first_id = static_cast<long int>(m_data_out[0]);
+    auto first_id = static_cast<long int>(m_data_out[0]);
     for (long int i = 0; i < m_valid_particles; i++)
     {
         if (m_data_out[i*noutputs] < first_id)

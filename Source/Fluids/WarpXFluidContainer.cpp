@@ -965,13 +965,13 @@ void WarpXFluidContainer::GatherAndPush (
 
 
    // Prepare interpolation of current components to cell center
-    amrex::GpuArray<int, 3> Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> Ex_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> Ey_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> Ez_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> Bx_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> By_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> Bz_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Ex_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Ey_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Ez_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Bx_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto By_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Bz_type = amrex::GpuArray<int, 3>{0, 0, 0};
     for (int i = 0; i < AMREX_SPACEDIM; ++i)
     {
         Nodal_type[i] = N[lev]->ixType()[i];
@@ -1245,10 +1245,10 @@ void WarpXFluidContainer::DepositCurrent(
     const amrex::Real q = getCharge();
 
     // Prepare interpolation of current components to cell center
-    amrex::GpuArray<int, 3> j_nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> jx_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> jy_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> jz_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto j_nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto jx_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto jy_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto jz_type = amrex::GpuArray<int, 3>{0, 0, 0};
     for (int i = 0; i < AMREX_SPACEDIM; ++i)
     {
         j_nodal_type[i] = tmp_jx_fluid.ixType()[i];

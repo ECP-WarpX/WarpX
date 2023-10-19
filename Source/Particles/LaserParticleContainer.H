@@ -42,7 +42,7 @@ class LaserParticleContainer
 {
 public:
     LaserParticleContainer (amrex::AmrCore* amr_core, int ispecies, const std::string& name);
-    virtual ~LaserParticleContainer () {}
+    ~LaserParticleContainer () override = default;
 
     void InitData () final;
 

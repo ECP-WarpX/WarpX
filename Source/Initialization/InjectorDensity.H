@@ -114,7 +114,7 @@ struct InjectorDensityPredefined
 
 private:
     enum struct Profile { null, parabolic_channel };
-    Profile profile;
+    Profile profile{Profile::null};
     amrex::GpuArray<amrex::Real,6> p;
 };
 

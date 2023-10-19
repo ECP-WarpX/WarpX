@@ -35,15 +35,15 @@ public:
     ~BTDPlotfileHeaderImpl () = default;
 
     /** Returns the Header file version for plotfile */
-    std::string fileVersion () const noexcept {return m_file_version; }
+    [[nodiscard]] std::string fileVersion () const noexcept {return m_file_version; }
     /** Returns the number of components written in the Headerfile */
     [[nodiscard]] int ncomp () const noexcept {return m_nComp; }
     /** Returns the names of components in the Headerfile */
-    const amrex::Vector<std::string>& varnames () const noexcept {return m_varnames; }
+    [[nodiscard]] const amrex::Vector<std::string>& varnames () const noexcept {return m_varnames; }
     /** Returns the number of dimensions in the Headerfile */
     [[nodiscard]] int spaceDim () const noexcept {return m_spacedim; }
     /** Returns the physical time in the simulation in the boosted-frame */
-    amrex::Real time () const noexcept {return m_time; }
+    [[nodiscard]] amrex::Real time () const noexcept {return m_time; }
     /** Returns finest level output in the Headerfile */
     [[nodiscard]] int finestLevel () const noexcept { return m_finest_level; }
     /** Returns the physical co-ordinates of the lower corner in dimension, idim,
@@ -72,7 +72,7 @@ public:
      */
     [[nodiscard]] amrex::Array<amrex::Real, AMREX_SPACEDIM> FabHi (int iFab) const noexcept {return m_ghi[iFab]; }
     /** Returns path to location of multifabs */
-    std::string CellPath () const noexcept {return m_CellPath; }
+    [[nodiscard]] std::string CellPath () const noexcept {return m_CellPath; }
 
     /** Reads the Header file data for BTD */
     void ReadHeaderData ();

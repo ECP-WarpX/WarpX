@@ -44,7 +44,7 @@ public:
      * [14]thetay_min, [15]thetay_ave, [16]thetay_max, [17]thetay_std
      * same for second species follows.
      */
-    void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) final;
 
 private:
     /// auxiliary structure to store headers and indices of the reduced diagnostics

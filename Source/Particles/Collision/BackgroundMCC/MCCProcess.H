@@ -100,6 +100,7 @@ public:
         MCCProcessType m_type;
     };
 
+    [[nodiscard]]
     Executor const& executor () const {
 #ifdef AMREX_USE_GPU
         return m_exe_d;
@@ -113,10 +114,10 @@ public:
         return m_exe_h.getCrossSection(E_coll);
     }
 
-    amrex::ParticleReal getEnergyPenalty () const { return m_exe_h.m_energy_penalty; }
-    amrex::ParticleReal getMinEnergyInput () const { return m_exe_h.m_energy_lo; }
-    amrex::ParticleReal getMaxEnergyInput () const { return m_exe_h.m_energy_hi; }
-    amrex::ParticleReal getEnergyInputStep () const { return m_exe_h.m_dE; }
+    [[nodiscard]] amrex::ParticleReal getEnergyPenalty () const { return m_exe_h.m_energy_penalty; }
+    [[nodiscard]] amrex::ParticleReal getMinEnergyInput () const { return m_exe_h.m_energy_lo; }
+    [[nodiscard]] amrex::ParticleReal getMaxEnergyInput () const { return m_exe_h.m_energy_hi; }
+    [[nodiscard]] amrex::ParticleReal getEnergyInputStep () const { return m_exe_h.m_dE; }
 
     MCCProcessType type () const { return m_exe_h.m_type; }
 

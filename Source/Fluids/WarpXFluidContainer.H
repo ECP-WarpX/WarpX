@@ -31,7 +31,7 @@ public:
     friend MultiFluidContainer;
 
     WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name);
-    ~WarpXFluidContainer() {}
+    ~WarpXFluidContainer() = default;
 
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);
 
@@ -126,8 +126,8 @@ public:
      */
     void DepositCharge (int lev, amrex::MultiFab &rho, int icomp = 0);
 
-    amrex::Real getCharge () const {return charge;}
-    amrex::Real getMass () const {return mass;}
+    [[nodiscard]] amrex::Real getCharge () const {return charge;}
+    [[nodiscard]] amrex::Real getMass () const {return mass;}
 
 protected:
     int species_id;

@@ -64,7 +64,7 @@ class PsatdAlgorithmJLinearInTime : public SpectralBaseAlgorithm
          *
          * \param[in,out] f all the fields in spectral space
          */
-        virtual void pushSpectralFields (SpectralFieldData& f) const final;
+        void pushSpectralFields (SpectralFieldData& f) const final;
 
         /**
          * \brief Initializes the coefficients used in \c pushSpectralFields to update the E and B fields
