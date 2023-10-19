@@ -8,7 +8,7 @@
 #ifndef ABLASTR_ANYFFT_H_
 #define ABLASTR_ANYFFT_H_
 
-#ifdef WARPX_USE_PSATD
+#ifdef ABLASTR_USE_FFT
 #   include <AMReX_Config.H>
 #   include <AMReX_LayoutData.H>
 

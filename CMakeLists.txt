@@ -144,6 +144,12 @@ mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
 
+# In order to enable PSATD solver we need FFT support enabled in ablastr
+if(WarpX_PSATD)
+    set(ABLASTR_USE_FFT ON CACHE INTERNAL "")
+else()
+    set(ABLASTR_USE_FFT OFF CACHE INTERNAL "")
+endif()
 
 # Dependencies ################################################################
 #

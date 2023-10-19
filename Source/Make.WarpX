@@ -173,7 +173,7 @@ endif
 
 ifeq ($(USE_PSATD),TRUE)
   USERSuffix := $(USERSuffix).PSATD
-  DEFINES += -DWARPX_USE_PSATD
+  DEFINES += -DWARPX_USE_PSATD -DABLASTR_USE_FFT
   ifeq ($(USE_CUDA),TRUE)
     # Use cuFFT
     libraries += -lcufft
