@@ -2,12 +2,12 @@
  *
  * This file is part of WarpX.
  *
- * Authors: David Grote, Maxence Thevenet, Weiqun Zhang, Roelof Groenewald
+ * Authors: David Grote, Maxence Thevenet, Weiqun Zhang, Roelof Groenewald, Axel Huebl
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PY_H_
-#define WARPX_PY_H_
+#ifndef WARPX_PY_CALLBACKS_H_
+#define WARPX_PY_CALLBACKS_H_
 
 #include "Utils/export.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -46,4 +46,4 @@ void ExecutePythonCallback ( std::string name );
  */
 void ClearPythonCallback ( std::string name );
 
-#endif
+#endif // WARPX_PY_CALLBACKS_H_
