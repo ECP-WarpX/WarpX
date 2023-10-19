@@ -16,7 +16,7 @@
 #include <cmath>
 
 /**
- * \brief Computes the total proton-boron fusion cross section in the range 0 < E < 3.5 MeV using
+ * \brief Computes the total proton-boron fusion cross section in the range 0 < E < 9.76 MeV using
  * the analytical fits given in A. Tentori & F. Belloni, Nuclear Fusion, 63, 086001 (2023).
  *
  * @param[in] E_keV the kinetic energy of the proton-boron pair in its center of mass frame, in
@@ -98,10 +98,38 @@ amrex::ParticleReal ProtonBoronFusionCrossSectionTentori (const amrex::ParticleR
 }
 
 /**
+ * \brief Computes the total proton-boron fusion cross section in the range E > 9.76 MeV using a
+ * simple power law fit of the data presented in Buck et al., Nuclear Physics A, 398(2), 189-202
+ * (1983) (data can also be found in the EXFOR database). Note: the fit in Buck et al. started
+ * from 3.5 MeV. The same exponent power has been used here however the cross_section_start_fit
+ * has been modified to ensure exact continuity with the fit used for lower energies.
+
+ * @param[in] E_keV the kinetic energy of the proton-boron pair in its center of mass frame, in
+ * keV.
+ * @return The total cross section in barn.
+ */
+AMREX_GPU_HOST_DEVICE AMREX_INLINE
+amrex::ParticleReal ProtonBoronFusionCrossSectionBuck (const amrex::ParticleReal& E_keV)
+{
+    using namespace amrex::literals;
+
+    constexpr amrex::ParticleReal E_start_fit = 9760._prt; // Fit starts at 9.76 MeV
+    // cross section at E = E_start_fit, in barn
+    constexpr amrex::ParticleReal cross_section_start_fit = 0.01277998_prt;
+    constexpr amrex::ParticleReal slope_fit = -2.661840717596765_prt;
+
+    // Compute fitted value
+    return cross_section_start_fit*std::pow(E_keV/E_start_fit, slope_fit);
+}
+
+/**
  * \brief Computes the total proton-boron fusion cross section using the analytical fit described
  * in A. Tentori & F. Belloni, Nuclear Fusion, 63, 086001 (2023). Includes the Breit-Wigner term
- * to reconstruct the 148 keV resonance, which is missing from the Sikora, Wellar dataset.
- *
+ * to reconstruct the 148 keV resonance, which is missing from the Sikora, Wellar dataset. When
+ * E_kin_star > 9.76 MeV, we use a simple power law fit of the data presented in Buck et al.,
+ * Nuclear Physics A, 398(2), 189-202 (1983). Both fits return the same value for
+ * E_kin_star = 9.76 MeV.
+
  * @param[in] E_kin_star the kinetic energy of the proton-boron pair in its center of mass frame,
  * in SI units.
  * @return The total cross section in SI units (square meters).
@@ -114,8 +142,11 @@ amrex::ParticleReal ProtonBoronFusionCrossSection (const amrex::ParticleReal& E_
     // Fits use energy in keV
     constexpr amrex::ParticleReal joule_to_keV = 1.e-3_prt/PhysConst::q_e;
     const amrex::ParticleReal E_keV = E_kin_star*joule_to_keV;
+    constexpr amrex::ParticleReal E_threshold = 9760._prt;
 
-    const amrex::ParticleReal cross_section_b = ProtonBoronFusionCrossSectionTentori(E_keV);
+    const amrex::ParticleReal cross_section_b = (E_keV <= E_threshold) ?
+                                                ProtonBoronFusionCrossSectionTentori(E_keV) :
+                                                ProtonBoronFusionCrossSectionBuck(E_keV);
 
     // Convert cross section to SI units: barn to square meter
     constexpr auto barn_to_sqm = 1.e-28_prt;
