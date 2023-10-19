@@ -198,21 +198,29 @@ guardCellManager::Init (
         // currents in the latter case). This does not seem to be necessary in x and y,
         // where it still seems fine to set half the number of guard cells of the nodal case.
 
-        int ngFFt_x = (grid_type == GridType::Collocated) ? nox_fft : nox_fft / 2;
-        int ngFFt_y = (grid_type == GridType::Collocated) ? noy_fft : noy_fft / 2;
-        int ngFFt_z = (grid_type == GridType::Collocated || galilean) ? noz_fft : noz_fft / 2;
+        int ngFFT_x = (grid_type == GridType::Collocated) ? nox_fft : nox_fft / 2;
+        int ngFFT_y = (grid_type == GridType::Collocated) ? noy_fft : noy_fft / 2;
+        int ngFFT_z = (grid_type == GridType::Collocated || galilean) ? noz_fft : noz_fft / 2;
 
         const ParmParse pp_psatd("psatd");
-        utils::parser::queryWithParser(pp_psatd, "nx_guard", ngFFt_x);
-        utils::parser::queryWithParser(pp_psatd, "ny_guard", ngFFt_y);
-        utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
+        utils::parser::queryWithParser(pp_psatd, "nx_guard", ngFFT_x);
+        utils::parser::queryWithParser(pp_psatd, "ny_guard", ngFFT_y);
+        utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFT_z);
 
 #if defined(WARPX_DIM_3D)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+        IntVect ngFFT = IntVect(ngFFT_x, ngFFT_y, ngFFT_z);
+#elif defined(WARPX_DIM_XZ)
+        IntVect ngFFT = IntVect(ngFFT_x, ngFFT_z);
+#elif defined(WARPX_DIM_RZ)
+        // In RZ geometry, no domain decomposition along r,
+        // no need to account for extent of spectral stencil
+        int ngFFT_r = std::max(ng_alloc_EB[0], ng_alloc_J[0]);
+        ngFFT_r = std::max(ngFFT_r, ng_alloc_Rho[0]);
+        ngFFT_r = std::max(ngFFT_r, ng_alloc_F[0]);
+        ngFFT_r = std::max(ngFFT_r, ng_alloc_G[0]);
+        IntVect ngFFT = IntVect(ngFFT_r, ngFFT_z);
 #elif defined(WARPX_DIM_1D_Z)
-        IntVect ngFFT = IntVect(ngFFt_z);
+        IntVect ngFFT = IntVect(ngFFT_z);
 #endif
 
 #ifdef WARPX_DIM_RZ
