@@ -285,7 +285,7 @@ def astrophysical_factor_midE(E):
 def astrophysical_factor_highE(E):
     ## E is in keV
     ## Returns astrophysical factor in MeV b using the high energy fit in the range
-    ## 668 keV < E < 3500 keV described in equation (5) of A. Tentori and F. Belloni,
+    ## 668 keV < E < 9760 keV described in equation (5) of A. Tentori and F. Belloni,
     ## Nuclear Fusion, 63, 086001 (2023)
     A0 = 1.98e6
     A1 = 3.89e6
