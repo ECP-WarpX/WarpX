@@ -23,7 +23,7 @@ geometry.prob_hi =  1.0  5.0
 #################################
 ###### Boundary Condition #######
 #################################
-boundary.field_lo = none pec
+boundary.field_lo = r_origin pec
 boundary.field_hi = pec  pec
 boundary.potential_lo_x = 0
 boundary.potential_hi_x = 0

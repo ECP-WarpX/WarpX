@@ -14,7 +14,7 @@ geometry.prob_hi     = 8.   16.
 #################################
 ###### Boundary Condition #######
 #################################
-boundary.field_lo = none periodic
+boundary.field_lo = r_origin periodic
 boundary.field_hi = pec periodic
 
 #################################

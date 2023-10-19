@@ -133,13 +133,11 @@ struct FieldBoundaryType {
         PML = 0,
         Periodic = 1,
         PEC = 2,     //!< perfect electric conductor (PEC) with E_tangential=0
-        PMC = 3,      //!< perfect magnetic conductor (PMC) with B_tangential=0
-        Damped = 4,   // Fields in the guard cells are damped for PSATD
-                     //in the moving window direction
+        PMC = 3,     //!< perfect magnetic conductor (PMC) with B_tangential=0
+        Damped = 4,  // Fields in the guard cells are damped for PSATD in the moving window direction
         Absorbing_SilverMueller = 5, // Silver-Mueller boundary condition
         Neumann = 6, // For electrostatic, the normal E is set to zero
-        None = 7     // The fields values at the boundary are not updated. This is
-                     // useful for RZ simulations, at r=0.
+        r_origin = 7 // Fields values at the boundary are not updated, used for RZ simulations at r=0
     };
 };
 

@@ -15,7 +15,7 @@ warpx.serialize_initial_conditions = 1
 #################################
 ####### Boundary condition ######
 #################################
-boundary.field_lo = none periodic
+boundary.field_lo = r_origin periodic
 boundary.field_hi = pec periodic
 
 #################################

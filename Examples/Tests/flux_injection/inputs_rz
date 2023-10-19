@@ -20,7 +20,7 @@ geometry.prob_lo     =  0.0  -2.0        # physical domain
 geometry.prob_hi     =  3.0   2.0
 
 # Boundary condition
-boundary.field_lo = none pec
+boundary.field_lo = r_origin pec
 boundary.field_hi = pec pec
 
 particles.B_ext_particle_init_style = "constant"

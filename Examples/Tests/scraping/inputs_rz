@@ -12,7 +12,7 @@ geometry.dims = RZ
 geometry.prob_lo     = 0.0 -0.5
 geometry.prob_hi     = 0.5  0.5
 
-boundary.field_lo = none periodic
+boundary.field_lo = r_origin periodic
 boundary.field_hi = pec periodic
 boundary.potential_lo_x = 0
 boundary.potential_hi_x = 0
