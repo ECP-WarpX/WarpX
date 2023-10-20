@@ -12,13 +12,13 @@ export OMP_NUM_THREADS=2
 #
 # Generate QED lookup tables using external tool
 #
-./build/bin/qed_tools/qed_table_generator \
+./build/bin/qed_table_generator \
     --table BW --mode DP --dndt_chi_min 0.01 \
     --dndt_chi_max 100 --dndt_how_many 64 \
     --pair_chi_min 0.01 --pair_chi_max 100 \
     --pair_chi_how_many 64 --pair_frac_how_many 64 \
     -o bw_table_tool
-./build/bin/qed_tools/qed_table_generator \
+./build/bin/qed_table_generator \
     --table QS --mode DP --dndt_chi_min 0.001 \
     --dndt_chi_max 100 --dndt_how_many 64 \
     --em_chi_min 0.001 --em_chi_max 100 \
@@ -53,10 +53,10 @@ export OMP_NUM_THREADS=2
 #
 # Convert lookup tables (generated with WarpX and with the external tool) in human-readable format
 #
-./build/bin/qed_tools/qed_table_reader -i qs_table --table QS --mode DP -o qs_table
-./build/bin/qed_tools/qed_table_reader -i qs_table_tool --table QS --mode DP -o qs_table_tool
-./build/bin/qed_tools/qed_table_reader -i bw_table --table BW --mode DP -o bw_table
-./build/bin/qed_tools/qed_table_reader -i bw_table_tool --table BW --mode DP -o bw_table_tool
+./build/bin/qed_table_reader -i qs_table --table QS --mode DP -o qs_table
+./build/bin/qed_table_reader -i qs_table_tool --table QS --mode DP -o qs_table_tool
+./build/bin/qed_table_reader -i bw_table --table BW --mode DP -o bw_table
+./build/bin/qed_table_reader -i bw_table_tool --table BW --mode DP -o bw_table_tool
 
 #
 # Compare the generated lookup tables
