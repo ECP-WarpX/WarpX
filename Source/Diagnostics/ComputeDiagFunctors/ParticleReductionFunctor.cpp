@@ -135,7 +135,7 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                     const amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
                     const amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
                     amrex::Real filter;
-                    if ((do_filter) && (!filter_fn(xw, yw, zw, ux, uy, uz))) filter = 0._rt;
+                    if ((do_filter) && (filter_fn(xw, yw, zw, ux, uy, uz) == 0._rt)) filter = 0._rt;
                     else filter = 1._rt;
                     amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), (amrex::Real)(p.rdata(PIdx::w) * filter));
                 });

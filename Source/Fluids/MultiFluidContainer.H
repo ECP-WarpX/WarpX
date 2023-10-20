@@ -61,7 +61,7 @@ public:
                  amrex::MultiFab* rho, amrex::MultiFab& jx,  amrex::MultiFab& jy, amrex::MultiFab& jz,
                  amrex::Real cur_time, bool skip_deposition=false);
 
-    [[nodiscard]] int nSpecies() const {return species_names.size();}
+    [[nodiscard]] int nSpecies() const {return static_cast<int>(species_names.size());}
 
     void DepositCharge (int lev, amrex::MultiFab &rho);
     void DepositCurrent (int lev,

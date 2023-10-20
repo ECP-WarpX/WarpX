@@ -23,13 +23,13 @@ Timer::record_stop_time() noexcept
     m_stop_time = amrex::ParallelDescriptor::second();
 }
 
-amrex::Real
+double
 Timer::get_duration () noexcept
 {
     return m_stop_time - m_start_time;
 }
 
-amrex::Real
+double
 Timer::get_global_duration ()
 {
     auto duration = this->get_duration();

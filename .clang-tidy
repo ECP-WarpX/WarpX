@@ -1,10 +1,11 @@
-Checks: '-*,
-    bugprone-*
+Checks: '
+    -*,
+    bugprone-*,
         -bugprone-easily-swappable-parameters,
         -bugprone-implicit-widening-of-multiplication-result,
         -bugprone-misplaced-widening-cast,
         -bugprone-unchecked-optional-access,
-    cert-*
+    cert-*,
         -cert-err58-cpp,
     cppcoreguidelines-avoid-goto,
     cppcoreguidelines-interfaces-global-init,
@@ -20,23 +21,10 @@ Checks: '-*,
     misc-*,
         -misc-no-recursion,
         -misc-non-private-member-variables-in-classes,
-    modernize-avoid-bind,
-    modernize-concat-nested-namespaces,
-    modernize-deprecated-headers,
-    modernize-deprecated-ios-base-aliases,
-    modernize-loop-convert,
-    modernize-make-shared,
-    modernize-make-unique,
-    modernize-pass-by-value,
-    modernize-raw-string-literal,
-    modernize-redundant-void-arg,
-    modernize-replace-auto-ptr,
-    modernize-replace-disallow-copy-and-assign-macro,
-    modernize-replace-random-shuffle,
-    modernize-return-braced-init-list,
-    modernize-shrink-to-fit,
-    modernize-unary-static-assert,
-    modernize-use-nullptr,
+    modernize-*,
+        -modernize-avoid-c-arrays,
+        -modernize-return-braced-init-list,
+        -modernize-use-trailing-return-type,
     mpi-*,
     performance-faster-string-find,
     performance-for-range-copy,
@@ -74,9 +62,12 @@ Checks: '-*,
     '
 
 CheckOptions:
-- key:          modernize-pass-by-value.ValuesOnly
-  value:        'true'
+- key:          bugprone-narrowing-conversions.WarnOnIntegerToFloatingPointNarrowingConversion
+  value:        "false"
 - key:          misc-definitions-in-headers.HeaderFileExtensions
   value:        "H,"
+- key:          modernize-pass-by-value.ValuesOnly
+  value:        "true"
+
 
 HeaderFilterRegex: 'Source[a-z_A-Z0-9\/]+\.H$'

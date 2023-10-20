@@ -128,9 +128,10 @@ namespace utils::parser
 
             auto parser = makeParser(str_val, {});
 
-            if (std::is_same<T, int>::value) {
+            if constexpr (std::is_same<T, int>::value) {
 
-                val = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+                val = safeCastToInt(
+                    static_cast<amrex::Real>(std::round(parser.compileHost<0>()())), str);
             }
             else {
                 val = static_cast<T>(parser.compileHost<0>()());
@@ -154,8 +155,9 @@ namespace utils::parser
             val.resize(n);
             for (int i=0 ; i < n ; i++) {
                 auto parser = makeParser(tmp_str_arr[i], {});
-                if (std::is_same<T, int>::value) {
-                    val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+                if constexpr (std::is_same<T, int>::value) {
+                    val[i] = safeCastToInt(
+                        static_cast<amrex::Real>(std::round(parser.compileHost<0>()())), str);
                 }
                 else {
                     val[i] = static_cast<T>(parser.compileHost<0>()());
@@ -196,8 +198,9 @@ namespace utils::parser
             val.resize(n);
             for (int i=0 ; i < n ; i++) {
                 auto parser = makeParser(tmp_str_arr[i], {});
-                if (std::is_same<T, int>::value) {
-                    val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+                if constexpr (std::is_same<T, int>::value) {
+                    val[i] = safeCastToInt(
+                        static_cast<amrex::Real>(std::round(parser.compileHost<0>()())), str);
                 }
                 else {
                     val[i] = static_cast<T>(parser.compileHost<0>()());
@@ -228,8 +231,9 @@ namespace utils::parser
         Store_parserString(a_pp, str, str_val);
 
         auto parser = makeParser(str_val, {});
-        if (std::is_same<T, int>::value) {
-            val = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+        if constexpr (std::is_same<T, int>::value) {
+            val = safeCastToInt(
+                static_cast<amrex::Real>(std::round(parser.compileHost<0>()())), str);
         }
         else {
             val = static_cast<T>(parser.compileHost<0>()());
@@ -247,8 +251,9 @@ namespace utils::parser
         val.resize(n);
         for (int i=0 ; i < n ; i++) {
             auto parser = makeParser(tmp_str_arr[i], {});
-            if (std::is_same<T, int>::value) {
-                val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+            if constexpr (std::is_same<T, int>::value) {
+                val[i] = safeCastToInt(
+                    static_cast<amrex::Real>(std::round(parser.compileHost<0>()())), str);
             }
             else {
                 val[i] = static_cast<T>(parser.compileHost<0>()());
@@ -284,8 +289,9 @@ namespace utils::parser
         val.resize(n);
         for (int i=0 ; i < n ; i++) {
             auto parser = makeParser(tmp_str_arr[i], {});
-            if (std::is_same<T, int>::value) {
-                val[i] = safeCastToInt(std::round(parser.compileHost<0>()()), str);
+            if constexpr (std::is_same<T, int>::value) {
+                val[i] = safeCastToInt(
+                    static_cast<amrex::Real>(std::round(parser.compileHost<0>()())), str);
             }
             else {
                 val[i] = static_cast<T>(parser.compileHost<0>()());

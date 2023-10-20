@@ -29,6 +29,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -199,15 +200,10 @@ public:
     void ExchangeG (amrex::MultiFab* G_fp, amrex::MultiFab* G_cp, int do_pml_in_domain);
     void ExchangeG (PatchType patch_type, amrex::MultiFab* Gp, int do_pml_in_domain);
 
-    void FillBoundary ();
-    void FillBoundaryE ();
-    void FillBoundaryB ();
-    void FillBoundaryF ();
-    void FillBoundaryG ();
-    void FillBoundaryE (PatchType patch_type);
-    void FillBoundaryB (PatchType patch_type);
-    void FillBoundaryF (PatchType patch_type);
-    void FillBoundaryG (PatchType patch_type);
+    void FillBoundaryE (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
+    void FillBoundaryB (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
+    void FillBoundaryF (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
+    void FillBoundaryG (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
 
     [[nodiscard]] bool ok () const { return m_ok; }
 

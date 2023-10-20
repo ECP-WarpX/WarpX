@@ -27,7 +27,7 @@
 #include "Fluids/MultiFluidContainer.H"
 #include "Fluids/WarpXFluidContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
-#include "Python/WarpX_py.H"
+#include "Python/callbacks.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
@@ -79,7 +79,7 @@ WarpX::Evolve (int numsteps)
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         WARPX_PROFILE("WarpX::Evolve::step");
-        const Real evolve_time_beg_step = amrex::second();
+        const auto evolve_time_beg_step = static_cast<Real>(amrex::second());
 
         //Check and clear signal flags and asynchronously broadcast them from process 0
         SignalHandling::CheckSignals();
@@ -378,7 +378,7 @@ WarpX::Evolve (int numsteps)
         }
 
         // create ending time stamp for calculating elapsed time each iteration
-        const Real evolve_time_end_step = amrex::second();
+        const auto evolve_time_end_step = static_cast<Real>(amrex::second());
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
         HandleSignals();
@@ -472,10 +472,6 @@ WarpX::OneStep_nosub (Real cur_time)
             if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
                 FillBoundaryG(guard_cells.ng_alloc_G, WarpX::sync_nodal_points);
         }
-
-        if (do_pml) {
-            NodalSyncPML();
-        }
     } else {
         EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
         EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
@@ -502,11 +498,10 @@ WarpX::OneStep_nosub (Real cur_time)
 
         if (do_pml) {
             DampPML();
-            NodalSyncPML();
-            FillBoundaryE(guard_cells.ng_MovingWindow);
-            FillBoundaryB(guard_cells.ng_MovingWindow);
-            FillBoundaryF(guard_cells.ng_MovingWindow);
-            FillBoundaryG(guard_cells.ng_MovingWindow);
+            FillBoundaryE(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryB(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryF(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryG(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
         }
 
         // E and B are up-to-date in the domain, but all guard cells are
@@ -746,11 +741,6 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
         FillBoundaryG(guard_cells.ng_alloc_G, WarpX::sync_nodal_points);
 
-    // Synchronize fields on nodal points in PML
-    if (do_pml)
-    {
-        NodalSyncPML();
-    }
 #else
     amrex::ignore_unused(cur_time);
     WARPX_ABORT_WITH_MESSAGE(
@@ -927,9 +917,6 @@ WarpX::OneStep_sub1 (Real curtime)
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
                       WarpX::sync_nodal_points);
-
-    // Synchronize nodal points at the end of the time step
-    if (do_pml) NodalSyncPML();
 }
 
 void
