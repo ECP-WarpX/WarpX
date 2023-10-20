@@ -73,8 +73,9 @@ public:
          * @param E_coll collision energy in eV
          *
          */
+        [[nodiscard]]
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-        [[nodiscard]] amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
+        amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
         {
             if (E_coll < m_energy_lo) {
                 return m_sigma_lo;
@@ -109,7 +110,7 @@ public:
 #endif
     }
 
-    [[nodiscard]] amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
+    amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
     {
         return m_exe_h.getCrossSection(E_coll);
     }
