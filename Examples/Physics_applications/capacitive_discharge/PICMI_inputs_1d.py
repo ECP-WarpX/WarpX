@@ -108,8 +108,9 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         calculating phi from rho."""
 
         left_voltage = 0.0
-        t = self.sim.extension.warpx.gett_new(0)
-        right_voltage = eval(self.right_voltage)
+        right_voltage = eval(
+            self.right_voltage, {'t': self.sim.extension.warpx.gett_new(0)}
+        )
 
         # Construct b vector
         rho = -self.rho_data / constants.ep0
@@ -376,7 +377,7 @@ class CapacitiveDischargeExample(object):
         # When using DSMC the neutral temperature will change due to collisions
         # with the ions. This is not captured in the original MCC test.
         # Re-thermalize the neutrals every 1000 steps
-        step = self.sim.extension.getistep(0)
+        step = self.sim.extension.warpx.getistep(lev=0)
         if step % 1000 != 10:
             return
 
