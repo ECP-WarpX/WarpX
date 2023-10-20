@@ -38,7 +38,7 @@ public:
                                     const std::string& name);
     ~PhotonParticleContainer () override = default;
 
-    virtual void InitData() override;
+    void InitData() override;
 
     void Evolve (int lev,
                          const amrex::MultiFab& Ex,

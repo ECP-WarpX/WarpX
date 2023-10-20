@@ -139,7 +139,6 @@ class SmartCopyFactory
 public:
     template <class SrcPC, class DstPC>
     SmartCopyFactory (const SrcPC& src, const DstPC& dst) noexcept
-        : m_defined(false)
     {
         m_tag_real = getSmartCopyTag(src.getParticleComps(),  dst.getParticleComps());
         m_tag_int  = getSmartCopyTag(src.getParticleiComps(), dst.getParticleiComps());
@@ -150,7 +149,7 @@ public:
         m_defined = true;
     }
 
-    SmartCopy getSmartCopy () const noexcept
+    [[nodiscard]] SmartCopy getSmartCopy () const noexcept
     {
         AMREX_ASSERT(m_defined);
         return SmartCopy{m_tag_real.size(),

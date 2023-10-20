@@ -74,7 +74,7 @@ public:
          *
          */
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-        amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
+        [[nodiscard]] amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
         {
             if (E_coll < m_energy_lo) {
                 return m_sigma_lo;
@@ -109,7 +109,7 @@ public:
 #endif
     }
 
-    amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
+    [[nodiscard]] amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
     {
         return m_exe_h.getCrossSection(E_coll);
     }
@@ -119,7 +119,7 @@ public:
     [[nodiscard]] amrex::ParticleReal getMaxEnergyInput () const { return m_exe_h.m_energy_hi; }
     [[nodiscard]] amrex::ParticleReal getEnergyInputStep () const { return m_exe_h.m_dE; }
 
-    MCCProcessType type () const { return m_exe_h.m_type; }
+    [[nodiscard]] MCCProcessType type () const { return m_exe_h.m_type; }
 
 private:
 

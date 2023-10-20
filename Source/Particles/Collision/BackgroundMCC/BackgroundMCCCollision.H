@@ -25,7 +25,7 @@ class BackgroundMCCCollision final
 public:
     BackgroundMCCCollision (std::string collision_name);
 
-    virtual ~BackgroundMCCCollision () = default;
+    ~BackgroundMCCCollision () override = default;
 
     amrex::ParticleReal get_nu_max (amrex::Vector<MCCProcess> const& mcc_processes);
 

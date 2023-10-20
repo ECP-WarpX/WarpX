@@ -309,7 +309,7 @@ guardCellManager::Init (
         // factor grows symmetrically by half a cell on each side. So every
         // +2 orders, one touches one more cell point.
         int const FGcell = (nox + 1) / 2;  // integer division
-        IntVect ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell,FGcell,FGcell));
+        auto ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell,FGcell,FGcell));
         ng_FieldGather_noNCI = ng_FieldGather_noNCI.min(ng_alloc_EB);
 
         // If NCI filter, add guard cells in the z direction

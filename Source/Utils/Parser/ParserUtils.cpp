@@ -37,7 +37,7 @@ namespace {
     template< typename int_type >
     AMREX_FORCE_INLINE
     int_type safeCastTo(const amrex::Real x, const std::string& real_name) {
-        int_type result = int_type(0);
+        auto result = int_type(0);
         bool error_detected = false;
         std::string assert_msg;
         // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits

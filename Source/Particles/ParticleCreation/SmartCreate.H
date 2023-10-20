@@ -92,14 +92,13 @@ class SmartCreateFactory
 public:
     template <class PartTileData>
     SmartCreateFactory (const PartTileData& part) noexcept
-        : m_defined(false)
     {
         m_policy_real = getPolicies(part.getParticleComps());
         m_policy_int  = getPolicies(part.getParticleiComps());
         m_defined = true;
     }
 
-    SmartCreate getSmartCreate () const noexcept
+    [[nodiscard]] SmartCreate getSmartCreate () const noexcept
     {
         AMREX_ASSERT(m_defined);
         return SmartCreate{m_policy_real.dataPtr(),
