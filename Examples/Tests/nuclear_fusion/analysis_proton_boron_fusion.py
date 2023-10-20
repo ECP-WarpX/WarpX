@@ -327,7 +327,7 @@ def pb_cross_section(E):
     ## E is in keV
     ## Returns cross section in b using the fits described in A. Tentori and F. Belloni,
     ## Nucl. Fusion, 63, 086001 (2023) for E < 9.76 MeV otherwise returns a power law fit
-    ## decribed in Buck et al., Nuclear Physics A, 398(2), 189-202 (1983)
+    ## of the data in Buck et al., Nuclear Physics A, 398(2), 189-202 (1983)
     E_MeV = E/1.e3
     conditions = [E <= 9760, E > 9760]
     choices = [astrophysical_factor(E)/E_MeV * np.exp(-np.sqrt(E_Gamow_MeV / E_MeV)),
