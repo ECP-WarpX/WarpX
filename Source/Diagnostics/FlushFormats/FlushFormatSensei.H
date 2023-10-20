@@ -35,8 +35,10 @@ public:
     FlushFormatSensei();
     ~FlushFormatSensei() override;
 
-    FlushFormatSensei(const FlushFormatSensei &) = delete;
-    void operator=(const FlushFormatSensei &) = delete;
+    FlushFormatSensei(const FlushFormatSensei &)            = delete;
+    FlushFormatSensei& operator=(const FlushFormatSensei &) = delete;
+    FlushFormatSensei(FlushFormatSensei&&)                  = default;
+    FlushFormatSensei& operator=(FlushFormatSensei&& )      = default;
 
     /** Construct.
      *

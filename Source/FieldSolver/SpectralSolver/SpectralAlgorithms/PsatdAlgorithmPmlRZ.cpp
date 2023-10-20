@@ -20,17 +20,16 @@ PsatdAlgorithmPmlRZ::PsatdAlgorithmPmlRZ (SpectralKSpaceRZ const & spectral_kspa
                                           amrex::DistributionMapping const & dm,
                                           const SpectralFieldIndex& spectral_index,
                                           int const n_rz_azimuthal_modes, int const norder_z,
-                                          short const grid_type, amrex::Real const dt)
-     // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
-       m_dt(dt)
+                                          short const grid_type, amrex::Real const dt):
+    // Initialize members of base class
+    coefficients_initialized{false},
+    SpectralBaseAlgorithmRZ{spectral_kspace, dm, spectral_index, norder_z, grid_type},
+    m_dt{dt}
 {
     // Allocate the arrays of coefficients
     amrex::BoxArray const & ba = spectral_kspace.spectralspace_ba;
     C_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
     S_ck_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
-
-    coefficients_initialized = false;
 }
 
 /* Advance the E and B field in spectral space (stored in `f`)

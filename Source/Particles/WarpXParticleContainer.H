@@ -118,10 +118,10 @@ public:
     ~WarpXParticleContainer() override {}
 
     // Move and copy operations
-    WarpXParticleContainer(const WarpXParticleContainer&) = delete;
+    WarpXParticleContainer(const WarpXParticleContainer&)            = delete;
     WarpXParticleContainer& operator=(const WarpXParticleContainer&) = delete;
-    WarpXParticleContainer(WarpXParticleContainer&&) = delete;
-    WarpXParticleContainer& operator=(WarpXParticleContainer&&) = delete;
+    WarpXParticleContainer(WarpXParticleContainer&&)                 = default;
+    WarpXParticleContainer& operator=(WarpXParticleContainer&&)      = default;
 
     virtual void InitData () = 0;
 

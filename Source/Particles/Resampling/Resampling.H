@@ -33,10 +33,12 @@ struct ResamplingAlgorithm
 
     /** Default constructor */
     ResamplingAlgorithm () = default;
-    /** Default Copy constructor */
-    ResamplingAlgorithm ( ResamplingAlgorithm const &) = default;
-    /** Default Copy operator */
+
+
+    ResamplingAlgorithm ( ResamplingAlgorithm const &)             = default;
     ResamplingAlgorithm& operator= ( ResamplingAlgorithm const & ) = default;
+    ResamplingAlgorithm ( ResamplingAlgorithm&& )                  = default;
+    ResamplingAlgorithm& operator= ( ResamplingAlgorithm&& )       = default;
 };
 
 /**

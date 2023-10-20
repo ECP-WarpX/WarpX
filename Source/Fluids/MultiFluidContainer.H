@@ -38,6 +38,11 @@ public:
 
     ~MultiFluidContainer() {}
 
+    MultiFluidContainer (MultiFluidContainer const &)              = delete;
+    MultiFluidContainer& operator= (MultiFluidContainer const & )  = delete;
+    MultiFluidContainer(MultiFluidContainer&& )                    = default;
+    MultiFluidContainer& operator=(MultiFluidContainer&& )         = default;
+
     WarpXFluidContainer&
     GetFluidContainer (int ispecies) const {return *allcontainers[ispecies];}
 

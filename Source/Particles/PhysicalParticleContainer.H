@@ -58,10 +58,10 @@ public:
 
     ~PhysicalParticleContainer () override {}
 
-    /** Delete Copy constructor */
-    PhysicalParticleContainer ( PhysicalParticleContainer const &) = delete;
-    /** Delete Copy operator */
-    PhysicalParticleContainer& operator= ( PhysicalParticleContainer const & ) = delete;
+    PhysicalParticleContainer (PhysicalParticleContainer const &)              = delete;
+    PhysicalParticleContainer& operator= (PhysicalParticleContainer const & )  = delete;
+    PhysicalParticleContainer(PhysicalParticleContainer&& )                    = default;
+    PhysicalParticleContainer& operator=(PhysicalParticleContainer&& )         = default;
 
     void InitData () override;
 

@@ -85,6 +85,16 @@ class SpectralFieldIndex
          */
         SpectralFieldIndex& operator= ( SpectralFieldIndex const & ) = default;
 
+        /**
+         * \brief Default Move constructor
+         */
+        SpectralFieldIndex ( SpectralFieldIndex&& ) = default;
+
+        /**
+         * \brief Default Move operator
+         */
+        SpectralFieldIndex& operator= ( SpectralFieldIndex&& ) = default;
+
     // Total number of fields that are actually allocated
     int n_fields;
 

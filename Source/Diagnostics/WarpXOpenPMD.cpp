@@ -378,8 +378,8 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     std::map< std::string, std::string > engine_parameters,
     std::vector<bool> fieldPMLdirections)
   :m_Series(nullptr),
-   m_MPIRank{1},
-   m_MPISize{1},
+   m_MPIRank{amrex::ParallelDescriptor::MyProc()},
+   m_MPISize{amrex::ParallelDescriptor::NProcs()},
    m_Encoding(ie),
    m_OpenPMDFileType(std::move(openPMDFileType)),
    m_fieldPMLdirections(std::move(fieldPMLdirections))
@@ -492,15 +492,11 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
                 amrex::ParallelDescriptor::Communicator(),
                 m_OpenPMDoptions
         );
-        m_MPISize = amrex::ParallelDescriptor::NProcs();
-        m_MPIRank = amrex::ParallelDescriptor::MyProc();
 #else
         WARPX_ABORT_WITH_MESSAGE("openPMD-api not built with MPI support!");
 #endif
     } else {
         m_Series = std::make_unique<openPMD::Series>(filepath, access, m_OpenPMDoptions);
-        m_MPISize = 1;
-        m_MPIRank = 1;
     }
 
     m_Series->setIterationEncoding( m_Encoding );
@@ -1483,11 +1479,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 //
 //
 //
-WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc)
+WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc):
+    m_MPIRank{amrex::ParallelDescriptor::MyProc()},
+    m_MPISize{amrex::ParallelDescriptor::NProcs()}
 {
-  m_MPISize = amrex::ParallelDescriptor::NProcs();
-  m_MPIRank = amrex::ParallelDescriptor::MyProc();
-
   m_ParticleCounterByLevel.resize(pc->finestLevel()+1);
   m_ParticleOffsetAtRank.resize(pc->finestLevel()+1);
   m_ParticleSizeAtRank.resize(pc->finestLevel()+1);

@@ -27,14 +27,13 @@ public:
         bool isLastBTDFlush = false,
         const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const = 0;
 
-     virtual ~FlushFormat() {}
-
-    /** Default constructor */
     FlushFormat () = default;
-    /** Default Copy constructor */
-    FlushFormat ( FlushFormat const &) = default;
-    /** Default Copy operator */
+    virtual ~FlushFormat() {}
+
+    FlushFormat ( FlushFormat const &)             = default;
     FlushFormat& operator= ( FlushFormat const & ) = default;
+    FlushFormat ( FlushFormat&& )                  = default;
+    FlushFormat& operator= ( FlushFormat&& )       = default;
 };
 
 #endif // WARPX_FLUSHFORMAT_H_

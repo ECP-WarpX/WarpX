@@ -45,10 +45,10 @@ public:
 
     ~FlushFormatOpenPMD () override = default;
 
-    /** Delete Copy constructor */
-    FlushFormatOpenPMD ( FlushFormatOpenPMD const &) = delete;
-    /** Delete Copy operator */
+    FlushFormatOpenPMD ( FlushFormatOpenPMD const &)             = delete;
     FlushFormatOpenPMD& operator= ( FlushFormatOpenPMD const & ) = delete;
+    FlushFormatOpenPMD ( FlushFormatOpenPMD&& )                  = default;
+    FlushFormatOpenPMD& operator= ( FlushFormatOpenPMD&& )       = default;
 
 private:
     /** This is responsible for dumping to file */

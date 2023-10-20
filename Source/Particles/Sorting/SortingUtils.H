@@ -195,12 +195,12 @@ class copyAndReorder
         copyAndReorder(
             amrex::Gpu::DeviceVector<T> const& src,
             amrex::Gpu::DeviceVector<T>& dst,
-            amrex::Gpu::DeviceVector<long> const& indices ) {
-            // Extract simple structure that can be used directly on the GPU
-            m_src_ptr = src.dataPtr();
-            m_dst_ptr = dst.dataPtr();
-            m_indices_ptr = indices.dataPtr();
-        }
+            amrex::Gpu::DeviceVector<long> const& indices ):
+                // Extract simple structure that can be used directly on the GPU
+                m_src_ptr{src.dataPtr()},
+                m_dst_ptr{dst.dataPtr()},
+                m_indices_ptr{indices.dataPtr()}
+        {}
 
         AMREX_GPU_DEVICE AMREX_FORCE_INLINE
         void operator()( const long ip ) const {

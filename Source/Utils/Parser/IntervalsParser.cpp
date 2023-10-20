@@ -16,9 +16,9 @@
 
 #include <algorithm>
 
-utils::parser::SliceParser::SliceParser (const std::string& instr, const bool isBTD)
+utils::parser::SliceParser::SliceParser (const std::string& instr, const bool isBTD):
+    m_isBTD{isBTD}
 {
-    m_isBTD = isBTD;
     // split string and trim whitespaces
     auto insplit = ablastr::utils::text::split_string<std::vector<std::string>>(
         instr, m_separator, true);

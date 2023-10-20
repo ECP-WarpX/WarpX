@@ -38,6 +38,17 @@ class SpectralBaseAlgorithmRZ
          */
         SpectralBaseAlgorithmRZ& operator= ( SpectralBaseAlgorithmRZ const & ) = default;
 
+
+        /**
+         * \brief Default Move constructor
+         */
+        SpectralBaseAlgorithmRZ ( SpectralBaseAlgorithmRZ&& ) = default;
+
+        /**
+         * \brief Default Move operator
+         */
+        SpectralBaseAlgorithmRZ& operator= ( SpectralBaseAlgorithmRZ&& ) = default;
+
         /**
          * \brief Virtual function for current correction in Fourier space
          * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).

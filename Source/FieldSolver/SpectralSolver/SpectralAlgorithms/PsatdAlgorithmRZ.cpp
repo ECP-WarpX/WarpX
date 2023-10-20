@@ -26,15 +26,16 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     const int J_in_time,
                                     const int rho_in_time,
                                     const bool dive_cleaning,
-                                    const bool divb_cleaning)
-     // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, spectral_index, norder_z, grid_type),
-       m_dt(dt),
-       m_update_with_rho(update_with_rho),
-       m_time_averaging(time_averaging),
-       m_J_in_time(J_in_time),
-       m_dive_cleaning(dive_cleaning),
-       m_divb_cleaning(divb_cleaning)
+                                    const bool divb_cleaning):
+    // Initialize members of base class
+    coefficients_initialized{false},
+    SpectralBaseAlgorithmRZ{spectral_kspace, dm, spectral_index, norder_z, grid_type},
+    m_dt{dt},
+    m_update_with_rho{update_with_rho},
+    m_time_averaging{time_averaging},
+    m_J_in_time{J_in_time},
+    m_dive_cleaning{dive_cleaning},
+    m_divb_cleaning{divb_cleaning}
 {
     amrex::ignore_unused(rho_in_time);
 
@@ -45,8 +46,6 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
     X1_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
     X2_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
     X3_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
-
-    coefficients_initialized = false;
 
     if (time_averaging && J_in_time == JInTime::Linear)
     {

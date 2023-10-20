@@ -50,10 +50,12 @@ public:
                                     const std::string& name);
     ~RigidInjectedParticleContainer () override = default;
 
-    /** Delete Copy constructor */
-    RigidInjectedParticleContainer ( RigidInjectedParticleContainer const &) = delete;
-    /** Delete Copy operator */
+
+    RigidInjectedParticleContainer ( RigidInjectedParticleContainer const &)             = delete;
     RigidInjectedParticleContainer& operator= ( RigidInjectedParticleContainer const & ) = delete;
+    RigidInjectedParticleContainer ( RigidInjectedParticleContainer&& )                  = default;
+    RigidInjectedParticleContainer& operator= ( RigidInjectedParticleContainer&& )       = default;
+
 
     void InitData() override;
 

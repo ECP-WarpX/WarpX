@@ -56,14 +56,13 @@ public:
                         amrex::Real time,
                         bool isBTD = false) const;
 
+    FlushFormatPlotfile () = default;
     ~FlushFormatPlotfile() override {}
 
-    /** Default constructor */
-    FlushFormatPlotfile () = default;
-    /** Default Copy constructor */
-    FlushFormatPlotfile ( FlushFormatPlotfile const &) = default;
-    /** Default Copy operator */
+    FlushFormatPlotfile ( FlushFormatPlotfile const &)             = default;
     FlushFormatPlotfile& operator= ( FlushFormatPlotfile const & ) = default;
+    FlushFormatPlotfile ( FlushFormatPlotfile&& )                  = default;
+    FlushFormatPlotfile& operator= ( FlushFormatPlotfile&& )       = default;
 };
 
 #endif // WARPX_FLUSHFORMATPLOTFILE_H_

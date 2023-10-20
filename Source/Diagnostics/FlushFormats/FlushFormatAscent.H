@@ -53,14 +53,13 @@ public:
     void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const;
 #endif
 
+    FlushFormatAscent ()          = default;
     ~FlushFormatAscent() override = default;
 
-    /** Default constructor */
-    FlushFormatAscent () = default;
-    /** Default Copy constructor */
-    FlushFormatAscent ( FlushFormatAscent const &) = default;
-    /** Default Copy operator */
+    FlushFormatAscent ( FlushFormatAscent const &)             = default;
     FlushFormatAscent& operator= ( FlushFormatAscent const & ) = default;
+    FlushFormatAscent ( FlushFormatAscent&& )                  = default;
+    FlushFormatAscent& operator= ( FlushFormatAscent&& )       = default;
 };
 
 #endif // WARPX_FLUSHFORMATASCENT_H_

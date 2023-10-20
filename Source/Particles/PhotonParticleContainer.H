@@ -38,6 +38,11 @@ public:
                                     const std::string& name);
     ~PhotonParticleContainer () override {}
 
+    PhotonParticleContainer ( PhotonParticleContainer const &)             = delete;
+    PhotonParticleContainer& operator= ( PhotonParticleContainer const & ) = delete;
+    PhotonParticleContainer ( PhotonParticleContainer&& )                  = default;
+    PhotonParticleContainer& operator= ( PhotonParticleContainer&& )       = default;
+
     void InitData() override;
 
     void Evolve (int lev,

@@ -60,10 +60,15 @@ ParticleHistogram::ParticleHistogram (std::string rd_name):
     pp_rd_name.get("species",selected_species_name);
 
     // read bin parameters
-    utils::parser::getWithParser(pp_rd_name, "bin_number",m_bin_num);
-    utils::parser::getWithParser(pp_rd_name, "bin_max",   m_bin_max);
-    utils::parser::getWithParser(pp_rd_name, "bin_min",   m_bin_min);
-    m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
+    int bin_num = 0;
+    amrex::Real bin_max = 0.0_rt, bin_min = 0.0_rt;
+    utils::parser::getWithParser(pp_rd_name, "bin_number", bin_num);
+    utils::parser::getWithParser(pp_rd_name, "bin_max",    bin_max);
+    utils::parser::getWithParser(pp_rd_name, "bin_min",    bin_min);
+    m_bin_num = bin_num;
+    m_bin_max = bin_max;
+    m_bin_min = bin_min;
+    m_bin_size = (bin_max - bin_min) / bin_num;
 
     // read histogram function
     std::string function_string;

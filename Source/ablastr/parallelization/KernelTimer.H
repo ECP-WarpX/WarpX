@@ -71,10 +71,10 @@ public:
 #endif //AMREX_USE_GPU
     }
 
-    /** Default Copy constructor */
-    KernelTimer ( KernelTimer const &) = default;
-    /** Default Copy operator */
+    KernelTimer ( KernelTimer const &)             = default;
     KernelTimer& operator= ( KernelTimer const & ) = default;
+    KernelTimer ( KernelTimer&& )                  = default;
+    KernelTimer& operator= ( KernelTimer&& )       = default;
 
 #if (defined AMREX_USE_GPU)
 private:

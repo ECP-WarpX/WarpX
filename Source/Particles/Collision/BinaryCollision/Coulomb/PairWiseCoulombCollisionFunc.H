@@ -45,7 +45,8 @@ public:
      */
     PairWiseCoulombCollisionFunc (const std::string collision_name,
                                   [[maybe_unused]] MultiParticleContainer const * const mypc,
-                                  const bool isSameSpecies)
+                                  const bool isSameSpecies):
+        m_isSameSpecies{isSameSpecies}
     {
         using namespace amrex::literals;
         const amrex::ParmParse pp_collision_name(collision_name);
@@ -53,7 +54,6 @@ public:
         amrex::ParticleReal CoulombLog = -1.0_prt;
         utils::parser::queryWithParser(
             pp_collision_name, "CoulombLog", CoulombLog);
-        m_isSameSpecies = isSameSpecies;
         m_CoulombLog = CoulombLog;
     }
 
