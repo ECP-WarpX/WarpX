@@ -149,14 +149,16 @@ namespace
         {}
 
         AMREX_GPU_HOST_DEVICE
+        ~PDim3() = default;
+
+        AMREX_GPU_HOST_DEVICE
         PDim3(PDim3 const &)            = default;
         AMREX_GPU_HOST_DEVICE
         PDim3& operator=(PDim3 const &) = default;
         AMREX_GPU_HOST_DEVICE
-        PDim3(PDim3&&)                 = default;
+        PDim3(PDim3&&)                  = default;
         AMREX_GPU_HOST_DEVICE
-        PDim3& operator=(PDim3&&)      = default;
-
+        PDim3& operator=(PDim3&&)       = default;
     };
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
