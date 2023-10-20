@@ -110,7 +110,7 @@ public:
 #endif
     }
 
-    amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
+    [[nodiscard]] amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
     {
         return m_exe_h.getCrossSection(E_coll);
     }
