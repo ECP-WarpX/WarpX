@@ -429,8 +429,8 @@ void FieldProbe::ComputeDiags (int step)
 
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
-            const auto getPosition = GetParticlePosition(pti);
-            auto setPosition = SetParticlePosition(pti);
+            const auto getPosition = GetParticlePosition<FieldProbePIdx>(pti);
+            auto setPosition = SetParticlePosition<FieldProbePIdx>(pti);
             const auto& aos = pti.GetArrayOfStructs();
             const auto* AMREX_RESTRICT m_structs = aos().dataPtr();
 
