@@ -221,7 +221,7 @@ public:
         // Store product species data in vectors
         const int n_product_species = m_product_species.size();
         amrex::Vector<ParticleTileType*> tile_products;
-        amrex::Vector<GetParticlePosition> get_position_products;
+        amrex::Vector<GetParticlePosition<PIdx>> get_position_products;
         amrex::Vector<index_type> products_np;
         amrex::Vector<amrex::ParticleReal> products_mass;
         constexpr int getpos_offset = 0;
@@ -229,7 +229,7 @@ public:
         {
             ParticleTileType& ptile_product = product_species_vector[i]->ParticlesAt(lev, mfi);
             tile_products.push_back(&ptile_product);
-            get_position_products.push_back(GetParticlePosition(ptile_product,
+            get_position_products.push_back(GetParticlePosition<PIdx>(ptile_product,
                                                                       getpos_offset));
             products_np.push_back(ptile_product.numParticles());
             products_mass.push_back(product_species_vector[i]->getMass());
@@ -254,7 +254,7 @@ public:
             index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
             const amrex::ParticleReal q1 = species_1.getCharge();
             const amrex::ParticleReal m1 = species_1.getMass();
-            auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
+            auto get_position_1  = GetParticlePosition<PIdx>(ptile_1, getpos_offset);
             // Needed to access the particle id
             ParticleType * AMREX_RESTRICT
                                  particle_ptr_1 = ptile_1.GetArrayOfStructs()().data();
@@ -394,7 +394,7 @@ public:
             index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
             const amrex::ParticleReal q1 = species_1.getCharge();
             const amrex::ParticleReal m1 = species_1.getMass();
-            auto get_position_1  = GetParticlePosition(ptile_1, getpos_offset);
+            auto get_position_1  = GetParticlePosition<PIdx>(ptile_1, getpos_offset);
             // Needed to access the particle id
             ParticleType * AMREX_RESTRICT
                                  particle_ptr_1 = ptile_1.GetArrayOfStructs()().data();
@@ -404,7 +404,7 @@ public:
             index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
             const amrex::ParticleReal q2 = species_2.getCharge();
             const amrex::ParticleReal m2 = species_2.getMass();
-            auto get_position_2  = GetParticlePosition(ptile_2, getpos_offset);
+            auto get_position_2  = GetParticlePosition<PIdx>(ptile_2, getpos_offset);
             // Needed to access the particle id
             ParticleType * AMREX_RESTRICT
                                  particle_ptr_2 = ptile_2.GetArrayOfStructs()().data();

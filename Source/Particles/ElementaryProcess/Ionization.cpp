@@ -42,7 +42,7 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
     comp = a_comp;
     m_atomic_number = a_atomic_number;
 
-    m_get_position  = GetParticlePosition(a_pti, a_offset);
+    m_get_position  = GetParticlePosition<PIdx>(a_pti, a_offset);
     m_get_externalEB = GetExternalEBField(a_pti, a_offset);
 
     m_ex_arr = exfab.array();
