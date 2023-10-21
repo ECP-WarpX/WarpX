@@ -108,7 +108,7 @@ DSMC::doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleConta
             {
                 amrex::Gpu::synchronize();
             }
-            amrex::Real wt = amrex::second();
+            auto wt = static_cast<amrex::Real>(amrex::second());
 
             doCollisionsWithinTile(dt, lev, mfi, species1, species2,
                                    copy_species1, copy_species2);
@@ -116,7 +116,7 @@ DSMC::doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleConta
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
             }
         }
@@ -140,7 +140,7 @@ DSMC::doCollisionsWithinTile(
 
     // get collision processes
     auto scattering_processes = m_scattering_processes_exe.data();
-    int const process_count   = m_scattering_processes_exe.size();
+    int const process_count   = static_cast<int>(m_scattering_processes_exe.size());
 
     // Extract particles in the tile that `mfi` points to
     ParticleTileType& ptile_1 = species_1.ParticlesAt(lev, mfi);
@@ -151,7 +151,7 @@ DSMC::doCollisionsWithinTile(
     ParticleBins bins_2 = findParticlesInEachCell( lev, mfi, ptile_2 );
 
     // Extract low-level data
-    int const n_cells = bins_1.numBins();
+    int const n_cells = static_cast<int>(bins_1.numBins());
 
     // - Species 1
     index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();

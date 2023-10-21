@@ -46,9 +46,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         WarpX parser.
         """
         # grab the boundary potentials from the grid object
-        self.right_voltage = (
-            self.grid.potential_zmax.replace('sin', 'np.sin').replace('pi', 'np.pi')
-        )
+        self.right_voltage = self.grid.potential_zmax
 
         # set WarpX boundary potentials to None since we will handle it
         # ourselves in this solver
@@ -109,7 +107,10 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
 
         left_voltage = 0.0
         right_voltage = eval(
-            self.right_voltage, {'t': self.sim.extension.warpx.gett_new(0)}
+            self.right_voltage, {
+                't': self.sim.extension.warpx.gett_new(0),
+                'sin': np.sin, 'pi': np.pi
+            }
         )
 
         # Construct b vector
@@ -355,8 +356,11 @@ class CapacitiveDischargeExample(object):
             else:
                 file_prefix = 'Python_background_mcc_1d_tridiag_plt'
 
+        species = [self.electrons, self.ions]
+        if self.dsmc:
+            species.append(self.neutrals)
         particle_diag = picmi.ParticleDiagnostic(
-            species=[self.electrons, self.ions],
+            species=species,
             name='diag1',
             period=0,
             write_dir='.',

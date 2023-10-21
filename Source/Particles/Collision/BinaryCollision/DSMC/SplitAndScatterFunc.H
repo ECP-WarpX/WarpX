@@ -19,7 +19,7 @@
  */
 template <typename index_type, typename Tile, typename Index, typename CopyFunc,
           amrex::EnableIf_t<std::is_integral<Index>::value, int> foo = 0>
-Index splitScatteringParticles (
+int splitScatteringParticles (
     const index_type& n_total_pairs,
     Tile& ptile1, Tile& ptile2,
     const Index* AMREX_RESTRICT mask,
@@ -159,6 +159,6 @@ Index splitScatteringParticles (
     });
 
     Gpu::synchronize();
-    return num_added;
+    return static_cast<int>(num_added);
 }
 #endif // SPLIT_AND_SCATTER_FUNC_H_
