@@ -790,7 +790,7 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
                                                            Real * AMREX_RESTRICT const pplane_Xp,
                                                            Real * AMREX_RESTRICT const pplane_Yp)
 {
-    const auto GetPosition = GetParticlePosition(pti);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti);
 
 #if (AMREX_SPACEDIM >= 2)
     const Real tmp_u_X_0 = m_u_X[0];
@@ -852,8 +852,8 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
                                                Real const * AMREX_RESTRICT const amplitude,
                                                const Real dt)
 {
-    const auto GetPosition = GetParticlePosition(pti);
-    auto       SetPosition = SetParticlePosition(pti);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti);
+    auto       SetPosition = SetParticlePosition<PIdx>(pti);
 
     const Real tmp_p_X_0 = m_p_X[0];
     const Real tmp_p_X_1 = m_p_X[1];

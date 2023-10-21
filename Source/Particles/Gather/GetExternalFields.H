@@ -45,7 +45,7 @@ struct GetExternalEBField
     amrex::ParserExecutor<4> m_Byfield_partparser;
     amrex::ParserExecutor<4> m_Bzfield_partparser;
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
     amrex::Real m_time;
 
     amrex::ParticleReal m_repeated_plasma_lens_period;
