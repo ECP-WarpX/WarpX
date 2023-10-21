@@ -152,4 +152,3 @@ void NCIGodfreyFilter::ComputeStencils()
 }
 
 #endif
-
