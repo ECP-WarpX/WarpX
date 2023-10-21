@@ -27,15 +27,14 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     const int rho_in_time,
                                     const bool dive_cleaning,
                                     const bool divb_cleaning):
-    // Initialize members of base class
+    // Initialize members of base class and member variables
     SpectralBaseAlgorithmRZ{spectral_kspace, dm, spectral_index, norder_z, grid_type},
     m_update_with_rho{update_with_rho},
     m_time_averaging{time_averaging},
     m_J_in_time{J_in_time},
+    m_dt{dt},
     m_dive_cleaning{dive_cleaning},
-    m_divb_cleaning{divb_cleaning},
-    // Initialize memeber variables
-    m_dt{dt}
+    m_divb_cleaning{divb_cleaning}
 {
     amrex::ignore_unused(rho_in_time);
 
