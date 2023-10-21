@@ -721,7 +721,7 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
         // Preparing data needed for user defined attributes
         const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
         const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
-        const auto get_position = GetParticlePosition(pinned_tile);
+        const auto get_position = GetParticlePosition<PIdx>(pinned_tile);
         const auto soa = pinned_tile.getParticleTileData();
         const amrex::ParticleReal* AMREX_RESTRICT ux = soa.m_rdata[PIdx::ux];
         const amrex::ParticleReal* AMREX_RESTRICT uy = soa.m_rdata[PIdx::uy];
@@ -2307,7 +2307,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
     // Loop over particle interator
     for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
     {
-        const auto GetPosition = GetParticlePosition(pti);
+        const auto GetPosition = GetParticlePosition<PIdx>(pti);
 
         const amrex::Vector<int> ppc_nd = plasma_injector->num_particles_per_cell_each_dim;
         const std::array<Real,3>& dx = WarpX::CellSize(lev);
@@ -2503,7 +2503,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& byfab = By[pti];
             const FArrayBox& bzfab = Bz[pti];
 
-            const auto getPosition = GetParticlePosition(pti);
+            const auto getPosition = GetParticlePosition<PIdx>(pti);
 
             const auto getExternalEB = GetExternalEBField(pti);
 
@@ -2679,8 +2679,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     // Add guard cells to the box.
     box.grow(ngEB);
 
-    const auto getPosition = GetParticlePosition(pti, offset);
-          auto setPosition = SetParticlePosition(pti, offset);
+    const auto getPosition = GetParticlePosition<PIdx>(pti, offset);
+          auto setPosition = SetParticlePosition<PIdx>(pti, offset);
 
     const auto getExternalEB = GetExternalEBField(pti, offset);
 

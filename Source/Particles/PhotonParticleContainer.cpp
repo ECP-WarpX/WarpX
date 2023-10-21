@@ -129,8 +129,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     const int do_copy = (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf) );
 
-    const auto GetPosition = GetParticlePosition(pti, offset);
-    auto SetPosition = SetParticlePosition(pti, offset);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti, offset);
+    auto SetPosition = SetParticlePosition<PIdx>(pti, offset);
 
     const auto getExternalEB = GetExternalEBField(pti, offset);
 

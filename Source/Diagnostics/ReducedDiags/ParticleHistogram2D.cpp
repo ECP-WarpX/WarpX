@@ -193,7 +193,7 @@ void ParticleHistogram2D::ComputeDiags (int step)
         {
             for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
             {
-                auto const GetPosition = GetParticlePosition(pti);
+                auto const GetPosition = GetParticlePosition<PIdx>(pti);
 
                 auto & attribs = pti.GetAttribs();
                 ParticleReal* const AMREX_RESTRICT d_w = attribs[PIdx::w].dataPtr();

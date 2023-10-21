@@ -37,7 +37,7 @@
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
+void doChargeDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                const amrex::ParticleReal * const wp,
                                const int* ion_lev,
                                amrex::FArrayBox& rho_fab,
@@ -239,7 +239,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
  * \param bin_size tile size to use for shared current deposition operations
  */
 template <int depos_order>
-void doChargeDepositionSharedShapeN (const GetParticlePosition& GetPosition,
+void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                      const amrex::ParticleReal * const wp,
                                      const int* ion_lev,
                                      amrex::FArrayBox& rho_fab,

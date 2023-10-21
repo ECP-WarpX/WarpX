@@ -340,7 +340,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
 
     // we need particle positions in order to calculate the local density
     // and temperature
-    auto GetPosition = GetParticlePosition(pti);
+    auto GetPosition = GetParticlePosition<PIdx>(pti);
 
     // get Struct-Of-Array particle data, also called attribs
     auto& attribs = pti.GetAttribs();

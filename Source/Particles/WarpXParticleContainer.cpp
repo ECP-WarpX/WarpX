@@ -424,7 +424,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     Array4<Real> const& jz_arr = local_jz[thread_num].array();
 #endif
 
-    const auto GetPosition = GetParticlePosition(pti, offset);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti, offset);
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
@@ -870,7 +870,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
         amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
 
-        const auto GetPosition = GetParticlePosition(pti, offset);
+        const auto GetPosition = GetParticlePosition<PIdx>(pti, offset);
         const Geometry& geom = Geom(lev);
         Box box = pti.validbox();
         box.grow(ng_rho);
@@ -1258,8 +1258,8 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             // Particle Push
             //
 
-            const auto GetPosition = GetParticlePosition(pti);
-                  auto SetPosition = SetParticlePosition(pti);
+            const auto GetPosition = GetParticlePosition<PIdx>(pti);
+                  auto SetPosition = SetParticlePosition<PIdx>(pti);
 
             // - momenta are stored as a struct of array, in `attribs`
             auto& attribs = pti.GetAttribs();
@@ -1345,8 +1345,8 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            auto GetPosition = GetParticlePosition(pti);
-            auto SetPosition = SetParticlePosition(pti);
+            auto GetPosition = GetParticlePosition<PIdx>(pti);
+            auto SetPosition = SetParticlePosition<PIdx>(pti);
 #ifndef WARPX_DIM_1D_Z
             const Real xmin = Geom(lev).ProbLo(0);
             const Real xmax = Geom(lev).ProbHi(0);

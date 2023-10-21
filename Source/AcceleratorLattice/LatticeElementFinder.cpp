@@ -96,7 +96,7 @@ LatticeElementFinderDevice::InitLatticeElementFinderDevice (WarpXParIter const& 
 
     int const lev = a_pti.GetLevel();
 
-    m_get_position = GetParticlePosition(a_pti, a_offset);
+    m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
     auto& attribs = a_pti.GetAttribs();
     m_ux = attribs[PIdx::ux].dataPtr() + a_offset;
     m_uy = attribs[PIdx::uy].dataPtr() + a_offset;
