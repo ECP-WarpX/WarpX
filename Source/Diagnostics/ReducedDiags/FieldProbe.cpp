@@ -164,7 +164,10 @@ FieldProbe::FieldProbe (std::string rd_name)
 
             // write header row
             int c = 0;
-            ofs << "#";
+            // No "#" symbol in FieldProbe header, because the recommended way to read FieldProbe
+            // output is to use pandas, which requires reading the header rather than treating it as a
+            // commented line.
+            // ofs << "#";
             ofs << "[" << c++ << "]step()";
             ofs << m_sep;
             ofs << "[" << c++ << "]time(s)";
