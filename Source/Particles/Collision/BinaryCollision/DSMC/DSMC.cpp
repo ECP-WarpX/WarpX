@@ -287,6 +287,8 @@ DSMC::doCollisionsWithinTile(
         p_pair_indices_1, p_pair_indices_2,
         p_pair_reaction_weight);
 
-    setNewParticleIDs(ptile_1, num_p_tile1, num_added);
-    setNewParticleIDs(ptile_2, num_p_tile2, num_added);
+    if (num_added > 0) {
+        setNewParticleIDs(ptile_1, num_p_tile1, num_added);
+        setNewParticleIDs(ptile_2, num_p_tile2, num_added);
+    }
 }

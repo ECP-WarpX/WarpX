@@ -39,6 +39,12 @@ namespace BinaryCollisionUtils{
 
     CollisionType nuclear_fusion_type_to_collision_type (NuclearFusionType fusion_type);
 
+    /**
+     * \brief Return (relativistic) collision energy, collision speed and
+     * Lorentz factor for transforming between the lab and center-of-momentum
+     * frames. Note the use of `double` for energy since this calculation is
+     * prone to error with single precision.
+     */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     void get_collision_parameters (
         const amrex::ParticleReal& u1x, const amrex::ParticleReal& u1y,
@@ -57,15 +63,15 @@ namespace BinaryCollisionUtils{
 
         constexpr auto one_pr = amrex::ParticleReal(1.);
         constexpr auto inv_four_pr = amrex::ParticleReal(1./4.);
-        constexpr amrex::ParticleReal c_sq = PhysConst::c * PhysConst::c;
-        constexpr amrex::ParticleReal inv_csq = one_pr / ( c_sq );
+        constexpr double c_sq = PhysConst::c * PhysConst::c;
+        constexpr double inv_csq = 1.0 / c_sq;
 
         const amrex::ParticleReal m1_sq = m1*m1;
         const amrex::ParticleReal m2_sq = m2*m2;
 
         // Compute Lorentz factor gamma in the lab frame
-        const amrex::ParticleReal g1 = std::sqrt( one_pr + (u1x*u1x+u1y*u1y+u1z*u1z)*inv_csq );
-        const amrex::ParticleReal g2 = std::sqrt( one_pr + (u2x*u2x+u2y*u2y+u2z*u2z)*inv_csq );
+        const double g1 = std::sqrt( 1.0 + static_cast<double>(u1x*u1x+u1y*u1y+u1z*u1z)*inv_csq );
+        const double g2 = std::sqrt( 1.0 + static_cast<double>(u2x*u2x+u2y*u2y+u2z*u2z)*inv_csq );
 
         // Compute momenta
         const amrex::ParticleReal p1x = u1x * m1;
@@ -75,19 +81,21 @@ namespace BinaryCollisionUtils{
         const amrex::ParticleReal p2y = u2y * m2;
         const amrex::ParticleReal p2z = u2z * m2;
         // Square norm of the total (sum between the two particles) momenta in the lab frame
-        const amrex::ParticleReal p_total_sq = powi<2>(p1x + p2x) +
-                                               powi<2>(p1y + p2y) +
-                                               powi<2>(p1z + p2z);
+        const double p_total_sq = static_cast<double>(
+            powi<2>(p1x + p2x) + powi<2>(p1y + p2y) + powi<2>(p1z + p2z)
+        );
 
         // Total energy in the lab frame
-        const amrex::ParticleReal E_lab = (m1 * g1 + m2 * g2) * c_sq;
+        const double m1_dbl = static_cast<double>(m1);
+        const double m2_dbl = static_cast<double>(m2);
+        const double E_lab = (m1_dbl * g1 + m2_dbl * g2) * c_sq;
         // Total energy squared in the center of mass frame, calculated using the Lorentz invariance
         // of the four-momentum norm
-        const amrex::ParticleReal E_star_sq = E_lab*E_lab - c_sq*p_total_sq;
+        const double E_star_sq = E_lab*E_lab - c_sq*p_total_sq;
 
         // Kinetic energy in the center of mass frame
-        const amrex::ParticleReal E_star = std::sqrt(E_star_sq);
-        E_coll = E_star - (m1 + m2)*c_sq;
+        const double E_star = std::sqrt(E_star_sq);
+        E_coll = static_cast<amrex::ParticleReal>(E_star - (m1_dbl + m2_dbl)*c_sq);
 
         // Square of the norm of the momentum of one of the particles in the center of mass frame
         // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle

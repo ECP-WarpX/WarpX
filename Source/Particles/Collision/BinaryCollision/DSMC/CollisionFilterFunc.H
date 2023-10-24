@@ -44,6 +44,8 @@ void CollisionPairFilter (const amrex::ParticleReal& u1x, const amrex::ParticleR
                           ScatteringProcess::Executor* scattering_processes,
                           const amrex::RandomEngine& engine)
 {
+    using namespace amrex::literals;
+
     amrex::ParticleReal E_coll, v_coll, lab_to_COM_factor;
 
     const amrex::ParticleReal w_min = amrex::min(w1, w2);
