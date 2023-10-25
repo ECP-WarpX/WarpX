@@ -117,6 +117,7 @@ python3 -m venv ${SW_DIR}/venvs/warpx
 source ${SW_DIR}/venvs/warpx/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade wheel
+python3 -m pip install --upgrade setuptools
 python3 -m pip install --upgrade cython
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas
