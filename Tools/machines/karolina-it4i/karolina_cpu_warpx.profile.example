@@ -27,6 +27,9 @@ export LD_LIBRARY_PATH=${HOME}/sw/karolina/cpu/adios2-2.8.3/lib64:$LD_LIBRARY_PA
 export LD_LIBRARY_PATH=${HOME}/sw/karolina/cpu/blaspp-master/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${HOME}/sw/karolina/cpu/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
+export PATH=${HOME}/sw/karolina/cpu/hdf5-1.14.1.2/bin:${PATH}
+export PATH=${HOME}/sw/karolina/cpu/adios2-2.8.3/bin:${PATH}
+
 # optional: CCache (not found)
 #module load ccache
 
