@@ -61,10 +61,16 @@ solver = picmi.ElectromagneticSolver(grid = grid,
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = max_steps,
                                       species = [electrons],
-                                      data_list = ['ux', 'uy', 'uz'],
+                                      data_list = ['ux', 'uy', 'uz', 'x', 'y', 'z'],
                                       write_dir = '.',
                                       warpx_file_prefix = 'Python_plasma_lens_plt')
 
+field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
+                                   grid = grid,
+                                   period = max_steps,
+                                   data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
+                                   write_dir = '.',
+                                   warpx_file_prefix = 'Python_plasma_lens_plt')
 # Set up simulation
 sim = picmi.Simulation(solver = solver,
                        max_steps = max_steps,
@@ -81,6 +87,7 @@ sim.add_applied_field(plasma_lenses)
 
 # Add diagnostics
 sim.add_diagnostic(part_diag1)
+sim.add_diagnostic(field_diag1)
 
 # Write input file that can be used to run with the compiled version
 #sim.write_input_file(file_name = 'inputs_3d_picmi')

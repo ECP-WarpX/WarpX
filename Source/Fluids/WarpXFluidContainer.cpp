@@ -233,8 +233,8 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
                 // Lorentz transform n, u (from lab to boosted frame)
                 if (n > 0.0){
                     if (gamma_boost > 1._rt){
-                        amrex::Real gamma = sqrt(1.0 + (u.x*u.x + u.y*u.y + u.z*u.z)/(clight*clight));
-                        amrex::Real n_boosted = gamma_boost*n*( 1.0 - beta_boost*u.z/(gamma*clight) );
+                        amrex::Real gamma = std::sqrt(1.0_rt + (u.x*u.x + u.y*u.y + u.z*u.z)/(clight*clight));
+                        amrex::Real n_boosted = gamma_boost*n*( 1.0_rt - beta_boost*u.z/(gamma*clight) );
                         amrex::Real uz_boosted = gamma_boost*(u.z - beta_boost*clight*gamma);
                         u.z = uz_boosted;
                         n = n_boosted;
@@ -417,22 +417,22 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     amrex::Real dt_over_dx = (dt/dx[0]);
     amrex::Real dt_over_dy = (dt/dx[1]);
     amrex::Real dt_over_dz = (dt/dx[2]);
-    amrex::Real dt_over_dx_half = 0.5*(dt/dx[0]);
-    amrex::Real dt_over_dy_half = 0.5*(dt/dx[1]);
-    amrex::Real dt_over_dz_half = 0.5*(dt/dx[2]);
+    amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
+    amrex::Real dt_over_dy_half = 0.5_rt*(dt/dx[1]);
+    amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[2]);
 #elif defined(WARPX_DIM_XZ)
-    amrex::Real dt_over_dx_half = 0.5*(dt/dx[0]);
-    amrex::Real dt_over_dz_half = 0.5*(dt/dx[1]);
+    amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
+    amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[1]);
     amrex::Real dt_over_dx = (dt/dx[0]);
     amrex::Real dt_over_dz = (dt/dx[1]);
 #elif defined(WARPX_DIM_RZ)
     const auto problo = geom.ProbLoArray();
-    amrex::Real dt_over_dx_half = 0.5*(dt/dx[0]);
-    amrex::Real dt_over_dz_half = 0.5*(dt/dx[1]);
+    amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
+    amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[1]);
     amrex::Box const& domain = geom.Domain();
 #else
     amrex::Real dt_over_dz = (dt/dx[0]);
-    amrex::Real dt_over_dz_half = 0.5*(dt/dx[0]);
+    amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[0]);
 #endif
 
     amrex::BoxArray ba = N[lev]->boxArray();
@@ -532,8 +532,8 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                     // Compute useful quantities for J
                     amrex::Real c_sq = clight*clight;
-                    amrex::Real gamma = sqrt(1.0 + (Ux*Ux + Uy*Uy + Uz*Uz)/(c_sq) );
-                    amrex::Real inv_c2_gamma3 = 1./(c_sq*gamma*gamma*gamma);
+                    amrex::Real gamma = std::sqrt(1.0_rt + (Ux*Ux + Uy*Uy + Uz*Uz)/(c_sq) );
+                    amrex::Real inv_c2_gamma3 = 1._rt/(c_sq*gamma*gamma*gamma);
 
                     // J represents are 4x4 matrices that show up in the advection
                     // equations written as a function of U = {N, Ux, Uy, Uz}:
@@ -654,14 +654,14 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         dU0x = ave( -UpDx_N(N_arr,i,j,k) , UpDx_N(N_arr,i,j,k) );
                         // First term in the ave is: U_{x,y} + U_{x,y}_p,
                         // which can be writen as 2*U_{x,y} + UpDx_U(U_{x,y})
-                        dU1x = ave( 2.0*Ux + UpDx_U(N_arr,NUx_arr,Ux,i,j,k) , UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
-                        dU2x = ave( 2.0*Uy + UpDx_U(N_arr,NUy_arr,Uy,i,j,k) , UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
+                        dU1x = ave( 2.0_rt*Ux + UpDx_U(N_arr,NUx_arr,Ux,i,j,k) , UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
+                        dU2x = ave( 2.0_rt*Uy + UpDx_U(N_arr,NUy_arr,Uy,i,j,k) , UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
                         dU3x = ave( -UpDx_U(N_arr,NUz_arr,Uz,i,j,k) , UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
                     } else if (i == domain.bigEnd(0)+1) {
-                        dU0x = ave( DownDx_N(N_arr,i,j,k) , 0.0 );
-                        dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k) , 0.0 );
-                        dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k) , 0.0 );
-                        dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k) , 0.0 );
+                        dU0x = ave( DownDx_N(N_arr,i,j,k) , 0.0_rt );
+                        dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k) , 0.0_rt );
+                        dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k) , 0.0_rt );
+                        dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k) , 0.0_rt );
                     }
 
                     // RZ sources:
@@ -679,7 +679,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real  JdU1z = J11z*dU1z;
                     amrex::Real  JdU2z = J22z*dU2z;
                     amrex::Real  JdU3z = J33z*dU3z;
-                    amrex::Real  U_tilde0 = N_arr(i,j,k)   - dt_over_dx_half*JdU0x - dt_over_dz_half*JdU0z - (dt/2.0)*N_source;
+                    amrex::Real  U_tilde0 = N_arr(i,j,k)   - dt_over_dx_half*JdU0x - dt_over_dz_half*JdU0z - (dt/2.0_rt)*N_source;
                     amrex::Real  U_tilde1 = Ux - dt_over_dx_half*JdU1x - dt_over_dz_half*JdU1z;
                     amrex::Real  U_tilde2 = Uy - dt_over_dx_half*JdU2x - dt_over_dz_half*JdU2z;
                     amrex::Real  U_tilde3 = Uz - dt_over_dx_half*JdU3x - dt_over_dz_half*JdU3z;
@@ -804,28 +804,28 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 amrex::Real dr = dx[0];
                 amrex::Real dz = dx[1];
                 amrex::Real r = problo[0] + i * dr;
-                amrex::Real Vij = 0.0;
-                amrex::Real S_Az = 0.0;
+                amrex::Real Vij = 0.0_rt;
+                amrex::Real S_Az = 0.0_rt;
 
                 // Volume element and z-facing surfaces
                 if (i == domain.smallEnd(0)) {
-                    Vij = 2.0*MathConst::pi*(dr/2.0)*(dr/4.0)*dz;
-                    S_Az = 2.0*MathConst::pi*(dr/4.0)*(dr/2.0);
+                    Vij = 2.0_rt*MathConst::pi*(dr/2.0_rt)*(dr/4.0_rt)*dz;
+                    S_Az = 2.0_rt*MathConst::pi*(dr/4.0_rt)*(dr/2.0_rt);
                 } else if (i == domain.bigEnd(0)+1) {
-                    Vij = 2.0*MathConst::pi*(r - dr/4.0)*(dr/2.0)*dz;
-                    S_Az = 2.0*MathConst::pi*(r - dr/4.0)*(dr/2.0);
+                    Vij = 2.0_rt*MathConst::pi*(r - dr/4.0_rt)*(dr/2.0_rt)*dz;
+                    S_Az = 2.0_rt*MathConst::pi*(r - dr/4.0_rt)*(dr/2.0_rt);
                 }  else {
-                    Vij = 2.0*MathConst::pi*r*dr*dz;
-                    S_Az = 2.0*MathConst::pi*(r)*dr;
+                    Vij = 2.0_rt*MathConst::pi*r*dr*dz;
+                    S_Az = 2.0_rt*MathConst::pi*(r)*dr;
                 }
 
                 // Radial Surfaces
-                amrex::Real S_Ar_plus = 2.0*MathConst::pi*(r + dr/2.0)*dz;
-                amrex::Real S_Ar_minus = 2.0*MathConst::pi*(r - dr/2.0)*dz;
+                amrex::Real S_Ar_plus = 2.0_rt*MathConst::pi*(r + dr/2.0_rt)*dz;
+                amrex::Real S_Ar_minus = 2.0_rt*MathConst::pi*(r - dr/2.0_rt)*dz;
                 if (i == domain.smallEnd(0))
-                    S_Ar_minus = 0.0;
+                    S_Ar_minus = 0.0_rt;
                 if (i == domain.bigEnd(0)+1)
-                    S_Ar_plus = 2.0*MathConst::pi*(r)*dz;
+                    S_Ar_plus = 2.0_rt*MathConst::pi*(r)*dz;
 
                 // Impose "none" boundaries
                 // Condition: Vx(r) = 0 at boundaries
@@ -834,9 +834,9 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                 // compute the fluxes:
                 // (note that _plus is shifted due to grid location)
-                amrex::Real Vx_L_minus = 0.0, Vx_I_plus = 0.0;
-                amrex::Real F0_minusx = 0.0, F1_minusx = 0.0, F2_minusx = 0.0, F3_minusx = 0.0;
-                amrex::Real F0_plusx = 0.0, F1_plusx = 0.0, F2_plusx = 0.0, F3_plusx = 0.0;
+                amrex::Real Vx_L_minus = 0.0_rt, Vx_I_plus = 0.0_rt;
+                amrex::Real F0_minusx = 0.0_rt, F1_minusx = 0.0_rt, F2_minusx = 0.0_rt, F3_minusx = 0.0_rt;
+                amrex::Real F0_plusx = 0.0_rt, F1_plusx = 0.0_rt, F2_plusx = 0.0_rt, F3_plusx = 0.0_rt;
                 if (i != domain.smallEnd(0)) {
                     Vx_L_minus = V_calc(U_minus_x,i-1,j,k,0,clight);
                     F0_minusx = flux_N(  U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus)*S_Ar_minus;
@@ -905,7 +905,7 @@ void WarpXFluidContainer::centrifugal_source_rz (int lev)
             {
 
                 // Verify density is non-zero
-                if (N_arr(i,j,k)>0.0) {
+                if (N_arr(i,j,k)>0.0_rt) {
 
                     // Compute r
                     amrex::Real r = problo[0] + i * dx[0];
@@ -920,10 +920,10 @@ void WarpXFluidContainer::centrifugal_source_rz (int lev)
                     if (i != domain.smallEnd(0)) {
                         amrex::Real u_r_1     = F_r(r,u_r,u_theta,u_z,dt);
                         amrex::Real u_theta_1 = F_theta(r,u_r,u_theta,u_z,dt);
-                        amrex::Real u_r_2     = (0.75)*(u_r)     + (0.25)*F_r(r,u_r_1,u_theta_1,u_z,dt);
-                        amrex::Real u_theta_2 = (0.75)*(u_theta) + (0.25)*F_theta(r,u_r_1,u_theta_1,u_z,dt);
-                        u_r            = (1.0/3.0)*(u_r)     + (2.0/3.0)*F_r(r,u_r_2,u_theta_2,u_z,dt);
-                        u_theta        = (1.0/3.0)*(u_theta) + (2.0/3.0)*F_theta(r,u_r_2,u_theta_2,u_z,dt);
+                        amrex::Real u_r_2     = (0.75_rt)*(u_r)     + (0.25_rt)*F_r(r,u_r_1,u_theta_1,u_z,dt);
+                        amrex::Real u_theta_2 = (0.75_rt)*(u_theta) + (0.25_rt)*F_theta(r,u_r_1,u_theta_1,u_z,dt);
+                        u_r            = (1.0_rt/3.0_rt)*(u_r)     + (2.0_rt/3.0_rt)*F_r(r,u_r_2,u_theta_2,u_z,dt);
+                        u_theta        = (1.0_rt/3.0_rt)*(u_theta) + (2.0_rt/3.0_rt)*F_theta(r,u_r_2,u_theta_2,u_z,dt);
 
                         // Calculate NU, save NUr, NUtheta
                         NUx_arr(i,j,k) = N_arr(i,j,k)*u_r*clight;
@@ -931,8 +931,8 @@ void WarpXFluidContainer::centrifugal_source_rz (int lev)
 
                     // BC r = 0, u_theta = 0, and there is no extra source terms
                     } else {
-                        NUx_arr(i,j,k) = 0.0;
-                        NUy_arr(i,j,k) = 0.0;
+                        NUx_arr(i,j,k) = 0.0_rt;
+                        NUy_arr(i,j,k) = 0.0_rt;
                     }
                 }
             }
@@ -1286,12 +1286,12 @@ void WarpXFluidContainer::DepositCurrent(
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
                 // Calculate J from fluid quantities
-                amrex::Real gamma = 1.0, Ux = 0.0, Uy = 0.0, Uz = 0.0;
-                if (N_arr(i, j, k)>0.0){
+                amrex::Real gamma = 1.0_rt, Ux = 0.0_rt, Uy = 0.0_rt, Uz = 0.0_rt;
+                if (N_arr(i, j, k)>0.0_rt){
                     Ux = NUx_arr(i, j, k)/N_arr(i, j, k);
                     Uy = NUy_arr(i, j, k)/N_arr(i, j, k);
                     Uz = NUz_arr(i, j, k)/N_arr(i, j, k);
-                    gamma = std::sqrt(1.0 + ( Ux*Ux + Uy*Uy + Uz*Uz) * inv_clight_sq ) ;
+                    gamma = std::sqrt(1.0_rt + ( Ux*Ux + Uy*Uy + Uz*Uz) * inv_clight_sq ) ;
                 }
                 tmp_jx_fluid_arr(i, j, k) = q * (NUx_arr(i, j, k) / gamma);
                 tmp_jy_fluid_arr(i, j, k) = q * (NUy_arr(i, j, k) / gamma);

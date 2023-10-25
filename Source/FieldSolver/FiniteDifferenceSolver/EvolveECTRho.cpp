@@ -88,7 +88,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         // Extract field data for this grid/tile
         amrex::Array4<amrex::Real> const &Ex = Efield[0]->array(mfi);
@@ -149,7 +149,7 @@ void FiniteDifferenceSolver::EvolveRhoCartesianECT (
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
 #ifdef WARPX_DIM_XZ

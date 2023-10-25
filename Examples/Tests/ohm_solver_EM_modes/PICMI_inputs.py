@@ -4,8 +4,8 @@
 # --- treated as kinetic particles and electrons as an isothermal, inertialess
 # --- background fluid. The script is set up to produce either parallel or
 # --- perpendicular (Bernstein) EM modes and can be run in 1d, 2d or 3d
-# --- Cartesian geometries. See Section 4.2 and 4.3 of Munoz et al. (2018) As a
-# --- CI test only a small number of steps are taken using the 1d version.
+# --- Cartesian geometries. See Section 4.2 and 4.3 of Munoz et al. (2018).
+# --- As a CI test only a small number of steps are taken using the 1d version.
 
 import argparse
 import os
@@ -15,15 +15,16 @@ import dill
 from mpi4py import MPI as mpi
 import numpy as np
 
-from pywarpx import callbacks, fields, picmi
+from pywarpx import callbacks, fields, libwarpx, picmi
 
 constants = picmi.constants
 
 comm = mpi.COMM_WORLD
 
-simulation = picmi.Simulation(verbose=0)
-# make a shorthand for simulation.extension since we use it a lot
-sim_ext = simulation.extension
+simulation = picmi.Simulation(
+    warpx_serialize_initial_conditions=True,
+    verbose=0
+)
 
 
 class EMModes(object):
@@ -256,6 +257,15 @@ class EMModes(object):
             self.output_file_name = 'perp_field_data.txt'
 
         if self.test:
+            particle_diag = picmi.ParticleDiagnostic(
+                name='field_diag',
+                period=self.total_steps,
+                write_dir='.',
+                warpx_file_prefix='Python_ohms_law_solver_EM_modes_1d_plt',
+                # warpx_format = 'openpmd',
+                # warpx_openpmd_backend = 'h5'
+            )
+            simulation.add_diagnostic(particle_diag)
             field_diag = picmi.FieldDiagnostic(
                 name='field_diag',
                 grid=self.grid,
@@ -306,16 +316,16 @@ class EMModes(object):
         similar format as the reduced diagnostic so that the same analysis
         script can be used regardless of the simulation dimension.
         """
-        step = sim_ext.getistep() - 1
+        step = simulation.extension.warpx.getistep(lev=0) - 1
 
         if step % self.diag_steps != 0:
             return
 
         Bx_warpx = fields.BxWrapper()[...]
-        By_warpx = fields.BxWrapper()[...]
+        By_warpx = fields.ByWrapper()[...]
         Ez_warpx = fields.EzWrapper()[...]
 
-        if sim_ext.getMyProc() != 0:
+        if libwarpx.amr.ParallelDescriptor.MyProc() != 0:
             return
 
         t = step * self.dt

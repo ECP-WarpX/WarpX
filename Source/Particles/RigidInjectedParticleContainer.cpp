@@ -121,8 +121,8 @@ RigidInjectedParticleContainer::RemapParticles()
                     const auto uyp = attribs[PIdx::uy].dataPtr();
                     const auto uzp = attribs[PIdx::uz].dataPtr();
 
-                    const auto GetPosition = GetParticlePosition(pti);
-                          auto SetPosition = SetParticlePosition(pti);
+                    const auto GetPosition = GetParticlePosition<PIdx>(pti);
+                          auto SetPosition = SetParticlePosition<PIdx>(pti);
 
                     // Loop over particles
                     const long np = pti.numParticles();
@@ -181,8 +181,8 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     amrex::Gpu::DeviceVector<ParticleReal> optical_depth_save;
 #endif
 
-    const auto GetPosition = GetParticlePosition(pti, offset);
-          auto SetPosition = SetParticlePosition(pti, offset);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti, offset);
+          auto SetPosition = SetParticlePosition<PIdx>(pti, offset);
 
     amrex::ParticleReal* const AMREX_RESTRICT ux = uxp.dataPtr() + offset;
     amrex::ParticleReal* const AMREX_RESTRICT uy = uyp.dataPtr() + offset;
@@ -357,7 +357,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& byfab = By[pti];
             const FArrayBox& bzfab = Bz[pti];
 
-            const auto getPosition = GetParticlePosition(pti);
+            const auto getPosition = GetParticlePosition<PIdx>(pti);
 
             const auto getExternalEB = GetExternalEBField(pti);
 

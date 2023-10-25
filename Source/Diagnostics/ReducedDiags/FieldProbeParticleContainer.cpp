@@ -76,7 +76,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
     AMREX_ALWAYS_ASSERT(x.size() == z.size());
 
     // number of particles to add
-    int const np = x.size();
+    auto const np = static_cast<int>(x.size());
 
     // have to resize here, not in the constructor because grids have not
     // been built when constructor was called.

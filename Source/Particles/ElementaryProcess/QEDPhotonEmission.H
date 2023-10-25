@@ -185,7 +185,7 @@ private:
     const QuantumSynchrotronPhotonEmission
         m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
     GetExternalEBField m_get_externalEB;
     amrex::ParticleReal m_Ex_external_particle;
     amrex::ParticleReal m_Ey_external_particle;

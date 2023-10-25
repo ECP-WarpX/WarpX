@@ -2014,9 +2014,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
     warpx_plot_raw_fields_guards: bool, optional
         Flag whether the raw fields should include the guard cells
 
-    warpx_write_species: bool, optional
-        Flag whether to output particle data with the diagnostic
-
     warpx_format: {plotfile, checkpoint, openpmd, ascent, sensei}, optional
         Diagnostic file format
 
@@ -2047,7 +2044,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.plot_raw_fields_guards = kw.pop('warpx_plot_raw_fields_guards', None)
         self.plot_finepatch = kw.pop('warpx_plot_finepatch', None)
         self.plot_crsepatch = kw.pop('warpx_plot_crsepatch', None)
-        self.write_species = kw.pop('warpx_write_species', None)
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
@@ -2130,7 +2126,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             # --- is the same on all processors.
             fields_to_plot = list(fields_to_plot)
             fields_to_plot.sort()
-            self.diagnostic.fields_to_plot = fields_to_plot
+            self.diagnostic.set_or_replace_attr('fields_to_plot', fields_to_plot)
 
         particle_fields_to_plot_names = list()
         for pfd in self.particle_fields_to_plot:
@@ -2157,8 +2153,8 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
         self.diagnostic.plot_finepatch = self.plot_finepatch
         self.diagnostic.plot_crsepatch = self.plot_crsepatch
-        self.diagnostic.write_species = self.write_species
-
+        if 'write_species' not in self.diagnostic.argvattrs:
+            self.diagnostic.write_species = False
         self.set_write_dir()
 
 
@@ -2263,7 +2259,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.file_min_digits = self.file_min_digits
         self.diagnostic.intervals = self.period
-
+        self.diagnostic.set_or_replace_attr('write_species', True)
+        if 'fields_to_plot' not in self.diagnostic.argvattrs:
+            self.diagnostic.fields_to_plot = 'none'
         self.set_write_dir()
 
         # --- Use a set to ensure that fields don't get repeated.
@@ -2296,24 +2294,26 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
             variables.sort()
 
         # species list
-        if np.iterable(self.species):
-            species_list = self.species
+        if self.species is None:
+            species_names = pywarpx.particles.species_names
+        elif np.iterable(self.species):
+            species_names = [specie.name for specie in self.species]
         else:
-            species_list = [self.species]
+            species_names = [species.name]
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution
             # is used multiple times
             self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-        for specie in species_list:
-            diag = pywarpx.Bucket.Bucket(self.name + '.' + specie.name,
+        for name in species_names:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables,
                                          random_fraction = self.random_fraction,
                                          uniform_stride = self.uniform_stride)
             expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
             diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
-            self.diagnostic._species_dict[specie.name] = diag
+            self.diagnostic._species_dict[name] = diag
 
 # ----------------------------
 # Lab frame diagnostics
@@ -2325,8 +2325,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
     """
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
     for more information.
-
-    This will by default write out both field and particle data. This can be changed by setting warpx_write_species.
 
     Parameters
     ----------
@@ -2354,11 +2352,10 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 
     warpx_upper_bound: vector of floats, optional
         Passed to <diagnostic name>.upper_bound
-
-    warpx_write_species: bool, optional, default=True
-        Whether the species will also be written out.
     """
     def init(self, kw):
+        """The user is using the new BTD"""
+
         self.format = kw.pop('warpx_format', None)
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
@@ -2367,7 +2364,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.buffer_size = kw.pop('warpx_buffer_size', None)
         self.lower_bound = kw.pop('warpx_lower_bound', None)
         self.upper_bound = kw.pop('warpx_upper_bound', None)
-        self.write_species = kw.pop('warpx_write_species', None)
 
     def initialize_inputs(self):
 
@@ -2380,7 +2376,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
 
-        self.diagnostic.do_back_transformed_fields = 1
+        self.diagnostic.do_back_transformed_fields = True
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
 
@@ -2389,8 +2385,6 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             self.diagnostic.intervals = self.intervals
         else:
             self.diagnostic.num_snapshots_lab = self.num_snapshots
-
-        self.diagnostic.do_back_transformed_particles = self.write_species
 
         # --- Use a set to ensure that fields don't get repeated.
         fields_to_plot = set()
@@ -2428,8 +2422,10 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
             # --- is the same on all processors.
             fields_to_plot = list(fields_to_plot)
             fields_to_plot.sort()
-            self.diagnostic.fields_to_plot = fields_to_plot
+            self.diagnostic.set_or_replace_attr('fields_to_plot', fields_to_plot)
 
+        if 'write_species' not in self.diagnostic.argvattrs:
+            self.diagnostic.write_species = False
         self.set_write_dir()
 
 
@@ -2438,8 +2434,6 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
     """
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
     for more information.
-
-    This will by default write out both field and particle data. This can be changed by setting warpx_write_fields.
 
     Parameters
     ----------
@@ -2461,9 +2455,6 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
 
     warpx_buffer_size: integer, optional
         Passed to <diagnostic name>.buffer_size
-
-    warpx_write_fields: bool, optional, default=True
-        Whether the fields will also be written out.
     """
     def init(self, kw):
         self.format = kw.pop('warpx_format', None)
@@ -2472,7 +2463,6 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.intervals = kw.pop('warpx_intervals', None)
         self.file_min_digits = kw.pop('warpx_file_min_digits', None)
         self.buffer_size = kw.pop('warpx_buffer_size', None)
-        self.write_fields = kw.pop('warpx_write_fields', None)
 
     def initialize_inputs(self):
 
@@ -2483,7 +2473,7 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.file_min_digits = self.file_min_digits
 
-        self.diagnostic.do_back_transformed_particles = 1
+        self.diagnostic.do_back_transformed_particles = True
         self.diagnostic.dt_snapshots_lab = self.dt_snapshots
         self.diagnostic.buffer_size = self.buffer_size
 
@@ -2493,7 +2483,11 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
         else:
             self.diagnostic.num_snapshots_lab = self.num_snapshots
 
-        self.diagnostic.do_back_transformed_fields = self.write_fields
+        self.diagnostic.do_back_transformed_fields = False
+
+        self.diagnostic.set_or_replace_attr('write_species', True)
+        if 'fields_to_plot' not in self.diagnostic.argvattrs:
+            self.diagnostic.fields_to_plot = 'none'
 
         self.set_write_dir()
 
@@ -2527,15 +2521,17 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
             variables.sort()
 
         # species list
-        if np.iterable(self.species):
-            species_list = self.species
+        if self.species is None:
+            species_names = pywarpx.particles.species_names
+        elif np.iterable(self.species):
+            species_names = [specie.name for specie in self.species]
         else:
-            species_list = [self.species]
+            species_names = [species.name]
 
-        for specie in species_list:
-            diag = pywarpx.Bucket.Bucket(self.name + '.' + specie.name,
+        for name in species_names:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + name,
                                          variables = variables)
-            self.diagnostic._species_dict[specie.name] = diag
+            self.diagnostic._species_dict[name] = diag
 
 
 class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
