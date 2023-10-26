@@ -24,6 +24,8 @@ export LD_LIBRARY_PATH=$HOME/sw/adios2-master/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/sw/blaspp-master/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/sw/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
+export PATH=$HOME/sw/adios2-master/bin:$PATH
+
 # optional: for Python bindings or libEnsemble
 module load python/3.10.8--gcc--11.3.0
 
