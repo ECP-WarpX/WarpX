@@ -26,8 +26,11 @@ PairGenerationTransformFunc (BreitWheelerGeneratePairs const generate_functor,
                              amrex::FArrayBox const& bxfab,
                              amrex::FArrayBox const& byfab,
                              amrex::FArrayBox const& bzfab,
-                             int a_offset)
-: m_generate_functor(generate_functor)
+                             int a_offset):
+    m_generate_functor{generate_functor},
+    m_galerkin_interpolation{WarpX::galerkin_interpolation},
+    m_nox{WarpX::nox},
+    m_n_rz_azimuthal_modes{WarpX::n_rz_azimuthal_modes}
 {
 
     using namespace amrex::literals;
@@ -58,10 +61,6 @@ PairGenerationTransformFunc (BreitWheelerGeneratePairs const generate_functor,
     // Lower corner of tile box physical domain (take into account Galilean shift)
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
     m_xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
-
-    m_galerkin_interpolation = WarpX::galerkin_interpolation;
-    m_nox = WarpX::nox;
-    m_n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
     m_lo = amrex::lbound(box);
 }

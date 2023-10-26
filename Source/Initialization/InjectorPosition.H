@@ -154,12 +154,14 @@ struct InjectorPosition
           zmin(a_zmin), zmax(a_zmax)
     { }
 
+    ~InjectorPosition () = default;
+
     // Explicitly prevent the compiler from generating copy constructors
     // and copy assignment operators.
     InjectorPosition (InjectorPosition const&) = delete;
-    InjectorPosition (InjectorPosition&&) = delete;
-    void operator= (InjectorPosition const&) = delete;
-    void operator= (InjectorPosition &&) = delete;
+    InjectorPosition (InjectorPosition&&)      = delete;
+    void operator= (InjectorPosition const&)   = delete;
+    void operator= (InjectorPosition &&)       = delete;
 
     // call getPositionUnitBox from the object stored in the union
     // (the union is called Object, and the instance is called object).
