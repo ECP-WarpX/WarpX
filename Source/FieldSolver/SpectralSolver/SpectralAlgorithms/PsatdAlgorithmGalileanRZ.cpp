@@ -25,13 +25,11 @@ PsatdAlgorithmGalileanRZ::PsatdAlgorithmGalileanRZ (SpectralKSpaceRZ const & spe
                                                     amrex::Real const dt,
                                                     bool const update_with_rho):
      // Initialize members of base class
-    coefficients_initialized{false},
     SpectralBaseAlgorithmRZ{spectral_kspace, dm, spectral_index, norder_z, grid_type},
     m_dt{dt},
     m_v_galilean{v_galilean},
     m_update_with_rho{update_with_rho}
 {
-
     // Allocate the arrays of coefficients
     amrex::BoxArray const & ba = spectral_kspace.spectralspace_ba;
     C_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
