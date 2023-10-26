@@ -83,7 +83,6 @@
 #include <AMReX_SPACE.H>
 #include <AMReX_Scan.H>
 #include <AMReX_StructOfArrays.H>
-#include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 #include <AMReX_Parser.H>

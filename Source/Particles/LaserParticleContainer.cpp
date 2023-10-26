@@ -46,7 +46,6 @@
 #include <AMReX_REAL.H>
 #include <AMReX_RealBox.H>
 #include <AMReX_StructOfArrays.H>
-#include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 
