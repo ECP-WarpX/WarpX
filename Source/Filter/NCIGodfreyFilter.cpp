@@ -138,7 +138,7 @@ void NCIGodfreyFilter::ComputeStencils()
 
 #else
 
-NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set, amrex::Real, bool):
+NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set, amrex::Real, bool)
 {
     amrex::ignore_unused(coeff_set, cdtodz, nodal_gather);
     WARPX_ABORT_WITH_MESSAGE(
