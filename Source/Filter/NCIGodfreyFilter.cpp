@@ -140,7 +140,6 @@ void NCIGodfreyFilter::ComputeStencils()
 
 NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set, amrex::Real, bool)
 {
-    amrex::ignore_unused(coeff_set, cdtodz, nodal_gather);
     WARPX_ABORT_WITH_MESSAGE(
         "NCIGodfreyFilter not implemented in 1D!");
 }
