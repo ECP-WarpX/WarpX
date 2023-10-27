@@ -1,6 +1,3 @@
-from distutils.command.build import build
-from distutils.command.clean import clean
-from distutils.version import LooseVersion
 import os
 import platform
 import re
@@ -10,6 +7,8 @@ import sys
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
+from setuptools.command.build_py import build_py as build
+from setuptools.command.clean import clean
 
 
 class CopyPreBuild(build):
@@ -59,6 +58,8 @@ class CMakeExtension(Extension):
 
 class CMakeBuild(build_ext):
     def run(self):
+        from packaging.version import parse
+
         try:
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
@@ -67,11 +68,8 @@ class CMakeBuild(build_ext):
                 "extensions: " +
                 ", ".join(e.name for e in self.extensions))
 
-        cmake_version = LooseVersion(re.search(
-            r'version\s*([\d.]+)',
-            out.decode()
-        ).group(1))
-        if cmake_version < '3.20.0':
+        cmake_version = parse(re.search(r"version\s*([\d.]+)", out.decode()).group(1))
+        if cmake_version < parse("3.20.0"):
             raise RuntimeError("CMake >= 3.20.0 is required")
 
         for ext in self.extensions:
