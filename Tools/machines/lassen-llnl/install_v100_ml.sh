@@ -64,6 +64,7 @@ rm -rf build
 cd -
 
 # optional: optimas dependencies (based on libEnsemble & ax->botorch->gpytorch->pytorch)
+TODO: scikit-learn needs a BLAS hint
 #   commented because scikit-learn et al. compile > 2 hrs
 #   please run manually on a login node if needed
 #python3 -m pip install -r ${SRC_DIR}/warpx/Tools/optimas/requirements.txt

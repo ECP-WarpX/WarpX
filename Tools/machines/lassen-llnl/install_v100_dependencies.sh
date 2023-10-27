@@ -117,6 +117,8 @@ python3 -m venv ${SW_DIR}/venvs/warpx-lassen
 source ${SW_DIR}/venvs/warpx-lassen/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip cache purge
+python3 -m pip install --upgrade build
+python3 -m pip install --upgrade packaging
 python3 -m pip install --upgrade wheel
 python3 -m pip install --upgrade setuptools
 # Older version for h4py
