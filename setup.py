@@ -6,9 +6,8 @@ import subprocess
 import sys
 
 from setuptools import Extension, setup
+from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
-from setuptools.command.build_py import build_py as build
-from setuptools.command.clean import clean
 
 
 class CopyPreBuild(build):
@@ -25,10 +24,8 @@ class CopyPreBuild(build):
         #   by default, this stays around. we want to make sure generated
         #   files like libwarpx.(1d|2d|rz|3d).(so|pyd) are always only the
         #   ones we want to package and not ones from an earlier wheel's stage
-        c = clean(self.distribution)
-        c.all = True
-        c.finalize_options()
-        c.run()
+        if os.path.exists(self.build_base):
+            shutil.rmtree(self.build_base)
 
         # call superclass
         build.run(self)
