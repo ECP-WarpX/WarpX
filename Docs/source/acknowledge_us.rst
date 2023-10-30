@@ -75,6 +75,11 @@ If your project uses a specific algorithm or component, please consider citing t
   *New Journal of Physics* **24** 025009, 2022.
   `DOI:10.1088/1367-2630/ac4ef1 <https://doi.org/10.1088/1367-2630/ac4ef1>`__
 
+- Lehe R, Blelly A, Giacomel L, Jambunathan R, Vay JL.
+  **Absorption of charged particles in perfectly matched layers by optimal damping of the deposited current**.
+  *Physical Review E* **106** 045306, 2022.
+  `DOI:10.1103/PhysRevE.106.045306 <https://doi.org/10.1103/PhysRevE.106.045306>`__
+
 - Zoni E, Lehe R, Shapoval O, Belkin D, Zaim N, Fedeli L, Vincenti H, Vay JL.
   **A hybrid nodal-staggered pseudo-spectral electromagnetic particle-in-cell method with finite-order centering**. *Computer Physics Communications* **279**, 2022.
   `DOI:10.1016/j.cpc.2022.108457 <https://doi.org/10.1016/j.cpc.2022.108457>`__
