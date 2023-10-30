@@ -36,22 +36,22 @@ struct ParmParseWithOptionalGroup
 
     /* Note that this follows the code pattern of ParmParse and writes out
      * each version of the routine rather than using templates */
-    bool query (const char* name, bool& ref) const;
-    bool query (const char* name, int& ref) const;
-    bool query (const char* name, double& ref) const;
-    bool query (const char* name, float& ref) const;
+    bool queryWithParser (const char* name, bool& ref) const;
+    bool queryWithParser (const char* name, int& ref) const;
+    bool queryWithParser (const char* name, double& ref) const;
+    bool queryWithParser (const char* name, float& ref) const;
     bool query (const char* name, std::string& ref) const;
 
-    void get (const char* name, int& ref) const;
-    void get (const char* name, long& ref) const;
-    void get (const char* name, double& ref) const;
-    void get (const char* name, float& ref) const;
+    void getWithParser (const char* name, int& ref) const;
+    void getWithParser (const char* name, long& ref) const;
+    void getWithParser (const char* name, double& ref) const;
+    void getWithParser (const char* name, float& ref) const;
     void get (const char* name, std::string& ref) const;
-    void get (const char* name, amrex::Vector<double>& ref) const;
-    void get (const char* name, amrex::Vector<float>& ref) const;
-    void get (const char* name, amrex::Vector<int>& ref, int start_ix, int num_val) const;
-    void get (const char* name, amrex::Vector<double>& ref, int start_ix, int num_val) const;
-    void get (const char* name, amrex::Vector<float>& ref, int start_ix, int num_val) const;
+    void getArrWithParser (const char* name, amrex::Vector<double>& ref) const;
+    void getArrWithParser (const char* name, amrex::Vector<float>& ref) const;
+    void getArrWithParser (const char* name, amrex::Vector<int>& ref, int start_ix, int num_val) const;
+    void getArrWithParser (const char* name, amrex::Vector<double>& ref, int start_ix, int num_val) const;
+    void getArrWithParser (const char* name, amrex::Vector<float>& ref, int start_ix, int num_val) const;
 
     void get_long_string (const char* name, std::string& ref) const;
 };

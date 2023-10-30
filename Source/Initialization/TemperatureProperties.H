@@ -9,7 +9,7 @@
 #ifndef TEMPERATURE_PROPERTIES_H_
 #define TEMPERATURE_PROPERTIES_H_
 
-#include "ParmParseWithOptionalGroup.H"
+#include "Utils/ParmParseWithOptionalGroup.H"
 
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>

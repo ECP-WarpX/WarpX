@@ -22,7 +22,7 @@ ParmParseWithOptionalGroup::ParmParseWithOptionalGroup(std::string const& a_pref
     }
 }
 
-bool ParmParseWithOptionalGroup::query (const char* name, bool& ref) const
+bool ParmParseWithOptionalGroup::queryWithParser (const char* name, bool& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -35,7 +35,7 @@ bool ParmParseWithOptionalGroup::query (const char* name, bool& ref) const
     return is_specified;
 }
 
-bool ParmParseWithOptionalGroup::query (const char* name, int& ref) const
+bool ParmParseWithOptionalGroup::queryWithParser (const char* name, int& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -48,7 +48,7 @@ bool ParmParseWithOptionalGroup::query (const char* name, int& ref) const
     return is_specified;
 }
 
-bool ParmParseWithOptionalGroup::query (const char* name, double& ref) const
+bool ParmParseWithOptionalGroup::queryWithParser (const char* name, double& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -61,7 +61,7 @@ bool ParmParseWithOptionalGroup::query (const char* name, double& ref) const
     return is_specified;
 }
 
-bool ParmParseWithOptionalGroup::query (const char* name, float& ref) const
+bool ParmParseWithOptionalGroup::queryWithParser (const char* name, float& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -102,7 +102,7 @@ void ParmParseWithOptionalGroup::get_long_string (const char* name, std::string&
 
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, int& ref) const
+void ParmParseWithOptionalGroup::getWithParser (const char* name, int& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -114,7 +114,7 @@ void ParmParseWithOptionalGroup::get (const char* name, int& ref) const
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, long& ref) const
+void ParmParseWithOptionalGroup::getWithParser (const char* name, long& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -126,7 +126,7 @@ void ParmParseWithOptionalGroup::get (const char* name, long& ref) const
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, double& ref) const
+void ParmParseWithOptionalGroup::getWithParser (const char* name, double& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -138,7 +138,7 @@ void ParmParseWithOptionalGroup::get (const char* name, double& ref) const
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, float& ref) const
+void ParmParseWithOptionalGroup::getWithParser (const char* name, float& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -162,7 +162,7 @@ void ParmParseWithOptionalGroup::get (const char* name, std::string& ref) const
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<double>& ref) const
+void ParmParseWithOptionalGroup::getArrWithParser (const char* name, amrex::Vector<double>& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -174,7 +174,7 @@ void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<double>& r
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<float>& ref) const
+void ParmParseWithOptionalGroup::getArrWithParser (const char* name, amrex::Vector<float>& ref) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -186,7 +186,7 @@ void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<float>& re
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<int>& ref, int start_ix, int num_val) const
+void ParmParseWithOptionalGroup::getArrWithParser (const char* name, amrex::Vector<int>& ref, int start_ix, int num_val) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -198,7 +198,7 @@ void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<int>& ref,
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<double>& ref, int start_ix, int num_val) const
+void ParmParseWithOptionalGroup::getArrWithParser (const char* name, amrex::Vector<double>& ref, int start_ix, int num_val) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);
@@ -210,7 +210,7 @@ void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<double>& r
     }
 }
 
-void ParmParseWithOptionalGroup::get (const char* name, amrex::Vector<float>& ref, int start_ix, int num_val) const
+void ParmParseWithOptionalGroup::getArrWithParser (const char* name, amrex::Vector<float>& ref, int start_ix, int num_val) const
 {
     // First, query name with the group name
     const amrex::ParmParse pp_with_group(prefix_dot_group);

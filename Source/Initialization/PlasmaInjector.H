@@ -9,7 +9,7 @@
 #ifndef PLASMA_INJECTOR_H_
 #define PLASMA_INJECTOR_H_
 
-#include "ParmParseWithOptionalGroup.H"
+#include "Utils/ParmParseWithOptionalGroup.H"
 #include "InjectorDensity.H"
 #include "InjectorFlux.H"
 #include "InjectorMomentum.H"

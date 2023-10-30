@@ -61,7 +61,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
 
     ParmParseWithOptionalGroup pp_species_dot_source(species_name, source_name);
 
-    pp_species_dot_source.query("radially_weighted", radially_weighted);
+    pp_species_dot_source.queryWithParser("radially_weighted", radially_weighted);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
 
     // Unlimited boundaries
@@ -103,15 +103,15 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     }
 #   endif
 
-    pp_species_dot_source.query("xmin", xmin);
-    pp_species_dot_source.query("ymin", ymin);
-    pp_species_dot_source.query("zmin", zmin);
-    pp_species_dot_source.query("xmax", xmax);
-    pp_species_dot_source.query("ymax", ymax);
-    pp_species_dot_source.query("zmax", zmax);
+    pp_species_dot_source.queryWithParser("xmin", xmin);
+    pp_species_dot_source.queryWithParser("ymin", ymin);
+    pp_species_dot_source.queryWithParser("zmin", zmin);
+    pp_species_dot_source.queryWithParser("xmax", xmax);
+    pp_species_dot_source.queryWithParser("ymax", ymax);
+    pp_species_dot_source.queryWithParser("zmax", zmax);
 
-    pp_species_dot_source.query("density_min", density_min);
-    pp_species_dot_source.query("density_max", density_max);
+    pp_species_dot_source.queryWithParser("density_min", density_min);
+    pp_species_dot_source.queryWithParser("density_max", density_max);
 
     // Parse injection style
     // Must be supplied for each source
@@ -193,24 +193,24 @@ PlasmaInjector::~PlasmaInjector () = default;
 
 void PlasmaInjector::setupSingleParticle (ParmParseWithOptionalGroup& pp_species_dot_source)
 {
-    pp_species_dot_source.get("single_particle_pos", single_particle_pos, 0, 3);
-    pp_species_dot_source.get("single_particle_u", single_particle_u, 0, 3);
+    pp_species_dot_source.getArrWithParser("single_particle_pos", single_particle_pos, 0, 3);
+    pp_species_dot_source.getArrWithParser("single_particle_u", single_particle_u, 0, 3);
     for (auto& x : single_particle_u) {
         x *= PhysConst::c;
     }
-    pp_species_dot_source.get("single_particle_weight", single_particle_weight);
+    pp_species_dot_source.getWithParser("single_particle_weight", single_particle_weight);
     add_single_particle = true;
 }
 
 void PlasmaInjector::setupMultipleParticles (ParmParseWithOptionalGroup& pp_species_dot_source)
 {
-    pp_species_dot_source.get("multiple_particles_pos_x", multiple_particles_pos_x);
-    pp_species_dot_source.get("multiple_particles_pos_y", multiple_particles_pos_y);
-    pp_species_dot_source.get("multiple_particles_pos_z", multiple_particles_pos_z);
-    pp_species_dot_source.get("multiple_particles_ux", multiple_particles_ux);
-    pp_species_dot_source.get("multiple_particles_uy", multiple_particles_uy);
-    pp_species_dot_source.get("multiple_particles_uz", multiple_particles_uz);
-    pp_species_dot_source.get("multiple_particles_weight", multiple_particles_weight);
+    pp_species_dot_source.getArrWithParser("multiple_particles_pos_x", multiple_particles_pos_x);
+    pp_species_dot_source.getArrWithParser("multiple_particles_pos_y", multiple_particles_pos_y);
+    pp_species_dot_source.getArrWithParser("multiple_particles_pos_z", multiple_particles_pos_z);
+    pp_species_dot_source.getArrWithParser("multiple_particles_ux", multiple_particles_ux);
+    pp_species_dot_source.getArrWithParser("multiple_particles_uy", multiple_particles_uy);
+    pp_species_dot_source.getArrWithParser("multiple_particles_uz", multiple_particles_uz);
+    pp_species_dot_source.getArrWithParser("multiple_particles_weight", multiple_particles_weight);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         ((multiple_particles_pos_x.size() == multiple_particles_pos_y.size()) &&
          (multiple_particles_pos_x.size() == multiple_particles_pos_z.size()) &&
@@ -227,19 +227,19 @@ void PlasmaInjector::setupMultipleParticles (ParmParseWithOptionalGroup& pp_spec
 
 void PlasmaInjector::setupGaussianBeam (ParmParseWithOptionalGroup& pp_species_dot_source)
 {
-    pp_species_dot_source.get("x_m", x_m);
-    pp_species_dot_source.get("y_m", y_m);
-    pp_species_dot_source.get("z_m", z_m);
-    pp_species_dot_source.get("x_rms", x_rms);
-    pp_species_dot_source.get("y_rms", y_rms);
-    pp_species_dot_source.get("z_rms", z_rms);
-    pp_species_dot_source.query("x_cut", x_cut);
-    pp_species_dot_source.query("y_cut", y_cut);
-    pp_species_dot_source.query("z_cut", z_cut);
-    pp_species_dot_source.get("q_tot", q_tot);
-    pp_species_dot_source.get("npart", npart);
-    pp_species_dot_source.query("do_symmetrize", do_symmetrize);
-    pp_species_dot_source.query("symmetrization_order", symmetrization_order);
+    pp_species_dot_source.getWithParser("x_m", x_m);
+    pp_species_dot_source.getWithParser("y_m", y_m);
+    pp_species_dot_source.getWithParser("z_m", z_m);
+    pp_species_dot_source.getWithParser("x_rms", x_rms);
+    pp_species_dot_source.getWithParser("y_rms", y_rms);
+    pp_species_dot_source.getWithParser("z_rms", z_rms);
+    pp_species_dot_source.queryWithParser("x_cut", x_cut);
+    pp_species_dot_source.queryWithParser("y_cut", y_cut);
+    pp_species_dot_source.queryWithParser("z_cut", z_cut);
+    pp_species_dot_source.getWithParser("q_tot", q_tot);
+    pp_species_dot_source.getWithParser("npart", npart);
+    pp_species_dot_source.queryWithParser("do_symmetrize", do_symmetrize);
+    pp_species_dot_source.queryWithParser("symmetrization_order", symmetrization_order);
     const std::set<int> valid_symmetries = {4,8};
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
         "Error: Symmetrization only supported to orders 4 or 8 ");
@@ -262,7 +262,7 @@ void PlasmaInjector::setupGaussianBeam (ParmParseWithOptionalGroup& pp_species_d
 
 void PlasmaInjector::setupNRandomPerCell (ParmParseWithOptionalGroup& pp_species_dot_source)
 {
-    pp_species_dot_source.get("num_particles_per_cell", num_particles_per_cell);
+    pp_species_dot_source.getWithParser("num_particles_per_cell", num_particles_per_cell);
 #if WARPX_DIM_RZ
     if (WarpX::n_rz_azimuthal_modes > 1) {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -291,7 +291,7 @@ void PlasmaInjector::setupNRandomPerCell (ParmParseWithOptionalGroup& pp_species
 
 void PlasmaInjector::setupNFluxPerCell (ParmParseWithOptionalGroup& pp_species_dot_source)
 {
-    pp_species_dot_source.get("num_particles_per_cell", num_particles_per_cell_real);
+    pp_species_dot_source.getWithParser("num_particles_per_cell", num_particles_per_cell_real);
 #ifdef WARPX_DIM_RZ
     if (WarpX::n_rz_azimuthal_modes > 1) {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -301,9 +301,9 @@ void PlasmaInjector::setupNFluxPerCell (ParmParseWithOptionalGroup& pp_species_d
         "(Please visit PR#765 for more information.)");
     }
 #endif
-    pp_species_dot_source.get("surface_flux_pos", surface_flux_pos);
-    pp_species_dot_source.query("flux_tmin", flux_tmin);
-    pp_species_dot_source.query("flux_tmax", flux_tmax);
+    pp_species_dot_source.getWithParser("surface_flux_pos", surface_flux_pos);
+    pp_species_dot_source.queryWithParser("flux_tmin", flux_tmin);
+    pp_species_dot_source.queryWithParser("flux_tmax", flux_tmax);
     std::string flux_normal_axis_string;
     pp_species_dot_source.get("flux_normal_axis", flux_normal_axis_string);
     flux_normal_axis = -1;
@@ -342,7 +342,7 @@ void PlasmaInjector::setupNFluxPerCell (ParmParseWithOptionalGroup& pp_species_d
 #endif
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flux_normal_axis >= 0,
         "Error: Invalid value for flux_normal_axis. It must be " + flux_normal_axis_help);
-    pp_species_dot_source.get("flux_direction", flux_direction);
+    pp_species_dot_source.getWithParser("flux_direction", flux_direction);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flux_direction == +1 || flux_direction == -1,
         "Error: flux_direction must be -1 or +1.");
     // Construct InjectorPosition with InjectorPositionRandom.
@@ -376,7 +376,7 @@ void PlasmaInjector::setupNuniformPerCell (ParmParseWithOptionalGroup& pp_specie
 #else
     constexpr int num_required_ppc_each_dim = 3;
 #endif
-    pp_species_dot_source.get("num_particles_per_cell_each_dim", num_particles_per_cell_each_dim,
+    pp_species_dot_source.getArrWithParser("num_particles_per_cell_each_dim", num_particles_per_cell_each_dim,
                         0, num_required_ppc_each_dim);
 #if WARPX_DIM_XZ
     num_particles_per_cell_each_dim.push_back(1);
@@ -427,8 +427,8 @@ void PlasmaInjector::setupExternalFile (ParmParseWithOptionalGroup& pp_species_d
     std::string str_injection_file;
     pp_species_dot_source.get("injection_file", str_injection_file);
     // optional parameters
-    pp_species_dot_source.query("q_tot", q_tot);
-    pp_species_dot_source.query("z_shift",z_shift);
+    pp_species_dot_source.queryWithParser("q_tot", q_tot);
+    pp_species_dot_source.queryWithParser("z_shift",z_shift);
 
 #ifdef WARPX_USE_OPENPMD
     const amrex::ParmParse pp_species(species_name);
@@ -533,7 +533,7 @@ void PlasmaInjector::parseFlux (ParmParseWithOptionalGroup& pp_species_dot_sourc
     std::transform(flux_prof_s.begin(), flux_prof_s.end(),
                    flux_prof_s.begin(), ::tolower);
     if (flux_prof_s == "constant") {
-        pp_species_dot_source.get("flux", flux);
+        pp_species_dot_source.getWithParser("flux", flux);
         // Construct InjectorFlux with InjectorFluxConstant.
         h_inj_flux.reset(new InjectorFlux((InjectorFluxConstant*)nullptr, flux));
     } else if (flux_prof_s == "parse_flux_function") {

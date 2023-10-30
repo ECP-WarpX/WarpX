@@ -5,7 +5,6 @@ foreach(D IN LISTS WarpX_DIMS)
         WarpXAMReXInit.cpp
         InjectorDensity.cpp
         InjectorMomentum.cpp
-        ParmParseWithOptionalGroup.cpp
         PlasmaInjector.cpp
         WarpXInitData.cpp
         TemperatureProperties.cpp

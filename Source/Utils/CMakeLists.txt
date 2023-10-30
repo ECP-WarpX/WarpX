@@ -5,6 +5,7 @@ foreach(D IN LISTS WarpX_DIMS)
         Interpolate.cpp
         ParticleUtils.cpp
         SpeciesUtils.cpp
+        ParmParseWithOptionalGroup.cpp
         RelativeCellPosition.cpp
         WarpXAlgorithmSelection.cpp
         WarpXMovingWindow.cpp

@@ -8,7 +8,7 @@
 #include <ablastr/warn_manager/WarnManager.H>
 #include "Utils/TextMsg.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "Initialization/ParmParseWithOptionalGroup.H"
+#include "Utils/ParmParseWithOptionalGroup.H"
 
 namespace SpeciesUtils {
 
@@ -91,7 +91,7 @@ namespace SpeciesUtils {
                     rho_prof_s.begin(), ::tolower);
         if (rho_prof_s == "constant") {
             amrex::Real density;
-            pp_species_name.get("density", density);
+            pp_species_name.getWithParser("density", density);
             // Construct InjectorDensity with InjectorDensityConstant.
             h_inj_rho.reset(new InjectorDensity((InjectorDensityConstant*)nullptr, density));
         } else if (rho_prof_s == "predefined") {
@@ -143,9 +143,9 @@ namespace SpeciesUtils {
             amrex::Real ux = 0._rt;
             amrex::Real uy = 0._rt;
             amrex::Real uz = 0._rt;
-            pp_species_name.query("ux", ux);
-            pp_species_name.query("uy", uy);
-            pp_species_name.query("uz", uz);
+            pp_species_name.queryWithParser("ux", ux);
+            pp_species_name.queryWithParser("uy", uy);
+            pp_species_name.queryWithParser("uz", uz);
             // Construct InjectorMomentum with InjectorMomentumConstant.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumConstant*)nullptr, ux, uy, uz));
         } else if (mom_dist_s == "gaussian") {
@@ -155,12 +155,12 @@ namespace SpeciesUtils {
             amrex::Real ux_th = 0._rt;
             amrex::Real uy_th = 0._rt;
             amrex::Real uz_th = 0._rt;
-            pp_species_name.query("ux_m", ux_m);
-            pp_species_name.query("uy_m", uy_m);
-            pp_species_name.query("uz_m", uz_m);
-            pp_species_name.query("ux_th", ux_th);
-            pp_species_name.query("uy_th", uy_th);
-            pp_species_name.query("uz_th", uz_th);
+            pp_species_name.queryWithParser("ux_m", ux_m);
+            pp_species_name.queryWithParser("uy_m", uy_m);
+            pp_species_name.queryWithParser("uz_m", uz_m);
+            pp_species_name.queryWithParser("ux_th", ux_th);
+            pp_species_name.queryWithParser("uy_th", uy_th);
+            pp_species_name.queryWithParser("uz_th", uz_th);
             // Construct InjectorMomentum with InjectorMomentumGaussian.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussian*)nullptr,
                                                 ux_m, uy_m, uz_m, ux_th, uy_th, uz_th));
@@ -173,12 +173,12 @@ namespace SpeciesUtils {
             amrex::Real ux_th = 0._rt;
             amrex::Real uy_th = 0._rt;
             amrex::Real uz_th = 0._rt;
-            pp_species_name.query("ux_m", ux_m);
-            pp_species_name.query("uy_m", uy_m);
-            pp_species_name.query("uz_m", uz_m);
-            pp_species_name.query("ux_th", ux_th);
-            pp_species_name.query("uy_th", uy_th);
-            pp_species_name.query("uz_th", uz_th);
+            pp_species_name.queryWithParser("ux_m", ux_m);
+            pp_species_name.queryWithParser("uy_m", uy_m);
+            pp_species_name.queryWithParser("uz_m", uz_m);
+            pp_species_name.queryWithParser("ux_th", ux_th);
+            pp_species_name.queryWithParser("uy_th", uy_th);
+            pp_species_name.queryWithParser("uz_th", uz_th);
             // Construct InjectorMomentum with InjectorMomentumGaussianFlux.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussianFlux*)nullptr,
                                                 ux_m, uy_m, uz_m, ux_th, uy_th, uz_th,
@@ -190,12 +190,12 @@ namespace SpeciesUtils {
             amrex::Real ux_max = 0._rt;
             amrex::Real uy_max = 0._rt;
             amrex::Real uz_max = 0._rt;
-            pp_species_name.query("ux_min", ux_min);
-            pp_species_name.query("uy_min", uy_min);
-            pp_species_name.query("uz_min", uz_min);
-            pp_species_name.query("ux_max", ux_max);
-            pp_species_name.query("uy_max", uy_max);
-            pp_species_name.query("uz_max", uz_max);
+            pp_species_name.queryWithParser("ux_min", ux_min);
+            pp_species_name.queryWithParser("uy_min", uy_min);
+            pp_species_name.queryWithParser("uz_min", uz_min);
+            pp_species_name.queryWithParser("ux_max", ux_max);
+            pp_species_name.queryWithParser("uy_max", uy_max);
+            pp_species_name.queryWithParser("uz_max", uz_max);
             // Construct InjectorMomentum with InjectorMomentumUniform.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumUniform*)nullptr,
                                                 ux_min, uy_min, uz_min, ux_max, uy_max, uz_max));
@@ -215,7 +215,7 @@ namespace SpeciesUtils {
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, getTemp, getVel));
         } else if (mom_dist_s == "radial_expansion") {
             amrex::Real u_over_r = 0._rt;
-            pp_species_name.query("u_over_r", u_over_r);
+            pp_species_name.queryWithParser("u_over_r", u_over_r);
             // Construct InjectorMomentum with InjectorMomentumRadialExpansion.
             h_inj_mom.reset(new InjectorMomentum
                             ((InjectorMomentumRadialExpansion*)nullptr, u_over_r));

@@ -47,7 +47,7 @@ VelocityProperties::VelocityProperties (const ParmParseWithOptionalGroup& pp):
 
     pp.query("beta_distribution_type", vel_dist_s);
     if (vel_dist_s == "constant") {
-        pp.query("beta", m_velocity);
+        pp.queryWithParser("beta", m_velocity);
         m_type = VelConstantValue;
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_velocity > -1 && m_velocity < 1,

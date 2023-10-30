@@ -27,7 +27,7 @@ TemperatureProperties::TemperatureProperties (const ParmParseWithOptionalGroup& 
     pp.query("momentum_distribution_type", mom_dist_s);
     if (temp_dist_s == "constant") {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            pp.query("theta", theta),
+            pp.queryWithParser("theta", theta),
             "Temperature parameter theta not specified");
 
         // Do validation on theta value
