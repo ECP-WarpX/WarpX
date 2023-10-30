@@ -877,7 +877,8 @@ PML::MakeBoxArray_single (const amrex::Box& regular_domain, const amrex::BoxArra
                           const amrex::IntVect& do_pml_Hi)
 {
     BoxList bl;
-    for (int i = 0, N = grid_ba.size(); i < N; ++i) {
+    const auto grid_ba_size = static_cast<int>(grid_ba.size());
+    for (int i = 0; i < grid_ba_size; ++i) {
         Box const& b = grid_ba[i];
         for (OrientationIter oit; oit.isValid(); ++oit) {
             // In 3d, a Box has 6 faces.  This iterates over the 6 faces.
@@ -926,7 +927,8 @@ PML::MakeBoxArray_multiple (const amrex::Geometry& geom, const amrex::BoxArray& 
         }
     }
     BoxList bl;
-    for (int i = 0, N = grid_ba.size(); i < N; ++i)
+    const auto grid_ba_size = static_cast<int>(grid_ba.size());
+    for (int i = 0; i < grid_ba_size; ++i)
     {
         const Box& grid_bx = grid_ba[i];
         const IntVect& grid_bx_sz = grid_bx.size();
@@ -1229,103 +1231,66 @@ PML::CopyToPML (MultiFab& pml, MultiFab& reg, const Geometry& geom)
 }
 
 void
-PML::FillBoundary ()
-{
-    FillBoundaryE();
-    FillBoundaryB();
-    FillBoundaryF();
-    FillBoundaryG();
-}
-
-void
-PML::FillBoundaryE ()
-{
-    FillBoundaryE(PatchType::fine);
-    FillBoundaryE(PatchType::coarse);
-}
-
-void
-PML::FillBoundaryE (PatchType patch_type)
+PML::FillBoundaryE (PatchType patch_type, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine && pml_E_fp[0] && pml_E_fp[0]->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
         const Vector<MultiFab*> mf{pml_E_fp[0].get(),pml_E_fp[1].get(),pml_E_fp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
     }
     else if (patch_type == PatchType::coarse && pml_E_cp[0] && pml_E_cp[0]->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
         const Vector<MultiFab*> mf{pml_E_cp[0].get(),pml_E_cp[1].get(),pml_E_cp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
     }
 }
 
 void
-PML::FillBoundaryB ()
-{
-    FillBoundaryB(PatchType::fine);
-    FillBoundaryB(PatchType::coarse);
-}
-
-void
-PML::FillBoundaryB (PatchType patch_type)
+PML::FillBoundaryB (PatchType patch_type, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine && pml_B_fp[0])
     {
         const auto& period = m_geom->periodicity();
         const Vector<MultiFab*> mf{pml_B_fp[0].get(),pml_B_fp[1].get(),pml_B_fp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
     }
     else if (patch_type == PatchType::coarse && pml_B_cp[0])
     {
         const auto& period = m_cgeom->periodicity();
         const Vector<MultiFab*> mf{pml_B_cp[0].get(),pml_B_cp[1].get(),pml_B_cp[2].get()};
-        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
     }
 }
 
 void
-PML::FillBoundaryF ()
-{
-    FillBoundaryF(PatchType::fine);
-    FillBoundaryF(PatchType::coarse);
-}
-
-void
-PML::FillBoundaryF (PatchType patch_type)
+PML::FillBoundaryF (PatchType patch_type, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine && pml_F_fp && pml_F_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_F_fp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_F_fp, WarpX::do_single_precision_comms, period, nodal_sync);
     }
     else if (patch_type == PatchType::coarse && pml_F_cp && pml_F_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_F_cp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_F_cp, WarpX::do_single_precision_comms, period, nodal_sync);
     }
 }
 
 void
-PML::FillBoundaryG ()
-{
-    FillBoundaryG(PatchType::fine);
-    FillBoundaryG(PatchType::coarse);
-}
-
-void
-PML::FillBoundaryG (PatchType patch_type)
+PML::FillBoundaryG (PatchType patch_type, std::optional<bool> nodal_sync)
 {
     if (patch_type == PatchType::fine && pml_G_fp && pml_G_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_G_fp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_G_fp, WarpX::do_single_precision_comms, period, nodal_sync);
     }
     else if (patch_type == PatchType::coarse && pml_G_cp && pml_G_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        ablastr::utils::communication::FillBoundary(*pml_G_cp, WarpX::do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*pml_G_cp, WarpX::do_single_precision_comms, period, nodal_sync);
     }
 }
 

@@ -12,7 +12,7 @@
 
 #include <vector>
 
-ParmParseWithOptionalGroup::ParmParseWithOptionalGroup(std::string& a_prefix, std::string& a_group):
+ParmParseWithOptionalGroup::ParmParseWithOptionalGroup(std::string const& a_prefix, std::string const& a_group):
     prefix{a_prefix}, group{a_group}
 {
     if (group.empty()) {

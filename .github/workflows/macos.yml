@@ -45,7 +45,7 @@ jobs:
         brew install ccache
         brew install fftw
         brew install libomp
-        brew link --force libomp
+        brew link --overwrite --force libomp
         brew install ninja
         brew install open-mpi
         brew install pkg-config

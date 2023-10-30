@@ -32,7 +32,7 @@ struct ParmParseWithOptionalGroup
      * \param[in] a_prefix The base input parameter prefix
      * \param[in] a_group The optional group name in the input parameters
      */
-    ParmParseWithOptionalGroup(std::string& a_prefix, std::string& a_group);
+    ParmParseWithOptionalGroup(std::string const& a_prefix, std::string const& a_group);
 
     /* Note that this follows the code pattern of ParmParse and writes out
      * each version of the routine rather than using templates */

@@ -13,7 +13,7 @@
 
 using namespace amrex::literals;
 
-GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset) noexcept
+GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset) noexcept
 {
     auto& warpx = WarpX::GetInstance();
     auto& mypc = warpx.GetPartContainer();
@@ -22,7 +22,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
 
     AcceleratorLattice const & accelerator_lattice = warpx.get_accelerator_lattice(lev);
     if (accelerator_lattice.m_lattice_defined) {
-        d_lattice_element_finder = accelerator_lattice.GetFinderDeviceInstance(a_pti, a_offset);
+        d_lattice_element_finder = accelerator_lattice.GetFinderDeviceInstance(a_pti, static_cast<int>(a_offset));
     }
 
     m_gamma_boost = WarpX::gamma_boost;
@@ -56,7 +56,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
         mypc.m_B_ext_particle_s == "repeated_plasma_lens")
     {
         m_time = warpx.gett_new(a_pti.GetLevel());
-        m_get_position = GetParticlePosition(a_pti, a_offset);
+        m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
     }
 
     if (mypc.m_E_ext_particle_s == "parse_e_ext_particle_function")

@@ -14,6 +14,11 @@ Plasma-Based Acceleration
 
 Scientific works in laser-plasma and beam-plasma acceleration.
 
+#. Peng, H. and Huang, T. W. and Jiang, K. and Li, R. and Wu, C. N. and Yu, M. Y. and Riconda, C. and Weber, S. and Zhou, C. T. and Ruan, S. C.
+   **Coherent Subcycle Optical Shock from a Superluminal Plasma Wake**.
+   Phys. Rev. Lett. **131**, 145003, 2023
+   `DOI:10.1103/PhysRevLett.131.145003 <https://doi.org/10.1103/PhysRevLett.131.145003>`__
+
 #. Mewes SM, Boyle GJ, Ferran Pousa A, Shalloo RJ, Osterhoff J, Arran C, Corner L, Walczak R, Hooker SM, Thévenet M.
    **Demonstration of tunability of HOFI waveguides via start-to-end simulations**.
    Phys. Rev. Research **5**, 033112, 2023
@@ -27,8 +32,8 @@ Scientific works in laser-plasma and beam-plasma acceleration.
 
 #. Wang J, Zeng M, Li D, Wang X, Gao J.
    **High quality beam produced by tightly focused laser driven wakefield accelerators**.
-   arXiv pre-print, 2023.
-   `DOI:10.48550/arXiv.2304.10730 <https://doi.org/10.48550/arXiv.2304.10730>`__
+   Phys. Rev. Accel. Beams, **26**, 091303, 2023.
+   `DOI:10.1103/PhysRevAccelBeams.26.091303 <https://doi.org/10.1103/PhysRevAccelBeams.26.091303>`__
 
 #. Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
    **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
