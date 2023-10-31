@@ -432,7 +432,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry
  */
 template <int depos_order, int lower_in_v>
-void doGatherShapeN(const GetParticlePosition& getPosition,
+void doGatherShapeN(const GetParticlePosition<PIdx>& getPosition,
                     const GetExternalEBField& getExternalEB,
                     amrex::ParticleReal * const Exp, amrex::ParticleReal * const Eyp,
                     amrex::ParticleReal * const Ezp, amrex::ParticleReal * const Bxp,

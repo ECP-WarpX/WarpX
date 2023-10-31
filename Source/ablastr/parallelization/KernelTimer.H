@@ -78,6 +78,11 @@ public:
 #endif //AMREX_USE_GPU
 
 
+    KernelTimer ( KernelTimer const &)             = default;
+    KernelTimer& operator= ( KernelTimer const & ) = default;
+    KernelTimer ( KernelTimer&& )                  = default;
+    KernelTimer& operator= ( KernelTimer&& )       = default;
+
 #if (defined AMREX_USE_GPU)
 private:
     //! Stores whether kernel timer is active.

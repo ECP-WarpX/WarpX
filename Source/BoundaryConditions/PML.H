@@ -212,8 +212,6 @@ public:
 
     static void Exchange (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom, int do_pml_in_domain);
 
-    ~PML () = default;
-
 private:
     bool m_ok;
 

@@ -9,6 +9,7 @@
 #define WARPX_PARTICLES_PUSHER_GETANDSETPOSITION_H_
 
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/NamedComponentParticleContainer.H"
 
 #include <AMReX.H>
 #include <AMReX_REAL.H>
@@ -18,7 +19,11 @@
 
 /** \brief Extract the cartesian position coordinates of the particle
  *         p and store them in the variables `x`, `y`, `z`
- *         This version operates on a SuperParticle */
+ *         This version operates on a SuperParticle
+ *
+ * \tparam T_PIdx particle index enumerator
+ */
+template<typename T_PIdx = PIdx>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
                             amrex::ParticleReal& x,
@@ -26,7 +31,7 @@ void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
                             amrex::ParticleReal& z) noexcept
 {
 #ifdef WARPX_DIM_RZ
-    const amrex::ParticleReal theta = p.rdata(PIdx::theta);
+    const amrex::ParticleReal theta = p.rdata(T_PIdx::theta);
     const amrex::ParticleReal r = p.pos(0);
     x = r*std::cos(theta);
     y = r*std::sin(theta);
@@ -48,7 +53,10 @@ void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
 
 /** \brief Functor that can be used to extract the positions of the macroparticles
  *         inside a ParallelFor kernel
+ *
+ * \tparam T_PIdx particle index enumerator
 */
+template<typename T_PIdx = PIdx>
 struct GetParticlePosition
 {
     using PType = WarpXParticleContainer::ParticleType;
@@ -80,7 +88,7 @@ struct GetParticlePosition
         m_structs = aos().dataPtr() + a_offset;
 #if defined(WARPX_DIM_RZ)
         const auto& soa = a_pti.GetStructOfArrays();
-        m_theta = soa.GetRealData(PIdx::theta).dataPtr() + a_offset;
+        m_theta = soa.GetRealData(T_PIdx::theta).dataPtr() + a_offset;
 #endif
     }
 
@@ -143,9 +151,11 @@ struct GetParticlePosition
 /** \brief Functor that can be used to modify the positions of the macroparticles,
  *         inside a ParallelFor kernel.
  *
+ * \tparam T_PIdx particle index enumerator
  * \param a_pti iterator to the tile being modified
  * \param a_offset offset to apply to the particle indices
 */
+template<typename T_PIdx = PIdx>
 struct SetParticlePosition
 {
     using PType = WarpXParticleContainer::ParticleType;
@@ -163,7 +173,7 @@ struct SetParticlePosition
         m_structs = aos().dataPtr() + a_offset;
 #if defined(WARPX_DIM_RZ)
         auto& soa = a_pti.GetStructOfArrays();
-        m_theta = soa.GetRealData(PIdx::theta).dataPtr() + a_offset;
+        m_theta = soa.GetRealData(T_PIdx::theta).dataPtr() + a_offset;
 #endif
     }
 

@@ -313,7 +313,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
                 if(plevel.find(index) == plevel.end()) continue;
 
-                const auto getPosition = GetParticlePosition(pti);
+                const auto getPosition = GetParticlePosition<PIdx>(pti);
                 auto& ptile_buffer = species_buffer.DefineAndReturnParticleTile(lev, pti.index(),
                                                                                 pti.LocalTileIndex());
                 const auto& ptile = plevel.at(index);

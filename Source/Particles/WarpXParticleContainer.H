@@ -120,7 +120,13 @@ public:
     using DiagnosticParticles = amrex::Vector<std::map<std::pair<int, int>, DiagnosticParticleData> >;
 
     WarpXParticleContainer (amrex::AmrCore* amr_core, int ispecies);
-    ~WarpXParticleContainer() override = default;
+    ~WarpXParticleContainer() override {}
+
+    // Move and copy operations
+    WarpXParticleContainer(const WarpXParticleContainer&)            = delete;
+    WarpXParticleContainer& operator=(const WarpXParticleContainer&) = delete;
+    WarpXParticleContainer(WarpXParticleContainer&&)                 = default;
+    WarpXParticleContainer& operator=(WarpXParticleContainer&&)      = default;
 
     virtual void InitData () = 0;
 
@@ -467,8 +473,12 @@ protected:
     TmpParticles tmp_particle_data;
 
 private:
+<<<<<<< HEAD
     void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,
                                     int lev) override;
+=======
+    void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld, int lev) override;
+>>>>>>> upstream/development
 
 };
 

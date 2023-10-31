@@ -38,11 +38,12 @@ public:
                 amrex::ParticleReal energy
                 );
 
-    MCCProcess (MCCProcess const&) = delete;
-    MCCProcess& operator= (MCCProcess const&) = delete;
+    ~MCCProcess() = default;
 
-    MCCProcess (MCCProcess &&) = default;
-    MCCProcess& operator= (MCCProcess &&) = default;
+    MCCProcess (MCCProcess const&)            = delete;
+    MCCProcess& operator= (MCCProcess const&) = delete;
+    MCCProcess (MCCProcess &&)                = default;
+    MCCProcess& operator= (MCCProcess &&)     = default;
 
     /** Read the given cross-section data file to memory.
      *

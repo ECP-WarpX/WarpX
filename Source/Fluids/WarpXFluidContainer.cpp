@@ -19,11 +19,10 @@
 using namespace ablastr::utils::communication;
 using namespace amrex;
 
-WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std::string &name)
+WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std::string &name):
+    species_id{ispecies},
+    species_name{name}
 {
-    species_id = ispecies;
-    species_name = name;
-
     ReadParameters();
 
     // Initialize injection objects

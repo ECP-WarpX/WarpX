@@ -21,6 +21,8 @@ export CMAKE_PREFIX_PATH=$HOME/sw/v100/adios2-2.8.3:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/v100/blaspp-master:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=$HOME/sw/v100/lapackpp-master:$CMAKE_PREFIX_PATH
 
+export PATH=$HOME/sw/v100/adios2-2.8.3/bin:$PATH
+
 # optional: CCache
 #module load ccache  # missing
 

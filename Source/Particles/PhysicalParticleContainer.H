@@ -56,7 +56,12 @@ public:
      *  the run if one of them is specified. */
     void BackwardCompatibility ();
 
-    ~PhysicalParticleContainer () override = default;
+    ~PhysicalParticleContainer () override {}
+
+    PhysicalParticleContainer (PhysicalParticleContainer const &)              = delete;
+    PhysicalParticleContainer& operator= (PhysicalParticleContainer const & )  = delete;
+    PhysicalParticleContainer(PhysicalParticleContainer&& )                    = default;
+    PhysicalParticleContainer& operator=(PhysicalParticleContainer&& )         = default;
 
     void InitData () override;
 
@@ -307,7 +312,11 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
+<<<<<<< HEAD
     void resample (int timestep, bool verbose=true) final;
+=======
+    void resample (int timestep, bool verbose) final;
+>>>>>>> upstream/development
 
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H

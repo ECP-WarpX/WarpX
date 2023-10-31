@@ -43,6 +43,12 @@ class SpectralBaseAlgorithm
         // calls the subclass's destructor.
         virtual ~SpectralBaseAlgorithm() = default;
 
+        // Default move and copy operations
+        SpectralBaseAlgorithm(const SpectralBaseAlgorithm&) = default;
+        SpectralBaseAlgorithm& operator=(const SpectralBaseAlgorithm&) = default;
+        SpectralBaseAlgorithm(SpectralBaseAlgorithm&&) = default;
+        SpectralBaseAlgorithm& operator=(SpectralBaseAlgorithm&&) = default;
+
         /**
          * \brief Virtual function for current correction in Fourier space
          * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).

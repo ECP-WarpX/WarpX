@@ -32,11 +32,13 @@ using AmrMeshParticleInSituBridge = void;
 class FlushFormatSensei : public FlushFormat
 {
 public:
-    FlushFormatSensei() = default;
+    FlushFormatSensei();
     ~FlushFormatSensei() override;
 
-    FlushFormatSensei(const FlushFormatSensei &) = delete;
-    void operator=(const FlushFormatSensei &) = delete;
+    FlushFormatSensei(const FlushFormatSensei &)            = delete;
+    FlushFormatSensei& operator=(const FlushFormatSensei &) = delete;
+    FlushFormatSensei(FlushFormatSensei&&)                  = default;
+    FlushFormatSensei& operator=(FlushFormatSensei&& )      = default;
 
     /** Construct.
      *
@@ -47,7 +49,7 @@ public:
 
     /** Do in-situ visualization for field and particle data */
     void WriteToFile (
-        amrex::Vector<std::string> varnames,
+        const amrex::Vector<std::string>& varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,

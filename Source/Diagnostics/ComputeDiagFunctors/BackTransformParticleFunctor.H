@@ -62,7 +62,7 @@ struct SelectParticles
     }
 
     /** Object to extract the positions of the macroparticles inside a ParallelFor kernel */
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
     /** Z coordinate in boosted frame that corresponds to a give snapshot*/
     amrex::Real m_current_z_boost;
     /** Previous Z coordinate in boosted frame that corresponds to a give snapshot*/
@@ -166,7 +166,7 @@ struct LorentzTransformParticles
         dst.m_rdata[PIdx::uz][i_dst] = uzp;
     }
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
 
     amrex::ParticleReal* AMREX_RESTRICT m_xpold = nullptr;
     amrex::ParticleReal* AMREX_RESTRICT m_ypold = nullptr;

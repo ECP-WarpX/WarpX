@@ -27,8 +27,6 @@ struct HardEdgedPlasmaLens
 
     HardEdgedPlasmaLens ();
 
-    ~HardEdgedPlasmaLens () = default;
-
     /**
      * \brief Read in an element and add it to the lists
      *
