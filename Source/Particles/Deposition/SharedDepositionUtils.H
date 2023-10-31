@@ -43,6 +43,8 @@ void addLocalToGlobal (const amrex::Box& bx,
                        const amrex::Array4<amrex::Real>& global,
                        const amrex::Array4<amrex::Real>& local) noexcept
 {
+    using namespace amrex::literals;
+
     const auto lo  = amrex::lbound(bx);
     const auto len = amrex::length(bx);
     for (int icell = threadIdx.x; icell < bx.numPts(); icell += blockDim.x)
@@ -63,7 +65,7 @@ void addLocalToGlobal (const amrex::Box& bx,
 #if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void depositComponent (const GetParticlePosition& GetPosition,
+void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
                        const amrex::ParticleReal * const wp,
                        const amrex::ParticleReal * const uxp,
                        const amrex::ParticleReal * const uyp,
@@ -80,6 +82,8 @@ void depositComponent (const GetParticlePosition& GetPosition,
                        const unsigned int ip,
                        const int zdir, const int NODE, const int CELL, const int dir)
 {
+    using namespace amrex::literals;
+
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif

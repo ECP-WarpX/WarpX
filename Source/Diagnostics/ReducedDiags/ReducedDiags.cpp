@@ -24,9 +24,8 @@ using namespace amrex;
 
 // constructor
 ReducedDiags::ReducedDiags (std::string rd_name)
+    : m_rd_name(std::move(rd_name))
 {
-    m_rd_name = rd_name;
-
     BackwardCompatibility();
 
     const ParmParse pp_rd_name(m_rd_name);

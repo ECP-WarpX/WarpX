@@ -2,7 +2,7 @@
 
 [![Code Status development](https://dev.azure.com/ECP-WarpX/WarpX/_apis/build/status/ECP-WarpX.WarpX?branchName=development)](https://dev.azure.com/ECP-WarpX/WarpX/_build/latest?definitionId=1&branchName=development)
 [![Nightly Installation Tests](https://dev.azure.com/ECP-WarpX/WarpX/_apis/build/status/ECP-WarpX.Nightly?branchName=nightly&label=nightly%20packages)](https://dev.azure.com/ECP-WarpX/WarpX/_build?definitionId=2)
-[![Documentation Status](https://readthedocs.org/projects/warpx/badge/?version=latest)](https://warpx.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/warpx/badge/?version=latest)](https://warpx.readthedocs.io)
 [![Spack Version](https://img.shields.io/spack/v/warpx)](https://spack.readthedocs.io/en/latest/package_list.html#warpx)
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/warpx)](https://anaconda.org/conda-forge/warpx)
 [![Discussions](https://img.shields.io/badge/chat-discussions-turquoise.svg)](https://github.com/ECP-WarpX/WarpX/discussions)  

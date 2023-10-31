@@ -26,8 +26,6 @@
 #include <AMReX_Array4.H>
 #include <AMReX_REAL.H>
 
-using namespace amrex::literals;
-
 /**
  * \brief Current Deposition for thread thread_num
  * \tparam depos_order deposition order
@@ -53,7 +51,7 @@ using namespace amrex::literals;
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doDepositionShapeN (const GetParticlePosition& GetPosition,
+void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          const amrex::ParticleReal * const wp,
                          const amrex::ParticleReal * const uxp,
                          const amrex::ParticleReal * const uyp,
@@ -72,6 +70,8 @@ void doDepositionShapeN (const GetParticlePosition& GetPosition,
                          amrex::Real* cost,
                          long load_balance_costs_update_algo)
 {
+    using namespace amrex::literals;
+
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
@@ -365,7 +365,7 @@ void doDepositionShapeN (const GetParticlePosition& GetPosition,
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
+void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                const amrex::ParticleReal * const wp,
                                const amrex::ParticleReal * const uxp,
                                const amrex::ParticleReal * const uyp,
@@ -388,6 +388,8 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                                const amrex::Geometry& geom,
                                const amrex::IntVect& a_tbox_max_size)
 {
+    using namespace amrex::literals;
+
 #if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
     using namespace amrex;
 
@@ -575,7 +577,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
+void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                   const amrex::ParticleReal * const wp,
                                   const amrex::ParticleReal * const uxp,
                                   const amrex::ParticleReal * const uyp,
@@ -596,6 +598,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                                   long load_balance_costs_update_algo)
 {
     using namespace amrex;
+    using namespace amrex::literals;
+
 #if !defined(WARPX_DIM_RZ)
     ignore_unused(n_rz_azimuthal_modes);
 #endif
@@ -953,7 +957,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
  * \param[in] load_balance_costs_update_algo Selected method for updating load balance costs
  */
 template <int depos_order>
-void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
+void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                             const amrex::ParticleReal* const wp,
                             const amrex::ParticleReal* const uxp,
                             const amrex::ParticleReal* const uyp,
@@ -973,6 +977,8 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                             amrex::Real* cost,
                             long load_balance_costs_update_algo)
 {
+    using namespace amrex::literals;
+
 #if defined(WARPX_DIM_RZ)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,

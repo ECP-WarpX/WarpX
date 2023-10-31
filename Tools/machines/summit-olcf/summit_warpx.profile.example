@@ -63,7 +63,7 @@ fi
 #   for paralle execution, start on the batch node: jsrun <command>
 alias getNode="bsub -q debug -P $proj -W 2:00 -nnodes 1 -Is /bin/bash"
 # an alias to run a command on a batch node for up to 30min
-#   usage: nrun <command>
+#   usage: runNode <command>
 alias runNode="bsub -q debug -P $proj -W 2:00 -nnodes 1 -I"
 
 # fix system defaults: do not escape $ with a \ on tab completion

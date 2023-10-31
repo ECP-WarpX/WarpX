@@ -69,7 +69,7 @@ namespace detail
     snakeToCamel (const std::string& snake_string)
     {
         std::string camelString = snake_string;
-        const int n = camelString.length();
+        const auto n = static_cast<int>(camelString.length());
         for (int x = 0; x < n; x++)
         {
             if (x == 0)
@@ -217,10 +217,8 @@ namespace detail
     getParticlePositionComponentLabels (bool ignore_dims=false)
     {
         using vs = std::vector< std::string >;
-        vs positionComponents;
-        if (ignore_dims) {
-            positionComponents = vs{"x", "y", "z"};
-        } else {
+        auto positionComponents = vs{"x", "y", "z"};
+        if (!ignore_dims) {
 #if defined(WARPX_DIM_1D_Z)
             positionComponents = vs{"z"};
 #elif defined(WARPX_DIM_XZ)
@@ -380,6 +378,8 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     std::map< std::string, std::string > engine_parameters,
     std::vector<bool> fieldPMLdirections)
   :m_Series(nullptr),
+   m_MPIRank{amrex::ParallelDescriptor::MyProc()},
+   m_MPISize{amrex::ParallelDescriptor::NProcs()},
    m_Encoding(ie),
    m_OpenPMDFileType(std::move(openPMDFileType)),
    m_fieldPMLdirections(std::move(fieldPMLdirections))
@@ -492,15 +492,11 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
                 amrex::ParallelDescriptor::Communicator(),
                 m_OpenPMDoptions
         );
-        m_MPISize = amrex::ParallelDescriptor::NProcs();
-        m_MPIRank = amrex::ParallelDescriptor::MyProc();
 #else
         WARPX_ABORT_WITH_MESSAGE("openPMD-api not built with MPI support!");
 #endif
     } else {
         m_Series = std::make_unique<openPMD::Series>(filepath, access, m_OpenPMDoptions);
-        m_MPISize = 1;
-        m_MPIRank = 1;
     }
 
     m_Series->setIterationEncoding( m_Encoding );
@@ -783,7 +779,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                         [](uint64_t const *p) { delete[] p; }
                 );
                 for (auto i = 0; i < numParticleOnTile; i++) {
-                    ids.get()[i] = ablastr::particles::localIDtoGlobal(aos[i].id(), aos[i].cpu());
+                    ids.get()[i] = ablastr::particles::localIDtoGlobal(static_cast<int>(aos[i].id()), static_cast<int>(aos[i].cpu()));
                 }
                 auto const scalar = openPMD::RecordComponent::SCALAR;
                 currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
@@ -1148,11 +1144,13 @@ WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
       fieldBoundary.resize(AMREX_SPACEDIM * 2);
       particleBoundary.resize(AMREX_SPACEDIM * 2);
 
-      for (auto i = 0u; i < fieldBoundary.size() / 2u; ++i)
+      const auto HalfFieldBoundarySize = static_cast<int>(fieldBoundary.size() / 2u);
+
+      for (auto i = 0; i < HalfFieldBoundarySize; ++i)
           if (m_fieldPMLdirections.at(i))
               fieldBoundary.at(i) = "open";
 
-      for (auto i = 0u; i < fieldBoundary.size() / 2u; ++i)
+      for (int i = 0; i < HalfFieldBoundarySize; ++i)
           if (period.isPeriodic(i)) {
               fieldBoundary.at(2u * i) = "periodic";
               fieldBoundary.at(2u * i + 1u) = "periodic";
@@ -1481,11 +1479,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
 //
 //
 //
-WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc)
+WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc):
+    m_MPIRank{amrex::ParallelDescriptor::MyProc()},
+    m_MPISize{amrex::ParallelDescriptor::NProcs()}
 {
-  m_MPISize = amrex::ParallelDescriptor::NProcs();
-  m_MPIRank = amrex::ParallelDescriptor::MyProc();
-
   m_ParticleCounterByLevel.resize(pc->finestLevel()+1);
   m_ParticleOffsetAtRank.resize(pc->finestLevel()+1);
   m_ParticleSizeAtRank.resize(pc->finestLevel()+1);
@@ -1540,7 +1537,7 @@ WarpXParticleCounter::GetParticleOffsetOfProcessor (
     amrex::ParallelGather::Gather (numParticles, result.data(), -1, amrex::ParallelDescriptor::Communicator());
 
     sum = 0;
-    int const num_results = result.size();
+    auto const num_results = static_cast<int>(result.size());
     for (int i=0; i<num_results; i++) {
         sum += result[i];
         if (i<m_MPIRank)
