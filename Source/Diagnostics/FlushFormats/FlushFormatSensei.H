@@ -33,10 +33,12 @@ class FlushFormatSensei : public FlushFormat
 {
 public:
     FlushFormatSensei();
-    ~FlushFormatSensei();
+    ~FlushFormatSensei() override;
 
-    FlushFormatSensei(const FlushFormatSensei &) = delete;
-    void operator=(const FlushFormatSensei &) = delete;
+    FlushFormatSensei(const FlushFormatSensei &)            = delete;
+    FlushFormatSensei& operator=(const FlushFormatSensei &) = delete;
+    FlushFormatSensei(FlushFormatSensei&&)                  = default;
+    FlushFormatSensei& operator=(FlushFormatSensei&& )      = default;
 
     /** Construct.
      *
@@ -46,8 +48,8 @@ public:
     FlushFormatSensei (amrex::AmrMesh *amr_mesh, std::string diag_name);
 
     /** Do in-situ visualization for field and particle data */
-    virtual void WriteToFile (
-        amrex::Vector<std::string> varnames,
+    void WriteToFile (
+        const amrex::Vector<std::string>& varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,

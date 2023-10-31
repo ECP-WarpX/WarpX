@@ -86,6 +86,12 @@ void HybridPICModel::AllocateLevelMFs (int lev, const BoxArray& ba, const Distri
         dm, ncomps, ngJ, lev, "current_fp_ampere[y]", 0.0_rt);
     WarpX::AllocInitMultiFab(current_fp_ampere[lev][2], amrex::convert(ba, jz_nodal_flag),
         dm, ncomps, ngJ, lev, "current_fp_ampere[z]", 0.0_rt);
+
+#ifdef WARPX_DIM_RZ
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        (ncomps == 1),
+        "Ohm's law solver only support m = 0 azimuthal mode at present.");
+#endif
 }
 
 void HybridPICModel::ClearLevel (int lev)

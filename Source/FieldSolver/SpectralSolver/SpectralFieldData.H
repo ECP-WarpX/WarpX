@@ -75,6 +75,26 @@ class SpectralFieldIndex
          */
         ~SpectralFieldIndex () = default;
 
+        /**
+         * \brief Default Copy constructor
+         */
+        SpectralFieldIndex ( SpectralFieldIndex const &) = default;
+
+        /**
+         * \brief Default Copy operator
+         */
+        SpectralFieldIndex& operator= ( SpectralFieldIndex const & ) = default;
+
+        /**
+         * \brief Default Move constructor
+         */
+        SpectralFieldIndex ( SpectralFieldIndex&& ) = default;
+
+        /**
+         * \brief Default Move operator
+         */
+        SpectralFieldIndex& operator= ( SpectralFieldIndex&& ) = default;
+
     // Total number of fields that are actually allocated
     int n_fields;
 
@@ -129,8 +149,13 @@ class SpectralFieldData
                            int n_field_required,
                            bool periodic_single_box);
         SpectralFieldData() = default; // Default constructor
-        SpectralFieldData& operator=(SpectralFieldData&& field_data) = default;
         ~SpectralFieldData();
+
+        // default move and copy operations
+        SpectralFieldData(const SpectralFieldData&) = delete;
+        SpectralFieldData& operator=(const SpectralFieldData&) = delete;
+        SpectralFieldData(SpectralFieldData&&) = default;
+        SpectralFieldData& operator=(SpectralFieldData&& field_data) = default;
 
         void ForwardTransform (int lev,
                                const amrex::MultiFab& mf, int field_index,

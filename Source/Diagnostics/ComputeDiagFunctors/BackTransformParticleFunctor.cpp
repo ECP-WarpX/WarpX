@@ -20,7 +20,7 @@ SelectParticles::SelectParticles (const WarpXParIter& a_pti, TmpParticles& tmp_p
                                   int a_offset)
     : m_current_z_boost(current_z_boost), m_old_z_boost(old_z_boost)
 {
-    m_get_position = GetParticlePosition(a_pti, a_offset);
+    m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
 
     const auto lev = a_pti.GetLevel();
     const auto index = a_pti.GetPairIndex();
@@ -38,7 +38,7 @@ LorentzTransformParticles::LorentzTransformParticles ( const WarpXParIter& a_pti
     using namespace amrex::literals;
 
     if (tmp_particle_data.empty()) return;
-    m_get_position = GetParticlePosition(a_pti, a_offset);
+    m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
 
     auto& attribs = a_pti.GetAttribs();
     m_wpnew = attribs[PIdx::w].dataPtr();

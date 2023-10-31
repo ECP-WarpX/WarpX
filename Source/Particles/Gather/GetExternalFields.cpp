@@ -56,7 +56,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
         mypc.m_B_ext_particle_s == "repeated_plasma_lens")
     {
         m_time = warpx.gett_new(a_pti.GetLevel());
-        m_get_position = GetParticlePosition(a_pti, a_offset);
+        m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
     }
 
     if (mypc.m_E_ext_particle_s == "parse_e_ext_particle_function")
