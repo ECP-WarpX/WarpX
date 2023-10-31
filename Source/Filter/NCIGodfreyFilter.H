@@ -39,6 +39,8 @@ public:
 
 private:
 
+//NCIGodfreyFilter not implemented in 1D
+#if (AMREX_SPACEDIM >= 2)
     // Set of coefficients (different fields require to read
     // different coefficients from the table)
     godfrey_coeff_set m_coeff_set;
@@ -46,6 +48,8 @@ private:
     amrex::Real m_cdtodz;
     // Whether the gather is from nodal fields or staggered fields
     bool m_nodal_gather;
+#endif
+
 };
 
 #endif // #ifndef WARPX_GODFREY_FILTER_H_

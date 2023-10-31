@@ -50,7 +50,6 @@
 #include <AMReX_ParticleTile.H>
 #include <AMReX_ParticleTransformation.H>
 #include <AMReX_ParticleUtil.H>
-#include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 
 
@@ -76,7 +75,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
     AMREX_ALWAYS_ASSERT(x.size() == z.size());
 
     // number of particles to add
-    int const np = x.size();
+    auto const np = static_cast<int>(x.size());
 
     // have to resize here, not in the constructor because grids have not
     // been built when constructor was called.

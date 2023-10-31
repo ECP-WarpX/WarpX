@@ -113,7 +113,9 @@ public:
                     const amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight
                     ) const
     {
-        if (n_total_pairs == 0) return {m_num_product_species, 0};
+        using namespace amrex::literals;
+
+        if (n_total_pairs == 0) return amrex::Vector<int>(m_num_product_species, 0);
 
         // Compute offset array and allocate memory for the produced species
         amrex::Gpu::DeviceVector<index_type> offsets(n_total_pairs);
@@ -128,7 +130,7 @@ public:
             // one electron, we create two electrons, one at the position of each particle that
             // collided. This allows for exact charge conservation.
             const index_type num_added = total * m_num_products_host[i] * 2;
-            num_added_vec[i] = num_added;
+            num_added_vec[i] = static_cast<int>(num_added);
             tile_products[i]->resize(products_np[i] + num_added);
         }
 
@@ -182,11 +184,11 @@ public:
                         const auto product_index = products_np_data[j] +
                                                    2*(p_offsets[i]*p_num_products_device[j] + k);
                         // Create product particle at position of particle 1
-                        copy_species1[j](soa_products_data[j], soa_1, p_pair_indices_1[i],
-                                      product_index, engine);
+                        copy_species1[j](soa_products_data[j], soa_1, static_cast<int>(p_pair_indices_1[i]),
+                                      static_cast<int>(product_index), engine);
                         // Create another product particle at position of particle 2
-                        copy_species2[j](soa_products_data[j], soa_2, p_pair_indices_2[i],
-                                      product_index + 1, engine);
+                        copy_species2[j](soa_products_data[j], soa_2, static_cast<int>(p_pair_indices_2[i]),
+                                      static_cast<int>(product_index + 1), engine);
 
                         // Set the weight of the new particles to p_pair_reaction_weight[i]/2
                         soa_products_data[j].m_rdata[PIdx::w][product_index] =

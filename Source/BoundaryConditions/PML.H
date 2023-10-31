@@ -29,6 +29,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -80,7 +81,7 @@ public:
                      const amrex::IntVect& ncell, const amrex::IntVect& delta,
                      const amrex::Box& regular_domain, const amrex::Real v_sigma_sb)
         : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_regdomain(regular_domain), m_v_sigma_sb(v_sigma_sb) {}
-    virtual ~SigmaBoxFactory () = default;
+    ~SigmaBoxFactory () override = default;
 
     SigmaBoxFactory (const SigmaBoxFactory&) = default;
     SigmaBoxFactory (SigmaBoxFactory&&) noexcept = default;
@@ -89,13 +90,13 @@ public:
     SigmaBoxFactory& operator= (const SigmaBoxFactory&) = delete;
     SigmaBoxFactory& operator= (SigmaBoxFactory&&) = delete;
 
-    virtual SigmaBox* create (const amrex::Box& box, int /*ncomps*/,
+    SigmaBox* create (const amrex::Box& box, int /*ncomps*/,
                               const amrex::FabInfo& /*info*/, int /*box_index*/) const final
         { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta, m_regdomain, m_v_sigma_sb); }
-    virtual void destroy (SigmaBox* fab) const final {
+    void destroy (SigmaBox* fab) const final {
         delete fab;
     }
-    virtual SigmaBoxFactory* clone () const final {
+    SigmaBoxFactory* clone () const final {
         return new SigmaBoxFactory(*this);
     }
 private:
@@ -187,15 +188,10 @@ public:
     void ExchangeG (amrex::MultiFab* G_fp, amrex::MultiFab* G_cp, int do_pml_in_domain);
     void ExchangeG (PatchType patch_type, amrex::MultiFab* Gp, int do_pml_in_domain);
 
-    void FillBoundary ();
-    void FillBoundaryE ();
-    void FillBoundaryB ();
-    void FillBoundaryF ();
-    void FillBoundaryG ();
-    void FillBoundaryE (PatchType patch_type);
-    void FillBoundaryB (PatchType patch_type);
-    void FillBoundaryF (PatchType patch_type);
-    void FillBoundaryG (PatchType patch_type);
+    void FillBoundaryE (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
+    void FillBoundaryB (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
+    void FillBoundaryF (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
+    void FillBoundaryG (PatchType patch_type, std::optional<bool> nodal_sync=std::nullopt);
 
     bool ok () const { return m_ok; }
 
@@ -203,8 +199,6 @@ public:
     void Restart (const std::string& dir);
 
     static void Exchange (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom, int do_pml_in_domain);
-
-    ~PML () = default;
 
 private:
     bool m_ok;

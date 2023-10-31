@@ -32,18 +32,18 @@ namespace ablastr::parallelization
     int
     mpi_thread_required ()
     {
+        int thread_required = -1;
 #ifdef AMREX_USE_MPI
-        return MPI_THREAD_SINGLE;  // equiv. to MPI_Init
+        thread_required = MPI_THREAD_SINGLE;  // equiv. to MPI_Init
 #   ifdef AMREX_USE_OMP
-        return MPI_THREAD_FUNNELED;
+        thread_required = MPI_THREAD_FUNNELED;
 #   endif
 #   ifdef AMREX_MPI_THREAD_MULTIPLE  // i.e. for async_io
-        return MPI_THREAD_MULTIPLE;
+        thread_required = MPI_THREAD_MULTIPLE;
 #   endif
-#else
-        return -1;
 #endif
-}
+        return thread_required;
+    }
 
     std::pair< int, int >
     mpi_init (int argc, char* argv[])
