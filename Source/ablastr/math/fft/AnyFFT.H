@@ -8,7 +8,7 @@
 #ifndef ABLASTR_ANYFFT_H_
 #define ABLASTR_ANYFFT_H_
 
-#ifdef WARPX_USE_PSATD
+#ifdef ABLASTR_USE_FFT
 #   include <AMReX_Config.H>
 #   include <AMReX_LayoutData.H>
 
@@ -32,7 +32,7 @@
  * done in different cpp files. This wrapper only depends on the underlying FFT library
  * AND on AMReX (There is no dependence on WarpX).
  */
-namespace ablastr::anyfft
+namespace ablastr::math::anyfft
 {
 
     /** This function is a wrapper around rocff_setup().

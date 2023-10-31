@@ -13,7 +13,7 @@
 #include "SpectralKSpace.H"
 #include "Utils/WarpX_Complex.H"
 
-#include <ablastr/fft/AnyFFT.H>
+#include <ablastr/math/fft/AnyFFT.H>
 
 #include <AMReX_BaseFab.H>
 #include <AMReX_Config.H>
@@ -173,7 +173,7 @@ class SpectralFieldData
         // right before/after the Fourier transform
         SpectralField tmpSpectralField; // contains Complexs
         amrex::MultiFab tmpRealField; // contains Reals
-        ablastr::anyfft::FFTplans forward_plan, backward_plan;
+        ablastr::math::anyfft::FFTplans forward_plan, backward_plan;
         // Correcting "shift" factors when performing FFT from/to
         // a cell-centered grid in real space, instead of a nodal grid
         SpectralShiftFactor xshift_FFTfromCell, xshift_FFTtoCell,

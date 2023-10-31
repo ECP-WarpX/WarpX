@@ -1,5 +1,5 @@
 add_subdirectory(coarsen)
-add_subdirectory(fft)
+add_subdirectory(math)
 #add_subdirectory(fields)
 add_subdirectory(parallelization)
 #add_subdirectory(particles)
