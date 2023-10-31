@@ -10,6 +10,7 @@ Checks: '
     clang-analyzer-*,
         -clang-analyzer-osx.*,
         -clang-analyzer-optin.osx.*,
+        -clang-analyzer-optin.mpi.MPI-Checker,
         -clang-analyzer-optin.performance.Padding,
     cppcoreguidelines-*,
         -cppcoreguidelines-avoid-c-arrays,
