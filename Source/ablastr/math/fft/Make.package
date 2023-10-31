@@ -10,4 +10,4 @@ else
   CEXE_sources += WrapNoFFT.cpp
 endif
 
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/ablastr/fft
+VPATH_LOCATIONS   += $(WARPX_HOME)/Source/ablastr/math/fft

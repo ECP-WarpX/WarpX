@@ -45,7 +45,7 @@ namespace ablastr::math::anyfft
     */
     void cleanup();
 
-#ifdef WARPX_USE_PSATD
+#ifdef ABLASTR_USE_FFT
 
     // First, define library-dependent types (complex, FFT plan)
 

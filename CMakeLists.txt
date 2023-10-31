@@ -144,13 +144,6 @@ mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
 
-# In order to enable PSATD solver we need FFT support enabled in ablastr
-if(WarpX_PSATD)
-    set(ABLASTR_USE_FFT ON CACHE INTERNAL "")
-else()
-    set(ABLASTR_USE_FFT OFF CACHE INTERNAL "")
-endif()
-
 # Dependencies ################################################################
 #
 
@@ -506,6 +499,9 @@ foreach(D IN LISTS WarpX_DIMS)
 
     if(WarpX_PSATD)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_PSATD)
+
+        # We need to enable FFT support in ABLASTR for PSATD solver
+        target_compile_definitions(ablastr_${SD} PRIVATE ABLASTR_USE_FFT)
     endif()
 
     if(WarpX_PYTHON AND pyWarpX_VERSION_INFO)
