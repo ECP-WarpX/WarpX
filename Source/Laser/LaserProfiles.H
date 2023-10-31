@@ -98,7 +98,7 @@ public:
         amrex::Real* AMREX_RESTRICT amplitude) const = 0;
 
     ILaserProfile () = default;
-    virtual ~ILaserProfile(){}
+    virtual ~ILaserProfile() = default;
 
     ILaserProfile ( ILaserProfile const &)             = default;
     ILaserProfile& operator= ( ILaserProfile const & ) = default;

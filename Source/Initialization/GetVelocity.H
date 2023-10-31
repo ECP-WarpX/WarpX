@@ -27,7 +27,7 @@ struct GetVelocity
     int m_sign_dir; //! Sign of the velocity direction positive=1, negative=-1
 
     /** Constant velocity value, if m_type == VelConstantValue */
-    amrex::Real m_velocity;
+    amrex::Real m_velocity{0};
     /** Velocity parser function, if m_type == VelParserFunction */
     amrex::ParserExecutor<3> m_velocity_parser;
 
