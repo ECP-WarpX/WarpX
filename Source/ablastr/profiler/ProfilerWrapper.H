@@ -38,6 +38,12 @@ namespace ablastr::profiler
             device_synchronize(m_do_device_synchronize);
         }
 
+        // default move and copy operations
+        SynchronizeOnDestruct(const SynchronizeOnDestruct&) = default;
+        SynchronizeOnDestruct& operator=(const SynchronizeOnDestruct&) = default;
+        SynchronizeOnDestruct(SynchronizeOnDestruct&&) = default;
+        SynchronizeOnDestruct& operator=(SynchronizeOnDestruct&& field_data) = default;
+
         bool m_do_device_synchronize = false;
     };
 

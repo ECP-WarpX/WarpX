@@ -159,7 +159,7 @@ void BackgroundStopping::doBackgroundStoppingOnElectronsWithinTile (WarpXParIter
     amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
     // May be needed to evaluate the density and/or temperature functions
-    auto const GetPosition = GetParticlePosition(pti);
+    auto const GetPosition = GetParticlePosition<PIdx>(pti);
 
     amrex::ParallelFor(np,
         [=] AMREX_GPU_HOST_DEVICE (long ip)
@@ -234,7 +234,7 @@ void BackgroundStopping::doBackgroundStoppingOnIonsWithinTile (WarpXParIter& pti
     amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
     // May be needed to evaluate the density function
-    auto const GetPosition = GetParticlePosition(pti);
+    auto const GetPosition = GetParticlePosition<PIdx>(pti);
 
     amrex::ParallelFor(np,
         [=] AMREX_GPU_HOST_DEVICE (long ip)

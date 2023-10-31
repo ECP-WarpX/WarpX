@@ -11,11 +11,12 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
-VelocityProperties::VelocityProperties (const amrex::ParmParse& pp) {
+VelocityProperties::VelocityProperties (const amrex::ParmParse& pp):
+    m_velocity{0}
+{
     // Set defaults
     std::string vel_dist_s = "constant";
     std::string vel_dir_s = "x";
-    m_velocity = 0;
 
     pp.query("bulk_vel_dir", vel_dir_s);
     if(vel_dir_s[0] == '-'){

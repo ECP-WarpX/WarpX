@@ -58,7 +58,7 @@ public:
      *
      * @param[in] step the timestep
      */
-    virtual void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) final;
 
     /**
      * This function queries deprecated input parameters and aborts

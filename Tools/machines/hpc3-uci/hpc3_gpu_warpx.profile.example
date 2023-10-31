@@ -27,6 +27,7 @@ export LD_LIBRARY_PATH=${HOME}/sw/hpc3/gpu/adios2-2.8.3/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${HOME}/sw/hpc3/gpu/blaspp-master/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${HOME}/sw/hpc3/gpu/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
+export PATH=${HOME}/sw/hpc3/gpu/adios2-2.8.3/bin:${PATH}
 
 # optional: CCache
 #module load ccache  # missing

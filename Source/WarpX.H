@@ -97,8 +97,7 @@ public:
      */
     static void Finalize();
 
-    /** Destructor */
-    ~WarpX ();
+    ~WarpX () override;
 
     /** Copy constructor */
     WarpX ( WarpX const &) = delete;
@@ -1037,7 +1036,7 @@ public:
 
     // This needs to be public for CUDA.
     //! Tagging cells for refinement
-    virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
+    void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
     // Return the accelerator lattice instance defined at the given refinement level
     const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}
@@ -1176,28 +1175,28 @@ protected:
 
     //! Use this function to override the Level 0 grids made by AMReX.
     //! This function is called in amrex::AmrCore::InitFromScratch.
-    virtual void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
+    void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
 
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
     //! by AmrCoreInitFromScratch.
-    virtual void MakeNewLevelFromScratch (int lev, amrex::Real time, const amrex::BoxArray& ba,
+    void MakeNewLevelFromScratch (int lev, amrex::Real time, const amrex::BoxArray& ba,
                                           const amrex::DistributionMapping& dm) final;
 
     //! Make a new level using provided BoxArray and
     //! DistributionMapping and fill with interpolated coarse level
     //! data.  Called by AmrCore::regrid.
-    virtual void MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
+    void MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
                                          const amrex::DistributionMapping& /*dm*/) final;
 
     //! Remake an existing level using provided BoxArray and
     //! DistributionMapping and fill with existing fine and coarse
     //! data.  Called by AmrCore::regrid.
-    virtual void RemakeLevel (int lev, amrex::Real time, const amrex::BoxArray& ba,
+    void RemakeLevel (int lev, amrex::Real time, const amrex::BoxArray& ba,
                               const amrex::DistributionMapping& dm) final;
 
     //! Delete level data.  Called by AmrCore::regrid.
-    virtual void ClearLevel (int lev) final;
+    void ClearLevel (int lev) final;
 
 private:
 

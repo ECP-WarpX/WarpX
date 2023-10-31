@@ -35,7 +35,7 @@ public:
      *
      * @param[in] step current time step
      */
-    void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) final;
 
 private:
     /// auxiliary structure to store headers and indices of the reduced diagnostics

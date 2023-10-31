@@ -388,7 +388,7 @@ void ParticleExtrema::ComputeDiags (int step)
                 // Loop over boxes
                 for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
                 {
-                    const auto GetPosition = GetParticlePosition(pti);
+                    const auto GetPosition = GetParticlePosition<PIdx>(pti);
                     // get particle arrays
                     amrex::ParticleReal* const AMREX_RESTRICT ux = pti.GetAttribs()[PIdx::ux].dataPtr();
                     amrex::ParticleReal* const AMREX_RESTRICT uy = pti.GetAttribs()[PIdx::uy].dataPtr();

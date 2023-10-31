@@ -50,7 +50,6 @@
 #include <AMReX_ParticleTile.H>
 #include <AMReX_ParticleTransformation.H>
 #include <AMReX_ParticleUtil.H>
-#include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 
 

@@ -50,7 +50,7 @@ FlushFormatSensei::~FlushFormatSensei () = default;
 
 void
 FlushFormatSensei::WriteToFile (
-    const amrex::Vector<std::string> varnames,
+    const amrex::Vector<std::string>& varnames,
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
