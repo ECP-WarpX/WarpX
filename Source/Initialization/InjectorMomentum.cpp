@@ -15,6 +15,7 @@ void InjectorMomentum::clear ()
     {
     case Type::parser:
     case Type::gaussian:
+    case Type::gaussianparser:
     case Type::gaussianflux:
     case Type::uniform:
     case Type::boltzmann:

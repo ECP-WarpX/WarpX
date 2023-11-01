@@ -262,6 +262,34 @@ assert(f7_error < tolerance)
 
 
 #============================================
+# Gaussian with parser mean and standard deviation
+#============================================
+
+# load data
+bin_value_ux, bin_data_ux = read_reduced_diags_histogram("h9x.txt")[2:]
+bin_value_uy, bin_data_uy = read_reduced_diags_histogram("h9y.txt")[2:]
+bin_value_uz, bin_data_uz = read_reduced_diags_histogram("h9z.txt")[2:]
+
+def Gaussian(mean, sigma, u):
+    V = 8.0 # volume in m^3
+    n = 1.0e21 # number density in 1/m^3
+    return (n*V/(sigma*np.sqrt(2.*np.pi)))*np.exp(-(u - mean)**2/(2.*sigma**2))
+
+du = 2./50
+f_ux = Gaussian(0.1 , 0.2 , bin_value_ux)*du
+f_uy = Gaussian(0.12, 0.21, bin_value_uy)*du
+f_uz = Gaussian(0.14, 0.22, bin_value_uz)*du
+
+f9_error = np.sum(np.abs(f_ux - bin_data_ux)/f_ux.max()
+                 +np.abs(f_uy - bin_data_uy)/f_ux.max()
+                 +np.abs(f_uz - bin_data_uz)/f_uz.max()) / bin_value_ux.size
+
+print('gaussian_parse_momentum_function velocity difference:', f9_error)
+
+assert(f9_error < tolerance)
+
+
+#============================================
 # Cuboid distribution in momentum space
 #============================================
 
