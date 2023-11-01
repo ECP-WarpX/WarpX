@@ -64,7 +64,7 @@ void FiniteDifferenceSolver::ApplySilverMuellerBoundary (
 
     // Extract stencil coefficients
     Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-    int const n_coefs_z = m_h_stencil_coefs_z.size();
+    auto const n_coefs_z = static_cast<int>(m_h_stencil_coefs_z.size());
 
     // Extract cylindrical specific parameters
     Real const dr = m_dr;

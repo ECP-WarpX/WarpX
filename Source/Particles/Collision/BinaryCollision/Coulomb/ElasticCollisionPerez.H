@@ -54,8 +54,8 @@ void ElasticCollisionPerez (
     amrex::RandomEngine const& engine,
     bool const isSameSpecies)
 {
-    const int NI1 = I1e - I1s;
-    const int NI2 = I2e - I2s;
+    const T_index NI1 = I1e - I1s;
+    const T_index NI2 = I2e - I2s;
 
     T_PR * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
     T_PR * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
@@ -84,8 +84,8 @@ void ElasticCollisionPerez (
     T_PR n1  = T_PR(0.0);
     T_PR n2  = T_PR(0.0);
     T_PR n12 = T_PR(0.0);
-    for (int i1=I1s; i1<static_cast<int>(I1e); ++i1) { n1 += w1[ I1[i1] ]; }
-    for (int i2=I2s; i2<static_cast<int>(I2e); ++i2) { n2 += w2[ I2[i2] ]; }
+    for (T_index i1=I1s; i1<I1e; ++i1) { n1 += w1[ I1[i1] ]; }
+    for (T_index i2=I2s; i2<I2e; ++i2) { n2 += w2[ I2[i2] ]; }
     // Intra-species: the density is in fact the sum of the density of
     // each sub-group of particles
     if (isSameSpecies) {
@@ -94,12 +94,12 @@ void ElasticCollisionPerez (
     }
     n1 = n1 / dV; n2 = n2 / dV;
     {
-      int i1 = I1s; int i2 = I2s;
-      for (int k = 0; k < amrex::max(NI1,NI2); ++k)
+      T_index i1 = I1s; T_index i2 = I2s;
+      for (T_index k = 0; k < amrex::max(NI1,NI2); ++k)
       {
         n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
-        ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
-        ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
+        ++i1; if ( i1 == I1e ) { i1 = I1s; }
+        ++i2; if ( i2 == I2e ) { i2 = I2s; }
       }
       n12 = n12 / dV;
     }
@@ -126,8 +126,8 @@ void ElasticCollisionPerez (
 
     // call UpdateMomentumPerezElastic()
     {
-      int i1 = I1s; int i2 = I2s;
-      for (int k = 0; k < amrex::max(NI1,NI2); ++k)
+      T_index i1 = I1s; T_index i2 = I2s;
+      for (T_index k = 0; k < amrex::max(NI1,NI2); ++k)
       {
 
 #if (defined WARPX_DIM_RZ)
@@ -159,8 +159,8 @@ void ElasticCollisionPerez (
           u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
 #endif
 
-          ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
-          ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
+          ++i1; if ( i1 == I1e ) { i1 = I1s; }
+          ++i2; if ( i2 == I2e ) { i2 = I2s; }
       }
     }
 

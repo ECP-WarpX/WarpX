@@ -379,7 +379,7 @@ using namespace amrex;
                 amrex::IntVect iv_mirror = ijk_vec;
                 iv_mirror[idim] = mirrorfac[idim][iside] - ijk_vec[idim];
 
-                // On the PEC boundary the current density is set to 0
+                // On the PEC boundary the charge/current density is set to 0
                 if (ijk_vec == iv_mirror) field(ijk_vec, n) = 0._rt;
                 // otherwise update the internal cell if the mirror guard cell exists
                 else if (fabbox.contains(iv_mirror))
@@ -389,7 +389,7 @@ using namespace amrex;
             }
         }
         // 2) The guard cells are updated with the appropriate image
-        //    charge current based on the current in the valid cells
+        //    charge based on the charge/current in the valid cells
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
         {
             for (int iside = 0; iside < 2; ++iside)

@@ -524,7 +524,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
@@ -589,7 +589,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
             WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -607,7 +607,8 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         // The temporary MultiFab is setup to refer to the data of the original Multifab (this can
         // be done since the shape of the data is all the same, just the indexing is different).
         amrex::BoxList bl;
-        for (int i = 0, N=ba.size(); i < N; ++i) {
+        const auto ba_size = static_cast<int>(ba.size());
+        for (int i = 0; i < ba_size; ++i) {
             bl.push_back(amrex::grow(ba[i], 0, mf.nGrowVect()[0]));
         }
         const amrex::BoxArray rba(std::move(bl));

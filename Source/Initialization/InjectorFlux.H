@@ -79,6 +79,9 @@ struct InjectorFlux
     void operator= (InjectorFlux const&) = delete;
     void operator= (InjectorFlux &&) = delete;
 
+    // Default destructor
+    ~InjectorFlux () = default;
+
     void clear ()
     {
         switch (type)

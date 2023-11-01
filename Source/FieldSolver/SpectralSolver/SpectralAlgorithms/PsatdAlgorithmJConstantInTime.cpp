@@ -60,11 +60,11 @@ PsatdAlgorithmJConstantInTime::PsatdAlgorithmJConstantInTime(
     m_update_with_rho(update_with_rho),
     m_time_averaging(time_averaging),
     m_dive_cleaning(dive_cleaning),
-    m_divb_cleaning(divb_cleaning)
+    m_divb_cleaning(divb_cleaning),
+    m_is_galilean{
+        (v_galilean[0] != 0.) || (v_galilean[1] != 0.) || (v_galilean[2] != 0.)}
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
-
-    m_is_galilean = (v_galilean[0] != 0.) || (v_galilean[1] != 0.) || (v_galilean[2] != 0.);
 
     // Always allocate these coefficients
     C_coef = SpectralRealCoefficients(ba, dm, 1, 0);

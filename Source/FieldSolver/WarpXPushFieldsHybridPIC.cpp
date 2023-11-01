@@ -101,7 +101,7 @@ void WarpX::HybridPICEvolveFields ()
             true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
+        EvolveB(0.5_rt / sub_steps * dt[0], DtType::FirstHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
@@ -129,7 +129,7 @@ void WarpX::HybridPICEvolveFields ()
             true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
+        EvolveB(0.5_rt / sub_steps * dt[0], DtType::SecondHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 

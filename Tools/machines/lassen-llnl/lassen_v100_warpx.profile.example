@@ -18,6 +18,8 @@ export CMAKE_PREFIX_PATH=${SW_DIR}/adios2-2.8.3:$CMAKE_PREFIX_PATH
 export LD_LIBRARY_PATH=${SW_DIR}/c-blosc-1.21.1/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${SW_DIR}/hdf5-1.14.1.2/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${SW_DIR}/adios2-2.8.3/lib64:$LD_LIBRARY_PATH
+export PATH=${SW_DIR}/hdf5-1.14.1.2/bin:${PATH}
+export PATH=${SW_DIR}/adios2-2.8.3/bin:$PATH
 
 # optional: for PSATD in RZ geometry support
 export CMAKE_PREFIX_PATH=${SW_DIR}/blaspp-master:$CMAKE_PREFIX_PATH

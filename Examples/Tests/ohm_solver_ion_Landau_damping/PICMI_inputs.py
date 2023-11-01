@@ -14,7 +14,7 @@ import dill
 from mpi4py import MPI as mpi
 import numpy as np
 
-from pywarpx import callbacks, fields, particle_containers, picmi
+from pywarpx import callbacks, fields, libwarpx, particle_containers, picmi
 
 constants = picmi.constants
 
@@ -22,9 +22,8 @@ comm = mpi.COMM_WORLD
 
 simulation = picmi.Simulation(
     warpx_serialize_initial_conditions=True,
-    verbose=0)
-# make a shorthand for simulation.extension since we use it a lot
-sim_ext = simulation.extension
+    verbose=0
+)
 
 
 class IonLandauDamping(object):
@@ -266,7 +265,8 @@ class IonLandauDamping(object):
 
     def text_diag(self):
         """Diagnostic function to print out timing data and particle numbers."""
-        step = sim_ext.getistep(0)
+        step = simulation.extension.warpx.getistep(lev=0) - 1
+
         if step % (self.total_steps // 10) != 0:
             return
 
@@ -290,7 +290,7 @@ class IonLandauDamping(object):
             "{step_rate:4.2f} steps/s"
         )
 
-        if sim_ext.getMyProc() == 0:
+        if libwarpx.amr.ParallelDescriptor.MyProc() == 0:
             print(diag_string.format(**status_dict))
 
         self.prev_time = time.time()
@@ -301,14 +301,14 @@ class IonLandauDamping(object):
         similar format as the reduced diagnostic so that the same analysis
         script can be used regardless of the simulation dimension.
         """
-        step = sim_ext.getistep() - 1
+        step = simulation.extension.warpx.getistep(lev=0) - 1
 
         if step % self.diag_steps != 0:
             return
 
         Ez_warpx = fields.EzWrapper()[...]
 
-        if sim_ext.getMyProc() != 0:
+        if libwarpx.amr.ParallelDescriptor.MyProc() != 0:
             return
 
         t = step * self.dt

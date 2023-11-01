@@ -11,7 +11,7 @@ import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse import linalg as sla
 
-from pywarpx import callbacks, fields, particle_containers, picmi
+from pywarpx import callbacks, fields, libwarpx, particle_containers, picmi
 
 constants = picmi.constants
 
@@ -108,7 +108,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         calculating phi from rho."""
 
         left_voltage = 0.0
-        t = self.sim_ext.gett_new()
+        t = self.sim.extension.warpx.gett_new(0)
         right_voltage = eval(self.right_voltage)
 
         # Construct b vector
@@ -300,6 +300,7 @@ class CapacitiveDischargeExample(object):
             warpx_load_balance_intervals=self.max_steps//5000,
             verbose=self.test
         )
+        self.solver.sim = self.sim
 
         self.sim.add_species(
             self.electrons,
@@ -313,7 +314,6 @@ class CapacitiveDischargeExample(object):
                 n_macroparticle_per_cell=[self.seed_nppc], grid=self.grid
             )
         )
-        self.solver.sim_ext = self.sim.extension
 
         #######################################################################
         # Add diagnostics for the CI test to be happy                         #
@@ -325,6 +325,7 @@ class CapacitiveDischargeExample(object):
             file_prefix = 'Python_background_mcc_1d_tridiag_plt'
 
         particle_diag = picmi.ParticleDiagnostic(
+            species=[self.electrons, self.ions],
             name='diag1',
             period=0,
             write_dir='.',
@@ -343,7 +344,8 @@ class CapacitiveDischargeExample(object):
 
     def _get_rho_ions(self):
         # deposit the ion density in rho_fp
-        self.sim.extension.depositChargeDensity('he_ions', 0)
+        he_ions_wrapper = particle_containers.ParticleContainerWrapper('he_ions')
+        he_ions_wrapper.deposit_charge_density(level=0)
 
         rho_data = self.rho_wrapper[...]
         self.ion_density_array += rho_data / constants.q_e / self.diag_steps
@@ -357,7 +359,7 @@ class CapacitiveDischargeExample(object):
 
         self.sim.step(self.diag_steps)
 
-        if self.sim.extension.getMyProc() == 0:
+        if libwarpx.amr.ParallelDescriptor.MyProc() == 0:
             np.save(f'ion_density_case_{self.n+1}.npy', self.ion_density_array)
 
         # query the particle z-coordinates if this is run during CI testing

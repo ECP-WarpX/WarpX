@@ -40,6 +40,11 @@ public:
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~Diagnostics ();
 
+    Diagnostics (Diagnostics const &)              = delete;
+    Diagnostics& operator= (Diagnostics const & )  = delete;
+    Diagnostics(Diagnostics&& )                    = default;
+    Diagnostics& operator=(Diagnostics&& )         = default;
+
     /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
      *
      * Fields are computed (e.g., cell-centered or back-transformed)

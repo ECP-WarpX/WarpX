@@ -51,7 +51,7 @@
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doDepositionShapeN (const GetParticlePosition& GetPosition,
+void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          const amrex::ParticleReal * const wp,
                          const amrex::ParticleReal * const uxp,
                          const amrex::ParticleReal * const uyp,
@@ -365,7 +365,7 @@ void doDepositionShapeN (const GetParticlePosition& GetPosition,
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
+void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                const amrex::ParticleReal * const wp,
                                const amrex::ParticleReal * const uxp,
                                const amrex::ParticleReal * const uyp,
@@ -577,7 +577,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
+void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                   const amrex::ParticleReal * const wp,
                                   const amrex::ParticleReal * const uxp,
                                   const amrex::ParticleReal * const uyp,
@@ -957,7 +957,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
  * \param[in] load_balance_costs_update_algo Selected method for updating load balance costs
  */
 template <int depos_order>
-void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
+void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                             const amrex::ParticleReal* const wp,
                             const amrex::ParticleReal* const uxp,
                             const amrex::ParticleReal* const uyp,

@@ -1824,7 +1824,9 @@ Particle push, charge and current deposition, field gathering
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
     is ``esirkepov`` for FDTD maxwell solvers but ``direct`` for standard or
     Galilean PSATD solver (i.e. with ``algo.maxwell_solver = psatd``) and
-    for the hybrid-PIC solver (i.e. with ``algo.maxwell_solver = hybrid``).
+    for the hybrid-PIC solver (i.e. with ``algo.maxwell_solver = hybrid``) and for
+    diagnostics output with the electrostatic solvers (i.e., with
+    ``warpx.do_electrostatic = ...``).
     Note that ``vay`` is only available for ``algo.maxwell_solver = psatd``.
 
     1. ``direct``
