@@ -22,6 +22,7 @@ module load Boost/1.81.0-cpeCray-23.03
 module load cray-hdf5/1.12.2.3
 export CMAKE_PREFIX_PATH=${HOME}/sw/lumi/gpu/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=${HOME}/sw/lumi/gpu/adios2-2.8.3:$CMAKE_PREFIX_PATH
+export PATH=${HOME}/sw/lumi/gpu/adios2-2.8.3/bin:${PATH}
 
 # optional: for Python bindings or libEnsemble
 module load cray-python/3.9.13.1

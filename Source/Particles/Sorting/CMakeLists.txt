@@ -3,5 +3,6 @@ foreach(D IN LISTS WarpX_DIMS)
     target_sources(lib_${SD}
       PRIVATE
         Partition.cpp
+        SortingUtils.cpp
     )
 endforeach()

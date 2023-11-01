@@ -13,6 +13,8 @@
 #   include "BoundaryConditions/PML_RZ.H"
 #endif
 #include "Particles/MultiParticleContainer.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
@@ -357,6 +359,18 @@ WarpX::MoveWindow (const int step, bool move_j)
                 }
             }
         }
+
+        // Shift values of N, NU for each fluid species
+        if (do_fluid_species) {
+            const int n_fluid_species = myfl->nSpecies();
+            for (int i=0; i<n_fluid_species; i++) {
+                WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
+                shiftMF( *fl.N[lev], geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *fl.NU[lev][0], geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *fl.NU[lev][1], geom[lev], num_shift, dir, lev, do_update_cost );
+                shiftMF( *fl.NU[lev][2], geom[lev], num_shift, dir, lev, do_update_cost );
+            }
+        }
     }
 
     // Loop over species (particles and lasers)
@@ -407,6 +421,30 @@ WarpX::MoveWindow (const int step, bool move_j)
                 pc.ContinuousInjection(particleBox);
                 pc.m_current_injection_position = new_injection_position;
             }
+        }
+    }
+
+    // Continuously inject fluid species in new cells (by default only on level 0)
+    const int lev = 0;
+    // Find box in which to initialize new fluid cells
+    amrex::Box injection_box = geom[lev].Domain();
+    injection_box.surroundingNodes(); // get nodal box
+    // Restrict box in the direction of the moving window, to only include the new cells
+    if (moving_window_v > 0._rt)
+    {
+        injection_box.setSmall( dir, injection_box.bigEnd(dir) - num_shift_base + 1 );
+    }
+    else if (moving_window_v < 0._rt)
+    {
+        injection_box.setBig( dir, injection_box.smallEnd(dir) + num_shift_base - 1 );
+    }
+    // Loop over fluid species, and fill the values of the new cells
+    if (do_fluid_species) {
+        const int n_fluid_species = myfl->nSpecies();
+        const amrex::Real cur_time = t_new[0];
+        for (int i=0; i<n_fluid_species; i++) {
+            WarpXFluidContainer& fl = myfl->GetFluidContainer(i);
+            fl.InitData( lev, injection_box, cur_time );
         }
     }
 
@@ -486,7 +524,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
@@ -551,7 +589,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
             WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -569,7 +607,8 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         // The temporary MultiFab is setup to refer to the data of the original Multifab (this can
         // be done since the shape of the data is all the same, just the indexing is different).
         amrex::BoxList bl;
-        for (int i = 0, N=ba.size(); i < N; ++i) {
+        const auto ba_size = static_cast<int>(ba.size());
+        for (int i = 0; i < ba_size; ++i) {
             bl.push_back(amrex::grow(ba[i], 0, mf.nGrowVect()[0]));
         }
         const amrex::BoxArray rba(std::move(bl));

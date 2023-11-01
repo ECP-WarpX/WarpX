@@ -70,6 +70,12 @@ embedded_boundary = picmi.EmbeddedBoundary(
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 1,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_ElectrostaticSphereEB_plt'
+)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -102,6 +108,7 @@ sim = picmi.Simulation(
     warpx_field_gathering_algo='momentum-conserving'
 )
 
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(reduced_diag)
 sim.add_diagnostic(reduced_diag_one_eighth)
@@ -112,6 +119,6 @@ sim.add_diagnostic(reduced_diag_one_eighth)
 
 sim.step(1)
 
-sim.extension.set_potential_EB("2.")
+sim.extension.warpx.set_potential_on_eb("2.")
 
 sim.step(1)

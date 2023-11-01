@@ -55,9 +55,8 @@ If your project uses a specific algorithm or component, please consider citing t
 
 - Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L and Huebl A.
   **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
-  14th International Particle Accelerator Conference (IPAC'23), WEPA101, *in print*, 2023.
-  `preprint <https://www.ipac23.org/preproc/pdf/WEPA101.pdf>`__,
-  `DOI:10.18429/JACoW-IPAC-23-WEPA101 <https://doi.org/10.18429/JACoW-IPAC-23-WEPA101>`__
+  14th International Particle Accelerator Conference (IPAC'23), WEPA101, 2023.
+  `DOI:10.18429/JACoW-IPAC2023-WEPA101 <https://doi.org/10.18429/JACoW-IPAC2023-WEPA101>`__
 
 - Huebl A, Lehe R, Zoni E, Shapoval O, Sandberg R T, Garten M, Formenti A, Jambunathan R, Kumar P, Gott K, Myers A, Zhang W, Almgren A, Mitchell C E, Qiang J, Sinn A, Diederichs S, Thevenet M, Grote D, Fedeli L, Clark T, Zaim N, Vincenti H, Vay JL.
   **From Compact Plasma Particle Sources to Advanced Accelerators with Modeling at Exascale**.
@@ -74,6 +73,11 @@ If your project uses a specific algorithm or component, please consider citing t
   **PICSAR-QED: a Monte Carlo module to simulate Strong-Field Quantum Electrodynamics in Particle-In-Cell codes for exascale architectures**.
   *New Journal of Physics* **24** 025009, 2022.
   `DOI:10.1088/1367-2630/ac4ef1 <https://doi.org/10.1088/1367-2630/ac4ef1>`__
+
+- Lehe R, Blelly A, Giacomel L, Jambunathan R, Vay JL.
+  **Absorption of charged particles in perfectly matched layers by optimal damping of the deposited current**.
+  *Physical Review E* **106** 045306, 2022.
+  `DOI:10.1103/PhysRevE.106.045306 <https://doi.org/10.1103/PhysRevE.106.045306>`__
 
 - Zoni E, Lehe R, Shapoval O, Belkin D, Zaim N, Fedeli L, Vincenti H, Vay JL.
   **A hybrid nodal-staggered pseudo-spectral electromagnetic particle-in-cell method with finite-order centering**. *Computer Physics Communications* **279**, 2022.

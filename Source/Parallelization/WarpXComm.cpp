@@ -181,6 +181,16 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                                                             ng_src, ng, WarpX::do_single_precision_comms, cperiod);
             }
 
+            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+
+            const amrex::IntVect& Bx_fp_stag = Bfield_fp[lev][0]->ixType().toIntVect();
+            const amrex::IntVect& By_fp_stag = Bfield_fp[lev][1]->ixType().toIntVect();
+            const amrex::IntVect& Bz_fp_stag = Bfield_fp[lev][2]->ixType().toIntVect();
+
+            const amrex::IntVect& Bx_cp_stag = Bfield_cp[lev][0]->ixType().toIntVect();
+            const amrex::IntVect& By_cp_stag = Bfield_cp[lev][1]->ixType().toIntVect();
+            const amrex::IntVect& Bz_cp_stag = Bfield_cp[lev][2]->ixType().toIntVect();
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -203,9 +213,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 amrex::ParallelFor(bx,
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, bx_cp, bx_c);
-                    warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, by_cp, by_c);
-                    warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, bz_cp, bz_c);
+                    warpx_interp(j, k, l, bx_aux, bx_fp, bx_cp, bx_c, Bx_fp_stag, Bx_cp_stag, refinement_ratio);
+                    warpx_interp(j, k, l, by_aux, by_fp, by_cp, by_c, By_fp_stag, By_cp_stag, refinement_ratio);
+                    warpx_interp(j, k, l, bz_aux, bz_fp, bz_cp, bz_c, Bz_fp_stag, Bz_cp_stag, refinement_ratio);
                 });
             }
         }
@@ -239,6 +249,16 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                                                             ng_src, ng, WarpX::do_single_precision_comms, cperiod);
             }
 
+            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+
+            const amrex::IntVect& Ex_fp_stag = Efield_fp[lev][0]->ixType().toIntVect();
+            const amrex::IntVect& Ey_fp_stag = Efield_fp[lev][1]->ixType().toIntVect();
+            const amrex::IntVect& Ez_fp_stag = Efield_fp[lev][2]->ixType().toIntVect();
+
+            const amrex::IntVect& Ex_cp_stag = Efield_cp[lev][0]->ixType().toIntVect();
+            const amrex::IntVect& Ey_cp_stag = Efield_cp[lev][1]->ixType().toIntVect();
+            const amrex::IntVect& Ez_cp_stag = Efield_cp[lev][2]->ixType().toIntVect();
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -261,9 +281,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 amrex::ParallelFor(bx,
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, ex_cp, ex_c);
-                    warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, ey_cp, ey_c);
-                    warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, ez_cp, ez_c);
+                    warpx_interp(j, k, l, ex_aux, ex_fp, ex_cp, ex_c, Ex_fp_stag, Ex_cp_stag, refinement_ratio);
+                    warpx_interp(j, k, l, ey_aux, ey_fp, ey_cp, ey_c, Ey_fp_stag, Ey_cp_stag, refinement_ratio);
+                    warpx_interp(j, k, l, ez_aux, ez_fp, ez_cp, ez_c, Ez_fp_stag, Ez_cp_stag, refinement_ratio);
                 });
             }
         }
@@ -561,13 +581,13 @@ WarpX::FillBoundaryE (const int lev, const PatchType patch_type, const amrex::In
                 (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
 
             pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
-            pml[lev]->FillBoundaryE(patch_type);
+            pml[lev]->FillBoundaryE(patch_type, nodal_sync);
         }
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
         if (pml_rz[lev])
         {
-            pml_rz[lev]->FillBoundaryE(patch_type);
+            pml_rz[lev]->FillBoundaryE(patch_type, nodal_sync);
         }
 #endif
     }
@@ -618,13 +638,13 @@ WarpX::FillBoundaryB (const int lev, const PatchType patch_type, const amrex::In
                 (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
 
             pml[lev]->Exchange(mf_pml, mf, patch_type, do_pml_in_domain);
-            pml[lev]->FillBoundaryB(patch_type);
+            pml[lev]->FillBoundaryB(patch_type, nodal_sync);
         }
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
         if (pml_rz[lev])
         {
-            pml_rz[lev]->FillBoundaryB(patch_type);
+            pml_rz[lev]->FillBoundaryB(patch_type, nodal_sync);
         }
 #endif
     }
@@ -761,7 +781,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (F_fp[lev]) pml[lev]->ExchangeF(patch_type, F_fp[lev].get(), do_pml_in_domain);
-            pml[lev]->FillBoundaryF(patch_type);
+            pml[lev]->FillBoundaryF(patch_type, nodal_sync);
         }
 
         if (F_fp[lev])
@@ -776,7 +796,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (F_cp[lev]) pml[lev]->ExchangeF(patch_type, F_cp[lev].get(), do_pml_in_domain);
-            pml[lev]->FillBoundaryF(patch_type);
+            pml[lev]->FillBoundaryF(patch_type, nodal_sync);
         }
 
         if (F_cp[lev])
@@ -805,7 +825,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (G_fp[lev]) pml[lev]->ExchangeG(patch_type, G_fp[lev].get(), do_pml_in_domain);
-            pml[lev]->FillBoundaryG(patch_type);
+            pml[lev]->FillBoundaryG(patch_type, nodal_sync);
         }
 
         if (G_fp[lev])
@@ -820,7 +840,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
             if (G_cp[lev]) pml[lev]->ExchangeG(patch_type, G_cp[lev].get(), do_pml_in_domain);
-            pml[lev]->FillBoundaryG(patch_type);
+            pml[lev]->FillBoundaryG(patch_type, nodal_sync);
         }
 
         if (G_cp[lev])
@@ -1472,63 +1492,4 @@ void WarpX::NodalSyncRho (
         MultiFab rhoc(*charge_cp[lev], amrex::make_alias, icomp, ncomp);
         ablastr::utils::communication::OverrideSync(rhoc, WarpX::do_single_precision_comms, cperiod);
     }
-}
-
-void WarpX::NodalSyncPML ()
-{
-    for (int lev = 0; lev <= finest_level; lev++) {
-        NodalSyncPML(lev);
-    }
-}
-
-void WarpX::NodalSyncPML (int lev)
-{
-    NodalSyncPML(lev, PatchType::fine);
-    if (lev > 0) NodalSyncPML(lev, PatchType::coarse);
-}
-
-void WarpX::NodalSyncPML (int lev, PatchType patch_type)
-{
-    if (pml[lev] && pml[lev]->ok())
-    {
-        const std::array<amrex::MultiFab*,3>& pml_E = (patch_type == PatchType::fine) ?
-                                                      pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
-        const std::array<amrex::MultiFab*,3>& pml_B = (patch_type == PatchType::fine) ?
-                                                      pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
-        amrex::MultiFab* const pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
-        amrex::MultiFab* const pml_G = (patch_type == PatchType::fine) ? pml[lev]->GetG_fp() : pml[lev]->GetG_cp();
-
-        // Always synchronize nodal points
-        const amrex::Periodicity& period = Geom(lev).periodicity();
-        ablastr::utils::communication::OverrideSync(*pml_E[0], WarpX::do_single_precision_comms, period);
-        ablastr::utils::communication::OverrideSync(*pml_E[1], WarpX::do_single_precision_comms, period);
-        ablastr::utils::communication::OverrideSync(*pml_E[2], WarpX::do_single_precision_comms, period);
-        ablastr::utils::communication::OverrideSync(*pml_B[0], WarpX::do_single_precision_comms, period);
-        ablastr::utils::communication::OverrideSync(*pml_B[1], WarpX::do_single_precision_comms, period);
-        ablastr::utils::communication::OverrideSync(*pml_B[2], WarpX::do_single_precision_comms, period);
-        if (pml_F) {
-            ablastr::utils::communication::OverrideSync(*pml_F, WarpX::do_single_precision_comms, period);
-        }
-        if (pml_G) {
-            ablastr::utils::communication::OverrideSync(*pml_G, WarpX::do_single_precision_comms, period);
-        }
-    }
-
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-    if (pml_rz[lev])
-    {
-        // This is not actually needed with RZ PSATD since the
-        // arrays are always cell centered. Keep for now since
-        // it may be useful if the PML is used with FDTD
-        const std::array<amrex::MultiFab*,2> pml_rz_E = pml_rz[lev]->GetE_fp();
-        const std::array<amrex::MultiFab*,2> pml_rz_B = pml_rz[lev]->GetB_fp();
-
-        // Always synchronize nodal points
-        const amrex::Periodicity& period = Geom(lev).periodicity();
-        pml_rz_E[0]->OverrideSync(period);
-        pml_rz_E[1]->OverrideSync(period);
-        pml_rz_B[0]->OverrideSync(period);
-        pml_rz_B[1]->OverrideSync(period);
-    }
-#endif
 }

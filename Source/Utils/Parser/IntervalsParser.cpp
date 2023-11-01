@@ -16,9 +16,9 @@
 
 #include <algorithm>
 
-utils::parser::SliceParser::SliceParser (const std::string& instr, const bool isBTD)
+utils::parser::SliceParser::SliceParser (const std::string& instr, const bool isBTD):
+    m_isBTD{isBTD}
 {
-    m_isBTD = isBTD;
     // split string and trim whitespaces
     auto insplit = ablastr::utils::text::split_string<std::vector<std::string>>(
         instr, m_separator, true);
@@ -205,7 +205,7 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
         }
         else
         {
-            btd_iter_ind = m_btd_iterations.size() - 1;
+            btd_iter_ind = static_cast<int>(m_btd_iterations.size() - 1);
             while (start < m_btd_iterations.at(btd_iter_ind) and btd_iter_ind>0)
             {
                 btd_iter_ind--;
@@ -256,7 +256,7 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
 
 int utils::parser::BTDIntervalsParser::NumSnapshots () const
 {
-    return m_btd_iterations.size();
+    return static_cast<int>(m_btd_iterations.size());
 }
 
 

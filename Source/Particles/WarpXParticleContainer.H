@@ -47,8 +47,6 @@
 #include <utility>
 
 
-using namespace amrex::literals;
-
 class WarpXParIter
     : public amrex::ParIter<0,0,PIdx::nattribs>
 {
@@ -117,7 +115,13 @@ public:
     using DiagnosticParticles = amrex::Vector<std::map<std::pair<int, int>, DiagnosticParticleData> >;
 
     WarpXParticleContainer (amrex::AmrCore* amr_core, int ispecies);
-    virtual ~WarpXParticleContainer() {}
+    ~WarpXParticleContainer() override {}
+
+    // Move and copy operations
+    WarpXParticleContainer(const WarpXParticleContainer&)            = delete;
+    WarpXParticleContainer& operator=(const WarpXParticleContainer&) = delete;
+    WarpXParticleContainer(WarpXParticleContainer&&)                 = default;
+    WarpXParticleContainer& operator=(WarpXParticleContainer&&)      = default;
 
     virtual void InitData () = 0;
 
@@ -299,7 +303,7 @@ public:
      * @param[in] id if different than -1, this id will be assigned to the particles (used for
      * particle tagging in some routines, e.g. SplitParticle)
      */
-    void AddNParticles (int lev, int n,
+    void AddNParticles (int lev, long n,
                         amrex::Vector<amrex::ParticleReal> const & x,
                         amrex::Vector<amrex::ParticleReal> const & y,
                         amrex::Vector<amrex::ParticleReal> const & z,
@@ -381,7 +385,7 @@ public:
      * override the method for every derived class. Note that in practice this function is never
      * called because resample() is only called for PhysicalParticleContainers.
      */
-    virtual void resample (const int /*timestep*/) {}
+    virtual void resample (const int /*timestep*/, bool /*verbose*/) {}
 
     /**
      * When using runtime components, AMReX requires to touch all tiles
@@ -464,8 +468,7 @@ protected:
     TmpParticles tmp_particle_data;
 
 private:
-    virtual void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,
-                                    int lev) override;
+    void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld, int lev) override;
 
 };
 

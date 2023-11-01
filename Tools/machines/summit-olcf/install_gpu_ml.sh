@@ -60,6 +60,7 @@ then
   git fetch
   git checkout .
   git checkout v2.0.1
+  git submodule update --init --recursive
   cd -
 else
   git clone -b v2.0.1 --recurse-submodules https://github.com/pytorch/pytorch.git /ccs/proj/${proj}/${USER}/src/pytorch

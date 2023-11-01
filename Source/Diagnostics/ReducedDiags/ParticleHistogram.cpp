@@ -50,8 +50,8 @@ struct NormalizationType {
 };
 
 // constructor
-ParticleHistogram::ParticleHistogram (std::string rd_name)
-: ReducedDiags{rd_name}
+ParticleHistogram::ParticleHistogram (std::string rd_name):
+    ReducedDiags{rd_name}
 {
     const ParmParse pp_rd_name(rd_name);
 
@@ -60,10 +60,15 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     pp_rd_name.get("species",selected_species_name);
 
     // read bin parameters
-    utils::parser::getWithParser(pp_rd_name, "bin_number",m_bin_num);
-    utils::parser::getWithParser(pp_rd_name, "bin_max",   m_bin_max);
-    utils::parser::getWithParser(pp_rd_name, "bin_min",   m_bin_min);
-    m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
+    int bin_num = 0;
+    amrex::Real bin_max = 0.0_rt, bin_min = 0.0_rt;
+    utils::parser::getWithParser(pp_rd_name, "bin_number", bin_num);
+    utils::parser::getWithParser(pp_rd_name, "bin_max",    bin_max);
+    utils::parser::getWithParser(pp_rd_name, "bin_min",    bin_min);
+    m_bin_num = bin_num;
+    m_bin_max = bin_max;
+    m_bin_min = bin_min;
+    m_bin_size = (bin_max - bin_min) / bin_num;
 
     // read histogram function
     std::string function_string;
@@ -196,7 +201,7 @@ void ParticleHistogram::ComputeDiags (int step)
         {
             for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
             {
-                auto const GetPosition = GetParticlePosition(pti);
+                auto const GetPosition = GetParticlePosition<PIdx>(pti);
 
                 auto & attribs = pti.GetAttribs();
                 ParticleReal* const AMREX_RESTRICT d_w = attribs[PIdx::w].dataPtr();
@@ -219,7 +224,7 @@ void ParticleHistogram::ComputeDiags (int step)
 
                     // don't count a particle if it is filtered out
                     if (do_parser_filter)
-                        if (!fun_filterparser(t, x, y, z, ux, uy, uz))
+                        if (fun_filterparser(t, x, y, z, ux, uy, uz) == 0._rt)
                             return;
                     // continue function if particle is not filtered out
                     auto const f = fun_partparser(t, x, y, z, ux, uy, uz);
@@ -247,7 +252,7 @@ void ParticleHistogram::ComputeDiags (int step)
 
     // reduced sum over mpi ranks
     ParallelDescriptor::ReduceRealSum
-        (m_data.data(), m_data.size(), ParallelDescriptor::IOProcessorNumber());
+        (m_data.data(), static_cast<int>(m_data.size()), ParallelDescriptor::IOProcessorNumber());
 
     // normalize the maximum value to be one
     if ( m_norm == NormalizationType::max_to_unity )
