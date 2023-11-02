@@ -528,6 +528,7 @@ void PsatdAlgorithmJRm::InitializeSpectralCoefficientsAveraging (
             {
                 Y7(i,j,k) = - dt3 / (24._rt * ep0);
             }
+
             if (om_s != 0.)
             {
                 Y8(i,j,k) =  ( dt - S_ck(i,j,k) ) / (ep0*om2_s);
