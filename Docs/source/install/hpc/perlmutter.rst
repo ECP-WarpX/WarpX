@@ -13,7 +13,7 @@ If you are new to this system, **please see the following resources**:
 
 * `NERSC user guide <https://docs.nersc.gov/>`__
 * Batch system: `Slurm <https://docs.nersc.gov/systems/perlmutter/#running-jobs>`__
-* `Jupyter service <https://docs.nersc.gov/services/jupyter/>`__
+* `Jupyter service <https://jupyter.nersc.gov>`__ (`documentation <https://docs.nersc.gov/services/jupyter/>`__)
 * `Filesystems <https://docs.nersc.gov/filesystems/>`__:
 
   * ``$HOME``: per-user directory, use only for inputs, source and scripts; backed up (40GB)
@@ -271,29 +271,36 @@ Running
 Post-Processing
 ---------------
 
-For post-processing, most users use Python via NERSC's `Jupyter service <https://jupyter.nersc.gov>`__ (`Docs <https://docs.nersc.gov/services/jupyter/>`__).
+For post-processing, most users use Python via NERSC's `Jupyter service <https://jupyter.nersc.gov>`__ (`documentation <https://docs.nersc.gov/services/jupyter/>`__).
 
-As a one-time preparatory setup, create your own Conda environment:
+As a one-time preparatory setup, log into Perlmutter via SSH and do *not* source the WarpX profile script above.
+Create your own Conda environment and `Jupyter kernel <https://docs.nersc.gov/services/jupyter/how-to-guides/#how-to-use-a-conda-environment-as-a-python-kernel>`__ for post-processing:
 
 .. code-block:: bash
 
    module load python
-   conda create --yes -n warpx_postproc -c conda-forge mamba
-   conda activate warpx_postproc
-   mamba install --yes -c conda-forge python ipykernel ipympl==0.8.6 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram dask dask-jobqueue pyarrow
-   python -m ipykernel install --user --name warpx_postproc --display-name WarpXPostProcessing
-   echo '#!/bin/bash\nmodule load python\nsource activate warpx_postproc\nexec "$@"' > $HOME/.local/share/jupyter/kernels/warpx_postproc/kernel-helper.sh
-   conda deactivate
+
+   conda config --set auto_activate_base false
+
+   # create conda environment
+   rm -rf $HOME/.conda/envs/warpx-pm-postproc
+   conda create --yes -n warpx-pm-postproc -c conda-forge mamba conda-libmamba-solver
+   conda activate warpx-pm-postproc
+   conda config --set solver libmamba
+   mamba install --yes -c conda-forge python ipykernel ipympl matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram dask dask-jobqueue pyarrow
+
+   # create Jupyter kernel
+   rm -rf $HOME/.local/share/jupyter/kernels/warpx-pm-postproc/
+   python -m ipykernel install --user --name warpx-pm-postproc --display-name WarpX-PM-PostProcessing
+   echo -e '#!/bin/bash\nmodule load python\nsource activate warpx-pm-postproc\nexec "$@"' > $HOME/.local/share/jupyter/kernels/warpx-pm-postproc/kernel-helper.sh
+   chmod a+rx $HOME/.local/share/jupyter/kernels/warpx-pm-postproc/kernel-helper.sh
+   KERNEL_STR=$(jq '.argv |= ["{resource_dir}/kernel-helper.sh"] + .' $HOME/.local/share/jupyter/kernels/warpx-pm-postproc/kernel.json | jq '.argv[1] = "python"')
+   echo ${KERNEL_STR} | jq > $HOME/.local/share/jupyter/kernels/warpx-pm-postproc/kernel.json
+
+   exit
 
 
-When opening a Jupyter notebook, just select `WarpXPostProcessing` from the list of available kernels on the top right of the notebook.
-(For more info on `conda` environments and JupyterHub at NERSC, see `this page <https://docs.nersc.gov/services/jupyter/how-to-guides/#how-to-use-a-conda-environment-as-a-python-kernel>`__.)
+When opening a Jupyter notebook on `https://jupyter.nersc.gov <https://jupyter.nersc.gov>`__, just select ``WarpX-PM-PostProcessing`` from the list of available kernels on the top right of the notebook.
 
-Additional software can be installed later on, e.g., in a Jupyter cell using ``!mamba install -c conda-forge ...``.
+Additional software can be installed later on, e.g., in a Jupyter cell using ``!mamba install -y -c conda-forge ...``.
 Software that is not available via conda can be installed via ``!python -m pip install ...``.
-
-.. warning::
-
-   Jan 6th, 2022 (NERSC-INC0179165 and `ipympl #416 <https://github.com/matplotlib/ipympl/issues/416>`__):
-   Above, we fixated the ``ipympl`` version to *not* take the latest release of `Matplotlib Jupyter Widgets <https://github.com/matplotlib/ipympl>`__.
-   This is an intentional work-around; the ``ipympl`` version needs to exactly fit the version pre-installed on the Jupyter base system.
