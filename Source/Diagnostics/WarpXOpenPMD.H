@@ -88,6 +88,7 @@ public:
    * @param engine_type ADIOS engine for output
    * @param engine_parameters map of parameters for the engine
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
+   * @param authors a string specifying the authors of the simulation (can be empty)
    */
   WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
                     std::string filetype,
