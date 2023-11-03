@@ -127,7 +127,7 @@ option(WarpX_PYTHON_IPO
 )
 
 set(pyWarpX_VERSION_INFO "" CACHE STRING
-    "PEP-440 conformant version (set by distutils)")
+    "PEP-440 conformant version (set by setup.py)")
 
 # enforce consistency of dependent options
 if(WarpX_APP OR WarpX_PYTHON)

@@ -23,6 +23,8 @@ export LD_LIBRARY_PATH=${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/adios2-2.8.3/
 export LD_LIBRARY_PATH=${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/blaspp-master/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
+export PATH=${CFS}/${proj%_g}/${USER}/sw/perlmutter/gpu/adios2-2.8.3/bin:${PATH}
+
 # optional: CCache
 export PATH=/global/common/software/spackecp/perlmutter/e4s-23.05/default/spack/opt/spack/linux-sles15-zen3/gcc-11.2.0/ccache-4.8-eqk2d3bipbpkgwxq7ujlp6mckwal4dwz/bin:$PATH
 
