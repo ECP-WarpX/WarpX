@@ -833,17 +833,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 #endif
         utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
             str_Bz_ext_grid_function);
+
         Bxfield_parser = std::make_unique<amrex::Parser>(
-        utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+            utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
         Byfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
-#ifdef WARPX_DIM_RZ
         Bzfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
-#else
-        Bzfield_parser = std::make_unique<amrex::Parser>(
-            utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
-#endif
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
