@@ -34,7 +34,7 @@ void InstallPythonCallback ( const std::string& name, std::function<void()> call
 /**
  * \brief Function to check if the given name is a key in warpx_callback_py_map
  */
-bool IsPythonCallBackInstalled ( const std::string& name );
+bool IsPythonCallbackInstalled ( const std::string& name );
 
 /**
  * \brief Function to look for and execute Python callbacks
