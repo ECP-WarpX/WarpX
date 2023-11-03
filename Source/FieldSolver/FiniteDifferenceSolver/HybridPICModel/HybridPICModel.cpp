@@ -138,7 +138,7 @@ void HybridPICModel::InitData ()
 
     // check if the external current parsers depend on time
     for (int i=0; i<3; i++) {
-        const std::set<std::string> J_ext_symbols = m_J_external_parser[0]->symbols();
+        const std::set<std::string> J_ext_symbols = m_J_external_parser[i]->symbols();
         m_external_field_has_time_dependence += J_ext_symbols.count("t");
     }
 
@@ -221,6 +221,7 @@ void HybridPICModel::InitData ()
 
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
+#ifdef AMREX_USE_EB
         auto& edge_lengths_x = warpx.getedgelengths(lev, 0);
         edge_lengths[0] = std::make_unique<amrex::MultiFab>(
             edge_lengths_x, amrex::make_alias, 0, edge_lengths_x.nComp()
@@ -233,6 +234,7 @@ void HybridPICModel::InitData ()
         edge_lengths[2] = std::make_unique<amrex::MultiFab>(
             edge_lengths_z, amrex::make_alias, 0, edge_lengths_z.nComp()
         );
+#endif
         GetCurrentExternal(edge_lengths, lev);
     }
 }
