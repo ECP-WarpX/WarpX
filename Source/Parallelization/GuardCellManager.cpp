@@ -123,6 +123,8 @@ guardCellManager::Init (
 #elif defined(WARPX_DIM_1D_Z)
     ng_alloc_EB = IntVect(ngz);
     ng_alloc_J = IntVect(ngJz);
+#else
+    amrex::ignore(ngx, ngy, ngz, ngJx, ngJy, ngJz);
 #endif
 
     // TODO Adding one cell for rho should not be necessary, given that the number of guard cells

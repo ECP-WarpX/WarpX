@@ -58,6 +58,10 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         const bool interpolate = true;
         std::unique_ptr< amrex::MultiFab > slice = nullptr;
         const int scomp = 0;
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_mf_src != nullptr,
+            "mf_src should not be null.");
+
         // Generate slice of the cell-centered multifab containing boosted-frame field-data
         // at current z-boost location for the ith buffer
         slice = amrex::get_slice_data(moving_window_dir,
