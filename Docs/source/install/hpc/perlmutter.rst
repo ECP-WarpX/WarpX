@@ -273,29 +273,21 @@ Post-Processing
 
 For post-processing, most users use Python via NERSC's `Jupyter service <https://jupyter.nersc.gov>`__ (`Docs <https://docs.nersc.gov/services/jupyter/>`__).
 
-As a one-time preparatory setup, `create your own Conda environment as described in NERSC docs <https://docs.nersc.gov/services/jupyter/#conda-environments-as-kernels>`__.
-In this manual, we often use this ``conda create`` line over the officially documented one:
+As a one-time preparatory setup, create your own Conda environment:
 
 .. code-block:: bash
 
    module load python
-   conda create -n myenv -c conda-forge mamba
-   conda activate myenv
-   mamba install -c conda-forge python ipykernel ipympl==0.8.6 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram dask dask-jobqueue pyarrow
+   conda create --yes -n warpx_postproc -c conda-forge mamba
+   conda activate warpx_postproc
+   mamba install --yes -c conda-forge python ipykernel ipympl==0.8.6 matplotlib numpy pandas yt openpmd-viewer openpmd-api h5py fast-histogram dask dask-jobqueue pyarrow
+   python -m ipykernel install --user --name warpx_postproc --display-name WarpXPostProcessing
+   echo '#!/bin/bash\nmodule load python\nsource activate warpx_postproc\nexec "$@"' > $HOME/.local/share/jupyter/kernels/warpx_postproc/kernel-helper.sh
    conda deactivate
 
-We then follow the `Customizing Kernels with a Helper Shell Script <https://docs.nersc.gov/services/jupyter/#customizing-kernels-with-a-helper-shell-script>`__ section to finalize the setup of using this conda-environment as a custom Jupyter kernel.
 
-``kernel_helper.sh`` should read:
-
-.. code-block:: bash
-
-   #!/bin/bash
-   module load python
-   source activate myenv
-   exec "$@"
-
-When opening a Jupyter notebook, just select the name you picked for your custom kernel on the top right of the notebook.
+When opening a Jupyter notebook, just select `WarpXPostProcessing` from the list of available kernels on the top right of the notebook.
+(For more info on `conda` environments and JupyterHub at NERSC, see `this page <https://docs.nersc.gov/services/jupyter/how-to-guides/#how-to-use-a-conda-environment-as-a-python-kernel>`__.)
 
 Additional software can be installed later on, e.g., in a Jupyter cell using ``!mamba install -c conda-forge ...``.
 Software that is not available via conda can be installed via ``!python -m pip install ...``.
