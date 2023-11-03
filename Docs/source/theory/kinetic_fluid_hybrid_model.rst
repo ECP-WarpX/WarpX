@@ -35,25 +35,46 @@ neglecting the displacement current term :cite:p:`c-NIELSON1976`, giving,
 
         \mu_0\vec{J} = \vec{\nabla}\times\vec{B},
 
-where :math:`\vec{J} = \vec{J}_i - \vec{J}_e` is the total electrical current, i.e.
-the sum of electron and ion currents. Since ions are treated in the regular
-PIC manner, the ion current, :math:`\vec{J}_i`, is known during a simulation. Therefore,
+where :math:`\vec{J} = \sum_{s\neq e}\vec{J}_s + \vec{J}_e + \vec{J}_{ext}` is the total electrical current,
+i.e. the sum of electron and ion currents as well as any external current (not captured through plasma
+particles). Since ions are treated in the regular
+PIC manner, the ion current, :math:`\sum_{s\neq e}\vec{J}_s`, is known during a simulation. Therefore,
 given the magnetic field, the electron current can be calculated.
 
-If we now further assume electrons are inertialess, the electron momentum
-equation yields,
+The electron momentum transport equation (obtained from multiplying the Vlasov equation by mass and
+integrating over velocity), also called the generalized Ohm's law, is given by:
 
     .. math::
 
-        \frac{d(n_em_e\vec{V}_e)}{dt} = 0 = -en_e\vec{E}-\vec{J}_e\times\vec{B}-\nabla\cdot\vec{P}_e+en_e\vec{\eta}\cdot\vec{J},
+        en_e\vec{E} = \frac{m}{e}\frac{\partial \vec{J}_e}{\partial t} + \frac{m}{e^2}\left( \vec{U}_e\cdot\nabla \right) \vec{J}_e - \nabla\cdot {\overleftrightarrow P}_e - \vec{J}_e\times\vec{B}+\vec{R}_e
 
-where :math:`\vec{V_e}=\vec{J}_e/(en_e)`, :math:`\vec{P}_e` is the electron pressure
-tensor and :math:`\vec{\eta}` is the resistivity tensor. An expression for the electric field
-(generalized Ohm's law) can be obtained from the above as:
+Applying the above momentum equation to the Maxwell-Faraday equation (:math:`\frac{\partial\vec{B}}{\partial t} = -\nabla\times\vec{E}`)
+and substituting in :math:`\vec{J}` calculated from the Maxwell-Ampere equation, gives,
 
     .. math::
 
-        \vec{E} = -\frac{1}{en_e}\left( \vec{J}_e\times\vec{B} + \nabla\cdot\vec{P}_e \right)+\vec{\eta}\cdot\vec{J}.
+        \frac{\partial\vec{J}_e}{\partial t} = -\frac{1}{\mu_0}\nabla\times\left(\nabla\times\vec{E}\right) - \frac{\partial\vec{J}_{ext}}{\partial t} - \sum_{s\neq e}\frac{\partial\vec{J}_s}{\partial t}.
+
+Plugging this back into the generalized Ohm' law gives:
+
+    .. math::
+
+        \left(en +\frac{m}{e\mu_0}\nabla\times\nabla\times\right)\vec{E} = - \frac{m}{e}\left( \frac{\partial\vec{J}_{ext}}{\partial t} - \sum_{s\neq e}\frac{\partial\vec{J}_s}{\partial t} \right) + \frac{m}{e^2}\left( \vec{U}_e\cdot\nabla \right) \vec{J}_e - \nabla\cdot {\overleftrightarrow P}_e - \vec{J}_e\times\vec{B}+\vec{R}_e.
+
+If we now further assume electrons are inertialess, the above equation simplifies to,
+
+    .. math::
+
+        en_e\vec{E} = -\vec{J}_e\times\vec{B}-\nabla\cdot{\overleftrightarrow P}_e+\vec{R}_e.
+
+Making the further simplifying assumptions that the electron pressure is isotropic and that
+the electron drag term can be written as a simple resistance
+i.e. :math:`\vec{R}_e = en_e\vec{\eta}\cdot\vec{J}`, brings us to the implemented form of
+Ohm's law:
+
+    .. math::
+
+        \vec{E} = -\frac{1}{en_e}\left( \vec{J}_e\times\vec{B} + \nabla P_e \right)+\vec{\eta}\cdot\vec{J}.
 
 Lastly, if an electron temperature is given from which the electron pressure can
 be calculated, the model is fully constrained and can be evolved given initial
