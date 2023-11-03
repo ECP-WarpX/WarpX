@@ -4,7 +4,7 @@ import sys
 
 import numpy as np
 
-from pywarpx import callbacks, particle_containers, picmi
+from pywarpx import callbacks, libwarpx, particle_containers, picmi
 
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
@@ -70,6 +70,12 @@ electrons = picmi.Species(
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = 10,
+    write_dir = '.',
+    warpx_file_prefix = f"Python_particle_attr_access_{'unique_' if args.unique else ''}plt"
+)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -96,6 +102,7 @@ sim.add_species(
         n_macroparticle_per_cell=[0, 0], grid=grid
     )
 )
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 
 sim.initialize_inputs()
@@ -112,7 +119,7 @@ np.random.seed(30025025)
 elec_wrapper = particle_containers.ParticleContainerWrapper('electrons')
 elec_wrapper.add_real_comp('newPid')
 
-my_id = sim.extension.getMyProc()
+my_id = libwarpx.amr.ParallelDescriptor.MyProc()
 
 def add_particles():
 

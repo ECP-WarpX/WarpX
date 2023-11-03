@@ -3,6 +3,7 @@ foreach(D IN LISTS WarpX_DIMS)
     target_sources(lib_${SD}
       PRIVATE
         BeamRelevant.cpp
+        ColliderRelevant.cpp
         FieldEnergy.cpp
         FieldProbe.cpp
         FieldProbeParticleContainer.cpp

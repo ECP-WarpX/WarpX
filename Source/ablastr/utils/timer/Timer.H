@@ -8,8 +8,6 @@
 #ifndef ABLASTR_TIMER_H_
 #define ABLASTR_TIMER_H_
 
-#include <AMReX_REAL.H>
-
 namespace ablastr::utils::timer
 {
 
@@ -46,7 +44,7 @@ namespace ablastr::utils::timer
         *
         * @return the duration
         */
-        amrex::Real get_duration () noexcept;
+        double get_duration () noexcept;
 
 
         /**
@@ -55,12 +53,12 @@ namespace ablastr::utils::timer
         *
         * @return the maximum duration across all the MPI ranks
         */
-        amrex::Real get_global_duration ();
+        double get_global_duration ();
 
         private:
 
-        amrex::Real m_start_time /*! The start time*/;
-        amrex::Real m_stop_time /*! The stop time*/;
+        double m_start_time /*! The start time*/;
+        double m_stop_time /*! The stop time*/;
     };
 
 }

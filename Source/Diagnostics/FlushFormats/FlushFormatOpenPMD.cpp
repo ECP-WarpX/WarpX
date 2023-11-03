@@ -112,7 +112,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 
 void
 FlushFormatOpenPMD::WriteToFile (
-    const amrex::Vector<std::string> varnames,
+    const amrex::Vector<std::string>& varnames,
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
@@ -155,10 +155,11 @@ FlushFormatOpenPMD::WriteToFile (
 
     // fields: only dumped for coarse level
     m_OpenPMDPlotWriter->WriteOpenPMDFieldsAll(
-        varnames, mf, geom, output_levels, output_iteration, time, isBTD, full_BTD_snapshot);
+        varnames, mf, geom, output_levels, output_iteration, static_cast<amrex::Real>(time), isBTD, full_BTD_snapshot);
 
     // particles: all (reside only on locally finest level)
-    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags, time, use_pinned_pc, isBTD, isLastBTDFlush, totalParticlesFlushedAlready);
+    m_OpenPMDPlotWriter->WriteOpenPMDParticles(
+      particle_diags, static_cast<amrex::Real>(time), use_pinned_pc, isBTD, isLastBTDFlush, totalParticlesFlushedAlready);
 
     // signal that no further updates will be written to this iteration
     m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);
