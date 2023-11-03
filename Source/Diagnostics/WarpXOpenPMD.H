@@ -95,7 +95,8 @@ public:
                     std::map< std::string, std::string > operator_parameters,
                     std::string engine_type,
                     std::map< std::string, std::string > engine_parameters,
-                    std::vector<bool> fieldPMLdirections);
+                    std::vector<bool> fieldPMLdirections,
+                    const std::string& authors);
 
   ~WarpXOpenPMDPlot ();
 
@@ -339,6 +340,9 @@ private:
 
   // meta data
   std::vector< bool > m_fieldPMLdirections; //! @see WarpX::getPMLdirections()
+
+  // The authors' string
+  std::string m_authors;
 };
 #endif // WARPX_USE_OPENPMD
 

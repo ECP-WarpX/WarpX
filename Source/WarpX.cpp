@@ -88,7 +88,6 @@ using namespace amrex;
 Vector<Real> WarpX::E_external_grid(3, 0.0);
 Vector<Real> WarpX::B_external_grid(3, 0.0);
 
-std::string WarpX::authors;
 std::string WarpX::B_ext_grid_s = "default";
 std::string WarpX::E_ext_grid_s = "default";
 bool WarpX::add_external_E_field = false;
@@ -518,7 +517,7 @@ WarpX::ReadParameters ()
         const ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         utils::parser::queryWithParser(pp, "max_step", max_step);
         utils::parser::queryWithParser(pp, "stop_time", stop_time);
-        pp.query("authors", authors);
+        pp.query("authors", m_authors);
     }
 
     {
