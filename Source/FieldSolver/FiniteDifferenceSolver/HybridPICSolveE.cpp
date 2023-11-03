@@ -486,6 +486,9 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
         Array4<Real const> const& Jir = Jifield[0]->const_array(mfi);
         Array4<Real const> const& Jit = Jifield[1]->const_array(mfi);
         Array4<Real const> const& Jiz = Jifield[2]->const_array(mfi);
+        Array4<Real const> const& Jextr = Jextfield[0]->const_array(mfi);
+        Array4<Real const> const& Jextt = Jextfield[1]->const_array(mfi);
+        Array4<Real const> const& Jextz = Jextfield[2]->const_array(mfi);
         Array4<Real const> const& Br = Bfield[0]->const_array(mfi);
         Array4<Real const> const& Bt = Bfield[1]->const_array(mfi);
         Array4<Real const> const& Bz = Bfield[2]->const_array(mfi);
@@ -510,16 +513,16 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
 
             // calculate enE = (J - Ji) x B
             enE_nodal(i, j, 0, 0) = (
-                (jt_interp - jit_interp) * Bz_interp
-                - (jz_interp - jiz_interp) * Bt_interp
+                (jt_interp - jit_interp - Jextt(i, j, 0)) * Bz_interp
+                - (jz_interp - jiz_interp - Jextz(i, j, 0)) * Bt_interp
             );
             enE_nodal(i, j, 0, 1) = (
-                (jz_interp - jiz_interp) * Br_interp
-                - (jr_interp - jir_interp) * Bz_interp
+                (jz_interp - jiz_interp - Jextz(i, j, 0)) * Br_interp
+                - (jr_interp - jir_interp - Jextr(i, j, 0)) * Bz_interp
             );
             enE_nodal(i, j, 0, 2) = (
-                (jr_interp - jir_interp) * Bt_interp
-                - (jt_interp - jit_interp) * Br_interp
+                (jr_interp - jir_interp - Jextr(i, j, 0)) * Bt_interp
+                - (jt_interp - jit_interp - Jextt(i, j, 0)) * Br_interp
             );
         });
 
