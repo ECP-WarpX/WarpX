@@ -91,8 +91,8 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     SetParticleSize();
     ReadParameters();
 
-    // This needs to be here since ReadParameters is static but the m_E_external_particle and B are not
-    // Should they be declared static?
+    // Reading the external fields needs to be here since ReadParameters
+    // is static but the m_E_external_particle and B are not
     const ParmParse pp_particles("particles");
 
     // allocating and initializing default values of external fields for particles
