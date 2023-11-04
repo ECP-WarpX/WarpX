@@ -263,12 +263,6 @@ void HybridPICModel::GetCurrentExternal (
     auto t = warpx.gett_new(lev);
 
     auto dx_lev = warpx.Geom(lev).CellSizeArray();
-    // amrex::IntVect refratio = (lev > 0 ) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1);
-    // if (patch_type == PatchType::coarse) {
-    //     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-    //         dx_lev[idim] = dx_lev[idim] * refratio[idim];
-    //     }
-    // }
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
 
     auto& mfx = current_fp_external[lev][0];

@@ -59,7 +59,7 @@ Plugging this back into the generalized Ohm' law gives:
 
     .. math::
 
-        \left(en +\frac{m}{e\mu_0}\nabla\times\nabla\times\right)\vec{E} = - \frac{m}{e}\left( \frac{\partial\vec{J}_{ext}}{\partial t} - \sum_{s\neq e}\frac{\partial\vec{J}_s}{\partial t} \right) + \frac{m}{e^2}\left( \vec{U}_e\cdot\nabla \right) \vec{J}_e - \nabla\cdot {\overleftrightarrow P}_e - \vec{J}_e\times\vec{B}+\vec{R}_e.
+        \left(en +\frac{m}{e\mu_0}\nabla\times\nabla\times\right)\vec{E} = - \frac{m}{e}\left( \frac{\partial\vec{J}_{ext}}{\partial t} + \sum_{s\neq e}\frac{\partial\vec{J}_s}{\partial t} \right) + \frac{m}{e^2}\left( \vec{U}_e\cdot\nabla \right) \vec{J}_e - \nabla\cdot {\overleftrightarrow P}_e - \vec{J}_e\times\vec{B}+\vec{R}_e.
 
 If we now further assume electrons are inertialess, the above equation simplifies to,
 
