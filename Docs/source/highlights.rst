@@ -140,3 +140,11 @@ High-Performance Computing and Numerics
 Scientific works in High-Performance Computing, applied mathematics and numerics.
 
 Please see :ref:`this section <acknowledge_warpx_all_refs>`.
+
+Nuclear fusion - Magnetically confined plasmas
+**********************************************
+
+#. Nicks, B. S., Putvinski, S. and Tajima, T.
+   **Stabilization of the Alfvén-ion cyclotron instability through short plasmas: Fully kinetic simulations in a high-beta regime**.
+   Physics of Plasmas **30**, 102108, 2023.
+   `DOI:10.1063/5.0163889 <https://doi.org/10.1063/5.0163889>`__
