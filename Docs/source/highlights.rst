@@ -141,7 +141,7 @@ Scientific works in High-Performance Computing, applied mathematics and numerics
 
 Please see :ref:`this section <acknowledge_warpx_all_refs>`.
 
-Nuclear fusion - Magnetically confined plasmas
+Nuclear Fusion - Magnetically Confined Plasmas
 **********************************************
 
 #. Nicks, B. S., Putvinski, S. and Tajima, T.
