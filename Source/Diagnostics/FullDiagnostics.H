@@ -27,7 +27,7 @@ private:
      */
     bool m_solver_deposits_current = true;
     /** Flush m_mf_output and particles to file for the i^th buffer */
-    void Flush (int i_buffer) override;
+    void Flush (int i_buffer, bool /* force_flush */) override;
     /** Flush raw data */
     void FlushRaw ();
     /** whether to compute and pack cell-centered data in m_mf_output
