@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 
-from pywarpx import picmi
-from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper
-from pywarpx.callbacks import installafterInitEsolve, installafterEsolve
-from pywarpx.particle_containers import ParticleBoundaryBufferWrapper, ParticleContainerWrapper
-import scipy.constants as scc
-import numpy as np
-from mpi4py import MPI as mpi
 import matplotlib.pyplot as plt
+from mpi4py import MPI as mpi
+import numpy as np
+import scipy.constants as scc
+
+from pywarpx import picmi
+from pywarpx.callbacks import installafterEsolve, installafterInitEsolve
+from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper
+from pywarpx.particle_containers import (
+    ParticleBoundaryBufferWrapper,
+    ParticleContainerWrapper,
+)
 
 
 # Utilities
@@ -33,11 +37,11 @@ class SpaceChargeFieldCorrector(object):
 
         # Correct fields so as to recover the actual charge
         Er = ExWrapper(include_ghosts=True)[:,:]
-        Er[...] = Er[...]+(q - q_v)*self.normalized_Er[...] 
+        Er[...] = Er[...]+(q - q_v)*self.normalized_Er[...]
         Ez = EzWrapper(include_ghosts=True)[:,:]
-        Ez[...]  += (q - q_v)*self.normalized_Ez[...] 
+        Ez[...]  += (q - q_v)*self.normalized_Ez[...]
         phi = PhiFPWrapper(include_ghosts=True)[:,:]
-        phi[...]  += (q - q_v)*self.normalized_phi[...] 
+        phi[...]  += (q - q_v)*self.normalized_phi[...]
         self.spacecraft_potential += (q - q_v)*self.spacecraft_capacitance
         sim.extension.warpx.set_potential_on_eb( "%f" %self.spacecraft_potential )
         print('Setting potential to %f' %self.spacecraft_potential)
@@ -47,7 +51,7 @@ class SpaceChargeFieldCorrector(object):
 
     def save_normalized_vacuum_Efields(self,):
         # Compute the charge that WarpX thinks there is on the spacecraft
-	    # from phi and rho after the Poisson solver
+        # from phi and rho after the Poisson solver
         q_v = compute_virtual_charge_on_spacecraft()
         self.spacecraft_capacitance = 1./q_v # the potential was set to 1V
 
@@ -90,14 +94,14 @@ def compute_virtual_charge_on_spacecraft():
 
     # Compute integral of grad phi over surfaces of the domain
     r = np.linspace(rmin, rmax, len(phi), endpoint=False) + (rmax - rmin) / (2 * len(phi)) #shift of the r points because the derivaties are calculated in the middle
-    
 
-    
+
+
     face_z0 = 2 * np.pi *  1./dz * ( (phi[:,0]-phi[:,1]) * r ).sum() * dr #here I am assuming that phi is a numpy array that can handle elementwise mult
     face_zend = 2 * np.pi * 1./dz * ( (phi[:,-1]-phi[:,-2]) * r ).sum() * dr
     face_rend = 2 * np.pi * 1./dr*((phi[-1,:]-phi[-2,:]) * rmax).sum() * dz
-    grad_phi_integral = face_z0 + face_zend + face_rend 
- 
+    grad_phi_integral = face_z0 + face_zend + face_rend
+
 
 
 
@@ -105,8 +109,8 @@ def compute_virtual_charge_on_spacecraft():
     # (i.e. total charge of the plasma particles)
     rho_integral = 0.0
     for k in range(1, nz-1):
-	    for i in range(1, nr-1):
-		    rho_integral += rho[i,k] * r[i] * dr * dz
+        for i in range(1, nr-1):
+            rho_integral += rho[i,k] * r[i] * dr * dz
 
     # Due to an oddity in WarpX (which will probably be solved later)
     # we need to multiply `rho` by `-epsilon_0` to get the correct charge
@@ -134,7 +138,7 @@ def compute_actual_charge_on_spacecraft():
         #print(species)
         weights = particle_buffer.get_particle_boundary_buffer(species, 'eb', 'w', 0)
         sum_weights_over_tiles = sum([w.sum() for w in weights])
-        
+
         # Reduce across all MPI ranks
         ntot = float(mpi.COMM_WORLD.allreduce(sum_weights_over_tiles, op=mpi.SUM))
         print('Total number of %s collected on spacecraft: %e'%(species, ntot))
@@ -207,7 +211,7 @@ electrons2 = picmi.Species(particle_type='electron', name='electrons2',
                           warpx_save_particles_at_eb=1#, warpx_radially_weighted=False
                           )
 
-p_dist2 = picmi.UniformFluxDistribution(  
+p_dist2 = picmi.UniformFluxDistribution(
     flux=n*v_pth/(2*np.pi)**.5, # because vmean=0
     #flux=0,
     surface_flux_position=4.9,
