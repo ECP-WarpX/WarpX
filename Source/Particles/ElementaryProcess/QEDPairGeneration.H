@@ -132,13 +132,14 @@ public:
 
         amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
         amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
-        m_get_externalEB(i_src, ex, ey, ez, bx, by, bz);
 
         doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
                        m_ex_arr, m_ey_arr, m_ez_arr, m_bx_arr, m_by_arr, m_bz_arr,
                        m_ex_type, m_ey_type, m_ez_type, m_bx_type, m_by_type, m_bz_type,
                        m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
                        m_nox, m_galerkin_interpolation);
+
+        m_get_externalEB(i_src, ex, ey, ez, bx, by, bz);
 
         //Despite the names of the variables, positrons and electrons
         //can be exchanged, since the physical process is completely
