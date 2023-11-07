@@ -18,19 +18,19 @@ ml Boost/1.79.0-GCC-11.3.0
 # optional: for openPMD and PSATD+RZ support
 ml OpenBLAS/0.3.20-GCC-11.3.0
 export CMAKE_PREFIX_PATH=${HOME}/sw/karolina/gpu/hdf5-1.14.1.2:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=${HOME}/sw/karolina/gpu/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=${HOME}/sw/karolina/gpu/adios2-2.8.3:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=${HOME}/sw/karolina/gpu/c-blosc2-2.11.1:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=${HOME}/sw/karolina/gpu/adios2-2.9.2:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=${HOME}/sw/karolina/gpu/blaspp-master:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=${HOME}/sw/karolina/gpu/lapackpp-master:$CMAKE_PREFIX_PATH
 
 export LD_LIBRARY_PATH=${HOME}/sw/karolina/gpu/hdf5-1.14.1.2/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${HOME}/sw/karolina/gpu/c-blosc-1.21.1/lib64:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${HOME}/sw/karolina/gpu/adios2-2.8.3/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${HOME}/sw/karolina/gpu/c-blosc2-2.11.1/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${HOME}/sw/karolina/gpu/adios2-2.9.2/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${HOME}/sw/karolina/gpu/blaspp-master/lib64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${HOME}/sw/karolina/gpu/lapackpp-master/lib64:$LD_LIBRARY_PATH
 
 export PATH=${HOME}/sw/karolina/gpu/hdf5-1.14.1.2/bin:${PATH}
-export PATH=${HOME}/sw/karolina/gpu/adios2-2.8.3/bin:${PATH}
+export PATH=${HOME}/sw/karolina/gpu/adios2-2.9.2/bin:${PATH}
 
 # optional: CCache (not found)
 #ml ccache

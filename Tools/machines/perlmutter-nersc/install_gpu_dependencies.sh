@@ -44,33 +44,33 @@ python3 -m pip uninstall -qqq -y mpi4py 2>/dev/null || true
 # General extra dependencies ##################################################
 #
 
-# c-blosc (I/O compression)
-if [ -d $HOME/src/c-blosc ]
+# c-blosc2 (I/O compression)
+if [ -d $HOME/src/c-blosc2 ]
 then
-  cd $HOME/src/c-blosc
+  cd $HOME/src/c-blosc2
   git fetch --prune
-  git checkout v1.21.1
+  git checkout v2.11.1
   cd -
 else
-  git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git $HOME/src/c-blosc
+  git clone -b v2.11.1 https://github.com/Blosc/c-blosc2.git $HOME/src/c-blosc2
 fi
-rm -rf $HOME/src/c-blosc-pm-gpu-build
-cmake -S $HOME/src/c-blosc -B $HOME/src/c-blosc-pm-gpu-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc-1.21.1
-cmake --build $HOME/src/c-blosc-pm-gpu-build --target install --parallel 16
-rm -rf $HOME/src/c-blosc-pm-gpu-build
+rm -rf $HOME/src/c-blosc2-pm-gpu-build
+cmake -S $HOME/src/c-blosc2 -B $HOME/src/c-blosc2-pm-gpu-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc2-2.11.1
+cmake --build $HOME/src/c-blosc2-pm-gpu-build --target install --parallel 16
+rm -rf $HOME/src/c-blosc2-pm-gpu-build
 
 # ADIOS2
 if [ -d $HOME/src/adios2 ]
 then
   cd $HOME/src/adios2
   git fetch --prune
-  git checkout v2.8.3
+  git checkout v2.9.2
   cd -
 else
-  git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git $HOME/src/adios2
+  git clone -b v2.9.2 https://github.com/ornladios/ADIOS2.git $HOME/src/adios2
 fi
 rm -rf $HOME/src/adios2-pm-gpu-build
-cmake -S $HOME/src/adios2 -B $HOME/src/adios2-pm-gpu-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-2.8.3
+cmake -S $HOME/src/adios2 -B $HOME/src/adios2-pm-gpu-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-2.9.2
 cmake --build $HOME/src/adios2-pm-gpu-build --target install -j 16
 rm -rf $HOME/src/adios2-pm-gpu-build
 

@@ -65,29 +65,33 @@ CXX=$(which CC) CXXFLAGS="-DLAPACK_FORTRAN_ADD_" cmake -S $HOME/src/lapackpp -B 
 cmake --build $HOME/src/lapackpp-adastra-gpu-build --target install --parallel 16
 rm -rf $HOME/src/lapackpp-adastra-gpu-build
 
-# c-blosc (I/O compression, for OpenPMD)
-if [ -d $HOME/src/c-blosc ]
+# c-blosc2 (I/O compression, for openPMD)
+if [ -d $HOME/src/c-blosc2 ]
 then
-  # git repository is already there
-  :
+  cd ${HOME}/src/adios2
+  git fetch --prune
+  git checkout v2.11.1
+  cd -
 else
-  git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git $HOME/src/c-blosc
+  git clone -b v2.11.1 https://github.com/Blosc/c-blosc.git $HOME/src/c-blosc
 fi
-rm -rf $HOME/src/c-blosc-ad-build
-cmake -S $HOME/src/c-blosc -B $HOME/src/c-blosc-ad-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/adastra/gpu/c-blosc-1.21.1
-cmake --build $HOME/src/c-blosc-ad-build --target install --parallel 16
-rm -rf $HOME/src/c-blosc-ad-build
+rm -rf $HOME/src/c-blosc2-ad-build
+cmake -S $HOME/src/c-blosc2 -B $HOME/src/c-blosc2-ad-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/adastra/gpu/c-blosc2-2.11.1
+cmake --build $HOME/src/c-blosc2-ad-build --target install --parallel 16
+rm -rf $HOME/src/c-blosc2-ad-build
 
-# ADIOS2 v. 2.8.3 (for OpenPMD)
+# ADIOS2 v. 2.9.2 (for openPMD)
 if [ -d $HOME/src/adios2 ]
 then
-  # git repository is already there
-  :
+  cd ${HOME}/src/adios2
+  git fetch --prune
+  git checkout v2.9.2
+  cd -
 else
-  git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git $HOME/src/adios2
+  git clone -b v2.9.2 https://github.com/ornladios/ADIOS2.git $HOME/src/adios2
 fi
 rm -rf $HOME/src/adios2-ad-build
-cmake -S $HOME/src/adios2 -B $HOME/src/adios2-ad-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/adastra/gpu/adios2-2.8.3
+cmake -S $HOME/src/adios2 -B $HOME/src/adios2-ad-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/adastra/gpu/adios2-2.9.2
 cmake --build $HOME/src/adios2-ad-build --target install -j 16
 rm -rf $HOME/src/adios2-ad-build
 
