@@ -908,8 +908,8 @@ Particle initialization
       ``<species_name>.momentum_function_uy(x,y,z)`` and ``<species_name>.momentum_function_uz(x,y,z)``,
       which gives the distribution of each component of the momentum as a function of space.
 
-    * ``gaussian_parse_momentum_function``: Gaussian momentum distribution where the mean momentum :math:`u = (u_{x},u_{y},u_{z})=(\gamma v_{x}/c,\gamma v_{y}/c,\gamma v_{z}/c)` and the standard deviation are given by functions of position in the input file.
-      It requires the following arguments which specify the distribution of each component of the mean momentum
+    * ``gaussian_parse_momentum_function``: Gaussian momentum distribution where the mean normalized momentum :math:`u = (u_{x},u_{y},u_{z})=(\gamma v_{x}/c,\gamma v_{y}/c,\gamma v_{z}/c)` and the standard deviation are given by functions of position in the input file.
+      It requires the following arguments which specify the distribution of each component of the mean normalized momentum
       and standard deviation as a function of space.
 
       * ``<species_name>.momentum_function_ux_m(x,y,z)``: mean :math:`u_{x}`
