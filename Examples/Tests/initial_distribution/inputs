@@ -119,20 +119,6 @@ velocity_parser.beta_distribution_type     = "parser"
 velocity_parser.beta_function(x,y,z)       = "-0.2 + 0.4 * heaviside(z,0)"
 velocity_parser.bulk_vel_dir               = -y
 
-gaussian_parser.charge                     = -q_e
-gaussian_parser.mass                       = m_e
-gaussian_parser.injection_style            = "NRandomPerCell"
-gaussian_parser.num_particles_per_cell     = 1000
-gaussian_parser.profile                    = constant
-gaussian_parser.density                    = 1.0e21
-gaussian_parser.momentum_distribution_type = "gaussian_parse_momentum_function"
-gaussian_parser.momentum_function_ux_m(x,y,z) = 0.1*z
-gaussian_parser.momentum_function_uy_m(x,y,z) = 0.12*z
-gaussian_parser.momentum_function_uz_m(x,y,z) = 0.14*z
-gaussian_parser.momentum_function_ux_th(x,y,z) = 0.2*z
-gaussian_parser.momentum_function_uy_th(x,y,z) = 0.21*z
-gaussian_parser.momentum_function_uz_th(x,y,z) = 0.22*z
-
 uniform.charge                     = q_e
 uniform.mass                       = m_e
 uniform.injection_style            = "NRandomPerCell"
@@ -146,6 +132,20 @@ uniform.uy_min                     = -0.1
 uniform.uy_max                     = 0.1
 uniform.uz_min                     = 10
 uniform.uz_max                     = 11.2
+
+gaussian_parser.charge                     = -q_e
+gaussian_parser.mass                       = m_e
+gaussian_parser.injection_style            = "NRandomPerCell"
+gaussian_parser.num_particles_per_cell     = 1000
+gaussian_parser.profile                    = constant
+gaussian_parser.density                    = 1.0e21
+gaussian_parser.momentum_distribution_type = "gaussian_parse_momentum_function"
+gaussian_parser.momentum_function_ux_m(x,y,z) = 0.1*z
+gaussian_parser.momentum_function_uy_m(x,y,z) = 0.12*z
+gaussian_parser.momentum_function_uz_m(x,y,z) = 0.14*z
+gaussian_parser.momentum_function_ux_th(x,y,z) = 0.2*z
+gaussian_parser.momentum_function_uy_th(x,y,z) = 0.21*z
+gaussian_parser.momentum_function_uz_th(x,y,z) = 0.22*z
 
 #################################
 ########## DIAGNOSTIC ###########
