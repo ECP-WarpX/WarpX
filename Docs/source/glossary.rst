@@ -34,7 +34,7 @@ Abbreviations
 * **GPU:** originally graphics processing unit, now used for fast `general purpose computing (GPGPU) <https://en.wikipedia.org/wiki/Graphics_processing_unit#Stream_processing_and_general_purpose_GPUs_(GPGPU)>`__; also called (hardware) accelerator
 * **IO:** input/output, usually files and/or data
 * **IPO:** `interprocedural optimization <https://en.wikipedia.org/wiki/Interprocedural_optimization>`__, a collection of compiler optimization techniques that analyze the whole code to avoid duplicate calculations and optimize performance
-* **ISI:** Induced Spectral Incoherence (for laser pulse manipulation technique)
+* **ISI:** Induced Spectral Incoherence (a laser pulse manipulation technique)
 * **LDRD:** Laboratory Directed Research and Development, a :ref:`funding program in U.S. DOE laboratories <funding>` that kick-started ABLASTR development
 * **LPA:** laser-plasma acceleration, historically used for laser-electron acceleration
 * **LPI:** laser-plasma interaction (often for laser-solid physics) *or* laser-plasma instability (often in fusion physics), depending on context
@@ -57,11 +57,11 @@ Abbreviations
 * **PWFA:** plasma-wakefield acceleration
 * **QED:** `quantum electrodynamics <https://en.wikipedia.org/wiki/Quantum_electrodynamics>`__
 * **RPA:** radiation-pressure acceleration (of protons/ions), e.g. hole-boring (HB) or light-sail (LS) acceleration
-* **RPP:** Random Phase Plate (for laser pulse manipulation technique)
+* **RPP:** Random Phase Plate (a laser pulse manipulation technique)
 * **RZ:** for the coordinate system ``r-z`` in cylindrical geometry; we use "RZ" when we refer to quasi-cylindrical geometry, decomposed in azimuthal modes (see details `here <https://fbpic.github.io/overview/pic_algorithm.html#cylindrical-grid-with-azimuthal-decomposition>`__)
 * **SENSEI:** `Scalable in situ analysis and visualization <https://sensei-insitu.org/>`__, light weight framework for in situ data analysis offering access to multiple visualization and analysis backends
 * **SEE:** secondary electron emission
-* **SSD:** Smoothing by Spectral Dispersion (for laser pulse manipulation technique)
+* **SSD:** Smoothing by Spectral Dispersion (a laser pulse manipulation technique)
 * **TNSA:** target-normal sheet acceleration (of protons/ions)
 
 Terms
