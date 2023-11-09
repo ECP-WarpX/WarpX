@@ -29,6 +29,7 @@ popt, pcov = curve_fit(func, t, phi)
 
 plt.plot(t,phi, label='modelisation')
 plt.plot(t, func(t, *popt), 'r-',label='fit: v0=%5.3f, tau=%5.9f' % (popt[0], popt[1]))
+plt.legend()
 plt.savefig('min_phi_analysis.png')
 
 print('parameters of the fit between the curve of min(phi) over the time and the function v0(1-exp(-t/tau)):')
