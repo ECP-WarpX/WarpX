@@ -93,7 +93,7 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
     MultiSigmaBox const& sigba,
     amrex::Real const dt, bool pml_has_particles ) {
 
-    Real constexpr c2 = PhysConst::c * PhysConst::c;
+    // Real constexpr c2 = PhysConst::c * PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
@@ -136,10 +136,10 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
                 if(lx(i, j, k) <= 0) return;
 #endif
 
-                Ex(i, j, k, PMLComp::xz) -= c2 * dt * (
+                Ex(i, j, k, PMLComp::xz) -= PhysConst::c2 * dt * (
                     T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yx)
                   + T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yz) );
-                Ex(i, j, k, PMLComp::xy) += c2 * dt * (
+                Ex(i, j, k, PMLComp::xy) += PhysConst::c2 * dt * (
                     T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, PMLComp::zx)
                   + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, PMLComp::zy) );
             },
@@ -155,10 +155,10 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
                 if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
 #endif
 #endif
-                Ey(i, j, k, PMLComp::yx) -= c2 * dt * (
+                Ey(i, j, k, PMLComp::yx) -= PhysConst::c2 * dt * (
                     T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zx)
                   + T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zy) );
-                Ey(i, j, k, PMLComp::yz) += c2 * dt * (
+                Ey(i, j, k, PMLComp::yz) += PhysConst::c2 * dt * (
                     T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, PMLComp::xy)
                   + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, PMLComp::xz) );
             },
@@ -168,10 +168,10 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
                 if(lz(i, j, k) <= 0) return;
 #endif
 
-                Ez(i, j, k, PMLComp::zy) -= c2 * dt * (
+                Ez(i, j, k, PMLComp::zy) -= PhysConst::c2 * dt * (
                     T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, PMLComp::xy)
                   + T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, PMLComp::xz) );
-                Ez(i, j, k, PMLComp::zx) += c2 * dt * (
+                Ez(i, j, k, PMLComp::zx) += PhysConst::c2 * dt * (
                     T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, PMLComp::yx)
                   + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, PMLComp::yz) );
             }
@@ -188,19 +188,19 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             amrex::ParallelFor(tex, tey, tez,
 
                 [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Ex(i, j, k, PMLComp::xx) += c2 * dt * (
+                    Ex(i, j, k, PMLComp::xx) += PhysConst::c2 * dt * (
                         T_Algo::UpwardDx(F, coefs_x, n_coefs_x, i, j, k, PMLComp::x)
                       + T_Algo::UpwardDx(F, coefs_x, n_coefs_x, i, j, k, PMLComp::y)
                       + T_Algo::UpwardDx(F, coefs_x, n_coefs_x, i, j, k, PMLComp::z) );
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Ey(i, j, k, PMLComp::yy) += c2 * dt * (
+                    Ey(i, j, k, PMLComp::yy) += PhysConst::c2 * dt * (
                         T_Algo::UpwardDy(F, coefs_y, n_coefs_y, i, j, k, PMLComp::x)
                       + T_Algo::UpwardDy(F, coefs_y, n_coefs_y, i, j, k, PMLComp::y)
                       + T_Algo::UpwardDy(F, coefs_y, n_coefs_y, i, j, k, PMLComp::z) );
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                    Ez(i, j, k, PMLComp::zz) += c2 * dt * (
+                    Ez(i, j, k, PMLComp::zz) += PhysConst::c2 * dt * (
                         T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, k, PMLComp::x)
                       + T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, k, PMLComp::y)
                       + T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, k, PMLComp::z) );

@@ -18,6 +18,7 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
+#include <JAModel.H>
 
 #include <memory>
 #include <string>
@@ -84,9 +85,9 @@ private:
     std::unique_ptr<amrex::MultiFab> m_eps_mf;
     /** Multifab for m_mu */
     std::unique_ptr<amrex::MultiFab> m_mu_mf;
-    /** iMultifab for magnetic objects, where the integer refers specifies to the ID 
+    /** iMultifab for magnetic objects, where the integer refers specifies to the ID
      * of which magnetic material is at the indexed location. The properties of each
-     * magnetic material are storing in m_magnetic_objects. Note that -1 corresponds to 
+     * magnetic material are storing in m_magnetic_objects. Note that -1 corresponds to
      * non-magnetic and defaults to m_mu_mf. */
     std::unique_ptr<amrex::iMultiFab> m_magnetic_material_id_mf;
 
@@ -129,7 +130,7 @@ private:
 
 /**
  * \brief
- * This struct contains only static functions to compute the co-efficients for the
+ * This struct contains only static functions to compute the coefficients for the
  * Lax-Wendroff scheme of macroscopic Maxwells equations using
  * macroscopic properties, namely, conductivity (sigma), permittivity (epsilon).
  * Permeability of the material, mu, is used as (beta/mu) for the E-update
@@ -161,7 +162,7 @@ struct LaxWendroffAlgo {
 
 /**
  * \brief
- * This struct contains only static functions to compute the co-efficients for the
+ * This struct contains only static functions to compute the coefficients for the
  * BackwardEuler scheme of macroscopic Maxwells equations using
  * macroscopic properties, namely, conductivity (sigma) and permittivity (epsilon).
  * Permeability of the material, mu, is used as (beta/mu) for the E-update
@@ -204,27 +205,44 @@ struct BackwardEulerAlgo {
 //     JAModelParameters m_ja_model_parameters;
 // };
 
-class MagneticMaterial {
-
+class MagneticMaterial
+{
 public:
 
-    void ComputeH(
-        amrex::RealVect H,
-        amrex::RealVect B_at_t_plus_dt_over_2,
-        amrex::RealVect B_at_t_minus_dt_over_2);
+    using RT = amrex::Real;
+
+    virtual void
+    UpdateHandM (      RT& H_x    ,       RT& H_y    ,       RT& H_z    ,
+                       RT& M_x    ,       RT& M_y    ,       RT& M_z    ,
+                 const RT& Bnext_x, const RT& Bnext_y, const RT& Bnext_z) const = 0;
+
+    // virtual void
+    // UpdateM (      RT& M_x    ,       RT& M_y    ,       RT& M_z    ,
+    //               const RT& Bprev_muinv0_x, const RT& Bprev_muinv0_y, const RT& Bprev_muinv0_z,
+    //               const RT& Bnext_muinv0_x, const RT& Bnext_muinv0_y, const RT& Bnext_muinv0_z) const = 0;
+
+    // virtual void ComputeH (      RT& Hx ,       RT& Hy ,       RT& Hz ,
+    //                              RT& Mx ,       RT& My ,       RT& Mz ,
+    //                        const RT& Bx , const RT& By , const RT& Bz ,
+    //                        const RT& dBx, const RT& dBy, const RT& dBz) const = 0;
+
+    // virtual void UpdateM (      RT& Mx ,       RT& My ,       RT& Mz ,
+    //                       const RT& Bx , const RT& By , const RT& Bz ,
+    //                       const RT& dBx, const RT& dBy, const RT& dBz) = 0;
 
 };
 
-struct MagneticMaterials {
+struct MagneticMaterials
+{
 
      static const JAModelParameters M330_50_A_steel;
 
 };
 
-const JAModelParameters MagneticMaterials::M330_50_A_steel(7.45E-5_rt /* alpha (unitless) */,
+const JAModelParameters MagneticMaterials::M330_50_A_steel{7.45E-5_rt /* alpha (unitless) */,
                                                            26.1_rt    /* a (A/m) */,
                                                            1.26E6_rt  /* Ms (A/m) */,
                                                            52.3_rt    /* k (A/m) */,
-                                                           0.13_rt    /* c (unitless) */);
+                                                           0.13_rt    /* c (unitless) */};
 
 #endif // WARPX_MACROSCOPIC_PROPERTIES_H_

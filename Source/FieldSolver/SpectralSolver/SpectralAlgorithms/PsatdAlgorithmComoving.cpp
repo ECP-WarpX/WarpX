@@ -121,7 +121,7 @@ PsatdAlgorithmComoving::pushSpectralFields (SpectralFieldData& f) const
 #endif
 
             // Physical constant c**2 and imaginary unit
-            constexpr amrex::Real c2 = PhysConst::c*PhysConst::c;
+            constexpr amrex::Real c2 = PhysConst::c2;
             constexpr Complex I = Complex{0._rt,1._rt};
 
             // The definition of these coefficients is explained in more detail
@@ -216,7 +216,7 @@ void PsatdAlgorithmComoving::InitializeSpectralCoefficients (const SpectralKSpac
 #endif
             // Physical constants c, c**2, and epsilon_0, and imaginary unit
             constexpr amrex::Real c   = PhysConst::c;
-            constexpr amrex::Real c2  = c*c;
+            constexpr amrex::Real c2  = PhysConst::c2;
             constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr Complex     I   = Complex{0._rt, 1._rt};
 

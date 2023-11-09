@@ -332,7 +332,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
     auto const M = m_background_mass;
 
     // precalculate often used value
-    constexpr auto c2 = PhysConst::c * PhysConst::c;
+    constexpr auto c2 = PhysConst::c2;
     auto const mc2 = m*c2;
 
     // we need particle positions in order to calculate the local density

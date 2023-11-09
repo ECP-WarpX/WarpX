@@ -222,7 +222,7 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
             const     amrex::Real kz_c = modified_kz_arr_c[j];
 #endif
             // Physical constants and imaginary unit
-            constexpr Real c2 = PhysConst::c * PhysConst::c;
+            constexpr Real c2 = PhysConst::c2;
             constexpr Real ep0 = PhysConst::ep0;
             constexpr Real inv_ep0 = 1._rt / PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};

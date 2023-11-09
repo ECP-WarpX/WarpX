@@ -48,7 +48,7 @@ namespace ParticleUtils {
         using std::sqrt;
         using namespace amrex::literals;
 
-        constexpr auto c2 = PhysConst::c * PhysConst::c;
+        constexpr auto c2 = PhysConst::c2;
         energy = mass * u2 / (sqrt(1.0_rt + u2 / c2) + 1.0_rt) / PhysConst::q_e;
     }
 
@@ -70,7 +70,7 @@ namespace ParticleUtils {
         using std::sqrt;
         using namespace amrex::literals;
 
-        constexpr auto c2 = PhysConst::c * PhysConst::c;
+        constexpr auto c2 = PhysConst::c2;
 
         gamma = sqrt(1.0_rt + u2 / c2);
         energy = (
@@ -97,7 +97,7 @@ namespace ParticleUtils {
         using namespace amrex::literals;
 
         // precompute repeatedly used quantities
-        constexpr auto c2 = PhysConst::c * PhysConst::c;
+        constexpr auto c2 = PhysConst::c2;
         const auto V2 = (Vx*Vx + Vy*Vy + Vz*Vz);
         const auto gamma_V = 1.0_prt / sqrt(1.0_prt - V2 / c2);
         const auto gamma_u = sqrt(1.0_prt + (ux*ux + uy*uy + uz*uz) / c2);
