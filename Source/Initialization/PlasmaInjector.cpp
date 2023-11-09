@@ -542,6 +542,12 @@ void PlasmaInjector::parseFlux (amrex::ParmParse const& pp_species)
             utils::parser::makeParser(str_flux_function,{"x","y","z","t"}));
         h_inj_flux.reset(new InjectorFlux((InjectorFluxParser*)nullptr,
             flux_parser->compile<4>()));
+    } else if (flux_prof_s == "fixed_ppc") {
+        fixed_ppc_is_specified = true;
+        pp_species_dot_source.getWithParser("fixed_ppc", fixed_ppc);
+        pp_species_dot_source.getWithParser("flux", flux);
+        // Construct InjectorFlux with InjectorFluxConstant.
+        h_inj_flux.reset(new InjectorFlux((InjectorFluxConstant*)nullptr, flux));
     } else {
         SpeciesUtils::StringParseAbortMessage("Flux profile type", flux_prof_s);
     }
