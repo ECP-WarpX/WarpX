@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 
-import matplotlib.pyplot as plt
-from mpi4py import MPI as mpi
-import numpy as np
-import scipy.constants as scc
-
 from pywarpx import picmi
-from pywarpx.callbacks import installafterEsolve, installafterInitEsolve
 from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper
-from pywarpx.particle_containers import (
-    ParticleBoundaryBufferWrapper,
-    ParticleContainerWrapper,
-)
+from pywarpx.callbacks import installafterInitEsolve, installafterEsolve
+from pywarpx.particle_containers import ParticleBoundaryBufferWrapper, ParticleContainerWrapper
+import scipy.constants as scc
+import numpy as np
+from mpi4py import MPI as mpi
+import matplotlib.pyplot as plt
 
 
 # Utilities
@@ -37,11 +33,11 @@ class SpaceChargeFieldCorrector(object):
 
         # Correct fields so as to recover the actual charge
         Er = ExWrapper(include_ghosts=True)[:,:]
-        Er[...] = Er[...]+(q - q_v)*self.normalized_Er[...]
+        Er[...] = Er[...]+(q - q_v)*self.normalized_Er[...] 
         Ez = EzWrapper(include_ghosts=True)[:,:]
-        Ez[...]  += (q - q_v)*self.normalized_Ez[...]
+        Ez[...]  += (q - q_v)*self.normalized_Ez[...] 
         phi = PhiFPWrapper(include_ghosts=True)[:,:]
-        phi[...]  += (q - q_v)*self.normalized_phi[...]
+        phi[...]  += (q - q_v)*self.normalized_phi[...] 
         self.spacecraft_potential += (q - q_v)*self.spacecraft_capacitance
         sim.extension.warpx.set_potential_on_eb( "%f" %self.spacecraft_potential )
         print('Setting potential to %f' %self.spacecraft_potential)
@@ -51,7 +47,7 @@ class SpaceChargeFieldCorrector(object):
 
     def save_normalized_vacuum_Efields(self,):
         # Compute the charge that WarpX thinks there is on the spacecraft
-        # from phi and rho after the Poisson solver
+	    # from phi and rho after the Poisson solver
         q_v = compute_virtual_charge_on_spacecraft()
         self.spacecraft_capacitance = 1./q_v # the potential was set to 1V
 
@@ -94,14 +90,14 @@ def compute_virtual_charge_on_spacecraft():
 
     # Compute integral of grad phi over surfaces of the domain
     r = np.linspace(rmin, rmax, len(phi), endpoint=False) + (rmax - rmin) / (2 * len(phi)) #shift of the r points because the derivaties are calculated in the middle
+    
 
-
-
+    
     face_z0 = 2 * np.pi *  1./dz * ( (phi[:,0]-phi[:,1]) * r ).sum() * dr #here I am assuming that phi is a numpy array that can handle elementwise mult
     face_zend = 2 * np.pi * 1./dz * ( (phi[:,-1]-phi[:,-2]) * r ).sum() * dr
     face_rend = 2 * np.pi * 1./dr*((phi[-1,:]-phi[-2,:]) * rmax).sum() * dz
-    grad_phi_integral = face_z0 + face_zend + face_rend
-
+    grad_phi_integral = face_z0 + face_zend + face_rend 
+ 
 
 
 
@@ -109,14 +105,13 @@ def compute_virtual_charge_on_spacecraft():
     # (i.e. total charge of the plasma particles)
     rho_integral = 0.0
     for k in range(1, nz-1):
-        for i in range(1, nr-1):
-            rho_integral += rho[i,k] * r[i] * dr * dz
+	    for i in range(1, nr-1):
+		    rho_integral += rho[i,k] * r[i] * dr * dz
 
     # Due to an oddity in WarpX (which will probably be solved later)
     # we need to multiply `rho` by `-epsilon_0` to get the correct charge
     rho_integral *= 2 * np.pi * -scc.epsilon_0 #does this oddity still exist?
-
-
+    
     # Compute charge of the spacecraft, based on Gauss theorem
     q_spacecraft = - rho_integral - scc.epsilon_0 * grad_phi_integral
     print('Virtual charge on the spacecraft: %e' %q_spacecraft)
@@ -133,18 +128,15 @@ def compute_actual_charge_on_spacecraft():
     q_spacecraft = 0
 
     particle_buffer = ParticleBoundaryBufferWrapper()
-    f=open('number_particles_RZ.txt', 'a')
     for species in charge.keys():
-        #print(species)
         weights = particle_buffer.get_particle_boundary_buffer(species, 'eb', 'w', 0)
         sum_weights_over_tiles = sum([w.sum() for w in weights])
-
+        
         # Reduce across all MPI ranks
         ntot = float(mpi.COMM_WORLD.allreduce(sum_weights_over_tiles, op=mpi.SUM))
         print('Total number of %s collected on spacecraft: %e'%(species, ntot))
-        f.write(str(ntot) + ' ')
         q_spacecraft += ntot * charge[species]
-    f.write('\n')
+    
     print('Actual charge on the spacecraft: %e' %q_spacecraft)
     return q_spacecraft
 
@@ -155,25 +147,24 @@ def compute_actual_charge_on_spacecraft():
 # numerics parameters
 ##########################
 
-dt = 1.27e-8
-
+dt=1.27e-8
 # --- Nb time steps
 
-max_steps = 800
+max_steps = 1000
 diagnostic_interval = 10
 
 # --- grid
 
-nr = 64
-nz= 128
+nr = 40
+nz= 80
 
 rmin = 0.0
-rmax = 5.0
-zmin = -5.0
-zmax = 5.0
+rmax = 3
+zmin = -3
+zmax = 3
 
-number_per_cell = 50
-number_per_cell_each_dim = [100,1, 1]
+number_per_cell =5
+number_per_cell_each_dim = [10,1, 1]
 
 
 ##########################
@@ -200,27 +191,20 @@ protons = picmi.Species(particle_type='proton', name='protons', #warpx_do_not_ga
 
 
 e_dist2 = picmi.UniformFluxDistribution(
-    flux=n*v_eth/(2*np.pi)**.5, # Flux for Gaussian with negligible mean velocity
-    #flux=0,
-    surface_flux_position=4.9,
+    flux=n*v_eth/(2*np.pi)**.5, # Flux for Gaussian with vmean=0
+    surface_flux_position=3,
     flux_direction=-1, flux_normal_axis='r',
     gaussian_flux_momentum_distribution=True,
     rms_velocity=[v_eth, v_eth, v_eth] )
-electrons2 = picmi.Species(particle_type='electron', name='electrons2',
-                          initial_distribution=e_dist2,# warpx_do_not_gather=True,
-                          warpx_save_particles_at_eb=1#, warpx_radially_weighted=False
-                          )
+electrons2 = picmi.Species(particle_type='electron', name='electrons2', initial_distribution=e_dist2, warpx_save_particles_at_eb=1)
 
-p_dist2 = picmi.UniformFluxDistribution(
-    flux=n*v_pth/(2*np.pi)**.5, # because vmean=0
-    #flux=0,
-    surface_flux_position=4.9,
+p_dist2 = picmi.UniformFluxDistribution(  
+    flux=n*v_pth/(2*np.pi)**.5, # Flux for Gaussian with vmean=0
+    surface_flux_position=3,
     flux_direction=-1, flux_normal_axis='r',
     gaussian_flux_momentum_distribution=True,
     rms_velocity=[v_pth, v_pth, v_pth] )
-protons2 = picmi.Species(particle_type='proton', name='protons2',
-                        initial_distribution=p_dist2,
-                        warpx_save_particles_at_eb=1)
+protons2 = picmi.Species(particle_type='proton', name='protons2', initial_distribution=p_dist2, warpx_save_particles_at_eb=1)
 
 
 
@@ -236,12 +220,10 @@ grid = picmi.CylindricalGrid(
     n_azimuthal_modes = 1,
     lower_bound = [rmin, zmin],
     upper_bound = [rmax, zmax],
-    lower_boundary_conditions = ['none', 'dirichlet'],  # is this none?
+    lower_boundary_conditions = ['none', 'dirichlet'],  
     upper_boundary_conditions =  ['dirichlet', 'dirichlet'],
-    lower_boundary_conditions_particles = ['absorbing', 'reflecting'], # is reflection at r = 0 okay?
-    upper_boundary_conditions_particles =  ['absorbing', 'reflecting'],
-    warpx_blocking_factor=8,
-    warpx_max_grid_size = 64
+    lower_boundary_conditions_particles = ['absorbing', 'reflecting'], 
+    upper_boundary_conditions_particles =  ['absorbing', 'reflecting']
 )
 
 solver = picmi.ElectrostaticSolver(
@@ -286,7 +268,6 @@ sim = picmi.Simulation(
     max_steps = max_steps,
     warpx_embedded_boundary=embedded_boundary,
     warpx_amrex_the_arena_is_managed=1,
-    warpx_numprocs=[1,1]
 )
 
 sim.add_species(electrons,
@@ -312,9 +293,7 @@ sim.add_diagnostic(part_diag)
 
 spc = SpaceChargeFieldCorrector()
 
-#installafterInitEsolve( spc.save_normalized_vacuum_Efields )
-#installafterEsolve( spc.correct_space_charge_fields )
-installafterEsolve( compute_actual_charge_on_spacecraft )
-installafterEsolve( compute_virtual_charge_on_spacecraft )
+installafterInitEsolve( spc.save_normalized_vacuum_Efields )
+installafterEsolve( spc.correct_space_charge_fields )
 
 sim.step(max_steps)
