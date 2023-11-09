@@ -16,10 +16,6 @@ jobs:
       HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: TRUE
       # For macOS, Ninja is slower than the default:
       #CMAKE_GENERATOR: Ninja
-      # setuptools/mp4py work-around, see
-      #   https://github.com/mpi4py/mpi4py/pull/159
-      #   https://github.com/mpi4py/mpi4py/issues/157#issuecomment-1001022274
-      SETUPTOOLS_USE_DISTUTILS: stdlib
     steps:
     - uses: actions/checkout@v3
     - name: Brew Cache
@@ -45,7 +41,7 @@ jobs:
         brew install ccache
         brew install fftw
         brew install libomp
-        brew link --force libomp
+        brew link --overwrite --force libomp
         brew install ninja
         brew install open-mpi
         brew install pkg-config
@@ -65,7 +61,7 @@ jobs:
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install --upgrade build packaging setuptools wheel
 
         cmake -S . -B build_dp         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \

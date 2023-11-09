@@ -1136,6 +1136,18 @@ Particle initialization
     Resampling is performed everytime the number of macroparticles per cell of the species
     averaged over the whole simulation domain exceeds this parameter.
 
+
+.. _running-cpp-parameters-fluids:
+
+Cold Relativistic Fluid initialization
+--------------------------------------
+
+* ``fluids.species_names`` (`strings`, separated by spaces)
+    Defines the names of each fluid species. It is a required input to create and evolve fluid species using the cold relativistic fluid equations.
+    Most of the parameters described in the section "Particle initialization" can also be used to initialize fluid properties (e.g. initial density distribution).
+    For fluid-specific inputs we use `<fluid_pecies_name>` as a placeholder. Also see external fields
+    for how to specify these for fluids as the function names differ.
+
 .. _running-cpp-parameters-laser:
 
 Laser initialization
@@ -1499,6 +1511,37 @@ Applied to Particles
       and :math:`E_z = 0`, and
       :math:`B_x = \mathrm{strength} \cdot y`, :math:`B_y = -\mathrm{strength} \cdot x`, and :math:`B_z = 0`.
 
+
+Applied to Cold Relativistic Fluids
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``<fluid_species_name>.E_ext_init_style`` & ``<fluid_species_name>.B_ext_init_style`` (string) optional (default "none")
+    These parameters determine the type of the external electric and
+    magnetic fields respectively that are applied directly to the cold relativistic fluids at every timestep.
+    The field values are specified in the lab frame.
+    With the default ``none`` style, no field is applied.
+    Possible values are ``parse_E_ext_function`` or ``parse_B_ext_function``.
+
+    * ``parse_E_ext_function`` or ``parse_B_ext_function``: the field is specified as an analytic
+      expression that is a function of space (x,y,z) and time (t), relative to the lab frame.
+      The E-field is specified by the input parameters:
+
+        * ``<fluid_species_name>.Ex_external_function(x,y,z,t)``
+
+        * ``<fluid_species_name>.Ey_external_function(x,y,z,t)``
+
+        * ``<fluid_species_name>.Ez_external_function(x,y,z,t)``
+
+      The B-field is specified by the input parameters:
+
+        * ``<fluid_species_name>.Bx_external_function(x,y,z,t)``
+
+        * ``<fluid_species_name>.By_external_function(x,y,z,t)``
+
+        * ``<fluid_species_name>.Bz_external_function(x,y,z,t)``
+
+      Note that the position is defined in Cartesian coordinates, as a function of (x,y,z), even for RZ.
+
 Accelerator Lattice
 ^^^^^^^^^^^^^^^^^^^
 
@@ -1781,7 +1824,9 @@ Particle push, charge and current deposition, field gathering
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
     is ``esirkepov`` for FDTD maxwell solvers but ``direct`` for standard or
     Galilean PSATD solver (i.e. with ``algo.maxwell_solver = psatd``) and
-    for the hybrid-PIC solver (i.e. with ``algo.maxwell_solver = hybrid``).
+    for the hybrid-PIC solver (i.e. with ``algo.maxwell_solver = hybrid``) and for
+    diagnostics output with the electrostatic solvers (i.e., with
+    ``warpx.do_electrostatic = ...``).
     Note that ``vay`` is only available for ``algo.maxwell_solver = psatd``.
 
     1. ``direct``

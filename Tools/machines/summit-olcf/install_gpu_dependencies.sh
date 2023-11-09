@@ -99,7 +99,10 @@ rm -rf ${SW_DIR}/venvs/warpx-summit
 python3 -m venv ${SW_DIR}/venvs/warpx-summit
 source ${SW_DIR}/venvs/warpx-summit/bin/activate
 python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade build
+python3 -m pip install --upgrade packaging
 python3 -m pip install --upgrade wheel
+python3 -m pip install --upgrade setuptools
 python3 -m pip install --upgrade cython
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas

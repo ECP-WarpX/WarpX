@@ -99,6 +99,11 @@ public:
 
   ~WarpXOpenPMDPlot ();
 
+  WarpXOpenPMDPlot ( WarpXOpenPMDPlot const &)             = delete;
+  WarpXOpenPMDPlot& operator= ( WarpXOpenPMDPlot const & ) = delete;
+  WarpXOpenPMDPlot ( WarpXOpenPMDPlot&& )                  = default;
+  WarpXOpenPMDPlot& operator= ( WarpXOpenPMDPlot&& )       = default;
+
   /** Set Iteration Step for the series
    *
    * @note If an iteration has been written, then it will give a warning

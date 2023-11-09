@@ -42,9 +42,16 @@ class PlasmaInjector
 
 public:
 
+    /** Default constructor*/
     PlasmaInjector () = default;
 
     PlasmaInjector (int ispecies, const std::string& name, const amrex::Geometry& geom);
+
+    // Default move and copy operations
+    PlasmaInjector(const PlasmaInjector&) = delete;
+    PlasmaInjector& operator=(const PlasmaInjector&) = delete;
+    PlasmaInjector(PlasmaInjector&&) = default;
+    PlasmaInjector& operator=(PlasmaInjector&&) = default;
 
     ~PlasmaInjector ();
 
@@ -120,11 +127,7 @@ public:
 
     bool radially_weighted = true;
 
-    std::string str_density_function;
     std::string str_flux_function;
-    std::string str_momentum_function_ux;
-    std::string str_momentum_function_uy;
-    std::string str_momentum_function_uz;
 
     amrex::Real xmin, xmax;
     amrex::Real ymin, ymax;
@@ -146,7 +149,6 @@ protected:
 
     PhysicalSpecies physical_species = PhysicalSpecies::unspecified;
 
-    amrex::Real density;
     amrex::Real flux;
 
     int species_id;
@@ -185,9 +187,7 @@ protected:
     void setupNuniformPerCell (const amrex::ParmParse& pp_species_name);
     void setupExternalFile (const amrex::ParmParse& pp_species_name);
 
-    void parseDensity (const amrex::ParmParse& pp_species_name);
     void parseFlux (const amrex::ParmParse& pp_species_name);
-    void parseMomentum (const amrex::ParmParse& pp_species_name, const std::string& style);
 };
 
 #endif

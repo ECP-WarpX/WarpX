@@ -149,7 +149,8 @@ MacroscopicProperties::InitData ()
 
     } else if (m_sigma_s == "parse_sigma_function") {
 
-        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), m_sigma_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), m_sigma_parser->compile<3>(),
+            warpx.Geom(lev).CellSizeArray(), warpx.Geom(lev).ProbDomain());
     }
     // Initialize epsilon
     if (m_epsilon_s == "constant") {
@@ -158,7 +159,8 @@ MacroscopicProperties::InitData ()
 
     } else if (m_epsilon_s == "parse_epsilon_function") {
 
-        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser->compile<3>(),
+        warpx.Geom(lev).CellSizeArray(), warpx.Geom(lev).ProbDomain());
 
     }
     // In the Maxwell solver, `epsilon` is used in the denominator.
@@ -174,7 +176,8 @@ MacroscopicProperties::InitData ()
 
     } else if (m_mu_s == "parse_mu_function") {
 
-        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), m_mu_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), m_mu_parser->compile<3>(),
+            warpx.Geom(lev).CellSizeArray(), warpx.Geom(lev).ProbDomain());
 
     }
 
@@ -209,11 +212,9 @@ void
 MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                        amrex::MultiFab *macro_mf,
                        amrex::ParserExecutor<3> const& macro_parser,
-                       const int lev)
+                       const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx_lev,
+                       const amrex::RealBox& prob_domain_lev)
 {
-    WarpX& warpx = WarpX::GetInstance();
-    const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dx_lev = warpx.Geom(lev).CellSizeArray();
-    const amrex::RealBox& real_box = warpx.Geom(lev).ProbDomain();
     const amrex::IntVect iv = macro_mf->ixType().toIntVect();
     for ( amrex::MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
@@ -228,20 +229,20 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                 const amrex::Real x = 0._rt;
                 const amrex::Real y = 0._rt;
                 const amrex::Real fac_z = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real z = j * dx_lev[0] + real_box.lo(0) + fac_z;
+                const amrex::Real z = j * dx_lev[0] + prob_domain_lev.lo(0) + fac_z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 const amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real x = i * dx_lev[0] + prob_domain_lev.lo(0) + fac_x;
                 const amrex::Real y = 0._rt;
                 const amrex::Real fac_z = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real z = j * dx_lev[1] + real_box.lo(1) + fac_z;
+                const amrex::Real z = j * dx_lev[1] + prob_domain_lev.lo(1) + fac_z;
 #else
                 const amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
+                const amrex::Real x = i * dx_lev[0] + prob_domain_lev.lo(0) + fac_x;
                 const amrex::Real fac_y = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
-                const amrex::Real y = j * dx_lev[1] + real_box.lo(1) + fac_y;
+                const amrex::Real y = j * dx_lev[1] + prob_domain_lev.lo(1) + fac_y;
                 const amrex::Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
-                const amrex::Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
+                const amrex::Real z = k * dx_lev[2] + prob_domain_lev.lo(2) + fac_z;
 #endif
                 // initialize the macroparameter
                 macro_fab(i,j,k) = macro_parser(x,y,z);

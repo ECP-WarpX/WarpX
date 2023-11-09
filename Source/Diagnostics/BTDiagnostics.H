@@ -47,7 +47,7 @@ private:
      * can be defined and implemented in Diagnostics.H, such that,
      * the function call to flush out buffer data for
      * FullDiagnostics and BTDiagnostics is the same */
-    void Flush (int i_buffer) override;
+    void Flush (int i_buffer, bool force_flush) override;
     /** whether to write output files at this time step
      *  The data is flushed when the buffer is full and/or
      *  when the simulation ends or when forced.
