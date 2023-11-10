@@ -464,6 +464,17 @@ class UniformDistribution(picmistandard.PICMI_UniformDistribution, DensityDistri
 
 
 class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDistributionBase):
+    """
+    Parameters
+    ----------
+
+    warpx_momentum_spread_expressions: list of string
+        Analytic expressions describing the gamma*velocity spread for each axis [m/s].
+        Expressions should be in terms of the position, written as 'x', 'y', and 'z'.
+        Parameters can be used in the expression with the values given as keyword arguments.
+        For any axis not supplied (set to None), zero will be used.
+
+    """
     def init(self, kw):
         self.momentum_spread_expressions = kw.pop('warpx_momentum_spread_expressions', [None, None, None])
 
