@@ -1,16 +1,16 @@
-#include <AMReX_RealVect.H>
+// #include <AMReX_RealVect.H>
 
-class RealMatrix : public std::array<amrex::RealVect, AMREX_SPACEDIM>
-{
-public:
+// class RealMatrix : public std::array<amrex::RealVect, AMREX_SPACEDIM>
+// {
+// public:
 
-    RealMatrix
-    Inverse ();
+//     RealMatrix
+//     Inverse ();
 
-    amrex::RealVect
-    Dot (amrex::RealVect x);
+//     amrex::RealVect
+//     Dot (amrex::RealVect x);
 
-    RealMatrix
-    Dot (RealMatrix B);
+//     RealMatrix
+//     Dot (RealMatrix B);
 
-};
+// };

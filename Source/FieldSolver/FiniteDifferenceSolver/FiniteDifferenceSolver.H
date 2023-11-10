@@ -107,12 +107,15 @@ class FiniteDifferenceSolver
           * \param[in] dt       timestep of the simulation
           * \param[in] macroscopic_properties contains user-defined properties of the medium.
           */
-        void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-                      amrex::Real dt,
-                      std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
+        void MacroscopicEvolveE (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3>& Hfield,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3>& Mfield,
+            std::array< std::unique_ptr<const amrex::MultiFab>, 3> const& edge_lengths,
+            amrex::Real dt,
+            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
                       std::array< amrex::MultiFab*, 3 > Efield,
@@ -303,13 +306,12 @@ class FiniteDifferenceSolver
 
         template< typename T_Algo, typename T_MacroAlgo >
         void MacroscopicEvolveECartesian (
-            std::array< std::unique_ptr<      amrex::MultiFab>, 3> const& Efield,
-            std::array< std::unique_ptr<const amrex::MultiFab>, 3> const& Bfield,
-            std::array< std::unique_ptr<const amrex::MultiFab>, 3> const& Jfield,
-            amrex::MultiFab &M_cc_field,
-            amrex::MultiFab &Bprev_cc_field,
-            amrex::MultiFab &H_cc_field,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Bfield,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3>& Hfield,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3>& Mfield,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3> const& edge_lengths,
             amrex::Real dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
@@ -355,10 +357,6 @@ class FiniteDifferenceSolver
             int lev
         );
 #endif
-
-    public:
-
-        std::array< amrex::MultiFab*, 3 > Hfield;
 
 };
 

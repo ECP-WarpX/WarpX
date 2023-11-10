@@ -1,3 +1,6 @@
+#ifndef WARPX_JAMODEL_H_
+#define WARPX_JAMODEL_H_
+
 #include "MacroscopicProperties_fwd.H"
 
 #include "Utils/WarpXConst.H"
@@ -15,13 +18,16 @@
 #include <memory>
 #include <string>
 
-/**
- * \brief This struct contains the five parameters necessary to describe magnetic
- * hysteresis of a material using the Jiles-Atherton (JA) model.
- */
-struct JAModelParameters {
-
+class JAModel
+    : public MagneticMaterial
+{
 public:
+
+    using GpuArray3 = amrex::GpuArray<amrex::Real,3>;
+    using GpuArray6 = amrex::GpuArray<amrex::Real,6>;
+    using Vec3 = amrex::Dim3;
+    using RT = amrex::Real;
+
     /**
      * \brief Specify the parameters of the Jiles-Atherton (JA) model for a magnetic material.
      *
@@ -29,11 +35,12 @@ public:
      *              where `H` is the magnetic field and `M` is the total magnetization.
      *              Quantifies interdomain coupling in the magnetic material.
      *
-     * \param a (A/m) Describes the scale of the `H` field at which the magnetic
-     *          material saturates. Used in the Langevin function as `L(H_e / a)`.
+     * \param a (A/m) Describes the scale of the `H` field at which the magnetic material saturates
+     *          via the ratio `|H_e|/a)`, where `H_e` is the effective field.
      *          Quantifies domain walls density in the magnetic material.
      *
-     * \param Ms (A/m) Saturation magnetization of the magnetic material.
+     * \param Ms (A/m) The saturation magnetization of the magnetic material.
+     *           The magnitude of the magnetization `M` should be bounded by `M_s`.
      *
      * \param k (A/m) Quantifies average energy required to break a pinning site in the magnetic material.
      *          Describes the scale by which the irreversible magnetization `M_irr` changes due to a change
@@ -46,126 +53,69 @@ public:
      *          for small displacement. The total magnetization is
      *          `M = M_rev + M_irr = c M_an + (1-c) M_irr`.
      */
-    JAModelParameters (amrex::Real a_alpha, amrex::Real a_a, amrex::Real a_Ms, amrex::Real a_k, amrex::Real a_c);
+    JAModel (amrex::Real alpha,
+             amrex::Real a,
+             amrex::Real Ms,
+             amrex::Real k,
+             amrex::Real c);
 
     /**
-     * \brief The alpha parameter in the Jiles-Atherton Model
-     *
-     * (unitless) Defines the effective field `H_e = H + alpha M`,
-     * where `H` is the magnetic field and `M` is the total magnetization.
-     * Quantifies interdomain coupling in the magnetic material.
+     * \brief Update the magnetization `M` and magnetic field `H` for the Jiles-Atherton model
      */
-    amrex::Real alpha () { return m_alpha; }
+    void UpdateHandM (
+              amrex::Real& H_x    ,       amrex::Real& H_y    ,       amrex::Real& H_z    ,
+              amrex::Real& M_x    ,       amrex::Real& M_y    ,       amrex::Real& M_z    ,
+        const amrex::Real& Bnext_x, const amrex::Real& Bnext_y, const amrex::Real& Bnext_z) const override;
 
-    /**(A/m) Describes the scale of the `H` field at which the magnetic
-     * material saturates. Used in the Langevin function as `L(H_e / a)`.
-     * Quantifies domain walls density in the magnetic material. */
-    amrex::Real a () { return m_a; }
 
-    /**(A/m) Saturation magnetization of the magnetic material. */
-    amrex::Real Ms () { return m_Ms; }
-
-    /**(A/m) Quantifies average energy required to break a pinning site in the magnetic material.
-     * Describes the scale by which the irreversible magnetization `M_irr` changes due to a change
-     * in the effective field `H_e`. In particular, `dM_irr / dH_e = (M_an - M_irr) / k`,
-     * where `M_an` is the anhysteretic magnetization.
-     */
-    amrex::Real k () { return m_k; }
-
-    /**(unitless) Quantifies magnetization reversiblity: `M_rev = c (M_an - M_irr)`,
-     * where `M_rev`, `M_an`, and `M_irr` are the reversible, anhysteretic, and irreversible
-     * magnetizations, respectively. This equation corresponds to the bulge of the domain walls
-     * for small displacement. The total magnetization is
-     * `M = M_rev + M_irr = c M_an + (1-c) M_irr`.
-     */
-    amrex::Real c () { return m_c; }
-
-    amrex::Real one_minus_alpha () { return m_one_minus_alpha; }
-
-    amrex::Real Ms_over_a () { return m_Ms_over_a; }
-
-    amrex::Real c_times_Ms_over_a () { return m_c_times_Ms_over_a; }
-
-private:
-
-    amrex::Real m_alpha;
-    amrex::Real m_a;
-    amrex::Real m_Ms;
-    amrex::Real m_k;
-    amrex::Real m_c;
-    amrex::Real m_one_minus_alpha;
-    amrex::Real m_Ms_over_a;
-    amrex::Real m_c_times_Ms_over_a;
-
-};
-
-class JAModel
-    : public MagneticMaterial
-{
-public:
-
-    using GpuArray3 = amrex::GpuArray<amrex::Real,3>;
-    using GpuArray6 = amrex::GpuArray<amrex::Real,6>;
-    using Vec3 = amrex::Dim3;
-    using RT = amrex::Real;
-
-    /**
-     * \brief Update the magnetization and magnetic field for the Jiles-Atherton model
-     */
-    void
-    UpdateHandM (      RT& H_x    ,       RT& H_y    ,       RT& H_z    ,
-                       RT& M_x    ,       RT& M_y    ,       RT& M_z    ,
-                 const RT& Bnext_x, const RT& Bnext_y, const RT& Bnext_z) const override;
-
-    // void ComputeH(GpuArray3 &H, const GpuArray3 &B, const GpuArray3 &dB);
-    // void ComputeH(RT &Hx, RT &Hy, RT &Hz,
-    //               const RT &Bx, const RT &By, const RT &Bz,
-    //               const RT &dBx, const GpuArray3 &dB);
-
-    // void ComputeH (      RT& H_x    ,       RT& H_y    ,       RT& H_z    ,
-    //                      RT& M_x    ,       RT& M_y    ,       RT& M_z    ,
-    //                const RT& Bprev_muin0_x, const RT& Bprev_muin0_y, const RT& Bprev_muin0_z,
-    //                const RT& Bnext_muin0_x, const RT& Bnext_muin0_y, const RT& Bnext_muin0_z) const override;
-
-    // void UpdateM (      RT& M_x          ,       RT& M_y          ,       RT& M_z          ,
-    //               const RT& Bprev_muin0_x, const RT& Bprev_muin0_y, const RT& Bprev_muin0_z,
-    //               const RT& Bnext_muin0_x, const RT& Bnext_muin0_y, const RT& Bnext_muin0_z) const override;
-
-    // void UpdateMx (      RT& Mx,  const RT& My,  const RT& Mz,
-    //                const RT& Bx,  const RT& By,  const RT& Bz,
-    //                const RT& dBx, const RT& dBy, const RT& dBz);
+    //! (unitless) The `alpha` parameter of the Jiles-Atherton model.
+    const amrex::Real& alpha () const { return m_param_alpha; }
+    //! (A/m) The `a` parameter of the Jiles-Atherton model.
+    const amrex::Real& a () const { return m_param_a; }
+    //! (A/m) The `M_s` parameter of the Jiles-Atherton model.
+    const amrex::Real& Ms () const { return m_param_Ms; }
+    //! (A/m) The `k` parameter of the Jiles-Atherton model.
+    const amrex::Real& k () const { return m_param_k; }
+    //! (unitless) The `c` parameter of the Jiles-Atherton model.
+    const amrex::Real& c () const { return m_param_c; }
 
 protected:
 
     /**
-     * \brief Compute the anhysteretic quantities for the JA model.
-     *
-     * \param[out] M_an The anhysteretic magnetization
-     * \param[out] chi_an The Jacobian matrix dM_an/dH_e. Symmetric, with elements ordered as xx, xy, yy, xz, yz, zz.
-     * \param[in] H_e The effective magnetic field
+     * \brief Compute the anhysteretic quantities `M_an` and `chi_an` for the JA model.
      */
-    void ComputeAnhystereticContribution (      RT& M_an_x,       RT& M_an_y,       RT& M_an_z,
-                                          amrex::GpuArray<RT,6>& chi_an,
-                                          const RT& H_e_x , const RT& H_e_y , const RT& H_e_z) const;
+    void ComputeAnhystereticContribution (
+              amrex::Real& M_an_x,       amrex::Real& M_an_y,       amrex::Real& M_an_z,
+              amrex::GpuArray<amrex::Real,6>& chi_an,
+        const amrex::Real& H_e_x , const amrex::Real& H_e_y , const amrex::Real& H_e_z) const;
 
     /**
-     * \brief Computes change in effective field: dH_e = (dB/dH_e)^{-1} dB.
+     * \brief Computes change in effective field: `dH_e` from `dB`.
      *
-     * Since B/mu0 = H_e + (1-alpha) M, we have d(B/mu0)/dH_e = I + (1-alpha) chi,
-     * where chi = dM/dH_e.
+     * Let `B` stand for `B/mu0` in the following:
+     * Since `B = H_e + (1-alpha) M`, we have `dB/dH_e = I + (1-alpha) chi`,
+     * where `chi = dM/dH_e`. Thus `dH_e = (I + (1-alpha) chi)^{-1} dB`.
      */
-    Compute_dHe (      GpuArray3 &dH_e,
-                 const GpuArray6 &chi,
-                 const GpuArray3 &dB_over_mu0);
+    void Compute_dH_e (
+              amrex::Real& dH_e_x    ,        amrex::Real& dH_e_y    ,         amrex::Real& dH_e_z,
+        const amrex::GpuArray<amrex::Real,6>& chi,
+        const amrex::Real& dB_mu0inv_x, const amrex::Real& dB_mu0inv_y,  const amrex::Real& dB_mu0inv_z) const;
 
-    JAModelParameters m_ja_model_parameters;
-
+    amrex::Real m_param_alpha;
+    amrex::Real m_param_a;
+    amrex::Real m_param_Ms;
+    amrex::Real m_param_k;
+    amrex::Real m_param_c;
+    amrex::Real m_param_one_minus_alpha;
+    amrex::Real m_param_one_minus_alpha_inv;
+    amrex::Real m_param_Ms_over_a;
+    amrex::Real m_param_c_Ms_over_a;
 
 };
 
-struct Langevin {
+namespace Langevin {
 
-public:
+// public:
 
     using R = amrex::Real;
 
@@ -201,7 +151,7 @@ public:
      */
     static amrex::Real dLdx_minus_L_over_x_over_x2 (amrex::Real x);
 
-private:
+// private:
 
     static constexpr double cutoff = 0.01;
     static constexpr double L_cutoff = 1.0/std::tanh(cutoff) - 1.0/cutoff;
@@ -238,3 +188,88 @@ private:
 
 };
 
+// /**
+//  * \brief This struct contains the five parameters necessary to describe magnetic
+//  * hysteresis of a material using the Jiles-Atherton (JA) model.
+//  */
+// struct JAModelParameters {
+
+// public:
+//     /**
+//      * \brief Specify the parameters of the Jiles-Atherton (JA) model for a magnetic material.
+//      *
+//      * \param alpha (unitless) Defines the effective field `H_e = H + alpha M`,
+//      *              where `H` is the magnetic field and `M` is the total magnetization.
+//      *              Quantifies interdomain coupling in the magnetic material.
+//      *
+//      * \param a (A/m) Describes the scale of the `H` field at which the magnetic
+//      *          material saturates. Used in the Langevin function as `L(H_e / a)`.
+//      *          Quantifies domain walls density in the magnetic material.
+//      *
+//      * \param Ms (A/m) Saturation magnetization of the magnetic material.
+//      *
+//      * \param k (A/m) Quantifies average energy required to break a pinning site in the magnetic material.
+//      *          Describes the scale by which the irreversible magnetization `M_irr` changes due to a change
+//      *          in the effective field `H_e`. In particular, `dM_irr / dH_e = (M_an - M_irr) / k`,
+//      *          where `M_an` is the anhysteretic magnetization.
+//      *
+//      * \param c (unitless) Quantifies magnetization reversibility: `M_rev = c (M_an - M_irr)`,
+//      *          where `M_rev`, `M_an`, and `M_irr` are the reversible, anhysteretic, and irreversible
+//      *          magnetizations, respectively. This equation corresponds to the bulge of the domain walls
+//      *          for small displacement. The total magnetization is
+//      *          `M = M_rev + M_irr = c M_an + (1-c) M_irr`.
+//      */
+//     JAModelParameters (amrex::Real a_alpha, amrex::Real a_a, amrex::Real a_Ms, amrex::Real a_k, amrex::Real a_c);
+
+//     /**
+//      * \brief The alpha parameter in the Jiles-Atherton Model
+//      *
+//      * (unitless) Defines the effective field `H_e = H + alpha M`,
+//      * where `H` is the magnetic field and `M` is the total magnetization.
+//      * Quantifies interdomain coupling in the magnetic material.
+//      */
+//     amrex::Real alpha () { return m_alpha; }
+
+//     /**(A/m) Describes the scale of the `H` field at which the magnetic
+//      * material saturates. Used in the Langevin function as `L(H_e / a)`.
+//      * Quantifies domain walls density in the magnetic material. */
+//     amrex::Real a () { return m_a; }
+
+//     /**(A/m) Saturation magnetization of the magnetic material. */
+//     amrex::Real Ms () { return m_Ms; }
+
+//     /**(A/m) Quantifies average energy required to break a pinning site in the magnetic material.
+//      * Describes the scale by which the irreversible magnetization `M_irr` changes due to a change
+//      * in the effective field `H_e`. In particular, `dM_irr / dH_e = (M_an - M_irr) / k`,
+//      * where `M_an` is the anhysteretic magnetization.
+//      */
+//     amrex::Real k () { return m_k; }
+
+//     /**(unitless) Quantifies magnetization reversiblity: `M_rev = c (M_an - M_irr)`,
+//      * where `M_rev`, `M_an`, and `M_irr` are the reversible, anhysteretic, and irreversible
+//      * magnetizations, respectively. This equation corresponds to the bulge of the domain walls
+//      * for small displacement. The total magnetization is
+//      * `M = M_rev + M_irr = c M_an + (1-c) M_irr`.
+//      */
+//     amrex::Real c () { return m_c; }
+
+//     amrex::Real one_minus_alpha () { return m_one_minus_alpha; }
+
+//     amrex::Real Ms_over_a () { return m_Ms_over_a; }
+
+//     amrex::Real c_times_Ms_over_a () { return m_c_times_Ms_over_a; }
+
+// private:
+
+//     amrex::Real m_alpha;
+//     amrex::Real m_a;
+//     amrex::Real m_Ms;
+//     amrex::Real m_k;
+//     amrex::Real m_c;
+//     amrex::Real m_one_minus_alpha;
+//     amrex::Real m_Ms_over_a;
+//     amrex::Real m_c_times_Ms_over_a;
+
+// };
+
+#endif // WARPX_JAMODEL_H_

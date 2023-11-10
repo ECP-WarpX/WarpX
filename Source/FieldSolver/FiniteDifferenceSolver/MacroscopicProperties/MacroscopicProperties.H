@@ -213,9 +213,9 @@ public:
     using RT = amrex::Real;
 
     virtual void
-    UpdateHandM (      RT& H_x    ,       RT& H_y    ,       RT& H_z    ,
-                       RT& M_x    ,       RT& M_y    ,       RT& M_z    ,
-                 const RT& Bnext_x, const RT& Bnext_y, const RT& Bnext_z) const = 0;
+    UpdateHandM (      amrex::Real& H_x    ,       amrex::Real& H_y    ,       amrex::Real& H_z    ,
+                       amrex::Real& M_x    ,       amrex::Real& M_y    ,       amrex::Real& M_z    ,
+                 const amrex::Real& Bnext_x, const amrex::Real& Bnext_y, const amrex::Real& Bnext_z) const = 0;
 
     // virtual void
     // UpdateM (      RT& M_x    ,       RT& M_y    ,       RT& M_z    ,
