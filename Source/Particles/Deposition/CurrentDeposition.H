@@ -426,7 +426,7 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doDepositionShapeNImplicit(const GetParticlePosition& GetPosition,
+void doDepositionShapeNImplicit(const GetParticlePosition<PIdx>& GetPosition,
                                 const amrex::ParticleReal * const wp,
                                 const amrex::ParticleReal * const uxp_n,
                                 const amrex::ParticleReal * const uyp_n,
@@ -1160,7 +1160,7 @@ template <int depos_order>
 void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * const xp_n,
                                                  const amrex::ParticleReal * const yp_n,
                                                  const amrex::ParticleReal * const zp_n,
-                                                 const GetParticlePosition& GetPosition,
+                                                 const GetParticlePosition<PIdx>& GetPosition,
                                                  const amrex::ParticleReal * const wp,
                                                  [[maybe_unused]]const amrex::ParticleReal * const uxp_n,
                                                  [[maybe_unused]]const amrex::ParticleReal * const uyp_n,
