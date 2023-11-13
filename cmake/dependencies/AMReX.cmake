@@ -1,4 +1,10 @@
 macro(find_amrex)
+    # if pyAMReX is external, AMReX must be as well
+    if(DEFINED WarpX_pyamrex_internal AND NOT WarpX_pyamrex_internal)
+        set(WarpX_amrex_internal OFF CACHE BOOL
+            "Download & build AMReX" FORCE)
+    endif()
+
     if(WarpX_amrex_src)
         message(STATUS "Compiling local AMReX ...")
         message(STATUS "AMReX source path: ${WarpX_amrex_src}")
@@ -10,6 +16,7 @@ macro(find_amrex)
         message(STATUS "AMReX repository: ${WarpX_amrex_repo} (${WarpX_amrex_branch})")
         include(FetchContent)
     endif()
+
     if(WarpX_amrex_internal OR WarpX_amrex_src)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
@@ -243,7 +250,12 @@ macro(find_amrex)
         endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PARTICLE_PRECISION})
 
-        find_package(AMReX 23.10 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} TINYP LSOLVERS)
+        find_package(AMReX 23.11 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIMS} ${COMPONENT_EB} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} ${COMPONENT_SENSEI} LSOLVERS)
+        # note: TINYP skipped because user-configured and optional
+
+        # AMReX CMake helper scripts
+        list(APPEND CMAKE_MODULE_PATH "${AMReX_DIR}/AMReXCMakeModules")
+
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()
@@ -257,7 +269,7 @@ set(WarpX_amrex_src ""
 set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
     CACHE STRING
     "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "23.10"
+set(WarpX_amrex_branch "d36463103daed09a40cdea235041a6ab79ff280c"
     CACHE STRING
     "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 

@@ -115,7 +115,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
         rel_ref_ratio = amrex::Vector<amrex::IntVect>{{amrex::IntVect(AMREX_D_DECL(1, 1, 1))}};
     }
 
-    int const finest_level = curr.size() - 1u;
+    auto const finest_level = static_cast<int>(curr.size()) - 1;
 
     // scale J appropriately; also determine if current is zero everywhere
     amrex::Real max_comp_J = 0.0;

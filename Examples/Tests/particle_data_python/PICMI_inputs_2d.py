@@ -4,7 +4,7 @@ import sys
 
 import numpy as np
 
-from pywarpx import callbacks, particle_containers, picmi
+from pywarpx import callbacks, libwarpx, particle_containers, picmi
 
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
@@ -119,7 +119,7 @@ np.random.seed(30025025)
 elec_wrapper = particle_containers.ParticleContainerWrapper('electrons')
 elec_wrapper.add_real_comp('newPid')
 
-my_id = sim.extension.getMyProc()
+my_id = libwarpx.amr.ParallelDescriptor.MyProc()
 
 def add_particles():
 

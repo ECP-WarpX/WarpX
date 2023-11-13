@@ -16,7 +16,7 @@ import dill
 from mpi4py import MPI as mpi
 import numpy as np
 
-from pywarpx import callbacks, fields, picmi
+from pywarpx import callbacks, fields, libwarpx, picmi
 
 constants = picmi.constants
 
@@ -24,9 +24,8 @@ comm = mpi.COMM_WORLD
 
 simulation = picmi.Simulation(
     warpx_serialize_initial_conditions=True,
-    verbose=0)
-# make a shorthand for simulation.extension since we use it a lot
-sim_ext = simulation.extension
+    verbose=0
+)
 
 
 class ForceFreeSheetReconnection(object):
@@ -306,7 +305,7 @@ class ForceFreeSheetReconnection(object):
 
     def check_fields(self):
 
-        step = sim_ext.getistep()
+        step = simulation.extension.warpx.getistep(lev=0) - 1
 
         if not (step == 1 or step%self.diag_steps == 0):
             return
@@ -318,7 +317,7 @@ class ForceFreeSheetReconnection(object):
         By = fields.ByFPWrapper(include_ghosts=False)[...] / self.B0
         Bz = fields.BzFPWrapper(include_ghosts=False)[...] / self.B0
 
-        if sim_ext.getMyProc() != 0:
+        if libwarpx.amr.ParallelDescriptor.MyProc() != 0:
             return
 
         # save the fields to file

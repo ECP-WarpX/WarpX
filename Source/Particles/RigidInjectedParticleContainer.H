@@ -49,13 +49,20 @@ public:
     RigidInjectedParticleContainer (amrex::AmrCore* amr_core,
                                     int ispecies,
                                     const std::string& name);
-    virtual ~RigidInjectedParticleContainer () {}
+    ~RigidInjectedParticleContainer () override = default;
 
-    virtual void InitData() override;
+
+    RigidInjectedParticleContainer ( RigidInjectedParticleContainer const &)             = delete;
+    RigidInjectedParticleContainer& operator= ( RigidInjectedParticleContainer const & ) = delete;
+    RigidInjectedParticleContainer ( RigidInjectedParticleContainer&& )                  = default;
+    RigidInjectedParticleContainer& operator= ( RigidInjectedParticleContainer&& )       = default;
+
+
+    void InitData() override;
 
     virtual void RemapParticles();
 
-    virtual void Evolve (int lev,
+    void Evolve (int lev,
                          const amrex::MultiFab& Ex,
                          const amrex::MultiFab& Ey,
                          const amrex::MultiFab& Ez,
@@ -82,7 +89,7 @@ public:
                          bool skip_deposition=false,
                          PushType push_type=PushType::Explicit) override;
 
-    virtual void PushPX (WarpXParIter& pti,
+    void PushPX (WarpXParIter& pti,
                          amrex::FArrayBox const * exfab,
                          amrex::FArrayBox const * eyfab,
                          amrex::FArrayBox const * ezfab,
@@ -96,7 +103,7 @@ public:
                          amrex::Real dt, ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full) override;
 
-    virtual void PushP (int lev, amrex::Real dt,
+    void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,
                         const amrex::MultiFab& Ey,
                         const amrex::MultiFab& Ez,
@@ -104,9 +111,9 @@ public:
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) override;
 
-    virtual void ReadHeader (std::istream& is) override;
+    void ReadHeader (std::istream& is) override;
 
-    virtual void WriteHeader (std::ostream& os) const override;
+    void WriteHeader (std::ostream& os) const override;
 
 private:
 

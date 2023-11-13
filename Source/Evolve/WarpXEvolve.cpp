@@ -27,7 +27,7 @@
 #include "Fluids/MultiFluidContainer.H"
 #include "Fluids/WarpXFluidContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
-#include "Python/WarpX_py.H"
+#include "Python/callbacks.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
@@ -92,7 +92,7 @@ WarpX::EvolveExplicit (int numsteps)
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         WARPX_PROFILE("WarpX::Evolve::step");
-        const Real evolve_time_beg_step = amrex::second();
+        const auto evolve_time_beg_step = static_cast<Real>(amrex::second());
 
         //Check and clear signal flags and asynchronously broadcast them from process 0
         SignalHandling::CheckSignals();
@@ -391,7 +391,7 @@ WarpX::EvolveExplicit (int numsteps)
         }
 
         // create ending time stamp for calculating elapsed time each iteration
-        const Real evolve_time_end_step = amrex::second();
+        const auto evolve_time_end_step = static_cast<Real>(amrex::second());
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
         HandleSignals();

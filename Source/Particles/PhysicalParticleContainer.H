@@ -57,20 +57,25 @@ public:
      *  the run if one of them is specified. */
     void BackwardCompatibility ();
 
-    virtual ~PhysicalParticleContainer () {}
+    ~PhysicalParticleContainer () override {}
 
-    virtual void InitData () override;
+    PhysicalParticleContainer (PhysicalParticleContainer const &)              = delete;
+    PhysicalParticleContainer& operator= (PhysicalParticleContainer const & )  = delete;
+    PhysicalParticleContainer(PhysicalParticleContainer&& )                    = default;
+    PhysicalParticleContainer& operator=(PhysicalParticleContainer&& )         = default;
 
-    virtual void ReadHeader (std::istream& is) override;
+    void InitData () override;
 
-    virtual void WriteHeader (std::ostream& os) const override;
+    void ReadHeader (std::istream& is) override;
 
-    virtual void InitIonizationModule () override;
+    void WriteHeader (std::ostream& os) const override;
+
+    void InitIonizationModule () override;
 
     /*
      * \brief Returns a pointer to the plasma injector.
      */
-    virtual PlasmaInjector* GetPlasmaInjector () override;
+    PlasmaInjector* GetPlasmaInjector () override;
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that
@@ -106,7 +111,7 @@ public:
      * field gather, particle push and current deposition for all particles
      * in the box.
      */
-    virtual void Evolve (int lev,
+    void Evolve (int lev,
                          const amrex::MultiFab& Ex,
                          const amrex::MultiFab& Ey,
                          const amrex::MultiFab& Ez,
@@ -147,21 +152,21 @@ public:
                          amrex::Real dt, ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full);
 
-    virtual void ImplicitPushXP (WarpXParIter& pti,
-                                 amrex::FArrayBox const * exfab,
-                                 amrex::FArrayBox const * eyfab,
-                                 amrex::FArrayBox const * ezfab,
-                                 amrex::FArrayBox const * bxfab,
-                                 amrex::FArrayBox const * byfab,
-                                 amrex::FArrayBox const * bzfab,
-                                 const amrex::IntVect ngEB, const int /*e_is_nodal*/,
-                                 const long offset,
-                                 const long np_to_push,
-                                 int lev, int gather_lev,
-                                 amrex::Real dt, ScaleFields scaleFields,
-                                 DtType a_dt_type=DtType::Full);
+    void ImplicitPushXP (WarpXParIter& pti,
+                         amrex::FArrayBox const * exfab,
+                         amrex::FArrayBox const * eyfab,
+                         amrex::FArrayBox const * ezfab,
+                         amrex::FArrayBox const * bxfab,
+                         amrex::FArrayBox const * byfab,
+                         amrex::FArrayBox const * bzfab,
+                         const amrex::IntVect ngEB, const int /*e_is_nodal*/,
+                         const long offset,
+                         const long np_to_push,
+                         int lev, int gather_lev,
+                         amrex::Real dt, ScaleFields scaleFields,
+                         DtType a_dt_type=DtType::Full);
 
-    virtual void PushP (int lev, amrex::Real dt,
+    void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,
                         const amrex::MultiFab& Ey,
                         const amrex::MultiFab& Ez,
@@ -178,7 +183,7 @@ public:
                         amrex::iMultiFab const* current_masks,
                         amrex::iMultiFab const* gather_masks );
 
-    virtual void PostRestart () final {}
+    void PostRestart () final {}
 
     void SplitParticles (int lev);
 
@@ -256,13 +261,13 @@ public:
      * These are NOT initialized by this function.
      * @param[in] engine the random engine, used in initialization of QED optical depths
      */
-    virtual void DefaultInitializeRuntimeAttributes (
+    void DefaultInitializeRuntimeAttributes (
                     amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
                                         NArrayReal, NArrayInt,
                                         amrex::PinnedArenaAllocator>& pinned_tile,
                     int n_external_attr_real,
                     int n_external_attr_int,
-                    const amrex::RandomEngine& engine) override final;
+                    const amrex::RandomEngine& engine) final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
@@ -323,7 +328,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void resample (int timestep, bool verbose=true) override final;
+    void resample (int timestep, bool verbose) final;
 
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H
