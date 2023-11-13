@@ -24,11 +24,11 @@ filename = "diags/reducedfiles/FP_line.txt"
 
 # Open data file
 df = pd.read_csv(filename, sep=' ')
-df = df.sort_values(by=['[2]part_x_lev0-(m)'])
+df = df.sort_values(by=['[2]part_x_lev0(m)'])
 
 # Select position and Intensity of timestep 500
-x = df.query('`[0]step()` == 500')['[2]part_x_lev0-(m)']
-S = df.query('`[0]step()` == 500')['[11]part_S_lev0-(W*s/m^2)']
+x = df.query('`[0]step()` == 500')['[2]part_x_lev0(m)']
+S = df.query('`[0]step()` == 500')['[11]part_S_lev0(W*s/m^2)']
 xvals = x.to_numpy()
 svals = S.to_numpy()
 
