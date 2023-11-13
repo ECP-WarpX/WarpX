@@ -183,7 +183,7 @@ public:
     static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
     static short electromagnetic_solver_id;
-    //! Integer that corresponds to the evolve scheme (explicit, implicit_picard)
+    //! Integer that corresponds to the evolve scheme (explicit, implicit_picard, semi_implicit_picard)
     static short evolve_scheme;
     //! The maximum number of Picard iterations to do each time step
     static int max_picard_iterations;

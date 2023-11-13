@@ -64,7 +64,8 @@ WarpX::Evolve (int numsteps)
 {
     if (evolve_scheme == EvolveScheme::Explicit) {
         EvolveExplicit(numsteps);
-    } else if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+    } else if (evolve_scheme == EvolveScheme::ImplicitPicard ||
+               evolve_scheme == EvolveScheme::SemiImplicitPicard) {
         EvolveImplicitPicard(numsteps);
     } else {
         amrex::Abort(Utils::TextMsg::Err("Unknown evolve scheme"));

@@ -2013,7 +2013,8 @@ void
 WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
     const bool aux_is_nodal = ((field_gathering_algo == GatheringAlgo::MomentumConserving) &&
-                               (evolve_scheme != EvolveScheme::ImplicitPicard));
+                               (evolve_scheme != EvolveScheme::ImplicitPicard &&
+                                evolve_scheme != EvolveScheme::SemiImplicitPicard));
 
 #if   defined(WARPX_DIM_1D_Z)
     const amrex::RealVect dx(WarpX::CellSize(lev)[2]);
@@ -2085,7 +2086,8 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
                   guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
 
-    if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+    if (evolve_scheme == EvolveScheme::ImplicitPicard ||
+        evolve_scheme == EvolveScheme::SemiImplicitPicard) {
         EvolveImplicitPicardInit(lev);
     }
 

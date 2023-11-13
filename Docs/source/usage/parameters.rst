@@ -87,6 +87,9 @@ Overall simulation parameters
       :math:`\omega_{pe} \delta t` is close to or greater than one.
       The method is described in `Angus et al., On numerical energy conservation for an implicit particle-in-cell method coupled with a binary Monte-Carlo algorithm for Coulomb collisions <https://doi.org/10.1016/j.jcp.2022.111030>`__.
 
+    * ``semi_implicit_picard``: Use an energy conserving semi-implicit solver that uses a Picard iteration to solve the system.
+      Note that this method has the CFL limitation :math:`\omega_{pe} \delta t < 1`.
+      The method is described in `Chen et al., A semi-implicit, energy- and charge-conserving particle-in-cell algorithm for the relativistic Vlasov-Maxwell equations <https://doi.org/10.1016/j.jcp.2020.109228>`__.
 
 * ``warpx.do_electrostatic`` (`string`) optional (default `none`)
     Specifies the electrostatic mode. When turned on, instead of updating

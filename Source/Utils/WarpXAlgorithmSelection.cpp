@@ -24,9 +24,10 @@
 // and corresponding integer for use inside the code
 
 const std::map<std::string, int> evolve_scheme_to_int = {
-    {"explicit",        EvolveScheme::Explicit },
-    {"implicit_picard", EvolveScheme::ImplicitPicard },
-    {"default",         EvolveScheme::Explicit }
+    {"explicit",             EvolveScheme::Explicit },
+    {"implicit_picard",      EvolveScheme::ImplicitPicard },
+    {"semi_implicit_picard", EvolveScheme::SemiImplicitPicard },
+    {"default",              EvolveScheme::Explicit }
 };
 
 const std::map<std::string, int> grid_to_int = {
