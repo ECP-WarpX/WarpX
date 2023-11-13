@@ -27,7 +27,7 @@ namespace
 
 void
 FlushFormatCheckpoint::WriteToFile (
-        const amrex::Vector<std::string> /*varnames*/,
+        const amrex::Vector<std::string>& /*varnames*/,
         const amrex::Vector<amrex::MultiFab>& /*mf*/,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double /*time*/,
@@ -211,7 +211,7 @@ FlushFormatCheckpoint::WriteDMaps (const std::string& dir, int nlev) const
         for (int lev = 0; lev < nlev; ++lev) {
             std::string DMFileName = dir;
             if (!DMFileName.empty() && DMFileName[DMFileName.size()-1] != '/') {DMFileName += '/';}
-            DMFileName = amrex::Concatenate(DMFileName + "Level_", lev, 1);
+            DMFileName = amrex::Concatenate(DMFileName.append("Level_"), lev, 1);
             DMFileName += "/DM";
 
             std::ofstream DMFile;

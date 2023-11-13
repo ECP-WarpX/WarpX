@@ -60,11 +60,11 @@ PsatdAlgorithmJConstantInTime::PsatdAlgorithmJConstantInTime(
     m_update_with_rho(update_with_rho),
     m_time_averaging(time_averaging),
     m_dive_cleaning(dive_cleaning),
-    m_divb_cleaning(divb_cleaning)
+    m_divb_cleaning(divb_cleaning),
+    m_is_galilean{
+        (v_galilean[0] != 0.) || (v_galilean[1] != 0.) || (v_galilean[2] != 0.)}
 {
     const amrex::BoxArray& ba = spectral_kspace.spectralspace_ba;
-
-    m_is_galilean = (v_galilean[0] != 0.) || (v_galilean[1] != 0.) || (v_galilean[2] != 0.);
 
     // Always allocate these coefficients
     C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
@@ -452,15 +452,8 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficients (
             }
 
             // Auxiliary variable
-            amrex::Real tmp;
-            if (om_s != 0.)
-            {
-                tmp = (1._rt - C(i,j,k)) / (ep0 * om2_s);
-            }
-            else // om_s = 0
-            {
-                tmp = 0.5_rt * dt2 / ep0;
-            }
+            const amrex::Real tmp = (om_s != 0.)?
+                ((1._rt - C(i,j,k)) / (ep0 * om2_s)):(0.5_rt * dt2 / ep0);
 
             // T2
             if (is_galilean)
@@ -606,18 +599,10 @@ void PsatdAlgorithmJConstantInTime::InitializeSpectralCoefficientsAveraging (
             const amrex::Real C1 = std::cos(0.5_rt * om_s * dt);
             const amrex::Real C3 = std::cos(1.5_rt * om_s * dt);
 
-            // S1_om, S3_om
-            amrex::Real S1_om, S3_om;
-            if (om_s != 0.)
-            {
-                S1_om = std::sin(0.5_rt * om_s * dt) / om_s;
-                S3_om = std::sin(1.5_rt * om_s * dt) / om_s;
-            }
-            else // om_s = 0
-            {
-                S1_om = 0.5_rt * dt;
-                S3_om = 1.5_rt * dt;
-            }
+            const amrex::Real S1_om = (om_s != 0.)?
+                (std::sin(0.5_rt * om_s * dt) / om_s) : (0.5_rt * dt);
+            const amrex::Real S3_om = (om_s != 0.)?
+                 (std::sin(1.5_rt * om_s * dt) / om_s) : (1.5_rt * dt);
 
             // Psi1 (multiplies E in the update equation for <E>)
             // Psi1 (multiplies B in the update equation for <B>)

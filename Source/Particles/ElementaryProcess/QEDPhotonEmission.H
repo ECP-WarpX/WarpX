@@ -109,8 +109,8 @@ public:
     */
     PhotonEmissionTransformFunc (
         QuantumSynchrotronGetOpticalDepth opt_depth_functor,
-        int const opt_depth_runtime_comp,
-        QuantumSynchrotronPhotonEmission const emission_functor,
+        int opt_depth_runtime_comp,
+        QuantumSynchrotronPhotonEmission emission_functor,
         const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
         amrex::FArrayBox const& exfab,
         amrex::FArrayBox const& eyfab,
@@ -178,7 +178,7 @@ private:
     const QuantumSynchrotronPhotonEmission
         m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
     GetExternalEBField m_get_externalEB;
 
     amrex::Array4<const amrex::Real> m_ex_arr;

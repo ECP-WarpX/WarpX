@@ -38,7 +38,7 @@ namespace pxr_sr = picsar::multi_physics::utils::serialization;
 BreitWheelerGetOpticalDepth
 BreitWheelerEngine::build_optical_depth_functor () const
 {
-    return BreitWheelerGetOpticalDepth();
+    return {};
 }
 
 BreitWheelerEvolveOpticalDepth
@@ -46,8 +46,7 @@ BreitWheelerEngine::build_evolve_functor () const
 {
     AMREX_ALWAYS_ASSERT(m_lookup_tables_initialized);
 
-    return BreitWheelerEvolveOpticalDepth(m_dndt_table.get_view(),
-        m_bw_minimum_chi_phot);
+    return {m_dndt_table.get_view(), m_bw_minimum_chi_phot};
 }
 
 BreitWheelerGeneratePairs
@@ -55,7 +54,7 @@ BreitWheelerEngine::build_pair_functor () const
 {
     AMREX_ALWAYS_ASSERT(m_lookup_tables_initialized);
 
-    return BreitWheelerGeneratePairs(m_pair_prod_table.get_view());
+    return {m_pair_prod_table.get_view()};
 }
 
 bool BreitWheelerEngine::are_lookup_tables_initialized () const
@@ -73,10 +72,10 @@ BreitWheelerEngine::init_lookup_tables_from_raw_data (
     if(size_first <= 0 || size_first >= raw_data.size() ) return false;
 
     const auto raw_dndt_table = vector<char>{
-        raw_iter, raw_iter+size_first};
+        raw_iter, raw_iter+static_cast<long>(size_first)};
 
     const auto raw_pair_prod_table = vector<char>{
-        raw_iter+size_first, raw_data.end()};
+        raw_iter+static_cast<long>(size_first), raw_data.end()};
 
     m_dndt_table = BW_dndt_table{raw_dndt_table};
     m_pair_prod_table = BW_pair_prod_table{raw_pair_prod_table};

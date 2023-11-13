@@ -10,7 +10,6 @@
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_REAL.H>
-#include <AMReX_Vector.H>
 
 /**
  * \brief Calculate the residence correction, the fraction of the time step the particle

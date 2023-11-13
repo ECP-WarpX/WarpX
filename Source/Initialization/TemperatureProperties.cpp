@@ -69,6 +69,6 @@ TemperatureProperties::TemperatureProperties (const amrex::ParmParse& pp) {
         std::string string;
         stringstream << "Temperature distribution type '" << temp_dist_s << "' not recognized.";
         string = stringstream.str();
-        WARPX_ABORT_WITH_MESSAGE(string.c_str());
+        WARPX_ABORT_WITH_MESSAGE(string);
     }
 }

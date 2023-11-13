@@ -29,7 +29,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
-#include "Python/WarpX_py.H"
+#include "Python/callbacks.H"
 
 #include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/Communication.H>
@@ -81,6 +81,30 @@
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 
 using namespace amrex;
+
+namespace
+{
+    /**
+     * \brief Check that the number of guard cells is smaller than the number of valid cells,
+     * for a given MultiFab, and abort otherwise.
+     */
+    void CheckGuardCells(amrex::MultiFab const& mf)
+    {
+        for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
+        {
+            const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
+            const amrex::IntVect gc = mf.nGrowVect();
+
+            std::stringstream ss_msg;
+            ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
+                " the number of guard cells " << gc <<
+                " is larger than or equal to the number of valid cells "
+                << vc << ", please reduce the number of guard cells" <<
+                " or increase the grid size by changing domain decomposition.";
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
+        }
+    }
+}
 
 void
 WarpX::PostProcessBaseGrids (BoxArray& ba0) const
@@ -306,7 +330,7 @@ WarpX::PrintMainPICparameters ()
       amrex::Print() << "                      |   - current_centering_noz = " << WarpX::current_centering_noz << "\n";
      }
     }
-    if (WarpX::use_hybrid_QED == true){
+    if (WarpX::use_hybrid_QED){
       amrex::Print() << "                      | - use_hybrid_QED = true \n";
     }
 
@@ -387,6 +411,12 @@ WarpX::InitData ()
 
     Print() << utils::logo::get_logo();
 
+    // Diagnostics
+    multi_diags = std::make_unique<MultiDiagnostics>();
+
+    /** create object for reduced diagnostics */
+    reduced_diags = std::make_unique<MultiReducedDiags>();
+
     // WarpX::computeMaxStepBoostAccelerator
     // needs to start from the initial zmin_domain_boost,
     // even if restarting from a checkpoint file
@@ -453,15 +483,17 @@ WarpX::InitData ()
         // looks at field values will see the composite of the field
         // solution and any external field
         AddExternalFields();
+    }
 
+    if (restart_chkfile.empty() || write_diagonstics_on_restart) {
         // Write full diagnostics before the first iteration.
-        multi_diags->FilterComputePackFlush( -1 );
+        multi_diags->FilterComputePackFlush(istep[0] - 1);
 
         // Write reduced diagnostics before the first iteration.
         if (reduced_diags->m_plot_rd != 0)
         {
-            reduced_diags->ComputeDiags(-1);
-            reduced_diags->WriteToFile(-1);
+            reduced_diags->ComputeDiags(istep[0] - 1);
+            reduced_diags->WriteToFile(istep[0] - 1);
         }
     }
 
@@ -636,13 +668,9 @@ WarpX::computeMaxStepBoostAccelerator() {
     const Real interaction_time_boost = (len_plasma_boost-zmin_domain_boost_step_0)/
         (moving_window_v-v_plasma_boost);
     // Divide by dt, and update value of max_step.
-    int computed_max_step;
-    if (do_subcycling){
-        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
-    } else {
-        computed_max_step =
-            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
-    }
+    const auto computed_max_step = (do_subcycling)?
+        static_cast<int>(interaction_time_boost/dt[0]):
+        static_cast<int>(interaction_time_boost/dt[maxLevel()]);
     max_step = computed_max_step;
     Print()<<"max_step computed in computeMaxStepBoostAccelerator: "
            <<max_step<<std::endl;
@@ -658,15 +686,14 @@ WarpX::InitNCICorrector ()
         {
             const Geometry& gm = Geom(lev);
             const Real* dx = gm.CellSize();
-            amrex::Real dz, cdtodz;
 #if defined(WARPX_DIM_3D)
-                dz = dx[2];
+                const auto dz = dx[2];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                dz = dx[1];
+                const auto dz = dx[1];
 #else
-                dz = dx[0];
+                const auto dz = dx[0];
 #endif
-            cdtodz = PhysConst::c * dt[lev] / dz;
+            const auto cdtodz = PhysConst::c * dt[lev] / dz;
 
             // Initialize Godfrey filters
             // Same filter for fields Ex, Ey and Bz
@@ -776,22 +803,35 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // provided in the input file.
     if (B_ext_grid_s == "parse_b_ext_grid_function") {
 
+        //! Strings storing parser function to initialize the components of the magnetic field on the grid
+        std::string str_Bx_ext_grid_function;
+        std::string str_By_ext_grid_function;
+        std::string str_Bz_ext_grid_function;
+
 #ifdef WARPX_DIM_RZ
-       WARPX_ABORT_WITH_MESSAGE(
-           "E and B parser for external fields does not work with RZ -- TO DO");
-#endif
+        std::stringstream warnMsg;
+        warnMsg << "Parser for external B (r and theta) fields does not work with RZ\n"
+            << "The initial Br and Bt fields are currently hardcoded to 0.\n"
+            << "The initial Bz field should only be a function of z.\n";
+        ablastr::warn_manager::WMRecordWarning(
+          "Inputs", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
+        str_Bx_ext_grid_function = "0";
+        str_By_ext_grid_function = "0";
+#else
        utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
           str_Bx_ext_grid_function);
        utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
           str_By_ext_grid_function);
-       utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
-          str_Bz_ext_grid_function);
-       Bxfield_parser = std::make_unique<amrex::Parser>(
-       utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
-       Byfield_parser = std::make_unique<amrex::Parser>(
-          utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
-       Bzfield_parser = std::make_unique<amrex::Parser>(
-          utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
+#endif
+        utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
+            str_Bz_ext_grid_function);
+
+        Bxfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+        Byfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
+        Bzfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
@@ -838,6 +878,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        WARPX_ABORT_WITH_MESSAGE(
            "E and B parser for external fields does not work with RZ -- TO DO");
 #endif
+
+       //! Strings storing parser function to initialize the components of the electric field on the grid
+       std::string str_Ex_ext_grid_function;
+       std::string str_Ey_ext_grid_function;
+       std::string str_Ez_ext_grid_function;
+
        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
            str_Ex_ext_grid_function);
        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
@@ -1182,30 +1228,30 @@ void WarpX::CheckGuardCells()
     {
         for (int dim = 0; dim < 3; ++dim)
         {
-            CheckGuardCells(*Efield_fp[lev][dim]);
-            CheckGuardCells(*Bfield_fp[lev][dim]);
-            CheckGuardCells(*current_fp[lev][dim]);
+            ::CheckGuardCells(*Efield_fp[lev][dim]);
+            ::CheckGuardCells(*Bfield_fp[lev][dim]);
+            ::CheckGuardCells(*current_fp[lev][dim]);
 
             if (WarpX::fft_do_time_averaging)
             {
-                CheckGuardCells(*Efield_avg_fp[lev][dim]);
-                CheckGuardCells(*Bfield_avg_fp[lev][dim]);
+                ::CheckGuardCells(*Efield_avg_fp[lev][dim]);
+                ::CheckGuardCells(*Bfield_avg_fp[lev][dim]);
             }
         }
 
         if (rho_fp[lev])
         {
-            CheckGuardCells(*rho_fp[lev]);
+            ::CheckGuardCells(*rho_fp[lev]);
         }
 
         if (F_fp[lev])
         {
-            CheckGuardCells(*F_fp[lev]);
+            ::CheckGuardCells(*F_fp[lev]);
         }
 
         if (G_fp[lev])
         {
-            CheckGuardCells(*G_fp[lev]);
+            ::CheckGuardCells(*G_fp[lev]);
         }
 
         // MultiFabs on coarse patch
@@ -1213,49 +1259,32 @@ void WarpX::CheckGuardCells()
         {
             for (int dim = 0; dim < 3; ++dim)
             {
-                CheckGuardCells(*Efield_cp[lev][dim]);
-                CheckGuardCells(*Bfield_cp[lev][dim]);
-                CheckGuardCells(*current_cp[lev][dim]);
+                ::CheckGuardCells(*Efield_cp[lev][dim]);
+                ::CheckGuardCells(*Bfield_cp[lev][dim]);
+                ::CheckGuardCells(*current_cp[lev][dim]);
 
                 if (WarpX::fft_do_time_averaging)
                 {
-                    CheckGuardCells(*Efield_avg_cp[lev][dim]);
-                    CheckGuardCells(*Bfield_avg_cp[lev][dim]);
+                    ::CheckGuardCells(*Efield_avg_cp[lev][dim]);
+                    ::CheckGuardCells(*Bfield_avg_cp[lev][dim]);
                 }
             }
 
             if (rho_cp[lev])
             {
-                CheckGuardCells(*rho_cp[lev]);
+                ::CheckGuardCells(*rho_cp[lev]);
             }
 
             if (F_cp[lev])
             {
-                CheckGuardCells(*F_cp[lev]);
+                ::CheckGuardCells(*F_cp[lev]);
             }
 
             if (G_cp[lev])
             {
-                CheckGuardCells(*G_cp[lev]);
+                ::CheckGuardCells(*G_cp[lev]);
             }
         }
-    }
-}
-
-void WarpX::CheckGuardCells(amrex::MultiFab const& mf)
-{
-    for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi)
-    {
-        const amrex::IntVect vc = mfi.validbox().enclosedCells().size();
-        const amrex::IntVect gc = mf.nGrowVect();
-
-        std::stringstream ss_msg;
-        ss_msg << "MultiFab " << mf.tags()[1].c_str() << ":" <<
-            " the number of guard cells " << gc <<
-            " is larger than or equal to the number of valid cells "
-            << vc << ", please reduce the number of guard cells" <<
-             " or increase the grid size by changing domain decomposition.";
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(vc.allGT(gc), ss_msg.str());
     }
 }
 
@@ -1337,6 +1366,16 @@ void WarpX::CheckKnownIssues()
             "applied directly to particles."
         );
     }
+
+#if defined(__CUDACC__) && (__CUDACC_VER_MAJOR__ == 11) && (__CUDACC_VER_MINOR__ == 6)
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee)
+    {
+        WARPX_ABORT_WITH_MESSAGE(
+            "CUDA 11.6 does not work with the Yee Maxwell "
+            "solver: https://github.com/AMReX-Codes/amrex/issues/2607"
+        );
+    }
+#endif
 }
 
 #if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z) && !defined(WARPX_DIM_XZ)
@@ -1383,27 +1422,27 @@ WarpX::ReadExternalFieldFromFile (
 #endif
 
     const auto offset = F.gridGlobalOffset();
-    const amrex::Real offset0 = offset[0];
-    const amrex::Real offset1 = offset[1];
+    const auto offset0 = static_cast<amrex::Real>(offset[0]);
+    const auto offset1 = static_cast<amrex::Real>(offset[1]);
 #if defined(WARPX_DIM_3D)
-    const amrex::Real offset2 = offset[2];
+    const auto offset2 = static_cast<amrex::Real>(offset[2]);
 #endif
     const auto d = F.gridSpacing<long double>();
 
 #if defined(WARPX_DIM_RZ)
-    const amrex::Real file_dr = d[0];
-    const amrex::Real file_dz = d[1];
+    const auto file_dr = static_cast<amrex::Real>(d[0]);
+    const auto file_dz = static_cast<amrex::Real>(d[1]);
 #elif defined(WARPX_DIM_3D)
-    const amrex::Real file_dx = d[0];
-    const amrex::Real file_dy = d[1];
-    const amrex::Real file_dz = d[2];
+    const auto file_dx = static_cast<amrex::Real>(d[0]);
+    const auto file_dy = static_cast<amrex::Real>(d[1]);
+    const auto file_dz = static_cast<amrex::Real>(d[2]);
 #endif
 
     auto FC = F[F_component];
     const auto extent = FC.getExtent();
-    const int extent0 = extent[0];
-    const int extent1 = extent[1];
-    const int extent2 = extent[2];
+    const auto extent0 = static_cast<int>(extent[0]);
+    const auto extent1 = static_cast<int>(extent[1]);
+    const auto extent2 = static_cast<int>(extent[2]);
 
     // Determine the chunk data that will be loaded.
     // Now, the full range of data is loaded.
@@ -1450,11 +1489,11 @@ WarpX::ReadExternalFieldFromFile (
                 // 0,1 denote r,z in 2D rz.
                 amrex::Real x0, x1;
                 if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
-                     { x0 = real_box.lo(0) + ii*dx[0]; }
-                else { x0 = real_box.lo(0) + ii*dx[0] + 0.5*dx[0]; }
+                     { x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0]; }
+                else { x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0] + 0.5_rt*dx[0]; }
                 if ( box.type(1)==amrex::IndexType::CellIndex::NODE )
                      { x1 = real_box.lo(1) + j*dx[1]; }
-                else { x1 = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
+                else { x1 = real_box.lo(1) + j*dx[1] + 0.5_rt*dx[1]; }
 
 #if defined(WARPX_DIM_RZ)
                 // Get index of the external field array
@@ -1469,7 +1508,7 @@ WarpX::ReadExternalFieldFromFile (
                 amrex::Real x2;
                 if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
                      { x2 = real_box.lo(2) + k*dx[2]; }
-                else { x2 = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
+                else { x2 = real_box.lo(2) + k*dx[2] + 0.5_rt*dx[2]; }
 
                 // Get index of the external field array
                 int const ix = floor( (x0-offset0)/file_dx );
@@ -1489,10 +1528,10 @@ WarpX::ReadExternalFieldFromFile (
                     f01 = fc_array(0, iz  , ir+1),
                     f10 = fc_array(0, iz+1, ir  ),
                     f11 = fc_array(0, iz+1, ir+1);
-                mffab(i,j,k) = utils::algorithms::bilinear_interp<double>
+                mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::bilinear_interp<double>
                     (xx0, xx0+file_dr, xx1, xx1+file_dz,
                      f00, f01, f10, f11,
-                     x0, x1);
+                     x0, x1));
 #elif defined(WARPX_DIM_3D)
                 const amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
                 const double
@@ -1504,10 +1543,10 @@ WarpX::ReadExternalFieldFromFile (
                     f101 = fc_array(iz+1, iy  , ix+1),
                     f110 = fc_array(iz  , iy+1, ix+1),
                     f111 = fc_array(iz+1, iy+1, ix+1);
-                mffab(i,j,k) = utils::algorithms::trilinear_interp<double>
+                mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::trilinear_interp<double>
                     (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
                      f000, f001, f010, f011, f100, f101, f110, f111,
-                     x0, x1, x2);
+                     x0, x1, x2));
 #endif
 
             }

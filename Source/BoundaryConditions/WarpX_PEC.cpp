@@ -256,16 +256,6 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
     }
     const int nComp = rho->nComp();
 
-#ifdef WARPX_DIM_RZ
-    if (is_pec[0][1]) {
-        ablastr::warn_manager::WMRecordWarning(
-          "PEC",
-          "PEC boundary handling is not yet properly implemented for r_max so it is skipped in PEC::ApplyPECtoRhofield",
-          ablastr::warn_manager::WarnPriority::medium);
-          is_pec[0][1] = false;
-    }
-#endif
-
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -351,15 +341,14 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
 #if (defined WARPX_DIM_1D_Z)
             // For 1D : icomp=0 and icomp=1 (Ex and Ey are tangential to the z boundary)
             //          The logic below ensures that the flags are set right for 1D
-            is_tangent_to_bndy[icomp][idim] = ( ( icomp == idim+2) ? false : true );
+            is_tangent_to_bndy[icomp][idim] = (icomp != (idim+2));
 #elif (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ),
             //          icomp=1 is tangential to both x and z boundaries
             //          The logic below ensures that the flags are set right for 2D
-            is_tangent_to_bndy[icomp][idim] = ( (icomp == AMREX_SPACEDIM*idim)
-                                            ? false : true );
+            is_tangent_to_bndy[icomp][idim] = (icomp != AMREX_SPACEDIM*idim);
 #else
-            is_tangent_to_bndy[icomp][idim] = ( ( icomp == idim) ? false : true );
+            is_tangent_to_bndy[icomp][idim] = (icomp != idim);
 #endif
 
             if (is_tangent_to_bndy[icomp][idim]){
@@ -386,16 +375,6 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
         mirrorfac[2][idim][0] = 2*domain_lo[idim] - (1 - Jz_nodal[idim]);
         mirrorfac[2][idim][1] = 2*domain_hi[idim] - (1 - Jz_nodal[idim]);
     }
-
-#ifdef WARPX_DIM_RZ
-    if (is_pec[0][1]) {
-        ablastr::warn_manager::WMRecordWarning(
-          "PEC",
-          "PEC boundary handling is not yet properly implemented for r_max so it is skipped in PEC::ApplyPECtoJfield",
-          ablastr::warn_manager::WarnPriority::medium);
-          is_pec[0][1] = false;
-    }
-#endif
 
     // Each current component is handled separately below, starting with Jx.
 #ifdef AMREX_USE_OMP
@@ -538,16 +517,6 @@ PEC::ApplyPECtoElectronPressure (amrex::MultiFab* Pefield, const int lev,
         mirrorfac[idim][1] = 2*domain_hi[idim] + (1 - Pe_nodal[idim]);
     }
     const int nComp = Pefield->nComp();
-
-#ifdef WARPX_DIM_RZ
-    if (is_pec[0][1]) {
-        ablastr::warn_manager::WMRecordWarning(
-          "PEC",
-          "PEC boundary handling is not yet properly implemented for r_max so it is skipped in PEC::ApplyPECtoPefield",
-          ablastr::warn_manager::WarnPriority::medium);
-          is_pec[0][1] = false;
-    }
-#endif
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())

@@ -8,15 +8,15 @@
 #include "SignalHandling.H"
 #include "TextMsg.H"
 
-#include <AMReX.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_IParser.H>
 
 #include <cctype>
+#include <stdexcept>
 
 // For sigaction() et al.
 #if defined(__linux__) || defined(__APPLE__)
-#   include <signal.h>
+#   include <csignal>
 #endif
 
 namespace ablastr::utils {
@@ -90,15 +90,15 @@ SignalHandling::parseSignalNameToNumber (const std::string &str)
         std::string name_upper = sp.abbrev;
         std::string name_lower = name_upper;
         for (char &c : name_lower) {
-            c = std::tolower(c);
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
         }
 
         signals_parser.setConstant(name_upper, sp.value);
         signals_parser.setConstant(name_lower, sp.value);
-        name_upper = "SIG" + name_upper;
-        name_lower = "sig" + name_lower;
-        signals_parser.setConstant(name_upper, sp.value);
-        signals_parser.setConstant(name_lower, sp.value);
+        const auto sig_name_upper = "SIG" + name_upper;
+        const auto sig_name_lower = "sig" + name_lower;
+        signals_parser.setConstant(sig_name_upper, sp.value);
+        signals_parser.setConstant(sig_name_lower, sp.value);
     }
 #endif // #if defined(__linux__) || defined(__APPLE__)
 
@@ -121,8 +121,8 @@ SignalHandling::InitSignalHandling ()
         signal_received_flags[signal_number] = false;
 
         bool signal_active = false;
-        for (int signal_request = 0; signal_request < SIGNAL_REQUESTS_SIZE; ++signal_request) {
-            signal_active |= signal_conf_requests[signal_request][signal_number];
+        for (const auto& request : signal_conf_requests) {
+            signal_active |= request[signal_number];
         }
         if (signal_active) {
             // at least one signal action is configured
@@ -162,8 +162,9 @@ SignalHandling::CheckSignals ()
             const bool signal_received = signal_received_flags[signal_number].exchange(false);
 
             if (signal_received) {
-                for (int signal_request = 0; signal_request < SIGNAL_REQUESTS_SIZE; ++signal_request) {
-                    signal_actions_requested[signal_request] |= signal_conf_requests[signal_request][signal_number];
+                int signal_request = 0;
+                for (const auto& request : signal_conf_requests) {
+                    signal_actions_requested[signal_request++] |= request[signal_number];
                 }
             }
         }

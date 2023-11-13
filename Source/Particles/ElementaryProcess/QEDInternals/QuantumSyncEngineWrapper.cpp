@@ -38,22 +38,21 @@ namespace pxr_sr = picsar::multi_physics::utils::serialization;
 QuantumSynchrotronGetOpticalDepth
 QuantumSynchrotronEngine::build_optical_depth_functor ()
 {
-    return QuantumSynchrotronGetOpticalDepth();
+    return {};
 }
 
 QuantumSynchrotronEvolveOpticalDepth QuantumSynchrotronEngine::build_evolve_functor ()
 {
     AMREX_ALWAYS_ASSERT(m_lookup_tables_initialized);
 
-    return QuantumSynchrotronEvolveOpticalDepth(m_dndt_table.get_view(),
-        m_qs_minimum_chi_part);
+    return {m_dndt_table.get_view(), m_qs_minimum_chi_part};
 }
 
 QuantumSynchrotronPhotonEmission QuantumSynchrotronEngine::build_phot_em_functor ()
 {
     AMREX_ALWAYS_ASSERT(m_lookup_tables_initialized);
 
-    return QuantumSynchrotronPhotonEmission(m_phot_em_table.get_view());
+    return {m_phot_em_table.get_view()};
 
 }
 
@@ -72,10 +71,10 @@ QuantumSynchrotronEngine::init_lookup_tables_from_raw_data (
     if(size_first <= 0 || size_first >= raw_data.size() ) return false;
 
     const auto raw_dndt_table = vector<char>{
-        raw_iter, raw_iter+size_first};
+        raw_iter, raw_iter+static_cast<long>(size_first)};
 
     const auto raw_phot_em_table = vector<char>{
-        raw_iter+size_first, raw_data.end()};
+        raw_iter+static_cast<long>(size_first), raw_data.end()};
 
     m_dndt_table = QS_dndt_table{raw_dndt_table};
     m_phot_em_table = QS_phot_em_table{raw_phot_em_table};

@@ -29,24 +29,24 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
         PsatdAlgorithmComoving (const SpectralKSpace& spectral_kspace,
                                 const amrex::DistributionMapping& dm,
                                 const SpectralFieldIndex& spectral_index,
-                                const int norder_x,
-                                const int norder_y,
-                                const int norder_z,
-                                const short grid_type,
+                                int norder_x,
+                                int norder_y,
+                                int norder_z,
+                                short grid_type,
                                 const amrex::Vector<amrex::Real>& v_comoving,
-                                const amrex::Real dt,
-                                const bool update_with_rho);
+                                amrex::Real dt,
+                                bool update_with_rho);
 
         /**
          * \brief Override the update equations in Fourier space
          */
-        virtual void pushSpectralFields (SpectralFieldData& f) const override final;
+        void pushSpectralFields (SpectralFieldData& f) const final;
 
         /* \brief Initialize the coefficients needed in the update equations
          */
         void InitializeSpectralCoefficients (const SpectralKSpace& spectral_kspace,
                                              const amrex::DistributionMapping& dm,
-                                             const amrex::Real dt);
+                                             amrex::Real dt);
 
         /**
          * \brief Virtual function for current correction in Fourier space.
@@ -56,7 +56,7 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void CurrentCorrection (SpectralFieldData& field_data) override final;
+        void CurrentCorrection (SpectralFieldData& field_data) final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space.
@@ -66,7 +66,7 @@ class PsatdAlgorithmComoving : public SpectralBaseAlgorithm
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void VayDeposition (SpectralFieldData& field_data) override final;
+        void VayDeposition (SpectralFieldData& field_data) final;
 
     private:
 

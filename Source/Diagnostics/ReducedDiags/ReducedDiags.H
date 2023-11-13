@@ -42,6 +42,9 @@ public:
     /// separator in the output file
     std::string m_sep = " ";
 
+    /// precision for data in the output file
+    int m_precision = 14;
+
     /// output data
     std::vector<amrex::Real> m_data;
 
@@ -55,6 +58,13 @@ public:
      * Virtual destructor for polymorphism
      */
     virtual ~ReducedDiags () = default;
+
+    // Default move and copy operations
+    ReducedDiags(const ReducedDiags&) = default;
+    ReducedDiags& operator=(const ReducedDiags&) = default;
+    ReducedDiags(ReducedDiags&&) = default;
+    ReducedDiags& operator=(ReducedDiags&&) = default;
+
 
     /**
      * function to initialize data after amr

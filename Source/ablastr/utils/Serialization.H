@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <iterator>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -93,7 +94,7 @@ namespace ablastr::utils::serialization
         if constexpr (std::is_same<T, std::string>())
         {
             const auto length = get_out<int>(it);
-            const auto str = std::string{it, it + length};
+            auto str = std::string{it, it + length};
             it += length;
 
             return str;

@@ -91,13 +91,19 @@ public:
      */
     virtual void
     fill_amplitude (
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const = 0;
+        amrex::Real* AMREX_RESTRICT amplitude) const = 0;
 
+    ILaserProfile () = default;
     virtual ~ILaserProfile(){}
+
+    ILaserProfile ( ILaserProfile const &)             = default;
+    ILaserProfile& operator= ( ILaserProfile const & ) = default;
+    ILaserProfile ( ILaserProfile&& )                  = default;
+    ILaserProfile& operator= ( ILaserProfile&& )       = default;
 };
 
 /**
@@ -110,19 +116,19 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters params) final;
 
     //No update needed
     void
-    update (amrex::Real /*t */) override final {}
+    update (amrex::Real /*t */) final {}
 
     void
     fill_amplitude (
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT amplitude) const final;
 
 private:
     struct {
@@ -152,19 +158,19 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters params) final;
 
     //No update needed
     void
-    update (amrex::Real /*t */) override final {}
+    update (amrex::Real /*t */) final {}
 
     void
     fill_amplitude (
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT amplitude) const final;
 
 private:
     struct{
@@ -187,14 +193,14 @@ public:
     void
     init (
         const amrex::ParmParse& ppl,
-        CommonLaserParameters params) override final;
+        CommonLaserParameters params) final;
 
     /** \brief Reads new field data chunk from file if needed
     *
     * @param[in] t simulation time (seconds)
     */
     void
-    update (amrex::Real t) override final;
+    update (amrex::Real t) final;
 
     /** \brief compute field amplitude at particles' position for a laser beam
     * loaded from an E(x,y,t) file.
@@ -211,11 +217,11 @@ public:
     */
     void
     fill_amplitude (
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT amplitude) const final;
 
     /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format in 3D Cartesian.
     * This function cannot be private due to restrictions related to
@@ -229,12 +235,12 @@ public:
     * \param amplitude: pointer to array of field amplitude.
     */
     void internal_fill_amplitude_uniform_cartesian(
-        const int idx_t_left,
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int idx_t_left,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const;
+        amrex::Real * AMREX_RESTRICT amplitude) const;
 
     /** \brief Function to fill the amplitude in case of a uniform grid and for the lasy format in RZ geometry.
     * This function cannot be private due to restrictions related to
@@ -248,12 +254,12 @@ public:
     * \param amplitude: pointer to array of field amplitude.
     */
     void internal_fill_amplitude_uniform_cylindrical(
-        const int idx_t_left,
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int idx_t_left,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const;
+        amrex::Real * AMREX_RESTRICT amplitude) const;
 
 
 
@@ -269,12 +275,12 @@ public:
     * \param amplitude: pointer to array of field amplitude.
     */
         void internal_fill_amplitude_uniform_binary(
-        const int idx_t_left,
-        const int np,
-        amrex::Real const * AMREX_RESTRICT const Xp,
-        amrex::Real const * AMREX_RESTRICT const Yp,
+        int idx_t_left,
+        int np,
+        amrex::Real const * AMREX_RESTRICT Xp,
+        amrex::Real const * AMREX_RESTRICT Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const;
+        amrex::Real * AMREX_RESTRICT amplitude) const;
 
 private:
     /** \brief parse a field file in the HDF5 'lasy' format
@@ -328,14 +334,14 @@ private:
      */
     struct{
 
-        /** Name of the lasy file geometry ("cartesian" for 3D cartesian or "thetaMode" for RZ) */
-        std::string fileGeom;
         /** Name of the binary file containing the data */
         std::string binary_file_name;
         /** Name of the lasy file containing the data */
         std::string lasy_file_name;
         /** true if the file is in the lasy format, false if it is in the binary format */
         bool file_in_lasy_format;
+        /** lasy file geometry ("cartesian" for 3D cartesian or "thetaMode" for RZ) */
+        int file_in_cartesian_geom;
         /** Dimensions of E_binary_data or E_lasy_data. nt, nx must be >=2.
          * If DIM=3, ny must be >=2 as well.
          * If DIM=2, ny must be 1 */

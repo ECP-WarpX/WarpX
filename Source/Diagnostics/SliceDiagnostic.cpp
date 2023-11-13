@@ -158,10 +158,10 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
     }
 
 
-    if (coarsen == false) {
+    if (!coarsen) {
        return smf;
     }
-    else if ( coarsen == true ) {
+    else {
        Vector<BoxArray> crse_ba(1);
        crse_ba[0] = sba[0];
        crse_ba[0].coarsen(slice_cr_ratio);
@@ -226,13 +226,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
        }
        return cs_mf;
-
     }
-
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-       false, "Should not hit this return statement.");
-
-    return smf;
 }
 
 
@@ -363,7 +357,7 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
 
             bool modify_cr = true;
 
-            while ( modify_cr == true) {
+            while ( modify_cr ) {
                 int lo_new = index_lo;
                 int hi_new = index_hi;
                 const int mod_lo = index_lo % slice_cr_ratio[idim];
@@ -400,7 +394,7 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
                     modify_cr = true;
                 }
 
-                if ( modify_cr == false ) {
+                if ( !modify_cr ) {
                    index_lo = lo_new;
                    index_hi = hi_new;
                 }

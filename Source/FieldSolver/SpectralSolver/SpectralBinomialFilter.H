@@ -25,15 +25,15 @@ class SpectralBinomialFilter
 
         SpectralBinomialFilter () {}
         void InitFilterArray (RealKVector const & kvec,
-                              amrex::Real const dels,
-                              int const npasses,
-                              bool const compensation,
+                              amrex::Real dels,
+                              int npasses,
+                              bool compensation,
                               KFilterArray & filter);
         void InitFilterArray (RealKVector const & kr,
                               RealKVector const & kz,
-                              amrex::RealVect const dx,
-                              amrex::IntVect const filter_npass_each_dir,
-                              bool const compensation);
+                              amrex::RealVect dx,
+                              amrex::IntVect filter_npass_each_dir,
+                              bool compensation);
 
         KFilterArray const & getFilterArrayR () {return filter_r;}
         KFilterArray const & getFilterArrayZ () {return filter_z;}

@@ -10,18 +10,15 @@
 #include "ablastr/utils/TextMsg.H"
 #include "ablastr/utils/Serialization.H"
 
-#ifdef AMREX_USE_MPI
-#   include <AMReX_ParallelDescriptor.H>
-#endif
-#include <AMReX_Print.H>
+#include <AMReX_ParallelDescriptor.H>
 
-#include <iostream>
-#include <sstream>
+#include <algorithm>
+#include <array>
+#include <memory>
 #include <numeric>
 
 namespace abl_msg_logger = ablastr::utils::msg_logger;
 namespace abl_ser = ablastr::utils::serialization;
-namespace abl_utils = ablastr::utils;
 
 using namespace abl_msg_logger;
 
@@ -41,8 +38,8 @@ namespace
     std::vector<char>
     get_serialized_gather_rank_msgs(
         const std::vector<Msg>& my_msgs,
-        const int gather_rank,
-        const int my_rank);
+        int gather_rank,
+        int my_rank);
 
     /**
     * \brief This function generates data to send back to the "gather rank"
@@ -56,9 +53,9 @@ namespace
     std::vector<char>
     compute_package_for_gather_rank(
         const std::vector<char>& serialized_gather_rank_msgs,
-        const std::int64_t gather_rank_how_many_msgs,
+        std::int64_t gather_rank_how_many_msgs,
         const std::map<Msg, std::int64_t>& my_msg_map,
-        const bool is_gather_rank
+        bool is_gather_rank
     );
 
     /**
@@ -77,7 +74,7 @@ namespace
     std::pair<std::vector<char>, std::vector<int>>
     gather_all_data(
         const std::vector<char>& package_for_gather_rank,
-        const int gather_rank, const int my_rank);
+        int gather_rank, int my_rank);
 
     /**
     * \brief This function converts a vector of Msg struct into a byte array
@@ -355,6 +352,7 @@ Logger::compute_msgs_with_counter_and_ranks(
     std::vector<MsgWithCounterAndRanks> msgs_with_counter_and_ranks;
 
     // Put messages of the gather rank in msgs_with_counter_and_ranks
+    msgs_with_counter_and_ranks.reserve(my_msg_map.size());
     for (const auto& el : my_msg_map)
     {
         msgs_with_counter_and_ranks.emplace_back(
