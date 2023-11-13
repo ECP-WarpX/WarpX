@@ -26,19 +26,33 @@ mkdir -p ${SW_DIR}
 # General extra dependencies ##################################################
 #
 
+# c-blosc2 (I/O compression)
+if [ -d ${HOME}/src/c-blosc2 ]
+then
+  cd ${HOME}/src/c-blosc2
+  git fetch --prune
+  git checkout v2.11.1
+  cd -
+else
+  git clone -b v2.11.1 https://github.com/Blosc/c-blosc2.git ${HOME}/src/c-blosc2
+fi
+rm -rf $HOME/src/c-blosc2-gpu-build
+cmake -S ${HOME}/src/c-blosc2 -B $HOME/src/c-blosc2-gpu-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc2-2.11.1
+cmake --build $HOME/src/c-blosc2-gpu-build --target install --parallel 6
+rm -rf $HOME/src/c-blosc2-gpu-build
+
 # ADIOS2
 if [ -d $HOME/src/adios2 ]
 then
   cd $HOME/src/adios2
-  git fetch
-  git checkout master
-  git pull
+  git fetch --prune
+  git checkout v2.9.2
   cd -
 else
-  git clone https://github.com/ornladios/ADIOS2.git $HOME/src/adios2
+  git clone -b v2.9.2 https://github.com/ornladios/ADIOS2.git $HOME/src/adios2
 fi
 rm -rf $HOME/src/adios2-gpu-build
-cmake -S $HOME/src/adios2 -B $HOME/src/adios2-gpu-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-master
+cmake -S $HOME/src/adios2 -B $HOME/src/adios2-gpu-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-2.9.2
 cmake --build $HOME/src/adios2-gpu-build --target install -j 16
 rm -rf $HOME/src/adios2-gpu-build
 
