@@ -23,7 +23,7 @@ class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
                              short grid_type, amrex::Real dt_step);
 
         // Redefine functions from base class
-        virtual void pushSpectralFields (SpectralFieldDataRZ & f) override final;
+        void pushSpectralFields (SpectralFieldDataRZ & f) final;
 
         void InitializeSpectralCoefficients (SpectralFieldDataRZ const & f);
 
@@ -36,7 +36,7 @@ class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void CurrentCorrection (SpectralFieldDataRZ& field_data) override final;
+        void CurrentCorrection (SpectralFieldDataRZ& field_data) final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -47,11 +47,11 @@ class PsatdAlgorithmPmlRZ : public SpectralBaseAlgorithmRZ
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void VayDeposition (SpectralFieldDataRZ& field_data) override final;
+        void VayDeposition (SpectralFieldDataRZ& field_data) final;
 
     private:
 
-        bool coefficients_initialized;
+        bool coefficients_initialized = false;
         // Note that dt is saved to use in InitializeSpectralCoefficients
         amrex::Real m_dt;
         SpectralRealCoefficients C_coef, S_ck_coef;

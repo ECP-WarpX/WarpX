@@ -115,6 +115,7 @@ struct IonizationFilterFunc
                            m_ex_type, m_ey_type, m_ez_type, m_bx_type, m_by_type, m_bz_type,
                            m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
                            m_nox, m_galerkin_interpolation);
+            m_get_externalEB(i, ex, ey, ez, bx, by, bz);
 
             // Compute electric field amplitude in the particle's frame of
             // reference (particularly important when in boosted frame).

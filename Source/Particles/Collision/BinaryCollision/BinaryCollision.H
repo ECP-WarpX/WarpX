@@ -104,7 +104,12 @@ public:
         m_copy_transform_functor = CopyTransformFunctorType(collision_name, mypc);
     }
 
-    virtual ~BinaryCollision () = default;
+    ~BinaryCollision () override = default;
+
+    BinaryCollision ( BinaryCollision const &)             = default;
+    BinaryCollision& operator= ( BinaryCollision const & ) = default;
+    BinaryCollision ( BinaryCollision&& )                  = default;
+    BinaryCollision& operator= ( BinaryCollision&& )       = default;
 
     /** Perform the collisions
      *

@@ -83,7 +83,6 @@
 #include <AMReX_SPACE.H>
 #include <AMReX_Scan.H>
 #include <AMReX_StructOfArrays.H>
-#include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 #include <AMReX_Vector.H>
 #include <AMReX_Parser.H>
@@ -144,12 +143,21 @@ namespace
         ParticleReal x, y, z;
 
         AMREX_GPU_HOST_DEVICE
-        PDim3(const PDim3&) = default;
-        AMREX_GPU_HOST_DEVICE
-        PDim3(const amrex::XDim3& a) : x(a.x), y(a.y), z(a.z) {}
+        PDim3(const amrex::XDim3& a):
+            x{a.x}, y{a.y}, z{a.z}
+        {}
 
         AMREX_GPU_HOST_DEVICE
-        PDim3& operator=(const PDim3&) = default;
+        ~PDim3() = default;
+
+        AMREX_GPU_HOST_DEVICE
+        PDim3(PDim3 const &)            = default;
+        AMREX_GPU_HOST_DEVICE
+        PDim3& operator=(PDim3 const &) = default;
+        AMREX_GPU_HOST_DEVICE
+        PDim3(PDim3&&)                  = default;
+        AMREX_GPU_HOST_DEVICE
+        PDim3& operator=(PDim3&&)       = default;
     };
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE

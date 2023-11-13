@@ -104,37 +104,40 @@ namespace {
         // Momentum to be returned at the end of this function
         amrex::Real u = 0._rt;
 
+        const amrex::Real abs_u_m = std::abs(u_m);
+
         if (u_th == 0._rt) {
             u = u_m; // Trivial case ; avoids division by 0 in the rest of the code below
-        } else if (u_m < 0.6*u_th) {
-            // Mean velocity is lower than thermal velocity
-            // Use the distribution u*exp(-u**2*(1-u_m/u_th)/(2*u_th**2)) as an approximation
+        } else if (abs_u_m < 0.6*u_th) {
+            // Mean velocity magnitude is less than thermal velocity
+            // Use the distribution u*exp(-u**2*(1-abs(u_m)/u_th)/(2*u_th**2)) as an approximation
             // and then use the rejection method to correct it
-            // ( stop rejecting with probability exp(-u_m/(2*u_th**3)*(u-u_th)**2) )
+            // ( stop rejecting with probability exp(-abs(u_m)/(2*u_th**3)*(u-sign(u_m)*u_th)**2) )
             // Note that this is the method that is used in the common case u_m=0
-            const amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - u_m/u_th );
-            const amrex::Real reject_prefactor = (u_m/u_th)/(2._rt*u_th*u_th); // To save computation
+            const amrex::Real umsign = std::copysign(1._rt, u_m);
+            const amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - abs_u_m/u_th );
+            const amrex::Real reject_prefactor = (abs_u_m/u_th)/(2._rt*u_th*u_th); // To save computation
             bool reject = true;
             while (reject) {
-                // Generates u according to u*exp(-u**2/(2*approx_u_th**2),
+                // Generates u according to u*exp(-u**2/(2*approx_u_th**2)),
                 // using the method of the inverse cumulative function
                 amrex::Real xrand = 1._rt - amrex::Random(engine); // ensures urand > 0
                 u = approx_u_th * std::sqrt(2._rt*std::log(1._rt/xrand));
                 // Rejection method
                 xrand = amrex::Random(engine);
-                if (xrand < std::exp(-reject_prefactor*(u-u_th)*(u-u_th))) reject = false;
+                if (xrand < std::exp(-reject_prefactor*(u - umsign*u_th)*(u - umsign*u_th))) reject = false;
             }
         } else {
-            // Mean velocity is greater than thermal velocity
-            // Use the distribution exp(-(u-u_m-u_th**2/u_m)**2/(2*u_th**2)) as an approximation
+            // Mean velocity magnitude is greater than thermal velocity
+            // Use the distribution exp(-(u-u_m-u_th**2/abs(u_m))**2/(2*u_th**2)) as an approximation
             // and then use the rejection method to correct it
-            // ( stop rejecting with probability (u/u_m)*exp(1-(u/u_m)) ; note
+            // ( stop rejecting with probability (u/abs(u_m))*exp(1-(u/abs(u_m))) ; note
             // that this number is always between 0 and 1 )
             // Note that in the common case `u_m = 0`, this rejection method
             // is not used, and the above rejection method is used instead.
             bool reject = true;
-            const amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
-            const amrex::Real inv_um = 1._rt/u_m; // To save computation
+            const amrex::Real approx_u_m = u_m + u_th*u_th/abs_u_m;
+            const amrex::Real inv_um = 1._rt/abs_u_m; // To save computation
             while (reject) {
                 // Approximate distribution: normal distribution, where we only retain positive u
                 u = -1._rt;
@@ -166,13 +169,6 @@ struct InjectorMomentumGaussianFlux
           m_flux_normal_axis(a_flux_normal_axis),
           m_flux_direction(a_flux_direction)
     {
-        // For now, do not allow negative `u_m` along the flux axis
-        bool raise_error = false;
-        if ((m_flux_normal_axis == 0) && (m_ux_m < 0)) raise_error = true;
-        if ((m_flux_normal_axis == 1) && (m_uy_m < 0)) raise_error = true;
-        if ((m_flux_normal_axis == 2) && (m_uz_m < 0)) raise_error = true;
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( raise_error==false,
-            "When using the `gaussianflux` distribution, the central momentum along the flux axis must be positive or zero." );
     }
 
     AMREX_GPU_HOST_DEVICE
@@ -229,17 +225,14 @@ struct InjectorMomentumUniform
                               amrex::Real a_uz_min, amrex::Real a_ux_max,
                               amrex::Real a_uy_max, amrex::Real a_uz_max) noexcept
         : m_ux_min(a_ux_min), m_uy_min(a_uy_min), m_uz_min(a_uz_min),
-          m_ux_max(a_ux_max), m_uy_max(a_uy_max), m_uz_max(a_uz_max)
-        {
-            using namespace amrex;
-
-            m_Dux = m_ux_max - m_ux_min;
-            m_Duy = m_uy_max - m_uy_min;
-            m_Duz = m_uz_max - m_uz_min;
-            m_ux_h = 0.5_rt * (m_ux_max + m_ux_min);
-            m_uy_h = 0.5_rt * (m_uy_max + m_uy_min);
-            m_uz_h = 0.5_rt * (m_uz_max + m_uz_min);
-        }
+          m_ux_max(a_ux_max), m_uy_max(a_uy_max), m_uz_max(a_uz_max),
+          m_Dux(m_ux_max - m_ux_min),
+          m_Duy(m_uy_max - m_uy_min),
+          m_Duz(m_uz_max - m_uz_min),
+          m_ux_h(amrex::Real(0.5) * (m_ux_max + m_ux_min)),
+          m_uy_h(amrex::Real(0.5) * (m_uy_max + m_uy_min)),
+          m_uz_h(amrex::Real(0.5) * (m_uz_max + m_uz_min))
+        {}
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
@@ -261,8 +254,8 @@ struct InjectorMomentumUniform
 private:
     amrex::Real m_ux_min, m_uy_min, m_uz_min;
     amrex::Real m_ux_max, m_uy_max, m_uz_max;
-    amrex::Real m_ux_h, m_uy_h, m_uz_h;
     amrex::Real m_Dux, m_Duy, m_Duz;
+    amrex::Real m_ux_h, m_uy_h, m_uz_h;
 };
 
 // struct whose getMomentum returns momentum for 1 particle with relativistic
@@ -586,6 +579,9 @@ struct InjectorMomentum
     InjectorMomentum (InjectorMomentum&&) = delete;
     void operator= (InjectorMomentum const&) = delete;
     void operator= (InjectorMomentum &&) = delete;
+
+    // Default destructor
+    ~InjectorMomentum() = default;
 
     void clear ();
 

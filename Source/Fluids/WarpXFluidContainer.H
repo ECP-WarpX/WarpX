@@ -33,6 +33,11 @@ public:
     WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name);
     ~WarpXFluidContainer() {}
 
+    WarpXFluidContainer (WarpXFluidContainer const &)             = delete;
+    WarpXFluidContainer& operator= (WarpXFluidContainer const & ) = delete;
+    WarpXFluidContainer(WarpXFluidContainer&& )                   = default;
+    WarpXFluidContainer& operator=(WarpXFluidContainer&& )        = default;
+
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);
 
     void InitData (int lev, amrex::Box init_box, amrex::Real cur_time);
