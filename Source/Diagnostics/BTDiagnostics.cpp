@@ -127,9 +127,6 @@ void BTDiagnostics::DerivedInitData ()
             mpc.SetDoBackTransformedParticles(species, m_do_back_transformed_particles);
         }
     }
-    m_particles_buffer.resize(m_num_buffers);
-    m_totalParticles_flushed_already.resize(m_num_buffers);
-    m_totalParticles_in_buffer.resize(m_num_buffers);
 
     // check that simulation can fill all BTD snapshots
     const int lev = 0;
