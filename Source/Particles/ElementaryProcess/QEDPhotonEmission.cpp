@@ -33,6 +33,12 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
     m_opt_depth_functor{opt_depth_functor},
     m_opt_depth_runtime_comp{opt_depth_runtime_comp},
     m_emission_functor{emission_functor},
+    m_Ex_external_particle{E_external_particle[0]},
+    m_Ey_external_particle{E_external_particle[1]},
+    m_Ez_external_particle{E_external_particle[2]},
+    m_Bx_external_particle{B_external_particle[0]},
+    m_By_external_particle{B_external_particle[1]},
+    m_Bz_external_particle{B_external_particle[2]},
     m_galerkin_interpolation{WarpX::galerkin_interpolation},
     m_nox{WarpX::nox},
     m_n_rz_azimuthal_modes{WarpX::n_rz_azimuthal_modes}
@@ -42,12 +48,6 @@ PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor
 
     m_get_position  = GetParticlePosition<PIdx>(a_pti, a_offset);
     m_get_externalEB = GetExternalEBField(a_pti, a_offset);
-    m_Ex_external_particle = E_external_particle[0];
-    m_Ey_external_particle = E_external_particle[1];
-    m_Ez_external_particle = E_external_particle[2];
-    m_Bx_external_particle = B_external_particle[0];
-    m_By_external_particle = B_external_particle[1];
-    m_Bz_external_particle = B_external_particle[2];
 
     m_ex_arr = exfab.array();
     m_ey_arr = eyfab.array();
