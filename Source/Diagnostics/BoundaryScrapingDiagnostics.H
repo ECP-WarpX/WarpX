@@ -58,10 +58,5 @@ private:
      * This is not used for BoundaryScrapingDiagnostics: no field to output
      */
     void InitializeFieldFunctors (int lev) override;
-    /** Initialize the diagnostics by pointing to the `ParticleBoundaryBuffer`
-     * that correspond to the species requested by the user.
-     */
-    void InitializeParticleBuffer () override;
-
 };
 #endif // WARPX_BOUNDARYSCRAPINGDIAGNOSTICS_H_

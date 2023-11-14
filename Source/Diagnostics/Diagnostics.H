@@ -197,8 +197,8 @@ protected:
      *  derived classes.(FullDiagnostics, BTDiagnostics)
      */
     virtual void DerivedInitData () {}
-    /** This function initialized particle buffers (not implemented in diagnostics, yet) */
-    virtual void InitializeParticleBuffer () = 0;
+    /** This function initializes particle buffers */
+    void InitializeParticleBuffer ();
     /** This function prepares buffer data as required for fields and particles. For back-transformed diagnostics,
      *  this function prepares the z coordinate in the boosted-frame and lab-frame.
      */

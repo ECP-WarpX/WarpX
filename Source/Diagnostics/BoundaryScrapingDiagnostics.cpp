@@ -82,37 +82,6 @@ BoundaryScrapingDiagnostics::InitializeBufferData (int /*i_buffer*/, int /*lev*/
     // since it only outputs particles
 }
 
-void
-BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
-{
-    auto & warpx = WarpX::GetInstance();
-    const MultiParticleContainer& mpc = warpx.GetPartContainer();
-
-    // If the user does not specify any species, dump all species
-    if (m_output_species_names.empty()) {
-        m_output_species_names = mpc.GetSpeciesNames();
-    }
-
-    // Initialize one ParticleDiag per species requested
-    ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
-    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        for (auto const& species_name : m_output_species_names){
-            WarpXParticleContainer* pc = &mpc.GetParticleContainerFromName(species_name);
-            PinnedMemoryParticleContainer* bnd_buffer = particle_buffer.getParticleBufferPointer(species_name, i_buffer);
-            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species_name, pc, bnd_buffer));
-        }
-    }
-    // Initialize total number of particles flushed
-    m_totalParticles_flushed_already.resize(m_num_buffers);
-    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        int const n_species = static_cast<int>(m_output_species_names.size());
-        m_totalParticles_flushed_already[i_buffer].resize(n_species);
-        for (int i_species=0; i_species<n_species; i_species++) {
-            m_totalParticles_flushed_already[i_buffer][i_species] = 0;
-        }
-    }
-}
-
 bool
 BoundaryScrapingDiagnostics::DoComputeAndPack (int /*step*/, bool /*force_flush*/)
 {

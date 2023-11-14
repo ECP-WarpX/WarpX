@@ -52,32 +52,6 @@ FullDiagnostics::FullDiagnostics (int i, std::string name):
 }
 
 void
-FullDiagnostics::InitializeParticleBuffer ()
-{
-    // When particle buffers are included, the vector of particle containers
-    // must be allocated in this function.
-    // Initialize data in the base class Diagnostics
-    auto & warpx = WarpX::GetInstance();
-
-    const MultiParticleContainer& mpc = warpx.GetPartContainer();
-    // If not specified, dump all species
-    if (m_output_species_names.empty()) {
-        if (m_format == "checkpoint") {
-            m_output_species_names = mpc.GetSpeciesAndLasersNames();
-        } else {
-            m_output_species_names = mpc.GetSpeciesNames();
-        }
-    }
-    // Initialize one ParticleDiag per species requested
-    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        for (auto const& species : m_output_species_names){
-            const int idx = mpc.getSpeciesID(species);
-            m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species, mpc.GetParticleContainerPtr(idx)));
-        }
-    }
-}
-
-void
 FullDiagnostics::ReadParameters ()
 {
     // Read list of full diagnostics fields requested by the user.

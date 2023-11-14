@@ -1424,29 +1424,6 @@ BTDiagnostics::InitializeParticleFunctors ()
 }
 
 void
-BTDiagnostics::InitializeParticleBuffer ()
-{
-    auto& warpx = WarpX::GetInstance();
-    const MultiParticleContainer& mpc = warpx.GetPartContainer();
-    for (int i = 0; i < m_num_buffers; ++i) {
-        m_particles_buffer[i].resize(m_output_species_names.size());
-        m_totalParticles_flushed_already[i].resize(m_output_species_names.size());
-        m_totalParticles_in_buffer[i].resize(m_output_species_names.size());
-        for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
-            m_totalParticles_flushed_already[i][isp] = 0;
-            m_totalParticles_in_buffer[i][isp] = 0;
-            m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(WarpX::GetInstance().GetParGDB());
-            const int idx = mpc.getSpeciesID(m_output_species_names[isp]);
-            m_output_species[i].push_back(ParticleDiag(m_diag_name,
-                                                       m_output_species_names[isp],
-                                                       mpc.GetParticleContainerPtr(idx),
-                                                       m_particles_buffer[i][isp].get()));
-        }
-    }
-
-}
-
-void
 BTDiagnostics::PrepareParticleDataForOutput()
 {
     for (int lev = 0; lev < nlev_output; ++lev) {

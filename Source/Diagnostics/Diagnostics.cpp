@@ -452,6 +452,45 @@ Diagnostics::InitData ()
     }
 }
 
+void
+Diagnostics::InitializeParticleBuffer ()
+{
+    // If the user does not specify any species, dump all species
+    auto & warpx = WarpX::GetInstance();
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    if (m_output_species_names.empty()) {
+        if (m_format == "checkpoint") {
+            m_output_species_names = mpc.GetSpeciesAndLasersNames();
+        } else {
+            m_output_species_names = mpc.GetSpeciesNames();
+        }
+    }
+    int const n_species = static_cast<int>(m_output_species_names.size());
+
+    // Initialize one ParticleDiag per species requested
+    // (m_num_buffers is 1, except for BTDiagnostic where it is the number of snapshots)
+    m_particles_buffer.resize(m_num_buffers);
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        m_particles_buffer[i_buffer].resize(n_species);
+        for (int i_species = 0; i_species < n_species; ++i_species){
+            auto const& species_name = m_output_species_names[i_species];
+            m_particles_buffer[i_buffer][i_species] = std::make_unique<PinnedMemoryParticleContainer>(WarpX::GetInstance().GetParGDB());
+            WarpXParticleContainer* pc = &mpc.GetParticleContainerFromName(species_name);
+            m_output_species[i_buffer].push_back(
+                ParticleDiag(m_diag_name, species_name, pc, m_particles_buffer[i_buffer][i_species].get())
+            );
+        }
+    }
+
+    // Initialize total number of particles flushed
+    m_totalParticles_flushed_already.resize(m_num_buffers);
+    m_totalParticles_in_buffer.resize(m_num_buffers);
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        m_totalParticles_flushed_already[i_buffer].resize(n_species, 0);
+        m_totalParticles_in_buffer[i_buffer].resize(n_species, 0);
+    }
+}
+
 
 void
 Diagnostics::InitBaseData ()
@@ -553,7 +592,7 @@ Diagnostics::ComputeAndPack ()
                                                             warpx.Geom(lev).periodicity());
             }
         }
-        // Call Particle functor
+        // Call Particle functors
         for (int isp = 0; isp < m_all_particle_functors.size(); ++isp) {
             m_all_particle_functors[isp]->operator()(*m_particles_buffer[i_buffer][isp], m_totalParticles_in_buffer[i_buffer][isp], i_buffer);
         }
