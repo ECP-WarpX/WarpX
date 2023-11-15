@@ -54,7 +54,7 @@ using namespace amrex;
 using ablastr::utils::SignalHandling;
 
 void
-WarpX::EvolveImplicitPicardInit (const int lev)
+WarpX::EvolveImplicitPicardInit (int lev)
 {
 
     if (lev == 0) {
@@ -418,7 +418,7 @@ WarpX::EvolveImplicitPicard (int numsteps)
 }
 
 void
-WarpX::SaveParticlesAtStepStart (WarpXParticleContainer& pc, const int lev)
+WarpX::SaveParticlesAtStepStart (WarpXParticleContainer& pc, int lev)
 {
 
 #ifdef AMREX_USE_OMP
@@ -474,7 +474,7 @@ WarpX::SaveParticlesAtStepStart (WarpXParticleContainer& pc, const int lev)
 }
 
 void
-WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, const int lev)
+WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev)
 {
 
 #ifdef AMREX_USE_OMP
