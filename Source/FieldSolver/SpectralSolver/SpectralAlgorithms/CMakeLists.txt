@@ -3,8 +3,6 @@ foreach(D IN LISTS WarpX_DIMS)
     target_sources(lib_${SD}
       PRIVATE
         PsatdAlgorithmFirstOrder.cpp
-        PsatdAlgorithmJConstantInTime.cpp
-        PsatdAlgorithmJLinearInTime.cpp
         PsatdAlgorithmGalilean.cpp
         PsatdAlgorithmJRm.cpp
         PsatdAlgorithmPml.cpp

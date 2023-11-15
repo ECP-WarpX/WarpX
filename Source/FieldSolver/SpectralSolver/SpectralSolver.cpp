@@ -9,8 +9,6 @@
 #include "SpectralAlgorithms/PsatdAlgorithmComoving.H"
 #include "SpectralAlgorithms/PsatdAlgorithmPml.H"
 #include "SpectralAlgorithms/PsatdAlgorithmFirstOrder.H"
-#include "SpectralAlgorithms/PsatdAlgorithmJConstantInTime.H"
-#include "SpectralAlgorithms/PsatdAlgorithmJLinearInTime.H"
 #include "SpectralAlgorithms/PsatdAlgorithmGalilean.H"
 #include "SpectralAlgorithms/PsatdAlgorithmJRm.H"
 #include "SpectralKSpace.H"
