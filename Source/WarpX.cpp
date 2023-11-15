@@ -200,8 +200,8 @@ int WarpX::self_fields_max_iters = 200;
 int WarpX::self_fields_verbosity = 2;
 
 bool WarpX::do_subcycling = false;
-bool WarpX::do_multi_J = false;
-int WarpX::do_multi_J_n_depositions;
+bool WarpX::do_psatd_JRm = false;
+int WarpX::do_psatd_JRm_n_depositions;
 bool WarpX::safe_guard_cells = 0;
 
 std::map<std::string, amrex::MultiFab *> WarpX::multifab_map;
@@ -658,11 +658,11 @@ WarpX::ReadParameters ()
         pp_warpx.query("verbose", verbose);
         utils::parser::queryWithParser(pp_warpx, "regrid_int", regrid_int);
         pp_warpx.query("do_subcycling", do_subcycling);
-        pp_warpx.query("do_multi_J", do_multi_J);
-        if (do_multi_J)
+        pp_warpx.query("do_psatd_JRm", do_psatd_JRm);
+        if (do_psatd_JRm)
         {
             utils::parser::getWithParser(
-                pp_warpx, "do_multi_J_n_depositions", do_multi_J_n_depositions);
+                pp_warpx, "do_psatd_JRm_n_depositions", do_psatd_JRm_n_depositions);
         }
         pp_warpx.query("use_hybrid_QED", use_hybrid_QED);
         pp_warpx.query("safe_guard_cells", safe_guard_cells);
@@ -1163,8 +1163,8 @@ WarpX::ReadParameters ()
 
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                do_multi_J == false,
-                "Vay deposition not implemented with multi-J algorithm");
+                do_psatd_JRm == false,
+                "Vay deposition not implemented with PSATD-JRm algorithm");
         }
 
         // Query algo.field_gathering from input, set field_gathering_algo to
@@ -1428,8 +1428,8 @@ WarpX::ReadParameters ()
         }
 
         // TODO Remove this default when current correction will
-        // be implemented for the multi-J algorithm as well.
-        if (do_multi_J) current_correction = false;
+        // be implemented for the PSATD-JRm algorithm as well.
+        if (do_psatd_JRm) current_correction = false;
 
         pp_psatd.query("current_correction", current_correction);
 
@@ -1566,7 +1566,7 @@ WarpX::ReadParameters ()
             "psatd.update_with_rho must be equal to 1 for comoving PSATD"
         );
 
-        if (do_multi_J)
+        if (do_psatd_JRm)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 v_galilean_is_zero,
@@ -2035,7 +2035,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::m_v_galilean,
         WarpX::m_v_comoving,
         safe_guard_cells,
-        WarpX::do_multi_J,
+        WarpX::do_psatd_JRm,
         WarpX::fft_do_time_averaging,
         WarpX::isAnyBoundaryPML(),
         WarpX::do_pml_in_domain,
@@ -2333,8 +2333,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         if (do_dive_cleaning || update_with_rho || current_correction) {
-            // For the multi-J algorithm we can allocate only one rho component (no distinction between old and new)
-            rho_ncomps = (WarpX::do_multi_J) ? ncomps : 2*ncomps;
+            // For the PSATD-JRm algorithm we can allocate only one rho component (no distinction between old and new)
+            rho_ncomps = (WarpX::do_psatd_JRm) ? ncomps : 2*ncomps;
         }
     }
     if (rho_ncomps > 0)
@@ -2642,7 +2642,7 @@ void WarpX::AllocLevelSpectralSolverRZ (amrex::Vector<std::unique_ptr<SpectralSo
     const RealVect dx_vect(dx[0], dx[2]);
 
     amrex::Real solver_dt = dt[lev];
-    if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
+    if (WarpX::do_psatd_JRm) solver_dt /= static_cast<amrex::Real>(WarpX::do_psatd_JRm_n_depositions);
 
     auto pss = std::make_unique<SpectralSolverRZ>(lev,
                                                   realspace_ba,
@@ -2695,7 +2695,7 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
 #endif
 
     amrex::Real solver_dt = dt[lev];
-    if (WarpX::do_multi_J) solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions);
+    if (WarpX::do_psatd_JRm) solver_dt /= static_cast<amrex::Real>(WarpX::do_psatd_JRm_n_depositions);
 
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,

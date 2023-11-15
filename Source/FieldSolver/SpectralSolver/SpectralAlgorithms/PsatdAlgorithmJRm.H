@@ -22,7 +22,7 @@
 
 #if WARPX_USE_PSATD
 /*
- * \brief Class that updates the fields in spectral space according to the multi-J algorithm
+ * \brief Class that updates the fields in spectral space according to the PSATD-JRm algorithm
  *        and stores the coefficients of the corresponding update equations. J is assumed to be
  *        linear in time and two currents, deposited at the beginning and the end of the time step,
  *        are used for the PSATD update equations, instead of only one current deposited at half time.
@@ -64,7 +64,7 @@ class PsatdAlgorithmJRm : public SpectralBaseAlgorithm
             int rho_in_time);
 
         /**
-         * \brief Updates the E and B fields in spectral space, according to the multi-J PSATD equations
+         * \brief Updates the E and B fields in spectral space, according to the PSATD-JRm equations
          *
          * \param[in,out] f all the fields in spectral space
          */

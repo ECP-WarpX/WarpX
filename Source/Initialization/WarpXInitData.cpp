@@ -292,10 +292,10 @@ WarpX::PrintMainPICparameters ()
     if (WarpX::do_divb_cleaning==1) {
       amrex::Print() << "                      | - div(B) cleaning is ON \n";
       }
-    if (do_multi_J == 1){
-      amrex::Print() << "                      | - multi-J deposition is ON \n";
-      amrex::Print() << "                      |   - do_multi_J_n_depositions = "
-                                        << WarpX::do_multi_J_n_depositions << "\n";
+    if (do_psatd_JRm == 1){
+      amrex::Print() << "                      | - PSATD-JRm deposition is ON \n";
+      amrex::Print() << "                      |   - do_psatd_JRm_n_depositions = "
+                                        << WarpX::do_psatd_JRm_n_depositions << "\n";
     }
     if (fft_do_time_averaging == 1){
       amrex::Print()<<"                      | - time-averaged is ON \n";
