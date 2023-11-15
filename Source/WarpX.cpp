@@ -1008,12 +1008,17 @@ WarpX::ReadParameters ()
             bool fine_tag_hi_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_hi", hi);
             std::string ref_patch_function;
             bool parser_specified = pp_warpx.query("ref_patch_function(x,y,z)",ref_patch_function);
-            const std::string error_string = std::string( "For max_level > 0, you need to either set\
-                                             warpx.fine_tag_lo and warpx.fine_tag_hi\
-                                             or warpx.ref_patch_function(x,y,z)");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ((fine_tag_lo_specified && fine_tag_hi_specified) ||
                                                 parser_specified ),
-                                                error_string);
+                                                "For max_level > 0, you need to either set\
+                                                warpx.fine_tag_lo and warpx.fine_tag_hi\
+                                                or warpx.ref_patch_function(x,y,z)");
+
+            if ( (fine_tag_lo_specified && fine_tag_hi_specified) && parser_specified) {
+               ablastr::warn_manager::WMRecordWarning("Refined patch", "Both fine_tag_lo,fine_tag_hi\
+                   and ref_patch_function(x,y,z) are provided. Note that the ref_patch_function will\
+                   override the fine_tag_lo/fine_tag_hi definition for the refined patches");
+            }
             if (fine_tag_lo_specified && fine_tag_hi_specified) {
                 fine_tag_lo = RealVect{lo};
                 fine_tag_hi = RealVect{hi};
