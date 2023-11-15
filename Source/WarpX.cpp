@@ -1017,34 +1017,11 @@ WarpX::ReadParameters ()
             if (fine_tag_lo_specified && fine_tag_hi_specified) {
                 fine_tag_lo = RealVect{lo};
                 fine_tag_hi = RealVect{hi};
-#if defined (WARPX_DIM_3D)
-                ref_patch_function =   " ( x > " + std::to_string(fine_tag_lo[0]) + " ) "
-                                   + " * ( x < " + std::to_string(fine_tag_hi[0]) + " )"
-                                   + " * ( y > " + std::to_string(fine_tag_lo[1]) + " )"
-                                   + " * ( y < " + std::to_string(fine_tag_hi[1]) + " )"
-                                   + " * ( z > " + std::to_string(fine_tag_lo[2]) + " )"
-                                   + " * ( z < " + std::to_string(fine_tag_hi[2]) + " )";
-#elif defined (WARPX_DIM_RZ)
-                ref_patch_function =   " ( x > " + std::to_string(fine_tag_lo[0]) + " ) "
-                                   + " * ( x < " + std::to_string(fine_tag_hi[0]) + " )"
-                                   + " * ( z > " + std::to_string(fine_tag_lo[1]) + " )"
-                                   + " * ( z < " + std::to_string(fine_tag_hi[1]) + " )";
-#elif defined (WARPX_DIM_XZ)
-                ref_patch_function =   " ( x > " + std::to_string(fine_tag_lo[0]) + " ) "
-                                   + " * ( x < " + std::to_string(fine_tag_hi[0]) + " )"
-                                   + " * ( z > " + std::to_string(fine_tag_lo[1]) + " )"
-                                   + " * ( z < " + std::to_string(fine_tag_hi[1]) + " )";
-#elif defined (WARPX_DIM_1D_Z)
-                ref_patch_function =   " ( z > " + std::to_string(fine_tag_lo[0]) + " ) "
-                                   + " * ( z < " + std::to_string(fine_tag_hi[0]) + " )";
-#endif
-                amrex::Print() << " ref patch func " << ref_patch_function << "\n";
             } else {
-                utils::parser::Store_parserString(pp_warpx, "ref_patch_function(x,y,z)",
-                    ref_patch_function);
+                utils::parser::Store_parserString(pp_warpx, "ref_patch_function(x,y,z)", ref_patch_function);
+                ref_patch_parser = std::make_unique<amrex::Parser>(
+                    utils::parser::makeParser(ref_patch_function,{"x","y","z"}));
             }
-            ref_patch_parser = std::make_unique<amrex::Parser>(
-                utils::parser::makeParser(ref_patch_function,{"x","y","z"}));
         }
 
         pp_warpx.query("do_dynamic_scheduling", do_dynamic_scheduling);
