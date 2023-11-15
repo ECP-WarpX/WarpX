@@ -1016,8 +1016,8 @@ WarpX::ReadParameters ()
 
             if ( (fine_tag_lo_specified && fine_tag_hi_specified) && parser_specified) {
                ablastr::warn_manager::WMRecordWarning("Refined patch", "Both fine_tag_lo,fine_tag_hi\
-                   and ref_patch_function(x,y,z) are provided. Note that the ref_patch_function will\
-                   override the fine_tag_lo/fine_tag_hi definition for the refined patches");
+                   and ref_patch_function(x,y,z) are provided. Note that fine_tag_lo/fine_tag_hi will\
+                   override the ref_patch_function(x,y,z) for defining the refinement patches");
             }
             if (fine_tag_lo_specified && fine_tag_hi_specified) {
                 fine_tag_lo = RealVect{lo};
