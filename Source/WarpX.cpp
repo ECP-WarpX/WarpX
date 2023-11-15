@@ -1142,8 +1142,8 @@ WarpX::ReadParameters ()
         charge_deposition_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "charge_deposition"));
         particle_pusher_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "particle_pusher"));
         evolve_scheme = static_cast<short>(GetAlgorithmInteger(pp_algo, "evolve_scheme"));
-        pp_algo.query("max_picard_iterations", max_picard_iterations);
-        pp_algo.query("picard_iteration_tolerance", picard_iteration_tolerance);
+        utils::parser::queryWithParser(pp_algo, "max_picard_iterations", max_picard_iterations);
+        utils::parser::queryWithParser(pp_algo, "picard_iteration_tolerance", picard_iteration_tolerance);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||
