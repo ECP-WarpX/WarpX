@@ -747,25 +747,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                    E_ext_grid_s.begin(),
                    ::tolower);
 
-    // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
-    // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
-    // Note that if the external fields are not provided, the fields, E and B, on all levels
-    // will still be initialized with the default value of 0.
-    if ( (B_ext_grid_s == "constant") || (B_ext_grid_s == "parse_b_ext_grid_function")) {
-        if (lev > maxlevel_extEMfield_init) {
-            Bfield_fp[lev][0]->setVal(0.);
-            Bfield_fp[lev][1]->setVal(0.);
-            Bfield_fp[lev][2]->setVal(0.);
-        }
-    }
-    if ( (E_ext_grid_s == "constant") || (E_ext_grid_s == "parse_e_ext_grid_function")) {
-        if (lev > maxlevel_extEMfield_init) {
-            Efield_fp[lev][0]->setVal(0.);
-            Efield_fp[lev][1]->setVal(0.);
-            Efield_fp[lev][2]->setVal(0.);
-        }
-    }
-
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     if (B_ext_grid_s == "constant")
