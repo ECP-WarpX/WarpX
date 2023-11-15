@@ -943,11 +943,11 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
     }
 }
 
-void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb)
+void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, const amrex::Real dt)
 {
 #ifdef AMREX_USE_EB
     for (auto& pc : allcontainers) {
-        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb());
+        scrapeParticles(*pc, distance_to_eb, ParticleBoundaryProcess::Absorb(), dt);
     }
 #else
     amrex::ignore_unused(distance_to_eb);
