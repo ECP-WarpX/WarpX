@@ -88,8 +88,9 @@ using namespace amrex;
 Vector<Real> WarpX::E_external_grid(3, 0.0);
 Vector<Real> WarpX::B_external_grid(3, 0.0);
 
-std::string WarpX::B_ext_grid_s = "default";
-std::string WarpX::E_ext_grid_s = "default";
+std::string WarpX::authors;
+std::string WarpX::B_ext_grid_s;
+std::string WarpX::E_ext_grid_s;
 bool WarpX::add_external_E_field = false;
 bool WarpX::add_external_B_field = false;
 
