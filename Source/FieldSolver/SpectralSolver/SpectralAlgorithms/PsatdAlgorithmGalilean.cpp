@@ -736,7 +736,7 @@ void
 PsatdAlgorithmGalilean::VayDeposition (SpectralFieldData& field_data)
 {
     // Profiling
-    BL_PROFILE("PsatdAlgorithmJConstantInTime::VayDeposition()");
+    BL_PROFILE("PsatdAlgorithmGalilean::VayDeposition()");
 
     const SpectralFieldIndex& Idx = m_spectral_index;
 
