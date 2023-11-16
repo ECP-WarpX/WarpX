@@ -61,6 +61,8 @@ jobs:
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip
+        # Start with a clean pip
+        pip freeze | xargs pip uninstall -y
         python3 -m pip install --upgrade build packaging setuptools wheel
 
         cmake -S . -B build_dp         \
