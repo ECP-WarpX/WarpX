@@ -197,8 +197,8 @@ using namespace amrex;
                             // Add radial scale so that drEr/dr = 0.
                             // This only works for the first guard cell and with
                             // Er cell centered in r.
-                            const amrex::Real rguard = ijk_vec[idim] + 0.5_rt*(1. - is_nodal[idim]);
-                            const amrex::Real rmirror = ijk_mirror[idim] + 0.5_rt*(1. - is_nodal[idim]);
+                            const amrex::Real rguard = ijk_vec[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
+                            const amrex::Real rmirror = ijk_mirror[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
                             sign *= rmirror/rguard;
                         }
 #endif
@@ -333,8 +333,8 @@ using namespace amrex;
 #if (defined WARPX_DIM_RZ)
                         if (icomp == 0 && idim == 0 && iside == 1) {
                             // Add radial scale so that drBr/dr = 0.
-                            const amrex::Real rguard = ijk_vec[idim] + 0.5_rt*(1. - is_nodal[idim]);
-                            const amrex::Real rmirror = ijk_mirror[idim] + 0.5_rt*(1. - is_nodal[idim]);
+                            const amrex::Real rguard = ijk_vec[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
+                            const amrex::Real rmirror = ijk_mirror[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
                             sign *= rmirror/rguard;
                         }
 #endif

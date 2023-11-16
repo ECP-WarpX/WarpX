@@ -757,7 +757,7 @@ void doGatherShapeNImplicit (
         amrex::Real sdxi = 0._rt;
         for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
             sdxi += (sx_E_old[i] - sx_E_new[i]);
-            amrex::Real sdxiov = ((x_new - x_old) == 0. ? 1. : sdxi/(x_new - x_old));
+            amrex::Real sdxiov = static_cast<amrex::Real>((x_new - x_old) == 0. ? 1. : sdxi/(x_new - x_old));
             Exp += Ex_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 0)*sdxiov*sdzk;
             Bzp += Bz_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 0)*sdxiov*sdzk;
         }
@@ -775,7 +775,7 @@ void doGatherShapeNImplicit (
         amrex::Real sdzk = 0._rt;
         for (int k=dkl_E; k<=depos_order+1-dku_E; k++) {
             sdzk += (sz_E_old[k] - sz_E_new[k]);
-            amrex::Real sdzkov = ((z_new - z_old) == 0. ? 1. : sdzk/(z_new - z_old));
+            amrex::Real sdzkov = static_cast<amrex::Real>((z_new - z_old) == 0. ? 1. : sdzk/(z_new - z_old));
             Ezp += Ez_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 0)*sdzkov*sdxi;
             Bxp += Bx_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 0)*sdzkov*sdxi;
         }
@@ -801,7 +801,7 @@ void doGatherShapeNImplicit (
             amrex::Real sdxi = 0._rt;
             for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
                 sdxi += (sx_E_old[i] - sx_E_new[i]);
-                amrex::Real sdxiov = ((x_new - x_old) == 0. ? 1. : sdxi/(x_new - x_old));
+                amrex::Real sdxiov = static_cast<amrex::Real>((x_new - x_old) == 0. ? 1. : sdxi/(x_new - x_old));
                 const amrex::Real dEx = (+ Ex_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1)*xy_mid.real()
                                          - Ex_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode)*xy_mid.imag());
                 const amrex::Real dBz = (+ Bz_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1)*xy_mid.real()
@@ -828,7 +828,7 @@ void doGatherShapeNImplicit (
             amrex::Real sdzk = 0._rt;
             for (int k=dkl_E; k<=depos_order+1-dku_E; k++) {
                 sdzk += (sz_E_old[k] - sz_E_new[k]);
-                amrex::Real sdzkov = ((z_new - z_old) == 0. ? 1. : sdzk/(z_new - z_old));
+                amrex::Real sdzkov = static_cast<amrex::Real>((z_new - z_old) == 0. ? 1. : sdzk/(z_new - z_old));
                 const amrex::Real dEz = (+ Ez_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1)*xy_mid.real()
                                          - Ez_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode)*xy_mid.imag());
                 const amrex::Real dBx = (+ Bx_arr(lo.x+i_E_new-1+i, lo.y+k_E_new-1+k, 0, 2*imode-1)*xy_mid.real()
