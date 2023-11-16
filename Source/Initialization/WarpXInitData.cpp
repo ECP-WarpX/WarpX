@@ -766,7 +766,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
         // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
         // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
-        if ( ( B_ext_grid_s == "constant" && (lev <= maxlevel_extEMfield_init) )
+        if ( ( B_ext_grid_s == "constant") && (lev <= maxlevel_extEMfield_init) )
         {
            Bfield_fp[lev][i]->setVal(B_external_grid[i]);
            if (fft_do_time_averaging) {
@@ -783,7 +783,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         }
         // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
         // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
-        if ( ( E_ext_grid_s == "constant" && (lev <= maxlevel_extEMfield_init) )
+        if ( ( E_ext_grid_s == "constant") && (lev <= maxlevel_extEMfield_init) )
         {
            Efield_fp[lev][i]->setVal(E_external_grid[i]);
            if (fft_do_time_averaging) {
