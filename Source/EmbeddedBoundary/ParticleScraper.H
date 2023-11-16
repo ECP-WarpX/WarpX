@@ -201,7 +201,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 {
                     amrex::Real x_temp, y_temp, z_temp;
                     amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
-                        [=] AMREX_GPU_DEVICE (amrex::Real dt_frac) mutable {
+                        [&] AMREX_GPU_DEVICE (amrex::Real dt_frac) {
                             x_temp = xp; y_temp = yp; z_temp = zp;
                             UpdatePosition(x_temp, y_temp, z_temp, ux[ip], uy[ip], uz[ip], -dt_frac*dt);
                             ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
