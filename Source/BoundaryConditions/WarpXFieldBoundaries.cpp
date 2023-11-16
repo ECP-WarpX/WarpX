@@ -172,8 +172,8 @@ WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex
             Er_arr(i,j,0,0) = -Er_arr(-i-ishift_r,j,0,0);
 
             for (int imode=1 ; imode < nmodes ; imode++) {
-                Er_arr(i,j,0,2*imode-1) = std::pow(-1._rt, imode+1)*Er_arr(-i-ishift_r,j,0,2*imode-1);
-                Er_arr(i,j,0,2*imode) = std::pow(-1._rt, imode+1)*Er_arr(-i-ishift_r,j,0,2*imode);
+                Er_arr(i,j,0,2*imode-1) = std::pow(-1._rt, imode+1._rt)*Er_arr(-i-ishift_r,j,0,2*imode-1);
+                Er_arr(i,j,0,2*imode) = std::pow(-1._rt, imode+1._rt)*Er_arr(-i-ishift_r,j,0,2*imode);
             }
         },
         [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
@@ -181,8 +181,8 @@ WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex
             Et_arr(i,j,0,0) = -Et_arr(-i-ishift_t,j,0,0);
 
             for (int imode=1 ; imode < nmodes ; imode++) {
-                Et_arr(i,j,0,2*imode-1) = std::pow(-1._rt, imode+1)*Et_arr(-i-ishift_t,j,0,2*imode-1);
-                Et_arr(i,j,0,2*imode) = std::pow(-1._rt, imode+1)*Et_arr(-i-ishift_t,j,0,2*imode);
+                Et_arr(i,j,0,2*imode-1) = std::pow(-1._rt, imode+1._rt)*Et_arr(-i-ishift_t,j,0,2*imode-1);
+                Et_arr(i,j,0,2*imode) = std::pow(-1._rt, imode+1._rt)*Et_arr(-i-ishift_t,j,0,2*imode);
             }
         },
         [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
@@ -190,8 +190,8 @@ WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex
             Ez_arr(i,j,0,0) = Ez_arr(-i-ishift_z,j,0,0);
 
             for (int imode=1 ; imode < nmodes ; imode++) {
-                Ez_arr(i,j,0,2*imode-1) = -std::pow(-1._rt, imode+1)*Ez_arr(-i-ishift_z,j,0,2*imode-1);
-                Ez_arr(i,j,0,2*imode) = -std::pow(-1._rt, imode+1)*Ez_arr(-i-ishift_z,j,0,2*imode);
+                Ez_arr(i,j,0,2*imode-1) = -std::pow(-1._rt, imode+1._rt)*Ez_arr(-i-ishift_z,j,0,2*imode-1);
+                Ez_arr(i,j,0,2*imode) = -std::pow(-1._rt, imode+1._rt)*Ez_arr(-i-ishift_z,j,0,2*imode);
             }
 
         });
