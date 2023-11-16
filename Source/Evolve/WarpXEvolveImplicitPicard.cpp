@@ -128,7 +128,7 @@ WarpX::EvolveImplicitPicard (int numsteps)
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         WARPX_PROFILE("WarpX::EvolveImplicitPicard::step");
-        Real evolve_time_beg_step = amrex::second();
+        const auto evolve_time_beg_step = static_cast<amrex::Real>(amrex::second());
 
         SignalHandling::CheckSignals();
 
@@ -389,7 +389,7 @@ WarpX::EvolveImplicitPicard (int numsteps)
         }
 
         // create ending time stamp for calculating elapsed time each iteration
-        const auto evolve_time_end_step = static_cast<Real>(amrex::second());
+        const auto evolve_time_end_step = static_cast<amrex::Real>(amrex::second());
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
         HandleSignals();
