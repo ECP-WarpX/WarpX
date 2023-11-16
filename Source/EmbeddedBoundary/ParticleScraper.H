@@ -188,8 +188,8 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
-                
-           
+
+
 
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
@@ -200,12 +200,13 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 if (phi_value < 0.0)
                 {
                     amrex::Real x_temp, y_temp, z_temp;
-                    amrex::Real dt_fraction = bisect( 0, 1,
+                    amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
                         [=] AMREX_GPU_DEVICE (amrex::Real dt_frac) mutable {
                             x_temp = xp; y_temp = yp; z_temp = zp;
                             UpdatePosition(x_temp, y_temp, z_temp, ux[ip], uy[ip], uz[ip], -dt_frac*dt);
                             ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
                             phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
+                            return phi_value;
                     } );
 
                     amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
