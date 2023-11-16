@@ -48,6 +48,15 @@ jobs:
         set -e
         brew tap openpmd/openpmd
         brew install openpmd-api
+
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade virtualenv
+
+        python3 -m venv py-venv
+        source py-venv/bin/activate
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade build packaging setuptools wheel
+        python3 -m pip install --upgrade mpi4py
     - name: CCache Cache
       uses: actions/cache@v3
       # - once stored under a key, they become immutable (even if local cache path content changes)
@@ -60,8 +69,7 @@ jobs:
           ccache-macos-appleclang-
     - name: build WarpX
       run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade build packaging setuptools wheel
+        source py-venv/bin/activate
 
         cmake -S . -B build_dp         \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
@@ -83,5 +91,7 @@ jobs:
 
     - name: run pywarpx
       run: |
+        source py-venv/bin/activate
         export OMP_NUM_THREADS=1
+
         mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
