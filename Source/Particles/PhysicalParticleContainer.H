@@ -72,12 +72,7 @@ public:
     void InitIonizationModule () override;
 
     /*
-     * \brief Returns the number of plasma injectors
-     */
-    int numberOfPlasmaInjectors () override;
-
-    /*
-     * \brief Returns a pointer to the i'th plasma injector.
+     * \brief Returns a reference to the i'th plasma injector.
      */
     PlasmaInjector* GetPlasmaInjector (int i) override;
 
@@ -200,7 +195,7 @@ public:
      * (this box should correspond to an integer number of cells in each direction,
      * but its boundaries need not be aligned with the actual cells of the simulation)
     */
-    void AddPlasma (const PlasmaInjector * plasma_injector, int lev, amrex::RealBox part_realbox = amrex::RealBox());
+    void AddPlasma (PlasmaInjector const& plasma_injector, int lev, amrex::RealBox part_realbox = amrex::RealBox());
 
     /**
      * Create new macroparticles for this species, with a fixed
@@ -208,14 +203,14 @@ public:
      * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] dt time step size, used to partially advance the particles
     */
-    void AddPlasmaFlux (const PlasmaInjector * plasma_injector, amrex::Real dt);
+    void AddPlasmaFlux (PlasmaInjector const& plasma_injector, amrex::Real dt);
 
     void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                                     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
                                     amrex::Real t_lab = 0.);
 
     void AddGaussianBeam (
-        const PlasmaInjector * plasma_injector,
+        PlasmaInjector const& plasma_injector,
         amrex::Real x_m, amrex::Real y_m, amrex::Real z_m,
         amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
         amrex::Real x_cut, amrex::Real y_cut, amrex::Real z_cut,
@@ -226,7 +221,7 @@ public:
      * @param[in] q_tot total charge of the particle species to be initialized
      * @param[in] z_shift optional shift to the z position of particles (useful for boosted frame runs)
      */
-    void AddPlasmaFromFile (PlasmaInjector * plasma_injector,
+    void AddPlasmaFromFile (PlasmaInjector & plasma_injector,
                             amrex::ParticleReal q_tot,
                             amrex::ParticleReal z_shift);
 

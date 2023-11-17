@@ -268,7 +268,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // Last is charge and mass from the plasma injector setup
     bool charge_from_source = false;
     bool mass_from_source = false;
-    for (auto &plasma_injector : plasma_injectors) {
+    for (auto const& plasma_injector : plasma_injectors) {
         // For now, use the last value for charge and mass that is found.
         // A check could be added for consistency of multiple values, but it'll probably never be needed
         charge_from_source |= plasma_injector->queryCharge(charge);
@@ -515,7 +515,7 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
 
 void
 PhysicalParticleContainer::AddGaussianBeam (
-    const PlasmaInjector * plasma_injector,
+    PlasmaInjector const& plasma_injector,
     const Real x_m, const Real y_m, const Real z_m,
     const Real x_rms, const Real y_rms, const Real z_rms,
     const Real x_cut, const Real y_cut, const Real z_cut,
@@ -556,11 +556,11 @@ PhysicalParticleContainer::AddGaussianBeam (
             constexpr Real y = 0._prt;
             const Real z = amrex::RandomNormal(z_m, z_rms);
 #endif
-            if (plasma_injector->insideBounds(x, y, z)  &&
+            if (plasma_injector.insideBounds(x, y, z)  &&
                 std::abs( x - x_m ) <= x_cut * x_rms     &&
                 std::abs( y - y_m ) <= y_cut * y_rms     &&
                 std::abs( z - z_m ) <= z_cut * z_rms   ) {
-                XDim3 u = plasma_injector->getMomentum(x, y, z);
+                XDim3 u = plasma_injector.getMomentum(x, y, z);
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
@@ -645,7 +645,7 @@ PhysicalParticleContainer::AddGaussianBeam (
 }
 
 void
-PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector * plasma_injector,
+PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector & plasma_injector,
                                              ParticleReal q_tot,
                                              ParticleReal z_shift)
 {
@@ -661,10 +661,8 @@ PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector * plasma_injector,
 #ifdef WARPX_USE_OPENPMD
     //TODO: Make changes for read/write in multiple MPI ranks
     if (ParallelDescriptor::IOProcessor()) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(plasma_injector,
-                                         "AddPlasmaFromFile: plasma injector not initialized.\n");
         // take ownership of the series and close it when done
-        auto series = std::move(plasma_injector->m_openpmd_input_series);
+        auto series = std::move(plasma_injector.m_openpmd_input_series);
 
         // assumption asserts: see PlasmaInjector
         openPMD::Iteration it = series->iterations.begin()->second;
@@ -732,7 +730,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector * plasma_injector,
 #endif
             ParticleReal const z = ptr_z.get()[i]*position_unit_z + ptr_offset_z.get()[i]*position_offset_unit_z + z_shift;
 
-            if (plasma_injector->insideBounds(x, y, z)) {
+            if (plasma_injector.insideBounds(x, y, z)) {
                 ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/mass;
                 ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/mass;
                 ParticleReal uy = 0.0_prt;
@@ -917,7 +915,7 @@ PhysicalParticleContainer::AddParticles (int lev)
 {
     WARPX_PROFILE("PhysicalParticleContainer::AddParticles()");
 
-    for (const auto & plasma_injector : plasma_injectors) {
+    for (auto const& plasma_injector : plasma_injectors) {
 
         if (plasma_injector->add_single_particle) {
             if (WarpX::gamma_boost > 1.) {
@@ -966,7 +964,7 @@ PhysicalParticleContainer::AddParticles (int lev)
         }
 
         if (plasma_injector->gaussian_beam) {
-            AddGaussianBeam(plasma_injector.get(),
+            AddGaussianBeam(*plasma_injector,
                             plasma_injector->x_m,
                             plasma_injector->y_m,
                             plasma_injector->z_m,
@@ -983,19 +981,19 @@ PhysicalParticleContainer::AddParticles (int lev)
         }
 
         if (plasma_injector->external_file) {
-            AddPlasmaFromFile(plasma_injector.get(),
+            AddPlasmaFromFile(*plasma_injector,
                               plasma_injector->q_tot,
                               plasma_injector->z_shift);
         }
 
         if ( plasma_injector->doInjection() ) {
-            AddPlasma(plasma_injector.get(), lev);
+            AddPlasma(*plasma_injector, lev);
         }
     }
 }
 
 void
-PhysicalParticleContainer::AddPlasma (const PlasmaInjector * plasma_injector, int lev, RealBox part_realbox)
+PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int lev, RealBox part_realbox)
 {
     WARPX_PROFILE("PhysicalParticleContainer::AddPlasma()");
 
@@ -1003,9 +1001,9 @@ PhysicalParticleContainer::AddPlasma (const PlasmaInjector * plasma_injector, in
     const Geometry& geom = Geom(lev);
     if (!part_realbox.ok()) part_realbox = geom.ProbDomain();
 
-    const int num_ppc = plasma_injector->num_particles_per_cell;
+    const int num_ppc = plasma_injector.num_particles_per_cell;
 #ifdef WARPX_DIM_RZ
-    Real rmax = std::min(plasma_injector->xmax, part_realbox.hi(0));
+    Real rmax = std::min(plasma_injector.xmax, part_realbox.hi(0));
 #endif
 
     const auto dx = geom.CellSizeArray();
@@ -1032,18 +1030,18 @@ PhysicalParticleContainer::AddPlasma (const PlasmaInjector * plasma_injector, in
         fine_injection_box.coarsen(rrfac);
     }
 
-    InjectorPosition* inj_pos = plasma_injector->getInjectorPosition();
-    InjectorDensity*  inj_rho = plasma_injector->getInjectorDensity();
-    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentumDevice();
+    InjectorPosition* inj_pos = plasma_injector.getInjectorPosition();
+    InjectorDensity*  inj_rho = plasma_injector.getInjectorDensity();
+    InjectorMomentum* inj_mom = plasma_injector.getInjectorMomentumDevice();
     const Real gamma_boost = WarpX::gamma_boost;
     const Real beta_boost = WarpX::beta_boost;
     const Real t = WarpX::GetInstance().gett_new(lev);
-    const Real density_min = plasma_injector->density_min;
-    const Real density_max = plasma_injector->density_max;
+    const Real density_min = plasma_injector.density_min;
+    const Real density_max = plasma_injector.density_max;
 
 #ifdef WARPX_DIM_RZ
     const int nmodes = WarpX::n_rz_azimuthal_modes;
-    bool radially_weighted = plasma_injector->radially_weighted;
+    bool radially_weighted = plasma_injector.radially_weighted;
 #endif
 
     MFItInfo info;
@@ -1517,16 +1515,16 @@ PhysicalParticleContainer::AddPlasma (const PlasmaInjector * plasma_injector, in
 }
 
 void
-PhysicalParticleContainer::AddPlasmaFlux (const PlasmaInjector * plasma_injector, amrex::Real dt)
+PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector, amrex::Real dt)
 {
     WARPX_PROFILE("PhysicalParticleContainer::AddPlasmaFlux()");
 
     const Geometry& geom = Geom(0);
     const amrex::RealBox& part_realbox = geom.ProbDomain();
 
-    const amrex::Real num_ppc_real = plasma_injector->num_particles_per_cell_real;
+    const amrex::Real num_ppc_real = plasma_injector.num_particles_per_cell_real;
 #ifdef WARPX_DIM_RZ
-    Real rmax = std::min(plasma_injector->xmax, geom.ProbDomain().hi(0));
+    Real rmax = std::min(plasma_injector.xmax, geom.ProbDomain().hi(0));
 #endif
 
     const auto dx = geom.CellSizeArray();
@@ -1535,20 +1533,20 @@ PhysicalParticleContainer::AddPlasmaFlux (const PlasmaInjector * plasma_injector
     Real scale_fac = 0._rt;
     // Scale particle weight by the area of the emitting surface, within one cell
 #if defined(WARPX_DIM_3D)
-    scale_fac = dx[0]*dx[1]*dx[2]/dx[plasma_injector->flux_normal_axis]/num_ppc_real;
+    scale_fac = dx[0]*dx[1]*dx[2]/dx[plasma_injector.flux_normal_axis]/num_ppc_real;
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
     scale_fac = dx[0]*dx[1]/num_ppc_real;
     // When emission is in the r direction, the emitting surface is a cylinder.
     // The factor 2*pi*r is added later below.
-    if (plasma_injector->flux_normal_axis == 0) scale_fac /= dx[0];
+    if (plasma_injector.flux_normal_axis == 0) scale_fac /= dx[0];
     // When emission is in the z direction, the emitting surface is an annulus
     // The factor 2*pi*r is added later below.
-    if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[1];
+    if (plasma_injector.flux_normal_axis == 2) scale_fac /= dx[1];
     // When emission is in the theta direction (flux_normal_axis == 1),
     // the emitting surface is a rectangle, within the plane of the simulation
 #elif defined(WARPX_DIM_1D_Z)
     scale_fac = dx[0]/num_ppc_real;
-    if (plasma_injector->flux_normal_axis == 2) scale_fac /= dx[0];
+    if (plasma_injector.flux_normal_axis == 2) scale_fac /= dx[0];
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
@@ -1575,16 +1573,16 @@ PhysicalParticleContainer::AddPlasmaFlux (const PlasmaInjector * plasma_injector
         fine_injection_box.coarsen(rrfac);
     }
 
-    InjectorPosition* flux_pos = plasma_injector->getInjectorFluxPosition();
-    InjectorFlux*  inj_flux = plasma_injector->getInjectorFlux();
-    InjectorMomentum* inj_mom = plasma_injector->getInjectorMomentumDevice();
+    InjectorPosition* flux_pos = plasma_injector.getInjectorFluxPosition();
+    InjectorFlux*  inj_flux = plasma_injector.getInjectorFlux();
+    InjectorMomentum* inj_mom = plasma_injector.getInjectorMomentumDevice();
     constexpr int level_zero = 0;
     const amrex::Real t = WarpX::GetInstance().gett_new(level_zero);
 
 #ifdef WARPX_DIM_RZ
     const int nmodes = WarpX::n_rz_azimuthal_modes;
     const bool rz_random_theta = m_rz_random_theta;
-    bool radially_weighted = plasma_injector->radially_weighted;
+    bool radially_weighted = plasma_injector.radially_weighted;
 #endif
 
     MFItInfo info;
@@ -1615,30 +1613,30 @@ PhysicalParticleContainer::AddPlasmaFlux (const PlasmaInjector * plasma_injector
 
         for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
 #if (defined(WARPX_DIM_3D))
-            if (dir == plasma_injector->flux_normal_axis) {
+            if (dir == plasma_injector.flux_normal_axis) {
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            if (2*dir == plasma_injector->flux_normal_axis) {
+            if (2*dir == plasma_injector.flux_normal_axis) {
             // The above formula captures the following cases:
             // - flux_normal_axis=0 (emission along x/r) and dir=0
             // - flux_normal_axis=2 (emission along z) and dir=1
 #elif defined(WARPX_DIM_1D_Z)
-            if ( (dir==0) && (plasma_injector->flux_normal_axis==2) ) {
+            if ( (dir==0) && (plasma_injector.flux_normal_axis==2) ) {
 #endif
-                if (plasma_injector->flux_direction > 0) {
-                    if (plasma_injector->surface_flux_pos <  tile_realbox.lo(dir) ||
-                        plasma_injector->surface_flux_pos >= tile_realbox.hi(dir)) {
+                if (plasma_injector.flux_direction > 0) {
+                    if (plasma_injector.surface_flux_pos <  tile_realbox.lo(dir) ||
+                        plasma_injector.surface_flux_pos >= tile_realbox.hi(dir)) {
                             no_overlap = true;
                             break;
                     }
                 } else {
-                    if (plasma_injector->surface_flux_pos <= tile_realbox.lo(dir) ||
-                        plasma_injector->surface_flux_pos >  tile_realbox.hi(dir)) {
+                    if (plasma_injector.surface_flux_pos <= tile_realbox.lo(dir) ||
+                        plasma_injector.surface_flux_pos >  tile_realbox.hi(dir)) {
                             no_overlap = true;
                             break;
                     }
                 }
-                overlap_realbox.setLo( dir, plasma_injector->surface_flux_pos );
-                overlap_realbox.setHi( dir, plasma_injector->surface_flux_pos );
+                overlap_realbox.setLo( dir, plasma_injector.surface_flux_pos );
+                overlap_realbox.setHi( dir, plasma_injector.surface_flux_pos );
                 overlap_box.setSmall( dir, 0 );
                 overlap_box.setBig( dir, 0 );
                 shifted[dir] =
@@ -1823,7 +1821,7 @@ PhysicalParticleContainer::AddPlasmaFlux (const PlasmaInjector * plasma_injector
         const bool loc_do_field_ionization = do_field_ionization;
         const int loc_ionization_initial_level = ionization_initial_level;
 #ifdef WARPX_DIM_RZ
-        int const loc_flux_normal_axis = plasma_injector->flux_normal_axis;
+        int const loc_flux_normal_axis = plasma_injector.flux_normal_axis;
 #endif
 
         // Loop over all new particles and inject them (creates too many
@@ -2688,8 +2686,8 @@ PhysicalParticleContainer::ContinuousInjection (const RealBox& injection_box)
 {
     // Inject plasma on level 0. Paticles will be redistributed.
     const int lev=0;
-    for (const auto & plasma_injector : plasma_injectors) {
-        AddPlasma(plasma_injector.get(), lev, injection_box);
+    for (auto const& plasma_injector : plasma_injectors) {
+        AddPlasma(*plasma_injector, lev, injection_box);
     }
 }
 
@@ -2698,13 +2696,13 @@ PhysicalParticleContainer::ContinuousInjection (const RealBox& injection_box)
 void
 PhysicalParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real dt)
 {
-    for (const auto & plasma_injector : plasma_injectors) {
+    for (auto const& plasma_injector : plasma_injectors) {
         if (plasma_injector->doFluxInjection()){
             // Check the optional parameters for start and stop of injection
             if ( ((plasma_injector->flux_tmin<0) || (t>=plasma_injector->flux_tmin)) &&
                  ((plasma_injector->flux_tmax<0) || (t< plasma_injector->flux_tmax)) ){
 
-                AddPlasmaFlux(plasma_injector.get(), dt);
+                AddPlasmaFlux(*plasma_injector, dt);
 
             }
         }
@@ -3024,14 +3022,9 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 ion_atomic_number};
 }
 
-int PhysicalParticleContainer::numberOfPlasmaInjectors ()
-{
-    return static_cast<int>(plasma_injectors.size());
-}
-
 PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector (int i)
 {
-    if (i < 0 || i >= numberOfPlasmaInjectors()) {
+    if (i < 0 || i >= static_cast<int>(plasma_injectors.size())) {
         return nullptr;
     } else {
         return plasma_injectors[i].get();
