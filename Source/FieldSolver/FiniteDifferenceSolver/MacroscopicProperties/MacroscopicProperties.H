@@ -44,7 +44,7 @@ public:
     amrex::MultiFab& getepsilon_mf  () { return (*m_eps_mf); }
     /** return MultiFab, mu (permeability) of the medium. */
     amrex::MultiFab& getmu_mf  () { return (*m_mu_mf); }
-    /** return MultiFab */
+    /** return MultiFab, magnetic material id number */
     amrex::iMultiFab& get_magnetic_material_id_mf  () { return (*m_magnetic_material_id_mf); }
 
     /** Bool flag on whether there are any magnetic materials present. */
@@ -210,12 +210,10 @@ class MagneticMaterial
 {
 public:
 
-    using RT = amrex::Real;
-
-    virtual void
-    UpdateHandM (      amrex::Real& H_x    ,       amrex::Real& H_y    ,       amrex::Real& H_z    ,
-                       amrex::Real& M_x    ,       amrex::Real& M_y    ,       amrex::Real& M_z    ,
-                 const amrex::Real& Bnext_x, const amrex::Real& Bnext_y, const amrex::Real& Bnext_z) const = 0;
+    virtual void UpdateHandM (
+              amrex::Real& H_x     ,       amrex::Real& H_y     ,        amrex::Real& H_z    ,
+              amrex::Real& M_x     ,       amrex::Real& M_y     ,        amrex::Real& M_z    ,
+        const amrex::Real& B_next_x, const amrex::Real& B_next_y, const amrex::Real& B_next_z) const = 0;
 
     // virtual void
     // UpdateM (      RT& M_x    ,       RT& M_y    ,       RT& M_z    ,

@@ -118,10 +118,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     amrex::ignore_unused(edge_lengths);
 #endif
 
-    const amrex::MultiFab& sigma_mf = macroscopic_properties->getsigma_mf();
-    const amrex::MultiFab& epsilon_mf = macroscopic_properties->getepsilon_mf();
-    const amrex::MultiFab& mu_mf = macroscopic_properties->getmu_mf();
-    const amrex::iMultiFab& mag_mat_id_mf = macroscopic_properties->get_magnetic_material_id_mf();
+    amrex::MultiFab const& sigma_mf = macroscopic_properties->getsigma_mf();
+    amrex::MultiFab const& epsilon_mf = macroscopic_properties->getepsilon_mf();
+    amrex::MultiFab const& mu_mf = macroscopic_properties->getmu_mf();
+    amrex::iMultiFab const& mag_mat_id_mf = macroscopic_properties->get_magnetic_material_id_mf();
 
     // Index type required for calling ablastr::coarsen::sample::Interp to interpolate macroscopic
     // properties from their respective staggering to the Ex, Ey, Ez locations
@@ -225,12 +225,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 return (Real(0.5)/mu_arr(i,j,k) + Real(0.5)/mu_arr(i,j,k-1))*Bz(i,j,k,n);
             };
 
-            // This functor computes Hx = Bx/mu
-            // Note that mu is cell-centered here and will be interpolated/averaged
-            // to the location where the B-field and H-field are defined
-            // FieldAccessorMacroscopic const Hx(Bx, mu_arr);
-            // FieldAccessorMacroscopic const Hy(By, mu_arr);
-            // FieldAccessorMacroscopic const Hz(Bz, mu_arr);
         }
 
         // Extract tileboxes for which to loop
