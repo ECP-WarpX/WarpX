@@ -1220,11 +1220,6 @@ private:
     //! Complete the asynchronous broadcast of signal flags, and initiate a checkpoint if requested
     void HandleSignals ();
 
-    ///
-    /// Advance the simulation by numsteps steps, electromagnetic case.
-    ///
-    void EvolveEM(int numsteps);
-
     void FillBoundaryB (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryE (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
     void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng, std::optional<bool> nodal_sync = std::nullopt);
