@@ -365,7 +365,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     multi_diags->InitializeFieldFunctors( lev );
 
     // Reduced diagnostics
-    // not needed yet 
+    // not needed yet
 }
 
 void

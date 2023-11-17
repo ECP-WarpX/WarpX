@@ -195,4 +195,3 @@ Langevin::dLdx_minus_L_over_x_over_x2 (amrex::Real x)
     const auto coth = 1.0 / std::tanh(x);
     return xinv2*(R(2.0)*xinv2 - xinv*R(coth) - R(csch*csch));
 }
-

@@ -250,4 +250,3 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
 
     }
 }
-
