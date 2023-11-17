@@ -24,11 +24,10 @@ Scientific works in laser-plasma and beam-plasma acceleration.
    Phys. Rev. Research **5**, 033112, 2023
    `DOI:10.1103/PhysRevResearch.5.033112 <https://doi.org/10.1103/PhysRevResearch.5.033112>`__
 
-#. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L, Huebl A.
+#. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L and Huebl A.
    **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
-   14th International Particle Accelerator Conference (IPAC'23), WEPA101, *in print*, 2023.
-   `preprint <https://www.ipac23.org/preproc/pdf/WEPA101.pdf>`__,
-   `DOI:10.18429/JACoW-IPAC-23-WEPA101 <https://doi.org/10.18429/JACoW-IPAC-23-WEPA101>`__
+   14th International Particle Accelerator Conference (IPAC'23), WEPA101, 2023.
+   `DOI:10.18429/JACoW-IPAC2023-WEPA101 <https://doi.org/10.18429/JACoW-IPAC2023-WEPA101>`__
 
 #. Wang J, Zeng M, Li D, Wang X, Gao J.
    **High quality beam produced by tightly focused laser driven wakefield accelerators**.
@@ -141,3 +140,11 @@ High-Performance Computing and Numerics
 Scientific works in High-Performance Computing, applied mathematics and numerics.
 
 Please see :ref:`this section <acknowledge_warpx_all_refs>`.
+
+Nuclear Fusion - Magnetically Confined Plasmas
+**********************************************
+
+#. Nicks, B. S., Putvinski, S. and Tajima, T.
+   **Stabilization of the Alfvén-ion cyclotron instability through short plasmas: Fully kinetic simulations in a high-beta regime**.
+   Physics of Plasmas **30**, 102108, 2023.
+   `DOI:10.1063/5.0163889 <https://doi.org/10.1063/5.0163889>`__
