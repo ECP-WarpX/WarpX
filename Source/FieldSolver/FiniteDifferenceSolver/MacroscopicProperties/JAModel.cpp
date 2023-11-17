@@ -15,6 +15,8 @@ JAModel::JAModel (amrex::Real alpha,
     m_param_one_minus_alpha_inv = amrex::Real(1.0) / m_param_one_minus_alpha;
     m_param_Ms_over_a = Ms / a;
     m_param_c_Ms_over_a = c * Ms / a;
+    m_param_a_inv = amrex::Real(1.0) / a;
+    m_param_a2_inv = m_param_a_inv*m_param_a_inv;
 }
 
 void JAModel::UpdateHandM (
@@ -70,7 +72,6 @@ void JAModel::UpdateHandM (
         chi[3] = chi_an[3] + (M_diff_x*M_diff_z / denominator); // xz
         chi[4] = chi_an[4] + (M_diff_y*M_diff_z / denominator); // yz
         chi[5] = chi_an[5] + (M_diff_z*M_diff_z / denominator); // zz
-// #endif
         /* Compute dH_e using the total contribution */
         Compute_dH_e(dH_e_x,dH_e_y,dH_e_z,chi,dB_mu0inv_x,dB_mu0inv_y,dB_mu0inv_z);
         /* Check the sign of (M_an - M) dot dH_e */
@@ -152,200 +153,6 @@ void JAModel::Compute_dH_e (
     dH_e_y = dHedB01*dB_mu0inv_x + dHedB11*dB_mu0inv_y + dHedB12*dB_mu0inv_z;
     dH_e_z = dHedB02*dB_mu0inv_x + dHedB12*dB_mu0inv_y + dHedB22*dB_mu0inv_z;
 }
-
-// void
-// JAModel::ComputeH (      RT& H_x    ,       RT& H_y    ,       RT& H_z    ,
-//                          RT& M_x    ,       RT& M_y    ,       RT& M_z    ,
-//                    const RT& Bprev_x, const RT& Bprev_y, const RT& Bprev_z,
-//                    const RT& B_next_x, const RT& B_next_y, const RT& B_next_z) const
-// {
-//     Vec3 H = {H_x,H_y,H_z};
-//     UpdateM(M_x,M_y,M_z,Bprev_x,Bprev_y,Bprev_z,B_next_x,B_next_y,B_next_z);
-//     H_x = PhysConst::mu0inv * Bprev_x
-// }
-
-// void
-// JAModel::UpdateM (      RT& M_x ,       RT &M_y,        RT &M_z,
-//                   const RT& B_x , const RT &B_y , const RT &B_z,
-//                   const RT& dB_x, const RT &dB_y, const RT &dB_z)
-// {
-//     /* 1 - alpha */
-//     amrex::Real oneMinusAlpha = m_ja_model_parameters.one_minus_alpha();
-
-//     /* The anhysteretic magnetization */
-//     GpuArray3 M_an;
-//     /* Jacobian matrix chi_an = dM_an/dH_e. The anhysteretic contribution to chi */
-//     GpuArray6 chi_an;
-//     /* The effective field H_e = H + alpha M = mu0^{-1} B - (1-alpha) M */
-//     GpuArray3 H_e;
-//     H_e[0] = PhysConst::mu0inv * B_x - oneMinusAlpha * M_x;
-//     H_e[1] = PhysConst::mu0inv * B_y - oneMinusAlpha * M_y;
-//     H_e[2] = PhysConst::mu0inv * B_z - oneMinusAlpha * M_z;
-
-//     /* Compute M_an and chi_an */
-//     JAModel::ComputeAnhystereticContribution(M_an, chi_an, H_e);
-
-//     /* The change in the effective field */
-//     GpuArray3 dH_e;
-//     GpuArray3 dBovermu0 = PhysConst::mu0inv * dB; // mu0^{-1} dB
-//     GpuArray3 M_diff = M_an - M; // M_an - M
-
-
-//     amrex::Real M_diff_mag = M_diff.vectorLength(); // |M_an - M|
-//     amrex::Real denominator = m_ja_model_parameters.k() * M_diff_mag; // k |M_an - M|
-
-//     if (denominator != 0) {
-//         // Jacobian matrix chi = dM/dH_e = chi_an + chi_irr
-//         amrex::Array<amrex::Real, 6> chi(chi_an);
-//         // Add the irreversible contribution chi_irr.
-//         chi[0] += M_diff[0] * M_diff[0] / denominator; // xx
-// // #if AMREX_SPACEDIM > 1
-//         chi[1] += M_diff[1] * M_diff[0] / denominator; // xy
-//         chi[2] += M_diff[1] * M_diff[1] / denominator; // yy
-// // #endif
-// // #if AMREX_SPACEDIM > 2
-//         chi[3] += M_diff[2] * M_diff[0] / denominator; // xz
-//         chi[4] += M_diff[2] * M_diff[1] / denominator; // yz
-//         chi[5] += M_diff[2] * M_diff[2] / denominator; // zz
-// // #endif
-//         /* Compute dH_e using the total contribution */
-//         Compute_dH_e(dHe, chi, dBovermu0, oneMinusAlpha);
-//         /* Check the sign of (M_an - M) dot dH_e */
-//         if (M_diff.dotProduct(dH_e) < 0) {
-//             /* Use only anhysteretic part of chi if (M_an - M) dot dH_e < 0 */
-//             Compute_dH_e(dHe, chi_an, dBovermu0, oneMinusAlpha);
-//         }
-//     }
-//     else {
-//         Compute_dH_e(dHe, chi_an, dBovermu0, oneMinusAlpha);
-//     }
-
-//     /* Update the magnetization */
-//     M = M + (1._rt / oneMinusAlpha) * (dBovermu0 - dH_e);
-
-
-//     M = amrex::Dim3_plus(M,amrex::Dim3_mult(1._rt / oneMinusAlpha, amrex::Dim3_minus(dBovermu0, dH_e)));
-// }
-
-// void
-// JAModel::UpdateMx (      RT& M_x,  const RT& M_y,  const RT& M_z,
-//                    const RT& Bprev_x,  const RT& Bprev_y,  const RT& Bprev_z,
-//                    const RT& B_next_x, const RT& B_next_y, const RT& B_next_z)
-// {
-//     const Vec3& M = {M_x,M_y,M_z};
-//     const Vec3& B = {Bprev_x,Bprev_y,Bprev_z};
-
-//     /* The anhysteretic magnetization */
-//     GpuArray3 M_an;
-//     /* Jacobian matrix chi_an = dM_an/dH_e. The anhysteretic contribution to chi */
-//     GpuArray6 chi_an;
-
-//     Vec3 H_e = amrex::Dim3_minus(amrex::Dim3_mult(PhysConst::mu0inv, B),amrex::Dim3_mult(-m_oneMinusAlpha, M));
-
-//     /* Compute M_an and chi_an */
-//     JAModel::ComputeAnhystereticContribution(M_an, chi_an, H_e);
-
-//     /* The change in the effective field */
-//     Dim3 dH_e;
-//     Dim3 dBovermu0 = amrex::Dim3_mult(mu0inv, dB); // mu0^{-1} dB
-//     Dim3 M_diff = amrex::Dim3_minus(M_an, M); // M_an - M
-
-//     amrex::Real M_diff_mag = amrex::Dim3_norm2(M_diff); // |M_an - M|
-//     amrex::Real denominator = m_ja_model_parameters.k() * M_diff_mag; // k |M_an - M|
-
-//     if (denominator != 0) {
-//         // Jacobian matrix chi = dM/dH_e = chi_an + chi_irr
-//         amrex::Array<amrex::Real, 6> chi(chi_an);
-//         // Add the irreversible contribution chi_irr.
-//         chi[0] += M_diff[0] * M_diff[0] / denominator; // xx
-// // #if AMREX_SPACEDIM > 1
-//         chi[1] += M_diff[1] * M_diff[0] / denominator; // xy
-//         chi[2] += M_diff[1] * M_diff[1] / denominator; // yy
-// // #endif
-// // #if AMREX_SPACEDIM > 2
-//         chi[3] += M_diff[2] * M_diff[0] / denominator; // xz
-//         chi[4] += M_diff[2] * M_diff[1] / denominator; // yz
-//         chi[5] += M_diff[2] * M_diff[2] / denominator; // zz
-// // #endif
-//         /* Compute dH_e using the total contribution */
-//         Compute_dH_e(dHe, chi, dBovermu0, oneMinusAlpha);
-//         /* Check the sign of (M_an - M) dot dH_e */
-//         if (M_diff.dotProduct(dH_e) < 0) {
-//             /* Use only anhysteretic part of chi if (M_an - M) dot dH_e < 0 */
-//             Compute_dH_e(dHe, chi_an, dBovermu0, oneMinusAlpha);
-//         }
-//     }
-//     else {
-//         Compute_dH_e(dHe, chi_an, dBovermu0, oneMinusAlpha);
-//     }
-
-//     Dim3 a = {0,0,0};
-//     Dim3 b = {1,1,1};
-
-//     Dim3 c = amrex::Dim3_plus(a, b);
-
-//     /* Update the magnetization */
-//     M = M + (1._rt / oneMinusAlpha) * (dBovermu0 - dH_e);
-
-
-//     M = amrex::Dim3_plus(M,amrex::Dim3_mult(1._rt / oneMinusAlpha, amrex::Dim3_minus(dBovermu0, dH_e)));
-// }
-
-
-// void
-// JAModel::ComputeAnhystereticContribution (      JAModel::GpuArray3 &M_an,
-//                                                 JAModel::GpuArray6 &chi_an,
-//                                           const JAModel::GpuArray3 &H_e)
-// {
-//     using RT = amrex::Real;
-//     RT a = m_ja_model_parameters.a();
-//     RT c_Ms_over_a = m_ja_model_parameters.c_times_Ms_over_a();
-//     RT H_e_mag = H_e.norm(); // |H_e|
-//     // if (H_e_mag <= amrex::Real(0.0)) { return; }
-//     RT x = H_e_mag / a; // x = |H_e| / a
-//     RT L_over_x = Langevin::L_over_x(x); // L(x)/x
-//     RT delta = Langevin::dLdx_minus_L_over_x_over_x2(x)/(a*a);  // delta = L'(x) - L(x)/x
-
-//     M_an = (m_ja_model_parameters.Ms_over_a() * L_over_x) * H_e;
-
-//     // chi_an = dM_an / dH_e is a symmetric matrix, so only 6 components need to be specified.
-//     // The order of elements is xx, xy, yy, xz, yz, zz)
-//     chi_an[0] = c_Ms_over_a * (L_over_x + delta * H_e[0] * H_e[0]);
-//     chi_an[1] = c_Ms_over_a * (           delta * H_e[0] * H_e[1]);
-//     chi_an[2] = c_Ms_over_a * (L_over_x + delta * H_e[1] * H_e[1]);
-//     chi_an[3] = c_Ms_over_a * (           delta * H_e[0] * H_e[2]);
-//     chi_an[4] = c_Ms_over_a * (           delta * H_e[1] * H_e[2]);
-//     chi_an[5] = c_Ms_over_a * (L_over_x + delta * H_e[2] * H_e[2]);
-// }
-
-
-// void
-// JAModel::ComputeAnhystereticContribution (GpuArray3& M_an, GpuArray6& chi_an, const GpuArray3& H_e)
-// {
-//     amrex::Real a = m_ja_model_parameters.a();
-//     /* c Ms / a */
-//     amrex::Real c_Ms_over_a = m_ja_model_parameters.c_times_Ms_over_a();
-//     amrex::Real H_e_mag = H_e.vectorLength(); // |H_e|
-//     if (H_e_mag <= amrex::Real(0.0)) { return; }
-//     amrex::Real x = H_e_mag / a; // x = |H_e| / a
-//     amrex::Real L_over_x = Langevin::L_over_x(x); // L(x)/x
-//     amrex::Real dLdx = Langevin::dLdx(x); // L'(x)
-//     M_an = ((ja_model_parameters->Ms_over_a()) * L_over_x) * H_e;
-//     amrex::Real delta = dLdx - L_over_x;  // delta = L'(x) - L(x)/x
-//     amrex::RealVect H_e_hat = H_e / H_e_mag; // Unit vector in direction of H_e
-//     // chi_an = dM_an / dH_e is a symmetric matrix, so only 6 components need to be specified.
-//     // The order of elements is xx, xy, yy, xz, yz, zz)
-//     chi_an[0] = c_Ms_over_a * (L_over_x + delta * H_e[0] * H_e[0]);
-// #if AMREX_SPACEDIM > 1
-//     chi_an[1] = c_Ms_over_a * (           delta * H_e_hat[1] * H_e_hat[0]);
-//     chi_an[2] = c_Ms_over_a * (L_over_x + delta * H_e_hat[1] * H_e_hat[1]);
-// #endif
-// #if AMREX_SPACEDIM > 2
-//     chi_an[3] = c_Ms_over_a * (           delta * H_e_hat[2] * H_e_hat[0]);
-//     chi_an[4] = c_Ms_over_a * (           delta * H_e_hat[2] * H_e_hat[1]);
-//     chi_an[5] = c_Ms_over_a * (L_over_x + delta * H_e_hat[2] * H_e_hat[2]);
-// #endif
-// }
 
 amrex::Real
 Langevin::L (amrex::Real x)

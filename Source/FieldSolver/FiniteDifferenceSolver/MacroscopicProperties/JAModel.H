@@ -101,15 +101,17 @@ protected:
         const amrex::GpuArray<amrex::Real,6>& dM_dH_e,
         const amrex::Real& dB_mu0inv_x, const amrex::Real& dB_mu0inv_y,  const amrex::Real& dB_mu0inv_z) const;
 
-    amrex::Real m_param_alpha;
-    amrex::Real m_param_a;
-    amrex::Real m_param_Ms;
-    amrex::Real m_param_k;
-    amrex::Real m_param_c;
-    amrex::Real m_param_one_minus_alpha;
-    amrex::Real m_param_one_minus_alpha_inv;
-    amrex::Real m_param_Ms_over_a;
-    amrex::Real m_param_c_Ms_over_a;
+    const amrex::Real m_param_alpha;
+    const amrex::Real m_param_a;
+    const amrex::Real m_param_Ms;
+    const amrex::Real m_param_k;
+    const amrex::Real m_param_c;
+    const amrex::Real m_param_one_minus_alpha;
+    const amrex::Real m_param_one_minus_alpha_inv;
+    const amrex::Real m_param_Ms_over_a;
+    const amrex::Real m_param_c_Ms_over_a;
+    const amrex::Real m_param_a_inv;
+    const amrex::Real m_param_a2_inv;
 
 };
 
@@ -155,7 +157,7 @@ namespace Langevin {
 
     static constexpr double cutoff = 0.01;
     static constexpr double L_cutoff = 1.0/std::tanh(cutoff) - 1.0/cutoff;
-    static constexpr double L_over_x_cutoff = L_cutoff / cutoff;
+    static constexpr double L_over_x_cutoff = L_cutoff/cutoff;
     static constexpr double dLdx_cutoff = -1.0/(std::sinh(cutoff)*std::sinh(cutoff)) + 1.0/(cutoff*cutoff);
     static constexpr double dLdx_minus_Loverx_over_x2_cutoff = (dLdx_cutoff - L_over_x_cutoff) / (cutoff*cutoff);
 
@@ -163,113 +165,14 @@ namespace Langevin {
     static constexpr R oneThird = R(1.0/3.0);
 
     //! Slightly different from -1/45 so that `L(x)` and `L_over_x(x)` are continuous at the cutoff.
-    static constexpr R LangConst1 = R((L_over_x_cutoff - 1.0/3.0) / (cutoff*cutoff));
+    static constexpr R LangConst1 = R((L_over_x_cutoff - 1.0/3.0)/(cutoff*cutoff));
 
     //! Slightly different from -1/15 so that `dLdx(x)` is continuous at the cutoff.
-    static constexpr R LangConst2 = R((dLdx_cutoff - 1.0/3.0) / (cutoff*cutoff));
+    static constexpr R LangConst2 = R((dLdx_cutoff - 1.0/3.0)/(cutoff*cutoff));
 
     //! Slightly different from 8/945 so that `dLdx_minus_L_over_x_over_x2(x)` is continuous at the cutoff.
-    static constexpr R LangConst3 = R((dLdx_minus_Loverx_over_x2_cutoff + 2.0/45.0) / (cutoff*cutoff));
-
-
-    // static constexpr amrex::Real LangConst1 = -0.02222201058412696_rt;
-    // static constexpr double LangConst1 = -0.02222201058412696;
-    // static constexpr double LangConst1 = -2.2222201058412696E-2;
-    // static constexpr double LangConst1 = (L_over_x_cutoff - 1.0/3.0) / (cutoff*cutoff);
-    // static constexpr amrex::Real LangConst2 = -0.06666559177859188_rt;
-    // static constexpr double LangConst2 = -0.06666560848042309;
-    // static constexpr double LangConst2 = -6.666560848042309E-2;
-    // static constexpr double LangConst2 = (dLdx_cutoff - 1.0/3.0) / (cutoff*cutoff);
-    // static constexpr amrex::Real LangConst3 = 0.008665953929384851;
-    // static constexpr double LangConst3 = 8.0/945.0 - (2.0/1575.0)*cutoff*cutoff + (16.0/93555.0)*cutoff*cutoff*cutoff*cutoff;
-    // static constexpr double LangConst3 = 0.00846548148319168;
-    // static constexpr double LangConst3 = 8.46548148319168E-3;
-    // static constexpr double LangConst3 = (dLdx_minus_Loverx_over_x2_cutoff + 2.0/45.0) / (cutoff*cutoff);
+    static constexpr R LangConst3 = R((dLdx_minus_Loverx_over_x2_cutoff + 2.0/45.0)/(cutoff*cutoff));
 
 };
-
-// /**
-//  * \brief This struct contains the five parameters necessary to describe magnetic
-//  * hysteresis of a material using the Jiles-Atherton (JA) model.
-//  */
-// struct JAModelParameters {
-
-// public:
-//     /**
-//      * \brief Specify the parameters of the Jiles-Atherton (JA) model for a magnetic material.
-//      *
-//      * \param alpha (unitless) Defines the effective field `H_e = H + alpha M`,
-//      *              where `H` is the magnetic field and `M` is the total magnetization.
-//      *              Quantifies interdomain coupling in the magnetic material.
-//      *
-//      * \param a (A/m) Describes the scale of the `H` field at which the magnetic
-//      *          material saturates. Used in the Langevin function as `L(H_e / a)`.
-//      *          Quantifies domain walls density in the magnetic material.
-//      *
-//      * \param Ms (A/m) Saturation magnetization of the magnetic material.
-//      *
-//      * \param k (A/m) Quantifies average energy required to break a pinning site in the magnetic material.
-//      *          Describes the scale by which the irreversible magnetization `M_irr` changes due to a change
-//      *          in the effective field `H_e`. In particular, `dM_irr / dH_e = (M_an - M_irr) / k`,
-//      *          where `M_an` is the anhysteretic magnetization.
-//      *
-//      * \param c (unitless) Quantifies magnetization reversibility: `M_rev = c (M_an - M_irr)`,
-//      *          where `M_rev`, `M_an`, and `M_irr` are the reversible, anhysteretic, and irreversible
-//      *          magnetizations, respectively. This equation corresponds to the bulge of the domain walls
-//      *          for small displacement. The total magnetization is
-//      *          `M = M_rev + M_irr = c M_an + (1-c) M_irr`.
-//      */
-//     JAModelParameters (amrex::Real a_alpha, amrex::Real a_a, amrex::Real a_Ms, amrex::Real a_k, amrex::Real a_c);
-
-//     /**
-//      * \brief The alpha parameter in the Jiles-Atherton Model
-//      *
-//      * (unitless) Defines the effective field `H_e = H + alpha M`,
-//      * where `H` is the magnetic field and `M` is the total magnetization.
-//      * Quantifies interdomain coupling in the magnetic material.
-//      */
-//     amrex::Real alpha () { return m_alpha; }
-
-//     /**(A/m) Describes the scale of the `H` field at which the magnetic
-//      * material saturates. Used in the Langevin function as `L(H_e / a)`.
-//      * Quantifies domain walls density in the magnetic material. */
-//     amrex::Real a () { return m_a; }
-
-//     /**(A/m) Saturation magnetization of the magnetic material. */
-//     amrex::Real Ms () { return m_Ms; }
-
-//     /**(A/m) Quantifies average energy required to break a pinning site in the magnetic material.
-//      * Describes the scale by which the irreversible magnetization `M_irr` changes due to a change
-//      * in the effective field `H_e`. In particular, `dM_irr / dH_e = (M_an - M_irr) / k`,
-//      * where `M_an` is the anhysteretic magnetization.
-//      */
-//     amrex::Real k () { return m_k; }
-
-//     /**(unitless) Quantifies magnetization reversiblity: `M_rev = c (M_an - M_irr)`,
-//      * where `M_rev`, `M_an`, and `M_irr` are the reversible, anhysteretic, and irreversible
-//      * magnetizations, respectively. This equation corresponds to the bulge of the domain walls
-//      * for small displacement. The total magnetization is
-//      * `M = M_rev + M_irr = c M_an + (1-c) M_irr`.
-//      */
-//     amrex::Real c () { return m_c; }
-
-//     amrex::Real one_minus_alpha () { return m_one_minus_alpha; }
-
-//     amrex::Real Ms_over_a () { return m_Ms_over_a; }
-
-//     amrex::Real c_times_Ms_over_a () { return m_c_times_Ms_over_a; }
-
-// private:
-
-//     amrex::Real m_alpha;
-//     amrex::Real m_a;
-//     amrex::Real m_Ms;
-//     amrex::Real m_k;
-//     amrex::Real m_c;
-//     amrex::Real m_one_minus_alpha;
-//     amrex::Real m_Ms_over_a;
-//     amrex::Real m_c_times_Ms_over_a;
-
-// };
 
 #endif // WARPX_JAMODEL_H_

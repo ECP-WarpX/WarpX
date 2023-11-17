@@ -209,12 +209,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                 +(mag_mat_id(i,j,k-1) >= 0 ?  H_z_arr(i,j,k-1,n) : Bz(i,j,k,n)/mu_arr(i,j,k-1))));
             };
         } else {
-            // auto Hx = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) {
-            //     const Real M_x_plus  = (mu0inv - Real(1.0)/mu_arr(i  ,j,k))*Real(0.5)*(Bx(i  ,j,k,n) + Bx(i+1,j,k,n));
-            //     const Real M_x_minus = (mu0inv - Real(1.0)/mu_arr(i-1,j,k))*Real(0.5)*(Bx(i-1,j,k,n) + Bx(i  ,j,k,n));
-            //     return mu0inv*Bx(i,j,k,n) - Real(0.5)*(M_x_plus + M_x_minus);
-            // };
-
             Hx = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) {
                 return (Real(0.5)/mu_arr(i,j,k) + Real(0.5)/mu_arr(i-1,j,k))*Bx(i,j,k,n);
             };
@@ -224,13 +218,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             Hz = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) {
                 return (Real(0.5)/mu_arr(i,j,k) + Real(0.5)/mu_arr(i,j,k-1))*Bz(i,j,k,n);
             };
-
         }
 
         // Extract tileboxes for which to loop
-        Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
-        Box const& tey  = mfi.tilebox(Efield[1]->ixType().toIntVect());
-        Box const& tez  = mfi.tilebox(Efield[2]->ixType().toIntVect());
+        amrex::Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
+        amrex::Box const& tey  = mfi.tilebox(Efield[1]->ixType().toIntVect());
+        amrex::Box const& tez  = mfi.tilebox(Efield[2]->ixType().toIntVect());
         // starting component to interpolate macro properties to Ex, Ey, Ez locations
         const int scomp = 0;
         // Loop over the cells and update the fields

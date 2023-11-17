@@ -44,7 +44,7 @@ public:
     amrex::MultiFab& getepsilon_mf  () { return (*m_eps_mf); }
     /** return MultiFab, mu (permeability) of the medium. */
     amrex::MultiFab& getmu_mf  () { return (*m_mu_mf); }
-    /** return MultiFab, magnetic material id number */
+    /** return iMultiFab, magnetic material id number */
     amrex::iMultiFab& get_magnetic_material_id_mf  () { return (*m_magnetic_material_id_mf); }
 
     /** Bool flag on whether there are any magnetic materials present. */
@@ -192,56 +192,30 @@ struct BackwardEulerAlgo {
     }
 };
 
-// class MagneticObject {
-
-// public:
-
-
-// private:
-//     /** String for storing parser function, which specifies where the object is location. */
-//     std::string m_str_material_location_function;
-//     /** Location parser wrappers. Describes where the object is location */
-//     std::unique_ptr<amrex::Parser> m_material_location_parser;
-//     /** Specifies the hysteretic properties of the magnetic object using the Jiles-Atherton model */
-//     JAModelParameters m_ja_model_parameters;
-// };
-
 class MagneticMaterial
 {
 public:
 
     virtual void UpdateHandM (
-              amrex::Real& H_x     ,       amrex::Real& H_y     ,        amrex::Real& H_z    ,
-              amrex::Real& M_x     ,       amrex::Real& M_y     ,        amrex::Real& M_z    ,
+              amrex::Real& H_x     ,       amrex::Real& H_y     ,       amrex::Real& H_z    ,
+              amrex::Real& M_x     ,       amrex::Real& M_y     ,       amrex::Real& M_z    ,
         const amrex::Real& B_next_x, const amrex::Real& B_next_y, const amrex::Real& B_next_z) const = 0;
 
-    // virtual void
-    // UpdateM (      RT& M_x    ,       RT& M_y    ,       RT& M_z    ,
-    //               const RT& Bprev_muinv0_x, const RT& Bprev_muinv0_y, const RT& Bprev_muinv0_z,
-    //               const RT& Bnext_muinv0_x, const RT& Bnext_muinv0_y, const RT& Bnext_muinv0_z) const = 0;
-
-    // virtual void ComputeH (      RT& Hx ,       RT& Hy ,       RT& Hz ,
-    //                              RT& Mx ,       RT& My ,       RT& Mz ,
-    //                        const RT& Bx , const RT& By , const RT& Bz ,
-    //                        const RT& dBx, const RT& dBy, const RT& dBz) const = 0;
-
-    // virtual void UpdateM (      RT& Mx ,       RT& My ,       RT& Mz ,
-    //                       const RT& Bx , const RT& By , const RT& Bz ,
-    //                       const RT& dBx, const RT& dBy, const RT& dBz) = 0;
-
 };
 
-struct MagneticMaterials
-{
+// M330-50 A steel Jiles-Atherton model parameters. Source:
+// Chwastek K. The applications of fixed‐point theorem in optimisation problems.
+// Arch Electr Eng. 2012;61(2):189–198
+static const JAModel mag_mat_M330_50_A_steel{amrex::Real(7.45E-5) /* alpha (unitless) */,
+                                             amrex::Real(26.1)    /* a (A/m) */,
+                                             amrex::Real(1.26E6)  /* Ms (A/m) */,
+                                             amrex::Real(52.3)    /* k (A/m) */,
+                                             amrex::Real(0.13)    /* c (unitless) */};
 
-     static const JAModelParameters M330_50_A_steel;
-
-};
-
-const JAModelParameters MagneticMaterials::M330_50_A_steel{7.45E-5_rt /* alpha (unitless) */,
-                                                           26.1_rt    /* a (A/m) */,
-                                                           1.26E6_rt  /* Ms (A/m) */,
-                                                           52.3_rt    /* k (A/m) */,
-                                                           0.13_rt    /* c (unitless) */};
+// static const JAModel mag_mat_M330_50_A_steel{7.45E-5_rt /* alpha (unitless) */,
+//                                              26.1_rt    /* a (A/m) */,
+//                                              1.26E6_rt  /* Ms (A/m) */,
+//                                              52.3_rt    /* k (A/m) */,
+//                                              0.13_rt    /* c (unitless) */};
 
 #endif // WARPX_MACROSCOPIC_PROPERTIES_H_
