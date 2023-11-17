@@ -39,19 +39,21 @@ public:
     void InitData ();
 
     /** return MultiFab, sigma (conductivity) of the medium. */
-    amrex::MultiFab& getsigma_mf  () { return (*m_sigma_mf); }
+    amrex::MultiFab& getsigma_mf  () {return ( *m_sigma_mf); }
     /** return MultiFab, epsilon (permittivity) of the medium. */
-    amrex::MultiFab& getepsilon_mf  () { return (*m_eps_mf); }
+    amrex::MultiFab& getepsilon_mf  () {return ( *m_eps_mf); }
     /** return MultiFab, mu (permeability) of the medium. */
-    amrex::MultiFab& getmu_mf  () { return (*m_mu_mf); }
+    amrex::MultiFab& getmu_mf  () {return ( *m_mu_mf); }
+
     /** return iMultiFab, magnetic material id number */
     amrex::iMultiFab& get_magnetic_material_id_mf  () { return (*m_magnetic_material_id_mf); }
 
     /** Bool flag on whether there are any magnetic materials present. */
     bool is_magnetic_material_present () { return m_magnetic_material_present_flag; }
 
-    /** Initializes the Multifabs storing macroscopic properties
-     *  with user-defined functions(x,y,z). */
+     /** Initializes the Multifabs storing macroscopic properties
+      *  with user-defined functions(x,y,z).
+      */
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
                                   amrex::ParserExecutor<3> const& macro_parser,
                                   const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx_lev,
@@ -131,7 +133,7 @@ private:
 
 /**
  * \brief
- * This struct contains only static functions to compute the coefficients for the
+ * This struct contains only static functions to compute the co-efficients for the
  * Lax-Wendroff scheme of macroscopic Maxwells equations using
  * macroscopic properties, namely, conductivity (sigma), permittivity (epsilon).
  * Permeability of the material, mu, is used as (beta/mu) for the E-update
@@ -163,7 +165,7 @@ struct LaxWendroffAlgo {
 
 /**
  * \brief
- * This struct contains only static functions to compute the coefficients for the
+ * This struct contains only static functions to compute the co-efficients for the
  * BackwardEuler scheme of macroscopic Maxwells equations using
  * macroscopic properties, namely, conductivity (sigma) and permittivity (epsilon).
  * Permeability of the material, mu, is used as (beta/mu) for the E-update
@@ -211,11 +213,5 @@ static const JAModel mag_mat_M330_50_A_steel{amrex::Real(7.45E-5) /* alpha (unit
                                              amrex::Real(1.26E6)  /* Ms (A/m) */,
                                              amrex::Real(52.3)    /* k (A/m) */,
                                              amrex::Real(0.13)    /* c (unitless) */};
-
-// static const JAModel mag_mat_M330_50_A_steel{7.45E-5_rt /* alpha (unitless) */,
-//                                              26.1_rt    /* a (A/m) */,
-//                                              1.26E6_rt  /* Ms (A/m) */,
-//                                              52.3_rt    /* k (A/m) */,
-//                                              0.13_rt    /* c (unitless) */};
 
 #endif // WARPX_MACROSCOPIC_PROPERTIES_H_

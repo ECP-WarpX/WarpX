@@ -35,11 +35,11 @@
 void FiniteDifferenceSolver::MacroscopicEvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Hfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Mfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Mfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-    amrex::Real dt,
+    amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)
 {
 
@@ -59,13 +59,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
             MacroscopicEvolveECartesian <CartesianYeeAlgorithm, LaxWendroffAlgo>
-                       ( Efield, Bfield, Jfield, Hfield, Mfield, edge_lengths, dt, macroscopic_properties);
+                       ( Efield, Bfield, Hfield, Mfield, Jfield, edge_lengths, dt, macroscopic_properties);
 
         }
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
             MacroscopicEvolveECartesian <CartesianYeeAlgorithm, BackwardEulerAlgo>
-                       ( Efield, Bfield, Jfield, Hfield, Mfield, edge_lengths, dt, macroscopic_properties);
+                       ( Efield, Bfield, Hfield, Mfield, Jfield, edge_lengths, dt, macroscopic_properties);
 
         }
 
@@ -76,12 +76,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, LaxWendroffAlgo>
-                       ( Efield, Bfield, Jfield, Hfield, Mfield, edge_lengths, dt, macroscopic_properties);
+                       ( Efield, Bfield, Hfield, Mfield, Jfield, edge_lengths, dt, macroscopic_properties);
 
         } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, BackwardEulerAlgo>
-                       ( Efield, Bfield, Jfield, Hfield, Mfield, edge_lengths, dt, macroscopic_properties);
+                       ( Efield, Bfield, Hfield, Mfield, Jfield, edge_lengths, dt, macroscopic_properties);
 
         }
 
@@ -100,9 +100,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Hfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Mfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Hfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Mfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     amrex::Real const dt,
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)
@@ -168,9 +168,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         auto const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
 
-        auto Hx = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) { return Real(0.0); };
-        auto Hy = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) { return Real(0.0); };
-        auto Hz = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) { return Real(0.0); };
+        auto Hx = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) { return Real(0.0); };
+        auto Hy = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) { return Real(0.0); };
+        auto Hz = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) { return Real(0.0); };
 
         if (macroscopic_properties->is_magnetic_material_present()) {
             amrex::Array4<Real> const& H_x_arr = Hfield[0]->array(mfi);
@@ -196,26 +196,26 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                     }
                 }
             );
-            Hx = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) {
+            Hx = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 return Real(0.5*((mag_mat_id(i  ,j,k) >= 0 ?  H_x_arr(i  ,j,k,n) : Bx(i,j,k,n)/mu_arr(i  ,j,k))
                                 +(mag_mat_id(i-1,j,k) >= 0 ?  H_x_arr(i-1,j,k,n) : Bx(i,j,k,n)/mu_arr(i-1,j,k))));
             };
-            Hy = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) {
+            Hy = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 return Real(0.5*((mag_mat_id(i,j  ,k) >= 0 ?  H_y_arr(i,j  ,k,n) : By(i,j,k,n)/mu_arr(i,j  ,k))
                                 +(mag_mat_id(i,j-1,k) >= 0 ?  H_y_arr(i,j-1,k,n) : By(i,j,k,n)/mu_arr(i,j-1,k))));
             };
-            Hz = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) {
+            Hz = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 return Real(0.5*((mag_mat_id(i,j,k  ) >= 0 ?  H_z_arr(i,j,k  ,n) : Bz(i,j,k,n)/mu_arr(i,j,k  ))
                                 +(mag_mat_id(i,j,k-1) >= 0 ?  H_z_arr(i,j,k-1,n) : Bz(i,j,k,n)/mu_arr(i,j,k-1))));
             };
         } else {
-            Hx = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) {
+            Hx = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 return (Real(0.5)/mu_arr(i,j,k) + Real(0.5)/mu_arr(i-1,j,k))*Bx(i,j,k,n);
             };
-            Hy = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) {
+            Hy = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 return (Real(0.5)/mu_arr(i,j,k) + Real(0.5)/mu_arr(i,j-1,k))*By(i,j,k,n);
             };
-            Hz = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n = 0) {
+            Hz = [=] AMREX_GPU_DEVICE (int i, int j, int k, int n) {
                 return (Real(0.5)/mu_arr(i,j,k) + Real(0.5)/mu_arr(i,j,k-1))*Bz(i,j,k,n);
             };
         }

@@ -83,6 +83,7 @@ MacroscopicProperties::ReadParameters ()
         ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
+
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
         utils::parser::Store_parserString(
@@ -250,4 +251,3 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
 
     }
 }
-

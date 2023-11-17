@@ -1432,12 +1432,8 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_vay;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Magnetization_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Magnetization_cc_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > dBfield_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > dBfield_cc_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Hfield_fp;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Hfield_cc_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > magnetization_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 

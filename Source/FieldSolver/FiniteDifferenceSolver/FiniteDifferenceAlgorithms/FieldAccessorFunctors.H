@@ -37,34 +37,16 @@ struct FieldAccessorMacroscopic
      * \return           m_field/m_getParameter(x,y,z) at (i,j,k,ncomp)
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    amrex::Real operator() (int i, int j, int k, int ncomp) const noexcept
+    amrex::Real operator() (int const i, int const j,
+                            int const k, int const ncomp) const noexcept
     {
-        // return ( m_field(i, j, k, ncomp)  /  m_parameter(i, j, k) ) ;
-        return (   /  m_parameter(i, j, k) ) * m_field(i, j, k, ncomp);
+        return ( m_field(i, j, k, ncomp)  /  m_parameter(i, j, k) ) ;
     }
 private:
     /** Array4 of the source field to be scaled and returned by the operator() */
     amrex::Array4<amrex::Real const> const m_field;
     /** Array4 of the macroscopic parameter used to divide m_field in the operator() */
     amrex::Array4<amrex::Real const> const m_parameter;
-
-    int dir;
-};
-
-struct HFieldFromBAndM
-{
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    amrex::Real operator() (int i, int j, int k, int ncomp) const noexcept
-    {
-        return PhysConst::mu0inv * m_B_fc(i,j,k,n) - m_M_cc(i,j,k,n);
-    }
-
-private:
-
-    amrex::Array4<const amrex::Real>& m_B_fc;
-    amrex::Array4<const amrex::Real>& m_M_cc;
-
-
 };
 
 

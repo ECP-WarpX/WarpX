@@ -49,9 +49,9 @@ namespace ablastr::constant
         //! vacuum inverse permittivity = 1/ep0 [m/F]
         static constexpr auto ep0inv = 1.0_rt / ep0;
         //! vacuum permeability: magnetic permeability of vacuum = 4.0e-7 * pi [H/m]
-        static constexpr auto mu0 = amrex::Real(1.25663706212e-06);
+        static constexpr auto mu0 = 1.25663706212e-06_rt;
         //! vacuum magnetic reluctivity = 1/mu0 [m/H]
-        static constexpr auto mu0inv = amrex::Real(1.0) / mu0;
+        static constexpr auto mu0inv = 1._rt / mu0;
         //! elementary charge [C]
         static constexpr auto q_e = 1.602176634e-19_rt;
         //! electron mass [kg]
