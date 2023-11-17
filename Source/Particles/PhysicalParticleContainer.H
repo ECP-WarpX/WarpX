@@ -72,7 +72,7 @@ public:
     void InitIonizationModule () override;
 
     /*
-     * \brief Returns a reference to the i'th plasma injector.
+     * \brief Returns a pointer to the i'th plasma injector.
      */
     PlasmaInjector* GetPlasmaInjector (int i) override;
 
