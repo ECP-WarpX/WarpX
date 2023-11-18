@@ -10,6 +10,7 @@
 
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_ParmParse.H>
 
 #include <string>
 
@@ -54,6 +55,11 @@ struct ParmParseWithOptionalGroup
     void getArrWithParser (const char* name, amrex::Vector<float>& ref, int start_ix, int num_val) const;
 
     void get_long_string (const char* name, std::string& ref) const;
+
+private:
+
+    const amrex::ParmParse ParmParseForGet(const char *name) const;
+
 };
 
 #endif
