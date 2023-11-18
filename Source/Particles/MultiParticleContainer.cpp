@@ -409,12 +409,24 @@ MultiParticleContainer::ReadParameters ()
 WarpXParticleContainer&
 MultiParticleContainer::GetParticleContainerFromName (const std::string& name) const
 {
+    // Search among regular species
     auto it = std::find(species_names.begin(), species_names.end(), name);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        it != species_names.end(),
-        "unknown species name");
-    const auto i = static_cast<int>(std::distance(species_names.begin(), it));
-    return *allcontainers[i];
+    if (it != species_names.end()) {
+        const auto i = static_cast<int>(std::distance(species_names.begin(), it));
+        return *allcontainers[i];
+    }
+
+    // Search among laser species
+    it = std::find(lasers_names.begin(), lasers_names.end(), name);
+    if (it != lasers_names.end()) {
+        const auto i = static_cast<int>(std::distance(lasers_names.begin(), it));
+        const auto nspecies = static_cast<int>(species_names.size());
+        return *allcontainers[nspecies+i];
+    }
+
+    // If the code reaches this point, it means that the name is not
+    // among regular species or laser species
+    amrex::Abort("Unknown species name.");
 }
 
 void
