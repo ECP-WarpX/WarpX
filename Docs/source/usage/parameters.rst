@@ -680,6 +680,7 @@ Particle initialization
     sources to be specified once. For example, if the ``source1`` and ``source2`` have the same value of ``uz_m``, then it can be
     set using ``<species_name>.uz_m`` instead of setting it for each source.
     Note that since by default ``<species_name>.injection_style = none``, all injection sources can be input this way.
+    Note that if a moving window is used, the bulk velocity of all of the sources must be the same since it is used when updating the window.
 
 * ``<species_name>.injection_style`` (`string`; default: ``none``)
     Determines how the (macro-)particles will be injected in the simulation.
