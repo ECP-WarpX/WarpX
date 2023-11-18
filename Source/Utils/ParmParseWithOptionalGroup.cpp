@@ -20,72 +20,7 @@ ParmParseWithOptionalGroup::ParmParseWithOptionalGroup(std::string const& a_pref
     }
 }
 
-bool ParmParseWithOptionalGroup::queryWithParser (const char* name, bool& ref) const
-{
-    // First, query name with the group name
-    const amrex::ParmParse pp_with_group(prefix_dot_group);
-    bool is_specified = utils::parser::queryWithParser(pp_with_group, name, ref);
-    if (!is_specified && !group.empty()) {
-        // If it wasn't found, query it with only the prefix
-        const amrex::ParmParse pp_prefix(prefix);
-        is_specified = utils::parser::queryWithParser(pp_prefix, name, ref);
-    }
-    return is_specified;
-}
-
-bool ParmParseWithOptionalGroup::queryWithParser (const char* name, int& ref) const
-{
-    // First, query name with the group name
-    const amrex::ParmParse pp_with_group(prefix_dot_group);
-    bool is_specified = utils::parser::queryWithParser(pp_with_group, name, ref);
-    if (!is_specified && !group.empty()) {
-        // If it wasn't found, query it with only the prefix
-        const amrex::ParmParse pp_prefix(prefix);
-        is_specified = utils::parser::queryWithParser(pp_prefix, name, ref);
-    }
-    return is_specified;
-}
-
-bool ParmParseWithOptionalGroup::queryWithParser (const char* name, double& ref) const
-{
-    // First, query name with the group name
-    const amrex::ParmParse pp_with_group(prefix_dot_group);
-    bool is_specified = utils::parser::queryWithParser(pp_with_group, name, ref);
-    if (!is_specified && !group.empty()) {
-        // If it wasn't found, query it with only the prefix
-        const amrex::ParmParse pp_prefix(prefix);
-        is_specified = utils::parser::queryWithParser(pp_prefix, name, ref);
-    }
-    return is_specified;
-}
-
-bool ParmParseWithOptionalGroup::queryWithParser (const char* name, float& ref) const
-{
-    // First, query name with the group name
-    const amrex::ParmParse pp_with_group(prefix_dot_group);
-    bool is_specified = utils::parser::queryWithParser(pp_with_group, name, ref);
-    if (!is_specified && !group.empty()) {
-        // If it wasn't found, query it with only the prefix
-        const amrex::ParmParse pp_prefix(prefix);
-        is_specified = utils::parser::queryWithParser(pp_prefix, name, ref);
-    }
-    return is_specified;
-}
-
-bool ParmParseWithOptionalGroup::query (const char* name, std::string& ref) const
-{
-    // First, query name with the group name
-    const amrex::ParmParse pp_with_group(prefix_dot_group);
-    bool is_specified = pp_with_group.query(name, ref);
-    if (!is_specified && !group.empty()) {
-        // If it wasn't found, query it with only the prefix
-        const amrex::ParmParse pp_prefix(prefix);
-        is_specified = pp_prefix.query(name, ref);
-    }
-    return is_specified;
-}
-
-const amrex::ParmParse ParmParseWithOptionalGroup::ParmParseForGet(const char *name) const
+const amrex::ParmParse ParmParseWithOptionalGroup::SelectParmParse(const char *name) const
 {
     // Check if the name is found with and without the group.
     const amrex::ParmParse pp_prefix(prefix);
@@ -98,73 +33,103 @@ const amrex::ParmParse ParmParseWithOptionalGroup::ParmParseForGet(const char *n
         // If found without the group but not with the group, then use the one without the group.
         return pp_prefix;
     } else {
-        // Otherwise, use the one with the group even if not found, in which case an exception will be raised.
+        // Otherwise, use the one with the group even if not found, in which case an exception may be raised.
         return pp_with_group;
     }
 }
 
+bool ParmParseWithOptionalGroup::queryWithParser (const char* name, bool& ref) const
+{
+    const amrex::ParmParse pp = SelectParmParse(name);
+    return utils::parser::queryWithParser(pp, name, ref);
+}
+
+bool ParmParseWithOptionalGroup::queryWithParser (const char* name, int& ref) const
+{
+    const amrex::ParmParse pp = SelectParmParse(name);
+    return utils::parser::queryWithParser(pp, name, ref);
+}
+
+bool ParmParseWithOptionalGroup::queryWithParser (const char* name, double& ref) const
+{
+    const amrex::ParmParse pp = SelectParmParse(name);
+    return utils::parser::queryWithParser(pp, name, ref);
+}
+
+bool ParmParseWithOptionalGroup::queryWithParser (const char* name, float& ref) const
+{
+    const amrex::ParmParse pp = SelectParmParse(name);
+    return utils::parser::queryWithParser(pp, name, ref);
+}
+
+bool ParmParseWithOptionalGroup::query (const char* name, std::string& ref) const
+{
+    const amrex::ParmParse pp = SelectParmParse(name);
+    return pp.query(name, ref);
+}
+
 void ParmParseWithOptionalGroup::get_long_string (const char* name, std::string& ref) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     utils::parser::Store_parserString(pp, name, ref);
 }
 
 void ParmParseWithOptionalGroup::getWithParser (const char* name, int& ref) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     utils::parser::getWithParser(pp, name, ref);
 }
 
 void ParmParseWithOptionalGroup::getWithParser (const char* name, long& ref) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     utils::parser::getWithParser(pp, name, ref);
 }
 
 void ParmParseWithOptionalGroup::getWithParser (const char* name, double& ref) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     utils::parser::getWithParser(pp, name, ref);
 }
 
 void ParmParseWithOptionalGroup::getWithParser (const char* name, float& ref) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     utils::parser::getWithParser(pp, name, ref);
 }
 
 void ParmParseWithOptionalGroup::get (const char* name, std::string& ref) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     pp.get(name, ref);
 }
 
 void ParmParseWithOptionalGroup::getArrWithParser (const char* name, amrex::Vector<double>& ref) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     utils::parser::getArrWithParser(pp, name, ref);
 }
 
 void ParmParseWithOptionalGroup::getArrWithParser (const char* name, amrex::Vector<float>& ref) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     utils::parser::getArrWithParser(pp, name, ref);
 }
 
 void ParmParseWithOptionalGroup::getArrWithParser (const char* name, amrex::Vector<int>& ref, int start_ix, int num_val) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     utils::parser::getArrWithParser(pp, name, ref, start_ix, num_val);
 }
 
 void ParmParseWithOptionalGroup::getArrWithParser (const char* name, amrex::Vector<double>& ref, int start_ix, int num_val) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     utils::parser::getArrWithParser(pp, name, ref, start_ix, num_val);
 }
 
 void ParmParseWithOptionalGroup::getArrWithParser (const char* name, amrex::Vector<float>& ref, int start_ix, int num_val) const
 {
-    const amrex::ParmParse pp = ParmParseForGet(name);
+    const amrex::ParmParse pp = SelectParmParse(name);
     utils::parser::getArrWithParser(pp, name, ref, start_ix, num_val);
 }

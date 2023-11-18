@@ -58,7 +58,7 @@ struct ParmParseWithOptionalGroup
 
 private:
 
-    const amrex::ParmParse ParmParseForGet(const char *name) const;
+    const amrex::ParmParse SelectParmParse(const char *name) const;
 
 };
 
