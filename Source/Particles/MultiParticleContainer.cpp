@@ -409,24 +409,27 @@ MultiParticleContainer::ReadParameters ()
 WarpXParticleContainer&
 MultiParticleContainer::GetParticleContainerFromName (const std::string& name) const
 {
+    // Index of the species in `allcontainers`
+    int i = 0;
+
     // Search among regular species
     auto it = std::find(species_names.begin(), species_names.end(), name);
     if (it != species_names.end()) {
-        const auto i = static_cast<int>(std::distance(species_names.begin(), it));
-        return *allcontainers[i];
+        i = static_cast<int>(std::distance(species_names.begin(), it));
+    } else {
+        // Search among laser species
+        it = std::find(lasers_names.begin(), lasers_names.end(), name);
+        if (it != lasers_names.end()) {
+            const int nspecies = static_cast<int>(species_names.size());
+            i = static_cast<int>(std::distance(lasers_names.begin(), it)) + nspecies;
+        } else {
+            // If the code reaches this point, it means that the name is not
+            // among regular species or laser species
+            amrex::Abort("Unknown species name.");
+        }
     }
 
-    // Search among laser species
-    it = std::find(lasers_names.begin(), lasers_names.end(), name);
-    if (it != lasers_names.end()) {
-        const auto i = static_cast<int>(std::distance(lasers_names.begin(), it));
-        const auto nspecies = static_cast<int>(species_names.size());
-        return *allcontainers[nspecies+i];
-    }
-
-    // If the code reaches this point, it means that the name is not
-    // among regular species or laser species
-    amrex::Abort("Unknown species name.");
+    return *allcontainers[i];
 }
 
 void
