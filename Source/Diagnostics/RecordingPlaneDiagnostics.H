@@ -1,5 +1,5 @@
-#ifndef WARPX_STATIONDIAGNOSTICS_H
-#define WARPX_STATIONDIAGNOSTICS_H
+#ifndef WARPX_RECORDINGPLANEDIAGNOSTICS_H
+#define WARPX_RECORDINGPLANEDIAGNOSTICS_H
 
 #include "Diagnostics.H"
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
@@ -9,10 +9,10 @@
 
 
 class
-StationDiagnostics final : public Diagnostics
+RecordingPlaneDiagnostics final : public Diagnostics
 {
 public:
-    StationDiagnostics (int i, std::string name);
+    RecordingPlaneDiagnostics (int i, std::string name);
 private:
     /** Read user-requested parameters for station diagnostics */
     utils::parser::SliceParser m_intervals;
@@ -61,9 +61,9 @@ private:
 
     void InitializeParticleFunctors () override;
 
-    void Flush (int i_buffer) override;
+    void Flush (int i_buffer, bool /*force_flush */) override;
 
-    void WriteStationHeader (const std::string& filename);
+    void WriteRecordingPlaneHeader (const std::string& filename);
 
     void PrepareFieldDataForOutput () override;
 

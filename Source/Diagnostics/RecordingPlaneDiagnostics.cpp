@@ -5,11 +5,11 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "StationDiagnostics.H"
-#include "ComputeDiagFunctors/StationFunctor.H"
+#include "RecordingPlaneDiagnostics.H"
+#include "ComputeDiagFunctors/RecordingPlaneFunctor.H"
 //temporary
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
-#include "ComputeDiagFunctors/StationParticleFunctor.H"
+#include "ComputeDiagFunctors/RecordingPlaneParticleFunctor.H"
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/FlushFormats/FlushFormat.H"
 
@@ -56,17 +56,17 @@
 
 using namespace amrex::literals;
 
-StationDiagnostics::StationDiagnostics (int i, std::string name)
+RecordingPlaneDiagnostics::RecordingPlaneDiagnostics (int i, std::string name)
     : Diagnostics(i, std::move(name))
 {
     ReadParameters();
 }
 
 void
-StationDiagnostics::ReadParameters ()
+RecordingPlaneDiagnostics::ReadParameters ()
 {
 #ifdef WARPX_DIM_RZ
-    amrex::Abort("StationDiagnostics is not implemented for RZ, yet");
+    amrex::Abort("RecordingPlaneDiagnostics is not implemented for RZ, yet");
 #endif
 
     BaseReadParameters();
@@ -84,13 +84,13 @@ StationDiagnostics::ReadParameters ()
 
     // Do a few checks
 #ifndef WARPX_USE_OPENPMD
-    WARPX_ABORT_WITH_MESSAGE("You need to compile WarpX with openPMD support, in order to use StationDiagnostic: -DWarpX_OPENPMD=ON");
+    WARPX_ABORT_WITH_MESSAGE("You need to compile WarpX with openPMD support, in order to use RecordingPlaneDiagnostic: -DWarpX_OPENPMD=ON");
 #endif
 
     // Check that the output format is openPMD
     const std::string error_string = std::string("You need to set `")
         .append(m_diag_name)
-        .append(".format=openpmd` for the StationDiagnostic.");
+        .append(".format=openpmd` for the RecordingPlaneDiagnostic.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "openpmd",
         error_string);
@@ -138,21 +138,21 @@ StationDiagnostics::ReadParameters ()
 }
 
 bool
-StationDiagnostics::DoDump (int step, int /* i_buffer*/, bool force_flush)
+RecordingPlaneDiagnostics::DoDump (int step, int /* i_buffer*/, bool force_flush)
 {
     // Determine criterion to dump output
     return ( (m_slice_counter == m_buffer_size) || force_flush || m_last_timeslice_filled);
 }
 
 bool
-StationDiagnostics::DoComputeAndPack (int step, bool force_flush)
+RecordingPlaneDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // we may have to compute and pack everytimestep, but only store at user-defined intervals
     return ( step>=0 );
 }
 
 void
-StationDiagnostics::InitializeFieldFunctors (int lev)
+RecordingPlaneDiagnostics::InitializeFieldFunctors (int lev)
 {
     // need to define a functor that will take a slice of the fields and store it in a given location
     // in the multifab based on current time
@@ -163,7 +163,7 @@ StationDiagnostics::InitializeFieldFunctors (int lev)
     int ncomp = 6;
     for (int i = 0; i < num_stationdiag_functors; ++i)
     {
-        m_all_field_functors[lev][i] = std::make_unique<StationFunctor>(
+        m_all_field_functors[lev][i] = std::make_unique<RecordingPlaneFunctor>(
                                            warpx.get_array_EBfield_fp(lev), m_station_loc, lev,
                                            m_crse_ratio, ncomp
                                        );
@@ -171,7 +171,7 @@ StationDiagnostics::InitializeFieldFunctors (int lev)
 }
 
 void
-StationDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart)
+RecordingPlaneDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart)
 {
     // Define boxArray, dmap, and initialize output multifab
     // This will have the extension in x-y at a given location z, and the third dimension will be time
@@ -194,7 +194,7 @@ StationDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart)
 }
 
 void
-StationDiagnostics::PrepareFieldDataForOutput ()
+RecordingPlaneDiagnostics::PrepareFieldDataForOutput ()
 {
     const int num_station_functors = 1;
     const int nlev = 1;
@@ -210,7 +210,7 @@ StationDiagnostics::PrepareFieldDataForOutput ()
 }
 
 bool
-StationDiagnostics::GetZSliceInDomain (const int lev)
+RecordingPlaneDiagnostics::GetZSliceInDomain (const int lev)
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::RealBox& prob_domain = warpx.Geom(lev).ProbDomain();
@@ -223,7 +223,7 @@ StationDiagnostics::GetZSliceInDomain (const int lev)
 }
 
 void
-StationDiagnostics::UpdateBufferData ()
+RecordingPlaneDiagnostics::UpdateBufferData ()
 {
     if (GetZSliceInDomain(0))
         m_slice_counter++;
@@ -233,7 +233,7 @@ StationDiagnostics::UpdateBufferData ()
 }
 
 void
-StationDiagnostics::InitializeParticleFunctors ()
+RecordingPlaneDiagnostics::InitializeParticleFunctors ()
 {
     auto& warpx = WarpX::GetInstance();
     const int num_station_buffers = 1;
@@ -244,12 +244,12 @@ StationDiagnostics::InitializeParticleFunctors ()
     {
         m_totalParticles_in_buffer[0][i] = 0;
         const int idx = mpc.getSpeciesID(m_output_species_names[i]);
-        m_all_particle_functors[i] = std::make_unique<StationParticleFunctor>(mpc.GetParticleContainerPtr(idx), m_output_species_names[i], num_station_buffers);
+        m_all_particle_functors[i] = std::make_unique<RecordingPlaneParticleFunctor>(mpc.GetParticleContainerPtr(idx), m_output_species_names[i], num_station_buffers);
     }
 }
 
 void
-StationDiagnostics::InitializeParticleBuffer ()
+RecordingPlaneDiagnostics::InitializeParticleBuffer ()
 {
     auto& warpx = WarpX::GetInstance();
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
@@ -270,7 +270,7 @@ StationDiagnostics::InitializeParticleBuffer ()
 }
 
 void
-StationDiagnostics::PrepareParticleDataForOutput ()
+RecordingPlaneDiagnostics::PrepareParticleDataForOutput ()
 {
     const int lev = 0;
     auto& warpx = WarpX::GetInstance();
@@ -297,7 +297,7 @@ StationDiagnostics::PrepareParticleDataForOutput ()
 }
 
 void
-StationDiagnostics::Flush (int i_buffer)
+RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 {
     if (m_slice_counter == 0) return;
     auto & warpx = WarpX::GetInstance();
@@ -309,7 +309,7 @@ StationDiagnostics::Flush (int i_buffer)
         amrex::CreateDirectoryFailed(filename);
     }
     amrex::Print() << " finename : " << filename << "\n";
-    WriteStationHeader(filename);
+    WriteRecordingPlaneHeader(filename);
     for (int lev = 0; lev < 1; ++lev) {
         const std::string buffer_path = filename + amrex::Concatenate("/Level_",lev,1) + "/";
         if (m_flush_counter == 0) {
@@ -364,14 +364,14 @@ StationDiagnostics::Flush (int i_buffer)
 }
 
 void
-StationDiagnostics::WriteStationHeader (const std::string& filename)
+RecordingPlaneDiagnostics::WriteRecordingPlaneHeader (const std::string& filename)
 {
     if (amrex::ParallelDescriptor::IOProcessor())
     {
         amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::IO_Buffer_Size);
         std::ofstream HeaderFile;
         HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
-        const std::string HeaderFileName(filename + "/StationHeader");
+        const std::string HeaderFileName(filename + "/RecordingPlaneHeader");
         HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
                                                 std::ofstream::trunc |
                                                 std::ofstream::binary);
@@ -391,7 +391,7 @@ StationDiagnostics::WriteStationHeader (const std::string& filename)
 }
 
 void
-StationDiagnostics::FlushParticleBuffer (std::string path, std::string species_name, int isp, int i_buffer)
+RecordingPlaneDiagnostics::FlushParticleBuffer (std::string path, std::string species_name, int isp, int i_buffer)
 {
 
     amrex::Vector<std::string> real_names;
@@ -446,7 +446,7 @@ StationDiagnostics::FlushParticleBuffer (std::string path, std::string species_n
 }
 
 void
-StationDiagnostics::WriteHeaderFile (std::string pdir, amrex::Vector<std::string> real_names,
+RecordingPlaneDiagnostics::WriteHeaderFile (std::string pdir, amrex::Vector<std::string> real_names,
                                      amrex::Vector<std::string> int_names, int isp)
 {
     std::string HdrFileName = pdir;
@@ -503,7 +503,7 @@ StationDiagnostics::WriteHeaderFile (std::string pdir, amrex::Vector<std::string
 }
 
 void
-StationDiagnostics::WriteParticleData (std::string pdir, amrex::Vector<std::string> real_names,
+RecordingPlaneDiagnostics::WriteParticleData (std::string pdir, amrex::Vector<std::string> real_names,
                                        amrex::Vector<std::string> int_names,
                                        amrex::Vector<int> real_flags, amrex::Vector<int> int_flags,
                                        int isp)
@@ -601,7 +601,7 @@ StationDiagnostics::WriteParticleData (std::string pdir, amrex::Vector<std::stri
 }
 
 void
-StationDiagnostics::ClearParticlesBuffer (int i_buffer)
+RecordingPlaneDiagnostics::ClearParticlesBuffer (int i_buffer)
 {
     std::for_each(
         m_particles_buffer[i_buffer].begin(),
