@@ -12,7 +12,7 @@ foreach(D IN LISTS WarpX_DIMS)
         BackTransformFunctor.cpp
         BackTransformParticleFunctor.cpp
         ParticleReductionFunctor.cpp
-        StationFunctor.cpp
-        StationParticleFunctor.cpp
+        RecordingPlaneFunctor.cpp
+        RecordingPlaneParticleFunctor.cpp
     )
 endforeach()

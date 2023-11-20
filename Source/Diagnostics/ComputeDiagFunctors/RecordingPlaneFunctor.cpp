@@ -1,4 +1,4 @@
-#include "StationFunctor.H"
+#include "RecordingPlaneFunctor.H"
 
 #include "WarpX.H"
 
@@ -17,17 +17,15 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_MultiFabUtil.H>
 
-//StationFunctor::StationFunctor ( const amrex::MultiFab* const mf_src,
-StationFunctor::StationFunctor(const std::array<const amrex::MultiFab* const, 6> arr_mf_src,
+RecordingPlaneFunctor::RecordingPlaneFunctor(const std::array<const amrex::MultiFab* const, 6> arr_mf_src,
                                amrex::Real zlocation, const int lev,
                                amrex::IntVect crse_ratio, const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_arr_mf_src(arr_mf_src), m_lev(lev), m_z_location(zlocation)
-//    : ComputeDiagFunctor(ncomp, crse_ratio), m_mf_src(mf_src), m_lev(lev), m_z_location(zlocation)
 {
 }
 
 void
-StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int i_buffer) const
+RecordingPlaneFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int i_buffer) const
 {
     // 1. First get slice at given z-location
     if (m_slice_in_domain == 1) {
@@ -114,7 +112,7 @@ StationFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int 
 }
 
 void
-StationFunctor::PrepareFunctorData (int i_station, bool slice_in_domain, amrex::Real zlocation,
+RecordingPlaneFunctor::PrepareFunctorData (int i_station, bool slice_in_domain, amrex::Real zlocation,
                                     amrex::Box buffer_box, int k_index, const int max_box_size)
 {
     amrex::ignore_unused(i_station, slice_in_domain, zlocation);
@@ -129,7 +127,7 @@ StationFunctor::PrepareFunctorData (int i_station, bool slice_in_domain, amrex::
 }
 
 std::unique_ptr<amrex::MultiFab>
-StationFunctor::AllocateSlice (amrex::Vector<int>& slice_to_full_ba_map) const
+RecordingPlaneFunctor::AllocateSlice (amrex::Vector<int>& slice_to_full_ba_map) const
 {
     auto& warpx = WarpX::GetInstance();
     amrex::Geometry geom = warpx.Geom(m_lev);

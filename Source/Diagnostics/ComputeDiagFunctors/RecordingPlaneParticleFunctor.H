@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_STATIONPARTICLEFUNCTOR_H_
-#define WARPX_STATIONPARTICLEFUNCTOR_H_
+#ifndef WARPX_RECORDINGPLANEPARTICLEFUNCTOR_H_
+#define WARPX_RECORDINGPLANEPARTICLEFUNCTOR_H_
 
 #include "ComputeParticleDiagFunctor.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -44,10 +44,10 @@ struct RecordParticles
 };
 
 class
-StationParticleFunctor final : public ComputeParticleDiagFunctor
+RecordingPlaneParticleFunctor final : public ComputeParticleDiagFunctor
 {
 public:
-    StationParticleFunctor (WarpXParticleContainer *pc_src, std::string species_name, int num_station_buffers);
+    RecordingPlaneParticleFunctor (WarpXParticleContainer *pc_src, std::string species_name, int num_station_buffers);
 
     void operator () (PinnedMemoryParticleContainer& pc_dst, int &TotalParticleCounter, int i_buffer) const override;
 

@@ -4,19 +4,18 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_STATIONFUNCTOR_H_
-#define WARPX_STATIONFUNCTOR_H_
+#ifndef WARPX_RECORDINGPLANEFUNCTOR_H_
+#define WARPX_RECORDINGPLANEFUNCTOR_H_
 
 #include "ComputeDiagFunctor.H"
 #include <AMReX_BaseFwd.H>
 #include <array>
 
 class
-StationFunctor final : public ComputeDiagFunctor
+RecordingPlaneFunctor final : public ComputeDiagFunctor
 {
 public:
-    //StationFunctor ( const amrex::MultiFab* const mf_src, amrex::Real zlocation,
-    StationFunctor (const std::array<const amrex::MultiFab* const, 6> arr_mf_src, amrex::Real zlocation,
+    RecordingPlaneFunctor (const std::array<const amrex::MultiFab* const, 6> arr_mf_src, amrex::Real zlocation,
                     const int lev, amrex::IntVect crse_ratio, const int ncomp = 1);
     virtual void operator () (amrex::MultiFab & mf_dst, const int dcomp, const int i_buffer) const override;
     void PrepareFunctorData (int i_station, bool slice_in_domain, amrex::Real zlocation, amrex::Box buffer_box,

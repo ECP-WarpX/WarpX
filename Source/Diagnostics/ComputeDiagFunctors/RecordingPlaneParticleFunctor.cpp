@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "StationParticleFunctor.H"
+#include "RecordingPlaneParticleFunctor.H"
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -61,14 +61,14 @@ PlaneCrossingTime::PlaneCrossingTime (const WarpXParIter& a_pti, TmpParticles& t
     m_inv_c2 = 1._rt/(m_Phys_c * m_Phys_c);
 }
 
-StationParticleFunctor::StationParticleFunctor (
+RecordingPlaneParticleFunctor::RecordingPlaneParticleFunctor (
                         WarpXParticleContainer *pc_src, std::string species_name, int num_station_buffers)
     : m_pc_src(pc_src), m_species_name(species_name), m_num_station_buffers(num_station_buffers)
 {
 }
 
 void
-StationParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int &TotalParticleCounter, int i_buffer) const
+RecordingPlaneParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int &TotalParticleCounter, int i_buffer) const
 {
     amrex::Print() << " in station particle operator " << m_record_particles << "\n";
     if (!m_record_particles) return;
@@ -135,7 +135,7 @@ StationParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int 
 }
 
 void
-StationParticleFunctor::PrepareFunctorData (const int i_buffer, bool record_particles,
+RecordingPlaneParticleFunctor::PrepareFunctorData (const int i_buffer, bool record_particles,
                                             amrex::Real z_location, amrex::Real current_z_boost, amrex::Real tlab, int snapshot_full)
 {
     amrex::ignore_unused(current_z_boost, tlab, snapshot_full);
