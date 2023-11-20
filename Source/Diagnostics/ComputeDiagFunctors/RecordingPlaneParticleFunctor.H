@@ -38,7 +38,7 @@ struct RecordParticles
         return Flag;
     }
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
     amrex::Real m_z_location;
     amrex::ParticleReal* AMREX_RESTRICT zp_old = nullptr;
 };
@@ -133,7 +133,7 @@ struct PlaneCrossingTime
 
     }
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
 
     amrex::ParticleReal* AMREX_RESTRICT m_xpold = nullptr;
     amrex::ParticleReal* AMREX_RESTRICT m_ypold = nullptr;

@@ -25,7 +25,7 @@ RecordParticles::RecordParticles (const WarpXParIter &a_pti, TmpParticles& tmp_p
                                   amrex::Real z_location, int a_offset)
     : m_z_location(z_location)
 {
-    m_get_position = GetParticlePosition(a_pti, a_offset);
+    m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
 
     const auto lev = a_pti.GetLevel();
     const auto index = a_pti.GetPairIndex();
@@ -39,7 +39,7 @@ PlaneCrossingTime::PlaneCrossingTime (const WarpXParIter& a_pti, TmpParticles& t
     : m_z_station(z_station_location), m_current_time(current_time), m_index(a_index)
 {
     using namespace amrex::literals;
-    m_get_position = GetParticlePosition(a_pti, a_offset);
+    m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
 
     auto& attribs = a_pti.GetAttribs();
     m_wpnew = attribs[PIdx::w].dataPtr();
