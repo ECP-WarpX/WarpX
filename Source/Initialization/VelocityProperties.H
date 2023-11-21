@@ -8,8 +8,6 @@
 #ifndef VELOCITY_PROPERTIES_H_
 #define VELOCITY_PROPERTIES_H_
 
-#include "Utils/ParmParseWithOptionalGroup.H"
-
 #include <AMReX_ParmParse.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
@@ -35,8 +33,9 @@ struct VelocityProperties
      * store the parser function
      *
      * \param[in] pp: Reference to the parameter parser object for the species being initialized
+     * \param[in] source_name: Optional group name of the input parameters
      */
-    VelocityProperties (const ParmParseWithOptionalGroup& pp);
+    VelocityProperties (const amrex::ParmParse& pp, std::string const& source_name);
 
     /* Type of velocity initialization */
     VelocityInitType m_type;

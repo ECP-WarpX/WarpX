@@ -9,7 +9,6 @@
 #ifndef PLASMA_INJECTOR_H_
 #define PLASMA_INJECTOR_H_
 
-#include "Utils/ParmParseWithOptionalGroup.H"
 #include "InjectorDensity.H"
 #include "InjectorFlux.H"
 #include "InjectorMomentum.H"
@@ -22,6 +21,7 @@
 #include <AMReX_Dim3.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+#include <AMReX_ParmParse.H>
 
 #include <AMReX_BaseFwd.H>
 
@@ -183,15 +183,15 @@ protected:
     std::unique_ptr<TemperatureProperties> h_mom_temp;
     std::unique_ptr<VelocityProperties> h_mom_vel;
 
-    void setupSingleParticle (ParmParseWithOptionalGroup& pp_species_dot_source);
-    void setupMultipleParticles (ParmParseWithOptionalGroup& pp_species_dot_source);
-    void setupGaussianBeam (ParmParseWithOptionalGroup& pp_species_dot_source);
-    void setupNRandomPerCell (ParmParseWithOptionalGroup& pp_species_dot_source);
-    void setupNFluxPerCell (ParmParseWithOptionalGroup& pp_species_dot_source);
-    void setupNuniformPerCell (ParmParseWithOptionalGroup& pp_species_dot_source);
-    void setupExternalFile (ParmParseWithOptionalGroup& pp_species_dot_source);
+    void setupSingleParticle (amrex::ParmParse const& pp_species);
+    void setupMultipleParticles (amrex::ParmParse const& pp_species);
+    void setupGaussianBeam (amrex::ParmParse const& pp_species);
+    void setupNRandomPerCell (amrex::ParmParse const& pp_species);
+    void setupNFluxPerCell (amrex::ParmParse const& pp_species);
+    void setupNuniformPerCell (amrex::ParmParse const& pp_species);
+    void setupExternalFile (amrex::ParmParse const& pp_species);
 
-    void parseFlux (ParmParseWithOptionalGroup& pp_species_dot_source);
+    void parseFlux (amrex::ParmParse const& pp_species);
 };
 
 #endif

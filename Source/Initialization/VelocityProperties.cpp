@@ -11,14 +11,14 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
-VelocityProperties::VelocityProperties (const ParmParseWithOptionalGroup& pp):
+VelocityProperties::VelocityProperties (const amrex::ParmParse& pp, std::string const& source_name):
     m_velocity{0}
 {
     // Set defaults
     std::string vel_dist_s = "constant";
     std::string vel_dir_s = "x";
 
-    pp.query("bulk_vel_dir", vel_dir_s);
+    utils::parser::query(pp, source_name, "bulk_vel_dir", vel_dir_s);
     if(vel_dir_s[0] == '-'){
         m_sign_dir = -1;
     }
@@ -45,9 +45,9 @@ VelocityProperties::VelocityProperties (const ParmParseWithOptionalGroup& pp):
             " other character.");
     }
 
-    pp.query("beta_distribution_type", vel_dist_s);
+    utils::parser::query(pp, source_name, "beta_distribution_type", vel_dist_s);
     if (vel_dist_s == "constant") {
-        pp.queryWithParser("beta", m_velocity);
+        utils::parser::queryWithParser(pp, source_name, "beta", m_velocity);
         m_type = VelConstantValue;
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_velocity > -1 && m_velocity < 1,
@@ -57,7 +57,7 @@ VelocityProperties::VelocityProperties (const ParmParseWithOptionalGroup& pp):
     }
     else if (vel_dist_s == "parser") {
         std::string str_beta_function;
-        pp.get_long_string("beta_function(x,y,z)", str_beta_function);
+        utils::parser::Store_parserString(pp, source_name, "beta_function(x,y,z)", str_beta_function);
         m_ptr_velocity_parser =
             std::make_unique<amrex::Parser>(
                 utils::parser::makeParser(str_beta_function,{"x","y","z"}));

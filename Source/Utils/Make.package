@@ -9,7 +9,6 @@ CEXE_sources += IntervalsParser.cpp
 CEXE_sources += RelativeCellPosition.cpp
 CEXE_sources += ParticleUtils.cpp
 CEXE_sources += SpeciesUtils.cpp
-CEXE_sources += ParmParseWithOptionalGroup.cpp
 
 include $(WARPX_HOME)/Source/Utils/Algorithms/Make.package
 include $(WARPX_HOME)/Source/Utils/Logo/Make.package

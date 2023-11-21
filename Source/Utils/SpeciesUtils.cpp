@@ -8,7 +8,6 @@
 #include <ablastr/warn_manager/WarnManager.H>
 #include "Utils/TextMsg.H"
 #include "Utils/Parser/ParserUtils.H"
-#include "Utils/ParmParseWithOptionalGroup.H"
 
 namespace SpeciesUtils {
 
@@ -82,16 +81,16 @@ namespace SpeciesUtils {
         std::unique_ptr<InjectorDensity,InjectorDensityDeleter>& h_inj_rho,
         std::unique_ptr<amrex::Parser>& density_parser)
     {
-        ParmParseWithOptionalGroup pp_species_name(species_name, source_name);
+        amrex::ParmParse pp_species(species_name);
 
         // parse density information
         std::string rho_prof_s;
-        pp_species_name.get("profile", rho_prof_s);
+        utils::parser::get(pp_species, source_name, "profile", rho_prof_s);
         std::transform(rho_prof_s.begin(), rho_prof_s.end(),
                     rho_prof_s.begin(), ::tolower);
         if (rho_prof_s == "constant") {
             amrex::Real density;
-            pp_species_name.getWithParser("density", density);
+            utils::parser::getWithParser(pp_species, source_name, "density", density);
             // Construct InjectorDensity with InjectorDensityConstant.
             h_inj_rho.reset(new InjectorDensity((InjectorDensityConstant*)nullptr, density));
         } else if (rho_prof_s == "predefined") {
@@ -99,7 +98,7 @@ namespace SpeciesUtils {
             h_inj_rho.reset(new InjectorDensity((InjectorDensityPredefined*)nullptr,species_name));
         } else if (rho_prof_s == "parse_density_function") {
             std::string str_density_function;
-            pp_species_name.get_long_string("density_function(x,y,z)", str_density_function);
+            utils::parser::Store_parserString(pp_species, source_name, "density_function(x,y,z)", str_density_function);
             // Construct InjectorDensity with InjectorDensityParser.
             density_parser = std::make_unique<amrex::Parser>(
                 utils::parser::makeParser(str_density_function,{"x","y","z"}));
@@ -124,11 +123,11 @@ namespace SpeciesUtils {
     {
         using namespace amrex::literals;
 
-        ParmParseWithOptionalGroup pp_species_name(species_name, source_name);
+        amrex::ParmParse pp_species(species_name);
 
         // parse momentum information
         std::string mom_dist_s;
-        pp_species_name.get("momentum_distribution_type", mom_dist_s);
+        utils::parser::get(pp_species, source_name, "momentum_distribution_type", mom_dist_s);
         std::transform(mom_dist_s.begin(),
                        mom_dist_s.end(),
                        mom_dist_s.begin(),
@@ -143,9 +142,9 @@ namespace SpeciesUtils {
             amrex::Real ux = 0._rt;
             amrex::Real uy = 0._rt;
             amrex::Real uz = 0._rt;
-            pp_species_name.queryWithParser("ux", ux);
-            pp_species_name.queryWithParser("uy", uy);
-            pp_species_name.queryWithParser("uz", uz);
+            utils::parser::queryWithParser(pp_species, source_name, "ux", ux);
+            utils::parser::queryWithParser(pp_species, source_name, "uy", uy);
+            utils::parser::queryWithParser(pp_species, source_name, "uz", uz);
             // Construct InjectorMomentum with InjectorMomentumConstant.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumConstant*)nullptr, ux, uy, uz));
         } else if (mom_dist_s == "gaussian") {
@@ -155,12 +154,12 @@ namespace SpeciesUtils {
             amrex::Real ux_th = 0._rt;
             amrex::Real uy_th = 0._rt;
             amrex::Real uz_th = 0._rt;
-            pp_species_name.queryWithParser("ux_m", ux_m);
-            pp_species_name.queryWithParser("uy_m", uy_m);
-            pp_species_name.queryWithParser("uz_m", uz_m);
-            pp_species_name.queryWithParser("ux_th", ux_th);
-            pp_species_name.queryWithParser("uy_th", uy_th);
-            pp_species_name.queryWithParser("uz_th", uz_th);
+            utils::parser::queryWithParser(pp_species, source_name, "ux_m", ux_m);
+            utils::parser::queryWithParser(pp_species, source_name, "uy_m", uy_m);
+            utils::parser::queryWithParser(pp_species, source_name, "uz_m", uz_m);
+            utils::parser::queryWithParser(pp_species, source_name, "ux_th", ux_th);
+            utils::parser::queryWithParser(pp_species, source_name, "uy_th", uy_th);
+            utils::parser::queryWithParser(pp_species, source_name, "uz_th", uz_th);
             // Construct InjectorMomentum with InjectorMomentumGaussian.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussian*)nullptr,
                                                 ux_m, uy_m, uz_m, ux_th, uy_th, uz_th));
@@ -173,12 +172,12 @@ namespace SpeciesUtils {
             amrex::Real ux_th = 0._rt;
             amrex::Real uy_th = 0._rt;
             amrex::Real uz_th = 0._rt;
-            pp_species_name.queryWithParser("ux_m", ux_m);
-            pp_species_name.queryWithParser("uy_m", uy_m);
-            pp_species_name.queryWithParser("uz_m", uz_m);
-            pp_species_name.queryWithParser("ux_th", ux_th);
-            pp_species_name.queryWithParser("uy_th", uy_th);
-            pp_species_name.queryWithParser("uz_th", uz_th);
+            utils::parser::queryWithParser(pp_species, source_name, "ux_m", ux_m);
+            utils::parser::queryWithParser(pp_species, source_name, "uy_m", uy_m);
+            utils::parser::queryWithParser(pp_species, source_name, "uz_m", uz_m);
+            utils::parser::queryWithParser(pp_species, source_name, "ux_th", ux_th);
+            utils::parser::queryWithParser(pp_species, source_name, "uy_th", uy_th);
+            utils::parser::queryWithParser(pp_species, source_name, "uz_th", uz_th);
             // Construct InjectorMomentum with InjectorMomentumGaussianFlux.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussianFlux*)nullptr,
                                                 ux_m, uy_m, uz_m, ux_th, uy_th, uz_th,
@@ -190,32 +189,32 @@ namespace SpeciesUtils {
             amrex::Real ux_max = 0._rt;
             amrex::Real uy_max = 0._rt;
             amrex::Real uz_max = 0._rt;
-            pp_species_name.queryWithParser("ux_min", ux_min);
-            pp_species_name.queryWithParser("uy_min", uy_min);
-            pp_species_name.queryWithParser("uz_min", uz_min);
-            pp_species_name.queryWithParser("ux_max", ux_max);
-            pp_species_name.queryWithParser("uy_max", uy_max);
-            pp_species_name.queryWithParser("uz_max", uz_max);
+            utils::parser::queryWithParser(pp_species, source_name, "ux_min", ux_min);
+            utils::parser::queryWithParser(pp_species, source_name, "uy_min", uy_min);
+            utils::parser::queryWithParser(pp_species, source_name, "uz_min", uz_min);
+            utils::parser::queryWithParser(pp_species, source_name, "ux_max", ux_max);
+            utils::parser::queryWithParser(pp_species, source_name, "uy_max", uy_max);
+            utils::parser::queryWithParser(pp_species, source_name, "uz_max", uz_max);
             // Construct InjectorMomentum with InjectorMomentumUniform.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumUniform*)nullptr,
                                                 ux_min, uy_min, uz_min, ux_max, uy_max, uz_max));
         } else if (mom_dist_s == "maxwell_boltzmann"){
-            h_mom_temp = std::make_unique<TemperatureProperties>(pp_species_name);
+            h_mom_temp = std::make_unique<TemperatureProperties>(pp_species, source_name);
             const GetTemperature getTemp(*h_mom_temp);
-            h_mom_vel = std::make_unique<VelocityProperties>(pp_species_name);
+            h_mom_vel = std::make_unique<VelocityProperties>(pp_species, source_name);
             const GetVelocity getVel(*h_mom_vel);
             // Construct InjectorMomentum with InjectorMomentumBoltzmann.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, getTemp, getVel));
         } else if (mom_dist_s == "maxwell_juttner"){
-            h_mom_temp = std::make_unique<TemperatureProperties>(pp_species_name);
+            h_mom_temp = std::make_unique<TemperatureProperties>(pp_species, source_name);
             const GetTemperature getTemp(*h_mom_temp);
-            h_mom_vel = std::make_unique<VelocityProperties>(pp_species_name);
+            h_mom_vel = std::make_unique<VelocityProperties>(pp_species, source_name);
             const GetVelocity getVel(*h_mom_vel);
             // Construct InjectorMomentum with InjectorMomentumJuttner.
             h_inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, getTemp, getVel));
         } else if (mom_dist_s == "radial_expansion") {
             amrex::Real u_over_r = 0._rt;
-            pp_species_name.queryWithParser("u_over_r", u_over_r);
+            utils::parser::queryWithParser(pp_species, source_name, "u_over_r", u_over_r);
             // Construct InjectorMomentum with InjectorMomentumRadialExpansion.
             h_inj_mom.reset(new InjectorMomentum
                             ((InjectorMomentumRadialExpansion*)nullptr, u_over_r));
@@ -223,9 +222,9 @@ namespace SpeciesUtils {
             std::string str_momentum_function_ux;
             std::string str_momentum_function_uy;
             std::string str_momentum_function_uz;
-            pp_species_name.get_long_string("momentum_function_ux(x,y,z)", str_momentum_function_ux);
-            pp_species_name.get_long_string("momentum_function_uy(x,y,z)", str_momentum_function_uy);
-            pp_species_name.get_long_string("momentum_function_uz(x,y,z)", str_momentum_function_uz);
+            utils::parser::Store_parserString(pp_species, source_name, "momentum_function_ux(x,y,z)", str_momentum_function_ux);
+            utils::parser::Store_parserString(pp_species, source_name, "momentum_function_uy(x,y,z)", str_momentum_function_uy);
+            utils::parser::Store_parserString(pp_species, source_name, "momentum_function_uz(x,y,z)", str_momentum_function_uz);
             // Construct InjectorMomentum with InjectorMomentumParser.
             ux_parser = std::make_unique<amrex::Parser>(
                 utils::parser::makeParser(str_momentum_function_ux, {"x","y","z"}));
