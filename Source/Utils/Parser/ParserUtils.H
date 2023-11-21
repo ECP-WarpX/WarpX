@@ -418,7 +418,7 @@ namespace utils::parser
      * \param[in] str name of the parameter to read
      * \param[out] val where the value queried and parsed is stored
      */
-    int query (const amrex::ParmParse& a_pp, std::string const& group, char const * const str, std::string& val);
+    int query (const amrex::ParmParse& a_pp, std::string const& group, char const * str, std::string& val);
 
     /** Similar to amrex::ParmParse::get, but also supports math expressions for the value.
      *
@@ -518,7 +518,7 @@ namespace utils::parser
      * \param[in] str name of the parameter to read
      * \param[out] val where the value queried and parsed is stored
      */
-    void get (const amrex::ParmParse& a_pp, std::string const& group, char const * const str, std::string& val);
+    void get (amrex::ParmParse const& a_pp, std::string const& group, char const * str, std::string& val);
 
 }
 

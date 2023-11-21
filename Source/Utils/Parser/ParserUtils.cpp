@@ -51,7 +51,7 @@ void utils::parser::Store_parserString(
     }
 }
 
-int utils::parser::query (const amrex::ParmParse& a_pp, std::string const& group, char const * const str, std::string& val)
+int utils::parser::query (const amrex::ParmParse& a_pp, std::string const& group, char const * str, std::string& val)
 {
     const bool is_specified_without_group = a_pp.contains(str);
     const std::string grp_str = group + "." + std::string(str);
@@ -66,7 +66,7 @@ int utils::parser::query (const amrex::ParmParse& a_pp, std::string const& group
     }
 }
 
-void utils::parser::get (const amrex::ParmParse& a_pp, std::string const& group, char const * const str, std::string& val)
+void utils::parser::get (const amrex::ParmParse& a_pp, std::string const& group, char const * str, std::string& val)
 {
     const bool is_specified_without_group = a_pp.contains(str);
     const std::string grp_str = group + "." + std::string(str);
