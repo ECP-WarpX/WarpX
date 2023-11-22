@@ -598,6 +598,9 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
         self.reflect_all_velocities = kw.pop('warpx_reflect_all_velocities', None)
 
+        self.warpx_start_moving_window_step = kw.pop('warpx_start_moving_window_step', 0)
+        self.warpx_end_moving_window_step = kw.pop('warpx_end_moving_window_step', -1)
+
         # Geometry
         # Set these as soon as the information is available
         # (since these are needed to determine which shared object to load)
@@ -637,6 +640,9 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
             if self.moving_window_velocity[1] != 0.:
                 pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[1]/constants.c  # in units of the speed of light
+
+            pywarpx.warpx.start_moving_window_step = self.warpx_start_moving_window_step
+            pywarpx.warpx.end_moving_window_step = self.warpx_end_moving_window_step
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
@@ -686,6 +692,9 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        self.warpx_start_moving_window_step = kw.pop('warpx_start_moving_window_step', 0)
+        self.warpx_end_moving_window_step = kw.pop('warpx_end_moving_window_step', -1)
+
         # Geometry
         # Set these as soon as the information is available
         # (since these are needed to determine which shared object to load)
@@ -714,6 +723,9 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
             if self.moving_window_velocity[0] != 0.:
                 pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[0]/constants.c  # in units of the speed of light
+
+            pywarpx.warpx.start_moving_window_step = self.warpx_start_moving_window_step
+            pywarpx.warpx.end_moving_window_step = self.warpx_end_moving_window_step
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
@@ -776,6 +788,9 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        self.warpx_start_moving_window_step = kw.pop('warpx_start_moving_window_step', 0)
+        self.warpx_end_moving_window_step = kw.pop('warpx_end_moving_window_step', -1)
+
         # Geometry
         # Set these as soon as the information is available
         # (since these are needed to determine which shared object to load)
@@ -809,6 +824,9 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
             if self.moving_window_velocity[1] != 0.:
                 pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[1]/constants.c  # in units of the speed of light
+            
+            pywarpx.warpx.start_moving_window_step = self.warpx_start_moving_window_step
+            pywarpx.warpx.end_moving_window_step = self.warpx_end_moving_window_step
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
@@ -886,6 +904,9 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
 
+        self.warpx_start_moving_window_step = kw.pop('warpx_start_moving_window_step', 0)
+        self.warpx_end_moving_window_step = kw.pop('warpx_end_moving_window_step', -1)
+
         # Geometry
         # Set these as soon as the information is available
         # (since these are needed to determine which shared object to load)
@@ -924,6 +945,9 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
             if self.moving_window_velocity[2] != 0.:
                 pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[2]/constants.c  # in units of the speed of light
+
+            pywarpx.warpx.start_moving_window_step = self.warpx_start_moving_window_step
+            pywarpx.warpx.end_moving_window_step = self.warpx_end_moving_window_step
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
