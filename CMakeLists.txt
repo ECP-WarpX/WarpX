@@ -501,7 +501,7 @@ foreach(D IN LISTS WarpX_DIMS)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_PSATD)
 
         # We need to enable FFT support in ABLASTR for PSATD solver
-        target_compile_definitions(ablastr_${SD} PRIVATE ABLASTR_USE_FFT)
+        target_compile_definitions(ablastr_${SD} PUBLIC ABLASTR_USE_FFT)
     endif()
 
     if(WarpX_PYTHON AND pyWarpX_VERSION_INFO)
