@@ -228,7 +228,7 @@ if args.mode == 'read':
         log_line = '## year month day input_file compiler architecture n_node n_mpi ' +\
                    'n_omp time_initialization time_one_iteration Redistribute '+\
                    'FillBoundary ParallelCopy CurrentDeposition FieldGather '+\
-                   'ParthiclePush Copy EvolveEM Checkpoint '+\
+                   'ParthiclePush Copy Evolve Checkpoint '+\
                    'WriteParticles Write_FabArray '+\
                    'WriteMultiLevelPlotfile(unit: second) '+\
                    'RedistributeMPI\n'
@@ -318,7 +318,7 @@ if args.mode == 'read':
     nrepeat = 4
     legends = [ 'n_node', 'n_mpi', 'n_omp', 'time_initialization', 'time_one_iteration', \
                 'Redistribute', 'FillBoundary', 'ParallelCopy', 'CurrentDeposition', \
-                'FieldGather', 'ParthiclePush', 'Copy', 'EvolveEM', 'Checkpoint', \
+                'FieldGather', 'ParthiclePush', 'Copy', 'Evolve', 'Checkpoint', \
                 'WriteParticles', 'Write_FabArray', 'WriteMultiLevelPlotfile', \
                 'RedistributeMPI']
     date = np.loadtxt( filename, usecols = np.arange(0, 3 ))

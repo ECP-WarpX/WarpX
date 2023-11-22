@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.20.0)
-project(WarpX VERSION 23.10)
+project(WarpX VERSION 23.11)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -127,7 +127,7 @@ option(WarpX_PYTHON_IPO
 )
 
 set(pyWarpX_VERSION_INFO "" CACHE STRING
-    "PEP-440 conformant version (set by distutils)")
+    "PEP-440 conformant version (set by setup.py)")
 
 # enforce consistency of dependent options
 if(WarpX_APP OR WarpX_PYTHON)

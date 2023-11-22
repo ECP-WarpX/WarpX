@@ -437,11 +437,11 @@ void PlasmaInjector::setupExternalFile (const amrex::ParmParse& pp_species_name)
     utils::parser::queryWithParser(pp_species_name, "q_tot", q_tot);
     utils::parser::queryWithParser(pp_species_name, "z_shift",z_shift);
 
+#ifdef WARPX_USE_OPENPMD
     const bool charge_is_specified = pp_species_name.contains("charge");
     const bool mass_is_specified = pp_species_name.contains("mass");
     const bool species_is_specified = pp_species_name.contains("species_type");
 
-#ifdef WARPX_USE_OPENPMD
     if (amrex::ParallelDescriptor::IOProcessor()) {
         m_openpmd_input_series = std::make_unique<openPMD::Series>(
             str_injection_file, openPMD::Access::READ_ONLY);
