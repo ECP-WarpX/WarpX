@@ -1004,10 +1004,29 @@ WarpX::ReadParameters ()
 
         if (maxLevel() > 0) {
             Vector<Real> lo, hi;
-            utils::parser::getArrWithParser(pp_warpx, "fine_tag_lo", lo);
-            utils::parser::getArrWithParser(pp_warpx, "fine_tag_hi", hi);
-            fine_tag_lo = RealVect{lo};
-            fine_tag_hi = RealVect{hi};
+            bool fine_tag_lo_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_lo", lo);
+            bool fine_tag_hi_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_hi", hi);
+            std::string ref_patch_function;
+            bool parser_specified = pp_warpx.query("ref_patch_function(x,y,z)",ref_patch_function);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ((fine_tag_lo_specified && fine_tag_hi_specified) ||
+                                                parser_specified ),
+                                                "For max_level > 0, you need to either set\
+                                                warpx.fine_tag_lo and warpx.fine_tag_hi\
+                                                or warpx.ref_patch_function(x,y,z)");
+
+            if ( (fine_tag_lo_specified && fine_tag_hi_specified) && parser_specified) {
+               ablastr::warn_manager::WMRecordWarning("Refined patch", "Both fine_tag_lo,fine_tag_hi\
+                   and ref_patch_function(x,y,z) are provided. Note that fine_tag_lo/fine_tag_hi will\
+                   override the ref_patch_function(x,y,z) for defining the refinement patches");
+            }
+            if (fine_tag_lo_specified && fine_tag_hi_specified) {
+                fine_tag_lo = RealVect{lo};
+                fine_tag_hi = RealVect{hi};
+            } else {
+                utils::parser::Store_parserString(pp_warpx, "ref_patch_function(x,y,z)", ref_patch_function);
+                ref_patch_parser = std::make_unique<amrex::Parser>(
+                    utils::parser::makeParser(ref_patch_function,{"x","y","z"}));
+            }
         }
 
         pp_warpx.query("do_dynamic_scheduling", do_dynamic_scheduling);

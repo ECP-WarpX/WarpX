@@ -284,6 +284,13 @@ Setting up the field mesh
     This patch is rectangular, and thus its extent is given here by the coordinates
     of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
 
+* ``warpx.ref_patch_function(x,y,z)`` (`string`) optional
+    A function of `x`, `y`, `z` that defines the extent of the refined patch when
+    using static mesh refinement with ``amr.max_level``>0. Note that the function can be used
+    to define distinct regions for refinement, however, the refined regions should be such that
+    the pml layer surrounding the patches should not overlap. For this reason, when defining
+    distinct patches, please ensure that they are sufficiently separated.
+
 * ``warpx.refine_plasma`` (`integer`) optional (default `0`)
     Increase the number of macro-particles that are injected "ahead" of a mesh
     refinement patch in a moving window simulation.
