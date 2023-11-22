@@ -382,8 +382,8 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
    m_MPIRank{amrex::ParallelDescriptor::MyProc()},
    m_MPISize{amrex::ParallelDescriptor::NProcs()},
    m_Encoding(ie),
-   m_OpenPMDFileType(std::move(openPMDFileType)),
-   m_fieldPMLdirections(std::move(fieldPMLdirections)),
+   m_OpenPMDFileType{openPMDFileType},
+   m_fieldPMLdirections{fieldPMLdirections},
    m_authors{authors}
 {
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
