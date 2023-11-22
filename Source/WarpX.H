@@ -137,7 +137,7 @@ public:
      * If an authors' string is specified in the inputfile, this method returns that string.
      * Otherwise, it returns an empty string.
      */
-    std::string GetAuthors () const { return m_authors; }
+    [[nodiscard]] std::string GetAuthors () const { return m_authors; }
 
     //! Initial electric field on the grid
     static amrex::Vector<amrex::Real> E_external_grid;
