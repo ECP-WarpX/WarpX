@@ -193,31 +193,31 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
             const IntVect ndtype(AMREX_D_DECL(1,1,1));
             if( SliceType == ndtype ) {
                 amrex::amrex_avgdown_nodes(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                            scomp, ncomp, slice_cr_ratio);
+                                           scomp, ncomp, slice_cr_ratio);
             }
             if( SliceType == WarpX::GetInstance().getEfield(0,0).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                            scomp, ncomp, slice_cr_ratio, 0);
+                                           scomp, ncomp, slice_cr_ratio, 0);
             }
             if( SliceType == WarpX::GetInstance().getEfield(0,1).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                            scomp, ncomp, slice_cr_ratio, 1);
+                                           scomp, ncomp, slice_cr_ratio, 1);
             }
             if( SliceType == WarpX::GetInstance().getEfield(0,2).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                            scomp, ncomp, slice_cr_ratio, 2);
+                                           scomp, ncomp, slice_cr_ratio, 2);
             }
             if( SliceType == WarpX::GetInstance().getBfield(0,0).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                            scomp, ncomp, slice_cr_ratio, 0);
+                                           scomp, ncomp, slice_cr_ratio, 0);
             }
             if( SliceType == WarpX::GetInstance().getBfield(0,1).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                            scomp, ncomp, slice_cr_ratio, 1);
+                                           scomp, ncomp, slice_cr_ratio, 1);
             }
             if( SliceType == WarpX::GetInstance().getBfield(0,2).ixType().toIntVect() ) {
                 amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                            scomp, ncomp, slice_cr_ratio, 2);
+                                           scomp, ncomp, slice_cr_ratio, 2);
             }
 
             if ( mfi_dst.isValid() ) {

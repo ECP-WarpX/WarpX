@@ -900,15 +900,15 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
         // Initialize Efield_fp with external function
         InitializeExternalFieldsOnGridUsingParser(Efield_fp[lev][0].get(),
-                                                    Efield_fp[lev][1].get(),
-                                                    Efield_fp[lev][2].get(),
-                                                    Exfield_parser->compile<3>(),
-                                                    Eyfield_parser->compile<3>(),
-                                                    Ezfield_parser->compile<3>(),
-                                                    m_edge_lengths[lev],
-                                                    m_face_areas[lev],
-                                                    'E',
-                                                    lev, PatchType::fine);
+                                                  Efield_fp[lev][1].get(),
+                                                  Efield_fp[lev][2].get(),
+                                                  Exfield_parser->compile<3>(),
+                                                  Eyfield_parser->compile<3>(),
+                                                  Ezfield_parser->compile<3>(),
+                                                  m_edge_lengths[lev],
+                                                  m_face_areas[lev],
+                                                  'E',
+                                                  lev, PatchType::fine);
 
 #ifdef AMREX_USE_EB
         // We initialize ECTRhofield consistently with the Efield
@@ -921,26 +921,26 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
         if (lev > 0) {
             InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
-                                                        Efield_aux[lev][1].get(),
-                                                        Efield_aux[lev][2].get(),
-                                                        Exfield_parser->compile<3>(),
-                                                        Eyfield_parser->compile<3>(),
-                                                        Ezfield_parser->compile<3>(),
-                                                        m_edge_lengths[lev],
-                                                        m_face_areas[lev],
-                                                        'E',
-                                                        lev, PatchType::fine);
+                                                      Efield_aux[lev][1].get(),
+                                                      Efield_aux[lev][2].get(),
+                                                      Exfield_parser->compile<3>(),
+                                                      Eyfield_parser->compile<3>(),
+                                                      Ezfield_parser->compile<3>(),
+                                                      m_edge_lengths[lev],
+                                                      m_face_areas[lev],
+                                                      'E',
+                                                      lev, PatchType::fine);
 
             InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
-                                                        Efield_cp[lev][1].get(),
-                                                        Efield_cp[lev][2].get(),
-                                                        Exfield_parser->compile<3>(),
-                                                        Eyfield_parser->compile<3>(),
-                                                        Ezfield_parser->compile<3>(),
-                                                        m_edge_lengths[lev],
-                                                        m_face_areas[lev],
-                                                        'E',
-                                                        lev, PatchType::coarse);
+                                                      Efield_cp[lev][1].get(),
+                                                      Efield_cp[lev][2].get(),
+                                                      Exfield_parser->compile<3>(),
+                                                      Eyfield_parser->compile<3>(),
+                                                      Ezfield_parser->compile<3>(),
+                                                      m_edge_lengths[lev],
+                                                      m_face_areas[lev],
+                                                      'E',
+                                                      lev, PatchType::coarse);
 #ifdef AMREX_USE_EB
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
                 // We initialize ECTRhofield consistently with the Efield
@@ -1412,7 +1412,7 @@ WarpX::ReadExternalFieldFromFile (
                                      "XZ expects axisLabels {x, z}");
 #elif defined(WARPX_DIM_1D_Z)
     WARPX_ABORT_WITH_MESSAGE(
-           "Reading from openPMD for external fields is not known to work with 1D3V (see #3830)");
+        "Reading from openPMD for external fields is not known to work with 1D3V (see #3830)");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "1D3V can only read from files with cartesian geometry");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "z");
 #elif defined(WARPX_DIM_RZ)

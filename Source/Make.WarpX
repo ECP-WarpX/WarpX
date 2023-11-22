@@ -211,7 +211,7 @@ ifeq ($(USE_RZ),TRUE)
 endif
 
 ifeq ($(USE_HDF5),TRUE)
-    DEFINES += -DWARPX_USE_HDF5
+  DEFINES += -DWARPX_USE_HDF5
 endif
 
 ifeq ($(USE_GPUCLOCK),TRUE)
