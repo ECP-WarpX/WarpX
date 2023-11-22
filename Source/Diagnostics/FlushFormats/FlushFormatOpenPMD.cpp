@@ -106,7 +106,8 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
     encoding, openpmd_backend,
     operator_type, operator_parameters,
     engine_type, engine_parameters,
-    warpx.getPMLdirections()
+    warpx.getPMLdirections(),
+    warpx.GetAuthors()
   );
 }
 

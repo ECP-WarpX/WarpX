@@ -131,8 +131,12 @@ public:
                          amrex::Real external_field=0.0, bool useparser = false,
                          amrex::ParserExecutor<3> const& field_parser={});
 
-    //! Author of an input file / simulation setup
-    static std::string authors;
+    /**
+     * \brief
+     * If an authors' string is specified in the inputfile, this method returns that string.
+     * Otherwise, it returns an empty string.
+     */
+    std::string GetAuthors () const { return m_authors; }
 
     //! Initial electric field on the grid
     static amrex::Vector<amrex::Real> E_external_grid;
@@ -1400,6 +1404,9 @@ private:
 #   endif
 #endif
 
+    //! Author of an input file / simulation setup
+    std::string m_authors;
+
     amrex::Vector<int> istep;      // which step?
     amrex::Vector<int> nsubsteps;  // how many substeps on each level?
 
@@ -1615,6 +1622,8 @@ private:
 
     amrex::RealVect fine_tag_lo;
     amrex::RealVect fine_tag_hi;
+    //! User-defined parser to define refinement patches
+    std::unique_ptr<amrex::Parser> ref_patch_parser;
 
     bool is_synchronized = true;
 
