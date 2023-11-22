@@ -96,7 +96,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
 #ifndef WARPX_DIM_RZ
 
-// template<typename T_Algo, typename T_MacroAlgo>
+template<typename T_Algo, typename T_MacroAlgo>
 void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
@@ -109,10 +109,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 {
     using Real = amrex::Real;
 
-    using T_Algo = CartesianYeeAlgorithm; //! debug variable
-    using T_MacroAlgo = BackwardEulerAlgo; //! debug variable
-
-    // constexpr mu0inv = PhysConst::mu0inv;
+    // using T_Algo = CartesianYeeAlgorithm; //! debug variable
+    // using T_MacroAlgo = BackwardEulerAlgo; //! debug variable
 
 #ifndef AMREX_USE_EB
     amrex::ignore_unused(edge_lengths);

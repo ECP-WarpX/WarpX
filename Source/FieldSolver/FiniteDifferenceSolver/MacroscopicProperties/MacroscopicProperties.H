@@ -107,10 +107,8 @@ private:
     std::string m_str_epsilon_function;
     /** string for storing parser function for permeability */
     std::string m_str_mu_function;
-    /** string for storing parser function for the integer ID of magnetic material.
-     * This index specifies which element to use in m_magnetic_materials. If the ID is -1,
-     * this indicates an absence of any magnetic material present at that location. */
-    std::string m_str_magnetic_material_id_function;
+    /** string vector for storing parser functions for the presence of magnetic materials.*/
+    amrex::Vector<std::string> m_str_magnetic_material_id_functions;
 
     /** Parser Wrapper for conductivity */
     std::unique_ptr<amrex::Parser> m_sigma_parser;
@@ -118,10 +116,8 @@ private:
     std::unique_ptr<amrex::Parser> m_epsilon_parser;
     /** Parser Wrapper for permeability */
     std::unique_ptr<amrex::Parser> m_mu_parser;
-    /** Parser Wrapper for the integer ID of magnetic material.
-     * This index specifies which element to use in m_magnetic_materials. If the ID is -1,
-     * this indicates an absence of any magnetic material present at that location. */
-    std::unique_ptr<amrex::Parser> m_magnetic_material_id_parser;
+    /** Parser Wrapper for the magnetic material ID */.
+    amrex::Vector<std::unique_ptr<amrex::Parser>> m_magnetic_material_id_parsers;
 
     /** Vector for storing magnetic materials present */
     amrex::Vector<MagneticMaterial> m_magnetic_materials;
@@ -146,8 +142,8 @@ struct LaxWendroffAlgo {
                                amrex::Real const epsilon,
                                amrex::Real dt) {
          using namespace amrex;
-         const amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
-         const amrex::Real alpha = (1._rt - fac1)/(1._rt + fac1);
+         const amrex::Real fac1 = 0.5_rt * sigma * dt;
+         const amrex::Real alpha = (epsilon - fac1) / (epsilon + fac1);
          return alpha;
      }
 
@@ -156,8 +152,8 @@ struct LaxWendroffAlgo {
                               amrex::Real const epsilon,
                               amrex::Real dt) {
          using namespace amrex;
-         const amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
-         const amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
+         const amrex::Real fac1 = 0.5_rt * sigma * dt;
+         const amrex::Real beta = dt / (epsilon + fac1);
          return beta;
      }
 
@@ -178,8 +174,8 @@ struct BackwardEulerAlgo {
                             amrex::Real const epsilon,
                             amrex::Real dt) {
         using namespace amrex;
-        const amrex::Real fac1 = sigma * dt / epsilon;
-        const amrex::Real alpha = (1._rt)/(1._rt + fac1);
+        const amrex::Real fac1 = sigma * dt;
+        const amrex::Real alpha = epsilon/(epsilon + fac1);
         return alpha;
     }
 
@@ -188,8 +184,8 @@ struct BackwardEulerAlgo {
                             amrex::Real const epsilon,
                             amrex::Real dt) {
         using namespace amrex;
-        const amrex::Real fac1 = sigma * dt / epsilon;
-        const amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
+        const amrex::Real fac1 = sigma * dt;
+        const amrex::Real beta = dt / (epsilon + fac1);
         return beta;
     }
 };
