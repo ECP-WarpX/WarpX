@@ -915,6 +915,20 @@ Particle initialization
       ``<species_name>.momentum_function_uy(x,y,z)`` and ``<species_name>.momentum_function_uz(x,y,z)``,
       which gives the distribution of each component of the momentum as a function of space.
 
+    * ``gaussian_parse_momentum_function``: Gaussian momentum distribution where the mean and the standard deviation are given by functions of position in the input file.
+      Both are assumed to be non-relativistic.
+      The mean is the normalized momentum, :math:`u_m = \gamma v_m/c`.
+      The standard deviation is normalized, :math:`u_th = v_th/c`.
+      For example, this might be `u_th = sqrt(T*q_e/mass)/clight` given the temperature (in eV) and mass.
+      It requires the following arguments:
+
+      * ``<species_name>.momentum_function_ux_m(x,y,z)``: mean :math:`u_{x}`
+      * ``<species_name>.momentum_function_uy_m(x,y,z)``: mean :math:`u_{y}`
+      * ``<species_name>.momentum_function_uz_m(x,y,z)``: mean :math:`u_{z}`
+      * ``<species_name>.momentum_function_ux_th(x,y,z)``: standard deviation of :math:`u_{x}`
+      * ``<species_name>.momentum_function_uy_th(x,y,z)``: standard deviation of :math:`u_{y}`
+      * ``<species_name>.momentum_function_uz_th(x,y,z)``: standard deviation of :math:`u_{z}`
+
 * ``<species_name>.theta_distribution_type`` (`string`) optional (default ``constant``)
     Only read if ``<species_name>.momentum_distribution_type`` is ``maxwell_boltzmann`` or ``maxwell_juttner``.
     See documentation for these distributions (above) for constraints on values of theta. Temperatures less than zero are not allowed.
