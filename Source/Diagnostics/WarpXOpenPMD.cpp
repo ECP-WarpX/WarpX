@@ -376,13 +376,15 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     std::map< std::string, std::string > operator_parameters,
     std::string engine_type,
     std::map< std::string, std::string > engine_parameters,
-    std::vector<bool> fieldPMLdirections)
+    std::vector<bool> fieldPMLdirections,
+    const std::string& authors)
   :m_Series(nullptr),
    m_MPIRank{amrex::ParallelDescriptor::MyProc()},
    m_MPISize{amrex::ParallelDescriptor::NProcs()},
    m_Encoding(ie),
    m_OpenPMDFileType(std::move(openPMDFileType)),
-   m_fieldPMLdirections(std::move(fieldPMLdirections))
+   m_fieldPMLdirections(std::move(fieldPMLdirections)),
+   m_authors{authors}
 {
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
@@ -502,8 +504,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
     m_Series->setIterationEncoding( m_Encoding );
 
     // input file / simulation setup author
-    if( !WarpX::authors.empty())
-        m_Series->setAuthor( WarpX::authors );
+    if( !m_authors.empty())
+        m_Series->setAuthor( m_authors );
     // more natural naming for PIC
     m_Series->setMeshesPath( "fields" );
     // conform to ED-PIC extension of openPMD
