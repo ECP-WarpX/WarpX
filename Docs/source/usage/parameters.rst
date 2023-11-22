@@ -1478,8 +1478,8 @@ Grid initialization
     will not be applied for levels greater than ``warpx.maxlevel_extEMfield_init``.
     For some mesh-refinement simulations,
     the external fields are only applied to the parent grid and not the refined patches. In such cases,
-    ``warpx.maxlevel_extEMfield_init`` can be set to 0. Note that the other levels will be initialized to
-    a default value of 0.
+    ``warpx.maxlevel_extEMfield_init`` can be set to 0.
+    In that case, the other levels have external field values of 0.
 
 Applied to Particles
 ^^^^^^^^^^^^^^^^^^^^
