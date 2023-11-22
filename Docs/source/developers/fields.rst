@@ -40,7 +40,7 @@ By default, the ``MultiFab`` are set to ``0`` at initialization. They can be ass
 Field solver
 ------------
 
-The field solver is performed in ``WarpX::EvolveE`` for the electric field and ``WarpX::EvolveB`` for the magnetic field, called from ``WarpX::OneStep_nosub`` in ``WarpX::EvolveEM``. This section describes the FDTD field push. It is implemented in ``Source/FieldSolver/FiniteDifferenceSolver/``.
+The field solver is performed in ``WarpX::EvolveE`` for the electric field and ``WarpX::EvolveB`` for the magnetic field, called from ``WarpX::OneStep_nosub`` in ``WarpX::Evolve``. This section describes the FDTD field push. It is implemented in ``Source/FieldSolver/FiniteDifferenceSolver/``.
 
 As all cell-wise operation, the field push is done as follows (this is split in multiple functions in the actual implementation to avoid code duplication)
 :

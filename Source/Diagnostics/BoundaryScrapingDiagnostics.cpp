@@ -130,7 +130,7 @@ BoundaryScrapingDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flus
 }
 
 void
-BoundaryScrapingDiagnostics::Flush (int i_buffer)
+BoundaryScrapingDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 {
     auto & warpx = WarpX::GetInstance();
     ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();

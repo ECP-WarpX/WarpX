@@ -55,7 +55,7 @@ with open(pyamrex_cmake_path, encoding='utf-8') as f:
 #     find_package(AMReX YY.MM CONFIG ...
 pyamrex_minimal = f"unknown (format issue in {pyamrex_cmake_path})"
 with open(pyamrex_cmake_path, encoding='utf-8') as f:
-    r_minimal = re.findall(r'.*find_package\(AMReX\s+(.+)\s+CONFIG\s+.*',
+    r_minimal = re.findall(r'.*find_package\(pyAMReX\s+(.+)\s+CONFIG\s+.*',
                            f.read(), re.MULTILINE)
     if len(r_minimal) >= 1:
         pyamrex_minimal = r_minimal[0]

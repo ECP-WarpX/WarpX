@@ -104,37 +104,40 @@ namespace {
         // Momentum to be returned at the end of this function
         amrex::Real u = 0._rt;
 
+        const amrex::Real abs_u_m = std::abs(u_m);
+
         if (u_th == 0._rt) {
             u = u_m; // Trivial case ; avoids division by 0 in the rest of the code below
-        } else if (u_m < 0.6*u_th) {
-            // Mean velocity is lower than thermal velocity
-            // Use the distribution u*exp(-u**2*(1-u_m/u_th)/(2*u_th**2)) as an approximation
+        } else if (abs_u_m < 0.6*u_th) {
+            // Mean velocity magnitude is less than thermal velocity
+            // Use the distribution u*exp(-u**2*(1-abs(u_m)/u_th)/(2*u_th**2)) as an approximation
             // and then use the rejection method to correct it
-            // ( stop rejecting with probability exp(-u_m/(2*u_th**3)*(u-u_th)**2) )
+            // ( stop rejecting with probability exp(-abs(u_m)/(2*u_th**3)*(u-sign(u_m)*u_th)**2) )
             // Note that this is the method that is used in the common case u_m=0
-            const amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - u_m/u_th );
-            const amrex::Real reject_prefactor = (u_m/u_th)/(2._rt*u_th*u_th); // To save computation
+            const amrex::Real umsign = std::copysign(1._rt, u_m);
+            const amrex::Real approx_u_th = u_th/std::sqrt( 1._rt - abs_u_m/u_th );
+            const amrex::Real reject_prefactor = (abs_u_m/u_th)/(2._rt*u_th*u_th); // To save computation
             bool reject = true;
             while (reject) {
-                // Generates u according to u*exp(-u**2/(2*approx_u_th**2),
+                // Generates u according to u*exp(-u**2/(2*approx_u_th**2)),
                 // using the method of the inverse cumulative function
                 amrex::Real xrand = 1._rt - amrex::Random(engine); // ensures urand > 0
                 u = approx_u_th * std::sqrt(2._rt*std::log(1._rt/xrand));
                 // Rejection method
                 xrand = amrex::Random(engine);
-                if (xrand < std::exp(-reject_prefactor*(u-u_th)*(u-u_th))) reject = false;
+                if (xrand < std::exp(-reject_prefactor*(u - umsign*u_th)*(u - umsign*u_th))) reject = false;
             }
         } else {
-            // Mean velocity is greater than thermal velocity
-            // Use the distribution exp(-(u-u_m-u_th**2/u_m)**2/(2*u_th**2)) as an approximation
+            // Mean velocity magnitude is greater than thermal velocity
+            // Use the distribution exp(-(u-u_m-u_th**2/abs(u_m))**2/(2*u_th**2)) as an approximation
             // and then use the rejection method to correct it
-            // ( stop rejecting with probability (u/u_m)*exp(1-(u/u_m)) ; note
+            // ( stop rejecting with probability (u/abs(u_m))*exp(1-(u/abs(u_m))) ; note
             // that this number is always between 0 and 1 )
             // Note that in the common case `u_m = 0`, this rejection method
             // is not used, and the above rejection method is used instead.
             bool reject = true;
-            const amrex::Real approx_u_m = u_m + u_th*u_th/u_m;
-            const amrex::Real inv_um = 1._rt/u_m; // To save computation
+            const amrex::Real approx_u_m = u_m + u_th*u_th/abs_u_m;
+            const amrex::Real inv_um = 1._rt/abs_u_m; // To save computation
             while (reject) {
                 // Approximate distribution: normal distribution, where we only retain positive u
                 u = -1._rt;
@@ -166,13 +169,6 @@ struct InjectorMomentumGaussianFlux
           m_flux_normal_axis(a_flux_normal_axis),
           m_flux_direction(a_flux_direction)
     {
-        // For now, do not allow negative `u_m` along the flux axis
-        bool raise_error = false;
-        if ((m_flux_normal_axis == 0) && (m_ux_m < 0)) raise_error = true;
-        if ((m_flux_normal_axis == 1) && (m_uy_m < 0)) raise_error = true;
-        if ((m_flux_normal_axis == 2) && (m_uz_m < 0)) raise_error = true;
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( raise_error==false,
-            "When using the `gaussianflux` distribution, the central momentum along the flux axis must be positive or zero." );
     }
 
     AMREX_GPU_HOST_DEVICE
@@ -504,6 +500,45 @@ struct InjectorMomentumParser
     amrex::ParserExecutor<3> m_ux_parser, m_uy_parser, m_uz_parser;
 };
 
+// struct whose getMomentumm returns local momentum and thermal spread computed from parser.
+struct InjectorMomentumGaussianParser
+{
+    InjectorMomentumGaussianParser (amrex::ParserExecutor<3> const& a_ux_m_parser,
+                                    amrex::ParserExecutor<3> const& a_uy_m_parser,
+                                    amrex::ParserExecutor<3> const& a_uz_m_parser,
+                                    amrex::ParserExecutor<3> const& a_ux_th_parser,
+                                    amrex::ParserExecutor<3> const& a_uy_th_parser,
+                                    amrex::ParserExecutor<3> const& a_uz_th_parser) noexcept
+        : m_ux_m_parser(a_ux_m_parser), m_uy_m_parser(a_uy_m_parser), m_uz_m_parser(a_uz_m_parser),
+          m_ux_th_parser(a_ux_th_parser), m_uy_th_parser(a_uy_th_parser), m_uz_th_parser(a_uz_th_parser) {}
+
+    AMREX_GPU_HOST_DEVICE
+    amrex::XDim3
+    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
+                 amrex::RandomEngine const& engine) const noexcept
+    {
+        amrex::Real const ux_m = m_ux_m_parser(x,y,z);
+        amrex::Real const uy_m = m_uy_m_parser(x,y,z);
+        amrex::Real const uz_m = m_uz_m_parser(x,y,z);
+        amrex::Real const ux_th = m_ux_th_parser(x,y,z);
+        amrex::Real const uy_th = m_uy_th_parser(x,y,z);
+        amrex::Real const uz_th = m_uz_th_parser(x,y,z);
+        return amrex::XDim3{amrex::RandomNormal(ux_m, ux_th, engine),
+                            amrex::RandomNormal(uy_m, uy_th, engine),
+                            amrex::RandomNormal(uz_m, uz_th, engine)};
+    }
+
+    AMREX_GPU_HOST_DEVICE
+    amrex::XDim3
+    getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    {
+        return amrex::XDim3{m_ux_m_parser(x,y,z), m_uy_m_parser(x,y,z), m_uz_m_parser(x,y,z)};
+    }
+
+    amrex::ParserExecutor<3> m_ux_m_parser, m_uy_m_parser, m_uz_m_parser;
+    amrex::ParserExecutor<3> m_ux_th_parser, m_uy_th_parser, m_uz_th_parser;
+};
+
 // Base struct for momentum injector.
 // InjectorMomentum contains a union (called Object) that holds any one
 // instance of:
@@ -512,6 +547,7 @@ struct InjectorMomentumParser
 // - InjectorMomentumGaussianFlux   : to generate v*gaussian distribution;
 // - InjectorMomentumRadialExpansion: to generate radial expansion;
 // - InjectorMomentumParser         : to generate momentum from parser;
+// - InjectorMomentumGaussianParser : to generate momentum and thermal spread from parser;
 // The choice is made at runtime, depending in the constructor called.
 // This mimics virtual functions.
 struct InjectorMomentum
@@ -530,6 +566,19 @@ struct InjectorMomentum
                       amrex::ParserExecutor<3> const& a_uz_parser)
         : type(Type::parser),
           object(t, a_ux_parser, a_uy_parser, a_uz_parser)
+    { }
+
+    // This constructor stores a InjectorMomentumGaussianParser in union object.
+    InjectorMomentum (InjectorMomentumGaussianParser* t,
+                      amrex::ParserExecutor<3> const& a_ux_m_parser,
+                      amrex::ParserExecutor<3> const& a_uy_m_parser,
+                      amrex::ParserExecutor<3> const& a_uz_m_parser,
+                      amrex::ParserExecutor<3> const& a_ux_th_parser,
+                      amrex::ParserExecutor<3> const& a_uy_th_parser,
+                      amrex::ParserExecutor<3> const& a_uz_th_parser)
+        : type(Type::gaussianparser),
+          object(t, a_ux_m_parser, a_uy_m_parser, a_uz_m_parser,
+                    a_ux_th_parser, a_uy_th_parser, a_uz_th_parser)
     { }
 
     // This constructor stores a InjectorMomentumGaussian in union object.
@@ -606,6 +655,10 @@ struct InjectorMomentum
         {
             return object.gaussian.getMomentum(x,y,z,engine);
         }
+        case Type::gaussianparser:
+        {
+            return object.gaussianparser.getMomentum(x,y,z,engine);
+        }
         case Type::gaussianflux:
         {
             return object.gaussianflux.getMomentum(x,y,z,engine);
@@ -654,6 +707,10 @@ struct InjectorMomentum
         {
             return object.gaussian.getBulkMomentum(x,y,z);
         }
+        case Type::gaussianparser:
+        {
+            return object.gaussianparser.getBulkMomentum(x,y,z);
+        }
         case Type::gaussianflux:
         {
             return object.gaussianflux.getBulkMomentum(x,y,z);
@@ -686,7 +743,7 @@ struct InjectorMomentum
         }
     }
 
-    enum struct Type { constant, gaussian, gaussianflux, uniform, boltzmann, juttner, radial_expansion, parser };
+    enum struct Type { constant, gaussian, gaussianflux, uniform, boltzmann, juttner, radial_expansion, parser, gaussianparser };
     Type type;
 
 private:
@@ -728,6 +785,15 @@ private:
                 amrex::ParserExecutor<3> const& a_uy_parser,
                 amrex::ParserExecutor<3> const& a_uz_parser) noexcept
             : parser(a_ux_parser, a_uy_parser, a_uz_parser) {}
+        Object (InjectorMomentumGaussianParser*,
+                amrex::ParserExecutor<3> const& a_ux_m_parser,
+                amrex::ParserExecutor<3> const& a_uy_m_parser,
+                amrex::ParserExecutor<3> const& a_uz_m_parser,
+                amrex::ParserExecutor<3> const& a_ux_th_parser,
+                amrex::ParserExecutor<3> const& a_uy_th_parser,
+                amrex::ParserExecutor<3> const& a_uz_th_parser) noexcept
+            : gaussianparser(a_ux_m_parser, a_uy_m_parser, a_uz_m_parser,
+                             a_ux_th_parser, a_uy_th_parser, a_uz_th_parser) {}
         InjectorMomentumConstant constant;
         InjectorMomentumGaussian gaussian;
         InjectorMomentumGaussianFlux gaussianflux;
@@ -735,7 +801,8 @@ private:
         InjectorMomentumBoltzmann boltzmann;
         InjectorMomentumJuttner juttner;
         InjectorMomentumRadialExpansion radial_expansion;
-        InjectorMomentumParser   parser;
+        InjectorMomentumParser parser;
+        InjectorMomentumGaussianParser gaussianparser;
     };
     Object object;
 };

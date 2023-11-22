@@ -244,6 +244,9 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
                 {
                     const auto& plevel = pc.GetParticles(lev);
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
                     for(PIter pti(pc, lev); pti.isValid(); ++pti)
                     {
                         auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
@@ -307,6 +310,9 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         {
             const auto& plevel = pc.GetParticles(lev);
             auto dxi = warpx_instance.Geom(lev).InvCellSizeArray();
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
             for(PIter pti(pc, lev); pti.isValid(); ++pti)
             {
                 auto phiarr = (*distance_to_eb[lev])[pti].array();  // signed distance function
