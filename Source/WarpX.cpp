@@ -3052,29 +3052,29 @@ amrex::Vector<amrex::Real> WarpX::getFornbergStencilCoefficients(const int n_ord
     // Coefficients for collocated (nodal) finite-difference approximation
     if (a_grid_type == GridType::Collocated)
     {
-       // First coefficient
-       coeffs.at(0) = m * 2._rt / (m+1);
-       // Other coefficients by recurrence
-       for (int n = 1; n < m; n++)
-       {
-           coeffs.at(n) = - (m-n) * 1._rt / (m+n+1) * coeffs.at(n-1);
-       }
+        // First coefficient
+        coeffs.at(0) = m * 2._rt / (m+1);
+        // Other coefficients by recurrence
+        for (int n = 1; n < m; n++)
+        {
+            coeffs.at(n) = - (m-n) * 1._rt / (m+n+1) * coeffs.at(n-1);
+        }
     }
     // Coefficients for staggered finite-difference approximation
     else
     {
-       Real prod = 1.;
-       for (int k = 1; k < m+1; k++)
-       {
-           prod *= (m + k) / (4._rt * k);
-       }
-       // First coefficient
-       coeffs.at(0) = 4_rt * m * prod * prod;
-       // Other coefficients by recurrence
-       for (int n = 1; n < m; n++)
-       {
-           coeffs.at(n) = - ((2_rt*n-1) * (m-n)) * 1._rt / ((2_rt*n+1) * (m+n)) * coeffs.at(n-1);
-       }
+        Real prod = 1.;
+        for (int k = 1; k < m+1; k++)
+        {
+            prod *= (m + k) / (4._rt * k);
+        }
+        // First coefficient
+        coeffs.at(0) = 4_rt * m * prod * prod;
+        // Other coefficients by recurrence
+        for (int n = 1; n < m; n++)
+        {
+            coeffs.at(n) = - ((2_rt*n-1) * (m-n)) * 1._rt / ((2_rt*n+1) * (m+n)) * coeffs.at(n-1);
+        }
     }
 
     return coeffs;

@@ -963,7 +963,7 @@ void WarpXFluidContainer::GatherAndPush (
     bool external_b_fields; // Needs intializing
 
 
-   // Prepare interpolation of current components to cell center
+    // Prepare interpolation of current components to cell center
     amrex::GpuArray<int, 3> Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
     amrex::GpuArray<int, 3> Ex_type = amrex::GpuArray<int, 3>{0, 0, 0};
     amrex::GpuArray<int, 3> Ey_type = amrex::GpuArray<int, 3>{0, 0, 0};

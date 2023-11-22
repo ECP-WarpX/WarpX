@@ -377,12 +377,12 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     std::string engine_type,
     std::map< std::string, std::string > engine_parameters,
     std::vector<bool> fieldPMLdirections)
-  :m_Series(nullptr),
-   m_MPIRank{amrex::ParallelDescriptor::MyProc()},
-   m_MPISize{amrex::ParallelDescriptor::NProcs()},
-   m_Encoding(ie),
-   m_OpenPMDFileType(std::move(openPMDFileType)),
-   m_fieldPMLdirections(std::move(fieldPMLdirections))
+    :m_Series(nullptr),
+    m_MPIRank{amrex::ParallelDescriptor::MyProc()},
+    m_MPISize{amrex::ParallelDescriptor::NProcs()},
+    m_Encoding(ie),
+    m_OpenPMDFileType(std::move(openPMDFileType)),
+    m_fieldPMLdirections(std::move(fieldPMLdirections))
 {
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
@@ -519,9 +519,9 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
                   const bool isBTD, const bool isLastBTDFlush,
                   const amrex::Vector<int>& totalParticlesFlushedAlready)
 {
-  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
+WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
-  for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
+for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
 
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
     PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
@@ -570,65 +570,64 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     int_flags.resize(tmp.NumIntComps(), 1);
 
     const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
-      RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
-                                       particle_diags[i].m_random_fraction);
-      UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
-                                         particle_diags[i].m_uniform_stride);
-      ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                utils::parser::compileParser<ParticleDiag::m_nvars>
+    RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
+                                     particle_diags[i].m_random_fraction);
+    UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
+                                       particle_diags[i].m_uniform_stride);
+    ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
+                               utils::parser::compileParser<ParticleDiag::m_nvars>
                                      (particle_diags[i].m_particle_filter_parser.get()),
                                  pc->getMass(), time);
-      parser_filter.m_units = InputUnits::SI;
-      GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
+    parser_filter.m_units = InputUnits::SI;
+    GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                            particle_diags[i].m_diag_domain);
 
-      if (isBTD || use_pinned_pc) {
-          tmp.copyParticles(*pinned_pc, true);
-          particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
-      } else {
-          particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
-          using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-          tmp.copyParticles(*pc,
-                            [random_filter,uniform_filter,parser_filter,geometry_filter]
-                            AMREX_GPU_HOST_DEVICE
-                            (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-          {
-              const SuperParticleType& p = src.getSuperParticle(ip);
-              return random_filter(p, engine) * uniform_filter(p, engine)
-                     * parser_filter(p, engine) * geometry_filter(p, engine);
-          }, true);
-          particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
-      }
+    if (isBTD || use_pinned_pc) {
+        tmp.copyParticles(*pinned_pc, true);
+        particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
+    } else {
+        particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
+        using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+        tmp.copyParticles(*pc,
+                        [random_filter,uniform_filter,parser_filter,geometry_filter]
+                        AMREX_GPU_HOST_DEVICE
+                        (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+                        {
+                            const SuperParticleType& p = src.getSuperParticle(ip);
+                            return random_filter(p, engine) * uniform_filter(p, engine)
+                                 * parser_filter(p, engine) * geometry_filter(p, engine);
+                        }, true);
+        particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
+    }
 
     // real_names contains a list of all real particle attributes.
     // real_flags is 1 or 0, whether quantity is dumped or not.
-
     {
-      if (isBTD) {
-          DumpToFile(&tmp,
-             particle_diags[i].getSpeciesName(),
-             m_CurrentStep,
-             real_flags,
-             int_flags,
-             real_names, int_names,
-             pc->getCharge(), pc->getMass(),
-             isBTD, isLastBTDFlush,
-             totalParticlesFlushedAlready[i]
-          );
-      } else {
-          DumpToFile(&tmp,
-             particle_diags[i].getSpeciesName(),
-             m_CurrentStep,
-             real_flags,
-             int_flags,
-             real_names, int_names,
-             pc->getCharge(), pc->getMass(),
-             isBTD, isLastBTDFlush,
-             0
-          );
-      }
+        if (isBTD) {
+            DumpToFile(&tmp,
+                particle_diags[i].getSpeciesName(),
+                m_CurrentStep,
+                real_flags,
+                int_flags,
+                real_names, int_names,
+                pc->getCharge(), pc->getMass(),
+                isBTD, isLastBTDFlush,
+                totalParticlesFlushedAlready[i]
+            );
+        } else {
+            DumpToFile(&tmp,
+                particle_diags[i].getSpeciesName(),
+                m_CurrentStep,
+                real_flags,
+                int_flags,
+                real_names, int_names,
+                pc->getCharge(), pc->getMass(),
+                isBTD, isLastBTDFlush,
+                0
+            );
+        }
     }
-  }
+}
 }
 
 void

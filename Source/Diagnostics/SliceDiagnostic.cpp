@@ -162,70 +162,70 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
        return smf;
     }
     else {
-       Vector<BoxArray> crse_ba(1);
-       crse_ba[0] = sba[0];
-       crse_ba[0].coarsen(slice_cr_ratio);
+        Vector<BoxArray> crse_ba(1);
+        crse_ba[0] = sba[0];
+        crse_ba[0].coarsen(slice_cr_ratio);
 
-       AMREX_ALWAYS_ASSERT(crse_ba[0].size() == sba[0].size());
+        AMREX_ALWAYS_ASSERT(crse_ba[0].size() == sba[0].size());
 
-       cs_mf = std::make_unique<MultiFab>(amrex::convert(crse_ba[0],SliceType),
-                    sdmap[0], ncomp,nghost);
+        cs_mf = std::make_unique<MultiFab>(amrex::convert(crse_ba[0],SliceType),
+                                           sdmap[0], ncomp,nghost);
 
-       const MultiFab& mfSrc = *smf;
-       MultiFab& mfDst = *cs_mf;
+        const MultiFab& mfSrc = *smf;
+        MultiFab& mfDst = *cs_mf;
 
-       MFIter mfi_dst(mfDst);
-       for (MFIter mfi(mfSrc); mfi.isValid(); ++mfi) {
+        MFIter mfi_dst(mfDst);
+        for (MFIter mfi(mfSrc); mfi.isValid(); ++mfi) {
 
-           Array4<Real const> const& Src_fabox = mfSrc.const_array(mfi);
+            Array4<Real const> const& Src_fabox = mfSrc.const_array(mfi);
 
-           const Box& Dst_bx = mfi_dst.validbox();
-           Array4<Real> const& Dst_fabox = mfDst.array(mfi_dst);
+            const Box& Dst_bx = mfi_dst.validbox();
+            Array4<Real> const& Dst_fabox = mfDst.array(mfi_dst);
 
-           const int scomp = 0;
-           const int dcomp = 0;
+            const int scomp = 0;
+            const int dcomp = 0;
 
-           const IntVect cctype(AMREX_D_DECL(0,0,0));
-           if( SliceType==cctype ) {
-              amrex::amrex_avgdown(Dst_bx, Dst_fabox, Src_fabox, dcomp, scomp,
-                                   ncomp, slice_cr_ratio);
-           }
-           const IntVect ndtype(AMREX_D_DECL(1,1,1));
-           if( SliceType == ndtype ) {
-              amrex::amrex_avgdown_nodes(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                         scomp, ncomp, slice_cr_ratio);
-           }
-           if( SliceType == WarpX::GetInstance().getEfield(0,0).ixType().toIntVect() ) {
-              amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                         scomp, ncomp, slice_cr_ratio, 0);
-           }
-           if( SliceType == WarpX::GetInstance().getEfield(0,1).ixType().toIntVect() ) {
-              amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                         scomp, ncomp, slice_cr_ratio, 1);
-           }
-           if( SliceType == WarpX::GetInstance().getEfield(0,2).ixType().toIntVect() ) {
-              amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                         scomp, ncomp, slice_cr_ratio, 2);
-           }
-           if( SliceType == WarpX::GetInstance().getBfield(0,0).ixType().toIntVect() ) {
-              amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                         scomp, ncomp, slice_cr_ratio, 0);
-           }
-           if( SliceType == WarpX::GetInstance().getBfield(0,1).ixType().toIntVect() ) {
-              amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                         scomp, ncomp, slice_cr_ratio, 1);
-           }
-           if( SliceType == WarpX::GetInstance().getBfield(0,2).ixType().toIntVect() ) {
-              amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
-                                         scomp, ncomp, slice_cr_ratio, 2);
-           }
+            const IntVect cctype(AMREX_D_DECL(0,0,0));
+            if( SliceType==cctype ) {
+                amrex::amrex_avgdown(Dst_bx, Dst_fabox, Src_fabox, dcomp, scomp,
+                                    ncomp, slice_cr_ratio);
+            }
+            const IntVect ndtype(AMREX_D_DECL(1,1,1));
+            if( SliceType == ndtype ) {
+                amrex::amrex_avgdown_nodes(Dst_bx, Dst_fabox, Src_fabox, dcomp,
+                                            scomp, ncomp, slice_cr_ratio);
+            }
+            if( SliceType == WarpX::GetInstance().getEfield(0,0).ixType().toIntVect() ) {
+                amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
+                                            scomp, ncomp, slice_cr_ratio, 0);
+            }
+            if( SliceType == WarpX::GetInstance().getEfield(0,1).ixType().toIntVect() ) {
+                amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
+                                            scomp, ncomp, slice_cr_ratio, 1);
+            }
+            if( SliceType == WarpX::GetInstance().getEfield(0,2).ixType().toIntVect() ) {
+                amrex::amrex_avgdown_edges(Dst_bx, Dst_fabox, Src_fabox, dcomp,
+                                            scomp, ncomp, slice_cr_ratio, 2);
+            }
+            if( SliceType == WarpX::GetInstance().getBfield(0,0).ixType().toIntVect() ) {
+                amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
+                                            scomp, ncomp, slice_cr_ratio, 0);
+            }
+            if( SliceType == WarpX::GetInstance().getBfield(0,1).ixType().toIntVect() ) {
+                amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
+                                            scomp, ncomp, slice_cr_ratio, 1);
+            }
+            if( SliceType == WarpX::GetInstance().getBfield(0,2).ixType().toIntVect() ) {
+                amrex::amrex_avgdown_faces(Dst_bx, Dst_fabox, Src_fabox, dcomp,
+                                            scomp, ncomp, slice_cr_ratio, 2);
+            }
 
-           if ( mfi_dst.isValid() ) {
-              ++mfi_dst;
-           }
+            if ( mfi_dst.isValid() ) {
+                ++mfi_dst;
+            }
 
-       }
-       return cs_mf;
+        }
+        return cs_mf;
     }
 }
 
@@ -299,7 +299,7 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
                warnMsg.str(), ablastr::warn_manager::WarnPriority::low);
         }
 
-         const auto very_small_number = 1E-10;
+        const auto very_small_number = 1E-10;
 
         // Factor to ensure index values computation depending on index type //
         const double fac = ( 1.0 - SliceType[idim] )*dom_geom[0].CellSize(idim)*0.5;

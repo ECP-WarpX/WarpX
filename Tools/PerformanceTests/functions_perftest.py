@@ -41,13 +41,13 @@ class test_element():
         self.n_cell = n_cell_scaled
 
 def scale_n_cell(ncell, n_node):
-     ncell_scaled = ncell[:]
-     index_dim = 0
-     while n_node > 1:
-         ncell_scaled[index_dim] *= 2
-         n_node /= 2
-         index_dim = (index_dim+1) % 3
-     return ncell_scaled
+    ncell_scaled = ncell[:]
+    index_dim = 0
+    while n_node > 1:
+        ncell_scaled[index_dim] *= 2
+        n_node /= 2
+        index_dim = (index_dim+1) % 3
+    return ncell_scaled
 
 def store_git_hash(repo_path=None, filename=None, name=None):
     repo = git.Repo(path=repo_path)

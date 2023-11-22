@@ -180,20 +180,20 @@ WarpX::MoveWindow (const int step, bool move_j)
     // slice box is modified only if slice diagnostics is initialized in input //
     if ( slice_plot_int > 0 )
     {
-       amrex::Real new_slice_lo[AMREX_SPACEDIM];
-       amrex::Real new_slice_hi[AMREX_SPACEDIM];
-       const amrex::Real* current_slice_lo = slice_realbox.lo();
-       const amrex::Real* current_slice_hi = slice_realbox.hi();
-       for ( int i = 0; i < AMREX_SPACEDIM; i++) {
-           new_slice_lo[i] = current_slice_lo[i];
-           new_slice_hi[i] = current_slice_hi[i];
-       }
-       const int num_shift_base_slice = static_cast<int> ((moving_window_x -
-                                  current_slice_lo[dir]) / cdx[dir]);
-       new_slice_lo[dir] = current_slice_lo[dir] + num_shift_base_slice*cdx[dir];
-       new_slice_hi[dir] = current_slice_hi[dir] + num_shift_base_slice*cdx[dir];
-       slice_realbox.setLo(new_slice_lo);
-       slice_realbox.setHi(new_slice_hi);
+        amrex::Real new_slice_lo[AMREX_SPACEDIM];
+        amrex::Real new_slice_hi[AMREX_SPACEDIM];
+        const amrex::Real* current_slice_lo = slice_realbox.lo();
+        const amrex::Real* current_slice_hi = slice_realbox.hi();
+        for ( int i = 0; i < AMREX_SPACEDIM; i++) {
+            new_slice_lo[i] = current_slice_lo[i];
+            new_slice_hi[i] = current_slice_hi[i];
+        }
+        const int num_shift_base_slice = static_cast<int> ((moving_window_x -
+                                   current_slice_lo[dir]) / cdx[dir]);
+        new_slice_lo[dir] = current_slice_lo[dir] + num_shift_base_slice*cdx[dir];
+        new_slice_hi[dir] = current_slice_hi[dir] + num_shift_base_slice*cdx[dir];
+        slice_realbox.setLo(new_slice_lo);
+        slice_realbox.setHi(new_slice_hi);
     }
 
     int num_shift      = num_shift_base;
