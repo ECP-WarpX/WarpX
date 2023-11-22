@@ -824,7 +824,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
             if self.moving_window_velocity[1] != 0.:
                 pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[1]/constants.c  # in units of the speed of light
-            
+
             pywarpx.warpx.start_moving_window_step = self.warpx_start_moving_window_step
             pywarpx.warpx.end_moving_window_step = self.warpx_end_moving_window_step
 
