@@ -280,9 +280,9 @@ void WarpX::PSATDForwardTransformJ (
     {
         Idx = spectral_solver_fp[lev]->m_spectral_index;
 
-        idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx_mid);
-        idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy_mid);
-        idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz_mid);
+        idx_jx = (J_in_time != JInTime::Constant) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx_mid);
+        idx_jy = (J_in_time != JInTime::Constant) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy_mid);
+        idx_jz = (J_in_time != JInTime::Constant) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz_mid);
 
         ForwardTransformVect(lev, *spectral_solver_fp[lev], J_fp[lev], idx_jx, idx_jy, idx_jz);
 
@@ -290,9 +290,9 @@ void WarpX::PSATDForwardTransformJ (
         {
             Idx = spectral_solver_cp[lev]->m_spectral_index;
 
-            idx_jx = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx_mid);
-            idx_jy = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy_mid);
-            idx_jz = (J_in_time == JInTime::Linear) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz_mid);
+            idx_jx = (J_in_time != JInTime::Constant) ? static_cast<int>(Idx.Jx_new) : static_cast<int>(Idx.Jx_mid);
+            idx_jy = (J_in_time != JInTime::Constant) ? static_cast<int>(Idx.Jy_new) : static_cast<int>(Idx.Jy_mid);
+            idx_jz = (J_in_time != JInTime::Constant) ? static_cast<int>(Idx.Jz_new) : static_cast<int>(Idx.Jz_mid);
 
             ForwardTransformVect(lev, *spectral_solver_cp[lev], J_cp[lev], idx_jx, idx_jy, idx_jz);
         }
@@ -574,6 +574,22 @@ WarpX::PSATDMoveRhoNewToRhoOld ()
 }
 
 void
+WarpX::PSATDMoveRhoNewToRhoMid ()
+{
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.rho_new, Idx.rho_mid);
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.rho_new, Idx.rho_mid);
+        }
+    }
+}
+
+void
 WarpX::PSATDMoveJNewToJOld ()
 {
     const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
@@ -589,6 +605,26 @@ WarpX::PSATDMoveJNewToJOld ()
             spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jx_new, Idx.Jx_old);
             spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jy_new, Idx.Jy_old);
             spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jz_new, Idx.Jz_old);
+        }
+    }
+}
+
+void
+WarpX::PSATDMoveJNewToJMid ()
+{
+    const SpectralFieldIndex& Idx = spectral_solver_fp[0]->m_spectral_index;
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jx_new, Idx.Jx_mid);
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jy_new, Idx.Jy_mid);
+        spectral_solver_fp[lev]->CopySpectralDataComp(Idx.Jz_new, Idx.Jz_mid);
+
+        if (spectral_solver_cp[lev])
+        {
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jx_new, Idx.Jx_mid);
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jy_new, Idx.Jy_mid);
+            spectral_solver_cp[lev]->CopySpectralDataComp(Idx.Jz_new, Idx.Jz_mid);
         }
     }
 }
