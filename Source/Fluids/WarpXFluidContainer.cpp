@@ -263,8 +263,8 @@ void WarpXFluidContainer::Evolve(
     WARPX_PROFILE("WarpXFluidContainer::Evolve");
 
     if (rho && ! skip_deposition && ! do_not_deposit) {
-         // Deposit charge before particle push, in component 0 of MultiFab rho.
-         DepositCharge(lev, *rho, 0);
+        // Deposit charge before particle push, in component 0 of MultiFab rho.
+        DepositCharge(lev, *rho, 0);
     }
 
     // Step the Lorentz Term

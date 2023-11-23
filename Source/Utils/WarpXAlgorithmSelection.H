@@ -74,9 +74,9 @@ struct ParticlePusherAlgo {
 
 struct CurrentDepositionAlgo {
     enum {
-         Esirkepov = 0,
-         Direct = 1,
-         Vay = 2
+        Esirkepov = 0,
+        Direct = 1,
+        Vay = 2
     };
 };
 
@@ -89,8 +89,8 @@ struct ChargeDepositionAlgo {
 
 struct GatheringAlgo {
     enum {
-         EnergyConserving = 0,
-         MomentumConserving
+        EnergyConserving = 0,
+        MomentumConserving
     };
 };
 

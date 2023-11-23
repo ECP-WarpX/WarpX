@@ -612,7 +612,7 @@ struct InjectorMomentum
            object(t, temperature, velocity)
     { }
 
-     // This constructor stores a InjectorMomentumJuttner in union object.
+    // This constructor stores a InjectorMomentumJuttner in union object.
     InjectorMomentum (InjectorMomentumJuttner* t,
                       GetTemperature const& temperature, GetVelocity const& velocity)
          : type(Type::juttner),

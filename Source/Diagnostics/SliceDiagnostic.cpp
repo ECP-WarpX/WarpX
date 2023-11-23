@@ -101,31 +101,31 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
     // Determine if interpolation is required and number of cells in slice //
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
 
-       // Flag for interpolation if required //
-       if ( interp_lo[idim] == 1) {
-          interpolate = 1;
-       }
+        // Flag for interpolation if required //
+        if ( interp_lo[idim] == 1) {
+            interpolate = 1;
+        }
 
-       // For the case when a dimension is reduced //
-       if ( ( slice_hi[idim] - slice_lo[idim]) == 1) {
-          slice_ncells[idim] = 1;
-       }
-       else {
-          slice_ncells[idim] = ( slice_hi[idim] - slice_lo[idim] + 1 )
-                                / slice_cr_ratio[idim];
+        // For the case when a dimension is reduced //
+        if ( ( slice_hi[idim] - slice_lo[idim]) == 1) {
+            slice_ncells[idim] = 1;
+        }
+        else {
+            slice_ncells[idim] = ( slice_hi[idim] - slice_lo[idim] + 1 )
+                                    / slice_cr_ratio[idim];
 
-          const int refined_ncells = slice_hi[idim] - slice_lo[idim] + 1 ;
-          if ( slice_cr_ratio[idim] > 1) {
-             coarsen = true;
+            const int refined_ncells = slice_hi[idim] - slice_lo[idim] + 1 ;
+            if ( slice_cr_ratio[idim] > 1) {
+                coarsen = true;
 
-             // modify slice_grid_size if >= refines_cells //
-             if ( slice_grid_size >= refined_ncells ) {
-                slice_grid_size = refined_ncells - 1;
-             }
+                // modify slice_grid_size if >= refines_cells //
+                if ( slice_grid_size >= refined_ncells ) {
+                    slice_grid_size = refined_ncells - 1;
+                }
 
-          }
-          configuration_dim += 1;
-       }
+            }
+            configuration_dim += 1;
+        }
     }
     if (configuration_dim==1) {
       ablastr::warn_manager::WMRecordWarning("Diagnostics",
@@ -425,15 +425,15 @@ InterpolateSliceValues(MultiFab& smf, IntVect interp_lo, RealBox slice_realbox,
 {
     for (MFIter mfi(smf); mfi.isValid(); ++mfi)
     {
-         const Box& bx = mfi.tilebox();
-         FArrayBox& fabox = smf[mfi];
+        const Box& bx = mfi.tilebox();
+        FArrayBox& fabox = smf[mfi];
 
-         for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-             if ( interp_lo[idim] == 1 ) {
-                InterpolateLo( bx, fabox, slice_lo, geom, idim, SliceType,
-                               slice_realbox, 0, ncomp, nghost, real_box);
-             }
-         }
+        for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if ( interp_lo[idim] == 1 ) {
+            InterpolateLo( bx, fabox, slice_lo, geom, idim, SliceType,
+                            slice_realbox, 0, ncomp, nghost, real_box);
+            }
+        }
     }
 
 }
