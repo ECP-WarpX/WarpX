@@ -83,7 +83,7 @@ struct CurrentDepositionAlgo {
 struct ChargeDepositionAlgo {
     // Only the Standard algorithm is implemented
     enum {
-         Standard = 0
+        Standard = 0
     };
 };
 

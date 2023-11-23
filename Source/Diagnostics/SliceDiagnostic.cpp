@@ -188,7 +188,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
             const IntVect cctype(AMREX_D_DECL(0,0,0));
             if( SliceType==cctype ) {
                 amrex::amrex_avgdown(Dst_bx, Dst_fabox, Src_fabox, dcomp, scomp,
-                                    ncomp, slice_cr_ratio);
+                                     ncomp, slice_cr_ratio);
             }
             const IntVect ndtype(AMREX_D_DECL(1,1,1));
             if( SliceType == ndtype ) {
@@ -430,8 +430,8 @@ InterpolateSliceValues(MultiFab& smf, IntVect interp_lo, RealBox slice_realbox,
 
         for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if ( interp_lo[idim] == 1 ) {
-            InterpolateLo( bx, fabox, slice_lo, geom, idim, SliceType,
-                            slice_realbox, 0, ncomp, nghost, real_box);
+                InterpolateLo( bx, fabox, slice_lo, geom, idim, SliceType,
+                               slice_realbox, 0, ncomp, nghost, real_box);
             }
         }
     }
