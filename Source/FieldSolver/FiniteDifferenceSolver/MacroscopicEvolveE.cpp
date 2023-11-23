@@ -43,8 +43,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)
 {
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 

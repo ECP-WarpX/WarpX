@@ -884,10 +884,10 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
 void
 BTDiagnostics::SetSnapshotFullStatus (const int i_buffer)
 {
-   if (m_snapshot_full[i_buffer] == 1) return;
-   // if the last valid z-index of the snapshot, which is 0, is filled, then
-   // set the snapshot full integer to 1
-   if (m_lastValidZSlice[i_buffer] == 1) m_snapshot_full[i_buffer] = 1;
+    if (m_snapshot_full[i_buffer] == 1) return;
+    // if the last valid z-index of the snapshot, which is 0, is filled, then
+    // set the snapshot full integer to 1
+    if (m_lastValidZSlice[i_buffer] == 1) m_snapshot_full[i_buffer] = 1;
 
 }
 
