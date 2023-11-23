@@ -584,7 +584,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
     warpx_start_moving_window_step: int, default=0
         The timestep at which the moving window starts
-        
+
     warpx_end_moving_window_step: int, default=-1
         The timestep at which the moving window ends. If -1, the moving window
     will continue until the end of the simulation.
@@ -688,7 +688,7 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
 
     warpx_start_moving_window_step: int, default=0
         The timestep at which the moving window starts
-        
+
     warpx_end_moving_window_step: int, default=-1
         The timestep at which the moving window ends. If -1, the moving window
     will continue until the end of the simulation.
@@ -789,7 +789,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
     warpx_start_moving_window_step: int, default=0
         The timestep at which the moving window starts
-        
+
     warpx_end_moving_window_step: int, default=-1
         The timestep at which the moving window ends. If -1, the moving window
     will continue until the end of the simulation.
@@ -910,7 +910,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
     warpx_start_moving_window_step: int, default=0
         The timestep at which the moving window starts
-        
+
     warpx_end_moving_window_step: int, default=-1
         The timestep at which the moving window ends. If -1, the moving window
     will continue until the end of the simulation.
