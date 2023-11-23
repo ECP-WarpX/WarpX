@@ -121,9 +121,9 @@ def write_file(fname, x, y, t, E):
         file.write(E.tobytes())
 
 def create_gaussian_2d():
-   T, X, Y = np.meshgrid(tcoords, xcoords, np.array([0.0]), indexing='ij')
-   E_t = gauss(T,X,Y,'2d')
-   write_file("gauss_2d", xcoords, np.array([0.0]), tcoords, E_t)
+    T, X, Y = np.meshgrid(tcoords, xcoords, np.array([0.0]), indexing='ij')
+    E_t = gauss(T,X,Y,'2d')
+    write_file("gauss_2d", xcoords, np.array([0.0]), tcoords, E_t)
 
 def do_analysis(fname, compname, steps):
     ds = yt.load(fname)
