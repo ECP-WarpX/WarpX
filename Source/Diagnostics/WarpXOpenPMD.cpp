@@ -376,13 +376,15 @@ WarpXOpenPMDPlot::WarpXOpenPMDPlot (
     std::map< std::string, std::string > operator_parameters,
     std::string engine_type,
     std::map< std::string, std::string > engine_parameters,
-    std::vector<bool> fieldPMLdirections)
-  :m_Series(nullptr),
-   m_MPIRank{amrex::ParallelDescriptor::MyProc()},
-   m_MPISize{amrex::ParallelDescriptor::NProcs()},
-   m_Encoding(ie),
-   m_OpenPMDFileType(std::move(openPMDFileType)),
-   m_fieldPMLdirections(std::move(fieldPMLdirections))
+    std::vector<bool> fieldPMLdirections,
+    const std::string& authors)
+    : m_Series(nullptr),
+      m_MPIRank{amrex::ParallelDescriptor::MyProc()},
+      m_MPISize{amrex::ParallelDescriptor::NProcs()},
+      m_Encoding(ie),
+      m_OpenPMDFileType(std::move(openPMDFileType)),
+      m_fieldPMLdirections(std::move(fieldPMLdirections)),
+      m_authors{authors}
 {
     m_OpenPMDoptions = detail::getSeriesOptions(operator_type, operator_parameters,
                                                 engine_type, engine_parameters);
@@ -400,23 +402,23 @@ WarpXOpenPMDPlot::~WarpXOpenPMDPlot ()
 std::string
 WarpXOpenPMDPlot::GetFileName (std::string& filepath)
 {
-  filepath.append("/");
-  // transform paths for Windows
-#ifdef _WIN32
-  filepath = openPMD::auxiliary::replace_all(filepath, "/", "\\");
-#endif
+    filepath.append("/");
+    // transform paths for Windows
+    #ifdef _WIN32
+    filepath = openPMD::auxiliary::replace_all(filepath, "/", "\\");
+    #endif
 
-  std::string filename = "openpmd";
-  //
-  // OpenPMD supports timestepped names
-  //
-  if (m_Encoding == openPMD::IterationEncoding::fileBased) {
-      const std::string fileSuffix = std::string("_%0") + std::to_string(m_file_min_digits) + std::string("T");
-      filename = filename.append(fileSuffix);
-  }
-  filename.append(".").append(m_OpenPMDFileType);
-  filepath.append(filename);
-  return filename;
+    std::string filename = "openpmd";
+    //
+    // OpenPMD supports timestepped names
+    //
+    if (m_Encoding == openPMD::IterationEncoding::fileBased) {
+        const std::string fileSuffix = std::string("_%0") + std::to_string(m_file_min_digits) + std::string("T");
+        filename = filename.append(fileSuffix);
+    }
+    filename.append(".").append(m_OpenPMDFileType);
+    filepath.append(filename);
+    return filename;
 }
 
 void WarpXOpenPMDPlot::SetStep (int ts, const std::string& dirPrefix, int file_min_digits,
@@ -502,8 +504,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
     m_Series->setIterationEncoding( m_Encoding );
 
     // input file / simulation setup author
-    if( !WarpX::authors.empty())
-        m_Series->setAuthor( WarpX::authors );
+    if( !m_authors.empty())
+        m_Series->setAuthor( m_authors );
     // more natural naming for PIC
     m_Series->setMeshesPath( "fields" );
     // conform to ED-PIC extension of openPMD
@@ -519,9 +521,9 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
                   const bool isBTD, const bool isLastBTDFlush,
                   const amrex::Vector<int>& totalParticlesFlushedAlready)
 {
-  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
+WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
-  for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
+for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
 
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
     PinnedMemoryParticleContainer* pinned_pc = particle_diags[i].getPinnedParticleContainer();
@@ -570,65 +572,64 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     int_flags.resize(tmp.NumIntComps(), 1);
 
     const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
-      RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
-                                       particle_diags[i].m_random_fraction);
-      UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
-                                         particle_diags[i].m_uniform_stride);
-      ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
-                                utils::parser::compileParser<ParticleDiag::m_nvars>
+    RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
+                                     particle_diags[i].m_random_fraction);
+    UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
+                                       particle_diags[i].m_uniform_stride);
+    ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
+                               utils::parser::compileParser<ParticleDiag::m_nvars>
                                      (particle_diags[i].m_particle_filter_parser.get()),
                                  pc->getMass(), time);
-      parser_filter.m_units = InputUnits::SI;
-      GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
+    parser_filter.m_units = InputUnits::SI;
+    GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                            particle_diags[i].m_diag_domain);
 
-      if (isBTD || use_pinned_pc) {
-          tmp.copyParticles(*pinned_pc, true);
-          particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
-      } else {
-          particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
-          using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-          tmp.copyParticles(*pc,
-                            [random_filter,uniform_filter,parser_filter,geometry_filter]
-                            AMREX_GPU_HOST_DEVICE
-                            (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-          {
-              const SuperParticleType& p = src.getSuperParticle(ip);
-              return random_filter(p, engine) * uniform_filter(p, engine)
-                     * parser_filter(p, engine) * geometry_filter(p, engine);
-          }, true);
-          particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
-      }
+    if (isBTD || use_pinned_pc) {
+        tmp.copyParticles(*pinned_pc, true);
+        particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
+    } else {
+        particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
+        using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+        tmp.copyParticles(*pc,
+                        [random_filter,uniform_filter,parser_filter,geometry_filter]
+                        AMREX_GPU_HOST_DEVICE
+                        (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+                        {
+                            const SuperParticleType& p = src.getSuperParticle(ip);
+                            return random_filter(p, engine) * uniform_filter(p, engine)
+                                 * parser_filter(p, engine) * geometry_filter(p, engine);
+                        }, true);
+        particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
+    }
 
     // real_names contains a list of all real particle attributes.
     // real_flags is 1 or 0, whether quantity is dumped or not.
-
     {
-      if (isBTD) {
-          DumpToFile(&tmp,
-             particle_diags[i].getSpeciesName(),
-             m_CurrentStep,
-             real_flags,
-             int_flags,
-             real_names, int_names,
-             pc->getCharge(), pc->getMass(),
-             isBTD, isLastBTDFlush,
-             totalParticlesFlushedAlready[i]
-          );
-      } else {
-          DumpToFile(&tmp,
-             particle_diags[i].getSpeciesName(),
-             m_CurrentStep,
-             real_flags,
-             int_flags,
-             real_names, int_names,
-             pc->getCharge(), pc->getMass(),
-             isBTD, isLastBTDFlush,
-             0
-          );
-      }
+        if (isBTD) {
+            DumpToFile(&tmp,
+                particle_diags[i].getSpeciesName(),
+                m_CurrentStep,
+                real_flags,
+                int_flags,
+                real_names, int_names,
+                pc->getCharge(), pc->getMass(),
+                isBTD, isLastBTDFlush,
+                totalParticlesFlushedAlready[i]
+            );
+        } else {
+            DumpToFile(&tmp,
+                particle_diags[i].getSpeciesName(),
+                m_CurrentStep,
+                real_flags,
+                int_flags,
+                real_names, int_names,
+                pc->getCharge(), pc->getMass(),
+                isBTD, isLastBTDFlush,
+                0
+            );
+        }
     }
-  }
+}
 }
 
 void
@@ -946,23 +947,23 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
   {
     // note: WarpX does not yet use extra AoS Real attributes
     for( auto idx=0; idx<ParticleIter::ContainerType::NStructReal; idx++ ) {  // lgtm [cpp/constant-comparison]
-      if( write_real_comp[idx] ) {
-          // handle scalar and non-scalar records by name
-          const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
-          auto currRecord = currSpecies[record_name];
-          auto currRecordComp = currRecord[component_name];
+        if( write_real_comp[idx] ) {
+            // handle scalar and non-scalar records by name
+            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
+            auto currRecord = currSpecies[record_name];
+            auto currRecordComp = currRecord[component_name];
 
-          const std::shared_ptr< amrex::ParticleReal > d(
-              new amrex::ParticleReal[numParticleOnTile],
-              [](amrex::ParticleReal const *p){ delete[] p; }
-          );
+            const std::shared_ptr< amrex::ParticleReal > d(
+                new amrex::ParticleReal[numParticleOnTile],
+                [](amrex::ParticleReal const *p){ delete[] p; }
+            );
 
-          for( auto kk=0; kk<numParticleOnTile; kk++ )
-               d.get()[kk] = aos[kk].rdata(idx);
+            for( auto kk=0; kk<numParticleOnTile; kk++ )
+                d.get()[kk] = aos[kk].rdata(idx);
 
-          currRecordComp.storeChunk(d,
-               {offset}, {numParticleOnTile64});
-      }
+            currRecordComp.storeChunk(d,
+                {offset}, {numParticleOnTile64});
+        }
     }
   }
 
@@ -976,22 +977,22 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
   {
     auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
     for (auto idx=0; idx<real_counter; idx++) {
-      auto ii = ParticleIter::ContainerType::NStructReal + idx;  // jump over extra AoS names
-      if (write_real_comp[ii]) {
-        getComponentRecord(real_comp_names[ii]).storeChunkRaw(
-          soa.GetRealData(idx).data(), {offset}, {numParticleOnTile64});
-      }
+        auto ii = ParticleIter::ContainerType::NStructReal + idx;  // jump over extra AoS names
+        if (write_real_comp[ii]) {
+            getComponentRecord(real_comp_names[ii]).storeChunkRaw(
+                soa.GetRealData(idx).data(), {offset}, {numParticleOnTile64});
+        }
     }
   }
   // and now SoA int properties
   {
     auto const int_counter = std::min(write_int_comp.size(), int_comp_names.size());
     for (auto idx=0; idx<int_counter; idx++) {
-      auto ii = ParticleIter::ContainerType::NStructInt + idx;  // jump over extra AoS names
-      if (write_int_comp[ii]) {
-        getComponentRecord(int_comp_names[ii]).storeChunkRaw(
-          soa.GetIntData(idx).data(), {offset}, {numParticleOnTile64});
-      }
+        auto ii = ParticleIter::ContainerType::NStructInt + idx;  // jump over extra AoS names
+        if (write_int_comp[ii]) {
+            getComponentRecord(int_comp_names[ii]).storeChunkRaw(
+                soa.GetIntData(idx).data(), {offset}, {numParticleOnTile64});
+        }
     }
   }
 }
@@ -1003,18 +1004,18 @@ WarpXOpenPMDPlot::SetupPos (
     const unsigned long long& np,
     bool const isBTD)
 {
-  std::string options = "{}";
-  if (isBTD) options = "{ \"resizable\": true }";
-  auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
-  auto idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np}, options);
+    std::string options = "{}";
+    if (isBTD) options = "{ \"resizable\": true }";
+    auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np}, options);
+    auto idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np}, options);
 
-  auto const positionComponents = detail::getParticlePositionComponentLabels();
-  for( auto const& comp : positionComponents ) {
-      currSpecies["position"][comp].resetDataset( realType );
-  }
+    auto const positionComponents = detail::getParticlePositionComponentLabels();
+    for( auto const& comp : positionComponents ) {
+        currSpecies["position"][comp].resetDataset( realType );
+    }
 
-  auto const scalar = openPMD::RecordComponent::SCALAR;
-  currSpecies["id"][scalar].resetDataset( idType );
+    auto const scalar = openPMD::RecordComponent::SCALAR;
+    currSpecies["id"][scalar].resetDataset( idType );
 }
 
 void
@@ -1137,69 +1138,69 @@ void
 WarpXOpenPMDPlot::SetupFields ( openPMD::Container< openPMD::Mesh >& meshes,
                                 amrex::Geometry& full_geom ) const
 {
-      // meta data for ED-PIC extension
-      auto const period = full_geom.periodicity(); // TODO double-check: is this the proper global bound or of some level?
-      std::vector<std::string> fieldBoundary(6, "reflecting");
-      std::vector<std::string> particleBoundary(6, "absorbing");
-      fieldBoundary.resize(AMREX_SPACEDIM * 2);
-      particleBoundary.resize(AMREX_SPACEDIM * 2);
+    // meta data for ED-PIC extension
+    auto const period = full_geom.periodicity(); // TODO double-check: is this the proper global bound or of some level?
+    std::vector<std::string> fieldBoundary(6, "reflecting");
+    std::vector<std::string> particleBoundary(6, "absorbing");
+    fieldBoundary.resize(AMREX_SPACEDIM * 2);
+    particleBoundary.resize(AMREX_SPACEDIM * 2);
 
-      const auto HalfFieldBoundarySize = static_cast<int>(fieldBoundary.size() / 2u);
+    const auto HalfFieldBoundarySize = static_cast<int>(fieldBoundary.size() / 2u);
 
-      for (auto i = 0; i < HalfFieldBoundarySize; ++i)
-          if (m_fieldPMLdirections.at(i))
-              fieldBoundary.at(i) = "open";
+    for (auto i = 0; i < HalfFieldBoundarySize; ++i)
+        if (m_fieldPMLdirections.at(i))
+            fieldBoundary.at(i) = "open";
 
-      for (int i = 0; i < HalfFieldBoundarySize; ++i)
-          if (period.isPeriodic(i)) {
-              fieldBoundary.at(2u * i) = "periodic";
-              fieldBoundary.at(2u * i + 1u) = "periodic";
-              particleBoundary.at(2u * i) = "periodic";
-              particleBoundary.at(2u * i + 1u) = "periodic";
-          }
+    for (int i = 0; i < HalfFieldBoundarySize; ++i)
+        if (period.isPeriodic(i)) {
+            fieldBoundary.at(2u * i) = "periodic";
+            fieldBoundary.at(2u * i + 1u) = "periodic";
+            particleBoundary.at(2u * i) = "periodic";
+            particleBoundary.at(2u * i + 1u) = "periodic";
+        }
 
-      meshes.setAttribute("fieldSolver", []() {
-          switch (WarpX::electromagnetic_solver_id) {
-              case ElectromagneticSolverAlgo::Yee :
-                  return "Yee";
-              case ElectromagneticSolverAlgo::CKC :
-                  return "CK";
-              case ElectromagneticSolverAlgo::PSATD :
-                  return "PSATD";
-              default:
-                  return "other";
-          }
-      }());
-      meshes.setAttribute("fieldBoundary", fieldBoundary);
-      meshes.setAttribute("particleBoundary", particleBoundary);
-      meshes.setAttribute("currentSmoothing", []() {
-          if (WarpX::use_filter) return "Binomial";
-          else return "none";
-      }());
-      if (WarpX::use_filter)
-          meshes.setAttribute("currentSmoothingParameters", []() {
-              std::stringstream ss;
-              ss << "period=1;compensator=false";
+    meshes.setAttribute("fieldSolver", []() {
+        switch (WarpX::electromagnetic_solver_id) {
+            case ElectromagneticSolverAlgo::Yee :
+                return "Yee";
+            case ElectromagneticSolverAlgo::CKC :
+                return "CK";
+            case ElectromagneticSolverAlgo::PSATD :
+                return "PSATD";
+            default:
+                return "other";
+        }
+    }());
+    meshes.setAttribute("fieldBoundary", fieldBoundary);
+    meshes.setAttribute("particleBoundary", particleBoundary);
+    meshes.setAttribute("currentSmoothing", []() {
+        if (WarpX::use_filter) return "Binomial";
+        else return "none";
+    }());
+    if (WarpX::use_filter)
+        meshes.setAttribute("currentSmoothingParameters", []() {
+            std::stringstream ss;
+            ss << "period=1;compensator=false";
 #if (AMREX_SPACEDIM >= 2)
-              ss << ";numPasses_x=" << WarpX::filter_npass_each_dir[0];
+            ss << ";numPasses_x=" << WarpX::filter_npass_each_dir[0];
 #endif
 #if defined(WARPX_DIM_3D)
-              ss << ";numPasses_y=" << WarpX::filter_npass_each_dir[1];
-              ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[2];
+            ss << ";numPasses_y=" << WarpX::filter_npass_each_dir[1];
+            ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[2];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-              ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[1];
+            ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[1];
 #elif defined(WARPX_DIM_1D_Z)
-              ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[0];
+            ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[0];
 #endif
-              std::string currentSmoothingParameters = ss.str();
-              return currentSmoothingParameters;
-          }());
-      meshes.setAttribute("chargeCorrection", []() {
-          if (WarpX::do_dive_cleaning) return "hyperbolic"; // TODO or "spectral" or something? double-check
-          else return "none";
-      }());
-      if (WarpX::do_dive_cleaning)
-          meshes.setAttribute("chargeCorrectionParameters", "period=1");
+            std::string currentSmoothingParameters = ss.str();
+            return currentSmoothingParameters;
+        }());
+    meshes.setAttribute("chargeCorrection", []() {
+        if (WarpX::do_dive_cleaning) return "hyperbolic"; // TODO or "spectral" or something? double-check
+        else return "none";
+    }());
+    if (WarpX::do_dive_cleaning)
+        meshes.setAttribute("chargeCorrectionParameters", "period=1");
 }
 
 
@@ -1483,33 +1484,33 @@ WarpXParticleCounter::WarpXParticleCounter (ParticleContainer* pc):
     m_MPIRank{amrex::ParallelDescriptor::MyProc()},
     m_MPISize{amrex::ParallelDescriptor::NProcs()}
 {
-  m_ParticleCounterByLevel.resize(pc->finestLevel()+1);
-  m_ParticleOffsetAtRank.resize(pc->finestLevel()+1);
-  m_ParticleSizeAtRank.resize(pc->finestLevel()+1);
+    m_ParticleCounterByLevel.resize(pc->finestLevel()+1);
+    m_ParticleOffsetAtRank.resize(pc->finestLevel()+1);
+    m_ParticleSizeAtRank.resize(pc->finestLevel()+1);
 
-  for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++)
+    for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++)
     {
-      long numParticles = 0; // numParticles in this processor
+        long numParticles = 0; // numParticles in this processor
 
-      for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
-          auto numParticleOnTile = pti.numParticles();
-          numParticles += numParticleOnTile;
-      }
+        for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
+            auto numParticleOnTile = pti.numParticles();
+            numParticles += numParticleOnTile;
+        }
 
-      unsigned long long offset=0; // offset of this level
-      unsigned long long sum=0; // numParticles in this level (sum from all processors)
+        unsigned long long offset=0; // offset of this level
+        unsigned long long sum=0; // numParticles in this level (sum from all processors)
 
-      GetParticleOffsetOfProcessor(numParticles, offset,  sum);
+        GetParticleOffsetOfProcessor(numParticles, offset,  sum);
 
-      m_ParticleCounterByLevel[currentLevel] = sum;
-      m_ParticleOffsetAtRank[currentLevel] = offset;
-      m_ParticleSizeAtRank[currentLevel] = numParticles;
+        m_ParticleCounterByLevel[currentLevel] = sum;
+        m_ParticleOffsetAtRank[currentLevel] = offset;
+        m_ParticleSizeAtRank[currentLevel] = numParticles;
 
-      // adjust offset, it should be numbered after particles from previous levels
-      for (auto lv=0; lv<currentLevel; lv++)
-    m_ParticleOffsetAtRank[currentLevel] += m_ParticleCounterByLevel[lv];
+        // adjust offset, it should be numbered after particles from previous levels
+        for (auto lv=0; lv<currentLevel; lv++)
+            m_ParticleOffsetAtRank[currentLevel] += m_ParticleCounterByLevel[lv];
 
-      m_Total += sum;
+        m_Total += sum;
     }
 }
 

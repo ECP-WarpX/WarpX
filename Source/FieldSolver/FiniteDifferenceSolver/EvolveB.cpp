@@ -63,8 +63,8 @@ void FiniteDifferenceSolver::EvolveB (
     amrex::ignore_unused(area_mod, ECTRhofield, Venl, flag_info_cell, borrowing);
 #endif
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if ((m_fdtd_algo == ElectromagneticSolverAlgo::Yee)||
         (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC)){

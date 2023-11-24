@@ -174,6 +174,9 @@ protected:
     std::unique_ptr<amrex::Parser> ux_parser;
     std::unique_ptr<amrex::Parser> uy_parser;
     std::unique_ptr<amrex::Parser> uz_parser;
+    std::unique_ptr<amrex::Parser> ux_th_parser;
+    std::unique_ptr<amrex::Parser> uy_th_parser;
+    std::unique_ptr<amrex::Parser> uz_th_parser;
 
     // Keep a pointer to TemperatureProperties to ensure the lifetime of the
     // contained Parser
@@ -182,7 +185,7 @@ protected:
 
 public:
 
-   // MultiFabs that contain the density (N) and momentum density (NU) of this fluid species, for each refinement level
+    // MultiFabs that contain the density (N) and momentum density (NU) of this fluid species, for each refinement level
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > N;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > NU;
 

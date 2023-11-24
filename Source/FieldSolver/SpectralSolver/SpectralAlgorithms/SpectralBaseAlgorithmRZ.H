@@ -88,7 +88,7 @@ class SpectralBaseAlgorithmRZ
           // Compute and assign the modified k vectors
           : m_spectral_index(spectral_index),
             modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, grid_type))
-          {}
+        {}
 
         SpectralFieldIndex m_spectral_index;
 
