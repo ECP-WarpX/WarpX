@@ -81,7 +81,7 @@ class CallbackFunctions(object):
     original reference. This is good since the user does not need to keep
     the reference to the object (for example it can be created using a local
     variable in a function). It may be bad if the user thinks an object was
-    deleted, but it actually isn't since it had (unkown to the user)
+    deleted, but it actually isn't since it had (unknown to the user)
     installed a method in one of the call back lists.
     """
 

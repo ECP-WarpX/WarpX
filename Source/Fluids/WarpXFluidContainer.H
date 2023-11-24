@@ -23,7 +23,7 @@
  *
  * WarpXFluidContainer contains the main functions for initialization,
  * interaction with the grid (field gather and current deposition), fluid
- * source and push, advective update and updates for non-intertial terms.
+ * source and push, advective update and updates for non-inertial terms.
  */
 class WarpXFluidContainer
 {
@@ -45,7 +45,7 @@ public:
     void ReadParameters ();
 
     /**
-     * Evolve updates a single timestep (dt) of the cold relativistic fluid eqautions
+     * Evolve updates a single timestep (dt) of the cold relativistic fluid equations
      */
     void Evolve (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
