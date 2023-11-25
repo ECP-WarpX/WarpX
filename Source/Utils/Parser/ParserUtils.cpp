@@ -133,9 +133,9 @@ amrex::Parser utils::parser::makeParser (
 
         const auto constant = warpx_constants.find(*it);
         if (constant != warpx_constants.end()) {
-          parser.setConstant(*it, constant->second);
-          it = symbols.erase(it);
-          continue;
+            parser.setConstant(*it, constant->second);
+            it = symbols.erase(it);
+            continue;
         }
 
         ++it;

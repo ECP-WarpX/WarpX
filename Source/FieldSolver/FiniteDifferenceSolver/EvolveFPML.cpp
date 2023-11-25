@@ -44,8 +44,8 @@ void FiniteDifferenceSolver::EvolveFPML (
     std::array< amrex::MultiFab*, 3 > const Efield,
     amrex::Real const dt ) {
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Ffield, Efield, dt);
     WARPX_ABORT_WITH_MESSAGE(

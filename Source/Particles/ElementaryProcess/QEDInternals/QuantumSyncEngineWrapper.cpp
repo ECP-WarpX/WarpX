@@ -103,7 +103,7 @@ void QuantumSynchrotronEngine::init_builtin_tables(
 
 vector<char> QuantumSynchrotronEngine::export_lookup_tables_data () const
 {
-   if(!m_lookup_tables_initialized)
+    if(!m_lookup_tables_initialized)
         return vector<char>{};
 
     const auto data_dndt = m_dndt_table.serialize();
