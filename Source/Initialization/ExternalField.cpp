@@ -18,8 +18,12 @@
 
 namespace
 {
-   ExternalFieldType string_to_external_field_type(std::string s)
-   {
+
+    enum class EMFieldType{E, B};
+
+    template <EMFieldType T>
+    ExternalFieldType string_to_external_field_type(std::string s)
+    {
         std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 
         if ( s == "" || s == "default")
@@ -34,8 +38,17 @@ namespace
             WARPX_ABORT_WITH_MESSAGE(
                 "'" + s + "' is an unknown external field type!");
 
+        if constexpr (T == EMFieldType::E){
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(s != "parse_b_ext_grid_function",
+                "parse_B_ext_grid_function can be used only for B_ext_grid_init_style");
+        }
+        else{
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(s != "parse_e_ext_grid_function",
+                "parse_E_ext_grid_function can be used only for E_ext_grid_init_style");
+        }
+
         return ExternalFieldType::default_zero;
-   }
+    }
 }
 
 std::unique_ptr<ExternalFieldParams> ReadExternalFieldParams(const amrex::ParmParse& pp_warpx)
@@ -47,11 +60,15 @@ std::unique_ptr<ExternalFieldParams> ReadExternalFieldParams(const amrex::ParmPa
     // "parser" is not explicitly used in the input.
     std::string B_ext_grid_s = "";
     pp_warpx.query("B_ext_grid_init_style", B_ext_grid_s);
-    p_external_field->B_ext_grid_type = string_to_external_field_type(B_ext_grid_s);
+    p_external_field->B_ext_grid_type = string_to_external_field_type<EMFieldType::B>(B_ext_grid_s);
 
     std::string E_ext_grid_s = "";
     pp_warpx.query("E_ext_grid_init_style", E_ext_grid_s);
-    p_external_field->E_ext_grid_type = string_to_external_field_type(E_ext_grid_s);
+    p_external_field->E_ext_grid_type = string_to_external_field_type<EMFieldType::E>(E_ext_grid_s);
+
+    //
+    //  Constant external field
+    //
 
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
@@ -66,9 +83,12 @@ std::unique_ptr<ExternalFieldParams> ReadExternalFieldParams(const amrex::ParmPa
     if (p_external_field->E_ext_grid_type == ExternalFieldType::constant)
         utils::parser::getArrWithParser(pp_warpx, "E_external_grid", v_E);
     std::copy(v_E.begin(), v_E.end(), p_external_field->E_external_grid.begin());
+    //___________________________________________________________________________
 
 
-
+    //
+    //  External E field with parser
+    //
 
     // if the input string for the B-field is "parse_b_ext_grid_function",
     // then the analytical expression or function must be
@@ -105,8 +125,12 @@ std::unique_ptr<ExternalFieldParams> ReadExternalFieldParams(const amrex::ParmPa
         p_external_field->Bzfield_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
     }
+    //___________________________________________________________________________
 
 
+    //
+    //  External B field with parser
+    //
 
     // if the input string for the E-field is "parse_e_ext_grid_function",
     // then the analytical expression or function must be
@@ -137,13 +161,19 @@ std::unique_ptr<ExternalFieldParams> ReadExternalFieldParams(const amrex::ParmPa
         p_external_field->Ezfield_parser = std::make_unique<amrex::Parser>(
            utils::parser::makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
     }
+    //___________________________________________________________________________
 
+
+    //
+    //  External fields from file
+    //
 
     if (p_external_field->E_ext_grid_type == ExternalFieldType::read_from_file ||
         p_external_field->B_ext_grid_type == ExternalFieldType::read_from_file){
             std::string read_fields_from_path="./";
             pp_warpx.query("read_fields_from_path", p_external_field->external_fields_path);
     }
+    //___________________________________________________________________________
 
     return p_external_field;
 }
