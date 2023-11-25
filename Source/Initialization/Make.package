@@ -1,6 +1,6 @@
 CEXE_sources += ExternalField.cpp
 CEXE_sources += GetTemperature.cpp
-CEXE_sources += GetVelocity.
+CEXE_sources += GetVelocity.cpp
 CEXE_sources += InjectorDensity.cpp
 CEXE_sources += InjectorMomentum.cpp
 CEXE_sources += PlasmaInjector.cpp
