@@ -82,7 +82,7 @@ private:
     //! HandleSignals() to indicate actions requested by signals
     static bool signal_actions_requested[SIGNAL_REQUESTS_SIZE];
 
-     // Don't allow clients to incorrectly try to construct and use an instance of this type
+    // Don't allow clients to incorrectly try to construct and use an instance of this type
     SignalHandling () = delete;
 };
 
