@@ -1349,8 +1349,8 @@ MultiParticleContainer::doQEDSchwinger ()
         * geom.CellSize(2);
 #endif
 
-   // Get the temporal step
-   const auto dt =  warpx.getdt(level_0);
+    // Get the temporal step
+    const auto dt =  warpx.getdt(level_0);
 
     auto& pc_product_ele =
             allcontainers[m_qed_schwinger_ele_product];
@@ -1370,8 +1370,8 @@ MultiParticleContainer::doQEDSchwinger ()
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-     for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
-     {
+    for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    {
         // Make the box cell centered to avoid creating particles twice on the tile edges
         amrex::Box box = enclosedCells(mfi.nodaltilebox());
 

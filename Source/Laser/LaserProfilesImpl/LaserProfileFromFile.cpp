@@ -216,7 +216,7 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_lasy_file(const std::string& las
     }
 
     //Broadcast parameters
-   ParallelDescriptor::Bcast(&m_params.file_in_cartesian_geom, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&m_params.file_in_cartesian_geom, 1, ParallelDescriptor::IOProcessorNumber());
     ParallelDescriptor::Bcast(&m_params.nt, 1, ParallelDescriptor::IOProcessorNumber());
     ParallelDescriptor::Bcast(&m_params.nx, 1, ParallelDescriptor::IOProcessorNumber());
     ParallelDescriptor::Bcast(&m_params.ny, 1, ParallelDescriptor::IOProcessorNumber());

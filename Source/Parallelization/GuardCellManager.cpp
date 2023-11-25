@@ -222,7 +222,7 @@ guardCellManager::Init (
             }
         }
 #else
-       amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
+        amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
 #endif
 
         // All boxes should have the same number of guard cells, to avoid temporary parallel copies:

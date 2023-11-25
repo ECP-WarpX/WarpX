@@ -185,7 +185,7 @@ protected:
 
 public:
 
-   // MultiFabs that contain the density (N) and momentum density (NU) of this fluid species, for each refinement level
+    // MultiFabs that contain the density (N) and momentum density (NU) of this fluid species, for each refinement level
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > N;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > NU;
 

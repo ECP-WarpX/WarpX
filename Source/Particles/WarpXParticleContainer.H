@@ -393,7 +393,7 @@ public:
      * they do not exist (or if they were defined by default, i.e.,
      * without runtime component).
      */
-     void defineAllParticleTiles () noexcept;
+    void defineAllParticleTiles () noexcept;
 
 protected:
     int species_id;

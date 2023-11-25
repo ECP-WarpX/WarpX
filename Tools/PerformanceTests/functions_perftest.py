@@ -41,13 +41,13 @@ class test_element():
         self.n_cell = n_cell_scaled
 
 def scale_n_cell(ncell, n_node):
-     ncell_scaled = ncell[:]
-     index_dim = 0
-     while n_node > 1:
-         ncell_scaled[index_dim] *= 2
-         n_node /= 2
-         index_dim = (index_dim+1) % 3
-     return ncell_scaled
+    ncell_scaled = ncell[:]
+    index_dim = 0
+    while n_node > 1:
+        ncell_scaled[index_dim] *= 2
+        n_node /= 2
+        index_dim = (index_dim+1) % 3
+    return ncell_scaled
 
 def store_git_hash(repo_path=None, filename=None, name=None):
     repo = git.Repo(path=repo_path)
@@ -108,7 +108,7 @@ def run_batch(run_name, res_dir, bin_name, config_command, architecture='knl',\
 def run_batch_nnode(test_list, res_dir, cwd, bin_name, config_command, batch_string, submit_job_command):
     # Clean res_dir
     if os.path.exists(res_dir):
-         shutil.rmtree(res_dir, ignore_errors=True)
+        shutil.rmtree(res_dir, ignore_errors=True)
     os.makedirs(res_dir)
     # Copy files to res_dir
     bin_dir = cwd + 'Bin/'
@@ -198,9 +198,9 @@ def extract_dataframe(filename, n_steps):
     # New, might break something
     line_match_WritePlotFile = re.search('\nDiagnostics::FilterComputePackFlush().*', search_area)
     if line_match_WritePlotFile is not None:
-         time_WritePlotFile = float(line_match_WritePlotFile.group(0).split()[3])
+        time_WritePlotFile = float(line_match_WritePlotFile.group(0).split()[3])
     else:
-         time_WritePlotFile = 0.
+        time_WritePlotFile = 0.
     # Get timers for all routines
     # Where to start and stop in the output_file
     partition_limit_start = 'NCalls  Excl. Min  Excl. Avg  Excl. Max   Max %'

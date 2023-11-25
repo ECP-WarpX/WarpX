@@ -263,8 +263,8 @@ void WarpXFluidContainer::Evolve(
     WARPX_PROFILE("WarpXFluidContainer::Evolve");
 
     if (rho && ! skip_deposition && ! do_not_deposit) {
-         // Deposit charge before particle push, in component 0 of MultiFab rho.
-         DepositCharge(lev, *rho, 0);
+        // Deposit charge before particle push, in component 0 of MultiFab rho.
+        DepositCharge(lev, *rho, 0);
     }
 
     // Step the Lorentz Term
@@ -963,7 +963,7 @@ void WarpXFluidContainer::GatherAndPush (
     bool external_b_fields; // Needs intializing
 
 
-   // Prepare interpolation of current components to cell center
+    // Prepare interpolation of current components to cell center
     amrex::GpuArray<int, 3> Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
     amrex::GpuArray<int, 3> Ex_type = amrex::GpuArray<int, 3>{0, 0, 0};
     amrex::GpuArray<int, 3> Ey_type = amrex::GpuArray<int, 3>{0, 0, 0};
