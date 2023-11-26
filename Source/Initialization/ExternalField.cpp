@@ -26,7 +26,7 @@ namespace
     {
         std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 
-        if ( s == "" || s == "default")
+        if ( s.empty() || s == "default")
             return ExternalFieldType::default_zero;
         else if ( s == "constant")
             return ExternalFieldType::constant;
@@ -58,11 +58,11 @@ std::unique_ptr<ExternalFieldParams> ReadExternalFieldParams(const amrex::ParmPa
     // default values of E_external_grid and B_external_grid
     // are used to set the E and B field when "constant" or
     // "parser" is not explicitly used in the input.
-    std::string B_ext_grid_s = "";
+    std::string B_ext_grid_s;
     pp_warpx.query("B_ext_grid_init_style", B_ext_grid_s);
     p_external_field->B_ext_grid_type = string_to_external_field_type<EMFieldType::B>(B_ext_grid_s);
 
-    std::string E_ext_grid_s = "";
+    std::string E_ext_grid_s;
     pp_warpx.query("E_ext_grid_init_style", E_ext_grid_s);
     p_external_field->E_ext_grid_type = string_to_external_field_type<EMFieldType::E>(E_ext_grid_s);
 
