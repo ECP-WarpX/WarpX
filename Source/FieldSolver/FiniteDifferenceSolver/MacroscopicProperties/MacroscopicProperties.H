@@ -113,20 +113,22 @@ struct LaxWendroffAlgo {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real alpha (amrex::Real const sigma,
                               amrex::Real const epsilon,
-                              amrex::Real dt) {
-        using namespace amrex;
-        const amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
-        const amrex::Real alpha = (1._rt - fac1)/(1._rt + fac1);
+                              amrex::Real dt)
+    {
+        using namespace amrex::literals;
+        const amrex::Real half_sigdt = 0.5_rt * sigma * dt;
+        const amrex::Real alpha = (epsilon - half_sigdt) / (epsilon + half_sigdt);
         return alpha;
     }
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real beta (amrex::Real const sigma,
                              amrex::Real const epsilon,
-                             amrex::Real dt) {
-        using namespace amrex;
-        const amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
-        const amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
+                             amrex::Real dt)
+    {
+        using namespace amrex::literals;
+        const amrex::Real half_sigdt = 0.5_rt * sigma * dt;
+        const amrex::Real beta = dt / (epsilon + half_sigdt);
         return beta;
     }
 
@@ -145,20 +147,20 @@ struct BackwardEulerAlgo {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real alpha (amrex::Real const sigma,
                               amrex::Real const epsilon,
-                              amrex::Real dt) {
-        using namespace amrex;
-        const amrex::Real fac1 = sigma * dt / epsilon;
-        const amrex::Real alpha = (1._rt)/(1._rt + fac1);
+                              amrex::Real dt)
+    {
+        const amrex::Real sigdt = sigma * dt;
+        const amrex::Real alpha = epsilon / (epsilon + sigdt);
         return alpha;
     }
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real beta (amrex::Real const sigma,
                              amrex::Real const epsilon,
-                             amrex::Real dt) {
-        using namespace amrex;
-        const amrex::Real fac1 = sigma * dt / epsilon;
-        const amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
+                             amrex::Real dt)
+    {
+        const amrex::Real sigdt = sigma * dt;
+        const amrex::Real beta = dt / (epsilon + sigdt);
         return beta;
     }
 
