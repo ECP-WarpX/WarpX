@@ -82,4 +82,54 @@ namespace ablastr::coarsen::average
         Loop(mf_dst, mf_src, ncomp, ngrow, crse_ratio);
     }
 
+    void
+    CoarseningPointsAndWeights (
+        amrex::Vector<amrex::Real> &weights_x,
+        amrex::Vector<amrex::Real> &weights_y,
+        amrex::Vector<amrex::Real> &weights_z,
+        amrex::GpuArray<int, 3> &src_index_min,
+        amrex::GpuArray<int, 3> const &coarsen_ratio,
+        amrex::GpuArray<int, 3> const &stag_fine_src,
+        amrex::GpuArray<int, 3> const &stag_crse_des
+    )
+    {
+        using namespace amrex::literals;
+
+        int num_points[3];
+        bool useHalf[3];
+
+        for (int l = 0; l < 3; ++l) {
+            int const twoImin = -coarsen_ratio[l]*stag_crse_des[l] + stag_fine_src[l] - 1;
+            if (twoImin % 2 == 0) {
+                src_index_min[l] = twoImin/2;
+                num_points[l] = coarsen_ratio[l]+1;
+                useHalf[l] = true;
+            } else {
+                src_index_min[l] = (twoImin+1)/2;
+                num_points[l] = coarsen_ratio[l];
+                useHalf[l] = false;
+            }
+        }
+
+        // amrex::Real const coarsen_factor = 1.0_rt / static_cast<amrex::Real>(coarsen_ratio[0]*coarsen_ratio[1]*coarsen_ratio[2]);
+
+        weights_x.resize(num_points[0], 1.0_rt);
+        weights_y.resize(num_points[1], 1.0_rt);
+        weights_z.resize(num_points[2], 1.0_rt);
+
+        if (useHalf[0]) {
+            weights_x[0] *= 0.5_rt;
+            weights_x[num_points[0]-1] *= 0.5_rt;
+        }
+        if (useHalf[1]) {
+            weights_y[0] *= 0.5_rt;
+            weights_y[num_points[1]-1] *= 0.5_rt;
+        }
+        if (useHalf[2]) {
+            weights_z[0] *= 0.5_rt;
+            weights_z[num_points[2]-1] *= 0.5_rt;
+        }
+
+    }
+
 } // namespace ablastr::coarsen::average

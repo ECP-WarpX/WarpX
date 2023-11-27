@@ -44,63 +44,47 @@ namespace ablastr::coarsen::average
      *
      * \return interpolated field at cell (i,j,k) of a coarsened Array4
      */
-    AMREX_GPU_DEVICE
-    AMREX_FORCE_INLINE
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     amrex::Real
     Interp (
         amrex::Array4<amrex::Real const> const &arr_src,
         amrex::GpuArray<int, 3> const &sf,
         amrex::GpuArray<int, 3> const &sc,
         amrex::GpuArray<int, 3> const &cr,
-        int const i, int const j, int const k, int const comp
-    )
+        int const i, int const j, int const k, int const comp)
     {
         using namespace amrex::literals;
 
-        AMREX_ASSERT_WITH_MESSAGE(sf[0] == sc[0], "Interp: Staggering for component 0 does not match!");
-        AMREX_ASSERT_WITH_MESSAGE(sf[1] == sc[1], "Interp: Staggering for component 1 does not match!");
-        AMREX_ASSERT_WITH_MESSAGE(sf[2] == sc[2], "Interp: Staggering for component 2 does not match!");
-
-        // Indices of destination array (coarse)
-        int const ic[3] = {i, j, k};
-
         // Number of points and starting indices of source array (fine)
         int np[3], idx_min[3];
+        bool useHalf[3];
 
-        // Compute number of points (np) and starting indices of source array (fine)
         for (int l = 0; l < 3; ++l) {
-            if (cr[l] == 1)
-                np[l] = 1; // no coarsening
-                idx_min[l] = ic[l]; // no coarsening
-            else
-                np[l] = cr[l] * (1 - sf[l]) * (1 - sc[l]) // cell-centered
-                      + (2 * cr[l] - 1) * sf[l] * sc[l];  // nodal
-                idx_min[l] =  ic[l] * cr[l] * (1 - sf[l]) * (1 - sc[l])   // cell-centered
-                           + (ic[l] * cr[l] - cr[l] + 1) * sf[l] * sc[l]; // nodal
+            const int twoImin = -cr[l]*sc[l] + sf[l] - 1;
+            if (twoImin % 2 == 0) {
+                idxmin[l] = twoImin/2;
+                np[l] = cr[l]+1;
+                useHalf[l] = true;
+            } else {
+                idxmin[l] = (twoImin+1)/2;
+                np[l] = cr[l];
+                useHalf[l] = false;
+            }
         }
 
         // Auxiliary integer variables
-        int const numx = np[0];
-        int const numy = np[1];
-        int const numz = np[2];
-        int const imin = idx_min[0];
-        int const jmin = idx_min[1];
-        int const kmin = idx_min[2];
-        int const sfx = sf[0];
-        int const sfy = sf[1];
-        int const sfz = sf[2];
-        int const scx = sc[0];
-        int const scy = sc[1];
-        int const scz = sc[2];
-        int const crx = cr[0];
-        int const cry = cr[1];
-        int const crz = cr[2];
+        int const iimin = i * cr[0] + idx_min[0];
+        int const jjmin = j * cr[1] + idx_min[1];
+        int const kkmin = k * cr[2] + idx_min[2];
+        // int const iimax = iimin + np[0] - 1;
+        // int const jjmax = jjmin + np[1] - 1;
+        // int const kkmax = kkmin + np[2] - 1;
 
         // Add neutral elements (=0) beyond guard cells in source array (fine)
-        auto const arr_src_safe = [arr_src]
-                AMREX_GPU_DEVICE(int const ix, int const iy, int const iz, int const n) noexcept {
-            return arr_src.contains(ix, iy, iz) ? arr_src(ix, iy, iz, n) : 0.0_rt;
-        };
+        // auto const arr_src_safe = [arr_src]
+        //         AMREX_GPU_DEVICE(int const ix, int const iy, int const iz, int const n) noexcept {
+        //     return arr_src.contains(ix, iy, iz) ? arr_src(ix, iy, iz, n) : 0.0_rt;
+        // };
 
         // Interpolate over points computed above. Weights are computed in order
         // to guarantee total charge conservation for both cell-centered data
@@ -111,26 +95,73 @@ namespace ablastr::coarsen::average
         // Python script Source/Utils/check_interp_points_and_weights.py can be
         // used to check interpolation points and weights in 1D.
         amrex::Real c = 0.0_rt;
-        for (int kref = 0; kref < numz; ++kref) {
-            for (int jref = 0; jref < numy; ++jref) {
-                for (int iref = 0; iref < numx; ++iref) {
-                    const int ii = imin + iref;
-                    const int jj = jmin + jref;
-                    const int kk = kmin + kref;
-                    const amrex::Real wx = (1.0_rt / static_cast<amrex::Real>(numx)) * (1 - sfx) * (1 - scx) // if cell-centered
-                         + ((amrex::Math::abs(crx - amrex::Math::abs(ii - i * crx))) /
-                            static_cast<amrex::Real>(crx * crx)) * sfx * scx; // if nodal
-                    const amrex::Real wy = (1.0_rt / static_cast<amrex::Real>(numy)) * (1 - sfy) * (1 - scy) // if cell-centered
-                         + ((amrex::Math::abs(cry - amrex::Math::abs(jj - j * cry))) /
-                            static_cast<amrex::Real>(cry * cry)) * sfy * scy; // if nodal
-                    const amrex::Real wz = (1.0_rt / static_cast<amrex::Real>(numz)) * (1 - sfz) * (1 - scz) // if cell-centered
-                         + ((amrex::Math::abs(crz - amrex::Math::abs(kk - k * crz))) /
-                            static_cast<amrex::Real>(crz * crz)) * sfz * scz; // if nodal
-                    c += wx * wy * wz * arr_src_safe(ii, jj, kk, comp);
+        for (int kr = 0; kr < np[2]; ++kr) {
+            int kk = kkmin + kr;
+            kk = amrex::Clamp(kk, arr_src.begin.z, arr_src.end.z - 1);
+            amrex::Real kfactor = (useHalf[2] && (kr == 0 || kr == np[2] - 1)) ? 0.5_rt : 1.0_rt;
+
+            for (int jr = 0; jr < np[1]; ++jr) {
+                int jj = jjmin + jr;
+                jj = amrex::Clamp(jj, arr_src.begin.y, arr_src.end.y - 1);
+                amrex::Real jfactor = (useHalf[1] && (jr == 0 || jr == np[1] - 1)) ? 0.5_rt : 1.0_rt;
+
+                for (int ir = 0; ir < np[1]; ++ir) {
+                    int ii = iimin + ir;
+                    ii = amrex::Clamp(ii, arr_src.begin.x, arr_src.end.x - 1);
+                    amrex::Real ifactor = (useHalf[1] && (ir == 0 || ir == np[1] - 1)) ? 0.5_rt : 1.0_rt;
+
+                    c += ifactor*jfactor*kfactor*arr_src(ii,jj,kk,comp);
+
+                    // amrex::Real src_iijjkk = arr_src_safe(ii, jj, kk, comp);
+                    // amrex::Real src_iijjkk = Array4ClampedEval(arr_src, ii, jj, kk, comp);
+                    // c += ifactor*jfactor*kfactor*src_iijjkk;
                 }
             }
         }
 
+        c *= 1.0_rt / static_cast<amrex::Real>(cr[0]*cr[1]*cr[2]);
+
+        return c;
+    }
+
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    amrex::Real
+    Interp (
+        amrex::Array4<amrex::Real const> const &arr_src,
+        amrex::GpuArray<int, 3> const &coarsen_ratio,
+        amrex::GpuArray<int, 3> const &ind_min,
+        amrex::Vector<amrex::Real> const &weights_x,
+        amrex::Vector<amrex::Real> const &weights_y,
+        amrex::Vector<amrex::Real> const &weights_z,
+        int const i, int const j, int const k, int const comp
+    )
+    {
+        amrex::Real c = 0.0_rt;
+
+        const int iimin = i * coarsen_ratio[0] + ind_min[0];
+        const int jjmin = j * coarsen_ratio[1] + ind_min[1];
+        const int kkmin = k * coarsen_ratio[2] + ind_min[2];
+
+        for (int kr = 0; k < weights_z.size(); ++kr)
+        {
+            int kk = kkmin + kr;
+            kk = amrex::Clamp(kk, arr_src.begin.z, arr_src.end.z - 1);
+
+            for (int jr = 0; j < weights_y.size(); ++jr)
+            {
+                int jj = jjmin + jr;
+                jj = amrex::Clamp(jj, arr_src.begin.y, arr_src.end.y - 1);
+
+                for (int ir = 0; i < weights_x.size(); ++ir)
+                {
+                    int ii = iimin + ir;
+                    ii = amrex::Clamp(ii, arr_src.begin.x, arr_src.end.x - 1);
+
+                    amrex::Real src_iijjkk = arr_src(ii, jj, kk, comp);
+                    c += weights_x[ir]*weights_y[ir]*weights_z[ir]*src_iijjkk;
+                }
+            }
+        }
         return c;
     }
 
@@ -172,6 +203,27 @@ namespace ablastr::coarsen::average
         amrex::MultiFab const & mf_src,
         amrex::IntVect crse_ratio
     );
+
+    void
+    CoarseningPointsAndWeights (
+        amrex::Vector<amrex::Real> &weights_x,
+        amrex::Vector<amrex::Real> &weights_y,
+        amrex::Vector<amrex::Real> &weights_z,
+        amrex::GpuArray<int, 3> const &ind_min,
+        amrex::GpuArray<int, 3> const &coarsen_ratio,
+        amrex::GpuArray<int, 3> const &stag_fine_src,
+        amrex::GpuArray<int, 3> const & stag_crse_des);
+
+    template <class U, typename std::enable_if<!std::is_void<U>::value,int>::type = 0>
+    [[nodiscard]] AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    U& Array4ClampedEval (amrex::Array4<U> const& arr,
+                          int i, int j, int k, int n)
+    {
+        int iClamped = amrex::Clamp(i, arr.begin.x, arr.end.x - 1);
+        int jClamped = amrex::Clamp(j, arr.begin.y, arr.end.y - 1);
+        int kClamped = amrex::Clamp(k, arr.begin.x, arr.end.z - 1);
+        return arr(iClamped,jClamped,kClamped,n);
+    }
 
 } // namespace ablastr::coarsen::average
 

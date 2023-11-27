@@ -29,36 +29,6 @@ import sys
 
 import numpy as np
 
-# # Fine grid limits (without ghost cells)
-# def fine_grid_limits( sf ):
-#     if   ( sf == 0 ): # cell-centered
-#        iimin = 0
-#        iimax = 7
-#     elif ( sf == 1 ): # nodal
-#        iimin = 0
-#        iimax = 8
-#     return [ iimin, iimax ]
-
-# # Coarse grid limits (without ghost cells)
-# def coarse_grid_limits( sc, sf, iimin, iimax ):
-#     imin = int( iimin/cr )
-#     imax = int( iimax/cr )-(1-sc)*sf+(1-sf)*sc
-#     return [ imin, imax ]
-
-# # Coarsening for MR: interpolation points and weights
-# def coarsening_points_and_weights( i, sc, sf, cr ):
-#     if   ( cr==1 ):
-#         numpts = 1
-#         idxmin = i
-#     elif ( cr>=2 ):
-#         numpts = cr*(1-sf)*(1-sc)+(2*(cr-1)+1)*sf*sc
-#         idxmin = i*cr*(1-sf)*(1-sc)+(i*cr-cr+1)*sf*sc
-#     weights = np.zeros( numpts )
-#     for ir in range( numpts ):
-#         ii = idxmin+ir
-#         weights[ir] = (1/cr)*(1-sf)*(1-sc)+((abs(cr-abs(ii-i*cr)))/(cr*cr))*sf*sc
-#     return [ numpts, idxmin, weights ]
-
 # # Refinement for MR: interpolation points and weights
 # def refinement_points_and_weights( ii, sc, sf, cr ):
 #     if   ( cr==1 ):
@@ -78,87 +48,6 @@ import numpy as np
 #         else:
 #            weights[ir] = (1-sf)*(1-sc)+((abs(cr-abs(ii-i*cr)))/(cr))*sf*sc
 #     return [ numpts, idxmin, weights ]
-
-## TODO Coarsening for IO: interpolation points and weights
-#def coarsening_points_and_weights_for_IO( i, sf, sc, cr ):
-#    if   ( cr==1 ):
-#        numpts = 1+abs(sf-sc)
-#        idxmin = i-sc*(1-sf)
-#    elif ( cr>=2 ):
-#        numpts = 2-sf
-#        idxmin = i*cr+cr//2*(1-sc)-(1-sf)
-#    weights = np.zeros( numpts )
-#    for ir in range( numpts ):
-#        weights[ir] = (1/numpts)*(1-sf)*(1-sc)+(1/numpts)*sf*sc
-#    return [ numpts, idxmin, weights ]
-
-def GetSignString(w):
-    if w == 0:
-        return " "
-    if w > 0:
-        return "+"
-    if w < 0:
-        return "-"
-
-def IntToString(i):
-    return GetSignString(i)+str(abs(i))
-
-def FloatToString(f):
-    if (f == 0.0):
-        return " none "
-    return GetSignString(f)+str("{:.3f}".format(abs(f)))
-
-def coarsening_points_and_weights( i, sc, sf, cr ):
-    twoImin = -cr*sc + sf - 1
-    if (twoImin % 2 == 0):
-        idxmin = i*cr + twoImin//2
-        numpts = cr+1
-        weights = np.zeros( numpts )
-        weights[0] = 1.0/(2*cr)
-        weights[numpts-1] = 1.0/(2*cr)
-        for ir in range( 1, numpts-1 ):
-            weights[ir] = 1.0/cr
-        return [ numpts, idxmin, weights ]
-    else:
-        idxmin = i*cr + (twoImin+1)//2
-        numpts = cr
-        weights = np.zeros( numpts )
-        for ir in range( 0, numpts ):
-            weights[ir] = 1.0/cr
-        return [ numpts, idxmin, weights ]
-    # if   ( cr==1 ):
-    #     numpts = 1
-    #     idxmin = i
-    # elif ( cr>=2 ):
-    #     numpts = cr*(1-sf)*(1-sc)+(2*(cr-1)+1)*sf*sc
-    #     idxmin = i*cr*(1-sf)*(1-sc)+(i*cr-cr+1)*sf*sc
-    # weights = np.zeros( numpts )
-    # for ir in range( numpts ):
-    #     ii = idxmin+ir
-    #     weights[ir] = (1/cr)*(1-sf)*(1-sc)+((abs(cr-abs(ii-i*cr)))/(cr*cr))*sf*sc
-    # return [ numpts, idxmin, weights ]
-    # weights = np.zeros( iimax - iimin + 1 )
-    # for ii in range( iimin, iimax + 1 ):
-    #     if (ii < idxmin or ii > idxmin + numpts ):
-    #         weights[ii] = 0.00
-    #     else:
-    #         weights[ii] = (1/cr)*(1-sf)*(1-sc)+((abs(cr-abs(ii-i*cr)))/(cr*cr))*sf*sc
-    # return [ numpts, idxmin, weights ]
-
-# def coarseing_points(i, sc, sf, cr):
-#     if   ( cr==1 ):
-#         numpts = 1
-#         idxmin = i
-#     elif ( cr>=2 ):
-#         numpts = cr*(1-sf)*(1-sc)+(2*(cr-1)+1)*sf*sc
-#         idxmin = i*cr*(1-sf)*(1-sc)+(i*cr-cr+1)*sf*sc
-#     return [idxmin, numpts]
-
-# def coarsening_weight(i, ii, sc, sf, cr):
-#     idxmin, numpts = coarseing_points(i, sc, sf, cr)
-#     if ii < idxmin or ii >= idxmin + numpts:
-#         return 0.0
-#     return (1/cr)*(1-sf)*(1-sc)+((abs(cr-abs(ii-i*cr)))/(cr*cr))*sf*sc
 
 def coarsening_fine_grid_limits( sc, sf, cr ):
     if   ( sf == 0 ): # cell-centered
@@ -182,6 +71,47 @@ def coarsening_coarse_grid_limits( sc, sf, cr, iimin, iimax ):
             imax = max(imax,i)
     return [ imin, imax ]
 
+def coarsening_points_and_weights( i, sc, sf, cr ):
+    twoImin = -cr*sc + sf - 1
+    if (twoImin % 2 == 0):
+        idxmin = i*cr + twoImin//2
+        numpts = cr+1
+        weights = np.zeros( numpts )
+        weights[0] = 1.0/(2*cr)
+        weights[numpts-1] = 1.0/(2*cr)
+        for ir in range( 1, numpts-1 ):
+            weights[ir] = 1.0/cr
+    else:
+        idxmin = i*cr + (twoImin+1)//2
+        numpts = cr
+        weights = np.zeros( numpts )
+        for ir in range( 0, numpts ):
+            weights[ir] = 1.0/cr
+
+    return [ numpts, idxmin, weights ]
+
+# def refinement_fine_grid_limits( sc, sf, cr ):
+#     if   ( sf == 0 ): # cell-centered
+#         iimin = 0 # original
+#         iimax = 7 # original
+#     elif ( sf == 1 ): # nodal
+#         iimin = 0 # original
+#         iimax = 8 # original
+#     return [ iimin, iimax ]
+
+# def refinement_coarse_grid_limits( sc, sf, cr, iimin, iimax ):
+#     # imin = int( iimin/cr ) # original
+#     # imax = int( iimax/cr )-(1-sc)*sf+(1-sf)*sc # original
+#     imin = 10000
+#     imax = -10000
+#     for i in range(-100,101):
+#         numpts, idxmin, weights = refinement_points_and_weights(i, sc, sf, cr)
+#         if iimin <= idxmin + numpts - 1:
+#             imin = min(imin,i)
+#         if iimax >= idxmin:
+#             imax = max(imax,i)
+#     return [ imin, imax ]
+
 # # Refinement for MR: interpolation points and weights
 # def refinement_points_and_weights( ii, sc, sf, cr ):
 #     if   ( cr==1 ):
@@ -202,19 +132,18 @@ def coarsening_coarse_grid_limits( sc, sf, cr, iimin, iimax ):
 #             weights[ir] = (1-sf)*(1-sc)+((abs(cr-abs(ii-i*cr)))/(cr))*sf*sc
 #     return [ numpts, idxmin, weights ]
 
-# def refinement_fine_grid_limits( sc, sf, cr ):
-#     if   ( sf == 0 ): # cell-centered
-#         iimin = 0 # original
-#         iimax = 7 # original
-#     elif ( sf == 1 ): # nodal
-#         iimin = 0 # original
-#         iimax = 8 # original
-#     return [ iimin, iimax ]
-
-# def refinement_coarse_grid_limits( sc, sf, cr, iimin, iimax ):
-#     imin = int( iimin/cr ) # original
-#     imax = int( iimax/cr )-(1-sc)*sf+(1-sf)*sc # original
-#     return [ imin, imax ]
+## TODO Coarsening for IO: interpolation points and weights
+#def coarsening_points_and_weights_for_IO( i, sf, sc, cr ):
+#    if   ( cr==1 ):
+#        numpts = 1+abs(sf-sc)
+#        idxmin = i-sc*(1-sf)
+#    elif ( cr>=2 ):
+#        numpts = 2-sf
+#        idxmin = i*cr+cr//2*(1-sc)-(1-sf)
+#    weights = np.zeros( numpts )
+#    for ir in range( numpts ):
+#        weights[ir] = (1/numpts)*(1-sf)*(1-sc)+(1/numpts)*sf*sc
+#    return [ numpts, idxmin, weights ]
 
 #-------------------------------------------------------------------------------
 # Main
@@ -255,8 +184,6 @@ for sc in [0,1]:
 
         print( '\n Min and max index on coarse grid:  imin={}  imax={}'.format( imin, imax ) )
         print(   ' Min and max index on fine   grid: iimin={} iimax={}'.format( iimin, iimax ) )
-        # print(   ' Min and max index on fine   grid: iiminL={} iimaxL={}'.format( iiminLarge, iimaxLarge     ) )
-
 
         # Number of grid points
         # nc = imax-imin+1
@@ -264,14 +191,9 @@ for sc in [0,1]:
         # print( '\n Number of points on coarse grid: nc={}'.format( nc ) )
         # print(   ' Number of points on fine   grid: nf={}'.format( nf ) )
 
-        # coarsening_table = range(imin,imax+1)
-
-        iiminLarge = iimin
-        iimaxLarge = iimax
         # Coarsening for MR: interpolation points and weights
-        for i in range(imin, imax+1): # index on coarse grid
+        for i in range( imin, imax+1 ): # index on coarse grid
             numpts,idxmin,weights = coarsening_points_and_weights( i, sc, sf, cr )
-            # coarsening_table[i-imin] = {i,idxmin,numpts,weights}
             print( '\n Find value at i={} by interpolating over the following points and weights:'.format( i ) )
             wtotal = 0.0
             for ir in range( numpts ): # interpolation points and weights
@@ -284,32 +206,10 @@ for sc in [0,1]:
             if (abs(wtotal - 1.0) > 1E-9):
                 print ('\n ERROR: total weight wtotal={} should be 1 for coarse index i={}'.format(wtotal,i))
 
-        # print("iiminLarge = {}, iimaxlarge = {}".format(iiminLarge,iimaxLarge))
-
-        # for ii in range(iiminLarge, iimaxLarge+1):
-        #     foundimin = False
-        #     foundimax = False
-        #     for i in range(iminLarge, imaxLarge+1):
-        #         numpts,idxmin,weights = coarsening_points_and_weights( i, sc, sf, cr )
-        #         if (ii < idxmin):
-        #             foundimin = True
-        #             iminTest = min(iminTest, i)
-        #             # print("ii={}, iminTest<={}".format(ii,i))
-        #         if (ii >= idxmin + numpts):
-        #             foundimax = True
-        #             imaxTest = max(imaxTest, i)
-        #             # print("ii={}, imaxTest>={}".format(ii,i))
-        #     if (foundimin and foundimax):
-        #         iiminTest = min(iiminTest,ii)
-        #         iimaxTest = max(iimaxTest,ii)
-
-        # print(" iminTest = {},  imaxTest = {}".format( iminTest, imaxTest))
-        # print("iiminTest = {}, iimaxTest = {}".format(iiminTest,iimaxTest))
-
         # Coarsening for MR: check conservation properties
-        for ii in range(iimin, iimax+1): # index on fine grid
+        for ii in range( iimin, iimax+1 ): # index on fine grid
             ws = 0.0
-            for i in range(imin, imax+1): # index on coarse grid
+            for i in range( imin, imax+1 ): # index on coarse grid
                 numpts,idxmin,weights = coarsening_points_and_weights( i, sc, sf, cr )
                 for ir in range( numpts ): # interpolation points and weights
                     jj = idxmin+ir
