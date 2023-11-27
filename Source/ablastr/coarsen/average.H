@@ -51,17 +51,7 @@ namespace ablastr::coarsen::average
         amrex::GpuArray<int, 3> const &sf,
         amrex::GpuArray<int, 3> const &sc,
         amrex::GpuArray<int, 3> const &cr,
-        int const i, int const j, int const k, int const comp)
-    {
-        // Number of points and starting indices of source array (fine)
-        amrex::GpuArray<int, 3> np, idx_min;
-        amrex::GpuArray<bool, 3> use_half;
-        amrex::Real crxyz_inv;
-
-        CalculateCoarseningData(idx_min, np, use_half, crxyz_inv, sf, sc, cr);
-
-        return InterpWithCoarseningData(arr_src, idx_min, np, use_half, crxyz_inv, cr, i, j, k, comp);
-    }
+        int const i, int const j, int const k, int const comp);
 
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void
@@ -72,22 +62,7 @@ namespace ablastr::coarsen::average
         amrex::Real &crx_cry_crz_inv,
         amrex::GpuArray<int, 3> const &stag_src_fine,
         amrex::GpuArray<int, 3> const &stag_des_crse,
-        amrex::GpuArray<int, 3> const &crse_ratio)
-    {
-        for (int l = 0; l < 3; ++l) {
-            int two_times_index_min = -crse_ratio[l]*stag_des_crse[l] + stag_src_fine[l] - 1;
-            if ((two_times_index_min % 2) == 0) {
-                src_fine_index_min[l] = two_times_index_min/2;
-                num_src_points[l] = crse_ratio[l]+1;
-                use_half_weight[l] = 1; // True
-            } else {
-                src_fine_index_min[l] = (two_times_index_min+1)/2;
-                num_src_points[l] = crse_ratio[l];
-                use_half_weight[l] = 0; // False
-            }
-        }
-        crx_cry_crz_inv = 1.0_rt / static_cast<amrex::Real>(crse_ratio[0]*crse_ratio[1]*crse_ratio[2]);
-    }
+        amrex::GpuArray<int, 3> const &crse_ratio);
 
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     amrex::Real
@@ -98,50 +73,7 @@ namespace ablastr::coarsen::average
         amrex::GpuArray<bool, 3> const &use_half,
         amrex::Real crx_cry_crz_inv,
         amrex::GpuArray<int, 3> const &coarsen_ratio,
-        int i, int j, int k, int comp)
-    {
-        using namespace amrex::literals;
-
-        // Auxiliary integer variables
-        int const numx = num_src_points[0];
-        int const numy = num_src_points[1];
-        int const numz = num_src_points[2];
-        int const iimin = i * coarsen_ratio[0] + src_fine_index_min[0];
-        int const jjmin = j * coarsen_ratio[1] + src_fine_index_min[1];
-        int const kkmin = k * coarsen_ratio[2] + src_fine_index_min[2];
-
-        // Add neutral elements (=0) beyond guard cells in source array (fine)
-        auto const arr_src_safe = [arr_src]
-                AMREX_GPU_DEVICE(int const ix, int const iy, int const iz, int const n) noexcept {
-            return arr_src.contains(ix, iy, iz) ? arr_src(ix, iy, iz, n) : 0.0_rt;
-        };
-
-        // Interpolate over points computed above. Weights are computed in order
-        // to guarantee total charge conservation for any staggering.
-        // Python script Source/Utils/check_interp_points_and_weights.py can be
-        // used to check interpolation points and weights in 1D.
-        amrex::Real c = 0.0_rt;
-        for (int kref = 0; kref < numz; ++kref) {
-            int kk = kkmin + kref;
-            amrex::Real kfactor = (use_half[2] && (kref == 0 || kref == numz-1)) ? 0.5_rt : 1.0_rt;
-
-            for (int jref = 0; jref < numy; ++jref) {
-                int jj = jjmin + jref;
-                amrex::Real jfactor = (use_half[1] && (jref == 0 || jref == numy-1)) ? 0.5_rt : 1.0_rt;
-
-                for (int iref = 0; iref < numx; ++iref) {
-                    int ii = iimin + iref;
-                    amrex::Real ifactor = (use_half[0] && (iref == 0 || iref == numx-1)) ? 0.5_rt : 1.0_rt;
-
-                    c += ifactor * jfactor * kfactor * arr_src_safe(ii, jj, kk, comp);
-                }
-            }
-        }
-
-        c *= crx_cry_crz_inv;
-
-        return c;
-    }
+        int i, int j, int k, int comp);
 
     /**
      * \brief Loops over the boxes of the coarsened MultiFab \c mf_dst and fills
@@ -165,30 +97,6 @@ namespace ablastr::coarsen::average
         amrex::IntVect crse_ratio
     );
 
-    void
-    LoopOverBox (
-        amrex::Box box, int ncomp,
-        amrex::Array4<amrex::Real> const &arr_dst,
-        amrex::Array4<amrex::Real const> const &arr_src,
-        amrex::GpuArray<int, 3> const &stag_src_fine,
-        amrex::GpuArray<int, 3> const &stag_des_crse,
-        amrex::GpuArray<int, 3> const &crse_ratio)
-    {
-        // Number of points and starting indices of source array (fine)
-        amrex::GpuArray<int,3> idx_min, np;
-        amrex::GpuArray<bool,3> use_half;
-        amrex::Real crx_cry_crz_inv;
-
-        CalculateCoarseningData(idx_min, np, use_half, crx_cry_crz_inv,
-                                stag_des_crse, stag_src_fine, crse_ratio);
-
-        amrex::ParallelFor(box, ncomp,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) {
-                arr_dst(i, j, k, n) = InterpWithCoarseningData(
-                    arr_src, idx_min, np, use_half, crx_cry_crz_inv, i, j, k, n);
-            });
-    }
-
     /**
      * \brief Stores in the coarsened MultiFab \c mf_dst the values obtained by
      *        interpolating the data contained in the fine MultiFab \c mf_src.
@@ -206,7 +114,7 @@ namespace ablastr::coarsen::average
         amrex::IntVect crse_ratio
     );
 
-        AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     amrex::Real
     InterpWithWeights (
         amrex::Array4<amrex::Real const> const &arr_src,
@@ -217,6 +125,8 @@ namespace ablastr::coarsen::average
         amrex::GpuArray<int, 3> const &coarsen_ratio,
         int i, int j, int k, int comp)
     {
+        using namespace amrex::literals;
+
         const int iimin = i * coarsen_ratio[0] + src_fine_ind_min[0];
         const int jjmin = j * coarsen_ratio[1] + src_fine_ind_min[1];
         const int kkmin = k * coarsen_ratio[2] + src_fine_ind_min[2];
@@ -307,6 +217,30 @@ namespace ablastr::coarsen::average
         int kClamped = amrex::Clamp(k, arr.begin.x, arr.end.z - 1);
         return arr(iClamped,jClamped,kClamped,n);
     }
+
+        // void
+    // LoopOverBox (
+    //     amrex::Box box, int ncomp,
+    //     amrex::Array4<amrex::Real> const &arr_dst,
+    //     amrex::Array4<amrex::Real const> const &arr_src,
+    //     amrex::GpuArray<int, 3> const &stag_src_fine,
+    //     amrex::GpuArray<int, 3> const &stag_des_crse,
+    //     amrex::GpuArray<int, 3> const &crse_ratio)
+    // {
+    //     // Number of points and starting indices of source array (fine)
+    //     amrex::GpuArray<int,3> idx_min, np;
+    //     amrex::GpuArray<bool,3> use_half;
+    //     amrex::Real crx_cry_crz_inv;
+
+    //     CalculateCoarseningData(idx_min, np, use_half, crx_cry_crz_inv,
+    //                             stag_des_crse, stag_src_fine, crse_ratio);
+
+    //     amrex::ParallelFor(box, ncomp,
+    //         [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) {
+    //             arr_dst(i, j, k, n) = InterpWithCoarseningData(
+    //                 arr_src, idx_min, np, use_half, crx_cry_crz_inv, i, j, k, n);
+    //         });
+    // }
 
 } // namespace ablastr::coarsen::average
 
