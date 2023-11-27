@@ -84,9 +84,8 @@ namespace ablastr::coarsen::sample
         const int imin = idx_min[0];
         const int jmin = idx_min[1];
         const int kmin = idx_min[2];
-        amrex::Real const wx = 1.0_rt / static_cast<amrex::Real>(numx);
-        amrex::Real const wy = 1.0_rt / static_cast<amrex::Real>(numy);
-        amrex::Real const wz = 1.0_rt / static_cast<amrex::Real>(numz);
+
+        amrex::Real const wxwywz = 1.0_rt / static_cast<amrex::Real>(numx*numy*numz);
 
         // Interpolate over points computed above
         amrex::Real c = 0.0_rt;
@@ -100,7 +99,7 @@ namespace ablastr::coarsen::sample
                 }
             }
         }
-        c*=wx*wy*wz;
+        c *= wxwywz;
         return c;
     }
 
