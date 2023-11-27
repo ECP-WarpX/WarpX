@@ -42,7 +42,7 @@ namespace ablastr::coarsen::average
      * \param[in] comp    index along the fourth component of the Array4 \c arr_src
      *                    containing the data to be interpolated
      *
-     * \return Interpolated field at cell (i,j,k) of a coarsened Array4
+     * \return interpolated field at cell (i,j,k) of a coarsened Array4
      */
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     amrex::Real
@@ -51,7 +51,7 @@ namespace ablastr::coarsen::average
         amrex::GpuArray<int, 3> const &sf,
         amrex::GpuArray<int, 3> const &sc,
         amrex::GpuArray<int, 3> const &cr,
-        int const i, int const j, int const k, int const comp);
+        int i, int j, int k, int comp);
 
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void
