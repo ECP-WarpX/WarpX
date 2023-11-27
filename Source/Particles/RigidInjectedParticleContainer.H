@@ -50,7 +50,6 @@ public:
                                     const std::string& name);
     ~RigidInjectedParticleContainer () override = default;
 
-
     RigidInjectedParticleContainer ( RigidInjectedParticleContainer const &)             = delete;
     RigidInjectedParticleContainer& operator= ( RigidInjectedParticleContainer const & ) = delete;
     RigidInjectedParticleContainer ( RigidInjectedParticleContainer&& )                  = default;
