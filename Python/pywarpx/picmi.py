@@ -271,8 +271,8 @@ class Species(picmistandard.PICMI_Species):
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
-            distributions_is_list = isinstance(self.initial_distribution, list)
-            layout_is_list = isinstance(layout, list)
+            distributions_is_list = np.iterable(self.initial_distribution)
+            layout_is_list = np.iterable(layout)
             if not distributions_is_list and not layout_is_list:
                 self.initial_distribution.initialize_inputs(self.species_number, layout, self.species, self.density_scale, '')
             elif distributions_is_list and (layout_is_list or layout is None):
