@@ -188,7 +188,7 @@ void PsatdAlgorithmPml::pushSpectralFields(SpectralFieldData& f) const
             constexpr amrex::Real ky = 0._rt;
             const amrex::Real kz = modified_kz_arr[j];
 #endif
-            constexpr Real c2 = PhysConst::c2;
+            constexpr amrex::Real c2 = PhysConst::c*PhysConst::c;
 
             const Complex I = Complex{0._rt, 1._rt};
 

@@ -39,11 +39,11 @@ public:
     void InitData ();
 
     /** return MultiFab, sigma (conductivity) of the medium. */
-    amrex::MultiFab& getsigma_mf  () {return ( *m_sigma_mf); }
+    amrex::MultiFab& getsigma_mf  () {return (*m_sigma_mf);}
     /** return MultiFab, epsilon (permittivity) of the medium. */
-    amrex::MultiFab& getepsilon_mf  () {return ( *m_eps_mf); }
+    amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
     /** return MultiFab, mu (permeability) of the medium. */
-    amrex::MultiFab& getmu_mf  () {return ( *m_mu_mf); }
+    amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
 
     /** return iMultiFab, magnetic material id number */
     amrex::iMultiFab& get_magnetic_material_id_mf  () { return (*m_magnetic_material_id_mf); }
@@ -51,10 +51,10 @@ public:
     /** Bool flag on whether there are any magnetic materials present. */
     bool is_magnetic_material_present () { return m_magnetic_material_present_flag; }
 
-     /** Initializes the Multifabs storing macroscopic properties
-      *  with user-defined functions(x,y,z).
-      */
-     void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
+    /** Initializes the Multifabs storing macroscopic properties
+     *  with user-defined functions(x,y,z).
+     */
+    void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
                                   amrex::ParserExecutor<3> const& macro_parser,
                                   const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx_lev,
                                   const amrex::RealBox& prob_domain_lev);
@@ -137,25 +137,25 @@ private:
  */
 struct LaxWendroffAlgo {
 
-     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-     static amrex::Real alpha (amrex::Real const sigma,
-                               amrex::Real const epsilon,
-                               amrex::Real dt) {
-         using namespace amrex;
-         const amrex::Real fac1 = 0.5_rt * sigma * dt;
-         const amrex::Real alpha = (epsilon - fac1) / (epsilon + fac1);
-         return alpha;
-     }
-
-     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-     static amrex::Real beta (amrex::Real const sigma,
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real alpha (amrex::Real const sigma,
                               amrex::Real const epsilon,
                               amrex::Real dt) {
-         using namespace amrex;
-         const amrex::Real fac1 = 0.5_rt * sigma * dt;
-         const amrex::Real beta = dt / (epsilon + fac1);
-         return beta;
-     }
+        using namespace amrex;
+        const amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
+        const amrex::Real alpha = (1._rt - fac1)/(1._rt + fac1);
+        return alpha;
+    }
+
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    static amrex::Real beta (amrex::Real const sigma,
+                             amrex::Real const epsilon,
+                             amrex::Real dt) {
+        using namespace amrex;
+        const amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
+        const amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
+        return beta;
+    }
 
 };
 
@@ -171,21 +171,21 @@ struct BackwardEulerAlgo {
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real alpha (amrex::Real const sigma,
-                            amrex::Real const epsilon,
-                            amrex::Real dt) {
+                              amrex::Real const epsilon,
+                              amrex::Real dt) {
         using namespace amrex;
-        const amrex::Real fac1 = sigma * dt;
-        const amrex::Real alpha = epsilon/(epsilon + fac1);
+        const amrex::Real fac1 = sigma * dt / epsilon;
+        const amrex::Real alpha = (1._rt)/(1._rt + fac1);
         return alpha;
     }
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real beta (amrex::Real const sigma,
-                            amrex::Real const epsilon,
-                            amrex::Real dt) {
+                             amrex::Real const epsilon,
+                             amrex::Real dt) {
         using namespace amrex;
-        const amrex::Real fac1 = sigma * dt;
-        const amrex::Real beta = dt / (epsilon + fac1);
+        const amrex::Real fac1 = sigma * dt / epsilon;
+        const amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
         return beta;
     }
 };

@@ -23,7 +23,6 @@ PsatdAlgorithmPmlRZ::PsatdAlgorithmPmlRZ (SpectralKSpaceRZ const & spectral_kspa
                                           short const grid_type, amrex::Real const dt):
     // Initialize members of base class and member variables
     SpectralBaseAlgorithmRZ{spectral_kspace, dm, spectral_index, norder_z, grid_type},
-    coefficients_initialized{false},
     m_dt{dt}
 {
     // Allocate the arrays of coefficients
@@ -91,7 +90,7 @@ PsatdAlgorithmPmlRZ::pushSpectralFields (SpectralFieldDataRZ & f)
             int const ir = i + nr*mode;
             amrex::Real const kr = kr_arr[ir];
 
-            constexpr amrex::Real c2 = PhysConst::c2;
+            constexpr amrex::Real c2 = PhysConst::c*PhysConst::c;
             Complex const I = Complex{0._rt,1._rt};
             amrex::Real const C = C_arr(i,j,k,mode);
             amrex::Real const S_ck = S_ck_arr(i,j,k,mode);
