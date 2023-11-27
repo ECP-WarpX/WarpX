@@ -23,7 +23,6 @@ PsatdAlgorithmPmlRZ::PsatdAlgorithmPmlRZ (SpectralKSpaceRZ const & spectral_kspa
                                           short const grid_type, amrex::Real const dt):
     // Initialize members of base class and member variables
     SpectralBaseAlgorithmRZ{spectral_kspace, dm, spectral_index, norder_z, grid_type},
-    coefficients_initialized{false},
     m_dt{dt}
 {
     // Allocate the arrays of coefficients
