@@ -57,23 +57,28 @@ public:
 
     WarpXParIter (ContainerType& pc, int level, amrex::MFItInfo& info);
 
-    const std::array<RealVector, PIdx::nattribs>& GetAttribs () const {
+    [[nodiscard]] const std::array<RealVector, PIdx::nattribs>& GetAttribs () const
+    {
         return GetStructOfArrays().GetRealData();
     }
 
-    std::array<RealVector, PIdx::nattribs>& GetAttribs () {
+    [[nodiscard]] std::array<RealVector, PIdx::nattribs>& GetAttribs ()
+    {
         return GetStructOfArrays().GetRealData();
     }
 
-    const RealVector& GetAttribs (int comp) const {
+    [[nodiscard]] const RealVector& GetAttribs (int comp) const
+    {
         return GetStructOfArrays().GetRealData(comp);
     }
 
-    RealVector& GetAttribs (int comp) {
+    [[nodiscard]] RealVector& GetAttribs (int comp)
+    {
         return GetStructOfArrays().GetRealData(comp);
     }
 
-    IntVector& GetiAttribs (int comp) {
+    [[nodiscard]] IntVector& GetiAttribs (int comp)
+    {
         return GetStructOfArrays().GetIntData(comp);
     }
 };
@@ -115,7 +120,7 @@ public:
     using DiagnosticParticles = amrex::Vector<std::map<std::pair<int, int>, DiagnosticParticleData> >;
 
     WarpXParticleContainer (amrex::AmrCore* amr_core, int ispecies);
-    ~WarpXParticleContainer() override {}
+    ~WarpXParticleContainer() override = default;
 
     // Move and copy operations
     WarpXParticleContainer(const WarpXParticleContainer&)            = delete;
