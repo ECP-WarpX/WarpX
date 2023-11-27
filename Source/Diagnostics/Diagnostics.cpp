@@ -335,7 +335,7 @@ Diagnostics::InitDataAfterRestart ()
         InitializeParticleBuffer();
         InitializeParticleFunctors();
     }
-   if (write_species == 0) {
+    if (write_species == 0) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_format != "checkpoint",
             "For checkpoint format, write_species flag must be 1."

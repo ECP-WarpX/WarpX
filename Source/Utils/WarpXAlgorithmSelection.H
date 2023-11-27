@@ -74,23 +74,23 @@ struct ParticlePusherAlgo {
 
 struct CurrentDepositionAlgo {
     enum {
-         Esirkepov = 0,
-         Direct = 1,
-         Vay = 2
+        Esirkepov = 0,
+        Direct = 1,
+        Vay = 2
     };
 };
 
 struct ChargeDepositionAlgo {
     // Only the Standard algorithm is implemented
     enum {
-         Standard = 0
+        Standard = 0
     };
 };
 
 struct GatheringAlgo {
     enum {
-         EnergyConserving = 0,
-         MomentumConserving
+        EnergyConserving = 0,
+        MomentumConserving
     };
 };
 

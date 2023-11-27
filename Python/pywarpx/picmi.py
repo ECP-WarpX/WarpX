@@ -394,11 +394,17 @@ class DensityDistributionBase(object):
             species.do_continuous_injection = 1
 
         # --- Note that WarpX takes gamma*beta as input
-        if (hasattr(self, "momentum_expressions")
+        if (hasattr(self, "momentum_spread_expressions")
+            and np.any(np.not_equal(self.momentum_spread_expressions, None))
+        ):
+            species.momentum_distribution_type = 'gaussian_parse_momentum_function'
+            self.setup_parse_momentum_functions(species, self.momentum_expressions, '_m', self.directed_velocity)
+            self.setup_parse_momentum_functions(species, self.momentum_spread_expressions, '_th', [0.,0.,0.])
+        elif (hasattr(self, "momentum_expressions")
             and np.any(np.not_equal(self.momentum_expressions, None))
         ):
             species.momentum_distribution_type = 'parse_momentum_function'
-            self.setup_parse_momentum_functions(species)
+            self.setup_parse_momentum_functions(species, self.momentum_expressions, '', self.directed_velocity)
         elif np.any(np.not_equal(self.rms_velocity, 0.)):
             species.momentum_distribution_type = "gaussian"
             species.ux_m = self.directed_velocity[0]/constants.c
@@ -413,13 +419,13 @@ class DensityDistributionBase(object):
             species.uy = self.directed_velocity[1]/constants.c
             species.uz = self.directed_velocity[2]/constants.c
 
-    def setup_parse_momentum_functions(self, species):
+    def setup_parse_momentum_functions(self, species, expressions, suffix, defaults):
         for sdir, idir in zip(['x', 'y', 'z'], [0, 1, 2]):
-            if self.momentum_expressions[idir] is not None:
-                expression = pywarpx.my_constants.mangle_expression(self.momentum_expressions[idir], self.mangle_dict)
+            if expressions[idir] is not None:
+                expression = pywarpx.my_constants.mangle_expression(expressions[idir], self.mangle_dict)
             else:
-                expression = f'{self.directed_velocity[idir]}'
-            species.__setattr__(f'momentum_function_u{sdir}(x,y,z)', f'({expression})/{constants.c}')
+                expression = f'{defaults[idir]}'
+            species.__setattr__(f'momentum_function_u{sdir}{suffix}(x,y,z)', f'({expression})/{constants.c}')
 
 
 class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, DensityDistributionBase):
@@ -460,6 +466,20 @@ class UniformDistribution(picmistandard.PICMI_UniformDistribution, DensityDistri
 
 
 class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDistributionBase):
+    """
+    Parameters
+    ----------
+
+    warpx_momentum_spread_expressions: list of string
+        Analytic expressions describing the gamma*velocity spread for each axis [m/s].
+        Expressions should be in terms of the position, written as 'x', 'y', and 'z'.
+        Parameters can be used in the expression with the values given as keyword arguments.
+        For any axis not supplied (set to None), zero will be used.
+
+    """
+    def init(self, kw):
+        self.momentum_spread_expressions = kw.pop('warpx_momentum_spread_expressions', [None, None, None])
+
     def initialize_inputs(self, species_number, layout, species, density_scale):
 
         self.set_mangle_dict()
@@ -2301,7 +2321,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         elif np.iterable(self.species):
             species_names = [specie.name for specie in self.species]
         else:
-            species_names = [species.name]
+            species_names = [self.species.name]
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution

@@ -118,6 +118,9 @@ namespace SpeciesUtils {
         std::unique_ptr<amrex::Parser>& ux_parser,
         std::unique_ptr<amrex::Parser>& uy_parser,
         std::unique_ptr<amrex::Parser>& uz_parser,
+        std::unique_ptr<amrex::Parser>& ux_th_parser,
+        std::unique_ptr<amrex::Parser>& uy_th_parser,
+        std::unique_ptr<amrex::Parser>& uz_th_parser,
         std::unique_ptr<TemperatureProperties>& h_mom_temp,
         std::unique_ptr<VelocityProperties>& h_mom_vel,
         int flux_normal_axis, int flux_direction)
@@ -240,6 +243,45 @@ namespace SpeciesUtils {
                                                 ux_parser->compile<3>(),
                                                 uy_parser->compile<3>(),
                                                 uz_parser->compile<3>()));
+        } else if (mom_dist_s == "gaussian_parse_momentum_function") {
+            std::string str_momentum_function_ux_m;
+            std::string str_momentum_function_uy_m;
+            std::string str_momentum_function_uz_m;
+            std::string str_momentum_function_ux_th;
+            std::string str_momentum_function_uy_th;
+            std::string str_momentum_function_uz_th;
+            utils::parser::Store_parserString(pp_species_name,
+                "momentum_function_ux_m(x,y,z)", str_momentum_function_ux_m);
+            utils::parser::Store_parserString(pp_species_name,
+                "momentum_function_uy_m(x,y,z)", str_momentum_function_uy_m);
+            utils::parser::Store_parserString(pp_species_name,
+                "momentum_function_uz_m(x,y,z)", str_momentum_function_uz_m);
+            utils::parser::Store_parserString(pp_species_name,
+                "momentum_function_ux_th(x,y,z)", str_momentum_function_ux_th);
+            utils::parser::Store_parserString(pp_species_name,
+                "momentum_function_uy_th(x,y,z)", str_momentum_function_uy_th);
+            utils::parser::Store_parserString(pp_species_name,
+                "momentum_function_uz_th(x,y,z)", str_momentum_function_uz_th);
+            // Construct InjectorMomentum with InjectorMomentumParser.
+            ux_parser = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_momentum_function_ux_m, {"x","y","z"}));
+            uy_parser = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_momentum_function_uy_m, {"x","y","z"}));
+            uz_parser = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_momentum_function_uz_m, {"x","y","z"}));
+            ux_th_parser = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_momentum_function_ux_th, {"x","y","z"}));
+            uy_th_parser = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_momentum_function_uy_th, {"x","y","z"}));
+            uz_th_parser = std::make_unique<amrex::Parser>(
+                utils::parser::makeParser(str_momentum_function_uz_th, {"x","y","z"}));
+            h_inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussianParser*)nullptr,
+                                                ux_parser->compile<3>(),
+                                                uy_parser->compile<3>(),
+                                                uz_parser->compile<3>(),
+                                                ux_th_parser->compile<3>(),
+                                                uy_th_parser->compile<3>(),
+                                                uz_th_parser->compile<3>()));
         } else {
             StringParseAbortMessage("Momentum distribution type", mom_dist_s);
         }

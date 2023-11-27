@@ -618,10 +618,7 @@ class ParticleContainerWrapper(object):
         local          : bool
             If True return total charge per processor
         '''
-        raise NotImplementedError()
-        return self.libwarpx_so.warpx_sumParticleCharge(
-            ctypes.c_char_p(species_name.encode('utf-8')), local
-        )
+        return self.particle_container.sum_particle_charge(local)
 
 
     def getex(self):
