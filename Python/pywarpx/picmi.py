@@ -2319,7 +2319,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
         elif np.iterable(self.species):
             species_names = [specie.name for specie in self.species]
         else:
-            species_names = [species.name]
+            species_names = [self.species.name]
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution

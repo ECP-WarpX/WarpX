@@ -57,7 +57,7 @@ public:
                         bool isBTD = false) const;
 
     FlushFormatPlotfile () = default;
-    ~FlushFormatPlotfile() override {}
+    ~FlushFormatPlotfile() override = default;
 
     FlushFormatPlotfile ( FlushFormatPlotfile const &)             = default;
     FlushFormatPlotfile& operator= ( FlushFormatPlotfile const & ) = default;
