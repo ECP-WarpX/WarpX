@@ -96,10 +96,11 @@ namespace ablastr::coarsen::sample
                     const int ii = imin+iref;
                     const int jj = jmin+jref;
                     const int kk = kmin+kref;
-                    c += wx*wy*wz*arr_src(ii,jj,kk,comp);
+                    c += arr_src(ii,jj,kk,comp);
                 }
             }
         }
+        c*=wx*wy*wz;
         return c;
     }
 

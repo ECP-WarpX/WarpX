@@ -52,10 +52,7 @@ namespace ablastr::coarsen::average
         amrex::GpuArray<int, 3> const &sf,
         amrex::GpuArray<int, 3> const &sc,
         amrex::GpuArray<int, 3> const &cr,
-        int const i,
-        int const j,
-        int const k,
-        int const comp
+        int const i, int const j, int const k, int const comp
     )
     {
         using namespace amrex::literals;
@@ -70,22 +67,16 @@ namespace ablastr::coarsen::average
         // Number of points and starting indices of source array (fine)
         int np[3], idx_min[3];
 
-        // Compute number of points
+        // Compute number of points (np) and starting indices of source array (fine)
         for (int l = 0; l < 3; ++l) {
             if (cr[l] == 1)
                 np[l] = 1; // no coarsening
-            else
-                np[l] = cr[l] * (1 - sf[l]) * (1 - sc[l])        // cell-centered
-                        + (2 * (cr[l] - 1) + 1) * sf[l] * sc[l]; // nodal
-        }
-
-        // Compute starting indices of source array (fine)
-        for (int l = 0; l < 3; ++l) {
-            if (cr[l] == 1)
                 idx_min[l] = ic[l]; // no coarsening
             else
-                idx_min[l] = ic[l] * cr[l] * (1 - sf[l]) * (1 - sc[l])      // cell-centered
-                             + (ic[l] * cr[l] - cr[l] + 1) * sf[l] * sc[l]; // nodal
+                np[l] = cr[l] * (1 - sf[l]) * (1 - sc[l]) // cell-centered
+                      + (2 * cr[l] - 1) * sf[l] * sc[l];  // nodal
+                idx_min[l] =  ic[l] * cr[l] * (1 - sf[l]) * (1 - sc[l])   // cell-centered
+                           + (ic[l] * cr[l] - cr[l] + 1) * sf[l] * sc[l]; // nodal
         }
 
         // Auxiliary integer variables
@@ -139,6 +130,7 @@ namespace ablastr::coarsen::average
                 }
             }
         }
+
         return c;
     }
 
