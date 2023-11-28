@@ -2748,7 +2748,7 @@ Reduced Diagnostics
         In RZ geometry, this only saves the
         0'th azimuthal mode component of the fields.
         Integrated electric and magnetic field components can instead be obtained by specifying
-        ``<reduced_diags_name>.integrate == true``.
+        ``<reduced_diags_name>.integrate = true``.
         In a *moving window* simulation, the FieldProbe can be set to follow the moving frame by specifying ``<reduced_diags_name>.do_moving_window_FP = 1`` (default 0).
 
         .. warning::
