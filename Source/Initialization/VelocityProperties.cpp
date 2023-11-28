@@ -11,8 +11,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
-VelocityProperties::VelocityProperties (const amrex::ParmParse& pp, std::string const& source_name):
-    m_velocity{0}
+VelocityProperties::VelocityProperties (const amrex::ParmParse& pp, std::string const& source_name)
 {
     // Set defaults
     std::string vel_dist_s = "constant";

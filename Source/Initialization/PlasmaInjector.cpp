@@ -237,7 +237,9 @@ void PlasmaInjector::setupGaussianBeam (amrex::ParmParse const& pp_species)
         "Error: Symmetrization only supported to orders 4 or 8 ");
     gaussian_beam = true;
     SpeciesUtils::parseMomentum(species_name, source_name, "gaussian_beam", h_inj_mom,
-                                ux_parser, uy_parser, uz_parser, h_mom_temp, h_mom_vel);
+                                ux_parser, uy_parser, uz_parser,
+                                ux_th_parser, uy_th_parser, uz_th_parser,
+                                h_mom_temp, h_mom_vel);
 #if defined(WARPX_DIM_XZ)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( y_rms > 0._rt,
         "Error: Gaussian beam y_rms must be strictly greater than 0 in 2D "
@@ -278,7 +280,9 @@ void PlasmaInjector::setupNRandomPerCell (amrex::ParmParse const& pp_species)
 
     SpeciesUtils::parseDensity(species_name, source_name, h_inj_rho, density_parser);
     SpeciesUtils::parseMomentum(species_name, source_name, "nrandompercell", h_inj_mom,
-                                ux_parser, uy_parser, uz_parser, h_mom_temp, h_mom_vel);
+                                ux_parser, uy_parser, uz_parser,
+                                ux_th_parser, uy_th_parser, uz_th_parser,
+                                h_mom_temp, h_mom_vel);
 }
 
 void PlasmaInjector::setupNFluxPerCell (amrex::ParmParse const& pp_species)
@@ -352,7 +356,9 @@ void PlasmaInjector::setupNFluxPerCell (amrex::ParmParse const& pp_species)
 
     parseFlux(pp_species);
     SpeciesUtils::parseMomentum(species_name, source_name, "nfluxpercell", h_inj_mom,
-                                ux_parser, uy_parser, uz_parser, h_mom_temp, h_mom_vel,
+                                ux_parser, uy_parser, uz_parser,
+                                ux_th_parser, uy_th_parser, uz_th_parser,
+                                h_mom_temp, h_mom_vel,
                                 flux_normal_axis, flux_direction);
 }
 
@@ -405,7 +411,9 @@ void PlasmaInjector::setupNuniformPerCell (amrex::ParmParse const& pp_species)
                              num_particles_per_cell_each_dim[2];
     SpeciesUtils::parseDensity(species_name, source_name, h_inj_rho, density_parser);
     SpeciesUtils::parseMomentum(species_name, source_name, "nuniformpercell", h_inj_mom,
-                                ux_parser, uy_parser, uz_parser, h_mom_temp, h_mom_vel);
+                                ux_parser, uy_parser, uz_parser,
+                                ux_th_parser, uy_th_parser, uz_th_parser,
+                                h_mom_temp, h_mom_vel);
 }
 
 void PlasmaInjector::setupExternalFile (amrex::ParmParse const& pp_species)

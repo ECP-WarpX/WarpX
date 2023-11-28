@@ -45,7 +45,7 @@ struct VelocityProperties
     int m_sign_dir; // Sign of the velocity direction positive=1, negative=-1
 
     /* Constant velocity value, if m_type == VelConstantValue */
-    amrex::Real m_velocity;
+    amrex::Real m_velocity{0};
     /* Storage of the parser function, if m_type == VelParserFunction */
     std::unique_ptr<amrex::Parser> m_ptr_velocity_parser;
 };
