@@ -69,6 +69,10 @@ EmbeddedBoundary
 Applied fields
 ^^^^^^^^^^^^^^
 
+AnalyticInitialField
+""""""""""""""""""""
+.. autoclass:: pywarpx.picmi.AnalyticInitialField
+
 ConstantAppliedField
 """"""""""""""""""""
 .. autoclass:: pywarpx.picmi.ConstantAppliedField
