@@ -184,6 +184,7 @@ jobs:
         restore-keys: |
           ccache-openmp-pyfull-${{ hashFiles('.github/workflows/ubuntu.yml') }}-
           ccache-openmp-pyfull-
+
     - name: build WarpX
       run: |
         python3 -m pip install --upgrade pip

@@ -22,23 +22,25 @@ if os.name == "nt":
         if os.path.exists(p):
             os.add_dll_directory(p)
 
-from .Algo import algo
-from .Amr import amr
-from .Amrex import amrex
-from .Boundary import boundary
-from .Collisions import collisions
-from .Constants import my_constants
-from .Diagnostics import diagnostics, reduced_diagnostics
-from .EB2 import eb2
-from .Geometry import geometry
-from .HybridPICModel import hybridpicmodel
-from .Interpolation import interpolation
-from .Lasers import lasers
-from .LoadThirdParty import load_cupy
-from .PSATD import psatd
-from .Particles import newspecies, particles
-from .WarpX import warpx
-from ._libwarpx import libwarpx
+# `noqa` below is to prevent `pyflakes` from raising an
+# `imported but not used` warning
+from .Algo import algo  # noqa
+from .Amr import amr  # noqa
+from .Amrex import amrex  # noqa
+from .Boundary import boundary  # noqa
+from .Collisions import collisions  # noqa
+from .Constants import my_constants  # noqa
+from .Diagnostics import diagnostics, reduced_diagnostics  # noqa
+from .EB2 import eb2  # noqa
+from .Geometry import geometry  # noqa
+from .HybridPICModel import hybridpicmodel  # noqa
+from .Interpolation import interpolation  # noqa
+from .Lasers import lasers  # noqa
+from .LoadThirdParty import load_cupy  # noqa
+from .PSATD import psatd  # noqa
+from .Particles import newspecies, particles  # noqa
+from .WarpX import warpx  # noqa
+from ._libwarpx import libwarpx  # noqa
 
 # This is a circular import and must happen after the import of libwarpx
 from . import picmi  # isort:skip
