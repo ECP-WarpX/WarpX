@@ -212,12 +212,36 @@ Style and conventions
 
 - Space before and after assignment operator (``=``)
 
-- To define a function , for e.g., ``myfunction()`` use a space between the name of the function and the paranthesis - ``myfunction ()``.
-  To call the function, the space is not required, i.e., just use ``myfunction()``.
+- To define a function, use a space between the name of the function and the paranthesis, e.g., ``myfunction ()``.
+  When calling a function, no space should be used, i.e., just use ``myfunction()``.
+  The reason this is beneficial is that when we do a ``git grep`` to search for ``myfunction ()``, we can clearly see the locations where ``myfunction ()`` is defined and where ``myfunction()`` is called.
+  Also, using ``git grep "myfunction ()"`` searches for files only in the git repo, which is more efficient compared to the ``grep "myfunction ()"`` command that searches through all the files in a directory, including plotfiles for example.
 
-- The reason this is beneficial is that when we do a ``git grep`` to search for ``myfunction ()``, we can clearly see the locations where ``myfunction ()`` is defined and where ``myfunction()`` is called.
+- To define a class, use ``class`` on the same line as the name of the class, e.g., ``class MyClass``.
+  The reason this is beneficial is that when we do a ``git grep`` to search for ``class MyClass``, we can clearly see the locations where ``class MyClass`` is defined and where ``MyClass`` is called.
 
-- Also, using ``git grep "myfunction ()"`` searches for files only in the git repo, which is more efficient compared to the ``grep "myfunction ()"`` command that searches through all the files in a directory, including plotfiles for example.
+- When defining a function or class, make sure the starting ``{`` token to appears on a new line.
+
+- Use curly braces for single statement blocks. For example:
+```cpp
+       for (int n = 0; n < 10; ++n) {
+           Print() << "Like this!";
+       }
+```
+  or
+```cpp
+       for (int n = 0; n < 10; ++n) { Print() << "Like this!"; }
+```
+  but not
+```cpp
+
+       for (int n = 0; n < 10; ++n) Print() << "Not like this.";
+```
+  or
+```cpp
+       for (int n = 0; n < 10; ++n)
+          Print() << "Not like this.";
+```
 
 - It is recommended that style changes are not included in the PR where new code is added.
   This is to avoid any errors that may be introduced in a PR just to do style change.
