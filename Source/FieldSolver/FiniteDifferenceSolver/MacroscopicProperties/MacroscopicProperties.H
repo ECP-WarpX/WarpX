@@ -11,6 +11,7 @@
 #include "MacroscopicProperties_fwd.H"
 
 #include "Utils/WarpXConst.H"
+#include "MagneticMaterial.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Extension.H>
@@ -18,7 +19,6 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
-#include <JAModel.H>
 
 #include <memory>
 #include <string>
@@ -28,8 +28,7 @@
  * \brief This class contains the macroscopic properties of the medium needed to
  * evaluate macroscopic Maxwell equation.
  */
-class
-MacroscopicProperties
+class MacroscopicProperties
 {
 public:
     MacroscopicProperties (); // constructor
@@ -116,7 +115,7 @@ private:
     std::unique_ptr<amrex::Parser> m_epsilon_parser;
     /** Parser Wrapper for permeability */
     std::unique_ptr<amrex::Parser> m_mu_parser;
-    /** Parser Wrapper for the magnetic material ID */.
+    /** Parser Wrapper for the magnetic material ID */
     amrex::Vector<std::unique_ptr<amrex::Parser>> m_magnetic_material_id_parsers;
 
     /** Vector for storing magnetic materials present */
@@ -189,25 +188,5 @@ struct BackwardEulerAlgo {
         return beta;
     }
 };
-
-class MagneticMaterial
-{
-public:
-
-    virtual void UpdateHandM (
-              amrex::Real& H_x     ,       amrex::Real& H_y     ,       amrex::Real& H_z    ,
-              amrex::Real& M_x     ,       amrex::Real& M_y     ,       amrex::Real& M_z    ,
-        const amrex::Real& B_next_x, const amrex::Real& B_next_y, const amrex::Real& B_next_z) const = 0;
-
-};
-
-// M330-50 A steel Jiles-Atherton model parameters. Source:
-// Chwastek K. The applications of fixed‐point theorem in optimisation problems.
-// Arch Electr Eng. 2012;61(2):189–198
-static const JAModel mag_mat_M330_50_A_steel{amrex::Real(7.45E-5) /* alpha (unitless) */,
-                                             amrex::Real(26.1)    /* a (A/m) */,
-                                             amrex::Real(1.26E6)  /* Ms (A/m) */,
-                                             amrex::Real(52.3)    /* k (A/m) */,
-                                             amrex::Real(0.13)    /* c (unitless) */};
 
 #endif // WARPX_MACROSCOPIC_PROPERTIES_H_
