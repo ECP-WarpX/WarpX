@@ -58,6 +58,7 @@ MacroscopicProperties::ReadParameters ()
         ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
+
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
         utils::parser::Store_parserString(
@@ -109,6 +110,7 @@ MacroscopicProperties::ReadParameters ()
         ablastr::warn_manager::WMRecordWarning("Macroscopic properties",
             warnMsg.str());
     }
+
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
         utils::parser::Store_parserString(
