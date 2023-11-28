@@ -224,30 +224,30 @@ Style and conventions
 
 - Use curly braces for single statement blocks. For example:
 
-.. code-block:: cpp
+  .. code-block:: cpp
 
-   for (int n = 0; n < 10; ++n) {
-       Print() << "Like this!";
-   }
+     for (int n = 0; n < 10; ++n) {
+         Print() << "Like this!";
+     }
 
-or
+  or
 
-.. code-block:: cpp
+  .. code-block:: cpp
 
-   for (int n = 0; n < 10; ++n) { Print() << "Like this!"; }
+     for (int n = 0; n < 10; ++n) { Print() << "Like this!"; }
 
-but not
+  but not
 
-.. code-block:: cpp
+  .. code-block:: cpp
 
-   for (int n = 0; n < 10; ++n) Print() << "Not like this.";
+     for (int n = 0; n < 10; ++n) Print() << "Not like this.";
 
-or
+  or
 
-.. code-block:: cpp
+  .. code-block:: cpp
 
-   for (int n = 0; n < 10; ++n)
-       Print() << "Not like this.";
+     for (int n = 0; n < 10; ++n)
+         Print() << "Not like this.";
 
 - It is recommended that style changes are not included in the PR where new code is added.
   This is to avoid any errors that may be introduced in a PR just to do style change.
