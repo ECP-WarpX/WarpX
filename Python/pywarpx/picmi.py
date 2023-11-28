@@ -581,6 +581,13 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     warpx_reflect_all_velocities: bool default=False
         Whether the sign of all of the particle velocities are changed upon
         reflection on a boundary, or only the velocity normal to the surface
+
+    warpx_start_moving_window_step: int, default=0
+       The timestep at which the moving window starts
+
+    warpx_end_moving_window_step: int, default=-1
+       The timestep at which the moving window ends. If -1, the moving window
+       will continue until the end of the simulation.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -597,6 +604,9 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
         self.reflect_all_velocities = kw.pop('warpx_reflect_all_velocities', None)
+
+        self.start_moving_window_step = kw.pop('warpx_start_moving_window_step', None)
+        self.end_moving_window_step = kw.pop('warpx_end_moving_window_step', None)
 
         # Geometry
         # Set these as soon as the information is available
@@ -638,6 +648,9 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
                 pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[1]/constants.c  # in units of the speed of light
 
+            pywarpx.warpx.start_moving_window_step = self.start_moving_window_step
+            pywarpx.warpx.end_moving_window_step = self.end_moving_window_step
+
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
             assert self.refined_regions[0][0] == 1, Exception('The one refined region can only be level 1')
@@ -672,6 +685,13 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
 
     warpx_potential_hi_z: float, default=0.
        Electrostatic potential on the upper longitudinal boundary
+
+    warpx_start_moving_window_step: int, default=0
+       The timestep at which the moving window starts
+
+    warpx_end_moving_window_step: int, default=-1
+       The timestep at which the moving window ends. If -1, the moving window
+       will continue until the end of the simulation.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -685,6 +705,9 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
         self.potential_ymax = None
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
+
+        self.start_moving_window_step = kw.pop('warpx_start_moving_window_step', None)
+        self.end_moving_window_step = kw.pop('warpx_end_moving_window_step', None)
 
         # Geometry
         # Set these as soon as the information is available
@@ -714,6 +737,9 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
             if self.moving_window_velocity[0] != 0.:
                 pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[0]/constants.c  # in units of the speed of light
+
+            pywarpx.warpx.start_moving_window_step = self.start_moving_window_step
+            pywarpx.warpx.end_moving_window_step = self.end_moving_window_step
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
@@ -760,6 +786,13 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
     warpx_potential_hi_z: float, default=0.
        Electrostatic potential on the upper z boundary
+
+    warpx_start_moving_window_step: int, default=0
+       The timestep at which the moving window starts
+
+    warpx_end_moving_window_step: int, default=-1
+       The timestep at which the moving window ends. If -1, the moving window
+       will continue until the end of the simulation.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -775,6 +808,9 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         self.potential_ymax = None
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
+
+        self.start_moving_window_step = kw.pop('warpx_start_moving_window_step', None)
+        self.end_moving_window_step = kw.pop('warpx_end_moving_window_step', None)
 
         # Geometry
         # Set these as soon as the information is available
@@ -809,6 +845,9 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
             if self.moving_window_velocity[1] != 0.:
                 pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[1]/constants.c  # in units of the speed of light
+
+            pywarpx.warpx.start_moving_window_step = self.start_moving_window_step
+            pywarpx.warpx.end_moving_window_step = self.end_moving_window_step
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
@@ -868,6 +907,13 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
     warpx_potential_hi_z: float, default=0.
        Electrostatic potential on the upper z boundary
+
+    warpx_start_moving_window_step: int, default=0
+       The timestep at which the moving window starts
+
+    warpx_end_moving_window_step: int, default=-1
+       The timestep at which the moving window ends. If -1, the moving window
+       will continue until the end of the simulation.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -885,6 +931,9 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         self.potential_ymax = kw.pop('warpx_potential_hi_y', None)
         self.potential_zmin = kw.pop('warpx_potential_lo_z', None)
         self.potential_zmax = kw.pop('warpx_potential_hi_z', None)
+
+        self.start_moving_window_step = kw.pop('warpx_start_moving_window_step', None)
+        self.end_moving_window_step = kw.pop('warpx_end_moving_window_step', None)
 
         # Geometry
         # Set these as soon as the information is available
@@ -924,6 +973,9 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
             if self.moving_window_velocity[2] != 0.:
                 pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[2]/constants.c  # in units of the speed of light
+
+            pywarpx.warpx.start_moving_window_step = self.start_moving_window_step
+            pywarpx.warpx.end_moving_window_step = self.end_moving_window_step
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
