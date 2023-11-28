@@ -63,15 +63,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
     pp_species_name.query("radially_weighted", radially_weighted);
 
     // Unlimited boundaries
-    amrex::Real xmin, ymin, zmin, xmax, ymax, zmax;
+    amrex::Real xmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real ymin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real zmin = std::numeric_limits<amrex::Real>::lowest();
 
-    xmin = std::numeric_limits<amrex::Real>::lowest();
-    ymin = std::numeric_limits<amrex::Real>::lowest();
-    zmin = std::numeric_limits<amrex::Real>::lowest();
-
-    xmax = std::numeric_limits<amrex::Real>::max();
-    ymax = std::numeric_limits<amrex::Real>::max();
-    zmax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real xmax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real ymax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real zmax = std::numeric_limits<amrex::Real>::max();
 
     // NOTE: When periodic boundaries are used, default injection range is set to mother grid dimensions.
     if( geom.isPeriodic(0) ) {
