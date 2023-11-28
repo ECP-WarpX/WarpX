@@ -139,13 +139,13 @@ public:
     amrex::Real density_min = std::numeric_limits<amrex::Real>::epsilon();
     amrex::Real density_max = std::numeric_limits<amrex::Real>::max();
 
-    InjectorPosition* getInjectorPosition () const;
-    InjectorPosition* getInjectorFluxPosition () const;
-    InjectorDensity*  getInjectorDensity () const;
+    [[nodiscard]] InjectorPosition* getInjectorPosition () const;
+    [[nodiscard]] InjectorPosition* getInjectorFluxPosition () const;
+    [[nodiscard]] InjectorDensity*  getInjectorDensity () const;
 
-    InjectorFlux*  getInjectorFlux () const;
-    InjectorMomentum* getInjectorMomentumDevice () const;
-    InjectorMomentum* getInjectorMomentumHost () const;
+    [[nodiscard]] InjectorFlux*  getInjectorFlux () const;
+    [[nodiscard]] InjectorMomentum* getInjectorMomentumDevice () const;
+    [[nodiscard]] InjectorMomentum* getInjectorMomentumHost () const;
 
 protected:
 
