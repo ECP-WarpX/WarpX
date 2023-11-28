@@ -223,25 +223,31 @@ Style and conventions
 - When defining a function or class, make sure the starting ``{`` token to appears on a new line.
 
 - Use curly braces for single statement blocks. For example:
-```cpp
-       for (int n = 0; n < 10; ++n) {
-           Print() << "Like this!";
-       }
-```
-  or
-```cpp
-       for (int n = 0; n < 10; ++n) { Print() << "Like this!"; }
-```
-  but not
-```cpp
 
-       for (int n = 0; n < 10; ++n) Print() << "Not like this.";
-```
+.. code-block:: cpp
+
+   for (int n = 0; n < 10; ++n) {
+       Print() << "Like this!";
+   }
+
   or
-```cpp
-       for (int n = 0; n < 10; ++n)
-          Print() << "Not like this.";
-```
+
+.. code-block:: cpp
+
+   for (int n = 0; n < 10; ++n) { Print() << "Like this!"; }
+
+but not
+
+.. code-block:: cpp
+
+   for (int n = 0; n < 10; ++n) Print() << "Not like this.";
+
+or
+
+.. code-block:: cpp
+
+   for (int n = 0; n < 10; ++n)
+       Print() << "Not like this.";
 
 - It is recommended that style changes are not included in the PR where new code is added.
   This is to avoid any errors that may be introduced in a PR just to do style change.
