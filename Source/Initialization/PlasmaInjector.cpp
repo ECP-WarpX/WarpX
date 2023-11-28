@@ -64,7 +64,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name,
 
     // Unlimited boundaries
     amrex::Real xmin, ymin, zmin, xmax, ymax, zmax;
-    
+
     xmin = std::numeric_limits<amrex::Real>::lowest();
     ymin = std::numeric_limits<amrex::Real>::lowest();
     zmin = std::numeric_limits<amrex::Real>::lowest();
