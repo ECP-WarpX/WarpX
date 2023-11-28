@@ -230,7 +230,7 @@ Style and conventions
        Print() << "Like this!";
    }
 
-  or
+or
 
 .. code-block:: cpp
 
