@@ -14,8 +14,8 @@
 /**
  * \brief Jiles-Atherton model of magnetic hysteresis.
  */
-class JAModel : public MagneticMaterial
-{
+// : public MagneticMaterial
+class JAModel {
 public:
 
     /**
@@ -93,28 +93,28 @@ protected:
         const amrex::GpuArray<amrex::Real,6>& dM_dH_e,
         const amrex::Real& dB_mu0inv_x, const amrex::Real& dB_mu0inv_y,  const amrex::Real& dB_mu0inv_z) const;
 
-    const amrex::Real m_param_alpha;
-    const amrex::Real m_param_a;
-    const amrex::Real m_param_Ms;
-    const amrex::Real m_param_k;
-    const amrex::Real m_param_c;
+    amrex::Real m_param_alpha;
+    amrex::Real m_param_a;
+    amrex::Real m_param_Ms;
+    amrex::Real m_param_k;
+    amrex::Real m_param_c;
 
-    const amrex::Real m_param_one_minus_alpha;
-    const amrex::Real m_param_one_minus_alpha_inv;
-    const amrex::Real m_param_Ms_over_a;
-    const amrex::Real m_param_c_Ms_over_a;
-    const amrex::Real m_param_a_inv;
-    const amrex::Real m_param_a2_inv;
+    amrex::Real m_param_one_minus_alpha;
+    amrex::Real m_param_one_minus_alpha_inv;
+    amrex::Real m_param_Ms_over_a;
+    amrex::Real m_param_c_Ms_over_a;
+    amrex::Real m_param_a_inv;
+    amrex::Real m_param_a2_inv;
 
 };
 
 // M330-50 A steel Jiles-Atherton model parameters. Source:
 // Chwastek K. The applications of fixed‐point theorem in optimisation problems.
 // Arch Electr Eng. 2012;61(2):189–198
-static const JAModel mag_mat_M330_50_A_steel{amrex::Real(7.45E-5) /* alpha (unitless) */,
-                                             amrex::Real(26.1)    /* a (A/m) */,
-                                             amrex::Real(1.26E6)  /* Ms (A/m) */,
-                                             amrex::Real(52.3)    /* k (A/m) */,
-                                             amrex::Real(0.13)    /* c (unitless) */};
+// static const JAModel mag_mat_M330_50_A_steel{amrex::Real(7.45E-5) /* alpha (unitless) */,
+//                                              amrex::Real(26.1)    /* a (A/m) */,
+//                                              amrex::Real(1.26E6)  /* Ms (A/m) */,
+//                                              amrex::Real(52.3)    /* k (A/m) */,
+//                                              amrex::Real(0.13)    /* c (unitless) */};
 
 #endif // WARPX_JAMODEL_H_

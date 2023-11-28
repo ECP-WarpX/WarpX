@@ -133,7 +133,7 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
-            constexpr amrex::Real c2 = PhysConst::c2;
+            constexpr amrex::Real c2 = c*c;
             constexpr amrex::Real inv_c = 1._rt/c;
             constexpr amrex::Real mu0 = PhysConst::mu0;
             constexpr Complex I = Complex{0._rt, 1._rt};

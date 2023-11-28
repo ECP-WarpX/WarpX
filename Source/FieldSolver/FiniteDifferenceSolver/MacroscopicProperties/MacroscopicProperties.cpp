@@ -120,11 +120,11 @@ MacroscopicProperties::ReadParameters ()
     }
 
     // Query input for magnetic materials
-    m_magnetic_material_present_flag = false;
-    if (utils::parser::queryWithParser(pp_macroscopic, "magnetic_id_vector", m_magnetic))
-    {
-        m_magnetic_material_present_flag= true;
-    }
+    // m_magnetic_material_present_flag = false;
+    // if (utils::parser::queryWithParser(pp_macroscopic, "magnetic_id_vector", m_magnetic))
+    // {
+    //     m_magnetic_material_present_flag= true;
+    // }
 
     // if (pp_macroscopic.query("ferromagnetic_material_id_function(x,y,z)", m_str_ferro_material_id_function)) {
     //     m_ferromagnetic_material_present_flag = true;
@@ -200,8 +200,7 @@ MacroscopicProperties::InitData ()
     // In the Maxwell solver, `mu` is used in the denominator.
     // Therefore, it needs to be strictly positive.
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_mu_mf->min(0,0,true) > 0,
-        "WarpX encountered zero or negative values for the relative permeability `mu`.
-        Please check the initialization of `mu`.");
+    "WarpX encountered zero or negative values for the relative permeability `mu`. Please check the initialization of `mu`.");
 
     // Initialize magnetic material ID
 

@@ -1,4 +1,5 @@
-#include <JAModel.H>
+#include "JAModel.H"
+#include "LangevinFunctions.H"
 
 JAModel::JAModel (amrex::Real alpha,
                   amrex::Real a,
@@ -6,6 +7,7 @@ JAModel::JAModel (amrex::Real alpha,
                   amrex::Real k,
                   amrex::Real c)
 {
+    using namespace amrex::literals;
     m_param_alpha = alpha;
     m_param_a = a;
     m_param_Ms = Ms;
@@ -24,6 +26,8 @@ void JAModel::UpdateHandM (
           amrex::Real& M_x     ,       amrex::Real& M_y     ,       amrex::Real& M_z     ,
     const amrex::Real& B_next_x, const amrex::Real& B_next_y, const amrex::Real& B_next_z) const
 {
+    using namespace amrex::literals;
+
     const amrex::Real B_prev_mu0inv_x = H_x + M_x;
     const amrex::Real B_prev_mu0inv_y = H_y + M_y;
     const amrex::Real B_prev_mu0inv_z = H_z + M_z;
@@ -63,7 +67,7 @@ void JAModel::UpdateHandM (
     //! The change in the effective field
     amrex::Real dH_e_x, dH_e_y, dH_e_z;
 
-    if (denominator != amrex::Real(0.0)) {
+    if (denominator != 0.0_rt) {
         //! Jacobian matrix chi = dM/dH_e = chi_an + chi_irr. Is symmetric 3-by-3 so only need 6 components
         amrex::GpuArray<amrex::Real,6> chi;
         chi[0] = chi_an[0] + (M_diff_x*M_diff_x / denominator); // xx
@@ -75,7 +79,7 @@ void JAModel::UpdateHandM (
         /* Compute dH_e using the total contribution */
         Compute_dH_e(dH_e_x,dH_e_y,dH_e_z,chi,dB_mu0inv_x,dB_mu0inv_y,dB_mu0inv_z);
         /* Check the sign of (M_an - M) dot dH_e */
-        if (M_diff_x*dH_e_x + M_diff_y*dH_e_y + M_diff_z*dH_e_z < Real(0.0)) {
+        if (M_diff_x*dH_e_x + M_diff_y*dH_e_y + M_diff_z*dH_e_z < 0.0_rt) {
             /* Use only anhysteretic part chi_an if (M_an - M) dot dH_e < 0 */
             Compute_dH_e(dH_e_x,dH_e_y,dH_e_z,chi_an,dB_mu0inv_x,dB_mu0inv_y,dB_mu0inv_z);
         }
@@ -127,9 +131,11 @@ void JAModel::ComputeAnhystereticContribution (
 
 void JAModel::Compute_dH_e (
           amrex::Real& dH_e_x    ,        amrex::Real& dH_e_y    ,         amrex::Real& dH_e_z     ,
-    const amrex::GpuArray<amrex::Real,6>& chi_an,
+    const amrex::GpuArray<amrex::Real,6>& chi,
     const amrex::Real& dB_mu0inv_x, const amrex::Real& dB_mu0inv_y,  const amrex::Real& dB_mu0inv_z) const
 {
+    using namespace amrex::literals;
+
     /* Jacobian matrix mu0^{-1} dB/dHe = I + (1-alpha) chi */
     const amrex::Real dBdHe00 = 1 + m_param_one_minus_alpha * chi[0];
     const amrex::Real dBdHe01 =     m_param_one_minus_alpha * chi[1];
@@ -138,9 +144,9 @@ void JAModel::Compute_dH_e (
     const amrex::Real dBdHe12 =     m_param_one_minus_alpha * chi[4];
     const amrex::Real dBdHe22 = 1 + m_param_one_minus_alpha * chi[5];
 
-    const amrex::Real det = dBdHe00*dBdHe11*dBdHe22 + amrex::Real(2.0)*dBdHe01*dBdHe02*dBdHe12
+    const amrex::Real det = dBdHe00*dBdHe11*dBdHe22 + 2.0_rt*dBdHe01*dBdHe02*dBdHe12
                           - dBdHe12*dBdHe12*dBdHe00 - dBdHe02*dBdHe02*dBdHe11 - dBdHe01*dBdHe01*dBdHe22;
-    const amrex::Real detinv = amrex::Real(1.0) / det;
+    const amrex::Real detinv = 1.0_rt / det;
 
     const amrex::Real dHedB00 = (dBdHe11*dBdHe22 - dBdHe12*dBdHe12)*detinv;
     const amrex::Real dHedB01 = (dBdHe02*dBdHe12 - dBdHe01*dBdHe22)*detinv;

@@ -1,5 +1,8 @@
+#ifndef WARPX_LANGEVINFUNCTIONS_H_
+#define WARPX_LANGEVINFUNCTIONS_H_
 
 #include <AMReX_REAL.H>
+#include <cmath>
 
 namespace Langevin {
 
@@ -13,7 +16,7 @@ namespace Langevin {
      * Uses a polynomial approximation of `x/3 + (constant) x^3` for small x.
      * The constant is chosen to ensure continuity at the cutoff.
      */
-    static amrex::Real L (amrex::Real x);
+    amrex::Real L (amrex::Real x);
 
     /**
      * \brief `L(x)/x`, where `L(x) = 1/tanh(x) - 1/x` is the Langevin function.
@@ -21,7 +24,7 @@ namespace Langevin {
      * Uses a polynomial approximation of `1/3 + (constant) x^2` for small x.
      * The constant is chosen to ensure continuity at the cutoff.
      */
-    static amrex::Real L_over_x (amrex::Real x);
+    amrex::Real L_over_x (amrex::Real x);
 
     /**
      * \brief The derivative of the Langevin function: `L'(x) = -1/sinh^2(x) + 1/x^2`.
@@ -29,7 +32,7 @@ namespace Langevin {
      * Uses a polynomial approximation of `1/3 + (constant) x^2` for small x.
      * The constant is chosen to ensure continuity at the cutoff.
      */
-    static amrex::Real dLdx (amrex::Real x);
+    amrex::Real dLdx (amrex::Real x);
 
     /**
      * \brief `(L'(x) - L(x)/x) / x^2`, where `L(x) = 1/tanh(x) - 1/x` is the Langevin function.
@@ -37,7 +40,7 @@ namespace Langevin {
      * Uses a polynomial approximation of `-2/45 + (constant) x^2` for small x.
      * The constant is chosen to ensure continuity at the cutoff.
      */
-    static amrex::Real dLdx_minus_L_over_x_over_x2 (amrex::Real x);
+    amrex::Real dLdx_minus_L_over_x_over_x2 (amrex::Real x);
 
 // private:
 
@@ -60,3 +63,5 @@ namespace Langevin {
     static constexpr R LangConst3 = R((dLdx_minus_Loverx_over_x2_cutoff + 2.0/45.0)/(cutoff*cutoff));
 
 };
+
+#endif /* WARPX_LANGEVINFUNCTIONS_H_ */

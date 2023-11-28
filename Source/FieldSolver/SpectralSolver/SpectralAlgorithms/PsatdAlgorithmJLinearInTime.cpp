@@ -143,7 +143,7 @@ PsatdAlgorithmJLinearInTime::pushSpectralFields (SpectralFieldData& f) const
             const     amrex::Real kz = modified_kz_arr[j];
 #endif
             // Physical constants and imaginary unit
-            constexpr amrex::Real c2 = PhysConst::c2;
+            constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
             constexpr amrex::Real inv_ep0 = 1._rt / PhysConst::ep0;
             constexpr Complex I = Complex{0._rt, 1._rt};
@@ -391,7 +391,7 @@ void PsatdAlgorithmJLinearInTime::InitializeSpectralCoefficientsAveraging (
 #endif
             // Physical constants and imaginary unit
             constexpr amrex::Real c = PhysConst::c;
-            constexpr amrex::Real c2 = PhysConst::c2;
+            constexpr amrex::Real c2 = c*c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
 
             // Auxiliary coefficients

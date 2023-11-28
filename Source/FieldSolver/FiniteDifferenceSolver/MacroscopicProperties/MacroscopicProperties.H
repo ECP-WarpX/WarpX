@@ -45,7 +45,7 @@ public:
     amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
 
     /** return iMultiFab, magnetic material id number */
-    amrex::iMultiFab& get_magnetic_material_id_mf  () { return (*m_magnetic_material_id_mf); }
+    amrex::iMultiFab& get_MagneticMaterialID_mf  () { return (*m_magnetic_material_id_mf); }
 
     /** Bool flag on whether there are any magnetic materials present. */
     bool is_magnetic_material_present () { return m_magnetic_material_present_flag; }
@@ -57,6 +57,8 @@ public:
                                   amrex::ParserExecutor<3> const& macro_parser,
                                   const amrex::GpuArray<amrex::Real, AMREX_SPACEDIM>& dx_lev,
                                   const amrex::RealBox& prob_domain_lev);
+
+    const amrex::Vector<MagneticMaterial>& getMagneticMaterialList () { return m_magnetic_materials; }
 
     /** Gpu Vector with index type of the conductivity multifab */
     amrex::GpuArray<int, 3> sigma_IndexType;
