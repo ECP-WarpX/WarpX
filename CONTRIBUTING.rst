@@ -214,9 +214,7 @@ Style and conventions
 
 - To define a function, use a space between the name of the function and the paranthesis, e.g., ``myfunction ()``.
   When calling a function, no space should be used, i.e., just use ``myfunction()``.
-
   The reason this is beneficial is that when we do a ``git grep`` to search for ``myfunction ()``, we can clearly see the locations where ``myfunction ()`` is defined and where ``myfunction()`` is called.
-
   Also, using ``git grep "myfunction ()"`` searches for files only in the git repo, which is more efficient compared to the ``grep "myfunction ()"`` command that searches through all the files in a directory, including plotfiles for example.
 
 - To define a class, use ``class`` on the same line as the name of the class, e.g., ``class MyClass``.
