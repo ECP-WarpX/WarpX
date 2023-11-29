@@ -127,7 +127,7 @@ private:
     int stop_move_step = INT_MAX;
 
     // Max refinement level
-    int max_level = 1;
+    // int max_level = 1;
 
     amrex::Real prob_lo_prev;
 
