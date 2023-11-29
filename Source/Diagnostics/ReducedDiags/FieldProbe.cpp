@@ -444,7 +444,7 @@ void FieldProbe::ComputeDiags (int step)
                 if (temp_warpx_moving_window == WARPX_ZINDEX)
                 {
                     z_probe += probe_move;
-                }    
+                }
             }
         }
 
@@ -696,10 +696,10 @@ void FieldProbe::WriteToFile (int step) const
     const auto nLevel = warpx.finestLevel() + 1;
     // const auto nLevel = warpx.finestLevel() + 1 > max_level + 1 ? max_level + 1 : warpx.finestLevel() + 1;
     for(int j = 0; j < nLevel; j++){
-        
+
         // m_valid_particles = m_valid_particles_level[j];
         // m_data_out = m_data_out_level[j];
-        
+
         // loop over num valid particles to find the lowest particle ID for later sorting
         auto first_id = static_cast<long int>(m_data_out_level[j][0]);
         for (long int i = 0; i < m_valid_particles_level[j]; i++)
@@ -729,7 +729,7 @@ void FieldProbe::WriteToFile (int step) const
         std::iota(idx_vec.begin(), idx_vec.end(), 0);
         // sort idx as id number(m_data_out_level[j][i1*noutputs]) order
         std::sort (idx_vec.begin(), idx_vec.end(), [&](int i1,int i2){
-            return static_cast<long int>(m_data_out_level[j][i1*noutputs]) < 
+            return static_cast<long int>(m_data_out_level[j][i1*noutputs]) <
                 static_cast<long int>(m_data_out_level[j][i2*noutputs]);
         });
         // push back data
