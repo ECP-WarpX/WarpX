@@ -1398,10 +1398,10 @@ External fields
 Grid initialization
 ^^^^^^^^^^^^^^^^^^^
 
-* ``warpx.B_ext_grid_init_style`` (string) optional (default is "default")
+* ``warpx.B_ext_grid_init_style`` (string) optional
     This parameter determines the type of initialization for the external
-    magnetic field. The "default" style initializes the
-    external magnetic field (Bx,By,Bz) to (0.0, 0.0, 0.0).
+    magnetic field. By default, the
+    external magnetic field (Bx,By,Bz) is initialized to (0.0, 0.0, 0.0).
     The string can be set to "constant" if a constant magnetic field is
     required to be set at initialization. If set to "constant", then an
     additional parameter, namely, ``warpx.B_external_grid`` must be specified.
@@ -1429,9 +1429,9 @@ Grid initialization
     Regarding how to prepare the openPMD data file, one can refer to
     the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
 
-* ``warpx.E_ext_grid_init_style`` (string) optional (default is "default")
+* ``warpx.E_ext_grid_init_style`` (string) optional
     This parameter determines the type of initialization for the external
-    electric field. The "default" style initializes the
+    electric field. By default, the
     external electric field (Ex,Ey,Ez) to (0.0, 0.0, 0.0).
     The string can be set to "constant" if a constant electric field is
     required to be set at initialization. If set to "constant", then an
@@ -1472,6 +1472,14 @@ Grid initialization
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
     than periodic.
+
+* ``warpx.maxlevel_extEMfield_init`` (default is maximum number of levels in the simulation)
+    With this parameter, the externally applied electric and magnetic fields
+    will not be applied for levels greater than ``warpx.maxlevel_extEMfield_init``.
+    For some mesh-refinement simulations,
+    the external fields are only applied to the parent grid and not the refined patches. In such cases,
+    ``warpx.maxlevel_extEMfield_init`` can be set to 0.
+    In that case, the other levels have external field values of 0.
 
 Applied to Particles
 ^^^^^^^^^^^^^^^^^^^^
@@ -2748,7 +2756,7 @@ Reduced Diagnostics
         In RZ geometry, this only saves the
         0'th azimuthal mode component of the fields.
         Integrated electric and magnetic field components can instead be obtained by specifying
-        ``<reduced_diags_name>.integrate == true``.
+        ``<reduced_diags_name>.integrate = true``.
         In a *moving window* simulation, the FieldProbe can be set to follow the moving frame by specifying ``<reduced_diags_name>.do_moving_window_FP = 1`` (default 0).
 
         .. warning::

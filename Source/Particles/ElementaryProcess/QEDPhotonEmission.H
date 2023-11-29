@@ -118,6 +118,8 @@ public:
         amrex::FArrayBox const& bxfab,
         amrex::FArrayBox const& byfab,
         amrex::FArrayBox const& bzfab,
+        amrex::Vector<amrex::ParticleReal>& E_external_particle,
+        amrex::Vector<amrex::ParticleReal>& B_external_particle,
         int a_offset = 0);
 
     /**
@@ -141,8 +143,13 @@ public:
         amrex::ParticleReal xp, yp, zp;
         m_get_position(i_src, xp, yp, zp);
 
-        amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
-        amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
+        amrex::ParticleReal ex = m_Ex_external_particle;
+        amrex::ParticleReal ey = m_Ey_external_particle;
+        amrex::ParticleReal ez = m_Ez_external_particle;
+        amrex::ParticleReal bx = m_Bx_external_particle;
+        amrex::ParticleReal by = m_By_external_particle;
+        amrex::ParticleReal bz = m_Bz_external_particle;
+
         m_get_externalEB(i_src, ex, ey, ez, bx, by, bz);
 
         doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
@@ -180,6 +187,12 @@ private:
 
     GetParticlePosition<PIdx> m_get_position;
     GetExternalEBField m_get_externalEB;
+    amrex::ParticleReal m_Ex_external_particle;
+    amrex::ParticleReal m_Ey_external_particle;
+    amrex::ParticleReal m_Ez_external_particle;
+    amrex::ParticleReal m_Bx_external_particle;
+    amrex::ParticleReal m_By_external_particle;
+    amrex::ParticleReal m_Bz_external_particle;
 
     amrex::Array4<const amrex::Real> m_ex_arr;
     amrex::Array4<const amrex::Real> m_ey_arr;

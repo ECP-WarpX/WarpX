@@ -146,7 +146,7 @@ public:
         m_defined{true}
     {}
 
-    SmartCopy getSmartCopy () const noexcept
+    [[nodiscard]] SmartCopy getSmartCopy () const noexcept
     {
         AMREX_ASSERT(m_defined);
         return SmartCopy{m_tag_real.size(),
@@ -159,7 +159,7 @@ public:
                          m_policy_int.dataPtr()};
     }
 
-    bool isDefined () const noexcept { return m_defined; }
+    [[nodiscard]] bool isDefined () const noexcept { return m_defined; }
 };
 
 #endif
