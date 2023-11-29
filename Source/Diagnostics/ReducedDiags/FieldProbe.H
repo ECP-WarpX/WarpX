@@ -19,7 +19,8 @@
 #include <string>
 #include <vector>
 
-#include <limits.h>
+//#include <limits.h>
+#include <climits>
 
 /**
  * This enumeration is used for assigning structural geometry levels (point vs line vs plane)
