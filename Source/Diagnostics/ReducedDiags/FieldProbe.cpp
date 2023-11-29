@@ -696,50 +696,50 @@ void FieldProbe::WriteToFile (int step) const
     auto & warpx = WarpX::GetInstance();
     const auto nLevel = warpx.finestLevel() + 1;
     // const auto nLevel = warpx.finestLevel() + 1 > max_level + 1 ? max_level + 1 : warpx.finestLevel() + 1;
-    for(int j = 0; j < nLevel; j++){
+    for(int lev = 0; lev < nLevel; lev++){
 
-        // m_valid_particles = m_valid_particles_level[j];
-        // m_data_out = m_data_out_level[j];
+        // m_valid_particles = m_valid_particles_level[lev];
+        // m_data_out = m_data_out_level[lev];
 
         // loop over num valid particles to find the lowest particle ID for later sorting
-        auto first_id = static_cast<long int>(m_data_out_level[j][0]);
-        for (long int i = 0; i < m_valid_particles_level[j]; i++)
+        auto first_id = static_cast<long int>(m_data_out_level[lev][0]);
+        for (long int i = 0; i < m_valid_particles_level[lev]; i++)
         {
-            if (m_data_out_level[j][i*noutputs] < first_id)
-                first_id = static_cast<long int>(m_data_out_level[j][i*noutputs]);
+            if (m_data_out_level[lev][i*noutputs] < first_id)
+                first_id = static_cast<long int>(m_data_out_level[lev][i*noutputs]);
         }
 
         // Create a new array to store probe data ordered by id, which will be printed to file.
         amrex::Vector<amrex::Real> sorted_data;
-        sorted_data.resize(m_data_out_level[j].size());
+        sorted_data.resize(m_data_out_level[lev].size());
 
         // // loop over num valid particles and write data into the appropriately
         // // sorted location
-        // for (long int i = 0; i < m_valid_particles_level[j]; i++)
+        // for (long int i = 0; i < m_valid_particles_level[lev]; i++)
         // {
-        //     const long int idx = static_cast<long int>(m_data_out_level[j][i*noutputs]) - first_id;
+        //     const long int idx = static_cast<long int>(m_data_out_level[lev][i*noutputs]) - first_id;
         //     for (long int k = 0; k < noutputs; k++)
         //     {
-        //         // sorted_data[idx * noutputs + k] = m_data_out_level[j][i * noutputs + k];
-        //         sorted_data[i * noutputs + k] = m_data_out_level[j][i * noutputs + k];
+        //         // sorted_data[idx * noutputs + k] = m_data_out_level[lev][i * noutputs + k];
+        //         sorted_data[i * noutputs + k] = m_data_out_level[lev][i * noutputs + k];
         //     }
         // }
 
         // push back idx
-        std::vector<long int> idx_vec(m_valid_particles_level[j]);
+        std::vector<long int> idx_vec(m_valid_particles_level[lev]);
         std::iota(idx_vec.begin(), idx_vec.end(), 0);
-        // sort idx as id number(m_data_out_level[j][i1*noutputs]) order
+        // sort idx as id number(m_data_out_level[lev][i1*noutputs]) order
         std::sort (idx_vec.begin(), idx_vec.end(), [&](int i1,int i2){
-            return static_cast<long int>(m_data_out_level[j][i1*noutputs]) <
-                static_cast<long int>(m_data_out_level[j][i2*noutputs]);
+            return static_cast<long int>(m_data_out_level[lev][i1*noutputs]) <
+                static_cast<long int>(m_data_out_level[lev][i2*noutputs]);
         });
         // push back data
-        for (long int i = 0; i < m_valid_particles_level[j]; i++)
+        for (long int i = 0; i < m_valid_particles_level[lev]; i++)
         {
             for (long int k = 0; k < noutputs; k++)
             {
-                // sorted_data[idx * noutputs + k] = m_data_out_level[j][i * noutputs + k];
-                sorted_data[i * noutputs + k] = m_data_out_level[j][idx_vec[i] * noutputs + k];
+                // sorted_data[idx * noutputs + k] = m_data_out_level[lev][i * noutputs + k];
+                sorted_data[i * noutputs + k] = m_data_out_level[lev][idx_vec[i] * noutputs + k];
             }
         }
 
@@ -749,7 +749,7 @@ void FieldProbe::WriteToFile (int step) const
         std::ofstream ofs{filename, std::ofstream::out | std::ofstream::app};
 
         // loop over num valid particles and write
-        for (long int i = 0; i < m_valid_particles_level[j]; i++)
+        for (long int i = 0; i < m_valid_particles_level[lev]; i++)
         {
             ofs << std::fixed << std::defaultfloat;
             ofs << step + 1;
