@@ -583,11 +583,11 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         reflection on a boundary, or only the velocity normal to the surface
 
     warpx_start_moving_window_step: int, default=0
-        The timestep at which the moving window starts
+       The timestep at which the moving window starts
 
     warpx_end_moving_window_step: int, default=-1
-        The timestep at which the moving window ends. If -1, the moving window
-    will continue until the end of the simulation.
+       The timestep at which the moving window ends. If -1, the moving window
+       will continue until the end of the simulation.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -687,11 +687,11 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
        Electrostatic potential on the upper longitudinal boundary
 
     warpx_start_moving_window_step: int, default=0
-        The timestep at which the moving window starts
+       The timestep at which the moving window starts
 
     warpx_end_moving_window_step: int, default=-1
-        The timestep at which the moving window ends. If -1, the moving window
-    will continue until the end of the simulation.
+       The timestep at which the moving window ends. If -1, the moving window
+       will continue until the end of the simulation.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -788,11 +788,11 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
        Electrostatic potential on the upper z boundary
 
     warpx_start_moving_window_step: int, default=0
-        The timestep at which the moving window starts
+       The timestep at which the moving window starts
 
     warpx_end_moving_window_step: int, default=-1
-        The timestep at which the moving window ends. If -1, the moving window
-    will continue until the end of the simulation.
+       The timestep at which the moving window ends. If -1, the moving window
+       will continue until the end of the simulation.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
@@ -909,11 +909,11 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
        Electrostatic potential on the upper z boundary
 
     warpx_start_moving_window_step: int, default=0
-        The timestep at which the moving window starts
+       The timestep at which the moving window starts
 
     warpx_end_moving_window_step: int, default=-1
-        The timestep at which the moving window ends. If -1, the moving window
-    will continue until the end of the simulation.
+       The timestep at which the moving window ends. If -1, the moving window
+       will continue until the end of the simulation.
     """
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
