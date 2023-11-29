@@ -1,7 +1,7 @@
 amr.max_level = 1
 warpx.fine_tag_lo = 0.0 -0.5
 warpx.fine_tag_hi = 0.25 0.0
-max_step = 23
+max_step = 1
 amr.blocking_factor = 8
 amr.max_grid_size = 128
 geometry.dims = RZ
@@ -15,7 +15,7 @@ boundary.potential_lo_y = 0
 boundary.potential_hi_y = 0
 boundary.potential_lo_z = 0
 boundary.potential_hi_z = 0
-warpx.const_dt = 1.216119097e-11
+warpx.const_dt = 1.216119097e-9
 warpx.eb_implicit_function = -(x**2 -0.2**2)
 algo.maxwell_solver = none
 algo.field_gathering = momentum-conserving
