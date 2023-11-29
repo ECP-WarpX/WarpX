@@ -100,11 +100,11 @@ private:
     //! Empty array to be used by IOProcessor node to store and output data
     amrex::Vector<amrex::Real> m_data_out;
 
-    //! 
+    //!
     std::vector<amrex::Vector<amrex::Real>> m_data_out_level;
 
     //! valid particles each level
-    //amrex::Vector<amrex::Real> 
+    //amrex::Vector<amrex::Real>
     std::vector<long> m_valid_particles_level;
 
     //! this is the particle container in which probe particles are stored
@@ -122,7 +122,7 @@ private:
     // //! timestep where stop sample
     int stop_step = INT_MAX;
 
-    // //! timestep where fieldprobe stop miving 
+    // //! timestep where fieldprobe stop miving
     int stop_move_step = INT_MAX;
 
     // Max refinement level
