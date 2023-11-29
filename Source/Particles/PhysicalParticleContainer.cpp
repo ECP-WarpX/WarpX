@@ -3119,7 +3119,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
             if (local_has_quantum_sync) {
                 evolve_opt(ux[ip], uy[ip], uz[ip],
                            Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                           dt, foo_podq[ip]);
+                           dt, p_optical_depth_QSR[ip]);
             }
         }
 #else
