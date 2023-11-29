@@ -205,8 +205,9 @@ FieldProbe::FieldProbe (std::string rd_name)
             }
             for (int lev = 0; lev < nLevel; ++lev)
             {
-                std::ofstream ofs{m_path + m_rd_name + "_lvl_" + std::to_string(lev) + "." + m_extension,
-                        std::ofstream::out};
+                auto filename = lev > 0 ? m_path + m_rd_name + "_lvl_" + std::to_string(lev) + "." + m_extension:
+                    m_path + m_rd_name + "." + m_extension;
+                std::ofstream ofs{filename, std::ofstream::out};
 
                 // write header row
                 int c = 0;
@@ -743,8 +744,9 @@ void FieldProbe::WriteToFile (int step) const
         }
 
         // open file
-        std::ofstream ofs{m_path + m_rd_name + "_lvl_" + std::to_string(j) + "." + m_extension,
-                            std::ofstream::out | std::ofstream::app};
+        auto filename = lev > 0 ? m_path + m_rd_name + "_lvl_" + std::to_string(lev) + "." + m_extension:
+            m_path + m_rd_name + "." + m_extension;
+        std::ofstream ofs{filename, std::ofstream::out | std::ofstream::app};
 
         // loop over num valid particles and write
         for (long int i = 0; i < m_valid_particles_level[j]; i++)
