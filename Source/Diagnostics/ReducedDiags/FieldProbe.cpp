@@ -360,7 +360,7 @@ void FieldProbe::InitData ()
 
 void FieldProbe::LoadBalance ()
 {
-    // m_probe.Redistribute();
+    m_probe.Redistribute();
 }
 
 bool FieldProbe::ProbeInDomain () const
@@ -429,6 +429,8 @@ void FieldProbe::ComputeDiags (int step)
                 const auto prob_lo = WarpX::GetInstance().Geom(0).ProbLo()[WarpX::moving_window_dir];
                 amrex::Real probe_move = prob_lo - prob_lo_prev;
                 prob_lo_prev = prob_lo;
+                
+                // move_dist = probe_move;
 
                 const auto temp_warpx_moving_window = WarpX::moving_window_dir;
                 if (temp_warpx_moving_window == 0)
