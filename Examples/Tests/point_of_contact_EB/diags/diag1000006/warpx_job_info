@@ -19,11 +19,11 @@ COMP version:  11.2.0
 C++ compiler:  /opt/cray/pe/craype/2.7.20/bin/CC
 C++ flags:     -O3 -DNDEBUG
 
-Fortran comp:  
-Fortran flags: 
+Fortran comp:
+Fortran flags:
 
-Link flags:    
-Libraries:     
+Link flags:
+Libraries:
 
 WarpX  git describe: 23.11-26-ga0e0b8bf15b2
 AMReX  git describe: 23.11-14-g175b99d913dc
@@ -34,11 +34,11 @@ AMReX  git describe: 23.11-14-g175b99d913dc
 ==============================================================================
  level: 0
    number of boxes = 1
-   maximum zones   = 64 64 
+   maximum zones   = 64 64
 
  level: 1
    number of boxes = 2
-   maximum zones   = 128 128 
+   maximum zones   = 128 128
 
  Boundary conditions
    -x: interior
