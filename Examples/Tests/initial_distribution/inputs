@@ -29,7 +29,7 @@ algo.particle_shape = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam maxwell_juttner_parser velocity_constant velocity_parser uniform
+particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam maxwell_juttner_parser velocity_constant velocity_parser uniform gaussian_parser
 particles.rigid_injected_species = beam
 
 gaussian.charge                     = -q_e
@@ -133,6 +133,20 @@ uniform.uy_max                     = 0.1
 uniform.uz_min                     = 10
 uniform.uz_max                     = 11.2
 
+gaussian_parser.charge                     = -q_e
+gaussian_parser.mass                       = m_e
+gaussian_parser.injection_style            = "NRandomPerCell"
+gaussian_parser.num_particles_per_cell     = 1000
+gaussian_parser.profile                    = constant
+gaussian_parser.density                    = 1.0e21
+gaussian_parser.momentum_distribution_type = "gaussian_parse_momentum_function"
+gaussian_parser.momentum_function_ux_m(x,y,z) = 0.1*z
+gaussian_parser.momentum_function_uy_m(x,y,z) = 0.12*z
+gaussian_parser.momentum_function_uz_m(x,y,z) = 0.14*z
+gaussian_parser.momentum_function_ux_th(x,y,z) = 0.2*z
+gaussian_parser.momentum_function_uy_th(x,y,z) = 0.21*z
+gaussian_parser.momentum_function_uz_th(x,y,z) = 0.22*z
+
 #################################
 ########## DIAGNOSTIC ###########
 #################################
@@ -144,7 +158,7 @@ uniform.uz_max                     = 11.2
 # 6 for maxwell-boltzmann with constant velocity
 # 7 for maxwell-boltzmann with parser velocity
 # 8 for cuboid in momentum space
-warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h3_filtered h4x h4y h4z bmmntr h5_neg h5_pos h6 h6uy h7 h7uy_pos h7uy_neg h8x h8y h8z
+warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h3_filtered h4x h4y h4z bmmntr h5_neg h5_pos h6 h6uy h7 h7uy_pos h7uy_neg h8x h8y h8z h9x h9y h9z
 
 h1x.type                                 = ParticleHistogram
 h1x.intervals                            = 1
@@ -349,6 +363,33 @@ h8z.bin_number                           = 200
 h8z.bin_min                              = 0
 h8z.bin_max                              = 15
 h8z.histogram_function(t,x,y,z,ux,uy,uz) = "uz"
+
+h9x.type                                 = ParticleHistogram
+h9x.intervals                            = 1
+h9x.path                                 = "./"
+h9x.species                              = gaussian_parser
+h9x.bin_number                           = 50
+h9x.bin_min                              = -1
+h9x.bin_max                              = 1
+h9x.histogram_function(t,x,y,z,ux,uy,uz) = "ux/z"
+
+h9y.type                                 = ParticleHistogram
+h9y.intervals                            = 1
+h9y.path                                 = "./"
+h9y.species                              = gaussian_parser
+h9y.bin_number                           = 50
+h9y.bin_min                              = -1
+h9y.bin_max                              = 1
+h9y.histogram_function(t,x,y,z,ux,uy,uz) = "uy/z"
+
+h9z.type                                 = ParticleHistogram
+h9z.intervals                            = 1
+h9z.path                                 = "./"
+h9z.species                              = gaussian_parser
+h9z.bin_number                           = 50
+h9z.bin_min                              = -1
+h9z.bin_max                              = 1
+h9z.histogram_function(t,x,y,z,ux,uy,uz) = "uz/z"
 
 # our little beam monitor
 bmmntr.type                              = BeamRelevant

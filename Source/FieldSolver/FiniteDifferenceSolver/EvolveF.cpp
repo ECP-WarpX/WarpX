@@ -50,8 +50,8 @@ void FiniteDifferenceSolver::EvolveF (
     int const rhocomp,
     amrex::Real const dt ) {
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == ElectromagneticSolverAlgo::Yee){
 

@@ -8,7 +8,7 @@ Repo Organization
 
 All the WarpX source code is located in ``Source/``.
 All sub-directories have a pretty straightforward name.
-The PIC loop is part of the WarpX class, in function ``WarpX::EvolveEM`` implemented in ``Source/WarpXEvolveEM.cpp``.
+The PIC loop is part of the WarpX class, in function ``WarpX::Evolve`` implemented in ``Source/WarpXEvolve.cpp``.
 The core of the PIC loop (i.e., without diagnostics etc.) is in ``WarpX::OneStep_nosub`` (when subcycling is OFF) or ``WarpX::OneStep_sub1`` (when subcycling is ON, with method 1).
 Here is a `visual representation <https://mango-dune-07a8b7110.1.azurestaticapps.net/?repo=ECP-WarpX%2FWarpX>`__ of the repository structure.
 
