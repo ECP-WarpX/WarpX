@@ -12,6 +12,7 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 
 #include <memory>
