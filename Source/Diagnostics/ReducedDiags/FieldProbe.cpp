@@ -249,6 +249,8 @@ FieldProbe::FieldProbe (std::string rd_name)
     m_data_out_level = std::vector<amrex::Vector<amrex::Real>> (nLevel, amrex::Vector<amrex::Real>());
     m_valid_particles_level = std::vector<long> (nLevel, 0);
 
+    //auto series = openPMD::Series(m_path + m_rd_name + ".h5", io::Access::CREATE);
+    m_Series = std::make_unique<openPMD::Series>(m_path + m_rd_name + ".h5", openPMD::Access::CREATE);
 } // end constructor
 
 void FieldProbe::InitData ()
@@ -696,60 +698,70 @@ void FieldProbe::WriteToFile (int step) const
     auto & warpx = WarpX::GetInstance();
     const auto nLevel = warpx.finestLevel() + 1;
     // const auto nLevel = warpx.finestLevel() + 1 > max_level + 1 ? max_level + 1 : warpx.finestLevel() + 1;
-    for(int lev = 0; lev < nLevel; lev++){
+    const auto max_nLevel = nLevel; //1;
+    for(int cur_lev = 0; cur_lev < max_nLevel; cur_lev++){
 
-        // m_valid_particles = m_valid_particles_level[lev];
-        // m_data_out = m_data_out_level[lev];
-
-        // loop over num valid particles to find the lowest particle ID for later sorting
-        auto first_id = static_cast<long int>(m_data_out_level[lev][0]);
-        for (long int i = 0; i < m_valid_particles_level[lev]; i++)
-        {
-            if (m_data_out_level[lev][i*noutputs] < first_id)
-                first_id = static_cast<long int>(m_data_out_level[lev][i*noutputs]);
-        }
-
-        // Create a new array to store probe data ordered by id, which will be printed to file.
-        amrex::Vector<amrex::Real> sorted_data;
-        sorted_data.resize(m_data_out_level[lev].size());
-
-        // // loop over num valid particles and write data into the appropriately
-        // // sorted location
-        // for (long int i = 0; i < m_valid_particles_level[lev]; i++)
-        // {
-        //     const long int idx = static_cast<long int>(m_data_out_level[lev][i*noutputs]) - first_id;
-        //     for (long int k = 0; k < noutputs; k++)
-        //     {
-        //         // sorted_data[idx * noutputs + k] = m_data_out_level[lev][i * noutputs + k];
-        //         sorted_data[i * noutputs + k] = m_data_out_level[lev][i * noutputs + k];
-        //     }
-        // }
-
-        // push back idx
-        std::vector<long int> idx_vec(m_valid_particles_level[lev]);
-        std::iota(idx_vec.begin(), idx_vec.end(), 0);
-        // sort idx as id number(m_data_out_level[lev][i1*noutputs]) order
-        std::sort (idx_vec.begin(), idx_vec.end(), [&](int i1,int i2){
-            return static_cast<long int>(m_data_out_level[lev][i1*noutputs]) <
-                static_cast<long int>(m_data_out_level[lev][i2*noutputs]);
-        });
-        // push back data
-        for (long int i = 0; i < m_valid_particles_level[lev]; i++)
-        {
-            for (long int k = 0; k < noutputs; k++)
-            {
-                // sorted_data[idx * noutputs + k] = m_data_out_level[lev][i * noutputs + k];
-                sorted_data[i * noutputs + k] = m_data_out_level[lev][idx_vec[i] * noutputs + k];
-            }
-        }
+        if(m_valid_particles_level[cur_lev] == 0) continue;
 
         // open file
-        auto filename = lev > 0 ? m_path + m_rd_name + "_lvl_" + std::to_string(lev) + "." + m_extension:
+        auto filename = cur_lev > 0 ? m_path + m_rd_name + "_lvl_" + std::to_string(cur_lev) + "." + m_extension:
             m_path + m_rd_name + "." + m_extension;
         std::ofstream ofs{filename, std::ofstream::out | std::ofstream::app};
 
+        long np = 0, data_size = 0;
+        // loop over num valid particles to find the lowest particle ID for later sorting
+        auto first_id = static_cast<long int>(m_data_out_level[cur_lev][0]);
+        for(int lev = cur_lev; lev < nLevel; lev++){
+            for (long int i = 0; i < m_valid_particles_level[lev]; i++)
+            {
+                if (m_data_out_level[lev][i*noutputs] < first_id)
+                    first_id = static_cast<long int>(m_data_out_level[lev][i*noutputs]);
+            }
+            np += static_cast<long> (m_valid_particles_level[lev]);
+            data_size += m_data_out_level[lev].size();
+        }
+        std::vector<amrex::Real> sorted_data(data_size, 0.0);
+        for(int lev = cur_lev; lev < nLevel; lev++){
+            // Create a new array to store probe data ordered by id, which will be printed to file.
+            // amrex::Vector<amrex::Real> sorted_data;
+            // sorted_data.resize(m_data_out_level[lev].size());
+
+            // loop over num valid particles and write data into the appropriately
+            // sorted location
+            for (long int i = 0; i < m_valid_particles_level[lev]; i++)
+            {
+                const long int idx = static_cast<long int>(m_data_out_level[lev][i*noutputs]) - first_id;
+                for (long int k = 0; k < noutputs; k++)
+                {
+                    sorted_data[idx * noutputs + k] = m_data_out_level[lev][i * noutputs + k];
+                    // sorted_data[i * noutputs + k] = m_data_out_level[lev][i * noutputs + k];
+                }
+            }
+        }
+            // // Create a new array to store probe data ordered by id, which will be printed to file.
+            // amrex::Vector<amrex::Real> sorted_data;
+            // sorted_data.resize(m_data_out_level[lev].size());
+            // // push back idx
+            // std::vector<long int> idx_vec(m_valid_particles_level[lev]);
+            // std::iota(idx_vec.begin(), idx_vec.end(), 0);
+            // // sort idx as id number(m_data_out_level[lev][i1*noutputs]) order
+            // std::sort (idx_vec.begin(), idx_vec.end(), [&](int i1,int i2){
+            //     return static_cast<long int>(m_data_out_level[lev][i1*noutputs]) <
+            //         static_cast<long int>(m_data_out_level[lev][i2*noutputs]);
+            // });
+            // // push back data
+            // for (long int i = 0; i < m_valid_particles_level[lev]; i++)
+            // {
+            //     for (long int k = 0; k < noutputs; k++)
+            //     {
+            //         // sorted_data[idx * noutputs + k] = m_data_out_level[lev][i * noutputs + k];
+            //         sorted_data[i * noutputs + k] = m_data_out_level[lev][idx_vec[i] * noutputs + k];
+            //     }
+            // }
+
+
         // loop over num valid particles and write
-        for (long int i = 0; i < m_valid_particles_level[lev]; i++)
+        for (long int i = 0; i < np; i++)
         {
             ofs << std::fixed << std::defaultfloat;
             ofs << step + 1;
@@ -759,7 +771,7 @@ void FieldProbe::WriteToFile (int step) const
             ofs << WarpX::GetInstance().gett_new(0);
 
             // start at k = 1 since the particle id is not written to file
-            for (int k = 1; k < noutputs; k++)
+            for (long int k = 1; k < noutputs; k++)
             {
                 ofs << m_sep;
                 ofs << sorted_data[i * noutputs + k];
@@ -769,4 +781,70 @@ void FieldProbe::WriteToFile (int step) const
         // close file
         ofs.close();
     }
+    //this->WriteToFileOpenPMD(step);
+}
+
+void FieldProbe::WriteToFileOpenPMD (int step) const
+{
+    if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) return;
+    if (!(step >= start_step - 1 && step <= stop_step)) return;
+
+    auto & warpx = WarpX::GetInstance();
+    const auto nLevel = warpx.finestLevel() + 1;
+    unsigned long np = 0;
+    for(int lev = 0; lev < nLevel; lev++){
+        np += static_cast<unsigned long> (m_valid_particles_level[lev]);
+    }
+
+    openPMD::Iteration currIteration = m_Series->writeIterations()[step + 1];
+    openPMD::ParticleSpecies currSpecies = currIteration.particles["species"];
+
+    const std::shared_ptr<amrex::Real> curr(
+        new amrex::ParticleReal[np], 
+        [](amrex::ParticleReal const *p) { delete[] p; }
+    );
+
+    std::string options = "{}";
+    auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::Real>(), {np}, options);
+    auto idType = openPMD::Dataset(openPMD::determineDatatype<amrex::Real>(), {np}, options);
+
+    std::vector<std::string> const positionComponents = {"x", "y", "z"};
+
+    for(auto const& comp : positionComponents) {
+        currSpecies["position"][comp].resetDataset(realType);
+        currSpecies["E"][comp].resetDataset(realType);
+        currSpecies["B"][comp].resetDataset(realType);
+    }
+    // auto const scalar = openPMD::RecordComponent::SCALAR;
+    currSpecies["S"]["0"].resetDataset(realType);
+    currSpecies["id"]["0"].resetDataset(idType);
+    std::vector<std::string> const components = {"position", "E", "B", "S", "id"};
+    for(int lev = 0; lev < nLevel; lev++){
+        for(int idx = 0; idx < components.size(); idx++){
+            if(idx < 3){
+                for (auto currDim = 0; currDim < 3; currDim++) {
+                    for (auto i = 0; i < static_cast<int> (np); i++) {
+                        int arg_offset = 1 + idx * 3 + currDim;
+                        curr.get()[i] = m_data_out_level[lev][i * noutputs + arg_offset];
+                    }
+                    unsigned long long offset = 0;
+                    currSpecies[components[idx]][positionComponents[currDim]].storeChunk(curr, {offset}, {np});
+                }
+            }else{
+                for (int i = 0; i < static_cast<int> (np); i++) {
+                    int arg_offset;
+                    if(idx == 3){
+                        arg_offset = 10;
+                    }else{
+                        arg_offset = 0;
+                    }
+                    curr.get()[i] = m_data_out_level[lev][i * noutputs + 0];
+                }
+                unsigned long long offset = 0;
+                currSpecies[components[idx]]["0"].storeChunk(curr, {offset}, {np});
+            }
+        }
+    }
+    currIteration.close();
+    m_Series->flush();
 }

@@ -19,8 +19,9 @@
 #include <string>
 #include <vector>
 
-//#include <limits.h>
 #include <climits>
+#include <openPMD/openPMD.hpp>
+#include <memory>
 
 /**
  * This enumeration is used for assigning structural geometry levels (point vs line vs plane)
@@ -61,6 +62,8 @@ public:
      * @param[in] step current time step
      */
     void ComputeDiags (int step) final;
+
+    void WriteToFileOpenPMD (int step) const;
 
     /*
      * Define constants used throughout FieldProbe
@@ -128,6 +131,9 @@ private:
 
     // Max refinement level
     // int max_level = 1;
+
+    //
+    std::unique_ptr<openPMD::Series> m_Series;
 
     amrex::Real prob_lo_prev;
 
