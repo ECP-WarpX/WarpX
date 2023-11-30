@@ -764,7 +764,10 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
     for (int i = 0; i < 3; ++i) {
 
-        if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
+        // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+        // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+        if ( ( B_ext_grid_s == "constant") && (lev <= maxlevel_extEMfield_init) )
+        {
            Bfield_fp[lev][i]->setVal(B_external_grid[i]);
            if (fft_do_time_averaging) {
                 Bfield_avg_fp[lev][i]->setVal(B_external_grid[i]);
@@ -778,7 +781,10 @@ WarpX::InitLevelData (int lev, Real /*time*/)
               }
            }
         }
-        if (E_ext_grid_s == "constant" || E_ext_grid_s == "default") {
+        // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+        // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+        if ( ( E_ext_grid_s == "constant") && (lev <= maxlevel_extEMfield_init) )
+        {
            Efield_fp[lev][i]->setVal(E_external_grid[i]);
            if (fft_do_time_averaging) {
                Efield_avg_fp[lev][i]->setVal(E_external_grid[i]);
@@ -801,7 +807,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // if the input string for the B-field is "parse_b_ext_grid_function",
     // then the analytical expression or function must be
     // provided in the input file.
-    if (B_ext_grid_s == "parse_b_ext_grid_function") {
+    // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+    // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+    if (B_ext_grid_s == "parse_b_ext_grid_function" && (lev <= maxlevel_extEMfield_init)) {
 
         //! Strings storing parser function to initialize the components of the magnetic field on the grid
         std::string str_Bx_ext_grid_function;
@@ -872,7 +880,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // if the input string for the E-field is "parse_e_ext_grid_function",
     // then the analytical expression or function must be
     // provided in the input file.
-    if (E_ext_grid_s == "parse_e_ext_grid_function") {
+    // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+    // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+    if (E_ext_grid_s == "parse_e_ext_grid_function" && (lev <= maxlevel_extEMfield_init)) {
 
 #ifdef WARPX_DIM_RZ
         WARPX_ABORT_WITH_MESSAGE(
