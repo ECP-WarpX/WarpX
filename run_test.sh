@@ -68,7 +68,7 @@ python3 -m pip install --upgrade -r warpx/Regression/requirements.txt
 
 # Clone AMReX and warpx-data
 git clone https://github.com/AMReX-Codes/amrex.git
-cd amrex && git checkout --detach 9e35dc19489dc5d312e92781cb0471d282cf8370 && cd -
+cd amrex && git checkout --detach 9b733ec45cd93a80234a7c98248b6eb4816589d5 && cd -
 # warpx-data contains various required data sets
 git clone --depth 1 https://github.com/ECP-WarpX/warpx-data.git
 # openPMD-example-datasets contains various required data sets

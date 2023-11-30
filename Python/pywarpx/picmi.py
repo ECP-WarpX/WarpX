@@ -271,7 +271,21 @@ class Species(picmistandard.PICMI_Species):
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
-            self.initial_distribution.initialize_inputs(self.species_number, layout, self.species, self.density_scale)
+            distributions_is_list = np.iterable(self.initial_distribution)
+            layout_is_list = np.iterable(layout)
+            if not distributions_is_list and not layout_is_list:
+                self.initial_distribution.initialize_inputs(self.species_number, layout, self.species, self.density_scale, '')
+            elif distributions_is_list and (layout_is_list or layout is None):
+                assert layout is None or (len(self.initial_distribution) == len(layout)),\
+                       Exception('The initial distribution and layout lists must have the same lenth')
+                source_names = [f'dist{i}' for i in range(len(self.initial_distribution))]
+                self.species.injection_sources = source_names
+                for i, dist in enumerate(self.initial_distribution):
+                    layout_i = layout[i] if layout is not None else None
+                    dist.initialize_inputs(self.species_number, layout_i, self.species,
+                                           self.density_scale, source_names[i])
+            else:
+                raise Exception('The initial distribution and layout must both be scalars or both be lists')
 
         if injection_plane_position is not None:
             if injection_plane_normal_vector is not None:
@@ -300,17 +314,17 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
         self.do_symmetrize = kw.pop('warpx_do_symmetrize', None)
         self.symmetrization_order = kw.pop('warpx_symmetrization_order', None)
 
-    def initialize_inputs(self, species_number, layout, species, density_scale):
-        species.injection_style = "gaussian_beam"
-        species.x_m = self.centroid_position[0]
-        species.y_m = self.centroid_position[1]
-        species.z_m = self.centroid_position[2]
-        species.x_rms = self.rms_bunch_size[0]
-        species.y_rms = self.rms_bunch_size[1]
-        species.z_rms = self.rms_bunch_size[2]
+    def initialize_inputs(self, species_number, layout, species, density_scale, source_name):
+        species.add_new_group_attr(source_name, 'injection_style', "gaussian_beam")
+        species.add_new_group_attr(source_name, 'x_m', self.centroid_position[0])
+        species.add_new_group_attr(source_name, 'y_m', self.centroid_position[1])
+        species.add_new_group_attr(source_name, 'z_m', self.centroid_position[2])
+        species.add_new_group_attr(source_name, 'x_rms', self.rms_bunch_size[0])
+        species.add_new_group_attr(source_name, 'y_rms', self.rms_bunch_size[1])
+        species.add_new_group_attr(source_name, 'z_rms', self.rms_bunch_size[2])
 
         # --- Only PseudoRandomLayout is supported
-        species.npart = layout.n_macroparticles
+        species.add_new_group_attr(source_name, 'npart', layout.n_macroparticles)
 
         # --- Calculate the total charge. Note that charge might be a string instead of a number.
         charge = species.charge
@@ -318,9 +332,9 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
             charge = constants.q_e
         elif charge == '-q_e':
             charge = -constants.q_e
-        species.q_tot = self.n_physical_particles*charge
+        species.add_new_group_attr(source_name, 'q_tot', self.n_physical_particles*charge)
         if density_scale is not None:
-            species.q_tot *= density_scale
+            species.add_new_group_attr(source_name, 'q_tot',  density_scale)
 
         # --- The PICMI standard doesn't yet have a way of specifying these values.
         # --- They should default to the size of the domain. They are not typically
@@ -334,26 +348,26 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
 
         # --- Note that WarpX takes gamma*beta as input
         if np.any(np.not_equal(self.velocity_divergence, 0.)):
-            species.momentum_distribution_type = "radial_expansion"
-            species.u_over_r = self.velocity_divergence[0]/constants.c
-            #species.u_over_y = self.velocity_divergence[1]/constants.c
-            #species.u_over_z = self.velocity_divergence[2]/constants.c
+            species.add_new_group_attr(source_name, 'momentum_distribution_type', "radial_expansion")
+            species.add_new_group_attr(source_name, 'u_over_r', self.velocity_divergence[0]/constants.c)
+            #species.add_new_group_attr(source_name, 'u_over_y', self.velocity_divergence[1]/constants.c)
+            #species.add_new_group_attr(source_name, 'u_over_z', self.velocity_divergence[2]/constants.c)
         elif np.any(np.not_equal(self.rms_velocity, 0.)):
-            species.momentum_distribution_type = "gaussian"
-            species.ux_m = self.centroid_velocity[0]/constants.c
-            species.uy_m = self.centroid_velocity[1]/constants.c
-            species.uz_m = self.centroid_velocity[2]/constants.c
-            species.ux_th = self.rms_velocity[0]/constants.c
-            species.uy_th = self.rms_velocity[1]/constants.c
-            species.uz_th = self.rms_velocity[2]/constants.c
+            species.add_new_group_attr(source_name, 'momentum_distribution_type', "gaussian")
+            species.add_new_group_attr(source_name, 'ux_m', self.centroid_velocity[0]/constants.c)
+            species.add_new_group_attr(source_name, 'uy_m', self.centroid_velocity[1]/constants.c)
+            species.add_new_group_attr(source_name, 'uz_m', self.centroid_velocity[2]/constants.c)
+            species.add_new_group_attr(source_name, 'ux_th', self.rms_velocity[0]/constants.c)
+            species.add_new_group_attr(source_name, 'uy_th', self.rms_velocity[1]/constants.c)
+            species.add_new_group_attr(source_name, 'uz_th', self.rms_velocity[2]/constants.c)
         else:
-            species.momentum_distribution_type = "constant"
-            species.ux = self.centroid_velocity[0]/constants.c
-            species.uy = self.centroid_velocity[1]/constants.c
-            species.uz = self.centroid_velocity[2]/constants.c
+            species.add_new_group_attr(source_name, 'momentum_distribution_type', "constant")
+            species.add_new_group_attr(source_name, 'ux', self.centroid_velocity[0]/constants.c)
+            species.add_new_group_attr(source_name, 'uy', self.centroid_velocity[1]/constants.c)
+            species.add_new_group_attr(source_name, 'uz', self.centroid_velocity[2]/constants.c)
 
-        species.do_symmetrize = self.do_symmetrize
-        species.symmetrization_order = self.symmetrization_order
+        species.add_new_group_attr(source_name, 'do_symmetrize', self.do_symmetrize)
+        species.add_new_group_attr(source_name, 'symmetrization_order', self.symmetrization_order)
 
 
 class DensityDistributionBase(object):
@@ -369,98 +383,98 @@ class DensityDistributionBase(object):
             # times
             self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
-    def set_species_attributes(self, species, layout):
+    def set_species_attributes(self, species, layout, source_name):
         if isinstance(layout, GriddedLayout):
             # --- Note that the grid attribute of GriddedLayout is ignored
-            species.injection_style = "nuniformpercell"
-            species.num_particles_per_cell_each_dim = layout.n_macroparticle_per_cell
+            species.add_new_group_attr(source_name, 'injection_style', "nuniformpercell")
+            species.add_new_group_attr(source_name, 'num_particles_per_cell_each_dim', layout.n_macroparticle_per_cell)
         elif isinstance(layout, PseudoRandomLayout):
             assert (layout.n_macroparticles_per_cell is not None), Exception('WarpX only supports n_macroparticles_per_cell for the PseudoRandomLayout with this distribution')
-            species.injection_style = "nrandompercell"
-            species.num_particles_per_cell = layout.n_macroparticles_per_cell
+            species.add_new_group_attr(source_name, 'injection_style', "nrandompercell")
+            species.add_new_group_attr(source_name, 'num_particles_per_cell', layout.n_macroparticles_per_cell)
         else:
             raise Exception('WarpX does not support the specified layout for this distribution')
 
-        species.xmin = self.lower_bound[0]
-        species.xmax = self.upper_bound[0]
-        species.ymin = self.lower_bound[1]
-        species.ymax = self.upper_bound[1]
-        species.zmin = self.lower_bound[2]
-        species.zmax = self.upper_bound[2]
+        species.add_new_group_attr(source_name, 'xmin', self.lower_bound[0])
+        species.add_new_group_attr(source_name, 'xmax', self.upper_bound[0])
+        species.add_new_group_attr(source_name, 'ymin', self.lower_bound[1])
+        species.add_new_group_attr(source_name, 'ymax', self.upper_bound[1])
+        species.add_new_group_attr(source_name, 'zmin', self.lower_bound[2])
+        species.add_new_group_attr(source_name, 'zmax', self.upper_bound[2])
 
         if self.fill_in:
-            species.do_continuous_injection = 1
+            species.add_new_group_attr(source_name, 'do_continuous_injection', 1)
 
         # --- Note that WarpX takes gamma*beta as input
         if (hasattr(self, "momentum_spread_expressions")
             and np.any(np.not_equal(self.momentum_spread_expressions, None))
         ):
             species.momentum_distribution_type = 'gaussian_parse_momentum_function'
-            self.setup_parse_momentum_functions(species, self.momentum_expressions, '_m', self.directed_velocity)
-            self.setup_parse_momentum_functions(species, self.momentum_spread_expressions, '_th', [0.,0.,0.])
+            self.setup_parse_momentum_functions(species, source_name, self.momentum_expressions, '_m', self.directed_velocity)
+            self.setup_parse_momentum_functions(species, source_name, self.momentum_spread_expressions, '_th', [0.,0.,0.])
         elif (hasattr(self, "momentum_expressions")
             and np.any(np.not_equal(self.momentum_expressions, None))
         ):
-            species.momentum_distribution_type = 'parse_momentum_function'
-            self.setup_parse_momentum_functions(species, self.momentum_expressions, '', self.directed_velocity)
+            species.add_new_group_attr(source_name, 'momentum_distribution_type', 'parse_momentum_function')
+            self.setup_parse_momentum_functions(species, source_name, self.momentum_expressions, '', self.directed_velocity)
         elif np.any(np.not_equal(self.rms_velocity, 0.)):
-            species.momentum_distribution_type = "gaussian"
-            species.ux_m = self.directed_velocity[0]/constants.c
-            species.uy_m = self.directed_velocity[1]/constants.c
-            species.uz_m = self.directed_velocity[2]/constants.c
-            species.ux_th = self.rms_velocity[0]/constants.c
-            species.uy_th = self.rms_velocity[1]/constants.c
-            species.uz_th = self.rms_velocity[2]/constants.c
+            species.add_new_group_attr(source_name, 'momentum_distribution_type', "gaussian")
+            species.add_new_group_attr(source_name, 'ux_m', self.directed_velocity[0]/constants.c)
+            species.add_new_group_attr(source_name, 'uy_m', self.directed_velocity[1]/constants.c)
+            species.add_new_group_attr(source_name, 'uz_m', self.directed_velocity[2]/constants.c)
+            species.add_new_group_attr(source_name, 'ux_th', self.rms_velocity[0]/constants.c)
+            species.add_new_group_attr(source_name, 'uy_th', self.rms_velocity[1]/constants.c)
+            species.add_new_group_attr(source_name, 'uz_th', self.rms_velocity[2]/constants.c)
         else:
-            species.momentum_distribution_type = "constant"
-            species.ux = self.directed_velocity[0]/constants.c
-            species.uy = self.directed_velocity[1]/constants.c
-            species.uz = self.directed_velocity[2]/constants.c
+            species.add_new_group_attr(source_name, 'momentum_distribution_type', "constant")
+            species.add_new_group_attr(source_name, 'ux', self.directed_velocity[0]/constants.c)
+            species.add_new_group_attr(source_name, 'uy', self.directed_velocity[1]/constants.c)
+            species.add_new_group_attr(source_name, 'uz', self.directed_velocity[2]/constants.c)
 
-    def setup_parse_momentum_functions(self, species, expressions, suffix, defaults):
+    def setup_parse_momentum_functions(self, species, source_name, expressions, suffix, defaults):
         for sdir, idir in zip(['x', 'y', 'z'], [0, 1, 2]):
             if expressions[idir] is not None:
                 expression = pywarpx.my_constants.mangle_expression(expressions[idir], self.mangle_dict)
             else:
                 expression = f'{defaults[idir]}'
-            species.__setattr__(f'momentum_function_u{sdir}{suffix}(x,y,z)', f'({expression})/{constants.c}')
+            species.add_new_group_attr(source_name, f'momentum_function_u{sdir}{suffix}(x,y,z)', f'({expression})/{constants.c}')
 
 
 class UniformFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, DensityDistributionBase):
-    def initialize_inputs(self, species_number, layout, species, density_scale):
+    def initialize_inputs(self, species_number, layout, species, density_scale, source_name):
 
         self.fill_in = False
         self.set_mangle_dict()
-        self.set_species_attributes(species, layout)
+        self.set_species_attributes(species, layout, source_name)
 
-        species.flux_profile = "constant"
-        species.flux = self.flux
+        species.add_new_group_attr(source_name, 'flux_profile', "constant")
+        species.add_new_group_attr(source_name, 'flux', self.flux)
         if density_scale is not None:
-            species.flux *= density_scale
-        species.flux_normal_axis = self.flux_normal_axis
-        species.surface_flux_pos = self.surface_flux_position
-        species.flux_direction = self.flux_direction
-        species.flux_tmin = self.flux_tmin
-        species.flux_tmax = self.flux_tmax
+            species.add_new_group_attr(source_name, 'flux',  density_scale)
+        species.add_new_group_attr(source_name, 'flux_normal_axis', self.flux_normal_axis)
+        species.add_new_group_attr(source_name, 'surface_flux_pos', self.surface_flux_position)
+        species.add_new_group_attr(source_name, 'flux_direction', self.flux_direction)
+        species.add_new_group_attr(source_name, 'flux_tmin', self.flux_tmin)
+        species.add_new_group_attr(source_name, 'flux_tmax', self.flux_tmax)
 
         # --- Use specific attributes for flux injection
-        species.injection_style = "nfluxpercell"
+        species.add_new_group_attr(source_name, 'injection_style', "nfluxpercell")
         assert (isinstance(layout, PseudoRandomLayout)), Exception('UniformFluxDistribution only supports the PseudoRandomLayout in WarpX')
         if self.gaussian_flux_momentum_distribution:
-            species.momentum_distribution_type = "gaussianflux"
+            species.add_new_group_attr(source_name, 'momentum_distribution_type', "gaussianflux")
 
 
 class UniformDistribution(picmistandard.PICMI_UniformDistribution, DensityDistributionBase):
-    def initialize_inputs(self, species_number, layout, species, density_scale):
+    def initialize_inputs(self, species_number, layout, species, density_scale, source_name):
 
         self.set_mangle_dict()
-        self.set_species_attributes(species, layout)
+        self.set_species_attributes(species, layout, source_name)
 
         # --- Only constant density is supported by this class
-        species.profile = "constant"
-        species.density = self.density
+        species.add_new_group_attr(source_name, 'profile', "constant")
+        species.add_new_group_attr(source_name, 'density', self.density)
         if density_scale is not None:
-            species.density *= density_scale
+            species.add_new_group_attr(source_name, 'density',  density_scale)
 
 
 class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDistributionBase):
@@ -478,35 +492,35 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution, DensityDist
     def init(self, kw):
         self.momentum_spread_expressions = kw.pop('warpx_momentum_spread_expressions', [None, None, None])
 
-    def initialize_inputs(self, species_number, layout, species, density_scale):
+    def initialize_inputs(self, species_number, layout, species, density_scale, source_name):
 
         self.set_mangle_dict()
-        self.set_species_attributes(species, layout)
+        self.set_species_attributes(species, layout, source_name)
 
-        species.profile = "parse_density_function"
+        species.add_new_group_attr(source_name, 'profile', "parse_density_function")
         expression = pywarpx.my_constants.mangle_expression(self.density_expression, self.mangle_dict)
         if density_scale is None:
-            species.__setattr__('density_function(x,y,z)', expression)
+            species.add_new_group_attr(source_name, 'density_function(x,y,z)', expression)
         else:
-            species.__setattr__('density_function(x,y,z)', "{}*({})".format(density_scale, expression))
+            species.add_new_group_attr(source_name, 'density_function(x,y,z)', "{}*({})".format(density_scale, expression))
 
 
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
         pass
 
-    def initialize_inputs(self, species_number, layout, species, density_scale):
+    def initialize_inputs(self, species_number, layout, species, density_scale, source_name):
 
-        species.injection_style = "multipleparticles"
-        species.multiple_particles_pos_x = self.x
-        species.multiple_particles_pos_y = self.y
-        species.multiple_particles_pos_z = self.z
-        species.multiple_particles_ux = np.array(self.ux)/constants.c
-        species.multiple_particles_uy = np.array(self.uy)/constants.c
-        species.multiple_particles_uz = np.array(self.uz)/constants.c
-        species.multiple_particles_weight = self.weight
+        species.add_new_group_attr(source_name, 'injection_style', "multipleparticles")
+        species.add_new_group_attr(source_name, 'multiple_particles_pos_x', self.x)
+        species.add_new_group_attr(source_name, 'multiple_particles_pos_y', self.y)
+        species.add_new_group_attr(source_name, 'multiple_particles_pos_z', self.z)
+        species.add_new_group_attr(source_name, 'multiple_particles_ux', np.array(self.ux)/constants.c)
+        species.add_new_group_attr(source_name, 'multiple_particles_uy', np.array(self.uy)/constants.c)
+        species.add_new_group_attr(source_name, 'multiple_particles_uz', np.array(self.uz)/constants.c)
+        species.add_new_group_attr(source_name, 'multiple_particles_weight', self.weight)
         if density_scale is not None:
-            species.multiple_particles_weight = self.weight*density_scale
+            species.add_new_group_attr(source_name, 'multiple_particles_weight', self.weight*density_scale)
 
 
 class ParticleDistributionPlanarInjector(picmistandard.PICMI_ParticleDistributionPlanarInjector):
