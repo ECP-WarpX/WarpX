@@ -108,24 +108,24 @@ def refinement_fine_grid_limits( sc, sf, cr, i_min, i_max ):
 # Refinement for MR: interpolation points and weights
 def refinement_points_and_weights( ii, sc, sf, cr ):
     i_start = 0
-    num_crse_pts = 0
+    num_i_pts = 0
     if   ( cr==1 ):
-        num_crse_pts = 1
+        num_i_pts = 1
         i_start = ii
     elif ( cr>=2 ):
         if   ( ii%cr==0 ):
-            num_crse_pts = (1-sf)*(1-sc)+sf*sc
+            num_i_pts = (1-sf)*(1-sc)+sf*sc
         elif ( ii%cr!=0 ):
-            num_crse_pts = (1-sf)*(1-sc)+2*sf*sc
+            num_i_pts = (1-sf)*(1-sc)+2*sf*sc
         i_start = (ii//cr)*(1-sf)*(1-sc)+(ii//cr)*sf*sc
-    weights = np.zeros( num_crse_pts )
-    for ir in range( num_crse_pts ):
+    weights = np.zeros( num_i_pts )
+    for ir in range( num_i_pts ):
         i = i_start+ir
-        if   ( ii!=iimin or ii!=iimax ):
-            weights[ir] = (1-sf)*(1-sc)+((abs(cr-abs(ii-i*cr)))/(cr))*sf*sc
-        else:
+        if   ( ii==iimin or ii==iimax ):
             weights[ir] = (1-sf)*(1-sc)+((abs(cr-abs(ii-i*cr)))/(cr)+(cr/2-0.5))*sf*sc
-    return [ num_crse_pts, i_start, weights ]
+        else:
+            weights[ir] = (1-sf)*(1-sc)+((abs(cr-abs(ii-i*cr)))/(cr))*sf*sc
+    return [ num_i_pts, i_start, weights ]
 
 ## TODO Coarsening for IO: interpolation points and weights
 #def coarsening_points_and_weights_for_IO( i, sf, sc, cr ):
