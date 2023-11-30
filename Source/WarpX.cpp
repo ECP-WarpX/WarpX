@@ -717,7 +717,7 @@ WarpX::ReadParameters ()
             moving_window_v *= PhysConst::c;
         }
 
-        m_p_ext_field_params = ReadExternalFieldParams(pp_warpx);
+        m_p_ext_field_params = std::make_unique<ExternalFieldParams>(pp_warpx);
         if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file ||
             m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file){
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_level == 0,

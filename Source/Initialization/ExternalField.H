@@ -32,6 +32,13 @@ enum class ExternalFieldType
  */
 struct ExternalFieldParams
 {
+
+    /**
+    * \brief The constructor reads and stores the ExternalField data.
+    * "pp_warpx" must point at the "warpx" parameter group in the inputfile.
+    */
+    ExternalFieldParams(const amrex::ParmParse& pp_warpx);
+
     //! Initial electric field on the grid
     amrex::GpuArray<amrex::Real,3> E_external_grid = {0,0,0};
     //! Initial magnetic field on the grid
@@ -58,14 +65,5 @@ struct ExternalFieldParams
      //! Path of the file where external fields are stored
     std::string external_fields_path;
 };
-
-/**
- * \brief This function reads the ExternalField data, initializes an ExternalFieldParams struct and returns
- * a unique pointer containing the initialized struct. "pp_warpx" must point at
- * the "warpx" parameter group in the inputfile.
- *
- */
-[[nodiscard]] std::unique_ptr<ExternalFieldParams>
-ReadExternalFieldParams(const amrex::ParmParse& pp_warpx);
 
 #endif //EXTERNAL_FIELD_H_
