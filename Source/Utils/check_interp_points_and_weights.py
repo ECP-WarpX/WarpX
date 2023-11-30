@@ -203,7 +203,7 @@ for sc in [0,1]:
         print( '\n Refinement for MR: check interpolation points and weights' )
         print( ' ---------------------------------------------------------' )
 
-         if ( sf!=sc ):
+        if ( sf!=sc ):
             print( '\n WARNING: sc={} not equal to sf={}, not implemented for Refinement for MR, continue ...'.format( sc, sf ) )
             continue
 
