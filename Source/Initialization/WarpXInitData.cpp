@@ -737,9 +737,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
     for (int i = 0; i < 3; ++i) {
 
-        if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::constant ||
-            m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::default_zero) {
-
+        // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+        // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+        const auto is_B_ext_const =
+            m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::constant ||
+            m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::default_zero;
+        if ( is_B_ext_const && (lev <= maxlevel_extEMfield_init) )
+        {
             Bfield_fp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
             if (fft_do_time_averaging)
                 Bfield_avg_fp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
@@ -751,9 +755,14 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                     Bfield_avg_cp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
            }
         }
-        if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::constant ||
-            m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::default_zero) {
 
+        // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+        // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+        const auto is_E_ext_const =
+            m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::constant ||
+            m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::default_zero;
+        if ( is_E_ext_const && (lev <= maxlevel_extEMfield_init) )
+        {
             Efield_fp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
             if (fft_do_time_averaging)
                 Efield_avg_fp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
@@ -771,7 +780,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     InitializeEBGridData(lev);
 #endif
 
-    if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
+    // if the input string for the B-field is "parse_b_ext_grid_function",
+    // then the analytical expression or function must be
+    // provided in the input file.
+    // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+    // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+    if ((m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::parse_ext_grid_function)
+         && (lev <= maxlevel_extEMfield_init)) {
 
         // Initialize Bfield_fp with external function
         InitializeExternalFieldsOnGridUsingParser(
@@ -813,7 +828,13 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         }
     }
 
-    if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::parse_ext_grid_function) {
+    // if the input string for the E-field is "parse_e_ext_grid_function",
+    // then the analytical expression or function must be
+    // provided in the input file.
+    // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+    // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+    if ((m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::parse_ext_grid_function)
+        && (lev <= maxlevel_extEMfield_init)) {
 
         // Initialize Efield_fp with external function
         InitializeExternalFieldsOnGridUsingParser(

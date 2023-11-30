@@ -141,9 +141,13 @@ option(ABLASTR_POSITION_INDEPENDENT_CODE
        "Build ABLASTR with position independent code" ON)
 mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 
+option(ABLASTR_FFT "compile AnyFFT wrappers" ${WarpX_PSATD})
+if(WarpX_PSATD)
+    set(ABLASTR_FFT ON CACHE STRING "compile AnyFFT wrappers" FORCE)
+endif()
+
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
-
 
 # Dependencies ################################################################
 #
@@ -404,7 +408,7 @@ foreach(D IN LISTS WarpX_DIMS)
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::amrex_${D}d)
     endif()
 
-    if(WarpX_PSATD)
+    if(ABLASTR_FFT)
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::FFT)
         if(D STREQUAL "RZ")
             target_link_libraries(ablastr_${SD} PUBLIC blaspp)
@@ -500,6 +504,10 @@ foreach(D IN LISTS WarpX_DIMS)
 
     if(WarpX_PSATD)
         target_compile_definitions(ablastr_${SD} PUBLIC WARPX_USE_PSATD)
+    endif()
+    if(ABLASTR_FFT)
+        # We need to enable FFT support in ABLASTR for PSATD solver
+        target_compile_definitions(ablastr_${SD} PUBLIC ABLASTR_USE_FFT)
     endif()
 
     if(WarpX_PYTHON AND pyWarpX_VERSION_INFO)

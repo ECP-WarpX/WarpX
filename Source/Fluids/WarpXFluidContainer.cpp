@@ -27,8 +27,8 @@ WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std:
 
     // Initialize injection objects
     const ParmParse pp_species_name(species_name);
-    SpeciesUtils::parseDensity(species_name, h_inj_rho, density_parser);
-    SpeciesUtils::parseMomentum(species_name, "none", h_inj_mom,
+    SpeciesUtils::parseDensity(species_name, "", h_inj_rho, density_parser);
+    SpeciesUtils::parseMomentum(species_name, "", "none", h_inj_mom,
         ux_parser, uy_parser, uz_parser, ux_th_parser, uy_th_parser, uz_th_parser, h_mom_temp, h_mom_vel);
     if (h_inj_rho) {
 #ifdef AMREX_USE_GPU
@@ -964,13 +964,13 @@ void WarpXFluidContainer::GatherAndPush (
 
 
     // Prepare interpolation of current components to cell center
-    amrex::GpuArray<int, 3> Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> Ex_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> Ey_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> Ez_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> Bx_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> By_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> Bz_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Ex_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Ey_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Ez_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Bx_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto By_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto Bz_type = amrex::GpuArray<int, 3>{0, 0, 0};
     for (int i = 0; i < AMREX_SPACEDIM; ++i)
     {
         Nodal_type[i] = N[lev]->ixType()[i];
@@ -1244,10 +1244,10 @@ void WarpXFluidContainer::DepositCurrent(
     const amrex::Real q = getCharge();
 
     // Prepare interpolation of current components to cell center
-    amrex::GpuArray<int, 3> j_nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> jx_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> jy_type = amrex::GpuArray<int, 3>{0, 0, 0};
-    amrex::GpuArray<int, 3> jz_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto j_nodal_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto jx_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto jy_type = amrex::GpuArray<int, 3>{0, 0, 0};
+    auto jz_type = amrex::GpuArray<int, 3>{0, 0, 0};
     for (int i = 0; i < AMREX_SPACEDIM; ++i)
     {
         j_nodal_type[i] = tmp_jx_fluid.ixType()[i];
