@@ -58,11 +58,11 @@ namespace ablastr::coarsen::average
             if ((two_times_index_min % 2) == 0) {
                 src_fine_index_min[l] = two_times_index_min/2;
                 num_src_points[l] = crse_ratio[l]+1;
-                use_half_weight[l] = 1; // True
+                use_half_weight[l] = true; // True
             } else {
                 src_fine_index_min[l] = (two_times_index_min+1)/2;
                 num_src_points[l] = crse_ratio[l];
-                use_half_weight[l] = 0; // False
+                use_half_weight[l] = false; // False
             }
         }
         crx_cry_crz_inv = 1.0_rt / static_cast<amrex::Real>(crse_ratio[0]*crse_ratio[1]*crse_ratio[2]);
