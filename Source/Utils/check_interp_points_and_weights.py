@@ -78,8 +78,6 @@ def coarsening_points_and_weights( i, sc, sf, cr ):
 # Refinement functions
 
 def refinement_coarse_grid_limits( sc, sf, cr ):
-    # imin = int( iimin/cr ) # original
-    # imax = int( iimax/cr )-(1-sc)*sf+(1-sf)*sc # original
     i_min = 0
     i_max = 3
     return [ i_min, i_max ]
@@ -146,9 +144,6 @@ def refinement_points_and_weights( ii, sc, sf, cr ):
 
 # Input coarsening ratio
 cr = int( input( "\n Select coarsening ratio (cr=1,2,4): cr=" ) )
-# if ( cr!=1 and cr!=2 and cr!=4 ):
-#     print()
-#     sys.exit( 'coarsening ratio cr={} is not valid'.format( cr ) )
 
 # Loop over possible staggering of coarse and fine grid (cell-centered or nodal)
 for sc in [0,1]:
@@ -167,10 +162,6 @@ for sc in [0,1]:
             print( ' nodal          *' )
         print( ' **************************************************' )
 
-        # if ( sf!=sc ):
-        #     print( '\n WARNING: sc={} not equal to sf={}, not implemented for MR, continue ...'.format( sc, sf ) )
-        #     continue
-
         print( '\n Coarsening for MR: check interpolation points and weights' )
         print( ' ---------------------------------------------------------' )
 
@@ -179,12 +170,6 @@ for sc in [0,1]:
 
         print( '\n Min and max index on coarse grid:  imin={}  imax={}'.format( imin, imax ) )
         print(   ' Min and max index on fine   grid: iimin={} iimax={}'.format( iimin, iimax ) )
-
-        # Number of grid points
-        # nc = imax-imin+1
-        # nf = iimax-iimin+1
-        # print( '\n Number of points on coarse grid: nc={}'.format( nc ) )
-        # print(   ' Number of points on fine   grid: nf={}'.format( nf ) )
 
         # Coarsening for MR: interpolation points and weights
         for i in range( imin, imax+1 ): # index on coarse grid
@@ -216,17 +201,16 @@ for sc in [0,1]:
         print( '\n Refinement for MR: check interpolation points and weights' )
         print( ' ---------------------------------------------------------' )
 
+         if ( sf!=sc ):
+            print( '\n WARNING: sc={} not equal to sf={}, not implemented for Refinement for MR, continue ...'.format( sc, sf ) )
+            continue
+
         imin ,imax  = refinement_coarse_grid_limits( sc, sf, cr)
         iimin,iimax = refinement_fine_grid_limits( sc, sf, cr, imin, imax )
 
         # Number of grid points
-        # nc = imax-imin+1
-        # nf = iimax-iimin+1
-
         print( '\n Min and max index on coarse grid:  imin={}  imax={}'.format( imin, imax ) )
         print(   ' Min and max index on fine   grid: iimin={} iimax={}'.format( iimin, iimax ) )
-        # print( '\n Number of points on coarse grid: nc={}'.format( nc ) )
-        # print(   ' Number of points on fine   grid: nf={}'.format( nf ) )
 
         # Refinement for MR: interpolation points and weights
         for ii in range ( iimin, iimax+1): # index on fine grid
@@ -234,12 +218,6 @@ for sc in [0,1]:
             print( '\n Find value at ii={} by interpolating over the following points and weights:'.format( ii ) )
             for ir in range( num_i_pts ): # interpolation points and weights
                 i = i_start+ir
-                # sign = '+'
-                # if (i == 0):
-                #     sign = ' '
-                # if (i < 0):
-                #     sign = '-'
-                # print( ' (i='+sign+'{},w={:.2f})'.format( abs(i), weights[ir] ), end='' )
                 print( ' (i={},w={:.3f})'.format( i, weights[ir] ), end='' )
                 if not ( ir == num_i_pts-1 ):
                     print( ' ', end='' )
