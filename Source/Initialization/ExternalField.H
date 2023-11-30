@@ -34,7 +34,7 @@ struct ExternalFieldParams
 {
 
     /**
-    * \brief The constructor reads and stores the ExternalField data.
+    * \brief The constructor reads and stores the parameters related to the external fields.
     * "pp_warpx" must point at the "warpx" parameter group in the inputfile.
     */
     ExternalFieldParams(const amrex::ParmParse& pp_warpx);
