@@ -25,7 +25,6 @@
 # Source/ablastr/coarsen/sample.(H/.cpp)
 #-------------------------------------------------------------------------------
 
-import sys
 
 import numpy as np
 
@@ -219,7 +218,7 @@ for sc in [0,1]:
 
         imin ,imax  = refinement_coarse_grid_limits( sc, sf, cr)
         iimin,iimax = refinement_fine_grid_limits( sc, sf, cr, imin, imax )
-        
+
         # Number of grid points
         # nc = imax-imin+1
         # nf = iimax-iimin+1
