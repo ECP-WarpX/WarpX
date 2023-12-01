@@ -195,8 +195,7 @@ struct LorentzTransformParticles
  * \brief BackTransform functor to select particles and Lorentz Transform them
  *  and store in particle buffers
  */
-class
-BackTransformParticleFunctor final : public ComputeParticleDiagFunctor
+class BackTransformParticleFunctor final : public ComputeParticleDiagFunctor
 {
 public:
     BackTransformParticleFunctor(WarpXParticleContainer *pc_src, std::string species_name, int num_buffers);
