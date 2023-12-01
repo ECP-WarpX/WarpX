@@ -1570,7 +1570,7 @@ WarpX::ReadExternalFieldFromFile (
 void
 WarpX::ReadExternalFieldFromFile (std::string , amrex::MultiFab* ,std::string, std::string)
 {
-#if defined(WARPX_DIM_1D)
+#if defined(WARPX_DIM_1D_Z)
     WARPX_ABORT_WITH_MESSAGE("Reading fields from openPMD files is not supported in 1D");
 #elif defined(WARPX_DIM_XZ)
     WARPX_ABORT_WITH_MESSAGE("Reading from openPMD for external fields is not known to work with XZ (see #3828)");
