@@ -95,7 +95,7 @@ Overall simulation parameters
 
 * ``algo.max_picard_iterations`` (`integer`, default: 10)
     When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets the maximum number of Picard
-    itearations that are done each time step. 
+    itearations that are done each time step.
 
 * ``algo.picard_iteration_tolerance`` (`float`, default: 1.e-7)
     When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets the convergence tolerance of
