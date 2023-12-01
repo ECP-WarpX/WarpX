@@ -485,7 +485,7 @@ WarpX::InitData ()
         AddExternalFields();
     }
 
-    if (restart_chkfile.empty() || write_diagonstics_on_restart) {
+    if (restart_chkfile.empty() || write_diagnostics_on_restart) {
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush(istep[0] - 1);
 
