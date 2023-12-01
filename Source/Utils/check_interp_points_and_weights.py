@@ -145,7 +145,7 @@ def refinement_points_and_weights( ii, sc, sf, cr ):
 #-------------------------------------------------------------------------------
 
 # Input coarsening ratio
-cr = int( input( "\n Select coarsening ratio (cr=1,2,4): cr=" ) )
+cr = int( input( "\n Select coarsening ratio (cr>=1): cr=" ) )
 
 # Loop over possible staggering of coarse and fine grid (cell-centered or nodal)
 for sc in [0,1]:
