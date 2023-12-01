@@ -56,7 +56,7 @@ class IonLandauDamping(object):
     # Plasma resistivity - used to dampen the mode excitation
     eta = 1e-7
     # Number of substeps used to update B
-    substeps = 100
+    substeps = 10
 
 
     def __init__(self, test, dim, m, T_ratio, verbose):
@@ -83,7 +83,7 @@ class IonLandauDamping(object):
         self.total_steps = int(np.ceil(self.LT / self.DT))
         # if this is a test case run for only 100 steps
         if self.test:
-            self.total_steps = 100
+            self.total_steps = 150
 
         self.dt = self.DT / self.w_ci # self.DT * self.t_ci
 
