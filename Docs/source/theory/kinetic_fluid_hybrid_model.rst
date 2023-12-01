@@ -108,7 +108,7 @@ Extrapolation step
 
 Obtaining the E-field at timestep :math:`t=t_{n+1}` is a well documented issue for
 the hybrid model. Currently the approach in WarpX is to simply extrapolate
-:math:`\vec{J}_i` foward in time, using
+:math:`\vec{J}_i` forward in time, using
 
     .. math::
 

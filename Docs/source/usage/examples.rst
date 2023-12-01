@@ -173,7 +173,7 @@ The analytical solution for these modes are described in :cite:t:`ex-Stix1992` C
 
 The input file for this example and corresponding analysis can be found at:
 
-* :download:`Cylinderical modes input <../../../Examples/Tests/ohm_solver_EM_modes/PICMI_inputs_rz.py>`
+* :download:`Cylindrical modes input <../../../Examples/Tests/ohm_solver_EM_modes/PICMI_inputs_rz.py>`
 * :download:`Analysis script <../../../Examples/Tests/ohm_solver_EM_modes/analysis_rz.py>`
 
 Ion beam R instability
