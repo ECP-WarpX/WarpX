@@ -27,8 +27,7 @@
  * \brief This class contains the macroscopic properties of the medium needed to
  * evaluate macroscopic Maxwell equation.
  */
-class
-MacroscopicProperties
+class MacroscopicProperties
 {
 public:
     MacroscopicProperties (); // constructor
