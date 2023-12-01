@@ -1171,23 +1171,6 @@ WarpX::ReadParameters ()
                 "Vay deposition not implemented with multi-J algorithm");
         }
 
-        if (evolve_scheme == EvolveScheme::ImplicitPicard ||
-            evolve_scheme == EvolveScheme::SemiImplicitPicard) {
-            utils::parser::queryWithParser(pp_algo, "max_picard_iterations", max_picard_iterations);
-            utils::parser::queryWithParser(pp_algo, "picard_iteration_tolerance", picard_iteration_tolerance);
-
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
-                current_deposition_algo == CurrentDepositionAlgo::Direct,
-                "Only Esirkepov or Direct current deposition supported with the implicit and semi-implicit schemes");
-
-            // Note - others, such as CKC, may work but have not been tested.
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee,
-                "Only the Yee EM solver is supported with the implicit and semi-implicit schemes");
-
-        }
-
         // Query algo.field_gathering from input, set field_gathering_algo to
         // "default" if not found (default defined in Utils/WarpXAlgorithmSelection.cpp)
         field_gathering_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "field_gathering"));
@@ -1237,6 +1220,37 @@ WarpX::ReadParameters ()
         em_solver_medium = GetAlgorithmInteger(pp_algo, "em_solver_medium");
         if (em_solver_medium == MediumForEM::Macroscopic ) {
             macroscopic_solver_algo = GetAlgorithmInteger(pp_algo,"macroscopic_sigma_method");
+        }
+
+        if (evolve_scheme == EvolveScheme::ImplicitPicard ||
+            evolve_scheme == EvolveScheme::SemiImplicitPicard) {
+            utils::parser::queryWithParser(pp_algo, "max_picard_iterations", max_picard_iterations);
+            utils::parser::queryWithParser(pp_algo, "picard_iteration_tolerance", picard_iteration_tolerance);
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
+                current_deposition_algo == CurrentDepositionAlgo::Direct,
+                "Only Esirkepov or Direct current deposition supported with the implicit and semi-implicit schemes");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC,
+                "Only the Yee EM solver is supported with the implicit and semi-implicit schemes");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                particle_pusher_algo == ParticlePusherAlgo::Boris,
+                "Only the Boris particle pusher is supported with the implicit and semi-implicit schemes");
+
+            if (current_deposition_algo == CurrentDepositionAlgo::Direct) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    field_gathering_algo == GatheringAlgo::MomentumConserving,
+                    "With implicit and semi-implicit schemes and direct deposition, the field gathering must be momentum conserving, algo.field_gathering = momentum-conserving");
+            }
+            if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    field_gathering_algo == GatheringAlgo::EnergyConserving,
+                    "With implicit and semi-implicit schemes and Esirkepov deposition, the field gathering must be energy conserving, algo.field_gathering = energy-conserving");
+            }
         }
 
         // Load balancing parameters
