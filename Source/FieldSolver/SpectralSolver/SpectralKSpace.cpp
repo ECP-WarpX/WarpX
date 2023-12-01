@@ -147,7 +147,7 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
 {
     // Initialize an empty DeviceVector in each box
     SpectralShiftFactor shift_factor( spectralspace_ba, dm );
-   // Loop over boxes and allocate the corresponding DeviceVector
+    // Loop over boxes and allocate the corresponding DeviceVector
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
         const Gpu::DeviceVector<Real>& k = k_vec[i_dim][mfi];

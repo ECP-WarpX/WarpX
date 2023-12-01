@@ -28,8 +28,8 @@ void FiniteDifferenceSolver::CalculateCurrentAmpere (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     int lev )
 {
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
     if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
 #ifdef WARPX_DIM_RZ
         CalculateCurrentAmpereCylindrical <CylindricalYeeAlgorithm> (
@@ -376,8 +376,8 @@ void FiniteDifferenceSolver::HybridPICSolveE (
     int lev, HybridPICModel const* hybrid_model,
     const bool include_resistivity_term )
 {
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
     if (m_fdtd_algo == ElectromagneticSolverAlgo::HybridPIC) {
 #ifdef WARPX_DIM_RZ
 

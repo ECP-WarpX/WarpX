@@ -15,12 +15,11 @@
 /**
  * \brief Functor to compute a diagnostic and store the result in existing ParticleContainer.
  */
-class
-ComputeParticleDiagFunctor
+class ComputeParticleDiagFunctor
 {
 public:
 
-    ComputeParticleDiagFunctor( ) {}
+    ComputeParticleDiagFunctor( ) = default;
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~ComputeParticleDiagFunctor() = default;
 

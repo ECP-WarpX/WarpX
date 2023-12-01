@@ -37,7 +37,7 @@ public:
     PhotonParticleContainer (amrex::AmrCore* amr_core,
                                     int ispecies,
                                     const std::string& name);
-    ~PhotonParticleContainer () override {}
+    ~PhotonParticleContainer () override = default;
 
     PhotonParticleContainer ( PhotonParticleContainer const &)             = delete;
     PhotonParticleContainer& operator= ( PhotonParticleContainer const & ) = delete;
