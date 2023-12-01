@@ -117,7 +117,7 @@ A typical format is:
 
    This is a short, 40-character title
 
-   After a newline, you can write arbritray paragraphs. You
+   After a newline, you can write arbitrary paragraphs. You
    usually limit the lines to 70 characters, but if you don't, then
    nothing bad will happen.
 
