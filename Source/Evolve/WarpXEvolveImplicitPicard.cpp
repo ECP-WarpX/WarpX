@@ -83,9 +83,13 @@ WarpX::EvolveImplicitPicardInit (int lev)
         Bfield_save.resize(nlevs_max);
     }
 
-    // Strange, the WarpX::DistributionMap(0) is not consistent with Ex_fp.DistributionMap()???
-
-    // Note that the *_fp will be the n+theta and n+1 time level
+    // The Efield_n and Bfield_n will hold the fields at the start of the time step.
+    // This is needed since in each iteration the fields are advanced from the values
+    // at the start of the step.
+    // The Efield_save and Bfield_save will hold the fields from the previous iteration,
+    // to check the change in the fields after the iterations to check for convergence.
+    // The Efiel_fp and Bfield_fp will hole the n+theta during the iterations and then
+    // advance to the n+1 time level after the iterations complete.
     AllocInitMultiFabFromModel(Efield_n[lev][0], *Efield_fp[0][0], lev, "Efield_n[0]");
     AllocInitMultiFabFromModel(Efield_n[lev][1], *Efield_fp[0][1], lev, "Efield_n[1]");
     AllocInitMultiFabFromModel(Efield_n[lev][2], *Efield_fp[0][2], lev, "Efield_n[2]");
