@@ -3,7 +3,7 @@ foreach(D IN LISTS WarpX_DIMS)
     target_sources(lib_${SD}
       PRIVATE
         WarpXEvolve.cpp
-        WarpXEvolveImplicitPicard.cpp
         WarpXComputeDt.cpp
+        WarpXOneStepImplicitPicard.cpp
     )
 endforeach()
