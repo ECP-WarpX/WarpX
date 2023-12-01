@@ -266,7 +266,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
             dirichlet_flag[adim][0] = false;
             dim_start = 1;
 
-            // handle the r_max boundary explicity
+            // handle the r_max boundary explicitly
             if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
                 if (adim == 0) {
                     hibc[adim][0] = LinOpBCType::Neumann;

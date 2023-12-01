@@ -1907,7 +1907,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                     // Rotate the momentum
                     // This because, when the flux direction is e.g. "r"
                     // the `inj_mom` objects generates a v*Gaussian distribution
-                    // along the Cartesian "x" directionm by default. This
+                    // along the Cartesian "x" direction by default. This
                     // needs to be rotated along "r".
                     Real ur = pu.x;
                     Real ut = pu.y;
@@ -2696,7 +2696,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 void
 PhysicalParticleContainer::ContinuousInjection (const RealBox& injection_box)
 {
-    // Inject plasma on level 0. Paticles will be redistributed.
+    // Inject plasma on level 0. Particles will be redistributed.
     const int lev=0;
     for (auto const& plasma_injector : plasma_injectors) {
         AddPlasma(*plasma_injector, lev, injection_box);

@@ -108,7 +108,7 @@ public:
      * specified electron equation of state.
      *
      * \param[out] Pe   scalar electron pressure MultiFab at a given level
-     * \param[in] rhofield scalar ion chrge density Multifab at a given level
+     * \param[in] rhofield scalar ion charge density Multifab at a given level
      */
     void FillElectronPressureMF (
         std::unique_ptr<amrex::MultiFab> const& Pe,

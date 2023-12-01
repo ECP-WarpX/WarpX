@@ -943,7 +943,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
   auto const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
   auto const& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
   auto const& soa = pti.GetStructOfArrays();
-  // first we concatinate the AoS into contiguous arrays
+  // first we concatenate the AoS into contiguous arrays
   {
     // note: WarpX does not yet use extra AoS Real attributes
     for( auto idx=0; idx<ParticleIter::ContainerType::NStructReal; idx++ ) {  // lgtm [cpp/constant-comparison]

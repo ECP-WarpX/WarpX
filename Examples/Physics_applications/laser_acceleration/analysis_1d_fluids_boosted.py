@@ -90,7 +90,7 @@ V_th /= c
 # Remove the ions
 rho_th = rho_th - e*n0
 
-# Dicate which region to compare solutions over (cuttoff 0's from BTD extra)
+# Dictate which region to compare solutions over (cuttoff 0's from BTD extra)
 min_i = 200
 max_i = 4864
 
