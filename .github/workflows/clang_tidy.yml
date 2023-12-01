@@ -20,9 +20,9 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.cache/ccache
-        key: ccache-clang-tidy-${{ github.job }}-git-${{ github.sha }}
+        key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
         restore-keys: |
-             ccache-clang-tidy-${{ github.job }}-git-
+             ccache-${{ github.workflow }}-${{ github.job }}-git-
     - name: build WarpX & run clang-tidy
       run: |
         export CCACHE_COMPRESS=1
@@ -56,3 +56,18 @@ jobs:
 
         ccache -s
         du -hs ~/.cache/ccache
+
+  save_pr_number:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save PR number
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          echo $PR_NUMBER > pr_number.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: pr_number.txt
+          retention-days: 1

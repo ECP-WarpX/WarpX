@@ -35,12 +35,21 @@ jobs:
         if: ${{ matrix.language == 'cpp' }}
         run: |
           sudo apt-get update
-          sudo apt-get install --yes cmake openmpi-bin libopenmpi-dev libhdf5-openmpi-dev libadios-openmpi-dev
+          sudo apt-get install --yes cmake openmpi-bin libopenmpi-dev libhdf5-openmpi-dev libadios-openmpi-dev ccache
 
           python -m pip install --upgrade pip
           python -m pip install --upgrade wheel
           python -m pip install --upgrade cmake
           export CMAKE="$HOME/.local/bin/cmake" && echo "CMAKE=$CMAKE" >> $GITHUB_ENV
+
+      - name: Set Up Cache
+        if: ${{ matrix.language == 'cpp' }}
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
+          restore-keys: |
+               ccache-${{ github.workflow }}-${{ github.job }}-git-
 
       - name: Configure (C++)
         if: ${{ matrix.language == 'cpp' }}
@@ -61,6 +70,19 @@ jobs:
       - name: Build (C++)
         if: ${{ matrix.language == 'cpp' }}
         run: |
+          export CCACHE_COMPRESS=1
+          export CCACHE_COMPRESSLEVEL=10
+          export CCACHE_MAXSIZE=100M
+          ccache -z
+
+          $CMAKE --build build -j 2
+
+          ccache -s
+          du -hs ~/.cache/ccache
+
+          # Make sure CodeQL has something to do
+          touch Source/Utils/WarpXVersion.cpp
+          export CCACHE_DISABLE=1
           $CMAKE --build build -j 2
 
       - name: Perform CodeQL Analysis
@@ -88,3 +110,18 @@ jobs:
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: sarif-results/${{ matrix.language }}.sarif
+
+  save_pr_number:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save PR number
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          echo $PR_NUMBER > pr_number.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: pr_number.txt
+          retention-days: 1
