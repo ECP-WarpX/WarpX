@@ -534,3 +534,100 @@ void HybridPICModel::FillElectronPressureMF (
         });
     }
 }
+
+void HybridPICModel::BfieldEvolveRK (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real const dt, DtType dt_type,
+        IntVect ng, std::optional<bool> nodal_sync )
+{
+    // make copies of the B-field multifabs at t = n
+    std::array< MultiFab, 3 > B_old;
+    B_old[0] = MultiFab(
+        Bfield[0][0]->boxArray(), Bfield[0][0]->DistributionMap(), 1,
+        Bfield[0][0]->nGrowVect()
+    );
+    MultiFab::Copy(B_old[0], *Bfield[0][0], 0, 0, 1, ng);
+    B_old[1] = MultiFab(
+        Bfield[0][1]->boxArray(), Bfield[0][1]->DistributionMap(), 1,
+        Bfield[0][1]->nGrowVect()
+    );
+    MultiFab::Copy(B_old[1], *Bfield[0][1], 0, 0, 1, ng);
+    B_old[2] = MultiFab(
+        Bfield[0][2]->boxArray(), Bfield[0][2]->DistributionMap(), 1,
+        Bfield[0][2]->nGrowVect()
+    );
+    MultiFab::Copy(B_old[2], *Bfield[0][2], 0, 0, 1, ng);
+
+    // Create multifabs for each direction to store the Runge-Kutta
+    // intermediate terms. Each multifab has 2 components for the different
+    // terms that need to be stored.
+    std::array< amrex::MultiFab, 3 > K;
+    K[0] = amrex::MultiFab(
+        Bfield[0][0]->boxArray(), Bfield[0][0]->DistributionMap(), 2,
+        Bfield[0][0]->nGrowVect()
+    );
+    K[0].setVal(0.0);
+    K[1] = amrex::MultiFab(
+        Bfield[0][1]->boxArray(), Bfield[0][1]->DistributionMap(), 2,
+        Bfield[0][1]->nGrowVect()
+    );
+    K[1].setVal(0.0);
+    K[2] = amrex::MultiFab(
+        Bfield[0][2]->boxArray(), Bfield[0][2]->DistributionMap(), 2,
+        Bfield[0][2]->nGrowVect()
+    );
+    K[2].setVal(0.0);
+
+    auto& warpx = WarpX::GetInstance();
+
+    // The Runge-Kutta scheme begins here.
+    // Step 1:
+    // Calculate J = curl x B / mu0
+    CalculateCurrentAmpere(Bfield, edge_lengths);
+    // Calculate the E-field from Ohm's law
+    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, true);
+    warpx.FillBoundaryE(ng, nodal_sync);
+    // Push forward the B-field using Faraday's law
+    warpx.EvolveB(0.5_rt*dt, dt_type);
+    warpx.FillBoundaryB(ng, nodal_sync);
+
+    // The Bfield is now given by:
+    // B_new = B_old + 0.5 * dt * [-curl x E(B_old)] = B_old + 0.5 * dt * K0.
+    for (int ii = 0; ii < 3; ii++)
+    {
+        // Extract 0.5 * dt * K0 for each direction into index 0 of K.
+        MultiFab::LinComb(
+            K[ii], 1._rt, *Bfield[0][ii], 0, -1._rt, B_old[ii], 0, 0, 1, ng
+        );
+    }
+
+    // Step 2:
+    // Calculate J = curl x B / mu0
+    CalculateCurrentAmpere(Bfield, edge_lengths);
+    // Calculate the E-field from Ohm's law
+    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, true);
+    warpx.FillBoundaryE(ng, nodal_sync);
+    // Push forward the B-field using Faraday's law
+    warpx.EvolveB(0.5_rt*dt, dt_type);
+    warpx.FillBoundaryB(ng, nodal_sync);
+
+    // The Bfield is now given by:
+    // B_new = B_old + 0.5 * dt * K0 + 0.5 * dt * [-curl x E(B_old + 0.5 * dt * K1)]
+    //       = B_old + 0.5 * dt * K0 + 0.5 * dt * K1
+    for (int ii = 0; ii < 3; ii++)
+    {
+        // Subtract 0.5 * dt * K0 from the Bfield for each direction, to get
+        // B_new = B_old + 0.5 * dt * K1.
+        MultiFab::Subtract(*Bfield[0][ii], K[ii], 0, 0, 1, ng);
+        // Extract 0.5 * dt * K1 for each direction into index 1 of K.
+        MultiFab::LinComb(
+            K[ii], 1._rt, *Bfield[0][ii], 0, -1._rt, B_old[ii], 0, 1, 1, ng
+        );
+    }
+
+    // TODO INSERT STEPS 3 & 4
+}
