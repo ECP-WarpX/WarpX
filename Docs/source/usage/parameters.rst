@@ -676,6 +676,19 @@ Particle initialization
     When ``<species_name>.xmin`` and ``<species_name>.xmax`` are set, they delimit the region within which particles are injected.
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
 
+* ``<species_name>.injection_sources`` (``list of strings``) optional
+    Names of additional injection sources. By default, WarpX assumes one injection source per species, hence all of the input
+    parameters below describing the injection are parameters directly of the species. However, this option allows
+    additional sources, the names of which are specified here. For each source, the name of the source is added to the
+    input parameters below. For instance, with ``<species_name>.injection_sources = source1 source2`` there can be the two input
+    parameters ``<species_name>.source1.injection_style`` and ``<species_name>.source2.injection_style``.
+    For the parameters of each source, the parameter with the name of the source will be used.
+    If it is not given, the value of the parameter without the source name will be used. This allows parameters used for all
+    sources to be specified once. For example, if the ``source1`` and ``source2`` have the same value of ``uz_m``, then it can be
+    set using ``<species_name>.uz_m`` instead of setting it for each source.
+    Note that since by default ``<species_name>.injection_style = none``, all injection sources can be input this way.
+    Note that if a moving window is used, the bulk velocity of all of the sources must be the same since it is used when updating the window.
+
 * ``<species_name>.injection_style`` (`string`; default: ``none``)
     Determines how the (macro-)particles will be injected in the simulation.
     The number of particles per cell is always given with respect to the coarsest level (level 0/mother grid), even if particles are immediately assigned to a refined patch.
