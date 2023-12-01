@@ -171,7 +171,6 @@ void WarpX::HybridPICEvolveFields ()
     m_hybrid_pic_model->CalculateElectronPressure(DtType::Full);
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
-    m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
     m_hybrid_pic_model->CalculateCurrentAmpere(Bfield_fp, m_edge_lengths);
     m_hybrid_pic_model->HybridPICSolveE(
         Efield_fp, current_fp_temp, Bfield_fp, rho_fp, m_edge_lengths,

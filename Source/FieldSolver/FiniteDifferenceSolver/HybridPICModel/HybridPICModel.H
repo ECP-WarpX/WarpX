@@ -113,7 +113,7 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real const dt, DtType a_dt_type,
+        amrex::Real dt, DtType a_dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     /**
