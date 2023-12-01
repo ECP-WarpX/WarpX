@@ -664,7 +664,7 @@ void HybridPICModel::BfieldEvolveRK (
     //       = B_old + 0.5 * dt * K1 + dt * K2
     for (int ii = 0; ii < 3; ii++)
     {
-        // Subtract 0.5 * dt * K1 from the Bfield for each direction to get 
+        // Subtract 0.5 * dt * K1 from the Bfield for each direction to get
         // B_new = B_old + dt * K2.
         MultiFab::Subtract(*Bfield[lev][ii], K[ii], 1, 0, 1, ng);
     }
@@ -684,10 +684,10 @@ void HybridPICModel::BfieldEvolveRK (
     //       = B_old + dt * K2 + 0.5 * dt * K3
     for (int ii = 0; ii < 3; ii++)
     {
-        // Subtract B_old from the Bfield for each direction, to get 
+        // Subtract B_old from the Bfield for each direction, to get
         // B = dt * K2 + 0.5 * dt * K3.
         MultiFab::Subtract(*Bfield[lev][ii], B_old[ii], 0, 0, 1, ng);
-        
+
         // Add dt * K2 + 0.5 * dt * K3 to index 0 of K (= 0.5 * dt * K0).
         MultiFab::Add(K[ii], *Bfield[lev][ii], 0, 0, 1, ng);
 
