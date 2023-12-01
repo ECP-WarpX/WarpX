@@ -109,318 +109,152 @@ WarpX::EvolveImplicitPicardInit (int lev)
 }
 
 void
-WarpX::EvolveImplicitPicard (int numsteps)
+WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
 {
-    WARPX_PROFILE_REGION("WarpX::EvolveImplicitPicard()");
-    WARPX_PROFILE("WarpX::EvolveImplicitPicard()");
 
-    Real cur_time = t_new[0];
+    // We have E^{n}.
+    // Particles have p^{n} and x^{n}.
+    // With full implicit, B^{n}
+    // With semi-implicit, B^{n-1/2}
 
-    int numsteps_max;
-    if (numsteps < 0) {  // Note that the default argument is numsteps = -1
-        numsteps_max = max_step;
-    } else {
-        numsteps_max = istep[0] + numsteps;
+    // Save the values at the start of the time step,
+    // copying particle data to x_n etc.
+    for (auto const& pc : *mypc) {
+        SaveParticlesAtStepStart (*pc, 0);
     }
 
-    bool early_params_checked = false; // check typos in inputs after step 1
-    bool exit_loop_due_to_interrupt_signal = false;
+    // Save the fields at the start of the step
+    amrex::MultiFab::Copy(*Efield_n[0][0], *Efield_fp[0][0], 0, 0, ncomps, Efield_fp[0][0]->nGrowVect());
+    amrex::MultiFab::Copy(*Efield_n[0][1], *Efield_fp[0][1], 0, 0, ncomps, Efield_fp[0][1]->nGrowVect());
+    amrex::MultiFab::Copy(*Efield_n[0][2], *Efield_fp[0][2], 0, 0, ncomps, Efield_fp[0][2]->nGrowVect());
 
-    static Real evolve_time = 0;
+    if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+        amrex::MultiFab::Copy(*Bfield_n[0][0], *Bfield_fp[0][0], 0, 0, ncomps, Bfield_fp[0][0]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfield_n[0][1], *Bfield_fp[0][1], 0, 0, ncomps, Bfield_fp[0][1]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, ncomps, Bfield_fp[0][2]->nGrowVect());
+    } else if (evolve_scheme == EvolveScheme::SemiImplicitPicard) {
+        // This updates Bfield_fp so it holds the new B at n+1/2
+        EvolveB(dt[0], DtType::Full);
+        // WarpX::sync_nodal_points is used to avoid instability
+        FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+        ApplyBfieldBoundary(0, PatchType::fine, DtType::Full);
+    }
 
-    const int step_begin = istep[0];
-    for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
-    {
-        WARPX_PROFILE("WarpX::EvolveImplicitPicard::step");
-        const auto evolve_time_beg_step = static_cast<amrex::Real>(amrex::second());
+    // Start the iterations
+    amrex::Real deltaE = 1._rt;
+    amrex::Real deltaB = 1._rt;
+    int iteration_count = 0;
+    while (iteration_count < max_picard_iterations &&
+           (deltaE > picard_iteration_tolerance || deltaB > picard_iteration_tolerance)) {
+        iteration_count++;
 
-        SignalHandling::CheckSignals();
+        // Advance the particle positions by 1/2 dt,
+        // particle velocities by dt, then take average of old and new v,
+        // deposit currents, giving J at n+1/2
+        // This uses Efield_fp and Bfield_fp, the field at n+1/2 from the previous iteration.
+        bool skip_deposition = false;
+        PushType push_type = PushType::Implicit;
+        PushParticlesandDepose(cur_time, skip_deposition, push_type);
 
-        multi_diags->NewIteration();
+        SyncCurrentAndRho();
 
-        // Start loop on time steps
-        if (verbose) {
-            amrex::Print() << "STEP " << step+1 << " starts ...\n";
-        }
-        ExecutePythonCallback("beforestep");
-
-        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
-        if (cost) {
-            if (step > 0 && load_balance_intervals.contains(step+1))
-            {
-                LoadBalance();
-
-                // Reset the costs to 0
-                ResetCosts();
-            }
-            for (int lev = 0; lev <= finest_level; ++lev)
-            {
-                cost = WarpX::getCosts(lev);
-                if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-                {
-                    // Perform running average of the costs
-                    // (Giving more importance to most recent costs; only needed
-                    // for timers update, heuristic load balance considers the
-                    // instantaneous costs)
-                    for (int i : cost->IndexArray())
-                    {
-                        (*cost)[i] *= (1._rt - 2._rt/load_balance_intervals.localPeriod(step+1));
-                    }
-                }
-            }
+        if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
+            // Save the E at n+1/2 from the previous iteration so that the change
+            // in this iteration can be calculated
+            amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, ncomps, 0);
+            amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, ncomps, 0);
+            amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, ncomps, 0);
         }
 
-        // We have B^{n} and E^{n}.
-        // Particles have p^{n} and x^{n}.
+        // Copy Efield_n into Efield_fp since EvolveE updates Efield_fp in place
+        amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, ncomps, Efield_n[0][0]->nGrowVect());
+        amrex::MultiFab::Copy(*Efield_fp[0][1], *Efield_n[0][1], 0, 0, ncomps, Efield_n[0][1]->nGrowVect());
+        amrex::MultiFab::Copy(*Efield_fp[0][2], *Efield_n[0][2], 0, 0, ncomps, Efield_n[0][2]->nGrowVect());
 
-        // E and B are up-to-date inside the domain only
-        /* FillBoundaryE(guard_cells.ng_alloc_EB); */
-        /* FillBoundaryB(guard_cells.ng_alloc_EB); */
+        // Updates Efield_fp so it holds the new E at n+1/2
+        EvolveE(0.5_rt*dt[0]);
+        // WarpX::sync_nodal_points is used to avoid instability
+        FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+        ApplyEfieldBoundary(0, PatchType::fine);
 
-        // Save the values at the start of the time step,
-        // copying particle data to x_n etc.
-        for (auto const& pc : *mypc) {
-            SaveParticlesAtStepStart (*pc, 0);
-        }
-
-        // Save the fields at the start of the step
-        amrex::MultiFab::Copy(*Efield_n[0][0], *Efield_fp[0][0], 0, 0, ncomps, Efield_fp[0][0]->nGrowVect());
-        amrex::MultiFab::Copy(*Efield_n[0][1], *Efield_fp[0][1], 0, 0, ncomps, Efield_fp[0][1]->nGrowVect());
-        amrex::MultiFab::Copy(*Efield_n[0][2], *Efield_fp[0][2], 0, 0, ncomps, Efield_fp[0][2]->nGrowVect());
         if (evolve_scheme == EvolveScheme::ImplicitPicard) {
-            amrex::MultiFab::Copy(*Bfield_n[0][0], *Bfield_fp[0][0], 0, 0, ncomps, Bfield_fp[0][0]->nGrowVect());
-            amrex::MultiFab::Copy(*Bfield_n[0][1], *Bfield_fp[0][1], 0, 0, ncomps, Bfield_fp[0][1]->nGrowVect());
-            amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, ncomps, Bfield_fp[0][2]->nGrowVect());
-        } else if (evolve_scheme == EvolveScheme::SemiImplicitPicard) {
+            if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
+                // Save the B at n+1/2 from the previous iteration so that the change
+                // in this iteration can be calculated
+                amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, ncomps, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, ncomps, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, ncomps, 0);
+            }
+
+            // Copy Bfield_n into Bfield_fp since EvolveB updates Bfield_fp in place
+            amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bfield_n[0][0], 0, 0, ncomps, Bfield_n[0][0]->nGrowVect());
+            amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bfield_n[0][1], 0, 0, ncomps, Bfield_n[0][1]->nGrowVect());
+            amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bfield_n[0][2], 0, 0, ncomps, Bfield_n[0][2]->nGrowVect());
+
             // This updates Bfield_fp so it holds the new B at n+1/2
-            EvolveB(dt[0], DtType::Full);
+            EvolveB(0.5_rt*dt[0], DtType::Full);
             // WarpX::sync_nodal_points is used to avoid instability
             FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
             ApplyBfieldBoundary(0, PatchType::fine, DtType::Full);
         }
 
-        // Start the iterations
-        amrex::Real deltaE = 1._rt;
-        amrex::Real deltaB = 1._rt;
-        int iteration_count = 0;
-        while (iteration_count < max_picard_iterations &&
-               (deltaE > picard_iteration_tolerance || deltaB > picard_iteration_tolerance)) {
-            iteration_count++;
+        // The B field update needs
+        if (num_mirrors>0){
+            applyMirrors(cur_time);
+            // E : guard cells are NOT up-to-date from the mirrors
+            // B : guard cells are NOT up-to-date from the mirrors
+        }
 
-            // Advance the particle positions by 1/2 dt,
-            // particle velocities by dt, then take average of old and new v,
-            // deposit currents, giving J at n+1/2
-            // This uses Efield_fp and Bfield_fp, the field at n+1/2 from the previous iteration.
-            bool skip_deposition = false;
-            PushType push_type = PushType::Implicit;
-            PushParticlesandDepose(cur_time, skip_deposition, push_type);
-
-            SyncCurrentAndRho();
-
-            if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
-                // Save the E at n+1/2 from the previous iteration so that the change
-                // in this iteration can be calculated
-                amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, ncomps, 0);
-                amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, ncomps, 0);
-                amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, ncomps, 0);
-            }
-
-            // Copy Efield_n into Efield_fp since EvolveE updates Efield_fp in place
-            amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, ncomps, Efield_n[0][0]->nGrowVect());
-            amrex::MultiFab::Copy(*Efield_fp[0][1], *Efield_n[0][1], 0, 0, ncomps, Efield_n[0][1]->nGrowVect());
-            amrex::MultiFab::Copy(*Efield_fp[0][2], *Efield_n[0][2], 0, 0, ncomps, Efield_n[0][2]->nGrowVect());
-
-            // Updates Efield_fp so it holds the new E at n+1/2
-            EvolveE(0.5_rt*dt[0]);
-            // WarpX::sync_nodal_points is used to avoid instability
-            FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-            ApplyEfieldBoundary(0, PatchType::fine);
-
+        if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
+            // Calculate the change in E and B from this iteration
+            // deltaE = abs(Enew - Eold)/max(abs(Enew))
+            Efield_save[0][0]->minus(*Efield_fp[0][0], 0, ncomps, 0);
+            Efield_save[0][1]->minus(*Efield_fp[0][1], 0, ncomps, 0);
+            Efield_save[0][2]->minus(*Efield_fp[0][2], 0, ncomps, 0);
+            amrex::Real maxE0 = std::max(1._rt, Efield_fp[0][0]->norm0(0, 0));
+            amrex::Real maxE1 = std::max(1._rt, Efield_fp[0][1]->norm0(0, 0));
+            amrex::Real maxE2 = std::max(1._rt, Efield_fp[0][2]->norm0(0, 0));
+            amrex::Real deltaE0 = Efield_save[0][0]->norm0(0, 0)/maxE0;
+            amrex::Real deltaE1 = Efield_save[0][1]->norm0(0, 0)/maxE1;
+            amrex::Real deltaE2 = Efield_save[0][2]->norm0(0, 0)/maxE2;
+            deltaE = std::max(std::max(deltaE0, deltaE1), deltaE2);
             if (evolve_scheme == EvolveScheme::ImplicitPicard) {
-                if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
-                    // Save the B at n+1/2 from the previous iteration so that the change
-                    // in this iteration can be calculated
-                    amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, ncomps, 0);
-                    amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, ncomps, 0);
-                    amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, ncomps, 0);
-                }
-
-                // Copy Bfield_n into Bfield_fp since EvolveB updates Bfield_fp in place
-                amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bfield_n[0][0], 0, 0, ncomps, Bfield_n[0][0]->nGrowVect());
-                amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bfield_n[0][1], 0, 0, ncomps, Bfield_n[0][1]->nGrowVect());
-                amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bfield_n[0][2], 0, 0, ncomps, Bfield_n[0][2]->nGrowVect());
-
-                // This updates Bfield_fp so it holds the new B at n+1/2
-                EvolveB(0.5_rt*dt[0], DtType::Full);
-                // WarpX::sync_nodal_points is used to avoid instability
-                FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-                ApplyBfieldBoundary(0, PatchType::fine, DtType::Full);
+                Bfield_save[0][0]->minus(*Bfield_fp[0][0], 0, ncomps, 0);
+                Bfield_save[0][1]->minus(*Bfield_fp[0][1], 0, ncomps, 0);
+                Bfield_save[0][2]->minus(*Bfield_fp[0][2], 0, ncomps, 0);
+                amrex::Real maxB0 = std::max(1._rt, Bfield_fp[0][0]->norm0(0, 0));
+                amrex::Real maxB1 = std::max(1._rt, Bfield_fp[0][1]->norm0(0, 0));
+                amrex::Real maxB2 = std::max(1._rt, Bfield_fp[0][2]->norm0(0, 0));
+                amrex::Real deltaB0 = Bfield_save[0][0]->norm0(0, 0)/maxB0;
+                amrex::Real deltaB1 = Bfield_save[0][1]->norm0(0, 0)/maxB1;
+                amrex::Real deltaB2 = Bfield_save[0][2]->norm0(0, 0)/maxB2;
+                deltaB = std::max(std::max(deltaB0, deltaB1), deltaB2);
+            } else {
+                deltaB = 0.;
             }
-
-            // The B field update needs
-            if (num_mirrors>0){
-                applyMirrors(cur_time);
-                // E : guard cells are NOT up-to-date from the mirrors
-                // B : guard cells are NOT up-to-date from the mirrors
-            }
-
-            if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
-                // Calculate the change in E and B from this iteration
-                // deltaE = abs(Enew - Eold)/max(abs(Enew))
-                Efield_save[0][0]->minus(*Efield_fp[0][0], 0, ncomps, 0);
-                Efield_save[0][1]->minus(*Efield_fp[0][1], 0, ncomps, 0);
-                Efield_save[0][2]->minus(*Efield_fp[0][2], 0, ncomps, 0);
-                amrex::Real maxE0 = std::max(1._rt, Efield_fp[0][0]->norm0(0, 0));
-                amrex::Real maxE1 = std::max(1._rt, Efield_fp[0][1]->norm0(0, 0));
-                amrex::Real maxE2 = std::max(1._rt, Efield_fp[0][2]->norm0(0, 0));
-                amrex::Real deltaE0 = Efield_save[0][0]->norm0(0, 0)/maxE0;
-                amrex::Real deltaE1 = Efield_save[0][1]->norm0(0, 0)/maxE1;
-                amrex::Real deltaE2 = Efield_save[0][2]->norm0(0, 0)/maxE2;
-                deltaE = std::max(std::max(deltaE0, deltaE1), deltaE2);
-                if (evolve_scheme == EvolveScheme::ImplicitPicard) {
-                    Bfield_save[0][0]->minus(*Bfield_fp[0][0], 0, ncomps, 0);
-                    Bfield_save[0][1]->minus(*Bfield_fp[0][1], 0, ncomps, 0);
-                    Bfield_save[0][2]->minus(*Bfield_fp[0][2], 0, ncomps, 0);
-                    amrex::Real maxB0 = std::max(1._rt, Bfield_fp[0][0]->norm0(0, 0));
-                    amrex::Real maxB1 = std::max(1._rt, Bfield_fp[0][1]->norm0(0, 0));
-                    amrex::Real maxB2 = std::max(1._rt, Bfield_fp[0][2]->norm0(0, 0));
-                    amrex::Real deltaB0 = Bfield_save[0][0]->norm0(0, 0)/maxB0;
-                    amrex::Real deltaB1 = Bfield_save[0][1]->norm0(0, 0)/maxB1;
-                    amrex::Real deltaB2 = Bfield_save[0][2]->norm0(0, 0)/maxB2;
-                    deltaB = std::max(std::max(deltaB0, deltaB1), deltaB2);
-                } else {
-                    deltaB = 0.;
-                }
-                amrex::Print() << "Max delta " << iteration_count << " " << deltaE << " " << deltaB << "\n";
-            }
-
-            // Now, the particle positions and velocities and the Efield_fp and Bfield_fp hold
-            // the new values at n+1/2
+            amrex::Print() << "Max delta " << iteration_count << " " << deltaE << " " << deltaB << "\n";
         }
 
-        amrex::Print() << "Picard iterations = " << iteration_count << ", Eerror =  " << deltaE << ", Berror =  " << deltaB << "\n";
-
-        // Advance particles to step n+1
-        for (auto const& pc : *mypc) {
-            FinishImplicitParticleUpdate(*pc, 0);
-        }
-
-        // Advance fields to step n+1
-        // WarpX::sync_nodal_points is used to avoid instability
-        FinishImplicitFieldUpdate(Efield_fp, Efield_n);
-        FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-        if (evolve_scheme == EvolveScheme::ImplicitPicard) {
-            FinishImplicitFieldUpdate(Bfield_fp, Bfield_n);
-            FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-        }
-
-        // Run multi-physics modules:
-        // ionization, Coulomb collisions, QED
-        doFieldIonization();
-        ExecutePythonCallback("beforecollisions");
-        mypc->doCollisions( cur_time, dt[0] );
-        ExecutePythonCallback("aftercollisions");
-#ifdef WARPX_QED
-        doQEDEvents();
-        mypc->doQEDSchwinger();
-#endif
-
-        for (int lev = 0; lev <= max_level; ++lev) {
-            ++istep[lev];
-        }
-
-        cur_time += dt[0];
-
-        ShiftGalileanBoundary();
-
-        // sync up time
-        for (int i = 0; i <= max_level; ++i) {
-            t_new[i] = cur_time;
-        }
-        multi_diags->FilterComputePackFlush( step, false, true );
-
-        bool move_j = is_synchronized;
-        // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
-        // We might need to move j because we are going to make a plotfile.
-        MoveWindow(step+1, move_j);
-
-        mypc->ContinuousFluxInjection(cur_time, dt[0]);
-
-        mypc->ApplyBoundaryConditions();
-
-        // interact the particles with EB walls (if present)
-#ifdef AMREX_USE_EB
-        mypc->ScrapeParticles(amrex::GetVecOfConstPtrs(m_distance_to_eb));
-#endif
-
-        m_particle_boundary_buffer->gatherParticles(*mypc, amrex::GetVecOfConstPtrs(m_distance_to_eb));
-
-        // Implicit solver: particles can move by an arbitrary number of cells
-        mypc->Redistribute();
-
-        if (sort_intervals.contains(step+1)) {
-            if (verbose) {
-                amrex::Print() << Utils::TextMsg::Info("re-sorting particles");
-            }
-            mypc->SortParticlesByBin(sort_bin_size);
-        }
-
-        // afterstep callback runs with the updated global time. It is included
-        // in the evolve timing.
-        ExecutePythonCallback("afterstep");
-
-        /// reduced diags
-        if (reduced_diags->m_plot_rd != 0)
-        {
-            reduced_diags->LoadBalance();
-            reduced_diags->ComputeDiags(step);
-            reduced_diags->WriteToFile(step);
-        }
-        multi_diags->FilterComputePackFlush( step );
-
-        // execute afterdiagnostic callbacks
-        ExecutePythonCallback("afterdiagnostics");
-
-        // inputs: unused parameters (e.g. typos) check after step 1 has finished
-        if (!early_params_checked) {
-            amrex::Print() << "\n"; // better: conditional \n based on return value
-            amrex::ParmParse::QueryUnusedInputs();
-
-            //Print the warning list right after the first step.
-            amrex::Print() <<
-                ablastr::warn_manager::GetWMInstance().PrintGlobalWarnings("FIRST STEP");
-            early_params_checked = true;
-        }
-
-        // create ending time stamp for calculating elapsed time each iteration
-        const auto evolve_time_end_step = static_cast<amrex::Real>(amrex::second());
-        evolve_time += evolve_time_end_step - evolve_time_beg_step;
-
-        HandleSignals();
-
-        if (verbose) {
-            amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
-                        << " DT = " << dt[0] << "\n";
-            amrex::Print()<< "Evolve time = " << evolve_time
-                      << " s; This step = " << evolve_time_end_step-evolve_time_beg_step
-                      << " s; Avg. per step = " << evolve_time/(step-step_begin+1) << " s\n\n";
-        }
-
-        exit_loop_due_to_interrupt_signal = SignalHandling::TestAndResetActionRequestFlag(SignalHandling::SIGNAL_REQUESTS_BREAK);
-        if (cur_time >= stop_time - 1.e-3*dt[0] || exit_loop_due_to_interrupt_signal) {
-            break;
-        }
-
-        // End loop on time steps
+        // Now, the particle positions and velocities and the Efield_fp and Bfield_fp hold
+        // the new values at n+1/2
     }
-    // This if statement is needed for PICMI, which allows the Evolve routine to be
-    // called multiple times, otherwise diagnostics will be done at every call,
-    // regardless of the diagnostic period parameter provided in the inputs.
-    if (istep[0] == max_step || (stop_time - 1.e-3*dt[0] <= cur_time && cur_time < stop_time + dt[0])
-        || exit_loop_due_to_interrupt_signal) {
-        multi_diags->FilterComputePackFlushLastTimestep( istep[0] );
-        if (exit_loop_due_to_interrupt_signal) ExecutePythonCallback("onbreaksignal");
+
+    amrex::Print() << "Picard iterations = " << iteration_count << ", Eerror =  " << deltaE << ", Berror =  " << deltaB << "\n";
+
+    // Advance particles to step n+1
+    for (auto const& pc : *mypc) {
+        FinishImplicitParticleUpdate(*pc, 0);
     }
+
+    // Advance fields to step n+1
+    // WarpX::sync_nodal_points is used to avoid instability
+    FinishImplicitFieldUpdate(Efield_fp, Efield_n);
+    FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+        FinishImplicitFieldUpdate(Bfield_fp, Bfield_n);
+        FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    }
+
 }
 
 void

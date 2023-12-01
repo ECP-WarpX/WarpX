@@ -1181,6 +1181,11 @@ WarpX::ReadParameters ()
                 current_deposition_algo == CurrentDepositionAlgo::Direct,
                 "Only Esirkepov or Direct current deposition supported with the implicit and semi-implicit schemes");
 
+            // Note - others, such as CKC, may work but have not been tested.
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee,
+                "Only the Yee EM solver is supported with the implicit and semi-implicit schemes");
+
         }
 
         // Query algo.field_gathering from input, set field_gathering_algo to

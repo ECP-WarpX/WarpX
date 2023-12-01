@@ -118,9 +118,7 @@ public:
     void InitData ();
 
     void Evolve (int numsteps = -1);
-    void EvolveExplicit (int numsteps = -1);
 
-    void EvolveImplicitPicard (int numsteps = -1);
     void EvolveImplicitPicardInit (int lev);
     void SaveParticlesAtStepStart (WarpXParticleContainer& pc, int lev);
     void FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev);
@@ -1273,6 +1271,8 @@ private:
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
+
+    void OneStep_ImplicitPicard(amrex::Real cur_time);
 
     /**
      * \brief Perform one PIC iteration, with the multiple J deposition per time step
