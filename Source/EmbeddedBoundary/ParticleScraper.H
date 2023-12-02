@@ -169,7 +169,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
         for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {
             const auto getPosition = GetParticlePosition<PIdx>(pti);
-            auto       setPosition = SetParticlePosition<PIdx>(pti); 
+            auto       setPosition = SetParticlePosition<PIdx>(pti);
             auto& tile = pti.GetParticleTile();
             auto ptd = tile.getParticleTileData();
             const auto np = tile.numParticles();
@@ -211,7 +211,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                     } );
 
                     amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
-	
+
                     // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
@@ -233,7 +233,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                     pos[0] = z_temp;
 #endif
                     DistanceToEB::normalize(normal);
-                    
+
                     f(ptd, ip, pos, normal, engine);
                     setPosition( ip, x_temp, y_temp, z_temp );
                 }
