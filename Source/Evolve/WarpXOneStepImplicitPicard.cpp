@@ -50,9 +50,6 @@
 #include <ostream>
 #include <vector>
 
-using namespace amrex;
-using ablastr::utils::SignalHandling;
-
 void
 WarpX::EvolveImplicitPicardInit (int lev)
 {
@@ -111,6 +108,7 @@ WarpX::EvolveImplicitPicardInit (int lev)
 void
 WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
 {
+    using namespace amrex::literals;
 
     // We have E^{n}.
     // Particles have p^{n} and x^{n}.
@@ -273,20 +271,20 @@ WarpX::SaveParticlesAtStepStart (WarpXParticleContainer& pc, int lev)
         const auto getPosition = GetParticlePosition(pti);
 
         auto& attribs = pti.GetAttribs();
-        ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
-        ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
-        ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
 #if (AMREX_SPACEDIM >= 2)
-        ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
+        amrex::ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-        ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
+        amrex::ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
 #endif
-        ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
-        ParticleReal* ux_n = pti.GetAttribs(particle_comps["ux_n"]).dataPtr();
-        ParticleReal* uy_n = pti.GetAttribs(particle_comps["uy_n"]).dataPtr();
-        ParticleReal* uz_n = pti.GetAttribs(particle_comps["uz_n"]).dataPtr();
+        amrex::ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
+        amrex::ParticleReal* ux_n = pti.GetAttribs(particle_comps["ux_n"]).dataPtr();
+        amrex::ParticleReal* uy_n = pti.GetAttribs(particle_comps["uy_n"]).dataPtr();
+        amrex::ParticleReal* uz_n = pti.GetAttribs(particle_comps["uz_n"]).dataPtr();
 
         const long np = pti.numParticles();
 
@@ -316,6 +314,7 @@ WarpX::SaveParticlesAtStepStart (WarpXParticleContainer& pc, int lev)
 void
 WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev)
 {
+    using namespace amrex::literals;
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
@@ -330,20 +329,20 @@ WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev)
         const auto setPosition = SetParticlePosition(pti);
 
         auto& attribs = pti.GetAttribs();
-        ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
-        ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
-        ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
+        amrex::ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
 #if (AMREX_SPACEDIM >= 2)
-        ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
+        amrex::ParticleReal* x_n = pti.GetAttribs(particle_comps["x_n"]).dataPtr();
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-        ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
+        amrex::ParticleReal* y_n = pti.GetAttribs(particle_comps["y_n"]).dataPtr();
 #endif
-        ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
-        ParticleReal* ux_n = pti.GetAttribs(particle_comps["ux_n"]).dataPtr();
-        ParticleReal* uy_n = pti.GetAttribs(particle_comps["uy_n"]).dataPtr();
-        ParticleReal* uz_n = pti.GetAttribs(particle_comps["uz_n"]).dataPtr();
+        amrex::ParticleReal* z_n = pti.GetAttribs(particle_comps["z_n"]).dataPtr();
+        amrex::ParticleReal* ux_n = pti.GetAttribs(particle_comps["ux_n"]).dataPtr();
+        amrex::ParticleReal* uy_n = pti.GetAttribs(particle_comps["uy_n"]).dataPtr();
+        amrex::ParticleReal* uz_n = pti.GetAttribs(particle_comps["uz_n"]).dataPtr();
 
         const long np = pti.numParticles();
 
@@ -375,6 +374,7 @@ void
 WarpX::FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
                                  amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n)
 {
+    using namespace amrex::literals;
 
     for (int lev = 0; lev <= finest_level; ++lev) {
 
