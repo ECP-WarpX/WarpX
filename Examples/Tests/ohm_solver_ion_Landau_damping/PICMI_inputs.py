@@ -83,7 +83,7 @@ class IonLandauDamping(object):
         self.total_steps = int(np.ceil(self.LT / self.DT))
         # if this is a test case run for only 100 steps
         if self.test:
-            self.total_steps = 150
+            self.total_steps = 100
 
         self.dt = self.DT / self.w_ci # self.DT * self.t_ci
 

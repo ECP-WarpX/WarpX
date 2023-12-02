@@ -563,56 +563,32 @@ void HybridPICModel::BfieldEvolveRK (
         amrex::Real const dt, int lev, DtType dt_type,
         IntVect ng, std::optional<bool> nodal_sync )
 {
-    // make copies of the B-field multifabs at t = n
+    // Make copies of the B-field multifabs at t = n and create multifabs for
+    // each direction to store the Runge-Kutta intermediate terms. Each
+    // multifab has 2 components for the different terms that need to be stored.
     std::array< MultiFab, 3 > B_old;
-    B_old[0] = MultiFab(
-        Bfield[lev][0]->boxArray(), Bfield[lev][0]->DistributionMap(), 1,
-        Bfield[lev][0]->nGrowVect()
-    );
-    MultiFab::Copy(B_old[0], *Bfield[lev][0], 0, 0, 1, ng);
-    B_old[1] = MultiFab(
-        Bfield[lev][1]->boxArray(), Bfield[lev][1]->DistributionMap(), 1,
-        Bfield[lev][1]->nGrowVect()
-    );
-    MultiFab::Copy(B_old[1], *Bfield[lev][1], 0, 0, 1, ng);
-    B_old[2] = MultiFab(
-        Bfield[lev][2]->boxArray(), Bfield[lev][2]->DistributionMap(), 1,
-        Bfield[lev][2]->nGrowVect()
-    );
-    MultiFab::Copy(B_old[2], *Bfield[lev][2], 0, 0, 1, ng);
+    std::array< MultiFab, 3 > K;
+    for (int ii = 0; ii < 3; ii++)
+    {
+        B_old[ii] = MultiFab(
+            Bfield[lev][ii]->boxArray(), Bfield[lev][ii]->DistributionMap(), 1,
+            Bfield[lev][ii]->nGrowVect()
+        );
+        MultiFab::Copy(B_old[ii], *Bfield[lev][ii], 0, 0, 1, ng);
 
-    // Create multifabs for each direction to store the Runge-Kutta
-    // intermediate terms. Each multifab has 2 components for the different
-    // terms that need to be stored.
-    std::array< amrex::MultiFab, 3 > K;
-    K[0] = amrex::MultiFab(
-        Bfield[lev][0]->boxArray(), Bfield[lev][0]->DistributionMap(), 2,
-        Bfield[lev][0]->nGrowVect()
-    );
-    K[0].setVal(0.0);
-    K[1] = amrex::MultiFab(
-        Bfield[lev][1]->boxArray(), Bfield[lev][1]->DistributionMap(), 2,
-        Bfield[lev][1]->nGrowVect()
-    );
-    K[1].setVal(0.0);
-    K[2] = amrex::MultiFab(
-        Bfield[lev][2]->boxArray(), Bfield[lev][2]->DistributionMap(), 2,
-        Bfield[lev][2]->nGrowVect()
-    );
-    K[2].setVal(0.0);
-
-    auto& warpx = WarpX::GetInstance();
+        K[ii] = MultiFab(
+            Bfield[lev][ii]->boxArray(), Bfield[lev][ii]->DistributionMap(), 2,
+            Bfield[lev][ii]->nGrowVect()
+        );
+        K[ii].setVal(0.0);
+    }
 
     // The Runge-Kutta scheme begins here.
     // Step 1:
-    // Calculate J = curl x B / mu0
-    CalculateCurrentAmpere(Bfield, edge_lengths);
-    // Calculate the E-field from Ohm's law
-    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, true);
-    warpx.FillBoundaryE(ng, nodal_sync);
-    // Push forward the B-field using Faraday's law
-    warpx.EvolveB(0.5_rt*dt, dt_type);
-    warpx.FillBoundaryB(ng, nodal_sync);
+    BfieldPush(
+        Bfield, Efield, Jfield, rhofield, edge_lengths,
+        0.5_rt*dt, dt_type, ng, nodal_sync
+    );
 
     // The Bfield is now given by:
     // B_new = B_old + 0.5 * dt * [-curl x E(B_old)] = B_old + 0.5 * dt * K0.
@@ -625,14 +601,10 @@ void HybridPICModel::BfieldEvolveRK (
     }
 
     // Step 2:
-    // Calculate J = curl x B / mu0
-    CalculateCurrentAmpere(Bfield, edge_lengths);
-    // Calculate the E-field from Ohm's law
-    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, true);
-    warpx.FillBoundaryE(ng, nodal_sync);
-    // Push forward the B-field using Faraday's law
-    warpx.EvolveB(0.5_rt*dt, dt_type);
-    warpx.FillBoundaryB(ng, nodal_sync);
+    BfieldPush(
+        Bfield, Efield, Jfield, rhofield, edge_lengths,
+        0.5_rt*dt, dt_type, ng, nodal_sync
+    );
 
     // The Bfield is now given by:
     // B_new = B_old + 0.5 * dt * K0 + 0.5 * dt * [-curl x E(B_old + 0.5 * dt * K1)]
@@ -649,18 +621,13 @@ void HybridPICModel::BfieldEvolveRK (
     }
 
     // Step 3:
-    // Calculate J = curl x B / mu0
-    CalculateCurrentAmpere(Bfield, edge_lengths);
-    // Calculate the E-field form Ohm's law
-    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, true);
-    warpx.FillBoundaryE(ng, nodal_sync);
-    // Push forward the B-field using Faraday's law.
-    warpx.EvolveB(dt, dt_type);
-    warpx.FillBoundaryB(ng, nodal_sync);
+    BfieldPush(
+        Bfield, Efield, Jfield, rhofield, edge_lengths,
+        dt, dt_type, ng, nodal_sync
+    );
 
     // The Bfield is now given by:
-    // B_new = B_old + 0.5 * dt * K1
-    //         + dt * [-curl  x E(B_old + 0.5 * dt * K1)]
+    // B_new = B_old + 0.5 * dt * K1 + dt * [-curl  x E(B_old + 0.5 * dt * K1)]
     //       = B_old + 0.5 * dt * K1 + dt * K2
     for (int ii = 0; ii < 3; ii++)
     {
@@ -670,14 +637,10 @@ void HybridPICModel::BfieldEvolveRK (
     }
 
     // Step 4:
-    // Calculate J = curl x B / mu0
-    CalculateCurrentAmpere(Bfield, edge_lengths);
-    // Calculate the E-field form Ohm's law
-    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, true);
-    warpx.FillBoundaryE(ng, nodal_sync);
-    // Push forward the B-field using Faraday's law.
-    warpx.EvolveB(0.5_rt*dt, dt_type);
-    warpx.FillBoundaryB(ng, nodal_sync);
+    BfieldPush(
+        Bfield, Efield, Jfield, rhofield, edge_lengths,
+        0.5_rt*dt, dt_type, ng, nodal_sync
+    );
 
     // The Bfield is now given by:
     // B_new = B_old + dt * K2 + 0.5 * dt * [-curl x E(B_old + dt * K2)]
@@ -702,4 +665,25 @@ void HybridPICModel::BfieldEvolveRK (
             *Bfield[lev][ii], 1.0, B_old[ii], 0, 1.0/3.0, K[ii], 0, 0, 1, ng
         );
     }
+}
+
+void HybridPICModel::BfieldPush (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real const dt, DtType dt_type,
+        IntVect ng, std::optional<bool> nodal_sync )
+{
+    auto& warpx = WarpX::GetInstance();
+
+    // Calculate J = curl x B / mu0
+    CalculateCurrentAmpere(Bfield, edge_lengths);
+    // Calculate the E-field from Ohm's law
+    HybridPICSolveE(Efield, Jfield, Bfield, rhofield, edge_lengths, true);
+    warpx.FillBoundaryE(ng, nodal_sync);
+    // Push forward the B-field using Faraday's law
+    warpx.EvolveB(dt, dt_type);
+    warpx.FillBoundaryB(ng, nodal_sync);
 }

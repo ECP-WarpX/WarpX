@@ -117,13 +117,22 @@ public:
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     void BfieldEvolveRK (
-            amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-            amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-            amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-            amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
-            amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-            amrex::Real dt, int lev, DtType dt_type,
-            amrex::IntVect ng, std::optional<bool> nodal_sync);
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real dt, int lev, DtType dt_type,
+        amrex::IntVect ng, std::optional<bool> nodal_sync);
+
+    void BfieldPush (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real dt, DtType dt_type,
+        amrex::IntVect ng, std::optional<bool> nodal_sync);
 
     /**
      * \brief
