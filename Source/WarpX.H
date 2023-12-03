@@ -597,13 +597,13 @@ public:
     void ResetProbDomain (const amrex::RealBox& rb);
     void EvolveE (         amrex::Real dt);
     void EvolveE (int lev, amrex::Real dt);
-    void EvolveB (         amrex::Real dt, DtType dt_type);
-    void EvolveB (int lev, amrex::Real dt, DtType dt_type);
+    void EvolveB (         amrex::Real dt);
+    void EvolveB (int lev, amrex::Real dt);
     void EvolveF (         amrex::Real dt, DtType dt_type);
     void EvolveF (int lev, amrex::Real dt, DtType dt_type);
     void EvolveG (         amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, amrex::Real dt, DtType dt_type);
-    void EvolveB (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
@@ -712,8 +712,13 @@ public:
                               amrex::MultiFab* Jy, amrex::MultiFab* Jz,
                               PatchType patch_type);
 
-    void ApplyEfieldBoundary (int lev, PatchType patch_type);
-    void ApplyBfieldBoundary (int lev, PatchType patch_type, DtType dt_type);
+    void ApplyEfieldBoundary (const amrex::IntVect& ng);
+    void ApplyEfieldBoundary (int lev, const amrex::IntVect& ng);
+    void ApplyEfieldBoundary (int lev, PatchType patch_type, const amrex::IntVect& ng);
+
+    void ApplyBfieldBoundary (const amrex::IntVect& ng, DtType a_dt_type);
+    void ApplyBfieldBoundary (int lev, const amrex::IntVect& ng, DtType a_dt_type);
+    void ApplyBfieldBoundary (int lev, PatchType patch_type, const amrex::IntVect& ng, DtType a_dt_type);
 
     /**
      * \brief When the Ohm's law solver is used, the electron pressure values

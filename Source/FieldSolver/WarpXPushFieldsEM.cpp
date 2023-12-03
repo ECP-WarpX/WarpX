@@ -783,35 +783,31 @@ WarpX::PushPSATD ()
         {
             pml[lev]->PushPSATD(lev);
         }
-        ApplyEfieldBoundary(lev, PatchType::fine);
-        if (lev > 0) ApplyEfieldBoundary(lev, PatchType::coarse);
-        ApplyBfieldBoundary(lev, PatchType::fine, DtType::FirstHalf);
-        if (lev > 0) ApplyBfieldBoundary(lev, PatchType::coarse, DtType::FirstHalf);
     }
 #endif
 }
 
 void
-WarpX::EvolveB (amrex::Real a_dt, DtType a_dt_type)
+WarpX::EvolveB (amrex::Real a_dt)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
-        EvolveB(lev, a_dt, a_dt_type);
+        EvolveB(lev, a_dt);
     }
 }
 
 void
-WarpX::EvolveB (int lev, amrex::Real a_dt, DtType a_dt_type)
+WarpX::EvolveB (int lev, amrex::Real a_dt)
 {
     WARPX_PROFILE("WarpX::EvolveB()");
-    EvolveB(lev, PatchType::fine, a_dt, a_dt_type);
+    EvolveB(lev, PatchType::fine, a_dt);
     if (lev > 0)
     {
-        EvolveB(lev, PatchType::coarse, a_dt, a_dt_type);
+        EvolveB(lev, PatchType::coarse, a_dt);
     }
 }
 
 void
-WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type)
+WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 {
 
     // Evolve B field in regular cells
@@ -836,7 +832,6 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
         }
     }
 
-    ApplyBfieldBoundary(lev, patch_type, a_dt_type);
 }
 
 
@@ -894,8 +889,6 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                 a_dt, pml_has_particles );
         }
     }
-
-    ApplyEfieldBoundary(lev, patch_type);
 
     // ECTRhofield must be recomputed at the very end of the Efield update to ensure
     // that ECTRhofield is consistent with Efield
@@ -1059,7 +1052,6 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
         }
     }
 
-    ApplyEfieldBoundary(lev, patch_type);
 }
 
 void

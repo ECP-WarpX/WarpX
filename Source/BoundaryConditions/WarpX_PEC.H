@@ -467,12 +467,13 @@ using namespace amrex;
      *
      * \param[in,out] Efield          Boundary values of tangential Efield are set to zero
      * \param[in]     lev             level of the Multifab
+     * \param[in]     ng              Number of guard cells to set
      * \param[in]     patch_type      coarse or fine
      * \param[in]     split_pml_field whether pml the multifab is the regular Efield or
      *                                split pml field
      */
     void ApplyPECtoEfield ( std::array<amrex::MultiFab*, 3> Efield,
-                            int lev, PatchType patch_type,
+                            int lev, PatchType patch_type, const amrex::IntVect& ng,
                             bool split_pml_field = false);
     /**
      * \brief Sets the normal component of the magnetic field at the PEC boundary to zero.
@@ -482,9 +483,10 @@ using namespace amrex;
      * \param[in,out] Bfield     Boundary values of normal Bfield are set to zero.
      * \param[in]     lev        level of the Multifab
      * \param[in]     patch_type coarse or fine
+     * \param[in]     ng         Number of guard cells to set
      */
     void ApplyPECtoBfield ( std::array<amrex::MultiFab*, 3> Bfield,
-                            int lev, PatchType patch_type);
+                            int lev, PatchType patch_type, const amrex::IntVect& ng);
 
     /**
      * \brief Reflects charge density deposited over the PEC boundary back into

@@ -85,14 +85,6 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
         int lev, bool include_resistivity_term);
 
-    void HybridPICSolveE (
-        std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
-        std::unique_ptr<amrex::MultiFab> const& rhofield,
-        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        int lev, PatchType patch_type, bool include_resistivity_term);
-
     /**
      * \brief
      * Function to calculate the electron pressure at a given timestep type
