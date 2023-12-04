@@ -179,19 +179,6 @@ public:
     static inline ImposeSnapshotInfo m_impose_snapshot_info;
     static inline amrex::Real m_t_boost_offset = 0;
 
-    //! String storing parser function to initialize x-component of the magnetic field on the grid
-    static std::string str_Bx_ext_grid_function;
-    //! String storing parser function to initialize y-component of the magnetic field on the grid
-    static std::string str_By_ext_grid_function;
-    //! String storing parser function to initialize z-component of the magnetic field on the grid
-    static std::string str_Bz_ext_grid_function;
-    //! String storing parser function to initialize x-component of the electric field on the grid
-    static std::string str_Ex_ext_grid_function;
-    //! String storing parser function to initialize y-component of the electric field on the grid
-    static std::string str_Ey_ext_grid_function;
-    //! String storing parser function to initialize z-component of the electric field on the grid
-    static std::string str_Ez_ext_grid_function;
-
     //! User-defined parser to initialize x-component of the magnetic field on the grid
     std::unique_ptr<amrex::Parser> Bxfield_parser;
     //! User-defined parser to initialize y-component of the magnetic field on the grid
