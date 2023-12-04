@@ -177,7 +177,7 @@ public:
         amrex::Real t_lab;
     };
     static inline ImposeSnapshotInfo m_impose_snapshot_info;
-    static inline amrex::Real m_t_boost_offset = 0.0_rt;
+    static inline amrex::Real m_t_boost_offset = 0;
 
     //! String storing parser function to initialize x-component of the magnetic field on the grid
     static std::string str_Bx_ext_grid_function;

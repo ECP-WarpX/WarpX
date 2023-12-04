@@ -31,7 +31,7 @@ private:
 #else
     enum struct StationNormalDir {x=0, y, z};
 #endif
-    StationNormalDir m_station_normal;
+    StationNormalDir m_station_normal = StationNormalDir::z;
     /** Whether to plot raw fields*/
     bool m_plot_raw_fields = true;
     /** Whether to plot guard cells of raw fields*/
@@ -82,8 +82,8 @@ private:
 
     int m_buffer_size = 256;
     int m_slice_counter = 0;
-    amrex::Real m_tmin;
-    amrex::Real m_tmax;
+    amrex::Real m_tmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_tmax = std::numeric_limits<amrex::Real>::lowest();
     amrex::Box m_buffer_box;
     int m_flush_counter = 0;
 
@@ -92,4 +92,4 @@ private:
 };
 
 
-#endif // WARPX_STATIONDIAGNOSTICS_H
+#endif // WARPX_RECORDINGPLANEDIAGNOSTICS_H
