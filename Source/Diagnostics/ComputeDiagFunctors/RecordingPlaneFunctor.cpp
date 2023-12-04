@@ -48,7 +48,7 @@ RecordingPlaneFunctor::RecordingPlaneFunctor(const std::array<const amrex::Multi
 }
 
 void
-RecordingPlaneFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, const int i_buffer) const
+RecordingPlaneFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const int i_buffer) const
 {
     if (! m_slice_in_domain) { return; }
 
@@ -111,13 +111,12 @@ RecordingPlaneFunctor::operator ()(amrex::MultiFab& mf_dst, const int dcomp, con
 
 void
 RecordingPlaneFunctor::PrepareFunctorData (int i_station, bool slice_in_domain, amrex::Real zlocation,
-                                    amrex::Box buffer_box, int k_index, const int max_box_size,
+                                    amrex::Box buffer_box, int k_index,
                                     const int buffer_full)
 {
     amrex::ignore_unused(i_station, slice_in_domain, zlocation, buffer_full);
     m_buffer_box = buffer_box;
     m_k_index = k_index;
-    m_max_box_size = max_box_size;
     if (slice_in_domain == true) {
         m_slice_in_domain = 1;
     } else {
