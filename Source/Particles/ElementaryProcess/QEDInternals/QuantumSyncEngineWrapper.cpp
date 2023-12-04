@@ -30,7 +30,7 @@ using namespace std;
 using namespace amrex;
 namespace pxr_sr = picsar::multi_physics::utils::serialization;
 
-//This file provides a wrapper aroud the quantum_sync engine
+//This file provides a wrapper around the quantum_sync engine
 //provided by the PICSAR library
 
 // Factory class =============================
