@@ -1136,9 +1136,14 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
 
     substeps: int, default=100
         Number of substeps to take when updating the B-field.
+
+    Jx/y/z_external_function: str
+        Function of space and time specifying external (non-plasma) currents.
     """
     def __init__(self, grid, Te=None, n0=None, gamma=None,
-                 n_floor=None, plasma_resistivity=None, substeps=None, **kw):
+                 n_floor=None, plasma_resistivity=None, substeps=None,
+                 Jx_external_function=None, Jy_external_function=None,
+                 Jz_external_function=None, **kw):
         self.grid = grid
         self.method = "hybrid"
 
@@ -1149,6 +1154,10 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.plasma_resistivity = plasma_resistivity
 
         self.substeps = substeps
+
+        self.Jx_external_function = Jx_external_function
+        self.Jy_external_function = Jy_external_function
+        self.Jz_external_function = Jz_external_function
 
         self.handle_init(kw)
 
@@ -1166,6 +1175,15 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
             'plasma_resistivity(rho)', self.plasma_resistivity
         )
         pywarpx.hybridpicmodel.substeps = self.substeps
+        pywarpx.hybridpicmodel.__setattr__(
+            'Jx_external_grid_function(x,y,z,t)', self.Jx_external_function
+        )
+        pywarpx.hybridpicmodel.__setattr__(
+            'Jy_external_grid_function(x,y,z,t)', self.Jy_external_function
+        )
+        pywarpx.hybridpicmodel.__setattr__(
+            'Jz_external_grid_function(x,y,z,t)', self.Jz_external_function
+        )
 
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
