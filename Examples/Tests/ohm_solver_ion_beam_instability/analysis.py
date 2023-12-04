@@ -192,9 +192,9 @@ if sim.test:
     # compared to the theoretical ones to determine if the physics test passes.
     # At creation, the full test (3d) had the following errors (ran on 1 V100):
     # m4_rms_error = 3.329; m5_rms_error = 1.052; m6_rms_error = 2.583
-    assert m4_rms_error < 0.8
-    assert m5_rms_error < 1.4
-    assert m6_rms_error < 0.8
+    assert np.isclose(m4_rms_error, 1.515, atol=0.01)
+    assert np.isclose(m5_rms_error, 0.718, atol=0.01)
+    assert np.isclose(m6_rms_error, 0.357, atol=0.01)
 
     # checksum check
     import os

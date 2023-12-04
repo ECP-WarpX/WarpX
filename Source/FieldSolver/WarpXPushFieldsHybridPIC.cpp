@@ -97,12 +97,6 @@ void WarpX::HybridPICEvolveFields ()
     // momentum equation
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
-        // m_hybrid_pic_model->BfieldPush(
-        //     Bfield_fp, Efield_fp, current_fp_temp, rho_fp_temp, m_edge_lengths,
-        //     0.5_rt/sub_steps*dt[0], DtType::FirstHalf,
-        //     guard_cells.ng_FieldSolver, WarpX::sync_nodal_points
-        // );
-
         m_hybrid_pic_model->BfieldEvolveRK(
             Bfield_fp, Efield_fp, current_fp_temp, rho_fp_temp,
             m_edge_lengths, 0.5_rt/sub_steps*dt[0],
@@ -129,12 +123,6 @@ void WarpX::HybridPICEvolveFields ()
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
     for (int sub_step = 0; sub_step < sub_steps; sub_step++)
     {
-        // m_hybrid_pic_model->BfieldPush(
-        //     Bfield_fp, Efield_fp, current_fp, rho_fp_temp, m_edge_lengths,
-        //     0.5_rt/sub_steps*dt[0], DtType::SecondHalf,
-        //     guard_cells.ng_FieldSolver, WarpX::sync_nodal_points
-        // );
-
         m_hybrid_pic_model->BfieldEvolveRK(
             Bfield_fp, Efield_fp, current_fp, rho_fp_temp,
             m_edge_lengths, 0.5_rt/sub_steps*dt[0],
