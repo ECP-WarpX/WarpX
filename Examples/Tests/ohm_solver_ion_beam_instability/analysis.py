@@ -190,11 +190,11 @@ if sim.test:
     # assert's fail, the full benchmark should be rerun (same as the test but
     # without the `--test` argument) and the growth rates (up to saturation)
     # compared to the theoretical ones to determine if the physics test passes.
-    # At creation, the full test (3d) had the following errors when ran on 1 V100:
+    # At creation, the full test (3d) had the following errors (ran on 1 V100):
     # m4_rms_error = 3.329; m5_rms_error = 1.052; m6_rms_error = 2.583
-    assert m4_rms_error < 1.5
-    assert m5_rms_error < 0.4
-    assert m6_rms_error < 1.25
+    assert m4_rms_error < 0.8
+    assert m5_rms_error < 1.4
+    assert m6_rms_error < 0.8
 
     # checksum check
     import os
