@@ -1,7 +1,6 @@
-/* Copyright 2020 Axel Huebl
+/* This file is part of ABLASTR.
  *
- * This file is part of ABLASTR.
- *
+ * Authors: Axel Huebl
  * License: BSD-3-Clause-LBNL
  */
 #include "MPIInitHelpers.H"
@@ -15,9 +14,18 @@
 #   include <mpi.h>
 #endif
 
+// OLCFDEV-1655: Segfault during MPI_Init & in PMI_Allgather
+// https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#olcfdev-1655-occasional-seg-fault-during-mpi-init
+#if defined(AMREX_USE_HIP)
+#include <hip/hip_runtime.h>
+#endif
+
+#include <iostream>
 #include <string>
 #include <utility>
+#include <stdexcept>
 #include <sstream>
+
 
 namespace ablastr::parallelization
 {
@@ -40,6 +48,16 @@ namespace ablastr::parallelization
     std::pair< int, int >
     mpi_init (int argc, char* argv[])
     {
+        // OLCFDEV-1655: Segfault during MPI_Init & in PMI_Allgather
+        // https://docs.olcf.ornl.gov/systems/crusher_quick_start_guide.html#olcfdev-1655-occasional-seg-fault-during-mpi-init
+#if defined(AMREX_USE_HIP) && defined(AMREX_USE_MPI)
+        hipError_t hip_ok = hipInit(0);
+        if (hip_ok != hipSuccess) {
+            std::cerr << "hipInit failed with error code " << hip_ok << "! Aborting now.\n";
+            throw std::runtime_error("hipInit failed. Did not proceeding with MPI_Init_thread.");
+        }
+#endif
+
         const int thread_required = mpi_thread_required();
 #ifdef AMREX_USE_MPI
         int thread_provided = -1;

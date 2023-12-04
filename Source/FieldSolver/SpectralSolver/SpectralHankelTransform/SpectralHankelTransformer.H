@@ -25,9 +25,9 @@ class SpectralHankelTransformer
 
         SpectralHankelTransformer () {}
 
-        SpectralHankelTransformer (const int nr,
-                                   const int n_rz_azimuthal_modes,
-                                   const amrex::Real rmax);
+        SpectralHankelTransformer (int nr,
+                                   int n_rz_azimuthal_modes,
+                                   amrex::Real rmax);
 
         void
         ExtractKrArray ();

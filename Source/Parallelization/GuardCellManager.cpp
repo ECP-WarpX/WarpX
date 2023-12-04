@@ -103,7 +103,7 @@ guardCellManager::Init (
     if (do_moving_window) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
-        const int nlevs = ref_ratios.size()+1;
+        const auto nlevs = static_cast<int>(ref_ratios.size()+1);
         const int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
 
         ngx = std::max(ngx,max_r);

@@ -1,6 +1,6 @@
 foreach(D IN LISTS WarpX_DIMS)
     warpx_set_suffix_dims(SD ${D})
-    target_sources(WarpX_${SD}
+    target_sources(lib_${SD}
       PRIVATE
         Diagnostics.cpp
         FieldIO.cpp
@@ -14,7 +14,7 @@ foreach(D IN LISTS WarpX_DIMS)
         BoundaryScrapingDiagnostics.cpp
         BTD_Plotfile_Header_Impl.cpp
         OpenPMDHelpFunction.cpp
-        StationDiagnostics.cpp
+        RecordingPlaneDiagnostics.cpp
     )
 endforeach()
 

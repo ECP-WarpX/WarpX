@@ -429,8 +429,8 @@ void FieldProbe::ComputeDiags (int step)
 
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
-            const auto getPosition = GetParticlePosition(pti);
-            auto setPosition = SetParticlePosition(pti);
+            const auto getPosition = GetParticlePosition<FieldProbePIdx>(pti);
+            auto setPosition = SetParticlePosition<FieldProbePIdx>(pti);
             const auto& aos = pti.GetArrayOfStructs();
             const auto* AMREX_RESTRICT m_structs = aos().dataPtr();
 
@@ -591,7 +591,7 @@ void FieldProbe::ComputeDiags (int step)
             if (amrex::ParallelDescriptor::IOProcessor()) {
                 length_vector.resize(mpisize, 0);
             }
-            localsize.resize(1, m_data.size());
+            localsize.resize(1, static_cast<int>(m_data.size()));
 
             // gather size of m_data from each processor
             amrex::ParallelDescriptor::Gather(localsize.data(), 1,

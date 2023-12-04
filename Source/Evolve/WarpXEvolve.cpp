@@ -24,8 +24,10 @@
 #endif
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
-#include "Python/WarpX_py.H"
+#include "Python/callbacks.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
@@ -77,9 +79,10 @@ WarpX::Evolve (int numsteps)
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
         WARPX_PROFILE("WarpX::Evolve::step");
-        const Real evolve_time_beg_step = amrex::second();
+        const auto evolve_time_beg_step = static_cast<Real>(amrex::second());
 
-        CheckSignals();
+        //Check and clear signal flags and asynchronously broadcast them from process 0
+        SignalHandling::CheckSignals();
 
         multi_diags->NewIteration();
 
@@ -215,7 +218,7 @@ WarpX::Evolve (int numsteps)
         // Resample particles
         // +1 is necessary here because value of step seen by user (first step is 1) is different than
         // value of step in code (first step is 0)
-        mypc->doResampling(istep[0]+1);
+        mypc->doResampling(istep[0]+1, verbose);
 
         if (num_mirrors>0){
             applyMirrors(cur_time);
@@ -377,7 +380,7 @@ WarpX::Evolve (int numsteps)
         }
 
         // create ending time stamp for calculating elapsed time each iteration
-        const Real evolve_time_end_step = amrex::second();
+        const auto evolve_time_end_step = static_cast<Real>(amrex::second());
         evolve_time += evolve_time_end_step - evolve_time_beg_step;
 
         HandleSignals();
@@ -471,10 +474,6 @@ WarpX::OneStep_nosub (Real cur_time)
             if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
                 FillBoundaryG(guard_cells.ng_alloc_G, WarpX::sync_nodal_points);
         }
-
-        if (do_pml) {
-            NodalSyncPML();
-        }
     } else {
         EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
         EvolveG(0.5_rt * dt[0], DtType::FirstHalf);
@@ -501,11 +500,10 @@ WarpX::OneStep_nosub (Real cur_time)
 
         if (do_pml) {
             DampPML();
-            NodalSyncPML();
-            FillBoundaryE(guard_cells.ng_MovingWindow);
-            FillBoundaryB(guard_cells.ng_MovingWindow);
-            FillBoundaryF(guard_cells.ng_MovingWindow);
-            FillBoundaryG(guard_cells.ng_MovingWindow);
+            FillBoundaryE(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryB(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryF(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
+            FillBoundaryG(guard_cells.ng_MovingWindow, WarpX::sync_nodal_points);
         }
 
         // E and B are up-to-date in the domain, but all guard cells are
@@ -566,7 +564,7 @@ void WarpX::SyncCurrentAndRho ()
     // Reflect charge and current density over PEC boundaries, if needed.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (rho_fp[lev].get()) {
+        if (rho_fp[lev]) {
             ApplyRhofieldBoundary(lev, rho_fp[lev].get(), PatchType::fine);
         }
         ApplyJfieldBoundary(
@@ -574,7 +572,7 @@ void WarpX::SyncCurrentAndRho ()
             current_fp[lev][2].get(), PatchType::fine
         );
         if (lev > 0) {
-            if (rho_cp[lev].get()) {
+            if (rho_cp[lev]) {
                 ApplyRhofieldBoundary(lev, rho_cp[lev].get(), PatchType::coarse);
             }
             ApplyJfieldBoundary(
@@ -745,11 +743,6 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     if (WarpX::do_divb_cleaning || WarpX::do_pml_divb_cleaning)
         FillBoundaryG(guard_cells.ng_alloc_G, WarpX::sync_nodal_points);
 
-    // Synchronize fields on nodal points in PML
-    if (do_pml)
-    {
-        NodalSyncPML();
-    }
 #else
     amrex::ignore_unused(cur_time);
     WARPX_ABORT_WITH_MESSAGE(
@@ -926,9 +919,6 @@ WarpX::OneStep_sub1 (Real curtime)
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver,
                       WarpX::sync_nodal_points);
-
-    // Synchronize nodal points at the end of the time step
-    if (do_pml) NodalSyncPML();
 }
 
 void
@@ -1018,9 +1008,9 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         if (current_buf[lev][0].get()) {
             ApplyInverseVolumeScalingToCurrentDensity(current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(), lev-1);
         }
-        if (rho_fp[lev].get()) {
+        if (rho_fp[lev]) {
             ApplyInverseVolumeScalingToChargeDensity(rho_fp[lev].get(), lev);
-            if (charge_buf[lev].get()) {
+            if (charge_buf[lev]) {
                 ApplyInverseVolumeScalingToChargeDensity(charge_buf[lev].get(), lev-1);
             }
         }
@@ -1032,6 +1022,12 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
         // of the filter to avoid incorrect results (moved to `SyncCurrentAndRho()`).
         // Might this be related to issue #1943?
 #endif
+        if (do_fluid_species) {
+            myfl->Evolve(lev,
+                *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+                rho_fp[lev].get(),*current_x, *current_y, *current_z, cur_time, skip_deposition);
+        }
     }
 }
 
@@ -1081,8 +1077,8 @@ WarpX::applyMirrors(Real time)
             NullifyMF(Bz, lev, z_min, z_max);
 
             // If div(E)/div(B) cleaning are used, set F/G field to zero
-            if (F_fp[lev]) NullifyMF(*F_fp[lev].get(), lev, z_min, z_max);
-            if (G_fp[lev]) NullifyMF(*G_fp[lev].get(), lev, z_min, z_max);
+            if (F_fp[lev]) NullifyMF(*F_fp[lev], lev, z_min, z_max);
+            if (G_fp[lev]) NullifyMF(*G_fp[lev], lev, z_min, z_max);
 
             if (lev>0)
             {
@@ -1103,17 +1099,11 @@ WarpX::applyMirrors(Real time)
                 NullifyMF(cBz, lev, z_min, z_max);
 
                 // If div(E)/div(B) cleaning are used, set F/G field to zero
-                if (F_cp[lev]) NullifyMF(*F_cp[lev].get(), lev, z_min, z_max);
-                if (G_cp[lev]) NullifyMF(*G_cp[lev].get(), lev, z_min, z_max);
+                if (F_cp[lev]) NullifyMF(*F_cp[lev], lev, z_min, z_max);
+                if (G_cp[lev]) NullifyMF(*G_cp[lev], lev, z_min, z_max);
             }
         }
     }
-}
-
-void
-WarpX::CheckSignals()
-{
-    SignalHandling::CheckSignals();
 }
 
 void

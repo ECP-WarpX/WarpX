@@ -81,20 +81,25 @@ Finally, since LUMI does not yet provide software modules for some of our depend
 Compilation
 -----------
 
-Use the following :ref:`cmake commands <building-cmake>` to compile:
+Use the following :ref:`cmake commands <building-cmake>` to compile the application executable:
 
 .. code-block:: bash
 
    cd $HOME/src/warpx
    rm -rf build_lumi
 
-   cmake -S . -B build_lumi -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake -S . -B build_lumi -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_DIMS="1;2;RZ;3"
    cmake --build build_lumi -j 16
-   cmake --build build_lumi -j 16 --target pip_install
 
-**That's it!**
-WarpX executables are now in ``build_lumi/bin/`` and :ref:`can be run <running-cpp-lumi>` with matching :ref:`example inputs files <usage-examples>`.
-Most people execute the binary directly or copy it out to a location in ``/scratch/<project>``.
+The WarpX application executables are now in ``$HOME/src/warpx/build_lumi/bin/``.
+Additionally, the following commands will install WarpX as a Python module:
+
+.. code-block:: bash
+
+   rm -rf build_lumi_py
+
+   cmake -S . -B build_lumi_py -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_APP=OFF -DWarpX_PYTHON=ON -DWarpX_DIMS="1;2;RZ;3"
+   cmake --build build_lumi_py -j 16 --target pip_install
 
 
 .. _building-lumi-update:

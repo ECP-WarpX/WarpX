@@ -22,7 +22,7 @@ In addition, WarpX is also a *multi-platform code* and runs on Linux, macOS and 
 Contact us
 ^^^^^^^^^^
 
-If you are starting using WarpX, or if you have a user question, please pop in our `Gitter chat room <https://gitter.im/ECP-WarpX/community>`__ and get in touch with the community.
+If you are starting using WarpX, or if you have a user question, please pop in our `discussions page <https://github.com/ECP-WarpX/WarpX/discussions>`__ and get in touch with the community.
 
 The `WarpX GitHub repo <https://github.com/ECP-WarpX/WarpX>`__ is the main communication platform.
 Have a look at the action icons on the top right of the web page: feel free to watch the repo if you want to receive updates, or to star the repo to support the project.
@@ -116,6 +116,7 @@ Theory
    theory/input_output
    theory/collisions
    theory/kinetic_fluid_hybrid_model
+   theory/cold_fluid_model
 
 Development
 -----------

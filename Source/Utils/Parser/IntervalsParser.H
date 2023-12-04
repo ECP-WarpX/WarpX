@@ -47,7 +47,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        bool contains (const int n) const;
+        bool contains (int n) const;
 
         /**
         * \brief A method that returns the smallest integer strictly greater than n such that
@@ -55,7 +55,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int nextContains (const int n) const;
+        int nextContains (int n) const;
 
         /**
         * \brief A method that returns the greatest integer strictly smaller than n such that
@@ -63,7 +63,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int previousContains (const int n) const;
+        int previousContains (int n) const;
 
         /**
         * \brief A method that returns the slice period.
@@ -127,7 +127,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        bool contains (const int n) const;
+        bool contains (int n) const;
 
         /**
         * \brief A method that returns the smallest integer strictly greater than n such that
@@ -135,7 +135,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int nextContains (const int n) const;
+        int nextContains (int n) const;
 
         /**
         * \brief A method that returns the greatest integer strictly smaller than n such that
@@ -143,7 +143,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int previousContains (const int n) const;
+        int previousContains (int n) const;
 
         /**
         * \brief A method that returns the greatest integer smaller than or equal to n such that
@@ -151,7 +151,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int previousContainsInclusive (const int n) const;
+        int previousContainsInclusive (int n) const;
 
         /**
         * \brief A method the local period (in timesteps) of the IntervalsParser at timestep n.
@@ -159,7 +159,7 @@ namespace utils::parser
         *
         * @param[in] n the input integer
         */
-        int localPeriod (const int n) const;
+        int localPeriod (int n) const;
 
         /**
         * \brief A method that returns true if any of the slices contained by the IntervalsParser

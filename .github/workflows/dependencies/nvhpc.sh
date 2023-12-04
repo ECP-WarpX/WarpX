@@ -12,8 +12,8 @@ set -eu -o pipefail
 #   failed files the given number of times.
 echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
 
-sudo apt-get -qqq update
-sudo apt-get install -y \
+sudo apt -qqq update
+sudo apt install -y     \
     build-essential     \
     ca-certificates     \
     cmake               \
@@ -27,8 +27,12 @@ sudo apt-get install -y \
 
 echo 'deb [trusted=yes] https://developer.download.nvidia.com/hpc-sdk/ubuntu/amd64 /' | \
   sudo tee /etc/apt/sources.list.d/nvhpc.list
-sudo apt-get update -y
-sudo apt-get install -y --no-install-recommends nvhpc-21-11
+sudo apt update -y && \
+sudo apt install -y --no-install-recommends nvhpc-21-11 && \
+sudo rm -rf /var/lib/apt/lists/* && \
+  sudo rm -rf /opt/nvidia/hpc_sdk/Linux_x86_64/21.11/examples \
+              /opt/nvidia/hpc_sdk/Linux_x86_64/21.11/profilers \
+              /opt/nvidia/hpc_sdk/Linux_x86_64/21.11/math_libs/11.5/targets/x86_64-linux/lib/lib*_static*.a
 
 # things should reside in /opt/nvidia/hpc_sdk now
 

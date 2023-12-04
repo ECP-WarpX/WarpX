@@ -37,7 +37,7 @@ struct IonizationFilterFunc
     int comp;
     int m_atomic_number;
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
     GetExternalEBField m_get_externalEB;
 
     amrex::Array4<const amrex::Real> m_ex_arr;
@@ -70,10 +70,10 @@ struct IonizationFilterFunc
                           amrex::FArrayBox const& bxfab,
                           amrex::FArrayBox const& byfab,
                           amrex::FArrayBox const& bzfab,
-                          const amrex::Real* const AMREX_RESTRICT a_ionization_energies,
-                          const amrex::Real* const AMREX_RESTRICT a_adk_prefactor,
-                          const amrex::Real* const AMREX_RESTRICT a_adk_exp_prefactor,
-                          const amrex::Real* const AMREX_RESTRICT a_adk_power,
+                          const amrex::Real* AMREX_RESTRICT a_ionization_energies,
+                          const amrex::Real* AMREX_RESTRICT a_adk_prefactor,
+                          const amrex::Real* AMREX_RESTRICT a_adk_exp_prefactor,
+                          const amrex::Real* AMREX_RESTRICT a_adk_power,
                           int a_comp,
                           int a_atomic_number,
                           int a_offset = 0) noexcept;
@@ -96,13 +96,13 @@ struct IonizationFilterFunc
 
             amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
             amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
-            m_get_externalEB(i, ex, ey, ez, bx, by, bz);
 
             doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
                            m_ex_arr, m_ey_arr, m_ez_arr, m_bx_arr, m_by_arr, m_bz_arr,
                            m_ex_type, m_ey_type, m_ez_type, m_bx_type, m_by_type, m_bz_type,
                            m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
                            m_nox, m_galerkin_interpolation);
+            m_get_externalEB(i, ex, ey, ez, bx, by, bz);
 
             // Compute electric field amplitude in the particle's frame of
             // reference (particularly important when in boosted frame).

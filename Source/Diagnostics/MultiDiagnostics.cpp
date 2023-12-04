@@ -3,7 +3,7 @@
 #include "Diagnostics/BTDiagnostics.H"
 #include "Diagnostics/FullDiagnostics.H"
 #include "Diagnostics/BoundaryScrapingDiagnostics.H"
-#include "Diagnostics/StationDiagnostics.H"
+#include "Diagnostics/RecordingPlaneDiagnostics.H"
 #include "Utils/TextMsg.H"
 #include <ablastr/warn_manager/WarnManager.H>
 #include <AMReX_ParmParse.H>
@@ -28,8 +28,8 @@ MultiDiagnostics::MultiDiagnostics ()
             alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
         } else if ( diags_types[i] == DiagTypes::BoundaryScraping ){
             alldiags[i] = std::make_unique<BoundaryScrapingDiagnostics>(i, diags_names[i]);
-        } else if ( diags_types[i] == DiagTypes::Station ){
-            alldiags[i] = std::make_unique<StationDiagnostics>(i, diags_names[i]);
+        } else if ( diags_types[i] == DiagTypes::RecordingPlane ){
+            alldiags[i] = std::make_unique<RecordingPlaneDiagnostics>(i, diags_names[i]);
         } else {
             WARPX_ABORT_WITH_MESSAGE("Unknown diagnostic type");
         }
@@ -71,12 +71,12 @@ MultiDiagnostics::ReadParameters ()
         std::string diag_type_str;
         pp_diag_name.get("diag_type", diag_type_str);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            diag_type_str == "Full" || diag_type_str == "BackTransformed" || diag_type_str == "BoundaryScraping" || diag_type_str == "Station",
-            "<diag>.diag_type must be Full or BackTransformed or BoundaryScraping or Station");
+            diag_type_str == "Full" || diag_type_str == "BackTransformed" || diag_type_str == "BoundaryScraping" || diag_type_str == "RecordingPlane",
+            "<diag>.diag_type must be Full or BackTransformed or BoundaryScraping or RecordingPlane");
         if (diag_type_str == "Full") diags_types[i] = DiagTypes::Full;
         if (diag_type_str == "BackTransformed") diags_types[i] = DiagTypes::BackTransformed;
         if (diag_type_str == "BoundaryScraping") diags_types[i] = DiagTypes::BoundaryScraping;
-        if (diag_type_str == "Station") diags_types[i] = DiagTypes::Station;
+        if (diag_type_str == "RecordingPlane") diags_types[i] = DiagTypes::RecordingPlane;
     }
 }
 
@@ -85,11 +85,11 @@ MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush, bool BackT
 {
     int i = 0;
     for (auto& diag : alldiags){
-        if (BackTransform) {
-            if (diags_types[i] == DiagTypes::BackTransformed)
+        if (BackTransform == true) {
+            if ( (diags_types[i] == DiagTypes::BackTransformed) || (diags_types[i] == DiagTypes::RecordingPlane))
                 diag->FilterComputePackFlush (step, force_flush);
         } else {
-            if (diags_types[i] != DiagTypes::BackTransformed)
+            if ((diags_types[i] != DiagTypes::BackTransformed) && (diags_types[i] !=DiagTypes::RecordingPlane))
                 diag->FilterComputePackFlush (step, force_flush);
         }
         ++i;

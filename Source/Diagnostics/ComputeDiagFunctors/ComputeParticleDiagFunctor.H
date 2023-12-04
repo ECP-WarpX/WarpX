@@ -24,6 +24,12 @@ public:
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~ComputeParticleDiagFunctor() = default;
 
+    /** Default assignment and copy operations*/
+    ComputeParticleDiagFunctor(const ComputeParticleDiagFunctor&) = default;
+    ComputeParticleDiagFunctor& operator=(const ComputeParticleDiagFunctor&) = default;
+    ComputeParticleDiagFunctor(ComputeParticleDiagFunctor&&) = default;
+    ComputeParticleDiagFunctor& operator=(ComputeParticleDiagFunctor&&) = default;
+
     /** \brief Prepare data required to back-transform particle attribtutes for
      *         lab-frame snapshot, with index i_buffer.
      *         Note that this function has parameters that are specific to
@@ -42,8 +48,8 @@ public:
      */
     virtual void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                                       amrex::Real old_z_boost,
-                                      amrex::Real current_z_boost, amrex::Real t_lab,
-                                      int snapshot_full)
+                                      amrex::Real current_z_boost = 0., amrex::Real t_lab = 0.,
+                                      int snapshot_full = 0)
                                       {
                                           amrex::ignore_unused(i_buffer,
                                           ZSliceInDomain, old_z_boost,

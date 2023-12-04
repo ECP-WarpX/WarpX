@@ -154,7 +154,7 @@ def read_run_perf(filename, n_steps):
                     '\nPPC::FieldGather.*',\
                     '\nPPC::ParticlePush.*',\
                     '\nPPC::Evolve::Copy.*',\
-                    '\nWarpX::EvolveEM().*',\
+                    '\nWarpX::Evolve().*',\
                     'Checkpoint().*',\
                     'WriteParticles().*',\
                     '\nVisMF::Write(FabArray).*',\

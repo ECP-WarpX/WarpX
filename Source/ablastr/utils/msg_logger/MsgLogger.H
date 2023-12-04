@@ -261,7 +261,7 @@ namespace ablastr::utils::msg_logger
             const std::map<Msg,std::int64_t>& my_msg_map,
             const std::vector<char>& all_data,
             const std::vector<int>& displacements,
-            const int gather_rank
+            int gather_rank
         ) const;
 
 

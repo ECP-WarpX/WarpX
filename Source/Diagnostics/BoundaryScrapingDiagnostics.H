@@ -34,7 +34,7 @@ private:
     utils::parser::IntervalsParser m_intervals;
 
     /** \brief Flush data to file. */
-    void Flush (int i_buffer) override;
+    void Flush (int i_buffer, bool /* force_flush */) override;
     /** \brief Return whether to dump data to file at this time step.
      * (i.e. whether to call Flush)
      *

@@ -18,6 +18,7 @@ Abbreviations
 * **BC:** boundary condition (of a simulation)
 * **BCK:** `Benkler-Chavannes-Kuster <https://ieeexplore.ieee.org/document/1638381>`__ method, a stabilization technique for small cells in the electromagnetic solver
 * **BTD:** backtransformed diagnosics, a method to collect data for analysis from a *boosted frame* simulation
+* **CEX:** charge-exchange collisions
 * **CFL:** the Courant-Friedrichs-Lewy condition, a numerical parameter for the numerical convergence of PDE solvers
 * **CI:** continuous integration, automated tests that we perform before a proposed code-change is accepted; see PR
 * **CPU:** `central processing unit <https://en.wikipedia.org/wiki/Central_processing_unit>`__, we usual mean a socket or generally the host-side of a computer (compared to the accelerator, e.g. GPU)
@@ -33,6 +34,7 @@ Abbreviations
 * **GPU:** originally graphics processing unit, now used for fast `general purpose computing (GPGPU) <https://en.wikipedia.org/wiki/Graphics_processing_unit#Stream_processing_and_general_purpose_GPUs_(GPGPU)>`__; also called (hardware) accelerator
 * **IO:** input/output, usually files and/or data
 * **IPO:** `interprocedural optimization <https://en.wikipedia.org/wiki/Interprocedural_optimization>`__, a collection of compiler optimization techniques that analyze the whole code to avoid duplicate calculations and optimize performance
+* **ISI:** Induced Spectral Incoherence (a laser pulse manipulation technique)
 * **LDRD:** Laboratory Directed Research and Development, a :ref:`funding program in U.S. DOE laboratories <funding>` that kick-started ABLASTR development
 * **LPA:** laser-plasma acceleration, historically used for laser-electron acceleration
 * **LPI:** laser-plasma interaction (often for laser-solid physics) *or* laser-plasma instability (often in fusion physics), depending on context
@@ -55,8 +57,11 @@ Abbreviations
 * **PWFA:** plasma-wakefield acceleration
 * **QED:** `quantum electrodynamics <https://en.wikipedia.org/wiki/Quantum_electrodynamics>`__
 * **RPA:** radiation-pressure acceleration (of protons/ions), e.g. hole-boring (HB) or light-sail (LS) acceleration
+* **RPP:** Random Phase Plate (a laser pulse manipulation technique)
 * **RZ:** for the coordinate system ``r-z`` in cylindrical geometry; we use "RZ" when we refer to quasi-cylindrical geometry, decomposed in azimuthal modes (see details `here <https://fbpic.github.io/overview/pic_algorithm.html#cylindrical-grid-with-azimuthal-decomposition>`__)
 * **SENSEI:** `Scalable in situ analysis and visualization <https://sensei-insitu.org/>`__, light weight framework for in situ data analysis offering access to multiple visualization and analysis backends
+* **SEE:** secondary electron emission
+* **SSD:** Smoothing by Spectral Dispersion (a laser pulse manipulation technique)
 * **TNSA:** target-normal sheet acceleration (of protons/ions)
 
 Terms
@@ -67,7 +72,7 @@ Terms
 * **Ascent:** `many-core capable flyweight in situ visualization and analysis infrastructure <https://alpine-dav.github.io/ascent/>`__, a visualization backend usable with WarpX data
 * **boosted frame:** a :ref:`Lorentz-boosted frame of reference <theory-boostedframe>` for a simulation
 * **evolve:** this is a generic term to advance a quantity (same nomenclature in AMReX).
-              For instance, ``WarpX::EvolveE(dt)`` advances the electric field for duration ``dt``, ``PhysicalParticleContainer::Evolve(...)`` does field gather + particle push + current deposition for all particles in ``PhysicalParticleContainer``, and ``WarpX::EvolveEM`` is the central ``WarpX`` function that performs 1 PIC iteration.
+              For instance, ``WarpX::EvolveE(dt)`` advances the electric field for duration ``dt``, ``PhysicalParticleContainer::Evolve(...)`` does field gather + particle push + current deposition for all particles in ``PhysicalParticleContainer``, and ``WarpX::Evolve`` is the central ``WarpX`` function that performs 1 PIC iteration.
 * **Frontier:** an `Exascale supercomputer at OLCF <https://www.olcf.ornl.gov/frontier/>`__
 * **hybrid-PIC:** a plasma simulation scheme that combines fluid and kinetic approaches, with (usually) the electrons treated as a fluid and the ions as kinetic particles (see :ref:`theory-kinetic-fluid-hybrid-model`)
 * **laser:** most of the time, we mean a `laser pulse <https://en.wikipedia.org/wiki/Ultrashort_pulse>`__

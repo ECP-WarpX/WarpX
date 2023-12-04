@@ -30,12 +30,11 @@
 FiniteDifferenceSolver::FiniteDifferenceSolver (
     int const fdtd_algo,
     std::array<amrex::Real,3> cell_size,
-    short grid_type) {
-
+    short grid_type):
     // Register the type of finite-difference algorithm
-    m_fdtd_algo = fdtd_algo;
-    m_grid_type = grid_type;
-
+    m_fdtd_algo{fdtd_algo},
+    m_grid_type{grid_type}
+{
     // return if not FDTD
     if (fdtd_algo == ElectromagneticSolverAlgo::None || fdtd_algo == ElectromagneticSolverAlgo::PSATD)
         return;

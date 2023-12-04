@@ -17,6 +17,7 @@
 #include <string>
 #include <utility>
 
+
 /** Particle Attributes stored in amrex::ParticleContainer's struct of array
  */
 struct PIdx
@@ -72,7 +73,7 @@ public:
     }
 
     /** Destructor for NamedComponentParticleContainer */
-    virtual ~NamedComponentParticleContainer() = default;
+    ~NamedComponentParticleContainer() override = default;
 
     /** Construct a NamedComponentParticleContainer from a regular
      * amrex::ParticleContainer, and additional name-to-index maps

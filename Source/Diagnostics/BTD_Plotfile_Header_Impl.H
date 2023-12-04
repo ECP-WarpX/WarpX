@@ -31,8 +31,6 @@ public:
      * \param[in] Headerfile_path string containing path of Headerfile
      */
     BTDPlotfileHeaderImpl (std::string const& Headerfile_path);
-    /** Destructor */
-    ~BTDPlotfileHeaderImpl () = default;
 
     /** Returns the Header file version for plotfile */
     std::string fileVersion () const noexcept {return m_file_version; }
@@ -166,7 +164,7 @@ class BTDMultiFabHeaderImpl
      * \param[in] Headerfile_path string containing path of Headerfile
      */
     BTDMultiFabHeaderImpl (std::string const& Headerfile_path);
-    ~BTDMultiFabHeaderImpl () = default;
+
     /** Reads the Multifab Header file and stores its data. */
     void ReadMultiFabHeader ();
     /** Writes the meta-data of the Multifab in a header file, with path, m_Header_path. */
@@ -249,13 +247,13 @@ public:
      * \param[in] species_name string containing species name
      */
     BTDSpeciesHeaderImpl (std::string const& Headerfile_path, std::string const& species_name);
-    ~BTDSpeciesHeaderImpl () = default;
+
     /** Reads the Header file for BTD species*/
     void ReadHeader ();
     /** Writes the meta-data of species Header file, with path, m_Header_path*/
     void WriteHeader ();
     /** Set data Index of the data-file, DATAXXXXX, that the particles belong to*/
-    void set_DataIndex (const int lev, const int box_id, const int data_index);
+    void set_DataIndex (int lev, int box_id, int data_index);
     /** Add new_particles to existing to obtain the total number of particles of the species.
         \param[in] new_particles total particles in the new buffer
      */
@@ -265,7 +263,7 @@ public:
     /** Append particle info of the newly added box, namely,
         m_which_data, m_particles_per_box, m_offset_per_box.
      */
-    void AppendParticleInfoForNewBox (const int data_index, const int particles_per_box, const int offset);
+    void AppendParticleInfoForNewBox (int data_index, int particles_per_box, int offset);
     /** Vector of data indices of all particle data for each level*/
     amrex::Vector< amrex::Vector<int> > m_which_data;
     /** Vector of particles per box for each level*/
@@ -314,8 +312,7 @@ public:
      * \param[in] Headerfile_path containing path of Headerfile
      */
     BTDParticleDataHeaderImpl (std::string const& Headerfile_path);
-    /** Destructor */
-    ~BTDParticleDataHeaderImpl () = default;
+
     /** Reads the particle header file at m_Header_path and stores its data*/
     void ReadHeader ();
     /** Writes the meta-data of particle box array in header file, with path, m_Header_path*/

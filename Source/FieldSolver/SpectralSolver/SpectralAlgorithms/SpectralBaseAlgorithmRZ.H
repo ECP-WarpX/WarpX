@@ -29,6 +29,27 @@ class SpectralBaseAlgorithmRZ
         virtual ~SpectralBaseAlgorithmRZ() {}
 
         /**
+         * \brief Default Copy constructor
+         */
+        SpectralBaseAlgorithmRZ ( SpectralBaseAlgorithmRZ const &) = default;
+
+        /**
+         * \brief Default Copy operator
+         */
+        SpectralBaseAlgorithmRZ& operator= ( SpectralBaseAlgorithmRZ const & ) = default;
+
+
+        /**
+         * \brief Default Move constructor
+         */
+        SpectralBaseAlgorithmRZ ( SpectralBaseAlgorithmRZ&& ) = default;
+
+        /**
+         * \brief Default Move operator
+         */
+        SpectralBaseAlgorithmRZ& operator= ( SpectralBaseAlgorithmRZ&& ) = default;
+
+        /**
          * \brief Virtual function for current correction in Fourier space
          * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
          * This virtual function is pure and must be defined in derived classes.
@@ -40,7 +61,7 @@ class SpectralBaseAlgorithmRZ
         /**
          * \brief Compute spectral divergence of E
          */
-        void ComputeSpectralDivE ( const int lev,
+        void ComputeSpectralDivE ( int lev,
                                    SpectralFieldDataRZ& field_data,
                                    const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                    amrex::MultiFab& divE );

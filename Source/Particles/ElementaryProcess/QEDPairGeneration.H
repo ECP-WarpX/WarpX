@@ -96,7 +96,7 @@ public:
     * @param[in] bzfab constant reference to the FArrayBox of the z component of the magnetic field
     * @param[in] a_offset offset to apply to the particle indices
     */
-    PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
+    PairGenerationTransformFunc(BreitWheelerGeneratePairs generate_functor,
                                 const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
                                 amrex::FArrayBox const& exfab,
                                 amrex::FArrayBox const& eyfab,
@@ -168,7 +168,7 @@ private:
     const BreitWheelerGeneratePairs
     m_generate_functor; /*!< A copy of the functor to generate pairs. It contains only pointers to the lookup tables.*/
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
     GetExternalEBField m_get_externalEB;
 
     amrex::Array4<const amrex::Real> m_ex_arr;

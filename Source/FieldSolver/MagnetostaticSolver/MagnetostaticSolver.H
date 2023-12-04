@@ -47,7 +47,7 @@ namespace MagnetostaticSolver {
                   m_grad_buf_b_stag(grad_buf_b_stag)
         {}
 
-        void operator()(amrex::Array<std::unique_ptr<amrex::MLMG>,3> & mlmg, int const lev);
+        void operator()(amrex::Array<std::unique_ptr<amrex::MLMG>,3> & mlmg, int lev);
 
         // Function to perform interpolation from cell edges to cell faces
         void doInterp(const std::unique_ptr<amrex::MultiFab> &src, const std::unique_ptr<amrex::MultiFab> &dst);

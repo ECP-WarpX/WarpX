@@ -27,7 +27,7 @@ public:
     MCCProcess (
                 const std::string& scattering_process,
                 const std::string& cross_section_file,
-                const amrex::ParticleReal energy
+                amrex::ParticleReal energy
                 );
 
     template <typename InputVector>
@@ -35,14 +35,15 @@ public:
                 const std::string& scattering_process,
                 const InputVector&& energies,
                 const InputVector&& sigmas,
-                const amrex::ParticleReal energy
+                amrex::ParticleReal energy
                 );
 
-    MCCProcess (MCCProcess const&) = delete;
-    MCCProcess& operator= (MCCProcess const&) = delete;
+    ~MCCProcess() = default;
 
-    MCCProcess (MCCProcess &&) = default;
-    MCCProcess& operator= (MCCProcess &&) = default;
+    MCCProcess (MCCProcess const&)            = delete;
+    MCCProcess& operator= (MCCProcess const&) = delete;
+    MCCProcess (MCCProcess &&)                = default;
+    MCCProcess& operator= (MCCProcess &&)     = default;
 
     /** Read the given cross-section data file to memory.
      *
@@ -54,7 +55,7 @@ public:
      */
     static
     void readCrossSectionFile (
-                               const std::string cross_section_file,
+                               std::string cross_section_file,
                                amrex::Vector<amrex::ParticleReal>& energies,
                                amrex::Gpu::HostVector<amrex::ParticleReal>& sigmas
                                );
@@ -125,7 +126,7 @@ private:
     static
     MCCProcessType parseProcessType(const std::string& process);
 
-    void init (const std::string& scattering_process, const amrex::ParticleReal energy);
+    void init (const std::string& scattering_process, amrex::ParticleReal energy);
 
     amrex::Vector<amrex::ParticleReal> m_energies;
 
