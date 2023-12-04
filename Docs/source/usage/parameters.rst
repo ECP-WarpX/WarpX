@@ -1185,7 +1185,7 @@ Cold Relativistic Fluid initialization
 * ``fluids.species_names`` (`strings`, separated by spaces)
     Defines the names of each fluid species. It is a required input to create and evolve fluid species using the cold relativistic fluid equations.
     Most of the parameters described in the section "Particle initialization" can also be used to initialize fluid properties (e.g. initial density distribution).
-    For fluid-specific inputs we use `<fluid_pecies_name>` as a placeholder. Also see external fields
+    For fluid-specific inputs we use `<fluid_species_name>` as a placeholder. Also see external fields
     for how to specify these for fluids as the function names differ.
 
 .. _running-cpp-parameters-laser:
