@@ -366,6 +366,8 @@ public:
     int DoQED() const { return false; }
 #endif
 
+    virtual bool has_radiation() const {return false;}
+
     /* \brief This function tests if the current species
     *  is of a given PhysicalSpecies (specified as a template parameter).
     * @tparam PhysSpec the PhysicalSpecies to test against
@@ -421,6 +423,7 @@ protected:
     int do_continuous_injection = 0;
 
     int do_field_ionization = 0;
+
     int ionization_product;
     std::string ionization_product_name;
     int ion_atomic_number;

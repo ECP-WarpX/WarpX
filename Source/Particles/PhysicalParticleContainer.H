@@ -353,6 +353,8 @@ public:
     PairGenerationFilterFunc getPairGenerationFilterFunc ();
 #endif
 
+    bool has_radiation() const override {return m_do_radiation;}
+    
 protected:
     std::string species_name;
     std::unique_ptr<PlasmaInjector> plasma_injector;
@@ -381,6 +383,7 @@ protected:
     //When true PhysicalParticleContainer tries to use a pusher including
     //radiation reaction
     bool do_classical_radiation_reaction = false;
+    bool m_do_radiation = false;
 
     // A flag to enable saving of the previous timestep positions
     bool m_save_previous_position = false;

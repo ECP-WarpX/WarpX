@@ -20,6 +20,7 @@
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 #include "PhysicalParticleContainer.H"
+#include "Particles/Radiation/RadiationHandler.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpXParticleContainer.H"
@@ -329,6 +330,8 @@ public:
                       const amrex::MultiFab& Bz);
 #endif
 
+    void doRadiation(amrex::Real dt);
+
     int getSpeciesID (std::string product_str) const;
 
 protected:
@@ -526,6 +529,8 @@ private:
     void CheckQEDProductSpecies();
 #endif
 
-
+// Radiation Handler
+std::unique_ptr<RadiationHandler> m_p_radiation_handler;
+bool m_at_least_one_has_radiation = false;
 };
 #endif /*WARPX_ParticleContainer_H_*/

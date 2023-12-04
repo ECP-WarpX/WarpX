@@ -279,6 +279,16 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     //check if Radiation Reaction is enabled and do consistency checks
     pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
+    //check if Radiations are enables for species and add previous momentum attribute
+    pp_species_name.query("do_radiation", m_do_radiation);
+    if (m_do_radiation){
+        //enable the radiations in the evolve looop
+        WarpX::m_do_radiation_flag = 1;
+
+        AddRealComp("previous_momentum_x");
+        AddRealComp("previous_momentum_y");
+        AddRealComp("previous_momentum_z");
+    }
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

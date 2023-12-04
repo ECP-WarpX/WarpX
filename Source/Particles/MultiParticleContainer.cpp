@@ -388,8 +388,7 @@ MultiParticleContainer::ReadParameters ()
                 m_qed_schwinger_threshold_poisson_gaussian);
             utils::parser::queryWithParser(
                 pp_qed_schwinger, "xmin", m_qed_schwinger_xmin);
-            utils::parser::queryWithParser(
-                pp_qed_schwinger, "xmax", m_qed_schwinger_xmax);
+    
 #if defined(WARPX_DIM_3D)
             utils::parser::queryWithParser(
                 pp_qed_schwinger, "ymin", m_qed_schwinger_ymin);
@@ -403,6 +402,16 @@ MultiParticleContainer::ReadParameters ()
         }
 #endif
         initialized = true;
+    }
+
+
+    for (auto& s : allcontainers) {
+
+        if (s->has_radiation()) {
+            m_at_least_one_has_radiation = true;
+            m_p_radiation_handler = std::make_unique<RadiationHandler>();
+            break;
+        }
     }
 }
 
@@ -973,6 +982,17 @@ void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::M
 #else
     amrex::ignore_unused(distance_to_eb);
 #endif
+}
+
+void
+MultiParticleContainer::doRadiation (const amrex::Real dt)
+{
+    for (auto& pc : allcontainers) {
+        if (pc->has_radiation()){
+            m_p_radiation_handler->add_radiation_contribution(dt,pc);
+
+        }
+    }
 }
 
 #ifdef WARPX_QED
