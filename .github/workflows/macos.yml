@@ -59,16 +59,18 @@ jobs:
         python3 -m pip install --upgrade mpi4py
     - name: CCache Cache
       uses: actions/cache@v3
-      # - once stored under a key, they become immutable (even if local cache path content changes)
-      # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
         path: /Users/runner/Library/Caches/ccache
-        key: ccache-macos-appleclang-${{ hashFiles('.github/workflows/macos.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
         restore-keys: |
-          ccache-macos-appleclang-${{ hashFiles('.github/workflows/macos.yml') }}-
-          ccache-macos-appleclang-
+             ccache-${{ github.workflow }}-${{ github.job }}-git-
     - name: build WarpX
       run: |
+        export CCACHE_COMPRESS=1
+        export CCACHE_COMPRESSLEVEL=10
+        export CCACHE_MAXSIZE=100M
+        ccache -z
+
         source py-venv/bin/activate
 
         cmake -S . -B build_dp         \
@@ -89,9 +91,26 @@ jobs:
         cmake --build build_sp -j 3
         cmake --build build_sp --target pip_install
 
+        ccache -s
+
     - name: run pywarpx
       run: |
         source py-venv/bin/activate
         export OMP_NUM_THREADS=1
 
         mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_3d.py
+
+  save_pr_number:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save PR number
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          echo $PR_NUMBER > pr_number.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: pr_number.txt
+          retention-days: 1

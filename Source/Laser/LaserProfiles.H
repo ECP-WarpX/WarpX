@@ -96,7 +96,7 @@ public:
         amrex::Real* AMREX_RESTRICT amplitude) const = 0;
 
     ILaserProfile () = default;
-    virtual ~ILaserProfile(){}
+    virtual ~ILaserProfile() = default;
 
     ILaserProfile ( ILaserProfile const &)             = default;
     ILaserProfile& operator= ( ILaserProfile const & ) = default;
@@ -306,7 +306,7 @@ private:
     *
     * \param t: simulation time
     */
-    std::pair<int,int> find_left_right_time_indices(amrex::Real t) const;
+    [[nodiscard]] std::pair<int,int> find_left_right_time_indices(amrex::Real t) const;
 
     /** \brief Load field data within the temporal range [t_begin, t_end]
     *

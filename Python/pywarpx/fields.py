@@ -160,15 +160,8 @@ class _MultiFABWrapper(object):
         if self.include_ghosts:
             # The ghost cells are added to the upper and lower end of the global domain.
             nghosts = self.mf.n_grow_vect()
-            ilo = list(ilo)
-            ihi = list(ihi)
-            min_box = self.mf.box_array().minimal_box()
-            imax = min_box.big_end
-            for i in range(self.dim):
-                if ilo[i] == 0:
-                    ilo[i] -= nghosts[i]
-                if ihi[i] == imax[i]:
-                    ihi[i] += nghosts[i]
+            ilo -= nghosts[idir]
+            ihi += nghosts[idir]
 
         # Cell size in the direction
         warpx = libwarpx.libwarpx_so.get_instance()
