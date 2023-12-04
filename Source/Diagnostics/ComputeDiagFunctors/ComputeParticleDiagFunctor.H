@@ -15,8 +15,7 @@
 /**
  * \brief Functor to compute a diagnostic and store the result in existing ParticleContainer.
  */
-class
-ComputeParticleDiagFunctor
+class ComputeParticleDiagFunctor
 {
 public:
 

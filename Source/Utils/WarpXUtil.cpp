@@ -289,11 +289,17 @@ void CheckDims ()
 #endif
     const ParmParse pp_geometry("geometry");
     std::string dims;
-    pp_geometry.get("dims", dims);
     std::string dims_error = "The selected WarpX executable was built as '";
     dims_error.append(dims_compiled).append("'-dimensional, but the ");
-    dims_error.append("inputs file declares 'geometry.dims = ").append(dims).append("'.\n");
-    dims_error.append("Please re-compile with a different WarpX_DIMS option or select the right executable name.");
+    if (pp_geometry.contains("dims")) {
+        pp_geometry.get("dims", dims);
+        dims_error.append("inputs file declares 'geometry.dims = ").append(dims).append("'.\n");
+        dims_error.append("Please re-compile with a different WarpX_DIMS option or select the right executable name.");
+    } else {
+        dims = "Not specified";
+        dims_error.append("inputs file does not declare 'geometry.dims'. Please add 'geometry.dims = ");
+        dims_error.append(dims_compiled).append("' to inputs file.");
+    }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(dims == dims_compiled, dims_error);
 }
 

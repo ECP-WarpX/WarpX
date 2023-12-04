@@ -48,6 +48,20 @@ public:
 
     /**
      * \brief
+     * Function to evaluate the external current expressions and populate the
+     * external current multifab. Note the external current can be a function
+     * of time and therefore this should be re-evaluated at every step.
+     */
+    void GetCurrentExternal (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
+    );
+    void GetCurrentExternal (
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        int lev
+    );
+
+    /**
+     * \brief
      * Function to calculate the total current based on Ampere's law while
      * neglecting displacement current (J = curl x B). Used in the Ohm's law
      * solver (kinetic-fluid hybrid model).
@@ -133,10 +147,19 @@ public:
     std::unique_ptr<amrex::Parser> m_resistivity_parser;
     amrex::ParserExecutor<1> m_eta;
 
+    /** External current */
+    std::string m_Jx_ext_grid_function = "0.0";
+    std::string m_Jy_ext_grid_function = "0.0";
+    std::string m_Jz_ext_grid_function = "0.0";
+    std::array< std::unique_ptr<amrex::Parser>, 3> m_J_external_parser;
+    std::array< amrex::ParserExecutor<4>, 3> m_J_external;
+    bool m_external_field_has_time_dependence = false;
+
     // Declare multifabs specifically needed for the hybrid-PIC model
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_external;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
 
     // Helper functions to retrieve hybrid-PIC multifabs

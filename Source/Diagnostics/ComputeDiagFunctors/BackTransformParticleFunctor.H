@@ -154,7 +154,7 @@ struct LorentzTransformParticles
         dst.m_aos[i_dst].pos(0) = xp;
         dst.m_aos[i_dst].pos(1) = zp;
         amrex::ignore_unused(yp);
-#elif defined (WARPX_DIM_1D)
+#elif defined (WARPX_DIM_1D_Z)
         dst.m_aos[i_dst].pos(0) = zp;
         amrex::ignore_unused(xp, yp);
 #else
@@ -195,8 +195,7 @@ struct LorentzTransformParticles
  * \brief BackTransform functor to select particles and Lorentz Transform them
  *  and store in particle buffers
  */
-class
-BackTransformParticleFunctor final : public ComputeParticleDiagFunctor
+class BackTransformParticleFunctor final : public ComputeParticleDiagFunctor
 {
 public:
     BackTransformParticleFunctor(WarpXParticleContainer *pc_src, std::string species_name, int num_buffers);

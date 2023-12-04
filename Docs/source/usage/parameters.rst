@@ -167,6 +167,12 @@ Overall simulation parameters
     For all regular WarpX operations, we therefore do explicit memory transfers without the need for managed memory and thus changed the AMReX default to false.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
 
+* ``amrex.omp_threads``  (``system``, ``nosmt`` or positive integer; default is ``nosmt``)
+    An integer number can be set in lieu of the ``OMP_NUM_THREADS`` environment variable to control the number of OpenMP threads to use for the ``OMP`` compute backend on CPUs.
+    By default, we use the ``nosmt`` option, which overwrites the OpenMP default of spawning one thread per logical CPU core, and instead only spawns a number of threads equal to the number of physical CPU cores on the machine.
+    If set, the environment variable ``OMP_NUM_THREADS`` takes precedence over ``system`` and ``nosmt``, but not over integer numbers set in this option.
+
+
 Signal Handling
 ^^^^^^^^^^^^^^^
 
@@ -2120,25 +2126,28 @@ Maxwell solver: kinetic-fluid hybrid
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * ``hybrid_pic_model.elec_temp`` (`float`)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the electron temperature, in eV, used to calculate
-     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the electron temperature, in eV, used to calculate
+    the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
 * ``hybrid_pic_model.n0_ref`` (`float`)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}`, used to calculate
-     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}`, used to calculate
+    the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
 * ``hybrid_pic_model.gamma`` (`float`) optional (default ``5/3``)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the exponent used to calculate
-     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the exponent used to calculate
+    the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
 * ``hybrid_pic_model.plasma_resistivity(rho)`` (`float` or `str`) optional (default ``0``)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
+
+* ``hybrid_pic_model.J[x/y/z]_external_grid_function(x, y, z, t)`` (`float` or `str`) optional (default ``0``)
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external current (on the grid) in :math:`A/m^2`.
 
 * ``hybrid_pic_model.n_floor`` (`float`) optional (default ``1``)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma density floor, in :math:`m^{-3}`, which is useful since the generalized Ohm's law used to calculate the E-field includes a :math:`1/n` term.
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma density floor, in :math:`m^{-3}`, which is useful since the generalized Ohm's law used to calculate the E-field includes a :math:`1/n` term.
 
 * ``hybrid_pic_model.substeps`` (`int`) optional (default ``100``)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the number of sub-steps to take during the B-field update.
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the number of sub-steps to take during the B-field update.
 
 .. note::
 

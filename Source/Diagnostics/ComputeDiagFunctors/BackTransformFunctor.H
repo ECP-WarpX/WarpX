@@ -29,8 +29,7 @@
  * lab-frame field data is then stored in mf_dst.
  */
 
-class
-BackTransformFunctor final : public ComputeDiagFunctor
+class BackTransformFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor description
