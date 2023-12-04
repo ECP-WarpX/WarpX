@@ -136,7 +136,7 @@ Using the Brew Package
    brew --cache
    set +e
    brew unlink gcc
-   brew update 
+   brew update
    brew install --overwrite python
    brew install fftw
    brew install libomp
