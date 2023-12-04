@@ -285,9 +285,9 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         //enable the radiations in the evolve looop
         WarpX::m_do_radiation_flag = 1;
 
-        AddRealComp("previous_momentum_x");
-        AddRealComp("previous_momentum_y");
-        AddRealComp("previous_momentum_z");
+        AddRealComp("prev_u_x");
+        AddRealComp("prev_u_y");
+        AddRealComp("prev_u_z");
     }
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false

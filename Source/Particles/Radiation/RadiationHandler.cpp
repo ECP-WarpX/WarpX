@@ -57,6 +57,7 @@ void RadiationHandler::add_radiation_contribution
 #ifdef AMREX_USE_OMP
 #pragma omp parallel for
 #endif
+{
             for (WarpXParIter pti(*pc, level0); pti.isValid(); ++pti) {
                     long const np = pti.numParticles();
                     auto& attribs = pti.GetAttribs();
@@ -65,6 +66,10 @@ void RadiationHandler::add_radiation_contribution
                     auto& p_uy = attribs[PIdx::uy];
                     auto& p_uz = attribs[PIdx::uz];
                     auto& attribut = attribs[PIdx::nattribs];
+
+                    //auto& ux = src.m_rdata[PIdx::ux][i_src];
+                    //auto& uy = src.m_rdata[PIdx::uy][i_src];
+                    //auto& uz = src.m_rdata[PIdx::uz][i_src];
 
                     //auto GetPosition = GetParticlePosition<PIdx>(pti);
                 amrex::ParallelFor(np,
@@ -94,8 +99,8 @@ void RadiationHandler::add_radiation_contribution
 //                                                                  old_size + IndexLocation[i]);
 //                 });
 //                 amrex::Gpu::synchronize();
+        }
     }
-
 }
 
 void RadiationHandler::add_detector
@@ -126,11 +131,11 @@ void RadiationHandler::add_detector
 void RadiationHandler::keepoldmomentum
     (std::unique_ptr<WarpXParticleContainer>& pc){
         const auto level0=0;
-        const auto part=pc->GetParticles(level0);
-
          for (WarpXParIter pti(*pc, level0); pti.isValid(); ++pti) {
-                    //long const np = pti.numParticles();
-                    //auto& attribs = pti.GetAtt
-            };
-        
+                    auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
+                    auto& part=pc->GetParticles(level0)[index];
+                    long const np = pti.numParticles();
+                    auto& soa = part.GetStructOfArrays();
+                    const amrex::ParticleReal* const AMREX_RESTRICT ux = soa.GetRealData(PIdx::ux).data();
+                    pc->particle_runtime_comps["prev_u_x"];
 }
