@@ -17,6 +17,8 @@ Dimensions  CMake Option
 **RZ**      ``WarpX_DIMS=RZ``
 ==========  ==========================
 
+Note that one can :ref:`build multiple WarpX dimensions at once <building-cmake-options>` via ``-DWarpX_DIMS="1;2;RZ;3"``.
+
 See :ref:`building from source <install-developers>` for further details.
 
 Defines

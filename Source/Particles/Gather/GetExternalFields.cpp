@@ -13,16 +13,16 @@
 
 using namespace amrex::literals;
 
-GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset) noexcept
+GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset) noexcept
 {
     auto& warpx = WarpX::GetInstance();
     auto& mypc = warpx.GetPartContainer();
 
-    int lev = a_pti.GetLevel();
+    const int lev = a_pti.GetLevel();
 
     AcceleratorLattice const & accelerator_lattice = warpx.get_accelerator_lattice(lev);
     if (accelerator_lattice.m_lattice_defined) {
-        d_lattice_element_finder = accelerator_lattice.GetFinderDeviceInstance(a_pti, a_offset);
+        d_lattice_element_finder = accelerator_lattice.GetFinderDeviceInstance(a_pti, static_cast<int>(a_offset));
     }
 
     m_gamma_boost = WarpX::gamma_boost;
@@ -34,21 +34,9 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     if (mypc.m_E_ext_particle_s == "none") m_Etype = None;
     if (mypc.m_B_ext_particle_s == "none") m_Btype = None;
 
-    if (mypc.m_E_ext_particle_s == "constant")
-    {
-        m_Etype = Constant;
-        m_Efield_value[0] = mypc.m_E_external_particle[0];
-        m_Efield_value[1] = mypc.m_E_external_particle[1];
-        m_Efield_value[2] = mypc.m_E_external_particle[2];
-    }
-
-    if (mypc.m_B_ext_particle_s == "constant")
-    {
-        m_Btype = Constant;
-        m_Bfield_value[0] = mypc.m_B_external_particle[0];
-        m_Bfield_value[1] = mypc.m_B_external_particle[1];
-        m_Bfield_value[2] = mypc.m_B_external_particle[2];
-    }
+    // These lines will be removed once the user interface is redefined and the CI tests updated
+    if (mypc.m_E_ext_particle_s == "constant") m_Etype = None;
+    if (mypc.m_B_ext_particle_s == "constant") m_Btype = None;
 
     if (mypc.m_E_ext_particle_s == "parse_e_ext_particle_function" ||
         mypc.m_B_ext_particle_s == "parse_b_ext_particle_function" ||
@@ -56,7 +44,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
         mypc.m_B_ext_particle_s == "repeated_plasma_lens")
     {
         m_time = warpx.gett_new(a_pti.GetLevel());
-        m_get_position = GetParticlePosition(a_pti, a_offset);
+        m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
     }
 
     if (mypc.m_E_ext_particle_s == "parse_e_ext_particle_function")

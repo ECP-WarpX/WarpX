@@ -56,15 +56,25 @@ public:
      *  the run if one of them is specified. */
     void BackwardCompatibility ();
 
-    virtual ~PhysicalParticleContainer () {}
+    ~PhysicalParticleContainer () override = default;
 
-    virtual void InitData () override;
+    PhysicalParticleContainer (PhysicalParticleContainer const &)              = delete;
+    PhysicalParticleContainer& operator= (PhysicalParticleContainer const & )  = delete;
+    PhysicalParticleContainer(PhysicalParticleContainer&& )                    = default;
+    PhysicalParticleContainer& operator=(PhysicalParticleContainer&& )         = default;
 
-    virtual void ReadHeader (std::istream& is) override;
+    void InitData () override;
 
-    virtual void WriteHeader (std::ostream& os) const override;
+    void ReadHeader (std::istream& is) override;
 
-    virtual void InitIonizationModule () override;
+    void WriteHeader (std::ostream& os) const override;
+
+    void InitIonizationModule () override;
+
+    /*
+     * \brief Returns a pointer to the i'th plasma injector.
+     */
+    PlasmaInjector* GetPlasmaInjector (int i) override;
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that
@@ -100,7 +110,7 @@ public:
      * field gather, particle push and current deposition for all particles
      * in the box.
      */
-    virtual void Evolve (int lev,
+    void Evolve (int lev,
                          const amrex::MultiFab& Ex,
                          const amrex::MultiFab& Ey,
                          const amrex::MultiFab& Ez,
@@ -133,14 +143,14 @@ public:
                          amrex::FArrayBox const * bxfab,
                          amrex::FArrayBox const * byfab,
                          amrex::FArrayBox const * bzfab,
-                         const amrex::IntVect ngEB, const int /*e_is_nodal*/,
-                         const long offset,
-                         const long np_to_push,
+                         amrex::IntVect ngEB, int /*e_is_nodal*/,
+                         long offset,
+                         long np_to_push,
                          int lev, int gather_lev,
                          amrex::Real dt, ScaleFields scaleFields,
                          DtType a_dt_type=DtType::Full);
 
-    virtual void PushP (int lev, amrex::Real dt,
+    void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,
                         const amrex::MultiFab& Ey,
                         const amrex::MultiFab& Ez,
@@ -151,13 +161,13 @@ public:
     void PartitionParticlesInBuffers (
                         long& nfine_current,
                         long& nfine_gather,
-                        long const np,
+                        long np,
                         WarpXParIter& pti,
-                        int const lev,
+                        int lev,
                         amrex::iMultiFab const* current_masks,
                         amrex::iMultiFab const* gather_masks );
 
-    virtual void PostRestart () final {}
+    void PostRestart () final {}
 
     void SplitParticles (int lev);
 
@@ -179,34 +189,40 @@ public:
      * number of particles per cell (in the cells of `part_realbox`).
      * The new particles are only created inside the intersection of `part_realbox`
      * with the local grid for the current proc.
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] lev the index of the refinement level
      * @param[in] part_realbox the box in which new particles should be created
      * (this box should correspond to an integer number of cells in each direction,
      * but its boundaries need not be aligned with the actual cells of the simulation)
     */
-    void AddPlasma (int lev, amrex::RealBox part_realbox = amrex::RealBox());
+    void AddPlasma (PlasmaInjector const& plasma_injector, int lev, amrex::RealBox part_realbox = amrex::RealBox());
 
     /**
      * Create new macroparticles for this species, with a fixed
      * number of particles per cell in a plane.
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] dt time step size, used to partially advance the particles
     */
-    void AddPlasmaFlux (amrex::Real dt);
+    void AddPlasmaFlux (PlasmaInjector const& plasma_injector, amrex::Real dt);
 
     void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
-                                    amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz);
+                                    amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
+                                    amrex::Real t_lab = 0.);
 
     void AddGaussianBeam (
-        const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
-        const amrex::Real x_rms, const amrex::Real y_rms, const amrex::Real z_rms,
-        const amrex::Real x_cut, const amrex::Real y_cut, const amrex::Real z_cut,
-        const amrex::Real q_tot, long npart, const int do_symmetrize, const int symmetrization_order);
+        PlasmaInjector const& plasma_injector,
+        amrex::Real x_m, amrex::Real y_m, amrex::Real z_m,
+        amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
+        amrex::Real x_cut, amrex::Real y_cut, amrex::Real z_cut,
+        amrex::Real q_tot, long npart, int do_symmetrize, int symmetrization_order);
 
     /** Load a particle beam from an external file
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] q_tot total charge of the particle species to be initialized
      * @param[in] z_shift optional shift to the z position of particles (useful for boosted frame runs)
      */
-    void AddPlasmaFromFile (amrex::ParticleReal q_tot,
+    void AddPlasmaFromFile (PlasmaInjector & plasma_injector,
+                            amrex::ParticleReal q_tot,
                             amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (
@@ -219,7 +235,8 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_ux,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uy,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uz,
-        amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w);
+        amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w,
+        amrex::Real t_lab= 0.);
 
     /**
      * \brief Default initialize runtime attributes in a tile. This routine does not initialize the
@@ -233,13 +250,13 @@ public:
      * These are NOT initialized by this function.
      * @param[in] engine the random engine, used in initialization of QED optical depths
      */
-    virtual void DefaultInitializeRuntimeAttributes (
+    void DefaultInitializeRuntimeAttributes (
                     amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
                                         NArrayReal, NArrayInt,
                                         amrex::PinnedArenaAllocator>& pinned_tile,
-                    const int n_external_attr_real,
-                    const int n_external_attr_int,
-                    const amrex::RandomEngine& engine) override final;
+                    int n_external_attr_real,
+                    int n_external_attr_int,
+                    const amrex::RandomEngine& engine) final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
@@ -300,7 +317,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void resample (const int timestep) override final;
+    void resample (int timestep, bool verbose=true) final;
 
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H
@@ -343,7 +360,7 @@ public:
 
 protected:
     std::string species_name;
-    std::unique_ptr<PlasmaInjector> plasma_injector;
+    std::vector<std::unique_ptr<PlasmaInjector>> plasma_injectors;
 
     // When true, adjust the transverse particle positions accounting
     // for the difference between the Lorentz transformed time of the
@@ -352,13 +369,16 @@ protected:
     bool do_backward_propagation = false;
     bool m_rz_random_theta = true;
 
+    // Impose t_lab from the openPMD file for externally loaded species
+    bool impose_t_lab_from_file = false;
+
     Resampling m_resampler;
 
     // Inject particles during the whole simulation
     void ContinuousInjection (const amrex::RealBox& injection_box) override;
 
     // Continuously inject a flux of particles from a defined surface
-    void ContinuousFluxInjection (const amrex::Real t, const amrex::Real dt) override;
+    void ContinuousFluxInjection (amrex::Real t, amrex::Real dt) override;
 
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise

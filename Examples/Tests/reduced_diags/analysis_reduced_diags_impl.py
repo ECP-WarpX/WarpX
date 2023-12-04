@@ -166,6 +166,9 @@ def do_analysis(single_precision = False):
     Bx = ad[('mesh','Bx')].to_ndarray()
     By = ad[('mesh','By')].to_ndarray()
     Bz = ad[('mesh','Bz')].to_ndarray()
+    jx = ad[('mesh','jx')].to_ndarray()
+    jy = ad[('mesh','jy')].to_ndarray()
+    jz = ad[('mesh','jz')].to_ndarray()
     rho = ad[('boxlib','rho')].to_ndarray()
     rho_electrons = ad[('boxlib','rho_electrons')].to_ndarray()
     rho_protons = ad[('boxlib','rho_protons')].to_ndarray()
@@ -203,6 +206,7 @@ def do_analysis(single_precision = False):
     values_yt['protons: maximum of |rho|'] = np.amax(np.abs(rho_protons))
     values_yt['maximum of |B| from generic field reduction'] = np.amax(np.sqrt(Bx**2 + By**2 + Bz**2))
     values_yt['minimum of x*Ey*Bz'] = np.amin(x*Ey*Bz)
+    values_yt['maximum of Edotj'] = np.amax(Ex*jx + Ey*jy + Ez*jz)
 
     #--------------------------------------------------------------------------------------------------
     # Part 2: get results from reduced diagnostics (label '_rd')
@@ -222,6 +226,7 @@ def do_analysis(single_precision = False):
     FR_Maxdata = np.genfromtxt('./diags/reducedfiles/FR_Max.txt')  # Field Reduction using maximum
     FR_Mindata = np.genfromtxt('./diags/reducedfiles/FR_Min.txt')  # Field Reduction using minimum
     FR_Integraldata = np.genfromtxt('./diags/reducedfiles/FR_Integral.txt')  # Field Reduction using integral
+    Edotjdata = np.genfromtxt('./diags/reducedfiles/Edotj.txt') # E dot j maximum
 
     # First index "1" points to the values written at the last time step
     values_rd['field energy'] = EFdata[1][2]
@@ -283,6 +288,7 @@ def do_analysis(single_precision = False):
     values_rd['photons: sum of weights'] = NPdata[1][9]
     values_rd['maximum of |B| from generic field reduction'] = FR_Maxdata[1][2]
     values_rd['minimum of x*Ey*Bz'] = FR_Mindata[1][2]
+    values_rd['maximum of Edotj'] = Edotjdata[1][2]
 
     #--------------------------------------------------------------------------------------------------
     # Part 3: compare values from plotfiles and reduced diagnostics and print output

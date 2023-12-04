@@ -93,7 +93,7 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 
     for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
     {
-        amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
+        const amrex::ParmParse pp_species(getSpeciesNames()[ispecies]);
 #if defined(WARPX_DIM_1D_Z)
         pp_species.query("save_particles_at_zlo", m_do_boundary_buffer[idx_zlo][ispecies]);
         pp_species.query("save_particles_at_zhi", m_do_boundary_buffer[idx_zhi][ispecies]);
@@ -149,7 +149,7 @@ void ParticleBoundaryBuffer::printNumParticles () const {
             auto& buffer = m_particle_containers[2*idim+iside];
             for (int i = 0; i < numSpecies(); ++i)
             {
-                int np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
+                const auto np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
                 amrex::Print() << Utils::TextMsg::Info(
                     "Species " + getSpeciesNames()[i] + " has "
                     + std::to_string(np) + " particles in the boundary buffer "
@@ -162,7 +162,7 @@ void ParticleBoundaryBuffer::printNumParticles () const {
     auto& buffer = m_particle_containers[2*AMREX_SPACEDIM];
     for (int i = 0; i < numSpecies(); ++i)
     {
-        int np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
+        const auto np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
         amrex::Print() << Utils::TextMsg::Info(
             "Species " + getSpeciesNames()[i] + " has "
             + std::to_string(np) + " particles in the EB boundary buffer"
@@ -184,6 +184,18 @@ void ParticleBoundaryBuffer::redistribute () {
             }
         }
     }
+}
+
+const std::vector<std::string>& ParticleBoundaryBuffer::getSpeciesNames() const
+{
+    static bool initialized = false;
+    if (!initialized)
+    {
+        const amrex::ParmParse pp_particles("particles");
+        pp_particles.queryarr("species_names", m_species_names);
+        initialized = true;
+    }
+    return m_species_names;
 }
 
 void ParticleBoundaryBuffer::clearParticles () {
@@ -232,6 +244,9 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
                 {
                     const auto& plevel = pc.GetParticles(lev);
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
                     for(PIter pti(pc, lev); pti.isValid(); ++pti)
                     {
                         auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
@@ -251,7 +266,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         amrex::ReduceData<int> reduce_data(reduce_op);
                         {
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::count_out_of_bounds");
-                          amrex::RandomEngine rng{};
+                          const amrex::RandomEngine rng{};
                           reduce_op.eval(np, reduce_data, [=] AMREX_GPU_HOST_DEVICE (int ip)
                                          { return predicate(ptile_data, ip, rng) ? 1 : 0; });
                         }
@@ -263,8 +278,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         }
                         {
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
-                          int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
-                          int timestep = warpx_instance.getistep(0);
+                          const int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
+                          const int timestep = warpx_instance.getistep(0);
 
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
@@ -295,13 +310,16 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         {
             const auto& plevel = pc.GetParticles(lev);
             auto dxi = warpx_instance.Geom(lev).InvCellSizeArray();
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
             for(PIter pti(pc, lev); pti.isValid(); ++pti)
             {
                 auto phiarr = (*distance_to_eb[lev])[pti].array();  // signed distance function
                 auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
                 if(plevel.find(index) == plevel.end()) continue;
 
-                const auto getPosition = GetParticlePosition(pti);
+                const auto getPosition = GetParticlePosition<PIdx>(pti);
                 auto& ptile_buffer = species_buffer.DefineAndReturnParticleTile(lev, pti.index(),
                                                                                 pti.LocalTileIndex());
                 const auto& ptile = plevel.at(index);
@@ -337,8 +355,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                   ptile_buffer.resize(dst_index + amrex::get<0>(reduce_data.value()));
                 }
 
-                int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
-                int timestep = warpx_instance.getistep(0);
+                const int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
+                const int timestep = warpx_instance.getistep(0);
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
@@ -358,8 +376,12 @@ int ParticleBoundaryBuffer::getNumParticlesInContainer(
     auto& buffer = m_particle_containers[boundary];
     auto index = WarpX::GetInstance().GetPartContainer().getSpeciesID(species_name);
 
-    if (buffer[index].isDefined()) return buffer[index].TotalNumberOfParticles(false, local);
-    else return 0;
+    if (buffer[index].isDefined()){
+        return static_cast<int>(buffer[index].TotalNumberOfParticles(false, local));
+    }
+    else{
+        return 0;
+    }
 }
 
 PinnedMemoryParticleContainer &

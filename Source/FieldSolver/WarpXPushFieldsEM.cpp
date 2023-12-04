@@ -440,21 +440,20 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
     {
         const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
 
-        amrex::MultiFab& Jx = *current_fp[lev][0];
-        amrex::MultiFab& Jy = *current_fp[lev][1];
-        amrex::MultiFab& Jz = *current_fp[lev][2];
         amrex::MultiFab const& Dx = *current_fp_vay[lev][0];
         amrex::MultiFab const& Dy = *current_fp_vay[lev][1];
         amrex::MultiFab const& Dz = *current_fp_vay[lev][2];
 
 #if defined (WARPX_DIM_XZ)
-        amrex::ignore_unused(Jy, Dy);
+        amrex::ignore_unused(Dy);
 #endif
+
+    amrex::MultiFab& Jx = *current_fp[lev][0];
+
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-
         // Subtract average of cumulative sum from Jx
         for (amrex::MFIter mfi(Jx); mfi.isValid(); ++mfi)
         {
@@ -480,6 +479,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 
 #if defined (WARPX_DIM_3D)
         // Subtract average of cumulative sum from Jy
+        amrex::MultiFab& Jy = *current_fp[lev][1];
         for (amrex::MFIter mfi(Jy); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -504,6 +504,7 @@ void WarpX::PSATDSubtractCurrentPartialSumsAvg ()
 #endif
 
         // Subtract average of cumulative sum from Jz
+        amrex::MultiFab& Jz = *current_fp[lev][2];
         for (amrex::MFIter mfi(Jz); mfi.isValid(); ++mfi)
         {
             const amrex::Box& bx = mfi.fabbox();
@@ -723,8 +724,8 @@ WarpX::PushPSATD ()
             PSATDBackwardTransformJ(current_fp, current_cp);
 
             // Synchronize J and rho
-            SyncCurrent(current_fp, current_cp);
-            SyncRho(rho_fp, rho_cp);
+            SyncCurrent(current_fp, current_cp, current_buf);
+            SyncRho(rho_fp, rho_cp, charge_buf);
         }
         else if (current_deposition_algo == CurrentDepositionAlgo::Vay)
         {
@@ -745,7 +746,7 @@ WarpX::PushPSATD ()
             // TODO This works only without mesh refinement
             const int lev = 0;
             SumBoundaryJ(current_fp, lev, Geom(lev).periodicity());
-            SyncRho(rho_fp, rho_cp);
+            SyncRho(rho_fp, rho_cp, charge_buf);
         }
 
         // FFT of J and rho (if used)
@@ -1117,12 +1118,12 @@ WarpX::DampFieldsInGuards(const int lev,
                 int const nn_domain = domain.bigEnd(dampdir);
 
                 // Set the tileboxes so that they only cover the lower/upper half of the guard cells
-                amrex::Box tex_guard = constrain_tilebox_to_guards(tex, dampdir, iside, nn_domain, tex_smallEnd_d, tex_bigEnd_d);
-                amrex::Box tey_guard = constrain_tilebox_to_guards(tey, dampdir, iside, nn_domain, tey_smallEnd_d, tey_bigEnd_d);
-                amrex::Box tez_guard = constrain_tilebox_to_guards(tez, dampdir, iside, nn_domain, tez_smallEnd_d, tez_bigEnd_d);
-                amrex::Box tbx_guard = constrain_tilebox_to_guards(tbx, dampdir, iside, nn_domain, tbx_smallEnd_d, tbx_bigEnd_d);
-                amrex::Box tby_guard = constrain_tilebox_to_guards(tby, dampdir, iside, nn_domain, tby_smallEnd_d, tby_bigEnd_d);
-                amrex::Box tbz_guard = constrain_tilebox_to_guards(tbz, dampdir, iside, nn_domain, tbz_smallEnd_d, tbz_bigEnd_d);
+                const amrex::Box tex_guard = constrain_tilebox_to_guards(tex, dampdir, iside, nn_domain, tex_smallEnd_d, tex_bigEnd_d);
+                const amrex::Box tey_guard = constrain_tilebox_to_guards(tey, dampdir, iside, nn_domain, tey_smallEnd_d, tey_bigEnd_d);
+                const amrex::Box tez_guard = constrain_tilebox_to_guards(tez, dampdir, iside, nn_domain, tez_smallEnd_d, tez_bigEnd_d);
+                const amrex::Box tbx_guard = constrain_tilebox_to_guards(tbx, dampdir, iside, nn_domain, tbx_smallEnd_d, tbx_bigEnd_d);
+                const amrex::Box tby_guard = constrain_tilebox_to_guards(tby, dampdir, iside, nn_domain, tby_smallEnd_d, tby_bigEnd_d);
+                const amrex::Box tbz_guard = constrain_tilebox_to_guards(tbz, dampdir, iside, nn_domain, tbz_smallEnd_d, tbz_bigEnd_d);
 
                 // Do the damping
                 amrex::ParallelFor(
@@ -1191,7 +1192,7 @@ void WarpX::DampFieldsInGuards(const int lev, std::unique_ptr<amrex::MultiFab>& 
                 int const nn_domain = domain.bigEnd(dampdir);
 
                 // Set the tilebox so that it only covers the lower/upper half of the guard cells
-                amrex::Box tx_guard = constrain_tilebox_to_guards(tx, dampdir, iside, nn_domain, tx_smallEnd_d, tx_bigEnd_d);
+                const amrex::Box tx_guard = constrain_tilebox_to_guards(tx, dampdir, iside, nn_domain, tx_smallEnd_d, tx_bigEnd_d);
 
                 // Do the damping
                 amrex::ParallelFor(
@@ -1290,8 +1291,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
                 if (rmin == 0._rt && 1-ishift_r <= i && i < ngJ[0]-ishift_r) {
-                    Jr_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode-1);
-                    Jr_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode);
+                    Jr_arr(i,j,0,2*imode-1) += static_cast<amrex::Real>(std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode-1));
+                    Jr_arr(i,j,0,2*imode) += static_cast<amrex::Real>(std::pow(-1, imode+1)*Jr_arr(-ishift_r-i,j,0,2*imode));
                 }
                 // Apply the inverse volume scaling
                 // Jr is forced to zero on axis.
@@ -1327,8 +1328,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
                 if (rmin == 0._rt && 1-ishift_t <= i && i <= ngJ[0]-ishift_t) {
-                    Jt_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode-1);
-                    Jt_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode);
+                    Jt_arr(i,j,0,2*imode-1) += static_cast<amrex::Real>(std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode-1));
+                    Jt_arr(i,j,0,2*imode) += static_cast<amrex::Real>(std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode));
                 }
 
                 // Apply the inverse volume scaling
@@ -1364,8 +1365,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
                 if (rmin == 0._rt && 1-ishift_z <= i && i <= ngJ[0]-ishift_z) {
-                    Jz_arr(i,j,0,2*imode-1) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode-1);
-                    Jz_arr(i,j,0,2*imode) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode);
+                    Jz_arr(i,j,0,2*imode-1) -= static_cast<amrex::Real>(std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode-1));
+                    Jz_arr(i,j,0,2*imode) -= static_cast<amrex::Real>(std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode));
                 }
 
                 // Apply the inverse volume scaling
@@ -1410,9 +1411,9 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev, 0._rt);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
-        const Real rminr = xyzmin[0] + (tb.type(0) == NODE ? 0. : 0.5*dx[0]);
+        const Real rminr = xyzmin[0] + (tb.type(0) == NODE ? 0._rt : 0.5_rt*dx[0]);
         const int irmin = lo.x;
-        int ishift = (rminr > rmin ? 1 : 0);
+        const int ishift = (rminr > rmin ? 1 : 0);
 
         // Grow the tilebox to include the guard cells, except for the
         // guard cells at negative radius.
@@ -1444,7 +1445,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
                 else {
                     imode = (icomp - ncomp/2 + 1)/2;
                 }
-                Rho_arr(i,j,0,icomp) -= std::pow(-1, imode+1)*Rho_arr(-ishift-i,j,0,icomp);
+                Rho_arr(i,j,0,icomp) -= static_cast<amrex::Real>(std::pow(-1, imode+1)*Rho_arr(-ishift-i,j,0,icomp));
             }
 
             // Apply the inverse volume scaling
@@ -1452,7 +1453,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             if (r == 0.) {
                 Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr*axis_volume_factor);
             } else {
-                Rho_arr(i,j,0,icomp) /= (2.*MathConst::pi*r);
+                Rho_arr(i,j,0,icomp) /= (2._rt*MathConst::pi*r);
             }
         });
     }

@@ -49,7 +49,7 @@ FieldMomentum::FieldMomentum (std::string rd_name)
 
     // Read number of levels
     int nLevel = 0;
-    amrex::ParmParse pp_amr("amr");
+    const amrex::ParmParse pp_amr("amr");
     pp_amr.query("max_level", nLevel);
     nLevel += 1;
 
@@ -58,7 +58,7 @@ FieldMomentum::FieldMomentum (std::string rd_name)
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
-        if (m_IsNotRestart)
+        if (m_write_header)
         {
             // Open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
@@ -94,10 +94,7 @@ FieldMomentum::FieldMomentum (std::string rd_name)
 void FieldMomentum::ComputeDiags (int step)
 {
     // Check if the diags should be done
-    if (m_intervals.contains(step+1) == false)
-    {
-        return;
-    }
+    if (!m_intervals.contains(step+1)) return;
 
     // Get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
@@ -182,9 +179,7 @@ void FieldMomentum::ComputeDiags (int step)
         amrex::Real ExB_x = amrex::get<0>(r);
         amrex::Real ExB_y = amrex::get<1>(r);
         amrex::Real ExB_z = amrex::get<2>(r);
-        amrex::ParallelDescriptor::ReduceRealSum(ExB_x);
-        amrex::ParallelDescriptor::ReduceRealSum(ExB_y);
-        amrex::ParallelDescriptor::ReduceRealSum(ExB_z);
+        amrex::ParallelDescriptor::ReduceRealSum({ExB_x,ExB_y,ExB_z});
 
         // Get cell size
         amrex::Geometry const & geom = warpx.Geom(lev);

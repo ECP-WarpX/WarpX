@@ -50,7 +50,6 @@
 #include <AMReX_ParticleTile.H>
 #include <AMReX_ParticleTransformation.H>
 #include <AMReX_ParticleUtil.H>
-#include <AMReX_TinyProfiler.H>
 #include <AMReX_Utility.H>
 
 
@@ -76,7 +75,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
     AMREX_ALWAYS_ASSERT(x.size() == z.size());
 
     // number of particles to add
-    int const np = x.size();
+    auto const np = static_cast<int>(x.size());
 
     // have to resize here, not in the constructor because grids have not
     // been built when constructor was called.
@@ -114,12 +113,18 @@ FieldProbeParticleContainer::AddNParticles (int lev,
         amrex::ignore_unused(x, y);
         p.pos(0) = z[i];
 #endif
+
         // write position, cpu id, and particle id to particle
         pinned_tile.push_back(p);
     }
 
     // write Real attributes (SoA) to particle initialized zero
     DefineAndReturnParticleTile(0, 0, 0);
+
+    // for RZ write theta value
+#ifdef WARPX_DIM_RZ
+    pinned_tile.push_back_real(FieldProbePIdx::theta, np, 0.0);
+#endif
 
     pinned_tile.push_back_real(FieldProbePIdx::Ex, np, 0.0);
     pinned_tile.push_back_real(FieldProbePIdx::Ey, np, 0.0);
@@ -129,16 +134,16 @@ FieldProbeParticleContainer::AddNParticles (int lev,
     pinned_tile.push_back_real(FieldProbePIdx::Bz, np, 0.0);
     pinned_tile.push_back_real(FieldProbePIdx::S, np, 0.0);
 
+    auto old_np = particle_tile.numParticles();
+    auto new_np = old_np + pinned_tile.numParticles();
+    particle_tile.resize(new_np);
+    amrex::copyParticles(
+        particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
+
     /*
      * Redistributes particles to their appropriate tiles if the box
      * structure of the simulation changes to accomodate data more
      * efficiently.
      */
-    auto old_np = particle_tile.numParticles();
-        auto new_np = old_np + pinned_tile.numParticles();
-        particle_tile.resize(new_np);
-        amrex::copyParticles(
-        particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles());
     Redistribute();
-
 }

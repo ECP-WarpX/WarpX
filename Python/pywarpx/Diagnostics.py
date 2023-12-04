@@ -26,3 +26,12 @@ class Diagnostic(Bucket):
 
     def __setattr__(self, name, value):
         self.add_new_attr_with_check(name, value)
+
+    def set_or_replace_attr(self, name, value):
+        """
+        Explicitly set or replace an existing attribute
+        (since __setattr__ cannot be used for replacing
+        as it would raise an Exception)
+        """
+        assert not name.startswith('_')
+        self.argvattrs[name] = value

@@ -220,7 +220,7 @@ const amrex::Real dyi = 1._rt/dy;
                                            invAz[1]*Omega[1] +
                                            invAz[2]*Omega[2]);
 
-   // Adding the QED corrections to the origional fields
+    // Adding the QED corrections to the origional fields
 
     Ex(j,k,l) = Ex(j,k,l) + 0.5_rt*dt*dEx;
 
@@ -346,7 +346,7 @@ const amrex::Real dyi = 1._rt/dy;
                                            invAz[1]*Omega[1] +
                                            invAz[2]*Omega[2]);
 
-   // Adding the QED corrections to the origional fields
+    // Adding the QED corrections to the origional fields
 
     Ex(j,k,0) = Ex(j,k,0) + 0.5_rt*dt*dEx;
 

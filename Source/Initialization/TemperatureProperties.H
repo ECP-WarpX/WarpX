@@ -30,8 +30,9 @@ struct TemperatureProperties
      * information
      *
      * \param[in] pp: Reference to the parameter parser object for the species being initialized
+     * \param[in] source_name: Optional group name of the input parameters
      */
-    TemperatureProperties (amrex::ParmParse& pp);
+    TemperatureProperties (const amrex::ParmParse& pp, std::string const& source_name);
 
     /* Type of temperature initialization */
     TemperatureInitType m_type;

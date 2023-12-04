@@ -20,7 +20,7 @@ SelectParticles::SelectParticles (const WarpXParIter& a_pti, TmpParticles& tmp_p
                                   int a_offset)
     : m_current_z_boost(current_z_boost), m_old_z_boost(old_z_boost)
 {
-    m_get_position = GetParticlePosition(a_pti, a_offset);
+    m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
 
     const auto lev = a_pti.GetLevel();
     const auto index = a_pti.GetPairIndex();
@@ -37,8 +37,8 @@ LorentzTransformParticles::LorentzTransformParticles ( const WarpXParIter& a_pti
 {
     using namespace amrex::literals;
 
-    if (tmp_particle_data.size() == 0) return;
-    m_get_position = GetParticlePosition(a_pti, a_offset);
+    if (tmp_particle_data.empty()) return;
+    m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
 
     auto& attribs = a_pti.GetAttribs();
     m_wpnew = attribs[PIdx::w].dataPtr();
@@ -71,7 +71,7 @@ BackTransformParticleFunctor::BackTransformParticleFunctor (
                               WarpXParticleContainer *pc_src,
                               std::string species_name,
                               int num_buffers)
-    : m_pc_src(pc_src), m_species_name(species_name), m_num_buffers(num_buffers)
+    : m_pc_src{pc_src}, m_species_name{std::move(species_name)}, m_num_buffers{num_buffers}
 {
     InitData();
 }
@@ -86,8 +86,8 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
     for (int lev = 0; lev < nlevs; ++lev) {
-        amrex::Real t_boost = warpx.gett_new(0);
-        amrex::Real dt = warpx.getdt(0);
+        const amrex::Real t_boost = warpx.gett_new(0);
+        const amrex::Real dt = warpx.getdt(0);
 
         for (WarpXParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
             auto ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
@@ -149,7 +149,7 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
             }
         }
     }
-    totalParticleCounter = pc_dst.TotalNumberOfParticles();
+    totalParticleCounter = static_cast<int>(pc_dst.TotalNumberOfParticles());
 }
 
 
@@ -171,5 +171,5 @@ BackTransformParticleFunctor::PrepareFunctorData ( int i_buffer, bool z_slice_in
     m_current_z_boost.at(i_buffer) = current_z_boost;
     m_t_lab.at(i_buffer) = t_lab;
     m_perform_backtransform.at(i_buffer) = 0;
-    if (z_slice_in_domain == true and snapshot_full == 0) m_perform_backtransform.at(i_buffer) = 1;
+    if (z_slice_in_domain && (snapshot_full == 0)) m_perform_backtransform.at(i_buffer) = 1;
 }

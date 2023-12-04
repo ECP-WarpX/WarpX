@@ -14,12 +14,12 @@ CollisionBase::CollisionBase (std::string collision_name)
 {
 
     // read collision species
-    amrex::ParmParse pp_collision_name(collision_name);
+    const amrex::ParmParse pp_collision_name(collision_name);
     pp_collision_name.getarr("species", m_species_names);
 
     // number of time steps between collisions
-    m_ndt = 1;
+    int ndt = 1;
     utils::parser::queryWithParser(
-        pp_collision_name, "ndt", m_ndt);
-
+        pp_collision_name, "ndt", ndt);
+    m_ndt = ndt;
 }

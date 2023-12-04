@@ -9,6 +9,7 @@
 #define QED_SCHWINGER_PROCESS_H_
 
 #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
+#include "Utils/TextMsg.H"
 
 /**
  * This structure is a functor which calls getSchwingerProductionNumber to

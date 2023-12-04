@@ -344,6 +344,13 @@ a collocated and a staggered formulation is application-dependent.
 
 Spectral solvers used to be very popular in the years 1970s to early 1990s, before being replaced by finite-difference methods with the advent of parallel supercomputers that favored local methods. However, it was shown recently that standard domain decomposition with Fast Fourier Transforms that are local to each subdomain could be used effectively with PIC spectral methods (Jean-Luc Vay, Haber, and Godfrey 2013), at the cost of truncation errors in the guard cells that could be neglected. A detailed analysis of the effectiveness of the method with exact evaluation of the magnitude of the effect of the truncation error is given in (Vincenti and Vay 2016) for stencils of arbitrary order (up-to the infinite “spectral” order).
 
+WarpX also includes a kinetic-fluid hybrid model in which the electric field is
+calculated using Ohm's law instead of directly evolving Maxwell's equations. This
+approach allows reduced physics simulations to be done with significantly lower
+spatial and temporal resolution than in the standard, fully kinetic, PIC. Details
+of this model can be found in the section
+:ref:`Kinetic-fluid hybrid model <theory-kinetic-fluid-hybrid-model>`.
+
 .. _current_deposition:
 
 Current deposition

@@ -40,7 +40,7 @@ MCCProcess::init (const std::string& scattering_process, const amrex::ParticleRe
     m_exe_h.m_sigmas_data = m_sigmas_h.data();
 
     // save energy grid parameters for easy use
-    m_grid_size = m_energies.size();
+    m_grid_size = static_cast<int>(m_energies.size());
     m_exe_h.m_energy_lo = m_energies[0];
     m_exe_h.m_energy_hi = m_energies[m_grid_size-1];
     m_exe_h.m_sigma_lo = m_sigmas_h[0];
@@ -97,14 +97,14 @@ MCCProcess::readCrossSectionFile (
                                   amrex::Gpu::HostVector<amrex::ParticleReal>& sigmas )
 {
     std::ifstream infile(cross_section_file);
-    if(!infile.is_open()) amrex::Abort("Failed to open cross-section data file");
+    if(!infile.is_open()) WARPX_ABORT_WITH_MESSAGE("Failed to open cross-section data file");
 
     amrex::ParticleReal energy, sigma;
     while (infile >> energy >> sigma) {
         energies.push_back(energy);
         sigmas.push_back(sigma);
     }
-    if (infile.bad()) amrex::Abort("Failed to read cross-section data from file.");
+    if (infile.bad()) WARPX_ABORT_WITH_MESSAGE("Failed to read cross-section data from file.");
     infile.close();
 }
 

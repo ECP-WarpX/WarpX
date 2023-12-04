@@ -33,8 +33,9 @@ struct VelocityProperties
      * store the parser function
      *
      * \param[in] pp: Reference to the parameter parser object for the species being initialized
+     * \param[in] source_name: Optional group name of the input parameters
      */
-    VelocityProperties (amrex::ParmParse& pp);
+    VelocityProperties (const amrex::ParmParse& pp, std::string const& source_name);
 
     /* Type of velocity initialization */
     VelocityInitType m_type;
@@ -44,7 +45,7 @@ struct VelocityProperties
     int m_sign_dir; // Sign of the velocity direction positive=1, negative=-1
 
     /* Constant velocity value, if m_type == VelConstantValue */
-    amrex::Real m_velocity;
+    amrex::Real m_velocity{0};
     /* Storage of the parser function, if m_type == VelParserFunction */
     std::unique_ptr<amrex::Parser> m_ptr_velocity_parser;
 };

@@ -6,6 +6,8 @@
  */
 #include "QuantumSyncEngineWrapper.H"
 
+#include "Utils/TextMsg.H"
+
 #include <AMReX.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_GpuDevice.H>
@@ -36,22 +38,21 @@ namespace pxr_sr = picsar::multi_physics::utils::serialization;
 QuantumSynchrotronGetOpticalDepth
 QuantumSynchrotronEngine::build_optical_depth_functor ()
 {
-    return QuantumSynchrotronGetOpticalDepth();
+    return {};
 }
 
 QuantumSynchrotronEvolveOpticalDepth QuantumSynchrotronEngine::build_evolve_functor ()
 {
     AMREX_ALWAYS_ASSERT(m_lookup_tables_initialized);
 
-    return QuantumSynchrotronEvolveOpticalDepth(m_dndt_table.get_view(),
-        m_qs_minimum_chi_part);
+    return {m_dndt_table.get_view(), m_qs_minimum_chi_part};
 }
 
 QuantumSynchrotronPhotonEmission QuantumSynchrotronEngine::build_phot_em_functor ()
 {
     AMREX_ALWAYS_ASSERT(m_lookup_tables_initialized);
 
-    return QuantumSynchrotronPhotonEmission(m_phot_em_table.get_view());
+    return {m_phot_em_table.get_view()};
 
 }
 
@@ -70,10 +71,10 @@ QuantumSynchrotronEngine::init_lookup_tables_from_raw_data (
     if(size_first <= 0 || size_first >= raw_data.size() ) return false;
 
     const auto raw_dndt_table = vector<char>{
-        raw_iter, raw_iter+size_first};
+        raw_iter, raw_iter+static_cast<long>(size_first)};
 
     const auto raw_phot_em_table = vector<char>{
-        raw_iter+size_first, raw_data.end()};
+        raw_iter+static_cast<long>(size_first), raw_data.end()};
 
     m_dndt_table = QS_dndt_table{raw_dndt_table};
     m_phot_em_table = QS_phot_em_table{raw_phot_em_table};
@@ -102,7 +103,7 @@ void QuantumSynchrotronEngine::init_builtin_tables(
 
 vector<char> QuantumSynchrotronEngine::export_lookup_tables_data () const
 {
-   if(!m_lookup_tables_initialized)
+    if(!m_lookup_tables_initialized)
         return vector<char>{};
 
     const auto data_dndt = m_dndt_table.serialize();
@@ -152,7 +153,7 @@ void QuantumSynchrotronEngine::compute_lookup_tables (
     m_lookup_tables_initialized = true;
 #else
     amrex::ignore_unused(ctrl, qs_minimum_chi_part);
-    amrex::Abort("WarpX was not compiled with table generation support!");
+    WARPX_ABORT_WITH_MESSAGE("WarpX was not compiled with table generation support!");
 #endif
 }
 

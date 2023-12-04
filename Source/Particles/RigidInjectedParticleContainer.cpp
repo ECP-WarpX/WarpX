@@ -61,7 +61,7 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
 
-    ParmParse pp_species_name(species_name);
+    const ParmParse pp_species_name(species_name);
 
     utils::parser::getWithParser(
         pp_species_name, "zinject_plane", zinject_plane);
@@ -71,7 +71,11 @@ RigidInjectedParticleContainer::RigidInjectedParticleContainer (AmrCore* amr_cor
 
 void RigidInjectedParticleContainer::InitData()
 {
-    zinject_plane_levels.resize(finestLevel()+1, zinject_plane/WarpX::gamma_boost);
+    // Perform Lorentz transform of `z_inject_plane`
+    const amrex::Real t_boost = WarpX::GetInstance().gett_new(0);
+    amrex::Real zinject_plane_boost = zinject_plane/WarpX::gamma_boost
+                                    - WarpX::beta_boost*PhysConst::c*t_boost;
+    zinject_plane_levels.resize(finestLevel()+1, zinject_plane_boost);
 
     AddParticles(0); // Note - add on level 0
 
@@ -117,8 +121,8 @@ RigidInjectedParticleContainer::RemapParticles()
                     const auto uyp = attribs[PIdx::uy].dataPtr();
                     const auto uzp = attribs[PIdx::uz].dataPtr();
 
-                    const auto GetPosition = GetParticlePosition(pti);
-                          auto SetPosition = SetParticlePosition(pti);
+                    const auto GetPosition = GetParticlePosition<PIdx>(pti);
+                          auto SetPosition = SetParticlePosition<PIdx>(pti);
 
                     // Loop over particles
                     const long np = pti.numParticles();
@@ -177,8 +181,8 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     amrex::Gpu::DeviceVector<ParticleReal> optical_depth_save;
 #endif
 
-    const auto GetPosition = GetParticlePosition(pti, offset);
-          auto SetPosition = SetParticlePosition(pti, offset);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti, offset);
+          auto SetPosition = SetParticlePosition<PIdx>(pti, offset);
 
     amrex::ParticleReal* const AMREX_RESTRICT ux = uxp.dataPtr() + offset;
     amrex::ParticleReal* const AMREX_RESTRICT uy = uyp.dataPtr() + offset;
@@ -353,20 +357,27 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& byfab = By[pti];
             const FArrayBox& bzfab = Bz[pti];
 
-            const auto getPosition = GetParticlePosition(pti);
+            const auto getPosition = GetParticlePosition<PIdx>(pti);
 
             const auto getExternalEB = GetExternalEBField(pti);
+
+            const amrex::ParticleReal Ex_external_particle = m_E_external_particle[0];
+            const amrex::ParticleReal Ey_external_particle = m_E_external_particle[1];
+            const amrex::ParticleReal Ez_external_particle = m_E_external_particle[2];
+            const amrex::ParticleReal Bx_external_particle = m_B_external_particle[0];
+            const amrex::ParticleReal By_external_particle = m_B_external_particle[1];
+            const amrex::ParticleReal Bz_external_particle = m_B_external_particle[2];
 
             const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
 
             const Dim3 lo = lbound(box);
 
-            bool galerkin_interpolation = WarpX::galerkin_interpolation;
-            int nox = WarpX::nox;
-            int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+            const bool galerkin_interpolation = WarpX::galerkin_interpolation;
+            const int nox = WarpX::nox;
+            const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
-            amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-            amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+            const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+            const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
             amrex::Array4<const amrex::Real> const& ex_arr = exfab.array();
             amrex::Array4<const amrex::Real> const& ey_arr = eyfab.array();
@@ -409,7 +420,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             enum exteb_flags : int { no_exteb, has_exteb };
 
-            int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+            const int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
 
             amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
                                {exteb_runtime_flag},
@@ -422,8 +433,12 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
-                amrex::ParticleReal Exp = 0._prt, Eyp = 0._prt, Ezp = 0._prt;
-                amrex::ParticleReal Bxp = 0._prt, Byp = 0._prt, Bzp = 0._prt;
+                amrex::ParticleReal Exp = Ex_external_particle;
+                amrex::ParticleReal Eyp = Ey_external_particle;
+                amrex::ParticleReal Ezp = Ez_external_particle;
+                amrex::ParticleReal Bxp = Bx_external_particle;
+                amrex::ParticleReal Byp = By_external_particle;
+                amrex::ParticleReal Bzp = Bz_external_particle;
 
                 // first gather E and B to the particle positions
                 doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,

@@ -43,8 +43,8 @@
 
 template <int do_sync>
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void doParticlePush(const GetParticlePosition& GetPosition,
-                    const SetParticlePosition& SetPosition,
+void doParticlePush(const GetParticlePosition<PIdx>& GetPosition,
+                    const SetParticlePosition<PIdx>& SetPosition,
                     const CopyParticleAttribs& copyAttribs,
                     const long i,
                     amrex::ParticleReal& ux,

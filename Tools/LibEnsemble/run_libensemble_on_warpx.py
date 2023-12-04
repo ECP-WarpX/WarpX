@@ -43,8 +43,11 @@ else:
 import all_machine_specs
 from libensemble import libE_logger
 from libensemble.executors.mpi_executor import MPIExecutor
-from libensemble.tools import (add_unique_random_streams, parse_args,
-                               save_libE_output)
+from libensemble.tools import (
+    add_unique_random_streams,
+    parse_args,
+    save_libE_output,
+)
 
 # Import machine-specific run parameters
 if machine == 'local':

@@ -43,8 +43,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
     std::unique_ptr<MacroscopicProperties> const& macroscopic_properties)
 {
 
-   // Select algorithm (The choice of algorithm is a runtime option,
-   // but we compile code for each algorithm, using templates)
+    // Select algorithm (The choice of algorithm is a runtime option,
+    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     amrex::ignore_unused(Efield, Bfield, Jfield, edge_lengths, dt, macroscopic_properties);
 
@@ -152,11 +152,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
-        int const n_coefs_x = m_stencil_coefs_x.size();
+        auto const n_coefs_x = static_cast<int>(m_stencil_coefs_x.size());
         Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
-        int const n_coefs_y = m_stencil_coefs_y.size();
+        auto const n_coefs_y = static_cast<int>(m_stencil_coefs_y.size());
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
-        int const n_coefs_z = m_stencil_coefs_z.size();
+        auto const n_coefs_z = static_cast<int>(m_stencil_coefs_z.size());
 
         // This functor computes Hx = Bx/mu
         // Note that mu is cell-centered here and will be interpolated/averaged
@@ -184,8 +184,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Interpolated permittivity, epsilon, to Ex position on the grid
                 amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
                                                                                     Ex_stag, macro_cr, i, j, k, scomp);
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
-                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
+                const amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
+                const amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
                 Ex(i, j, k) = alpha * Ex(i, j, k)
                             + beta * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
                                        + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)
@@ -208,8 +208,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Interpolated permittivity, epsilon, to Ey position on the grid
                 amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
                                                                                     Ey_stag, macro_cr, i, j, k, scomp);
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
-                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
+                const amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
+                const amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
                 Ey(i, j, k) = alpha * Ey(i, j, k)
                             + beta * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
@@ -228,8 +228,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 // Interpolated permittivity, epsilon, to Ez position on the grid
                 amrex::Real const epsilon_interp = ablastr::coarsen::sample::Interp(eps_arr, epsilon_stag,
                                                                                     Ez_stag, macro_cr, i, j, k, scomp);
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
-                amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
+                const amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
+                const amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
                 Ez(i, j, k) = alpha * Ez(i, j, k)
                             + beta * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)
