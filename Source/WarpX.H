@@ -154,19 +154,6 @@ public:
     //! Whether to apply the effect of an externally-defined magnetic field
     static bool add_external_B_field;
 
-    //! Whether to impose E field in a plane
-    static inline bool impose_E_field_in_plane = false;
-    //! Whether to impose E field in a plane
-    static inline bool impose_B_field_in_plane = false;
-    //! The path to the file containing the raw fields
-    static inline std::string m_impose_field_file_path;
-    //! Information for station
-    struct ImposeStationInfo {
-        amrex::Real location;
-        amrex::Vector<std::pair<amrex::Real,amrex::Real>> time;
-        int ibuffer1, ibuffer2;
-    };
-    static inline ImposeStationInfo m_impose_station_info;
     static inline amrex::Real m_t_boost_offset = 0;
 
     //! User-defined parser to initialize x-component of the magnetic field on the grid

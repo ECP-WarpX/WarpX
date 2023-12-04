@@ -1,4 +1,3 @@
-CEXE_sources += WarpXImposeFields.cpp
 CEXE_sources += WarpXMovingWindow.cpp
 CEXE_sources += WarpXTagging.cpp
 CEXE_sources += WarpXUtil.cpp

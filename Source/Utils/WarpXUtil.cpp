@@ -29,6 +29,7 @@
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Parser.H>
 
 #include <algorithm>
@@ -37,6 +38,7 @@
 #include <cstring>
 #include <fstream>
 #include <set>
+#include <sstream>
 #include <string>
 #include <limits>
 
@@ -59,21 +61,6 @@ void ParseGeometryInput()
 {
     // Ensure that geometry.dims is set properly.
     CheckDims();
-
-    { // We must call WarpX::InitImposeFieldsGeom here so that it can
-      // modify geometry.prob_lo and geometry.prob_hi.
-        ParmParse pp_warpx("warpx");
-        pp_warpx.query("B_ext_grid_init_style", WarpX::B_ext_grid_s);
-        pp_warpx.query("E_ext_grid_init_style", WarpX::E_ext_grid_s);
-
-        WarpX::impose_B_field_in_plane = (WarpX::B_ext_grid_s == "impose_field_in_plane");
-        WarpX::impose_E_field_in_plane = (WarpX::E_ext_grid_s == "impose_field_in_plane");
-
-        if (WarpX::impose_B_field_in_plane || WarpX::impose_E_field_in_plane) {
-            pp_warpx.get("read_fields_from_path", WarpX::m_impose_field_file_path);
-            WarpX::InitImposeFieldsGeom();
-        }
-    }
 
     // Parse prob_lo and hi, evaluating any expressions since geometry does not
     // parse its input
@@ -205,25 +192,39 @@ void ConvertLabParamsToBoost ()
     Vector<int> dim_map {2};
 #endif
 
-    if (WarpX::impose_B_field_in_plane || WarpX::impose_E_field_in_plane) {
-        int const zdir = AMREX_SPACEDIM-1;
-        if (WarpX::m_impose_field_type == WarpX::ImposeFieldType::station) {
-            Real zstation = WarpX::m_impose_station_info.location;
-            Real tmin = WarpX::m_impose_station_info.time.front().first;
-            Real tmax = WarpX::m_impose_station_info.time.back().second;
-            prob_hi[zdir] = gamma_boost * (zstation - beta_boost*PhysConst::c*tmin);
-            prob_lo[zdir] = prob_hi[zdir] - gamma_boost*(1._rt+beta_boost)*PhysConst::c*(tmax-tmin);
-            auto const dz = (prob_hi[zdir]-prob_lo[zdir])/Real(1.e6);
-            prob_hi[zdir] += dz;
-            prob_lo[zdir] += dz;
-            WarpX::m_t_boost_offset = gamma_boost*(tmin - beta_boost*zstation/PhysConst::c);
-        } else {
-            Real zmin = prob_lo[zdir];
-            Real zmax = prob_hi[zdir];
-            prob_hi[zdir] = gamma_boost * (zmax - beta_boost*PhysConst::c*WarpX::m_impose_snapshot_info.t_lab);
-            prob_lo[zdir] = prob_hi[zdir] - gamma_boost*(1._rt+beta_boost)*(zmax-zmin);
-            WarpX::m_t_boost_offset = gamma_boost*(WarpX::m_impose_snapshot_info.t_lab-beta_boost*zmax/PhysConst::c);
+    pp_warpx.query("B_ext_grid_init_style", WarpX::B_ext_grid_s);
+    pp_warpx.query("E_ext_grid_init_style", WarpX::E_ext_grid_s);
+
+    if ((WarpX::B_ext_grid_s == "impose_field_in_plane") ||
+        (WarpX::E_ext_grid_s == "impose_field_in_plane")) {
+        Real zstation;
+        Real tmin = std::numeric_limits<Real>::max();
+        Real tmax = std::numeric_limits<Real>::lowest();
+        {
+            std::string impose_field_file_path;
+            pp_warpx.get("read_fields_from_path", impose_field_file_path);
+            Vector<char> headerfile;
+            ParallelDescriptor::ReadAndBcastFile(impose_field_file_path+"/StationHeader", headerfile);
+            std::istringstream is(std::string(headerfile.data()));
+            is >> zstation;
+            std::string tt;
+            std::getline(is,tt); // eat \n
+            while (std::getline(is, tt)) {
+                std::istringstream istt(tt);
+                Real t0, t1;
+                istt >> t0;
+                istt >> t1;
+                tmin = std::min(tmin, t0);
+                tmax = std::max(tmax, t1);
+            }
         }
+        int const zdir = AMREX_SPACEDIM-1;
+        prob_hi[zdir] = gamma_boost * (zstation - beta_boost*PhysConst::c*tmin);
+        prob_lo[zdir] = prob_hi[zdir] - gamma_boost*(1._rt+beta_boost)*PhysConst::c*(tmax-tmin);
+        auto const dz = (prob_hi[zdir]-prob_lo[zdir])/Real(1.e6);
+        prob_hi[zdir] += dz;
+        prob_lo[zdir] += dz;
+        WarpX::m_t_boost_offset = gamma_boost*(tmin - beta_boost*zstation/PhysConst::c);
     } else {
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
         {
