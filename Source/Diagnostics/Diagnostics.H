@@ -239,7 +239,7 @@ protected:
     amrex::Vector< std::string > m_pfield_varnames;
     /** Names of species for which to output particle field diagnostics */
     std::vector< std::string > m_pfield_species;
-    /** Whether to do averaging for each of the particle fied diagnostics */
+    /** Whether to do averaging for each of the particle field diagnostics */
     std::vector< bool > m_pfield_do_average;
     /** Species indices corresponding to elements of m_pfield_varnames */
     std::vector< int > m_pfield_species_index;
