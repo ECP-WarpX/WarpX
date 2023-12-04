@@ -70,15 +70,6 @@ void ParseGeometryInput()
         WarpX::impose_E_field_in_plane = (WarpX::E_ext_grid_s == "impose_field_in_plane");
 
         if (WarpX::impose_B_field_in_plane || WarpX::impose_E_field_in_plane) {
-            std::string impose_field_type;
-            pp_warpx.get("impose_field_type", impose_field_type);
-            if (impose_field_type == "station") {
-                WarpX::m_impose_field_type = WarpX::ImposeFieldType::station;
-            } else if (impose_field_type == "snapshot") {
-                WarpX::m_impose_field_type = WarpX::ImposeFieldType::snapshot;
-            } else {
-                WARPX_ABORT_WITH_MESSAGE("Unknown warpx.impose_field_type "+impose_field_type);
-            }
             pp_warpx.get("read_fields_from_path", WarpX::m_impose_field_file_path);
             WarpX::InitImposeFieldsGeom();
         }

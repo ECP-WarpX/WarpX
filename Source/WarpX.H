@@ -158,10 +158,6 @@ public:
     static inline bool impose_E_field_in_plane = false;
     //! Whether to impose E field in a plane
     static inline bool impose_B_field_in_plane = false;
-    //! There are two types of impose field
-    enum struct ImposeFieldType { station, snapshot };
-    //! Impose field type
-    static inline ImposeFieldType m_impose_field_type;
     //! The path to the file containing the raw fields
     static inline std::string m_impose_field_file_path;
     //! Information for station
@@ -171,12 +167,6 @@ public:
         int ibuffer1, ibuffer2;
     };
     static inline ImposeStationInfo m_impose_station_info;
-    //! Information for snapshot
-    struct ImposeSnapshotInfo {
-        amrex::Vector<amrex::Geometry> geom;
-        amrex::Real t_lab;
-    };
-    static inline ImposeSnapshotInfo m_impose_snapshot_info;
     static inline amrex::Real m_t_boost_offset = 0;
 
     //! User-defined parser to initialize x-component of the magnetic field on the grid
@@ -1090,9 +1080,6 @@ public:
     const AcceleratorLattice& get_accelerator_lattice (int lev) {return *(m_accelerator_lattice[lev]);}
 
     static void InitImposeFieldsGeom ();
-    void ImposeFieldsInPlane ();
-    void ImposeStationFieldsInPlane (); // needs to be public for cuda
-    void ImposeSnapshotFieldsInPlane (); // needs to be public for cuda
 
     // for cuda
     void BuildBufferMasksInBox ( amrex::Box tbx, amrex::IArrayBox &buffer_mask,
