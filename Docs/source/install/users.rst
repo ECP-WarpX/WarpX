@@ -156,7 +156,7 @@ Using the Brew Package
    python3 -m pip install --upgrade build packaging setuptools wheel
    python3 -m pip install --upgrade mpi4py
 
-WarpX can now be installed from source using CMake, outline below.
+WarpX can now be installed from source using CMake, outlined below.
 
 .. _install-cmake:
 
