@@ -211,7 +211,8 @@ PICMI Python Bindings
 
    .. code-block:: bash
 
-      python3 -m pip install -U pip setuptools wheel
+      python3 -m pip install -U pip
+      python3 -m pip install -U build packaging setuptools wheel
       python3 -m pip install -U cmake
       python3 -m pip install -r requirements.txt
 

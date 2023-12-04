@@ -133,14 +133,6 @@ MultiParticleContainer::ReadParameters ()
     {
         const ParmParse pp_particles("particles");
 
-        // allocating and initializing default values of external fields for particles
-        m_E_external_particle.resize(3);
-        m_B_external_particle.resize(3);
-        // initialize E and B fields to 0.0
-        for (int idim = 0; idim < 3; ++idim) {
-            m_E_external_particle[idim] = 0.0;
-            m_B_external_particle[idim] = 0.0;
-        }
         // default values of E_external_particle and B_external_particle
         // are used to set the E and B field when "constant" or "parser"
         // is not explicitly used in the input
@@ -154,19 +146,6 @@ MultiParticleContainer::ReadParameters ()
                        m_E_ext_particle_s.end(),
                        m_E_ext_particle_s.begin(),
                        ::tolower);
-        // if the input string for B_external on particles is "constant"
-        // then the values for the external B on particles must
-        // be provided in the input file.
-        if (m_B_ext_particle_s == "constant")
-            utils::parser::getArrWithParser(
-                pp_particles, "B_external_particle", m_B_external_particle);
-
-        // if the input string for E_external on particles is "constant"
-        // then the values for the external E on particles must
-        // be provided in the input file.
-        if (m_E_ext_particle_s == "constant")
-            utils::parser::getArrWithParser(
-                pp_particles, "E_external_particle", m_E_external_particle);
 
         // if the input string for B_ext_particle_s is
         // "parse_b_ext_particle_function" then the mathematical expression
@@ -294,7 +273,7 @@ MultiParticleContainer::ReadParameters ()
                     it != species_names.end(),
                     "species '" + name
                     + "' in particles.deposit_on_main_grid must be part of particles.species_names");
-                const int i = std::distance(species_names.begin(), it);
+                const auto i = static_cast<int>(std::distance(species_names.begin(), it));
                 m_deposit_on_main_grid[i] = true;
             }
 
@@ -307,7 +286,7 @@ MultiParticleContainer::ReadParameters ()
                     it != species_names.end(),
                     "species '" + name
                         + "' in particles.gather_from_main_grid must be part of particles.species_names");
-                const int i = std::distance(species_names.begin(), it);
+                const auto i = static_cast<int>(std::distance(species_names.begin(), it));
                 m_gather_from_main_grid.at(i) = true;
             }
 
@@ -323,7 +302,7 @@ MultiParticleContainer::ReadParameters ()
                         it != species_names.end(),
                         "species '" + name
                         + "' in particles.rigid_injected_species must be part of particles.species_names");
-                    const int i = std::distance(species_names.begin(), it);
+                    const auto i = static_cast<int>(std::distance(species_names.begin(), it));
                     species_types[i] = PCTypes::RigidInjected;
                 }
             }
@@ -337,7 +316,7 @@ MultiParticleContainer::ReadParameters ()
                         it != species_names.end(),
                         "species '" + name
                         + "' in particles.photon_species must be part of particles.species_names");
-                    const int i = std::distance(species_names.begin(), it);
+                    const auto i = static_cast<int>(std::distance(species_names.begin(), it));
                     species_types[i] = PCTypes::Photon;
                 }
             }
@@ -366,7 +345,7 @@ MultiParticleContainer::ReadParameters ()
                 it != lasers_names.end(),
                 "laser '" + name
                 + "' in lasers.deposit_on_main_grid must be part of lasers.lasers_names");
-            const int i = std::distance(lasers_names.begin(), it);
+            const auto i = static_cast<int>(std::distance(lasers_names.begin(), it));
             m_laser_deposit_on_main_grid[i] = true;
         }
 
@@ -413,7 +392,7 @@ MultiParticleContainer::GetParticleContainerFromName (const std::string& name) c
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         it != species_names.end(),
         "unknown species name");
-    const int i = std::distance(species_names.begin(), it);
+    const auto i = static_cast<int>(std::distance(species_names.begin(), it));
     return *allcontainers[i];
 }
 
@@ -671,7 +650,7 @@ Vector<Long>
 MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
 {
     const WarpX& warpx = WarpX::GetInstance();
-    const int num_boxes = warpx.boxArray(lev).size();
+    const auto num_boxes = static_cast<int>(warpx.boxArray(lev).size());
     Vector<Long> r(num_boxes, 0);
     return r;
 }
@@ -694,7 +673,7 @@ MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
                 r[j] += ri[j];
             }
         }
-        ParallelDescriptor::ReduceLongSum(r.data(),r.size());
+        ParallelDescriptor::ReduceLongSum(r.data(),static_cast<int>(r.size()));
         return r;
     }
 }
@@ -826,13 +805,13 @@ MultiParticleContainer::getSpeciesID (std::string product_str) const
 {
     auto species_and_lasers_names = GetSpeciesAndLasersNames();
     int i_product = 0;
-    bool found = 0;
+    bool found = false;
     // Loop over species
     for (int i=0; i < static_cast<int>(species_and_lasers_names.size()); i++){
         // If species name matches, store its ID
         // into i_product
         if (species_and_lasers_names[i] == product_str){
-            found = 1;
+            found = true;
             i_product = i;
         }
     }
@@ -853,12 +832,12 @@ MultiParticleContainer::SetDoBackTransformedParticles (const bool do_back_transf
 void
 MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles) {
     auto species_names_list = GetSpeciesNames();
-    bool found = 0;
+    bool found = false;
     // Loop over species
     for (int i = 0; i < static_cast<int>(species_names.size()); ++i) {
         // If species name matches, set back-transformed particles parameters
         if (species_names_list[i] == species_name) {
-           found = 1;
+           found = true;
            auto& pc = allcontainers[i];
            pc->SetDoBackTransformedParticles(do_back_transformed_particles);
         }
@@ -910,7 +889,7 @@ MultiParticleContainer::doFieldIonization (int lev,
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = amrex::second();
+            auto wt = static_cast<amrex::Real>(amrex::second());
 
             auto& src_tile = pc_source ->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product->ParticlesAt(lev, pti);
@@ -928,7 +907,7 @@ MultiParticleContainer::doFieldIonization (int lev,
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
@@ -1349,8 +1328,8 @@ MultiParticleContainer::doQEDSchwinger ()
         * geom.CellSize(2);
 #endif
 
-   // Get the temporal step
-   const auto dt =  warpx.getdt(level_0);
+    // Get the temporal step
+    const auto dt =  warpx.getdt(level_0);
 
     auto& pc_product_ele =
             allcontainers[m_qed_schwinger_ele_product];
@@ -1370,8 +1349,8 @@ MultiParticleContainer::doQEDSchwinger ()
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-     for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
-     {
+    for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    {
         // Make the box cell centered to avoid creating particles twice on the tile edges
         amrex::Box box = enclosedCells(mfi.nodaltilebox());
 
@@ -1542,12 +1521,14 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = amrex::second();
+            auto wt = static_cast<amrex::Real>(amrex::second());
 
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
                                                          pti, lev, Ex.nGrowVect(),
                                                          Ex[pti], Ey[pti], Ez[pti],
-                                                         Bx[pti], By[pti], Bz[pti]);
+                                                         Bx[pti], By[pti], Bz[pti],
+                                                         phys_pc_ptr->m_E_external_particle,
+                                                         phys_pc_ptr->m_B_external_particle);
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
             auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, pti);
@@ -1566,7 +1547,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
@@ -1617,7 +1598,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = amrex::second();
+            auto wt = static_cast<amrex::Real>(amrex::second());
 
             auto Transform = PhotonEmissionTransformFunc(
                   m_shr_p_qs_engine->build_optical_depth_functor(),
@@ -1625,7 +1606,9 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                   m_shr_p_qs_engine->build_phot_em_functor(),
                   pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],
-                  Bx[pti], By[pti], Bz[pti]);
+                  Bx[pti], By[pti], Bz[pti],
+                  phys_pc_ptr->m_E_external_particle,
+                  phys_pc_ptr->m_B_external_particle);
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product_phot->ParticlesAt(lev, pti);
@@ -1645,7 +1628,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }

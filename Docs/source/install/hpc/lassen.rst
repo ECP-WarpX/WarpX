@@ -24,12 +24,27 @@ If you are new to this system, **please see the following resources**:
 Login
 -----
 
-.. note::
+.. tab-set::
 
-   Lassen is currently transitioning to RHEL8.
-   During this transition, first SSH into lassen and then ``ssh eatoss4`` next to work with the updated RHEL8/TOSS4 nodes.
+   .. tab-item:: TOSS4 (RHEL8)
 
-   Approximately October 2023, the new software environment on these nodes will be the new default.
+      Lassen is currently transitioning to RHEL8.
+      During this transition, first SSH into lassen and then to the updated RHEL8/TOSS4 nodes.
+
+      .. code-block:: bash
+
+         ssh lassen.llnl.gov
+         ssh eatoss4
+
+      Approximately October/November 2023, the new software environment on these nodes will be the new default.
+
+   .. tab-item:: TOSS3 (RHEL7)
+
+      .. code-block:: bash
+
+         ssh lassen.llnl.gov
+
+      Approximately October/November 2023, this partition will become TOSS4 (RHEL8) as well.
 
 
 .. _building-lassen-preparation:
@@ -43,78 +58,135 @@ Use the following commands to download the WarpX source code:
 
    git clone https://github.com/ECP-WarpX/WarpX.git /usr/workspace/${USER}/lassen/src/warpx
 
-We use system software modules, add environment hints and further dependencies via the file ``$HOME/lassen_v100_warpx.profile``.
-Create it now:
+.. tab-set::
 
-.. code-block:: bash
+   .. tab-item:: TOSS4 (RHEL8)
 
-   cp /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/lassen_v100_warpx.profile.example $HOME/lassen_v100_warpx.profile
+      We use system software modules, add environment hints and further dependencies via the file ``$HOME/lassen_v100_warpx.profile``.
+      Create it now:
 
-.. dropdown:: Script Details
-   :color: light
-   :icon: info
-   :animate: fade-in-slide-down
+      .. code-block:: bash
 
-   .. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen_v100_warpx.profile.example
-      :language: bash
+         cp /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/lassen_v100_warpx.profile.example $HOME/lassen_v100_warpx.profile
 
-Edit the 2nd line of this script, which sets the ``export proj=""`` variable.
-For example, if you are member of the project ``nsldt``, then run ``vi $HOME/lassen_v100_warpx.profile``.
-Enter the edit mode by typing ``i`` and edit line 2 to read:
+      .. dropdown:: Script Details
+         :color: light
+         :icon: info
+         :animate: fade-in-slide-down
 
-.. code-block:: bash
+         .. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen_v100_warpx.profile.example
+            :language: bash
 
-   export proj="nsldt"
+      Edit the 2nd line of this script, which sets the ``export proj=""`` variable.
+      For example, if you are member of the project ``nsldt``, then run ``vi $HOME/lassen_v100_warpx.profile``.
+      Enter the edit mode by typing ``i`` and edit line 2 to read:
 
-Exit the ``vi`` editor with ``Esc`` and then type ``:wq`` (write & quit).
+      .. code-block:: bash
 
-.. important::
+         export proj="nsldt"
 
-   Now, and as the first step on future logins to lassen, activate these environment settings:
+      Exit the ``vi`` editor with ``Esc`` and then type ``:wq`` (write & quit).
 
-   .. code-block:: bash
+      .. important::
 
-      source $HOME/lassen_v100_warpx.profile
+         Now, and as the first step on future logins to lassen, activate these environment settings:
+
+         .. code-block:: bash
+
+            source $HOME/lassen_v100_warpx.profile
+
+   .. tab-item:: TOSS3 (RHEL7)
+
+      We use system software modules, add environment hints and further dependencies via the file ``$HOME/lassen_v100_warpx_toss3.profile``.
+      Create it now:
+
+      .. code-block:: bash
+
+         cp /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/lassen_v100_warpx_toss3.profile.example $HOME/lassen_v100_warpx_toss3.profile
+
+      .. dropdown:: Script Details
+         :color: light
+         :icon: info
+         :animate: fade-in-slide-down
+
+         .. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen_v100_warpx_toss3.profile.example
+            :language: bash
+
+      Edit the 2nd line of this script, which sets the ``export proj=""`` variable.
+      For example, if you are member of the project ``nsldt``, then run ``vi $HOME/lassen_v100_warpx_toss3.profile``.
+      Enter the edit mode by typing ``i`` and edit line 2 to read:
+
+      .. code-block:: bash
+
+         export proj="nsldt"
+
+      Exit the ``vi`` editor with ``Esc`` and then type ``:wq`` (write & quit).
+
+      .. important::
+
+         Now, and as the first step on future logins to lassen, activate these environment settings:
+
+         .. code-block:: bash
+
+            source $HOME/lassen_v100_warpx_toss3.profile
 
 Finally, since lassen does not yet provide software modules for some of our dependencies, install them once:
 
-.. code-block:: bash
+.. tab-set::
 
-   bash /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/install_v100_dependencies.sh
-   source /usr/workspace/${USER}/lassen/gpu/venvs/warpx-lassen/bin/activate
+   .. tab-item:: TOSS4 (RHEL8)
 
-.. dropdown:: Script Details
-   :color: light
-   :icon: info
-   :animate: fade-in-slide-down
+      .. code-block:: bash
 
-   .. literalinclude:: ../../../../Tools/machines/lassen-llnl/install_v100_dependencies.sh
-      :language: bash
+         bash /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/install_v100_dependencies.sh
+         source /usr/workspace/${USER}/lassen/gpu/venvs/warpx-lassen/bin/activate
 
-.. dropdown:: AI/ML Dependencies (Optional)
-   :animate: fade-in-slide-down
+      .. dropdown:: Script Details
+         :color: light
+         :icon: info
+         :animate: fade-in-slide-down
 
-   If you plan to run AI/ML workflows depending on pyTorch, run the next step as well.
-   This will take a while and should be skipped if not needed.
+         .. literalinclude:: ../../../../Tools/machines/lassen-llnl/install_v100_dependencies.sh
+            :language: bash
 
-   .. code-block:: bash
+      .. dropdown:: AI/ML Dependencies (Optional)
+         :animate: fade-in-slide-down
 
-      runNode bash /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/install_v100_ml.sh
+         If you plan to run AI/ML workflows depending on pyTorch, run the next step as well.
+         This will take a while and should be skipped if not needed.
 
-   .. dropdown:: Script Details
-      :color: light
-      :icon: info
-      :animate: fade-in-slide-down
+         .. code-block:: bash
 
-      .. literalinclude:: ../../../../Tools/machines/lassen-llnl/install_v100_ml.sh
-         :language: bash
+            runNode bash /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/install_v100_ml.sh
 
-   For `optimas dependencies <https://github.com/optimas-org/optimas>`__ (incl. scikit-learn), plan another hour of build time:
+         .. dropdown:: Script Details
+            :color: light
+            :icon: info
+            :animate: fade-in-slide-down
 
-   .. code-block:: bash
+            .. literalinclude:: ../../../../Tools/machines/lassen-llnl/install_v100_ml.sh
+               :language: bash
 
-      python3 -m pip install -r /usr/workspace/${USER}/lassen/src/warpx/Tools/optimas/requirements.txt
+         For `optimas dependencies <https://github.com/optimas-org/optimas>`__ (incl. scikit-learn), plan another hour of build time:
 
+         .. code-block:: bash
+
+            python3 -m pip install -r /usr/workspace/${USER}/lassen/src/warpx/Tools/optimas/requirements.txt
+
+   .. tab-item:: TOSS3 (RHEL7)
+
+      .. code-block:: bash
+
+         bash /usr/workspace/${USER}/lassen/src/warpx/Tools/machines/lassen-llnl/install_v100_dependencies_toss3.sh
+         source /usr/workspace/${USER}/lassen/gpu/venvs/warpx-lassen-toss3/bin/activate
+
+      .. dropdown:: Script Details
+         :color: light
+         :icon: info
+         :animate: fade-in-slide-down
+
+         .. literalinclude:: ../../../../Tools/machines/lassen-llnl/install_v100_dependencies_toss3.sh
+            :language: bash
 
 .. _building-lassen-compilation:
 

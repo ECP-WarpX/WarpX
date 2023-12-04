@@ -84,14 +84,14 @@ public:
      *
      * @param[in] step current time step
      */
-    void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) final;
 
     /**
      * write to file function
      *
      * @param[in] step current time step
      */
-    void WriteToFile (int step) const override final;
+    void WriteToFile (int step) const final;
 
 };
 

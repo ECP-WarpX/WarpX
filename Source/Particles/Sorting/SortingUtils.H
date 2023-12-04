@@ -84,13 +84,13 @@ class fillBufferFlag
     public:
         fillBufferFlag( WarpXParIter const& pti, amrex::iMultiFab const* bmasks,
                         amrex::Gpu::DeviceVector<int>& inexflag,
-                        amrex::Geometry const& geom ) {
-
+                        amrex::Geometry const& geom ):
             // Extract simple structure that can be used directly on the GPU
-            m_particles = pti.GetArrayOfStructs().data();
-            m_buffer_mask = (*bmasks)[pti].array();
-            m_inexflag_ptr = inexflag.dataPtr();
-            m_domain = geom.Domain();
+            m_domain{geom.Domain()},
+            m_inexflag_ptr{inexflag.dataPtr()},
+            m_particles{pti.GetArrayOfStructs().data()},
+            m_buffer_mask{(*bmasks)[pti].array()}
+        {
             for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
                 m_prob_lo[idim] = geom.ProbLo(idim);
                 m_inv_cell_size[idim] = geom.InvCellSize(idim);
@@ -111,12 +111,12 @@ class fillBufferFlag
         }
 
     private:
-        amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_prob_lo;
-        amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_inv_cell_size;
         amrex::Box m_domain;
         int* m_inexflag_ptr;
         WarpXParticleContainer::ParticleType const* m_particles;
         amrex::Array4<int const> m_buffer_mask;
+        amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_prob_lo;
+        amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_inv_cell_size;
 };
 
 /** \brief Functor that fills the elements of the particle array `inexflag`
@@ -143,14 +143,14 @@ class fillBufferFlagRemainingParticles
                         amrex::Geometry const& geom,
                         amrex::Gpu::DeviceVector<long> const& particle_indices,
                         long const start_index ) :
-                        m_start_index(start_index) {
-
+            m_domain{geom.Domain()},
             // Extract simple structure that can be used directly on the GPU
-            m_particles = pti.GetArrayOfStructs().data();
-            m_buffer_mask = (*bmasks)[pti].array();
-            m_inexflag_ptr = inexflag.dataPtr();
-            m_indices_ptr = particle_indices.dataPtr();
-            m_domain = geom.Domain();
+            m_inexflag_ptr{inexflag.dataPtr()},
+            m_particles{pti.GetArrayOfStructs().data()},
+            m_buffer_mask{(*bmasks)[pti].array()},
+            m_start_index{start_index},
+            m_indices_ptr{particle_indices.dataPtr()}
+        {
             for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
                 m_prob_lo[idim] = geom.ProbLo(idim);
                 m_inv_cell_size[idim] = geom.InvCellSize(idim);
@@ -195,12 +195,12 @@ class copyAndReorder
         copyAndReorder(
             amrex::Gpu::DeviceVector<T> const& src,
             amrex::Gpu::DeviceVector<T>& dst,
-            amrex::Gpu::DeviceVector<long> const& indices ) {
-            // Extract simple structure that can be used directly on the GPU
-            m_src_ptr = src.dataPtr();
-            m_dst_ptr = dst.dataPtr();
-            m_indices_ptr = indices.dataPtr();
-        }
+            amrex::Gpu::DeviceVector<long> const& indices ):
+                // Extract simple structure that can be used directly on the GPU
+                m_src_ptr{src.dataPtr()},
+                m_dst_ptr{dst.dataPtr()},
+                m_indices_ptr{indices.dataPtr()}
+        {}
 
         AMREX_GPU_DEVICE AMREX_FORCE_INLINE
         void operator()( const long ip ) const {

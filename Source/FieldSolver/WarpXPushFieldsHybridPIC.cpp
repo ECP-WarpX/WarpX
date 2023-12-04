@@ -54,6 +54,9 @@ void WarpX::HybridPICEvolveFields ()
     // Get requested number of substeps to use
     int sub_steps = m_hybrid_pic_model->m_substeps / 2;
 
+    // Get the external current
+    m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
+
     // Reference hybrid-PIC multifabs
     auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
     auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
@@ -101,7 +104,7 @@ void WarpX::HybridPICEvolveFields ()
             true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
+        EvolveB(0.5_rt / sub_steps * dt[0], DtType::FirstHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
@@ -129,7 +132,7 @@ void WarpX::HybridPICEvolveFields ()
             true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
+        EvolveB(0.5_rt / sub_steps * dt[0], DtType::SecondHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 

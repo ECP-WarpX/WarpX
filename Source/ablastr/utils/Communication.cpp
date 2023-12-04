@@ -114,18 +114,18 @@ void FillBoundary (amrex::MultiFab &mf,
     }
 }
 
-void FillBoundary (amrex::MultiFab &mf, bool do_single_precision_comms, const amrex::Periodicity &period)
+void FillBoundary (amrex::MultiFab &mf, bool do_single_precision_comms, const amrex::Periodicity &period, std::optional<bool> nodal_sync)
 {
     amrex::IntVect const ng = mf.n_grow;
-    FillBoundary(mf, ng, do_single_precision_comms, period);
+    FillBoundary(mf, ng, do_single_precision_comms, period, nodal_sync);
 }
 
 void
 FillBoundary (amrex::Vector<amrex::MultiFab *> const &mf, bool do_single_precision_comms,
-             const amrex::Periodicity &period)
+             const amrex::Periodicity &period, std::optional<bool> nodal_sync)
 {
     for (auto x : mf) {
-        ablastr::utils::communication::FillBoundary(*x, do_single_precision_comms, period);
+        ablastr::utils::communication::FillBoundary(*x, do_single_precision_comms, period, nodal_sync);
     }
 }
 

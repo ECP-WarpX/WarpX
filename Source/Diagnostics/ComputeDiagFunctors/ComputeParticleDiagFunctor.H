@@ -15,14 +15,19 @@
 /**
  * \brief Functor to compute a diagnostic and store the result in existing ParticleContainer.
  */
-class
-ComputeParticleDiagFunctor
+class ComputeParticleDiagFunctor
 {
 public:
 
-    ComputeParticleDiagFunctor( ) {}
+    ComputeParticleDiagFunctor( ) = default;
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~ComputeParticleDiagFunctor() = default;
+
+    /** Default assignment and copy operations*/
+    ComputeParticleDiagFunctor(const ComputeParticleDiagFunctor&) = default;
+    ComputeParticleDiagFunctor& operator=(const ComputeParticleDiagFunctor&) = default;
+    ComputeParticleDiagFunctor(ComputeParticleDiagFunctor&&) = default;
+    ComputeParticleDiagFunctor& operator=(ComputeParticleDiagFunctor&&) = default;
 
     /** \brief Prepare data required to back-transform particle attribtutes for
      *         lab-frame snapshot, with index i_buffer.

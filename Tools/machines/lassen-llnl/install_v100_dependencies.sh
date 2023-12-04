@@ -108,19 +108,28 @@ cmake --build ${build_dir}/lapackpp-lassen-build --target install --parallel 10
 
 # Python ######################################################################
 #
+# sometimes, the Lassen PIP Index is down
+export PIP_EXTRA_INDEX_URL="https://pypi.org/simple"
+
 python3 -m pip install --upgrade --user virtualenv
 rm -rf ${SW_DIR}/venvs/warpx-lassen
 python3 -m venv ${SW_DIR}/venvs/warpx-lassen
 source ${SW_DIR}/venvs/warpx-lassen/bin/activate
 python3 -m pip install --upgrade pip
 python3 -m pip cache purge
+python3 -m pip install --upgrade build
+python3 -m pip install --upgrade packaging
 python3 -m pip install --upgrade wheel
-python3 -m pip install --upgrade cython
+python3 -m pip install --upgrade setuptools
+# Older version for h4py
+# https://github.com/h5py/h5py/issues/2268
+python3 -m pip install --upgrade "cython<3"
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas
 python3 -m pip install --upgrade -Ccompile-args="-j10" scipy
 python3 -m pip install --upgrade mpi4py --no-cache-dir --no-build-isolation --no-binary mpi4py
 python3 -m pip install --upgrade openpmd-api
+CC=mpicc H5PY_SETUP_REQUIRES=0 HDF5_DIR=${SW_DIR}/hdf5-1.14.1.2 HDF5_MPI=ON python3 -m pip install --upgrade h5py --no-cache-dir --no-build-isolation --no-binary h5py
 MPLLOCALFREETYPE=1 python3 -m pip install --upgrade matplotlib==3.2.2  # does not try to build freetype itself
 echo "matplotlib==3.2.2" > ${build_dir}/constraints.txt
 python3 -m pip install --upgrade -c ${build_dir}/constraints.txt yt

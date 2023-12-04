@@ -43,6 +43,9 @@ sudo apt-get install -y --no-install-recommends \
     rocprim-dev     \
     rocrand-dev
 
+# ccache
+$(dirname "$0")/ccache.sh
+
 # activate
 #
 source /etc/profile.d/rocm.sh
@@ -56,12 +59,3 @@ sudo curl -L -o /usr/local/bin/cmake-easyinstall https://raw.githubusercontent.c
 sudo chmod a+x /usr/local/bin/cmake-easyinstall
 export CEI_SUDO="sudo"
 export CEI_TMP="/tmp/cei"
-
-# ccache 4.2+
-#
-CXXFLAGS="" cmake-easyinstall --prefix=/usr/local \
-    git+https://github.com/ccache/ccache.git@v4.6 \
-    -DCMAKE_BUILD_TYPE=Release        \
-    -DENABLE_DOCUMENTATION=OFF        \
-    -DENABLE_TESTING=OFF              \
-    -DWARNINGS_AS_ERRORS=OFF

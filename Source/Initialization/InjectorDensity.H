@@ -26,6 +26,7 @@ struct InjectorDensityConstant
 {
     InjectorDensityConstant (amrex::Real a_rho) noexcept : m_rho(a_rho) {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::Real
     getDensity (amrex::Real, amrex::Real, amrex::Real) const noexcept
@@ -43,6 +44,7 @@ struct InjectorDensityParser
     InjectorDensityParser (amrex::ParserExecutor<3> const& a_parser) noexcept
         : m_parser(a_parser) {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::Real
     getDensity (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -60,6 +62,7 @@ struct InjectorDensityPredefined
 
     void clear ();
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::Real
     getDensity (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -111,7 +114,7 @@ struct InjectorDensityPredefined
 
 private:
     enum struct Profile { null, parabolic_channel };
-    Profile profile;
+    Profile profile{Profile::null};
     amrex::GpuArray<amrex::Real,6> p;
 };
 
@@ -150,10 +153,14 @@ struct InjectorDensity
     void operator= (InjectorDensity const&) = delete;
     void operator= (InjectorDensity &&) = delete;
 
+    // Default destructor
+    ~InjectorDensity () = default;
+
     void clear ();
 
     // call getDensity from the object stored in the union
     // (the union is called Object, and the instance is called object).
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::Real
     getDensity (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept

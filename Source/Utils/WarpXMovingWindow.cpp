@@ -81,7 +81,8 @@ WarpX::UpdateInjectionPosition (const amrex::Real a_dt)
             current_injection_position[dir] = pc.m_current_injection_position;
 #endif
 
-            PlasmaInjector* plasma_injector = pc.GetPlasmaInjector();
+            // This only uses the base plasma injector
+            PlasmaInjector* plasma_injector = pc.GetPlasmaInjector(0);
 
             amrex::Real v_shift = 0._rt;
             if (plasma_injector != nullptr)
@@ -180,20 +181,20 @@ WarpX::MoveWindow (const int step, bool move_j)
     // slice box is modified only if slice diagnostics is initialized in input //
     if ( slice_plot_int > 0 )
     {
-       amrex::Real new_slice_lo[AMREX_SPACEDIM];
-       amrex::Real new_slice_hi[AMREX_SPACEDIM];
-       const amrex::Real* current_slice_lo = slice_realbox.lo();
-       const amrex::Real* current_slice_hi = slice_realbox.hi();
-       for ( int i = 0; i < AMREX_SPACEDIM; i++) {
-           new_slice_lo[i] = current_slice_lo[i];
-           new_slice_hi[i] = current_slice_hi[i];
-       }
-       const int num_shift_base_slice = static_cast<int> ((moving_window_x -
-                                  current_slice_lo[dir]) / cdx[dir]);
-       new_slice_lo[dir] = current_slice_lo[dir] + num_shift_base_slice*cdx[dir];
-       new_slice_hi[dir] = current_slice_hi[dir] + num_shift_base_slice*cdx[dir];
-       slice_realbox.setLo(new_slice_lo);
-       slice_realbox.setHi(new_slice_hi);
+        amrex::Real new_slice_lo[AMREX_SPACEDIM];
+        amrex::Real new_slice_hi[AMREX_SPACEDIM];
+        const amrex::Real* current_slice_lo = slice_realbox.lo();
+        const amrex::Real* current_slice_hi = slice_realbox.hi();
+        for ( int i = 0; i < AMREX_SPACEDIM; i++) {
+            new_slice_lo[i] = current_slice_lo[i];
+            new_slice_hi[i] = current_slice_hi[i];
+        }
+        const int num_shift_base_slice = static_cast<int> ((moving_window_x -
+                                   current_slice_lo[dir]) / cdx[dir]);
+        new_slice_lo[dir] = current_slice_lo[dir] + num_shift_base_slice*cdx[dir];
+        new_slice_hi[dir] = current_slice_hi[dir] + num_shift_base_slice*cdx[dir];
+        slice_realbox.setLo(new_slice_lo);
+        slice_realbox.setHi(new_slice_hi);
     }
 
     int num_shift      = num_shift_base;
@@ -524,7 +525,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         auto const& dstfab = mf.array(mfi);
         auto const& srcfab = tmpmf.array(mfi);
@@ -589,7 +590,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
             WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -607,7 +608,8 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         // The temporary MultiFab is setup to refer to the data of the original Multifab (this can
         // be done since the shape of the data is all the same, just the indexing is different).
         amrex::BoxList bl;
-        for (int i = 0, N=ba.size(); i < N; ++i) {
+        const auto ba_size = static_cast<int>(ba.size());
+        for (int i = 0; i < ba_size; ++i) {
             bl.push_back(amrex::grow(ba[i], 0, mf.nGrowVect()[0]));
         }
         const amrex::BoxArray rba(std::move(bl));

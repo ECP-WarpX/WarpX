@@ -29,7 +29,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
-#include "Python/WarpX_py.H"
+#include "Python/callbacks.H"
 
 #include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/utils/Communication.H>
@@ -485,7 +485,7 @@ WarpX::InitData ()
         AddExternalFields();
     }
 
-    if (restart_chkfile.empty() || write_diagonstics_on_restart) {
+    if (restart_chkfile.empty() || write_diagnostics_on_restart) {
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush(istep[0] - 1);
 
@@ -764,7 +764,10 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
     for (int i = 0; i < 3; ++i) {
 
-        if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
+        // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+        // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+        if ( ( B_ext_grid_s == "constant") && (lev <= maxlevel_extEMfield_init) )
+        {
            Bfield_fp[lev][i]->setVal(B_external_grid[i]);
            if (fft_do_time_averaging) {
                 Bfield_avg_fp[lev][i]->setVal(B_external_grid[i]);
@@ -778,7 +781,10 @@ WarpX::InitLevelData (int lev, Real /*time*/)
               }
            }
         }
-        if (E_ext_grid_s == "constant" || E_ext_grid_s == "default") {
+        // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+        // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+        if ( ( E_ext_grid_s == "constant") && (lev <= maxlevel_extEMfield_init) )
+        {
            Efield_fp[lev][i]->setVal(E_external_grid[i]);
            if (fft_do_time_averaging) {
                Efield_avg_fp[lev][i]->setVal(E_external_grid[i]);
@@ -801,30 +807,39 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // if the input string for the B-field is "parse_b_ext_grid_function",
     // then the analytical expression or function must be
     // provided in the input file.
-    if (B_ext_grid_s == "parse_b_ext_grid_function") {
+    // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+    // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+    if (B_ext_grid_s == "parse_b_ext_grid_function" && (lev <= maxlevel_extEMfield_init)) {
+
+        //! Strings storing parser function to initialize the components of the magnetic field on the grid
+        std::string str_Bx_ext_grid_function;
+        std::string str_By_ext_grid_function;
+        std::string str_Bz_ext_grid_function;
 
 #ifdef WARPX_DIM_RZ
-       WARPX_ABORT_WITH_MESSAGE(
-           "E and B parser for external fields does not work with RZ -- TO DO");
-#endif
-
-       //! Strings storing parser function to initialize the components of the magnetic field on the grid
-       std::string str_Bx_ext_grid_function;
-       std::string str_By_ext_grid_function;
-       std::string str_Bz_ext_grid_function;
-
+        std::stringstream warnMsg;
+        warnMsg << "Parser for external B (r and theta) fields does not work with RZ\n"
+            << "The initial Br and Bt fields are currently hardcoded to 0.\n"
+            << "The initial Bz field should only be a function of z.\n";
+        ablastr::warn_manager::WMRecordWarning(
+          "Inputs", warnMsg.str(), ablastr::warn_manager::WarnPriority::high);
+        str_Bx_ext_grid_function = "0";
+        str_By_ext_grid_function = "0";
+#else
        utils::parser::Store_parserString(pp_warpx, "Bx_external_grid_function(x,y,z)",
           str_Bx_ext_grid_function);
        utils::parser::Store_parserString(pp_warpx, "By_external_grid_function(x,y,z)",
           str_By_ext_grid_function);
-       utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
-          str_Bz_ext_grid_function);
-       Bxfield_parser = std::make_unique<amrex::Parser>(
-       utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
-       Byfield_parser = std::make_unique<amrex::Parser>(
-          utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
-       Bzfield_parser = std::make_unique<amrex::Parser>(
-          utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
+#endif
+        utils::parser::Store_parserString(pp_warpx, "Bz_external_grid_function(x,y,z)",
+            str_Bz_ext_grid_function);
+
+        Bxfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+        Byfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_By_ext_grid_function,{"x","y","z"}));
+        Bzfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
@@ -865,43 +880,45 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     // if the input string for the E-field is "parse_e_ext_grid_function",
     // then the analytical expression or function must be
     // provided in the input file.
-    if (E_ext_grid_s == "parse_e_ext_grid_function") {
+    // Externally imposed fields are only initialized until the user-defined maxlevel_extEMfield_init.
+    // The default maxlevel_extEMfield_init value is the total number of levels in the simulation
+    if (E_ext_grid_s == "parse_e_ext_grid_function" && (lev <= maxlevel_extEMfield_init)) {
 
 #ifdef WARPX_DIM_RZ
-       WARPX_ABORT_WITH_MESSAGE(
-           "E and B parser for external fields does not work with RZ -- TO DO");
+        WARPX_ABORT_WITH_MESSAGE(
+            "E and B parser for external fields does not work with RZ -- TO DO");
 #endif
 
-       //! Strings storing parser function to initialize the components of the electric field on the grid
-       std::string str_Ex_ext_grid_function;
-       std::string str_Ey_ext_grid_function;
-       std::string str_Ez_ext_grid_function;
+        //! Strings storing parser function to initialize the components of the electric field on the grid
+        std::string str_Ex_ext_grid_function;
+        std::string str_Ey_ext_grid_function;
+        std::string str_Ez_ext_grid_function;
 
-       utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
-           str_Ex_ext_grid_function);
-       utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
-           str_Ey_ext_grid_function);
-       utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
-           str_Ez_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ex_external_grid_function(x,y,z)",
+            str_Ex_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ey_external_grid_function(x,y,z)",
+            str_Ey_ext_grid_function);
+        utils::parser::Store_parserString(pp_warpx, "Ez_external_grid_function(x,y,z)",
+            str_Ez_ext_grid_function);
 
-       Exfield_parser = std::make_unique<amrex::Parser>(
-           utils::parser::makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
-       Eyfield_parser = std::make_unique<amrex::Parser>(
-           utils::parser::makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
-       Ezfield_parser = std::make_unique<amrex::Parser>(
-           utils::parser::makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
+        Exfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
+        Eyfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
+        Ezfield_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
 
-       // Initialize Efield_fp with external function
-       InitializeExternalFieldsOnGridUsingParser(Efield_fp[lev][0].get(),
-                                                 Efield_fp[lev][1].get(),
-                                                 Efield_fp[lev][2].get(),
-                                                 Exfield_parser->compile<3>(),
-                                                 Eyfield_parser->compile<3>(),
-                                                 Ezfield_parser->compile<3>(),
-                                                 m_edge_lengths[lev],
-                                                 m_face_areas[lev],
-                                                 'E',
-                                                 lev, PatchType::fine);
+        // Initialize Efield_fp with external function
+        InitializeExternalFieldsOnGridUsingParser(Efield_fp[lev][0].get(),
+                                                  Efield_fp[lev][1].get(),
+                                                  Efield_fp[lev][2].get(),
+                                                  Exfield_parser->compile<3>(),
+                                                  Eyfield_parser->compile<3>(),
+                                                  Ezfield_parser->compile<3>(),
+                                                  m_edge_lengths[lev],
+                                                  m_face_areas[lev],
+                                                  'E',
+                                                  lev, PatchType::fine);
 
 #ifdef AMREX_USE_EB
         // We initialize ECTRhofield consistently with the Efield
@@ -912,35 +929,35 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         }
 #endif
 
-       if (lev > 0) {
-          InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
-                                                    Efield_aux[lev][1].get(),
-                                                    Efield_aux[lev][2].get(),
-                                                    Exfield_parser->compile<3>(),
-                                                    Eyfield_parser->compile<3>(),
-                                                    Ezfield_parser->compile<3>(),
-                                                    m_edge_lengths[lev],
-                                                    m_face_areas[lev],
-                                                    'E',
-                                                    lev, PatchType::fine);
+        if (lev > 0) {
+            InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
+                                                      Efield_aux[lev][1].get(),
+                                                      Efield_aux[lev][2].get(),
+                                                      Exfield_parser->compile<3>(),
+                                                      Eyfield_parser->compile<3>(),
+                                                      Ezfield_parser->compile<3>(),
+                                                      m_edge_lengths[lev],
+                                                      m_face_areas[lev],
+                                                      'E',
+                                                      lev, PatchType::fine);
 
-          InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
-                                                    Efield_cp[lev][1].get(),
-                                                    Efield_cp[lev][2].get(),
-                                                    Exfield_parser->compile<3>(),
-                                                    Eyfield_parser->compile<3>(),
-                                                    Ezfield_parser->compile<3>(),
-                                                    m_edge_lengths[lev],
-                                                    m_face_areas[lev],
-                                                    'E',
-                                                    lev, PatchType::coarse);
+            InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
+                                                      Efield_cp[lev][1].get(),
+                                                      Efield_cp[lev][2].get(),
+                                                      Exfield_parser->compile<3>(),
+                                                      Eyfield_parser->compile<3>(),
+                                                      Ezfield_parser->compile<3>(),
+                                                      m_edge_lengths[lev],
+                                                      m_face_areas[lev],
+                                                      'E',
+                                                      lev, PatchType::coarse);
 #ifdef AMREX_USE_EB
-           if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
-               // We initialize ECTRhofield consistently with the Efield
-               m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
-                                                   m_face_areas[lev], ECTRhofield[lev], lev);
+            if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
+                // We initialize ECTRhofield consistently with the Efield
+                m_fdtd_solver_cp[lev]->EvolveECTRho(Efield_cp[lev], m_edge_lengths[lev],
+                                                    m_face_areas[lev], ECTRhofield[lev], lev);
 
-           }
+            }
 #endif
        }
     }
@@ -1011,27 +1028,27 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
-       const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
-       const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
+        const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
+        const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
+        const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
 
-       auto const& mfxfab = mfx->array(mfi);
-       auto const& mfyfab = mfy->array(mfi);
-       auto const& mfzfab = mfz->array(mfi);
+        auto const& mfxfab = mfx->array(mfi);
+        auto const& mfyfab = mfy->array(mfi);
+        auto const& mfzfab = mfz->array(mfi);
 
 #ifdef AMREX_USE_EB
-       amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
-       amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
-       amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
-       amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
-       amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
-       amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
+        amrex::Array4<amrex::Real> const& lx = edge_lengths[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& ly = edge_lengths[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& lz = edge_lengths[2]->array(mfi);
+        amrex::Array4<amrex::Real> const& Sx = face_areas[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& Sy = face_areas[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& Sz = face_areas[2]->array(mfi);
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-       const amrex::Dim3 lx_lo = amrex::lbound(lx);
-       const amrex::Dim3 lx_hi = amrex::ubound(lx);
-       const amrex::Dim3 lz_lo = amrex::lbound(lz);
-       const amrex::Dim3 lz_hi = amrex::ubound(lz);
+        const amrex::Dim3 lx_lo = amrex::lbound(lx);
+        const amrex::Dim3 lx_hi = amrex::ubound(lx);
+        const amrex::Dim3 lz_lo = amrex::lbound(lz);
+        const amrex::Dim3 lz_hi = amrex::ubound(lz);
 #endif
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -1041,7 +1058,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 #endif
 
 #else
-       amrex::ignore_unused(edge_lengths, face_areas, field);
+        amrex::ignore_unused(edge_lengths, face_areas, field);
 #endif
 
         amrex::ParallelFor (tbx, tby, tbz,
@@ -1405,7 +1422,7 @@ WarpX::ReadExternalFieldFromFile (
                                      "XZ expects axisLabels {x, z}");
 #elif defined(WARPX_DIM_1D_Z)
     WARPX_ABORT_WITH_MESSAGE(
-           "Reading from openPMD for external fields is not known to work with 1D3V (see #3830)");
+        "Reading from openPMD for external fields is not known to work with 1D3V (see #3830)");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "1D3V can only read from files with cartesian geometry");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "z");
 #elif defined(WARPX_DIM_RZ)
@@ -1415,27 +1432,27 @@ WarpX::ReadExternalFieldFromFile (
 #endif
 
     const auto offset = F.gridGlobalOffset();
-    const amrex::Real offset0 = offset[0];
-    const amrex::Real offset1 = offset[1];
+    const auto offset0 = static_cast<amrex::Real>(offset[0]);
+    const auto offset1 = static_cast<amrex::Real>(offset[1]);
 #if defined(WARPX_DIM_3D)
-    const amrex::Real offset2 = offset[2];
+    const auto offset2 = static_cast<amrex::Real>(offset[2]);
 #endif
     const auto d = F.gridSpacing<long double>();
 
 #if defined(WARPX_DIM_RZ)
-    const amrex::Real file_dr = d[0];
-    const amrex::Real file_dz = d[1];
+    const auto file_dr = static_cast<amrex::Real>(d[0]);
+    const auto file_dz = static_cast<amrex::Real>(d[1]);
 #elif defined(WARPX_DIM_3D)
-    const amrex::Real file_dx = d[0];
-    const amrex::Real file_dy = d[1];
-    const amrex::Real file_dz = d[2];
+    const auto file_dx = static_cast<amrex::Real>(d[0]);
+    const auto file_dy = static_cast<amrex::Real>(d[1]);
+    const auto file_dz = static_cast<amrex::Real>(d[2]);
 #endif
 
     auto FC = F[F_component];
     const auto extent = FC.getExtent();
-    const int extent0 = extent[0];
-    const int extent1 = extent[1];
-    const int extent2 = extent[2];
+    const auto extent0 = static_cast<int>(extent[0]);
+    const auto extent1 = static_cast<int>(extent[1]);
+    const auto extent2 = static_cast<int>(extent[2]);
 
     // Determine the chunk data that will be loaded.
     // Now, the full range of data is loaded.
@@ -1482,11 +1499,11 @@ WarpX::ReadExternalFieldFromFile (
                 // 0,1 denote r,z in 2D rz.
                 amrex::Real x0, x1;
                 if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
-                     { x0 = real_box.lo(0) + ii*dx[0]; }
-                else { x0 = real_box.lo(0) + ii*dx[0] + 0.5*dx[0]; }
+                     { x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0]; }
+                else { x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0] + 0.5_rt*dx[0]; }
                 if ( box.type(1)==amrex::IndexType::CellIndex::NODE )
                      { x1 = real_box.lo(1) + j*dx[1]; }
-                else { x1 = real_box.lo(1) + j*dx[1] + 0.5*dx[1]; }
+                else { x1 = real_box.lo(1) + j*dx[1] + 0.5_rt*dx[1]; }
 
 #if defined(WARPX_DIM_RZ)
                 // Get index of the external field array
@@ -1501,7 +1518,7 @@ WarpX::ReadExternalFieldFromFile (
                 amrex::Real x2;
                 if ( box.type(2)==amrex::IndexType::CellIndex::NODE )
                      { x2 = real_box.lo(2) + k*dx[2]; }
-                else { x2 = real_box.lo(2) + k*dx[2] + 0.5*dx[2]; }
+                else { x2 = real_box.lo(2) + k*dx[2] + 0.5_rt*dx[2]; }
 
                 // Get index of the external field array
                 int const ix = floor( (x0-offset0)/file_dx );
@@ -1521,10 +1538,10 @@ WarpX::ReadExternalFieldFromFile (
                     f01 = fc_array(0, iz  , ir+1),
                     f10 = fc_array(0, iz+1, ir  ),
                     f11 = fc_array(0, iz+1, ir+1);
-                mffab(i,j,k) = utils::algorithms::bilinear_interp<double>
+                mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::bilinear_interp<double>
                     (xx0, xx0+file_dr, xx1, xx1+file_dz,
                      f00, f01, f10, f11,
-                     x0, x1);
+                     x0, x1));
 #elif defined(WARPX_DIM_3D)
                 const amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
                 const double
@@ -1536,10 +1553,10 @@ WarpX::ReadExternalFieldFromFile (
                     f101 = fc_array(iz+1, iy  , ix+1),
                     f110 = fc_array(iz  , iy+1, ix+1),
                     f111 = fc_array(iz+1, iy+1, ix+1);
-                mffab(i,j,k) = utils::algorithms::trilinear_interp<double>
+                mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::trilinear_interp<double>
                     (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
                      f000, f001, f010, f011, f100, f101, f110, f111,
-                     x0, x1, x2);
+                     x0, x1, x2));
 #endif
 
             }
@@ -1553,7 +1570,7 @@ WarpX::ReadExternalFieldFromFile (
 void
 WarpX::ReadExternalFieldFromFile (std::string , amrex::MultiFab* ,std::string, std::string)
 {
-#if defined(WARPX_DIM_1D)
+#if defined(WARPX_DIM_1D_Z)
     WARPX_ABORT_WITH_MESSAGE("Reading fields from openPMD files is not supported in 1D");
 #elif defined(WARPX_DIM_XZ)
     WARPX_ABORT_WITH_MESSAGE("Reading from openPMD for external fields is not known to work with XZ (see #3828)");

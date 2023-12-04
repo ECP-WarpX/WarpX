@@ -8,8 +8,7 @@
 /**
  * \brief Functor to compute charge density rho into mf_out
  */
-class
-RhoFunctor final : public ComputeDiagFunctor
+class RhoFunctor final : public ComputeDiagFunctor
 {
 
 public:
@@ -38,7 +37,7 @@ public:
      * \param[out] mf_dst output MultiFab where the result is written
      * \param[in]  dcomp  first component of mf_dst in which cell-centered data are stored
      */
-    virtual void operator() ( amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer=0*/ ) const override;
+    void operator() ( amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer=0*/ ) const override;
 
 private:
 

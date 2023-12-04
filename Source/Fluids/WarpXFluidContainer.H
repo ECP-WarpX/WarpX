@@ -31,7 +31,12 @@ public:
     friend MultiFluidContainer;
 
     WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name);
-    ~WarpXFluidContainer() {}
+    ~WarpXFluidContainer() = default;
+
+    WarpXFluidContainer (WarpXFluidContainer const &)             = delete;
+    WarpXFluidContainer& operator= (WarpXFluidContainer const & ) = delete;
+    WarpXFluidContainer(WarpXFluidContainer&& )                   = default;
+    WarpXFluidContainer& operator=(WarpXFluidContainer&& )        = default;
 
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm);
 
@@ -126,8 +131,8 @@ public:
      */
     void DepositCharge (int lev, amrex::MultiFab &rho, int icomp = 0);
 
-    amrex::Real getCharge () const {return charge;}
-    amrex::Real getMass () const {return mass;}
+    [[nodiscard]] amrex::Real getCharge () const {return charge;}
+    [[nodiscard]] amrex::Real getMass () const {return mass;}
 
 protected:
     int species_id;
@@ -169,6 +174,9 @@ protected:
     std::unique_ptr<amrex::Parser> ux_parser;
     std::unique_ptr<amrex::Parser> uy_parser;
     std::unique_ptr<amrex::Parser> uz_parser;
+    std::unique_ptr<amrex::Parser> ux_th_parser;
+    std::unique_ptr<amrex::Parser> uy_th_parser;
+    std::unique_ptr<amrex::Parser> uz_th_parser;
 
     // Keep a pointer to TemperatureProperties to ensure the lifetime of the
     // contained Parser
@@ -177,7 +185,7 @@ protected:
 
 public:
 
-   // MultiFabs that contain the density (N) and momentum density (NU) of this fluid species, for each refinement level
+    // MultiFabs that contain the density (N) and momentum density (NU) of this fluid species, for each refinement level
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > N;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > NU;
 

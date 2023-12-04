@@ -10,8 +10,7 @@
 /**
  * \brief Functor to compute divB into mf_out.
  */
-class
-DivBFunctor final : public ComputeDiagFunctor
+class DivBFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor.
@@ -32,7 +31,7 @@ public:
      * \param[in] dcomp first component of mf_dst in which cell-centered
      *            data is stored
      */
-    virtual void operator()(amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer*/) const override;
+    void operator()(amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer*/) const override;
 private:
     /** Vector of pointer to source multifab Bx, By, Bz */
     std::array<const amrex::MultiFab * const, 3> m_arr_mf_src;

@@ -38,11 +38,12 @@ public:
                 amrex::ParticleReal energy
                 );
 
-    MCCProcess (MCCProcess const&) = delete;
-    MCCProcess& operator= (MCCProcess const&) = delete;
+    ~MCCProcess() = default;
 
-    MCCProcess (MCCProcess &&) = default;
-    MCCProcess& operator= (MCCProcess &&) = default;
+    MCCProcess (MCCProcess const&)            = delete;
+    MCCProcess& operator= (MCCProcess const&) = delete;
+    MCCProcess (MCCProcess &&)                = default;
+    MCCProcess& operator= (MCCProcess &&)     = default;
 
     /** Read the given cross-section data file to memory.
      *
@@ -73,6 +74,7 @@ public:
          * @param E_coll collision energy in eV
          *
          */
+        [[nodiscard]]
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
         amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
         {
@@ -100,6 +102,7 @@ public:
         MCCProcessType m_type;
     };
 
+    [[nodiscard]]
     Executor const& executor () const {
 #ifdef AMREX_USE_GPU
         return m_exe_d;
@@ -108,17 +111,17 @@ public:
 #endif
     }
 
-    amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
+    [[nodiscard]] amrex::ParticleReal getCrossSection (amrex::ParticleReal E_coll) const
     {
         return m_exe_h.getCrossSection(E_coll);
     }
 
-    amrex::ParticleReal getEnergyPenalty () const { return m_exe_h.m_energy_penalty; }
-    amrex::ParticleReal getMinEnergyInput () const { return m_exe_h.m_energy_lo; }
-    amrex::ParticleReal getMaxEnergyInput () const { return m_exe_h.m_energy_hi; }
-    amrex::ParticleReal getEnergyInputStep () const { return m_exe_h.m_dE; }
+    [[nodiscard]] amrex::ParticleReal getEnergyPenalty () const { return m_exe_h.m_energy_penalty; }
+    [[nodiscard]] amrex::ParticleReal getMinEnergyInput () const { return m_exe_h.m_energy_lo; }
+    [[nodiscard]] amrex::ParticleReal getMaxEnergyInput () const { return m_exe_h.m_energy_hi; }
+    [[nodiscard]] amrex::ParticleReal getEnergyInputStep () const { return m_exe_h.m_dE; }
 
-    MCCProcessType type () const { return m_exe_h.m_type; }
+    [[nodiscard]] MCCProcessType type () const { return m_exe_h.m_type; }
 
 private:
 

@@ -55,7 +55,7 @@ namespace
 
 void
 FlushFormatPlotfile::WriteToFile (
-    const amrex::Vector<std::string> varnames,
+    const amrex::Vector<std::string>& varnames,
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
@@ -99,7 +99,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
-    WriteParticles(filename, particle_diags, time, isBTD);
+    WriteParticles(filename, particle_diags, static_cast<amrex::Real>(time), isBTD);
 
     WriteJobInfo(filename);
 

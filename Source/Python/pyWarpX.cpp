@@ -4,7 +4,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "pyWarpX.H"
-#include "WarpX_py.H"
+#include "callbacks.H"
 
 #include <WarpX.H>  // todo: move this out to Python/WarpX.cpp
 #include <Utils/WarpXUtil.H>  // todo: move to its own Python/Utils.cpp

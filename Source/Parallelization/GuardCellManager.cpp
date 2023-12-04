@@ -103,7 +103,7 @@ guardCellManager::Init (
     if (do_moving_window) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ref_ratios.size() <= 1,
             "The number of grow cells for the moving window currently assumes 2 levels max.");
-        const int nlevs = ref_ratios.size()+1;
+        const auto nlevs = static_cast<int>(ref_ratios.size()+1);
         const int max_r = (nlevs > 1) ? ref_ratios[0][moving_window_dir] : 2;
 
         ngx = std::max(ngx,max_r);
@@ -208,11 +208,11 @@ guardCellManager::Init (
         utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if defined(WARPX_DIM_3D)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #elif defined(WARPX_DIM_1D_Z)
-        IntVect ngFFT = IntVect(ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_z);
 #endif
 
 #ifdef WARPX_DIM_RZ
@@ -222,7 +222,7 @@ guardCellManager::Init (
             }
         }
 #else
-       amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
+        amrex::ignore_unused(do_pml, do_pml_in_domain, pml_ncell);
 #endif
 
         // All boxes should have the same number of guard cells, to avoid temporary parallel copies:
@@ -309,7 +309,7 @@ guardCellManager::Init (
         // factor grows symmetrically by half a cell on each side. So every
         // +2 orders, one touches one more cell point.
         int const FGcell = (nox + 1) / 2;  // integer division
-        IntVect ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell,FGcell,FGcell));
+        auto ng_FieldGather_noNCI = IntVect(AMREX_D_DECL(FGcell,FGcell,FGcell));
         ng_FieldGather_noNCI = ng_FieldGather_noNCI.min(ng_alloc_EB);
 
         // If NCI filter, add guard cells in the z direction
