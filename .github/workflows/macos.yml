@@ -55,6 +55,7 @@ jobs:
         export CCACHE_COMPRESS=1
         export CCACHE_COMPRESSLEVEL=10
         export CCACHE_MAXSIZE=100M
+        export CCACHE_DEPEND=1
         ccache -z
 
         source py-venv/bin/activate
