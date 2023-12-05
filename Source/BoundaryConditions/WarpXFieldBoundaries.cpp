@@ -121,7 +121,6 @@ void
 WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev)
 {
     const amrex::IntVect ngE = get_ng_fieldgather();
-    /* const amrex::IntVect ngE = Er->nGrowVect(); */
 
     constexpr int NODE = amrex::IndexType::NODE;
 

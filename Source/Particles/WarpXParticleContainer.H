@@ -232,7 +232,7 @@ public:
                                amrex::MultiFab* rho,
                                int icomp,
                                long offset,
-                               long np_to_depose,
+                               long np_to_deposit,
                                int thread_num,
                                int lev,
                                int depos_lev);
@@ -247,7 +247,7 @@ public:
                                 amrex::MultiFab* jy,
                                 amrex::MultiFab* jz,
                                 long offset,
-                                long np_to_depose,
+                                long np_to_deposit,
                                 int thread_num,
                                 int lev,
                                 int depos_lev,

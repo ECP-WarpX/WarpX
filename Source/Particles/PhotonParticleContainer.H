@@ -105,7 +105,7 @@ public:
                                 amrex::MultiFab* /*rho*/,
                                 int /*icomp*/,
                                 const long /*offset*/,
-                                const long /*np_to_depose*/,
+                                const long /*np_to_deposit*/,
                                 int /*thread_num*/,
                                 int /*lev*/,
                                 int /*depos_lev*/) override {}
@@ -121,7 +121,7 @@ public:
                                  amrex::MultiFab * const /*jy*/,
                                  amrex::MultiFab * const /*jz*/,
                                  long const /*offset*/,
-                                 long const /*np_to_depose*/,
+                                 long const /*np_to_deposit*/,
                                  int const /*thread_num*/,
                                  int const /*lev*/,
                                  int const /*depos_lev*/,

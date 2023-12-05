@@ -75,11 +75,9 @@ Usage
    :hidden:
 
    usage/how_to_run
-   usage/domain_decomposition
-   usage/parameters
    usage/python
+   usage/parameters
    usage/examples
-   usage/pwfa
    usage/workflows
    usage/faq
 
@@ -126,10 +124,10 @@ Development
    :hidden:
 
    developers/contributing
-   developers/workflows
    developers/developers
    developers/doxygen
    developers/gnumake
+   developers/workflows
    developers/faq
 .. good to have in the future:
 ..   developers/repostructure
