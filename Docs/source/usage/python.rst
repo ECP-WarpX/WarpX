@@ -252,13 +252,13 @@ An important object is ``Simulation.extension.warpx``, which is available during
 This object is the Python equivalent to the central ``WarpX`` simulation class and provides access to
 field ``MultiFab`` and ``ParticleContainer`` data.
 
-.. py:function:: pywarpx.picmi.Simulation.extension.warpx.getistep
+.. py:function:: pywarpx.picmi.Simulation.extension.warpx.getistep()
 
-.. py:function:: pywarpx.picmi.Simulation.extension.warpx.gett_new
+.. py:function:: pywarpx.picmi.Simulation.extension.warpx.gett_new()
 
-.. py:function:: pywarpx.picmi.Simulation.extension.warpx.evolve
+.. py:function:: pywarpx.picmi.Simulation.extension.warpx.evolve()
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.finalize
+.. autofunction:: pywarpx.picmi.Simulation.extension.finalize()
 
 These and other classes are provided through `pyAMReX <https://github.com/AMReX-Codes/pyamrex>`__.
 After the simulation is initialized, pyAMReX can be accessed via
