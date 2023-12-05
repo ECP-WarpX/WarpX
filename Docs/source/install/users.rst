@@ -129,24 +129,15 @@ In the future, will publish pre-compiled binary packages on `PyPI <https://pypi.
 Using the Brew Package
 ----------------------
 
-:ref:`WarpX dependencies <install-dependencies>` can be installed using the `Brew <https://brew.sh>`__ package manager.
+A package for WarpX is available via the `Homebrew <https://brew.sh/>`_/`Linuxbrew <https://docs.brew.sh/Homebrew-on-Linux>`_ package manager.
 
 .. code-block:: bash
 
-   brew --cache
-   set +e
-   brew unlink gcc
    brew update
-   brew install --overwrite python
-   brew install fftw
-   brew install libomp
-   brew link --overwrite --force libomp
-   brew install ninja
-   brew install open-mpi
-   brew install pkg-config
-   set -e
    brew tap openpmd/openpmd
    brew install openpmd-api
+   brew tap ecp-warpx/blast
+   brew install warpx
 
    python3 -m pip install --upgrade pip
    python3 -m pip install --upgrade virtualenv
@@ -156,7 +147,6 @@ Using the Brew Package
    python3 -m pip install --upgrade build packaging setuptools wheel
    python3 -m pip install --upgrade mpi4py
 
-WarpX can now be installed from source using CMake, outlined below.
 
 .. _install-cmake:
 
