@@ -113,8 +113,8 @@ Coming soon:
 Kinetic-fluid Hybrid Models
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Several examples and benchmarks of the kinetic-fluid hybrid model are shown below.
-The first few examples are replications of the verification tests described in :cite:t:`ex-MUNOZ2018`.
+Several examples and benchmarks of the kinetic-fluid hybrid model are provided below.
+A few examples are replications of the verification tests described in :cite:t:`ex-MUNOZ2018`.
 The hybrid-PIC model was added to WarpX in `PR #3665 <https://github.com/ECP-WarpX/WarpX/pull/3665>`_ - the figures in the examples below were generated at that time.
 
 .. toctree::
