@@ -129,7 +129,6 @@ public:
     int flux_normal_axis;
     int flux_direction; // -1 for left, +1 for right
     bool fixed_ppc_is_specified = false;
-    int fixed_ppc;
 
     bool radially_weighted = true;
 
