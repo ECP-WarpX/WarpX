@@ -29,7 +29,7 @@ We run the following script to analyze correctness:
 Visualize
 ---------
 
-You can run the following script to visualize the beam evolution over time:
+You can run the following script to visualize the B-field evolution over time:
 
 .. dropdown:: Script ``analysis.py``
 
