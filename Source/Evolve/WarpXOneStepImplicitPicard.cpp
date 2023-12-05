@@ -396,10 +396,6 @@ WarpX::FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex
             amrex::Box tby = mfi.tilebox(Field_fp[lev][1]->ixType().toIntVect());
             amrex::Box tbz = mfi.tilebox(Field_fp[lev][2]->ixType().toIntVect());
 
-            /* tbx.grow(Field_fp[lev][0]->nGrowVect()); */
-            /* tby.grow(Field_fp[lev][1]->nGrowVect()); */
-            /* tbz.grow(Field_fp[lev][2]->nGrowVect()); */
-
             amrex::ParallelFor(
             tbx, ncomps, [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
             {

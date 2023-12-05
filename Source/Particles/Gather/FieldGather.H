@@ -541,7 +541,6 @@ void doGatherShapeNImplicit (
     amrex::Real const yp_old = yp_n;
     amrex::Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
     amrex::Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
-    /* amrex::Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid); */
     amrex::Real const rp_mid = (rp_new + rp_old)/2._rt;
     amrex::Real costheta_mid, sintheta_mid;
     if (rp_mid > 0._rt) {
