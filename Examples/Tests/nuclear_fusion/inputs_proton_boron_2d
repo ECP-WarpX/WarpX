@@ -37,7 +37,7 @@ my_constants.m_reduced = m_p*m_b11/(m_p+m_b11)
 my_constants.keV_to_J = 1.e3*q_e
 my_constants.Energy_step = 22. * keV_to_J
 
-proton1.species_type = proton
+proton1.species_type = hydrogen1
 proton1.injection_style = "NRandomPerCell"
 proton1.num_particles_per_cell = 80000
 proton1.profile = constant
@@ -70,7 +70,7 @@ alpha1.do_not_deposit = 1
 my_constants.background_dens = 1.e26
 my_constants.beam_dens = 1.e20
 
-proton2.species_type = proton
+proton2.species_type = hydrogen1
 proton2.injection_style = "NRandomPerCell"
 proton2.num_particles_per_cell = 8000
 proton2.profile = "parse_density_function"
@@ -100,7 +100,7 @@ alpha2.do_not_deposit = 1
 
 my_constants.temperature = 44. * keV_to_J
 
-proton3.species_type = proton
+proton3.species_type = hydrogen1
 proton3.injection_style = "NRandomPerCell"
 proton3.num_particles_per_cell = 4800
 proton3.profile = constant
@@ -126,7 +126,7 @@ alpha3.do_not_deposit = 1
 
 my_constants.proton4_energy = 550*keV_to_J
 
-proton4.species_type = proton
+proton4.species_type = hydrogen1
 proton4.injection_style = "NRandomPerCell"
 proton4.num_particles_per_cell = 800
 proton4.profile = "constant"
@@ -149,7 +149,7 @@ alpha4.species_type = helium4
 alpha4.do_not_push = 1
 alpha4.do_not_deposit = 1
 
-proton5.species_type = proton
+proton5.species_type = hydrogen1
 proton5.injection_style = "NRandomPerCell"
 proton5.num_particles_per_cell = 800
 proton5.profile = "constant"
