@@ -71,8 +71,6 @@ RecordingPlaneDiagnostics::ReadParameters ()
 
     BaseReadParameters();
     const amrex::ParmParse pp_diag_name(m_diag_name);
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_format == "plotfile", "<diag>.format must be plotfile");
 
     std::string station_normal_dir("z");
     pp_diag_name.query("station_normal_dir", station_normal_dir);
@@ -96,10 +94,6 @@ RecordingPlaneDiagnostics::ReadParameters ()
         error_string);
 
     pp_diag_name.get("station_location",m_station_loc);
-
-    // If station recordings are used to restart simulations, then raw fields are needed
-    pp_diag_name.query("plot_raw_fields", m_plot_raw_fields);
-    pp_diag_name.query("plot_raw_fields", m_plot_raw_fields_guards);
 
     pp_diag_name.query("buffer_size",m_buffer_size);
     // for now, number of buffers or in this case, z-locations is assumed to be 1
@@ -132,9 +126,8 @@ RecordingPlaneDiagnostics::ReadParameters ()
             mpc.SetDoBackTransformedParticles(species, m_record_particles);
         }
     }
-    const int num_stationdiag_buffers = 1;
-    m_particles_buffer.resize(num_stationdiag_buffers);
-    m_totalParticles_in_buffer.resize(num_stationdiag_buffers);
+    m_particles_buffer.resize(m_num_buffers);
+    m_totalParticles_in_buffer.resize(m_num_buffers);
 }
 
 bool
@@ -171,7 +164,7 @@ RecordingPlaneDiagnostics::InitializeFieldFunctors (int lev)
 }
 
 void
-RecordingPlaneDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart)
+RecordingPlaneDiagnostics::InitializeBufferData (int /*i_buffer*/, int lev, bool /*restart*/)
 {
     AMREX_ALWAYS_ASSERT(lev == 0);
 
@@ -193,7 +186,7 @@ RecordingPlaneDiagnostics::InitializeBufferData (int i_buffer, int lev, bool res
     ba.convert(typ);
     amrex::DistributionMapping dmap(ba);
     int ncomps = 6; //  Ex Ey Ez Bx By Bz
-    int nghost = 0; //  Ex Ey Ez Bx By Bz
+    int nghost = 0;
     m_mf_output[0][lev] = amrex::MultiFab(ba, dmap, ncomps, nghost);
 }
 
@@ -263,8 +256,7 @@ RecordingPlaneDiagnostics::InitializeParticleBuffer ()
 {
     auto& warpx = WarpX::GetInstance();
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
-    const int num_stationdiag_buffers = 1;
-    for (int i = 0; i < num_stationdiag_buffers; ++i) {
+    for (int i = 0; i < m_num_buffers; ++i) {
         m_particles_buffer[i].resize(m_output_species_names.size());
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
             m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(warpx.GetParGDB());
@@ -309,8 +301,6 @@ RecordingPlaneDiagnostics::PrepareParticleDataForOutput ()
 void
 RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 {
-// xxxxx TODO xxxxx
-#if 0
     if (m_slice_counter == 0) return;
 
     std::string filename = amrex::Concatenate(m_file_prefix, i_buffer, 1);
@@ -319,7 +309,7 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
         if (! amrex::UtilCreateDirectory(filename, permission_flag_rwxrxrx) ) {
             amrex::CreateDirectoryFailed(filename);
         }
-        WriteStationHeader(filename);
+        WriteRecordingPlaneHeader(filename);
         for (int lev = 0; lev < 1; ++lev) {
             const std::string buffer_path = filename + amrex::Concatenate("/Level_",lev,1) + "/";
             if (m_flush_counter == 0) {
@@ -373,73 +363,54 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
         }
     }
 
+#if 0
+    // plotfile particles
+    for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
+        FlushParticleBuffer(filename, m_output_species_names[isp], isp, i_buffer);
+    }
+#endif
+
+    // Particle stuff
+    if (0)
+    {
+        int nparticles = 0;
+        for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
+            nparticles += m_totalParticles_in_buffer[i_buffer][isp];
+        }
+
+        // Initializing variables needed for compatibility with WriteToFile
+        bool const isBTD = false;
+        bool const isLastBTD = false;
+        int const maxBTDBuffers = 0;
+        // particles buffer is saved in pinned particle container
+        bool const use_pinned_pc = true;
+        auto const& warpx = WarpX::GetInstance();
+        const amrex::Geometry& geom = warpx.Geom(0); // not used in WriteToFile
+        bool const plot_raw_fields = false;
+        bool const plot_raw_fields_guards = false;
+
+        if (nparticles > 0) {
+            m_flush_format->WriteToFile(m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer],
+                                        warpx.getistep(), warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
+                                        m_file_min_digits, plot_raw_fields, plot_raw_fields_guards, use_pinned_pc,
+                                        isBTD, i_buffer, m_flush_counter, maxBTDBuffers, geom,
+                                        isLastBTD, m_totalParticles_flushed_already[i_buffer]);
+        }
+
+        for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
+            m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
+            m_totalParticles_in_buffer[i_buffer][isp] = 0;
+        }
+
+        if (m_output_species_names.size() > 0)
+        {
+            ClearParticlesBuffer(i_buffer);
+        }
+    }
+
     // reset counter
     m_slice_counter = (m_last_timeslice_filled) ? 0 : 1; // Keep the last slice
     m_tmin = m_tmax;
-    // update Flush counter
-    m_flush_counter++;
-#endif
-
-    if (m_slice_counter == 0) return;
-    auto & warpx = WarpX::GetInstance();
-    m_tmax = warpx.gett_new(0);
-    std::string filename = m_file_prefix;
-    filename = amrex::Concatenate(m_file_prefix, i_buffer, m_file_min_digits);
-    constexpr int permission_flag_rwxrxrx = 0755;
-    if (! amrex::UtilCreateDirectory(filename, permission_flag_rwxrxrx) ) {
-        amrex::CreateDirectoryFailed(filename);
-    }
-    amrex::Print() << " finename : " << filename << "\n";
-    WriteRecordingPlaneHeader(filename);
-    for (int lev = 0; lev < 1; ++lev) {
-        const std::string buffer_path = filename + amrex::Concatenate("/Level_",lev,1) + "/";
-        if (m_flush_counter == 0) {
-            if (! amrex::UtilCreateDirectory(buffer_path, permission_flag_rwxrxrx) ) {
-                amrex::CreateDirectoryFailed(buffer_path);
-            }
-        }
-        std::string buffer_string = amrex::Concatenate("buffer-",m_flush_counter,m_file_min_digits);
-        const std::string prefix = amrex::MultiFabFileFullPrefix(lev, filename, "Level_", buffer_string);
-        amrex::Print() << " Writing buffer " << buffer_string << "\n";
-        amrex::VisMF::Write(m_mf_output[i_buffer][lev], prefix);
-    }
-
-    int nparticles = 0;
-    for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
-        nparticles += m_totalParticles_in_buffer[i_buffer][isp];
-    }
-
-    // Initializing variables needed for compatibility with WriteToFile
-    bool const isBTD = false;
-    bool const isLastBTD = false;
-    int const maxBTDBuffers = 0;
-    // particles buffer is saved in pinned particle container
-    bool const use_pinned_pc = true;
-    const amrex::Geometry& geom = warpx.Geom(0); // not used in WriteToFile
-    bool const plot_raw_fields = false;
-    bool const plot_raw_fields_guards = false;
-
-    if (nparticles > 0) {
-        m_flush_format->WriteToFile(m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer],
-            warpx.getistep(), warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
-            m_file_min_digits, plot_raw_fields, plot_raw_fields_guards, use_pinned_pc,
-            isBTD, i_buffer, m_flush_counter, maxBTDBuffers, geom,
-            isLastBTD, m_totalParticles_flushed_already[i_buffer]);
-    }
-
-    for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
-        m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
-        m_totalParticles_in_buffer[i_buffer][isp] = 0;
-    }
-
-    if (m_output_species_names.size() > 0)
-    {
-        ClearParticlesBuffer(i_buffer);
-    }
-
-
-    // reset counter
-    m_slice_counter = 0;
     // update Flush counter
     m_flush_counter++;
 }
@@ -472,6 +443,7 @@ RecordingPlaneDiagnostics::WriteRecordingPlaneHeader (const std::string& filenam
     HeaderFile << m_tmin << " " << m_tmax << "\n";
 }
 
+// Currently not used
 void
 RecordingPlaneDiagnostics::FlushParticleBuffer (std::string path, std::string species_name, int isp, int i_buffer)
 {

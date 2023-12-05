@@ -8,8 +8,8 @@
 #include <string>
 
 
-class
-RecordingPlaneDiagnostics final : public Diagnostics
+class RecordingPlaneDiagnostics final
+    : public Diagnostics
 {
 public:
     RecordingPlaneDiagnostics (int i, std::string name);
