@@ -167,6 +167,12 @@ public:
     //! User-defined parser to initialize z-component of the electric field on the grid
     std::unique_ptr<amrex::Parser> Ezfield_parser;
 
+    /** Maximum level up to which the externally defined electric and magnetic fields are initialized.
+     *  The default value is set to the max levels in the simulation.
+     *  if lev > maxlevel_extEMfield_init, the fields on those levels will have a default value of 0
+     */
+    int maxlevel_extEMfield_init;
+
     // Algorithms
     //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay)
     static short current_deposition_algo;
@@ -511,6 +517,9 @@ public:
     const amrex::MultiFab& getEfield_avg_cp (int lev, int direction) {return *Efield_avg_cp[lev][direction];}
     const amrex::MultiFab& getBfield_avg_cp (int lev, int direction) {return *Bfield_avg_cp[lev][direction];}
 
+    const amrex::MultiFab& getedgelengths (int lev, int direction) {return *m_edge_lengths[lev][direction];}
+    const amrex::MultiFab& getfaceareas  (int lev, int direction) {return *m_face_areas[lev][direction];}
+
     [[nodiscard]] bool DoPML () const {return do_pml;}
     [[nodiscard]] bool DoFluidSpecies () const {return do_fluid_species;}
 
@@ -543,7 +552,7 @@ public:
     amrex::Vector<amrex::Real> mirror_z_width;
     amrex::Vector<int> mirror_z_npoints;
 
-    /// object with all reduced diagnotics, similar to MultiParticleContainer for species.
+    /// object with all reduced diagnostics, similar to MultiParticleContainer for species.
     std::unique_ptr<MultiReducedDiags> reduced_diags;
 
     void applyMirrors(amrex::Real time);
@@ -709,6 +718,11 @@ public:
     void ApplyEfieldBoundary (int lev, PatchType patch_type);
     void ApplyBfieldBoundary (int lev, PatchType patch_type, DtType dt_type);
 
+#ifdef WARPX_DIM_RZ
+    // Applies the boundary conditions that are specific to the axis when in RZ.
+    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev);
+#endif
+
     /**
      * \brief When the Ohm's law solver is used, the electron pressure values
      * on PEC boundaries are set to enforce a zero derivative Neumann condition,
@@ -752,8 +766,8 @@ public:
     void doQEDEvents (int lev);
 #endif
 
-    void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full, bool skip_current=false);
-    void PushParticlesandDepose (         amrex::Real cur_time, bool skip_current=false);
+    void PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full, bool skip_current=false);
+    void PushParticlesandDeposit (amrex::Real cur_time, bool skip_current=false);
 
     // This function does aux(lev) = fp(lev) + I(aux(lev-1)-cp(lev)).
     // Caller must make sure fp and cp have ghost cells filled.
@@ -1613,7 +1627,7 @@ private:
     std::string restart_chkfile;
 
     /** When `true`, write the diagnostics after restart at the time of the restart. */
-    bool write_diagonstics_on_restart = false;
+    bool write_diagnostics_on_restart = false;
 
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;

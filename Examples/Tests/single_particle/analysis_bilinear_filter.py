@@ -42,7 +42,7 @@ while my_order[1]>1:
     my_order[1] -= 1
 my_filter = my_filterx[:,None]*my_filtery
 
-# Apply filter. my_F_filetered is the theoretical value for filtered field
+# Apply filter. my_F_filtered is the theoretical value for filtered field
 my_F_filtered = signal.convolve2d(my_F_nofilter, my_filter, boundary='symm', mode='same')
 
 # Get simulation result for F_filtered

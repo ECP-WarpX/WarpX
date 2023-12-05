@@ -8,6 +8,7 @@ This section collects typical user workflows and best practices for WarpX.
 .. toctree::
    :maxdepth: 2
 
+   workflows/domain_decomposition
    workflows/debugging
    workflows/libensemble
    workflows/plot_timestep_duration

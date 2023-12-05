@@ -23,11 +23,20 @@ class Bucket(object):
         object.__setattr__(self, name, value)
 
     def add_new_attr(self, name, value):
-        """Names starting with "_" are make instance attributes.
+        """Names starting with "_" are made instance attributes.
         Otherwise the attribute is added to the args list.
         """
         if name.startswith('_'):
             self._localsetattr(name, value)
+        else:
+            self.argvattrs[name] = value
+
+    def add_new_group_attr(self, group, name, value):
+        """The attribute is added to the args list in the form "group.name" if
+        group is not an empty string, otherwise as only "name".
+        """
+        if group:
+            self.argvattrs[f'{group}.{name}'] = value
         else:
             self.argvattrs[name] = value
 

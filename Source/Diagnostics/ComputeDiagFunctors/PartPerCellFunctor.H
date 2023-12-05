@@ -8,8 +8,7 @@
 /**
  * \brief Functor to cell-center MF and store result in mf_out.
  */
-class
-PartPerCellFunctor final : public ComputeDiagFunctor
+class PartPerCellFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor.
