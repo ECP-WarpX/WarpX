@@ -21,7 +21,7 @@
 
 /**
  * This struct contains only static functions to initialize the stencil coefficients
- * and to compute finite-difference derivatives for the Cylindrial Yee algorithm.
+ * and to compute finite-difference derivatives for the Cylindrical Yee algorithm.
  */
 struct CylindricalYeeAlgorithm {
 
