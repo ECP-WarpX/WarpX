@@ -23,10 +23,6 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 
                TODO: This input file should be created following the ``inputs_3d`` file.
 
-            .. literalinclude:: PICMI_inputs_3d.py
-               :language: python3
-               :caption: You can copy this file from ``usage/examples/lwfa/PICMI_inputs_3d.py``.
-
          .. tab-item:: Executable: Input File
 
             This example can be run **either** as WarpX **executable** using an input file: ``warpx.3d inputs_3d``
@@ -44,10 +40,6 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
             .. note::
 
                TODO: This input file should be created following the ``inputs_2d`` file.
-
-            .. literalinclude:: PICMI_inputs_2d.py
-               :language: python3
-               :caption: You can copy this file from ``usage/examples/lwfa/PICMI_inputs_2d.py``.
 
          .. tab-item:: Executable: Input File
 

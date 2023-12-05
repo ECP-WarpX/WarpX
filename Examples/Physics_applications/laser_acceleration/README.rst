@@ -68,14 +68,6 @@ Analyze
 
    This section is TODO.
 
-We run the following script to analyze correctness:
-
-.. dropdown:: Script ``analysis_3d.py``
-
-   .. literalinclude:: analysis_3d.py
-      :language: python3
-      :caption: You can copy this file from ``Examples/Physics_applications/laser_acceleration/analysis_3d.py``.
-
 
 Visualize
 ---------

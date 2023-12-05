@@ -36,13 +36,13 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 
          TODO: This input file should use the boosted frame method, like the ``inputs_3d_boost`` file.
 
-      .. literalinclude:: PICMI_inputs_3d.py
+      .. literalinclude:: PICMI_inputs_plasma_acceleration.py
          :language: python3
          :caption: You can copy this file from ``Examples/Physics_applications/plasma_acceleration/PICMI_inputs_plasma_acceleration.py``.
 
    .. tab-item:: Executable: Input File
 
-      .. literalinclude:: inputs_3d
+      .. literalinclude:: inputs_3d_boost
          :language: ini
          :caption: You can copy this file from ``Examples/Physics_applications/plasma_acceleration/inputs_3d_boost``.
 
@@ -52,14 +52,6 @@ Analyze
 .. note::
 
    This section is TODO.
-
-We run the following script to analyze correctness:
-
-.. dropdown:: Script ``analysis_3d.py``
-
-   .. literalinclude:: analysis_3d.py
-      :language: python3
-      :caption: You can copy this file from ``Examples/Physics_applications/plasma_acceleration/analysis_3d.py``.
 
 
 Visualize

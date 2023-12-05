@@ -23,6 +23,7 @@ Plasma-Based Acceleration
 
    examples/lwfa/README.rst
    examples/pwfa/README.rst
+   pwfa.rst
 
 Coming soon:
 

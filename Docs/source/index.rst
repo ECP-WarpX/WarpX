@@ -79,7 +79,6 @@ Usage
    usage/parameters
    usage/python
    usage/examples
-   usage/pwfa
    usage/workflows
    usage/faq
 

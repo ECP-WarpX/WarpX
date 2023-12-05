@@ -29,11 +29,7 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 
       .. note::
 
-         TODO: This input file should be created, like the ``inputs`` file.
-
-      .. literalinclude:: PICMI_plasma_mirror_2d.py
-         :language: python3
-         :caption: You can copy this file from ``Examples/Physics_applications/plasma_mirror/PICMI_plasma_mirror_2d.py``.
+         TODO: This input file should be created following the ``inputs_2d`` file.
 
    .. tab-item:: Executable: Input File
 
