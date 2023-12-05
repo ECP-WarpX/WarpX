@@ -1,5 +1,6 @@
 #include "Laser/LaserProfiles.H"
 #include "WarpX.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 
 #include <AMReX_VisMF.H>
@@ -58,9 +59,9 @@ void StationFieldLaserProfile::update (amrex::Real t)
             amrex::VisMF::Read(mf, m_station_file+"/Level_0/buffer-"
                                +std::to_string(m_ibuffer));
 
-            amrex::Print() << "xxxxx LaserProfileStationField: reading "
-                           << m_station_file+"/Level_0/buffer-"+std::to_string(m_ibuffer)
-                           << "\n";
+            std::string msg("LaserProfileStationField: reading ");
+            msg.append(m_station_file).append("/Level_0/buffer-").append(std::to_string(m_ibuffer));
+            amrex::Print() << Utils::TextMsg::Info(msg);
 
             m_station_mf = std::make_unique<amrex::MultiFab>
                 (mf.boxArray(), mf.DistributionMap(), 1, 0);
@@ -88,7 +89,7 @@ void StationFieldLaserProfile::update (amrex::Real t)
             m_station_mf.reset();
             m_slice_fab.reset();
 
-            amrex::Print() << "xxxxx LaserProfileStationField: no more data\n";
+            amrex::Print() << Utils::TextMsg::Info("LaserProfileStationField: no more data");
 
             return;
         }

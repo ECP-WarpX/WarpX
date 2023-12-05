@@ -22,7 +22,7 @@ amrex::Real interp_to_slice (int i, int j,
     Real const w = z - Real(iz);
 #if (AMREX_SPACEDIM == 1)
     amrex::ignore_unused(i,j);
-    amrex::Abort("xxxxx todo");
+    amrex::Abort("interp_to_slice: 1D not supported");
     return 0;
 #elif (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(j);
@@ -33,8 +33,20 @@ amrex::Real interp_to_slice (int i, int j,
                           src(i  ,iz,0)*(Real(1.0)-w) + src(i  ,iz+1,0)*w);
     }
 #else
-    amrex::Abort("xxxxx todo");
-    return 0;
+    if (type.nodeCentered(0) && type.nodeCentered(1)) {
+        return src(i,j,iz)*(Real(1.0)-w) + src(i,j,iz+1)*w;
+    } else if (type.nodeCentered(0)) {
+        return Real(0.5)*((src(i,j-1,iz  )+src(i,j,iz  ))*(Real(1.0)-w) +
+                          (src(i,j-1,iz+1)+src(i,j,iz+1))*           w);
+    } else if (type.nodeCentered(1)) {
+        return Real(0.5)*((src(i-1,j,iz  )+src(i,j,iz  ))*(Real(1.0)-w) +
+                          (src(i-1,j,iz+1)+src(i,j,iz+1))*           w);
+    } else {
+        return Real(0.25)*((src(i-1,j-1,iz  )+src(i,j-1,iz  ) +
+                            src(i-1,j  ,iz  )+src(i,j  ,iz  ))*(Real(1.0)-w) +
+                           (src(i-1,j-1,iz+1)+src(i,j-1,iz+1) +
+                            src(i-1,j  ,iz+1)+src(i,j  ,iz+1))*           w);
+    }
 #endif
 }
 
@@ -67,6 +79,8 @@ RecordingPlaneFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, con
 
     amrex::Vector<int> slice_to_full_ba_map;
     std::unique_ptr<amrex::MultiFab> slice = AllocateSlice(slice_to_full_ba_map, slice_k);
+    // slice is cell-centered in z-direction and nodal in others. There is
+    // only one cell in the z-direction.
 
     for (auto& smf : m_arr_mf_src) {
         AMREX_ALWAYS_ASSERT(smf->nGrowVect().allGE(amrex::IntVect(1)));
@@ -117,11 +131,7 @@ RecordingPlaneFunctor::PrepareFunctorData (int i_station, bool slice_in_domain, 
     amrex::ignore_unused(i_station, slice_in_domain, zlocation, buffer_full);
     m_buffer_box = buffer_box;
     m_k_index = k_index;
-    if (slice_in_domain == true) {
-        m_slice_in_domain = 1;
-    } else {
-        m_slice_in_domain = 0;
-    }
+    m_slice_in_domain = slice_in_domain;
 }
 
 std::unique_ptr<amrex::MultiFab>
