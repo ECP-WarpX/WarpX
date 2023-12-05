@@ -58,7 +58,7 @@ public:
      * The data is then lorentz-transformed in-place using LorenzTransformZ ().
      * The user-requested fields are then copied to mf_dst.
      *
-     * \param[out] mf_dst output MuliFab where the back-transformed data is written
+     * \param[out] mf_dst output MultiFab where the back-transformed data is written
      * \param[in] dcomp first component of mf_dst in which the back-transformed
      *            lab-frame data for the user-request fields is written.
      * \param[in] i_buffer buffer index for which the data is transformed.

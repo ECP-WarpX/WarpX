@@ -7,7 +7,7 @@
 
 import os
 # This script modifies `WarpX-test.ini` (which is used for nightly builds)
-# and creates the file `ci-test.ini` (which is used for continous
+# and creates the file `ci-test.ini` (which is used for continuous
 # integration)
 # The subtests that are selected are controlled by WARPX_TEST_DIM
 # The architecture (CPU/GPU) is selected by WARPX_TEST_ARCH

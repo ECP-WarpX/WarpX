@@ -52,7 +52,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
     tmpSpectralField = SpectralField(spectralspace_ba, dm, n_rz_azimuthal_modes, 0);
 
     // By default, we assume the z FFT is done from/to a nodal grid in real space.
-    // It the FFT is performed from/to a cell-centered grid in real space,
+    // If the FFT is performed from/to a cell-centered grid in real space,
     // a correcting "shift" factor must be applied in spectral space.
     zshift_FFTfromCell = k_space.getSpectralShiftFactor(dm, 1,
                                     ShiftType::TransformFromCellCentered);
