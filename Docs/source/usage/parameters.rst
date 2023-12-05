@@ -1,7 +1,11 @@
 .. _running-cpp-parameters:
 
-Input Parameters
-================
+Parameters: Inputs File
+=======================
+
+This documents on how to use WarpX with an inputs file (e.g., ``warpx.3d input_3d``).
+
+Complete example input files can be found in :ref:`the examples section <usage-examples>`.
 
 .. note::
 
@@ -1084,11 +1088,12 @@ Particle initialization
     the above mentioned function.
 
     .. note::
-        When accessing the data via Python, the scraped particle buffer relies on the user
-        to clear the buffer after processing the data. The
-        buffer will grow unbounded as particles are scraped and therefore could
-        lead to memory issues if not periodically cleared. To clear the buffer
-        call ``warpx_clearParticleBoundaryBuffer()``.
+
+       When accessing the data via Python, the scraped particle buffer relies on the user
+       to clear the buffer after processing the data. The
+       buffer will grow unbounded as particles are scraped and therefore could
+       lead to memory issues if not periodically cleared. To clear the buffer
+       call ``clear_buffer()``.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
