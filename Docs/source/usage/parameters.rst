@@ -1,7 +1,11 @@
 .. _running-cpp-parameters:
 
-Input Parameters
-================
+Parameters: Inputs File
+=======================
+
+This documents on how to use WarpX with an inputs file (e.g., ``warpx.3d input_3d``).
+
+Complete example input files can be found in :ref:`the examples section <usage-examples>`.
 
 .. note::
 
@@ -1084,11 +1088,12 @@ Particle initialization
     the above mentioned function.
 
     .. note::
-        When accessing the data via Python, the scraped particle buffer relies on the user
-        to clear the buffer after processing the data. The
-        buffer will grow unbounded as particles are scraped and therefore could
-        lead to memory issues if not periodically cleared. To clear the buffer
-        call ``warpx_clearParticleBoundaryBuffer()``.
+
+       When accessing the data via Python, the scraped particle buffer relies on the user
+       to clear the buffer after processing the data. The
+       buffer will grow unbounded as particles are scraped and therefore could
+       lead to memory issues if not periodically cleared. To clear the buffer
+       call ``clear_buffer()``.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
@@ -1303,14 +1308,16 @@ Laser initialization
       ``<laser_name>.e_max`` (i.e. in most cases the maximum of abs(E(x,y,t)) should be 1,
       so that the maximum field intensity can be set straightforwardly with ``<laser_name>.e_max``).
       The binary file has to respect the following format:
-        * flag to indicate the grid is uniform(1 byte, 0 means non-uniform, !=0 means uniform) - only uniform is supported
-        * nt, number of timesteps (uint32_t, must be >=2)
-        * nx, number of points along x (uint32_t, must be >=2)
-        * ny, number of points along y (uint32_t, must be 1 for 2D simulations and >=2 for 3D simulations)
-        * timesteps (double[2]=[t_min,t_max])
-        * x_coords (double[2]=[x_min,x_max])
-        * y_coords (double[1] in 2D, double[2]=[y_min,y_max] in 3D)
-        * field_data (double[nt * nx * ny], with nt being the slowest coordinate).
+
+      * ``flag`` to indicate the grid is uniform (1 byte, 0 means non-uniform, !=0 means uniform) - only uniform is supported
+      * ``nt``, number of timesteps (``uint32_t``, must be >=2)
+      * ``nx``, number of points along x (``uint32_t``, must be >=2)
+      * ``ny``, number of points along y (``uint32_t``, must be 1 for 2D simulations and >=2 for 3D simulations)
+      * ``timesteps`` (``double[2]=[t_min,t_max]``)
+      * ``x_coords`` (``double[2]=[x_min,x_max]``)
+      * ``y_coords`` (``double[1]`` in 2D, ``double[2]=[y_min,y_max]`` in 3D)
+      * ``field_data`` (``double[nt x nx * ny]``, with ``nt`` being the slowest coordinate).
+
       A binary file can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file``
 
 * ``<laser_name>.profile_t_peak`` (`float`; in seconds)
@@ -1724,7 +1731,7 @@ WarpX provides several particle collision models, using varying degrees of appro
     See `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`__
     for more details. The default value of ``fusion_multiplier`` is 1.
 
-* ``<collision_name>.fusion_probability_threshold``(`float`) optional.
+* ``<collision_name>.fusion_probability_threshold`` (`float`) optional.
     Only for ``nuclearfusion``.
     If the fusion multiplier is too high and results in a fusion probability
     that approaches 1 (for a given collision between two macroparticles), then
@@ -2262,8 +2269,8 @@ Additional parameters
     ``idx_type = {0, 0, 0}``: Sort particles to a cell centered grid
     ``idx_type = {1, 1, 1}``: Sort particles to a node centered grid
     ``idx_type = {2, 2, 2}``: Compromise between a cell and node centered grid.
-     In 2D (XZ and RZ), only the first two elements are read.
-     In 1D, only the first element is read.
+    In 2D (XZ and RZ), only the first two elements are read.
+    In 1D, only the first element is read.
 
 * ``warpx.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
      If ``sort_intervals`` is activated and ``sort_particles_for_deposition`` is ``false``, particles are sorted in bins of ``sort_bin_size`` cells.

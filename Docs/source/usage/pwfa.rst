@@ -1,3 +1,5 @@
+.. _examples-pwfa-boost:
+
 In-Depth: PWFA
 ==============
 
