@@ -302,7 +302,7 @@ RecordingPlaneDiagnostics::PrepareParticleDataForOutput ()
     }
     for (int isp = 0; isp < m_all_particle_functors.size(); ++isp)
     {
-        m_all_particle_functors[isp]->PrepareFunctorData(0, GetZSliceInDomain(0), m_station_loc);
+        m_all_particle_functors[isp]->PrepareFunctorData(0, GetZSliceInDomain(0), m_station_loc, 0._rt, 0._rt, 0._rt);
     }
 }
 
