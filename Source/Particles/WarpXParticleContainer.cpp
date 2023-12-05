@@ -1055,6 +1055,40 @@ WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
     }
 #endif
 }
+void WarpXParticleContainer::keepoldmomentum
+    (std::unique_ptr<WarpXParticleContainer>& pc){
+        const auto level0=0;
+         for (WarpXParIter pti(*pc, level0); pti.isValid(); ++pti) {
+                    auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
+                    auto& part=pc->GetParticles(level0)[index];
+                    long const np = pti.numParticles();
+                    auto& soa = part.GetStructOfArrays();
+
+                    //Load the momentums
+                    amrex::ParticleReal* ux = soa.GetRealData(PIdx::ux).data();
+                    amrex::ParticleReal* uy = soa.GetRealData(PIdx::ux).data();
+                    amrex::ParticleReal* uz = soa.GetRealData(PIdx::ux).data();
+
+                    //Finding the good attribute index
+                    int index_name_x=pc->GetRealCompIndex("prev_u_x");
+                    int index_name_y=pc->GetRealCompIndex("prev_u_y");
+                    int index_name_z=pc->GetRealCompIndex("prev_u_z");
+
+                    auto* p_ux = soa.GetRealData(index_name_x).data();
+                    auto* p_uy = soa.GetRealData(index_name_y).data();
+                    auto* p_uz = soa.GetRealData(index_name_z).data();
+
+                    amrex::ParallelFor(np,
+                 [=] AMREX_GPU_DEVICE(int ip)
+                 {
+                    //Putting them in an attribute
+                    p_ux[ip] = ux[ip];
+                    p_uy[ip] = ux[ip];
+                    p_uz[ip] = ux[ip];
+
+        });
+        }
+    }    
 
 std::unique_ptr<MultiFab>
 WarpXParticleContainer::GetChargeDensity (int lev, bool local)

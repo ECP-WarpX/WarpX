@@ -33,7 +33,6 @@ public:
     //void doRadiation (amrex::Real dt, MultiParticleContainer* mypc);    
     void add_radiation_contribution(const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc);
     void add_detector(amrex::IntVect m_det_pts, amrex::IntVect m_omega_rg, amrex::Vector<amrex::Real> m_d_det, int m_omega_pts, double m_d_distance, amrex::IntVect m_d_direction, amrex::Vector<amrex::Real> m_th_rg);
-    void keepoldmomentum(std::unique_ptr<WarpXParticleContainer>& pc);
 
 private:
 

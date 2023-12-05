@@ -404,7 +404,7 @@ MultiParticleContainer::ReadParameters ()
         initialized = true;
     }
 
-
+//Initialization of the radiation
     for (auto& s : allcontainers) {
 
         if (s->has_radiation()) {
@@ -983,32 +983,26 @@ void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::M
     amrex::ignore_unused(distance_to_eb);
 #endif
 }
-void MultiParticleContainer::initradiation ()
-{
-    m_nspecies_radiate = 0;
 
-    for (auto& pc : allcontainers) {
-        if(pc->has_radiation()){
-            m_at_least_one_particle_radiate = 1;
-            m_nspecies_radiate++;
-        }
-    }
-
-}
-
-void
-MultiParticleContainer::doRadiation (const amrex::Real dt)
-{   if (m_at_least_one_has_radiation){
+void MultiParticleContainer::doRadiation (const amrex::Real dt)
+{   
+    if (m_at_least_one_has_radiation){
     for (auto& pc : allcontainers) {
         if (pc->has_radiation()){
-            m_p_radiation_handler->add_radiation_contribution(dt,pc);
+            //m_p_radiation_handler->add_radiation_contribution(dt,pc);
 
             }
         }
     }
 }
-
 #ifdef WARPX_QED
+void MultiParticleContainer::keepoldmomentum(){
+    for (auto& pc : allcontainers) {
+        if (pc->has_radiation()){
+            pc->keepoldmomentum();
+        }
+    }
+}
 void MultiParticleContainer::InitQED ()
 {
     m_shr_p_qs_engine = std::make_shared<QuantumSynchrotronEngine>();

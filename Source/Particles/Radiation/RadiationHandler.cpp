@@ -127,22 +127,3 @@ void RadiationHandler::add_detector
     m_d_omega=m_omega_rg[1]-m_omega_rg[0]/static_cast<double>(m_omega_pts);
     }
 }
-
-void RadiationHandler::keepoldmomentum
-    (std::unique_ptr<WarpXParticleContainer>& pc){
-        const auto level0=0;
-         for (WarpXParIter pti(*pc, level0); pti.isValid(); ++pti) {
-                    auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
-                    auto& part=pc->GetParticles(level0)[index];
-                    long const np = pti.numParticles();
-                    auto& soa = part.GetStructOfArrays();
-                    amrex::ParticleReal* ux = soa.GetRealData(PIdx::ux).data();
-                    int index_name=pc->GetRealCompIndex("prev_u_x");
-                    auto& p_ux = soa.GetRealData(index_name);
-                    amrex::ParallelFor(np,
-                 [=] AMREX_GPU_DEVICE(int ip)
-                 {
-                    p_ux[ip] = ux[ip];
-        });
-        }
-    }       

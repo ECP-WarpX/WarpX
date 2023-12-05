@@ -217,6 +217,9 @@ public:
                         bool apply_boundary_and_scale_volume = false,
                         int icomp = 0);
 
+    //Keep old momentum for particles
+    void keepoldmomentum (std::unique_ptr<WarpXParticleContainer>& pc);
+
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
     virtual void DepositCharge (WarpXParIter& pti,

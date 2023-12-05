@@ -282,7 +282,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     //check if Radiations are enables for species and add previous momentum attribute
     pp_species_name.query("do_radiation", m_do_radiation);
     if (m_do_radiation){
-        //enable the radiations in the evolve looop
+        //enable the radiations in the evolve loop
         AddRealComp("prev_u_x");
         AddRealComp("prev_u_y");
         AddRealComp("prev_u_z");

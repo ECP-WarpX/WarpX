@@ -332,7 +332,7 @@ public:
 
     void doRadiation(amrex::Real dt);
 
-    void initradiation();
+    void keepoldmomentum();
 
     int getSpeciesID (std::string product_str) const;
 
