@@ -26,7 +26,7 @@ from functions_perftest import *
 # > --architecture=knl --mode=run --input_file=uniform_plasma
 # > --n_node=1 --log_file='my_performance_log.txt'
 
-# ---- Running the pre-drefined automated tests ----
+# ---- Running the pre-defined automated tests ----
 # Compile and run:
 # > python run_alltests_1node.py --automated --recompile
 # Just run:

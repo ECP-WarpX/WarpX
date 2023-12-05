@@ -155,7 +155,7 @@ Overall simulation parameters
     This only applies when warpx.do_electrostatic = labframe.
 
 * ``warpx.self_fields_verbosity`` (`integer`, default: 2)
-    The vebosity used for MLMG solver for space-charge fields calculation. Currently
+    The verbosity used for MLMG solver for space-charge fields calculation. Currently
     MLMG solver looks for verbosity levels from 0-5. A higher number results in more
     verbose output.
 
@@ -369,7 +369,7 @@ Domain Boundary Conditions
 
     * ``Absorbing``: Particles leaving the boundary will be deleted.
 
-    * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+    * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistently set to periodic and both lower and upper boundaries must be periodic.
 
     * ``Reflecting``: Particles leaving the boundary are reflected from the boundary back into the domain.
       When ``boundary.reflect_all_velocities`` is false, the sign of only the normal velocity is changed, otherwise the sign of all velocities are changed.
@@ -861,7 +861,7 @@ Particle initialization
       ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
       momenta in the x, y and z direction respectively, which are all ``0.`` by default.
 
-    * ``uniform``: uniform probability distribution between a minumum and a maximum value.
+    * ``uniform``: uniform probability distribution between a minimum and a maximum value.
       The x, y and z directions are sampled independently and the final momentum space is a cuboid.
       The parameters that control the minimum and maximum domain of the distribution
       are ``<species_name>.u<x,y,z>_min`` and ``<species_name>.u<x,y,z>_max`` in each
@@ -1190,7 +1190,7 @@ Cold Relativistic Fluid initialization
 * ``fluids.species_names`` (`strings`, separated by spaces)
     Defines the names of each fluid species. It is a required input to create and evolve fluid species using the cold relativistic fluid equations.
     Most of the parameters described in the section "Particle initialization" can also be used to initialize fluid properties (e.g. initial density distribution).
-    For fluid-specific inputs we use `<fluid_pecies_name>` as a placeholder. Also see external fields
+    For fluid-specific inputs we use `<fluid_species_name>` as a placeholder. Also see external fields
     for how to specify these for fluids as the function names differ.
 
 .. _running-cpp-parameters-laser:
@@ -1726,7 +1726,7 @@ WarpX provides several particle collision models, using varying degrees of appro
     total number of physical particle remains the same). This can improve
     the statistics of the simulation, in the case where fusion reactions are very rare.
     More specifically, in a fusion reaction between two macroparticles with weight ``w_1`` and ``w_2``,
-    the weight of the product macroparticles will be ``min(w_1,w_2)/fusion_multipler``.
+    the weight of the product macroparticles will be ``min(w_1,w_2)/fusion_multiplier``.
     (And the weights of the reactant macroparticles are reduced correspondingly after the reaction.)
     See `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`__
     for more details. The default value of ``fusion_multiplier`` is 1.
@@ -2299,7 +2299,7 @@ Additional parameters
 
 * ``warpx.shared_tilesize`` (list of `int`) optional (default `6 6 8` in 3D; `14 14` in 2D; `1s` otherwise)
      Used to tune performance when ``do_shared_mem_current_deposition`` or
-     ``do_shared_mem_charge_depostion`` is enabled. ``shared_tilesize`` is the
+     ``do_shared_mem_charge_deposition`` is enabled. ``shared_tilesize`` is the
      size of the temporary buffer allocated in shared memory for a threadblock.
      A larger tilesize requires more shared memory, but gives more work to each
      threadblock, which can lead to higher occupancy, and allows for more

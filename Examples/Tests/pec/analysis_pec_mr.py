@@ -7,7 +7,7 @@
 # License: BSD-3-Clause-LBNL
 #
 # This is a script that analyses the simulation results from
-# the script `inputs_field_PEC_mr_3d`. This simulates a sinusoindal wave.
+# the script `inputs_field_PEC_mr_3d`. This simulates a sinusoidal wave.
 # The electric field (Ey) is a standing wave due to the PEC boundary condition,
 # and as a result, the minimum and maximum value after reflection would be two times the value at initialization due to constructive interference.
 # Additionally, the value of Ey at the boundary must be equal to zero.

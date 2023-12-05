@@ -147,7 +147,7 @@ using namespace amrex;
                                 amrex::GpuArray<int, 3> const& fbndry_lo,
                                 amrex::GpuArray<int, 3> const& fbndry_hi )
     {
-        // Tangential Efield componentes in guard cells set equal and opposite to cells
+        // Tangential Efield components in guard cells set equal and opposite to cells
         // in the mirror locations across the PEC boundary, whereas normal E-field
         // components are set equal to values in the mirror locations across the PEC
         // boundary. Here we just initialize it.

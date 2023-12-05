@@ -157,7 +157,7 @@ struct GeometryFilter
     GeometryFilter(bool a_is_active, amrex::RealBox a_domain)
         : m_is_active(a_is_active), m_domain(a_domain) {}
     /**
-     * \brief return 1 if the partcile is within the region described by the RealBox
+     * \brief return 1 if the particle is within the region described by the RealBox
      * \param p one particle
      * \return whether or not the particle is inside the region defined by m_domain
      */

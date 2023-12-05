@@ -25,7 +25,7 @@
 /**
  * Photon particles have no mass, they deposit no charge, and see specific QED
  * effects. For these reasons, they are stored in the separate particle
- * container PhotonParticleContainer, that inherts from
+ * container PhotonParticleContainer, that inherits from
  * PhysicalParticleContainer. The particle pusher and current deposition, in
  * particular, are overriden in this container.
  */
