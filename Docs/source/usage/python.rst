@@ -252,13 +252,13 @@ An important object is ``Simulation.extension.warpx``, which is available during
 This object is the Python equivalent to the central ``WarpX`` simulation class and provides access to
 field ``MultiFab`` and ``ParticleContainer`` data.
 
-.. function:: pywarpx.picmi.Simulation.extension.warpx.getistep
+.. py:function:: pywarpx.picmi.Simulation.extension.warpx.getistep()
 
-.. function:: pywarpx.picmi.Simulation.extension.warpx.gett_new
+.. py:function:: pywarpx.picmi.Simulation.extension.warpx.gett_new()
 
-.. function:: pywarpx.picmi.Simulation.extension.warpx.evolve
+.. py:function:: pywarpx.picmi.Simulation.extension.warpx.evolve()
 
-.. autofunction:: pywarpx.picmi.Simulation.extension.finalize
+.. autofunction:: pywarpx.picmi.Simulation.extension.finalize()
 
 These and other classes are provided through `pyAMReX <https://github.com/AMReX-Codes/pyamrex>`__.
 After the simulation is initialized, pyAMReX can be accessed via
@@ -274,13 +274,13 @@ After the simulation is initialized, pyAMReX can be accessed via
    # for a 3D simulation
    amr = libwarpx.amr  # picks the right 1d, 2d or 3d variant
 
-.. function:: amr.ParallelDescriptor.NProcs()
+.. py:function:: amr.ParallelDescriptor.NProcs()
 
-.. function:: amr.ParallelDescriptor.MyProc()
+.. py:function:: amr.ParallelDescriptor.MyProc()
 
-.. function:: amr.ParallelDescriptor.IOProcessor()
+.. py:function:: amr.ParallelDescriptor.IOProcessor()
 
-.. function:: amr.ParallelDescriptor.IOProcessorNumber()
+.. py:function:: amr.ParallelDescriptor.IOProcessorNumber()
 
 Particles can be added to the simulation at specific positions and with specific
 attribute values:
@@ -333,7 +333,7 @@ with scraped particle data.
 
 The embedded boundary conditions can be modified when using the electrostatic solver.
 
-.. function:: pywarpx.picmi.Simulation.extension.warpx.set_potential_on_eb
+.. py:function:: pywarpx.picmi.Simulation.extension.warpx.set_potential_on_eb()
 
 Using Python Input as a Preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
