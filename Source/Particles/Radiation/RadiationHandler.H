@@ -9,7 +9,6 @@
 #ifndef WARPX_PARTICLES_RADIATION_H_
 #define WARPX_PARTICLES_RADIATION_H_
 #include "Utils/Math/Complex.H"
-#include "Particles/WarpXParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 
 

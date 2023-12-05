@@ -332,6 +332,8 @@ public:
 
     void doRadiation(amrex::Real dt);
 
+    void initradiation();
+
     int getSpeciesID (std::string product_str) const;
 
 protected:
@@ -481,6 +483,12 @@ protected:
     amrex::Real m_qed_schwinger_ymax = std::numeric_limits<amrex::Real>::max();
     amrex::Real m_qed_schwinger_zmin = std::numeric_limits<amrex::Real>::lowest();
     amrex::Real m_qed_schwinger_zmax = std::numeric_limits<amrex::Real>::max();
+
+    /**
+     * For Radiation module 
+     */
+    bool m_at_least_one_particle_radiate = 0;
+    int m_nspecies_radiate;
 
 #endif
 

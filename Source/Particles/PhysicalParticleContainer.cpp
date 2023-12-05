@@ -283,8 +283,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_radiation", m_do_radiation);
     if (m_do_radiation){
         //enable the radiations in the evolve looop
-        WarpX::m_do_radiation_flag = 1;
-
         AddRealComp("prev_u_x");
         AddRealComp("prev_u_y");
         AddRealComp("prev_u_z");

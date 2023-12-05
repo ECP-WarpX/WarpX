@@ -424,16 +424,17 @@ WarpX::OneStep_nosub (Real cur_time)
 
     ExecutePythonCallback("particlescraper");
     ExecutePythonCallback("beforedeposition");
+    if (m_do_radiation_flag){
+    //Save particle old momentum in a attribute
+    //mypc->RadiationHandler::keepoldmomentum();
+    }
 
     PushParticlesandDepose(cur_time);
 
     //Radiation contribution at each timestep
-    if (m_do_radiation_flag){
-    //Save particle old momentum in a attribute
-    //mypc->RadiationHandler::keepoldmomentum();
    //Only level 0 is supported 
     mypc->doRadiation(dt[0]);
-    }
+    
 
 
 

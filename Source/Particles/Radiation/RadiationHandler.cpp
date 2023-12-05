@@ -136,6 +136,13 @@ void RadiationHandler::keepoldmomentum
                     auto& part=pc->GetParticles(level0)[index];
                     long const np = pti.numParticles();
                     auto& soa = part.GetStructOfArrays();
-                    const amrex::ParticleReal* const AMREX_RESTRICT ux = soa.GetRealData(PIdx::ux).data();
-                    pc->particle_runtime_comps["prev_u_x"];
-}
+                    amrex::ParticleReal* ux = soa.GetRealData(PIdx::ux).data();
+                    int index_name=pc->GetRealCompIndex("prev_u_x");
+                    auto& p_ux = soa.GetRealData(index_name);
+                    amrex::ParallelFor(np,
+                 [=] AMREX_GPU_DEVICE(int ip)
+                 {
+                    p_ux[ip] = ux[ip];
+        });
+        }
+    }       

@@ -983,14 +983,27 @@ void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::M
     amrex::ignore_unused(distance_to_eb);
 #endif
 }
+void MultiParticleContainer::initradiation ()
+{
+    m_nspecies_radiate = 0;
+
+    for (auto& pc : allcontainers) {
+        if(pc->has_radiation()){
+            m_at_least_one_particle_radiate = 1;
+            m_nspecies_radiate++;
+        }
+    }
+
+}
 
 void
 MultiParticleContainer::doRadiation (const amrex::Real dt)
-{
+{   if (m_at_least_one_has_radiation){
     for (auto& pc : allcontainers) {
         if (pc->has_radiation()){
             m_p_radiation_handler->add_radiation_contribution(dt,pc);
 
+            }
         }
     }
 }
