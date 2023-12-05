@@ -132,7 +132,7 @@ void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
     // pcurrent is the particle current in the deposited direction
 #if defined(WARPX_DIM_RZ)
     // In RZ, wqx is actually wqr, and wqy is wqtheta
-    // Convert to cylinderical at the mid point
+    // Convert to cylindrical at the mid point
     const amrex::Real xpmid = xp + relative_time*vx;
     const amrex::Real ypmid = yp + relative_time*vy;
     const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
