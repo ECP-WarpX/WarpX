@@ -129,7 +129,6 @@ namespace {
     // The atomic mass data below is from these NIST pages
     // https://physics.nist.gov/cgi-bin/Compositions/stand_alone.pl?ele=&ascii=ascii2&isotype=some
     // https://physics.nist.gov/cgi-bin/cuu/Value?malu
-
     const
     std::map<PhysicalSpecies,Properties> species_to_properties
     {
