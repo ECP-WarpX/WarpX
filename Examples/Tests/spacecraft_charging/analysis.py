@@ -1,9 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
 from scipy.optimize import curve_fit
-
-
 
 ts = OpenPMDTimeSeries('../../../../warpx/Examples/Physics_applications/spacecraft_charging/diags/diag1/')
 dt = 1.27e-8
@@ -21,7 +19,7 @@ for i in it:
 
 def func(x, v0, tau):
 
-    return v0 * (1-np.exp(-np.array(x) / tau)) 
+    return v0 * (1-np.exp(-np.array(x) / tau))
 
 
 
@@ -50,9 +48,4 @@ diff_tau=np.abs((popt[1]-moy_tau)/moy_tau)
 print("pourcentage error for v0 = "+ str(diff_v0 *100) + '%')
 print("pourcentage error for tau = "+ str(diff_tau*100) + '%')
 
-assert (diff_v0 < tolerance_v0) and (diff_tau < tolerance_tau), 'Test spacecraft_charging did not pass' 
-
-
-
-
-
+assert (diff_v0 < tolerance_v0) and (diff_tau < tolerance_tau), 'Test spacecraft_charging did not pass'
