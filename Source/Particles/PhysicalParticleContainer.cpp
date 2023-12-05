@@ -1723,6 +1723,9 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                     const int i = static_cast<int>((xp - xmin)*dxi);
                     const int j = static_cast<int>((yp - ymin)*dyi);
                     const int k = static_cast<int>((zp - zmin)*dzi);
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                    const int i = static_cast<int>((xp - xmin)*dxi);
+                    const int j = static_cast<int>((zp - zmin)*dzi);
 #elif defined(WARPX_DIM_1D_Z)
                     const int i = static_cast<int>((zp - zmin)*dzi);
 #endif
