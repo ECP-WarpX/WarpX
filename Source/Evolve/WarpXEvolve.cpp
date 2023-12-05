@@ -188,7 +188,7 @@ WarpX::Evolve (int numsteps)
              electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )
         {
             const bool skip_deposition = true;
-            PushParticlesandDepose(cur_time, skip_deposition);
+            PushParticlesandDeposit(cur_time, skip_deposition);
         }
         // Electromagnetic case: multi-J algorithm
         else if (do_multi_J)
@@ -425,7 +425,7 @@ WarpX::OneStep_nosub (Real cur_time)
     ExecutePythonCallback("particlescraper");
     ExecutePythonCallback("beforedeposition");
 
-    PushParticlesandDepose(cur_time);
+    PushParticlesandDeposit(cur_time);
 
     ExecutePythonCallback("afterdeposition");
 
@@ -597,7 +597,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     const bool skip_deposition = true;
-    PushParticlesandDepose(cur_time, skip_deposition);
+    PushParticlesandDeposit(cur_time, skip_deposition);
 
     // Initialize multi-J loop:
 
@@ -639,29 +639,29 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
     }
 
     // Number of depositions for multi-J scheme
-    const int n_depose = WarpX::do_multi_J_n_depositions;
+    const int n_deposit = WarpX::do_multi_J_n_depositions;
     // Time sub-step for each multi-J deposition
-    const amrex::Real sub_dt = dt[0] / static_cast<amrex::Real>(n_depose);
+    const amrex::Real sub_dt = dt[0] / static_cast<amrex::Real>(n_deposit);
     // Whether to perform multi-J depositions on a time interval that spans
     // one or two full time steps (from n*dt to (n+1)*dt, or from n*dt to (n+2)*dt)
-    const int n_loop = (WarpX::fft_do_time_averaging) ? 2*n_depose : n_depose;
+    const int n_loop = (WarpX::fft_do_time_averaging) ? 2*n_deposit : n_deposit;
 
     // Loop over multi-J depositions
-    for (int i_depose = 0; i_depose < n_loop; i_depose++)
+    for (int i_deposit = 0; i_deposit < n_loop; i_deposit++)
     {
         // Move J from new to old if J is linear in time
         if (J_in_time == JInTime::Linear) PSATDMoveJNewToJOld();
 
-        const amrex::Real t_depose_current = (J_in_time == JInTime::Linear) ?
-            (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5_rt)*sub_dt;
+        const amrex::Real t_deposit_current = (J_in_time == JInTime::Linear) ?
+            (i_deposit-n_deposit+1)*sub_dt : (i_deposit-n_deposit+0.5_rt)*sub_dt;
 
-        const amrex::Real t_depose_charge = (rho_in_time == RhoInTime::Linear) ?
-            (i_depose-n_depose+1)*sub_dt : (i_depose-n_depose+0.5_rt)*sub_dt;
+        const amrex::Real t_deposit_charge = (rho_in_time == RhoInTime::Linear) ?
+            (i_deposit-n_deposit+1)*sub_dt : (i_deposit-n_deposit+0.5_rt)*sub_dt;
 
-        // Deposit new J at relative time t_depose_current with time step dt
+        // Deposit new J at relative time t_deposit_current with time step dt
         // (dt[0] denotes the time step on mesh refinement level 0)
         auto& current = (WarpX::do_current_centering) ? current_fp_nodal : current_fp;
-        mypc->DepositCurrent(current, dt[0], t_depose_current);
+        mypc->DepositCurrent(current, dt[0], t_deposit_current);
         // Synchronize J: filter, exchange boundary, and interpolate across levels.
         // With current centering, the nodal current is deposited in 'current',
         // namely 'current_fp_nodal': SyncCurrent stores the result of its centering
@@ -678,8 +678,8 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
             // Move rho from new to old if rho is linear in time
             if (rho_in_time == RhoInTime::Linear) PSATDMoveRhoNewToRhoOld();
 
-            // Deposit rho at relative time t_depose_charge
-            mypc->DepositCharge(rho_fp, t_depose_charge);
+            // Deposit rho at relative time t_deposit_charge
+            mypc->DepositCharge(rho_fp, t_deposit_charge);
             // Filter, exchange boundary, and interpolate across levels
             SyncRho(rho_fp, rho_cp, charge_buf);
             // Forward FFT of rho
@@ -696,9 +696,9 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
         // Advance E,B,F,G fields in time and update the average fields
         PSATDPushSpectralFields();
 
-        // Transform non-average fields E,B,F,G after n_depose pushes
+        // Transform non-average fields E,B,F,G after n_deposit pushes
         // (the relative time reached here coincides with an integer full time step)
-        if (i_depose == n_depose-1)
+        if (i_deposit == n_deposit-1)
         {
             PSATDBackwardTransformEB(Efield_fp, Bfield_fp, Efield_cp, Bfield_cp);
             if (WarpX::do_dive_cleaning) PSATDBackwardTransformF();
@@ -778,7 +778,7 @@ WarpX::OneStep_sub1 (Real curtime)
     const int coarse_lev = 0;
 
     // i) Push particles and fields on the fine patch (first fine step)
-    PushParticlesandDepose(fine_lev, curtime, DtType::FirstHalf);
+    PushParticlesandDeposit(fine_lev, curtime, DtType::FirstHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
     if (use_filter) ApplyFilterJ(current_fp, fine_lev);
@@ -809,7 +809,7 @@ WarpX::OneStep_sub1 (Real curtime)
     // ii) Push particles on the coarse patch and mother grid.
     // Push the fields on the coarse patch and mother grid
     // by only half a coarse step (first half)
-    PushParticlesandDepose(coarse_lev, curtime, DtType::Full);
+    PushParticlesandDeposit(coarse_lev, curtime, DtType::Full);
     StoreCurrent(coarse_lev);
     AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, current_buf, coarse_lev);
     AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, charge_buf, coarse_lev, 0, ncomps);
@@ -839,7 +839,7 @@ WarpX::OneStep_sub1 (Real curtime)
     FillBoundaryAux(guard_cells.ng_UpdateAux);
 
     // iv) Push particles and fields on the fine patch (second fine step)
-    PushParticlesandDepose(fine_lev, curtime+dt[fine_lev], DtType::SecondHalf);
+    PushParticlesandDeposit(fine_lev, curtime + dt[fine_lev], DtType::SecondHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
     if (use_filter) ApplyFilterJ(current_fp, fine_lev);
@@ -954,17 +954,17 @@ WarpX::doQEDEvents (int lev)
 #endif
 
 void
-WarpX::PushParticlesandDepose (amrex::Real cur_time, bool skip_deposition)
+WarpX::PushParticlesandDeposit (amrex::Real cur_time, bool skip_current)
 {
     // Evolve particles to p^{n+1/2} and x^{n+1}
-    // Depose current, j^{n+1/2}
+    // Deposit current, j^{n+1/2}
     for (int lev = 0; lev <= finest_level; ++lev) {
-        PushParticlesandDepose(lev, cur_time, DtType::Full, skip_deposition);
+        PushParticlesandDeposit(lev, cur_time, DtType::Full, skip_current);
     }
 }
 
 void
-WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_deposition)
+WarpX::PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type, bool skip_current)
 {
     amrex::MultiFab* current_x = nullptr;
     amrex::MultiFab* current_y = nullptr;
@@ -991,15 +991,15 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
     }
 
     mypc->Evolve(lev,
-                 *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                 *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+                 *Efield_aux[lev][0], *Efield_aux[lev][1], *Efield_aux[lev][2],
+                 *Bfield_aux[lev][0], *Bfield_aux[lev][1], *Bfield_aux[lev][2],
                  *current_x, *current_y, *current_z,
                  current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
                  rho_fp[lev].get(), charge_buf[lev].get(),
                  Efield_cax[lev][0].get(), Efield_cax[lev][1].get(), Efield_cax[lev][2].get(),
                  Bfield_cax[lev][0].get(), Bfield_cax[lev][1].get(), Bfield_cax[lev][2].get(),
-                 cur_time, dt[lev], a_dt_type, skip_deposition);
-    if (! skip_deposition) {
+                 cur_time, dt[lev], a_dt_type, skip_current);
+    if (! skip_current) {
 #ifdef WARPX_DIM_RZ
         // This is called after all particles have deposited their current and charge.
         ApplyInverseVolumeScalingToCurrentDensity(current_fp[lev][0].get(), current_fp[lev][1].get(), current_fp[lev][2].get(), lev);
@@ -1022,9 +1022,9 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type, 
 #endif
         if (do_fluid_species) {
             myfl->Evolve(lev,
-                *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
-                rho_fp[lev].get(),*current_x, *current_y, *current_z, cur_time, skip_deposition);
+                         *Efield_aux[lev][0], *Efield_aux[lev][1], *Efield_aux[lev][2],
+                         *Bfield_aux[lev][0], *Bfield_aux[lev][1], *Bfield_aux[lev][2],
+                         rho_fp[lev].get(), *current_x, *current_y, *current_z, cur_time, skip_current);
         }
     }
 }
