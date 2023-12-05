@@ -17,7 +17,7 @@ If you are new to this system, **please see the following resources**:
 * `Filesystems <https://docs.it4i.cz/karolina/storage/>`__:
 
   * ``$HOME``: per-user directory, use only for inputs, source and scripts; backed up (25GB default quota)
-  * ``/scatch/``: `production directory <https://docs.it4i.cz/karolina/storage/#scratch-file-system>`__; very fast for parallel jobs (20TB default)
+  * ``/scratch/``: `production directory <https://docs.it4i.cz/karolina/storage/#scratch-file-system>`__; very fast for parallel jobs (20TB default)
 
 
 .. _building-karolina-preparation:
@@ -143,7 +143,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
 
 Now, you can :ref:`submit Karolina compute jobs <running-cpp-karolina>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
 Or, you can use the WarpX executables to submit Karolina jobs (:ref:`example inputs <usage-examples>`).
-For executables, you can reference their location in your :ref:`job script <running-cpp-karolina>` or copy them to a location in ``/scatch/``.
+For executables, you can reference their location in your :ref:`job script <running-cpp-karolina>` or copy them to a location in ``/scratch/``.
 
 
 .. _building-karolina-update:

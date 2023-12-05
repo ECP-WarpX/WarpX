@@ -674,9 +674,9 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
     if (patch_type == PatchType::fine)
     {
         if (do_pml && pml[lev]->ok())
-         {
+        {
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
-         }
+        }
 
         const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ){
@@ -694,9 +694,9 @@ WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
     else if (patch_type == PatchType::coarse)
     {
         if (do_pml && pml[lev]->ok())
-         {
+        {
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
-         }
+        }
 
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ) {
@@ -728,9 +728,9 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
     if (patch_type == PatchType::fine)
     {
         if (do_pml && pml[lev]->ok())
-          {
+        {
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
-          }
+        }
         const amrex::Periodicity& period = Geom(lev).periodicity();
         if ( safe_guard_cells ) {
             const Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
@@ -747,9 +747,9 @@ WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
     else if (patch_type == PatchType::coarse)
     {
         if (do_pml && pml[lev]->ok())
-          {
+        {
             WARPX_ABORT_WITH_MESSAGE("Averaged Galilean PSATD with PML is not yet implemented");
-          }
+        }
 
         const amrex::Periodicity& cperiod = Geom(lev-1).periodicity();
         if ( safe_guard_cells ){
@@ -904,7 +904,7 @@ WarpX::SyncCurrent (
     // SumBoundary even if there is only a single process, because a process
     // may have multiple boxes. Furthermore, even if there is only a single
     // box on a single process, SumBoundary should also be called if there
-    // are periodic boundaries. So we always call SumBounary even if it
+    // are periodic boundaries. So we always call SumBoundary even if it
     // might be a no-op in some cases, because the function does not perform
     // any communication if not necessary.
     //
@@ -923,13 +923,13 @@ WarpX::SyncCurrent (
     // have all been properly filtered and summed. For the current level, if
     // there are levels below this, we need to process this level's cp data
     // just like we have done for the finer level. The iteration continues
-    // until we reache level 0. There are however two additional
+    // until we reach level 0. There are however two additional
     // complications.
     //
     // The first complication is that simply calling ParallelAdd to add the
     // finer level's cp data to the current level's fp data does not
     // work. Suppose there are multiple boxes on the current level (or just
-    // a single box with periodic bounaries). A given (i,j,k) can be present
+    // a single box with periodic boundaries). A given (i,j,k) can be present
     // in more than one box for nodal data in AMReX.
     // At the time of calling ParallelAdd, the current
     // level's fp data have not been summed. Because of how ParallelAdd

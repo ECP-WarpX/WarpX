@@ -348,7 +348,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     amrex::RealBox diag_dom;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim ) {
         // Setting lo-coordinate for the diag domain by taking the max of user-defined
-        // lo-cordinate and lo-coordinat of the simulation domain at level, lev
+        // lo-cordinate and lo-coordinate of the simulation domain at level, lev
         diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
         // Setting hi-coordinate for the diag domain by taking the max of user-defined
         // hi-cordinate and hi-coordinate of the simulation domain at level, lev
@@ -423,7 +423,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     // For the z-dimension, number of cells in the lab-frame is
     // computed using the coarsened cell-size in the lab-frame obtained using
     // the ref_ratio at level, lev-1.
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
+    auto ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     // Number of lab-frame cells in z-direction at level, lev
     const int num_zcells_lab = static_cast<int>( std::floor (
@@ -787,7 +787,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
 
     auto & warpx = WarpX::GetInstance();
     // In this function, we will get cell-centered data for every level, lev,
-    // using the cell-center functors and their respective opeators()
+    // using the cell-center functors and their respective operators()
     // Call m_cell_center_functors->operator
     for (int lev = 0; lev < nmax_lev; ++lev) {
         int icomp_dst = 0;
@@ -871,7 +871,7 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::Real prob_domain_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
+    auto ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     const int k_lab = static_cast<int>(floor (
                           ( m_current_z_lab[i_buffer]
@@ -884,10 +884,10 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
 void
 BTDiagnostics::SetSnapshotFullStatus (const int i_buffer)
 {
-   if (m_snapshot_full[i_buffer] == 1) return;
-   // if the last valid z-index of the snapshot, which is 0, is filled, then
-   // set the snapshot full integer to 1
-   if (m_lastValidZSlice[i_buffer] == 1) m_snapshot_full[i_buffer] = 1;
+    if (m_snapshot_full[i_buffer] == 1) return;
+    // if the last valid z-index of the snapshot, which is 0, is filled, then
+    // set the snapshot full integer to 1
+    if (m_lastValidZSlice[i_buffer] == 1) m_snapshot_full[i_buffer] = 1;
 
 }
 
@@ -910,7 +910,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
                                               static_cast<int>(m_varnames.size()), ngrow );
     m_mf_output[i_buffer][lev].setVal(0.);
 
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
+    auto ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         const amrex::Real cellsize = (idim < WARPX_ZINDEX)?

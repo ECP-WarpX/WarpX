@@ -153,7 +153,7 @@ public:
         amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_np.begin(),
                               products_np.end(),
                               device_products_np.begin());
-       amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_mass.begin(),
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice, products_mass.begin(),
                               products_mass.end(),
                               device_products_mass.begin());
         amrex::Gpu::streamSynchronize();

@@ -600,7 +600,7 @@ void FieldProbe::ComputeDiags (int step)
 
             // IO processor sums values from length_array to get size of total output array.
             /* displs records the size of each m_data as well as previous displs. This array
-             * tells Gatherv where in the m_data_out array allocation to write incomming data. */
+             * tells Gatherv where in the m_data_out array allocation to write incoming data. */
             long total_data_size = 0;
             amrex::Vector<int> displs_vector;
             if (amrex::ParallelDescriptor::IOProcessor()) {
@@ -631,7 +631,7 @@ void FieldProbe::WriteToFile (int step) const
     if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) return;
 
     // loop over num valid particles to find the lowest particle ID for later sorting
-    long int first_id = static_cast<long int>(m_data_out[0]);
+    auto first_id = static_cast<long int>(m_data_out[0]);
     for (long int i = 0; i < m_valid_particles; i++)
     {
         if (m_data_out[i*noutputs] < first_id)

@@ -66,7 +66,7 @@ and the details of the on-node parallelization and computer architecture used fo
 Because these parameters put additional constraints on the domain size for a
 simulation, it can be cumbersome to calculate the number of cells and the
 physical size of the computational domain for a given resolution. This
-:download:`Python script <../../../Tools/DevUtils/compute_domain.py>` does it
+:download:`Python script <../../../../Tools/DevUtils/compute_domain.py>` does it
 automatically.
 
 When using the RZ spectral solver, the values of ``amr.max_grid_size`` and ``amr.blocking_factor`` are constrained since the solver

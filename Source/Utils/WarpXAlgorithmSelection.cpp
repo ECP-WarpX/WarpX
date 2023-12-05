@@ -20,7 +20,7 @@
 #include <map>
 #include <utility>
 
-// Define dictionary with correspondance between user-input strings,
+// Define dictionary with correspondence between user-input strings,
 // and corresponding integer for use inside the code
 
 const std::map<std::string, int> grid_to_int = {

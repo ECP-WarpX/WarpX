@@ -160,15 +160,8 @@ class _MultiFABWrapper(object):
         if self.include_ghosts:
             # The ghost cells are added to the upper and lower end of the global domain.
             nghosts = self.mf.n_grow_vect()
-            ilo = list(ilo)
-            ihi = list(ihi)
-            min_box = self.mf.box_array().minimal_box()
-            imax = min_box.big_end
-            for i in range(self.dim):
-                if ilo[i] == 0:
-                    ilo[i] -= nghosts[i]
-                if ihi[i] == imax[i]:
-                    ihi[i] += nghosts[i]
+            ilo -= nghosts[idir]
+            ihi += nghosts[idir]
 
         # Cell size in the direction
         warpx = libwarpx.libwarpx_so.get_instance()
@@ -348,10 +341,7 @@ class _MultiFABWrapper(object):
         """
         box = mfi.tilebox()
         if self.include_ghosts:
-            ng = self._get_indices(self.mf.n_grow_vect(),0)
-        else:
-            ng=[0]*3
-
+            box.grow(self.mf.n_grow_vect())
 
         ilo = self._get_indices(box.small_end, 0)
         ihi = self._get_indices(box.big_end, 0)
@@ -366,8 +356,8 @@ class _MultiFABWrapper(object):
             block_slices = []
             global_slices = []
             for i in range(3):
-                block_slices.append(slice(i1[i] - ilo[i] + ng[i], i2[i] - ilo[i] + ng[i]))
-                global_slices.append(slice(i1[i] - starts[i] + ng[i], i2[i] - starts[i] + ng[i]))
+                block_slices.append(slice(i1[i] - ilo[i], i2[i] - ilo[i]))
+                global_slices.append(slice(i1[i] - starts[i], i2[i] - starts[i]))
 
             block_slices.append(slice(icstart, icstop))
             global_slices.append(slice(0, icstop - icstart))

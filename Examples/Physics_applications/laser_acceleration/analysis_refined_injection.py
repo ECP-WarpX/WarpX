@@ -43,7 +43,7 @@ n_0 = 15
 n_move = 192
 
 # ref ratio = 2 1
-# Refined only transversly. Longitudinal spacing between particles in each stream is the same in both coarse and fine regions
+# Refined only transversely. Longitudinal spacing between particles in each stream is the same in both coarse and fine regions
 rr_longitudinal = 1
 
 np_expected = (n_coarse + n_fine*rr_longitudinal)*(n_0 + n_move)
