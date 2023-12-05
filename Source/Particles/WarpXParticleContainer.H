@@ -173,7 +173,7 @@ public:
 
     ///
     /// This pushes the particle positions by one half time step.
-    /// It is used to desynchronize the particles after initializaton
+    /// It is used to desynchronize the particles after initialization
     /// or when restarting from a checkpoint.
     ///
     void PushX (         amrex::Real dt);

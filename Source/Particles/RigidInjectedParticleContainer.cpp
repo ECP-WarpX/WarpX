@@ -308,7 +308,7 @@ RigidInjectedParticleContainer::Evolve (int lev,
     zinject_plane_levels[lev] -= dt*WarpX::beta_boost*PhysConst::c;
     zinject_plane_lev = zinject_plane_levels[lev];
 
-    // Set the done injecting flag whan the inject plane moves out of the
+    // Set the done injecting flag when the inject plane moves out of the
     // simulation domain.
     // It is much easier to do this check, rather than checking if all of the
     // particles have crossed the inject plane.

@@ -85,7 +85,7 @@ if sim.resonant:
     plt.plot(t_grid, np.abs(field_kt[:, 5] / sim.B0), 'b', label=f'm = 5, $kl_i={k[5]:.2f}$')
     plt.plot(t_grid, np.abs(field_kt[:, 6] / sim.B0), 'k', label=f'm = 6, $kl_i={k[6]:.2f}$')
 
-    # The theoretical growth rates for the 4th, 5th and 6th Foruier modes of
+    # The theoretical growth rates for the 4th, 5th and 6th Fourier modes of
     # the By-field was obtained from Fig. 12a of Munoz et al.
     # Note the rates here are gamma / w_ci
     gamma4 = 0.1915611861780133

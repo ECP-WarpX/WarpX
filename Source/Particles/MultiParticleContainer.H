@@ -113,14 +113,14 @@ public:
 
     ///
     /// This pushes the particle positions by one half time step for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initializaton
+    /// MultiParticleContainer. It is used to desynchronize the particles after initialization
     /// or when restarting from a checkpoint.
     ///
     void PushX (amrex::Real dt);
 
     ///
     /// This pushes the particle momenta by dt for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initializaton
+    /// MultiParticleContainer. It is used to desynchronize the particles after initialization
     /// or when restarting from a checkpoint.  It is also used to synchronize particles at the
     /// the end of the run.  This is the electromagnetic version.
     ///
@@ -195,7 +195,7 @@ public:
 
     /** This function computes the box outside which Schwinger process is disabled. The box is
      * defined by m_qed_schwinger_xmin/xmax/ymin/ymax/zmin/zmax and the warpx level 0 geometry
-     * object (to make the link between Real and int quatities).
+     * object (to make the link between Real and int quantities).
      */
     [[nodiscard]] amrex::Box ComputeSchwingerGlobalBox () const;
 #endif

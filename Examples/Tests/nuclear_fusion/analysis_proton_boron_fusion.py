@@ -521,7 +521,7 @@ def check_initial_energy2(data):
 
     # Loop over all slices (i.e. cells in the z direction)
     for slice_number in range(1, size_z):
-        ## For simplicity, all the calculations in this functino are done nonrelativistically
+        ## For simplicity, all the calculations in this function are done nonrelativistically
         ## Proton kinetic energy in the lab frame before fusion
         E_proton_nonrelativistic = Energy_step*slice_number**2
         ## Corresponding square norm of proton momentum
