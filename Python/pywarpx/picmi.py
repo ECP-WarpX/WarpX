@@ -561,7 +561,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -681,7 +681,7 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -770,7 +770,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -879,7 +879,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -1828,9 +1828,11 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_sort_idx_type: list of int, optional (default: 0 0 0)
         This controls the type of grid used to sort the particles when sort_particles_for_deposition is true.
         Possible values are:
-            idx_type = {0, 0, 0}: Sort particles to a cell centered grid,
-            idx_type = {1, 1, 1}: Sort particles to a node centered grid,
-            idx_type = {2, 2, 2}: Compromise between a cell and node centered grid.
+
+        * idx_type = {0, 0, 0}: Sort particles to a cell centered grid,
+        * idx_type = {1, 1, 1}: Sort particles to a node centered grid,
+        * idx_type = {2, 2, 2}: Compromise between a cell and node centered grid.
+
         In 2D (XZ and RZ), only the first two elements are read. In 1D, only the first element is read.
 
     warpx_sort_bin_size: list of int, optional (default 1 1 1)
