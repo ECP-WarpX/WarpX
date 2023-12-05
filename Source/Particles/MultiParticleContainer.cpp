@@ -403,18 +403,18 @@ MultiParticleContainer::ReadParameters ()
 #endif
         initialized = true;
     }
-
+amrex::Print() << "wEEEEEEEESSSSSSSHHHHH" << allcontainers.size() << "\n";
 //Initialization of the radiation
     for (auto& s : allcontainers) {
-
+        amrex::Print() << s->has_radiation() <<"jzfnfhjzbefhezbfhzebfzehb" << "\n";
         if (s->has_radiation()) {
             m_at_least_one_has_radiation = true;
+            amrex::Print() << "Hey ! I'm here" << "\n";
             m_p_radiation_handler = std::make_unique<RadiationHandler>();
             break;
         }
     }
 }
-
 WarpXParticleContainer&
 MultiParticleContainer::GetParticleContainerFromName (const std::string& name) const
 {
@@ -944,6 +944,47 @@ MultiParticleContainer::doFieldIonization (int lev,
     }
 }
 
+void MultiParticleContainer::keepoldmomentum(){
+    for (auto& pc : allcontainers) {
+        if (pc->has_radiation()){
+            keepoldmomentum_p(pc);
+        }
+    }
+}void MultiParticleContainer::keepoldmomentum_p
+    (std::unique_ptr<WarpXParticleContainer>& pc){
+        const auto level0=0;
+         for (WarpXParIter pti(*pc, level0); pti.isValid(); ++pti) {
+                    auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
+                    auto& part=pc->GetParticles(level0)[index];
+                    long const np = pti.numParticles();
+                    auto& soa = part.GetStructOfArrays();
+
+                    //Load the momentums
+                    amrex::ParticleReal* ux = soa.GetRealData(PIdx::ux).data();
+                    amrex::ParticleReal* uy = soa.GetRealData(PIdx::ux).data();
+                    amrex::ParticleReal* uz = soa.GetRealData(PIdx::ux).data();
+
+                    //Finding the good attribute index
+                    int index_name_x=pc->GetRealCompIndex("prev_u_x");
+                    int index_name_y=pc->GetRealCompIndex("prev_u_y");
+                    int index_name_z=pc->GetRealCompIndex("prev_u_z");
+
+                    auto* p_ux = soa.GetRealData(index_name_x).data();
+                    auto* p_uy = soa.GetRealData(index_name_y).data();
+                    auto* p_uz = soa.GetRealData(index_name_z).data();
+
+                    amrex::ParallelFor(np,
+                 [=] AMREX_GPU_DEVICE(int ip)
+                 {
+                    //Putting them in an attribute
+                    p_ux[ip] = ux[ip];
+                    p_uy[ip] = uy[ip];
+                    p_uz[ip] = uz[ip];
+
+        });
+        }
+    }    
+
 void
 MultiParticleContainer::doCollisions ( Real cur_time, amrex::Real dt )
 {
@@ -989,6 +1030,7 @@ void MultiParticleContainer::doRadiation (const amrex::Real dt)
     if (m_at_least_one_has_radiation){
     for (auto& pc : allcontainers) {
         if (pc->has_radiation()){
+            
             //m_p_radiation_handler->add_radiation_contribution(dt,pc);
 
             }
@@ -996,13 +1038,6 @@ void MultiParticleContainer::doRadiation (const amrex::Real dt)
     }
 }
 #ifdef WARPX_QED
-void MultiParticleContainer::keepoldmomentum(){
-    for (auto& pc : allcontainers) {
-        if (pc->has_radiation()){
-            pc->keepoldmomentum();
-        }
-    }
-}
 void MultiParticleContainer::InitQED ()
 {
     m_shr_p_qs_engine = std::make_shared<QuantumSynchrotronEngine>();

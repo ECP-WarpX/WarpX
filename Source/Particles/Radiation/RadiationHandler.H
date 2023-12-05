@@ -32,7 +32,7 @@ public:
     /* Perform the calculation of the radiation */
     //void doRadiation (amrex::Real dt, MultiParticleContainer* mypc);    
     void add_radiation_contribution(const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc);
-    void add_detector(amrex::IntVect m_det_pts, amrex::IntVect m_omega_rg, amrex::Vector<amrex::Real> m_d_det, int m_omega_pts, double m_d_distance, amrex::IntVect m_d_direction, amrex::Vector<amrex::Real> m_th_rg);
+    void add_detector();
 
 private:
 
@@ -59,6 +59,10 @@ private:
     amrex::IntVect m_det_pts;
     amrex::IntVect m_det_direction;
     amrex::Vector<amrex::Real> m_pos_det;
+
+    //resolution of the grid of the detectir 
+    amrex::Vector<amrex::Real> m_d_d;
+
 };
 #endif // WARPX_PARTICLES_RADIATION_H_
 

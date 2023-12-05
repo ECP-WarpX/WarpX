@@ -281,11 +281,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //check if Radiations are enables for species and add previous momentum attribute
     pp_species_name.query("do_radiation", m_do_radiation);
-    if (m_do_radiation){
+    if (m_do_radiation==1){
         //enable the radiations in the evolve loop
         AddRealComp("prev_u_x");
         AddRealComp("prev_u_y");
         AddRealComp("prev_u_z");
+
     }
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false

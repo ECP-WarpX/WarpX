@@ -19,12 +19,7 @@ RadiationHandler::RadiationHandler()
     // Read in radiation input      
     const amrex::ParmParse pp_radiations("radiations");
 
-    // Direction of the normal of the detector
-    pp_radiations.query("omega_range", m_omega_range);
-    pp_radiations.query("omega_points", m_omega_points);
-
-    pp_radiations.queryarr("angle_aperture", m_theta_range);
-
+    // Verify if there is a detector 
     pp_radiations.query("put_a_detector", m_get_a_detector);
 
 
@@ -33,12 +28,19 @@ RadiationHandler::RadiationHandler()
 #endif    
 
     //Compute the radiation
-    if(m_get_a_detector==1){
+    if(m_get_a_detector){
+        //Resolution in frequency of the detector
+        pp_radiations.query("omega_range", m_omega_range);
+        pp_radiations.query("omega_points", m_omega_points);
+        //Angle theta AND phi
+        pp_radiations.queryarr("angle_aperture", m_theta_range);
+
+        //Type of detector
         pp_radiations.query("detector_number_points", m_det_pts);
         pp_radiations.query("detector_direction", m_det_direction);
         pp_radiations.query("detector_distance", m_det_distance);
 
-        add_detector(m_det_pts, m_omega_range, m_d_det, m_omega_points, m_det_distance, m_det_direction, m_theta_range);
+        add_detector();
     }
 
     //
@@ -104,10 +106,10 @@ void RadiationHandler::add_radiation_contribution
 }
 
 void RadiationHandler::add_detector
-    (amrex::IntVect m_d_pts, amrex::IntVect m_omega_rg, amrex::Vector<amrex::Real> m_d_d, int m_omega_pts, double m_d_distance, amrex::IntVect m_d_direction, amrex::Vector<amrex::Real> m_th_rg){
+    (){
 
     // Box of angle and frequency
-    const amrex::Box detect_box({0,0,0}, {m_d_pts[0], m_d_pts[1], m_omega_pts});
+    const amrex::Box detect_box({0,0,0}, {m_det_pts[0], m_det_pts[1], m_omega_points});
     amrex::Print() << detect_box << "\n";
     ncomp = 0;
     amrex::FArrayBox fab_detect(detect_box, ncomp);
@@ -115,15 +117,15 @@ void RadiationHandler::add_detector
 
     //Calculation of angle resolution 
     for(int i=0; i<2; i++){
-        m_d_theta[i] = 2*m_th_rg[i]/static_cast<double>(m_d_pts[i]);
+        m_d_theta[i] = 2*m_theta_range[i]/static_cast<double>(m_det_pts[i]);
     }
     //Set the resolution of the detector
     for(int idim = 0; idim<3; ++idim){
-        if(m_d_direction[idim]==1){
-            m_d_d[(idim+1)%3]=2*m_d_distance*tan(m_d_theta[0]/2);
-            m_d_d[(idim+2)%3]=2*m_d_distance*tan(m_d_theta[1]/2);
+        if(m_det_direction[idim]==1){
+            m_d_d[(idim+1)%3]=2*m_det_distance*tan(m_d_theta[0]/2);
+            m_d_d[(idim+2)%3]=2*m_det_distance*tan(m_d_theta[1]/2);
         }
 
-    m_d_omega=m_omega_rg[1]-m_omega_rg[0]/static_cast<double>(m_omega_pts);
+    m_d_omega=m_omega_range[1]-m_omega_range[0]/static_cast<double>(m_omega_points);
     }
 }
