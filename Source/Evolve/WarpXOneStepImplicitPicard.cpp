@@ -150,9 +150,9 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
         // particle velocities by dt, then take average of old and new v,
         // deposit currents, giving J at n+1/2
         // This uses Efield_fp and Bfield_fp, the field at n+1/2 from the previous iteration.
-        bool skip_deposition = false;
+        bool skip_current = false;
         PushType push_type = PushType::Implicit;
-        PushParticlesandDepose(cur_time, skip_deposition, push_type);
+        PushParticlesandDeposit(cur_time, skip_current, push_type);
 
         SyncCurrentAndRho();
 

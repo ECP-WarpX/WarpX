@@ -362,7 +362,7 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
     }
 #endif
     amrex::ParallelFor(
-        np_to_depose,
+        np_to_deposit,
         [=] AMREX_GPU_DEVICE (long ip) {
 #if defined(WARPX_USE_GPUCLOCK)
             const auto KernelTimer = ablastr::parallelization::KernelTimer(
@@ -416,7 +416,7 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          since q is a scalar. For non-ionizable species,
                          ion_lev is a null pointer.
  * \param jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile.
- * \param np_to_depose Number of particles for which current is deposited.
+ * \param np_to_deposit Number of particles for which current is deposited.
  * \param dx           3D cell size
  * \param xyzmin       Physical lower bounds of domain.
  * \param lo           Index lower bounds of domain.
@@ -438,7 +438,7 @@ void doDepositionShapeNImplicit(const GetParticlePosition<PIdx>& GetPosition,
                                 amrex::FArrayBox& jx_fab,
                                 amrex::FArrayBox& jy_fab,
                                 amrex::FArrayBox& jz_fab,
-                                const long np_to_depose,
+                                const long np_to_deposit,
                                 const std::array<amrex::Real,3>& dx,
                                 const std::array<amrex::Real,3>& xyzmin,
                                 const amrex::Dim3 lo,
@@ -1146,7 +1146,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                        since q is a scalar. For non-ionizable species,
                        ion_lev is a null pointer.
  * \param Jx_arr,Jy_arr,Jz_arr Array4 of current density, either full array or tile.
- * \param np_to_depose Number of particles for which current is deposited.
+ * \param np_to_deposit Number of particles for which current is deposited.
  * \param dt           Time step for particle level
  * \param dx           3D cell size
  * \param xyzmin       Physical lower bounds of domain.
@@ -1172,7 +1172,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
                                                  const amrex::Array4<amrex::Real>& Jx_arr,
                                                  const amrex::Array4<amrex::Real>& Jy_arr,
                                                  const amrex::Array4<amrex::Real>& Jz_arr,
-                                                 const long np_to_depose,
+                                                 const long np_to_deposit,
                                                  const amrex::Real dt,
                                                  const std::array<amrex::Real,3>& dx,
                                                  const std::array<amrex::Real, 3> xyzmin,
@@ -1238,7 +1238,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
     }
 #endif
     amrex::ParallelFor(
-        np_to_depose,
+        np_to_deposit,
         [=] AMREX_GPU_DEVICE (long const ip) {
 #if defined(WARPX_USE_GPUCLOCK)
             const auto KernelTimer = ablastr::parallelization::KernelTimer(
