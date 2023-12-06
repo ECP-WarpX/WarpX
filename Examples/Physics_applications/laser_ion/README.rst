@@ -3,7 +3,7 @@
 Laser-Ion Acceleration with a Planar Target
 ===========================================
 
-This example shows how to model laser-ion acceleration with planar targets of solid density :cite:p:`ex-Wilks2001,Bulanov2008,ex-Macchi2013`.
+This example shows how to model laser-ion acceleration with planar targets of solid density :cite:p:`ex-Wilks2001,ex-Bulanov2008,ex-Macchi2013`.
 The acceleration mechanism in this scenario depends on target parameters
 
 Although laser-ion acceleration requires full 3D modeling for adequate description of the acceleration dynamics, especially the acceleration field lengths and decay times, this example models a 2D example.

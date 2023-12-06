@@ -57,7 +57,7 @@ extensions = ['sphinx.ext.autodoc',
 templates_path = ['_templates']
 
 # Relative path to bibliography file, bibliography style
-bibtex_bibfiles = ['./refs.bib']
+bibtex_bibfiles = ['latex_theory/allbibs.bib', 'refs.bib']
 bibtex_default_style = 'unsrt'
 
 # The suffix(es) of source filenames.
