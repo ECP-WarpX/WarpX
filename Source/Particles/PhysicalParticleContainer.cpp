@@ -2628,7 +2628,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             enum exteb_flags : int { no_exteb, has_exteb };
 
-            const int (exteb_runtime_flag = getExternalEB.isNoOp() || do_not_gather_external_fields)? no_exteb : has_exteb;
+            const int exteb_runtime_flag = (getExternalEB.isNoOp() || do_not_gather_external_fields)? no_exteb : has_exteb;
 
             amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
                                {exteb_runtime_flag},
