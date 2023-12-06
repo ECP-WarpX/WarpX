@@ -122,10 +122,17 @@ void RadiationHandler::add_radiation_contribution
                     amrex::ParticleReal ncrossncrossBetapointz=static_cast<double>(m_det_direction[1])*ncrossBetapointy-static_cast<double>(m_det_direction[1])*ncrossBetapointx;
 
                     //Calculation of ei(omegat-n.r)
-                    for(int i_om=0, i_om<m_omega_points,i_om++){
-                     eiomega=
-                    }
                     
+                    //omega effective calculé
+                    amrex::Real omega_calc = 0
+                    for(int i_om=0, i_om<m_omega_points,i_om++){
+                        for(int i_x=0, i_x<m_det_pts[0], i_x++){
+                            for(int i_y=0, i_y<m_det_pts[1], i_y++){
+                        omega_calc = omega_calc + m_d_omega
+                        amrex::Real dephas= omega_calc*current_time+
+                        amrex::Complex eiomega=(amrex::cos(dephas), amrex::sin(dephas))
+                    }
+                    }
 
 
                  });
