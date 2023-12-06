@@ -57,9 +57,6 @@ void WarpX::HybridPICEvolveFields ()
     // Get the external current
     m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
 
-    // Get the external current
-    m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
-
     // Reference hybrid-PIC multifabs
     auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
     auto& current_fp_temp = m_hybrid_pic_model->current_fp_temp;
