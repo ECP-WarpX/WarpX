@@ -37,7 +37,7 @@ public:
 private:
 
     // Frequency range
-    amrex::IntVect m_omega_range;
+    amrex::Vector<amrex::Real> m_omega_range;
  
     // Dimensions of the detector 
     amrex::Vector<amrex::Real> m_theta_range;
@@ -56,7 +56,7 @@ private:
     //Define the Fab with the datas
     int ncomp;
 
-    amrex::IntVect m_det_pts;
+    amrex::Vector<int> m_det_pts;
     amrex::IntVect m_det_direction;
     amrex::Vector<amrex::Real> m_pos_det;
 

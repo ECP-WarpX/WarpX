@@ -122,7 +122,17 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
 
     // Setup particle collisions
     collisionhandler = std::make_unique<CollisionHandler>(this);
-
+    amrex::Print() << "wEEEEEEEESSSSSSSHHHHH" << allcontainers.size() << "\n";
+    //Initialization of the radiation
+    for (auto& s : allcontainers) {
+        amrex::Print() << s->has_radiation() <<"jzfnfhjzbefhezbfhzebfzehb" << "\n";
+        if (s->has_radiation()) {
+            m_at_least_one_has_radiation = true;
+            amrex::Print() << "Hey ! I'm here" << "\n";
+            m_p_radiation_handler = std::make_unique<RadiationHandler>();
+            break;
+        }
+    }
 }
 
 void
@@ -402,17 +412,6 @@ MultiParticleContainer::ReadParameters ()
         }
 #endif
         initialized = true;
-    }
-amrex::Print() << "wEEEEEEEESSSSSSSHHHHH" << allcontainers.size() << "\n";
-//Initialization of the radiation
-    for (auto& s : allcontainers) {
-        amrex::Print() << s->has_radiation() <<"jzfnfhjzbefhezbfhzebfzehb" << "\n";
-        if (s->has_radiation()) {
-            m_at_least_one_has_radiation = true;
-            amrex::Print() << "Hey ! I'm here" << "\n";
-            m_p_radiation_handler = std::make_unique<RadiationHandler>();
-            break;
-        }
     }
 }
 WarpXParticleContainer&
@@ -1031,7 +1030,7 @@ void MultiParticleContainer::doRadiation (const amrex::Real dt)
     for (auto& pc : allcontainers) {
         if (pc->has_radiation()){
             
-            //m_p_radiation_handler->add_radiation_contribution(dt,pc);
+            m_p_radiation_handler->add_radiation_contribution(dt,pc);
 
             }
         }

@@ -30,16 +30,15 @@ RadiationHandler::RadiationHandler()
     //Compute the radiation
     if(m_get_a_detector){
         //Resolution in frequency of the detector
-        pp_radiations.query("omega_range", m_omega_range);
+        pp_radiations.queryarr("omega_range", m_omega_range);
         pp_radiations.query("omega_points", m_omega_points);
         //Angle theta AND phi
         pp_radiations.queryarr("angle_aperture", m_theta_range);
 
         //Type of detector
-        pp_radiations.query("detector_number_points", m_det_pts);
+        pp_radiations.getarr("detector_number_points", m_det_pts,0,2);
         pp_radiations.query("detector_direction", m_det_direction);
         pp_radiations.query("detector_distance", m_det_distance);
-
         add_detector();
     }
 
@@ -63,12 +62,12 @@ void RadiationHandler::add_radiation_contribution
             for (WarpXParIter pti(*pc, level0); pti.isValid(); ++pti) {
                     long const np = pti.numParticles();
                     auto& attribs = pti.GetAttribs();
-                    auto&  p_w = attribs[PIdx::w];
+                    auto& p_w = attribs[PIdx::w];
                     auto& p_ux = attribs[PIdx::ux];
                     auto& p_uy = attribs[PIdx::uy];
                     auto& p_uz = attribs[PIdx::uz];
-                    auto& attribut = attribs[PIdx::nattribs];
-
+                    auto& attribut = attribs[PIdx::nattribs+1];
+                    amrex::Print() << attribut[-1] << "\n";
                     //auto& ux = src.m_rdata[PIdx::ux][i_src];
                     //auto& uy = src.m_rdata[PIdx::uy][i_src];
                     //auto& uz = src.m_rdata[PIdx::uz][i_src];
@@ -110,16 +109,16 @@ void RadiationHandler::add_detector
 
     // Box of angle and frequency
     const amrex::Box detect_box({0,0,0}, {m_det_pts[0], m_det_pts[1], m_omega_points});
-    amrex::Print() << detect_box << "\n";
-    ncomp = 0;
+    ncomp = 2; //Real and complex part
     amrex::FArrayBox fab_detect(detect_box, ncomp);
-    amrex::Print() << fab_detect << "\n";
 
     //Calculation of angle resolution 
+     m_d_theta.resize(2);
     for(int i=0; i<2; i++){
         m_d_theta[i] = 2*m_theta_range[i]/static_cast<double>(m_det_pts[i]);
     }
     //Set the resolution of the detector
+    m_d_d.resize(2);
     for(int idim = 0; idim<3; ++idim){
         if(m_det_direction[idim]==1){
             m_d_d[(idim+1)%3]=2*m_det_distance*tan(m_d_theta[0]/2);
