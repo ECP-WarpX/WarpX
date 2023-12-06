@@ -1539,7 +1539,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
     if (fixed_ppc_is_specified) {
         // This divides by the total number of particles in the cell
-        scale_fac /= fixed_ppc; 
+        scale_fac /= fixed_ppc;
     } else {
         // Divide out the grid cell size along the normal direction to
         // get the emitting area.
