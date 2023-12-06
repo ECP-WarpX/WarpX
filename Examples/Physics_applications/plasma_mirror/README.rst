@@ -3,7 +3,7 @@
 Plasma-Mirror
 =============
 
-This example shows how to model a plasma mirror, using a planar target of solid density :cite:p:`Dromey2004,Roedel2010`.
+This example shows how to model a plasma mirror, using a planar target of solid density :cite:p:`ex-Dromey2004,ex-Roedel2010`.
 
 Although laser-solid interaction modeling requires full 3D modeling for adequate description of the dynamics at play, this example models a 2D example.
 2D modeling provide a qualitative overview of the dynamics, but mostly saves computational costs since the plasma frequency (and Debye length) of the surface plasma determines the resolution need in laser-solid interaction modeling.
