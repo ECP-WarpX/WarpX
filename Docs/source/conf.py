@@ -32,6 +32,15 @@ import urllib.request
 
 import sphinx_rtd_theme
 
+import pybtex.plugin
+
+from pybtex.richtext import Symbol, Text
+from pybtex.style.formatting.unsrt import Style as UnsrtStyle
+from pybtex.style.template import (
+    field, first_of, href, join, names, optional, optional_field, sentence,
+    tag, together, words,
+)
+
 sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
 
 # -- General configuration ------------------------------------------------
@@ -43,7 +52,8 @@ sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
+extensions = [
+    'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
@@ -58,7 +68,18 @@ templates_path = ['_templates']
 
 # Relative path to bibliography file, bibliography style
 bibtex_bibfiles = ['./refs.bib']
-bibtex_default_style = 'unsrt'
+
+class MyStyle(UnsrtStyle):
+    default_name_style = 'lastfirst'
+
+    def __init__(self, *args, **kwargs):
+        # Set 'abbreviate_names' to True before calling the superclass initializer
+        kwargs['abbreviate_names'] = True
+        super().__init__(*args, **kwargs)
+
+pybtex.plugin.register_plugin('pybtex.style.formatting', 'mystyle', MyStyle)
+
+bibtex_default_style = 'mystyle'
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
