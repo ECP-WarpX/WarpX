@@ -183,7 +183,7 @@ public:
      */
     int GetRealCompIndex (const std::string& name)
     {
-        return particle_runtime_comps.at(name);
+        return particle_comps.at(name);
     }
      /** Initialize value at a component
      *

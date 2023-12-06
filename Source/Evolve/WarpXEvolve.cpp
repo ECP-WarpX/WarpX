@@ -432,7 +432,7 @@ WarpX::OneStep_nosub (Real cur_time)
 
     //Radiation contribution at each timestep
    //Only level 0 is supported 
-    mypc->doRadiation(dt[0]);
+    mypc->doRadiation(dt[0],cur_time);
     
 
 

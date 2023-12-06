@@ -11,6 +11,9 @@
 
 #include <AMReX_ParmParse.H>
 
+#include <ablastr/constant.H>
+
+
 #include <vector>
 using namespace warpx::utils;
 
@@ -51,10 +54,8 @@ RadiationHandler::RadiationHandler()
 }
 
 void RadiationHandler::add_radiation_contribution
-    (const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc){
-        const auto level0=0;
-        const auto part=pc->GetParticles(level0);
-        
+    (const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time){
+        const auto level0=0;        
 #ifdef AMREX_USE_OMP
 #pragma omp parallel for
 #endif
@@ -66,24 +67,66 @@ void RadiationHandler::add_radiation_contribution
                     auto& p_ux = attribs[PIdx::ux];
                     auto& p_uy = attribs[PIdx::uy];
                     auto& p_uz = attribs[PIdx::uz];
-                    auto& attribut = attribs[PIdx::nattribs+1];
-                    amrex::Print() << attribut[-1] << "\n";
-                    //auto& ux = src.m_rdata[PIdx::ux][i_src];
-                    //auto& uy = src.m_rdata[PIdx::uy][i_src];
-                    //auto& uz = src.m_rdata[PIdx::uz][i_src];
 
-                    //auto GetPosition = GetParticlePosition<PIdx>(pti);
+                    auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
+                    auto& part=pc->GetParticles(level0)[index];
+                    auto& soa = part.GetStructOfArrays();
+
+                    const auto prev_u_x_idx =pc->GetRealCompIndex("prev_u_x");
+                    const auto prev_u_y_idx =pc->GetRealCompIndex("prev_u_y");
+                    const auto prev_u_z_idx =pc->GetRealCompIndex("prev_u_z");
+
+                    auto* p_ux_old = soa.GetRealData(prev_u_x_idx).data();
+                    auto* p_uy_old = soa.GetRealData(prev_u_y_idx).data();
+                    auto* p_uz_old = soa.GetRealData(prev_u_z_idx).data();
+
+                    auto GetPosition = GetParticlePosition<PIdx>(pti);
                 amrex::ParallelFor(np,
                  [=] AMREX_GPU_DEVICE(int ip)
-                 {   //amrex::ParticleReal xp, yp, zp;
-                     //GetPosition.AsStored(ip, xp, yp, zp);
-                    const amrex::ParticleReal p_ux_unit=p_ux[ip];
-                    const amrex::ParticleReal p_uy_unit=p_uy[ip];
-                    const amrex::ParticleReal p_uz_unit=p_uz[ip];
+                 {   amrex::ParticleReal xp, yp, zp;
+                     GetPosition.AsStored(ip, xp, yp, zp);
+
+                                     std::cout << "######### " <<  ip << " "
+                            << xp << " " << yp << " " << zp << " "
+                            << p_ux[ip] << " " << p_uy[ip] << " " << p_uz[ip] << " "
+                            << p_ux_old[ip] << " " << p_uy_old[ip] << " " << p_uz_old[ip] << std::endl;
+
+                    amrex::ParticleReal p_ux_unit=p_ux_old[ip];
+                    amrex::ParticleReal p_uy_unit=p_uy_old[ip];
+                    amrex::ParticleReal p_uz_unit=p_uz_old[ip];
+
+                    amrex::ParticleReal p_ux_old_unit=p_ux[ip];
+                    amrex::ParticleReal p_uy_old_unit=p_uy[ip];
+                    amrex::ParticleReal p_uz_old_unit=p_uz[ip];
 
                     amrex::ParticleReal p_u = std::sqrt(std::pow(p_ux_unit,2)+std::pow(p_uy_unit,2)+std::pow(p_uz_unit,2));
+                    //Calculation of 1_beta.n, n corresponds to m_det_direction, the direction of the normal
+                    amrex::ParticleReal un_betan = 1-(p_ux_unit*static_cast<double>(m_det_direction[0])+p_uy_unit*static_cast<double>(m_det_direction[1])+p_uz_unit*static_cast<double>(m_det_direction[2]));
 
-                        //const amrex::ParticleReal* p_pos0 = src_data.pos(0);
+                    //Calculation of gamma 
+                    amrex::ParticleReal gamma = 1/(1-std::pow(p_u,2)/std::pow(ablastr::constant::SI::c,2));
+
+                    //Calculation of betapoint
+                    amrex::ParticleReal betapointx=(p_ux_unit-p_ux_old_unit)/dt/ablastr::constant::SI::c;
+                    amrex::ParticleReal betapointy=(p_uy_unit-p_uy_old_unit)/dt/ablastr::constant::SI::c;
+                    amrex::ParticleReal betapointz=(p_uz_unit-p_uz_old_unit)/dt/ablastr::constant::SI::c;
+
+                    //Calculation of nxbeta
+                    amrex::ParticleReal ncrossBetapointx=(static_cast<double>(m_det_direction[1])-p_uy_unit/gamma)*betapointz - (static_cast<double>(m_det_direction[2])-p_uz_unit/gamma)*betapointy;
+                    amrex::ParticleReal ncrossBetapointy=(static_cast<double>(m_det_direction[2])-p_uz_unit/gamma)*betapointx - (static_cast<double>(m_det_direction[0])-p_ux_unit/gamma)*betapointz;
+                    amrex::ParticleReal ncrossBetapointz=(static_cast<double>(m_det_direction[0])-p_ux_unit/gamma)*betapointy - (static_cast<double>(m_det_direction[1])-p_uy_unit/gamma)*betapointx;
+
+                    //Calculation of nxnxbeta
+                    amrex::ParticleReal ncrossncrossBetapointx=static_cast<double>(m_det_direction[2])*ncrossBetapointz-static_cast<double>(m_det_direction[2])*ncrossBetapointy;
+                    amrex::ParticleReal ncrossncrossBetapointy=static_cast<double>(m_det_direction[0])*ncrossBetapointx-static_cast<double>(m_det_direction[0])*ncrossBetapointz;
+                    amrex::ParticleReal ncrossncrossBetapointz=static_cast<double>(m_det_direction[1])*ncrossBetapointy-static_cast<double>(m_det_direction[1])*ncrossBetapointx;
+
+                    //Calculation of ei(omegat-n.r)
+                    for(int i_om=0, i_om<m_omega_points,i_om++){
+                     eiomega=
+                    }
+                    
+
 
                  });
 

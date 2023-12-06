@@ -960,8 +960,8 @@ void MultiParticleContainer::keepoldmomentum(){
 
                     //Load the momentums
                     amrex::ParticleReal* ux = soa.GetRealData(PIdx::ux).data();
-                    amrex::ParticleReal* uy = soa.GetRealData(PIdx::ux).data();
-                    amrex::ParticleReal* uz = soa.GetRealData(PIdx::ux).data();
+                    amrex::ParticleReal* uy = soa.GetRealData(PIdx::uy).data();
+                    amrex::ParticleReal* uz = soa.GetRealData(PIdx::uz).data();
 
                     //Finding the good attribute index
                     int index_name_x=pc->GetRealCompIndex("prev_u_x");
