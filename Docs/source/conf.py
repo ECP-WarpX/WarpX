@@ -31,21 +31,7 @@ import sys
 import urllib.request
 
 import pybtex.plugin
-from pybtex.richtext import Symbol, Text
 from pybtex.style.formatting.unsrt import Style as UnsrtStyle
-from pybtex.style.template import (
-    field,
-    first_of,
-    href,
-    join,
-    names,
-    optional,
-    optional_field,
-    sentence,
-    tag,
-    together,
-    words,
-)
 import sphinx_rtd_theme
 
 sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
