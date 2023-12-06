@@ -69,7 +69,7 @@ templates_path = ['_templates']
 # Relative path to bibliography file, bibliography style
 bibtex_bibfiles = ['./refs.bib']
 
-class MyStyle(UnsrtStyle):
+class WarpXBibStyle(UnsrtStyle):
     default_name_style = 'lastfirst'
 
     def __init__(self, *args, **kwargs):
@@ -77,9 +77,9 @@ class MyStyle(UnsrtStyle):
         kwargs['abbreviate_names'] = True
         super().__init__(*args, **kwargs)
 
-pybtex.plugin.register_plugin('pybtex.style.formatting', 'mystyle', MyStyle)
+pybtex.plugin.register_plugin('pybtex.style.formatting', 'warpxbibstyle', WarpXBibStyle)
 
-bibtex_default_style = 'mystyle'
+bibtex_default_style = 'warpxbibstyle'
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
