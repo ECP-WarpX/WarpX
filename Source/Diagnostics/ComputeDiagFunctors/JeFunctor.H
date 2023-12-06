@@ -15,15 +15,13 @@ JeFunctor final: public ComputeDiagFunctor
 public:
     /**
      *
-     * \param[in] dir director o vector field to operate on
+     * \param[in] dir direction of vector field to operate on
      * \param[in] lev level of multifab. Used for averaging in rz.
      * \param[in] crse_ratio for interpoalting field values from the simulation Multifab, src_mf,
      *            to the output diagnostic MultiFab, mf_dst.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
     */
-    JeFunctor (int dir, int lev,
-              amrex::IntVect crse_ratio,
-              bool deposit_current, int ncomp=1);
+    JeFunctor (int dir, int lev, amrex::IntVect crse_ratio, int ncomp=1);
     /** \brief Cell-center m_mf_src and write the result in mf_dst.
      *
      * Currently, the Kinetic-Fluid Hybrid model only supports the m=0 mode, so only
@@ -39,8 +37,6 @@ private:
     int m_dir;
     /** level on which mf_src is defined */
     int m_lev;
-    /** whether to deposit current density before saving */
-    bool m_deposit_current;
 };
 
 #endif // WARPX_JEFUNCTOR_H_

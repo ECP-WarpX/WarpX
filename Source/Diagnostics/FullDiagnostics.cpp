@@ -682,6 +682,29 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(warpx.get_array_Bfield_aux(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "divE" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
+//         } else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){ // Take care of Hybrid-solver electron current
+//             std::cout << "Processing component " << m_varnames[comp] << std::endl;
+//             if ( m_varnames[comp] == "jez" ){
+//                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(2, lev, m_crse_ratio);
+//                 deposit_current = false;
+//             }
+// #ifdef WARPX_DIM_RZ
+//             if ( m_varnames[comp] == "jer" ){
+//                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
+//                 deposit_current = false;
+//             } else if ( m_varnames[comp] == "jet" ){
+//                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
+//                 deposit_current = false;
+//             }
+// #else
+//             if ( m_varnames[comp] == "jex" ){
+//                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
+//                 deposit_current = false;
+//             } else if ( m_varnames[comp] == "jey" ){
+//                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
+//                 deposit_current = false;
+//             }
+// #endif
         }
         else {
 
@@ -704,7 +727,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "At" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 1), lev, m_crse_ratio);
-            } else {
+            } 
+            else {
+                std::cout << "Error on component " << m_varnames[comp] << std::endl;
                 WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for RZ geometry");
             }
 #else
@@ -728,32 +753,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "Ay" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 1), lev, m_crse_ratio);
             } else {
+                std::cout << "Error on component " << m_varnames[comp] << std::endl;
                 WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for this geometry");
-            }
-#endif
-        }
-        // Check for electron current diagnostic output if HybridPIC algorithm is used
-        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
-        {
-            if ( m_varnames[comp] == "jez" ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(2, lev, m_crse_ratio, deposit_current);
-                deposit_current = false;
-            }
-#ifdef WARPX_DIM_RZ
-            if ( m_varnames[comp] == "jer" ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio, deposit_current);
-                deposit_current = false;
-            } else if ( m_varnames[comp] == "jet" ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio, deposit_current);
-                deposit_current = false;
-            }
-#else
-            if ( m_varnames[comp] == "jex" ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio, deposit_current);
-                deposit_current = false;
-            } else if ( m_varnames[comp] == "jey" ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio, deposit_current);
-                deposit_current = false;
             }
 #endif
         }
