@@ -154,9 +154,11 @@ FlushFormatOpenPMD::WriteToFile (
     // Set step and output directory name.
     m_OpenPMDPlotWriter->SetStep(output_iteration, prefix, file_min_digits, isBTD);
 
-    // fields: only dumped for coarse level
-    m_OpenPMDPlotWriter->WriteOpenPMDFieldsAll(
-        varnames, mf, geom, output_levels, output_iteration, static_cast<amrex::Real>(time), isBTD, full_BTD_snapshot);
+    if (!mf.empty()) {
+        // fields: only dumped for coarse level
+        m_OpenPMDPlotWriter->WriteOpenPMDFieldsAll(
+            varnames, mf, geom, output_levels, output_iteration, static_cast<amrex::Real>(time), isBTD, full_BTD_snapshot);
+    }
 
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(
