@@ -973,7 +973,7 @@ void ElectrostaticSolver::PoissonBoundaryHandler::definePhiBCs (const amrex::Geo
         lobc[0] = LinOpBCType::Neumann;
         dirichlet_flag[0] = false;
 
-        // handle the r_max boundary explicity
+        // handle the r_max boundary explicitly
         if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
             hibc[0] = LinOpBCType::Dirichlet;
             dirichlet_flag[1] = true;

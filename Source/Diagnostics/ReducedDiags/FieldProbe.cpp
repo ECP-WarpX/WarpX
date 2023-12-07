@@ -600,7 +600,7 @@ void FieldProbe::ComputeDiags (int step)
 
             // IO processor sums values from length_array to get size of total output array.
             /* displs records the size of each m_data as well as previous displs. This array
-             * tells Gatherv where in the m_data_out array allocation to write incomming data. */
+             * tells Gatherv where in the m_data_out array allocation to write incoming data. */
             long total_data_size = 0;
             amrex::Vector<int> displs_vector;
             if (amrex::ParallelDescriptor::IOProcessor()) {
