@@ -673,6 +673,8 @@ PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector & plasma_injector,
             // Impose t_lab as being the time stored in the openPMD file
             t_lab = it.time<double>() * it.timeUnitSI();
         }
+        bool injection_from_recording_plane = false;
+        pp_species_name.query("injection_from_recording_plane", injection_from_recording_plane);
         std::string const ps_name = it.particles.begin()->first;
         openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
@@ -705,6 +707,10 @@ PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector & plasma_injector,
             ptr_uy = ps["momentum"]["y"].loadChunk<ParticleReal>();
             momentum_unit_y = static_cast<ParticleReal>(ps["momentum"]["y"].unitSI());
         }
+        std::shared_ptr<ParticleReal> ptr_t = nullptr;
+        if (injection_from_recording_plane) {
+            ptr_t = ps["time"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>();
+        }
         series->flush();  // shared_ptr data can be read now
 
         if (q_tot != 0.0) {
@@ -729,6 +735,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector & plasma_injector,
             ParticleReal const y = 0.0_prt;
 #endif
             ParticleReal const z = ptr_z.get()[i]*position_unit_z + ptr_offset_z.get()[i]*position_offset_unit_z + z_shift;
+            ParticleReal const t = injection_from_recording_plane ? ptr_t.get()[i] : t_lab;
 
             if (plasma_injector.insideBounds(x, y, z)) {
                 ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/mass;
@@ -740,7 +747,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector & plasma_injector,
                 CheckAndAddParticle(x, y, z, ux, uy, uz, weight,
                                     particle_x,  particle_y,  particle_z,
                                     particle_ux, particle_uy, particle_uz,
-                                    particle_w, static_cast<amrex::Real>(t_lab));
+                                    particle_w, static_cast<Real>(t));
             }
         }
         auto const np = particle_z.size();
