@@ -113,9 +113,16 @@ Coming soon:
 Kinetic-fluid Hybrid Models
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Several examples and benchmarks of the kinetic-fluid hybrid model are provided below.
-A few examples are replications of the verification tests described in :cite:t:`ex-MUNOZ2018`.
-The hybrid-PIC model was added to WarpX in `PR #3665 <https://github.com/ECP-WarpX/WarpX/pull/3665>`_ - the figures in the examples below were generated at that time.
+WarpX includes a reduced plasma model in which electrons are treated as a massless
+fluid while ions are kinetically evolved, and Ohm's law is used to calculate
+the electric field. This model is appropriate for problems in which ion kinetics
+dominate (ion cyclotron waves, for instance). See the
+:ref:`theory section <theory-kinetic-fluid-hybrid-model>` for more details. Several
+examples and benchmarks of this kinetic-fluid hybrid model are provided below.
+A few of the examples are replications of the verification tests described in
+:cite:t:`ex-MUNOZ2018`. The hybrid-PIC model was added to WarpX in
+`PR #3665 <https://github.com/ECP-WarpX/WarpX/pull/3665>`_ - the figures in the
+examples below were generated at that time.
 
 .. toctree::
    :maxdepth: 1

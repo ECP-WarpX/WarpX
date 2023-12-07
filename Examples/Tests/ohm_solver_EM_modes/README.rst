@@ -1,7 +1,7 @@
 .. _examples-ohm-solver-em-modes:
 
-Electromagnetic modes
-=====================
+Ohm solver: Electromagnetic modes
+=================================
 
 In this example a simulation is seeded with a thermal plasma while an initial magnetic field is applied in either the
 :math:`z` or :math:`x` direction. The simulation is progressed for a large number of steps and the resulting fields are
@@ -69,8 +69,8 @@ Perpendicularly propagating modes are also supported, commonly referred to as io
 
    Calculated ion Bernstein waves spectrum with the theoretical dispersion overlaid.
 
-Cylindrical normal modes
-========================
+Ohm solver: Cylindrical normal modes
+====================================
 
 A RZ-geometry example case for normal modes propagating along an applied magnetic
 field in a cylinder is also available. The analytical solution for these modes

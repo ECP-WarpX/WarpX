@@ -1,7 +1,7 @@
 .. _examples-ohm-solver-ion-landau-damping:
 
-Ion Landau Damping
-==================
+Ohm solver: Ion Landau Damping
+==============================
 
 Landau damping is a well known process in which electrostatic (acoustic) waves are
 damped by transferring energy to particles satisfying a resonance condition.

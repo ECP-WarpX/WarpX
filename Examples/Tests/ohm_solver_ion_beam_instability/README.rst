@@ -1,7 +1,7 @@
 .. _examples-ohm-solver-ion-beam-instability:
 
-Ion Beam R Instability
-======================
+Ohm solver: Ion Beam R Instability
+==================================
 
 In this example a low density ion beam interacts with a "core" plasma population which induces an instability.
 Based on the relative density between the beam and the core plasma a resonant or non-resonant condition can
