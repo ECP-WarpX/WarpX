@@ -372,7 +372,6 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 #endif
 
     // Particle stuff
-    if (0)
     {
         int nparticles = 0;
         for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
