@@ -307,7 +307,8 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 {
     if (m_slice_counter == 0) return;
 
-    std::string filename = amrex::Concatenate(m_file_prefix, i_buffer, 1);
+    // const std::string filename = amrex::Concatenate(m_file_prefix, i_buffer, 1);
+    const std::string filename = m_file_prefix;
     constexpr int permission_flag_rwxrxrx = 0755;
     if (amrex::ParallelDescriptor::IOProcessor()) {
         if (! amrex::UtilCreateDirectory(filename, permission_flag_rwxrxrx) ) {
@@ -394,7 +395,7 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 
         if (nparticles > 0) {
             m_flush_format->WriteToFile(m_varnames, {}, m_geom_output[i_buffer],
-                                        warpx.getistep(), warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
+                                        warpx.getistep(), warpx.gett_new(0), m_output_species[i_buffer], nlev_output, filename,
                                         m_file_min_digits, plot_raw_fields, plot_raw_fields_guards, use_pinned_pc,
                                         isBTD, i_buffer, m_flush_counter, maxBTDBuffers, geom,
                                         isLastBTD, m_totalParticles_flushed_already[i_buffer]);
