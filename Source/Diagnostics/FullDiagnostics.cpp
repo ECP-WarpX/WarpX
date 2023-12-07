@@ -267,6 +267,21 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jz"), ncomp);
             }
+        } else if ( m_varnames_fields[comp] == "jer" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){
+            m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
+            if (update_varnames) {
+                AddRZModesToOutputNames(std::string("jer"), ncomp);
+            }
+        } else if ( m_varnames_fields[comp] == "jet" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){
+            m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
+            if (update_varnames) {
+                AddRZModesToOutputNames(std::string("jet"), ncomp);
+            }
+        } else if ( m_varnames_fields[comp] == "jez" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){
+            m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(2, lev, m_crse_ratio);
+            if (update_varnames) {
+                AddRZModesToOutputNames(std::string("jez"), ncomp);
+            }
         } else if ( m_varnames_fields[comp] == "rho" ){
             // Initialize rho functor to dump total rho
             m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1,
@@ -326,30 +341,6 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
         else {
             WARPX_ABORT_WITH_MESSAGE(
                 "Error: " + m_varnames_fields[comp] + " is not a known field output type in RZ geometry");
-        }
-        // Check for electron current diagnostic output if HybridPIC algorithm is used.
-        if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
-        {
-            if ( m_varnames[comp] == "jer" ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio, deposit_current);
-                deposit_current = false;
-                if (update_varnames) {
-                    AddRZModesToOutputNames(std::string("jer"), ncomp);
-                }
-            } else if ( m_varnames[comp] == "jet" ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio, deposit_current);
-                deposit_current = false;
-                if (update_varnames) {
-                    AddRZModesToOutputNames(std::string("jet"), ncomp);
-                }
-            } else if ( m_varnames[comp] == "jez" ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(2, lev, m_crse_ratio, deposit_current);
-                deposit_current = false;
-                if (update_varnames) {
-                    AddRZModesToOutputNames(std::string("jez"), ncomp);
-                }
-            }
-
         }
     }
 
@@ -684,7 +675,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(warpx.get_array_Bfield_aux(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "divE" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
-        }
+        } 
         else {
 
 #ifdef WARPX_DIM_RZ
@@ -710,7 +701,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "At" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 1), lev, m_crse_ratio);
-            }
+            } 
             else {
                 std::cout << "Error on component " << m_varnames[comp] << std::endl;
                 WARPX_ABORT_WITH_MESSAGE(m_varnames[comp] + " is not a known field output type for RZ geometry");
@@ -735,7 +726,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "jey" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
-            }
+            } 
             else if ( m_varnames[comp] == "Ax" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ay" ){
@@ -853,3 +844,4 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
 
 
 }
+
