@@ -11,6 +11,8 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Pusher/UpdatePosition.H"
 
 #include <ablastr/particles/NodalFieldGather.H>
 
@@ -19,6 +21,7 @@
 #include <AMReX_Reduce.H>
 #include <AMReX_Tuple.H>
 #include <AMReX.H>
+#include <AMReX_Algorithm.H>
 
 struct IsOutsideDomainBoundary {
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
@@ -38,6 +41,70 @@ struct IsOutsideDomainBoundary {
             if (p.pos(m_idim) >= m_phi[m_idim]) { return 1; }
         }
         return 0;
+    }
+};
+
+struct FindBoundaryIntersection {
+    int m_index;
+    int m_step;
+    amrex::Real m_dt;
+    const auto m_phiarr;
+    const auto m_dxi;
+    const auto m_plo;
+    
+
+    template <typename DstData, typename SrcData>
+    AMREX_GPU_HOST_DEVICE
+    void operator() (const DstData& dst, const SrcData& src,
+                     int src_i, int dst_i) const noexcept
+    {
+        // Copy all particle attributes, from the source to the destination
+        dst.m_aos[dst_i] = src.m_aos[src_i];
+        for (int j = 0; j < SrcData::NAR; ++j)
+            dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
+        for (int j = 0; j < src.m_num_runtime_real; ++j)
+            dst.m_runtime_rdata[j][dst_i] = src.m_runtime_rdata[j][src_i];
+        for (int j = 0; j < src.m_num_runtime_int; ++j)
+            dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
+
+        // Also record the integer timestep on the destination
+        dst.m_runtime_idata[m_index][dst_i] = m_step;
+
+        // Modify the position of the destination particle:
+        // Move it to the point of intersection with the embedded boundary
+        // (which is found by using a bisection algorithm)
+        const auto& p = dst.getSuperParticle(ip);
+        amrex::ParticleReal xp, yp, zp;
+        get_particle_position( p, xp, yp, zp );
+        
+        
+        // Bisection algorithm to find the point phi=0 (i.e. on the embedded boundary)
+        amrex::Real x_temp, y_temp, z_temp;
+        int i, j, k;
+        amrex::Real W[AMREX_SPACEDIM][2];
+        amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
+            [&] AMREX_GPU_DEVICE (amrex::Real dt_frac) {
+                x_temp = xp; y_temp = yp; z_temp = zp;
+                UpdatePosition(x_temp, y_temp, z_temp, ux[ip], uy[ip], uz[ip], -dt_frac*m_dt);
+                ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, m_plo, m_dxi, i, j, k, W);
+                phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
+                return phi_value;
+        } );
+        // Record the corresponding position
+#if (defined WARPX_DIM_3D)
+        p.pos(0) = x_temp;
+        p.pos(1) = y_temp;
+        p.pos(2) = z_temp;
+#elif (defined WARPX_DIM_XZ)
+        p.pos(0) = x_temp;
+        p.pos(1) = z_temp;
+#elif (defined WARPX_DIM_RZ)
+        p.pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
+        // Note: this fails to change the angle theta of the particle
+        p.pos(1) = z_temp;
+#elif (defined WARPX_DIM_1D_Z)
+        p.pos(0) = z_temp;
+#endif
     }
 };
 
@@ -360,7 +427,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
-                                                     CopyAndTimestamp{timestamp_index, timestep}, 0, dst_index);
+                                                     FindBoundaryIntersection{timestamp_index, timestep, dt, phiarr, dxi, plo}, 0, dst_index);
                 }
             }
         }
@@ -407,3 +474,5 @@ ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name,
 
     return &buffer[index];
 }
+
+
