@@ -30,7 +30,7 @@ JeFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*
     /** pointer to source3 (Jext) multifab */
     amrex::MultiFab* m_mf_j_external = hybrid_pic_model.get_pointer_current_fp_external(m_lev, m_dir);
 
-    // A Je multifab is generated to hold electron current. 
+    // A Je multifab is generated to hold electron current.
     amrex::MultiFab Je( m_mf_j->boxArray(), m_mf_j->DistributionMap(), 1, m_mf_j->nGrowVect() );
 
     // Je = Jamp - Ji - Jext
