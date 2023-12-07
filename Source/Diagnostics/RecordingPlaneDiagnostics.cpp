@@ -379,12 +379,13 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
     {
         int nparticles = 0;
         for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
+            amrex::Print() << " isp : " << m_totalParticles_in_buffer[i_buffer][isp] << "\n";
             nparticles += m_totalParticles_in_buffer[i_buffer][isp];
         }
 
         // Initializing variables needed for compatibility with WriteToFile
         bool const isBTD = true;
-        bool const isLastBTD = false;
+        bool const isLastBTD = true;
         int const maxBTDBuffers = 0;
         // particles buffer is saved in pinned particle container
         bool const use_pinned_pc = true;
