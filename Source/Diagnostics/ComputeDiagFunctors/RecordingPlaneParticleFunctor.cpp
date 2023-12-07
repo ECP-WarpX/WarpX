@@ -115,14 +115,13 @@ RecordingPlaneParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_ds
                 auto old_size = ptile_dst.numParticles();
                 ptile_dst.resize(old_size + total_partdiag_size);
                 auto dst_data = ptile_dst.getParticleTileData();
-                int timecross_index = ptile_src.NumRuntimeRealComps() - 1;
+                int timecross_index = ptile_dst.NumRuntimeRealComps() - 1;
                 const auto GetPlaneCrossingTime = PlaneCrossingTime(pti, tmp_particle_data,
                                                   warpx.gett_new(0), m_z_location, timecross_index);
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE (int i)
                 {
                     if (Flag[i]) {
-                         amrex::copyParticle(dst_data, src_data, i, old_size+IndexLocation[i]);
                          GetPlaneCrossingTime(dst_data, src_data, i, old_size+IndexLocation[i]);
                     }
                 });
