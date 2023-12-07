@@ -382,7 +382,7 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
         }
 
         // Initializing variables needed for compatibility with WriteToFile
-        bool const isBTD = false;
+        bool const isBTD = true;
         bool const isLastBTD = false;
         int const maxBTDBuffers = 0;
         // particles buffer is saved in pinned particle container
