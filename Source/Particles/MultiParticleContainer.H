@@ -330,7 +330,7 @@ public:
                       const amrex::MultiFab& Bz);
 #endif
 
-    void doRadiation(amrex::Real dt);
+    void doRadiation(amrex::Real dt, amrex::Real cur_time);
 
     void keepoldmomentum();
     void keepoldmomentum_p(std::unique_ptr<WarpXParticleContainer>& pc);

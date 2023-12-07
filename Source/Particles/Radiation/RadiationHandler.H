@@ -17,7 +17,7 @@
 #include <AMReX_Box.H>
 #include <AMReX_Vector.H>
 #include <AMReX_FArrayBox.H>
-
+#include "Particles/Sorting/SortingUtils.H"
 #include <memory>
 #include <string>
 
@@ -31,9 +31,9 @@ public:
 
     /* Perform the calculation of the radiation */
     //void doRadiation (amrex::Real dt, MultiParticleContainer* mypc);    
-    void add_radiation_contribution(const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc);
-    void add_detector();
-    void RadiationHandler::gather_and_write_radiation(const std::string& filename);
+    void add_radiation_contribution(const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time);
+    amrex::IntVect add_detector();
+    void gather_and_write_radiation(const std::string& filename);
 
 
 private:
@@ -64,6 +64,16 @@ private:
 
     //resolution of the grid of the detectir 
     amrex::Vector<amrex::Real> m_d_d;
+
+    //
+    amrex::Gpu::DeviceVector<amrex::Real> m_radiation_data;
+
+    //
+    amrex::Real dephas;
+
+    //
+    amrex::Vector<amrex::Vector<amrex::Real>> det_pos;
+    amrex::Vector<amrex::Real> omega_calc;
 
 };
 #endif // WARPX_PARTICLES_RADIATION_H_

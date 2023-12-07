@@ -42,7 +42,22 @@ RadiationHandler::RadiationHandler()
         pp_radiations.getarr("detector_number_points", m_det_pts,0,2);
         pp_radiations.query("detector_direction", m_det_direction);
         pp_radiations.query("detector_distance", m_det_distance);
-        add_detector();
+        amrex::IntVect d_d_fab = add_detector();
+         /* Initialize the Fab with the field in function of angle and frequency */
+         //int numcomps = 4;
+        //BaseFab<Complex> fab(bx,numcomps);
+        // Box of angle and frequency
+        //const amrex::Box detect_box({0,0,0}, {m_det_pts[0], m_det_pts[1], m_omega_points});
+        //ncomp = 2; //Real and complex part
+        //amrex::FArrayBox fab_detect(detect_box, ncomp);
+        //fab_detect.setval(0,0)
+        m_radiation_data = amrex::Gpu::DeviceVector<amrex::Real>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
+        fillWithConsecutiveReal(det_pos[0], 0,s);
+        fillWithConsecutiveReal(det_pos[1]);
+        fillWithConsecutiveReal(omega_calc);
+        
+
+
     }
 
     //
@@ -81,15 +96,14 @@ void RadiationHandler::add_radiation_contribution
                     auto* p_uz_old = soa.GetRealData(prev_u_z_idx).data();
 
                     auto GetPosition = GetParticlePosition<PIdx>(pti);
+                    amrex::ParticleReal const q = pc->getCharge();
+
                 amrex::ParallelFor(np,
                  [=] AMREX_GPU_DEVICE(int ip)
                  {   amrex::ParticleReal xp, yp, zp;
-                     GetPosition.AsStored(ip, xp, yp, zp);
-
-                                     std::cout << "######### " <<  ip << " "
-                            << xp << " " << yp << " " << zp << " "
-                            << p_ux[ip] << " " << p_uy[ip] << " " << p_uz[ip] << " "
-                            << p_ux_old[ip] << " " << p_uy_old[ip] << " " << p_uz_old[ip] << std::endl;
+                    
+                    GetPosition.AsStored(ip,xp, yp, zp);
+                    amrex::GpuArray<amrex::Real, 3> Part_pos{xp,yp,zp};
 
                     amrex::ParticleReal p_ux_old_unit=p_ux_old[ip];
                     amrex::ParticleReal p_uy_old_unit=p_uy_old[ip];
@@ -99,8 +113,6 @@ void RadiationHandler::add_radiation_contribution
                     amrex::ParticleReal p_uy_unit=p_uy[ip];
                     amrex::ParticleReal p_uz_unit=p_uz[ip];
                             
-                    amrex::ParticleReal const q = pc.getCharge();
-
                     amrex::ParticleReal p_u = std::sqrt(std::pow(p_ux_unit,2)+std::pow(p_uy_unit,2)+std::pow(p_uz_unit,2));
                     //Calculation of 1_beta.n, n corresponds to m_det_direction, the direction of the normal
                     amrex::ParticleReal un_betan = 1-(p_ux_unit*static_cast<double>(m_det_direction[0])+p_uy_unit*static_cast<double>(m_det_direction[1])+p_uz_unit*static_cast<double>(m_det_direction[2]));
@@ -126,39 +138,37 @@ void RadiationHandler::add_radiation_contribution
                     //Calculation of ei(omegat-n.r)
                     
                     //omega effective calculé
-                    amrex::Real omega_calc = 0
-                    for(int i_om=0, i_om<m_omega_points,i_om++){
-                        for(int i_x=0, i_x<m_det_pts[0], i_x++){
-                            for(int i_y=0, i_y<m_det_pts[1], i_y++){
-                        omega_calc = omega_calc + m_d_omega
-
-                        for(int idim = 0; idim<3; ++idim){
-                            if(m_det_direction[idim]==1){
-                        amrex::Real dephas= omega_calc*(current_time-(static_cast<double>(m_det_direction[(idim+1)%3])*(xp-m_det_distance*static_cast<double>(m_det_direction[0])-pos_det_x[0])-static_cast<double>(m_det_direction[1])*(yp-m_det_distance*static_cast<double>(m_det_direction[1]))-static_cast<double>(m_det_direction[2])*(zp-m_det_distance*static_cast<double>(m_det_direction[2])))/ablastr::constant::SI::c);
-                            m_d_d[(idim+1)%3]=2*m_det_distance*tan(m_d_theta[0]/2);
-                            m_d_d[(idim+2)%3]=2*m_det_distance*tan(m_d_theta[1]/2);
+                    amrex::Real omega_calc = 0;
+                    for(int i_om=0; i_om<m_omega_points;i_om++){
+                        for(int i_x=0; i_x<m_det_pts[0]; i_x++){
+                            for(int i_y=0; i_y<m_det_pts[1]; i_y++){
+                        //omega_calc = omega_calc + m_d_omega
+                                for(int idim = 0; idim<3; ++idim){
+                                    if(m_det_direction[idim]==1){      
+                                        dephas=omega_calc*(current_time-(Part_pos[idim]-m_det_distance)/ablastr::constant::SI::c) ;
+                                        }
                         }
-                        amrex::Complex eiomega=(amrex::cos(dephas), amrex::sin(dephas));
-                        amrex::Complex Term_x=ncrossncrossBetapointx/un_betan**2*eiomega;
-                        amrex::Complex Term_y=ncrossncrossBetapointy/un_betan**2*eiomega;
-                        amrex::Complex Term_z=ncrossncrossBetapointz/un_betan**2*eiomega;
+                        //function cospi and not cos
+                        Complex eiomega=(amrex::Math::cospi(dephas/ablastr::constant::math::pi), amrex::Math::cospi((ablastr::constant::math::pi/2-dephas)/ablastr::constant::math::pi));
+                        Complex Term_x= q*dt/(16*pow(ablastr::constant::math::pi,3)*ablastr::constant::SI::ep0*ablastr::constant::SI::c)*ncrossncrossBetapointx/std::pow(un_betan,2)*eiomega;
+                        Complex Term_y= q*dt/(16*pow(ablastr::constant::math::pi,3)*ablastr::constant::SI::ep0*ablastr::constant::SI::c)*ncrossncrossBetapointy/std::pow(un_betan,2)*eiomega;
+                        Complex Term_z= q*dt/(16*pow(ablastr::constant::math::pi,3)*ablastr::constant::SI::ep0*ablastr::constant::SI::c)*ncrossncrossBetapointz/std::pow(un_betan,2)*eiomega;
 
-                        //Calcul du terme direct de contribution
-                        amrex::Real Term_int = q*dt/(16*ablastr::constant::SI::pi*ablastr::constant::SI::mu0*ablastr::constant::SI::cx)*std(std::pow(qpTerm_x,2)+std::pow(Term_y,2)+std::pow(Term_z,2));
-                        fab_detect.saxpy(Real 1, fab_detect);
-                        gather_and_write_radiation(const std::string& filename)    
-                            }
+                        //Add the contributions
+
+                        //fab_detect.saxpy(Real 1, fab_detect);
+                         }
                         }
                     }
-                 }
-            }
-        }       
+            });
+        }     
+    }  
     
-    });
+    }
 
 void RadiationHandler::gather_and_write_radiation(const std::string& filename)
 {
-    auto radiation_data_cpu = amrex::Vector<amrex::Real>(m_I*m_J*m_W*2);
+    auto radiation_data_cpu = amrex::Vector<amrex::Real>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
     amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
         m_radiation_data.begin(), m_radiation_data.end(), radiation_data_cpu.begin());
     amrex::Gpu::streamSynchronize();
@@ -175,14 +185,9 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
         of.close();
     }
 }
-void RadiationHandler::add_detector
+amrex::IntVect RadiationHandler::add_detector
     (){
-
-    // Box of angle and frequency
-    const amrex::Box detect_box({0,0,0}, {m_det_pts[0], m_det_pts[1], m_omega_points});
-    ncomp = 2; //Real and complex part
-    amrex::FArrayBox fab_detect(detect_box, ncomp);
-    fab_detect.setval(0,0)
+    Geometry const& geom = WarpX::GetInstance().Geom(lev);
     //Calculation of angle resolution 
      m_d_theta.resize(2);
     for(int i=0; i<2; i++){
@@ -190,6 +195,7 @@ void RadiationHandler::add_detector
     }
     //Set the resolution of the detector
     m_d_d.resize(2);
+     geom[0].ProbLo();
     for(int idim = 0; idim<3; ++idim){
         if(m_det_direction[idim]==1){
             m_d_d[(idim+1)%3]=2*m_det_distance*tan(m_d_theta[0]/2);
@@ -197,5 +203,14 @@ void RadiationHandler::add_detector
         }
 
     m_d_omega=m_omega_range[1]-m_omega_range[0]/static_cast<double>(m_omega_points);
+
+
+    //Calculate the sides of the detector 
+    size_dim = 
+    //fillWithConsecutiveReal(pos_det_x)
+    //pos_det_y
+    //omega_calc
+    
     }
+    return(amrex::IntVect(m_d_d[0],m_d_d[1],m_d_omega));
 }
