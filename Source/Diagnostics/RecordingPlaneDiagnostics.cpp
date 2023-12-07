@@ -239,7 +239,6 @@ RecordingPlaneDiagnostics::UpdateBufferData ()
 void
 RecordingPlaneDiagnostics::InitializeParticleFunctors ()
 {
-#if 0
     auto& warpx = WarpX::GetInstance();
     const int num_station_buffers = 1;
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
@@ -251,13 +250,11 @@ RecordingPlaneDiagnostics::InitializeParticleFunctors ()
         const int idx = mpc.getSpeciesID(m_output_species_names[i]);
         m_all_particle_functors[i] = std::make_unique<RecordingPlaneParticleFunctor>(mpc.GetParticleContainerPtr(idx), m_output_species_names[i], num_station_buffers);
     }
-#endif
 }
 
 void
 RecordingPlaneDiagnostics::InitializeParticleBuffer ()
 {
-#if 0
     auto& warpx = WarpX::GetInstance();
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     for (int i = 0; i < m_num_buffers; ++i) {
@@ -272,13 +269,12 @@ RecordingPlaneDiagnostics::InitializeParticleBuffer ()
                                                        m_particles_buffer[i][isp].get() ));
         }
     }
-#endif
+
 }
 
 void
 RecordingPlaneDiagnostics::PrepareParticleDataForOutput ()
 {
-#if 0
     const int lev = 0;
     auto& warpx = WarpX::GetInstance();
     for (int i = 0; i < m_particles_buffer.size(); ++i) {
@@ -301,7 +297,6 @@ RecordingPlaneDiagnostics::PrepareParticleDataForOutput ()
     {
         m_all_particle_functors[isp]->PrepareFunctorData(0, GetZSliceInDomain(0), m_station_loc, 0._rt, 0._rt, 0._rt);
     }
-#endif
 }
 
 void
