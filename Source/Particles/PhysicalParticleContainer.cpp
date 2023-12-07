@@ -1624,6 +1624,14 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         IntVect shifted;
         bool no_overlap = false;
 
+        // This will hold the cell location on the emitting plane.
+        // When the flux direction is positive, this will be the same as overlap_corner.
+        // When the flux direction is negative, this will differ from overlap_corner
+        // which will hold the lower corner of the cell below the emitting plane.
+        // overlap_corner refers to the cell below the emitting plane since that is where
+        // the new particles will be injected.
+        GpuArray<Real,AMREX_SPACEDIM> emitting_cell_location;
+
         for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
 #if (defined(WARPX_DIM_3D))
             if (dir == plasma_injector.flux_normal_axis) {
@@ -1635,21 +1643,18 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #elif defined(WARPX_DIM_1D_Z)
             if ( (dir==0) && (plasma_injector.flux_normal_axis==2) ) {
 #endif
-                if (plasma_injector.flux_direction > 0) {
-                    if (plasma_injector.surface_flux_pos <  tile_realbox.lo(dir) ||
-                        plasma_injector.surface_flux_pos >= tile_realbox.hi(dir)) {
-                            no_overlap = true;
-                            break;
-                    }
-                } else {
-                    if (plasma_injector.surface_flux_pos <= tile_realbox.lo(dir) ||
-                        plasma_injector.surface_flux_pos >  tile_realbox.hi(dir)) {
-                            no_overlap = true;
-                            break;
-                    }
+                amrex::Real surface_flux_cell = plasma_injector.surface_flux_pos;
+                if (plasma_injector.flux_direction < 0) {
+                    surface_flux_cell -= dx[dir];
                 }
-                overlap_realbox.setLo( dir, plasma_injector.surface_flux_pos );
-                overlap_realbox.setHi( dir, plasma_injector.surface_flux_pos );
+                if (surface_flux_cell <  tile_realbox.lo(dir) ||
+                    surface_flux_cell >= tile_realbox.hi(dir)) {
+                    no_overlap = true;
+                    break;
+                }
+                emitting_cell_location[dir] = plasma_injector.surface_flux_pos;
+                overlap_realbox.setLo( dir, surface_flux_cell );
+                overlap_realbox.setHi( dir, surface_flux_cell );
                 overlap_box.setSmall( dir, 0 );
                 overlap_box.setBig( dir, 0 );
                 shifted[dir] =
@@ -1667,6 +1672,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 } else {
                     no_overlap = true; break;
                 }
+                emitting_cell_location[dir] = overlap_realbox.lo(dir);
                 // Count the number of cells in this direction in overlap_realbox
                 overlap_box.setSmall( dir, 0 );
                 overlap_box.setBig( dir,
@@ -1719,15 +1725,17 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 {
                     ParticleReal xp, yp, zp;
                     GetPosition(ip, xp, yp, zp);
+                    // The floor is used to get the correct casting in cases when
+                    // the position is below the min
 #if defined(WARPX_DIM_3D)
-                    const int i = static_cast<int>((xp - xmin)*dxi);
-                    const int j = static_cast<int>((yp - ymin)*dyi);
-                    const int k = static_cast<int>((zp - zmin)*dzi);
+                    const int i = static_cast<int>(std::floor((xp - xmin)*dxi));
+                    const int j = static_cast<int>(std::floor((yp - ymin)*dyi));
+                    const int k = static_cast<int>(std::floor((zp - zmin)*dzi));
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                    const int i = static_cast<int>((xp - xmin)*dxi);
-                    const int j = static_cast<int>((zp - zmin)*dzi);
+                    const int i = static_cast<int>(std::floor((xp - xmin)*dxi));
+                    const int j = static_cast<int>(std::floor((zp - zmin)*dzi));
 #elif defined(WARPX_DIM_1D_Z)
-                    const int i = static_cast<int>((zp - zmin)*dzi);
+                    const int i = static_cast<int>(std::floor((zp - zmin)*dzi));
 #endif
                     const IntVect iv(AMREX_D_DECL(i, j, k));
 
@@ -1905,8 +1913,15 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                   flux_pos->getPositionUnitBox(i_part, lrrfac, engine) :
                   // Otherwise: use 1 as the refinement ratio
                   flux_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
-                auto pos = getCellCoords(overlap_corner, dx, r, iv);
+                auto pos = getCellCoords(emitting_cell_location, dx, r, iv);
                 auto ppos = PDim3(pos);
+
+                // If the particle's initial position is not within or on the species's
+                // xmin, xmax, ymin, ymax, zmin, zmax, go to the next generated particle.
+                if (!flux_pos->insideBoundsInclusive(ppos.x, ppos.y, ppos.z)) {
+                    p.id() = -1;
+                    continue;
+                }
 
                 // inj_mom would typically be InjectorMomentumGaussianFlux
                 XDim3 u;
@@ -1916,35 +1931,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 pu.x *= PhysConst::c;
                 pu.y *= PhysConst::c;
                 pu.z *= PhysConst::c;
-
-                // The containsInclusive is used to allow the case of the flux surface
-                // being on the boundary of the domain. After the UpdatePosition below,
-                // the particles will be within the domain.
-#if defined(WARPX_DIM_3D)
-                if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.x,ppos.y,ppos.z})) {
-                    p.id() = -1;
-                    continue;
-                }
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-                if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.x,ppos.z,0.0_prt})) {
-                    p.id() = -1;
-                    continue;
-                }
-#else
-                amrex::ignore_unused(j,k);
-                if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.z,0.0_prt,0.0_prt})) {
-                    p.id() = -1;
-                    continue;
-                }
-#endif
-                // Lab-frame simulation
-                // If the particle's initial position is not within or on the species's
-                // xmin, xmax, ymin, ymax, zmin, zmax, go to the next generated particle.
-                if (!flux_pos->insideBoundsInclusive(ppos.x, ppos.y, ppos.z)) {
-                    p.id() = -1;
-                    continue;
-                }
 
 #ifdef WARPX_DIM_RZ
                 // Conversion from cylindrical to Cartesian coordinates
@@ -2040,6 +2026,27 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // so as to produce a continuous-looking flow of particles
                 const amrex::Real t_fract = amrex::Random(engine)*dt;
                 UpdatePosition(ppos.x, ppos.y, ppos.z, pu.x, pu.y, pu.z, t_fract);
+
+                // Check if the updated particle location is within the domain.
+                // If not, skip it.
+#if defined(WARPX_DIM_3D)
+                if (!tile_realbox.contains(XDim3{ppos.x, ppos.y, ppos.z})) {
+                    p.id() = -1;
+                    continue;
+                }
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                amrex::ignore_unused(k);
+                if (!tile_realbox.contains(XDim3{ppos.x, ppos.z, 0.0_prt})) {
+                    p.id() = -1;
+                    continue;
+                }
+#else
+                amrex::ignore_unused(j, k);
+                if (!tile_realbox.contains(XDim3{ppos.z, 0.0_prt, 0.0_prt})) {
+                    p.id() = -1;
+                    continue;
+                }
+#endif
 
 #if defined(WARPX_DIM_3D)
                 p.pos(0) = ppos.x;
