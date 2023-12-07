@@ -9,7 +9,6 @@
 
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
-#include "Particles/Pusher/UpdatePosition.H"
 
 #include <ablastr/particles/NodalFieldGather.H>
 
@@ -20,7 +19,6 @@
 #include <AMReX_REAL.H>
 #include <AMReX_TypeTraits.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Algorithm.H>
 
 #include <type_traits>
 #include <utility>
@@ -66,9 +64,9 @@
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f, const amrex::Real dt)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f)
 {
-    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f), dt);
+    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f));
 }
 
 /**
@@ -109,9 +107,9 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f, const amrex::Real dt)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f)
 {
-    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f), dt);
+    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f));
 }
 
 /**
@@ -155,7 +153,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
 scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb,
-                 int lev_min, int lev_max, F&& f, const amrex::Real dt)
+                 int lev_min, int lev_max, F&& f)
 {
     BL_PROFILE("scrapeParticles");
 
@@ -163,24 +161,14 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
     {
         const auto plo = pc.Geom(lev).ProbLoArray();
         const auto dxi = pc.Geom(lev).InvCellSizeArray();
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
         for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {
-            const auto getPosition = GetParticlePosition<PIdx>(pti);
-            auto       setPosition = SetParticlePosition<PIdx>(pti);
+            const auto getPosition = GetParticlePosition(pti);
             auto& tile = pti.GetParticleTile();
             auto ptd = tile.getParticleTileData();
             const auto np = tile.numParticles();
             amrex::Particle<0,0> * const particles = tile.GetArrayOfStructs()().data();
             auto phi = (*distance_to_eb[lev])[pti].array();  // signed distance function
-            // - momenta are stored as a struct of array, in `attribs`
-            auto& attribs = pti.GetAttribs();
-            const amrex::ParticleReal* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
-            const amrex::ParticleReal* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
-            const amrex::ParticleReal* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-
             amrex::ParallelForRNG( np,
             [=] AMREX_GPU_DEVICE (const int ip, amrex::RandomEngine const& engine) noexcept
             {
@@ -190,52 +178,34 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
-
-
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-
                 ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
+
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
                 if (phi_value < 0.0)
                 {
-                    amrex::Real x_temp, y_temp, z_temp;
-                    amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
-                        [&] AMREX_GPU_DEVICE (amrex::Real dt_frac) {
-                            x_temp = xp; y_temp = yp; z_temp = zp;
-                            UpdatePosition(x_temp, y_temp, z_temp, ux[ip], uy[ip], uz[ip], -dt_frac*dt);
-                            ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
-                            phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
-                            return phi_value;
-                    } );
-
                     amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
 
                     // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
-                    pos[0] = x_temp;
-                    pos[1] = y_temp;
-                    pos[2] = z_temp;
-                    std::cout<<"x_temp: "<<x_temp<<std::endl;
-                    std::cout<<"y_temp: "<<y_temp<<std::endl;
+                    pos[0] = xp - normal[0]*phi_value;
+                    pos[1] = yp - normal[1]*phi_value;
+                    pos[2] = zp - normal[2]*phi_value;
 #elif (defined WARPX_DIM_XZ)
-                    pos[0] = x_temp;
-                    pos[1] = z_temp;
+                    pos[0] = xp - normal[0]*phi_value;
+                    pos[1] = zp - normal[1]*phi_value;
 #elif (defined WARPX_DIM_RZ)
-                    pos[0] = std::sqrt(x_temp*x_temp + y_temp*y_temp);
-                    pos[1] = z_temp;
-                    std::cout<<"x_temp: "<<x_temp<<std::endl;
-                    std::cout<<"y_temp: "<<y_temp<<std::endl;
-                    std::cout<<"z_temp: "<<z_temp<<std::endl;
+                    pos[0] = std::sqrt(xp*xp + yp*yp) - normal[0]*phi_value;
+                    pos[1] = zp - normal[1]*phi_value;
 #elif (defined WARPX_DIM_1D_Z)
-                    pos[0] = z_temp;
+                    pos[0] = zp - normal[0]*phi_value;
 #endif
                     DistanceToEB::normalize(normal);
 
                     f(ptd, ip, pos, normal, engine);
-                    setPosition( ip, x_temp, y_temp, z_temp );
                 }
             });
         }
