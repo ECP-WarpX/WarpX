@@ -245,9 +245,11 @@ RecordingPlaneDiagnostics::InitializeParticleFunctors ()
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     m_all_particle_functors.resize(m_output_species_names.size());
     m_totalParticles_in_buffer[0].resize(m_output_species_names.size());
+    m_totalParticles_flushed_already[0].resize(m_output_species_names.size());
     for (int i = 0; i < m_all_particle_functors.size(); ++i)
     {
         m_totalParticles_in_buffer[0][i] = 0;
+        m_totalParticles_flushed_already[0][i] = 0;
         const int idx = mpc.getSpeciesID(m_output_species_names[i]);
         m_all_particle_functors[i] = std::make_unique<RecordingPlaneParticleFunctor>(mpc.GetParticleContainerPtr(idx), m_output_species_names[i], num_station_buffers);
     }
