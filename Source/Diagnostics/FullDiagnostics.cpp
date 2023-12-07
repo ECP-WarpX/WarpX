@@ -693,9 +693,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "jt" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;
-            } else if  (m_varnames[comp] == 'jer' &&  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
+            } else if  (m_varnames[comp] == "jer" &&  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
-            } else if  (m_varnames[comp] == 'jet' &&  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
+            } else if  (m_varnames[comp] == "jet" &&  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ar" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
