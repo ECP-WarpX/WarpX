@@ -1031,7 +1031,6 @@ void MultiParticleContainer::doRadiation (const amrex::Real dt)
         if (pc->has_radiation()){
             
             m_p_radiation_handler->add_radiation_contribution(dt,pc);
-
             }
         }
     }

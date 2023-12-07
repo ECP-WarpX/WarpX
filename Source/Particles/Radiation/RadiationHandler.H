@@ -33,6 +33,8 @@ public:
     //void doRadiation (amrex::Real dt, MultiParticleContainer* mypc);    
     void add_radiation_contribution(const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc);
     void add_detector();
+    void RadiationHandler::gather_and_write_radiation(const std::string& filename);
+
 
 private:
 
