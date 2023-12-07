@@ -38,6 +38,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_MakeType.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_NonLocalBC.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParticleContainer.H>
@@ -414,7 +415,21 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
     }
 
     // reset counter
-    m_slice_counter = (m_last_timeslice_filled) ? 0 : 1; // Keep the last slice
+    if (m_last_timeslice_filled) {
+        m_slice_counter = 0;
+    } else {
+        m_slice_counter = 1;
+        // Keep the last slice. Copy date from the last slice to the first
+        // slice
+        for (int lev = 0; lev < 1; ++lev) {
+            auto& out = m_mf_output[i_buffer][lev];
+            amrex::Box destbox = WarpX::GetInstance().Geom(lev).Domain();
+            destbox.convert(out.ixType()).setRange(WARPX_ZINDEX,0);
+            amrex::NonLocalBC::MultiBlockIndexMapping dtos;
+            dtos.offset[WARPX_ZINDEX] = -(m_buffer_size-1);
+            amrex::NonLocalBC::ParallelCopy(out, destbox, out, 0, 0, out.nComp(), amrex::IntVect(0), dtos);
+        }
+    }
     m_tmin = m_tmax;
     // update Flush counter
     m_flush_counter++;

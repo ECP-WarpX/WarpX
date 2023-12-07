@@ -152,9 +152,10 @@ void StationFieldLaserProfile::fill_amplitude (
     const int np,
     amrex::Real const * AMREX_RESTRICT const Xp,
     amrex::Real const * AMREX_RESTRICT const Yp,
-    amrex::Real t,
+    amrex::Real /*t*/,
     amrex::Real * AMREX_RESTRICT const amplitude) const
 {
+    amrex::ignore_unused(Yp);
     using namespace amrex::literals;
     if (m_ibuffer >= 0 && m_ibuffer < int(m_times.size())) {
         auto const& geom = WarpX::GetInstance().Geom(0);
