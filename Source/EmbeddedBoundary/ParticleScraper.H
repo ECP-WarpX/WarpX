@@ -64,9 +64,9 @@
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f,const amrex::Real dt)
 {
-    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f));
+    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f),dt);
 }
 
 /**
@@ -107,9 +107,9 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, F&& f,const amrex::Real dt)
 {
-    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f));
+    scrapeParticles(pc, distance_to_eb, 0, pc.finestLevel(), std::forward<F>(f),dt);
 }
 
 /**
@@ -153,7 +153,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
 scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb,
-                 int lev_min, int lev_max, F&& f)
+                 int lev_min, int lev_max, F&& f,const amrex::Real dt)
 {
     BL_PROFILE("scrapeParticles");
 
