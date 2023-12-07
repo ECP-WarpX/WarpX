@@ -659,6 +659,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(2, lev, m_crse_ratio, true, deposit_current);
             deposit_current = false;
+        } else if ( m_varnames[comp] == "jez" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(2, lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Az" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
@@ -682,30 +684,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(warpx.get_array_Bfield_aux(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "divE" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
-//         } else if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){ // Take care of Hybrid-solver electron current
-//             std::cout << "Processing component " << m_varnames[comp] << std::endl;
-//             if ( m_varnames[comp] == "jez" ){
-//                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(2, lev, m_crse_ratio);
-//                 deposit_current = false;
-//             }
-// #ifdef WARPX_DIM_RZ
-//             if ( m_varnames[comp] == "jer" ){
-//                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
-//                 deposit_current = false;
-//             } else if ( m_varnames[comp] == "jet" ){
-//                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
-//                 deposit_current = false;
-//             }
-// #else
-//             if ( m_varnames[comp] == "jex" ){
-//                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
-//                 deposit_current = false;
-//             } else if ( m_varnames[comp] == "jey" ){
-//                 m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
-//                 deposit_current = false;
-//             }
-// #endif
-        }
+        } 
         else {
 
 #ifdef WARPX_DIM_RZ
@@ -723,6 +702,10 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "jt" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;
+            } else if  (m_varnames[comp] == 'jer' &&  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
+            } else if  (m_varnames[comp] == 'jet' &&  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ar" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "At" ){
@@ -748,7 +731,12 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "jy" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;
-            } else if ( m_varnames[comp] == "Ax" ){
+            } else if ( m_varnames[comp] == "jex" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
+            } else if ( m_varnames[comp] == "jey" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
+                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
+            } 
+            else if ( m_varnames[comp] == "Ax" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ay" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 1), lev, m_crse_ratio);
