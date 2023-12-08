@@ -31,7 +31,6 @@ Checks: '
         -modernize-use-trailing-return-type,
     mpi-*,
     performance-*,
-        -performance-noexcept-move-constructor,
         -performance-unnecessary-copy-initialization,
         -performance-unnecessary-value-param,
     portability-*,
