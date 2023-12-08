@@ -51,7 +51,7 @@ struct FindBoundaryIntersection {
     amrex::Array4<const amrex::Real> m_phiarr;
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& m_dxi;
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& m_plo;
-    amrex::ParticleReal m_ux, m_uy, m_uz;
+    const double* const m_ux, m_uy, m_uz;
     //int m_ip;
     
 
@@ -425,9 +425,9 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 //const amrex::ParticleReal* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
                 //const amrex::ParticleReal* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
                 auto& soa = ptile.GetStructOfArrays();
-                const amrex::ParticleReal * const AMREX_RESTRICT ux = soa.GetRealData(PIdx::ux).data();
-                const amrex::ParticleReal * const AMREX_RESTRICT uy = soa.GetRealData(PIdx::uy).data();
-                const amrex::ParticleReal * const AMREX_RESTRICT uz = soa.GetRealData(PIdx::uz).data();    
+                const auto ux = soa.GetRealData(PIdx::ux).data();
+                const auto uy = soa.GetRealData(PIdx::uy).data();
+                const auto uz = soa.GetRealData(PIdx::uz).data();    
                     
                 amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
                 amrex::ReduceData<int> reduce_data(reduce_op);
