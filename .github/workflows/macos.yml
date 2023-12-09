@@ -23,7 +23,7 @@ jobs:
         set +e
         brew unlink gcc
         brew update
-        brew install --overwrite python
+        brew install --overwrite --force python@3.12
         brew install ccache
         brew install fftw
         brew install libomp
