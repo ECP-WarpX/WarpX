@@ -1298,7 +1298,6 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
             amrex::Real const yp_old = yp_n[ip];
             amrex::Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
             amrex::Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
-            /* amrex::Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid); */
             amrex::Real const rp_mid = (rp_new + rp_old)/2._rt;
             amrex::Real costheta_new, sintheta_new;
             if (rp_new > 0._rt) {
@@ -1347,9 +1346,6 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
             double const z_old = (zp_n[ip] - zmin)*dzi;
 
 #if defined(WARPX_DIM_RZ)
-            /* amrex::Real const theta_old = std::atan2(yp_old, xp_old); */
-            /* amrex::Real const theta_new = std::atan2(yp_new, xp_new); */
-            /* amrex::Real const vy = (theta_new - theta_old)*rp_mid/dt; */
             amrex::Real const vy = (-uxp_nph[ip]*sintheta_mid + uyp_nph[ip]*costheta_mid)*gaminv;
 #elif defined(WARPX_DIM_XZ)
             amrex::Real const vy = uyp_nph[ip]*gaminv;
