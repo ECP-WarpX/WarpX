@@ -27,7 +27,7 @@ struct ParticleBoundaries
     void SetBoundsY (ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi);
     void SetBoundsZ (ParticleBoundaryType bc_lo, ParticleBoundaryType bc_hi);
 
-    bool CheckAll (ParticleBoundaryType bc);
+    [[nodiscard]] bool CheckAll (ParticleBoundaryType bc) const;
 
     void BuildReflectionModelParsers ();
 

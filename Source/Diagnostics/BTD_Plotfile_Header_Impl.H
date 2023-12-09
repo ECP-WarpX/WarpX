@@ -171,11 +171,11 @@ class BTDMultiFabHeaderImpl
     void WriteMultiFabHeader ();
 
     /** Returns size, m_ba_size, of the Box Array, m_ba.*/
-    int ba_size () const {return m_ba_size;}
+    [[nodiscard]] int ba_size () const {return m_ba_size;}
     /** Returns box corresponding to the ith box in the BoxArray, m_ba.
      *  \param[in] ibox index of the box in the BoxArray.
      */
-    amrex::Box ba_box (int ibox) const {return m_ba[ibox]; }
+    [[nodiscard]] amrex::Box ba_box (int ibox) const {return m_ba[ibox]; }
     /** Returns prefix of the ith-fab on disk, i.e., ith fab of the MultiFab data.
      *  \param[in] ifab index of the ith fab in the MultiFab data.
      */
@@ -326,7 +326,7 @@ public:
     /** Returns box corresponding to the ith box in the BoxArray, m_ba.
      *  \param[in] ibox index of the box in the BoxArray.
      */
-    amrex::Box ba_box (int ibox) const {return m_ba[ibox]; }
+    [[nodiscard]] amrex::Box ba_box (int ibox) const {return m_ba[ibox]; }
     /** Resize boxArray, m_ba, to size, m_ba_size. */
     void ResizeBoxArray () { m_ba.resize(m_ba_size); }
     /** Set Box indices of the ith-box in Box Array, m_ba, to the new Box, ba_box.

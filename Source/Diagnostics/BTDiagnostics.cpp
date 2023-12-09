@@ -870,7 +870,7 @@ BTDiagnostics::dz_lab (amrex::Real dt, amrex::Real ref_ratio) const
 
 
 int
-BTDiagnostics::k_index_zlab (int i_buffer, int lev)
+BTDiagnostics::k_index_zlab (int i_buffer, int lev) const
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::Real prob_domain_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );

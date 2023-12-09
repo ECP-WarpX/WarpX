@@ -52,7 +52,7 @@ public:
      *
      * @param[in] lev the level of refinement
      */
-    void UpdateElementFinder (int lev) const;
+    void UpdateElementFinder (int lev);
 
     /* The lattice element finder handles the lookup that finds the elements at the particle locations.
      * It should follow the same grid layout as the main grids.

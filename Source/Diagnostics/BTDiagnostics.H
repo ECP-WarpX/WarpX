@@ -300,7 +300,7 @@ private:
      * \param[in] i_buffer snapshot index
      * \param[in] lev      mesh-refinement level at which the lab-frame z-index is computed
      */
-    int k_index_zlab (int i_buffer, int lev);
+    [[nodiscard]] int k_index_zlab (int i_buffer, int lev) const;
     /** whether field buffer is full
      * \param[in] i_buffer buffer id for which the buffer size is checked.
      * returns bool = true is buffer is full, that is,
