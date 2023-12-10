@@ -461,11 +461,11 @@ MultiParticleContainer::Evolve (int lev,
         jx.setVal(0.0);
         jy.setVal(0.0);
         jz.setVal(0.0);
-        if (cjx) cjx->setVal(0.0);
-        if (cjy) cjy->setVal(0.0);
-        if (cjz) cjz->setVal(0.0);
-        if (rho) rho->setVal(0.0);
-        if (crho) crho->setVal(0.0);
+        if (cjx) { cjx->setVal(0.0); }
+        if (cjy) { cjy->setVal(0.0); }
+        if (cjz) { cjz->setVal(0.0); }
+        if (rho) { rho->setVal(0.0); }
+        if (crho) { crho->setVal(0.0); }
     }
     for (auto& pc : allcontainers) {
         pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
@@ -507,8 +507,9 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
     const bool is_PSATD_RZ = false;
 #endif
 
-    if( !is_PSATD_RZ )
+    if( !is_PSATD_RZ ) {
         nba.surroundingNodes();
+    }
 
     auto zero_rho = std::make_unique<MultiFab>(nba, dmap, WarpX::ncomps, ng_rho);
     zero_rho->setVal(amrex::Real(0.0));
@@ -555,7 +556,7 @@ MultiParticleContainer::DepositCharge (
     }
 
     // Push the particles in time, if needed
-    if (relative_time != 0.) PushX(relative_time);
+    if (relative_time != 0.) { PushX(relative_time); }
 
     bool const local = true;
     bool const reset = false;
@@ -564,13 +565,13 @@ MultiParticleContainer::DepositCharge (
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
     {
-        if (pc->do_not_deposit) continue;
+        if (pc->do_not_deposit) { continue; }
         pc->DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
                               interpolate_across_levels);
     }
 
     // Push the particles back in time
-    if (relative_time != 0.) PushX(-relative_time);
+    if (relative_time != 0.) { PushX(-relative_time); }
 
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev < rho.size(); ++lev)
@@ -586,7 +587,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
     std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
 
     for (auto& container : allcontainers) {
-        if (container->do_not_deposit) continue;
+        if (container->do_not_deposit) { continue; }
         const std::unique_ptr<MultiFab> rhoi = container->GetChargeDensity(lev, true);
         MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
     }
@@ -790,10 +791,10 @@ MultiParticleContainer::mapSpeciesProduct ()
 
 #ifdef WARPX_QED
     if (m_do_qed_schwinger) {
-    m_qed_schwinger_ele_product =
-        getSpeciesID(m_qed_schwinger_ele_product_name);
-    m_qed_schwinger_pos_product =
-        getSpeciesID(m_qed_schwinger_pos_product_name);
+        m_qed_schwinger_ele_product =
+            getSpeciesID(m_qed_schwinger_ele_product_name);
+        m_qed_schwinger_pos_product =
+            getSpeciesID(m_qed_schwinger_pos_product_name);
     }
 #endif
 }
@@ -976,11 +977,13 @@ void MultiParticleContainer::InitQED ()
         }
     }
 
-    if(m_nspecies_quantum_sync != 0)
+    if(m_nspecies_quantum_sync != 0) {
         InitQuantumSync();
+    }
 
-    if(m_nspecies_breit_wheeler !=0)
+    if(m_nspecies_breit_wheeler !=0) {
         InitBreitWheeler();
+    }
 
 }
 
@@ -1065,8 +1068,9 @@ void MultiParticleContainer::InitBreitWheeler ()
     // considered for pair production. If a photon has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real bw_minimum_chi_part;
-    if(!utils::parser::queryWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part))
+    if(!utils::parser::queryWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part)) {
         WARPX_ABORT_WITH_MESSAGE("qed_bw.chi_min should be provided!");
+    }
 
     pp_qed_bw.query("lookup_table_mode", lookup_table_mode);
     if(lookup_table_mode.empty()){
@@ -1488,7 +1492,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
     // in pc_product_ele and positrons in pc_product_pos
 
     for (auto& pc_source : allcontainers){
-        if(!pc_source->has_breit_wheeler()) continue;
+        if(!pc_source->has_breit_wheeler()) { continue; }
 
         // Get product species
         auto& pc_product_ele =

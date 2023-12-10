@@ -334,7 +334,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 {
     WARPX_PROFILE("RigidInjectedParticleContainer::PushP");
 
-    if (do_not_push) return;
+    if (do_not_push) { return; }
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(lev,0));
 

@@ -352,7 +352,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                           [=] AMREX_GPU_HOST_DEVICE (long ip, amrex::RandomEngine const& engine)
                           {
                               // determine if this particle should collide
-                              if (amrex::Random(engine) > total_collision_prob) return;
+                              if (amrex::Random(engine) > total_collision_prob) { return; }
 
                               amrex::ParticleReal x, y, z;
                               GetPosition.AsStored(ip, x, y, z);
@@ -398,7 +398,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                   nu_i += n_a * sigma_E * v_coll / nu_max;
 
                                   // check if this collision should be performed
-                                  if (col_select > nu_i) continue;
+                                  if (col_select > nu_i) { continue; }
 
                                   // charge exchange is implemented as a simple swap of the projectile
                                   // and target velocities which doesn't require any of the Lorentz

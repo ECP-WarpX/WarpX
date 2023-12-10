@@ -242,7 +242,7 @@ void HybridPICModel::InitData ()
 void HybridPICModel::GetCurrentExternal (
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths)
 {
-    if (!m_external_field_has_time_dependence) return;
+    if (!m_external_field_has_time_dependence) { return; }
 
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
@@ -414,7 +414,7 @@ void HybridPICModel::CalculateCurrentAmpere (
     // the boundary correction was already applied to J_i and the B-field
     // boundary ensures that J itself complies with the boundary conditions, right?
     // ApplyJfieldBoundary(lev, Jfield[0].get(), Jfield[1].get(), Jfield[2].get());
-    for (int i=0; i<3; i++) current_fp_ampere[lev][i]->FillBoundary(warpx.Geom(lev).periodicity());
+    for (int i=0; i<3; i++) { current_fp_ampere[lev][i]->FillBoundary(warpx.Geom(lev).periodicity()); }
 }
 
 void HybridPICModel::HybridPICSolveE (

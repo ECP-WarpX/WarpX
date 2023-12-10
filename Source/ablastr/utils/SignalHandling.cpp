@@ -146,8 +146,9 @@ SignalHandling::CheckSignals ()
 {
     // Is any signal handling action configured?
     // If not, we can skip all handling and the MPI communication as well.
-    if (!m_any_signal_action_active)
+    if (!m_any_signal_action_active) {
         return;
+    }
 
     // We assume that signals will definitely be delivered to rank 0,
     // and may be delivered to other ranks as well. For coordination,
@@ -185,8 +186,9 @@ SignalHandling::WaitSignals ()
 {
     // Is any signal handling action configured?
     // If not, we can skip all handling and the MPI communication as well.
-    if (!m_any_signal_action_active)
+    if (!m_any_signal_action_active) {
         return;
+    }
 
 #if defined(AMREX_USE_MPI)
     BL_MPI_REQUIRE(MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE));

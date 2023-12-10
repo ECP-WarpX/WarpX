@@ -551,7 +551,7 @@ void
 WarpX::FillBoundaryE (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryE(lev, PatchType::fine, ng, nodal_sync);
-    if (lev > 0) FillBoundaryE(lev, PatchType::coarse, ng, nodal_sync);
+    if (lev > 0) { FillBoundaryE(lev, PatchType::coarse, ng, nodal_sync); }
 }
 
 void
@@ -608,7 +608,7 @@ void
 WarpX::FillBoundaryB (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryB(lev, PatchType::fine, ng, nodal_sync);
-    if (lev > 0) FillBoundaryB(lev, PatchType::coarse, ng, nodal_sync);
+    if (lev > 0) { FillBoundaryB(lev, PatchType::coarse, ng, nodal_sync); }
 }
 
 void
@@ -665,7 +665,7 @@ void
 WarpX::FillBoundaryE_avg(int lev, IntVect ng)
 {
     FillBoundaryE_avg(lev, PatchType::fine, ng);
-    if (lev > 0) FillBoundaryE_avg(lev, PatchType::coarse, ng);
+    if (lev > 0) { FillBoundaryE_avg(lev, PatchType::coarse, ng); }
 }
 
 void
@@ -719,7 +719,7 @@ void
 WarpX::FillBoundaryB_avg (int lev, IntVect ng)
 {
     FillBoundaryB_avg(lev, PatchType::fine, ng);
-    if (lev > 0) FillBoundaryB_avg(lev, PatchType::coarse, ng);
+    if (lev > 0) { FillBoundaryB_avg(lev, PatchType::coarse, ng); }
 }
 
 void
@@ -770,7 +770,7 @@ void
 WarpX::FillBoundaryF (int lev, IntVect ng, std::optional<bool> nodal_sync)
 {
     FillBoundaryF(lev, PatchType::fine, ng, nodal_sync);
-    if (lev > 0) FillBoundaryF(lev, PatchType::coarse, ng, nodal_sync);
+    if (lev > 0) { FillBoundaryF(lev, PatchType::coarse, ng, nodal_sync); }
 }
 
 void
@@ -780,7 +780,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (F_fp[lev]) pml[lev]->ExchangeF(patch_type, F_fp[lev].get(), do_pml_in_domain);
+            if (F_fp[lev]) { pml[lev]->ExchangeF(patch_type, F_fp[lev].get(), do_pml_in_domain); }
             pml[lev]->FillBoundaryF(patch_type, nodal_sync);
         }
 
@@ -795,7 +795,7 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng, std::optional<b
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (F_cp[lev]) pml[lev]->ExchangeF(patch_type, F_cp[lev].get(), do_pml_in_domain);
+            if (F_cp[lev]) { pml[lev]->ExchangeF(patch_type, F_cp[lev].get(), do_pml_in_domain); }
             pml[lev]->FillBoundaryF(patch_type, nodal_sync);
         }
 
@@ -824,7 +824,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (G_fp[lev]) pml[lev]->ExchangeG(patch_type, G_fp[lev].get(), do_pml_in_domain);
+            if (G_fp[lev]) { pml[lev]->ExchangeG(patch_type, G_fp[lev].get(), do_pml_in_domain); }
             pml[lev]->FillBoundaryG(patch_type, nodal_sync);
         }
 
@@ -839,7 +839,7 @@ void WarpX::FillBoundaryG (int lev, PatchType patch_type, IntVect ng, std::optio
     {
         if (do_pml && pml[lev] && pml[lev]->ok())
         {
-            if (G_cp[lev]) pml[lev]->ExchangeG(patch_type, G_cp[lev].get(), do_pml_in_domain);
+            if (G_cp[lev]) { pml[lev]->ExchangeG(patch_type, G_cp[lev].get(), do_pml_in_domain); }
             pml[lev]->FillBoundaryG(patch_type, nodal_sync);
         }
 
@@ -1048,7 +1048,7 @@ WarpX::SyncRho (
 {
     WARPX_PROFILE("WarpX::SyncRho()");
 
-    if (!charge_fp[0]) return;
+    if (!charge_fp[0]) { return; }
     const int ncomp = charge_fp[0]->nComp();
 
     // See comments in WarpX::SyncCurrent for an explanation of the algorithm.
@@ -1330,7 +1330,7 @@ void WarpX::ApplyFilterandSumBoundaryRho (
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
     const std::unique_ptr<amrex::MultiFab>& rho = (patch_type == PatchType::fine) ?
                                                   charge_fp[lev] : charge_cp[lev];
-    if (rho == nullptr) return;
+    if (rho == nullptr) { return; }
     ApplyFilterandSumBoundaryRho(lev, glev, *rho, icomp, ncomp);
 }
 
@@ -1373,7 +1373,7 @@ void WarpX::AddRhoFromFineLevelandSumBoundary (
     const int icomp,
     const int ncomp)
 {
-    if (!charge_fp[lev]) return;
+    if (!charge_fp[lev]) { return; }
 
     ApplyFilterandSumBoundaryRho(charge_fp, charge_cp, lev, PatchType::fine, icomp, ncomp);
 
@@ -1452,7 +1452,7 @@ void WarpX::NodalSyncJ (
     const int lev,
     PatchType patch_type)
 {
-    if (!override_sync_intervals.contains(istep[0])) return;
+    if (!override_sync_intervals.contains(istep[0])) { return; }
 
     if (patch_type == PatchType::fine)
     {
@@ -1478,7 +1478,7 @@ void WarpX::NodalSyncRho (
     const int icomp,
     const int ncomp)
 {
-    if (!override_sync_intervals.contains(istep[0])) return;
+    if (!override_sync_intervals.contains(istep[0])) { return; }
 
     if (patch_type == PatchType::fine && charge_fp[lev])
     {

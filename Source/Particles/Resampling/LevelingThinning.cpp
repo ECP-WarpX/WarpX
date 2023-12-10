@@ -89,8 +89,9 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
 
             // do nothing for cells with less particles than min_ppc
             // (this intentionally includes skipping empty cells, too)
-            if (cell_numparts < min_ppc)
+            if (cell_numparts < min_ppc) {
                 return;
+            }
             amrex::Real average_weight = 0._rt;
 
             // First loop over cell particles to compute average particle weight in the cell
