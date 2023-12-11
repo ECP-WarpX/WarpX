@@ -32,25 +32,26 @@ namespace ablastr::coarsen::average
     )
     {
         // Staggering of source fine MultiFab and destination coarse MultiFab
-        amrex::IntVect const stag_src = mf_src.boxArray().ixType().toIntVect();
-        amrex::IntVect const stag_dst = mf_dst.boxArray().ixType().toIntVect();
+        amrex::IntVect const ixtype_src = mf_src.boxArray().ixType().toIntVect();
+        amrex::IntVect const ixtype_dst = mf_dst.boxArray().ixType().toIntVect();
 
         // Auxiliary integer arrays (always 3D)
-        auto sf = amrex::GpuArray<int,3>{0,0,0}; // staggering of source fine MultiFab
-        auto sc = amrex::GpuArray<int,3>{0,0,0}; // staggering of destination coarse MultiFab
-        auto cr = amrex::GpuArray<int,3>{1,1,1}; // coarsening ratio
+        auto stag_src = amrex::GpuArray<int,3>{0,0,0}; // staggering of source fine MultiFab
+        auto stag_des = amrex::GpuArray<int,3>{0,0,0}; // staggering of destination coarse MultiFab
+        auto crse_ratio = amrex::GpuArray<int,3>{1,1,1}; // coarsening ratio
         for (int i=0; i<AMREX_SPACEDIM; ++i)
         {
-             sf[i] = stag_src[i];
-             sc[i] = stag_dst[i];
-             cr[i] = crse_ratio[i];
+            stag_src[i] = ixtype_src[i];
+            stag_des[i] = ixtype_dst[i];
+            crse_ratio[i] = crse_ratio[i];
         }
 
-        amrex::GpuArray<int,3> idx_min, np;
-        amrex::GpuArray<bool,3> use_half;
-        amrex::Real crxyz_inv;
+        amrex::GpuArray<int,3> idx_min_src, np_src;
+        amrex::GpuArray<bool,3> use_half_weight;
+        amrex::Real crx_cry_crz_inv;
 
-        CalculateCoarseningData(idx_min, np, use_half, crxyz_inv, sf, sc, cr);
+        CalculateCoarseningData(
+            idx_min_src, np_src, use_half_weight, crx_cry_crz_inv, stag_src, stag_des, crse_ratio);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -64,7 +65,7 @@ namespace ablastr::coarsen::average
             amrex::ParallelFor(bx, ncomp,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) {
                     arr_dst(i, j, k, n) = InterpWithCoarseningData(
-                        arr_src, idx_min, np, use_half, crxyz_inv, cr, i, j, k, n);
+                        arr_src, idx_min_src, np_src, use_half_weight, crx_cry_crz_inv, crse_ratio, i, j, k, n);
                 });
         }
     }

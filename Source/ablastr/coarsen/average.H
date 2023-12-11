@@ -25,30 +25,29 @@
  */
 namespace ablastr::coarsen::average
 {
-    AMREX_FORCE_INLINE
     void
     CalculateCoarseningData (
-        amrex::GpuArray<int, 3> &src_fine_index_min,
-        amrex::GpuArray<int, 3> &num_src_points,
+        amrex::GpuArray<int, 3> &idx_min_src,
+        amrex::GpuArray<int, 3> &np_src,
         amrex::GpuArray<bool, 3> &use_half_weight, // Use int instead bool?
         amrex::Real &crx_cry_crz_inv,
-        amrex::GpuArray<int, 3> const &stag_src_fine,
-        amrex::GpuArray<int, 3> const &stag_des_crse,
+        amrex::GpuArray<int, 3> const &stag_src,
+        amrex::GpuArray<int, 3> const &stag_des,
         amrex::GpuArray<int, 3> const &crse_ratio)
     {
         using namespace amrex::literals;
 
         for (int l = 0; l < 3; ++l) {
-            int sf_minus_cr_sc = stag_src_fine[l] - crse_ratio[l]*stag_des_crse[l];
-            if (sf_minus_cr_sc & 1) {
-                // sf - cr*sc is odd
-                src_fine_index_min[l] = (sf_minus_cr_sc - 1)/2;
-                num_src_points[l] = crse_ratio[l] + 1;
+            int stag_src_minus_cr_stag_des = stag_src[l] - crse_ratio[l]*stag_des[l];
+            if (stag_src_minus_cr_stag_des & 1) {
+                // stag_src - crse_ratio*stag_des is odd
+                idx_min_src[l] = (stag_src_minus_cr_stag_des - 1)/2;
+                np_src[l] = crse_ratio[l] + 1;
                 use_half_weight[l] = true; // Use half weight at end points
             } else {
-                // sf - cr*sc is even
-                src_fine_index_min[l] = sf_minus_cr_sc/2;
-                num_src_points[l] = crse_ratio[l];
+                // stag_src - crse_ratio*stag_des is even
+                idx_min_src[l] = stag_src_minus_cr_stag_des/2;
+                np_src[l] = crse_ratio[l];
                 use_half_weight[l] = false; // Don't use half weight at end points
             }
         }
@@ -60,22 +59,22 @@ namespace ablastr::coarsen::average
     amrex::Real
     InterpWithCoarseningData (
         amrex::Array4<amrex::Real const> const &arr_src,
-        amrex::GpuArray<int, 3> const &src_fine_index_min,
-        amrex::GpuArray<int, 3> const &num_src_points,
-        amrex::GpuArray<bool, 3> const &use_half,
+        amrex::GpuArray<int, 3> const &idx_min_src,
+        amrex::GpuArray<int, 3> const &np_src,
+        amrex::GpuArray<bool, 3> const &use_half_weight,
         amrex::Real crx_cry_crz_inv,
-        amrex::GpuArray<int, 3> const &coarsen_ratio,
+        amrex::GpuArray<int, 3> const &crse_ratio,
         int i, int j, int k, int comp)
     {
         using namespace amrex::literals;
 
         // Auxiliary integer variables
-        int const numx = num_src_points[0];
-        int const numy = num_src_points[1];
-        int const numz = num_src_points[2];
-        int const iimin = i * coarsen_ratio[0] + src_fine_index_min[0];
-        int const jjmin = j * coarsen_ratio[1] + src_fine_index_min[1];
-        int const kkmin = k * coarsen_ratio[2] + src_fine_index_min[2];
+        int const krefmax = np_src[0] - 1;
+        int const jrefmax = np_src[1] - 1;
+        int const irefmax = np_src[2] - 1;
+        int const iimin = i * crse_ratio[0] + idx_min_src[0];
+        int const jjmin = j * crse_ratio[1] + idx_min_src[1];
+        int const kkmin = k * crse_ratio[2] + idx_min_src[2];
 
         // Add neutral elements (=0) beyond guard cells in source array (fine)
         auto const arr_src_safe = [arr_src]
@@ -88,19 +87,23 @@ namespace ablastr::coarsen::average
         // Python script Source/Utils/check_interp_points_and_weights.py can be
         // used to check interpolation points and weights in 1D.
         amrex::Real c = 0.0_rt;
-        for (int kref = 0; kref < numz; ++kref) {
+        for (int kref = 0; kref <= irefmax; ++kref) {
             int kk = kkmin + kref;
-            amrex::Real kfactor = (use_half[2] && (kref == 0 || kref == numz-1)) ? 0.5_rt : 1.0_rt;
+            bool use_half_kk = use_half_weight[2] && (kref == 0 || kref == irefmax);
 
-            for (int jref = 0; jref < numy; ++jref) {
+            for (int jref = 0; jref <= jrefmax; ++jref) {
                 int jj = jjmin + jref;
-                amrex::Real jfactor = (use_half[1] && (jref == 0 || jref == numy-1)) ? 0.5_rt : 1.0_rt;
+                bool use_half_jj = use_half_weight[1] && (jref == 0 || jref == jrefmax);
 
-                for (int iref = 0; iref < numx; ++iref) {
+                for (int iref = 0; iref <= krefmax; ++iref) {
                     int ii = iimin + iref;
-                    amrex::Real ifactor = (use_half[0] && (iref == 0 || iref == numx-1)) ? 0.5_rt : 1.0_rt;
+                    bool use_half_ii = use_half_weight[0] && (iref == 0 || iref == krefmax);
 
-                    c += ifactor * jfactor * kfactor * arr_src_safe(ii, jj, kk, comp);
+                    amrex::Real c_iijjkk = arr_src_safe(ii, jj, kk, comp);
+                    if (use_half_kk) { c_iijjkk *= 0.5_rt; }
+                    if (use_half_jj) { c_iijjkk *= 0.5_rt; }
+                    if (use_half_ii) { c_iijjkk *= 0.5_rt; }
+                    c += c_iijjkk;
                 }
             }
         }
@@ -117,15 +120,15 @@ namespace ablastr::coarsen::average
      *
      * Works for any staggering of the fine source and coarse destination.
      *
-     * \param[in] arr_src source fine floating point data to be interpolated
-     * \param[in] sf      staggering of the source fine MultiFab
-     * \param[in] sc      staggering of the destination coarsened MultiFab
-     * \param[in] cr      coarsening ratio along each spatial direction
-     * \param[in] i       index along x of the coarsened Array4 to be filled
-     * \param[in] j       index along y of the coarsened Array4 to be filled
-     * \param[in] k       index along z of the coarsened Array4 to be filled
-     * \param[in] comp    index along the fourth component of the Array4 \c arr_src
-     *                    containing the data to be interpolated
+     * \param[in] arr_src    source fine floating point data to be interpolated
+     * \param[in] stag_src   staggering of the source fine MultiFab
+     * \param[in] stag_des   staggering of the destination coarsened MultiFab
+     * \param[in] crse_ratio coarsening ratio along each spatial direction
+     * \param[in] i          index along x of the coarsened Array4 to be filled
+     * \param[in] j          index along y of the coarsened Array4 to be filled
+     * \param[in] k          index along z of the coarsened Array4 to be filled
+     * \param[in] comp       index along the fourth component of the Array4 \c arr_src
+     *                       containing the data to be interpolated
      *
      * \return interpolated field at cell (i,j,k) of a coarsened Array4
      */
@@ -133,19 +136,40 @@ namespace ablastr::coarsen::average
     amrex::Real
     Interp (
         amrex::Array4<amrex::Real const> const &arr_src,
-        amrex::GpuArray<int, 3> const &sf,
-        amrex::GpuArray<int, 3> const &sc,
-        amrex::GpuArray<int, 3> const &cr,
+        amrex::GpuArray<int, 3> const &stag_src,
+        amrex::GpuArray<int, 3> const &stag_des,
+        amrex::GpuArray<int, 3> const &crse_ratio,
         int const i, int const j, int const k, int const comp)
     {
+        using namespace amrex::literals;
+
         // Number of points and starting indices of source array (fine)
-        amrex::GpuArray<int, 3> np, idx_min;
-        amrex::GpuArray<bool, 3> use_half;
-        amrex::Real crxyz_inv;
+        amrex::GpuArray<int, 3> np_src, idx_min_src;
+        amrex::GpuArray<bool, 3> use_half_weight;
+        amrex::Real crx_cry_crz_inv;
 
-        CalculateCoarseningData(idx_min, np, use_half, crxyz_inv, sf, sc, cr);
+        // The following is intended to be an exact copy of CalculateCoarseningData
+        // This is needed to calculate the coarsening data on the GPU device instead of the host
 
-        return InterpWithCoarseningData(arr_src, idx_min, np, use_half, crxyz_inv, cr, i, j, k, comp);
+        for (int l = 0; l < 3; ++l) {
+            int stag_src_minus_cr_stag_des = stag_src[l] - crse_ratio[l]*stag_des[l];
+            if (stag_src_minus_cr_stag_des & 1) {
+                // stag_src - crse_ratio*stag_des is odd
+                idx_min_src[l] = (stag_src_minus_cr_stag_des - 1)/2;
+                np_src[l] = crse_ratio[l] + 1;
+                use_half_weight[l] = true; // Use half weight at end points
+            } else {
+                // stag_src - crse_ratio*stag_des is even
+                idx_min_src[l] = stag_src_minus_cr_stag_des/2;
+                np_src[l] = crse_ratio[l];
+                use_half_weight[l] = false; // Don't use half weight at end points
+            }
+        }
+
+        crx_cry_crz_inv = 1.0_rt/static_cast<amrex::Real>(crse_ratio[0]*crse_ratio[1]*crse_ratio[2]);
+
+        return InterpWithCoarseningData(
+            arr_src,idx_min_src,np_src,use_half_weight,crx_cry_crz_inv,crse_ratio,i,j,k,comp);
     }
 
     /**
