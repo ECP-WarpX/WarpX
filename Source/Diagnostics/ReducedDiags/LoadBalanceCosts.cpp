@@ -87,7 +87,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
     int nBoxes = 0;
     for (int lev = 0; lev < nLevels; ++lev)
     {
-        const auto cost = WarpX::getCosts(lev);
+        auto *const cost = WarpX::getCosts(lev);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             cost, "ERROR: costs are not initialized on level " + std::to_string(lev) + " !");
         nBoxes += cost->size();

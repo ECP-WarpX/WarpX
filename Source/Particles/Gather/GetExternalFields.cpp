@@ -71,7 +71,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
         if (mypc.m_E_ext_particle_s == "repeated_plasma_lens") m_Etype = RepeatedPlasmaLens;
         if (mypc.m_B_ext_particle_s == "repeated_plasma_lens") m_Btype = RepeatedPlasmaLens;
         m_dt = warpx.getdt(a_pti.GetLevel());
-        auto& attribs = a_pti.GetAttribs();
+        const auto& attribs = a_pti.GetAttribs();
         m_ux = attribs[PIdx::ux].dataPtr() + a_offset;
         m_uy = attribs[PIdx::uy].dataPtr() + a_offset;
         m_uz = attribs[PIdx::uz].dataPtr() + a_offset;

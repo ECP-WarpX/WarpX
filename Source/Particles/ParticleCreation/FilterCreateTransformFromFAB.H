@@ -86,7 +86,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     dst1.resize(std::max(dst1_index + num_added, dst1.numParticles()));
     dst2.resize(std::max(dst2_index + num_added, dst2.numParticles()));
 
-    auto p_offsets = offsets.dataPtr();
+    auto *p_offsets = offsets.dataPtr();
 
     const auto dst1_data = dst1.getParticleTileData();
     const auto dst2_data = dst2.getParticleTileData();
@@ -188,7 +188,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 
     Gpu::DeviceVector<Index> mask(ncells);
 
-    auto p_mask = mask.dataPtr();
+    auto *p_mask = mask.dataPtr();
 
     // for loop over all cells in the box. We apply the filter function to each cell
     // and store the result in arrNumPartCreation. If the result is strictly greater than

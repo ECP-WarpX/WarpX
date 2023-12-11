@@ -340,8 +340,8 @@ bool FieldProbe::ProbeInDomain () const
     auto & warpx = WarpX::GetInstance();
     int const lev = 0;
     const amrex::Geometry& gm = warpx.Geom(lev);
-    const auto prob_lo = gm.ProbLo();
-    const auto prob_hi = gm.ProbHi();
+    const auto *const prob_lo = gm.ProbLo();
+    const auto *const prob_hi = gm.ProbHi();
 
     /*
      * Determine if probe exists within simulation boundaries. During 2D simulations,

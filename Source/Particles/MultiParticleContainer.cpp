@@ -710,7 +710,7 @@ MultiParticleContainer::SetParticleDistributionMap (int lev, DistributionMapping
 void
 MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
 {
-    for (auto& pc : allcontainers){
+    for (const auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             pc->ContinuousInjection(injection_box);
         }
@@ -720,7 +720,7 @@ MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
 void
 MultiParticleContainer::UpdateAntennaPosition (const amrex::Real dt) const
 {
-    for (auto& pc : allcontainers){
+    for (const auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             pc->UpdateAntennaPosition(dt);
         }
@@ -731,7 +731,7 @@ int
 MultiParticleContainer::doContinuousInjection () const
 {
     int warpx_do_continuous_injection = 0;
-    for (auto& pc : allcontainers){
+    for (const auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             warpx_do_continuous_injection = 1;
         }
@@ -746,7 +746,7 @@ MultiParticleContainer::doContinuousInjection () const
 void
 MultiParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real dt) const
 {
-    for (auto& pc : allcontainers){
+    for (const auto& pc : allcontainers){
         pc->ContinuousFluxInjection(t, dt);
     }
 }
@@ -870,7 +870,7 @@ MultiParticleContainer::doFieldIonization (int lev,
         auto& pc_product = allcontainers[pc_source->ionization_product];
 
         const SmartCopyFactory copy_factory(*pc_source, *pc_product);
-        auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
+        auto *phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
 
         auto Copy      = copy_factory.getSmartCopy();
         auto Transform = IonizationTransformFunc();
@@ -1498,7 +1498,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 
         const SmartCopyFactory copy_factory_ele(*pc_source, *pc_product_ele);
         const SmartCopyFactory copy_factory_pos(*pc_source, *pc_product_pos);
-        auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
+        auto *phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
 
         const auto Filter  = phys_pc_ptr->getPairGenerationFilterFunc();
         const auto CopyEle = copy_factory_ele.getSmartCopy();
@@ -1578,7 +1578,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             allcontainers[pc_source->m_qed_quantum_sync_phot_product];
 
         const SmartCopyFactory copy_factory_phot(*pc_source, *pc_product_phot);
-        auto phys_pc_ptr =
+        auto *phys_pc_ptr =
             static_cast<PhysicalParticleContainer*>(pc_source.get());
 
         const auto Filter   = phys_pc_ptr->getPhotonEmissionFilterFunc();

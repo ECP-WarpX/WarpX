@@ -47,7 +47,6 @@ Checks: '
         -readability-magic-numbers,
         -readability-make-member-function-const,
         -readability-named-parameter,
-        -readability-qualified-auto,
         -readability-uppercase-literal-suffix
     '
 
