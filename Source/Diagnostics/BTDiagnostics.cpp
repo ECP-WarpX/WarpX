@@ -873,7 +873,7 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
     const amrex::Real prob_domain_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
     auto ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
-    const int k_lab = static_cast<int>(floor (
+    const int k_lab = static_cast<int>(std::floor (
                           ( m_current_z_lab[i_buffer]
                             - (prob_domain_zmin_lab  ) )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )

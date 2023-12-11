@@ -1507,8 +1507,8 @@ WarpX::ReadExternalFieldFromFile (
 
 #if defined(WARPX_DIM_RZ)
                 // Get index of the external field array
-                int const ir = floor( (x0-offset0)/file_dr );
-                int const iz = floor( (x1-offset1)/file_dz );
+                int const ir = std::floor( (x0-offset0)/file_dr );
+                int const iz = std::floor( (x1-offset1)/file_dz );
 
                 // Get coordinates of external grid point
                 amrex::Real const xx0 = offset0 + ir * file_dr;
@@ -1521,9 +1521,9 @@ WarpX::ReadExternalFieldFromFile (
                 else { x2 = real_box.lo(2) + k*dx[2] + 0.5_rt*dx[2]; }
 
                 // Get index of the external field array
-                int const ix = floor( (x0-offset0)/file_dx );
-                int const iy = floor( (x1-offset1)/file_dy );
-                int const iz = floor( (x2-offset2)/file_dz );
+                int const ix = std::floor( (x0-offset0)/file_dx );
+                int const iy = std::floor( (x1-offset1)/file_dy );
+                int const iz = std::floor( (x2-offset2)/file_dz );
 
                 // Get coordinates of external grid point
                 amrex::Real const xx0 = offset0 + ix * file_dx;
