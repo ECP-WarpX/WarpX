@@ -1,11 +1,11 @@
 
-import numpy as np
 import os
+
+import numpy as np
+
 c = 2.998e8
 
-from openpmd_viewer import OpenPMDTimeSeries
-from openpmd_viewer import ParticleTracker
-
+from openpmd_viewer import OpenPMDTimeSeries, ParticleTracker
 import torch
 
 ###############
@@ -17,32 +17,32 @@ def sanitize_dir_strings(*dir_strings):
     for ii, dir_string in enumerate(dir_strings):
         if dir_string[-1] != '/':
             dir_strings[ii] = dir_string + '/'
-        
+
     return dir_strings
 
-def create_source_target_data(data_dir,  
+def create_source_target_data(data_dir,
                               species,
-                              training_frac=0.7, 
-                              batch_size=600, 
+                              training_frac=0.7,
+                              batch_size=600,
                               source_index=0,
                               target_index=-1,
                               particle_selection=None
                              ):
     """Create dataset from openPMD files
-    
+
     Parameters
     ---
     data_dir : string, location of diagnostic data
     training_frac : float between 0 and 1
     batch_size : int, number of data points in a batch
-    source_index : int, which index to take source data from 
+    source_index : int, which index to take source data from
     target_index : int, which index to take target data from
     particle_selection: dictionary, optional, selection criterion for dataset
-    
+
     Returns
     ---
     source_data:  Nx6 array of source particle data
-    source_means: 6 element array of source particle coordinate means 
+    source_means: 6 element array of source particle coordinate means
     source_stds:  6 element array of source particle coordinate standard deviations
     target_data:  Nx6 array of target particle data
     target_means: 6 element array of target particle coordinate means
@@ -57,9 +57,9 @@ def create_source_target_data(data_dir,
 
     # Manual: Particle tracking START
     iteration = ts.iterations[target_index]
-    pt = ParticleTracker( ts, 
-                         species=species, 
-                         iteration=iteration, 
+    pt = ParticleTracker( ts,
+                         species=species,
+                         iteration=iteration,
                          select=particle_selection)
     # Manual: Particle tracking END
 
@@ -68,14 +68,14 @@ def create_source_target_data(data_dir,
 
     # Manual: Load openPMD START
     iteration = ts.iterations[source_index]
-    source_data = ts.get_particle(species=species, 
-                                  iteration=iteration, 
+    source_data = ts.get_particle(species=species,
+                                  iteration=iteration,
                                   var_list=['x','y','z','ux','uy','uz'],
                                   select=pt)
 
     iteration = ts.iterations[target_index]
-    target_data = ts.get_particle(species=species, 
-                                  iteration=iteration, 
+    target_data = ts.get_particle(species=species,
+                                  iteration=iteration,
                                   var_list=['x','y','z','ux','uy','uz'],
                                   select=pt)
     # Manual: Load openPMD END
@@ -102,12 +102,12 @@ def create_source_target_data(data_dir,
     source_data = torch.tensor(np.column_stack(source_data))
     target_data = torch.tensor(np.column_stack(target_data))
     # Manual: Format data END
- 
+
     return source_data, source_means, source_stds, target_data, target_means, target_stds, relevant_times
 
 
 def save_warpx_surrogate_data(dataset_fullpath_filename,
-                              diag_dir, 
+                              diag_dir,
                               species,
                               training_frac,
                               batch_size,
@@ -116,13 +116,13 @@ def save_warpx_surrogate_data(dataset_fullpath_filename,
                               survivor_select_index,
                               particle_selection=None
                              ):
-    
-    source_target_data = create_source_target_data(data_dir=diag_dir, 
+
+    source_target_data = create_source_target_data(data_dir=diag_dir,
                                                       species=species,
-                                                      training_frac=training_frac, 
-                                                      batch_size=batch_size, 
+                                                      training_frac=training_frac,
+                                                      batch_size=batch_size,
                                                       source_index=source_index,
-                                                      target_index=target_index, 
+                                                      target_index=target_index,
                                                       survivor_select_index=survivor_select_index,
                                                       particle_selection=particle_selection
                                                      )
@@ -139,7 +139,7 @@ def save_warpx_surrogate_data(dataset_fullpath_filename,
     train_data, test_data = torch.utils.data.random_split(full_dataset, [n_train, n_test])
 
     torch.save({'dataset':full_dataset,
-                'train_indices':train_data.indices, 
+                'train_indices':train_data.indices,
                 'test_indices':test_data.indices,
                 'source_means':source_means,
                 'source_stds':source_stds,
@@ -175,12 +175,12 @@ species = f'beam_stage_{ii}'
 dataset_filename = f'dataset_species_{species}_source_ind_{source_index}_target_index_{target_index}_select_index_{survivor_select_index}_improved.pt'
 dataset_file = 'datasets/' + dataset_filename
 save_warpx_surrogate_data(dataset_fullpath_filename=dataset_file,
-                diag_dir=data_dir, 
+                diag_dir=data_dir,
                 species=species,
-                training_frac=training_frac, 
-                batch_size=batch_size, 
+                training_frac=training_frac,
+                batch_size=batch_size,
                 source_index=source_index,
-                target_index=target_index, 
+                target_index=target_index,
                 survivor_select_index=survivor_select_index,
                 particle_selection=select
                )
@@ -190,11 +190,11 @@ for ii in range(1,9):
     dataset_filename = f'dataset_species_{species}_source_ind_{source_index}_target_index_{target_index}_select_index_{survivor_select_index}.pt'
     dataset_file = 'datasets/' + dataset_filename
     save_warpx_surrogate_data(dataset_fullpath_filename=dataset_file,
-                    diag_dir=data_dir, 
+                    diag_dir=data_dir,
                     species=species,
-                    training_frac=training_frac, 
-                    batch_size=batch_size, 
+                    training_frac=training_frac,
+                    batch_size=batch_size,
                     source_index=source_index,
-                    target_index=target_index, 
+                    target_index=target_index,
                     survivor_select_index=survivor_select_index
                    )

@@ -1,11 +1,9 @@
 
 from matplotlib import pyplot as plt
+import neural_network_classes as mynn
 import numpy as np
-
 import torch
 import torch.nn.functional as F
-
-import neural_network_classes as mynn
 
 c = 2.998e8
 
@@ -52,9 +50,9 @@ plt.savefig(f'{species}_training_testing_error.png')
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'device={device}')
 
-model = mynn.OneActNN(n_in = n_in, 
-                       n_out = n_out, 
-                       n_hidden_nodes=n_hidden_nodes, 
+model = mynn.OneActNN(n_in = n_in,
+                       n_out = n_out,
+                       n_hidden_nodes=n_hidden_nodes,
                        n_hidden_layers = n_hidden_layers,
                        act = activation_type
                   )

@@ -3,11 +3,10 @@
 import os
 import time
 
+import neural_network_classes as mynn
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-
-import neural_network_classes as mynn
 
 ############# set model parameters #################
 
@@ -18,7 +17,7 @@ target_index = 4
 survivor_select_index = 4
 
 data_dim = 6
-n_in = data_dim 
+n_in = data_dim
 n_out = data_dim
 
 learning_rate = 0.0001
@@ -69,9 +68,9 @@ testing_set_size = len(test_data_device.indices)
 
 ###### create model ###########
 
-model = mynn.OneActNN(n_in = n_in, 
-                      n_out = n_out, 
-                      n_hidden_nodes=n_hidden_nodes, 
+model = mynn.OneActNN(n_in = n_in,
+                      n_out = n_out,
+                      n_hidden_nodes=n_hidden_nodes,
                       n_hidden_layers = n_hidden_layers,
                       act=activation_type
                      )
@@ -91,12 +90,12 @@ def train(model, optimizer, train_loader, loss_fun):
         #evaluate network with data
         output = model(data)
         #compute loss
-         # sum the differences squared, take mean afterward 
+         # sum the differences squared, take mean afterward
         loss = loss_fun(output, target,reduction='sum')
         #backpropagation: step optimizer and reset gradients
         loss.backward()
         optimizer.step()
-        optimizer.zero_grad() 
+        optimizer.zero_grad()
         total_loss += loss.item()
     return total_loss
 # Manual: Train function END
@@ -117,7 +116,7 @@ def test_dataset(model, test_source, test_target, loss_fun):
         output = model(test_source)
         return loss_fun(output, test_target, reduction='sum').item()
 # Manual: Test function END
-        
+
 ######## training loop ########
 
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)

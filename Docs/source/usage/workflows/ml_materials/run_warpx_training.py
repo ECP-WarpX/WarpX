@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 import math
+
+from mpi4py import MPI as mpi
 import numpy as np
 from scipy.optimize import fsolve
+
 from pywarpx import particle_containers, picmi
 from pywarpx.callbacks import installbeforestep
-from mpi4py import MPI as mpi
 
 # Physical constants
 c = picmi.constants.c

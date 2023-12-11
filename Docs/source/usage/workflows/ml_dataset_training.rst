@@ -22,9 +22,9 @@ This assumes you have an up-to-date environment with PyTorch and openPMD.
 Data Cleaning
 -------------
 
-It is important to inspect the data for artifacts to  
+It is important to inspect the data for artifacts to
 check that input/output data make sense.
-If we plot the final phase space for beams 1-8, 
+If we plot the final phase space for beams 1-8,
 the particle data is distributed in a single blob.
 
 .. figure:: ml_materials/stage_1_final_beam.png
@@ -44,7 +44,7 @@ Looking closer at the z-pz space, we see that some particles got caught in a dec
 region of the wake, have slipped back and are much slower than the rest of the beam.
 To assist our neural network in learning dynamics of interest, we filter out these particles.
 It is sufficient for our purposes to select particles that are not too far back, setting
-``particle_selection={'z':[0.28002, None]}``. Then a particle tracker is set up to make sure 
+``particle_selection={'z':[0.28002, None]}``. Then a particle tracker is set up to make sure
 we consistently filter out these particles from both the initial and final data.
 
 .. literalinclude:: ml_materials/create_dataset.py
@@ -56,7 +56,7 @@ we consistently filter out these particles from both the initial and final data.
 Create normalized dataset
 -------------------------
 
-Having chosen training data we are content with, we now need to format the data, 
+Having chosen training data we are content with, we now need to format the data,
 normalize it, and store the normalized data as well as the normalizations.
 The script below will take the openPMD data we have selected and
 format, normalize, and store it.
@@ -87,7 +87,7 @@ Normalize data
 ^^^^^^^^^^^^^^
 
 Neural networks learn better on appropriately normalized data.
-Here we subtract out the mean in each coordinate direction and 
+Here we subtract out the mean in each coordinate direction and
 divide by the standard deviation in each coordinate direction,
 for normalized data that is centered on the origin with unit variance.
 
@@ -101,8 +101,8 @@ openPMD to PyTorch data
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 With the data normalized, it must be stored in a form PyTorch recognizes.
-The openPMD data are 6 lists of arrays, for each of the 6 phase space coordinates 
-:math:`x, y, z, p_x, p_y,` and :math:`p_z`. 
+The openPMD data are 6 lists of arrays, for each of the 6 phase space coordinates
+:math:`x, y, z, p_x, p_y,` and :math:`p_z`.
 This data are converted to an :math:`N\times 6` numpy array and then to a PyTorch :math:`N\times 6` tensor.
 
 .. literalinclude:: ml_materials/create_dataset.py
@@ -114,7 +114,7 @@ This data are converted to an :math:`N\times 6` numpy array and then to a PyTorc
 Save normalizations and normalized data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-With the data properly normalized, it and the normalizations are saved to file for 
+With the data properly normalized, it and the normalizations are saved to file for
 use in training and inference.
 
 .. literalinclude:: ml_materials/create_dataset.py
@@ -128,8 +128,8 @@ Neural network structure
 
 It was found in (cite PASC) that reasonable surrogate models are obtained with
 shallow feedforward neural networks consisting of fewer than 10 hidden layers and
-just under 1000 nodes per layer.  
-The example shown here uses 3 hidden layers and 20 nodes per layer 
+just under 1000 nodes per layer.
+The example shown here uses 3 hidden layers and 20 nodes per layer
 and is trained for 10 epochs.
 
 
@@ -151,7 +151,7 @@ In subsequent sections we discuss the various parts of the training process.
 Training function
 ^^^^^^^^^^^^^^
 
-In the training function, the model weights are updated.  
+In the training function, the model weights are updated.
 Iterating through batches, the loss function is evaluated on each batch.
 PyTorch provides automatic differentiation, so the direction of steepest descent
 is determined when the loss function is evaluated and the ``loss.backward()`` function
@@ -171,7 +171,7 @@ Tesing function
 ^^^^^^^^^^^^^
 
 The testing function just evaluates the neural network on the testing data that has not been used
-to update the model parameters.  
+to update the model parameters.
 This testing function requires that the testing dataset is small enough to be loaded all at once.
 The PyTorch dataloader can load data in batches if this size assumption is not satisfied.
 The error, measured by the loss function, is returned by the testing function to be aggregated and stored.
@@ -226,7 +226,7 @@ When the test-loss starts to trend flat or even upward, the neural network is no
 
    [fig:train_test_loss] Plot of training (in blue) and testing (in green) loss curves versus number of training epochs.
 
-A visual inspection of the model prediction can be seen in Fig. `[fig:train_evaluation]` .  
+A visual inspection of the model prediction can be seen in Fig. `[fig:train_evaluation]` .
 This plot compares the model prediction, with dots colored by mean-square error, on the testing data with the actual simulation output in black.
 
 .. figure:: ml_materials/beam_stage_0_model_evaluation.png
@@ -235,7 +235,7 @@ This plot compares the model prediction, with dots colored by mean-square error,
    [fig:train_evaluation] Plot comparing model prediction (yellow-red dots, colored by mean-squared error) with simulation output (black dots).
 
 The model obtained with the hyperparameters chosen here trains quickly but is not very accurate.
-A more accurate model is obtained with 5 hidden layers and 800 nodes per layer, 
+A more accurate model is obtained with 5 hidden layers and 800 nodes per layer,
 as discussed in (reference PASC).
 
 These figures can be generated with the following Python script.
