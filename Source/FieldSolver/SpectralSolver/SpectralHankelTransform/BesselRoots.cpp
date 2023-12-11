@@ -43,7 +43,12 @@ namespace{
     void SecantRootFinder(int n, int nitmx, amrex::Real tol, amrex::Real *zeroj, int *ier) {
         using namespace amrex::literals;
 
-        amrex::Real p0, p1, q0, q1, dp, p;
+        amrex::Real p0;
+        amrex::Real p1;
+        amrex::Real q0;
+        amrex::Real q1;
+        amrex::Real dp;
+        amrex::Real p;
         amrex::Real c[2];
 
         c[0] = 0.95_rt;
@@ -81,7 +86,9 @@ void GetBesselRoots(int n, int nk, amrex::Vector<amrex::Real>& roots, amrex::Vec
     using namespace amrex::literals;
 
     amrex::Real zeroj;
-    int ierror, ik, k;
+    int ierror;
+    int ik;
+    int k;
 
     const amrex::Real tol = 1e-14_rt;
     const int nitmx = 10;

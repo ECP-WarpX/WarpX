@@ -87,7 +87,9 @@ struct CopyParticleAttribs
         AMREX_ASSERT(uypold != nullptr);
         AMREX_ASSERT(uzpold != nullptr);
 
-        amrex::ParticleReal x, y, z;
+        amrex::ParticleReal x;
+        amrex::ParticleReal y;
+        amrex::ParticleReal z;
         m_get_position(i, x, y, z);
 
         xpold[i] = x;

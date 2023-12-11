@@ -198,7 +198,9 @@ struct LatticeElementFinderDevice
 
         using namespace amrex::literals;
 
-        amrex::ParticleReal x, y, z;
+        amrex::ParticleReal x;
+        amrex::ParticleReal y;
+        amrex::ParticleReal z;
         m_get_position(i, x, y, z);
 
         // Find location of partice in the indices grid
@@ -227,7 +229,10 @@ struct LatticeElementFinderDevice
         if (d_quad.nelements > 0) {
             if (d_quad_indices_arr[iz] > -1) {
                 const auto ielement = d_quad_indices_arr[iz];
-                amrex::ParticleReal Ex, Ey, Bx, By;
+                amrex::ParticleReal Ex;
+                amrex::ParticleReal Ey;
+                amrex::ParticleReal Bx;
+                amrex::ParticleReal By;
                 d_quad.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
                 Ey_sum += Ey;
@@ -239,7 +244,10 @@ struct LatticeElementFinderDevice
         if (d_plasmalens.nelements > 0) {
             if (d_plasmalens_indices_arr[iz] > -1) {
                 const auto ielement = d_plasmalens_indices_arr[iz];
-                amrex::ParticleReal Ex, Ey, Bx, By;
+                amrex::ParticleReal Ex;
+                amrex::ParticleReal Ey;
+                amrex::ParticleReal Bx;
+                amrex::ParticleReal By;
                 d_plasmalens.get_field(ielement, x, y, z, zpvdt, Ex, Ey, Bx, By);
                 Ex_sum += Ex;
                 Ey_sum += Ey;

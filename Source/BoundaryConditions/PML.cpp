@@ -249,7 +249,11 @@ void SigmaBox::define_multiple (const Box& box, const BoxArray& grids, const Int
         const int kdim = (idim+2) % AMREX_SPACEDIM;
 #endif
 
-        Vector<int> direct_faces, side_faces, direct_side_edges, side_side_edges, corners;
+        Vector<int> direct_faces;
+        Vector<int> side_faces;
+        Vector<int> direct_side_edges;
+        Vector<int> side_side_edges;
+        Vector<int> corners;
         for (const auto& kv : isects)
         {
             const Box& grid_box = grids[kv.first];
@@ -952,9 +956,11 @@ PML::MakeBoxArray_multiple (const amrex::Geometry& geom, const amrex::BoxArray& 
 
         Vector<Box> bndryboxes;
 #if defined(WARPX_DIM_3D)
-        const int kbegin = -1, kend = 1;
+        const int kbegin = -1;
+        const int kend = 1;
 #else
-        const int kbegin =  0, kend = 0;
+        const int kbegin =  0;
+        const int kend = 0;
 #endif
         for (int kk = kbegin; kk <= kend; ++kk) {
             for (int jj = -1; jj <= 1; ++jj) {

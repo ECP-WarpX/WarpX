@@ -63,7 +63,8 @@ namespace ablastr::coarsen::sample
         const int ic[3] = { i, j, k };
 
         // Number of points and starting indices of source array (fine)
-        int np[3], idx_min[3];
+        int np[3];
+        int idx_min[3];
 
         // Compute number of points
         for ( int l = 0; l < 3; ++l ) {

@@ -833,7 +833,9 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                 if (particle_comps.find(m_user_real_attribs[ia]) != particle_comps.end() &&
                     particle_comps[m_user_real_attribs[ia]] == j)
                 {
-                    amrex::ParticleReal xp, yp, zp;
+                    amrex::ParticleReal xp;
+                    amrex::ParticleReal yp;
+                    amrex::ParticleReal zp;
                     const amrex::ParserExecutor<7> user_real_attrib_parserexec =
                                              m_user_real_attrib_parser[ia]->compile<7>();
                     for (int i = 0; i < np; ++i) {
@@ -867,7 +869,9 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                 if (particle_icomps.find(m_user_int_attribs[ia]) != particle_icomps.end() &&
                     particle_icomps[m_user_int_attribs[ia]] == j)
                 {
-                    amrex::ParticleReal xp, yp, zp;
+                    amrex::ParticleReal xp;
+                    amrex::ParticleReal yp;
+                    amrex::ParticleReal zp;
                     const amrex::ParserExecutor<7> user_int_attrib_parserexec =
                                              m_user_int_attrib_parser[ia]->compile<7>();
                     for (int i = 0; i < np; ++i) {
@@ -2076,8 +2080,12 @@ PhysicalParticleContainer::Evolve (int lev,
         const int thread_num = 0;
 #endif
 
-        FArrayBox filtered_Ex, filtered_Ey, filtered_Ez;
-        FArrayBox filtered_Bx, filtered_By, filtered_Bz;
+        FArrayBox filtered_Ex;
+        FArrayBox filtered_Ey;
+        FArrayBox filtered_Ez;
+        FArrayBox filtered_Bx;
+        FArrayBox filtered_By;
+        FArrayBox filtered_Bz;
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
@@ -2106,7 +2114,12 @@ PhysicalParticleContainer::Evolve (int lev,
             FArrayBox const* byfab = &By[pti];
             FArrayBox const* bzfab = &Bz[pti];
 
-            Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
+            Elixir exeli;
+            Elixir eyeli;
+            Elixir ezeli;
+            Elixir bxeli;
+            Elixir byeli;
+            Elixir bzeli;
 
             if (WarpX::use_fdtd_nci_corr)
             {
@@ -2353,8 +2366,13 @@ PhysicalParticleContainer::SplitParticles (int lev)
 {
     auto& mypc = WarpX::GetInstance().GetPartContainer();
     auto& pctmp_split = mypc.GetPCtmp();
-    RealVector psplit_x, psplit_y, psplit_z, psplit_w;
-    RealVector psplit_ux, psplit_uy, psplit_uz;
+    RealVector psplit_x;
+    RealVector psplit_y;
+    RealVector psplit_z;
+    RealVector psplit_w;
+    RealVector psplit_ux;
+    RealVector psplit_uy;
+    RealVector psplit_uz;
     long np_split_to_add = 0;
     long np_split;
     if(split_type==0)
@@ -2398,7 +2416,9 @@ PhysicalParticleContainer::SplitParticles (int lev)
         auto& uzp = attribs[PIdx::uz];
         const long np = pti.numParticles();
         for(int i=0; i<np; i++){
-            ParticleReal xp, yp, zp;
+            ParticleReal xp;
+            ParticleReal yp;
+            ParticleReal zp;
             GetPosition(i, xp, yp, zp);
             auto& p = particles[i];
             if (p.id() == DoSplitParticleID){
@@ -2633,7 +2653,9 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                {exteb_runtime_flag},
                                np, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control)
             {
-                amrex::ParticleReal xp, yp, zp;
+                amrex::ParticleReal xp;
+                amrex::ParticleReal yp;
+                amrex::ParticleReal zp;
                 getPosition(ip, xp, yp, zp);
 
                 amrex::ParticleReal Exp = Ex_external_particle;
@@ -2874,7 +2896,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
                                                          auto qed_control)
     {
-        amrex::ParticleReal xp, yp, zp;
+        amrex::ParticleReal xp;
+        amrex::ParticleReal yp;
+        amrex::ParticleReal zp;
         getPosition(ip, xp, yp, zp);
 
         if (save_previous_position) {

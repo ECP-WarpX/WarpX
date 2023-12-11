@@ -66,7 +66,8 @@ struct SmartCopy
         // copy the shared real components
         for (int j = 0; j < m_num_copy_real; ++j)
         {
-            int src_comp, dst_comp;
+            int src_comp;
+            int dst_comp;
             amrex::ParticleReal* AMREX_RESTRICT dst_data;
             const amrex::ParticleReal* AMREX_RESTRICT src_data;
 
@@ -102,7 +103,8 @@ struct SmartCopy
         // copy the shared int components
         for (int j = 0; j < m_num_copy_int; ++j)
         {
-            int src_comp, dst_comp;
+            int src_comp;
+            int dst_comp;
             int* AMREX_RESTRICT dst_data;
             int* AMREX_RESTRICT src_data;
 

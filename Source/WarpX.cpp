@@ -989,7 +989,8 @@ WarpX::ReadParameters ()
         }
 
         if (maxLevel() > 0) {
-            Vector<Real> lo, hi;
+            Vector<Real> lo;
+            Vector<Real> hi;
             bool fine_tag_lo_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_lo", lo);
             bool fine_tag_hi_specified = utils::parser::queryArrWithParser(pp_warpx, "fine_tag_hi", hi);
             std::string ref_patch_function;
@@ -2094,12 +2095,19 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                       const IntVect& ngF, const IntVect& ngG, const bool aux_is_nodal)
 {
     // Declare nodal flags
-    IntVect Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag;
-    IntVect Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag;
-    IntVect jx_nodal_flag, jy_nodal_flag, jz_nodal_flag;
+    IntVect Ex_nodal_flag;
+    IntVect Ey_nodal_flag;
+    IntVect Ez_nodal_flag;
+    IntVect Bx_nodal_flag;
+    IntVect By_nodal_flag;
+    IntVect Bz_nodal_flag;
+    IntVect jx_nodal_flag;
+    IntVect jy_nodal_flag;
+    IntVect jz_nodal_flag;
     IntVect rho_nodal_flag;
     IntVect phi_nodal_flag;
-    amrex::IntVect F_nodal_flag, G_nodal_flag;
+    amrex::IntVect F_nodal_flag;
+    amrex::IntVect G_nodal_flag;
 
     // Set nodal flags
 #if   defined(WARPX_DIM_1D_Z)
@@ -2817,7 +2825,9 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
         "ComputeDivB not implemented with warpx.grid_type=Collocated.");
 
-    const Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
+    const Real dxinv = 1._rt/dx[0];
+    const Real dyinv = 1._rt/dx[1];
+    const Real dzinv = 1._rt/dx[2];
 
 #ifdef WARPX_DIM_RZ
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
@@ -2854,7 +2864,9 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(grid_type != GridType::Collocated,
         "ComputeDivB not implemented with warpx.grid_type=collocated.");
 
-    const Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
+    const Real dxinv = 1._rt/dx[0];
+    const Real dyinv = 1._rt/dx[1];
+    const Real dzinv = 1._rt/dx[2];
 
 #ifdef WARPX_DIM_RZ
     const Real rmin = GetInstance().Geom(0).ProbLo(0);

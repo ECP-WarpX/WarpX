@@ -61,7 +61,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name):
 
     // read bin parameters
     int bin_num = 0;
-    amrex::Real bin_max = 0.0_rt, bin_min = 0.0_rt;
+    amrex::Real bin_max = 0.0_rt;
+    amrex::Real bin_min = 0.0_rt;
     utils::parser::getWithParser(pp_rd_name, "bin_number", bin_num);
     utils::parser::getWithParser(pp_rd_name, "bin_max",    bin_max);
     utils::parser::getWithParser(pp_rd_name, "bin_min",    bin_min);
@@ -215,7 +216,9 @@ void ParticleHistogram::ComputeDiags (int step)
                 amrex::ParallelFor(np,
                    [=] AMREX_GPU_DEVICE(int i)
                 {
-                    amrex::ParticleReal x, y, z;
+                    amrex::ParticleReal x;
+                    amrex::ParticleReal y;
+                    amrex::ParticleReal z;
                     GetPosition(i, x, y, z);
                     auto const w  = (amrex::Real)d_w[i];
                     auto const ux = d_ux[i] / PhysConst::c;

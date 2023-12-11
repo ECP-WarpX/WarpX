@@ -496,7 +496,9 @@ void ColliderRelevant::ComputeDiags (int step)
                 [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                 {
                     // get external fields
-                    amrex::ParticleReal xp, yp, zp;
+                    amrex::ParticleReal xp;
+                    amrex::ParticleReal yp;
+                    amrex::ParticleReal zp;
                     GetPosition(i, xp, yp, zp);
                     amrex::ParticleReal ex = Ex_external_particle;
                     amrex::ParticleReal ey = Ey_external_particle;

@@ -104,7 +104,8 @@ WarpX::InitFromCheckpoint ()
         std::istringstream is(fileCharPtrString, std::istringstream::in);
         is.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
-        std::string line, word;
+        std::string line;
+        std::string word;
 
         std::getline(is, line);
 

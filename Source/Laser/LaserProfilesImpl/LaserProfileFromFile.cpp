@@ -260,7 +260,9 @@ WarpXLaserProfiles::FromFileLaserProfile::parse_binary_file (std::string binary_
         if(m_params.ny != 1) WARPX_ABORT_WITH_MESSAGE("ny in binary file must be 1 in 2D");
 #endif
         //Coordinates
-        Vector<double> dbuf_t, dbuf_x, dbuf_y;
+        Vector<double> dbuf_t;
+        Vector<double> dbuf_x;
+        Vector<double> dbuf_y;
         dbuf_t.resize(2);
         dbuf_x.resize(2);
 #if (defined(WARPX_DIM_3D) || (defined WARPX_DIM_RZ))

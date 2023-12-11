@@ -99,7 +99,9 @@ struct IonizationFilterFunc
             constexpr amrex::Real c2_inv = amrex::Real(1.)/c/c;
 
             // gather E and B
-            amrex::ParticleReal xp, yp, zp;
+            amrex::ParticleReal xp;
+            amrex::ParticleReal yp;
+            amrex::ParticleReal zp;
             m_get_position(i, xp, yp, zp);
 
             amrex::ParticleReal ex = m_Ex_external_particle;

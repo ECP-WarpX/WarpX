@@ -33,7 +33,8 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
 
     // Read existing snapshot Header first
     amrex::Vector<char> HeaderCharPtr;
-    amrex::Long fileLength(0), fileLengthPadded(0);
+    amrex::Long fileLength(0);
+    amrex::Long fileLengthPadded(0);
     std::ifstream iss;
     iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
@@ -188,7 +189,8 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
 {
     // Read existing fab Header first
     amrex::Vector<char> HeaderCharPtr;
-    amrex::Long fileLength(0), fileLengthPadded(0);
+    amrex::Long fileLength(0);
+    amrex::Long fileLengthPadded(0);
     std::ifstream iss;
     iss.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
@@ -363,7 +365,8 @@ void
 BTDSpeciesHeaderImpl::ReadHeader ()
 {
     amrex::Vector<char> HeaderCharPtr;
-    amrex::Long fileLength(0), fileLengthPadded(0);
+    amrex::Long fileLength(0);
+    amrex::Long fileLengthPadded(0);
     std::ifstream iss;
 
     iss.open(m_Header_path.c_str(), std::ios::in);
@@ -483,7 +486,8 @@ BTDParticleDataHeaderImpl::ReadHeader ()
 {
     // Read existing fab Header first
     amrex::Vector<char> HeaderCharPtr;
-    amrex::Long fileLength(0), fileLengthPadded(0);
+    amrex::Long fileLength(0);
+    amrex::Long fileLengthPadded(0);
     std::ifstream iss;
 
     iss.open(m_Header_path.c_str(), std::ios::in);

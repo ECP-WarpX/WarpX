@@ -237,7 +237,8 @@ PsatdAlgorithmJConstantInTime::pushSpectralFields (SpectralFieldData& f) const
             const Complex T2 = (is_galilean) ? T2_arr(i,j,k) : 1.0_rt;
 
             // Shortcuts for the values of rho
-            Complex rho_old, rho_new;
+            Complex rho_old;
+            Complex rho_new;
             if (update_with_rho)
             {
                 rho_old = fields(i,j,k,Idx.rho_old);

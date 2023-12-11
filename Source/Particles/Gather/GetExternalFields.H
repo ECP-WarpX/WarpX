@@ -58,7 +58,7 @@ struct GetExternalEBField
 
     std::optional<LatticeElementFinderDevice> d_lattice_element_finder;
 
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    [[nodiscard]] AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool isNoOp () const { return (m_Etype == None && m_Btype == None && !d_lattice_element_finder.has_value()); }
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -91,7 +91,9 @@ struct GetExternalEBField
 
         if (m_Etype == ExternalFieldInitType::Parser)
         {
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x;
+            amrex::ParticleReal y;
+            amrex::ParticleReal z;
             m_get_position(i, x, y, z);
             amrex::Real lab_time = m_time;
             if (m_gamma_boost > 1._prt) {
@@ -105,7 +107,9 @@ struct GetExternalEBField
 
         if (m_Btype == ExternalFieldInitType::Parser)
         {
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x;
+            amrex::ParticleReal y;
+            amrex::ParticleReal z;
             m_get_position(i, x, y, z);
             amrex::Real lab_time = m_time;
             if (m_gamma_boost > 1._prt) {
@@ -120,7 +124,9 @@ struct GetExternalEBField
         if (m_Etype == RepeatedPlasmaLens ||
             m_Btype == RepeatedPlasmaLens)
         {
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x;
+            amrex::ParticleReal y;
+            amrex::ParticleReal z;
             m_get_position(i, x, y, z);
 
             const amrex::ParticleReal uxp = m_ux[i];

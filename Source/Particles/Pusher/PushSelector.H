@@ -88,7 +88,9 @@ void doParticlePush(const GetParticlePosition<PIdx>& GetPosition,
                                      Ex, Ey, Ez, Bx,
                                      By, Bz, qp, m, dt);
             }
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x;
+            amrex::ParticleReal y;
+            amrex::ParticleReal z;
             GetPosition(i, x, y, z);
             UpdatePosition(x, y, z, ux, uy, uz, dt );
             SetPosition(i, x, y, z);
@@ -99,7 +101,9 @@ void doParticlePush(const GetParticlePosition<PIdx>& GetPosition,
             UpdateMomentumBorisWithRadiationReaction(ux, uy, uz,
                                                      Ex, Ey, Ez, Bx,
                                                      By, Bz, qp, m, dt);
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x;
+            amrex::ParticleReal y;
+            amrex::ParticleReal z;
             GetPosition(i, x, y, z);
             UpdatePosition(x, y, z, ux, uy, uz, dt );
             SetPosition(i, x, y, z);
@@ -108,7 +112,9 @@ void doParticlePush(const GetParticlePosition<PIdx>& GetPosition,
         UpdateMomentumBoris( ux, uy, uz,
                              Ex, Ey, Ez, Bx,
                              By, Bz, qp, m, dt);
-        amrex::ParticleReal x, y, z;
+        amrex::ParticleReal x;
+        amrex::ParticleReal y;
+        amrex::ParticleReal z;
         GetPosition(i, x, y, z);
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);
@@ -116,7 +122,9 @@ void doParticlePush(const GetParticlePosition<PIdx>& GetPosition,
         UpdateMomentumVay( ux, uy, uz,
                            Ex, Ey, Ez, Bx,
                            By, Bz, qp, m, dt);
-        amrex::ParticleReal x, y, z;
+        amrex::ParticleReal x;
+        amrex::ParticleReal y;
+        amrex::ParticleReal z;
         GetPosition(i, x, y, z);
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);
@@ -124,7 +132,9 @@ void doParticlePush(const GetParticlePosition<PIdx>& GetPosition,
         UpdateMomentumHigueraCary( ux, uy, uz,
                                    Ex, Ey, Ez, Bx,
                                    By, Bz, qp, m, dt);
-        amrex::ParticleReal x, y, z;
+        amrex::ParticleReal x;
+        amrex::ParticleReal y;
+        amrex::ParticleReal z;
         GetPosition(i, x, y, z);
         UpdatePosition(x, y, z, ux, uy, uz, dt );
         SetPosition(i, x, y, z);

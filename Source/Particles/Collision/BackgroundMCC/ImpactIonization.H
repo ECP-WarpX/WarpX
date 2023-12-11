@@ -81,7 +81,9 @@ public:
 
         // get references to the particle to get its position
         const auto& p = ptd.getSuperParticle(i);
-        ParticleReal x, y, z;
+        ParticleReal x;
+        ParticleReal y;
+        ParticleReal z;
         double E_coll;
         get_particle_position(p, x, y, z);
 
@@ -176,7 +178,9 @@ public:
 
         // get references to the particle to get its position
         const auto& p = src.getSuperParticle(i_src);
-        ParticleReal x, y, z;
+        ParticleReal x;
+        ParticleReal y;
+        ParticleReal z;
         double E_coll;
         get_particle_position(p, x, y, z);
 

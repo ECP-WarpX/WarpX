@@ -185,7 +185,8 @@ struct InjectorMomentumGaussianFlux
         using namespace amrex::literals;
 
         // Generate the distribution in the direction of the flux
-        amrex::Real u_m = 0, u_th = 0;
+        amrex::Real u_m = 0;
+        amrex::Real u_th = 0;
         if (m_flux_normal_axis == 0) {
             u_m = m_ux_m;
             u_th = m_ux_th;
@@ -372,7 +373,9 @@ struct InjectorMomentumJuttner
         using namespace amrex::literals;
         // Sobol method for sampling MJ Speeds,
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
-        amrex::Real x1, x2, gamma;
+        amrex::Real x1;
+        amrex::Real x2;
+        amrex::Real gamma;
         amrex::Real u [3];
         amrex::Real const theta = temperature(x,y,z);
         // Check if temperature is too low to do sampling method. Abort for now,

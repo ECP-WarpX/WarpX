@@ -510,7 +510,9 @@ void doGatherShapeN(const GetParticlePosition<PIdx>& getPosition,
         np_to_gather,
         [=] AMREX_GPU_DEVICE (long ip) {
 
-            amrex::ParticleReal xp, yp, zp;
+            amrex::ParticleReal xp;
+            amrex::ParticleReal yp;
+            amrex::ParticleReal zp;
             getPosition(ip, xp, yp, zp);
             getExternalEB(ip, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip]);
 

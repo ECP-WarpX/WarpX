@@ -67,14 +67,18 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
             {
                 // Get position in WarpX convention to use in parser. Will be different from
                 // p.pos() for 1D and 2D simulations.
-                amrex::ParticleReal xw = 0._rt, yw = 0._rt, zw = 0._rt;
+                amrex::ParticleReal xw = 0._rt;
+                amrex::ParticleReal yw = 0._rt;
+                amrex::ParticleReal zw = 0._rt;
                 get_particle_position(p, xw, yw, zw);
 
                 // Get position in AMReX convention to calculate corresponding index.
                 // Ideally this will be replaced with the AMReX NGP interpolator
                 // Always do x direction. No RZ case because it's not implemented, and code
                 // will have aborted
-                int ii = 0, jj = 0, kk = 0;
+                int ii = 0;
+                int jj = 0;
+                int kk = 0;
                 const amrex::ParticleReal x = p.pos(0);
                 const amrex::Real lx = (x - plo[0]) * dxi[0];
                 ii = static_cast<int>(amrex::Math::floor(lx));
@@ -109,14 +113,18 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                 {
                     // Get position in WarpX convention to use in parser. Will be different from
                     // p.pos() for 1D and 2D simulations.
-                    amrex::ParticleReal xw = 0._rt, yw = 0._rt, zw = 0._rt;
+                    amrex::ParticleReal xw = 0._rt;
+                    amrex::ParticleReal yw = 0._rt;
+                    amrex::ParticleReal zw = 0._rt;
                     get_particle_position(p, xw, yw, zw);
 
                     // Get position in AMReX convention to calculate corresponding index.
                     // Ideally this will be replaced with the AMReX NGP interpolator
                     // Always do x direction. No RZ case because it's not implemented, and code
                     // will have aborted
-                    int ii = 0, jj = 0, kk = 0;
+                    int ii = 0;
+                    int jj = 0;
+                    int kk = 0;
                     const amrex::ParticleReal x = p.pos(0);
                     const amrex::Real lx = (x - plo[0]) * dxi[0];
                     ii = static_cast<int>(amrex::Math::floor(lx));

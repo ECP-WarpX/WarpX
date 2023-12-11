@@ -665,7 +665,8 @@ MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
     }
     else
     {
-        const bool only_valid=true, only_local=true;
+        const bool only_valid=true;
+        const bool only_local=true;
         Vector<Long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
         for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
             const auto& ri = allcontainers[i]->NumberOfParticlesInGrid(lev,only_valid,only_local);

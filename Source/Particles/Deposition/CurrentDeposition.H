@@ -143,7 +143,9 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                 wq *= ion_lev[ip];
             }
 
-            amrex::ParticleReal xp, yp, zp;
+            amrex::ParticleReal xp;
+            amrex::ParticleReal yp;
+            amrex::ParticleReal zp;
             GetPosition(ip, xp, yp, zp);
 
             const amrex::Real vx  = uxp[ip]*gaminv;
@@ -675,7 +677,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                 wq *= ion_lev[ip];
             }
 
-            ParticleReal xp, yp, zp;
+            ParticleReal xp;
+            ParticleReal yp;
+            ParticleReal zp;
             GetPosition(ip, xp, yp, zp);
 
 #if !defined(WARPX_DIM_1D_Z)
@@ -697,7 +701,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
             Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
             Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
-            Real costheta_new, sintheta_new;
+            Real costheta_new;
+            Real sintheta_new;
             if (rp_new > 0._rt) {
                 costheta_new = xp_new/rp_new;
                 sintheta_new = yp_new/rp_new;
@@ -705,7 +710,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                 costheta_new = 1._rt;
                 sintheta_new = 0._rt;
             }
-            amrex::Real costheta_mid, sintheta_mid;
+            amrex::Real costheta_mid;
+            amrex::Real sintheta_mid;
             if (rp_mid > 0._rt) {
                 costheta_mid = xp_mid/rp_mid;
                 sintheta_mid = yp_mid/rp_mid;
@@ -713,7 +719,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                 costheta_mid = 1._rt;
                 sintheta_mid = 0._rt;
             }
-            amrex::Real costheta_old, sintheta_old;
+            amrex::Real costheta_old;
+            amrex::Real sintheta_old;
             if (rp_old > 0._rt) {
                 costheta_old = xp_old/rp_old;
                 sintheta_old = yp_old/rp_old;
@@ -789,16 +796,19 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 
             // computes min/max positions of current contributions
 #if !defined(WARPX_DIM_1D_Z)
-            int dil = 1, diu = 1;
+            int dil = 1;
+            int diu = 1;
             if (i_old < i_new) dil = 0;
             if (i_old > i_new) diu = 0;
 #endif
 #if defined(WARPX_DIM_3D)
-            int djl = 1, dju = 1;
+            int djl = 1;
+            int dju = 1;
             if (j_old < j_new) djl = 0;
             if (j_old > j_new) dju = 0;
 #endif
-            int dkl = 1, dku = 1;
+            int dkl = 1;
+            int dku = 1;
             if (k_old < k_new) dkl = 0;
             if (k_old > k_new) dku = 0;
 
@@ -1071,7 +1081,9 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
         if (do_ionization) wq *= ion_lev[ip];
 
         // Current particle positions (in physical units)
-        amrex::ParticleReal xp, yp, zp;
+        amrex::ParticleReal xp;
+        amrex::ParticleReal yp;
+        amrex::ParticleReal zp;
         GetPosition(ip, xp, yp, zp);
 
         // Particle velocities

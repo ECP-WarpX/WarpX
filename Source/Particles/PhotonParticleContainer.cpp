@@ -186,7 +186,9 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                        [=] AMREX_GPU_DEVICE (long i, auto exteb_control,
                                              auto qed_control) {
             if (do_copy) copyAttribs(i);
-            ParticleReal x, y, z;
+            ParticleReal x;
+            ParticleReal y;
+            ParticleReal z;
             GetPosition(i, x, y, z);
 
             amrex::ParticleReal Exp = Ex_external_particle;

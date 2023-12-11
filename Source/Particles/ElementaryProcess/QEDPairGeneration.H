@@ -129,7 +129,9 @@ public:
         using namespace amrex;
 
         // gather E and B
-        amrex::ParticleReal xp, yp, zp;
+        amrex::ParticleReal xp;
+        amrex::ParticleReal yp;
+        amrex::ParticleReal zp;
         m_get_position(i_src, xp, yp, zp);
 
         amrex::ParticleReal ex = m_Ex_external_particle;

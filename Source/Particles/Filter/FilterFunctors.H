@@ -114,7 +114,9 @@ struct ParserFilter
             return true;
         }
         else{
-            amrex::ParticleReal x, y, z;
+            amrex::ParticleReal x;
+            amrex::ParticleReal y;
+            amrex::ParticleReal z;
             get_particle_position(p, x, y, z);
             amrex::Real ux = p.rdata(PIdx::ux)/PhysConst::c;
             amrex::Real uy = p.rdata(PIdx::uy)/PhysConst::c;

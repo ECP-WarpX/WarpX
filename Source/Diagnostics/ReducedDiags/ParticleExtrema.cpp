@@ -356,7 +356,8 @@ void ParticleExtrema::ComputeDiags (int step)
         if (myspc.DoQED())
         {
             // declare chi arrays
-            std::vector<Real> chimin, chimax;
+            std::vector<Real> chimin;
+            std::vector<Real> chimax;
             chimin.resize(level_number+1,0.0_rt);
             chimax.resize(level_number+1,0.0_rt);
 
@@ -427,7 +428,9 @@ void ParticleExtrema::ComputeDiags (int step)
                     [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                     {
                         // get external fields
-                        ParticleReal xp, yp, zp;
+                        ParticleReal xp;
+                        ParticleReal yp;
+                        ParticleReal zp;
                         GetPosition(i, xp, yp, zp);
                         amrex::ParticleReal ex = Ex_external_particle;
                         amrex::ParticleReal ey = Ey_external_particle;

@@ -216,7 +216,8 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 
     m_laser_injection_box= Geom(0).ProbDomain();
     {
-        Vector<Real> lo, hi;
+        Vector<Real> lo;
+        Vector<Real> hi;
         if (utils::parser::queryArrWithParser(
                 pp_laser_name, "prob_lo", lo, 0, AMREX_SPACEDIM)) {
             m_laser_injection_box.setLo(lo);
@@ -371,7 +372,8 @@ LaserParticleContainer::InitData (int lev)
 
     // spacing of laser particles in the laser plane.
     // has to be done after geometry is set up.
-    Real S_X, S_Y;
+    Real S_X;
+    Real S_Y;
     ComputeSpacing(lev, S_X, S_Y);
     ComputeWeightMobility(S_X, S_Y);
 
@@ -482,7 +484,10 @@ LaserParticleContainer::InitData (int lev)
     const BoxArray plane_ba { Box {IntVect(0), IntVect(0)} };
 #endif
 
-    amrex::Vector<amrex::ParticleReal> particle_x, particle_y, particle_z, particle_w;
+    amrex::Vector<amrex::ParticleReal> particle_x;
+    amrex::Vector<amrex::ParticleReal> particle_y;
+    amrex::Vector<amrex::ParticleReal> particle_z;
+    amrex::Vector<amrex::ParticleReal> particle_w;
 
     const DistributionMapping plane_dm {plane_ba, nprocs};
     const Vector<int>& procmap = plane_dm.ProcessorMap();
@@ -595,7 +600,9 @@ LaserParticleContainer::Evolve (int lev,
         int const thread_num = 0;
 #endif
 
-        Gpu::DeviceVector<Real> plane_Xp, plane_Yp, amplitude_E;
+        Gpu::DeviceVector<Real> plane_Xp;
+        Gpu::DeviceVector<Real> plane_Yp;
+        Gpu::DeviceVector<Real> amplitude_E;
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
@@ -703,7 +710,8 @@ LaserParticleContainer::PostRestart ()
 {
     if (!m_enabled) return;
 
-    Real Sx, Sy;
+    Real Sx;
+    Real Sy;
     const int lev = finestLevel();
     ComputeSpacing(lev, Sx, Sy);
     ComputeWeightMobility(Sx, Sy);
@@ -808,7 +816,9 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
     amrex::ParallelFor(
         np,
         [=] AMREX_GPU_DEVICE (int i) {
-            ParticleReal x, y, z;
+            ParticleReal x;
+            ParticleReal y;
+            ParticleReal z;
             GetPosition(i, x, y, z);
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             pplane_Xp[i] =
@@ -892,7 +902,9 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
             puzp[i] = gamma * vz;
 
             // Push the the particle positions
-            ParticleReal x, y, z;
+            ParticleReal x;
+            ParticleReal y;
+            ParticleReal z;
             GetPosition(i, x, y, z);
 #if !defined(WARPX_DIM_1D_Z)
             x += vx * dt;

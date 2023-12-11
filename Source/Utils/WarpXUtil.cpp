@@ -140,7 +140,8 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
 
 void ConvertLabParamsToBoost()
 {
-    Real gamma_boost = 1., beta_boost = 0.;
+    Real gamma_boost = 1.;
+    Real beta_boost = 0.;
     int max_level = 0;
     Vector<int> boost_direction {0,0,0};
 

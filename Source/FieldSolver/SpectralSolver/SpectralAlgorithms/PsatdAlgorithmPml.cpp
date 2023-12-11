@@ -129,15 +129,28 @@ void PsatdAlgorithmPml::pushSpectralFields(SpectralFieldData& f) const
             const Complex Bzx = fields(i,j,k,Idx.Bzx);
             const Complex Bzy = fields(i,j,k,Idx.Bzy);
 
-            Complex Ex, Ey, Ez;
-            Complex Bx, By, Bz;
+            Complex Ex;
+            Complex Ey;
+            Complex Ez;
+            Complex Bx;
+            Complex By;
+            Complex Bz;
 
             // Used only if dive_cleaning = true and divb_cleaning = true
-            Complex Exx, Eyy, Ezz;
-            Complex Bxx, Byy, Bzz;
-            Complex Fx, Fy, Fz;
-            Complex Gx, Gy, Gz;
-            Complex F, G;
+            Complex Exx;
+            Complex Eyy;
+            Complex Ezz;
+            Complex Bxx;
+            Complex Byy;
+            Complex Bzz;
+            Complex Fx;
+            Complex Fy;
+            Complex Fz;
+            Complex Gx;
+            Complex Gy;
+            Complex Gz;
+            Complex F;
+            Complex G;
 
             if (!dive_cleaning && !divb_cleaning)
             {

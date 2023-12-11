@@ -62,8 +62,12 @@ namespace {
     {
         using namespace amrex::literals;
 
-        amrex::ParticleReal ux1_out = 0.0_prt, uy1_out = 0.0_prt, uz1_out = 0.0_prt;
-        amrex::ParticleReal ux2_out = 0.0_prt, uy2_out = 0.0_prt, uz2_out = 0.0_prt;
+        amrex::ParticleReal ux1_out = 0.0_prt;
+        amrex::ParticleReal uy1_out = 0.0_prt;
+        amrex::ParticleReal uz1_out = 0.0_prt;
+        amrex::ParticleReal ux2_out = 0.0_prt;
+        amrex::ParticleReal uy2_out = 0.0_prt;
+        amrex::ParticleReal uz2_out = 0.0_prt;
 
         TwoProductFusionComputeProductMomenta(
             soa1_in.m_rdata[PIdx::ux][idx1_in],

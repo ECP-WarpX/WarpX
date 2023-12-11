@@ -51,7 +51,9 @@ struct SelectParticles
     int operator() (const SrcData& src, int i) const noexcept
     {
         amrex::ignore_unused(src);
-        amrex::ParticleReal xp, yp, zp;
+        amrex::ParticleReal xp;
+        amrex::ParticleReal yp;
+        amrex::ParticleReal zp;
         m_get_position(i, xp, yp, zp);
         int Flag = 0;
         if ( ( (zp >= m_current_z_boost) && (zpold[i] <= m_old_z_boost) ) ||
@@ -109,7 +111,9 @@ struct LorentzTransformParticles
         amrex::ignore_unused(src);
         using namespace amrex::literals;
         // get current src position
-        amrex::ParticleReal xpnew, ypnew, zpnew;
+        amrex::ParticleReal xpnew;
+        amrex::ParticleReal ypnew;
+        amrex::ParticleReal zpnew;
         m_get_position(i_src, xpnew, ypnew, zpnew);
         const amrex::Real gamma_new_p = std::sqrt(1.0_rt + m_inv_c2*
                                         ( m_uxpnew[i_src] * m_uxpnew[i_src]

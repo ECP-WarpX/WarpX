@@ -165,7 +165,8 @@ amrex::ParticleReal
 BackgroundMCCCollision::get_nu_max(amrex::Vector<MCCProcess> const& mcc_processes)
 {
     using namespace amrex::literals;
-    amrex::ParticleReal nu, nu_max = 0.0;
+    amrex::ParticleReal nu;
+    amrex::ParticleReal nu_max = 0.0;
     amrex::ParticleReal E_start = 1e-4_prt;
     amrex::ParticleReal E_end = 5000._prt;
     amrex::ParticleReal E_step = 0.2_prt;
@@ -354,16 +355,29 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               // determine if this particle should collide
                               if (amrex::Random(engine) > total_collision_prob) return;
 
-                              amrex::ParticleReal x, y, z;
+                              amrex::ParticleReal x;
+                              amrex::ParticleReal y;
+                              amrex::ParticleReal z;
                               GetPosition.AsStored(ip, x, y, z);
 
                               const amrex::ParticleReal n_a = n_a_func(x, y, z, t);
                               const amrex::ParticleReal T_a = T_a_func(x, y, z, t);
 
-                              amrex::ParticleReal v_coll, v_coll2, sigma_E, nu_i = 0;
-                              double gamma, E_coll;
-                              amrex::ParticleReal ua_x, ua_y, ua_z, vx, vy, vz;
-                              amrex::ParticleReal uCOM_x, uCOM_y, uCOM_z;
+                              amrex::ParticleReal v_coll;
+                              amrex::ParticleReal v_coll2;
+                              amrex::ParticleReal sigma_E;
+                              amrex::ParticleReal nu_i = 0;
+                              double gamma;
+                              double E_coll;
+                              amrex::ParticleReal ua_x;
+                              amrex::ParticleReal ua_y;
+                              amrex::ParticleReal ua_z;
+                              amrex::ParticleReal vx;
+                              amrex::ParticleReal vy;
+                              amrex::ParticleReal vz;
+                              amrex::ParticleReal uCOM_x;
+                              amrex::ParticleReal uCOM_y;
+                              amrex::ParticleReal uCOM_z;
                               const amrex::ParticleReal col_select = amrex::Random(engine);
 
                               // get velocities of gas particles from a Maxwellian distribution

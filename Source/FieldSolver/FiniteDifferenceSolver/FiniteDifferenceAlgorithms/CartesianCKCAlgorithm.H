@@ -68,16 +68,29 @@ struct CartesianCKCAlgorithm {
         Real const alphaz = (1._rt - 2._rt*rx*beta)*inv_dz;
         // Other coefficients are 0 in 2D Cartesian
         // (and will actually not be used in the stencil)
-        constexpr Real gammax=0._rt, gammay=0._rt, gammaz=0._rt;
-        constexpr Real betaxy=0._rt, betazy=0._rt, betayx=0._rt, betayz=0._rt;
+        constexpr Real gammax=0._rt;
+        constexpr Real gammay=0._rt;
+        constexpr Real gammaz=0._rt;
+        constexpr Real betaxy=0._rt;
+        constexpr Real betazy=0._rt;
+        constexpr Real betayx=0._rt;
+        constexpr Real betayz=0._rt;
         constexpr Real alphay=0._rt;
 #elif defined WARPX_DIM_1D_Z
         Real const alphaz = inv_dz;
         // Other coefficients are 0 in 1D Cartesian
         // (and will actually not be used in the stencil)
-        constexpr Real gammax=0._rt, gammay=0._rt, gammaz=0._rt;
-        constexpr Real betaxy=0._rt, betazy=0._rt, betayx=0._rt, betayz=0._rt, betaxz=0._rt, betazx=0._rt;
-        constexpr Real alphay=0._rt, alphax=0._rt;
+        constexpr Real gammax=0._rt;
+        constexpr Real gammay=0._rt;
+        constexpr Real gammaz=0._rt;
+        constexpr Real betaxy=0._rt;
+        constexpr Real betazy=0._rt;
+        constexpr Real betayx=0._rt;
+        constexpr Real betayz=0._rt;
+        constexpr Real betaxz=0._rt;
+        constexpr Real betazx=0._rt;
+        constexpr Real alphay=0._rt;
+        constexpr Real alphax=0._rt;
 #endif
 
         // Store the coefficients in array `stencil_coefs`, in prescribed order

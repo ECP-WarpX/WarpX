@@ -107,8 +107,13 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
             const Complex Jy_c1 = (J_linear  ) ? (Jy_new-Jy_old)/dt : 0._rt;
             const Complex Jz_c1 = (J_linear  ) ? (Jz_new-Jz_old)/dt : 0._rt;
 
-            Complex rho_mid, rho_old, rho_new, F_old, G_old;
-            Complex rho_c0, rho_c1;
+            Complex rho_mid;
+            Complex rho_old;
+            Complex rho_new;
+            Complex F_old;
+            Complex G_old;
+            Complex rho_c0;
+            Complex rho_c1;
             if (div_cleaning)
             {
                 rho_mid = (rho_constant) ? fields(i,j,k,Idx.rho_mid) : 0._rt;
@@ -169,8 +174,22 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
             }
             else // knorm != 0
             {
-                Complex C01, C02, C03, C04, C05, C06, C07, C08,
-                        C09, C10, C11, C12, C13, C14, C15, C16;
+                Complex C01;
+                Complex C02;
+                Complex C03;
+                Complex C04;
+                Complex C05;
+                Complex C06;
+                Complex C07;
+                Complex C08;
+                Complex C09;
+                Complex C10;
+                Complex C11;
+                Complex C12;
+                Complex C13;
+                Complex C14;
+                Complex C15;
+                Complex C16;
 
                 // Ex
                 C01 = (div_cleaning) ? C : (kx2+ky2*C+kz2*C)*inv_knorm2;

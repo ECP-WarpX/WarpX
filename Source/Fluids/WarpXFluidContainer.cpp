@@ -833,9 +833,16 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
                 // compute the fluxes:
                 // (note that _plus is shifted due to grid location)
-                amrex::Real Vx_L_minus = 0.0_rt, Vx_I_plus = 0.0_rt;
-                amrex::Real F0_minusx = 0.0_rt, F1_minusx = 0.0_rt, F2_minusx = 0.0_rt, F3_minusx = 0.0_rt;
-                amrex::Real F0_plusx = 0.0_rt, F1_plusx = 0.0_rt, F2_plusx = 0.0_rt, F3_plusx = 0.0_rt;
+                amrex::Real Vx_L_minus = 0.0_rt;
+                amrex::Real Vx_I_plus = 0.0_rt;
+                amrex::Real F0_minusx = 0.0_rt;
+                amrex::Real F1_minusx = 0.0_rt;
+                amrex::Real F2_minusx = 0.0_rt;
+                amrex::Real F3_minusx = 0.0_rt;
+                amrex::Real F0_plusx = 0.0_rt;
+                amrex::Real F1_plusx = 0.0_rt;
+                amrex::Real F2_plusx = 0.0_rt;
+                amrex::Real F3_plusx = 0.0_rt;
                 if (i != domain.smallEnd(0)) {
                     Vx_L_minus = V_calc(U_minus_x,i-1,j,k,0,clight);
                     F0_minusx = flux_N(  U_minus_x, U_plus_x, i-1, j, k, Vx_L_minus, Vx_L_plus)*S_Ar_minus;
@@ -1055,10 +1062,18 @@ void WarpXFluidContainer::GatherAndPush (
                         if ( ( external_b_fields ) || ( external_e_fields ) ){
 
                             // Lorentz transform z (from boosted to lab frame)
-                            amrex::Real Ex_ext_boost, Ey_ext_boost, Ez_ext_boost;
-                            amrex::Real Bx_ext_boost, By_ext_boost, Bz_ext_boost;
-                            amrex::Real Ex_ext_lab, Ey_ext_lab, Ez_ext_lab;
-                            amrex::Real Bx_ext_lab, By_ext_lab, Bz_ext_lab;
+                            amrex::Real Ex_ext_boost;
+                            amrex::Real Ey_ext_boost;
+                            amrex::Real Ez_ext_boost;
+                            amrex::Real Bx_ext_boost;
+                            amrex::Real By_ext_boost;
+                            amrex::Real Bz_ext_boost;
+                            amrex::Real Ex_ext_lab;
+                            amrex::Real Ey_ext_lab;
+                            amrex::Real Ez_ext_lab;
+                            amrex::Real Bx_ext_lab;
+                            amrex::Real By_ext_lab;
+                            amrex::Real Bz_ext_lab;
 
                             // Grab the location
 #if defined(WARPX_DIM_3D)
@@ -1285,7 +1300,10 @@ void WarpXFluidContainer::DepositCurrent(
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
                 // Calculate J from fluid quantities
-                amrex::Real gamma = 1.0_rt, Ux = 0.0_rt, Uy = 0.0_rt, Uz = 0.0_rt;
+                amrex::Real gamma = 1.0_rt;
+                amrex::Real Ux = 0.0_rt;
+                amrex::Real Uy = 0.0_rt;
+                amrex::Real Uz = 0.0_rt;
                 if (N_arr(i, j, k)>0.0_rt){
                     Ux = NUx_arr(i, j, k)/N_arr(i, j, k);
                     Uy = NUy_arr(i, j, k)/N_arr(i, j, k);

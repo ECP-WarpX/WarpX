@@ -337,7 +337,9 @@ WarpX::PrintMainPICparameters ()
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD){
     // Print solver's order
-      std::string psatd_nox_fft, psatd_noy_fft, psatd_noz_fft;
+      std::string psatd_nox_fft;
+      std::string psatd_noy_fft;
+      std::string psatd_noz_fft;
       psatd_nox_fft = (nox_fft == -1) ? "inf" : std::to_string(nox_fft);
       psatd_noy_fft = (noy_fft == -1) ? "inf" : std::to_string(noy_fft);
       psatd_noz_fft = (noz_fft == -1) ? "inf" : std::to_string(noz_fft);
@@ -1425,7 +1427,8 @@ WarpX::ReadExternalFieldFromFile (
                 // Physical coordinates of the grid point
                 // 0,1,2 denote x,y,z in 3D xyz.
                 // 0,1 denote r,z in 2D rz.
-                amrex::Real x0, x1;
+                amrex::Real x0;
+                amrex::Real x1;
                 if ( box.type(0)==amrex::IndexType::CellIndex::NODE )
                      { x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0]; }
                 else { x0 = static_cast<amrex::Real>(real_box.lo(0)) + ii*dx[0] + 0.5_rt*dx[0]; }
@@ -1461,26 +1464,24 @@ WarpX::ReadExternalFieldFromFile (
 
 #if defined(WARPX_DIM_RZ)
                 amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent0, extent2, extent1}, 1);
-                double
-                    f00 = fc_array(0, iz  , ir  ),
-                    f01 = fc_array(0, iz  , ir+1),
-                    f10 = fc_array(0, iz+1, ir  ),
-                    f11 = fc_array(0, iz+1, ir+1);
+                double f00 = fc_array(0, iz  , ir  );
+                double f01 = fc_array(0, iz  , ir+1);
+                double f10 = fc_array(0, iz+1, ir  );
+                double f11 = fc_array(0, iz+1, ir+1);
                 mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::bilinear_interp<double>
                     (xx0, xx0+file_dr, xx1, xx1+file_dz,
                      f00, f01, f10, f11,
                      x0, x1));
 #elif defined(WARPX_DIM_3D)
                 const amrex::Array4<double> fc_array(FC_data, {0,0,0}, {extent2, extent1, extent0}, 1);
-                const double
-                    f000 = fc_array(iz  , iy  , ix  ),
-                    f001 = fc_array(iz+1, iy  , ix  ),
-                    f010 = fc_array(iz  , iy+1, ix  ),
-                    f011 = fc_array(iz+1, iy+1, ix  ),
-                    f100 = fc_array(iz  , iy  , ix+1),
-                    f101 = fc_array(iz+1, iy  , ix+1),
-                    f110 = fc_array(iz  , iy+1, ix+1),
-                    f111 = fc_array(iz+1, iy+1, ix+1);
+                const double f000 = fc_array(iz  , iy  , ix  );
+                const double f001 = fc_array(iz+1, iy  , ix  );
+                const double f010 = fc_array(iz  , iy+1, ix  );
+                const double f011 = fc_array(iz+1, iy+1, ix  );
+                const double f100 = fc_array(iz  , iy  , ix+1);
+                const double f101 = fc_array(iz+1, iy  , ix+1);
+                const double f110 = fc_array(iz  , iy+1, ix+1);
+                const double f111 = fc_array(iz+1, iy+1, ix+1);
                 mffab(i,j,k) = static_cast<amrex::Real>(utils::algorithms::trilinear_interp<double>
                     (xx0, xx0+file_dx, xx1, xx1+file_dy, xx2, xx2+file_dz,
                      f000, f001, f010, f011, f100, f101, f110, f111,

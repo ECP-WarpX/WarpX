@@ -99,7 +99,8 @@ MCCProcess::readCrossSectionFile (
     std::ifstream infile(cross_section_file);
     if(!infile.is_open()) WARPX_ABORT_WITH_MESSAGE("Failed to open cross-section data file");
 
-    amrex::ParticleReal energy, sigma;
+    amrex::ParticleReal energy;
+    amrex::ParticleReal sigma;
     while (infile >> energy >> sigma) {
         energies.push_back(energy);
         sigmas.push_back(sigma);
