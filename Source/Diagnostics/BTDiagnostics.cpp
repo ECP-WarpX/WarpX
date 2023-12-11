@@ -348,7 +348,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     amrex::RealBox diag_dom;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim ) {
         // Setting lo-coordinate for the diag domain by taking the max of user-defined
-        // lo-cordinate and lo-coordinat of the simulation domain at level, lev
+        // lo-cordinate and lo-coordinate of the simulation domain at level, lev
         diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
         // Setting hi-coordinate for the diag domain by taking the max of user-defined
         // hi-cordinate and hi-coordinate of the simulation domain at level, lev
@@ -787,7 +787,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
 
     auto & warpx = WarpX::GetInstance();
     // In this function, we will get cell-centered data for every level, lev,
-    // using the cell-center functors and their respective opeators()
+    // using the cell-center functors and their respective operators()
     // Call m_cell_center_functors->operator
     for (int lev = 0; lev < nmax_lev; ++lev) {
         int icomp_dst = 0;

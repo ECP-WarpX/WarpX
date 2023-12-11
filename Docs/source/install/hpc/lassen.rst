@@ -263,15 +263,15 @@ The batch script below can be used to run a WarpX simulation on 2 nodes on the s
 Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
 Note that the only option so far is to run with one MPI rank per GPU.
 
-.. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen.bsub
+.. literalinclude:: ../../../../Tools/machines/lassen-llnl/lassen_v100.bsub
    :language: bash
-   :caption: You can copy this file from ``Tools/machines/lassen-llnl/lassen.bsub``.
+   :caption: You can copy this file from ``Tools/machines/lassen-llnl/lassen_v100.bsub``.
 
-To run a simulation, copy the lines above to a file ``lassen.bsub`` and run
+To run a simulation, copy the lines above to a file ``lassen_v100.bsub`` and run
 
 .. code-block:: bash
 
-   bsub lassen.bsub
+   bsub lassen_v100.bsub
 
 to submit the job.
 

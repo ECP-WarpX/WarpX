@@ -9,7 +9,7 @@ The checksum module is located in ``Regression/Checksum/``, and the benchmarks a
 
 For more details on the implementation, the Python files in ``Regression/Checksum/`` should be well documented.
 
-From a user point of view, you should only need to use ``checksumAPI.py``. It contains Python functions that can be imported and used from an analysis Python script. It can also be executed directly as a Python script. Here are recipies for the main tasks related to checksum regression tests in WarpX CI.
+From a user point of view, you should only need to use ``checksumAPI.py``. It contains Python functions that can be imported and used from an analysis Python script. It can also be executed directly as a Python script. Here are recipes for the main tasks related to checksum regression tests in WarpX CI.
 
 Include a checksum regression test in an analysis Python script
 ---------------------------------------------------------------

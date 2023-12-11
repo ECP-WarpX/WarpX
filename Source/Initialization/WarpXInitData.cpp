@@ -119,7 +119,7 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
 #if defined(WARPX_DIM_3D)
         for (int k = 0; k < numprocs[2]; ++k) {
             // The first extra[2] blocks get one extra cell with a total of
-            // sz[2]+1.  The rest get sz[2] cells.  The docomposition in y
+            // sz[2]+1.  The rest get sz[2] cells.  The decomposition in y
             // and x directions are similar.
             int klo = (k < extra[2]) ? k*(sz[2]+1) : (k*sz[2]+extra[2]);
             int khi = (k < extra[2]) ? klo+(sz[2]+1)-1 : klo+sz[2]-1;
@@ -485,7 +485,7 @@ WarpX::InitData ()
         AddExternalFields();
     }
 
-    if (restart_chkfile.empty() || write_diagonstics_on_restart) {
+    if (restart_chkfile.empty() || write_diagnostics_on_restart) {
         // Write full diagnostics before the first iteration.
         multi_diags->FilterComputePackFlush(istep[0] - 1);
 
@@ -1570,7 +1570,7 @@ WarpX::ReadExternalFieldFromFile (
 void
 WarpX::ReadExternalFieldFromFile (std::string , amrex::MultiFab* ,std::string, std::string)
 {
-#if defined(WARPX_DIM_1D)
+#if defined(WARPX_DIM_1D_Z)
     WARPX_ABORT_WITH_MESSAGE("Reading fields from openPMD files is not supported in 1D");
 #elif defined(WARPX_DIM_XZ)
     WARPX_ABORT_WITH_MESSAGE("Reading from openPMD for external fields is not known to work with XZ (see #3828)");

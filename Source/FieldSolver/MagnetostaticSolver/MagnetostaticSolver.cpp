@@ -266,7 +266,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
             dirichlet_flag[adim][0] = false;
             dim_start = 1;
 
-            // handle the r_max boundary explicity
+            // handle the r_max boundary explicitly
             if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
                 if (adim == 0) {
                     hibc[adim][0] = LinOpBCType::Neumann;
@@ -317,7 +317,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                 }
                 else {
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                        "Field boundary conditions have to be either periodic, PEC, or neumann "
+                        "Field boundary conditions have to be either periodic, PEC, or Neumann "
                         "when using the magnetostatic solver"
                     );
                 }
@@ -337,8 +337,8 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                 }
                 else {
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                        "Field boundary conditions have to be either periodic, PEC, or neumann "
-                        "when using the electrostatic solver"
+                        "Field boundary conditions have to be either periodic, PEC, or Neumann "
+                        "when using the magnetostatic solver"
                     );
                 }
             }

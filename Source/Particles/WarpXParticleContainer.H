@@ -171,7 +171,7 @@ public:
 
     ///
     /// This pushes the particle positions by one half time step.
-    /// It is used to desynchronize the particles after initializaton
+    /// It is used to desynchronize the particles after initialization
     /// or when restarting from a checkpoint.
     ///
     void PushX (         amrex::Real dt);
@@ -230,7 +230,7 @@ public:
                                amrex::MultiFab* rho,
                                int icomp,
                                long offset,
-                               long np_to_depose,
+                               long np_to_deposit,
                                int thread_num,
                                int lev,
                                int depos_lev);
@@ -245,7 +245,7 @@ public:
                                 amrex::MultiFab* jy,
                                 amrex::MultiFab* jz,
                                 long offset,
-                                long np_to_depose,
+                                long np_to_deposit,
                                 int thread_num,
                                 int lev,
                                 int depos_lev,

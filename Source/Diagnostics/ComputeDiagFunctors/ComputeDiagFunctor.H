@@ -13,8 +13,7 @@
  * \brief Functor to compute a diagnostic and store the result in existing
  * MultiFab
  */
-class
-ComputeDiagFunctor
+class ComputeDiagFunctor
 {
 public:
     ComputeDiagFunctor( int ncomp, amrex::IntVect crse_ratio) :
