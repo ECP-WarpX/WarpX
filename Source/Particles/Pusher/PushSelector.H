@@ -31,7 +31,7 @@
  * \param ux, uy, uz                Particle momentum
  * \param Ex, Ey, Ez                Electric field on particles.
  * \param Bx, By, Bz                Magnetic field on particles.
- * \param ion_lev                   Ionization level of this particle (0 if ioniziation not on)
+ * \param ion_lev                   Ionization level of this particle (0 if ionization not on)
  * \param m                         Mass of this species.
  * \param a_q                       Charge of this species.
  * \param pusher_algo               0: Boris, 1: Vay, 2: HigueraCary
@@ -43,8 +43,8 @@
 
 template <int do_sync>
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void doParticlePush(const GetParticlePosition& GetPosition,
-                    const SetParticlePosition& SetPosition,
+void doParticlePush(const GetParticlePosition<PIdx>& GetPosition,
+                    const SetParticlePosition<PIdx>& SetPosition,
                     const CopyParticleAttribs& copyAttribs,
                     const long i,
                     amrex::ParticleReal& ux,

@@ -15,6 +15,7 @@ void InjectorMomentum::clear ()
     {
     case Type::parser:
     case Type::gaussian:
+    case Type::gaussianparser:
     case Type::gaussianflux:
     case Type::uniform:
     case Type::boltzmann:
@@ -22,11 +23,6 @@ void InjectorMomentum::clear ()
     case Type::constant:
     case Type::radial_expansion:
     {
-        break;
-    }
-    case Type::custom:
-    {
-        object.custom.clear();
         break;
     }
     }

@@ -11,7 +11,6 @@
 #include "ablastr/parallelization/KernelTimer.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXConst.H"
 #ifdef WARPX_DIM_RZ
 #   include "Utils/WarpX_Complex.H"
@@ -27,8 +26,8 @@
 AMREX_FORCE_INLINE
 int getMaxTboxAlongDim (int nCells, int tilesize){
     int maxTilesize = 0;
-    int nTiles = nCells / tilesize;
-    int remainder = nCells % tilesize;
+    const int nTiles = nCells / tilesize;
+    const int remainder = nCells % tilesize;
     maxTilesize = tilesize + int(std::ceil((amrex::Real) remainder / nTiles));
     return maxTilesize;
 }
@@ -45,6 +44,8 @@ void addLocalToGlobal (const amrex::Box& bx,
                        const amrex::Array4<amrex::Real>& global,
                        const amrex::Array4<amrex::Real>& local) noexcept
 {
+    using namespace amrex::literals;
+
     const auto lo  = amrex::lbound(bx);
     const auto len = amrex::length(bx);
     for (int icell = threadIdx.x; icell < bx.numPts(); icell += blockDim.x)
@@ -65,12 +66,12 @@ void addLocalToGlobal (const amrex::Box& bx,
 #if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void depositComponent (const GetParticlePosition& GetPosition,
+void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
                        const amrex::ParticleReal * const wp,
                        const amrex::ParticleReal * const uxp,
                        const amrex::ParticleReal * const uyp,
                        const amrex::ParticleReal * const uzp,
-                       const int * const ion_lev,
+                       const int* ion_lev,
                        amrex::Array4<amrex::Real> const& j_buff,
                        amrex::IntVect const j_type,
                        const amrex::Real relative_time,
@@ -82,6 +83,8 @@ void depositComponent (const GetParticlePosition& GetPosition,
                        const unsigned int ip,
                        const int zdir, const int NODE, const int CELL, const int dir)
 {
+    using namespace amrex::literals;
+
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
@@ -130,7 +133,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
     // pcurrent is the particle current in the deposited direction
 #if defined(WARPX_DIM_RZ)
     // In RZ, wqx is actually wqr, and wqy is wqtheta
-    // Convert to cylinderical at the mid point
+    // Convert to cylindrical at the mid point
     const amrex::Real xpmid = xp + relative_time*vx;
     const amrex::Real ypmid = yp + relative_time*vy;
     const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);

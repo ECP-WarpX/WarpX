@@ -43,8 +43,11 @@ else:
 import all_machine_specs
 from libensemble import libE_logger
 from libensemble.executors.mpi_executor import MPIExecutor
-from libensemble.tools import (add_unique_random_streams, parse_args,
-                               save_libE_output)
+from libensemble.tools import (
+    add_unique_random_streams,
+    parse_args,
+    save_libE_output,
+)
 
 # Import machine-specific run parameters
 if machine == 'local':
@@ -99,7 +102,7 @@ sim_specs = {
         ('ramp_down_2', float, (1,)),
         # input parameter: position of the focusing lens.
         ('zlens_1', float, (1,)),
-        # Relative stength of the lens (1. is from
+        # Relative strength of the lens (1. is from
         # back-of-the-envelope calculation)
         ('adjust_factor', float, (1,)),
     ],

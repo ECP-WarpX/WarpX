@@ -15,6 +15,8 @@
 
 #include <map>
 #include <string>
+#include <utility>
+
 
 /** Particle Attributes stored in amrex::ParticleContainer's struct of array
  */
@@ -71,7 +73,7 @@ public:
     }
 
     /** Destructor for NamedComponentParticleContainer */
-    virtual ~NamedComponentParticleContainer() = default;
+    ~NamedComponentParticleContainer() override = default;
 
     /** Construct a NamedComponentParticleContainer from a regular
      * amrex::ParticleContainer, and additional name-to-index maps
@@ -89,10 +91,10 @@ public:
         std::map<std::string, int> p_rcomps,
         std::map<std::string, int> p_ricomps)
     : amrex::ParticleContainer<0,0,PIdx::nattribs,0,T_Allocator>(std::move(pc)),
-    particle_comps(p_comps),
-    particle_icomps(p_icomps),
-    particle_runtime_comps(p_rcomps),
-    particle_runtime_icomps(p_ricomps) {}
+    particle_comps(std::move(p_comps)),
+    particle_icomps(std::move(p_icomps)),
+    particle_runtime_comps(std::move(p_rcomps)),
+    particle_runtime_icomps(std::move(p_ricomps)) {}
 
     /** Copy constructor for NamedComponentParticleContainer */
     NamedComponentParticleContainer ( const NamedComponentParticleContainer &) = delete;
@@ -167,13 +169,13 @@ public:
     }
 
     /** Return the name-to-index map for the compile-time and runtime-time real components */
-    std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
+    [[nodiscard]] std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
     /** Return the name-to-index map for the compile-time and runtime-time integer components */
-    std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
+    [[nodiscard]] std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
     /** Return the name-to-index map for the runtime-time real components */
-    std::map<std::string, int> getParticleRuntimeComps () const noexcept { return particle_runtime_comps;}
+    [[nodiscard]] std::map<std::string, int> getParticleRuntimeComps () const noexcept { return particle_runtime_comps;}
     /** Return the name-to-index map for the runtime-time integer components */
-    std::map<std::string, int> getParticleRuntimeiComps () const noexcept { return particle_runtime_icomps;}
+    [[nodiscard]] std::map<std::string, int> getParticleRuntimeiComps () const noexcept { return particle_runtime_icomps;}
 
 protected:
     std::map<std::string, int> particle_comps;

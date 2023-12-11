@@ -279,22 +279,22 @@ public:
     /**
      * Builds the functor to initialize the optical depth
      */
-    QuantumSynchrotronGetOpticalDepth build_optical_depth_functor ();
+    [[nodiscard]] QuantumSynchrotronGetOpticalDepth build_optical_depth_functor ();
 
     /**
      * Builds the functor to evolve the optical depth
      */
-    QuantumSynchrotronEvolveOpticalDepth build_evolve_functor ();
+    [[nodiscard]] QuantumSynchrotronEvolveOpticalDepth build_evolve_functor ();
 
     /**
      * Builds the functor to generate photons
      */
-    QuantumSynchrotronPhotonEmission build_phot_em_functor ();
+    [[nodiscard]] QuantumSynchrotronPhotonEmission build_phot_em_functor ();
 
     /**
      * Checks if the optical tables are properly initialized
      */
-    bool are_lookup_tables_initialized () const;
+    [[nodiscard]] bool are_lookup_tables_initialized () const;
 
     /**
      * Export lookup tables data into a raw binary Vector
@@ -302,7 +302,7 @@ public:
      * @return the data in binary format. The Vector is empty if tables were
      * not previously initialized.
      */
-    std::vector<char> export_lookup_tables_data () const;
+    [[nodiscard]] std::vector<char> export_lookup_tables_data () const;
 
     /**
      * Init lookup tables from raw binary data.
@@ -312,14 +312,14 @@ public:
      * @return true if it succeeds, false if it cannot parse raw_data
      */
     bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data,
-        const amrex::ParticleReal qs_minimum_chi_part);
+        amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * Init lookup tables using built-in (low resolution) tables
      *
      * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
-    void init_builtin_tables(const amrex::ParticleReal qs_minimum_chi_part);
+    void init_builtin_tables(amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
@@ -328,16 +328,16 @@ public:
      * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
     void compute_lookup_tables (PicsarQuantumSyncCtrl ctrl,
-        const amrex::ParticleReal qs_minimum_chi_part);
+        amrex::ParticleReal qs_minimum_chi_part);
 
     /**
      * gets default values for the control parameters
      *
      * @return default control params to generate the tables
      */
-    PicsarQuantumSyncCtrl get_default_ctrl() const;
+    [[nodiscard]] PicsarQuantumSyncCtrl get_default_ctrl() const;
 
-    amrex::ParticleReal get_minimum_chi_part() const;
+    [[nodiscard]] amrex::ParticleReal get_minimum_chi_part() const;
 
 private:
     bool m_lookup_tables_initialized = false;

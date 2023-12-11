@@ -47,7 +47,7 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
                                                   const std::string& name)
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
-    ParmParse pp_species_name(species_name);
+    const ParmParse pp_species_name(species_name);
 
 #ifdef WARPX_QED
         //Find out if Breit Wheeler process is enabled
@@ -127,24 +127,31 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 #endif
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
-    int do_copy = (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf) );
+    const int do_copy = (m_do_back_transformed_particles && (a_dt_type!=DtType::SecondHalf) );
 
-    const auto GetPosition = GetParticlePosition(pti, offset);
-    auto SetPosition = SetParticlePosition(pti, offset);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti, offset);
+    auto SetPosition = SetParticlePosition<PIdx>(pti, offset);
 
     const auto getExternalEB = GetExternalEBField(pti, offset);
+
+    const amrex::ParticleReal Ex_external_particle = m_E_external_particle[0];
+    const amrex::ParticleReal Ey_external_particle = m_E_external_particle[1];
+    const amrex::ParticleReal Ez_external_particle = m_E_external_particle[2];
+    const amrex::ParticleReal Bx_external_particle = m_B_external_particle[0];
+    const amrex::ParticleReal By_external_particle = m_B_external_particle[1];
+    const amrex::ParticleReal Bz_external_particle = m_B_external_particle[2];
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev, 0._rt);
 
     const Dim3 lo = lbound(box);
 
-    bool galerkin_interpolation = WarpX::galerkin_interpolation;
-    int nox = WarpX::nox;
-    int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+    const bool galerkin_interpolation = WarpX::galerkin_interpolation;
+    const int nox = WarpX::nox;
+    const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
-    amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
-    amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+    const amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+    const amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
     amrex::Array4<const amrex::Real> const& ex_arr = exfab->array();
     amrex::Array4<const amrex::Real> const& ey_arr = eyfab->array();
@@ -165,11 +172,11 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     enum exteb_flags : int { no_exteb, has_exteb };
     enum qed_flags : int { no_qed, has_qed };
 
-    int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
+    const int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
 #ifdef WARPX_QED
-    int qed_runtime_flag = (local_has_breit_wheeler) ? has_qed : no_qed;
+    const int qed_runtime_flag = (local_has_breit_wheeler) ? has_qed : no_qed;
 #else
-    int qed_runtime_flag = no_qed;
+    const int qed_runtime_flag = no_qed;
 #endif
 
     amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
@@ -182,8 +189,12 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
 
-            amrex::ParticleReal Exp=0, Eyp=0, Ezp=0;
-            amrex::ParticleReal Bxp=0, Byp=0, Bzp=0;
+            amrex::ParticleReal Exp = Ex_external_particle;
+            amrex::ParticleReal Eyp = Ey_external_particle;
+            amrex::ParticleReal Ezp = Ez_external_particle;
+            amrex::ParticleReal Bxp = Bx_external_particle;
+            amrex::ParticleReal Byp = By_external_particle;
+            amrex::ParticleReal Bzp = Bz_external_particle;
 
             if(!t_do_not_gather){
                 // first gather E and B to the particle positions
@@ -231,8 +242,8 @@ PhotonParticleContainer::Evolve (int lev,
                                  const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
                                  Real t, Real dt, DtType a_dt_type, bool skip_deposition)
 {
-    // This does gather, push and depose.
-    // Push and depose have been re-written for photons
+    // This does gather, push and deposit.
+    // Push and deposit have been re-written for photons
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,

@@ -20,7 +20,7 @@ namespace BinaryCollisionUtils{
     NuclearFusionType get_nuclear_fusion_type (const std::string collision_name,
                                                MultiParticleContainer const * const mypc)
         {
-            amrex::ParmParse pp_collision_name(collision_name);
+            const amrex::ParmParse pp_collision_name(collision_name);
             amrex::Vector<std::string> species_names;
             pp_collision_name.getarr("species", species_names);
             auto& species1 = mypc->GetParticleContainerFromName(species_names[0]);
@@ -63,7 +63,7 @@ namespace BinaryCollisionUtils{
                   ||(product_species1.AmIA<PhysicalSpecies::hydrogen1>() && product_species2.AmIA<PhysicalSpecies::hydrogen3>())){
                     return NuclearFusionType::DeuteriumDeuteriumToProtonTritium;
                 } else {
-                    amrex::Abort("ERROR: Product species of deuterium-deuterium fusion must be of type helium3 and neutron, or tritium and proton");
+                    WARPX_ABORT_WITH_MESSAGE("ERROR: Product species of deuterium-deuterium fusion must be of type helium3 and neutron, or tritium and proton");
                 }
             }
             else if ((species1.AmIA<PhysicalSpecies::hydrogen2>() && species2.AmIA<PhysicalSpecies::helium3>())
@@ -97,7 +97,7 @@ namespace BinaryCollisionUtils{
                     "ERROR: Product species of proton-boron fusion must be of type alpha");
                 return NuclearFusionType::ProtonBoronToAlphas;
             }
-            amrex::Abort("Binary nuclear fusion not implemented between species " +
+            WARPX_ABORT_WITH_MESSAGE("Binary nuclear fusion not implemented between species " +
                          species_names[0] + " of type " + species1.getSpeciesTypeName() +
                          " and species " + species_names[1] + " of type " +
                          species2.getSpeciesTypeName());
@@ -107,14 +107,14 @@ namespace BinaryCollisionUtils{
     CollisionType get_collision_type (const std::string collision_name,
                                       MultiParticleContainer const * const mypc)
         {
-            amrex::ParmParse pp_collision_name(collision_name);
+            const amrex::ParmParse pp_collision_name(collision_name);
             std::string type;
             pp_collision_name.get("type", type);
             if (type == "nuclearfusion") {
-                NuclearFusionType fusion_type = get_nuclear_fusion_type(collision_name, mypc);
+                const NuclearFusionType fusion_type = get_nuclear_fusion_type(collision_name, mypc);
                 return nuclear_fusion_type_to_collision_type(fusion_type);
             }
-            amrex::Abort(type + " is not a valid type of collision that creates new particles");
+            WARPX_ABORT_WITH_MESSAGE(type + " is not a valid type of collision that creates new particles");
             return CollisionType::Undefined;
         }
 
@@ -130,7 +130,7 @@ namespace BinaryCollisionUtils{
                 return CollisionType::DeuteriumHeliumToProtonHeliumFusion;
             if (fusion_type == NuclearFusionType::ProtonBoronToAlphas)
                 return CollisionType::ProtonBoronToAlphasFusion;
-            amrex::Abort("Invalid nuclear fusion type");
+            WARPX_ABORT_WITH_MESSAGE("Invalid nuclear fusion type");
             return CollisionType::Undefined;
         }
 }

@@ -9,6 +9,7 @@
 
 #include "BinaryCollisionUtils.H"
 #include "Particles/MultiParticleContainer.H"
+#include "Utils/TextMsg.H"
 
 #include <AMReX_GpuContainers.H>
 #include <AMReX_ParmParse.H>
@@ -19,7 +20,7 @@
 ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
                                             MultiParticleContainer const * const mypc)
     {
-        amrex::ParmParse pp_collision_name(collision_name);
+        const amrex::ParmParse pp_collision_name(collision_name);
 
         m_collision_type = BinaryCollisionUtils::get_collision_type(collision_name, mypc);
 
@@ -30,7 +31,7 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
                 // Proton-Boron fusion produces 3 alpha particles per fusion reaction
                 m_num_products_host.push_back(3);
 #ifndef AMREX_USE_GPU
-                // On CPU, the device vector can be filled immediatly
+                // On CPU, the device vector can be filled immediately
                 m_num_products_device.push_back(3);
 #endif
             }
@@ -42,14 +43,14 @@ ParticleCreationFunc::ParticleCreationFunc (const std::string collision_name,
             m_num_products_host.push_back(1);
             m_num_products_host.push_back(1);
 #ifndef AMREX_USE_GPU
-            // On CPU, the device vector can be filled immediatly
+            // On CPU, the device vector can be filled immediately
             m_num_products_device.push_back(1);
             m_num_products_device.push_back(1);
 #endif
         }
         else
         {
-          amrex::Abort("Unknown collision type in ParticleCreationFunc");
+          WARPX_ABORT_WITH_MESSAGE("Unknown collision type in ParticleCreationFunc");
         }
 
 #ifdef AMREX_USE_GPU

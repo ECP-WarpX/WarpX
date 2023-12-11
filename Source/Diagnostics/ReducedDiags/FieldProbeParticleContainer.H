@@ -27,6 +27,9 @@ struct FieldProbePIdx
         Ex = 0, Ey, Ez,
         Bx, By, Bz,
         S, //!< the Poynting vector
+#ifdef WARPX_DIM_RZ
+        theta,      ///< RZ needs all three position components
+#endif
         nattribs
     };
 };
@@ -41,7 +44,12 @@ class FieldProbeParticleContainer
 {
 public:
     FieldProbeParticleContainer (amrex::AmrCore* amr_core);
-    virtual ~FieldProbeParticleContainer() {}
+    ~FieldProbeParticleContainer() override = default;
+
+    FieldProbeParticleContainer ( FieldProbeParticleContainer const &)             = delete;
+    FieldProbeParticleContainer& operator= ( FieldProbeParticleContainer const & ) = delete;
+    FieldProbeParticleContainer ( FieldProbeParticleContainer&& )                  = default;
+    FieldProbeParticleContainer& operator= ( FieldProbeParticleContainer&& )       = default;
 
     //! amrex iterator for our number of attributes
     using iterator = amrex::ParIter<0, 0, FieldProbePIdx::nattribs, 0>;

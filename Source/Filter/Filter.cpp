@@ -47,7 +47,7 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
         {
             amrex::Gpu::synchronize();
         }
-        amrex::Real wt = amrex::second();
+        auto wt = static_cast<amrex::Real>(amrex::second());
 
         const auto& src = srcmf.array(mfi);
         const auto& dst = dstmf.array(mfi);
@@ -59,7 +59,7 @@ Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, const int lev, int
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();
-            wt = amrex::second() - wt;
+            wt = static_cast<amrex::Real>(amrex::second()) - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
@@ -218,7 +218,7 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
             {
                 amrex::Gpu::synchronize();
             }
-            amrex::Real wt = amrex::second();
+            auto wt = static_cast<amrex::Real>(amrex::second());
 
             const auto& srcfab = srcmf[mfi];
             auto& dstfab = dstmf[mfi];
@@ -236,7 +236,7 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, cons
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
                 amrex::Gpu::synchronize();
-                wt = amrex::second() - wt;
+                wt = static_cast<amrex::Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
             }
         }
@@ -298,11 +298,11 @@ void Filter::DoFilter (const Box& tbx,
             for     (int iy=0; iy < slen.y; ++iy){
                 for (int ix=0; ix < slen.x; ++ix){
 #if defined(WARPX_DIM_3D)
-                    Real sss = sx[ix]*sy[iy]*sz[iz];
+                    const Real sss = sx[ix]*sy[iy]*sz[iz];
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                    Real sss = sx[ix]*sz[iy];
+                    const Real sss = sx[ix]*sz[iy];
 #else
-                    Real sss = sz[ix];
+                    const Real sss = sz[ix];
 #endif
                     // 3 nested loop on 3D array
                     for         (int k = lo.z; k <= hi.z; ++k) {

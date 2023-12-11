@@ -92,12 +92,22 @@ elif 'lattice.elements' in ds.parameters:
     plasma_lens_strengths_B = np.zeros(len(plasma_lens_zstarts))
 
 
-x0 = float(ds.parameters.get('electrons.multiple_particles_pos_x').split()[0])
-y0 = float(ds.parameters.get('electrons.multiple_particles_pos_y').split()[1])
-z0 = float(ds.parameters.get('electrons.multiple_particles_pos_z').split()[0])
-ux0 = float(ds.parameters.get('electrons.multiple_particles_ux').split()[0])*c
-uy0 = float(ds.parameters.get('electrons.multiple_particles_uy').split()[1])*c
-uz0 = eval(ds.parameters.get('electrons.multiple_particles_uz').split()[0])*c
+try:
+    # The picmi version
+    x0 = float(ds.parameters.get('electrons.dist0.multiple_particles_pos_x'))
+    y0 = float(ds.parameters.get('electrons.dist1.multiple_particles_pos_y'))
+    z0 = float(ds.parameters.get('electrons.dist0.multiple_particles_pos_z'))
+    ux0 = float(ds.parameters.get('electrons.dist0.multiple_particles_ux'))*c
+    uy0 = float(ds.parameters.get('electrons.dist1.multiple_particles_uy'))*c
+    uz0 = eval(ds.parameters.get('electrons.dist0.multiple_particles_uz'))*c
+except TypeError:
+    # The inputs version
+    x0 = float(ds.parameters.get('electrons.multiple_particles_pos_x').split()[0])
+    y0 = float(ds.parameters.get('electrons.multiple_particles_pos_y').split()[1])
+    z0 = float(ds.parameters.get('electrons.multiple_particles_pos_z').split()[0])
+    ux0 = float(ds.parameters.get('electrons.multiple_particles_ux').split()[0])*c
+    uy0 = float(ds.parameters.get('electrons.multiple_particles_uy').split()[1])*c
+    uz0 = eval(ds.parameters.get('electrons.multiple_particles_uz').split()[0])*c
 
 tt = 0.
 xx = x0

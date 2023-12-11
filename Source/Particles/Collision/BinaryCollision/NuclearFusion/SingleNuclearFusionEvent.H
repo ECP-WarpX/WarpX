@@ -184,7 +184,7 @@ void SingleNuclearFusionEvent (const amrex::ParticleReal& u1x, const amrex::Part
                                     probability_estimate: one_pr - std::exp(-probability_estimate);
 
     // Get a random number
-    amrex::ParticleReal random_number = amrex::Random(engine);
+    const amrex::ParticleReal random_number = amrex::Random(engine);
 
     // If we have a fusion event, set the mask the true and fill the product weight array
     if (random_number < probability)

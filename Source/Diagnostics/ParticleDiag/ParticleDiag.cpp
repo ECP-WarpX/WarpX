@@ -22,7 +22,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
     // By default output all attributes
     m_plot_flags.resize(plot_flag_size, 1);
 
-    ParmParse pp_diag_name_species_name(diag_name + "." + name);
+    const ParmParse pp_diag_name_species_name(diag_name + "." + name);
     amrex::Vector<std::string> variables;
     const int variables_specified = pp_diag_name_species_name.queryarr("variables", variables);
 
@@ -60,7 +60,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
                                                          buf);
 
     if (m_do_parser_filter) {
-        std::string function_string = "";
+        std::string function_string;
         utils::parser::Store_parserString(
             pp_diag_name_species_name,"plot_filter_function(t,x,y,z,ux,uy,uz)", function_string);
         m_particle_filter_parser = std::make_unique<amrex::Parser>(
