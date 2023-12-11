@@ -16,9 +16,9 @@ import os
 import re
 import sys
 
-import openpmd_viewer
 import numpy as np
-from scipy.constants import c, m_e, m_p, e
+import openpmd_viewer
+from scipy.constants import c, e, m_e, m_p
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
