@@ -50,7 +50,7 @@ jobs:
         cmake --build build_clang_tidy -j 2
 
         ${{github.workspace}}/.github/workflows/source/makeMakefileForClangTidy.py --input ${{github.workspace}}/ccache.log.txt
-        make -j2 -f clang-tidy-ccache-misses.mak \
+        make -j2 --keep-going -f clang-tidy-ccache-misses.mak \
             CLANG_TIDY=clang-tidy \
             CLANG_TIDY_ARGS="--config-file=${{github.workspace}}/.clang-tidy --warnings-as-errors=*"
 
