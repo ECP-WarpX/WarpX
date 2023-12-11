@@ -62,11 +62,21 @@ templates_path = ['_templates']
 # Relative path to bibliography file, bibliography style
 bibtex_bibfiles = ['latex_theory/allbibs.bib', 'refs.bib']
 
+# An brief introduction to custom BibTex formatting can be found in the Sphinx documentation:
+# https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html#bibtex-custom-formatting
+#
+# More details can be gleaned from looking at the pybtex dist-package files.
+# Some examples include the following:
+# BaseStyle class in pybtex/style/formatting/__init__.py
+# UnsrtStyle class in pybtex/style/formating/unsrt.py
 class WarpXBibStyle(UnsrtStyle):
+    # We want the family name, i.e, "last" name, of an author to appear first.
     default_name_style = 'lastfirst'
 
     def __init__(self, *args, **kwargs):
-        # Set 'abbreviate_names' to True before calling the superclass initializer
+        # We want the given names of an author to be abbreviated to just initials.
+        # Example: "Jean-Luc Vay" becomes "Vay, J.-L."
+        # Set 'abbreviate_names' to True before calling the superclass (BaseStyle class) initializer
         kwargs['abbreviate_names'] = True
         super().__init__(*args, **kwargs)
 
