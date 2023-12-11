@@ -25,7 +25,7 @@
  */
 namespace ablastr::coarsen::average
 {
-    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    AMREX_FORCE_INLINE
     void
     CalculateCoarseningData (
         amrex::GpuArray<int, 3> &src_fine_index_min,
@@ -37,19 +37,23 @@ namespace ablastr::coarsen::average
         amrex::GpuArray<int, 3> const &crse_ratio)
     {
         using namespace amrex::literals;
+
         for (int l = 0; l < 3; ++l) {
-            int two_times_index_min = -crse_ratio[l]*stag_des_crse[l] + stag_src_fine[l] - 1;
-            if ((two_times_index_min % 2) == 0) {
-                src_fine_index_min[l] = two_times_index_min/2;
-                num_src_points[l] = crse_ratio[l]+1;
-                use_half_weight[l] = true; // True
+            int sf_minus_cr_sc = stag_src_fine[l] - crse_ratio[l]*stag_des_crse[l];
+            if (sf_minus_cr_sc & 1) {
+                // sf - cr*sc is odd
+                src_fine_index_min[l] = (sf_minus_cr_sc - 1)/2;
+                num_src_points[l] = crse_ratio[l] + 1;
+                use_half_weight[l] = true; // Use half weight at end points
             } else {
-                src_fine_index_min[l] = (two_times_index_min+1)/2;
+                // sf - cr*sc is even
+                src_fine_index_min[l] = sf_minus_cr_sc/2;
                 num_src_points[l] = crse_ratio[l];
-                use_half_weight[l] = false; // False
+                use_half_weight[l] = false; // Don't use half weight at end points
             }
         }
-        crx_cry_crz_inv = 1.0_rt / static_cast<amrex::Real>(crse_ratio[0]*crse_ratio[1]*crse_ratio[2]);
+
+        crx_cry_crz_inv = 1.0_rt/static_cast<amrex::Real>(crse_ratio[0]*crse_ratio[1]*crse_ratio[2]);
     }
 
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE

@@ -32,7 +32,7 @@ import numpy as np
 
 def coarsening_coarse_grid_limits( sc, sf, cr, ii_min, ii_max ):
     i_range_start = (ii_min//cr) - 100
-    i_range_end = (ii_max//cr) + 1 + 100
+    i_range_end = (ii_max//cr) + 100
 
     i_min = i_range_end
     i_max = i_range_start
@@ -41,18 +41,18 @@ def coarsening_coarse_grid_limits( sc, sf, cr, ii_min, ii_max ):
         num_ii_pts, ii_start, weights = coarsening_points_and_weights(i, sc, sf, cr)
         ii_end = ii_start + num_ii_pts - 1
         if (ii_min <= ii_end):
-            i_min = min(i_min,i)
+            i_min = min(i_min, i)
         if (ii_max >= ii_start):
-            i_max = max(i_max,i)
+            i_max = max(i_max, i)
     return [ i_min, i_max ]
 
 def coarsening_fine_grid_limits( sc, sf, cr ):
     if   ( sf == 0 ): # cell-centered
-        iimin = 1
-        iimax = 4*cr
+        iimin = 0
+        iimax = 4*cr - 1
     elif ( sf == 1 ): # nodal
         iimin = 0
-        iimax = 4*cr+1
+        iimax = 4*cr
     return [ iimin, iimax ]
 
 def coarsening_points_and_weights( i, sc, sf, cr ):
@@ -66,7 +66,7 @@ def coarsening_points_and_weights( i, sc, sf, cr ):
         for ir in range( 1, num_ii_pts-1 ):
             weights[ir] = 1.0/cr
     else:
-        ii_start = i*cr + (two_ii_start+1)//2
+        ii_start = i*cr + (two_ii_start + 1)//2
         num_ii_pts = cr
         weights = np.zeros( num_ii_pts )
         for ir in range( 0, num_ii_pts ):
@@ -97,9 +97,9 @@ def refinement_fine_grid_limits( sc, sf, cr, i_min, i_max ):
         num_i_pts, i_start, weights = refinement_points_and_weights(ii, sc, sf, cr)
         i_end = i_start + num_i_pts - 1
         if i_min <= i_end:
-            ii_min = min(ii_min,ii)
+            ii_min = min(ii_min, ii)
         if i_max >= i_start:
-            ii_max = max(ii_max,ii)
+            ii_max = max(ii_max, ii)
 
     print("After ii_min={} and ii_max={}".format(ii_min,ii_max))
 
