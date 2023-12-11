@@ -26,18 +26,6 @@ namespace
     {
         std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 
-        if ( s.empty() || s == "default")
-            return ExternalFieldType::default_zero;
-        else if ( s == "constant")
-            return ExternalFieldType::constant;
-        else if ( s == "parse_b_ext_grid_function" || s == "parse_e_ext_grid_function")
-            return ExternalFieldType::parse_ext_grid_function;
-        else if ( s == "read_from_file")
-            return ExternalFieldType::read_from_file;
-        else
-            WARPX_ABORT_WITH_MESSAGE(
-                "'" + s + "' is an unknown external field type!");
-
         if constexpr (T == EMFieldType::E){
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(s != "parse_b_ext_grid_function",
                 "parse_B_ext_grid_function can be used only for B_ext_grid_init_style");
@@ -45,6 +33,23 @@ namespace
         else{
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(s != "parse_e_ext_grid_function",
                 "parse_E_ext_grid_function can be used only for E_ext_grid_init_style");
+        }
+
+        if ( s.empty() || s == "default"){
+            return ExternalFieldType::default_zero;
+        }
+        else if ( s == "constant"){
+            return ExternalFieldType::constant;
+        }
+        else if ( s == "parse_b_ext_grid_function" || s == "parse_e_ext_grid_function"){
+            return ExternalFieldType::parse_ext_grid_function;
+        }
+        else if ( s == "read_from_file"){
+            return ExternalFieldType::read_from_file;
+        }
+        else{
+            WARPX_ABORT_WITH_MESSAGE(
+                "'" + s + "' is an unknown external field type!");
         }
 
         return ExternalFieldType::default_zero;
