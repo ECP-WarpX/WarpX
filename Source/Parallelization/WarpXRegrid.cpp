@@ -11,6 +11,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "Initialization/ExternalField.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -170,10 +171,10 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         {
             RemakeMultiFab(Bfield_fp[lev][idim], dm, true ,lev);
             RemakeMultiFab(Efield_fp[lev][idim], dm, true ,lev);
-            if (add_external_B_field) {
+            if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
                 RemakeMultiFab(Bfield_fp_external[lev][idim], dm, true ,lev);
             }
-            if (add_external_E_field) {
+            if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
                 RemakeMultiFab(Efield_fp_external[lev][idim], dm, true ,lev);
             }
             RemakeMultiFab(current_fp[lev][idim], dm, false ,lev);
