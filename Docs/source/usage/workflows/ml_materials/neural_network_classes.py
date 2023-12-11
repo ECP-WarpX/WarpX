@@ -25,12 +25,15 @@ def get_enum_type(type_to_test, EnumClass):
     EnumClass: Enum class
         Enum class to test
     """
-    if type(type_to_test) is EnumClass:  ## Useful ?
+    if type(type_to_test) is EnumClass:
         return type_to_test
     if type(type_to_test) is int:
         return EnumClass(type_to_test)
     if type(type_to_test) is str:
         return getattr(EnumClass, type_to_test)
+    else:
+        raise Exception("unsupported type entered")
+
 
 
 class ConnectedNN(nn.Module):

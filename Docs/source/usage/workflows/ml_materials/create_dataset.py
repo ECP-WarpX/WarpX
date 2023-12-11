@@ -22,8 +22,6 @@ def sanitize_dir_strings(*dir_strings):
 
 def create_source_target_data(data_dir,
                               species,
-                              training_frac=0.7,
-                              batch_size=600,
                               source_index=0,
                               target_index=-1,
                               particle_selection=None
@@ -33,8 +31,6 @@ def create_source_target_data(data_dir,
     Parameters
     ---
     data_dir : string, location of diagnostic data
-    training_frac : float between 0 and 1
-    batch_size : int, number of data points in a batch
     source_index : int, which index to take source data from
     target_index : int, which index to take target data from
     particle_selection: dictionary, optional, selection criterion for dataset
@@ -119,15 +115,11 @@ def save_warpx_surrogate_data(dataset_fullpath_filename,
 
     source_target_data = create_source_target_data(data_dir=diag_dir,
                                                       species=species,
-                                                      training_frac=training_frac,
-                                                      batch_size=batch_size,
                                                       source_index=source_index,
                                                       target_index=target_index,
-                                                      survivor_select_index=survivor_select_index,
                                                       particle_selection=particle_selection
                                                      )
     source_data, source_means, source_stds, target_data, target_means, target_stds, times = source_target_data
-    source_time,target_time = times
 
     # Manual: Save dataset START
     full_dataset = torch.utils.data.TensorDataset(source_data.float(), target_data.float())

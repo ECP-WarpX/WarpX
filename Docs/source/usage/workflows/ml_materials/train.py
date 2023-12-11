@@ -46,7 +46,6 @@ source_means = dataset_with_indices['source_means']
 source_stds = dataset_with_indices['source_stds']
 target_means = dataset_with_indices['target_means']
 target_stds = dataset_with_indices['target_stds']
-source_time,target_time = dataset_with_indices['times']
 print("able to load data and test/train split")
 
 ###### move data to device (GPU) if available ########
