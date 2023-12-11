@@ -168,6 +168,8 @@ namespace ablastr::coarsen::average
 
         crx_cry_crz_inv = 1.0_rt/static_cast<amrex::Real>(crse_ratio[0]*crse_ratio[1]*crse_ratio[2]);
 
+        // End copy of CalculateCoarseningData
+
         return InterpWithCoarseningData(
             arr_src,idx_min_src,np_src,use_half_weight,crx_cry_crz_inv,crse_ratio,i,j,k,comp);
     }
