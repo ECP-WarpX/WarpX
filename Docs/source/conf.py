@@ -60,7 +60,7 @@ extensions = [
 templates_path = ['_templates']
 
 # Relative path to bibliography file, bibliography style
-bibtex_bibfiles = ['./refs.bib']
+bibtex_bibfiles = ['latex_theory/allbibs.bib', 'refs.bib']
 
 class WarpXBibStyle(UnsrtStyle):
     default_name_style = 'lastfirst'
