@@ -1,7 +1,11 @@
 .. _running-cpp-parameters:
 
-Input Parameters
-================
+Parameters: Inputs File
+=======================
+
+This documents on how to use WarpX with an inputs file (e.g., ``warpx.3d input_3d``).
+
+Complete example input files can be found in :ref:`the examples section <usage-examples>`.
 
 .. note::
 
@@ -151,7 +155,7 @@ Overall simulation parameters
     This only applies when warpx.do_electrostatic = labframe.
 
 * ``warpx.self_fields_verbosity`` (`integer`, default: 2)
-    The vebosity used for MLMG solver for space-charge fields calculation. Currently
+    The verbosity used for MLMG solver for space-charge fields calculation. Currently
     MLMG solver looks for verbosity levels from 0-5. A higher number results in more
     verbose output.
 
@@ -166,6 +170,12 @@ Overall simulation parameters
     This is useful for convenience during development, but has sometimes severe performance and memory footprint implications if relied on (and sometimes vendor bugs).
     For all regular WarpX operations, we therefore do explicit memory transfers without the need for managed memory and thus changed the AMReX default to false.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`__.
+
+* ``amrex.omp_threads``  (``system``, ``nosmt`` or positive integer; default is ``nosmt``)
+    An integer number can be set in lieu of the ``OMP_NUM_THREADS`` environment variable to control the number of OpenMP threads to use for the ``OMP`` compute backend on CPUs.
+    By default, we use the ``nosmt`` option, which overwrites the OpenMP default of spawning one thread per logical CPU core, and instead only spawns a number of threads equal to the number of physical CPU cores on the machine.
+    If set, the environment variable ``OMP_NUM_THREADS`` takes precedence over ``system`` and ``nosmt``, but not over integer numbers set in this option.
+
 
 Signal Handling
 ^^^^^^^^^^^^^^^
@@ -284,6 +294,13 @@ Setting up the field mesh
     This patch is rectangular, and thus its extent is given here by the coordinates
     of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
 
+* ``warpx.ref_patch_function(x,y,z)`` (`string`) optional
+    A function of `x`, `y`, `z` that defines the extent of the refined patch when
+    using static mesh refinement with ``amr.max_level``>0. Note that the function can be used
+    to define distinct regions for refinement, however, the refined regions should be such that
+    the pml layer surrounding the patches should not overlap. For this reason, when defining
+    distinct patches, please ensure that they are sufficiently separated.
+
 * ``warpx.refine_plasma`` (`integer`) optional (default `0`)
     Increase the number of macro-particles that are injected "ahead" of a mesh
     refinement patch in a moving window simulation.
@@ -352,7 +369,7 @@ Domain Boundary Conditions
 
     * ``Absorbing``: Particles leaving the boundary will be deleted.
 
-    * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistenly set to periodic and both lower and upper boundaries must be periodic.
+    * ``Periodic``: Particles leaving the boundary will re-enter from the opposite boundary. The field boundary condition must be consistently set to periodic and both lower and upper boundaries must be periodic.
 
     * ``Reflecting``: Particles leaving the boundary are reflected from the boundary back into the domain.
       When ``boundary.reflect_all_velocities`` is false, the sign of only the normal velocity is changed, otherwise the sign of all velocities are changed.
@@ -669,6 +686,19 @@ Particle initialization
     When ``<species_name>.xmin`` and ``<species_name>.xmax`` are set, they delimit the region within which particles are injected.
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
 
+* ``<species_name>.injection_sources`` (``list of strings``) optional
+    Names of additional injection sources. By default, WarpX assumes one injection source per species, hence all of the input
+    parameters below describing the injection are parameters directly of the species. However, this option allows
+    additional sources, the names of which are specified here. For each source, the name of the source is added to the
+    input parameters below. For instance, with ``<species_name>.injection_sources = source1 source2`` there can be the two input
+    parameters ``<species_name>.source1.injection_style`` and ``<species_name>.source2.injection_style``.
+    For the parameters of each source, the parameter with the name of the source will be used.
+    If it is not given, the value of the parameter without the source name will be used. This allows parameters used for all
+    sources to be specified once. For example, if the ``source1`` and ``source2`` have the same value of ``uz_m``, then it can be
+    set using ``<species_name>.uz_m`` instead of setting it for each source.
+    Note that since by default ``<species_name>.injection_style = none``, all injection sources can be input this way.
+    Note that if a moving window is used, the bulk velocity of all of the sources must be the same since it is used when updating the window.
+
 * ``<species_name>.injection_style`` (`string`; default: ``none``)
     Determines how the (macro-)particles will be injected in the simulation.
     The number of particles per cell is always given with respect to the coarsest level (level 0/mother grid), even if particles are immediately assigned to a refined patch.
@@ -831,7 +861,7 @@ Particle initialization
       ``<species_name>.ux``, ``<species_name>.uy`` and ``<species_name>.uz``, the normalized
       momenta in the x, y and z direction respectively, which are all ``0.`` by default.
 
-    * ``uniform``: uniform probability distribution between a minumum and a maximum value.
+    * ``uniform``: uniform probability distribution between a minimum and a maximum value.
       The x, y and z directions are sampled independently and the final momentum space is a cuboid.
       The parameters that control the minimum and maximum domain of the distribution
       are ``<species_name>.u<x,y,z>_min`` and ``<species_name>.u<x,y,z>_max`` in each
@@ -907,6 +937,20 @@ Particle initialization
       file. It requires additional arguments ``<species_name>.momentum_function_ux(x,y,z)``,
       ``<species_name>.momentum_function_uy(x,y,z)`` and ``<species_name>.momentum_function_uz(x,y,z)``,
       which gives the distribution of each component of the momentum as a function of space.
+
+    * ``gaussian_parse_momentum_function``: Gaussian momentum distribution where the mean and the standard deviation are given by functions of position in the input file.
+      Both are assumed to be non-relativistic.
+      The mean is the normalized momentum, :math:`u_m = \gamma v_m/c`.
+      The standard deviation is normalized, :math:`u_th = v_th/c`.
+      For example, this might be `u_th = sqrt(T*q_e/mass)/clight` given the temperature (in eV) and mass.
+      It requires the following arguments:
+
+      * ``<species_name>.momentum_function_ux_m(x,y,z)``: mean :math:`u_{x}`
+      * ``<species_name>.momentum_function_uy_m(x,y,z)``: mean :math:`u_{y}`
+      * ``<species_name>.momentum_function_uz_m(x,y,z)``: mean :math:`u_{z}`
+      * ``<species_name>.momentum_function_ux_th(x,y,z)``: standard deviation of :math:`u_{x}`
+      * ``<species_name>.momentum_function_uy_th(x,y,z)``: standard deviation of :math:`u_{y}`
+      * ``<species_name>.momentum_function_uz_th(x,y,z)``: standard deviation of :math:`u_{z}`
 
 * ``<species_name>.theta_distribution_type`` (`string`) optional (default ``constant``)
     Only read if ``<species_name>.momentum_distribution_type`` is ``maxwell_boltzmann`` or ``maxwell_juttner``.
@@ -1044,11 +1088,12 @@ Particle initialization
     the above mentioned function.
 
     .. note::
-        When accessing the data via Python, the scraped particle buffer relies on the user
-        to clear the buffer after processing the data. The
-        buffer will grow unbounded as particles are scraped and therefore could
-        lead to memory issues if not periodically cleared. To clear the buffer
-        call ``warpx_clearParticleBoundaryBuffer()``.
+
+       When accessing the data via Python, the scraped particle buffer relies on the user
+       to clear the buffer after processing the data. The
+       buffer will grow unbounded as particles are scraped and therefore could
+       lead to memory issues if not periodically cleared. To clear the buffer
+       call ``clear_buffer()``.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
@@ -1145,7 +1190,7 @@ Cold Relativistic Fluid initialization
 * ``fluids.species_names`` (`strings`, separated by spaces)
     Defines the names of each fluid species. It is a required input to create and evolve fluid species using the cold relativistic fluid equations.
     Most of the parameters described in the section "Particle initialization" can also be used to initialize fluid properties (e.g. initial density distribution).
-    For fluid-specific inputs we use `<fluid_pecies_name>` as a placeholder. Also see external fields
+    For fluid-specific inputs we use `<fluid_species_name>` as a placeholder. Also see external fields
     for how to specify these for fluids as the function names differ.
 
 .. _running-cpp-parameters-laser:
@@ -1263,14 +1308,16 @@ Laser initialization
       ``<laser_name>.e_max`` (i.e. in most cases the maximum of abs(E(x,y,t)) should be 1,
       so that the maximum field intensity can be set straightforwardly with ``<laser_name>.e_max``).
       The binary file has to respect the following format:
-        * flag to indicate the grid is uniform(1 byte, 0 means non-uniform, !=0 means uniform) - only uniform is supported
-        * nt, number of timesteps (uint32_t, must be >=2)
-        * nx, number of points along x (uint32_t, must be >=2)
-        * ny, number of points along y (uint32_t, must be 1 for 2D simulations and >=2 for 3D simulations)
-        * timesteps (double[2]=[t_min,t_max])
-        * x_coords (double[2]=[x_min,x_max])
-        * y_coords (double[1] in 2D, double[2]=[y_min,y_max] in 3D)
-        * field_data (double[nt * nx * ny], with nt being the slowest coordinate).
+
+      * ``flag`` to indicate the grid is uniform (1 byte, 0 means non-uniform, !=0 means uniform) - only uniform is supported
+      * ``nt``, number of timesteps (``uint32_t``, must be >=2)
+      * ``nx``, number of points along x (``uint32_t``, must be >=2)
+      * ``ny``, number of points along y (``uint32_t``, must be 1 for 2D simulations and >=2 for 3D simulations)
+      * ``timesteps`` (``double[2]=[t_min,t_max]``)
+      * ``x_coords`` (``double[2]=[x_min,x_max]``)
+      * ``y_coords`` (``double[1]`` in 2D, ``double[2]=[y_min,y_max]`` in 3D)
+      * ``field_data`` (``double[nt x nx * ny]``, with ``nt`` being the slowest coordinate).
+
       A binary file can be generated from Python, see an example at ``Examples/Tests/laser_injection_from_file``
 
 * ``<laser_name>.profile_t_peak`` (`float`; in seconds)
@@ -1377,10 +1424,10 @@ External fields
 Grid initialization
 ^^^^^^^^^^^^^^^^^^^
 
-* ``warpx.B_ext_grid_init_style`` (string) optional (default is "default")
+* ``warpx.B_ext_grid_init_style`` (string) optional
     This parameter determines the type of initialization for the external
-    magnetic field. The "default" style initializes the
-    external magnetic field (Bx,By,Bz) to (0.0, 0.0, 0.0).
+    magnetic field. By default, the
+    external magnetic field (Bx,By,Bz) is initialized to (0.0, 0.0, 0.0).
     The string can be set to "constant" if a constant magnetic field is
     required to be set at initialization. If set to "constant", then an
     additional parameter, namely, ``warpx.B_external_grid`` must be specified.
@@ -1408,9 +1455,9 @@ Grid initialization
     Regarding how to prepare the openPMD data file, one can refer to
     the `openPMD-example-datasets <https://github.com/openPMD/openPMD-example-datasets>`__.
 
-* ``warpx.E_ext_grid_init_style`` (string) optional (default is "default")
+* ``warpx.E_ext_grid_init_style`` (string) optional
     This parameter determines the type of initialization for the external
-    electric field. The "default" style initializes the
+    electric field. By default, the
     external electric field (Ex,Ey,Ez) to (0.0, 0.0, 0.0).
     The string can be set to "constant" if a constant electric field is
     required to be set at initialization. If set to "constant", then an
@@ -1451,6 +1498,14 @@ Grid initialization
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
     than periodic.
+
+* ``warpx.maxlevel_extEMfield_init`` (default is maximum number of levels in the simulation)
+    With this parameter, the externally applied electric and magnetic fields
+    will not be applied for levels greater than ``warpx.maxlevel_extEMfield_init``.
+    For some mesh-refinement simulations,
+    the external fields are only applied to the parent grid and not the refined patches. In such cases,
+    ``warpx.maxlevel_extEMfield_init`` can be set to 0.
+    In that case, the other levels have external field values of 0.
 
 Applied to Particles
 ^^^^^^^^^^^^^^^^^^^^
@@ -1671,12 +1726,12 @@ WarpX provides several particle collision models, using varying degrees of appro
     total number of physical particle remains the same). This can improve
     the statistics of the simulation, in the case where fusion reactions are very rare.
     More specifically, in a fusion reaction between two macroparticles with weight ``w_1`` and ``w_2``,
-    the weight of the product macroparticles will be ``min(w_1,w_2)/fusion_multipler``.
+    the weight of the product macroparticles will be ``min(w_1,w_2)/fusion_multiplier``.
     (And the weights of the reactant macroparticles are reduced correspondingly after the reaction.)
     See `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`__
     for more details. The default value of ``fusion_multiplier`` is 1.
 
-* ``<collision_name>.fusion_probability_threshold``(`float`) optional.
+* ``<collision_name>.fusion_probability_threshold`` (`float`) optional.
     Only for ``nuclearfusion``.
     If the fusion multiplier is too high and results in a fusion probability
     that approaches 1 (for a given collision between two macroparticles), then
@@ -2078,25 +2133,28 @@ Maxwell solver: kinetic-fluid hybrid
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * ``hybrid_pic_model.elec_temp`` (`float`)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the electron temperature, in eV, used to calculate
-     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the electron temperature, in eV, used to calculate
+    the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
 * ``hybrid_pic_model.n0_ref`` (`float`)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}`, used to calculate
-     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the reference density, in :math:`m^{-3}`, used to calculate
+    the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
 * ``hybrid_pic_model.gamma`` (`float`) optional (default ``5/3``)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the exponent used to calculate
-     the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the exponent used to calculate
+    the electron pressure (see :ref:`here <theory-hybrid-model-elec-temp>`).
 
 * ``hybrid_pic_model.plasma_resistivity(rho)`` (`float` or `str`) optional (default ``0``)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma resistivity in :math:`\Omega m`.
+
+* ``hybrid_pic_model.J[x/y/z]_external_grid_function(x, y, z, t)`` (`float` or `str`) optional (default ``0``)
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the external current (on the grid) in :math:`A/m^2`.
 
 * ``hybrid_pic_model.n_floor`` (`float`) optional (default ``1``)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma density floor, in :math:`m^{-3}`, which is useful since the generalized Ohm's law used to calculate the E-field includes a :math:`1/n` term.
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the plasma density floor, in :math:`m^{-3}`, which is useful since the generalized Ohm's law used to calculate the E-field includes a :math:`1/n` term.
 
 * ``hybrid_pic_model.substeps`` (`int`) optional (default ``100``)
-     If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the number of sub-steps to take during the B-field update.
+    If ``algo.maxwell_solver`` is set to ``hybrid``, this sets the number of sub-steps to take during the B-field update.
 
 .. note::
 
@@ -2211,8 +2269,8 @@ Additional parameters
     ``idx_type = {0, 0, 0}``: Sort particles to a cell centered grid
     ``idx_type = {1, 1, 1}``: Sort particles to a node centered grid
     ``idx_type = {2, 2, 2}``: Compromise between a cell and node centered grid.
-     In 2D (XZ and RZ), only the first two elements are read.
-     In 1D, only the first element is read.
+    In 2D (XZ and RZ), only the first two elements are read.
+    In 1D, only the first element is read.
 
 * ``warpx.sort_bin_size`` (list of `int`) optional (default ``1 1 1``)
      If ``sort_intervals`` is activated and ``sort_particles_for_deposition`` is ``false``, particles are sorted in bins of ``sort_bin_size`` cells.
@@ -2241,7 +2299,7 @@ Additional parameters
 
 * ``warpx.shared_tilesize`` (list of `int`) optional (default `6 6 8` in 3D; `14 14` in 2D; `1s` otherwise)
      Used to tune performance when ``do_shared_mem_current_deposition`` or
-     ``do_shared_mem_charge_depostion`` is enabled. ``shared_tilesize`` is the
+     ``do_shared_mem_charge_deposition`` is enabled. ``shared_tilesize`` is the
      size of the temporary buffer allocated in shared memory for a threadblock.
      A larger tilesize requires more shared memory, but gives more work to each
      threadblock, which can lead to higher occupancy, and allows for more
@@ -2727,7 +2785,7 @@ Reduced Diagnostics
         In RZ geometry, this only saves the
         0'th azimuthal mode component of the fields.
         Integrated electric and magnetic field components can instead be obtained by specifying
-        ``<reduced_diags_name>.integrate == true``.
+        ``<reduced_diags_name>.integrate = true``.
         In a *moving window* simulation, the FieldProbe can be set to follow the moving frame by specifying ``<reduced_diags_name>.do_moving_window_FP = 1`` (default 0).
 
         .. warning::
@@ -3233,7 +3291,7 @@ The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.
     Name of the checkpoint file to restart from. Returns an error if the folder does not exist
     or if it is not properly formatted.
 
-* ``warpx.write_diagonstics_on_restart`` (`bool`) optional (default `false`)
+* ``warpx.write_diagnostics_on_restart`` (`bool`) optional (default `false`)
     When `true`, write the diagnostics after restart at the time of the restart.
 
 Intervals parser

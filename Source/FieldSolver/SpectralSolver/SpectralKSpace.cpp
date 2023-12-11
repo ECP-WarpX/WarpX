@@ -137,7 +137,7 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
  * specified by `i_dim`.
  *
  * (By default, we assume the FFT is done from/to a collocated grid in real space
- * It the FFT is performed from/to a cell-centered grid in real space,
+ * If the FFT is performed from/to a cell-centered grid in real space,
  * a correcting "shift" factor must be applied in spectral space.)
  */
 SpectralShiftFactor
@@ -147,7 +147,7 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
 {
     // Initialize an empty DeviceVector in each box
     SpectralShiftFactor shift_factor( spectralspace_ba, dm );
-   // Loop over boxes and allocate the corresponding DeviceVector
+    // Loop over boxes and allocate the corresponding DeviceVector
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
         const Gpu::DeviceVector<Real>& k = k_vec[i_dim][mfi];

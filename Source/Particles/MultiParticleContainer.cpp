@@ -133,14 +133,6 @@ MultiParticleContainer::ReadParameters ()
     {
         const ParmParse pp_particles("particles");
 
-        // allocating and initializing default values of external fields for particles
-        m_E_external_particle.resize(3);
-        m_B_external_particle.resize(3);
-        // initialize E and B fields to 0.0
-        for (int idim = 0; idim < 3; ++idim) {
-            m_E_external_particle[idim] = 0.0;
-            m_B_external_particle[idim] = 0.0;
-        }
         // default values of E_external_particle and B_external_particle
         // are used to set the E and B field when "constant" or "parser"
         // is not explicitly used in the input
@@ -154,19 +146,6 @@ MultiParticleContainer::ReadParameters ()
                        m_E_ext_particle_s.end(),
                        m_E_ext_particle_s.begin(),
                        ::tolower);
-        // if the input string for B_external on particles is "constant"
-        // then the values for the external B on particles must
-        // be provided in the input file.
-        if (m_B_ext_particle_s == "constant")
-            utils::parser::getArrWithParser(
-                pp_particles, "B_external_particle", m_B_external_particle);
-
-        // if the input string for E_external on particles is "constant"
-        // then the values for the external E on particles must
-        // be provided in the input file.
-        if (m_E_ext_particle_s == "constant")
-            utils::parser::getArrWithParser(
-                pp_particles, "E_external_particle", m_E_external_particle);
 
         // if the input string for B_ext_particle_s is
         // "parse_b_ext_particle_function" then the mathematical expression
@@ -866,13 +845,13 @@ MultiParticleContainer::getSpeciesID (std::string product_str) const
 {
     auto species_and_lasers_names = GetSpeciesAndLasersNames();
     int i_product = 0;
-    bool found = 0;
+    bool found = false;
     // Loop over species
     for (int i=0; i < static_cast<int>(species_and_lasers_names.size()); i++){
         // If species name matches, store its ID
         // into i_product
         if (species_and_lasers_names[i] == product_str){
-            found = 1;
+            found = true;
             i_product = i;
         }
     }
@@ -893,12 +872,12 @@ MultiParticleContainer::SetDoBackTransformedParticles (const bool do_back_transf
 void
 MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles) {
     auto species_names_list = GetSpeciesNames();
-    bool found = 0;
+    bool found = false;
     // Loop over species
     for (int i = 0; i < static_cast<int>(species_names.size()); ++i) {
         // If species name matches, set back-transformed particles parameters
         if (species_names_list[i] == species_name) {
-           found = 1;
+           found = true;
            auto& pc = allcontainers[i];
            pc->SetDoBackTransformedParticles(do_back_transformed_particles);
         }
@@ -1389,8 +1368,8 @@ MultiParticleContainer::doQEDSchwinger ()
         * geom.CellSize(2);
 #endif
 
-   // Get the temporal step
-   const auto dt =  warpx.getdt(level_0);
+    // Get the temporal step
+    const auto dt =  warpx.getdt(level_0);
 
     auto& pc_product_ele =
             allcontainers[m_qed_schwinger_ele_product];
@@ -1410,8 +1389,8 @@ MultiParticleContainer::doQEDSchwinger ()
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-     for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
-     {
+    for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    {
         // Make the box cell centered to avoid creating particles twice on the tile edges
         amrex::Box box = enclosedCells(mfi.nodaltilebox());
 
@@ -1587,7 +1566,9 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
                                                          pti, lev, Ex.nGrowVect(),
                                                          Ex[pti], Ey[pti], Ez[pti],
-                                                         Bx[pti], By[pti], Bz[pti]);
+                                                         Bx[pti], By[pti], Bz[pti],
+                                                         phys_pc_ptr->m_E_external_particle,
+                                                         phys_pc_ptr->m_B_external_particle);
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
             auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, pti);
@@ -1665,7 +1646,9 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                   m_shr_p_qs_engine->build_phot_em_functor(),
                   pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],
-                  Bx[pti], By[pti], Bz[pti]);
+                  Bx[pti], By[pti], Bz[pti],
+                  phys_pc_ptr->m_E_external_particle,
+                  phys_pc_ptr->m_B_external_particle);
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product_phot->ParticlesAt(lev, pti);

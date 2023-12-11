@@ -102,7 +102,7 @@ sim_specs = {
         ('ramp_down_2', float, (1,)),
         # input parameter: position of the focusing lens.
         ('zlens_1', float, (1,)),
-        # Relative stength of the lens (1. is from
+        # Relative strength of the lens (1. is from
         # back-of-the-envelope calculation)
         ('adjust_factor', float, (1,)),
     ],

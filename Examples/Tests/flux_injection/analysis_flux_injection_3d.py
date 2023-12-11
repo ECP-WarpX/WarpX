@@ -17,7 +17,7 @@ rejection methods implemented in WarpX, which depend on the u_m/u_th ratio.)
 
 After the particles are emitted with flux injection, this script produces
 histograms of the velocity distribution and compares it with the expected
-velocity distibution (Gaussian or Gaussian-flux depending on the direction
+velocity distribution (Gaussian or Gaussian-flux depending on the direction
 of space)
 """
 import os

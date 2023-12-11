@@ -95,7 +95,7 @@ Step 5: **Current and Charge Deposition**
 
    Mesh refinement is not supported for the fluids.
 
-   The implemented MUSCL scheme has a simplifed slope averaging, see the extended writeup for details.
+   The implemented MUSCL scheme has a simplified slope averaging, see the extended writeup for details.
 
    More details on the precise implementation are available here, `WarpX_Cold_Rel_Fluids.pdf`_.
 .. _WarpX_Cold_Rel_Fluids.pdf: https://github.com/ECP-WarpX/WarpX/files/12886437/WarpX_Cold_Rel_Fluids.pdf

@@ -29,12 +29,12 @@ namespace ablastr::coarsen::sample
     void
     Loop (
         amrex::MultiFab& mf_dst,
-       const amrex::MultiFab& mf_src,
-       const int dcomp,
-       const int scomp,
-       const int ncomp,
-       const amrex::IntVect ngrowvect,
-       const amrex::IntVect crse_ratio
+        const amrex::MultiFab& mf_src,
+        const int dcomp,
+        const int scomp,
+        const int ncomp,
+        const amrex::IntVect ngrowvect,
+        const amrex::IntVect crse_ratio
     )
     {
         // Staggering of source fine MultiFab and destination coarse MultiFab
