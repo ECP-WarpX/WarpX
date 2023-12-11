@@ -29,6 +29,10 @@ namespace {
         bool the_arena_is_managed = false; // AMReX' default: true
         pp_amrex.queryAdd("the_arena_is_managed", the_arena_is_managed);
 
+        // https://amrex-codes.github.io/amrex/docs_html/InputsComputeBackends.html
+        std::string omp_threads = "nosmt"; // AMReX' default: system
+        pp_amrex.queryAdd("omp_threads", omp_threads);
+
         // Work-around:
         // If warpx.numprocs is used for the domain decomposition, we will not use blocking factor
         // to generate grids. Nonetheless, AMReX has asserts in place that validate that the

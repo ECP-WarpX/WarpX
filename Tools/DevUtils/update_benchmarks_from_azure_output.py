@@ -51,7 +51,7 @@ with open(azure_output_filename, "r") as f:
                     # Raw Azure output comes with a prefix at the beginning of each line that we do
                     # not need here. The first line that we will read is the prefix followed by the
                     # "{" character, so we determine how long the prefix is by finding the last
-                    # occurence of the "{" character in this line.
+                    # occurrence of the "{" character in this line.
                     azure_indent = line.rfind('{')
                     first_line_read = True
                 new_file_string += line[azure_indent:]

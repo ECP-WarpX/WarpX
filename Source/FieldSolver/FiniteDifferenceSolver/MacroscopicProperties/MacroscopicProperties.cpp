@@ -66,6 +66,7 @@ MacroscopicProperties::ReadParameters ()
             utils::parser::makeParser(m_str_sigma_function,{"x","y","z"}));
     }
 
+    // Query input for material permittivity, epsilon.
     bool epsilon_specified = false;
     if (utils::parser::queryWithParser(pp_macroscopic, "epsilon", m_epsilon)) {
         m_epsilon_s = "constant";
@@ -91,7 +92,7 @@ MacroscopicProperties::ReadParameters ()
             utils::parser::makeParser(m_str_epsilon_function,{"x","y","z"}));
     }
 
-    // Query input for material permittivity, epsilon.
+    // Query input for material permeability, mu.
     bool mu_specified = false;
     if (utils::parser::queryWithParser(pp_macroscopic, "mu", m_mu)) {
         m_mu_s = "constant";

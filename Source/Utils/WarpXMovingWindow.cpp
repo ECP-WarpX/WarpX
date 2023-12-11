@@ -604,7 +604,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         // guard region both radially and longitudinally. These are the PML cells in the overlapping
         // longitudinal region. FillBoundary normally does not update these cells.
         // This update is needed so that the cells at the end of the FABs are updated appropriately
-        // with the data shifted from the nieghboring FAB. Without this update, the RZ PML becomes
+        // with the data shifted from the neighboring FAB. Without this update, the RZ PML becomes
         // unstable with the moving grid.
         // This code creates a temporary MultiFab using a BoxList where the radial size of all of
         // its boxes is increased so that the radial guard cells are included in the boxes valid domain.

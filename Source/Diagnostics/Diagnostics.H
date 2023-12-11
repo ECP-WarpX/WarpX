@@ -75,7 +75,7 @@ public:
      *
      * Derived classes MUST implement this function, and it must allocate m_all_field_functors
      * and fill it with ComputeDiagFunctor objects.
-     * The functions is called at intiailization and when the domain is decomposed
+     * The functions is called at initialization and when the domain is decomposed
      * during the simulation to load-balance.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
@@ -239,13 +239,13 @@ protected:
     amrex::Vector< std::string > m_pfield_varnames;
     /** Names of species for which to output particle field diagnostics */
     std::vector< std::string > m_pfield_species;
-    /** Whether to do averaging for each of the particle fied diagnostics */
+    /** Whether to do averaging for each of the particle field diagnostics */
     std::vector< bool > m_pfield_do_average;
     /** Species indices corresponding to elements of m_pfield_varnames */
     std::vector< int > m_pfield_species_index;
     /** List of the parser strings for the particle field diagnostics */
     std::vector< std::string > m_pfield_strings;
-    /** Whether to use a filter function on particles before calculating particle fied diagnostics */
+    /** Whether to use a filter function on particles before calculating particle field diagnostics */
     std::vector< bool> m_pfield_dofilter;
     /** List of parser strings for pre-average filtering for the particle field diagnostics */
     std::vector< std::string > m_pfield_filter_strings;

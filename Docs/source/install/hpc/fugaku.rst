@@ -24,7 +24,7 @@ Use the following commands to download the WarpX source code and switch to the c
    git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
 
 
-Compiling WarpX on Fugaku is more pratical on a compute node. Use the following commands to acquire a compute node for one hour:
+Compiling WarpX on Fugaku is more practical on a compute node. Use the following commands to acquire a compute node for one hour:
 
 .. code-block:: bash
 

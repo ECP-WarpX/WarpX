@@ -221,7 +221,7 @@ struct InjectorPosition
                 z <= zmax and z >= zmin);
     }
 
-    // bool: whether the region defined by lo and hi overaps with the plasma region
+    // bool: whether the region defined by lo and hi overlaps with the plasma region
     [[nodiscard]]
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool

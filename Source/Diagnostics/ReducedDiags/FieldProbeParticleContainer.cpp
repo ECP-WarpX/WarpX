@@ -142,7 +142,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
 
     /*
      * Redistributes particles to their appropriate tiles if the box
-     * structure of the simulation changes to accomodate data more
+     * structure of the simulation changes to accommodate data more
      * efficiently.
      */
     Redistribute();

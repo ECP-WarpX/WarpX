@@ -30,7 +30,7 @@ using namespace std;
 using namespace amrex;
 namespace pxr_sr = picsar::multi_physics::utils::serialization;
 
-//This file provides a wrapper aroud the breit_wheeler engine
+//This file provides a wrapper around the breit_wheeler engine
 //provided by the PICSAR library
 
 // Factory class =============================
