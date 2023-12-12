@@ -7,6 +7,7 @@
 #include "WarpX.H"
 
 #include "FieldSolver/ElectrostaticSolver.H"
+#include "FieldSolver/ElectrostaticSolver/ImplicitDarwinSolver.H"
 #include "Fluids/MultiFluidContainer.H"
 #include "Fluids/WarpXFluidContainer.H"
 #include "Parallelization/GuardCellManager.H"
@@ -75,6 +76,13 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
     if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame ||
         electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
         AddSpaceChargeFieldLabFrame();
+    }
+    else if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameDarwinImplicit) {
+        m_implicit_darwin_solver->AddSpaceChargeField(
+            rho_fp, phi_fp, Efield_fp,
+            self_fields_required_precision, self_fields_absolute_tolerance,
+            self_fields_max_iters, self_fields_verbosity
+        );
     }
     else {
         // Loop over the species and add their space-charge contribution to E and B.

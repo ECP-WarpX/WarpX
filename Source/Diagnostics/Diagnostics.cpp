@@ -76,7 +76,8 @@ Diagnostics::BaseReadParameters ()
     if (utils::algorithms::is_in(m_varnames_fields, "phi")){
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrame ||
-            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic,
+            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
+            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameDarwinImplicit,
             "plot phi only works if do_electrostatic = labframe or do_electrostatic = labframe-electromagnetostatic");
     }
 
