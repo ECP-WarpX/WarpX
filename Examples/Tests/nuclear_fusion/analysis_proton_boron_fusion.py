@@ -65,11 +65,11 @@ default_tol = 1.e-12 # Default relative tolerance
 keV_to_Joule = scc.e*1e3
 MeV_to_Joule = scc.e*1e6
 barn_to_square_meter = 1.e-28
-m_p = scc.m_p # Proton mass
+m_p = 1.00782503223*scc.m_u # Proton mass
 m_b = 11.00930536*scc.m_u # Boron 11 mass
 m_reduced = m_p*m_b/(m_p+m_b)
-m_a = 4.002602*scc.m_u # Alpha mass
-m_be = 7.94748*m_p # Beryllium 8 mass
+m_a = 4.00260325413*scc.m_u # Alpha mass
+m_be = 7.94748*scc.m_p # Beryllium 8 mass
 Z_boron = 5.
 Z_proton = 1.
 E_Gamow = (Z_boron*Z_proton*np.pi*scc.fine_structure)**2*2.*m_reduced*scc.c**2
@@ -395,7 +395,7 @@ def p_sq_boron_frame_to_E_COM_frame(p_proton_sq):
     # Use invariant E**2 - p**2c**2 of 4-momentum norm to compute energy in center of mass frame
     E_com = np.sqrt(E_lab**2 - p_proton_sq*scc.c**2)
     # Corresponding kinetic energy
-    E_com_kin = E_com - (m_b+scc.m_p)*scc.c**2
+    E_com_kin = E_com - (m_b+m_p)*scc.c**2
     return E_com_kin*(p_proton_sq>0.)
 
 def p_sq_to_kinetic_energy(p_sq, m):
@@ -525,7 +525,7 @@ def check_initial_energy2(data):
         ## Proton kinetic energy in the lab frame before fusion
         E_proton_nonrelativistic = Energy_step*slice_number**2
         ## Corresponding square norm of proton momentum
-        p_proton_sq = 2.*scc.m_p*E_proton_nonrelativistic
+        p_proton_sq = 2.*m_p*E_proton_nonrelativistic
         ## Kinetic energy in the lab frame after
         ## proton + boron 11 -> alpha + beryllium 8
         E_after_fusion = E_proton_nonrelativistic + E_fusion
