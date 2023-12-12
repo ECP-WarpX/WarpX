@@ -536,13 +536,13 @@ void HybridPICModel::FillElectronPressureMF (
 }
 
 void HybridPICModel::BfieldEvolveRK (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real dt, DtType dt_type,
-        IntVect ng, std::optional<bool> nodal_sync )
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    amrex::Real dt, DtType dt_type,
+    IntVect ng, std::optional<bool> nodal_sync )
 {
     auto& warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
@@ -555,13 +555,13 @@ void HybridPICModel::BfieldEvolveRK (
 }
 
 void HybridPICModel::BfieldEvolveRK (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real dt, int lev, DtType dt_type,
-        IntVect ng, std::optional<bool> nodal_sync )
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    amrex::Real dt, int lev, DtType dt_type,
+    IntVect ng, std::optional<bool> nodal_sync )
 {
     // Make copies of the B-field multifabs at t = n and create multifabs for
     // each direction to store the Runge-Kutta intermediate terms. Each
@@ -668,13 +668,13 @@ void HybridPICModel::BfieldEvolveRK (
 }
 
 void HybridPICModel::FieldPush (
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
-        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
-        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real dt, DtType dt_type,
-        IntVect ng, std::optional<bool> nodal_sync )
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+    amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+    amrex::Real dt, DtType dt_type,
+    IntVect ng, std::optional<bool> nodal_sync )
 {
     auto& warpx = WarpX::GetInstance();
 
