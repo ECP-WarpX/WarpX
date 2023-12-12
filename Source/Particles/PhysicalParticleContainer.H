@@ -408,9 +408,9 @@ protected:
     /* Vector of user-defined real attributes for species, species_name */
     std::vector<std::string> m_user_real_attribs;
     /* Vector of user-defined parser for initializing user-defined integer attributes */
-    std::vector< std::unique_ptr<amrex::Parser> > m_user_int_attrib_parser;
+    amrex::Vector< std::unique_ptr<amrex::Parser> > m_user_int_attrib_parser;
     /* Vector of user-defined parser for initializing user-defined real attributes */
-    std::vector< std::unique_ptr<amrex::Parser> > m_user_real_attrib_parser;
+    amrex::Vector< std::unique_ptr<amrex::Parser> > m_user_real_attrib_parser;
 
 };
 
