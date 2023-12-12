@@ -844,7 +844,7 @@ Villasenor, J, and O Buneman. 1992. “Rigorous Charge Conservation for Local El
 
 .. raw:: html
 
-   <div id="ref-Vincenti2016a">
+   <div id="ref-VincentiCPC2017a">
 
 Vincenti, H., and J.-L. Vay. 2016. “Detailed analysis of the effects of stencil spatial variations with arbitrary high-order finite-difference Maxwell solver.” *Computer Physics Communications* 200 (March). ELSEVIER SCIENCE BV, PO BOX 211, 1000 AE AMSTERDAM, NETHERLANDS: 147–67. https://doi.org/10.1016/j.cpc.2015.11.009.
 
