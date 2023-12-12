@@ -120,7 +120,7 @@ class _MultiFABWrapper(object):
         min_box = self.mf.box_array().minimal_box()
         shape = list(min_box.size - min_box.small_end)
         if self.include_ghosts:
-            nghosts = self.mf.n_grow_vect()
+            nghosts = self.mf.n_grow_vect
             shape = [shape[i] + 2*nghosts[i] for i in range(self.dim)]
         shape.append(self.mf.nComp)
         return tuple(shape)
@@ -159,7 +159,7 @@ class _MultiFABWrapper(object):
 
         if self.include_ghosts:
             # The ghost cells are added to the upper and lower end of the global domain.
-            nghosts = self.mf.n_grow_vect()
+            nghosts = self.mf.n_grow_vect
             ilo -= nghosts[idir]
             ihi += nghosts[idir]
 
@@ -199,7 +199,7 @@ class _MultiFABWrapper(object):
 
     def _get_n_ghosts(self):
         """Return the list of number of ghosts. This includes the component dimension."""
-        nghosts = list(self._get_indices(self.mf.n_grow_vect(), 0))
+        nghosts = list(self._get_indices(self.mf.n_grow_vect, 0))
         # The components always has nghosts = 0
         nghosts.append(0)
         return nghosts
@@ -208,7 +208,7 @@ class _MultiFABWrapper(object):
         """Returns the minimum indices, expanded to length 3"""
         min_box = self.mf.box_array().minimal_box()
         if self.include_ghosts:
-            min_box.grow(self.mf.n_grow_vect())
+            min_box.grow(self.mf.n_grow_vect)
         imin = self._get_indices(min_box.small_end, 0)
         return imin
 
@@ -217,7 +217,7 @@ class _MultiFABWrapper(object):
         """
         min_box = self.mf.box_array().minimal_box()
         if self.include_ghosts:
-            min_box.grow(self.mf.n_grow_vect())
+            min_box.grow(self.mf.n_grow_vect)
         imax = self._get_indices(min_box.big_end, 0)
         return imax
 
@@ -341,7 +341,7 @@ class _MultiFABWrapper(object):
         """
         box = mfi.tilebox()
         if self.include_ghosts:
-            box.grow(self.mf.n_grow_vect())
+            box.grow(self.mf.n_grow_vect)
 
         ilo = self._get_indices(box.small_end, 0)
         ihi = self._get_indices(box.big_end, 0)
@@ -409,7 +409,7 @@ class _MultiFABWrapper(object):
         ixstart, ixstop = self._find_start_stop(ii[0], ixmin, ixmax+1, 0)
         iystart, iystop = self._find_start_stop(ii[1], iymin, iymax+1, 1)
         izstart, izstop = self._find_start_stop(ii[2], izmin, izmax+1, 2)
-        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp(), 3)
+        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp, 3)
 
         # Gather the data to be included in a list to be sent to other processes
         starts = [ixstart, iystart, izstart]
@@ -499,7 +499,7 @@ class _MultiFABWrapper(object):
         ixstart, ixstop = self._find_start_stop(ii[0], ixmin, ixmax+1, 0)
         iystart, iystop = self._find_start_stop(ii[1], iymin, iymax+1, 1)
         izstart, izstop = self._find_start_stop(ii[2], izmin, izmax+1, 2)
-        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp(), 3)
+        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp, 3)
 
         if isinstance(value, np.ndarray):
             # Expand the shape of the input array to match the shape of the global array

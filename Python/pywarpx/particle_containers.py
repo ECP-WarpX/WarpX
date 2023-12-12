@@ -124,7 +124,7 @@ class ParticleContainerWrapper(object):
             built_in_attrs += 1
 
         # --- The number of extra attributes (including the weight)
-        nattr = self.particle_container.num_real_comps() - built_in_attrs
+        nattr = self.particle_container.num_real_comps - built_in_attrs
         attr = np.zeros((maxlen, nattr))
         attr[:,0] = w
 
@@ -818,7 +818,7 @@ class ParticleBoundaryBufferWrapper(object):
         data_array = []
         if comp_name == 'step_scraped':
             # the step scraped is always the final integer component
-            comp_idx = part_container.num_int_comps() - 1
+            comp_idx = part_container.num_int_comps - 1
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
                 data_array.append(xp.array(soa.GetIntData(comp_idx), copy=False))
