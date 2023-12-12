@@ -33,10 +33,12 @@ struct IonizationFilterFunc
     const amrex::Real* AMREX_RESTRICT m_adk_prefactor;
     const amrex::Real* AMREX_RESTRICT m_adk_exp_prefactor;
     const amrex::Real* AMREX_RESTRICT m_adk_power;
+    const amrex::Real* AMREX_RESTRICT m_adk_correction_factors;
 
     int comp;
     int m_atomic_number;
-
+    int m_do_adk_correction = 0;
+    
     GetParticlePosition<PIdx> m_get_position;
     GetExternalEBField m_get_externalEB;
     amrex::ParticleReal m_Ex_external_particle;
@@ -82,8 +84,10 @@ struct IonizationFilterFunc
                           const amrex::Real* AMREX_RESTRICT a_adk_prefactor,
                           const amrex::Real* AMREX_RESTRICT a_adk_exp_prefactor,
                           const amrex::Real* AMREX_RESTRICT a_adk_power,
+                          const amrex::Real* const AMREX_RESTRICT a_adk_correction_factors,
                           int a_comp,
                           int a_atomic_number,
+                          int a_do_adk_correction,
                           int a_offset = 0) noexcept;
 
     template <typename PData>
@@ -133,9 +137,16 @@ struct IonizationFilterFunc
                                );
 
             // Compute probability of ionization p
-            const amrex::Real w_dtau = (E <= 0._rt) ? 0._rt : 1._rt/ ga * m_adk_prefactor[ion_lev] *
+            amrex::Real w_dtau = (E <= 0._rt) ? 0._rt : 1._rt/ ga * m_adk_prefactor[ion_lev] *
                 std::pow(E, m_adk_power[ion_lev]) *
                 std::exp( m_adk_exp_prefactor[ion_lev]/E );
+            // if requested, do Zhang's correction of ADK
+            if (m_do_adk_correction) {
+                const amrex::Real r = E / m_adk_correction_factors[3];
+                w_dtau *= std::exp(m_adk_correction_factors[0]*r*r+m_adk_correction_factors[1]*r+
+                                   m_adk_correction_factors[2]);
+            }
+
             const amrex::Real p = 1._rt - std::exp( - w_dtau );
 
             const amrex::Real random_draw = amrex::Random(engine);

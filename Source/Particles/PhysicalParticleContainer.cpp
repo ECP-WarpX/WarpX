@@ -2967,10 +2967,15 @@ PhysicalParticleContainer::InitIonizationModule ()
             "overriding user value and setting charge = q_e.");
         charge = PhysConst::q_e;
     }
+    utils::parser::queryWithParser(pp_species_name, "do_adk_correction", do_adk_correction);
+
     utils::parser::queryWithParser(
         pp_species_name, "ionization_initial_level", ionization_initial_level);
     pp_species_name.get("ionization_product_species", ionization_product_name);
     pp_species_name.get("physical_element", physical_element);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        physical_element == "H" || !do_adk_correction,
+        "Correction to ADK by Zhang et al., PRA 90, 043410 (2014) only workds with Hydrogen");
     // Add runtime integer component for ionization level
     AddIntComp("ionizationLevel");
     // Get atomic number and ionization energies from file
@@ -3005,6 +3010,18 @@ PhysicalParticleContainer::InitIonizationModule ()
                    h_ionization_energies.begin(), h_ionization_energies.end(),
                    ionization_energies.begin());
 
+    adk_correction_factors.resize(4);
+    if (do_adk_correction) {
+        Vector<Real> h_correction_factors(4);
+        constexpr int offset_corr = 0; // hard-coded: only Hydrogen
+        for(int i=0; i<4; i++){
+            h_correction_factors[i] = table_correction_factors[i+offset_corr];
+        }
+        Gpu::copyAsync(Gpu::hostToDevice,
+                       h_correction_factors.begin(), h_correction_factors.end(),
+                       adk_correction_factors.begin());
+    }
+    
     Real const* AMREX_RESTRICT p_ionization_energies = ionization_energies.data();
     Real * AMREX_RESTRICT p_adk_power = adk_power.data();
     Real * AMREX_RESTRICT p_adk_prefactor = adk_prefactor.data();
@@ -3042,8 +3059,10 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),
                                 adk_power.dataPtr(),
+                                adk_correction_factors.dataPtr(),
                                 particle_icomps["ionizationLevel"],
-                                ion_atomic_number};
+                                ion_atomic_number,
+                                do_adk_correction};
 }
 
 PlasmaInjector* PhysicalParticleContainer::GetPlasmaInjector (int i)
