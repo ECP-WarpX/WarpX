@@ -6,8 +6,7 @@
 
 #include <string>
 
-class
-FullDiagnostics final : public Diagnostics
+class FullDiagnostics final : public Diagnostics
 {
 public:
     FullDiagnostics (int i, std::string name);

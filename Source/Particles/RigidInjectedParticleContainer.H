@@ -50,7 +50,6 @@ public:
                                     const std::string& name);
     ~RigidInjectedParticleContainer () override = default;
 
-
     RigidInjectedParticleContainer ( RigidInjectedParticleContainer const &)             = delete;
     RigidInjectedParticleContainer& operator= ( RigidInjectedParticleContainer const & ) = delete;
     RigidInjectedParticleContainer ( RigidInjectedParticleContainer&& )                  = default;
@@ -123,7 +122,7 @@ private:
 
     amrex::Vector<amrex::ParticleReal> zinject_plane_levels;
 
-    // Temporary quantites
+    // Temporary quantities
     amrex::ParticleReal zinject_plane_lev;
     amrex::ParticleReal zinject_plane_lev_previous;
     bool done_injecting_lev;

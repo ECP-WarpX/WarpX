@@ -15,9 +15,4 @@ void init_PinnedMemoryParticleContainer (py::module& m)
         PinnedMemoryParticleContainer,
         amrex::ParticleContainer<0,0,PIdx::nattribs,0,amrex::PinnedArenaAllocator>
     > pmpc (m, "PinnedMemoryParticleContainer");
-    pmpc
-        .def("num_int_comps",
-            [](PinnedMemoryParticleContainer& pc) { return pc.NumIntComps(); }
-        )
-    ;
 }

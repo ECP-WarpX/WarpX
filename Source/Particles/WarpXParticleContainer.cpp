@@ -20,6 +20,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "WarpX.H"
 
 #include <ablastr/coarsen/average.H>
@@ -88,6 +89,17 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 {
     SetParticleSize();
     ReadParameters();
+
+    // Reading the external fields needs to be here since ReadParameters
+    // is static but the m_E_external_particle and B are not
+    const ParmParse pp_particles("particles");
+
+    // allocating and initializing default values of external fields for particles
+    m_E_external_particle.resize(3, 0.);
+    m_B_external_particle.resize(3, 0.);
+
+    utils::parser::queryArrWithParser(pp_particles, "E_external_particle", m_E_external_particle);
+    utils::parser::queryArrWithParser(pp_particles, "B_external_particle", m_B_external_particle);
 
     // Initialize temporary local arrays for charge/current deposition
 #ifdef AMREX_USE_OMP
@@ -283,22 +295,22 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
 }
 
 /* \brief Current Deposition for thread thread_num
- * \param pti         : Particle iterator
- * \param wp          : Array of particle weights
- * \param uxp uyp uzp : Array of particle momenta
- * \param ion_lev      : Pointer to array of particle ionization level. This is
-                         required to have the charge of each macroparticle
-                         since q is a scalar. For non-ionizable species,
-                         ion_lev is a null pointer.
- * \param jx jy jz    : Full array of current density
- * \param offset      : Index of first particle for which current is deposited
- * \param np_to_depose: Number of particles for which current is deposited.
-                        Particles [offset,offset+np_tp_depose] deposit current
- * \param thread_num  : Thread number (if tiling)
- * \param lev         : Level of box that contains particles
- * \param depos_lev   : Level on which particles deposit (if buffers are used)
- * \param dt          : Time step for particle level
- * \param relative_time: Time at which to deposit J, relative to the time of the
+ * \param pti         Particle iterator
+ * \param wp          Array of particle weights
+ * \param uxp uyp uzp Array of particle momenta
+ * \param ion_lev     Pointer to array of particle ionization level. This is
+                      required to have the charge of each macroparticle
+                      since q is a scalar. For non-ionizable species,
+                      ion_lev is a null pointer.
+ * \param jx jy jz    Full array of current density
+ * \param offset      Index of first particle for which current is deposited
+ * \param np_to_deposit Number of particles for which current is deposited.
+                        Particles [offset,offset+np_to_deposit] deposit current
+ * \param thread_num  Thread number (if tiling)
+ * \param lev         Level of box that contains particles
+ * \param depos_lev   Level on which particles deposit (if buffers are used)
+ * \param dt          Time step for particle level
+ * \param relative_time  Time at which to deposit J, relative to the time of the
  *                       current positions of the particles. When different than 0,
  *                       the particle position will be temporarily modified to match
  *                       the time of the deposition.
@@ -309,7 +321,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                                         RealVector const & uyp, RealVector const & uzp,
                                         int const * const ion_lev,
                                         amrex::MultiFab * const jx, amrex::MultiFab * const jy, amrex::MultiFab * const jz,
-                                        long const offset, long const np_to_depose,
+                                        long const offset, long const np_to_deposit,
                                         int const thread_num, const int lev, int const depos_lev,
                                         amrex::Real const dt, amrex::Real const relative_time)
 {
@@ -318,7 +330,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                                      "Deposition buffers only work for lev-1");
 
     // If no particles, do not do anything
-    if (np_to_depose == 0) return;
+    if (np_to_deposit == 0) return;
 
     // If user decides not to deposit
     if (do_not_deposit) return;
@@ -500,25 +512,25 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             WARPX_PROFILE_VAR_START(direct_current_dep_kernel);
             if        (WarpX::nox == 1){
                 doDepositionSharedShapeN<1>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
-                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx,
+                        xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             } else if (WarpX::nox == 2){
                 doDepositionSharedShapeN<2>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
-                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx,
+                        xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             } else if (WarpX::nox == 3){
                 doDepositionSharedShapeN<3>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
-                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx,
+                        xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             }
             WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
         }
@@ -528,71 +540,71 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
             if        (WarpX::nox == 1){
                 doEsirkepovDepositionShapeN<1>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                    WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, relative_time, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
             } else if (WarpX::nox == 2){
                 doEsirkepovDepositionShapeN<2>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                    WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, relative_time, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
             } else if (WarpX::nox == 3){
                 doEsirkepovDepositionShapeN<3>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_arr, jy_arr, jz_arr, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                    WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, relative_time, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
             }
         } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
             if        (WarpX::nox == 1){
                 doVayDepositionShapeN<1>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                    WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, dt, relative_time, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
             } else if (WarpX::nox == 2){
                 doVayDepositionShapeN<2>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                    WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, dt, relative_time, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
             } else if (WarpX::nox == 3){
                 doVayDepositionShapeN<3>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx, xyzmin, lo, q,
-                    WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, dt, relative_time, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
             }
         } else { // Direct deposition
             if        (WarpX::nox == 1){
                 doDepositionShapeN<1>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
-                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx,
+                        xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
             } else if (WarpX::nox == 2){
                 doDepositionShapeN<2>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
-                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx,
+                        xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
             } else if (WarpX::nox == 3){
                 doDepositionShapeN<3>(
-                    GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
-                    xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo);
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx,
+                        xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
             }
         }
     }
@@ -650,28 +662,28 @@ WarpXParticleContainer::DepositCurrent (
 }
 
 /* \brief Charge Deposition for thread thread_num
- * \param pti         : Particle iterator
- * \param wp          : Array of particle weights
- * \param ion_lev     : Pointer to array of particle ionization level. This is
-                         required to have the charge of each macroparticle
-                         since q is a scalar. For non-ionizable species,
-                         ion_lev is a null pointer.
- * \param rho         : Full array of charge density
- * \param icomp       : Component of rho into which charge is deposited.
-                        0: old value (before particle push).
-                        1: new value (after particle push).
- * \param offset      : Index of first particle for which charge is deposited
- * \param np_to_depose: Number of particles for which charge is deposited.
-                        Particles [offset,offset+np_tp_depose) deposit charge
- * \param thread_num  : Thread number (if tiling)
- * \param lev         : Level of box that contains particles
- * \param depos_lev   : Level on which particles deposit (if buffers are used)
+ * \param pti         Particle iterator
+ * \param wp          Array of particle weights
+ * \param ion_lev     Pointer to array of particle ionization level. This is
+                      required to have the charge of each macroparticle
+                      since q is a scalar. For non-ionizable species,
+                      ion_lev is a null pointer.
+ * \param rho         Full array of charge density
+ * \param icomp       Component of rho into which charge is deposited.
+                      0: old value (before particle push).
+                      1: new value (after particle push).
+ * \param offset      Index of first particle for which charge is deposited
+ * \param np_to_deposit Number of particles for which charge is deposited.
+                        Particles [offset,offset+np_to_deposit) deposit charge
+ * \param thread_num  Thread number (if tiling)
+ * \param lev         Level of box that contains particles
+ * \param depos_lev   Level on which particles deposit (if buffers are used)
  */
 void
 WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                        const int * const ion_lev,
                                        amrex::MultiFab* rho, const int icomp,
-                                       const long offset, const long np_to_depose,
+                                       const long offset, const long np_to_deposit,
                                        const int thread_num, const int lev, const int depos_lev)
 {
     if (WarpX::do_shared_mem_charge_deposition)
@@ -681,7 +693,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                          "Deposition buffers only work for lev-1");
 
         // If no particles, do not do anything
-        if (np_to_depose == 0) return;
+        if (np_to_deposit == 0) return;
 
         // Number of guard cells for local deposition of rho
         const WarpX& warpx = WarpX::GetInstance();
@@ -876,19 +888,19 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
         if (WarpX::nox == 1){
             doChargeDepositionSharedShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                              rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
+                                              rho_fab, ix_type, np_to_deposit, dx, xyzmin, lo, q,
                                               WarpX::n_rz_azimuthal_modes, cost,
                                               WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
                                               WarpX::shared_tilesize);
         } else if (WarpX::nox == 2){
             doChargeDepositionSharedShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                              rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
+                                              rho_fab, ix_type, np_to_deposit, dx, xyzmin, lo, q,
                                               WarpX::n_rz_azimuthal_modes, cost,
                                               WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
                                               WarpX::shared_tilesize);
         } else if (WarpX::nox == 3){
             doChargeDepositionSharedShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                              rho_fab, ix_type, np_to_depose, dx, xyzmin, lo, q,
+                                              rho_fab, ix_type, np_to_deposit, dx, xyzmin, lo, q,
                                               WarpX::n_rz_azimuthal_modes, cost,
                                               WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
                                               WarpX::shared_tilesize);
@@ -942,13 +954,13 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
         AMREX_ALWAYS_ASSERT(WarpX::nox == WarpX::noz);
 
         ablastr::particles::deposit_charge<WarpXParticleContainer>(
-            pti, wp, this->charge, ion_lev,
-            rho, local_rho[thread_num],
-            WarpX::noz, dx, xyzmin, WarpX::n_rz_azimuthal_modes,
-            ng_rho, depos_lev, ref_ratio,
-            offset, np_to_depose,
-            icomp, nc,
-            cost, WarpX::load_balance_costs_update_algo, WarpX::do_device_synchronize
+                pti, wp, this->charge, ion_lev,
+                rho, local_rho[thread_num],
+                WarpX::noz, dx, xyzmin, WarpX::n_rz_azimuthal_modes,
+                ng_rho, depos_lev, ref_ratio,
+                offset, np_to_deposit,
+                icomp, nc,
+                cost, WarpX::load_balance_costs_update_algo, WarpX::do_device_synchronize
         );
     }
 }

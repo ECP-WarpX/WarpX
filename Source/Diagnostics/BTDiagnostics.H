@@ -24,8 +24,7 @@
 #include <memory>
 #include <string>
 
-class
-BTDiagnostics final : public Diagnostics
+class BTDiagnostics final : public Diagnostics
 {
 public:
 

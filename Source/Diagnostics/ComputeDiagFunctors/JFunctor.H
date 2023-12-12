@@ -8,8 +8,7 @@
 /**
  * \brief Functor to cell-center MF for current density and store result in mf_out.
  */
-class
-JFunctor final : public ComputeDiagFunctor
+class JFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor.

@@ -601,7 +601,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     m_all_field_functors[lev].resize(ntot);
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0; comp<nvar; comp++){
-         if       ( m_varnames[comp] == "Ez" ){
+        if        ( m_varnames[comp] == "Ez" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Bz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio);

@@ -57,23 +57,28 @@ public:
 
     WarpXParIter (ContainerType& pc, int level, amrex::MFItInfo& info);
 
-    const std::array<RealVector, PIdx::nattribs>& GetAttribs () const {
+    [[nodiscard]] const std::array<RealVector, PIdx::nattribs>& GetAttribs () const
+    {
         return GetStructOfArrays().GetRealData();
     }
 
-    std::array<RealVector, PIdx::nattribs>& GetAttribs () {
+    [[nodiscard]] std::array<RealVector, PIdx::nattribs>& GetAttribs ()
+    {
         return GetStructOfArrays().GetRealData();
     }
 
-    const RealVector& GetAttribs (int comp) const {
+    [[nodiscard]] const RealVector& GetAttribs (int comp) const
+    {
         return GetStructOfArrays().GetRealData(comp);
     }
 
-    RealVector& GetAttribs (int comp) {
+    [[nodiscard]] RealVector& GetAttribs (int comp)
+    {
         return GetStructOfArrays().GetRealData(comp);
     }
 
-    IntVector& GetiAttribs (int comp) {
+    [[nodiscard]] IntVector& GetiAttribs (int comp)
+    {
         return GetStructOfArrays().GetIntData(comp);
     }
 };
@@ -115,7 +120,7 @@ public:
     using DiagnosticParticles = amrex::Vector<std::map<std::pair<int, int>, DiagnosticParticleData> >;
 
     WarpXParticleContainer (amrex::AmrCore* amr_core, int ispecies);
-    ~WarpXParticleContainer() override {}
+    ~WarpXParticleContainer() override = default;
 
     // Move and copy operations
     WarpXParticleContainer(const WarpXParticleContainer&)            = delete;
@@ -131,7 +136,7 @@ public:
      * \brief Virtual function that returns a pointer to the plasma injector,
      *        for derived classes that define one (PhysicalParticleContainer).
      */
-    virtual PlasmaInjector* GetPlasmaInjector () { return nullptr; }
+    virtual PlasmaInjector* GetPlasmaInjector (const int /*i*/) { return nullptr; }
 
     /**
      * Evolve is the central WarpXParticleContainer function that advances
@@ -166,7 +171,7 @@ public:
 
     ///
     /// This pushes the particle positions by one half time step.
-    /// It is used to desynchronize the particles after initializaton
+    /// It is used to desynchronize the particles after initialization
     /// or when restarting from a checkpoint.
     ///
     void PushX (         amrex::Real dt);
@@ -225,7 +230,7 @@ public:
                                amrex::MultiFab* rho,
                                int icomp,
                                long offset,
-                               long np_to_depose,
+                               long np_to_deposit,
                                int thread_num,
                                int lev,
                                int depos_lev);
@@ -240,7 +245,7 @@ public:
                                 amrex::MultiFab* jy,
                                 amrex::MultiFab* jz,
                                 long offset,
-                                long np_to_depose,
+                                long np_to_deposit,
                                 int thread_num,
                                 int lev,
                                 int depos_lev,
@@ -335,6 +340,10 @@ public:
     int self_fields_max_iters = 200;
     int self_fields_verbosity = 2;
 
+    // External fields added to particle fields.
+    amrex::Vector<amrex::ParticleReal> m_B_external_particle;
+    amrex::Vector<amrex::ParticleReal> m_E_external_particle;
+
     //! Current injection position
     amrex::Real m_current_injection_position;
 
@@ -393,7 +402,7 @@ public:
      * they do not exist (or if they were defined by default, i.e.,
      * without runtime component).
      */
-     void defineAllParticleTiles () noexcept;
+    void defineAllParticleTiles () noexcept;
 
 protected:
     int species_id;
