@@ -25,6 +25,7 @@
  */
 namespace ablastr::coarsen::average
 {
+    AMREX_FORCE_INLINE
     void
     CalculateCoarseningData (
         amrex::GpuArray<int, 3> &idx_min_src,
