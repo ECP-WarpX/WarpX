@@ -20,6 +20,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
 #include "Filter/NCIGodfreyFilter_fwd.H"
+#include "Initialization/ExternalField_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
@@ -34,12 +35,12 @@
 #       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
 #endif
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Evolve/WarpXDtType.H"
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
-#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/export.H"
@@ -138,34 +139,6 @@ public:
      * Otherwise, it returns an empty string.
      */
     [[nodiscard]] std::string GetAuthors () const { return m_authors; }
-
-    //! Initial electric field on the grid
-    static amrex::Vector<amrex::Real> E_external_grid;
-    //! Initial magnetic field on the grid
-    static amrex::Vector<amrex::Real> B_external_grid;
-
-    //! Initialization type for external magnetic field on the grid
-    static std::string B_ext_grid_s;
-    //! Initialization type for external electric field on the grid
-    static std::string E_ext_grid_s;
-
-    //! Whether to apply the effect of an externally-defined electric field
-    static bool add_external_E_field;
-    //! Whether to apply the effect of an externally-defined magnetic field
-    static bool add_external_B_field;
-
-    //! User-defined parser to initialize x-component of the magnetic field on the grid
-    std::unique_ptr<amrex::Parser> Bxfield_parser;
-    //! User-defined parser to initialize y-component of the magnetic field on the grid
-    std::unique_ptr<amrex::Parser> Byfield_parser;
-    //! User-defined parser to initialize z-component of the magnetic field on the grid
-    std::unique_ptr<amrex::Parser> Bzfield_parser;
-    //! User-defined parser to initialize x-component of the electric field on the grid
-    std::unique_ptr<amrex::Parser> Exfield_parser;
-    //! User-defined parser to initialize y-component of the electric field on the grid
-    std::unique_ptr<amrex::Parser> Eyfield_parser;
-    //! User-defined parser to initialize z-component of the electric field on the grid
-    std::unique_ptr<amrex::Parser> Ezfield_parser;
 
     /** Maximum level up to which the externally defined electric and magnetic fields are initialized.
      *  The default value is set to the max levels in the simulation.
@@ -1180,11 +1153,11 @@ protected:
      *  then, the E and B fields at all the levels are initialized with
      *  user-defined values for E_external_grid and B_external_grid.
      *  If the initialization type for B-field is set to
-     *  "parse_B_ext_grid_function", then, the parser is used to read
+     *  "parse_ext_grid_function", then, the parser is used to read
      *  Bx_external_grid_function(x,y,z), By_external_grid_function(x,y,z),
      *  and Bz_external_grid_function(x,y,z).
      *  Similarly, if the E-field initialization type is set to
-     *  "parse_E_ext_grid_function", then, the parser is used to read
+     *  "parse_ext_grid_function", then, the parser is used to read
      *  Ex_external_grid_function(x,y,z), Ey_external_grid_function(x,y,z),
      *  and Ex_external_grid_function(x,y,z). The parser for the E and B
      *  initialization assumes that the function has three independent
@@ -1558,6 +1531,9 @@ private:
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
 #endif
     amrex::Real v_particle_pml;
+
+    // External fields parameters
+    std::unique_ptr<ExternalFieldParams> m_p_ext_field_params;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
 
