@@ -541,7 +541,7 @@ void HybridPICModel::BfieldEvolveRK (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real const dt, DtType dt_type,
+        amrex::Real dt, DtType dt_type,
         IntVect ng, std::optional<bool> nodal_sync )
 {
     auto& warpx = WarpX::GetInstance();
@@ -560,7 +560,7 @@ void HybridPICModel::BfieldEvolveRK (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real const dt, int lev, DtType dt_type,
+        amrex::Real dt, int lev, DtType dt_type,
         IntVect ng, std::optional<bool> nodal_sync )
 {
     // Make copies of the B-field multifabs at t = n and create multifabs for
@@ -673,7 +673,7 @@ void HybridPICModel::BfieldPush (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        amrex::Real const dt, DtType dt_type,
+        amrex::Real dt, DtType dt_type,
         IntVect ng, std::optional<bool> nodal_sync )
 {
     auto& warpx = WarpX::GetInstance();
