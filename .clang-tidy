@@ -38,7 +38,6 @@ Checks: '
     readability-*,
         -readability-braces-around-statements,
         -readability-convert-member-functions-to-static,
-        -readability-duplicate-include,
         -readability-else-after-return,
         -readability-function-cognitive-complexity,
         -readability-identifier-length,
