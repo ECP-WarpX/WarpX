@@ -38,7 +38,7 @@ struct IonizationFilterFunc
     int comp;
     int m_atomic_number;
     int m_do_adk_correction = 0;
-    
+
     GetParticlePosition<PIdx> m_get_position;
     GetExternalEBField m_get_externalEB;
     amrex::ParticleReal m_Ex_external_particle;

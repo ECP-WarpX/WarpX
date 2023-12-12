@@ -3021,7 +3021,7 @@ PhysicalParticleContainer::InitIonizationModule ()
                        h_correction_factors.begin(), h_correction_factors.end(),
                        adk_correction_factors.begin());
     }
-    
+
     Real const* AMREX_RESTRICT p_ionization_energies = ionization_energies.data();
     Real * AMREX_RESTRICT p_adk_power = adk_power.data();
     Real * AMREX_RESTRICT p_adk_prefactor = adk_prefactor.data();
