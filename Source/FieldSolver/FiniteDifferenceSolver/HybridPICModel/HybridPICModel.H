@@ -125,7 +125,7 @@ public:
         amrex::Real dt, int lev, DtType dt_type,
         amrex::IntVect ng, std::optional<bool> nodal_sync);
 
-    void BfieldPush (
+    void FieldPush (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
@@ -157,7 +157,7 @@ public:
 
     // Declare variables to hold hybrid-PIC model parameters
     /** Number of substeps to take when evolving B */
-    int m_substeps = 100;
+    int m_substeps = 10;
 
     /** Electron temperature in eV */
     amrex::Real m_elec_temp;

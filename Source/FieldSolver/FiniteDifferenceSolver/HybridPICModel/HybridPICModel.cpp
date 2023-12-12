@@ -585,7 +585,7 @@ void HybridPICModel::BfieldEvolveRK (
 
     // The Runge-Kutta scheme begins here.
     // Step 1:
-    BfieldPush(
+    FieldPush(
         Bfield, Efield, Jfield, rhofield, edge_lengths,
         0.5_rt*dt, dt_type, ng, nodal_sync
     );
@@ -601,7 +601,7 @@ void HybridPICModel::BfieldEvolveRK (
     }
 
     // Step 2:
-    BfieldPush(
+    FieldPush(
         Bfield, Efield, Jfield, rhofield, edge_lengths,
         0.5_rt*dt, dt_type, ng, nodal_sync
     );
@@ -621,7 +621,7 @@ void HybridPICModel::BfieldEvolveRK (
     }
 
     // Step 3:
-    BfieldPush(
+    FieldPush(
         Bfield, Efield, Jfield, rhofield, edge_lengths,
         dt, dt_type, ng, nodal_sync
     );
@@ -637,7 +637,7 @@ void HybridPICModel::BfieldEvolveRK (
     }
 
     // Step 4:
-    BfieldPush(
+    FieldPush(
         Bfield, Efield, Jfield, rhofield, edge_lengths,
         0.5_rt*dt, dt_type, ng, nodal_sync
     );
@@ -667,7 +667,7 @@ void HybridPICModel::BfieldEvolveRK (
     }
 }
 
-void HybridPICModel::BfieldPush (
+void HybridPICModel::FieldPush (
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
