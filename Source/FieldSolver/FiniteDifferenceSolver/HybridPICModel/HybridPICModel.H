@@ -37,7 +37,7 @@ public:
     /** Allocate hybrid-PIC specific multifabs. Called in constructor. */
     void AllocateMFs (int nlevs_max);
     void AllocateLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                           const int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
+                           int ncomps, const amrex::IntVect& ngJ, const amrex::IntVect& ngRho,
                            const amrex::IntVect& jx_nodal_flag, const amrex::IntVect& jy_nodal_flag,
                            const amrex::IntVect& jz_nodal_flag, const amrex::IntVect& rho_nodal_flag);
 
@@ -45,6 +45,20 @@ public:
     void ClearLevel (int lev);
 
     void InitData ();
+
+    /**
+     * \brief
+     * Function to evaluate the external current expressions and populate the
+     * external current multifab. Note the external current can be a function
+     * of time and therefore this should be re-evaluated at every step.
+     */
+    void GetCurrentExternal (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
+    );
+    void GetCurrentExternal (
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        int lev
+    );
 
     /**
      * \brief
@@ -62,7 +76,7 @@ public:
     void CalculateCurrentAmpere (
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        const int lev
+        int lev
     );
 
     /**
@@ -75,21 +89,23 @@ public:
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Bfield,
         amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
-        const bool include_resistivity_term);
+        bool include_resistivity_term);
+
     void HybridPICSolveE (
         std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        const int lev, const bool include_resistivity_term);
+        int lev, bool include_resistivity_term);
+
     void HybridPICSolveE (
         std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
         std::unique_ptr<amrex::MultiFab> const& rhofield,
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
-        const int lev, PatchType patch_type, const bool include_resistivity_term);
+        int lev, PatchType patch_type, bool include_resistivity_term);
 
     /**
      * \brief
@@ -97,8 +113,8 @@ public:
      * using the simulation charge density. Used in the Ohm's law solver
      * (kinetic-fluid hybrid model).
      */
-    void CalculateElectronPressure (                DtType a_dt_type);
-    void CalculateElectronPressure (const int lev,  DtType a_dt_type);
+    void CalculateElectronPressure (          DtType a_dt_type);
+    void CalculateElectronPressure (int lev,  DtType a_dt_type);
 
     /**
      * \brief Fill the electron pressure multifab given the kinetic particle
@@ -106,7 +122,7 @@ public:
      * specified electron equation of state.
      *
      * \param[out] Pe   scalar electron pressure MultiFab at a given level
-     * \param[in] rhofield scalar ion chrge density Multifab at a given level
+     * \param[in] rhofield scalar ion charge density Multifab at a given level
      */
     void FillElectronPressureMF (
         std::unique_ptr<amrex::MultiFab> const& Pe,
@@ -131,15 +147,33 @@ public:
     std::unique_ptr<amrex::Parser> m_resistivity_parser;
     amrex::ParserExecutor<1> m_eta;
 
+    /** External current */
+    std::string m_Jx_ext_grid_function = "0.0";
+    std::string m_Jy_ext_grid_function = "0.0";
+    std::string m_Jz_ext_grid_function = "0.0";
+    std::array< std::unique_ptr<amrex::Parser>, 3> m_J_external_parser;
+    std::array< amrex::ParserExecutor<4>, 3> m_J_external;
+    bool m_external_field_has_time_dependence = false;
+
     // Declare multifabs specifically needed for the hybrid-PIC model
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_external;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
 
     // Helper functions to retrieve hybrid-PIC multifabs
-    amrex::MultiFab * get_pointer_current_fp_ampere  (int lev, int direction) const { return current_fp_ampere[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_electron_pressure_fp  (int lev) const { return electron_pressure_fp[lev].get(); }
+    [[nodiscard]] amrex::MultiFab*
+    get_pointer_current_fp_ampere  (int lev, int direction) const
+    {
+        return current_fp_ampere[lev][direction].get();
+    }
+
+    [[nodiscard]] amrex::MultiFab*
+    get_pointer_electron_pressure_fp  (int lev) const
+    {
+        return electron_pressure_fp[lev].get();
+    }
 
     /** Gpu Vector with index type of the Jx multifab */
     amrex::GpuArray<int, 3> Jx_IndexType;
@@ -174,7 +208,7 @@ struct ElectronPressure {
                                      amrex::Real const T0,
                                      amrex::Real const gamma,
                                      amrex::Real const rho) {
-        return n0 * T0 * pow((rho/PhysConst::q_e)/n0, gamma);
+        return n0 * T0 * std::pow((rho/PhysConst::q_e)/n0, gamma);
     }
 };
 

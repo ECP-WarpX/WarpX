@@ -10,6 +10,8 @@
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
+#include "Fluids/MultiFluidContainer.H"
+#include "Fluids/WarpXFluidContainer.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
@@ -30,6 +32,13 @@ void WarpX::HybridPICEvolveFields ()
     // Perform current deposition at t_{n+1/2}.
     mypc->DepositCurrent(current_fp, dt[0], -0.5_rt * dt[0]);
 
+    // Deposit cold-relativistic fluid charge and current
+    if (do_fluid_species) {
+        int const lev = 0;
+        myfl->DepositCharge(lev, *rho_fp[lev]);
+        myfl->DepositCurrent(lev, *current_fp[lev][0], *current_fp[lev][1], *current_fp[lev][2]);
+    }
+
     // Synchronize J and rho:
     // filter (if used), exchange guard cells, interpolate across MR levels
     // and apply boundary conditions
@@ -44,6 +53,9 @@ void WarpX::HybridPICEvolveFields ()
 
     // Get requested number of substeps to use
     int sub_steps = m_hybrid_pic_model->m_substeps / 2;
+
+    // Get the external current
+    m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
 
     // Reference hybrid-PIC multifabs
     auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;
@@ -92,7 +104,7 @@ void WarpX::HybridPICEvolveFields ()
             true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        EvolveB(0.5 / sub_steps * dt[0], DtType::FirstHalf);
+        EvolveB(0.5_rt / sub_steps * dt[0], DtType::FirstHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 
@@ -120,7 +132,7 @@ void WarpX::HybridPICEvolveFields ()
             true
         );
         FillBoundaryE(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
-        EvolveB(0.5 / sub_steps * dt[0], DtType::SecondHalf);
+        EvolveB(0.5_rt / sub_steps * dt[0], DtType::SecondHalf);
         FillBoundaryB(guard_cells.ng_FieldSolver, WarpX::sync_nodal_points);
     }
 

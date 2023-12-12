@@ -88,6 +88,7 @@ public:
    * @param engine_type ADIOS engine for output
    * @param engine_parameters map of parameters for the engine
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
+   * @param authors a string specifying the authors of the simulation (can be empty)
    */
   WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
                     std::string filetype,
@@ -95,9 +96,15 @@ public:
                     std::map< std::string, std::string > operator_parameters,
                     std::string engine_type,
                     std::map< std::string, std::string > engine_parameters,
-                    std::vector<bool> fieldPMLdirections);
+                    std::vector<bool> fieldPMLdirections,
+                    const std::string& authors);
 
   ~WarpXOpenPMDPlot ();
+
+  WarpXOpenPMDPlot ( WarpXOpenPMDPlot const &)             = delete;
+  WarpXOpenPMDPlot& operator= ( WarpXOpenPMDPlot const & ) = delete;
+  WarpXOpenPMDPlot ( WarpXOpenPMDPlot&& )                  = default;
+  WarpXOpenPMDPlot& operator= ( WarpXOpenPMDPlot&& )       = default;
 
   /** Set Iteration Step for the series
    *
@@ -115,10 +122,10 @@ public:
 
   void WriteOpenPMDParticles (
               const amrex::Vector<ParticleDiag>& particle_diags,
-              const amrex::Real time,
-              const bool use_pinned_pc = false,
-              const bool isBTD = false,
-              const bool isLastBTDFlush = false,
+              amrex::Real time,
+              bool use_pinned_pc = false,
+              bool isBTD = false,
+              bool isLastBTDFlush = false,
               const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>());
 
   /** Write out all openPMD fields for all active MR levels
@@ -138,8 +145,8 @@ public:
               const amrex::Vector<amrex::MultiFab>& mf,
               amrex::Vector<amrex::Geometry>& geom,
               int output_levels,
-              const int iteration,
-              const double time,
+              int iteration,
+              double time,
               bool isBTD = false,
               const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
 
@@ -160,7 +167,7 @@ private:
    * @param[in] isBTD is this a backtransformed diagnostics write?
    * @return the iteration object
    */
-  inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
+  [[nodiscard]] inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
   {
     if (isBTD)
     {
@@ -218,7 +225,7 @@ private:
   void SetupPos (
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np,
-        bool const isBTD = false);
+        bool isBTD = false);
 
   /** This function sets constant particle records and ED-PIC attributes.
    *
@@ -232,8 +239,8 @@ private:
   void SetConstParticleRecordsEDPIC (
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np,
-        amrex::ParticleReal const charge,
-        amrex::ParticleReal const mass);
+        amrex::ParticleReal charge,
+        amrex::ParticleReal mass);
 
   /** This function sets up the entries for particle properties
    *
@@ -252,7 +259,7 @@ private:
                const amrex::Vector<std::string>& real_comp_names,
                const amrex::Vector<int>& write_int_comp,
                const amrex::Vector<std::string>& int_comp_names,
-               const unsigned long long np, bool const isBTD = false) const;
+               unsigned long long np, bool isBTD = false) const;
 
   /** This function saves the values of the entries for particle properties
    *
@@ -294,10 +301,10 @@ private:
             const amrex::Vector<int>& write_int_comp,
             const amrex::Vector<std::string>& real_comp_names,
             const amrex::Vector<std::string>&  int_comp_names,
-            amrex::ParticleReal const charge,
-            amrex::ParticleReal const mass,
-            const bool isBTD = false,
-            const bool isLastBTDFlush = false,
+            amrex::ParticleReal charge,
+            amrex::ParticleReal mass,
+            bool isBTD = false,
+            bool isLastBTDFlush = false,
             int ParticleFlushOffset = 0);
 
   /** Get the openPMD-api filename for openPMD::Series
@@ -334,6 +341,9 @@ private:
 
   // meta data
   std::vector< bool > m_fieldPMLdirections; //! @see WarpX::getPMLdirections()
+
+  // The authors' string
+  std::string m_authors;
 };
 #endif // WARPX_USE_OPENPMD
 

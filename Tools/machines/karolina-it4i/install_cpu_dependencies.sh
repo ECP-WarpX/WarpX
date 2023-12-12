@@ -37,7 +37,7 @@ python3 -m pip uninstall -qqq -y mpi4py 2>/dev/null || true
 if [ -d $HOME/src/c-blosc ]
 then
   cd $HOME/src/c-blosc
-  git fetch
+  git fetch --prune
   git checkout v1.21.1
   cd -
 else
@@ -52,7 +52,7 @@ rm -rf $HOME/src/c-blosc-cpu-build
 if [ -d $HOME/src/hdf5 ]
 then
   cd $HOME/src/hdf5
-  git fetch
+  git fetch --prune
   git checkout hdf5-1_14_1-2
   cd -
 else
@@ -67,7 +67,7 @@ rm -rf $HOME/src/hdf5-build
 if [ -d $HOME/src/adios2 ]
 then
   cd $HOME/src/adios2
-  git fetch
+  git fetch --prune
   git checkout v2.8.3
   cd -
 else
@@ -82,7 +82,7 @@ rm -rf $HOME/src/adios2-cpu-build
 if [ -d $HOME/src/blaspp ]
 then
   cd $HOME/src/blaspp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -
@@ -98,7 +98,7 @@ rm -rf $HOME/src/blaspp-cpu-build
 if [ -d $HOME/src/lapackpp ]
 then
   cd $HOME/src/lapackpp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -
@@ -120,7 +120,10 @@ rm -rf ${SW_DIR}/venvs/warpx-cpu
 python3 -m venv ${SW_DIR}/venvs/warpx-cpu
 source ${SW_DIR}/venvs/warpx-cpu/bin/activate
 python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade build
+python3 -m pip install --upgrade packaging
 python3 -m pip install --upgrade wheel
+python3 -m pip install --upgrade setuptools
 python3 -m pip install --upgrade cython
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas

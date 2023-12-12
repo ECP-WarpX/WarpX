@@ -16,7 +16,7 @@
 #include <blas.hh>
 #include <lapack.hh>
 
-using amrex::operator""_rt;
+using namespace amrex::literals;
 
 HankelTransform::HankelTransform (int const hankel_order,
                                   int const azimuthal_mode,
@@ -68,7 +68,7 @@ HankelTransform::HankelTransform (int const hankel_order,
 
     amrex::Vector<amrex::Real> denom(m_nk);
     for (int ik=0 ; ik < m_nk ; ik++) {
-        const amrex::Real jna = jn(p_denom, alphas[ik]);
+        const auto jna = static_cast<amrex::Real>(jn(p_denom, alphas[ik]));
         denom[ik] = MathConst::pi*rmax*rmax*jna*jna;
     }
 
@@ -76,7 +76,7 @@ HankelTransform::HankelTransform (int const hankel_order,
     for (int ir=0 ; ir < m_nr ; ir++) {
         for (int ik=0 ; ik < m_nk ; ik++) {
             int const ii = ik + ir*m_nk;
-            num[ii] = jn(hankel_order, rmesh[ir]*kr[ik]);
+            num[ii] = static_cast<amrex::Real>(jn(hankel_order, rmesh[ir]*kr[ik]));
         }
     }
 
@@ -99,7 +99,8 @@ HankelTransform::HankelTransform (int const hankel_order,
         if (hankel_order == azimuthal_mode-1) {
             for (int ir=0 ; ir < m_nr ; ir++) {
                 int const ii = ir*m_nk;
-                invM[ii] = std::pow(rmesh[ir], (azimuthal_mode-1))/(MathConst::pi*std::pow(rmax, (azimuthal_mode+1)));
+                invM[ii] = static_cast<amrex::Real>(
+                    std::pow(rmesh[ir], (azimuthal_mode-1))/(MathConst::pi*std::pow(rmax, (azimuthal_mode+1))));
             }
         } else {
             for (int ir=0 ; ir < m_nr ; ir++) {
@@ -121,7 +122,7 @@ HankelTransform::HankelTransform (int const hankel_order,
     // Calculate the matrix M by inverting invM
     if (azimuthal_mode !=0 && hankel_order != azimuthal_mode-1) {
         // In this case, invM is singular, thus we calculate the pseudo-inverse.
-        // The Moore-Penrose psuedo-inverse is calculated using the SVD method.
+        // The Moore-Penrose pseudo-inverse is calculated using the SVD method.
 
         M.resize(m_nk*m_nr, 0.);
         amrex::Vector<amrex::Real> invMcopy(invM);
@@ -131,7 +132,7 @@ HankelTransform::HankelTransform (int const hankel_order,
         amrex::Vector<amrex::Real> sp((m_nr)*(m_nk-1), 0.);
         amrex::Vector<amrex::Real> temp((m_nr)*(m_nk-1), 0.);
 
-        // Calculate the singlular-value-decomposition of invM (leaving out the first row).
+        // Calculate the singular-value-decomposition of invM (leaving out the first row).
         // invM = u*sdiag*vt
         // Note that invMcopy.dataPtr()+1 is passed in so that the first ik row is skipped
         // A copy is passed in since the matrix is destroyed

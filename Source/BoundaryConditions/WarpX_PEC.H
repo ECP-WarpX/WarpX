@@ -147,7 +147,7 @@ using namespace amrex;
                                 amrex::GpuArray<int, 3> const& fbndry_lo,
                                 amrex::GpuArray<int, 3> const& fbndry_hi )
     {
-        // Tangential Efield componentes in guard cells set equal and opposite to cells
+        // Tangential Efield components in guard cells set equal and opposite to cells
         // in the mirror locations across the PEC boundary, whereas normal E-field
         // components are set equal to values in the mirror locations across the PEC
         // boundary. Here we just initialize it.
@@ -192,6 +192,16 @@ using namespace amrex;
                         GuardCell = true;
                         // tangential components are inverted across PEC boundary
                         if (is_tangent_to_PEC) sign *= -1._rt;
+#if (defined WARPX_DIM_RZ)
+                        if (icomp == 0 && idim == 0 && iside == 1) {
+                            // Add radial scale so that drEr/dr = 0.
+                            // This only works for the first guard cell and with
+                            // Er cell centered in r.
+                            const amrex::Real rguard = ijk_vec[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
+                            const amrex::Real rmirror = ijk_mirror[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
+                            sign *= rmirror/rguard;
+                        }
+#endif
                     }
                 } // is PEC boundary
             } // loop over iside
@@ -320,6 +330,14 @@ using namespace amrex;
                         GuardCell = true;
                         // Sign of the normal component in guard cell is inverted
                         if (is_normal_to_PEC) sign *= -1._rt;
+#if (defined WARPX_DIM_RZ)
+                        if (icomp == 0 && idim == 0 && iside == 1) {
+                            // Add radial scale so that drBr/dr = 0.
+                            const amrex::Real rguard = ijk_vec[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
+                            const amrex::Real rmirror = ijk_mirror[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
+                            sign *= rmirror/rguard;
+                        }
+#endif
                     }
                 } // if PEC Boundary
             } // loop over sides
@@ -379,7 +397,7 @@ using namespace amrex;
                 amrex::IntVect iv_mirror = ijk_vec;
                 iv_mirror[idim] = mirrorfac[idim][iside] - ijk_vec[idim];
 
-                // On the PEC boundary the current density is set to 0
+                // On the PEC boundary the charge/current density is set to 0
                 if (ijk_vec == iv_mirror) field(ijk_vec, n) = 0._rt;
                 // otherwise update the internal cell if the mirror guard cell exists
                 else if (fabbox.contains(iv_mirror))
@@ -389,7 +407,7 @@ using namespace amrex;
             }
         }
         // 2) The guard cells are updated with the appropriate image
-        //    charge current based on the current in the valid cells
+        //    charge based on the charge/current in the valid cells
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
         {
             for (int iside = 0; iside < 2; ++iside)
@@ -472,8 +490,8 @@ using namespace amrex;
      *                                split pml field
      */
     void ApplyPECtoEfield ( std::array<amrex::MultiFab*, 3> Efield,
-                            const int lev, PatchType patch_type,
-                            const bool split_pml_field = false);
+                            int lev, PatchType patch_type,
+                            bool split_pml_field = false);
     /**
      * \brief Sets the normal component of the magnetic field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell
@@ -484,7 +502,7 @@ using namespace amrex;
      * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoBfield ( std::array<amrex::MultiFab*, 3> Bfield,
-                            const int lev, PatchType patch_type);
+                            int lev, PatchType patch_type);
 
     /**
      * \brief Reflects charge density deposited over the PEC boundary back into
@@ -494,7 +512,7 @@ using namespace amrex;
      * \param[in]     lev        level of the Multifab
      * \param[in]     patch_type coarse or fine
      */
-    void ApplyPECtoRhofield(amrex::MultiFab* rho, const int lev,
+    void ApplyPECtoRhofield(amrex::MultiFab* rho, int lev,
                             PatchType patch_type);
 
     /**
@@ -506,7 +524,7 @@ using namespace amrex;
      * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
-                          amrex::MultiFab* Jz, const int lev,
+                          amrex::MultiFab* Jz, int lev,
                           PatchType patch_type);
 
     /**
@@ -517,6 +535,6 @@ using namespace amrex;
      * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoElectronPressure (amrex::MultiFab* Pefield,
-                                     const int lev, PatchType patch_type);
+                                     int lev, PatchType patch_type);
 }
 #endif // WarpX_PEC_KERNELS_H_

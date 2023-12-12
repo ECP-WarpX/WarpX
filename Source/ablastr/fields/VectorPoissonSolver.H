@@ -13,19 +13,6 @@
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
-#include <AMReX_MultiFab.H>
-#include <AMReX_REAL.H>
-#include <AMReX_MLLinOp.H>
-#include <AMReX_Vector.H>
-#include <AMReX_Array.H>
-#include <AMReX_MLEBNodeFDLaplacian.H>
-#ifdef AMREX_USE_EB
-#   include <AMReX_EBFabFactory.H>
-#endif
-#include <AMReX_Parser.H>
-#include <AMReX_REAL.H>
-#include <AMReX_MFInterp_C.H>
-
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
 #include <AMReX_BLassert.H>
@@ -43,12 +30,18 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_LO_BCTYPES.H>
 #include <AMReX_MFIter.H>
+#include <AMReX_MFInterp_C.H>
+#include <AMReX_MLEBNodeFDLaplacian.H>
+#include <AMReX_MLLinOp.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
-#include <AMReX_MFInterp_C.H>
+#ifdef AMREX_USE_EB
+#   include <AMReX_EBFabFactory.H>
+#endif
 
 #include <array>
 #include <optional>
@@ -115,7 +108,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
         rel_ref_ratio = amrex::Vector<amrex::IntVect>{{amrex::IntVect(AMREX_D_DECL(1, 1, 1))}};
     }
 
-    int const finest_level = curr.size() - 1u;
+    auto const finest_level = static_cast<int>(curr.size()) - 1;
 
     // scale J appropriately; also determine if current is zero everywhere
     amrex::Real max_comp_J = 0.0;

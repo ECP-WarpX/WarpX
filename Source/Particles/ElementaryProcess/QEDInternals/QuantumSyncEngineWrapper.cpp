@@ -30,7 +30,7 @@ using namespace std;
 using namespace amrex;
 namespace pxr_sr = picsar::multi_physics::utils::serialization;
 
-//This file provides a wrapper aroud the quantum_sync engine
+//This file provides a wrapper around the quantum_sync engine
 //provided by the PICSAR library
 
 // Factory class =============================
@@ -71,10 +71,10 @@ QuantumSynchrotronEngine::init_lookup_tables_from_raw_data (
     if(size_first <= 0 || size_first >= raw_data.size() ) return false;
 
     const auto raw_dndt_table = vector<char>{
-        raw_iter, raw_iter+size_first};
+        raw_iter, raw_iter+static_cast<long>(size_first)};
 
     const auto raw_phot_em_table = vector<char>{
-        raw_iter+size_first, raw_data.end()};
+        raw_iter+static_cast<long>(size_first), raw_data.end()};
 
     m_dndt_table = QS_dndt_table{raw_dndt_table};
     m_phot_em_table = QS_phot_em_table{raw_phot_em_table};
@@ -103,7 +103,7 @@ void QuantumSynchrotronEngine::init_builtin_tables(
 
 vector<char> QuantumSynchrotronEngine::export_lookup_tables_data () const
 {
-   if(!m_lookup_tables_initialized)
+    if(!m_lookup_tables_initialized)
         return vector<char>{};
 
     const auto data_dndt = m_dndt_table.serialize();

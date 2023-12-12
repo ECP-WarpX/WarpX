@@ -10,7 +10,7 @@
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
-#include "Python/WarpX_py.H"
+#include "Python/callbacks.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
@@ -112,7 +112,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     setVectorPotentialBC(vector_potential_fp_nodal);
 
     // Compute the vector potential A, by solving the Poisson equation
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallBackInstalled("poissonsolver"),
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallbackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
 
     const amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
@@ -266,7 +266,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
             dirichlet_flag[adim][0] = false;
             dim_start = 1;
 
-            // handle the r_max boundary explicity
+            // handle the r_max boundary explicitly
             if (WarpX::field_boundary_hi[0] == FieldBoundaryType::PEC) {
                 if (adim == 0) {
                     hibc[adim][0] = LinOpBCType::Neumann;
@@ -317,7 +317,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                 }
                 else {
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                        "Field boundary conditions have to be either periodic, PEC, or neumann "
+                        "Field boundary conditions have to be either periodic, PEC, or Neumann "
                         "when using the magnetostatic solver"
                     );
                 }
@@ -337,8 +337,8 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
                 }
                 else {
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-                        "Field boundary conditions have to be either periodic, PEC, or neumann "
-                        "when using the electrostatic solver"
+                        "Field boundary conditions have to be either periodic, PEC, or Neumann "
+                        "when using the magnetostatic solver"
                     );
                 }
             }

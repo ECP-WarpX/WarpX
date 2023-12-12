@@ -62,7 +62,7 @@ build_dir=$(mktemp -d)
 if [ -d $HOME/src/blaspp ]
 then
   cd $HOME/src/blaspp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -
@@ -76,7 +76,7 @@ cmake --build ${build_dir}/blaspp-summit-build --target install --parallel 10
 if [ -d $HOME/src/lapackpp ]
 then
   cd $HOME/src/lapackpp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -
@@ -99,7 +99,10 @@ rm -rf ${SW_DIR}/venvs/warpx-summit
 python3 -m venv ${SW_DIR}/venvs/warpx-summit
 source ${SW_DIR}/venvs/warpx-summit/bin/activate
 python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade build
+python3 -m pip install --upgrade packaging
 python3 -m pip install --upgrade wheel
+python3 -m pip install --upgrade setuptools
 python3 -m pip install --upgrade cython
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas

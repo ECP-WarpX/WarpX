@@ -74,7 +74,7 @@ void RigidInjectedParticleContainer::InitData()
     // Perform Lorentz transform of `z_inject_plane`
     const amrex::Real t_boost = WarpX::GetInstance().gett_new(0);
     amrex::Real zinject_plane_boost = zinject_plane/WarpX::gamma_boost
-                                    - WarpX::beta_boost*t_boost;
+                                    - WarpX::beta_boost*PhysConst::c*t_boost;
     zinject_plane_levels.resize(finestLevel()+1, zinject_plane_boost);
 
     AddParticles(0); // Note - add on level 0
@@ -121,8 +121,8 @@ RigidInjectedParticleContainer::RemapParticles()
                     const auto uyp = attribs[PIdx::uy].dataPtr();
                     const auto uzp = attribs[PIdx::uz].dataPtr();
 
-                    const auto GetPosition = GetParticlePosition(pti);
-                          auto SetPosition = SetParticlePosition(pti);
+                    const auto GetPosition = GetParticlePosition<PIdx>(pti);
+                          auto SetPosition = SetParticlePosition<PIdx>(pti);
 
                     // Loop over particles
                     const long np = pti.numParticles();
@@ -181,8 +181,8 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     amrex::Gpu::DeviceVector<ParticleReal> optical_depth_save;
 #endif
 
-    const auto GetPosition = GetParticlePosition(pti, offset);
-          auto SetPosition = SetParticlePosition(pti, offset);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti, offset);
+          auto SetPosition = SetParticlePosition<PIdx>(pti, offset);
 
     amrex::ParticleReal* const AMREX_RESTRICT ux = uxp.dataPtr() + offset;
     amrex::ParticleReal* const AMREX_RESTRICT uy = uyp.dataPtr() + offset;
@@ -307,7 +307,7 @@ RigidInjectedParticleContainer::Evolve (int lev,
     zinject_plane_levels[lev] -= dt*WarpX::beta_boost*PhysConst::c;
     zinject_plane_lev = zinject_plane_levels[lev];
 
-    // Set the done injecting flag whan the inject plane moves out of the
+    // Set the done injecting flag when the inject plane moves out of the
     // simulation domain.
     // It is much easier to do this check, rather than checking if all of the
     // particles have crossed the inject plane.
@@ -357,9 +357,16 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& byfab = By[pti];
             const FArrayBox& bzfab = Bz[pti];
 
-            const auto getPosition = GetParticlePosition(pti);
+            const auto getPosition = GetParticlePosition<PIdx>(pti);
 
             const auto getExternalEB = GetExternalEBField(pti);
+
+            const amrex::ParticleReal Ex_external_particle = m_E_external_particle[0];
+            const amrex::ParticleReal Ey_external_particle = m_E_external_particle[1];
+            const amrex::ParticleReal Ez_external_particle = m_E_external_particle[2];
+            const amrex::ParticleReal Bx_external_particle = m_B_external_particle[0];
+            const amrex::ParticleReal By_external_particle = m_B_external_particle[1];
+            const amrex::ParticleReal Bz_external_particle = m_B_external_particle[2];
 
             const std::array<amrex::Real,3>& xyzmin = WarpX::LowerCorner(box, lev, 0._rt);
 
@@ -426,8 +433,12 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
-                amrex::ParticleReal Exp = 0._prt, Eyp = 0._prt, Ezp = 0._prt;
-                amrex::ParticleReal Bxp = 0._prt, Byp = 0._prt, Bzp = 0._prt;
+                amrex::ParticleReal Exp = Ex_external_particle;
+                amrex::ParticleReal Eyp = Ey_external_particle;
+                amrex::ParticleReal Ezp = Ez_external_particle;
+                amrex::ParticleReal Bxp = Bx_external_particle;
+                amrex::ParticleReal Byp = By_external_particle;
+                amrex::ParticleReal Bzp = Bz_external_particle;
 
                 // first gather E and B to the particle positions
                 doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,

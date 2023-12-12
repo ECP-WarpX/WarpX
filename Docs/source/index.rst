@@ -75,11 +75,9 @@ Usage
    :hidden:
 
    usage/how_to_run
-   usage/domain_decomposition
-   usage/parameters
    usage/python
+   usage/parameters
    usage/examples
-   usage/pwfa
    usage/workflows
    usage/faq
 
@@ -116,6 +114,7 @@ Theory
    theory/input_output
    theory/collisions
    theory/kinetic_fluid_hybrid_model
+   theory/cold_fluid_model
 
 Development
 -----------
@@ -125,10 +124,10 @@ Development
    :hidden:
 
    developers/contributing
-   developers/workflows
    developers/developers
    developers/doxygen
    developers/gnumake
+   developers/workflows
    developers/faq
 .. good to have in the future:
 ..   developers/repostructure

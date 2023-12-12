@@ -1,6 +1,3 @@
-from distutils.command.build import build
-from distutils.command.clean import clean
-from distutils.version import LooseVersion
 import os
 import platform
 import re
@@ -9,6 +6,7 @@ import subprocess
 import sys
 
 from setuptools import Extension, setup
+from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
 
 
@@ -26,23 +24,21 @@ class CopyPreBuild(build):
         #   by default, this stays around. we want to make sure generated
         #   files like libwarpx.(1d|2d|rz|3d).(so|pyd) are always only the
         #   ones we want to package and not ones from an earlier wheel's stage
-        c = clean(self.distribution)
-        c.all = True
-        c.finalize_options()
-        c.run()
+        if os.path.exists(self.build_base):
+            shutil.rmtree(self.build_base)
 
         # call superclass
         build.run(self)
 
-        # matches: libwarpx.(1d|2d|rz|3d).(so|pyd)
-        re_libprefix = re.compile(r"libwarpx\...\.(?:so|dll)")
+        # matches: warpx_pybind_(1d|2d|rz|3d). ... .(so|pyd)
+        re_libprefix = re.compile(r"warpx_pybind_..\..*\.(?:so|pyd)")
         libs_found = []
         for lib_name in os.listdir(PYWARPX_LIB_DIR):
             if re_libprefix.match(lib_name):
                 lib_path = os.path.join(PYWARPX_LIB_DIR, lib_name)
                 libs_found.append(lib_path)
         if len(libs_found) == 0:
-            raise RuntimeError("Error: no pre-build WarpX libraries found in "
+            raise RuntimeError("Error: no pre-build WarpX modules found in "
                                "PYWARPX_LIB_DIR='{}'".format(PYWARPX_LIB_DIR))
 
         # copy external libs into collection of files in a temporary build dir
@@ -59,6 +55,8 @@ class CMakeExtension(Extension):
 
 class CMakeBuild(build_ext):
     def run(self):
+        from packaging.version import parse
+
         try:
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
@@ -67,11 +65,8 @@ class CMakeBuild(build_ext):
                 "extensions: " +
                 ", ".join(e.name for e in self.extensions))
 
-        cmake_version = LooseVersion(re.search(
-            r'version\s*([\d.]+)',
-            out.decode()
-        ).group(1))
-        if cmake_version < '3.20.0':
+        cmake_version = parse(re.search(r"version\s*([\d.]+)", out.decode()).group(1))
+        if cmake_version < parse("3.20.0"):
             raise RuntimeError("CMake >= 3.20.0 is required")
 
         for ext in self.extensions:
@@ -94,7 +89,6 @@ class CMakeBuild(build_ext):
             '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=' + extdir,
             '-DWarpX_DIMS=' + dims,
             '-DWarpX_APP:BOOL=OFF',
-            '-DWarpX_LIB:BOOL=ON',
             ## variants
             '-DWarpX_COMPUTE=' + WARPX_COMPUTE,
             '-DWarpX_MPI:BOOL=' + WARPX_MPI,
@@ -103,10 +97,14 @@ class CMakeBuild(build_ext):
             '-DWarpX_PRECISION=' + WARPX_PRECISION,
             '-DWarpX_PARTICLE_PRECISION=' + WARPX_PARTICLE_PRECISION,
             '-DWarpX_PSATD:BOOL=' + WARPX_PSATD,
+            '-DWarpX_PYTHON:BOOL=ON',
+            '-DWarpX_PYTHON_IPO:BOOL=' + WARPX_PYTHON_IPO,
             '-DWarpX_QED:BOOL=' + WARPX_QED,
             '-DWarpX_QED_TABLE_GEN:BOOL=' + WARPX_QED_TABLE_GEN,
             ## dependency control (developers & package managers)
             '-DWarpX_amrex_internal=' + WARPX_AMREX_INTERNAL,
+            # PEP-440 conformant version from package
+            "-DpyWarpX_VERSION_INFO=" + self.distribution.get_version(),
             #        see PICSAR and openPMD below
             ## static/shared libs
             '-DBUILD_SHARED_LIBS:BOOL=' + BUILD_SHARED_LIBS,
@@ -137,6 +135,14 @@ class CMakeBuild(build_ext):
             cmake_args.append('-DWarpX_openpmd_src=' + WARPX_OPENPMD_SRC)
         if WARPX_PICSAR_SRC:
             cmake_args.append('-DWarpX_picsar_src=' + WARPX_PICSAR_SRC)
+        if WARPX_PYAMREX_SRC:
+            cmake_args.append('-DWarpX_pyamrex_src=' + WARPX_PYAMREX_SRC)
+        if WARPX_PYAMREX_INTERNAL:
+            cmake_args.append('-DWarpX_pyamrex_internal=' + WARPX_PYAMREX_INTERNAL)
+        if WARPX_PYBIND11_SRC:
+            cmake_args.append('-DWarpX_pybind11_src=' + WARPX_PYBIND11_SRC)
+        if WARPX_PYBIND11_INTERNAL:
+            cmake_args.append('-DWarpX_pybind11_internal=' + WARPX_PYBIND11_INTERNAL)
         if WARPX_CCACHE_PROGRAM is not None:
             cmake_args.append('-DCCACHE_PROGRAM=' + WARPX_CCACHE_PROGRAM)
 
@@ -164,17 +170,11 @@ class CMakeBuild(build_ext):
 
         build_args += ['--parallel', BUILD_PARALLEL]
 
-        env = os.environ.copy()
-        env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(
-            env.get('CXXFLAGS', ''),
-            self.distribution.get_version()
-        )
         build_dir = os.path.join(self.build_temp, dims)
         os.makedirs(build_dir, exist_ok=True)
         subprocess.check_call(
             ['cmake', ext.sourcedir] + cmake_args,
-            cwd=build_dir,
-            env=env
+            cwd=build_dir
         )
         subprocess.check_call(
             ['cmake', '--build', '.'] + build_args,
@@ -191,6 +191,8 @@ with open('./README.md', encoding='utf-8') as f:
 #   Work-around for https://github.com/pypa/setuptools/issues/1712
 # Pick up existing WarpX libraries or...
 PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
+
+WARPX_PYTHON_IPO = os.environ.get("WARPX_PYTHON_IPO", "ON")
 
 env = os.environ.copy()
 # ... build WarpX libraries with CMake
@@ -226,6 +228,10 @@ WARPX_OPENPMD_SRC = env.pop('WARPX_OPENPMD_SRC', '')
 WARPX_OPENPMD_INTERNAL = env.pop('WARPX_OPENPMD_INTERNAL', 'ON')
 WARPX_PICSAR_SRC = env.pop('WARPX_PICSAR_SRC', '')
 WARPX_PICSAR_INTERNAL = env.pop('WARPX_PICSAR_INTERNAL', 'ON')
+WARPX_PYAMREX_SRC = env.pop('WARPX_PYAMREX_SRC', '')
+WARPX_PYAMREX_INTERNAL = env.pop('WARPX_PYAMREX_INTERNAL', 'ON')
+WARPX_PYBIND11_SRC = env.pop('WARPX_PYBIND11_SRC', '')
+WARPX_PYBIND11_INTERNAL = env.pop('WARPX_PYBIND11_INTERNAL', 'ON')
 WARPX_CCACHE_PROGRAM = env.pop('WARPX_CCACHE_PROGRAM', None)
 
 for key in env.keys():
@@ -272,7 +278,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '23.08',
+    version = '23.12',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',
@@ -297,7 +303,7 @@ setup(
     cmdclass=cmdclass,
     # scripts=['warpx_1d', 'warpx_2d', 'warpx_rz', 'warpx_3d'],
     zip_safe=False,
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     # tests_require=['pytest'],
     install_requires=install_requires,
     # see: src/bindings/python/cli
@@ -321,10 +327,10 @@ setup(
         'Topic :: Scientific/Engineering :: Physics',
         'Programming Language :: C++',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         ('License :: OSI Approved :: '
          'BSD License'), # TODO: use real SPDX: BSD-3-Clause-LBNL
     ],
