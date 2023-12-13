@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # Copyright 2022-2023 WarpX contributors
-# Authors: Remi Lehe, Ryan Sandberg, Marco Garten, Axel Huebl, Edoardo Zoni, Olga Shapoval, Jean-Luc Vay
+# Authors: WarpX team
 # License: BSD-3-Clause-LBNL
 #
 # -*- coding: utf-8 -*-

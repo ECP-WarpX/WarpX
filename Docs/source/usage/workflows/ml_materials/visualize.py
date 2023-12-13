@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 #
-# Copyright 2022-2023 WarpX contributors
-# Authors: Ryan Sandberg, Axel Huebl
+# Copyright 2023 The WarpX Community
+#
+# This file is part of WarpX.
+#
+# Authors: Ryan Sandberg
 # License: BSD-3-Clause-LBNL
 #
-# -*- coding: utf-8 -*-
-
 from matplotlib import pyplot as plt
 import neural_network_classes as mynn
 import numpy as np
