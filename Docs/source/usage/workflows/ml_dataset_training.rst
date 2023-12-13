@@ -53,7 +53,7 @@ we consistently filter out these particles from both the initial and final data.
    :start-after: # Manual: Particle tracking START
    :end-before: # Manual: Particle tracking END
 
-Create normalized dataset
+Create Normalized Dataset
 -------------------------
 
 Having chosen training data we are content with, we now need to format the data,
@@ -69,7 +69,7 @@ format, normalize, and store it.
     .. literalinclude:: ml_materials/create_dataset.py
     :language: python3
 
-Load openPMD data
+Load openPMD Data
 ^^^^^^^^^^^^^^^^^
 
 First the openPMD data is loaded, using the particle selector as chosen above.
@@ -83,7 +83,7 @@ Hence we load two sets of particle data, the source and target particle arrays.
    :start-after: # Manual: Load openPMD START
    :end-before: # Manual: Load openPMD END
 
-Normalize data
+Normalize Data
 ^^^^^^^^^^^^^^
 
 Neural networks learn better on appropriately normalized data.
@@ -97,7 +97,7 @@ for normalized data that is centered on the origin with unit variance.
    :start-after: # Manual: Normalization START
    :end-before: # Manual: Normalization END
 
-openPMD to PyTorch data
+openPMD to PyTorch Data
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 With the data normalized, it must be stored in a form PyTorch recognizes.
@@ -111,7 +111,7 @@ This data are converted to an :math:`N\times 6` numpy array and then to a PyTorc
    :start-after: # Manual: Format data START
    :end-before: # Manual: Format data END
 
-Save normalizations and normalized data
+Save Normalizations and Normalized Data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 With the data properly normalized, it and the normalizations are saved to file for
@@ -123,7 +123,7 @@ use in training and inference.
    :start-after: # Manual: Save dataset START
    :end-before: # Manual: Save dataset END
 
-Neural network structure
+Neural Network Structure
 ------------------------
 
 It was found in (cite PASC) that reasonable surrogate models are obtained with
@@ -134,7 +134,7 @@ and is trained for 10 epochs.
 
 
 
-Train and save neural network
+Train and Save Neural Network
 -----------------------------
 
 The script below trains the neural network on the dataset just created.
@@ -183,7 +183,7 @@ which is later divided by the size of the dataset in the training loop.
    :start-after: # Manual: Test function START
    :end-before: # Manual: Test function END
 
-Train loop
+Train Loop
 ^^^^^^^^^^
 
 The full training loop performs ``n_epochs`` number of iterations.
@@ -196,7 +196,7 @@ and a status update is printed to the console.
    :start-after: # Manual: Training loop START
    :end-before: # Manual: Training loop END
 
-Save neural network parameters
+Save Neural Network Parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The model weights are saved after training to record the updates to the model parameters.
@@ -248,7 +248,7 @@ These figures can be generated with the following Python script.
     .. literalinclude:: ml_materials/visualize.py
     :language: python3
 
-Reference ImpactX documentation
+Reference ImpactX Documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A neural network such as the one we trained here can be incorporated in other BLAST codes.
 `Consider the example using neural networks in ImpactX <https://impactx.readthedocs.io/en/latest/usage/examples/pytorch_surrogate_model/README.html>`__.
