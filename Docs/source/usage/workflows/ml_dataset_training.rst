@@ -126,7 +126,7 @@ use in training and inference.
 Neural Network Structure
 ------------------------
 
-It was found in (cite PASC) that reasonable surrogate models are obtained with
+It was found in Ref. :cite:p:`SandbergPASC24` that reasonable surrogate models are obtained with
 shallow feedforward neural networks consisting of fewer than 10 hidden layers and
 just under 1000 nodes per layer.
 The example shown here uses 3 hidden layers and 20 nodes per layer
