@@ -1,5 +1,12 @@
-
-
+#!/usr/bin/env python3
+#
+# Copyright 2023 The WarpX Community
+#
+# This file is part of WarpX.
+#
+# Authors: Ryan Sandberg
+# License: BSD-3-Clause-LBNL
+#
 import os
 import time
 

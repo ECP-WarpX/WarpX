@@ -1,6 +1,6 @@
 .. _ml_dataset_training:
 
-Training a surrogate model from WarpX data
+Training a Surrogate Model from WarpX Data
 ==========================================
 
 Suppose we have a WarpX simulation that we wish to replace with a neural network surrogate model.
@@ -15,7 +15,7 @@ For example, a simulation determined by the following input script
     :language: python3
 
 In this section we walk through a workflow for data processing and model training.
-This workflow was developed and first presented in (CITE PASC submission).
+This workflow was developed and first presented in Refs. :cite:t:`SandbergIPAC23,SandbergPASC24`.
 
 This assumes you have an up-to-date environment with PyTorch and openPMD.
 
@@ -148,8 +148,8 @@ In subsequent sections we discuss the various parts of the training process.
     .. literalinclude:: ml_materials/train.py
     :language: python3
 
-Training function
-^^^^^^^^^^^^^^
+Training Function
+^^^^^^^^^^^^^^^^^
 
 In the training function, the model weights are updated.
 Iterating through batches, the loss function is evaluated on each batch.
@@ -167,8 +167,8 @@ which is later divided by the size of the dataset in the training loop.
    :start-after: # Manual: Train function START
    :end-before: # Manual: Train function END
 
-Tesing function
-^^^^^^^^^^^^^
+Testing Function
+^^^^^^^^^^^^^^^^
 
 The testing function just evaluates the neural network on the testing data that has not been used
 to update the model parameters.
@@ -251,4 +251,4 @@ These figures can be generated with the following Python script.
 Reference ImpactX documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A neural network such as the one we trained here can be incorporated in other BLAST codes.
-Consider the example here (link to ImpactX) using neural networks in ImpactX.
+`Consider the example using neural networks in ImpactX <https://impactx.readthedocs.io/en/latest/usage/examples/pytorch_surrogate_model/README.html>`__.
