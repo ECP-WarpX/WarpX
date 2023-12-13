@@ -8,11 +8,10 @@
 # License: BSD-3-Clause-LBNL
 #
 import os
-
-import numpy as np
-import os
 import tarfile
 from urllib import request
+
+import numpy as np
 
 c = 2.998e8
 
