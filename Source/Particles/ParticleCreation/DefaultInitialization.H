@@ -170,13 +170,24 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 if (particle_comps.find(user_real_attribs[ia]) != particle_comps.end() &&
                     particle_comps.at(user_real_attribs[ia]) == j)
                 {
-                    amrex::ParticleReal xp, yp, zp;
                     const amrex::ParserExecutor<7> user_real_attrib_parserexec =
                                              user_real_attrib_parser[ia]->compile<7>();
-                    for (int ip = start; ip < stop; ++ip) {
-                        get_position(ip, xp, yp, zp);
-                        attr_ptr[ip] = user_real_attrib_parserexec(xp, yp, zp,
-                                                                   ux[ip], uy[ip], uz[ip], t);
+                    if constexpr (amrex::RunOnGpu<PTile::AllocatorType<amrex::Real>>::value) {
+                        amrex::ParallelFor(stop - start,
+                                           [=] AMREX_GPU_DEVICE (int i) noexcept {
+                                               int ip = i + start;
+                                               amrex::ParticleReal xp, yp, zp;
+                                               get_position(ip, xp, yp, zp);
+                                               attr_ptr[ip] = user_real_attrib_parserexec(xp, yp, zp,
+                                                                                          ux[ip], uy[ip], uz[ip], t);
+                                           });
+                    } else {
+                        for (int ip = start; ip < stop; ++ip) {
+                            amrex::ParticleReal xp, yp, zp;
+                            get_position(ip, xp, yp, zp);
+                            attr_ptr[ip] = user_real_attrib_parserexec(xp, yp, zp,
+                                                                       ux[ip], uy[ip], uz[ip], t);
+                        }
                     }
                 }
             }
