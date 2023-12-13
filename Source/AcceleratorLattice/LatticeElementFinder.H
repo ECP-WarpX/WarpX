@@ -72,8 +72,8 @@ struct LatticeElementFinder
      * @param[in] a_offset particle index offset needed to access particle info
      * @param[in] accelerator_lattice a reference to the accelerator lattice at the refinement level
      */
-    LatticeElementFinderDevice GetFinderDeviceInstance (WarpXParIter const& a_pti, int a_offset,
-                                                        AcceleratorLattice const& accelerator_lattice);
+    [[nodiscard]] LatticeElementFinderDevice GetFinderDeviceInstance (
+        WarpXParIter const& a_pti, int a_offset, AcceleratorLattice const& accelerator_lattice) const;
 
     /* The index lookup tables for each lattice element type */
     amrex::Gpu::DeviceVector<int> d_quad_indices;

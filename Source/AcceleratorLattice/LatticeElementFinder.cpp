@@ -78,7 +78,7 @@ LatticeElementFinder::UpdateIndices (int const lev, amrex::MFIter const& a_mfi,
 
 LatticeElementFinderDevice
 LatticeElementFinder::GetFinderDeviceInstance (WarpXParIter const& a_pti, int const a_offset,
-                                              AcceleratorLattice const& accelerator_lattice)
+                                              AcceleratorLattice const& accelerator_lattice) const
 {
     LatticeElementFinderDevice result;
     result.InitLatticeElementFinderDevice(a_pti, a_offset, accelerator_lattice, *this);

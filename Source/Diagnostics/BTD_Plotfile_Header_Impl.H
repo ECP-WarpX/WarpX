@@ -316,9 +316,9 @@ public:
     /** Reads the particle header file at m_Header_path and stores its data*/
     void ReadHeader ();
     /** Writes the meta-data of particle box array in header file, with path, m_Header_path*/
-    void WriteHeader ();
+    void WriteHeader () const;
     /** Returns the size of the box array, m_ba_size */
-    int ba_size () {return m_ba_size; }
+    [[nodiscard]] int ba_size () const {return m_ba_size; }
     /** Increases Box array size, m_ba_size, by add_size
      *  \param[in] add_size
      */
