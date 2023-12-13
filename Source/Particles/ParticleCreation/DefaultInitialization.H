@@ -112,8 +112,8 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                                          const std::vector<amrex::Parser*>& user_real_attrib_parser,
                                          const std::vector<amrex::Parser*>& user_int_attrib_parser,
 #ifdef WARPX_QED
-                                         QuantumSynchrotronEngine* p_qs_engine,
                                          BreitWheelerEngine* p_bw_engine,
+                                         QuantumSynchrotronEngine* p_qs_engine,
 #endif
                                          const int ionization_initial_level,
                                          const amrex::RandomEngine& engine)

@@ -404,6 +404,19 @@ public:
      */
     void defineAllParticleTiles () noexcept;
 
+    virtual std::vector<std::string> getUserIntAttribs () const { return std::vector<std::string>{}; }
+
+    virtual std::vector<std::string> getUserRealAttribs () const { return std::vector<std::string>{}; }
+
+    virtual amrex::Vector< amrex::Parser* > getUserIntAttribParser () const { return amrex::Vector<amrex::Parser*>{}; }
+
+    virtual amrex::Vector< amrex::Parser* > getUserRealAttribParser () const { return amrex::Vector<amrex::Parser*>{}; }
+
+#ifdef WARPX_QED
+    virtual BreitWheelerEngine* get_breit_wheeler_engine_ptr () const {return nullptr;}
+    virtual QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const {return nullptr;}
+#endif
+
 protected:
     int species_id;
 

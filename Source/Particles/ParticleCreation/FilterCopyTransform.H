@@ -8,6 +8,8 @@
 #ifndef FILTER_COPY_TRANSFORM_H_
 #define FILTER_COPY_TRANSFORM_H_
 
+#include "Particles/ParticleCreation/DefaultInitialization.H"
+
 #include <AMReX_GpuContainers.H>
 #include <AMReX_TypeTraits.H>
 
@@ -47,10 +49,11 @@
  *
  * \return num_added the number of particles that were written to dst.
  */
-template <int N, typename DstTile, typename SrcTile, typename Index,
+template <int N, typename DstPC, typename DstTile, typename SrcTile, typename Index,
           typename TransFunc, typename CopyFunc,
           amrex::EnableIf_t<std::is_integral<Index>::value, int> foo = 0>
-Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Index dst_index,
+Index filterCopyTransformParticles (DstPC& pc, DstTile& dst, SrcTile& src,
+                                    Index* mask, Index dst_index,
                                     CopyFunc&& copy, TransFunc&& transform) noexcept
 {
     using namespace amrex;
@@ -62,6 +65,17 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Ind
     auto total = amrex::Scan::ExclusiveSum(np, mask, offsets.data());
     const Index num_added = N * total;
     dst.resize(std::max(dst_index + num_added, dst.numParticles()));
+
+    ParticleCreation::DefaultInitializeRuntimeAttributes(dst,
+                                       0, 0,
+                                       pc.getUserRealAttribs(), pc.getUserIntAttribs(),
+                                       pc.getParticleComps(), pc.getParticleiComps(),
+                                       pc.getUserIntAttribParser(),
+                                       pc.getUserRealAttribParser(),
+                                       pc.get_breit_wheeler_engine_ptr(),
+                                       pc.get_quantum_sync_engine_ptr(),
+                                       0,
+                                       amrex::RandomEngine{});
 
     const auto p_offsets = offsets.dataPtr();
 
@@ -121,9 +135,9 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Ind
  *
  * \return num_added the number of particles that were written to dst.
  */
-template <int N, typename DstTile, typename SrcTile, typename Index,
+template <int N, typename DstPC, typename DstTile, typename SrcTile, typename Index,
           typename PredFunc, typename TransFunc, typename CopyFunc>
-Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
+Index filterCopyTransformParticles (DstPC& pc, DstTile& dst, SrcTile& src, Index dst_index,
                                     PredFunc&& filter, CopyFunc&& copy, TransFunc&& transform) noexcept
 {
     using namespace amrex;
@@ -142,9 +156,9 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
         p_mask[i] = filter(src_data, i, engine);
     });
 
-    return filterCopyTransformParticles<N>(dst, src, mask.dataPtr(), dst_index,
-                                                      std::forward<CopyFunc>(copy),
-                                                      std::forward<TransFunc>(transform));
+    return filterCopyTransformParticles<N>(pc, dst, src, mask.dataPtr(), dst_index,
+                                           std::forward<CopyFunc>(copy),
+                                           std::forward<TransFunc>(transform));
 }
 
 /**
@@ -188,10 +202,10 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
  *
  * \return num_added the number of particles that were written to dst.
  */
-template <int N, typename DstTile, typename SrcTile, typename Index,
+template <int N, typename DstPC, typename DstTile, typename SrcTile, typename Index,
           typename TransFunc, typename CopyFunc1, typename CopyFunc2,
           amrex::EnableIf_t<std::is_integral<Index>::value, int> foo = 0>
-Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, Index* mask,
+Index filterCopyTransformParticles (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTile& dst2, SrcTile& src, Index* mask,
                                     Index dst1_index, Index dst2_index,
                                     CopyFunc1&& copy1, CopyFunc2&& copy2,
                                     TransFunc&& transform) noexcept
@@ -206,6 +220,28 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
     const Index num_added = N * total;
     dst1.resize(std::max(dst1_index + num_added, dst1.numParticles()));
     dst2.resize(std::max(dst2_index + num_added, dst2.numParticles()));
+
+    ParticleCreation::DefaultInitializeRuntimeAttributes(dst1,
+                                       0, 0,
+                                       pc1.getUserRealAttribs(), pc1.getUserIntAttribs(),
+                                       pc1.getParticleComps(), pc1.getParticleiComps(),
+                                       pc1.getUserIntAttribParser(),
+                                       pc1.getUserRealAttribParser(),
+                                       pc1.get_breit_wheeler_engine_ptr(),
+                                       pc1.get_quantum_sync_engine_ptr(),
+                                       0,
+                                       amrex::RandomEngine{});
+
+    ParticleCreation::DefaultInitializeRuntimeAttributes(dst2,
+                                       0, 0,
+                                       pc2.getUserRealAttribs(), pc2.getUserIntAttribs(),
+                                       pc2.getParticleComps(), pc2.getParticleiComps(),
+                                       pc2.getUserIntAttribParser(),
+                                       pc2.getUserRealAttribParser(),
+                                       pc2.get_breit_wheeler_engine_ptr(),
+                                       pc2.get_quantum_sync_engine_ptr(),
+                                       0,
+                                       amrex::RandomEngine{});
 
     auto p_offsets = offsets.dataPtr();
 
@@ -276,9 +312,9 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
  *
  * \return num_added the number of particles that were written to dst.
  */
-template <int N, typename DstTile, typename SrcTile, typename Index,
+template <int N, typename DstPC, typename DstTile, typename SrcTile, typename Index,
           typename PredFunc, typename TransFunc, typename CopyFunc1, typename CopyFunc2>
-Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src,
+Index filterCopyTransformParticles (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTile& dst2, SrcTile& src,
                                     Index dst1_index, Index dst2_index,
                                     PredFunc&& filter, CopyFunc1&& copy1, CopyFunc2&& copy2,
                                     TransFunc&& transform) noexcept
@@ -299,7 +335,7 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src,
         p_mask[i] = filter(src_data, i, engine);
     });
 
-    return filterCopyTransformParticles<N>(dst1, dst2, src, mask.dataPtr(),
+    return filterCopyTransformParticles<N>(pc1, pc2, dst1, dst2, src, mask.dataPtr(),
                                         dst1_index, dst2_index,
                                         std::forward<CopyFunc1>(copy1),
                                         std::forward<CopyFunc2>(copy2),

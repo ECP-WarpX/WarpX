@@ -501,7 +501,7 @@ void BackgroundMCCCollision::doBackgroundIonization
                                                        m_mass1, sqrt_kb_m, m_background_temperature_func, t
                                                        );
 
-        const auto num_added = filterCopyTransformParticles<1>(
+        const auto num_added = filterCopyTransformParticles<1>(species1, species2,
                                                                elec_tile, ion_tile, elec_tile, np_elec, np_ion,
                                                                Filter, CopyElec, CopyIon, Transform
                                                                );

@@ -353,10 +353,34 @@ public:
         (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
     //__________
 
+    BreitWheelerEngine* get_breit_wheeler_engine_ptr () const {
+        return m_shr_p_bw_engine.get();
+    }
+
+    QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const {
+        return m_shr_p_qs_engine.get();
+    }
+
     PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
 
     PairGenerationFilterFunc getPairGenerationFilterFunc ();
 #endif
+
+    std::vector<std::string> getUserIntAttribs () const override {
+        return m_user_int_attribs;
+    }
+
+    std::vector<std::string> getUserRealAttribs () const override {
+        return m_user_real_attribs;
+    }
+
+    amrex::Vector< amrex::Parser* > getUserIntAttribParser () const override {
+        return GetVecOfPtrs(m_user_int_attrib_parser);
+    }
+
+    amrex::Vector< amrex::Parser* > getUserRealAttribParser () const override {
+        return GetVecOfPtrs(m_user_real_attrib_parser);
+    }
 
 protected:
     std::string species_name;

@@ -787,8 +787,8 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                                        particle_comps, particle_icomps,
                                        amrex::GetVecOfPtrs(m_user_real_attrib_parser),
                                        amrex::GetVecOfPtrs(m_user_int_attrib_parser),
-                                       m_shr_p_qs_engine.get(),
                                        m_shr_p_bw_engine.get(),
+                                       m_shr_p_qs_engine.get(),
                                        ionization_initial_level,
                                        engine);
 }
