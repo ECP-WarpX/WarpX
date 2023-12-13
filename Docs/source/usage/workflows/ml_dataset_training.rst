@@ -236,7 +236,7 @@ This plot compares the model prediction, with dots colored by mean-square error,
 
 The model obtained with the hyperparameters chosen here trains quickly but is not very accurate.
 A more accurate model is obtained with 5 hidden layers and 800 nodes per layer,
-as discussed in (reference PASC).
+as discussed in :cite:t:`SandbergPASC24`.
 
 These figures can be generated with the following Python script.
 
@@ -248,7 +248,9 @@ These figures can be generated with the following Python script.
     .. literalinclude:: ml_materials/visualize.py
        :language: python3
 
-Reference ImpactX Documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Surrogate Usage in Accelerator Physics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 A neural network such as the one we trained here can be incorporated in other BLAST codes.
 `Consider the example using neural networks in ImpactX <https://impactx.readthedocs.io/en/latest/usage/examples/pytorch_surrogate_model/README.html>`__.
