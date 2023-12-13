@@ -142,7 +142,7 @@ public:
                                        pc_products[i]->getUserRealAttribParser(),
                                        pc_products[i]->get_breit_wheeler_engine_ptr(),
                                        pc_products[i]->get_quantum_sync_engine_ptr(),
-                                       0,
+                                       pc_products[i]->getIonizationInitialLevel(),
                                        amrex::RandomEngine{});
         }
 

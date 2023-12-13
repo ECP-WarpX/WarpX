@@ -96,7 +96,7 @@ Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2,
                                        pc1.getUserRealAttribParser(),
                                        pc1.get_breit_wheeler_engine_ptr(),
                                        pc1.get_quantum_sync_engine_ptr(),
-                                       0,
+                                       pc1.getIonizationInitialLevel(),
                                        amrex::RandomEngine{});
 
     ParticleCreation::DefaultInitializeRuntimeAttributes(dst2,
@@ -107,7 +107,7 @@ Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2,
                                        pc2.getUserRealAttribParser(),
                                        pc2.get_breit_wheeler_engine_ptr(),
                                        pc2.get_quantum_sync_engine_ptr(),
-                                       0,
+                                       pc2.getIonizationInitialLevel(),
                                        amrex::RandomEngine{});
 
     auto p_offsets = offsets.dataPtr();

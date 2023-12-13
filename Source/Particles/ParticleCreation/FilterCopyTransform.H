@@ -74,7 +74,7 @@ Index filterCopyTransformParticles (DstPC& pc, DstTile& dst, SrcTile& src,
                                        pc.getUserRealAttribParser(),
                                        pc.get_breit_wheeler_engine_ptr(),
                                        pc.get_quantum_sync_engine_ptr(),
-                                       0,
+                                       pc.getIonizationInitialLevel(),
                                        amrex::RandomEngine{});
 
     const auto p_offsets = offsets.dataPtr();
@@ -229,7 +229,7 @@ Index filterCopyTransformParticles (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTi
                                        pc1.getUserRealAttribParser(),
                                        pc1.get_breit_wheeler_engine_ptr(),
                                        pc1.get_quantum_sync_engine_ptr(),
-                                       0,
+                                       pc1.getIonizationInitialLevel(),
                                        amrex::RandomEngine{});
 
     ParticleCreation::DefaultInitializeRuntimeAttributes(dst2,
@@ -240,7 +240,7 @@ Index filterCopyTransformParticles (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTi
                                        pc2.getUserRealAttribParser(),
                                        pc2.get_breit_wheeler_engine_ptr(),
                                        pc2.get_quantum_sync_engine_ptr(),
-                                       0,
+                                       pc2.getIonizationInitialLevel(),
                                        amrex::RandomEngine{});
 
     auto p_offsets = offsets.dataPtr();
