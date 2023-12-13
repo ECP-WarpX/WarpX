@@ -1,4 +1,10 @@
-
+#!/usr/bin/env python3
+#
+# Copyright 2022-2023 WarpX contributors
+# Authors: Ryan Sandberg, Axel Huebl
+# License: BSD-3-Clause-LBNL
+#
+# -*- coding: utf-8 -*-
 
 import os
 import time
@@ -33,7 +39,7 @@ activation_type = 'ReLU'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'device={device}')
 #################### load dataset ################
-dataset_filename = f'dataset_species_{species}_source_ind_{source_index}_target_index_{target_index}_select_index_{survivor_select_index}_improved.pt'
+dataset_filename = f'dataset_{species}.pt'
 dataset_file = 'datasets/' + dataset_filename
 
 print(f"trying to load dataset+test-train split in {dataset_file}")

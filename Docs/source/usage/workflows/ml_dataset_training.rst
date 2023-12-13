@@ -1,6 +1,6 @@
 .. _ml_dataset_training:
 
-Training a surrogate model from WarpX data
+Training a Surrogate model from WarpX data
 ==========================================
 
 Suppose we have a WarpX simulation that we wish to replace with a neural network surrogate model.
@@ -27,7 +27,7 @@ check that input/output data make sense.
 If we plot the final phase space for beams 1-8,
 the particle data is distributed in a single blob.
 
-.. figure:: ml_materials/stage_1_final_beam.png
+.. figure:: https://user-images.githubusercontent.com/10621396/290010209-c55baf1c-dd98-4d56-a675-ad3729481eee.png
    :alt: [fig:stage_1_final_beam] Plot comparing model prediction with simulation output.
 
    [fig:stage_1_final_beam] Plot showing the final phase space projections of the training data for stage 1.
@@ -35,7 +35,7 @@ the particle data is distributed in a single blob.
 This is as we expect and what is optimal for training neural networks.
 On the other hand, the final phase space for beam 0 has a halo of outlying particles.
 
-.. figure:: ml_materials/stage_0_final_beam.png
+.. figure:: https://user-images.githubusercontent.com/10621396/290010282-40560ac4-8509-4599-82ca-167bb1739cff.png
    :alt: [fig:stage_0_final_beam] Plot comparing model prediction with simulation output.
 
    [fig:stage_0_final_beam] Plot showing the final phase space projections of the training data for stage 1.
@@ -221,7 +221,7 @@ The testing error serves as a metric of model generalizability, indicating how w
 on data it hasn't seen yet.
 When the test-loss starts to trend flat or even upward, the neural network is no longer improving its ability to generalize to new data.
 
-.. figure:: ml_materials/beam_stage_0_training_testing_error.png
+.. figure:: https://user-images.githubusercontent.com/10621396/290010428-f83725ab-a08f-494c-b075-314b0d26cb9a.png
    :alt: [fig:train_test_loss] Plot of training and testing loss curves
 
    [fig:train_test_loss] Plot of training (in blue) and testing (in green) loss curves versus number of training epochs.
@@ -229,7 +229,7 @@ When the test-loss starts to trend flat or even upward, the neural network is no
 A visual inspection of the model prediction can be seen in Fig. `[fig:train_evaluation]` .
 This plot compares the model prediction, with dots colored by mean-square error, on the testing data with the actual simulation output in black.
 
-.. figure:: ml_materials/beam_stage_0_model_evaluation.png
+.. figure:: https://user-images.githubusercontent.com/10621396/290010486-4a3541e7-e0be-4cf1-b33b-57d5e5985196.png
    :alt: [fig:train_evaluation] Plot comparing model prediction with simulation output.
 
    [fig:train_evaluation] Plot comparing model prediction (yellow-red dots, colored by mean-squared error) with simulation output (black dots).

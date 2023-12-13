@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+#
+# Copyright 2022-2023 WarpX contributors
+# Authors: Ryan Sandberg, Axel Huebl
+# License: BSD-3-Clause-LBNL
+#
+# -*- coding: utf-8 -*-
 
 from matplotlib import pyplot as plt
 import neural_network_classes as mynn
@@ -60,14 +67,7 @@ model.load_state_dict(model_data['model_state_dict'])
 model.to(device=device);
 
 ###### load model data ###############
-source_index = 0
-target_index = 4
-survivor_select_index = 4
-dataset_filename = f'dataset_species_{species}_source_ind_{source_index}_target_index_{target_index}_select_index_{survivor_select_index}'
-if stage_i == 0:
-    dataset_filename += '_improved.pt'
-else:
-    dataset_filename += '.pt'
+dataset_filename = f'dataset_{species}.pt'
 dataset_dir = 'datasets/'
 model_input_data = torch.load(dataset_dir + dataset_filename)
 dataset = model_input_data['dataset']

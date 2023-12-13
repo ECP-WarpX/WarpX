@@ -1,7 +1,13 @@
+#!/usr/bin/env python3
+#
+# Copyright 2022-2023 WarpX contributors
+# Authors: Ryan Sandberg, Axel Huebl
+# License: BSD-3-Clause-LBNL
+#
+# -*- coding: utf-8 -*-
 
 from enum import Enum
 
-import torch
 from torch import nn
 
 

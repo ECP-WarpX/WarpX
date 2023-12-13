@@ -1,7 +1,15 @@
-
-import os
+#!/usr/bin/env python3
+#
+# Copyright 2022-2023 WarpX contributors
+# Authors: Ryan Sandberg, Axel Huebl
+# License: BSD-3-Clause-LBNL
+#
+# -*- coding: utf-8 -*-
 
 import numpy as np
+import os
+import tarfile
+from urllib import request
 
 c = 2.998e8
 
@@ -19,6 +27,11 @@ def sanitize_dir_strings(*dir_strings):
             dir_strings[ii] = dir_string + '/'
 
     return dir_strings
+
+def download_and_unzip(url, data_dir):
+  request.urlretrieve(url, data_dir)
+  with tarfile.open(data_dir) as tar_dataset:
+      tar_dataset.extractall()
 
 def create_source_target_data(data_dir,
                               species,
@@ -146,25 +159,26 @@ def save_warpx_surrogate_data(dataset_fullpath_filename,
 ######## end utility functions #############
 ######## start dataset creation ############
 
-data_dir = '../../01_ldrd_mlai/ImpactX-ML-LDRD-project/Simulations_models/'
-data_dir += 'WarpX/30_3d_9_stages/04_setup_training/'
-data_dir += 'lab_particle_diags/lab_particle_diags/'
+data_url = "https://zenodo.org/records/10368972/files/ml_example_training.tar.gz?download=1"
+download_and_unzip(data_url, "training_dataset.tar.gz")
+data_dir = "lab_particle_diags/lab_particle_diags/"
+
 
 # create data set
 
 source_index = 0
-target_index = 4
-survivor_select_index = 4
+target_index = 1
+survivor_select_index = 1
 batch_size=1200
 training_frac = 0.7
 
 os.makedirs('datasets', exist_ok=True)
 
 # improve stage 0 dataset
-ii = 0
+stage_i = 0
 select = {'z':[0.28002, None]}
-species = f'beam_stage_{ii}'
-dataset_filename = f'dataset_species_{species}_source_ind_{source_index}_target_index_{target_index}_select_index_{survivor_select_index}_improved.pt'
+species = f'beam_stage_{stage_i}'
+dataset_filename = f'dataset_{species}.pt'
 dataset_file = 'datasets/' + dataset_filename
 save_warpx_surrogate_data(dataset_fullpath_filename=dataset_file,
                 diag_dir=data_dir,
@@ -177,9 +191,9 @@ save_warpx_surrogate_data(dataset_fullpath_filename=dataset_file,
                 particle_selection=select
                )
 
-for ii in range(1,9):
-    species = f'beam_stage_{ii}'
-    dataset_filename = f'dataset_species_{species}_source_ind_{source_index}_target_index_{target_index}_select_index_{survivor_select_index}.pt'
+for stage_i in range(1,9):
+    species = f'beam_stage_{stage_i}'
+    dataset_filename = f'dataset_{species}.pt'
     dataset_file = 'datasets/' + dataset_filename
     save_warpx_surrogate_data(dataset_fullpath_filename=dataset_file,
                     diag_dir=data_dir,
