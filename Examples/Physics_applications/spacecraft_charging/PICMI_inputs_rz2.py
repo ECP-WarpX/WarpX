@@ -192,10 +192,10 @@ e_dist2 = picmi.UniformFluxDistribution(
     flux_direction=-1, flux_normal_axis='r',
     gaussian_flux_momentum_distribution=True,
     rms_velocity=[v_eth, v_eth, v_eth] )
-electrons = picmi.Species(particle_type='electron', 
+electrons = picmi.Species(particle_type='electron',
                           name='electrons',
-                          initial_distribution=[e_dist,e_dist2], 
-                          warpx_save_particles_at_eb=1, 
+                          initial_distribution=[e_dist,e_dist2],
+                          warpx_save_particles_at_eb=1,
                           warpx_radially_weighted=True)
 
 
@@ -207,10 +207,10 @@ p_dist2 = picmi.UniformFluxDistribution(
     flux_direction=-1, flux_normal_axis='r',
     gaussian_flux_momentum_distribution=True,
     rms_velocity=[v_pth, v_pth, v_pth] )
-protons = picmi.Species(particle_type='proton', 
-                        name='protons', 
-                        initial_distribution=[p_dist,p_dist2], 
-                        warpx_save_particles_at_eb=1, 
+protons = picmi.Species(particle_type='proton',
+                        name='protons',
+                        initial_distribution=[p_dist,p_dist2],
+                        warpx_save_particles_at_eb=1,
                         warpx_radially_weighted=True)
 
 
