@@ -102,19 +102,20 @@ struct FindBoundaryIntersection {
                 return phi_value;
             } );
             // Record the corresponding position
+       
     #if (defined WARPX_DIM_3D)
-            p.pos(0) = x_temp;
-            p.pos(1) = y_temp;
-            p.pos(2) = z_temp;
+            p.pos(0) < x_temp;
+            p.pos(1) < y_temp;
+            p.pos(2) < z_temp;
     #elif (defined WARPX_DIM_XZ)
-            p.pos(0) = x_temp;
-            p.pos(1) = z_temp;
+            p.pos(0) < x_temp;
+            p.pos(1) < z_temp;
     #elif (defined WARPX_DIM_RZ)
-            p.pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
+            p.pos(0) < std::sqrt(x_temp*x_temp + y_temp*y_temp);
             // Note: this fails to change the angle theta of the particle
-            p.pos(1) = z_temp;
+            p.pos(1) < z_temp;
     #elif (defined WARPX_DIM_1D_Z)
-            p.pos(0) = z_temp;
+            p.pos(0) < z_temp;
     #endif
     }
 };
