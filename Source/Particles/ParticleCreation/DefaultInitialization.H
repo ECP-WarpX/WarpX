@@ -165,7 +165,7 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                         amrex::ParallelForRNG(stop - start,
                                               [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept {
                                                   int ip = i + start;
-                                                  attr_ptr[ip] = breit_wheeler_get_opt(amrex::RandomEngine{});
+                                                  attr_ptr[ip] = breit_wheeler_get_opt(engine);
                                               });
                 } else {
                     for (int ip = start; ip < stop; ++ip) {
