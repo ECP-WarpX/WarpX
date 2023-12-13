@@ -7,12 +7,12 @@ Suppose we have a WarpX simulation that we wish to replace with a neural network
 For example, a simulation determined by the following input script
 
 .. dropdown:: Python Input for Training Simulation
-    :color: light
-    :icon: info
-    :animate: fade-in-slide-down
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
 
     .. literalinclude:: ml_materials/run_warpx_training.py
-    :language: python3
+       :language: python
 
 In this section we walk through a workflow for data processing and model training.
 This workflow was developed and first presented in Refs. :cite:t:`SandbergIPAC23,SandbergPASC24`.
@@ -28,17 +28,17 @@ If we plot the final phase space for beams 1-8,
 the particle data is distributed in a single blob.
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290010209-c55baf1c-dd98-4d56-a675-ad3729481eee.png
-   :alt: [fig:stage_1_final_beam] Plot comparing model prediction with simulation output.
+   :alt: Plot comparing model prediction with simulation output.
 
-   [fig:stage_1_final_beam] Plot showing the final phase space projections of the training data for stage 1.
+   Plot showing the final phase space projections of the training data for stage 1.
 
 This is as we expect and what is optimal for training neural networks.
 On the other hand, the final phase space for beam 0 has a halo of outlying particles.
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290010282-40560ac4-8509-4599-82ca-167bb1739cff.png
-   :alt: [fig:stage_0_final_beam] Plot comparing model prediction with simulation output.
+   :alt: Plot comparing model prediction with simulation output.
 
-   [fig:stage_0_final_beam] Plot showing the final phase space projections of the training data for stage 1.
+   Plot showing the final phase space projections of the training data for stage 1.
 
 Looking closer at the z-pz space, we see that some particles got caught in a decelerating
 region of the wake, have slipped back and are much slower than the rest of the beam.
@@ -48,7 +48,7 @@ It is sufficient for our purposes to select particles that are not too far back,
 we consistently filter out these particles from both the initial and final data.
 
 .. literalinclude:: ml_materials/create_dataset.py
-   :language: python3
+   :language: python
    :dedent: 4
    :start-after: # Manual: Particle tracking START
    :end-before: # Manual: Particle tracking END
@@ -62,12 +62,12 @@ The script below will take the openPMD data we have selected and
 format, normalize, and store it.
 
 .. dropdown:: Python dataset creation
-    :color: light
-    :icon: info
-    :animate: fade-in-slide-down
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
 
     .. literalinclude:: ml_materials/create_dataset.py
-    :language: python3
+       :language: python
 
 Load openPMD Data
 ^^^^^^^^^^^^^^^^^
@@ -78,7 +78,7 @@ using the final phase space coordinates to measure how well it is making predict
 Hence we load two sets of particle data, the source and target particle arrays.
 
 .. literalinclude:: ml_materials/create_dataset.py
-   :language: python3
+   :language: python
    :dedent: 4
    :start-after: # Manual: Load openPMD START
    :end-before: # Manual: Load openPMD END
@@ -92,7 +92,7 @@ divide by the standard deviation in each coordinate direction,
 for normalized data that is centered on the origin with unit variance.
 
 .. literalinclude:: ml_materials/create_dataset.py
-   :language: python3
+   :language: python
    :dedent: 4
    :start-after: # Manual: Normalization START
    :end-before: # Manual: Normalization END
@@ -106,7 +106,7 @@ The openPMD data are 6 lists of arrays, for each of the 6 phase space coordinate
 This data are converted to an :math:`N\times 6` numpy array and then to a PyTorch :math:`N\times 6` tensor.
 
 .. literalinclude:: ml_materials/create_dataset.py
-   :language: python3
+   :language: python
    :dedent: 4
    :start-after: # Manual: Format data START
    :end-before: # Manual: Format data END
@@ -118,7 +118,7 @@ With the data properly normalized, it and the normalizations are saved to file f
 use in training and inference.
 
 .. literalinclude:: ml_materials/create_dataset.py
-   :language: python3
+   :language: python
    :dedent: 4
    :start-after: # Manual: Save dataset START
    :end-before: # Manual: Save dataset END
@@ -141,12 +141,12 @@ The script below trains the neural network on the dataset just created.
 In subsequent sections we discuss the various parts of the training process.
 
 .. dropdown:: Python neural network training
-    :color: light
-    :icon: info
-    :animate: fade-in-slide-down
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
 
     .. literalinclude:: ml_materials/train.py
-    :language: python3
+       :language: python3
 
 Training Function
 ^^^^^^^^^^^^^^^^^
@@ -163,7 +163,7 @@ Note that this function returns the sum of all errors across the entire dataset,
 which is later divided by the size of the dataset in the training loop.
 
 .. literalinclude:: ml_materials/train.py
-   :language: python3
+   :language: python
    :start-after: # Manual: Train function START
    :end-before: # Manual: Train function END
 
@@ -179,7 +179,7 @@ Note that this function returns the sum of all errors across the entire dataset,
 which is later divided by the size of the dataset in the training loop.
 
 .. literalinclude:: ml_materials/train.py
-   :language: python3
+   :language: python
    :start-after: # Manual: Test function START
    :end-before: # Manual: Test function END
 
@@ -192,7 +192,7 @@ the respective errors are divided by the size of the dataset and recorded,
 and a status update is printed to the console.
 
 .. literalinclude:: ml_materials/train.py
-   :language: python3
+   :language: python
    :start-after: # Manual: Training loop START
    :end-before: # Manual: Training loop END
 
@@ -204,7 +204,7 @@ Addtionally, we save some model metainformation with the model for convenience,
 including the model hyperparameters, the training and testing losses, and how long the training took.
 
 .. literalinclude:: ml_materials/train.py
-   :language: python3
+   :language: python
    :start-after: # Manual: Save model START
    :end-before: # Manual: Save model END
 
@@ -222,17 +222,17 @@ on data it hasn't seen yet.
 When the test-loss starts to trend flat or even upward, the neural network is no longer improving its ability to generalize to new data.
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290010428-f83725ab-a08f-494c-b075-314b0d26cb9a.png
-   :alt: [fig:train_test_loss] Plot of training and testing loss curves
+   :alt: Plot of training and testing loss curves
 
-   [fig:train_test_loss] Plot of training (in blue) and testing (in green) loss curves versus number of training epochs.
+   Plot of training (in blue) and testing (in green) loss curves versus number of training epochs.
 
 A visual inspection of the model prediction can be seen in Fig. `[fig:train_evaluation]` .
 This plot compares the model prediction, with dots colored by mean-square error, on the testing data with the actual simulation output in black.
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290010486-4a3541e7-e0be-4cf1-b33b-57d5e5985196.png
-   :alt: [fig:train_evaluation] Plot comparing model prediction with simulation output.
+   :alt: Plot comparing model prediction with simulation output.
 
-   [fig:train_evaluation] Plot comparing model prediction (yellow-red dots, colored by mean-squared error) with simulation output (black dots).
+   Plot comparing model prediction (yellow-red dots, colored by mean-squared error) with simulation output (black dots).
 
 The model obtained with the hyperparameters chosen here trains quickly but is not very accurate.
 A more accurate model is obtained with 5 hidden layers and 800 nodes per layer,
@@ -241,12 +241,12 @@ as discussed in (reference PASC).
 These figures can be generated with the following Python script.
 
 .. dropdown:: Python visualization of progress training neural network
-    :color: light
-    :icon: info
-    :animate: fade-in-slide-down
+   :color: light
+   :icon: info
+   :animate: fade-in-slide-down
 
     .. literalinclude:: ml_materials/visualize.py
-    :language: python3
+       :language: python3
 
 Reference ImpactX Documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
