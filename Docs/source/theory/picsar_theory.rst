@@ -764,7 +764,7 @@ Pukhov, A. 1999. “Three-dimensional electromagnetic relativistic particle-in-c
 
 .. raw:: html
 
-   <div id="ref-VayJCP13">
+   <div id="ref-VayJCP2013">
 
 Vay, Jean-Luc, Irving Haber, and Brendan B Godfrey. 2013. “A domain decomposition method for pseudo-spectral electromagnetic simulations of plasmas.” *Journal of Computational Physics* 243 (June): 260–68. https://doi.org/10.1016/j.jcp.2013.03.010.
 
