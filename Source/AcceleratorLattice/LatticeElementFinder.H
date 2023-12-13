@@ -89,7 +89,7 @@ struct LatticeElementFinder
      */
     void setup_lattice_indices (amrex::Gpu::DeviceVector<amrex::ParticleReal> const & zs,
                                 amrex::Gpu::DeviceVector<amrex::ParticleReal> const & ze,
-                                amrex::Gpu::DeviceVector<int> & indices)
+                                amrex::Gpu::DeviceVector<int> & indices) const
     {
 
         using namespace amrex::literals;

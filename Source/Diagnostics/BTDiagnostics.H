@@ -275,7 +275,7 @@ private:
       * \param[in] t_lab   lab-frame time of the snapshot
       * \param[in] t_boost boosted-frame time at level, lev
       */
-    amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
+    amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost) const
     {
         const amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
         return current_z_boost;
@@ -284,7 +284,7 @@ private:
       * \param[in] t_lab   lab-frame time of the snapshot
       * \param[in] t_boost boosted-frame time at level, lev
       */
-    amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost)
+    amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost) const
     {
         const amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
         return current_z_lab;
@@ -294,7 +294,7 @@ private:
      *  \param[in] ref_ratio  refinement ratio in the z-direction at level, lev-1.
      *             The ref-ratio in the z-direction for single-level diagnostics is 1.
      */
-    amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio);
+    amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio) const;
     /** Compute k-index corresponding to current lab-frame z co-ordinate (m_current_z_lab)
      *  for the ith buffer i_buffer, and at level, lev.
      * \param[in] i_buffer snapshot index

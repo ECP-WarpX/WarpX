@@ -88,7 +88,7 @@ AcceleratorLattice::InitElementFinder (int const lev, amrex::BoxArray const & ba
 }
 
 void
-AcceleratorLattice::UpdateElementFinder (int const lev)
+AcceleratorLattice::UpdateElementFinder (int const lev) const
 {
     if (m_lattice_defined) {
         for (amrex::MFIter mfi(*m_element_finder); mfi.isValid(); ++mfi)
