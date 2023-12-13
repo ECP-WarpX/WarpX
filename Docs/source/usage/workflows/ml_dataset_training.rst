@@ -15,7 +15,7 @@ For example, a simulation determined by the following input script
        :language: python
 
 In this section we walk through a workflow for data processing and model training.
-This workflow was developed and first presented in Refs. :cite:t:`SandbergIPAC23,SandbergPASC24`.
+This workflow was developed and first presented in Refs. :cite:p:`SandbergIPAC23,SandbergPASC24`.
 
 This assumes you have an up-to-date environment with PyTorch and openPMD.
 
