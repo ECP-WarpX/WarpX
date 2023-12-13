@@ -100,6 +100,7 @@ public:
     amrex::Vector<int> operator() (
                     const index_type& n_total_pairs,
                     const SoaData_type& soa_1, const SoaData_type& soa_2,
+                    const amrex::Vector<WarpXParticleContainer*>& pc_products,
                     ParticleTileType** AMREX_RESTRICT tile_products,
                     ParticleType* particle_ptr_1, ParticleType*  particle_ptr_2,
                     const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
@@ -132,6 +133,17 @@ public:
             const index_type num_added = total * m_num_products_host[i] * 2;
             num_added_vec[i] = static_cast<int>(num_added);
             tile_products[i]->resize(products_np[i] + num_added);
+
+            ParticleCreation::DefaultInitializeRuntimeAttributes(*tile_products[i],
+                                       0, 0,
+                                       pc_products[i]->getUserRealAttribs(), pc_products[i]->getUserIntAttribs(),
+                                       pc_products[i]->getParticleComps(), pc_products[i]->getParticleiComps(),
+                                       pc_products[i]->getUserIntAttribParser(),
+                                       pc_products[i]->getUserRealAttribParser(),
+                                       pc_products[i]->get_breit_wheeler_engine_ptr(),
+                                       pc_products[i]->get_quantum_sync_engine_ptr(),
+                                       0,
+                                       amrex::RandomEngine{});
         }
 
         amrex::ParticleReal* AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
@@ -289,6 +301,7 @@ public:
     amrex::Vector<int> operator() (
                     const index_type& /*n_total_pairs*/,
                     const SoaData_type& /*soa_1*/, const SoaData_type& /*soa_2*/,
+                    amrex::Vector<WarpXParticleContainer*>& /*pc_products*/,
                     ParticleTileType** /*tile_products*/,
                     ParticleType* /*particle_ptr_1*/, ParticleType* /*particle_ptr_2*/,
                     const amrex::ParticleReal& /*m1*/, const amrex::ParticleReal& /*m2*/,
