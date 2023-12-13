@@ -45,13 +45,13 @@ struct IsOutsideDomainBoundary {
 };
 
 struct FindBoundaryIntersection {
-    int m_index;
-    int m_step;
-    amrex::Real m_dt;
+    const int m_index;
+    const int m_step;
+    const amrex::Real m_dt;
     amrex::Array4<const amrex::Real> m_phiarr;
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& m_dxi;
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& m_plo;
-    const double* const m_ux, m_uy, m_uz;
+    const amrex::ParticleReal m_ux, m_uy, m_uz;
     //int m_ip;
     
 
@@ -424,10 +424,19 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 //const amrex::ParticleReal* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
                 //const amrex::ParticleReal* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
                 //const amrex::ParticleReal* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-                auto& soa = ptile.GetStructOfArrays();
-                const auto ux = soa.GetRealData(PIdx::ux).data();
-                const auto uy = soa.GetRealData(PIdx::uy).data();
-                const auto uz = soa.GetRealData(PIdx::uz).data();    
+                
+                auto attribs = pti.GetStructOfArrays().GetRealData();
+                auto ux = attribs[PIdx::ux].dataPtr();
+                auto uy = attribs[PIdx::uy].dataPtr();
+                auto uz = attribs[PIdx::uz].dataPtr();
+                
+                //auto& soa = ptile.GetStructOfArrays();
+                //amrex::ParticleReal ux = soa.GetRealData(PIdx::ux).data();
+                //amrex::ParticleReal uy = soa.GetRealData(PIdx::uy).data();
+                //amrex::ParticleReal uz = soa.GetRealData(PIdx::uz).data(); 
+                //auto ux_value = ux;
+                //auto uy_value = uy;
+                //auto uz_value = uz;
                     
                 amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
                 amrex::ReduceData<int> reduce_data(reduce_op);
@@ -450,7 +459,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
-                                                     FindBoundaryIntersection{timestamp_index, timestep, dt, phiarr, dxi, plo, ux, uy, uz}, 0, dst_index);
+                                                     FindBoundaryIntersection{timestamp_index, timestep, dt, phiarr, dxi, plo, *ux, *uy, *uz}, 0, dst_index);
                 }
             }
         }
