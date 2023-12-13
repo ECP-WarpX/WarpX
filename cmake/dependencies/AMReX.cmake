@@ -87,6 +87,7 @@ macro(find_amrex)
         set(AMReX_PARTICLES ON CACHE INTERNAL "")
         set(AMReX_PROBINIT OFF CACHE INTERNAL "")
         set(AMReX_TINY_PROFILE ON CACHE BOOL "")
+        set(AMReX_OPENPMD_API ON CACHE BOOL "")
 
         if(WarpX_ASCENT OR WarpX_SENSEI)
             set(AMReX_GPU_RDC ON CACHE BOOL "")

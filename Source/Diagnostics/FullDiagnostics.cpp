@@ -86,7 +86,7 @@ FullDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" ||
         m_format == "checkpoint" || m_format == "ascent" ||
-        m_format == "sensei",
+        m_format == "sensei" || m_format == "plotplus",
         "<diag>.format must be plotfile or openpmd or checkpoint or ascent or sensei");
     std::vector<std::string> intervals_string_vec = {"0"};
     pp_diag_name.getarr("intervals", intervals_string_vec);
@@ -602,7 +602,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
 {
 #ifdef WARPX_DIM_RZ
     // For RZ, with openPMD, we need a special initialization instead
-    if (m_format == "openpmd") {
+    if ( (m_format == "openpmd") || (m_format == "plotplus") ) {
         InitializeFieldFunctorsRZopenPMD(lev);
         return; // We skip the rest of this function
     }

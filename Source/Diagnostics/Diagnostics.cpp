@@ -10,6 +10,8 @@
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
 #include "FlushFormats/FlushFormatPlotfile.H"
+//   possibly find a flag for PlotPlus?
+#include "FlushFormats/FlushFormatPlotPlus.H"
 #include "FlushFormats/FlushFormatSensei.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Algorithms/IsIn.H"
@@ -476,6 +478,8 @@ Diagnostics::InitBaseData ()
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = std::make_unique<FlushFormatPlotfile>() ;
+    } else if (m_format == "plotplus"){
+        m_flush_format = std::make_unique<FlushFormatPlotPlus>() ;
     } else if (m_format == "checkpoint"){
         // creating checkpoint format
         m_flush_format = std::make_unique<FlushFormatCheckpoint>() ;
