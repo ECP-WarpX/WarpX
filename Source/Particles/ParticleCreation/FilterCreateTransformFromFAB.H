@@ -98,7 +98,7 @@ Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2,
                                        pc1.get_breit_wheeler_engine_ptr(),
                                        pc1.get_quantum_sync_engine_ptr(),
                                        pc1.getIonizationInitialLevel(),
-                                       amrex::RandomEngine{}, old_np1, new_np1);
+                                       old_np1, new_np1);
 
     auto old_np2 = dst2.size();
     auto new_np2 = std::max(dst2_index + num_added, dst2.numParticles());
@@ -112,7 +112,7 @@ Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2,
                                        pc2.get_breit_wheeler_engine_ptr(),
                                        pc2.get_quantum_sync_engine_ptr(),
                                        pc2.getIonizationInitialLevel(),
-                                       amrex::RandomEngine{}, old_np2, new_np2);
+                                       old_np2, new_np2);
 
     auto p_offsets = offsets.dataPtr();
 

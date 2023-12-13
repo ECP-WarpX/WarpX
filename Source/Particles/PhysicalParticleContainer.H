@@ -255,8 +255,7 @@ public:
                                         NArrayReal, NArrayInt,
                                         amrex::PinnedArenaAllocator>& pinned_tile,
                     int n_external_attr_real,
-                    int n_external_attr_int,
-                    const amrex::RandomEngine& engine) final;
+                    int n_external_attr_int) final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
@@ -353,11 +352,11 @@ public:
         (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
     //__________
 
-    BreitWheelerEngine* get_breit_wheeler_engine_ptr () const {
+    BreitWheelerEngine* get_breit_wheeler_engine_ptr () const override {
         return m_shr_p_bw_engine.get();
     }
 
-    QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const {
+    QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const override {
         return m_shr_p_qs_engine.get();
     }
 

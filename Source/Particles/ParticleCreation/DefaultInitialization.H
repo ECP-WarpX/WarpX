@@ -116,7 +116,6 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                                          QuantumSynchrotronEngine* p_qs_engine,
 #endif
                                          const int ionization_initial_level,
-                                         const amrex::RandomEngine& engine,
                                          int start, int stop)
 {
         using namespace amrex::literals;
@@ -132,10 +131,6 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
         constexpr int lev = 0;
         const amrex::Real t = WarpX::GetInstance().gett_new(lev);
 
-#ifndef WARPX_QED
-        amrex::ignore_unused(engine);
-#endif
-
         // Initialize the last NumRuntimeRealComps() - n_external_attr_real runtime real attributes
         for (int j = PIdx::nattribs + n_external_attr_real; j < ptile.NumRealComps() ; ++j)
         {
@@ -146,9 +141,17 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 particle_comps.at("opticalDepthQSR") == j)
             {
                 const QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt =
-                                                p_qs_engine->build_optical_depth_functor();;
-                for (int ip = start; ip < stop; ++ip) {
-                    attr_ptr[ip] = quantum_sync_get_opt(engine);
+                                                p_qs_engine->build_optical_depth_functor();
+                if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<amrex::Real>>::value) {
+                        amrex::ParallelForRNG(stop - start,
+                                              [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept {
+                                                  int ip = i + start;
+                                                  attr_ptr[ip] = quantum_sync_get_opt(engine);
+                                              });
+                } else {
+                    for (int ip = start; ip < stop; ++ip) {
+                        attr_ptr[ip] = quantum_sync_get_opt(amrex::RandomEngine{});
+                    }
                 }
             }
 
@@ -158,8 +161,16 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
             {
                 const BreitWheelerGetOpticalDepth breit_wheeler_get_opt =
                                                 p_bw_engine->build_optical_depth_functor();;
-                for (int ip = start; ip < stop; ++ip) {
-                    attr_ptr[ip] = breit_wheeler_get_opt(engine);
+                if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<amrex::Real>>::value) {
+                        amrex::ParallelForRNG(stop - start,
+                                              [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept {
+                                                  int ip = i + start;
+                                                  attr_ptr[ip] = breit_wheeler_get_opt(amrex::RandomEngine{});
+                                              });
+                } else {
+                    for (int ip = start; ip < stop; ++ip) {
+                        attr_ptr[ip] = breit_wheeler_get_opt(amrex::RandomEngine{});
+                    }
                 }
             }
 #endif
@@ -172,7 +183,7 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 {
                     const amrex::ParserExecutor<7> user_real_attrib_parserexec =
                                              user_real_attrib_parser[ia]->compile<7>();
-                    if constexpr (amrex::RunOnGpu<PTile::AllocatorType<amrex::Real>>::value) {
+                    if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<amrex::Real>>::value) {
                         amrex::ParallelFor(stop - start,
                                            [=] AMREX_GPU_DEVICE (int i) noexcept {
                                                int ip = i + start;
@@ -202,8 +213,16 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
             if (particle_icomps.find("ionizationLevel") != particle_icomps.end() &&
                 particle_icomps.at("ionizationLevel") == j)
             {
-                for (int ip = start; ip < stop; ++ip) {
-                    attr_ptr[ip] = ionization_initial_level;
+                if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<int>>::value) {
+                        amrex::ParallelFor(stop - start,
+                                           [=] AMREX_GPU_DEVICE (int i) noexcept {
+                                               int ip = i + start;
+                                               attr_ptr[ip] = ionization_initial_level;
+                                           });
+                } else {
+                    for (int ip = start; ip < stop; ++ip) {
+                        attr_ptr[ip] = ionization_initial_level;
+                    }
                 }
             }
 
@@ -213,14 +232,25 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 if (particle_icomps.find(user_int_attribs[ia]) != particle_icomps.end() &&
                     particle_icomps.at(user_int_attribs[ia]) == j)
                 {
-                    amrex::ParticleReal xp, yp, zp;
-                    const amrex::ParserExecutor<7> user_int_attrib_parserexec =
+                     const amrex::ParserExecutor<7> user_int_attrib_parserexec =
                                              user_int_attrib_parser[ia]->compile<7>();
+                if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<int>>::value) {
+                        amrex::ParallelFor(stop - start,
+                                           [=] AMREX_GPU_DEVICE (int i) noexcept {
+                                               int ip = i + start;
+                                               amrex::ParticleReal xp, yp, zp;
+                                               get_position(ip, xp, yp, zp);
+                                               attr_ptr[ip] = static_cast<int>(
+                                                                               user_int_attrib_parserexec(xp, yp, zp, ux[ip], uy[ip], uz[ip], t));
+                                           });
+                } else {
                     for (int ip = start; ip < stop; ++ip) {
+                        amrex::ParticleReal xp, yp, zp;
                         get_position(ip, xp, yp, zp);
                         attr_ptr[ip] = static_cast<int>(
                                 user_int_attrib_parserexec(xp, yp, zp, ux[ip], uy[ip], uz[ip], t));
                     }
+                }
                 }
             }
         }

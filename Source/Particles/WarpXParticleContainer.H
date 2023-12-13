@@ -166,8 +166,7 @@ public:
                                             NArrayReal, NArrayInt,
                                             amrex::PinnedArenaAllocator>& pinned_tile,
                         int n_external_attr_real,
-                        int n_external_attr_int,
-                        const amrex::RandomEngine& engine) = 0;
+                        int n_external_attr_int) = 0;
 
     ///
     /// This pushes the particle positions by one half time step.

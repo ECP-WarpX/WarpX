@@ -778,8 +778,7 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                                         NArrayReal, NArrayInt,
                                         amrex::PinnedArenaAllocator>& pinned_tile,
                     const int n_external_attr_real,
-                    const int n_external_attr_int,
-                    const amrex::RandomEngine& engine)
+                    const int n_external_attr_int)
 {
     ParticleCreation::DefaultInitializeRuntimeAttributes(pinned_tile,
                                        n_external_attr_real, n_external_attr_int,
@@ -790,7 +789,7 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                                        m_shr_p_bw_engine.get(),
                                        m_shr_p_qs_engine.get(),
                                        ionization_initial_level,
-                                       engine,0,pinned_tile.numParticles());
+                                       0,pinned_tile.numParticles());
 }
 
 

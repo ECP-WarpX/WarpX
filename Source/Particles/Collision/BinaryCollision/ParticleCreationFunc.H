@@ -143,7 +143,7 @@ public:
                                        pc_products[i]->get_breit_wheeler_engine_ptr(),
                                        pc_products[i]->get_quantum_sync_engine_ptr(),
                                        pc_products[i]->getIonizationInitialLevel(),
-                                       amrex::RandomEngine{},products_np[i],products_np[i]+num_added);
+                                       products_np[i],products_np[i]+num_added);
         }
 
         amrex::ParticleReal* AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
