@@ -64,7 +64,9 @@ Index filterCopyTransformParticles (DstPC& pc, DstTile& dst, SrcTile& src,
     Gpu::DeviceVector<Index> offsets(np);
     auto total = amrex::Scan::ExclusiveSum(np, mask, offsets.data());
     const Index num_added = N * total;
-    dst.resize(std::max(dst_index + num_added, dst.numParticles()));
+    auto old_np = dst.size();
+    auto new_np = std::max(dst_index + num_added, dst.numParticles());
+    dst.resize(new_np);
 
     ParticleCreation::DefaultInitializeRuntimeAttributes(dst,
                                        0, 0,
@@ -75,7 +77,7 @@ Index filterCopyTransformParticles (DstPC& pc, DstTile& dst, SrcTile& src,
                                        pc.get_breit_wheeler_engine_ptr(),
                                        pc.get_quantum_sync_engine_ptr(),
                                        pc.getIonizationInitialLevel(),
-                                       amrex::RandomEngine{});
+                                       amrex::RandomEngine{}, old_np, new_np);
 
     const auto p_offsets = offsets.dataPtr();
 
@@ -218,8 +220,9 @@ Index filterCopyTransformParticles (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTi
     Gpu::DeviceVector<Index> offsets(np);
     auto total = amrex::Scan::ExclusiveSum(np, mask, offsets.data());
     const Index num_added = N * total;
-    dst1.resize(std::max(dst1_index + num_added, dst1.numParticles()));
-    dst2.resize(std::max(dst2_index + num_added, dst2.numParticles()));
+    auto old_np1 = dst1.size();
+    auto new_np1 = std::max(dst1_index + num_added, dst1.numParticles());
+    dst1.resize(new_np1);
 
     ParticleCreation::DefaultInitializeRuntimeAttributes(dst1,
                                        0, 0,
@@ -230,8 +233,11 @@ Index filterCopyTransformParticles (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTi
                                        pc1.get_breit_wheeler_engine_ptr(),
                                        pc1.get_quantum_sync_engine_ptr(),
                                        pc1.getIonizationInitialLevel(),
-                                       amrex::RandomEngine{});
+                                       amrex::RandomEngine{}, old_np1, new_np1);
 
+    auto old_np2 = dst2.size();
+    auto new_np2 = std::max(dst2_index + num_added, dst2.numParticles());
+    dst2.resize(new_np2);
     ParticleCreation::DefaultInitializeRuntimeAttributes(dst2,
                                        0, 0,
                                        pc2.getUserRealAttribs(), pc2.getUserIntAttribs(),
@@ -241,7 +247,7 @@ Index filterCopyTransformParticles (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTi
                                        pc2.get_breit_wheeler_engine_ptr(),
                                        pc2.get_quantum_sync_engine_ptr(),
                                        pc2.getIonizationInitialLevel(),
-                                       amrex::RandomEngine{});
+                                       amrex::RandomEngine{}, old_np2, new_np2);
 
     auto p_offsets = offsets.dataPtr();
 

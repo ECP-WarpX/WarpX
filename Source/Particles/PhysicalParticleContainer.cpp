@@ -790,7 +790,7 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                                        m_shr_p_bw_engine.get(),
                                        m_shr_p_qs_engine.get(),
                                        ionization_initial_level,
-                                       engine);
+                                       engine,0,pinned_tile.numParticles());
 }
 
 

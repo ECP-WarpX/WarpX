@@ -116,11 +116,10 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                                          QuantumSynchrotronEngine* p_qs_engine,
 #endif
                                          const int ionization_initial_level,
-                                         const amrex::RandomEngine& engine)
+                                         const amrex::RandomEngine& engine,
+                                         int start, int stop)
 {
         using namespace amrex::literals;
-
-        const int np = ptile.numParticles();
 
         // Preparing data needed for user defined attributes
         const auto n_user_real_attribs = static_cast<int>(user_real_attribs.size());
@@ -140,7 +139,7 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
         // Initialize the last NumRuntimeRealComps() - n_external_attr_real runtime real attributes
         for (int j = PIdx::nattribs + n_external_attr_real; j < ptile.NumRealComps() ; ++j)
         {
-            amrex::Vector<amrex::ParticleReal> attr_temp(np, 0.0_prt);
+            auto attr_ptr = ptile.GetStructOfArrays().GetRealData(j).data();
 #ifdef WARPX_QED
             // Current runtime comp is quantum synchrotron optical depth
             if (particle_comps.find("opticalDepthQSR") != particle_comps.end() &&
@@ -148,8 +147,8 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
             {
                 const QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt =
                                                 p_qs_engine->build_optical_depth_functor();;
-                for (int i = 0; i < np; ++i) {
-                    attr_temp[i] = quantum_sync_get_opt(engine);
+                for (int ip = start; ip < stop; ++ip) {
+                    attr_ptr[ip] = quantum_sync_get_opt(engine);
                 }
             }
 
@@ -159,8 +158,8 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
             {
                 const BreitWheelerGetOpticalDepth breit_wheeler_get_opt =
                                                 p_bw_engine->build_optical_depth_functor();;
-                for (int i = 0; i < np; ++i) {
-                    attr_temp[i] = breit_wheeler_get_opt(engine);
+                for (int ip = start; ip < stop; ++ip) {
+                    attr_ptr[ip] = breit_wheeler_get_opt(engine);
                 }
             }
 #endif
@@ -174,28 +173,26 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                     amrex::ParticleReal xp, yp, zp;
                     const amrex::ParserExecutor<7> user_real_attrib_parserexec =
                                              user_real_attrib_parser[ia]->compile<7>();
-                    for (int i = 0; i < np; ++i) {
-                        get_position(i, xp, yp, zp);
-                        attr_temp[i] = user_real_attrib_parserexec(xp, yp, zp,
-                                                                   ux[i], uy[i], uz[i], t);
+                    for (int ip = start; ip < stop; ++ip) {
+                        get_position(ip, xp, yp, zp);
+                        attr_ptr[ip] = user_real_attrib_parserexec(xp, yp, zp,
+                                                                   ux[ip], uy[ip], uz[ip], t);
                     }
                 }
             }
-
-            ptile.push_back_real(j, attr_temp.data(), attr_temp.data() + np);
         }
 
         // Initialize the last NumRuntimeIntComps() - n_external_attr_int runtime int attributes
         for (int j = n_external_attr_int; j < ptile.NumIntComps() ; ++j)
         {
-            amrex::Vector<int> attr_temp(np, 0);
+            auto attr_ptr = ptile.GetStructOfArrays().GetIntData(j).data();
 
             // Current runtime comp is ionization level
             if (particle_icomps.find("ionizationLevel") != particle_icomps.end() &&
                 particle_icomps.at("ionizationLevel") == j)
             {
-                for (int i = 0; i < np; ++i) {
-                    attr_temp[i] = ionization_initial_level;
+                for (int ip = start; ip < stop; ++ip) {
+                    attr_ptr[ip] = ionization_initial_level;
                 }
             }
 
@@ -208,15 +205,13 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                     amrex::ParticleReal xp, yp, zp;
                     const amrex::ParserExecutor<7> user_int_attrib_parserexec =
                                              user_int_attrib_parser[ia]->compile<7>();
-                    for (int i = 0; i < np; ++i) {
-                        get_position(i, xp, yp, zp);
-                        attr_temp[i] = static_cast<int>(
-                                user_int_attrib_parserexec(xp, yp, zp, ux[i], uy[i], uz[i], t));
+                    for (int ip = start; ip < stop; ++ip) {
+                        get_position(ip, xp, yp, zp);
+                        attr_ptr[ip] = static_cast<int>(
+                                user_int_attrib_parserexec(xp, yp, zp, ux[ip], uy[ip], uz[ip], t));
                     }
                 }
             }
-
-            ptile.push_back_int(j, attr_temp.data(), attr_temp.data() + np);
         }
 }
 
