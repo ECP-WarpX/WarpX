@@ -286,12 +286,12 @@ public:
  * \param Bx Field array before filtering (not modified)
  * \param By Field array before filtering (not modified)
  * \param Bz Field array before filtering (not modified)
- * \param exfab pointer to the Ex field (modified)
- * \param eyfab pointer to the Ey field (modified)
- * \param ezfab pointer to the Ez field (modified)
- * \param bxfab pointer to the Bx field (modified)
- * \param byfab pointer to the By field (modified)
- * \param bzfab pointer to the Bz field (modified)
+ * \param ex_ptr pointer to the Ex field (modified)
+ * \param ey_ptr pointer to the Ey field (modified)
+ * \param ez_ptr pointer to the Ez field (modified)
+ * \param bx_ptr pointer to the Bx field (modified)
+ * \param by_ptr pointer to the By field (modified)
+ * \param bz_ptr pointer to the Bz field (modified)
  *
  * The NCI Godfrey filter is applied on Ex, the result is stored in filtered_Ex
  * and the pointer exfab is modified (before this function is called, it points to Ex
@@ -307,9 +307,9 @@ public:
         const amrex::FArrayBox& Ex, const amrex::FArrayBox& Ey,
         const amrex::FArrayBox& Ez, const amrex::FArrayBox& Bx,
         const amrex::FArrayBox& By, const amrex::FArrayBox& Bz,
-        amrex::FArrayBox const * & exfab, amrex::FArrayBox const * & eyfab,
-        amrex::FArrayBox const * & ezfab, amrex::FArrayBox const * & bxfab,
-        amrex::FArrayBox const * & byfab, amrex::FArrayBox const * & bzfab);
+        amrex::FArrayBox const * & ex_ptr, amrex::FArrayBox const * & ey_ptr,
+        amrex::FArrayBox const * & ez_ptr, amrex::FArrayBox const * & bx_ptr,
+        amrex::FArrayBox const * & by_ptr, amrex::FArrayBox const * & bz_ptr);
 
     /**
     * \brief This function determines if resampling should be done for the current species, and
