@@ -5,8 +5,9 @@ Laser-Wakefield Acceleration of Electrons
 
 This example shows how to model a laser-wakefield accelerator (LWFA) :cite:p:`ex-TajimaDawson1982,ex-Esarey1996`.
 
-Laser-wakefield acceleration is best performed in 3D and quasi-cylindrical (RZ) geometry, which ensures that the plasma wavelength of the wakefield is modelled with the right scale lengths.
-RZ modeling enables efficient modeling if effects of asymmetry shall be ignored (e.g., asymmetric beams and transverse profiles, hosing of the injected beam, etc.).
+Laser-wakefield acceleration is best performed in 3D or quasi-cylindrical (RZ) geometry, in order to correctly capture some of the key physics (laser diffraction, beamloading, etc.).
+For physical situations that have close-to-cylindrical symmetry, simulations in RZ geometry capture the relevant physics at a fraction of the computational cost of a 3D simulation.
+On the other hand, for physical situation with strong asymmetries (e.g., non-round laser driver, strong hosing of the accelerated beam, etc.), only 3D simulations are suitable.
 
 For LWFA scenarios with long propagation lengths, use the :ref:`boosted frame method <theory-boostedframe>`.
 An example can be seen in the :ref:`PWFA example <examples-pwfa>`.
