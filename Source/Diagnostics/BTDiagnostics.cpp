@@ -1336,9 +1336,9 @@ BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_pat
 
 
 void
-BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
-                                        std::string snapshot_FabHeader_path,
-                                        std::string newsnapshot_FabFilename)
+BTDiagnostics::InterleaveFabArrayHeader (std::string Buffer_FabHeader_path,
+                                         std::string snapshot_FabHeader_path,
+                                         std::string newsnapshot_FabFilename)
 {
     BTDMultiFabHeaderImpl snapshot_FabHeader(snapshot_FabHeader_path);
     snapshot_FabHeader.ReadMultiFabHeader();

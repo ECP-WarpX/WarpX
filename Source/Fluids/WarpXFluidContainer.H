@@ -99,12 +99,12 @@ public:
      * \param[in] Bx Yee magnetic field (x)
      * \param[in] By Yee magnetic field (y)
      * \param[in] Bz Yee magnetic field (z)
-     * \param[in] cur_time Current time
+     * \param[in] t Current time
      */
     void GatherAndPush (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
         const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-        amrex::Real cur_time);
+        amrex::Real t);
 
     /**
      * DepositCurrent interpolates the fluid current density comps. onto the Yee grid and

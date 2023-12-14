@@ -770,7 +770,7 @@ WarpX::OneStep_multiJ (const amrex::Real cur_time)
 *
 */
 void
-WarpX::OneStep_sub1 (Real curtime)
+WarpX::OneStep_sub1 (Real cur_time)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         electrostatic_solver_id == ElectrostaticSolverAlgo::None,
@@ -784,7 +784,7 @@ WarpX::OneStep_sub1 (Real curtime)
     const int coarse_lev = 0;
 
     // i) Push particles and fields on the fine patch (first fine step)
-    PushParticlesandDeposit(fine_lev, curtime, DtType::FirstHalf);
+    PushParticlesandDeposit(fine_lev, cur_time, DtType::FirstHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
     if (use_filter) { ApplyFilterJ(current_fp, fine_lev); }
@@ -815,7 +815,7 @@ WarpX::OneStep_sub1 (Real curtime)
     // ii) Push particles on the coarse patch and mother grid.
     // Push the fields on the coarse patch and mother grid
     // by only half a coarse step (first half)
-    PushParticlesandDeposit(coarse_lev, curtime, DtType::Full);
+    PushParticlesandDeposit(coarse_lev, cur_time, DtType::Full);
     StoreCurrent(coarse_lev);
     AddCurrentFromFineLevelandSumBoundary(current_fp, current_cp, current_buf, coarse_lev);
     AddRhoFromFineLevelandSumBoundary(rho_fp, rho_cp, charge_buf, coarse_lev, 0, ncomps);
@@ -845,7 +845,7 @@ WarpX::OneStep_sub1 (Real curtime)
     FillBoundaryAux(guard_cells.ng_UpdateAux);
 
     // iv) Push particles and fields on the fine patch (second fine step)
-    PushParticlesandDeposit(fine_lev, curtime + dt[fine_lev], DtType::SecondHalf);
+    PushParticlesandDeposit(fine_lev, cur_time + dt[fine_lev], DtType::SecondHalf);
     RestrictCurrentFromFineToCoarsePatch(current_fp, current_cp, fine_lev);
     RestrictRhoFromFineToCoarsePatch(rho_fp, rho_cp, fine_lev);
     if (use_filter) { ApplyFilterJ(current_fp, fine_lev); }
