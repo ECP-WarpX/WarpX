@@ -786,8 +786,10 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                                        particle_comps, particle_icomps,
                                        amrex::GetVecOfPtrs(m_user_real_attrib_parser),
                                        amrex::GetVecOfPtrs(m_user_int_attrib_parser),
+#ifdef WARPX_QED
                                        m_shr_p_bw_engine.get(),
                                        m_shr_p_qs_engine.get(),
+#endif
                                        ionization_initial_level,
                                        0,pinned_tile.numParticles());
 }

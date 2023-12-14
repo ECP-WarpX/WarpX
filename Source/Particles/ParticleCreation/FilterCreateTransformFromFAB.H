@@ -95,8 +95,10 @@ Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2,
                                        pc1.getParticleComps(), pc1.getParticleiComps(),
                                        pc1.getUserIntAttribParser(),
                                        pc1.getUserRealAttribParser(),
+#ifdef WARPX_QED
                                        pc1.get_breit_wheeler_engine_ptr(),
                                        pc1.get_quantum_sync_engine_ptr(),
+#endif
                                        pc1.getIonizationInitialLevel(),
                                        old_np1, new_np1);
 
@@ -109,8 +111,10 @@ Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2,
                                        pc2.getParticleComps(), pc2.getParticleiComps(),
                                        pc2.getUserIntAttribParser(),
                                        pc2.getUserRealAttribParser(),
+#ifdef WARPX_QED
                                        pc2.get_breit_wheeler_engine_ptr(),
                                        pc2.get_quantum_sync_engine_ptr(),
+#endif
                                        pc2.getIonizationInitialLevel(),
                                        old_np2, new_np2);
 

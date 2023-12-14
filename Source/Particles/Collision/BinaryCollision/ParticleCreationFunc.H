@@ -140,8 +140,10 @@ public:
                                        pc_products[i]->getParticleComps(), pc_products[i]->getParticleiComps(),
                                        pc_products[i]->getUserIntAttribParser(),
                                        pc_products[i]->getUserRealAttribParser(),
+#ifdef WARPX_QED
                                        pc_products[i]->get_breit_wheeler_engine_ptr(),
                                        pc_products[i]->get_quantum_sync_engine_ptr(),
+#endif
                                        pc_products[i]->getIonizationInitialLevel(),
                                        products_np[i],products_np[i]+num_added);
         }

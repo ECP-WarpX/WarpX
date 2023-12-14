@@ -411,8 +411,10 @@ public:
 
     virtual amrex::Vector< amrex::Parser* > getUserRealAttribParser () const { return amrex::Vector<amrex::Parser*>{}; }
 
+#ifdef WARPX_QED
     virtual BreitWheelerEngine* get_breit_wheeler_engine_ptr () const {return nullptr;}
     virtual QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const {return nullptr;}
+#endif
 
 protected:
     int species_id;
