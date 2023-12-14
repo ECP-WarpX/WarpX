@@ -503,14 +503,14 @@ Three variations are considered:
    are first interpolated to the staggered positions on an auxiliary
    grid).
 
-As shown in :raw-latex:`\cite{BirdsallLangdon,HockneyEastwoodBook,LewisJCP1972}`,
+As shown in :cite:t:`BirdsallLangdon,HockneyEastwoodBook,LewisJCP1972`,
 the momentum and energy conserving schemes conserve momentum and energy
 respectively at the limit of infinitesimal time steps and generally
 offer better conservation of the respective quantities for a finite
 time step. The uniform scheme does not conserve momentum nor energy
 in the sense defined for the others but is given for completeness,
 as it has been shown to offer some interesting properties in the modeling
-of relativistically drifting plasmas :raw-latex:`\cite{GodfreyJCP2013}`.
+of relativistically drifting plasmas :cite:p:`GodfreyJCP2013`.
 
 .. _theory-pic-filter:
 
