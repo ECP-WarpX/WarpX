@@ -47,6 +47,9 @@
 #include <vector>
 
 
+#ifdef AMREX_USE_OPENPMD_API
+
+
 #include "warpxWriter.H"
 #include "warpxBTD.H"
 
@@ -423,3 +426,5 @@ void AMReXWithOpenPMD::StoreMesh (const Vector<const MultiFab*> &mf,
                      geom,
                      time);
 }
+
+#endif //#ifdef AMREX_USE_OPENPMD_API

@@ -17,6 +17,7 @@
 #include <AMReX_PlotFileUtil.H> // for AMReXWithOpenPMD
 #include <AMReX_MultiFab.H> // for StoreMesh's multi  fab
 
+#ifdef AMREX_USE_OPENPMD_API
 class AMReXWithOpenPMD
 {
 public:
@@ -116,5 +117,5 @@ public:
          ) const;
 
 };
-
+#endif // AMREX_USE_OPENPMD_API
 #endif // WARPX_FLUSHFORMATPLOTPLUS_H_

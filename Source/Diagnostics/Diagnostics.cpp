@@ -10,8 +10,11 @@
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
 #include "FlushFormats/FlushFormatPlotfile.H"
-//   possibly find a flag for PlotPlus?
+
+#ifdef AMREX_USE_OPENPMD_API
 #include "FlushFormats/FlushFormatPlotPlus.H"
+#endif
+
 #include "FlushFormats/FlushFormatSensei.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/Algorithms/IsIn.H"
@@ -479,7 +482,12 @@ Diagnostics::InitBaseData ()
     if        (m_format == "plotfile"){
         m_flush_format = std::make_unique<FlushFormatPlotfile>() ;
     } else if (m_format == "plotplus"){
+#ifdef AMREX_USE_OPENPMD_API
         m_flush_format = std::make_unique<FlushFormatPlotPlus>() ;
+#else
+        WARPX_ABORT_WITH_MESSAGE(
+            "To use plotplus output format, need to compile AMReX with openpmd support");
+#endif
     } else if (m_format == "checkpoint"){
         // creating checkpoint format
         m_flush_format = std::make_unique<FlushFormatCheckpoint>() ;
