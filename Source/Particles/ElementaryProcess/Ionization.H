@@ -37,8 +37,14 @@ struct IonizationFilterFunc
     int comp;
     int m_atomic_number;
 
-    GetParticlePosition m_get_position;
+    GetParticlePosition<PIdx> m_get_position;
     GetExternalEBField m_get_externalEB;
+    amrex::ParticleReal m_Ex_external_particle;
+    amrex::ParticleReal m_Ey_external_particle;
+    amrex::ParticleReal m_Ez_external_particle;
+    amrex::ParticleReal m_Bx_external_particle;
+    amrex::ParticleReal m_By_external_particle;
+    amrex::ParticleReal m_Bz_external_particle;
 
     amrex::Array4<const amrex::Real> m_ex_arr;
     amrex::Array4<const amrex::Real> m_ey_arr;
@@ -70,6 +76,8 @@ struct IonizationFilterFunc
                           amrex::FArrayBox const& bxfab,
                           amrex::FArrayBox const& byfab,
                           amrex::FArrayBox const& bzfab,
+                          amrex::Vector<amrex::ParticleReal>& E_external_particle,
+                          amrex::Vector<amrex::ParticleReal>& B_external_particle,
                           const amrex::Real* AMREX_RESTRICT a_ionization_energies,
                           const amrex::Real* AMREX_RESTRICT a_adk_prefactor,
                           const amrex::Real* AMREX_RESTRICT a_adk_exp_prefactor,
@@ -94,8 +102,12 @@ struct IonizationFilterFunc
             amrex::ParticleReal xp, yp, zp;
             m_get_position(i, xp, yp, zp);
 
-            amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
-            amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
+            amrex::ParticleReal ex = m_Ex_external_particle;
+            amrex::ParticleReal ey = m_Ey_external_particle;
+            amrex::ParticleReal ez = m_Ez_external_particle;
+            amrex::ParticleReal bx = m_Bx_external_particle;
+            amrex::ParticleReal by = m_By_external_particle;
+            amrex::ParticleReal bz = m_Bz_external_particle;
             m_get_externalEB(i, ex, ey, ez, bx, by, bz);
 
             doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
@@ -103,6 +115,7 @@ struct IonizationFilterFunc
                            m_ex_type, m_ey_type, m_ez_type, m_bx_type, m_by_type, m_bz_type,
                            m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
                            m_nox, m_galerkin_interpolation);
+            m_get_externalEB(i, ex, ey, ez, bx, by, bz);
 
             // Compute electric field amplitude in the particle's frame of
             // reference (particularly important when in boosted frame).
@@ -110,7 +123,7 @@ struct IonizationFilterFunc
             const amrex::ParticleReal uy = ptd.m_rdata[PIdx::uy][i];
             const amrex::ParticleReal uz = ptd.m_rdata[PIdx::uz][i];
 
-            const amrex::Real ga = static_cast<amrex::Real>(
+            const auto ga = static_cast<amrex::Real>(
                 std::sqrt(1. + (ux*ux + uy*uy + uz*uz) * c2_inv));
             const amrex::Real E = std::sqrt(
                                - ( ux*ex + uy*ey + uz*ez ) * ( ux*ex + uy*ey + uz*ez ) * c2_inv

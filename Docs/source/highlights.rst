@@ -24,11 +24,10 @@ Scientific works in laser-plasma and beam-plasma acceleration.
    Phys. Rev. Research **5**, 033112, 2023
    `DOI:10.1103/PhysRevResearch.5.033112 <https://doi.org/10.1103/PhysRevResearch.5.033112>`__
 
-#. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L, Huebl A.
+#. Sandberg R T, Lehe R, Mitchell C E, Garten M, Qiang J, Vay J-L and Huebl A.
    **Hybrid Beamline Element ML-Training for Surrogates in the ImpactX Beam-Dynamics Code**.
-   14th International Particle Accelerator Conference (IPAC'23), WEPA101, *in print*, 2023.
-   `preprint <https://www.ipac23.org/preproc/pdf/WEPA101.pdf>`__,
-   `DOI:10.18429/JACoW-IPAC-23-WEPA101 <https://doi.org/10.18429/JACoW-IPAC-23-WEPA101>`__
+   14th International Particle Accelerator Conference (IPAC'23), WEPA101, 2023.
+   `DOI:10.18429/JACoW-IPAC2023-WEPA101 <https://doi.org/10.18429/JACoW-IPAC2023-WEPA101>`__
 
 #. Wang J, Zeng M, Li D, Wang X, Gao J.
    **High quality beam produced by tightly focused laser driven wakefield accelerators**.
@@ -70,6 +69,11 @@ Laser-Plasma Interaction
 ************************
 
 Scientific works in laser-ion acceleration and laser-matter interaction.
+
+#. Knight B, Gautam C, Stoner C, Egner B, Smith J, Orban C, Manfredi J, Frische K, Dexter M, Chowdhury E, Patnaik A (2023).
+   **Detailed Characterization of a kHz-rate Laser-Driven Fusion at a Thin Liquid Sheet with a Neutron Detection Suite**.
+   High Power Laser Science and Engineering, 1-13, 2023.
+   `DOI:10.1017/hpl.2023.84 <https://doi.org/10.1017/hpl.2023.84>`__
 
 #. Fedeli L, Huebl A, Boillod-Cerneux F, Clark T, Gott K, Hillairet C, Jaure S, Leblanc A, Lehe R, Myers A, Piechurski C, Sato M, Zaim N, Zhang W, Vay J-L, Vincenti H.
    **Pushing the Frontier in the Design of Laser-Based Electron Accelerators with Groundbreaking Mesh-Refined Particle-In-Cell Simulations on Exascale-Class Supercomputers**.
@@ -141,3 +145,11 @@ High-Performance Computing and Numerics
 Scientific works in High-Performance Computing, applied mathematics and numerics.
 
 Please see :ref:`this section <acknowledge_warpx_all_refs>`.
+
+Nuclear Fusion - Magnetically Confined Plasmas
+**********************************************
+
+#. Nicks, B. S., Putvinski, S. and Tajima, T.
+   **Stabilization of the Alfvén-ion cyclotron instability through short plasmas: Fully kinetic simulations in a high-beta regime**.
+   Physics of Plasmas **30**, 102108, 2023.
+   `DOI:10.1063/5.0163889 <https://doi.org/10.1063/5.0163889>`__

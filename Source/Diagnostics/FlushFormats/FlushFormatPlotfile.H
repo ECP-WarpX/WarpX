@@ -22,8 +22,8 @@ class FlushFormatPlotfile : public FlushFormat
 {
 public:
     /** Flush fields and particles to plotfile */
-    virtual void WriteToFile (
-        amrex::Vector<std::string> varnames,
+    void WriteToFile (
+        const amrex::Vector<std::string>& varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,
@@ -56,7 +56,13 @@ public:
                         amrex::Real time,
                         bool isBTD = false) const;
 
-    ~FlushFormatPlotfile() {}
+    FlushFormatPlotfile () = default;
+    ~FlushFormatPlotfile() override = default;
+
+    FlushFormatPlotfile ( FlushFormatPlotfile const &)             = default;
+    FlushFormatPlotfile& operator= ( FlushFormatPlotfile const & ) = default;
+    FlushFormatPlotfile ( FlushFormatPlotfile&& )                  = default;
+    FlushFormatPlotfile& operator= ( FlushFormatPlotfile&& )       = default;
 };
 
 #endif // WARPX_FLUSHFORMATPLOTFILE_H_

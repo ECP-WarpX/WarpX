@@ -88,6 +88,7 @@ public:
    * @param engine_type ADIOS engine for output
    * @param engine_parameters map of parameters for the engine
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
+   * @param authors a string specifying the authors of the simulation (can be empty)
    */
   WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
                     std::string filetype,
@@ -95,9 +96,15 @@ public:
                     std::map< std::string, std::string > operator_parameters,
                     std::string engine_type,
                     std::map< std::string, std::string > engine_parameters,
-                    std::vector<bool> fieldPMLdirections);
+                    std::vector<bool> fieldPMLdirections,
+                    const std::string& authors);
 
   ~WarpXOpenPMDPlot ();
+
+  WarpXOpenPMDPlot ( WarpXOpenPMDPlot const &)             = delete;
+  WarpXOpenPMDPlot& operator= ( WarpXOpenPMDPlot const & ) = delete;
+  WarpXOpenPMDPlot ( WarpXOpenPMDPlot&& )                  = default;
+  WarpXOpenPMDPlot& operator= ( WarpXOpenPMDPlot&& )       = default;
 
   /** Set Iteration Step for the series
    *
@@ -160,7 +167,7 @@ private:
    * @param[in] isBTD is this a backtransformed diagnostics write?
    * @return the iteration object
    */
-  inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
+  [[nodiscard]] inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
   {
     if (isBTD)
     {
@@ -334,6 +341,9 @@ private:
 
   // meta data
   std::vector< bool > m_fieldPMLdirections; //! @see WarpX::getPMLdirections()
+
+  // The authors' string
+  std::string m_authors;
 };
 #endif // WARPX_USE_OPENPMD
 

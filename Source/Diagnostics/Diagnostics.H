@@ -40,6 +40,11 @@ public:
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~Diagnostics ();
 
+    Diagnostics (Diagnostics const &)              = delete;
+    Diagnostics& operator= (Diagnostics const & )  = delete;
+    Diagnostics(Diagnostics&& )                    = default;
+    Diagnostics& operator=(Diagnostics&& )         = default;
+
     /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
      *
      * Fields are computed (e.g., cell-centered or back-transformed)
@@ -58,8 +63,10 @@ public:
      *   multiple times yet.
      *  When these are fixed, the implementation of Flush should be in Diagnostics.cpp
      * \param[in] i_buffer index of the buffer data to be flushed.
+     * \param[in] force_flush only used for BTD, whether to do a complete flush of the data
+     * (including metadata listing the total number of particles) even if the snapshot is incomplete
      */
-    virtual void Flush (int i_buffer) = 0;
+    virtual void Flush (int i_buffer, bool force_flush) = 0;
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     void InitData ();
     void InitDataBeforeRestart ();
@@ -105,7 +112,7 @@ public:
      */
     void FilterComputePackFlush (int step, bool force_flush=false);
     /** Whether the last timestep is always dumped */
-    bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
+    [[nodiscard]] bool DoDumpLastTimestep () const {return  m_dump_last_timestep;}
     /** Returns the number of snapshots used in BTD. For Full-Diagnostics, the value is 1*/
     int getnumbuffers() {return m_num_buffers;}
     /** Time in lab-frame associated with the ith snapshot

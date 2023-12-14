@@ -17,11 +17,13 @@ sudo apt-get -qqq update
 sudo apt-get install -y \
   build-essential \
   ca-certificates \
-  ccache          \
   cmake           \
   gnupg           \
   pkg-config      \
   wget
+
+# ccache
+$(dirname "$0")/ccache.sh
 
 # Ref.: https://github.com/rscohn2/oneapi-ci
 sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB

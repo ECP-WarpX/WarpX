@@ -98,7 +98,7 @@ class WarpX(Bucket):
         libwarpx.initialize(argv, mpi_comm=mpi_comm)
 
     def evolve(self, nsteps=-1):
-        libwarpx.evolve(nsteps)
+        libwarpx.warpx.evolve(nsteps)
 
     def finalize(self, finalize_mpi=1):
         libwarpx.finalize(finalize_mpi)

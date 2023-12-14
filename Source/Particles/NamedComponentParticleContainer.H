@@ -73,7 +73,7 @@ public:
     }
 
     /** Destructor for NamedComponentParticleContainer */
-    virtual ~NamedComponentParticleContainer() = default;
+    ~NamedComponentParticleContainer() override = default;
 
     /** Construct a NamedComponentParticleContainer from a regular
      * amrex::ParticleContainer, and additional name-to-index maps
@@ -169,13 +169,13 @@ public:
     }
 
     /** Return the name-to-index map for the compile-time and runtime-time real components */
-    std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
+    [[nodiscard]] std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
     /** Return the name-to-index map for the compile-time and runtime-time integer components */
-    std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
+    [[nodiscard]] std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
     /** Return the name-to-index map for the runtime-time real components */
-    std::map<std::string, int> getParticleRuntimeComps () const noexcept { return particle_runtime_comps;}
+    [[nodiscard]] std::map<std::string, int> getParticleRuntimeComps () const noexcept { return particle_runtime_comps;}
     /** Return the name-to-index map for the runtime-time integer components */
-    std::map<std::string, int> getParticleRuntimeiComps () const noexcept { return particle_runtime_icomps;}
+    [[nodiscard]] std::map<std::string, int> getParticleRuntimeiComps () const noexcept { return particle_runtime_icomps;}
 
 protected:
     std::map<std::string, int> particle_comps;

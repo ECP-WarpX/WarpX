@@ -7,14 +7,8 @@
 # include <AMReX_AmrMeshParticleInSituBridge.H>
 #endif
 
-FlushFormatSensei::FlushFormatSensei () :
-    m_insitu_pin_mesh(0), m_insitu_bridge(nullptr),
-    m_amr_mesh(nullptr)
-{}
-
 FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
     std::string diag_name) :
-    m_insitu_pin_mesh(0), m_insitu_bridge(nullptr),
     m_amr_mesh(amr_mesh)
 {
 #ifndef AMREX_USE_SENSEI_INSITU
@@ -50,7 +44,7 @@ FlushFormatSensei::~FlushFormatSensei () = default;
 
 void
 FlushFormatSensei::WriteToFile (
-    const amrex::Vector<std::string> varnames,
+    const amrex::Vector<std::string>& varnames,
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
