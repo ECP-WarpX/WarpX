@@ -56,7 +56,7 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Ind
     using namespace amrex;
 
     const auto np = src.numParticles();
-    if (np == 0) return 0;
+    if (np == 0) { return 0; }
 
     Gpu::DeviceVector<Index> offsets(np);
     auto total = amrex::Scan::ExclusiveSum(np, mask, offsets.data());
@@ -129,7 +129,7 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
     using namespace amrex;
 
     const auto np = src.numParticles();
-    if (np == 0) return 0;
+    if (np == 0) { return 0; }
 
     Gpu::DeviceVector<Index> mask(np);
 
@@ -199,7 +199,7 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
     using namespace amrex;
 
     auto np = src.numParticles();
-    if (np == 0) return 0;
+    if (np == 0) { return 0; }
 
     Gpu::DeviceVector<Index> offsets(np);
     auto total = amrex::Scan::ExclusiveSum(np, mask, offsets.data());
@@ -286,7 +286,7 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src,
     using namespace amrex;
 
     auto np = src.numParticles();
-    if (np == 0) return 0;
+    if (np == 0) { return 0; }
 
     Gpu::DeviceVector<Index> mask(np);
 

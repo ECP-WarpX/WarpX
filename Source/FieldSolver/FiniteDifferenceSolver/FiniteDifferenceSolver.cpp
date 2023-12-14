@@ -36,8 +36,9 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
     m_grid_type{grid_type}
 {
     // return if not FDTD
-    if (fdtd_algo == ElectromagneticSolverAlgo::None || fdtd_algo == ElectromagneticSolverAlgo::PSATD)
+    if (fdtd_algo == ElectromagneticSolverAlgo::None || fdtd_algo == ElectromagneticSolverAlgo::PSATD) {
         return;
+    }
 
     // Calculate coefficients of finite-difference stencil
 #ifdef WARPX_DIM_RZ

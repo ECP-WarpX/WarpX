@@ -54,7 +54,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     using namespace amrex;
 
     const auto ncells = box.volume();
-    if (ncells == 0) return 0;
+    if (ncells == 0) { return 0; }
 
     auto & warpx = WarpX::GetInstance();
     const int level_0 = 0;
@@ -184,7 +184,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     auto arrNumPartCreation = NumPartCreation.array();
 
     const auto ncells = box.volume();
-    if (ncells == 0) return 0;
+    if (ncells == 0) { return 0; }
 
     Gpu::DeviceVector<Index> mask(ncells);
 

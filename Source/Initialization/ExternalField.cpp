@@ -76,15 +76,17 @@ ExternalFieldParams::ExternalFieldParams(const amrex::ParmParse& pp_warpx)
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     auto v_B = std::vector<amrex::Real>(3);
-    if (B_ext_grid_type == ExternalFieldType::constant)
+    if (B_ext_grid_type == ExternalFieldType::constant) {
         utils::parser::getArrWithParser(pp_warpx, "B_external_grid", v_B);
+    }
     std::copy(v_B.begin(), v_B.end(), B_external_grid.begin());
 
     // if the input string is "constant", the values for the
     // external grid must be provided in the input.
     auto v_E = std::vector<amrex::Real>(3);
-    if (E_ext_grid_type == ExternalFieldType::constant)
+    if (E_ext_grid_type == ExternalFieldType::constant) {
         utils::parser::getArrWithParser(pp_warpx, "E_external_grid", v_E);
+    }
     std::copy(v_E.begin(), v_E.end(), E_external_grid.begin());
     //___________________________________________________________________________
 
