@@ -14,7 +14,6 @@ Checks: '
         -cppcoreguidelines-avoid-non-const-global-variables,
         -cppcoreguidelines-init-variables,
         -cppcoreguidelines-macro-usage,
-        -cppcoreguidelines-no-malloc,
         -cppcoreguidelines-narrowing-conversions,
         -cppcoreguidelines-non-private-member-variables-in-classes,
         -cppcoreguidelines-owning-memory,
