@@ -318,6 +318,22 @@ public:
     */
     void resample (int timestep, bool verbose=true) final;
 
+    BreitWheelerEngine* get_breit_wheeler_engine_ptr () const override {
+#ifdef WARPX_QED
+        return m_shr_p_bw_engine.get();
+#else
+        return nullptr;
+#endif
+    }
+
+    QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const override {
+#ifdef WARPX_QED
+        return m_shr_p_qs_engine.get();
+#else
+        return nullptr;
+#endif
+    }
+
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H
     //containers for which QED processes could be relevant
@@ -351,14 +367,6 @@ public:
     void set_quantum_sync_engine_ptr
         (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
     //__________
-
-    BreitWheelerEngine* get_breit_wheeler_engine_ptr () const override {
-        return m_shr_p_bw_engine.get();
-    }
-
-    QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const override {
-        return m_shr_p_qs_engine.get();
-    }
 
     PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
 
