@@ -35,7 +35,7 @@ API for WarpX checksum tests. It can be used in two ways:
 """
 
 
-def evaluate_checksum(test_name, output_file, output_format, rtol=1.e-9, atol=1.e-40,
+def evaluate_checksum(test_name, output_file, output_format='plotfile', rtol=1.e-9, atol=1.e-40,
                       do_fields=True, do_particles=True):
     """
     Compare output file checksum with benchmark.
@@ -70,7 +70,7 @@ def evaluate_checksum(test_name, output_file, output_format, rtol=1.e-9, atol=1.
     test_checksum.evaluate(rtol=rtol, atol=atol)
 
 
-def reset_benchmark(test_name, output_file, output_format, do_fields=True, do_particles=True):
+def reset_benchmark(test_name, output_file, output_format='plotfile', do_fields=True, do_particles=True):
     """
     Update the benchmark (overwrites reference json file).
     Overwrite value of benchmark corresponding to
@@ -99,7 +99,7 @@ def reset_benchmark(test_name, output_file, output_format, do_fields=True, do_pa
     ref_benchmark.reset()
 
 
-def reset_all_benchmarks(path_to_all_output_files, output_format):
+def reset_all_benchmarks(path_to_all_output_files, output_format='plotfile'):
     """
     Update all benchmarks (overwrites reference json files)
     found in path_to_all_output_files
