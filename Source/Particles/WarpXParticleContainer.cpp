@@ -330,10 +330,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                                      "Deposition buffers only work for lev-1");
 
     // If no particles, do not do anything
-    if (np_to_deposit == 0) return;
+    if (np_to_deposit == 0) { return; }
 
     // If user decides not to deposit
-    if (do_not_deposit) return;
+    if (do_not_deposit) { return; }
 
     // Number of guard cells for local deposition of J
     const WarpX& warpx = WarpX::GetInstance();
@@ -693,7 +693,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                          "Deposition buffers only work for lev-1");
 
         // If no particles, do not do anything
-        if (np_to_deposit == 0) return;
+        if (np_to_deposit == 0) { return; }
 
         // Number of guard cells for local deposition of rho
         const WarpX& warpx = WarpX::GetInstance();
@@ -1014,7 +1014,7 @@ WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
 {
     // Reset the rho array if reset is True
     int const nc = WarpX::ncomps;
-    if (reset) rho->setVal(0., icomp*nc, nc, rho->nGrowVect());
+    if (reset) { rho->setVal(0., icomp*nc, nc, rho->nGrowVect()); }
 
     // Loop over particle tiles and deposit charge on each level
 #ifdef AMREX_USE_OMP
@@ -1081,8 +1081,9 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 #else
     const bool is_PSATD_RZ = false;
 #endif
-    if( !is_PSATD_RZ )
+    if( !is_PSATD_RZ ) {
         nba.surroundingNodes();
+    }
 
     // Number of guard cells for local deposition of rho
     const WarpX& warpx = WarpX::GetInstance();
@@ -1117,7 +1118,7 @@ amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
 
     total_charge = get<0>(reduce_data.value());
 
-    if (!local) ParallelDescriptor::ReduceRealSum(total_charge);
+    if (!local) { ParallelDescriptor::ReduceRealSum(total_charge); }
     total_charge *= this->charge;
     return total_charge;
 }
@@ -1230,7 +1231,7 @@ amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) {
         }
     }
 
-    if (!local) ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator());
+    if (!local) { ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator()); }
     return max_v;
 }
 
@@ -1248,7 +1249,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 {
     WARPX_PROFILE("WarpXParticleContainer::PushX()");
 
-    if (do_not_push) return;
+    if (do_not_push) { return; }
 
     amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
 
@@ -1323,7 +1324,7 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
                                            const ParticleLocData& pld,
                                            const int lev)
 {
-    if (not do_splitting) return;
+    if (not do_splitting) { return; }
 
     // Tag particle if goes to higher level.
     // It will be split later in the loop
@@ -1345,7 +1346,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
     WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
 
     // Periodic boundaries are handled in AMReX code
-    if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
+    if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) { return; }
 
     auto boundary_conditions = m_boundary_conditions.data;
 
@@ -1384,7 +1385,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                     ParticleType& p = pp[i];
 
                     // skip particles that are already flagged for removal
-                    if (p.id() < 0) return;
+                    if (p.id() < 0) { return; }
 
                     ParticleReal x, y, z;
                     GetPosition.AsStored(i, x, y, z);

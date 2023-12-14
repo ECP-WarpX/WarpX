@@ -282,7 +282,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
-    if (!ParallelDescriptor::IOProcessor()) return;
+    if (!ParallelDescriptor::IOProcessor()) { return; }
 
     // final step is a special case, fill jagged array with NaN
     if (m_intervals.nextContains(step+1) > warpx.maxStep())
@@ -347,7 +347,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
             while (std::getline(ss, token, m_sep[0]))
             {
                 cnt += 1;
-                if (ss.peek() == m_sep[0]) ss.ignore();
+                if (ss.peek() == m_sep[0]) { ss.ignore(); }
             }
 
             // 2 columns for step, time; then nBoxes*nDatafields columns for data;

@@ -764,7 +764,7 @@ Pukhov, A. 1999. “Three-dimensional electromagnetic relativistic particle-in-c
 
 .. raw:: html
 
-   <div id="ref-VayJCP13">
+   <div id="ref-VayJCP2013">
 
 Vay, Jean-Luc, Irving Haber, and Brendan B Godfrey. 2013. “A domain decomposition method for pseudo-spectral electromagnetic simulations of plasmas.” *Journal of Computational Physics* 243 (June): 260–68. https://doi.org/10.1016/j.jcp.2013.03.010.
 
@@ -844,7 +844,7 @@ Villasenor, J, and O Buneman. 1992. “Rigorous Charge Conservation for Local El
 
 .. raw:: html
 
-   <div id="ref-Vincenti2016a">
+   <div id="ref-VincentiCPC2017a">
 
 Vincenti, H., and J.-L. Vay. 2016. “Detailed analysis of the effects of stencil spatial variations with arbitrary high-order finite-difference Maxwell solver.” *Computer Physics Communications* 200 (March). ELSEVIER SCIENCE BV, PO BOX 211, 1000 AE AMSTERDAM, NETHERLANDS: 147–67. https://doi.org/10.1016/j.cpc.2015.11.009.
 

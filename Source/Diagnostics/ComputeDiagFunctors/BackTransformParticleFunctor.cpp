@@ -37,7 +37,7 @@ LorentzTransformParticles::LorentzTransformParticles ( const WarpXParIter& a_pti
 {
     using namespace amrex::literals;
 
-    if (tmp_particle_data.empty()) return;
+    if (tmp_particle_data.empty()) { return; }
     m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
 
     auto& attribs = a_pti.GetAttribs();
@@ -80,7 +80,7 @@ BackTransformParticleFunctor::BackTransformParticleFunctor (
 void
 BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int &totalParticleCounter, int i_buffer) const
 {
-    if (m_perform_backtransform[i_buffer] == 0) return;
+    if (m_perform_backtransform[i_buffer] == 0) { return; }
     auto &warpx = WarpX::GetInstance();
     // get particle slice
     const int nlevs = std::max(0, m_pc_src->finestLevel()+1);
@@ -142,8 +142,9 @@ BackTransformParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst
                 amrex::ParallelFor(np,
                 [=] AMREX_GPU_DEVICE(int i)
                 {
-                   if (Flag[i] == 1) GetParticleLorentzTransform(dst_data, src_data, i,
+                   if (Flag[i] == 1) { GetParticleLorentzTransform(dst_data, src_data, i,
                                                                  old_size + IndexLocation[i]);
+                   }
                 });
                 amrex::Gpu::synchronize();
             }
@@ -171,5 +172,5 @@ BackTransformParticleFunctor::PrepareFunctorData ( int i_buffer, bool z_slice_in
     m_current_z_boost.at(i_buffer) = current_z_boost;
     m_t_lab.at(i_buffer) = t_lab;
     m_perform_backtransform.at(i_buffer) = 0;
-    if (z_slice_in_domain && (snapshot_full == 0)) m_perform_backtransform.at(i_buffer) = 1;
+    if (z_slice_in_domain && (snapshot_full == 0)) { m_perform_backtransform.at(i_buffer) = 1; }
 }

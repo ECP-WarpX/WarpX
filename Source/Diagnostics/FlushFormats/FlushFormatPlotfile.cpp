@@ -86,7 +86,7 @@ FlushFormatPlotfile::WriteToFile (
     Vector<std::string> rfs;
     const VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
-    if (plot_raw_fields) rfs.emplace_back("raw_fields");
+    if (plot_raw_fields) { rfs.emplace_back("raw_fields"); }
     amrex::WriteMultiLevelPlotfile(filename, nlev,
                                    amrex::GetVecOfConstPtrs(mf),
                                    varnames, geom,
@@ -245,8 +245,9 @@ FlushFormatPlotfile::WriteWarpXHeader(
         HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
                                                 std::ofstream::trunc |
                                                 std::ofstream::binary);
-        if( ! HeaderFile.good())
+        if( ! HeaderFile.good()) {
             amrex::FileOpenFailed(HeaderFileName);
+        }
 
         HeaderFile.precision(17);
 
@@ -484,7 +485,7 @@ WriteCoarseVector( const std::string field_name,
     const int lev, const bool plot_guards )
 {
     IntVect ng(0);
-    if (plot_guards) ng = Fx_fp->nGrowVect();
+    if (plot_guards) { ng = Fx_fp->nGrowVect(); }
 
     if (lev == 0) {
         // No coarse field for level 0: instead write a MultiFab
@@ -521,7 +522,7 @@ WriteCoarseScalar( const std::string field_name,
     const int icomp )
 {
     IntVect ng(0);
-    if (plot_guards) ng = F_fp->nGrowVect();
+    if (plot_guards) { ng = F_fp->nGrowVect(); }
 
     if (lev == 0) {
         // No coarse field for level 0: instead write a MultiFab
@@ -544,7 +545,7 @@ FlushFormatPlotfile::WriteAllRawFields(
     const bool plot_raw_fields, const int nlevels, const std::string& plotfilename,
     const bool plot_raw_fields_guards) const
 {
-    if (!plot_raw_fields) return;
+    if (!plot_raw_fields) { return; }
     auto & warpx = WarpX::GetInstance();
     for (int lev = 0; lev < nlevels; ++lev)
     {
