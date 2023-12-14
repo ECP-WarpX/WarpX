@@ -134,6 +134,8 @@ public:
             num_added_vec[i] = static_cast<int>(num_added);
             tile_products[i]->resize(products_np[i] + num_added);
 
+            int start_index = int(products_np[i]);
+            int stop_index  = int(products_np[i] + num_added);
             ParticleCreation::DefaultInitializeRuntimeAttributes(*tile_products[i],
                                        0, 0,
                                        pc_products[i]->getUserRealAttribs(), pc_products[i]->getUserIntAttribs(),
@@ -145,7 +147,7 @@ public:
                                        pc_products[i]->get_quantum_sync_engine_ptr(),
 #endif
                                        pc_products[i]->getIonizationInitialLevel(),
-                                       products_np[i],products_np[i]+num_added);
+                                       start_index, stop_index);
         }
 
         amrex::ParticleReal* AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
