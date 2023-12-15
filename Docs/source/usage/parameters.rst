@@ -1337,7 +1337,7 @@ Laser initialization
 
     Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.1774`.
 
-    For a chirped laser (i.e. with a non-zero ``<laser_name>.phi2``), ``profile_duration`` is the Fourier-limited duration of the pulse, not the actual duration of the pulse. See the documentation for ``<laser_name>.phi2`` for more detail.
+    For a chirped laser pulse (i.e. with a non-zero ``<laser_name>.phi2``), ``profile_duration`` is the Fourier-limited duration of the pulse, not the actual duration of the pulse. See the documentation for ``<laser_name>.phi2`` for more detail.
 
     When running a **boosted-frame simulation**, provide the value of
     ``<laser_name>.profile_duration`` in the laboratory frame, and use ``warpx.gamma_boost``
@@ -1390,7 +1390,7 @@ Laser initialization
         E(\boldsymbol{x},t) \propto Re\left[ \exp\left(  -\frac{(t-t_{peak})^2}{\tau^2 + 2i\phi^{(2)}} + i\omega_0 (t-t_{peak}) + i\phi_0 \right) \right]
 
     where :math:`\tau` is given by ``<laser_name>.laser_duration`` and represents the
-    Fourier-limited duration of the laser. Thus, the actual duration of the laser is:
+    Fourier-limited duration of the laser pulse. Thus, the actual duration of the chirped laser pulse is:
 
     .. math::
 
