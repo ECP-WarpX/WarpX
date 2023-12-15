@@ -29,8 +29,6 @@ the particle data is distributed in a single blob,
 as shown by :numref:`fig_phase_space_beam_1` for beam 1.
 This is as we expect and what is optimal for training neural networks.
 
-
-
 .. _fig_phase_space_beam_1:
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290010209-c55baf1c-dd98-4d56-a675-ad3729481eee.png
