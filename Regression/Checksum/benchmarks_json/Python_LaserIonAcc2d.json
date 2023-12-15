@@ -1,0 +1,25 @@
+{
+  "electrons": {
+    "particle_momentum_x": 3.8621627192974665e-19,
+    "particle_momentum_y": 0.0,
+    "particle_momentum_z": 6.896952587339058e-19,
+    "particle_position_x": 0.0006797030751154397,
+    "particle_position_y": 0.0,
+    "particle_position_z": 0.003396826825506241,
+    "particle_weight": 78498903451616.39
+  },
+  "lev=0": {
+    "Bx": 0.0,
+    "By": 11414190.202643845,
+    "Bz": 0.0,
+    "Ex": 2029717163660505.8,
+    "Ey": 0.0,
+    "Ez": 322822619107718.8,
+    "jx": 1.639516352489411e+19,
+    "jy": 0.0,
+    "jz": 9.077513680796167e+18,
+    "rho": 59460456286.93235,
+    "rho_electrons": 17448973788388.283,
+    "rho_hydrogen": 17441803388471.8
+  }
+}

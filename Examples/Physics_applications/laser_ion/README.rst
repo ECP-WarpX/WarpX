@@ -4,18 +4,15 @@ Laser-Ion Acceleration with a Planar Target
 ===========================================
 
 This example shows how to model laser-ion acceleration with planar targets of solid density :cite:p:`ex-Wilks2001,ex-Bulanov2008,ex-Macchi2013`.
-The acceleration mechanism in this scenario depends on target parameters
+The acceleration mechanism in this scenario depends on target parameters.
 
 Although laser-ion acceleration requires full 3D modeling for adequate description of the acceleration dynamics, especially the acceleration field lengths and decay times, this example models a 2D example.
 2D modeling can often hint at a qualitative overview of the dynamics, but mostly saves computational costs since the plasma frequency (and Debye length) of the plasma determines the resolution need in laser-solid interaction modeling.
 
 .. note::
 
-   TODO: The Python (PICMI) input file needs to be created.
-
-.. note::
-
    The resolution of this 2D case is extremely low by default.
+   This includes spatial and temporal resolution, but also the number of macro-particles per cell representing the target density for proper phase space sampling.
    You will need a computing cluster for adequate resolution of the target density, see comments in the input file.
 
 .. warning::
@@ -30,18 +27,19 @@ Run
 
 This example can be run **either** as:
 
-* **Python** script: (*TODO*) or
-* WarpX **executable** using an input file: ``warpx.2d inputs_2d``
+* **Python** script: ``python3 PICMI_inputs_2d.py`` or
+* WarpX **executable** using an input file: ``mpirun -n 2 warpx.2d inputs_2d``
 
-For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with ``mpiexec -n 4 ...`` or ``srun -n 4 ...``, depending on the system.
+For `MPI-parallel <https://www.mpi-forum.org>`__ runs on computing clusters, change the prefix to ``mpiexec -n <no. of MPI ranks> ...`` or ``srun -n <no. of MPI ranks> ...``, depending on the system and number of MPI ranks you want to allocate.
 
 .. tab-set::
 
    .. tab-item:: Python: Script
 
-      .. note::
+      .. literalinclude:: PICMI_inputs_2d.py
+         :language: python3
+         :caption: You can copy this file from ``Examples/Physics_applications/laser_ion/PICMI_inputs_2d.py``.
 
-         TODO: This input file should be created following the ``inputs_2d`` file.
 
    .. tab-item:: Executable: Input File
 
@@ -52,14 +50,45 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 Analyze
 -------
 
-.. note::
+.. _fig_tnsa_ps_electrons_pinhole:
+.. figure:: https://user-images.githubusercontent.com/5416860/295003882-c755fd47-4bb3-4439-9319-c48214cbaafd.png
+   :alt: Longitudinal phase space of forward-flying electrons in a 2 degree opening angle.
+   :width: 100%
 
-   This section is TODO.
+.. _fig_tnsa_ps_protons_pinhole:
+.. figure:: https://user-images.githubusercontent.com/5416860/295003988-dea3dfb7-0d55-4616-b32d-061fb429f9ac.png
+   :alt: Longitudinal phase space of forward-flying protons in a 2 degree opening angle.
+   :width: 100%
 
+Time-resolved phase electron space analysis as in :numref:`fig_tnsa_ps_electrons_pinhole` gives information about, e.g., how laser energy is locally converted into electron kinetic energy.
+Later in time, ion phase spaces like :numref:`fig_tnsa_ps_protons_pinhole` can reveal where accelerated ion populations originate.
+
+.. dropdown:: Script ``analysis_histogram_2D.py``
+
+   .. literalinclude:: analysis_histogram_2D.py
+      :language: python3
+      :caption: You can copy this file from ``Examples/Physics_applications/laser_ion/analysis_histogram_2D.py``.
 
 Visualize
 ---------
 
-.. note::
+.. _fig_tnsa_densities:
+.. figure:: https://user-images.githubusercontent.com/5416860/294958596-451b613e-f360-42f5-98c6-34b70f07358b.png
+   :alt: Particle densities for electrons (top), protons (middle), and electrons again in logarithmic scale (bottom).
+   :width: 80%
 
-   This section is TODO.
+Particle density output illustrates the evolution of the target in time and space.
+Logarithmic scales can help to identify where the target becomes transparent for the laser pulse (bottom panel in :numref:`fig_tnsa_densities` ).
+
+.. _fig_tnsa_fields:
+.. figure:: https://user-images.githubusercontent.com/5416860/294958786-8f9624d9-5d9d-4de5-ba2e-231b19a89916.png
+   :alt: Electromagnetic fields for E_x (top), B_y (middle), and E_z (bottom).
+   :width: 80%
+
+Electromagnetic field output shows where the laser field is strongest at a given point in time, and where accelerating fields build up :numref:`fig_tnsa_fields`.
+
+.. dropdown:: Script ``plot_2d.py``
+
+   .. literalinclude:: plot_2d.py
+      :language: python3
+      :caption: You can copy this file from ``Examples/Physics_applications/laser_ion/plot_2d.py``.
