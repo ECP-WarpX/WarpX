@@ -21,14 +21,4 @@ void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v )
 #endif
 }
 
-void fillWithConsecutiveReal( amrex::Gpu::DeviceVector<amrex::Real>& v,amrex::Real begin,amrex::Real increment, int N)
-{
-#ifdef AMREX_USE_GPU
-    // On GPU: Use amrex
-    auto data = begin;
-    AMREX_FOR_1D( N, i, {data+i*increment;});
-#else
-    // On CPU: Use std library
-    std::iota( begin, N, 0L );
-#endif
-}
+

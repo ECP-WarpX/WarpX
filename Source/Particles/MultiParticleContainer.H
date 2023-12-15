@@ -335,7 +335,7 @@ public:
     void keepoldmomentum();
     void keepoldmomentum_p(std::unique_ptr<WarpXParticleContainer>& pc);
 
-
+    void Dump_radiations();
     int getSpeciesID (std::string product_str) const;
 
 protected:
