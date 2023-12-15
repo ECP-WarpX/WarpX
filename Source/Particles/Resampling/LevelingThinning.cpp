@@ -71,8 +71,8 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
     auto bins = ParticleUtils::findParticlesInEachCell(lev, pti, ptile);
 
     const auto n_cells = static_cast<int>(bins.numBins());
-    const auto indices = bins.permutationPtr();
-    const auto cell_offsets = bins.offsetsPtr();
+    auto *const indices = bins.permutationPtr();
+    auto *const cell_offsets = bins.offsetsPtr();
 
     const amrex::Real target_ratio = m_target_ratio;
     const int min_ppc = m_min_ppc;

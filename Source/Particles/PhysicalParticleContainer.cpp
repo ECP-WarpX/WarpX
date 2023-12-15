@@ -1109,7 +1109,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         // count the number of particles that each cell in overlap_box could add
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
-        auto pcounts = counts.data();
+        auto *pcounts = counts.data();
         const amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
@@ -1282,7 +1282,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         // particles, in particular does not consider xmin, xmax etc.).
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
-        const auto poffset = offset.data();
+        auto *const poffset = offset.data();
 #ifdef WARPX_DIM_RZ
         const bool rz_random_theta = m_rz_random_theta;
 #endif
@@ -1705,7 +1705,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         // count the number of particles that each cell in overlap_box could add
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
-        auto pcounts = counts.data();
+        auto *pcounts = counts.data();
         const amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
@@ -1903,7 +1903,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         // particles, in particular does not consider xmin, xmax etc.).
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
-        const auto poffset = offset.data();
+        auto *const poffset = offset.data();
         amrex::ParallelForRNG(overlap_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
@@ -2735,7 +2735,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 }
 
                 // Externally applied E and B-field in Cartesian co-ordinates
-                [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
+                [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;
                 if constexpr (exteb_control == has_exteb) {
                     getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
                 }
@@ -2985,7 +2985,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            nox, galerkin_interpolation);
         }
 
-        [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
+        [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;
         if constexpr (exteb_control == has_exteb) {
             getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
         }
@@ -3022,8 +3022,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
 #ifdef WARPX_QED
         [[maybe_unused]] auto foo_local_has_quantum_sync = local_has_quantum_sync;
-        [[maybe_unused]] auto foo_podq = p_optical_depth_QSR;
-        [[maybe_unused]] auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
+        [[maybe_unused]] auto *foo_podq = p_optical_depth_QSR;
+        [[maybe_unused]] const auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
         if constexpr (qed_control == has_qed) {
             if (local_has_quantum_sync) {
                 evolve_opt(ux[ip], uy[ip], uz[ip],

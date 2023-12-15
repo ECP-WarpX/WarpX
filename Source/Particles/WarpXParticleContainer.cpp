@@ -470,7 +470,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         {
             auto& ptile = ParticlesAt(lev, pti);
             auto& aos = ptile.GetArrayOfStructs();
-            auto pstruct_ptr = aos().dataPtr();
+            auto *pstruct_ptr = aos().dataPtr();
 
             const int ntiles = numTilesInBox(box, true, bin_size);
 
@@ -795,7 +795,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             auto& ptile = ParticlesAt(lev, pti);
             auto& aos   = ptile.GetArrayOfStructs();
-            auto pstruct_ptr = aos().dataPtr();
+            auto *pstruct_ptr = aos().dataPtr();
 
             Box box = pti.validbox();
             box.grow(ng_rho);
@@ -824,15 +824,15 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             auto& ptile = ParticlesAt(lev, pti);
             auto& aos   = ptile.GetArrayOfStructs();
-            auto pstruct_ptr = aos().dataPtr();
+            auto *pstruct_ptr = aos().dataPtr();
 
             Box box = pti.validbox();
             box.grow(ng_rho);
             const amrex::IntVect bin_size = WarpX::shared_tilesize;
 
-            const auto offsets_ptr = bins.offsetsPtr();
-            auto tbox_ptr = tboxes.dataPtr();
-            auto permutation = bins.permutationPtr();
+            auto *const offsets_ptr = bins.offsetsPtr();
+            auto *tbox_ptr = tboxes.dataPtr();
+            auto *permutation = bins.permutationPtr();
             amrex::ParallelFor(bins.numBins(),
                                [=] AMREX_GPU_DEVICE (int ibin) {
                                    const auto bin_start = offsets_ptr[ibin];
@@ -857,7 +857,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
             ReduceData<AMREX_D_DECL(int, int, int)> reduce_data(reduce_op);
             using ReduceTuple = typename decltype(reduce_data)::Type;
 
-            const auto boxes_ptr = tboxes.dataPtr();
+            auto *const boxes_ptr = tboxes.dataPtr();
             reduce_op.eval(tboxes.size(), reduce_data,
                            [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                            {
@@ -1108,7 +1108,7 @@ amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
     for (int lev = 0; lev <= nLevels; ++lev) {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            const auto wp = pti.GetAttribs(PIdx::w).data();
+            auto *const wp = pti.GetAttribs(PIdx::w).data();
 
             reduce_op.eval(pti.numParticles(), reduce_data,
                             [=] AMREX_GPU_DEVICE (int ip)

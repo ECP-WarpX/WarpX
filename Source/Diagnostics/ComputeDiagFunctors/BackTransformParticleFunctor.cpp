@@ -40,7 +40,7 @@ LorentzTransformParticles::LorentzTransformParticles ( const WarpXParIter& a_pti
     if (tmp_particle_data.empty()) { return; }
     m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
 
-    auto& attribs = a_pti.GetAttribs();
+    const auto& attribs = a_pti.GetAttribs();
     m_wpnew = attribs[PIdx::w].dataPtr();
     m_uxpnew = attribs[PIdx::ux].dataPtr();
     m_uypnew = attribs[PIdx::uy].dataPtr();
