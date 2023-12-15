@@ -81,13 +81,13 @@ namespace BinaryCollisionUtils{
         const amrex::ParticleReal p2y = u2y * m2;
         const amrex::ParticleReal p2z = u2z * m2;
         // Square norm of the total (sum between the two particles) momenta in the lab frame
-        const double p_total_sq = static_cast<double>(
+        const auto p_total_sq = static_cast<double>(
             powi<2>(p1x + p2x) + powi<2>(p1y + p2y) + powi<2>(p1z + p2z)
         );
 
         // Total energy in the lab frame
-        const double m1_dbl = static_cast<double>(m1);
-        const double m2_dbl = static_cast<double>(m2);
+        const auto m1_dbl = static_cast<double>(m1);
+        const auto m2_dbl = static_cast<double>(m2);
         const double E_lab = (m1_dbl * g1 + m2_dbl * g2) * c_sq;
         // Total energy squared in the center of mass frame, calculated using the Lorentz invariance
         // of the four-momentum norm
@@ -101,13 +101,15 @@ namespace BinaryCollisionUtils{
         // Formula obtained by inverting E^2 = p^2*c^2 + m^2*c^4 in the COM frame for each particle
         // The expression below is specifically written in a form that avoids returning
         // small negative numbers due to machine precision errors, for low-energy particles
-        const amrex::ParticleReal E_ratio = E_star/((m1 + m2)*c_sq);
-        const amrex::ParticleReal p_star_sq = m1*m2*c_sq * ( powi<2>(E_ratio) - one_pr )
-                + powi<2>(m1 - m2)*c_sq*inv_four_pr * powi<2>( E_ratio - 1._prt/E_ratio );
+        const auto E_ratio = static_cast<amrex::ParticleReal>(E_star/((m1 + m2)*c_sq));
+        const auto p_star_sq = static_cast<amrex::ParticleReal>(
+            m1*m2*c_sq * ( powi<2>(E_ratio) - one_pr )
+            + powi<2>(m1 - m2)*c_sq*inv_four_pr * powi<2>( E_ratio - 1._prt/E_ratio)
+        );
 
         // Lorentz factors in the center of mass frame
-        const amrex::ParticleReal g1_star = std::sqrt(one_pr + p_star_sq / (m1_sq*c_sq));
-        const amrex::ParticleReal g2_star = std::sqrt(one_pr + p_star_sq / (m2_sq*c_sq));
+        const auto g1_star = std::sqrt(one_pr + p_star_sq / static_cast<amrex::ParticleReal>(m1_sq*c_sq));
+        const auto g2_star = std::sqrt(one_pr + p_star_sq / static_cast<amrex::ParticleReal>(m2_sq*c_sq));
 
         // relative velocity in the center of mass frame
         v_coll = std::sqrt(p_star_sq) * (one_pr/(m1*g1_star) + one_pr/(m2*g2_star));
@@ -117,7 +119,7 @@ namespace BinaryCollisionUtils{
         // take into account this discrepancy, we need to multiply the fusion probability by the ratio
         // between the Lorentz factors in the COM frame and the Lorentz factors in the lab frame
         // (see Perez et al., Phys.Plasmas.19.083104 (2012))
-        lab_to_COM_factor = g1_star*g2_star/(g1*g2);
+        lab_to_COM_factor = g1_star*g2_star/static_cast<amrex::ParticleReal>(g1*g2);
     }
 }
 

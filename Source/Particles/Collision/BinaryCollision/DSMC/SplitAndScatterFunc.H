@@ -31,7 +31,9 @@ int splitScatteringParticles (
 {
     using namespace amrex;
 
-    if (n_total_pairs == 0) return 0;
+    if (n_total_pairs == 0) {
+        return 0;
+    }
 
     Gpu::DeviceVector<Index> offsets(n_total_pairs);
     Index* AMREX_RESTRICT p_offsets = offsets.dataPtr();
@@ -42,7 +44,9 @@ int splitScatteringParticles (
     for (Index i=0; i<n_total_pairs; i++)
     {
         p_offsets[i] = offset;
-        if (mask[i]) offset++;
+        if (mask[i]) {
+            offset++;
+        }
     }
 
     const Index num_added = offset;
@@ -114,7 +118,7 @@ int splitScatteringParticles (
             if (mask[i] == int(ScatteringProcessType::ELASTIC)) {
                 // randomly rotate the velocity vector for the first particle
                 ParticleUtils::RandomizeVelocity(
-                    ux1, uy1, uz1, sqrt(ux1*ux1 + uy1*uy1 + uz1*uz1), engine
+                    ux1, uy1, uz1, std::sqrt(ux1*ux1 + uy1*uy1 + uz1*uz1), engine
                 );
                 // set the second particles velocity so that the total momentum
                 // is zero

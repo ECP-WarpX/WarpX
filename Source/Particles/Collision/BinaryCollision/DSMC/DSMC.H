@@ -43,13 +43,9 @@ class DSMC final
     using index_type = ParticleBins::index_type;
 
 public:
-    /**
-     * \brief Default constructor of the DSMCFunc class.
-     */
-    virtual ~DSMC () = default;
 
     /**
-     * \brief Constructor of the DSMCFunc class
+     * \brief Constructor of the DSMC class
      *
      * @param[in] collision_name the name of the collision
      */

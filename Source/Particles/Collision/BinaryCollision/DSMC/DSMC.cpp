@@ -22,7 +22,9 @@ DSMC::DSMC (const std::string collision_name)
 #endif
 
     if(m_species_names.size() != 2)
+    {
         amrex::Abort("DSMC collision " + collision_name + " must have exactly two species.");
+    }
 
     // query for a list of collision processes
     // these could be elastic, excitation, charge_exchange, back, etc.
@@ -91,7 +93,7 @@ DSMC::doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleConta
 
     // Enable tiling
     amrex::MFItInfo info;
-    if (amrex::Gpu::notInLaunchRegion()) info.EnableTiling(WarpXParticleContainer::tile_size);
+    if (amrex::Gpu::notInLaunchRegion()) { info.EnableTiling(WarpXParticleContainer::tile_size); }
 
     // Loop over refinement levels
     for (int lev = 0; lev <= species1.finestLevel(); ++lev){
@@ -198,9 +200,13 @@ DSMC::doCollisionsWithinTile(
             const auto n_part_in_cell_2 = cell_offsets_2[i_cell+1] - cell_offsets_2[i_cell];
             // Particular case: no pair if a species has no particle in that cell
             if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0)
+            {
                 p_n_pairs_in_each_cell[i_cell] = 0;
+            }
             else
+            {
                 p_n_pairs_in_each_cell[i_cell] = amrex::max(n_part_in_cell_1,n_part_in_cell_2);
+            }
         }
     );
 
@@ -250,7 +256,7 @@ DSMC::doCollisionsWithinTile(
 
             // Do not collide if one species is missing in the cell
             if ( cell_stop_1 - cell_start_1 < 1 ||
-                cell_stop_2 - cell_start_2 < 1 ) return;
+                cell_stop_2 - cell_start_2 < 1 ) { return; }
 
             // shuffle
             ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
