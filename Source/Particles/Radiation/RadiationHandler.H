@@ -33,7 +33,7 @@ public:
     RadiationHandler ();
 
     /* Perform the calculation of the radiation */
-    //void doRadiation (amrex::Real dt, MultiParticleContainer* mypc);    
+    //void doRadiation (amrex::Real dt, MultiParticleContainer* mypc);
     void add_radiation_contribution(const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time);
     void add_detector();
     void gather_and_write_radiation(const std::string& filename);
@@ -44,13 +44,13 @@ private:
 
     // Frequency range
     amrex::Vector<amrex::Real> m_omega_range;
- 
-    // Dimensions of the detector 
+
+    // Dimensions of the detector
     amrex::Vector<amrex::Real> m_theta_range;
 
     int m_omega_points;
 
-    //put a detector 
+    //put a detector
     int m_get_a_detector;
     // Resolution of the detector
     amrex::Vector<amrex::Real>  m_d_theta;
@@ -67,7 +67,7 @@ private:
     amrex::Vector<amrex::Real> m_pos_det;
     amrex::Vector<amrex::Real> n;
 
-    //resolution of the grid of the detectir 
+    //resolution of the grid of the detectir
     amrex::Vector<amrex::Real> m_d_d;
 
     //
@@ -84,4 +84,3 @@ private:
 
 };
 #endif // WARPX_PARTICLES_RADIATION_H_
-

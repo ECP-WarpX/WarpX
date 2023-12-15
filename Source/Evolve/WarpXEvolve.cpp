@@ -434,13 +434,13 @@ WarpX::OneStep_nosub (Real cur_time)
     PushParticlesandDeposit(cur_time);
 
     //Radiation contribution at each timestep
-   //Only level 0 is supported 
+   //Only level 0 is supported
     mypc->doRadiation(dt[0],cur_time);
-    
 
 
 
- 
+
+
 
     ExecutePythonCallback("afterdeposition");
 

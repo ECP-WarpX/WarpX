@@ -14,15 +14,15 @@
 #if defined(AMREX_USE_CUDA)
 #   include <cuComplex.h>
 #elif defined(AMREX_USE_HIP)
-#   include <hip/hip_complex.h>    
+#   include <hip/hip_complex.h>
 
 #else
 #   if WARPX_USE_PSATD
-#       include <fftw3.h>   
-#    else 
+#       include <fftw3.h>
+#    else
 #       include <complex>
 
-#   endif 
+#   endif
 #endif
 
     // First, define library-dependent types (complex, FFT plan)
@@ -48,9 +48,9 @@ namespace warpx::utils
 #         else
             using Complex = fftw_complex;
 #         endif
-#         else 
+#         else
             using Complex = std::complex<amrex::Real>;
-#       endif    
+#       endif
 #endif
 }
 #endif // WARPX_UTILS_MATH_COMPLEX__H_

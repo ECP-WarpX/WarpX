@@ -335,7 +335,7 @@ public:
     static bool safe_guard_cells;
 
 
-    //enable radiations in the evolve 
+    //enable radiations in the evolve
     bool m_do_radiation_flag;
 
     //! With mesh refinement, particles located inside a refinement patch, but within

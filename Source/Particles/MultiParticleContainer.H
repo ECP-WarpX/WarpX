@@ -488,7 +488,7 @@ protected:
     amrex::Real m_qed_schwinger_zmax = std::numeric_limits<amrex::Real>::max();
 
     /**
-     * For Radiation module 
+     * For Radiation module
      */
     bool m_at_least_one_particle_radiate = 0;
     int m_nspecies_radiate;

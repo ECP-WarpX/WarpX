@@ -18,17 +18,17 @@
 using namespace warpx::utils;
 
 RadiationHandler::RadiationHandler()
-{   
-    // Read in radiation input      
+{
+    // Read in radiation input
     const amrex::ParmParse pp_radiations("radiations");
 
-    // Verify if there is a detector 
+    // Verify if there is a detector
     pp_radiations.query("put_a_detector", m_get_a_detector);
 
 
 #if defined  WARPX_DIM_RZ
     WARPX_ABORT_WITH_MESSAGE("Radiation is not supported yet with RZ.");
-#endif    
+#endif
 
     //Compute the radiation
     if(m_get_a_detector){
@@ -75,9 +75,9 @@ RadiationHandler::RadiationHandler()
 
 void RadiationHandler::add_radiation_contribution
     (const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time){
-        const auto level0=0;        
+        const auto level0=0;
 #ifdef AMREX_USE_OMP
-#pragma omp parallel 
+#pragma omp parallel
 #endif
 {
             for (WarpXParIter pti(*pc, level0); pti.isValid(); ++pti) {
@@ -117,10 +117,10 @@ void RadiationHandler::add_radiation_contribution
                     amrex::ParticleReal p_ux_unit=p_ux[ip];
                     amrex::ParticleReal p_uy_unit=p_uy[ip];
                     amrex::ParticleReal p_uz_unit=p_uz[ip];
-                    
+
                     amrex::ParticleReal p_u = std::sqrt(std::pow(p_ux_unit,2)+std::pow(p_uy_unit,2)+std::pow(p_uz_unit,2));
 
-                    //Calculation of gamma 
+                    //Calculation of gamma
                     amrex::ParticleReal gamma = 1/(1-std::pow(p_u,2)/std::pow(ablastr::constant::SI::c,2));
 
                     //Calculation of ei(omegat-n.r)
@@ -136,7 +136,7 @@ void RadiationHandler::add_radiation_contribution
                                     }
                                     else{
                                         n[idimo]=(Part_pos[idimo]-det_pos[(idimo+1)%2][i_y])/m_det_distance;
-                                        n[idimo]=(Part_pos[idimo]-det_pos[(idimo+2)%2][i_x])/m_det_distance;                                                   
+                                        n[idimo]=(Part_pos[idimo]-det_pos[(idimo+2)%2][i_x])/m_det_distance;
                                         }
                                 }
                                     //Calculation of 1_beta.n, n corresponds to m_det_direction, the direction of the normal
@@ -156,7 +156,7 @@ void RadiationHandler::add_radiation_contribution
                                     amrex::ParticleReal ncrossncrossBetapointx=n[2]*ncrossBetapointz-n[2]*ncrossBetapointy;
                                     amrex::ParticleReal ncrossncrossBetapointy=n[0]*ncrossBetapointx-n[0]*ncrossBetapointz;
                                     amrex::ParticleReal ncrossncrossBetapointz=n[1]*ncrossBetapointy-n[1]*ncrossBetapointx;
-            
+
                                      //function cospi and not cos
                                     Complex eiomega=(amrex::Math::cospi(dephas/ablastr::constant::math::pi), amrex::Math::cospi((ablastr::constant::math::pi/2-dephas)/ablastr::constant::math::pi));
                                     Complex Term_x= q*dt/(16*pow(ablastr::constant::math::pi,3)*ablastr::constant::SI::ep0*ablastr::constant::SI::c)*ncrossncrossBetapointx/std::pow(un_betan,2)*eiomega;
@@ -174,11 +174,11 @@ void RadiationHandler::add_radiation_contribution
                          }
                         }
                     }
-                
+
                 });
             }
                 }
-            }     
+            }
 
 void RadiationHandler::gather_and_write_radiation(const std::string& filename)
 {
@@ -203,7 +203,7 @@ void RadiationHandler::add_detector
     (){
     const auto level0=0;
     amrex::Geometry const& geom = WarpX::GetInstance().Geom(level0);
-    //Calculation of angle resolution 
+    //Calculation of angle resolution
     m_d_theta.resize(2);
     for(int i=0; i<2; i++){
         m_d_theta[i] = 2*m_theta_range[i]/static_cast<double>(m_det_pts[i]);
@@ -223,7 +223,7 @@ void RadiationHandler::add_detector
 
     m_d_omega=m_omega_range[1]-m_omega_range[0]/static_cast<double>(m_omega_points);
 
-    //Calculate the sides of the detector 
+    //Calculate the sides of the detector
     det_bornes.resize(2);
     det_bornes[0].resize(2);
     det_bornes[1].resize(2);
@@ -235,7 +235,7 @@ void RadiationHandler::add_detector
     //fillWithConsecutiveReal(pos_det_x)
     //pos_det_y
     //omega_calc
-    
+
     }
 }
 

@@ -20,5 +20,3 @@ void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v )
     std::iota( v.begin(), v.end(), 0L );
 #endif
 }
-
-

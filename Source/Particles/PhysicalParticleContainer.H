@@ -359,7 +359,7 @@ public:
 #endif
 
     bool has_radiation() const override {return m_do_radiation;}
-    
+
 protected:
     std::string species_name;
     std::vector<std::unique_ptr<PlasmaInjector>> plasma_injectors;

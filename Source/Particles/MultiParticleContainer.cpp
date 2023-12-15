@@ -377,7 +377,7 @@ MultiParticleContainer::ReadParameters ()
                 m_qed_schwinger_threshold_poisson_gaussian);
             utils::parser::queryWithParser(
                 pp_qed_schwinger, "xmin", m_qed_schwinger_xmin);
-    
+
 #if defined(WARPX_DIM_3D)
             utils::parser::queryWithParser(
                 pp_qed_schwinger, "ymin", m_qed_schwinger_ymin);
@@ -962,7 +962,7 @@ void MultiParticleContainer::keepoldmomentum(){
 
         });
         }
-    }    
+    }
 
 void
 MultiParticleContainer::doCollisions ( Real cur_time, amrex::Real dt )
@@ -1005,11 +1005,11 @@ void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::M
 }
 
 void MultiParticleContainer::doRadiation (const amrex::Real dt, amrex::Real cur_time)
-{   
+{
     if (m_at_least_one_has_radiation){
     for (auto& pc : allcontainers) {
         if (pc->has_radiation()){
-            
+
             m_p_radiation_handler->add_radiation_contribution(dt,pc,cur_time);
             }
         }

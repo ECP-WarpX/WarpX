@@ -1919,7 +1919,7 @@ WarpX::BackwardCompatibility ()
             "collisions.ncollisions is ignored. Just use particles.collision_names please.",
             ablastr::warn_manager::WarnPriority::low);
     }
-    
+
     const ParmParse pp_lasers("lasers");
     int nlasers;
     if (pp_lasers.query("nlasers", nlasers)){
