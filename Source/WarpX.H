@@ -334,10 +334,6 @@ public:
     static bool do_device_synchronize;
     static bool safe_guard_cells;
 
-
-    //enable radiations in the evolve
-    bool m_do_radiation_flag;
-
     //! With mesh refinement, particles located inside a refinement patch, but within
     //! #n_field_gather_buffer cells of the edge of the patch, will gather the fields
     //! from the lower refinement level instead of the refinement patch itself

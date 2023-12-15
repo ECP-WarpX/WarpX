@@ -8,10 +8,11 @@
 #define WARPX_SPECTRAL_BASE_ALGORITHM_H_
 
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
-#include "Utils/WarpX_Complex.H"
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData_fwd.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+
+#include <ablastr/math/Complex.H>
 
 #include <AMReX_BaseFab.H>
 #include <AMReX_Config.H>
@@ -80,7 +81,7 @@ class SpectralBaseAlgorithm
         using SpectralRealCoefficients = \
             amrex::FabArray< amrex::BaseFab <amrex::Real> >;
         using SpectralComplexCoefficients = \
-            amrex::FabArray< amrex::BaseFab <Complex> >;
+            amrex::FabArray< amrex::BaseFab <ablastr::math::Complex> >;
 
         /**
         * \brief Constructor

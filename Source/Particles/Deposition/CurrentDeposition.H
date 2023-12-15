@@ -15,11 +15,12 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#ifdef WARPX_DIM_RZ
-#   include "Utils/WarpX_Complex.H"
-#endif
 
 #include "WarpX.H" // todo: remove include and pass globals as args
+
+#ifdef WARPX_DIM_RZ
+#   include <ablastr/math/Complex.H>
+#endif
 
 #include <AMReX.H>
 #include <AMReX_Arena.H>
@@ -71,6 +72,9 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          long load_balance_costs_update_algo)
 {
     using namespace amrex::literals;
+#ifdef WARPX_DIM_RZ
+    using namespace ablastr::math;
+#endif
 
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
@@ -599,6 +603,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 {
     using namespace amrex;
     using namespace amrex::literals;
+#ifdef WARPX_DIM_RZ
+    using namespace ablastr::math;
+#endif
 
 #if !defined(WARPX_DIM_RZ)
     ignore_unused(n_rz_azimuthal_modes);

@@ -11,8 +11,9 @@
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
+
 #ifdef WARPX_DIM_RZ
-#   include "Utils/WarpX_Complex.H"
+#   include <ablastr/math/Complex.H>
 #endif
 
 #include <AMReX.H>
@@ -83,6 +84,7 @@ void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
                        const int zdir, const int NODE, const int CELL, const int dir)
 {
     using namespace amrex::literals;
+    using namespace ablastr::math;
 
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
