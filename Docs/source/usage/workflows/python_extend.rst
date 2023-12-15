@@ -121,17 +121,37 @@ This example accesses the :math:`E_x(x,y,z)` field at level 0 after every time s
 
 
    @callfromafterstep
-   def print_max_E2_x():
+   def set_E_x():
        warpx = sim.extension.warpx
 
        # data access
        E_x_mf = warpx.multifab(f"Efield_fp[x][l=0]")
-       E_x_np = E_x_mf.to_numpy(copy=True)  # list of arrays
 
        # compute
-       max_E2_x = max([np.max(chunk*chunk) for chunk in E_x_np])
+       # iterate over mesh-refinement levels
+       for lev in range(warpx.finest_level + 1):
+           # grow (aka guard/ghost/halo) regions
+           ngv = E_x_mf.n_grow_vect
 
-       print(f"On this process, the maximum value of the pointwise squared E_x is {max_E2_x}")
+           # get every local block of the field
+           for mfi in E_x_mf:
+               # global index space box, including guards
+               bx = mfi.tilebox().grow(ngv)
+               print(bx)  # note: global index space of this block
+
+               # numpy representation: non-copying view, including the
+               # guard/ghost region;     .to_cupy() for GPU!
+               E_x_np = E_x_mf.array(mfi).to_numpy()
+
+               # notes on indexing in E_x_np:
+               # - numpy uses locally zero-based indexing
+               # - layout is F_CONTIGUOUS by default, just like AMReX
+
+               # notes:
+               # Only the next lines are the "HOT LOOP" of the computation.
+               # For efficiency, use numpy array operation for speed on CPUs.
+               # For GPUs use .to_cupy() above and compute with cupy or numba.
+               E_x_np[()] = 42.0
 
 
    sim.step(nsteps=100)
@@ -170,13 +190,26 @@ Particles
        pc = mypc.get_particle_container_from_name("electrons")
 
        # compute
+       # iterate over mesh-refinement levels
        for lvl in range(pc.finest_level + 1):
            # get every local chunk of particles
            for pti in pc.iterator(pc, level=lvl):
+               # default layout: AoS with positions and cpuid
+               aos = pti.aos().to_numpy()
+
                # additional compile-time and runtime attributes in SoA format
                soa = pti.soa().to_numpy()
 
+               # notes:
+               # Only the next lines are the "HOT LOOP" of the computation.
+               # For efficiency, use numpy array operation for speed on CPUs.
+               # For GPUs use .to_cupy() above and compute with cupy or numba.
+
                # write to all particles in the chunk
+               aos[()]["x"] = 0.30
+               aos[()]["y"] = 0.35
+               aos[()]["z"] = 0.40
+
                for soa_real in soa.real:
                    soa_real[()] = 42.0
 

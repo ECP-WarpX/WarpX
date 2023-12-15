@@ -86,7 +86,15 @@ void init_WarpX (py::module& m)
             "Evolve the simulation the specified number of steps"
         )
 
-        // from AmrCore->AmrMesh
+        // from amrex::AmrCore / amrex::AmrMesh
+        .def_property_readonly("max_level",
+            [](WarpX const & wx){ return wx.maxLevel(); },
+            "The maximum mesh-refinement level for the simulation."
+        )
+        .def_property_readonly("finest_level",
+            [](WarpX const & wx){ return wx.finestLevel(); },
+            "The currently finest level of mesh-refinement used. This is always less or equal to max_level."
+        )
         .def("Geom",
             //[](WarpX const & wx, int const lev) { return wx.Geom(lev); },
             py::overload_cast< int >(&WarpX::Geom, py::const_),
