@@ -233,7 +233,6 @@ void RadiationHandler::add_detector
         det_bornes[idim][0]=center[idim]-std::tan(m_theta_range[idim]/2)*m_det_distance;
         det_bornes[idim][1]=center[idim]+std::tan(m_theta_range[idim]/2)*m_det_distance;
     }
-    //fillWithConsecutiveReal(pos_det_x)
     //pos_det_y
     //omega_calc
 
