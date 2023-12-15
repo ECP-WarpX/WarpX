@@ -33,14 +33,14 @@ This is as we expect and what is optimal for training neural networks.
 
 .. _fig_phase_space_beam_1:
 
-.. figure:: fig_phase_space_beam_1.png
+.. figure:: https://user-images.githubusercontent.com/10621396/290010209-c55baf1c-dd98-4d56-a675-ad3729481eee.png
    :alt: Plot showing the final phase space projections for beam 1 of the training data, for a surrogate to stage 1.
 
    The final phase space projections for beam 1 of the training data, for a surrogate to stage 1.
 
 .. _fig_phase_space_beam_0:
 
-.. figure:: fig_phase_space_beam_0.png
+.. figure:: https://user-images.githubusercontent.com/10621396/290010282-40560ac4-8509-4599-82ca-167bb1739cff.png
    :alt: Plot showing the final phase space projections for beam 0 of the training data.
 
    The final phase space projections for beam 0 of the training data.
@@ -230,14 +230,14 @@ When the test-loss starts to trend flat or even upward, the neural network is no
 
 .. _fig_train_test_loss:
 
-.. figure:: fig_train_test_loss.png
+.. figure:: https://user-images.githubusercontent.com/10621396/290010428-f83725ab-a08f-494c-b075-314b0d26cb9a.png
    :alt: Plot of training and testing loss curves versus number of training epochs.
 
    Training (in blue) and testing (in green) loss curves versus number of training epochs.
 
 .. _fig_train_evaluation:
 
-.. figure:: fig_train_evaluation.png
+.. figure:: https://user-images.githubusercontent.com/10621396/290010486-4a3541e7-e0be-4cf1-b33b-57d5e5985196.png
    :alt: Plot comparing model prediction with simulation output.
 
    A comparison of model prediction (yellow-red dots, colored by mean-squared error) with simulation output (black dots).
