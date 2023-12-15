@@ -49,7 +49,7 @@ Important APIs include:
 
 * `amr.ParallelDescriptor <https://pyamrex.readthedocs.io/en/latest/usage/api.html#amrex.space3d.ParallelDescriptor.IOProcessor>`__: MPI-parallel rank information
 * `amr.MultiFab <https://pyamrex.readthedocs.io/en/latest/usage/api.html#amrex.space3d.MultiFab>`__: MPI-parallel field data
-* `amr.ParticleContainer_* <https://pyamrex.readthedocs.io/en/latest/usage/api.html#amrex.space3d.ParticleContainer_1_1_2_1_default>`: MPI-parallel particle data for a particle species
+* `amr.ParticleContainer_* <https://pyamrex.readthedocs.io/en/latest/usage/api.html#amrex.space3d.ParticleContainer_1_1_2_1_default>`__: MPI-parallel particle data for a particle species
 
 
 Data Access
@@ -227,3 +227,12 @@ See the example in ``Examples/Tests/ParticleBoundaryScrape`` for a reference on 
 
 .. autoclass:: pywarpx.particle_containers.ParticleBoundaryBufferWrapper
    :members:
+
+
+Modify Solvers
+--------------
+
+From Python, once can also replace numerical solvers in the PIC loop or add new physical processes into the time step loop.
+Examples:
+
+* :ref:`Capacitive Discharge <examples-capacitive-discharge>`: replaces the Poisson solver of an electrostatic simulation (default: MLMG) with a python function that uses `superLU <https://portal.nersc.gov/project/sparse/superlu/>`__ to directly solve the Poisson equation.
