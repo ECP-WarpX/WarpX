@@ -76,7 +76,7 @@ This object is the Python equivalent to the C++ ``WarpX`` simulation class.
 
    .. py:method:: multifab(multifab_name: str)
 
-      Return MultiFabs by name, e.g., ``"Efield_aux[x][l=0]"``, ``"Efield_cp[x][l=0]"``, ...
+      Return MultiFabs by name, e.g., ``"Efield_aux[x][level=0]"``, ``"Efield_cp[x][level=0]"``, ...
 
       The physical fields in WarpX have the following naming:
 
@@ -128,7 +128,7 @@ This example accesses the :math:`E_x(x,y,z)` field at level 0 after every time s
        warpx = sim.extension.warpx
 
        # data access
-       E_x_mf = warpx.multifab(f"Efield_fp[x][l=0]")
+       E_x_mf = warpx.multifab(f"Efield_fp[x][level=0]")
 
        # compute
        # iterate over mesh-refinement levels

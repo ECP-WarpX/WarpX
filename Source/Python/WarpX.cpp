@@ -120,7 +120,7 @@ void init_WarpX (py::module& m)
             },
             py::arg("multifab_name"),
             py::return_value_policy::reference_internal,
-            R"doc(Return MultiFabs by name, e.g., ``\"Efield_aux[x][l=0]\"``, ``\"Efield_cp[x][l=0]\"``, ...
+            R"doc(Return MultiFabs by name, e.g., ``\"Efield_aux[x][level=0]\"``, ``\"Efield_cp[x][level=0]\"``, ...
 
 The physical fields in WarpX have the following naming:
 
