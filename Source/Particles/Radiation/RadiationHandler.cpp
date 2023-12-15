@@ -135,8 +135,8 @@ void RadiationHandler::add_radiation_contribution
 
                                     }
                                     else{
-                                        n[idimo]=(Part_pos[idimo]-det_pos[(idimo+1)%3][i_y])/m_det_distance;
-                                        n[idimo]=(Part_pos[idimo]-det_pos[(idimo+2)%3][i_x])/m_det_distance;                                                   
+                                        n[idimo]=(Part_pos[idimo]-det_pos[(idimo+1)%2][i_y])/m_det_distance;
+                                        n[idimo]=(Part_pos[idimo]-det_pos[(idimo+2)%2][i_x])/m_det_distance;                                                   
                                         }
                                 }
                                     //Calculation of 1_beta.n, n corresponds to m_det_direction, the direction of the normal
