@@ -13,12 +13,10 @@
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Sorting/SortingUtils.H"
-#include "WarpX.H"
 
+#include <AMReX_GpuContainers.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Geometry.H>
-
 
 #include <memory>
 #include <string>
