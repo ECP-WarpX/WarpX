@@ -232,7 +232,7 @@ See the example in ``Examples/Tests/ParticleBoundaryScrape`` for a reference on 
 Modify Solvers
 --------------
 
-From Python, once can also replace numerical solvers in the PIC loop or add new physical processes into the time step loop.
+From Python, one can also replace numerical solvers in the PIC loop or add new physical processes into the time step loop.
 Examples:
 
 * :ref:`Capacitive Discharge <examples-capacitive-discharge>`: replaces the Poisson solver of an electrostatic simulation (default: MLMG) with a python function that uses `superLU <https://portal.nersc.gov/project/sparse/superlu/>`__ to directly solve the Poisson equation.
