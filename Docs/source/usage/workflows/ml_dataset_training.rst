@@ -41,9 +41,9 @@ This is as we expect and what is optimal for training neural networks.
 .. _fig_phase_space_beam_0:
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290010282-40560ac4-8509-4599-82ca-167bb1739cff.png
-   :alt: Plot showing the final phase space projections for beam 0 of the training data.
+   :alt: Plot showing the final phase space projections for beam 0 of the training data, for a surrogate to stage 0.
 
-   The final phase space projections for beam 0 of the training data.
+   The final phase space projections for beam 0 of the training data, for a surrogate to stage 0
 
 On the other hand, the final phase space for beam 0, shown in :numref:`fig_phase_space_beam_1`,
 has a halo of outlying particles.
