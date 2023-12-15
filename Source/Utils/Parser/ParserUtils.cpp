@@ -19,8 +19,8 @@
 #include <set>
 
 void utils::parser::Store_parserString(
-    const amrex::ParmParse& pp,
-    std::string query_string,
+    amrex::ParmParse const& pp,
+    std::string const& query_string,
     std::string& stored_string)
 {
     std::vector<std::string> f;
@@ -32,12 +32,60 @@ void utils::parser::Store_parserString(
     f.clear();
 }
 
+void utils::parser::Store_parserString(
+    amrex::ParmParse const& a_pp,
+    std::string const& group,
+    std::string const& query_string,
+    std::string& stored_string)
+{
+    const bool is_specified_without_group = a_pp.contains(query_string.c_str());
+    const std::string grp_str = group + "." + query_string;
+    const bool is_specified_with_group = (group.empty() ? false : a_pp.contains(grp_str.c_str()));
+
+    if (is_specified_without_group && !is_specified_with_group) {
+        // If found without the group but not with the group, then use the one without the group.
+        utils::parser::Store_parserString(a_pp, query_string, stored_string);
+    } else {
+        // Otherwise, use the one with the group even if not found, in which case an exception may be raised.
+        utils::parser::Store_parserString(a_pp, grp_str, stored_string);
+    }
+}
+
+int utils::parser::query (const amrex::ParmParse& a_pp, std::string const& group, char const * str, std::string& val)
+{
+    const bool is_specified_without_group = a_pp.contains(str);
+    const std::string grp_str = group + "." + std::string(str);
+    const bool is_specified_with_group = (group.empty() ? false : a_pp.contains(grp_str.c_str()));
+
+    if (is_specified_without_group && !is_specified_with_group) {
+        // If found without the group but not with the group, then use the one without the group.
+        return a_pp.query(str, val);
+    } else {
+        // Otherwise, use the one with the group even if not found, in which case an exception may be raised.
+        return a_pp.query(grp_str.c_str(), val);
+    }
+}
+
+void utils::parser::get (const amrex::ParmParse& a_pp, std::string const& group, char const * str, std::string& val)
+{
+    const bool is_specified_without_group = a_pp.contains(str);
+    const std::string grp_str = group + "." + std::string(str);
+    const bool is_specified_with_group = (group.empty() ? false : a_pp.contains(grp_str.c_str()));
+
+    if (is_specified_without_group && !is_specified_with_group) {
+        // If found without the group but not with the group, then use the one without the group.
+        a_pp.get(str, val);
+    } else {
+        // Otherwise, use the one with the group even if not found, in which case an exception may be raised.
+        a_pp.get(grp_str.c_str(), val);
+    }
+}
 
 namespace {
     template< typename int_type >
     AMREX_FORCE_INLINE
     int_type safeCastTo(const amrex::Real x, const std::string& real_name) {
-        int_type result = int_type(0);
+        auto result = int_type(0);
         bool error_detected = false;
         std::string assert_msg;
         // (2.0*(numeric_limits<int>::max()/2+1)) converts numeric_limits<int>::max()+1 to a real ensuring accuracy to all digits
@@ -87,7 +135,7 @@ amrex::Parser utils::parser::makeParser (
     parser.registerVariables(varnames);
 
     std::set<std::string> symbols = parser.symbols();
-    for (auto const& v : varnames) symbols.erase(v);
+    for (auto const& v : varnames) { symbols.erase(v); }
 
     // User can provide inputs under this name, through which expressions
     // can be provided for arbitrary variables. PICMI inputs are aware of

@@ -503,14 +503,14 @@ Three variations are considered:
    are first interpolated to the staggered positions on an auxiliary
    grid).
 
-As shown in :raw-latex:`\cite{BirdsallLangdon,HockneyEastwoodBook,LewisJCP1972}`,
+As shown in :cite:t:`BirdsallLangdon,HockneyEastwoodBook,LewisJCP1972`,
 the momentum and energy conserving schemes conserve momentum and energy
 respectively at the limit of infinitesimal time steps and generally
 offer better conservation of the respective quantities for a finite
 time step. The uniform scheme does not conserve momentum nor energy
 in the sense defined for the others but is given for completeness,
 as it has been shown to offer some interesting properties in the modeling
-of relativistically drifting plasmas :raw-latex:`\cite{GodfreyJCP2013}`.
+of relativistically drifting plasmas :cite:p:`GodfreyJCP2013`.
 
 .. _theory-pic-filter:
 
@@ -764,7 +764,7 @@ Pukhov, A. 1999. “Three-dimensional electromagnetic relativistic particle-in-c
 
 .. raw:: html
 
-   <div id="ref-VayJCP13">
+   <div id="ref-VayJCP2013">
 
 Vay, Jean-Luc, Irving Haber, and Brendan B Godfrey. 2013. “A domain decomposition method for pseudo-spectral electromagnetic simulations of plasmas.” *Journal of Computational Physics* 243 (June): 260–68. https://doi.org/10.1016/j.jcp.2013.03.010.
 
@@ -844,7 +844,7 @@ Villasenor, J, and O Buneman. 1992. “Rigorous Charge Conservation for Local El
 
 .. raw:: html
 
-   <div id="ref-Vincenti2016a">
+   <div id="ref-VincentiCPC2017a">
 
 Vincenti, H., and J.-L. Vay. 2016. “Detailed analysis of the effects of stencil spatial variations with arbitrary high-order finite-difference Maxwell solver.” *Computer Physics Communications* 200 (March). ELSEVIER SCIENCE BV, PO BOX 211, 1000 AE AMSTERDAM, NETHERLANDS: 147–67. https://doi.org/10.1016/j.cpc.2015.11.009.
 

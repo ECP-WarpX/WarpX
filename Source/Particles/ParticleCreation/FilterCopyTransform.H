@@ -56,14 +56,14 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Ind
     using namespace amrex;
 
     const auto np = src.numParticles();
-    if (np == 0) return 0;
+    if (np == 0) { return 0; }
 
     Gpu::DeviceVector<Index> offsets(np);
     auto total = amrex::Scan::ExclusiveSum(np, mask, offsets.data());
     const Index num_added = N * total;
     dst.resize(std::max(dst_index + num_added, dst.numParticles()));
 
-    const auto p_offsets = offsets.dataPtr();
+    auto *const p_offsets = offsets.dataPtr();
 
     const auto src_data = src.getParticleTileData();
     const auto dst_data = dst.getParticleTileData();
@@ -129,11 +129,11 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
     using namespace amrex;
 
     const auto np = src.numParticles();
-    if (np == 0) return 0;
+    if (np == 0) { return 0; }
 
     Gpu::DeviceVector<Index> mask(np);
 
-    auto p_mask = mask.dataPtr();
+    auto *p_mask = mask.dataPtr();
     const auto src_data = src.getParticleTileData();
 
     amrex::ParallelForRNG(np,
@@ -199,7 +199,7 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
     using namespace amrex;
 
     auto np = src.numParticles();
-    if (np == 0) return 0;
+    if (np == 0) { return 0; }
 
     Gpu::DeviceVector<Index> offsets(np);
     auto total = amrex::Scan::ExclusiveSum(np, mask, offsets.data());
@@ -207,7 +207,7 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
     dst1.resize(std::max(dst1_index + num_added, dst1.numParticles()));
     dst2.resize(std::max(dst2_index + num_added, dst2.numParticles()));
 
-    auto p_offsets = offsets.dataPtr();
+    auto *p_offsets = offsets.dataPtr();
 
     const auto src_data  =  src.getParticleTileData();
     const auto dst1_data = dst1.getParticleTileData();
@@ -286,11 +286,11 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src,
     using namespace amrex;
 
     auto np = src.numParticles();
-    if (np == 0) return 0;
+    if (np == 0) { return 0; }
 
     Gpu::DeviceVector<Index> mask(np);
 
-    auto p_mask = mask.dataPtr();
+    auto *p_mask = mask.dataPtr();
     const auto src_data = src.getParticleTileData();
 
     amrex::ParallelForRNG(np,

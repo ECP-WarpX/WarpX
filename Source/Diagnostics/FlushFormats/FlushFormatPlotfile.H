@@ -46,18 +46,18 @@ public:
                             const std::string& plotfilename,
                             bool plot_raw_fields_guards) const;
     /** \brief Write particles data to file.
-     * \param[in] filename name of output directory
+     * \param[in] dir name of output directory
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
      * \param[in] time the simulation time on the coarsest level
      * \param[in] isBTD whether this is a back-transformed diagnostic
      */
-    void WriteParticles(const std::string& filename,
+    void WriteParticles(const std::string& dir,
                         const amrex::Vector<ParticleDiag>& particle_diags,
                         amrex::Real time,
                         bool isBTD = false) const;
 
     FlushFormatPlotfile () = default;
-    ~FlushFormatPlotfile() override {}
+    ~FlushFormatPlotfile() override = default;
 
     FlushFormatPlotfile ( FlushFormatPlotfile const &)             = default;
     FlushFormatPlotfile& operator= ( FlushFormatPlotfile const & ) = default;

@@ -56,7 +56,7 @@ public:
      *  the run if one of them is specified. */
     void BackwardCompatibility ();
 
-    ~PhysicalParticleContainer () override {}
+    ~PhysicalParticleContainer () override = default;
 
     PhysicalParticleContainer (PhysicalParticleContainer const &)              = delete;
     PhysicalParticleContainer& operator= (PhysicalParticleContainer const & )  = delete;
@@ -72,9 +72,9 @@ public:
     void InitIonizationModule () override;
 
     /*
-     * \brief Returns a pointer to the plasma injector.
+     * \brief Returns a pointer to the i'th plasma injector.
      */
-    PlasmaInjector* GetPlasmaInjector () override;
+    PlasmaInjector* GetPlasmaInjector (int i) override;
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that
@@ -189,35 +189,40 @@ public:
      * number of particles per cell (in the cells of `part_realbox`).
      * The new particles are only created inside the intersection of `part_realbox`
      * with the local grid for the current proc.
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] lev the index of the refinement level
      * @param[in] part_realbox the box in which new particles should be created
      * (this box should correspond to an integer number of cells in each direction,
      * but its boundaries need not be aligned with the actual cells of the simulation)
     */
-    void AddPlasma (int lev, amrex::RealBox part_realbox = amrex::RealBox());
+    void AddPlasma (PlasmaInjector const& plasma_injector, int lev, amrex::RealBox part_realbox = amrex::RealBox());
 
     /**
      * Create new macroparticles for this species, with a fixed
      * number of particles per cell in a plane.
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] dt time step size, used to partially advance the particles
     */
-    void AddPlasmaFlux (amrex::Real dt);
+    void AddPlasmaFlux (PlasmaInjector const& plasma_injector, amrex::Real dt);
 
     void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                                     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
                                     amrex::Real t_lab = 0.);
 
     void AddGaussianBeam (
+        PlasmaInjector const& plasma_injector,
         amrex::Real x_m, amrex::Real y_m, amrex::Real z_m,
         amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
         amrex::Real x_cut, amrex::Real y_cut, amrex::Real z_cut,
         amrex::Real q_tot, long npart, int do_symmetrize, int symmetrization_order);
 
     /** Load a particle beam from an external file
+     * @param[in] the PlasmaInjector instance holding the input parameters
      * @param[in] q_tot total charge of the particle species to be initialized
      * @param[in] z_shift optional shift to the z position of particles (useful for boosted frame runs)
      */
-    void AddPlasmaFromFile (amrex::ParticleReal q_tot,
+    void AddPlasmaFromFile (PlasmaInjector & plasma_injector,
+                            amrex::ParticleReal q_tot,
                             amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (
@@ -281,12 +286,12 @@ public:
  * \param Bx Field array before filtering (not modified)
  * \param By Field array before filtering (not modified)
  * \param Bz Field array before filtering (not modified)
- * \param exfab pointer to the Ex field (modified)
- * \param eyfab pointer to the Ey field (modified)
- * \param ezfab pointer to the Ez field (modified)
- * \param bxfab pointer to the Bx field (modified)
- * \param byfab pointer to the By field (modified)
- * \param bzfab pointer to the Bz field (modified)
+ * \param ex_ptr pointer to the Ex field (modified)
+ * \param ey_ptr pointer to the Ey field (modified)
+ * \param ez_ptr pointer to the Ez field (modified)
+ * \param bx_ptr pointer to the Bx field (modified)
+ * \param by_ptr pointer to the By field (modified)
+ * \param bz_ptr pointer to the Bz field (modified)
  *
  * The NCI Godfrey filter is applied on Ex, the result is stored in filtered_Ex
  * and the pointer exfab is modified (before this function is called, it points to Ex
@@ -302,9 +307,9 @@ public:
         const amrex::FArrayBox& Ex, const amrex::FArrayBox& Ey,
         const amrex::FArrayBox& Ez, const amrex::FArrayBox& Bx,
         const amrex::FArrayBox& By, const amrex::FArrayBox& Bz,
-        amrex::FArrayBox const * & exfab, amrex::FArrayBox const * & eyfab,
-        amrex::FArrayBox const * & ezfab, amrex::FArrayBox const * & bxfab,
-        amrex::FArrayBox const * & byfab, amrex::FArrayBox const * & bzfab);
+        amrex::FArrayBox const * & ex_ptr, amrex::FArrayBox const * & ey_ptr,
+        amrex::FArrayBox const * & ez_ptr, amrex::FArrayBox const * & bx_ptr,
+        amrex::FArrayBox const * & by_ptr, amrex::FArrayBox const * & bz_ptr);
 
     /**
     * \brief This function determines if resampling should be done for the current species, and
@@ -312,7 +317,7 @@ public:
     *
     * @param[in] timestep the current timestep.
     */
-    void resample (int timestep, bool verbose) final;
+    void resample (int timestep, bool verbose=true) final;
 
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H
@@ -357,7 +362,7 @@ public:
     
 protected:
     std::string species_name;
-    std::unique_ptr<PlasmaInjector> plasma_injector;
+    std::vector<std::unique_ptr<PlasmaInjector>> plasma_injectors;
 
     // When true, adjust the transverse particle positions accounting
     // for the difference between the Lorentz transformed time of the

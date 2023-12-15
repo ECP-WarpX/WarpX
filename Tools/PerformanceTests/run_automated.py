@@ -87,7 +87,7 @@ parser.add_argument('--automated',
 parser.add_argument('--n_node_list',
                     dest='n_node_list',
                     default=[],
-                    help='list ofnumber of nodes for the runs', type=str)
+                    help='list of number of nodes for the runs', type=str)
 parser.add_argument('--start_date',
                     dest='start_date' )
 parser.add_argument('--compiler',

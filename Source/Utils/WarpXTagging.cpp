@@ -32,7 +32,7 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
     const auto dx = Geom(lev).CellSizeArray();
 
     amrex::ParserExecutor<3> ref_parser;
-    if (ref_patch_parser) ref_parser = ref_patch_parser->compile<3>();
+    if (ref_patch_parser) { ref_parser = ref_patch_parser->compile<3>(); }
     const auto ftlo = fine_tag_lo;
     const auto fthi = fine_tag_hi;
 #ifdef AMREX_USE_OMP
@@ -47,7 +47,7 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
             const RealVect pos {AMREX_D_DECL((i+0.5_rt)*dx[0]+problo[0],
                                        (j+0.5_rt)*dx[1]+problo[1],
                                        (k+0.5_rt)*dx[2]+problo[2])};
-            bool tag_val = 0;
+            bool tag_val = false;
             if (ref_parser) {
 #if defined (WARPX_DIM_3D)
                 tag_val = (ref_parser(pos[0], pos[1], pos[2]) == 1);

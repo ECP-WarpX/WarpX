@@ -48,6 +48,20 @@ public:
 
     /**
      * \brief
+     * Function to evaluate the external current expressions and populate the
+     * external current multifab. Note the external current can be a function
+     * of time and therefore this should be re-evaluated at every step.
+     */
+    void GetCurrentExternal (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths
+    );
+    void GetCurrentExternal (
+        std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
+        int lev
+    );
+
+    /**
+     * \brief
      * Function to calculate the total current based on Ampere's law while
      * neglecting displacement current (J = curl x B). Used in the Ohm's law
      * solver (kinetic-fluid hybrid model).
@@ -107,12 +121,12 @@ public:
      * charge density (and assumption of quasi-neutrality) using the user
      * specified electron equation of state.
      *
-     * \param[out] Pe   scalar electron pressure MultiFab at a given level
-     * \param[in] rhofield scalar ion chrge density Multifab at a given level
+     * \param[out] Pe_filed scalar electron pressure MultiFab at a given level
+     * \param[in] rho_field scalar ion charge density Multifab at a given level
      */
     void FillElectronPressureMF (
-        std::unique_ptr<amrex::MultiFab> const& Pe,
-        amrex::MultiFab* const& rhofield );
+        std::unique_ptr<amrex::MultiFab> const& Pe_field,
+        amrex::MultiFab* const& rho_field );
 
     // Declare variables to hold hybrid-PIC model parameters
     /** Number of substeps to take when evolving B */
@@ -133,15 +147,33 @@ public:
     std::unique_ptr<amrex::Parser> m_resistivity_parser;
     amrex::ParserExecutor<1> m_eta;
 
+    /** External current */
+    std::string m_Jx_ext_grid_function = "0.0";
+    std::string m_Jy_ext_grid_function = "0.0";
+    std::string m_Jz_ext_grid_function = "0.0";
+    std::array< std::unique_ptr<amrex::Parser>, 3> m_J_external_parser;
+    std::array< amrex::ParserExecutor<4>, 3> m_J_external;
+    bool m_external_field_has_time_dependence = false;
+
     // Declare multifabs specifically needed for the hybrid-PIC model
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_temp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_ampere;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_external;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > electron_pressure_fp;
 
     // Helper functions to retrieve hybrid-PIC multifabs
-    amrex::MultiFab * get_pointer_current_fp_ampere  (int lev, int direction) const { return current_fp_ampere[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_electron_pressure_fp  (int lev) const { return electron_pressure_fp[lev].get(); }
+    [[nodiscard]] amrex::MultiFab*
+    get_pointer_current_fp_ampere  (int lev, int direction) const
+    {
+        return current_fp_ampere[lev][direction].get();
+    }
+
+    [[nodiscard]] amrex::MultiFab*
+    get_pointer_electron_pressure_fp  (int lev) const
+    {
+        return electron_pressure_fp[lev].get();
+    }
 
     /** Gpu Vector with index type of the Jx multifab */
     amrex::GpuArray<int, 3> Jx_IndexType;

@@ -25,7 +25,7 @@
 /**
  * Photon particles have no mass, they deposit no charge, and see specific QED
  * effects. For these reasons, they are stored in the separate particle
- * container PhotonParticleContainer, that inherts from
+ * container PhotonParticleContainer, that inherits from
  * PhysicalParticleContainer. The particle pusher and current deposition, in
  * particular, are overriden in this container.
  */
@@ -36,7 +36,7 @@ public:
     PhotonParticleContainer (amrex::AmrCore* amr_core,
                                     int ispecies,
                                     const std::string& name);
-    ~PhotonParticleContainer () override {}
+    ~PhotonParticleContainer () override = default;
 
     PhotonParticleContainer ( PhotonParticleContainer const &)             = delete;
     PhotonParticleContainer& operator= ( PhotonParticleContainer const & ) = delete;
@@ -103,7 +103,7 @@ public:
                                 amrex::MultiFab* /*rho*/,
                                 int /*icomp*/,
                                 const long /*offset*/,
-                                const long /*np_to_depose*/,
+                                const long /*np_to_deposit*/,
                                 int /*thread_num*/,
                                 int /*lev*/,
                                 int /*depos_lev*/) override {}
@@ -119,7 +119,7 @@ public:
                                  amrex::MultiFab * const /*jy*/,
                                  amrex::MultiFab * const /*jz*/,
                                  long const /*offset*/,
-                                 long const /*np_to_depose*/,
+                                 long const /*np_to_deposit*/,
                                  int const /*thread_num*/,
                                  int const /*lev*/,
                                  int const /*depos_lev*/,

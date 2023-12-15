@@ -51,12 +51,15 @@ struct CopyAndTimestamp {
                      int src_i, int dst_i) const noexcept
     {
         dst.m_aos[dst_i] = src.m_aos[src_i];
-        for (int j = 0; j < SrcData::NAR; ++j)
+        for (int j = 0; j < SrcData::NAR; ++j) {
             dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
-        for (int j = 0; j < src.m_num_runtime_real; ++j)
+        }
+        for (int j = 0; j < src.m_num_runtime_real; ++j) {
             dst.m_runtime_rdata[j][dst_i] = src.m_runtime_rdata[j][src_i];
-        for (int j = 0; j < src.m_num_runtime_int; ++j)
+        }
+        for (int j = 0; j < src.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
+        }
         dst.m_runtime_idata[m_index][dst_i] = m_step;
     }
 };
@@ -115,7 +118,7 @@ ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 #endif
         // Set the flag whether the boundary is active or any species
         for (int i = 0; i < numBoundaries(); ++i) {
-            if (m_do_boundary_buffer[i][ispecies]) m_do_any_boundary[i] = 1;
+            if (m_do_boundary_buffer[i][ispecies]) { m_do_any_boundary[i] = 1; }
         }
     }
 
@@ -146,7 +149,7 @@ void ParticleBoundaryBuffer::printNumParticles () const {
     {
         for (int iside = 0; iside < 2; ++iside)
         {
-            auto& buffer = m_particle_containers[2*idim+iside];
+            const auto& buffer = m_particle_containers[2*idim+iside];
             for (int i = 0; i < numSpecies(); ++i)
             {
                 const auto np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
@@ -210,7 +213,7 @@ void ParticleBoundaryBuffer::clearParticles (int const i) {
     for (int ispecies = 0; ispecies < numSpecies(); ++ispecies)
     {
         auto& species_buffer = buffer[ispecies];
-        if (species_buffer.isDefined()) species_buffer.clearParticles();
+        if (species_buffer.isDefined()) { species_buffer.clearParticles(); }
     }
 }
 
@@ -227,13 +230,13 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
-        if (geom.isPeriodic(idim)) continue;
+        if (geom.isPeriodic(idim)) { continue; }
         for (int iside = 0; iside < 2; ++iside)
         {
             auto& buffer = m_particle_containers[2*idim+iside];
             for (int i = 0; i < numSpecies(); ++i)
             {
-                if (!m_do_boundary_buffer[2*idim+iside][i]) continue;
+                if (!m_do_boundary_buffer[2*idim+iside][i]) { continue; }
                 const WarpXParticleContainer& pc = mypc.GetParticleContainer(i);
                 if (!buffer[i].isDefined())
                 {
@@ -250,13 +253,13 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                     for(PIter pti(pc, lev); pti.isValid(); ++pti)
                     {
                         auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
-                        if(plevel.find(index) == plevel.end()) continue;
+                        if(plevel.find(index) == plevel.end()) { continue; }
 
                         auto& ptile_buffer = species_buffer.DefineAndReturnParticleTile(
                                                         lev, pti.index(), pti.LocalTileIndex());
                         const auto& ptile = plevel.at(index);
                         auto np = ptile.numParticles();
-                        if (np == 0) continue;
+                        if (np == 0) { continue; }
 
                         auto predicate = IsOutsideDomainBoundary{plo, phi, idim, iside};
 
@@ -324,7 +327,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                                                                                 pti.LocalTileIndex());
                 const auto& ptile = plevel.at(index);
                 auto np = ptile.numParticles();
-                if (np == 0) continue;
+                if (np == 0) { continue; }
 
                 using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
                 auto predicate = [=] AMREX_GPU_HOST_DEVICE (const SrcData& /*src*/, const int ip)

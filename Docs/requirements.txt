@@ -15,6 +15,7 @@ picmistandard==0.28.0
 # for development against an unreleased PICMI version, use:
 # picmistandard @ git+https://github.com/picmi-standard/picmi.git#subdirectory=PICMI_Python
 
+pybtex
 pygments
 recommonmark
 # Sphinx<7.2 because we are waiting for
