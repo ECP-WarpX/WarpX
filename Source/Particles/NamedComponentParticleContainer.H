@@ -102,9 +102,9 @@ public:
     NamedComponentParticleContainer& operator= ( const NamedComponentParticleContainer & ) = delete;
 
     /** Move constructor for NamedComponentParticleContainer */
-    NamedComponentParticleContainer ( NamedComponentParticleContainer && ) = default;
+    NamedComponentParticleContainer ( NamedComponentParticleContainer && ) noexcept = default;
     /** Move operator for NamedComponentParticleContainer */
-    NamedComponentParticleContainer& operator= ( NamedComponentParticleContainer && ) = default;
+    NamedComponentParticleContainer& operator= ( NamedComponentParticleContainer && ) noexcept = default;
 
     /** Create an empty particle container
      *
