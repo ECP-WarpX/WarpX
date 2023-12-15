@@ -9,7 +9,8 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpX_Complex.H"
+
+#include <ablastr/math/Complex.H>
 
 #include <AMReX_Array4.H>
 #include <AMReX_BLProfiler.H>
@@ -27,6 +28,7 @@
 #if WARPX_USE_PSATD
 
 using namespace amrex::literals;
+using namespace ablastr::math;
 
 PsatdAlgorithmFirstOrder::PsatdAlgorithmFirstOrder(
     const SpectralKSpace& spectral_kspace,

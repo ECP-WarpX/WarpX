@@ -11,7 +11,8 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpX_Complex.H"
+
+#include <ablastr/math/Complex.H>
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -29,6 +30,7 @@
 #if WARPX_USE_PSATD
 
 using namespace amrex;
+using namespace ablastr::math;
 
 PsatdAlgorithmPml::PsatdAlgorithmPml(
         const SpectralKSpace& spectral_kspace,

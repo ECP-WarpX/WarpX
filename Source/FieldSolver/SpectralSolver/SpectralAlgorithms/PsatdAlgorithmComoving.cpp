@@ -3,7 +3,8 @@
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
-#include "Utils/WarpX_Complex.H"
+
+#include <ablastr/math/Complex.H>
 
 #include <AMReX.H>
 #include <AMReX_Array4.H>
@@ -22,6 +23,7 @@
 #if WARPX_USE_PSATD
 
 using namespace amrex;
+using namespace ablastr::math;
 
 PsatdAlgorithmComoving::PsatdAlgorithmComoving (const SpectralKSpace& spectral_kspace,
                                                 const DistributionMapping& dm,
@@ -75,7 +77,7 @@ PsatdAlgorithmComoving::pushSpectralFields (SpectralFieldData& f) const
         const amrex::Box& bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        const amrex::Array4<Complex> fields = f.fields[mfi].array();
+        const amrex::Array4<ablastr::math::Complex> fields = f.fields[mfi].array();
 
         // Extract arrays for the coefficients
         const amrex::Array4<const amrex::Real> C_arr    = C_coef   [mfi].array();

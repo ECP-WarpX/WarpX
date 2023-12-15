@@ -13,8 +13,9 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+
 #ifdef WARPX_DIM_RZ
-#   include "Utils/WarpX_Complex.H"
+#   include <ablastr/math/Complex.H>
 #endif
 
 #include <AMReX.H>
@@ -51,6 +52,7 @@ void doChargeDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                long load_balance_costs_update_algo)
 {
     using namespace amrex;
+    using namespace ablastr::math;
 
 #if !defined(AMREX_USE_GPU)
     amrex::ignore_unused(cost, load_balance_costs_update_algo);
@@ -260,6 +262,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
                                      )
 {
     using namespace amrex;
+    using namespace ablastr::math;
 
     const auto *permutation = a_bins.permutationPtr();
 

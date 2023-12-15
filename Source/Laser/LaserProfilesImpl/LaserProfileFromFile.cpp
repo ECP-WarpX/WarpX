@@ -9,9 +9,9 @@
 #include "Utils/Algorithms/LinearInterpolation.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
-#include "Utils/WarpX_Complex.H"
 #include "Utils/WarpXConst.H"
 
+#include <ablastr/math/Complex.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
@@ -48,6 +48,7 @@
 #endif
 
 using namespace amrex;
+using namespace ablastr::math;
 
 void
 WarpXLaserProfiles::FromFileLaserProfile::init (
