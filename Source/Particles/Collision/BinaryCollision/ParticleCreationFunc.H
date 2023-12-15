@@ -140,8 +140,8 @@ public:
                                        0, 0,
                                        pc_products[i]->getUserRealAttribs(), pc_products[i]->getUserIntAttribs(),
                                        pc_products[i]->getParticleComps(), pc_products[i]->getParticleiComps(),
-                                       pc_products[i]->getUserIntAttribParser(),
                                        pc_products[i]->getUserRealAttribParser(),
+                                       pc_products[i]->getUserIntAttribParser(),
 #ifdef WARPX_QED
                                        pc_products[i]->get_breit_wheeler_engine_ptr(),
                                        pc_products[i]->get_quantum_sync_engine_ptr(),
