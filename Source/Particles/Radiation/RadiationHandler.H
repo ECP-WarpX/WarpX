@@ -27,17 +27,17 @@
 class RadiationHandler
 {
 public:
-    RadiationHandler ();
+    RadiationHandler (const amrex::Array<amrex::Real,3>& center);
 
     /* Perform the calculation of the radiation */
     //void doRadiation (amrex::Real dt, MultiParticleContainer* mypc);
     void add_radiation_contribution(const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time);
-    void add_detector();
     void gather_and_write_radiation(const std::string& filename);
     void Integral_overtime();
 
 
 private:
+    void add_detector(const amrex::Array<amrex::Real,3>& center);
 
     // Frequency range
     amrex::Vector<amrex::Real> m_omega_range;

@@ -332,8 +332,7 @@ public:
 
     void doRadiation(amrex::Real dt, amrex::Real cur_time);
 
-    void keepoldmomentum();
-    void keepoldmomentum_p(std::unique_ptr<WarpXParticleContainer>& pc);
+    void RecordOldMomenta();
 
     void Dump_radiations();
     [[nodiscard]] int getSpeciesID (std::string product_str) const;
