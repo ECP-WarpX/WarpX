@@ -95,7 +95,7 @@ def reset_benchmark(test_name, output_file, output_format='plotfile', do_fields=
     """
     ref_checksum = Checksum(test_name, output_file, output_format,
                             do_fields=do_fields, do_particles=do_particles)
-    ref_benchmark = Benchmark(test_name, output_format, ref_checksum.data)
+    ref_benchmark = Benchmark(test_name, ref_checksum.data)
     ref_benchmark.reset()
 
 
