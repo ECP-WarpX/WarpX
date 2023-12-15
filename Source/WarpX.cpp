@@ -215,7 +215,7 @@ bool WarpX::do_device_synchronize = true;
 bool WarpX::do_device_synchronize = false;
 #endif
 
-bool m_do_radiation_flag = 0;
+bool m_do_radiation_flag = false;
 
 WarpX* WarpX::m_instance = nullptr;
 
