@@ -47,6 +47,5 @@ WarpXSumGuardCells(amrex::MultiFab& dst, amrex::MultiFab& src,
     }
 
     dst.setVal(0., icomp, ncomp, n_updated_guards);
-//    ablastr::utils::communication::ParallelAdd(dst, src, 0, icomp, ncomp, src_ngrow, n_updated_guards, period);
     dst.ParallelAdd(src, 0, icomp, ncomp, src_ngrow, n_updated_guards, period);
 }
