@@ -56,7 +56,8 @@ Particle Accelerator & Beam Physics
    :maxdepth: 1
 
    examples/gaussian_beam/README.rst
-
+   examples/beam-beam_collision/README.rst
+   
 Coming soon:
 
 * Beam-Beam Collision
