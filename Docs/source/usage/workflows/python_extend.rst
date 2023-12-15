@@ -115,6 +115,9 @@ This example accesses the :math:`E_x(x,y,z)` field at level 0 after every time s
 
 .. code-block:: python3
 
+   from pywarpx import picmi
+   from pywarpx.callbacks import callfromafterstep
+
    # Preparation: set up the simulation
    #   sim = picmi.Simulation(...)
    #   ...
@@ -176,6 +179,9 @@ Particles
 ^^^^^^^^^
 
 .. code-block:: python3
+
+   from pywarpx import picmi
+   from pywarpx.callbacks import callfromafterstep
 
    # Preparation: set up the simulation
    #   sim = picmi.Simulation(...)

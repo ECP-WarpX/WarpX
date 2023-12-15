@@ -48,6 +48,8 @@ Example that calls the Python function ``myplots`` after each step:
 
 .. code-block:: python3
 
+   from pywarpx.callbacks import installcallback
+
    def myplots():
        # do something here
 
@@ -61,6 +63,8 @@ To use a decorator, the syntax is as follows. This will install the function ``m
 The above example is quivalent to the following:
 
 .. code-block:: python3
+
+   from pywarpx.callbacks import callfromafterstep
 
    @callfromafterstep
    def myplots():
