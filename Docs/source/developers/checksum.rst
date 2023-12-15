@@ -14,9 +14,9 @@ From a user point of view, you should only need to use ``checksumAPI.py``. It co
 Include a checksum regression test in an analysis Python script
 ---------------------------------------------------------------
 
-This relies on function ``evaluate_checksum``:
+This relies on the function ``evaluate_checksum``:
 
-.. doxygenfunction:: evaluate_checksum
+.. autofunction:: checksumAPI.evaluate_checksum
 
 For an example, see
 
