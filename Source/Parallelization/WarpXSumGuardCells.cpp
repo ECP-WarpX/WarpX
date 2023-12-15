@@ -10,12 +10,14 @@
 
 #include "Utils/WarpXAlgorithmSelection.H"
 
+#include "WarpX.H"
+
 #include <ablastr/utils/Communication.H>
 
 void
 WarpXSumGuardCells(amrex::MultiFab& mf, const amrex::Periodicity& period,
                    const amrex::IntVect& src_ngrow,
-                   const int icomp=0, const int ncomp=1)
+                   const int icomp, const int ncomp)
 {
     amrex::IntVect n_updated_guards;
 
@@ -33,7 +35,7 @@ void
 WarpXSumGuardCells(amrex::MultiFab& dst, amrex::MultiFab& src,
                    const amrex::Periodicity& period,
                    const amrex::IntVect& src_ngrow,
-                   const int icomp=0, const int ncomp=1)
+                   const int icomp, const int ncomp)
 {
     amrex::IntVect n_updated_guards;
 
