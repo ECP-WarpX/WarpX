@@ -25,7 +25,7 @@ Once the simulation is fully configured, it can be used in one of two modes.
 
       :py:meth:`~pywarpx.picmi.Simulation.write_input_file`: create an :ref:`inputs file for a WarpX executable <running-cpp-parameters>`
 
-When run directly from Python, once can also extend WarpX with further custom user logic.
+When run directly from Python, one can also extend WarpX with further custom user logic.
 See the :ref:`detailed workflow page <usage-python-extend>` on how to extend WarpX from Python.
 
 

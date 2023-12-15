@@ -1,7 +1,7 @@
 .. _usage-python-extend:
 
-Extend a Simulation
-===================
+Extend a Simulation with Python
+===============================
 
 When running WarpX directly :ref:`from Python <usage-picmi>` it is possible to interact with the simulation.
 
@@ -55,7 +55,7 @@ Important APIs include:
 Data Access
 -----------
 
-While the simulation is running, callbacks can read and write access the WarpX simulation data *in situ*.
+While the simulation is running, callbacks can have read and write access the WarpX simulation data *in situ*.
 
 An important object in the ``pywarpx.picmi`` module for data access is ``Simulation.extension.warpx``, which is available only during the simulation run.
 This object is the Python equivalent to the C++ ``WarpX`` simulation class.
@@ -121,7 +121,7 @@ This example accesses the :math:`E_x(x,y,z)` field at level 0 after every time s
 
 
    @callfromafterstep
-   def sum_rho_electrons():
+   def print_max_E_x():
        warpx = sim.extension.warpx
 
        # data access

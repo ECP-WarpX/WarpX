@@ -56,7 +56,7 @@ Example that calls the Python function ``myplots`` after each step:
    # run simulation
    sim.step(nsteps=100)
 
-The install can be done using a `Python decorator <https://docs.python.org/3/glossary.html#term-decorator>`__, which has the prefix ``callfrom``.
+The install can also be done using a `Python decorator <https://docs.python.org/3/glossary.html#term-decorator>`__, which has the prefix ``callfrom``.
 To use a decorator, the syntax is as follows. This will install the function ``myplots`` to be called after each step.
 The above example is quivalent to the following:
 
