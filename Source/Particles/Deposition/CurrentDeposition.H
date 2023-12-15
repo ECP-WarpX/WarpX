@@ -72,7 +72,9 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          long load_balance_costs_update_algo)
 {
     using namespace amrex::literals;
+#ifdef WARPX_DIM_RZ
     using namespace ablastr::math;
+#endif
 
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
@@ -601,7 +603,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 {
     using namespace amrex;
     using namespace amrex::literals;
+#ifdef WARPX_DIM_RZ
     using namespace ablastr::math;
+#endif
 
 #if !defined(WARPX_DIM_RZ)
     ignore_unused(n_rz_azimuthal_modes);

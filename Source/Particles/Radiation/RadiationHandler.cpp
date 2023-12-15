@@ -12,10 +12,11 @@
 #include <AMReX_ParmParse.H>
 
 #include <ablastr/constant.H>
-
+#include <ablastr/math/Complex.H>
 
 #include <vector>
-using namespace warpx::utils;
+
+using namespace ablastr::math;
 
 RadiationHandler::RadiationHandler()
 {
@@ -164,12 +165,12 @@ void RadiationHandler::add_radiation_contribution
                                     Complex Term_z= q*dt/(16*pow(ablastr::constant::math::pi,3)*ablastr::constant::SI::ep0*ablastr::constant::SI::c)*ncrossncrossBetapointz/std::pow(un_betan,2)*eiomega;
 
                                     //Add the contributions
-                                    m_radiation_data[i_x,i_y,i_om,0]+=std::real(Term_x);
-                                    m_radiation_data[i_x,i_y,i_om,1]+=std::imag(Term_x);
-                                    m_radiation_data[i_x,i_y,i_om,2]+=std::real(Term_y);
-                                    m_radiation_data[i_x,i_y,i_om,3]+=std::imag(Term_y);
-                                    m_radiation_data[i_x,i_y,i_om,4]+=std::real(Term_z);
-                                    m_radiation_data[i_x,i_y,i_om,5]+=std::imag(Term_z);
+                                    m_radiation_data[i_x,i_y,i_om,0]+=Term_x.m_real;
+                                    m_radiation_data[i_x,i_y,i_om,1]+=Term_x.m_imag;
+                                    m_radiation_data[i_x,i_y,i_om,2]+=Term_y.m_real;
+                                    m_radiation_data[i_x,i_y,i_om,3]+=Term_y.m_imag;
+                                    m_radiation_data[i_x,i_y,i_om,4]+=Term_z.m_real;
+                                    m_radiation_data[i_x,i_y,i_om,5]+=Term_z.m_imag;
 
                          }
                         }

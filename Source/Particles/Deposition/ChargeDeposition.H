@@ -52,7 +52,10 @@ void doChargeDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                long load_balance_costs_update_algo)
 {
     using namespace amrex;
+
+#ifdef WARPX_DIM_RZ
     using namespace ablastr::math;
+#endif
 
 #if !defined(AMREX_USE_GPU)
     amrex::ignore_unused(cost, load_balance_costs_update_algo);
@@ -262,7 +265,9 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
                                      )
 {
     using namespace amrex;
+#ifdef WARPX_DIM_RZ
     using namespace ablastr::math;
+#endif
 
     const auto *permutation = a_bins.permutationPtr();
 
