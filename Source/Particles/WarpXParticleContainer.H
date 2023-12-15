@@ -407,6 +407,19 @@ public:
     void defineAllParticleTiles () noexcept;
 
 protected:
+
+    /**
+     * This function allocates three real components:
+     * old_u_x, old_u_y, old_u_z.
+     */
+    void AllocateOldMomenta();
+
+    /**
+     * This function copies the momenta of the particles into:
+     * old_u_x, old_u_y, old_u_z.
+     */
+    void RecordOldMomenta();
+
     int species_id;
 
     amrex::ParticleReal charge;

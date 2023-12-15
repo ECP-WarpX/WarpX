@@ -20,7 +20,7 @@
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 #include "PhysicalParticleContainer.H"
-#include "Particles/Radiation/RadiationHandler.H"
+#include "Particles/Radiation/RadiationHandler_fwd.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpXParticleContainer.H"
@@ -69,7 +69,7 @@ public:
 
     MultiParticleContainer (amrex::AmrCore* amr_core);
 
-    ~MultiParticleContainer() = default;
+    ~MultiParticleContainer();
 
     MultiParticleContainer (MultiParticleContainer const &)             = delete;
     MultiParticleContainer& operator= (MultiParticleContainer const & ) = delete;
@@ -332,8 +332,7 @@ public:
 
     void doRadiation(amrex::Real dt, amrex::Real cur_time);
 
-    void keepoldmomentum();
-    void keepoldmomentum_p(std::unique_ptr<WarpXParticleContainer>& pc);
+    void RecordOldMomenta();
 
     void Dump_radiations();
     [[nodiscard]] int getSpeciesID (std::string product_str) const;

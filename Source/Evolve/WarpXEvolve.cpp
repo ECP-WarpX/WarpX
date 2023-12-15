@@ -428,8 +428,8 @@ WarpX::OneStep_nosub (Real cur_time)
     ExecutePythonCallback("particlescraper");
     ExecutePythonCallback("beforedeposition");
 
-    //Save particle old momentum in a attribute
-    mypc->keepoldmomentum();
+    //Save particles' old momenta
+    mypc->RecordOldMomenta();
 
     PushParticlesandDeposit(cur_time);
 

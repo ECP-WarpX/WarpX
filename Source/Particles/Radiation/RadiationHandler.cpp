@@ -18,7 +18,7 @@
 
 using namespace ablastr::math;
 
-RadiationHandler::RadiationHandler()
+RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
 {
     // Read in radiation input
     const amrex::ParmParse pp_radiations("radiations");
@@ -43,7 +43,8 @@ RadiationHandler::RadiationHandler()
         pp_radiations.getarr("detector_number_points", m_det_pts,0,2);
         pp_radiations.getarr("detector_direction", m_det_direction,0,3);
         pp_radiations.query("detector_distance", m_det_distance);
-        add_detector();
+
+        add_detector(center);
          /* Initialize the Fab with the field in function of angle and frequency */
          //int numcomps = 4;
         //BaseFab<Complex> fab(bx,numcomps);
@@ -93,13 +94,13 @@ void RadiationHandler::add_radiation_contribution
                     auto& part=pc->GetParticles(level0)[index];
                     auto& soa = part.GetStructOfArrays();
 
-                    const auto prev_u_x_idx =pc->GetRealCompIndex("prev_u_x");
-                    const auto prev_u_y_idx =pc->GetRealCompIndex("prev_u_y");
-                    const auto prev_u_z_idx =pc->GetRealCompIndex("prev_u_z");
+                    const auto old_u_x_idx =pc->GetRealCompIndex("old_u_x");
+                    const auto old_u_y_idx =pc->GetRealCompIndex("old_u_y");
+                    const auto old_u_z_idx =pc->GetRealCompIndex("old_u_z");
 
-                    auto* p_ux_old = soa.GetRealData(prev_u_x_idx).data();
-                    auto* p_uy_old = soa.GetRealData(prev_u_y_idx).data();
-                    auto* p_uz_old = soa.GetRealData(prev_u_z_idx).data();
+                    auto* p_ux_old = soa.GetRealData(old_u_x_idx).data();
+                    auto* p_uy_old = soa.GetRealData(old_u_y_idx).data();
+                    auto* p_uz_old = soa.GetRealData(old_u_z_idx).data();
 
                     auto GetPosition = GetParticlePosition<PIdx>(pti);
                     amrex::ParticleReal const q = pc->getCharge();
@@ -200,10 +201,8 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
         of.close();
     }
 }
-void RadiationHandler::add_detector
-    (){
-    const auto level0=0;
-    amrex::Geometry const& geom = WarpX::GetInstance().Geom(level0);
+void RadiationHandler::add_detector(const amrex::Array<amrex::Real,3>& center){
+
     //Calculation of angle resolution
     m_d_theta.resize(2);
     for(int i=0; i<2; i++){
@@ -211,11 +210,7 @@ void RadiationHandler::add_detector
     }
     //Set the resolution of the detector
     m_d_d.resize(3);
-    amrex::Vector<amrex::Real> center;
-    center.resize(3);
-    for(int idim=0; idim<AMREX_SPACEDIM; idim++){
-        center[idim] = (geom.ProbHi()[idim]+geom.ProbLo()[idim])/2;
-    }
+
     for(int idi = 0; idi<3; ++idi){
         if(m_det_direction[idi]==1){
             m_d_d[(idi+1)%3]=2*m_det_distance*tan(m_d_theta[0]/2);
@@ -233,7 +228,6 @@ void RadiationHandler::add_detector
         det_bornes[idim][0]=center[idim]-std::tan(m_theta_range[idim]/2)*m_det_distance;
         det_bornes[idim][1]=center[idim]+std::tan(m_theta_range[idim]/2)*m_det_distance;
     }
-    //fillWithConsecutiveReal(pos_det_x)
     //pos_det_y
     //omega_calc
 

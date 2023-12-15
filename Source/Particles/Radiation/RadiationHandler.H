@@ -6,40 +6,38 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_PARTICLES_RADIATION_H_
-#define WARPX_PARTICLES_RADIATION_H_
+#ifndef WARPX_PARTICLES_RADIATION_H
+#define WARPX_PARTICLES_RADIATION_H
+
+#include "RadiationHandler_fwd.H"
+
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Sorting/SortingUtils.H"
 
-
+#include <AMReX_GpuContainers.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Box.H>
-#include <AMReX_Vector.H>
-#include <AMReX_FArrayBox.H>
-#include <AMReX_Geometry.H>
 
-#include "WarpX.H"
-#include "Particles/Sorting/SortingUtils.H"
 #include <memory>
 #include <string>
 
-/* \brief CollisionHandler is a light weight class that contains the
+/* \brief CollisionHandler is a class that contains the
  * calculation of radiation for particles at each frequencies and angles.
  */
 class RadiationHandler
 {
 public:
-    RadiationHandler ();
+    RadiationHandler (const amrex::Array<amrex::Real,3>& center);
 
     /* Perform the calculation of the radiation */
     //void doRadiation (amrex::Real dt, MultiParticleContainer* mypc);
     void add_radiation_contribution(const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time);
-    void add_detector();
     void gather_and_write_radiation(const std::string& filename);
     void Integral_overtime();
 
 
 private:
+    void add_detector(const amrex::Array<amrex::Real,3>& center);
 
     // Frequency range
     amrex::Vector<amrex::Real> m_omega_range;
@@ -82,4 +80,4 @@ private:
     amrex::Vector<amrex::Real> omega_calc;
 
 };
-#endif // WARPX_PARTICLES_RADIATION_H_
+#endif // WARPX_PARTICLES_RADIATION_H

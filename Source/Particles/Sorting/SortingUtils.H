@@ -21,14 +21,6 @@
  */
 void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v );
 
-/** \brief Fill the elements of the input vector with consecutive integer,
- *        starting from 0
- *
- * \param[inout] v Vector of reals, to be filled by this routine
- */
-
-void fillWithConsecutiveReal( amrex::Gpu::DeviceVector<amrex::Real>& v );
-
 
 /** \brief Find the indices that would reorder the elements of `predicate`
  * so that the elements with non-zero value precede the other elements

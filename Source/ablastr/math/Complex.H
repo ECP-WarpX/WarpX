@@ -31,6 +31,6 @@ namespace ablastr::math
 
     static_assert(sizeof(Complex) == sizeof(amrex::Real[2]),
         "Unexpected complex type.");
-};
+}
 
 #endif //ABLASTR_MATH_COMPLEX_H_
