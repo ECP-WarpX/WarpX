@@ -788,7 +788,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                 for (auto i = 0; i < numParticleOnTile; i++) {
                     ids.get()[i] = ablastr::particles::localIDtoGlobal(static_cast<int>(aos[i].id()), static_cast<int>(aos[i].cpu()));
                 }
-                auto const scalar = openPMD::RecordComponent::SCALAR;
+                const auto *const scalar = openPMD::RecordComponent::SCALAR;
                 currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
 
             }
@@ -1024,7 +1024,7 @@ WarpXOpenPMDPlot::SetupPos (
         currSpecies["position"][comp].resetDataset( realType );
     }
 
-    auto const scalar = openPMD::RecordComponent::SCALAR;
+    const auto *const scalar = openPMD::RecordComponent::SCALAR;
     currSpecies["id"][scalar].resetDataset( idType );
 }
 
@@ -1036,7 +1036,7 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
         amrex::ParticleReal const mass)
 {
     auto realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
-    auto const scalar = openPMD::RecordComponent::SCALAR;
+    const auto *const scalar = openPMD::RecordComponent::SCALAR;
 
     // define record shape to be number of particles
     auto const positionComponents = detail::getParticlePositionComponentLabels(true);
