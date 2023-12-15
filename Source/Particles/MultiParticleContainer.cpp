@@ -29,6 +29,7 @@
 #include "Particles/ParticleCreation/SmartUtils.H"
 #include "Particles/PhotonParticleContainer.H"
 #include "Particles/PhysicalParticleContainer.H"
+#include "Particles/Radiation/RadiationHandler.H"
 #include "Particles/RigidInjectedParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "SpeciesPhysicalProperties.H"
@@ -132,6 +133,8 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
         }
     }
 }
+
+MultiParticleContainer::~MultiParticleContainer() {}
 
 void
 MultiParticleContainer::ReadParameters ()

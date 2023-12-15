@@ -6,24 +6,24 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_PARTICLES_RADIATION_H_
-#define WARPX_PARTICLES_RADIATION_H_
-#include "Particles/Pusher/GetAndSetPosition.H"
+#ifndef WARPX_PARTICLES_RADIATION_H
+#define WARPX_PARTICLES_RADIATION_H
 
+#include "RadiationHandler_fwd.H"
+
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Sorting/SortingUtils.H"
+#include "WarpX.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Box.H>
-#include <AMReX_Vector.H>
-#include <AMReX_FArrayBox.H>
 #include <AMReX_Geometry.H>
 
-#include "WarpX.H"
-#include "Particles/Sorting/SortingUtils.H"
+
 #include <memory>
 #include <string>
 
-/* \brief CollisionHandler is a light weight class that contains the
+/* \brief CollisionHandler is a class that contains the
  * calculation of radiation for particles at each frequencies and angles.
  */
 class RadiationHandler
@@ -82,4 +82,4 @@ private:
     amrex::Vector<amrex::Real> omega_calc;
 
 };
-#endif // WARPX_PARTICLES_RADIATION_H_
+#endif // WARPX_PARTICLES_RADIATION_H
