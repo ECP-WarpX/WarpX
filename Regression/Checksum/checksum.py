@@ -12,6 +12,7 @@ import sys
 from benchmark import Benchmark
 import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
+from scipy.constants import c
 import yt
 
 yt.funcs.mylog.setLevel(50)
@@ -160,9 +161,20 @@ class Checksum:
                     data_species = {}
                     part_fields = [item for item in ts.avail_record_components[species]
                                    if item != 'id' and item != 'charge' and item != 'mass']
+                    # Convert the field name to the name used in plotfiles
                     for field in part_fields:
                         Q = ts.get_particle(var_list=[field], species=species, iteration=ts.iterations[-1])
-                        data_species[field] = np.sum(np.abs(Q))
+                        if field in ['x', 'y', 'z']:
+                            field_name = 'particle_position_' + field
+                        elif field in ['ux', 'uy', 'uz']:
+                            field_name = 'particle_momentum_' + field[-1]
+                            m, = ts.get_particle(['mass'], species=species, iteration=ts.iterations[-1])
+                            Q *= m*c
+                        elif field in ['w']:
+                            field_name = 'particle_weight'
+                        else:
+                            field_name = 'particle_' + field
+                        data_species[field_name] = np.sum(np.abs(Q))
                     data[species] = data_species
 
         return data
