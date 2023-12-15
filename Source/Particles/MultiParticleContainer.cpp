@@ -125,7 +125,6 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     collisionhandler = std::make_unique<CollisionHandler>(this);
     //Initialization of the radiation
     for (auto& s : allcontainers) {
-        amrex::Print() << s->has_radiation() <<"jzfnfhjzbefhezbfhzebfzehb" << "\n";
         if (s->has_radiation()) {
             m_at_least_one_has_radiation = true;
             m_p_radiation_handler = std::make_unique<RadiationHandler>();
