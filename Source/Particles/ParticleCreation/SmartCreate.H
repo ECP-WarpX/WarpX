@@ -63,16 +63,20 @@ struct SmartCreate
         prt.m_aos[i_prt].id() = id;
 
         // initialize the real components
-        for (int j = 0; j < PartData::NAR; ++j)
+        for (int j = 0; j < PartData::NAR; ++j) {
             prt.m_rdata[j][i_prt] = initializeRealValue(m_policy_real[j], engine);
-        for (int j = 0; j < prt.m_num_runtime_real; ++j)
+        }
+        for (int j = 0; j < prt.m_num_runtime_real; ++j) {
             prt.m_runtime_rdata[j][i_prt] = initializeRealValue(m_policy_real[j+PartData::NAR], engine);
+        }
 
         // initialize the int components
-        for (int j = 0; j < PartData::NAI; ++j)
+        for (int j = 0; j < PartData::NAI; ++j) {
             prt.m_idata[j][i_prt] = initializeIntValue(m_policy_int[j]);
-        for (int j = 0; j < prt.m_num_runtime_int; ++j)
+        }
+        for (int j = 0; j < prt.m_num_runtime_int; ++j) {
             prt.m_runtime_idata[j][i_prt] = initializeIntValue(m_policy_int[j+PartData::NAI]);
+        }
     }
 };
 

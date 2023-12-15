@@ -206,7 +206,7 @@ void
 WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3>>& A ) const
 {
     // check if any dimension has non-periodic boundary conditions
-    if (!m_vector_poisson_boundary_handler.has_non_periodic) return;
+    if (!m_vector_poisson_boundary_handler.has_non_periodic) { return; }
 
     auto dirichlet_flag = m_vector_poisson_boundary_handler.dirichlet_flag;
 
@@ -228,7 +228,7 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
                 // loop over dimensions
                 for (int idim=0; idim<AMREX_SPACEDIM; idim++){
                     // check if neither boundaries in this dimension should be set
-                    if (!(dirichlet_flag[adim][2*idim] || dirichlet_flag[adim][2*idim+1])) continue;
+                    if (!(dirichlet_flag[adim][2*idim] || dirichlet_flag[adim][2*idim+1])) { continue; }
 
                     // a check can be added below to test if the boundary values
                     // are already correct, in which case the ParallelFor over the
@@ -240,11 +240,13 @@ WarpX::setVectorPotentialBC ( amrex::Vector<amrex::Array<std::unique_ptr<amrex::
 
                                 IntVect iv(AMREX_D_DECL(i,j,k));
 
-                                if (dirichlet_flag[adim][2*idim] && iv[idim] == domain.smallEnd(idim))
+                                if (dirichlet_flag[adim][2*idim] && iv[idim] == domain.smallEnd(idim)) {
                                     A_arr(i,j,k) = 0.;
+                                }
 
-                                if (dirichlet_flag[adim][2*idim+1] && iv[idim] == domain.bigEnd(idim))
+                                if (dirichlet_flag[adim][2*idim+1] && iv[idim] == domain.bigEnd(idim)) {
                                     A_arr(i,j,k) = 0.;
+                                }
                             } // loop ijk
                         );
                     }
@@ -289,7 +291,7 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
             ndotA = (adim == idim);
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            if (idim == 1) ndotA = (adim == 2);
+            if (idim == 1) { ndotA = (adim == 2); }
 #endif
 
             if ( WarpX::field_boundary_lo[idim] == FieldBoundaryType::Periodic

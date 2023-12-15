@@ -420,7 +420,7 @@ Haber, I, R Lee, Hh Klein, and Jp Boris. 1973. “Advances in Electromagnetic Si
 
 .. raw:: html
 
-   <div id="ref-KirchenARXIV2016">
+   <div id="ref-KirchenPOP2016">
 
 Kirchen, M., R. Lehe, B. B. Godfrey, I. Dornmair, S. Jalas, K. Peters, J.-L. Vay, and A. R. Maier. 2016. “Stable discrete representation of relativistically drifting plasmas.” *arXiv:1608.00215*.
 
@@ -440,7 +440,7 @@ Lehe, Rémi, Manuel Kirchen, Igor A. Andriyash, Brendan B. Godfrey, and Jean-Luc
 
 .. raw:: html
 
-   <div id="ref-LeheARXIV2016">
+   <div id="ref-LehePRE2016">
 
 Lehe, R., M. Kirchen, B. B. Godfrey, A. R. Maier, and J.-L. Vay. 2016. “Elimination of Numerical Cherenkov Instability in flowing-plasma Particle-In-Cell simulations by using Galilean coordinates.” *arXiv:1608.00227*.
 

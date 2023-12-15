@@ -185,7 +185,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                        np_to_push,
                        [=] AMREX_GPU_DEVICE (long i, auto exteb_control,
                                              auto qed_control) {
-            if (do_copy) copyAttribs(i);
+            if (do_copy) { copyAttribs(i); }
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
 
@@ -205,17 +205,17 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                nox, galerkin_interpolation);
             }
 
-            [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB; // workaround for nvcc
+            [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB; // workaround for nvcc
             if constexpr (exteb_control == has_exteb) {
                 getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
             }
 
 #ifdef WARPX_QED
-            [[maybe_unused]] auto& evolve_opt_tmp = evolve_opt;
-            [[maybe_unused]] auto p_optical_depth_BW_tmp = p_optical_depth_BW;
-            [[maybe_unused]] auto ux_tmp = ux; // for nvhpc
-            [[maybe_unused]] auto uy_tmp = uy;
-            [[maybe_unused]] auto uz_tmp = uz;
+            [[maybe_unused]] const auto& evolve_opt_tmp = evolve_opt;
+            [[maybe_unused]] auto *p_optical_depth_BW_tmp = p_optical_depth_BW;
+            [[maybe_unused]] auto *ux_tmp = ux; // for nvhpc
+            [[maybe_unused]] auto *uy_tmp = uy;
+            [[maybe_unused]] auto *uz_tmp = uz;
             [[maybe_unused]] auto dt_tmp = dt;
             if constexpr (qed_control == has_qed) {
                 evolve_opt(ux[i], uy[i], uz[i], Exp, Eyp, Ezp, Bxp, Byp, Bzp,

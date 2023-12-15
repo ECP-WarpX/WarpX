@@ -130,7 +130,7 @@ namespace {
                 u = approx_u_th * std::sqrt(2._rt*std::log(1._rt/xrand));
                 // Rejection method
                 xrand = amrex::Random(engine);
-                if (xrand < std::exp(-reject_prefactor*(u - umsign*u_th)*(u - umsign*u_th))) reject = false;
+                if (xrand < std::exp(-reject_prefactor*(u - umsign*u_th)*(u - umsign*u_th))) { reject = false; }
             }
         } else {
             // Mean velocity magnitude is greater than thermal velocity
@@ -151,7 +151,7 @@ namespace {
                 }
                 // Rejection method
                 const amrex::Real xrand = amrex::Random(engine);
-                if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) reject = false;
+                if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) { reject = false; }
             }
         }
 
@@ -197,7 +197,7 @@ struct InjectorMomentumGaussianFlux
             u_th = m_uz_th;
         }
         amrex::Real u = generateGaussianFluxDist(u_m, u_th, engine);
-        if (m_flux_direction < 0) u = -u;
+        if (m_flux_direction < 0) { u = -u; }
 
         // Note: Here, in RZ geometry, the variables `ux` and `uy` actually
         // correspond to the radial and azimuthal component of the momentum
@@ -338,7 +338,7 @@ struct InjectorMomentumBoltzmann
     {
         using namespace amrex::literals;
         amrex::Real u[3];
-        for (auto& el : u) el = 0.0_rt;
+        for (auto& el : u) { el = 0.0_rt; }
         const amrex::Real beta = velocity(x,y,z);
         int const dir = velocity.direction();
         const auto gamma = 1._rt/std::sqrt(1._rt-beta*beta);
@@ -441,7 +441,7 @@ struct InjectorMomentumJuttner
     {
         using namespace amrex::literals;
         amrex::Real u[3];
-        for (auto& el : u) el = 0.0_rt;
+        for (auto& el : u) { el = 0.0_rt; }
         amrex::Real const beta = velocity(x,y,z);
         int const dir = velocity.direction();
         auto const gamma = 1._rt/std::sqrt(1._rt-beta*beta);

@@ -162,7 +162,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
     const bool always_use_bnorm = (max_norm_b > 0);
     if (!always_use_bnorm) {
-        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
+        if (absolute_tolerance == 0.0) { absolute_tolerance = amrex::Real(1e-6); }
         ablastr::warn_manager::WMRecordWarning(
                 "ElectrostaticSolver",
                 "Max norm of rho is 0",
@@ -306,9 +306,11 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         }
 
         // Run additional operations, such as calculation of the E field for embedded boundaries
-        if constexpr (!std::is_same<T_PostPhiCalculationFunctor, std::nullopt_t>::value)
-            if (post_phi_calculation.has_value())
+        if constexpr (!std::is_same<T_PostPhiCalculationFunctor, std::nullopt_t>::value) {
+            if (post_phi_calculation.has_value()) {
                 post_phi_calculation.value()(mlmg, lev);
+            }
+        }
 
     } // loop over lev(els)
 }

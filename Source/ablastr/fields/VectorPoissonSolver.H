@@ -122,7 +122,7 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
 
     const bool always_use_bnorm = (max_comp_J > 0);
     if (!always_use_bnorm) {
-        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
+        if (absolute_tolerance == 0.0) { absolute_tolerance = amrex::Real(1e-6); }
         ablastr::warn_manager::WMRecordWarning(
                 "MagnetostaticSolver",
                 "Max norm of J is 0",
@@ -242,9 +242,11 @@ computeVectorPotential   (  amrex::Vector<amrex::Array<amrex::MultiFab*, 3> > co
             curr[lev][adim]->mult(-1._rt/ablastr::constant::SI::mu0);
         } // Loop over adim
         // Run additional operations, such as calculation of the B fields for embedded boundaries
-        if constexpr (!std::is_same<T_PostACalculationFunctor, std::nullopt_t>::value)
-            if (post_A_calculation.has_value())
+        if constexpr (!std::is_same<T_PostACalculationFunctor, std::nullopt_t>::value) {
+            if (post_A_calculation.has_value()) {
                     post_A_calculation.value()(mlmg, lev);
+            }
+        }
     } // loop over lev(els)
 }
 }  // namepace Magnetostatic

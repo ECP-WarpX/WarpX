@@ -34,7 +34,7 @@ import pybtex.plugin
 from pybtex.style.formatting.unsrt import Style as UnsrtStyle
 import sphinx_rtd_theme
 
-sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../Regression/Checksum'))
 
 # -- General configuration ------------------------------------------------
 
@@ -70,12 +70,12 @@ bibtex_bibfiles = ['latex_theory/allbibs.bib', 'refs.bib']
 # BaseStyle class in pybtex/style/formatting/__init__.py
 # UnsrtStyle class in pybtex/style/formating/unsrt.py
 class WarpXBibStyle(UnsrtStyle):
-    # We want the family name, i.e, "last" name, of an author to appear first.
-    default_name_style = 'lastfirst'
+    # This option makes the family name, i.e, "last" name, of an author to appear first.
+    # default_name_style = 'lastfirst'
 
     def __init__(self, *args, **kwargs):
-        # We want the given names of an author to be abbreviated to just initials.
-        # Example: "Jean-Luc Vay" becomes "Vay, J.-L."
+        # This option makes the given names of an author abbreviated to just initials.
+        # Example: "Jean-Luc" becomes "J.-L."
         # Set 'abbreviate_names' to True before calling the superclass (BaseStyle class) initializer
         kwargs['abbreviate_names'] = True
         super().__init__(*args, **kwargs)

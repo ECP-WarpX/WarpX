@@ -1173,8 +1173,8 @@ protected:
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
     //! by AmrCoreInitFromScratch.
-    void MakeNewLevelFromScratch (int lev, amrex::Real time, const amrex::BoxArray& ba,
-                                          const amrex::DistributionMapping& dm) final;
+    void MakeNewLevelFromScratch (int lev, amrex::Real time, const amrex::BoxArray& new_grids,
+                                          const amrex::DistributionMapping& new_dmap) final;
 
     //! Make a new level using provided BoxArray and
     //! DistributionMapping and fill with interpolated coarse level
@@ -1223,13 +1223,13 @@ private:
 
     void AddExternalFields ();
 
-    void OneStep_nosub (amrex::Real t);
-    void OneStep_sub1 (amrex::Real t);
+    void OneStep_nosub (amrex::Real cur_time);
+    void OneStep_sub1 (amrex::Real cur_time);
 
     /**
      * \brief Perform one PIC iteration, with the multiple J deposition per time step
      */
-    void OneStep_multiJ (amrex::Real t);
+    void OneStep_multiJ (amrex::Real cur_time);
 
     void RestrictCurrentFromFineToCoarsePatch (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
@@ -1298,8 +1298,8 @@ private:
 
     void InitFromScratch ();
 
-    void AllocLevelData (int lev, const amrex::BoxArray& new_grids,
-                         const amrex::DistributionMapping& new_dmap);
+    void AllocLevelData (int lev, const amrex::BoxArray& ba,
+                         const amrex::DistributionMapping& dm);
 
     [[nodiscard]] amrex::DistributionMapping
     GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, int lev) const;
