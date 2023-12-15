@@ -121,7 +121,7 @@ This example accesses the :math:`E_x(x,y,z)` field at level 0 after every time s
 
 
    @callfromafterstep
-   def print_max_E_x():
+   def print_max_E2_x():
        warpx = sim.extension.warpx
 
        # data access
@@ -129,9 +129,9 @@ This example accesses the :math:`E_x(x,y,z)` field at level 0 after every time s
        E_x_np = E_x_mf.to_numpy(copy=True)  # list of arrays
 
        # compute
-       max_E_x = max([np.max(box) for box in E_x_np])
+       max_E2_x = max([np.max(chunk*chunk) for chunk in E_x_np])
 
-       print(f"On this process, the maximum value in E_x is {max_E_x}")
+       print(f"On this process, the maximum value of the pointwise squared E_x is {max_E2_x}")
 
 
    sim.step(nsteps=100)
