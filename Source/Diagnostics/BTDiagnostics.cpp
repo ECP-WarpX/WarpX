@@ -906,7 +906,6 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     auto & warpx = WarpX::GetInstance();
 
     const int hi_k_lab = m_buffer_k_index_hi[i_buffer][lev];
-    amrex::Print() << "hi_k_lab = " << hi_k_lab << "\n";
     m_buffer_box[i_buffer][lev].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
     m_buffer_box[i_buffer][lev].setBig( m_moving_window_dir, hi_k_lab );
     amrex::BoxArray buffer_ba( m_buffer_box[i_buffer][lev] );
@@ -957,7 +956,6 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         // Refine the geometry object defined at the previous level, lev-1
         m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
                                                       WarpX::RefRatio(lev-1) );
-       //amrex::Print() << "DefineFieldBufferMultiFab lev == 1 : m_geom_output[i_buffer][lev] = " << m_geom_output[i_buffer][lev] << "\n";
     }
     m_field_buffer_multifab_defined[i_buffer] = 1;
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_mf_output[i_buffer][lev].boxArray().size() == 1,

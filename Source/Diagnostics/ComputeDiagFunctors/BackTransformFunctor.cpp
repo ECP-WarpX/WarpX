@@ -60,6 +60,14 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         const int scomp = 0;
         // Generate slice of the cell-centered multifab containing boosted-frame field-data
         // at current z-boost location for the ith buffer
+        // Create a 2D box for the slice in the boosted frame
+        const amrex::Real dx = geom.CellSize(moving_window_dir);
+        // index corresponding to z_boost location in the boost-frame
+        const int i_boost = static_cast<int> ( ( m_current_z_boost[i_buffer]
+                                            - geom.ProbLo(moving_window_dir) ) / dx );
+        amrex::Box box = warpx.boxArray(m_lev).minimalBox() ;
+        // Checking if the index of the slice is within the box of the boosted frame region at level, m_lev
+        if ( !( (i_boost > box.smallEnd(moving_window_dir) ) && (i_boost < box.bigEnd(moving_window_dir) ) ) ) return;
         slice = amrex::get_slice_data(moving_window_dir,
                                      m_current_z_boost[i_buffer],
                                      *m_mf_src,
@@ -70,12 +78,6 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         // Perform in-place Lorentz-transform of all the fields stored in the slice.
         LorentzTransformZ( *slice, gamma_boost, beta_boost);
 
-        // Create a 2D box for the slice in the boosted frame
-        const amrex::Real dx = geom.CellSize(moving_window_dir);
-        // index corresponding to z_boost location in the boost-frame
-        const int i_boost = static_cast<int> ( ( m_current_z_boost[i_buffer]
-                                            - geom.ProbLo(moving_window_dir) ) / dx );
-        // z-Slice at i_boost with x,y indices same as buffer_box
         amrex::Box slice_box = m_buffer_box[i_buffer];
         slice_box.setSmall(moving_window_dir, i_boost);
         slice_box.setBig(moving_window_dir, i_boost);
