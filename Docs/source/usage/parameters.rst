@@ -1387,7 +1387,7 @@ Laser initialization
 
     .. math::
 
-        E(\boldsymbol{x},t) \propto Re\left[ \exp\left(  -\frac{(t-t_{peak})^2}{\tau^2 + 2i\phi^{(2))} + i\omega_0 (t-t_{peak}) + i\phi_0 \right) \right]
+        E(\boldsymbol{x},t) \propto Re\left[ \exp\left(  -\frac{(t-t_{peak})^2}{\tau^2 + 2i\phi^{(2)}} + i\omega_0 (t-t_{peak}) + i\phi_0 \right) \right]
 
     where :math:`\tau` is given by ``<laser_name>.laser_duration`` and represents the
     Fourier-limited duration of the laser. Thus, the actual duration of the laser is:
