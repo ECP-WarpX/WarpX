@@ -18,7 +18,7 @@ We slightly modify this file in ``Regression/prepare_file_ci.py``.
 
 For example, if you like to change the compiler to compilation to build on Nvidia GPUs, modify this block to add ``-DWarpX_COMPUTE=CUDA``:
 
-.. code-block:: toml
+.. code-block:: ini
 
    [source]
    dir = /home/regtester/AMReX_RegTesting/warpx

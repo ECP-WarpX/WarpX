@@ -149,7 +149,7 @@ void ParticleBoundaryBuffer::printNumParticles () const {
     {
         for (int iside = 0; iside < 2; ++iside)
         {
-            auto& buffer = m_particle_containers[2*idim+iside];
+            const auto& buffer = m_particle_containers[2*idim+iside];
             for (int i = 0; i < numSpecies(); ++i)
             {
                 const auto np = buffer[i].isDefined() ? buffer[i].TotalNumberOfParticles(false) : 0;
