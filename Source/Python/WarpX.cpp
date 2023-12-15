@@ -112,7 +112,15 @@ void init_WarpX (py::module& m)
             },
             py::arg("multifab_name"),
             py::return_value_policy::reference_internal,
-            "Return MultiFabs by name, e.g., 'Efield_aux[x][l=0]', 'Efield_cp[x][l=0]', ..."
+            R"doc(Return MultiFabs by name, e.g., ``\"Efield_aux[x][l=0]\"``, ``\"Efield_cp[x][l=0]\"``, ...
+
+The physical fields in WarpX have the following naming:
+
+- ``_fp`` are the "fine" patches, the regular resolution of a current mesh-refinement level
+- ``_aux`` are temporary (auxiliar) patches at the same resolution as ``_fp``.
+  They usually include contributions from other levels and can be interpolated for gather routines of particles.
+- ``_cp`` are "coarse" patches, at the same resolution (but not necessary values) as the ``_fp`` of ``level - 1``
+  (only for level 1 and higher).)doc"
         )
         .def("multi_particle_container",
             [](WarpX& wx){ return &wx.GetPartContainer(); },
@@ -140,22 +148,26 @@ void init_WarpX (py::module& m)
         // Expose functions to get the current simulation step and time
         .def("getistep",
             [](WarpX const & wx, int lev){ return wx.getistep(lev); },
-            py::arg("lev")
+            py::arg("lev"),
+            "Get the current step on mesh-refinement level ``lev``."
         )
         .def("gett_new",
             [](WarpX const & wx, int lev){ return wx.gett_new(lev); },
-            py::arg("lev")
+            py::arg("lev"),
+            "Get the current physical time on mesh-refinement level ``lev``."
         )
         .def("getdt",
             [](WarpX const & wx, int lev){ return wx.getdt(lev); },
-            py::arg("lev")
+            py::arg("lev"),
+            "Get the current physical time step size on mesh-refinement level ``lev``."
         )
 
         .def("set_potential_on_eb",
             [](WarpX& wx, std::string potential) {
                 wx.m_poisson_boundary_handler.setPotentialEB(potential);
             },
-            py::arg("potential")
+            py::arg("potential"),
+            "Sets the EB potential string and updates the function parser."
         )
     ;
 

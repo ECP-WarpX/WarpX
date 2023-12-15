@@ -7,7 +7,7 @@
 # License: BSD-3-Clause-LBNL
 
 """Callback Locations
-==================
+------------------
 
 These are the functions which allow installing user created functions so that
 they are called at various places along the time step.
@@ -22,9 +22,6 @@ the different call back types.
 These functions all take a callback location name (string) and function or
 instance method as an argument. Note that if an instance method is used, an
 extra reference to the method's object is saved.
-
-The install can be done using a decorator, which has the prefix ``callfrom``. See
-example below.
 
 Functions can be called at the following times:
 
@@ -46,27 +43,33 @@ Functions can be called at the following times:
 * ``particleinjection``: called when particle injection happens, after the position
   advance and before deposition is called, allowing a user
   defined particle distribution to be injected each time step
-* ``appliedfields``: allows directly specifying any fields to be applied to the particles
-  during the advance
 
-To use a decorator, the syntax is as follows. This will install the function
-``myplots`` to be called after each step.
+Example that calls the Python function ``myplots`` after each step:
+
+.. code-block:: python3
+
+   def myplots():
+       # do something here
+
+   installcallback('afterstep', myplots)
+
+   # run simulation
+   sim.step(nsteps=100)
+
+The install can be done using a `Python decorator <https://docs.python.org/3/glossary.html#term-decorator>`__, which has the prefix ``callfrom``.
+To use a decorator, the syntax is as follows. This will install the function ``myplots`` to be called after each step.
+The above example is quivalent to the following:
 
 .. code-block:: python3
 
    @callfromafterstep
    def myplots():
-       ppzx()
+       # do something here
 
-This is equivalent to the following:
-
-.. code-block:: python3
-
-   def myplots():
-       ppzx()
-
-   installcallback('afterstep', myplots)
+   # run simulation
+   sim.step(nsteps=100)
 """
+
 import copy
 import sys
 import time
