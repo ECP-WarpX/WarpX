@@ -27,7 +27,7 @@ Lorentz boosted frame
     In the boosted frame, that argument is no longer valid, as ions have relativistic velocities.
 
     To avoid spurious effects in the boosted frame, we want the longitudinal cell size to be larger than the transverse one.
-    Translating this condition to the cell transverse (:math:`d_{x}`) and longitudinal dimensions (:math:`d_{z}`) in the laboratory frame leads to: :math:`d_{x} > (d_{z} (1+\beta_{b}) \gamma_{b})`, 
+    Translating this condition to the cell transverse (:math:`d_{x}`) and longitudinal dimensions (:math:`d_{z}`) in the laboratory frame leads to: :math:`d_{x} > (d_{z} (1+\beta_{b}) \gamma_{b})`,
     where :math:`\beta_{b}` is the boosted frame velocity in units of :math:`c`.
 
     To determine the total number of time steps of the simulation, we could either set the `<zmax_plasma_to_compute_max_step>` parameter to the end of the plasma (:math:`z_{\textrm{end}}`), or compute it using:
@@ -79,7 +79,7 @@ With this configuration the driver excites a nonlinear plasma wake and drives th
 
    Electron beam, in black, accelerated by wakefield, in red-blue colormap, driven by drive electron beam, in purple.  Set ``max_steps`` to 800 in a WarpX simulation to generate data for this figure.
 
-The beam increases in energy as it propagates in the wake, as shown in Fig. 
+The beam increases in energy as it propagates in the wake, as shown in Fig.
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290962801-97d994f9-d48d-4f76-a37e-d14f6781d680.png
    :alt: Energy gain of electron beam in wake through this simulation (this is the mean beam energy in the boosted frame, NOT the lab frame). Set ``max_steps`` to 800 in a WarpX simulation to generate data for this figure.
@@ -93,5 +93,3 @@ The plots can be generated with the following script:
    .. literalinclude:: plot_3d.py
       :language: python3
       :caption: You can copy this file from ``Examples/Physics_applications/plasma_acceleration/plot_3d.py``.
-
-

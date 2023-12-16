@@ -11,6 +11,7 @@
 
 
 from matplotlib import pyplot as plt
+
 plt.rcParams.update({'font.size':16})
 import numpy as np
 
@@ -20,15 +21,15 @@ ts = OpenPMDTimeSeries('diags/diag1')
 
 iteration=ts.iterations[-1]
 
-pez, pex = ts.get_particle(species='plasma_e', 
-                           iteration=iteration, 
+pez, pex = ts.get_particle(species='plasma_e',
+                           iteration=iteration,
                            var_list=['z','x'],
                            select=select)
-pdz, pdx = ts.get_particle(species='driver', 
-                           iteration=iteration, 
+pdz, pdx = ts.get_particle(species='driver',
+                           iteration=iteration,
                            var_list=['z','x'])
-bz, bx = ts.get_particle(species='beam', 
-                         iteration=iteration, 
+bz, bx = ts.get_particle(species='beam',
+                         iteration=iteration,
                          var_list=['z','x'])
 
 fez, info = ts.get_field('E',

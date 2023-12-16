@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import argparse
 from pywarpx import picmi
 
 c = picmi.constants.c
@@ -43,7 +42,7 @@ grid = picmi.Cartesian3DGrid(
 smoother = picmi.BinomialSmoother(n_pass=[1]*3)
 solver = picmi.ElectromagneticSolver(
     method='CKC',
-    grid=grid, 
+    grid=grid,
     cfl=0.99,
     source_smoother=smoother,
     warpx_pml_ncell=10)
@@ -79,20 +78,20 @@ plasma_distribution = picmi.AnalyticDistribution(
     fill_in=True)
 
 beam = picmi.Species(
-    particle_type='electron', 
-    name='beam', 
+    particle_type='electron',
+    name='beam',
     initial_distribution=beam_gaussian_distribution)
 driver = picmi.Species(
-    particle_type='electron', 
-    name='driver', 
+    particle_type='electron',
+    name='driver',
     initial_distribution=driver_gaussian_distribution)
 plasma_e = picmi.Species(
-    particle_type='electron', 
-    name='plasma_e', 
+    particle_type='electron',
+    name='plasma_e',
     initial_distribution=plasma_distribution)
 plasma_i = picmi.Species(
-    particle_type='proton', 
-    name='plasma_p', 
+    particle_type='proton',
+    name='plasma_p',
     initial_distribution=plasma_distribution)
 
 sim = picmi.Simulation(
@@ -106,34 +105,34 @@ sim = picmi.Simulation(
 )
 
 sim.add_species_through_plane(
-    beam, 
+    beam,
     layout=picmi.PseudoRandomLayout(
-        grid=grid, 
+        grid=grid,
         n_macroparticles=1000
     ),
     injection_plane_position=0.,
     injection_plane_normal_vector=[0.,0.,1.]
 )
 sim.add_species_through_plane(
-    driver, 
+    driver,
     layout=picmi.PseudoRandomLayout(
-        grid=grid, 
+        grid=grid,
         n_macroparticles=1000
     ),
     injection_plane_position=0.,
     injection_plane_normal_vector=[0.,0.,1.]
 )
 sim.add_species(
-    plasma_e, 
+    plasma_e,
     layout=picmi.GriddedLayout(
-        grid=grid, 
+        grid=grid,
         n_macroparticle_per_cell=[npc_x, npc_x, npc_z]
     )
 )
 sim.add_species(
-    plasma_i, 
+    plasma_i,
     layout=picmi.GriddedLayout(
-        grid=grid, 
+        grid=grid,
         n_macroparticle_per_cell=[npc_x, npc_x, npc_z]
     )
 )
