@@ -31,6 +31,7 @@ then
     spack env create warpx-karolina-cuda $WORK/src/warpx/Tools/machines/karolina-it4i/spack-karolina-cuda.yaml
     spack env activate warpx-karolina-cuda
     spack install
+fi
 
 # Python ##########################################################
 #
