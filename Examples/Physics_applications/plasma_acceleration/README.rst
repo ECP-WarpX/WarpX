@@ -74,7 +74,7 @@ The plasma has a density profile that consists of a long up-ramp followed by a u
 
 With this configuration the driver excites a nonlinear plasma wake and drives the bubble depleted of plasma electrons where the beam accelerates, as can be seen in Fig
 .. figure:: https://user-images.githubusercontent.com/10621396/290962794-7bdbbff7-39fa-4d2e-8b5f-2030f811d257.png
-   
+
    :alt: Electron beam, in black, accelerated by wakefield, in red-blue colormap, driven by drive electron beam, in purple.  Set max_steps to 800 in WarpX simulation to generate data for this figure.
 
    Electron beam, in black, accelerated by wakefield, in red-blue colormap, driven by drive electron beam, in purple.  Set ``max_steps`` to 800 in a WarpX simulation to generate data for this figure.
