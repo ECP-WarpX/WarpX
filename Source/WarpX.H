@@ -197,6 +197,8 @@ public:
     static int max_picard_iterations;
     //! The tolerance for the Picard iteration convergence
     static amrex::Real picard_iteration_tolerance;
+    //! Flags whether the Picard iterations are required to converge
+    static bool require_picard_convergence;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */

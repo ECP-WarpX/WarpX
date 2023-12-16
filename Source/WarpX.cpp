@@ -121,6 +121,7 @@ short WarpX::electromagnetic_solver_id;
 short WarpX::evolve_scheme;
 int WarpX::max_picard_iterations = 10;
 Real WarpX::picard_iteration_tolerance = 1.e-7;
+bool WarpX::require_picard_convergence = true;
 short WarpX::psatd_solution_type;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
@@ -1245,6 +1246,7 @@ WarpX::ReadParameters ()
             evolve_scheme == EvolveScheme::SemiImplicitPicard) {
             utils::parser::queryWithParser(pp_algo, "max_picard_iterations", max_picard_iterations);
             utils::parser::queryWithParser(pp_algo, "picard_iteration_tolerance", picard_iteration_tolerance);
+            utils::parser::queryWithParser(pp_algo, "require_picard_convergence", require_picard_convergence);
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||

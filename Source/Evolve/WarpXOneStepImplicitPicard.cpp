@@ -237,7 +237,16 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
         // the new values at n+1/2
     }
 
-    amrex::Print() << "Picard iterations = " << iteration_count << ", Eerror =  " << deltaE << ", Berror =  " << deltaB << "\n";
+    amrex::Print() << "Picard iterations = " << iteration_count << ", Eerror = " << deltaE << ", Berror = " << deltaB << "\n";
+    if (picard_iteration_tolerance > 0. && iteration_count == max_picard_iterations) {
+       std::stringstream convergenceMsg;
+       convergenceMsg << "The Picard implicit solver failed to converge after " << iteration_count << " iterations, with Eerror = " << deltaE << ", Berror = " << deltaB << " with a tolerance of " << picard_iteration_tolerance;
+       if (require_picard_convergence) {
+           WARPX_ABORT_WITH_MESSAGE(convergenceMsg.str());
+       } else {
+           ablastr::warn_manager::WMRecordWarning("PicardSolver", convergenceMsg.str());
+       }
+    }
 
     // Advance particles to step n+1
     for (auto const& pc : *mypc) {

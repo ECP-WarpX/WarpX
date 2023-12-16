@@ -107,6 +107,12 @@ Overall simulation parameters
     If this is set to zero, the maximum number of iterations will always be done with the change only calculated on the last
     iteration (for a slight optimization).
 
+* ``algo.require_picard_convergence`` (`bool`, default: 1)
+    When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets whether the iteration each step
+    is required to converge.
+    If it is required, an abort is raised if it does not converge and the code then exits.
+    If not, then a warning is issued and the calculation continues.
+
 * ``warpx.do_electrostatic`` (`string`) optional (default `none`)
     Specifies the electrostatic mode. When turned on, instead of updating
     the fields at each iteration with the full Maxwell equations, the fields
