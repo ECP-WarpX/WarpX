@@ -12,6 +12,7 @@
 
 from matplotlib import pyplot as plt
 plt.rcParams.update({'font.size':16})
+import numpy as np
 
 from openpmd_viewer import OpenPMDTimeSeries
 
@@ -60,4 +61,17 @@ plt.ylim(-60,60)
 
 plt.xlabel(r'Propagation distance z (cm)')
 plt.ylabel(r'Transverse direction x ($\mu$m)')
+plt.tight_layout()
+plt.savefig('pwfa_wakefield.png')
+plt.close()
 
+
+data = np.genfromtxt("diags/reducedfiles/beamrel.txt")
+plt.figure()
+c = 2.998e8
+plt.plot(c*data[:,1]*1e3,data[:,8]*0.511)
+plt.ylabel('Mean energy, boosted frame (MeV)')
+plt.xlabel(r'Propagation distance z (mm)')
+plt.tight_layout()
+plt.savefig('pwfa_beam_energy.png')
+plt.close()
