@@ -23,7 +23,13 @@ Plasma-Based Acceleration
 
    examples/lwfa/README.rst
    examples/pwfa/README.rst
-   pwfa.rst
+
+Coming soon:
+
+* LWFA: External injection in the boosted frame
+* LWFA: Ionization injection in the lab frame using a LASY data file
+* PWFA: Self-injection in the lab frame
+* MR case?
 
 
 Laser-Plasma Interaction
