@@ -212,9 +212,11 @@ Particles
                # For GPUs use .to_cupy() above and compute with cupy or numba.
 
                # write to all particles in the chunk
-               aos[()]["x"] = 0.30
-               aos[()]["y"] = 0.35
-               aos[()]["z"] = 0.40
+               # note: careful, if you change particle positions, you need to 
+               #       redistribute particles before continuing the simulation step
+               # aos[()]["x"] = 0.30
+               # aos[()]["y"] = 0.35
+               # aos[()]["z"] = 0.40
 
                for soa_real in soa.real:
                    soa_real[()] = 42.0
