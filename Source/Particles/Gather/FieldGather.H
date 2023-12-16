@@ -635,28 +635,28 @@ void doGatherShapeNImplicit (
     // computes min/max positions of current contributions
 #if !defined(WARPX_DIM_1D_Z)
     int dil_E = 1, diu_E = 1;
-    if (i_E_old < i_E_new) dil_E = 0;
-    if (i_E_old > i_E_new) diu_E = 0;
+    if (i_E_old < i_E_new) { dil_E = 0; }
+    if (i_E_old > i_E_new) { diu_E = 0; }
 #endif
 #if defined(WARPX_DIM_3D)
     int djl_E = 1, dju_E = 1;
-    if (j_E_old < j_E_new) djl_E = 0;
-    if (j_E_old > j_E_new) dju_E = 0;
+    if (j_E_old < j_E_new) { djl_E = 0; }
+    if (j_E_old > j_E_new) { dju_E = 0; }
 #endif
     int dkl_E = 1, dku_E = 1;
-    if (k_E_old < k_E_new) dkl_E = 0;
-    if (k_E_old > k_E_new) dku_E = 0;
+    if (k_E_old < k_E_new) { dkl_E = 0; }
+    if (k_E_old > k_E_new) { dku_E = 0; }
 
 #if defined(WARPX_DIM_3D)
     int dil_B = 1, diu_B = 1;
-    if (i_B_old < i_B_new) dil_B = 0;
-    if (i_B_old > i_B_new) diu_B = 0;
+    if (i_B_old < i_B_new) { dil_B = 0; }
+    if (i_B_old > i_B_new) { diu_B = 0; }
     int djl_B = 1, dju_B = 1;
-    if (j_B_old < j_B_new) djl_B = 0;
-    if (j_B_old > j_B_new) dju_B = 0;
+    if (j_B_old < j_B_new) { djl_B = 0; }
+    if (j_B_old > j_B_new) { dju_B = 0; }
     int dkl_B = 1, dku_B = 1;
-    if (k_B_old < k_B_new) dkl_B = 0;
-    if (k_B_old > k_B_new) dku_B = 0;
+    if (k_B_old < k_B_new) { dkl_B = 0; }
+    if (k_B_old > k_B_new) { dku_B = 0; }
 #endif
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -667,11 +667,11 @@ void doGatherShapeNImplicit (
     const int k_By_new = compute_shape_factor_By(sz_By_new+1, z_new - 0.5_rt);
     const int k_By_old = compute_shifted_shape_factor_By(sz_By_old, z_old - 0.5_rt, k_By_new);
     int dil_By = 1, diu_By = 1;
-    if (i_By_old < i_By_new) dil_By = 0;
-    if (i_By_old > i_By_new) diu_By = 0;
+    if (i_By_old < i_By_new) { dil_By = 0; }
+    if (i_By_old > i_By_new) { diu_By = 0; }
     int dkl_By = 1, dku_By = 1;
-    if (k_By_old < k_By_new) dkl_By = 0;
-    if (k_By_old > k_By_new) dku_By = 0;
+    if (k_By_old < k_By_new) { dkl_By = 0; }
+    if (k_By_old > k_By_new) { dku_By = 0; }
 #endif
 
 #if defined(WARPX_DIM_3D)
