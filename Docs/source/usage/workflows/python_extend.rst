@@ -212,7 +212,7 @@ Particles
                # For GPUs use .to_cupy() above and compute with cupy or numba.
 
                # write to all particles in the chunk
-               # note: careful, if you change particle positions, you need to 
+               # note: careful, if you change particle positions, you need to
                #       redistribute particles before continuing the simulation step
                # aos[()]["x"] = 0.30
                # aos[()]["y"] = 0.35
