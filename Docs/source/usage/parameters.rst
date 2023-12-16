@@ -1402,12 +1402,12 @@ Laser initialization
 
         E(\boldsymbol{x},t) \propto Re\left[ \exp\left(  -\frac{(t-t_{peak})^2}{\tau^2 + 2i\phi^{(2)}} + i\omega_0 (t-t_{peak}) + i\phi_0 \right) \right]
 
-    where :math:`\tau` is given by ``<laser_name>.laser_duration`` and represents the
+    where :math:`\tau` is given by ``<laser_name>.profile_duration`` and represents the
     Fourier-limited duration of the laser pulse. Thus, the actual duration of the chirped laser pulse is:
 
     .. math::
 
-        \tau' = \sqrt{ \tau^2 + 4 \phi^{(2)}/\tau^2 }
+        \tau' = \sqrt{ \tau^2 + 4 (\phi^{(2)})^2/\tau^2 }
 
 * ``<laser_name>.do_continuous_injection`` (`0` or `1`) optional (default `0`).
     Whether or not to use continuous injection.
