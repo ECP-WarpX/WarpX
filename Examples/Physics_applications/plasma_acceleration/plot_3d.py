@@ -14,7 +14,6 @@ from matplotlib import pyplot as plt
 
 plt.rcParams.update({'font.size':16})
 import numpy as np
-
 from openpmd_viewer import OpenPMDTimeSeries
 
 ts = OpenPMDTimeSeries('diags/diag1')
