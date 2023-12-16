@@ -3,6 +3,8 @@
 Boundary conditions
 ===================
 
+.. _theory-bc-pml:
+
 Open boundary condition for electromagnetic waves
 -------------------------------------------------
 
