@@ -590,7 +590,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Real rho_val = Interp(rho, nodal, Er_stag, coarsen, i, j, 0, 0);
 
                 // safety condition since we divide by rho_val later
-                if (rho_val < rho_floor) rho_val = rho_floor;
+                if (rho_val < rho_floor) { rho_val = rho_floor; }
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = T_Algo::UpwardDr(Pe, coefs_r, n_coefs_r, i, j, 0, 0);
@@ -601,7 +601,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Er(i, j, 0) = (enE_r - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) Er(i, j, 0) += eta(rho_val) * Jr(i, j, 0);
+                if (include_resistivity_term) { Er(i, j, 0) += eta(rho_val) * Jr(i, j, 0); }
             },
 
             // Et calculation
@@ -623,7 +623,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Real rho_val = Interp(rho, nodal, Er_stag, coarsen, i, j, 0, 0);
 
                 // safety condition since we divide by rho_val later
-                if (rho_val < rho_floor) rho_val = rho_floor;
+                if (rho_val < rho_floor) { rho_val = rho_floor; }
 
                 // Get the gradient of the electron pressure
                 // -> d/dt = 0 for m = 0
@@ -635,20 +635,20 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Et(i, j, 0) = (enE_t - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) Et(i, j, 0) += eta(rho_val) * Jt(i, j, 0);
+                if (include_resistivity_term) { Et(i, j, 0) += eta(rho_val) * Jt(i, j, 0); }
             },
 
             // Ez calculation
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 // Skip field solve if this cell is fully covered by embedded boundaries
-                if (lz(i,j,0) <= 0) return;
+                if (lz(i,j,0) <= 0) { return; }
 #endif
                 // Interpolate to get the appropriate charge density in space
                 Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
 
                 // safety condition since we divide by rho_val later
-                if (rho_val < rho_floor) rho_val = rho_floor;
+                if (rho_val < rho_floor) { rho_val = rho_floor; }
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k, 0);
@@ -659,7 +659,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Ez(i, j, k) = (enE_z - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) Ez(i, j, k) += eta(rho_val) * Jz(i, j, k);
+                if (include_resistivity_term) { Ez(i, j, k) += eta(rho_val) * Jz(i, j, k); }
             }
         );
 
@@ -854,7 +854,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Real rho_val = Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0);
 
                 // safety condition since we divide by rho_val later
-                if (rho_val < rho_floor) rho_val = rho_floor;
+                if (rho_val < rho_floor) { rho_val = rho_floor; }
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = T_Algo::UpwardDx(Pe, coefs_x, n_coefs_x, i, j, k);
@@ -865,7 +865,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ex(i, j, k) = (enE_x - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) Ex(i, j, k) += eta(rho_val) * Jx(i, j, k);
+                if (include_resistivity_term) { Ex(i, j, k) += eta(rho_val) * Jx(i, j, k); }
             },
 
             // Ey calculation
@@ -873,18 +873,18 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 #ifdef AMREX_USE_EB
                 // Skip field solve if this cell is fully covered by embedded boundaries
 #ifdef WARPX_DIM_3D
-                if (ly(i,j,k) <= 0) return;
+                if (ly(i,j,k) <= 0) { return; }
 #elif defined(WARPX_DIM_XZ)
                 //In XZ Ey is associated with a mesh node, so we need to check if the mesh node is covered
                 amrex::ignore_unused(ly);
-                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) return;
+                if (lx(i, j, k)<=0 || lx(i-1, j, k)<=0 || lz(i, j-1, k)<=0 || lz(i, j, k)<=0) { return; }
 #endif
 #endif
                 // Interpolate to get the appropriate charge density in space
                 Real rho_val = Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0);
 
                 // safety condition since we divide by rho_val later
-                if (rho_val < rho_floor) rho_val = rho_floor;
+                if (rho_val < rho_floor) { rho_val = rho_floor; }
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = T_Algo::UpwardDy(Pe, coefs_y, n_coefs_y, i, j, k);
@@ -895,20 +895,20 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ey(i, j, k) = (enE_y - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) Ey(i, j, k) += eta(rho_val) * Jy(i, j, k);
+                if (include_resistivity_term) { Ey(i, j, k) += eta(rho_val) * Jy(i, j, k); }
             },
 
             // Ez calculation
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
                 // Skip field solve if this cell is fully covered by embedded boundaries
-                if (lz(i,j,k) <= 0) return;
+                if (lz(i,j,k) <= 0) { return; }
 #endif
                 // Interpolate to get the appropriate charge density in space
                 Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
 
                 // safety condition since we divide by rho_val later
-                if (rho_val < rho_floor) rho_val = rho_floor;
+                if (rho_val < rho_floor) { rho_val = rho_floor; }
 
                 // Get the gradient of the electron pressure
                 auto grad_Pe = T_Algo::UpwardDz(Pe, coefs_z, n_coefs_z, i, j, k);
@@ -919,7 +919,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Ez(i, j, k) = (enE_z - grad_Pe) / rho_val;
 
                 // Add resistivity only if E field value is used to update B
-                if (include_resistivity_term) Ez(i, j, k) += eta(rho_val) * Jz(i, j, k);
+                if (include_resistivity_term) { Ez(i, j, k) += eta(rho_val) * Jz(i, j, k); }
             }
         );
 

@@ -1275,7 +1275,7 @@ Laser initialization
         be parallel to ``warpx.boost_direction``, for now.
 
 * ``<laser_name>.e_max`` (`float` ; in V/m)
-    Peak amplitude of the laser field.
+    Peak amplitude of the laser field, in the focal plane.
 
     For a laser with a wavelength :math:`\lambda = 0.8\,\mu m`, the peak amplitude
     is related to :math:`a_0` by:
@@ -1289,9 +1289,9 @@ Laser initialization
     perform the conversion to the boosted frame.
 
 * ``<laser_name>.a0`` (`float` ; dimensionless)
-    Peak normalized amplitude of the laser field (given in the lab frame, just as ``e_max`` above).
+    Peak normalized amplitude of the laser field, in the focal plane (given in the lab frame, just as ``e_max`` above).
     See the description of ``<laser_name>.e_max`` for the conversion between ``a0`` and ``e_max``.
-    Exactly one of ``a0`` and ``e_max`` must be specified.
+    Either ``a0`` or ``e_max`` must be specified.
 
 * ``<laser_name>.wavelength`` (`float`; in meters)
     The wavelength of the laser in vacuum.
@@ -1369,12 +1369,15 @@ Laser initialization
 
     Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.1774`.
 
+    For a chirped laser pulse (i.e. with a non-zero ``<laser_name>.phi2``), ``profile_duration`` is the Fourier-limited duration of the pulse, not the actual duration of the pulse. See the documentation for ``<laser_name>.phi2`` for more detail.
+
     When running a **boosted-frame simulation**, provide the value of
     ``<laser_name>.profile_duration`` in the laboratory frame, and use ``warpx.gamma_boost``
     to automatically perform the conversion to the boosted frame.
 
 * ``<laser_name>.profile_waist`` (`float` ; in meters)
-    The waist of the transverse Gaussian laser profile, defined as :math:`w_0` :
+    The waist of the transverse Gaussian :math:`w_0`, i.e. defined such that the electric field of the
+    laser pulse in the focal plane is of the form:
 
     .. math::
 
@@ -1407,8 +1410,23 @@ Laser initialization
     See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.phi2`` (`float`; in seconds**2) optional (default `0.`)
-    Temporal chirp at focus.
-    See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
+    The amount of temporal chirp :math:`\phi^{(2)}`, at focus (in the lab frame). Namely, a wave packet
+    centered on the frequency :math:`(\omega_0 + \delta \omega)` will reach its peak intensity
+    at :math:`z(\delta \omega) = z_0 - c \phi^{(2)} \, \delta \omega`. Thus, a positive
+    :math:`\phi^{(2)}` corresponds to positive chirp, i.e. red part of the spectrum in the
+    front of the pulse and blue part of the spectrum in the back. More specifically, the electric
+    field in the focal plane is of the form:
+
+    .. math::
+
+        E(\boldsymbol{x},t) \propto Re\left[ \exp\left(  -\frac{(t-t_{peak})^2}{\tau^2 + 2i\phi^{(2)}} + i\omega_0 (t-t_{peak}) + i\phi_0 \right) \right]
+
+    where :math:`\tau` is given by ``<laser_name>.laser_duration`` and represents the
+    Fourier-limited duration of the laser pulse. Thus, the actual duration of the chirped laser pulse is:
+
+    .. math::
+
+        \tau' = \sqrt{ \tau^2 + 4 \phi^{(2)}/\tau^2 }
 
 * ``<laser_name>.do_continuous_injection`` (`0` or `1`) optional (default `0`).
     Whether or not to use continuous injection.

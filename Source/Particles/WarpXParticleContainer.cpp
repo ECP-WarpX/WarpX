@@ -330,10 +330,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                                      "Deposition buffers only work for lev-1");
 
     // If no particles, do not do anything
-    if (np_to_deposit == 0) return;
+    if (np_to_deposit == 0) { return; }
 
     // If user decides not to deposit
-    if (do_not_deposit) return;
+    if (do_not_deposit) { return; }
 
     // Number of guard cells for local deposition of J
     const WarpX& warpx = WarpX::GetInstance();
@@ -470,7 +470,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         {
             auto& ptile = ParticlesAt(lev, pti);
             auto& aos = ptile.GetArrayOfStructs();
-            auto pstruct_ptr = aos().dataPtr();
+            auto *pstruct_ptr = aos().dataPtr();
 
             const int ntiles = numTilesInBox(box, true, bin_size);
 
@@ -778,7 +778,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                          "Deposition buffers only work for lev-1");
 
         // If no particles, do not do anything
-        if (np_to_deposit == 0) return;
+        if (np_to_deposit == 0) { return; }
 
         // Number of guard cells for local deposition of rho
         const WarpX& warpx = WarpX::GetInstance();
@@ -880,7 +880,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             auto& ptile = ParticlesAt(lev, pti);
             auto& aos   = ptile.GetArrayOfStructs();
-            auto pstruct_ptr = aos().dataPtr();
+            auto *pstruct_ptr = aos().dataPtr();
 
             Box box = pti.validbox();
             box.grow(ng_rho);
@@ -909,15 +909,15 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
             auto& ptile = ParticlesAt(lev, pti);
             auto& aos   = ptile.GetArrayOfStructs();
-            auto pstruct_ptr = aos().dataPtr();
+            auto *pstruct_ptr = aos().dataPtr();
 
             Box box = pti.validbox();
             box.grow(ng_rho);
             const amrex::IntVect bin_size = WarpX::shared_tilesize;
 
-            const auto offsets_ptr = bins.offsetsPtr();
-            auto tbox_ptr = tboxes.dataPtr();
-            auto permutation = bins.permutationPtr();
+            auto *const offsets_ptr = bins.offsetsPtr();
+            auto *tbox_ptr = tboxes.dataPtr();
+            auto *permutation = bins.permutationPtr();
             amrex::ParallelFor(bins.numBins(),
                                [=] AMREX_GPU_DEVICE (int ibin) {
                                    const auto bin_start = offsets_ptr[ibin];
@@ -942,7 +942,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
             ReduceData<AMREX_D_DECL(int, int, int)> reduce_data(reduce_op);
             using ReduceTuple = typename decltype(reduce_data)::Type;
 
-            const auto boxes_ptr = tboxes.dataPtr();
+            auto *const boxes_ptr = tboxes.dataPtr();
             reduce_op.eval(tboxes.size(), reduce_data,
                            [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                            {
@@ -1099,7 +1099,7 @@ WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
 {
     // Reset the rho array if reset is True
     int const nc = WarpX::ncomps;
-    if (reset) rho->setVal(0., icomp*nc, nc, rho->nGrowVect());
+    if (reset) { rho->setVal(0., icomp*nc, nc, rho->nGrowVect()); }
 
     // Loop over particle tiles and deposit charge on each level
 #ifdef AMREX_USE_OMP
@@ -1166,8 +1166,9 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 #else
     const bool is_PSATD_RZ = false;
 #endif
-    if( !is_PSATD_RZ )
+    if( !is_PSATD_RZ ) {
         nba.surroundingNodes();
+    }
 
     // Number of guard cells for local deposition of rho
     const WarpX& warpx = WarpX::GetInstance();
@@ -1192,7 +1193,7 @@ amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
     for (int lev = 0; lev <= nLevels; ++lev) {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            const auto wp = pti.GetAttribs(PIdx::w).data();
+            auto *const wp = pti.GetAttribs(PIdx::w).data();
 
             reduce_op.eval(pti.numParticles(), reduce_data,
                             [=] AMREX_GPU_DEVICE (int ip)
@@ -1202,7 +1203,7 @@ amrex::ParticleReal WarpXParticleContainer::sumParticleCharge(bool local) {
 
     total_charge = get<0>(reduce_data.value());
 
-    if (!local) ParallelDescriptor::ReduceRealSum(total_charge);
+    if (!local) { ParallelDescriptor::ReduceRealSum(total_charge); }
     total_charge *= this->charge;
     return total_charge;
 }
@@ -1315,7 +1316,7 @@ amrex::ParticleReal WarpXParticleContainer::maxParticleVelocity(bool local) {
         }
     }
 
-    if (!local) ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator());
+    if (!local) { ParallelAllReduce::Max(max_v, ParallelDescriptor::Communicator()); }
     return max_v;
 }
 
@@ -1333,7 +1334,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 {
     WARPX_PROFILE("WarpXParticleContainer::PushX()");
 
-    if (do_not_push) return;
+    if (do_not_push) { return; }
 
     amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
 
@@ -1408,7 +1409,7 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
                                            const ParticleLocData& pld,
                                            const int lev)
 {
-    if (not do_splitting) return;
+    if (not do_splitting) { return; }
 
     // Tag particle if goes to higher level.
     // It will be split later in the loop
@@ -1430,7 +1431,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
     WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
 
     // Periodic boundaries are handled in AMReX code
-    if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) return;
+    if (m_boundary_conditions.CheckAll(ParticleBoundaryType::Periodic)) { return; }
 
     auto boundary_conditions = m_boundary_conditions.data;
 
@@ -1469,7 +1470,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                     ParticleType& p = pp[i];
 
                     // skip particles that are already flagged for removal
-                    if (p.id() < 0) return;
+                    if (p.id() < 0) { return; }
 
                     ParticleReal x, y, z;
                     GetPosition.AsStored(i, x, y, z);

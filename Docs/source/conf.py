@@ -30,9 +30,11 @@ import subprocess
 import sys
 import urllib.request
 
+import pybtex.plugin
+from pybtex.style.formatting.unsrt import Style as UnsrtStyle
 import sphinx_rtd_theme
 
-sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../Regression/Checksum'))
 
 # -- General configuration ------------------------------------------------
 
@@ -43,7 +45,8 @@ sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
+extensions = [
+    'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
@@ -57,8 +60,29 @@ extensions = ['sphinx.ext.autodoc',
 templates_path = ['_templates']
 
 # Relative path to bibliography file, bibliography style
-bibtex_bibfiles = ['./refs.bib']
-bibtex_default_style = 'unsrt'
+bibtex_bibfiles = ['latex_theory/allbibs.bib', 'refs.bib']
+
+# An brief introduction to custom BibTex formatting can be found in the Sphinx documentation:
+# https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html#bibtex-custom-formatting
+#
+# More details can be gleaned from looking at the pybtex dist-package files.
+# Some examples include the following:
+# BaseStyle class in pybtex/style/formatting/__init__.py
+# UnsrtStyle class in pybtex/style/formating/unsrt.py
+class WarpXBibStyle(UnsrtStyle):
+    # This option makes the family name, i.e, "last" name, of an author to appear first.
+    # default_name_style = 'lastfirst'
+
+    def __init__(self, *args, **kwargs):
+        # This option makes the given names of an author abbreviated to just initials.
+        # Example: "Jean-Luc" becomes "J.-L."
+        # Set 'abbreviate_names' to True before calling the superclass (BaseStyle class) initializer
+        kwargs['abbreviate_names'] = True
+        super().__init__(*args, **kwargs)
+
+pybtex.plugin.register_plugin('pybtex.style.formatting', 'warpxbibstyle', WarpXBibStyle)
+
+bibtex_default_style = 'warpxbibstyle'
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:

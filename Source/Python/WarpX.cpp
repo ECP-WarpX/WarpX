@@ -25,6 +25,7 @@
 #endif // use PSATD ifdef
 #include <FieldSolver/WarpX_FDTD.H>
 #include <Filter/NCIGodfreyFilter.H>
+#include <Initialization/ExternalField.H>
 #include <Particles/MultiParticleContainer.H>
 #include <Fluids/MultiFluidContainer.H>
 #include <Fluids/WarpXFluidContainer.H>

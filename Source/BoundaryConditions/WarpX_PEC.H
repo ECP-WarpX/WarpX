@@ -191,7 +191,7 @@ using namespace amrex;
                                         : (dom_hi[idim] + 1 - ig));
                         GuardCell = true;
                         // tangential components are inverted across PEC boundary
-                        if (is_tangent_to_PEC) sign *= -1._rt;
+                        if (is_tangent_to_PEC) { sign *= -1._rt; }
 #if (defined WARPX_DIM_RZ)
                         if (icomp == 0 && idim == 0 && iside == 1) {
                             // Add radial scale so that drEr/dr = 0.
@@ -329,7 +329,7 @@ using namespace amrex;
                                         : (dom_hi[idim] + 1 - ig));
                         GuardCell = true;
                         // Sign of the normal component in guard cell is inverted
-                        if (is_normal_to_PEC) sign *= -1._rt;
+                        if (is_normal_to_PEC) { sign *= -1._rt; }
 #if (defined WARPX_DIM_RZ)
                         if (icomp == 0 && idim == 0 && iside == 1) {
                             // Add radial scale so that drBr/dr = 0.
@@ -391,17 +391,17 @@ using namespace amrex;
         {
             for (int iside = 0; iside < 2; ++iside)
             {
-                if (!is_pec[idim][iside]) continue;
+                if (!is_pec[idim][iside]) { continue; }
 
                 // Get the mirror guard cell index
                 amrex::IntVect iv_mirror = ijk_vec;
                 iv_mirror[idim] = mirrorfac[idim][iside] - ijk_vec[idim];
 
                 // On the PEC boundary the charge/current density is set to 0
-                if (ijk_vec == iv_mirror) field(ijk_vec, n) = 0._rt;
+                if (ijk_vec == iv_mirror) {
+                    field(ijk_vec, n) = 0._rt;
                 // otherwise update the internal cell if the mirror guard cell exists
-                else if (fabbox.contains(iv_mirror))
-                {
+                } else if (fabbox.contains(iv_mirror)) {
                     field(ijk_vec,n) += psign[idim][iside] * field(iv_mirror,n);
                 }
             }
@@ -412,16 +412,17 @@ using namespace amrex;
         {
             for (int iside = 0; iside < 2; ++iside)
             {
-                if (!is_pec[idim][iside]) continue;
+                if (!is_pec[idim][iside]) { continue; }
 
                 amrex::IntVect iv_mirror = ijk_vec;
                 iv_mirror[idim] = mirrorfac[idim][iside] - ijk_vec[idim];
                 if (ijk_vec != iv_mirror && fabbox.contains(iv_mirror))
                 {
-                    if (tangent_to_bndy[idim])
+                    if (tangent_to_bndy[idim]) {
                         field(iv_mirror, n) = -field(ijk_vec, n);
-                    else
+                    } else {
                         field(iv_mirror, n) = field(ijk_vec, n);
+                    }
                 }
             }
         }
@@ -454,7 +455,7 @@ using namespace amrex;
         {
             for (int iside = 0; iside < 2; ++iside)
             {
-                if (!is_pec[idim][iside]) continue;
+                if (!is_pec[idim][iside]) { continue; }
 
                 // Get the mirror guard cell index
                 amrex::IntVect iv_mirror = ijk_vec;
@@ -464,7 +465,7 @@ using namespace amrex;
                 // first value in the domain (nodal fields)
                 if (ijk_vec == iv_mirror) {
                     iv_mirror[idim] += (iside == 0) ? 1 : -1;
-                    if (fabbox.contains(iv_mirror)) field(ijk_vec, n) = field(iv_mirror, n);
+                    if (fabbox.contains(iv_mirror)) { field(ijk_vec, n) = field(iv_mirror, n); }
                 }
                 // otherwise set the mirror guard cell equal to the internal cell value
                 else if (fabbox.contains(iv_mirror))

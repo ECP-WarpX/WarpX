@@ -276,7 +276,7 @@ BackgroundMCCCollision::doCollisions (amrex::Real cur_time, amrex::Real dt, Mult
     auto const flvl = species1.finestLevel();
     for (int lev = 0; lev <= flvl; ++lev) {
 
-        auto cost = WarpX::getCosts(lev);
+        auto *cost = WarpX::getCosts(lev);
 
         // firstly loop over particles box by box and do all particle conserving
         // scattering
@@ -324,7 +324,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
     auto T_a_func = m_background_temperature_func;
 
     // get collision parameters
-    auto scattering_processes = m_scattering_processes_exe.data();
+    auto *scattering_processes = m_scattering_processes_exe.data();
     auto const process_count  = static_cast<int>(m_scattering_processes_exe.size());
 
     auto const total_collision_prob = m_total_collision_prob;
@@ -352,7 +352,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                           [=] AMREX_GPU_HOST_DEVICE (long ip, amrex::RandomEngine const& engine)
                           {
                               // determine if this particle should collide
-                              if (amrex::Random(engine) > total_collision_prob) return;
+                              if (amrex::Random(engine) > total_collision_prob) { return; }
 
                               amrex::ParticleReal x, y, z;
                               GetPosition.AsStored(ip, x, y, z);
@@ -398,7 +398,7 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                   nu_i += n_a * sigma_E * v_coll / nu_max;
 
                                   // check if this collision should be performed
-                                  if (col_select > nu_i) continue;
+                                  if (col_select > nu_i) { continue; }
 
                                   // charge exchange is implemented as a simple swap of the projectile
                                   // and target velocities which doesn't require any of the Lorentz
