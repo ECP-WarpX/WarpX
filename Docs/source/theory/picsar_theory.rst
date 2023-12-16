@@ -208,7 +208,7 @@ respectively as
 .. math::
 
    \begin{align}
-   D_{t}G|_{i,j,k}^{n} & = \frac{(G|_{i,j,k}^{n+1/2}-G|_{i,j,k}^{n-1/2})}{\Delta t}\quad\mathrm{and}
+   D_{t}G|_{i,j,k}^{n} & = \frac{(G|_{i,j,k}^{n+1/2}-G|_{i,j,k}^{n-1/2})}{\Delta t},
    \\
    D_{x}G|_{i,j,k}^{n} & = \frac{G|_{i+1/2,j,k}^{n}-G|_{i-1/2,j,k}^{n}}{\Delta x},
    \end{align}
