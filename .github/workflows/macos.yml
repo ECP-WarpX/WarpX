@@ -23,6 +23,7 @@ jobs:
         set +e
         brew unlink gcc
         brew update
+        brew upgrade || true
         brew install --overwrite python
         brew install ccache
         brew install fftw

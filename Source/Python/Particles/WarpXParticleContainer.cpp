@@ -85,7 +85,6 @@ void init_WarpXParticleContainer (py::module& m)
             py::arg("nattr_int"), py::arg("attr_int"),
             py::arg("uniqueparticles"), py::arg("id")=-1
         )
-        .def("num_real_comps", &WarpXParticleContainer::NumRealComps)
         .def("get_comp_index",
             [](WarpXParticleContainer& pc, std::string comp_name)
             {
