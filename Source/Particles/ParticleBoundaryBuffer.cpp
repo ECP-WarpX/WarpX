@@ -53,8 +53,8 @@ struct FindBoundaryIntersection {
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& m_plo;
     const amrex::ParticleReal m_ux, m_uy, m_uz;
     //int m_ip;
-​
-​
+
+
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
     void operator() (const DstData& dst, const SrcData& src,
@@ -68,30 +68,34 @@ struct FindBoundaryIntersection {
             dst.m_runtime_rdata[j][dst_i] = src.m_runtime_rdata[j][src_i];
         for (int j = 0; j < src.m_num_runtime_int; ++j)
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
-​
+
         // Also record the integer timestep on the destination
         dst.m_runtime_idata[m_index][dst_i] = m_step;
-​
-​
-​
+
+
+
         // Modify the position of the destination particle:
         // Move it to the point of intersection with the embedded boundary
         // (which is found by using a bisection algorithm)
-​
+
         const auto& p = dst.getSuperParticle(dst_i);
-​
-​
+
+
         amrex::ParticleReal xp, yp, zp;
         get_particle_position( p, xp, yp, zp );
-​
+
         // Bisection algorithm to find the point phi=0 (i.e. on the embedded boundary)
-        int i, j, k;
-        amrex::Real W[AMREX_SPACEDIM][2];
-        ablastr::particles::compute_weights_nodal(xp, yp, zp, m_plo, m_dxi, i, j, k, W);
-        amrex::Real phi_value = ablastr::particles::interp_field_nodal(i,j,k,W,m_phiarr);
-​
+        //int i, j, k;
+        //amrex::Real W[AMREX_SPACEDIM][2];
+        //ablastr::particles::compute_weights_nodal(xp, yp, zp, m_plo, m_dxi, i, j, k, W);
+        //amrex::Real phi_value = ablastr::particles::interp_field_nodal(i,j,k,W,m_phiarr);
+
         amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
             [=] AMREX_GPU_DEVICE (amrex::Real dt_frac) {
+                int i, j, k;
+                amrex::Real W[AMREX_SPACEDIM][2];
+                ablastr::particles::compute_weights_nodal(xp, yp, zp, m_plo, m_dxi, i, j, k, W);
+                amrex::Real phi_value = ablastr::particles::interp_field_nodal(i,j,k,W,m_phiarr);
                 amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
                 UpdatePosition(x_temp, y_temp, z_temp, m_ux, m_uy, m_uz, -dt_frac*m_dt);
                 ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, m_plo, m_dxi, i, j, k, W);
@@ -99,24 +103,25 @@ struct FindBoundaryIntersection {
                 return phi_value;
             } );
             // Record the corresponding position
-​
+
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
         amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
         UpdatePosition(x_temp, y_temp, z_temp, m_ux, m_uy, m_uz, -dt_fraction*m_dt);
 #if (defined WARPX_DIM_3D)
-        p.pos(0) = x_temp;
-        p.pos(1) = y_temp;
-        p.pos(2) = z_temp;
+        dst.m_aos[dst_i].pos(0) = x_temp;
+        dst.m_aos[dst_i].pos(1) = y_temp;
+        dst.m_aos[dst_i].pos(2) = z_temp; 
 #elif (defined WARPX_DIM_XZ)
-        p.pos(0) = x_temp;
-        p.pos(1) = z_temp;
+        dst.m_aos[dst_i].pos(0) = x_temp;
+        dst.m_aos[dst_i].pos(1) = z_temp;
 #elif (defined WARPX_DIM_RZ)
-        p.pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
+        dst.m_aos[dst_i].pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
+        std::cout << "x_temp : " << x_temp << std::endl;
         // Note: this fails to change the angle theta of the particle
-        p.pos(1) = z_temp;
+        dst.m_aos[dst_i].pos(1) = z_temp;
 #elif (defined WARPX_DIM_1D_Z)
-        p.pos(0) = z_temp;
+        dst.m_aos[dst_i].pos(0) = z_temp;
 #endif
     }
 };
