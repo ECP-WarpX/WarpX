@@ -77,7 +77,7 @@ public:
         using std::sqrt;
 
         // determine if this particle should collide
-        if (Random(engine) > m_total_collision_prob) return false;
+        if (Random(engine) > m_total_collision_prob) { return false; }
 
         // get references to the particle to get its position
         const auto& p = ptd.getSuperParticle(i);
@@ -202,7 +202,7 @@ public:
         ParticleUtils::getEnergy(u_coll2, m_mass1, E_coll);
 
         // each electron gets half the energy (could change this later)
-        const amrex::ParticleReal E_out = static_cast<amrex::ParticleReal>((E_coll - m_energy_cost) / 2.0_prt * PhysConst::q_e);
+        const auto E_out = static_cast<amrex::ParticleReal>((E_coll - m_energy_cost) / 2.0_prt * PhysConst::q_e);
 
         // precalculate often used value
         constexpr auto c2 = PhysConst::c * PhysConst::c;

@@ -130,7 +130,7 @@ BoundaryScrapingDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flus
 }
 
 void
-BoundaryScrapingDiagnostics::Flush (int i_buffer)
+BoundaryScrapingDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 {
     auto & warpx = WarpX::GetInstance();
     ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
@@ -142,7 +142,7 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
 
     // If the saving of the particles was not set up for any of the species for this boundary
     // or if no particles have been lost, then don't write anything out.
-    if (n_particles == 0) return;
+    if (n_particles == 0) { return; }
 
     // This is not a backtransform diagnostics
     bool const isBTD = false;

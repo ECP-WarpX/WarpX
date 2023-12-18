@@ -23,25 +23,27 @@ jobs:
         .github/workflows/dependencies/icc.sh
     - name: CCache Cache
       uses: actions/cache@v3
-      # - once stored under a key, they become immutable (even if local cache path content changes)
-      # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
-        path: |
-          ~/.ccache
-          ~/.cache/ccache
-        key: ccache-intel-icc-${{ hashFiles('.github/workflows/intel.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        path: ~/.cache/ccache
+        key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
         restore-keys: |
-          ccache-intel-icc-${{ hashFiles('.github/workflows/intel.yml') }}-
-          ccache-intel-icc-
+             ccache-${{ github.workflow }}-${{ github.job }}-git-
     - name: build WarpX
       run: |
+        export CCACHE_COMPRESS=1
+        export CCACHE_COMPRESSLEVEL=10
+        export CCACHE_MAXSIZE=200M
+        export CCACHE_DEPEND=1
+        ccache -z
+
         set +eu
         source /opt/intel/oneapi/setvars.sh
         set -eu
         export CXX=$(which icpc)
         export CC=$(which icc)
 
-        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade build packaging setuptools wheel
 
         cmake -S . -B build_dp \
           -DCMAKE_VERBOSE_MAKEFILE=ON \
@@ -65,6 +67,9 @@ jobs:
         cmake --build build_sp -j 2
         cmake --build build_sp --target pip_install
 
+        ccache -s
+        du -hs ~/.cache/ccache
+
   build_icpx:
     name: oneAPI ICX SP
     runs-on: ubuntu-20.04
@@ -84,19 +89,20 @@ jobs:
         .github/workflows/dependencies/dpcpp.sh
     - name: CCache Cache
       uses: actions/cache@v3
-      # - once stored under a key, they become immutable (even if local cache path content changes)
-      # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
-        path: |
-          ~/.ccache
-          ~/.cache/ccache
-        key: ccache-intel-icpx-${{ hashFiles('.github/workflows/intel.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        path: ~/.cache/ccache
+        key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
         restore-keys: |
-          ccache-intel-icpx-${{ hashFiles('.github/workflows/intel.yml') }}-
-          ccache-intel-icpx-
+             ccache-${{ github.workflow }}-${{ github.job }}-git-
     - name: build WarpX
       shell: bash
       run: |
+        export CCACHE_COMPRESS=1
+        export CCACHE_COMPRESSLEVEL=10
+        export CCACHE_MAXSIZE=100M
+        export CCACHE_DEPEND=1
+        ccache -z
+
         set +e
         source /opt/intel/oneapi/setvars.sh
         set -e
@@ -104,7 +110,7 @@ jobs:
         export CC=$(which icx)
 
         python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade setuptools wheel
+        python3 -m pip install --upgrade build packaging setuptools wheel
 
         cmake -S . -B build_sp         \
           -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
@@ -116,6 +122,9 @@ jobs:
           -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
         cmake --build build_sp --target pip_install
+
+        ccache -s
+        du -hs ~/.cache/ccache
 
     - name: run pywarpx
       run: |
@@ -144,19 +153,20 @@ jobs:
         .github/workflows/dependencies/dpcpp.sh
     - name: CCache Cache
       uses: actions/cache@v3
-      # - once stored under a key, they become immutable (even if local cache path content changes)
-      # - for a refresh the key has to change, e.g., hash of a tracked file in the key
       with:
-        path: |
-          ~/.ccache
-          ~/.cache/ccache
-        key: ccache-intel-dpcc-${{ hashFiles('.github/workflows/intel.yml') }}-${{ hashFiles('cmake/dependencies/AMReX.cmake') }}
+        path: ~/.cache/ccache
+        key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
         restore-keys: |
-          ccache-intel-dpcc-${{ hashFiles('.github/workflows/intel.yml') }}-
-          ccache-intel-dpcc-
+             ccache-${{ github.workflow }}-${{ github.job }}-git-
     - name: build WarpX
       shell: bash
       run: |
+        export CCACHE_COMPRESS=1
+        export CCACHE_COMPRESSLEVEL=10
+        export CCACHE_MAXSIZE=100M
+        export CCACHE_DEPEND=1
+        ccache -z
+
         set +e
         source /opt/intel/oneapi/setvars.sh
         set -e
@@ -176,8 +186,26 @@ jobs:
           -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
 
+        ccache -s
+        du -hs ~/.cache/ccache
+
      # Skip this as it will copy the binary artifacts and we are tight on disk space
      #   python3 -m pip install --upgrade pip
-     #   python3 -m pip install --upgrade setuptools wheel
+     #   python3 -m pip install --upgrade build packaging setuptools wheel
      #   PYWARPX_LIB_DIR=$PWD/build_sp/lib/site-packages/pywarpx/ python3 -m pip wheel .
      #   python3 -m pip install *.whl
+
+  save_pr_number:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save PR number
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          echo $PR_NUMBER > pr_number.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: pr_number.txt
+          retention-days: 1

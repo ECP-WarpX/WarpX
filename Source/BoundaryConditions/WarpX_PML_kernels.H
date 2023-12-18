@@ -278,12 +278,12 @@ void warpx_damp_pml_bx (int i, int j, int k, amrex::Array4<amrex::Real> const& B
         }
     }
 
-   // Bxz
-   if (sz == 0) {
-       Bx(i,j,k,PMLComp::xz) *= sigma_star_fac_z[j-zlo];
-   } else {
-       Bx(i,j,k,PMLComp::xz) *= sigma_fac_z[j-zlo];
-   }
+    // Bxz
+    if (sz == 0) {
+        Bx(i,j,k,PMLComp::xz) *= sigma_star_fac_z[j-zlo];
+    } else {
+        Bx(i,j,k,PMLComp::xz) *= sigma_fac_z[j-zlo];
+    }
 
 #elif defined(WARPX_DIM_3D)
 
@@ -302,19 +302,19 @@ void warpx_damp_pml_bx (int i, int j, int k, amrex::Array4<amrex::Real> const& B
         }
     }
 
-   // Bxy
-   if (sy == 0) {
-       Bx(i,j,k,PMLComp::xy) *= sigma_star_fac_y[j-ylo];
-   } else {
-       Bx(i,j,k,PMLComp::xy) *= sigma_fac_y[j-ylo];
-   }
+    // Bxy
+    if (sy == 0) {
+        Bx(i,j,k,PMLComp::xy) *= sigma_star_fac_y[j-ylo];
+    } else {
+        Bx(i,j,k,PMLComp::xy) *= sigma_fac_y[j-ylo];
+    }
 
-   // Bxz
-   if (sz == 0) {
-       Bx(i,j,k,PMLComp::xz) *= sigma_star_fac_z[k-zlo];
-   } else {
-       Bx(i,j,k,PMLComp::xz) *= sigma_fac_z[k-zlo];
-   }
+    // Bxz
+    if (sz == 0) {
+        Bx(i,j,k,PMLComp::xz) *= sigma_star_fac_z[k-zlo];
+    } else {
+        Bx(i,j,k,PMLComp::xz) *= sigma_fac_z[k-zlo];
+    }
 
 #endif
 }
@@ -345,19 +345,19 @@ void warpx_damp_pml_by (int i, int j, int k, amrex::Array4<amrex::Real> const& B
     const int sx = By_stag[0];
     const int sz = By_stag[1];
 
-   // Byx
-   if (sx == 0) {
-       By(i,j,k,PMLComp::yx) *= sigma_star_fac_x[i-xlo];
-   } else {
-       By(i,j,k,PMLComp::yx) *= sigma_fac_x[i-xlo];
-   }
+    // Byx
+    if (sx == 0) {
+        By(i,j,k,PMLComp::yx) *= sigma_star_fac_x[i-xlo];
+    } else {
+        By(i,j,k,PMLComp::yx) *= sigma_fac_x[i-xlo];
+    }
 
-   // Byz
-   if (sz == 0) {
-       By(i,j,k,PMLComp::yz) *= sigma_star_fac_z[j-zlo];
-   } else {
-       By(i,j,k,PMLComp::yz) *= sigma_fac_z[j-zlo];
-   }
+    // Byz
+    if (sz == 0) {
+        By(i,j,k,PMLComp::yz) *= sigma_star_fac_z[j-zlo];
+    } else {
+        By(i,j,k,PMLComp::yz) *= sigma_fac_z[j-zlo];
+    }
 
 #elif defined(WARPX_DIM_3D)
 
@@ -366,12 +366,12 @@ void warpx_damp_pml_by (int i, int j, int k, amrex::Array4<amrex::Real> const& B
     const int sy = By_stag[1];
     const int sz = By_stag[2];
 
-   // Byx
-   if (sx == 0) {
-       By(i,j,k,PMLComp::yx) *= sigma_star_fac_x[i-xlo];
-   } else {
-       By(i,j,k,PMLComp::yx) *= sigma_fac_x[i-xlo];
-   }
+    // Byx
+    if (sx == 0) {
+        By(i,j,k,PMLComp::yx) *= sigma_star_fac_x[i-xlo];
+    } else {
+        By(i,j,k,PMLComp::yx) *= sigma_fac_x[i-xlo];
+    }
 
     if (divb_cleaning)
     {
@@ -383,12 +383,12 @@ void warpx_damp_pml_by (int i, int j, int k, amrex::Array4<amrex::Real> const& B
         }
     }
 
-   // Byz
-   if (sz == 0) {
-       By(i,j,k,PMLComp::yz) *= sigma_star_fac_z[k-zlo];
-   } else {
-       By(i,j,k,PMLComp::yz) *= sigma_fac_z[k-zlo];
-   }
+    // Byz
+    if (sz == 0) {
+        By(i,j,k,PMLComp::yz) *= sigma_star_fac_z[k-zlo];
+    } else {
+        By(i,j,k,PMLComp::yz) *= sigma_fac_z[k-zlo];
+    }
 
 #endif
 }
@@ -419,12 +419,12 @@ void warpx_damp_pml_bz (int i, int j, int k, amrex::Array4<amrex::Real> const& B
     const int sx = Bz_stag[0];
     const int sz = Bz_stag[1];
 
-   // Bzx
-   if (sx == 0) {
-       Bz(i,j,k,PMLComp::zx) *= sigma_star_fac_x[i-xlo];
-   } else {
-       Bz(i,j,k,PMLComp::zx) *= sigma_fac_x[i-xlo];
-   }
+    // Bzx
+    if (sx == 0) {
+        Bz(i,j,k,PMLComp::zx) *= sigma_star_fac_x[i-xlo];
+    } else {
+        Bz(i,j,k,PMLComp::zx) *= sigma_fac_x[i-xlo];
+    }
 
     if (divb_cleaning)
     {
@@ -443,19 +443,19 @@ void warpx_damp_pml_bz (int i, int j, int k, amrex::Array4<amrex::Real> const& B
     const int sy = Bz_stag[1];
     const int sz = Bz_stag[2];
 
-   // Bzx
-   if (sx == 0) {
-       Bz(i,j,k,PMLComp::zx) *= sigma_star_fac_x[i-xlo];
-   } else {
-       Bz(i,j,k,PMLComp::zx) *= sigma_fac_x[i-xlo];
-   }
+    // Bzx
+    if (sx == 0) {
+        Bz(i,j,k,PMLComp::zx) *= sigma_star_fac_x[i-xlo];
+    } else {
+        Bz(i,j,k,PMLComp::zx) *= sigma_fac_x[i-xlo];
+    }
 
-   // Bzy
-   if (sy == 0) {
-       Bz(i,j,k,PMLComp::zy) *= sigma_star_fac_y[j-ylo];
-   } else {
-       Bz(i,j,k,PMLComp::zy) *= sigma_fac_y[j-ylo];
-   }
+    // Bzy
+    if (sy == 0) {
+        Bz(i,j,k,PMLComp::zy) *= sigma_star_fac_y[j-ylo];
+    } else {
+        Bz(i,j,k,PMLComp::zy) *= sigma_fac_y[j-ylo];
+    }
 
     if (divb_cleaning)
     {
@@ -495,19 +495,19 @@ void warpx_damp_pml_scalar (int i, int j, int k, amrex::Array4<amrex::Real> cons
     const int sx = arr_stag[0];
     const int sz = arr_stag[1];
 
-   // Component along x
-   if (sx == 0) {
-       arr(i,j,k,PMLComp::x) *= sigma_star_fac_x[i-xlo];
-   } else {
-       arr(i,j,k,PMLComp::x) *= sigma_fac_x[i-xlo];
-   }
+    // Component along x
+    if (sx == 0) {
+        arr(i,j,k,PMLComp::x) *= sigma_star_fac_x[i-xlo];
+    } else {
+        arr(i,j,k,PMLComp::x) *= sigma_fac_x[i-xlo];
+    }
 
-   // Component along z
-   if (sz == 0) {
-       arr(i,j,k,PMLComp::z) *= sigma_star_fac_z[j-zlo];
-   } else {
-       arr(i,j,k,PMLComp::z) *= sigma_fac_z[j-zlo];
-   }
+    // Component along z
+    if (sz == 0) {
+        arr(i,j,k,PMLComp::z) *= sigma_star_fac_z[j-zlo];
+    } else {
+        arr(i,j,k,PMLComp::z) *= sigma_fac_z[j-zlo];
+    }
 
 #elif defined(WARPX_DIM_3D)
 
@@ -516,26 +516,26 @@ void warpx_damp_pml_scalar (int i, int j, int k, amrex::Array4<amrex::Real> cons
     const int sy = arr_stag[1];
     const int sz = arr_stag[2];
 
-   // Component along x
-   if (sx == 0) {
-       arr(i,j,k,PMLComp::x) *= sigma_star_fac_x[i-xlo];
-   } else {
-       arr(i,j,k,PMLComp::x) *= sigma_fac_x[i-xlo];
-   }
+    // Component along x
+    if (sx == 0) {
+        arr(i,j,k,PMLComp::x) *= sigma_star_fac_x[i-xlo];
+    } else {
+        arr(i,j,k,PMLComp::x) *= sigma_fac_x[i-xlo];
+    }
 
-   // Component along y
-   if (sy == 0) {
-       arr(i,j,k,PMLComp::y) *= sigma_star_fac_y[j-ylo];
-   } else {
-       arr(i,j,k,PMLComp::y) *= sigma_fac_y[j-ylo];
-   }
+    // Component along y
+    if (sy == 0) {
+        arr(i,j,k,PMLComp::y) *= sigma_star_fac_y[j-ylo];
+    } else {
+        arr(i,j,k,PMLComp::y) *= sigma_fac_y[j-ylo];
+    }
 
-   // Component along z
-   if (sz == 0) {
-       arr(i,j,k,PMLComp::z) *= sigma_star_fac_z[k-zlo];
-   } else {
-       arr(i,j,k,PMLComp::z) *= sigma_fac_z[k-zlo];
-   }
+    // Component along z
+    if (sz == 0) {
+        arr(i,j,k,PMLComp::z) *= sigma_star_fac_z[k-zlo];
+    } else {
+        arr(i,j,k,PMLComp::z) *= sigma_fac_z[k-zlo];
+    }
 
 #endif
 }

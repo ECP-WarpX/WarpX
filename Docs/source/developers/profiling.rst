@@ -247,7 +247,7 @@ node, or without a workload management system.
 .. note::
 
     To collect full statistics, Nsight-Compute reruns kernels,
-    temporarilly saving device memory in host memory. This makes it
+    temporarily saving device memory in host memory. This makes it
     slower than Nsight-Systems, so the provided script profiles only a single
     step of a single process. This is generally enough to extract relevant
     information.

@@ -10,8 +10,7 @@
 /**
  * \brief Functor to compute divB into mf_out.
  */
-class
-DivBFunctor final : public ComputeDiagFunctor
+class DivBFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor.

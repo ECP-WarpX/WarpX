@@ -335,7 +335,7 @@ Diagnostics::InitDataAfterRestart ()
         InitializeParticleBuffer();
         InitializeParticleFunctors();
     }
-   if (write_species == 0) {
+    if (write_species == 0) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_format != "checkpoint",
             "For checkpoint format, write_species flag must be 1."
@@ -574,9 +574,7 @@ Diagnostics::FilterComputePackFlush (int step, bool force_flush)
     }
 
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        if ( !DoDump (step, i_buffer, force_flush) ) continue;
-        Flush(i_buffer);
+        if ( !DoDump (step, i_buffer, force_flush) ) { continue; }
+        Flush(i_buffer, force_flush);
     }
-
-
 }
