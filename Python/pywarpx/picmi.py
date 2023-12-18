@@ -2182,13 +2182,13 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             E_fields_list = ['Er', 'Et', 'Ez']
             B_fields_list = ['Br', 'Bt', 'Bz']
             J_fields_list = ['Jr', 'Jt', 'Jz']
-            Je_fields_list = ['Jer', 'Jet', 'Jez']
+            Je_fields_list = ['Jr_e', 'Jt_e', 'Jz_e']
             A_fields_list = ['Ar', 'At', 'Az']
         else:
             E_fields_list = ['Ex', 'Ey', 'Ez']
             B_fields_list = ['Bx', 'By', 'Bz']
             J_fields_list = ['Jx', 'Jy', 'Jz']
-            Je_fields_list = ['Jex', 'Jey', 'Jez']
+            Je_fields_list = ['Jx_e', 'Jy_e', 'Jz_e'] # Je_fields_list = ['Jex', 'Jey', 'Jez']
             A_fields_list = ['Ax', 'Ay', 'Az']
         if self.data_list is not None:
             for dataname in self.data_list:
@@ -2201,7 +2201,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                 elif dataname == 'J':
                     for field_name in J_fields_list:
                         fields_to_plot.add(field_name.lower())
-                elif dataname == 'Je':
+                elif dataname == 'J_e':
                     for field_name in Je_fields_list:
                         fields_to_plot.add(field_name.lower())
                 elif dataname == 'A':
