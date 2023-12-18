@@ -31,7 +31,7 @@ public:
      * \param[in] dcomp first component of mf_dst in which cell-centered
      *            data is stored
     */
-    virtual void operator()(amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer=0*/) const override;
+    void operator()(amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer=0*/) const override;
 private:
     /** direction of the electron current density to save */
     int m_dir;
