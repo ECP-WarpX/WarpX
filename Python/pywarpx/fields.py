@@ -344,7 +344,7 @@ class _MultiFABWrapper(object):
         """
         box = mfi.tilebox()
         if self.include_ghosts:
-            nghosts = self.mf.n_grow_vect()
+            nghosts = self.mf.n_grow_vect
             if with_internal_ghosts:
                 box.grow(nghosts)
             else:
