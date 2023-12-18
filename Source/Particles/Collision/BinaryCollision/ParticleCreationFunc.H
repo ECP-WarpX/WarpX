@@ -264,6 +264,7 @@ public:
                                        pc_products[i]->getUserRealAttribParser(),
                                        pc_products[i]->getUserIntAttribParser(),
 #ifdef WARPX_QED
+                                       false,
                                        pc_products[i]->get_breit_wheeler_engine_ptr(),
                                        pc_products[i]->get_quantum_sync_engine_ptr(),
 #endif
