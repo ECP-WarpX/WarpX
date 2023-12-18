@@ -89,34 +89,9 @@ Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2,
     auto new_np1 = std::max(dst1_index + num_added, dst1.numParticles());
     dst1.resize(new_np1);
 
-    ParticleCreation::DefaultInitializeRuntimeAttributes(dst1,
-                                       0, 0,
-                                       pc1.getUserRealAttribs(), pc1.getUserIntAttribs(),
-                                       pc1.getParticleComps(), pc1.getParticleiComps(),
-                                       pc1.getUserRealAttribParser(),
-                                       pc1.getUserIntAttribParser(),
-#ifdef WARPX_QED
-                                       pc1.get_breit_wheeler_engine_ptr(),
-                                       pc1.get_quantum_sync_engine_ptr(),
-#endif
-                                       pc1.getIonizationInitialLevel(),
-                                       old_np1, new_np1);
-
     auto old_np2 = dst2.size();
     auto new_np2 = std::max(dst2_index + num_added, dst2.numParticles());
     dst2.resize(new_np2);
-    ParticleCreation::DefaultInitializeRuntimeAttributes(dst2,
-                                       0, 0,
-                                       pc2.getUserRealAttribs(), pc2.getUserIntAttribs(),
-                                       pc2.getParticleComps(), pc2.getParticleiComps(),
-                                       pc2.getUserRealAttribParser(),
-                                       pc2.getUserIntAttribParser(),
-#ifdef WARPX_QED
-                                       pc2.get_breit_wheeler_engine_ptr(),
-                                       pc2.get_quantum_sync_engine_ptr(),
-#endif
-                                       pc2.getIonizationInitialLevel(),
-                                       old_np2, new_np2);
 
     auto p_offsets = offsets.dataPtr();
 
@@ -161,6 +136,31 @@ Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2,
                     N*p_offsets[i] + dst2_index, N, arrNumPartCreation(j,k,l));
         }
     });
+
+    ParticleCreation::DefaultInitializeRuntimeAttributes(dst1,
+                                       0, 0,
+                                       pc1.getUserRealAttribs(), pc1.getUserIntAttribs(),
+                                       pc1.getParticleComps(), pc1.getParticleiComps(),
+                                       pc1.getUserRealAttribParser(),
+                                       pc1.getUserIntAttribParser(),
+#ifdef WARPX_QED
+                                       pc1.get_breit_wheeler_engine_ptr(),
+                                       pc1.get_quantum_sync_engine_ptr(),
+#endif
+                                       pc1.getIonizationInitialLevel(),
+                                       old_np1, new_np1);
+    ParticleCreation::DefaultInitializeRuntimeAttributes(dst2,
+                                       0, 0,
+                                       pc2.getUserRealAttribs(), pc2.getUserIntAttribs(),
+                                       pc2.getParticleComps(), pc2.getParticleiComps(),
+                                       pc2.getUserRealAttribParser(),
+                                       pc2.getUserIntAttribParser(),
+#ifdef WARPX_QED
+                                       pc2.get_breit_wheeler_engine_ptr(),
+                                       pc2.get_quantum_sync_engine_ptr(),
+#endif
+                                       pc2.getIonizationInitialLevel(),
+                                       old_np2, new_np2);
 
     Gpu::synchronize();
     return num_added;

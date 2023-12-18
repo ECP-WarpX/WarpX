@@ -133,21 +133,6 @@ public:
             const index_type num_added = total * m_num_products_host[i] * 2;
             num_added_vec[i] = static_cast<int>(num_added);
             tile_products[i]->resize(products_np[i] + num_added);
-
-            int start_index = int(products_np[i]);
-            int stop_index  = int(products_np[i] + num_added);
-            ParticleCreation::DefaultInitializeRuntimeAttributes(*tile_products[i],
-                                       0, 0,
-                                       pc_products[i]->getUserRealAttribs(), pc_products[i]->getUserIntAttribs(),
-                                       pc_products[i]->getParticleComps(), pc_products[i]->getParticleiComps(),
-                                       pc_products[i]->getUserRealAttribParser(),
-                                       pc_products[i]->getUserIntAttribParser(),
-#ifdef WARPX_QED
-                                       pc_products[i]->get_breit_wheeler_engine_ptr(),
-                                       pc_products[i]->get_quantum_sync_engine_ptr(),
-#endif
-                                       pc_products[i]->getIonizationInitialLevel(),
-                                       start_index, stop_index);
         }
 
         amrex::ParticleReal* AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
@@ -266,6 +251,25 @@ public:
 
             }
         });
+
+        // Initialize the user runtime components
+        for (int i = 0; i < m_num_product_species; i++)
+        {
+            int start_index = int(products_np[i]);
+            int stop_index  = int(products_np[i] + num_added_vec[i]);
+            ParticleCreation::DefaultInitializeRuntimeAttributes(*tile_products[i],
+                                       0, 0,
+                                       pc_products[i]->getUserRealAttribs(), pc_products[i]->getUserIntAttribs(),
+                                       pc_products[i]->getParticleComps(), pc_products[i]->getParticleiComps(),
+                                       pc_products[i]->getUserRealAttribParser(),
+                                       pc_products[i]->getUserIntAttribParser(),
+#ifdef WARPX_QED
+                                       pc_products[i]->get_breit_wheeler_engine_ptr(),
+                                       pc_products[i]->get_quantum_sync_engine_ptr(),
+#endif
+                                       pc_products[i]->getIonizationInitialLevel(),
+                                       start_index, stop_index);
+        }
 
         amrex::Gpu::synchronize();
 
