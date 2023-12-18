@@ -1392,17 +1392,17 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
             // computes min/max positions of current contributions
 #if !defined(WARPX_DIM_1D_Z)
             int dil = 1, diu = 1;
-            if (i_old < i_new) dil = 0;
-            if (i_old > i_new) diu = 0;
+            if (i_old < i_new) { dil = 0; }
+            if (i_old > i_new) { diu = 0; }
 #endif
 #if defined(WARPX_DIM_3D)
             int djl = 1, dju = 1;
-            if (j_old < j_new) djl = 0;
-            if (j_old > j_new) dju = 0;
+            if (j_old < j_new) { djl = 0; }
+            if (j_old > j_new) { dju = 0; }
 #endif
             int dkl = 1, dku = 1;
-            if (k_old < k_new) dkl = 0;
-            if (k_old > k_new) dku = 0;
+            if (k_old < k_new) { dkl = 0; }
+            if (k_old > k_new) { dku = 0; }
 
 #if defined(WARPX_DIM_3D)
 

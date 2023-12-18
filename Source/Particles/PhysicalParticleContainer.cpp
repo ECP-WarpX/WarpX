@@ -3021,7 +3021,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything
-    if (np_to_push == 0) return;
+    if (np_to_push == 0) { return; }
 
     // Get cell size on gather_lev
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(gather_lev,0));
@@ -3105,7 +3105,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 #ifdef WARPX_QED
     const auto do_sync = m_do_qed_quantum_sync;
     amrex::Real t_chi_max = 0.0;
-    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_minimum_chi_part();
+    if (do_sync) { t_chi_max = m_shr_p_qs_engine->get_minimum_chi_part(); }
 
     QuantumSynchrotronEvolveOpticalDepth evolve_opt;
     amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR = nullptr;
@@ -3172,7 +3172,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
         }
 
         // Externally applied E and B-field in Cartesian co-ordinates
-        [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
+        [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;
         if constexpr (exteb_control == has_exteb) {
             getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
         }
@@ -3217,8 +3217,8 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 
 #ifdef WARPX_QED
         [[maybe_unused]] auto foo_local_has_quantum_sync = local_has_quantum_sync;
-        [[maybe_unused]] auto foo_podq = p_optical_depth_QSR;
-        [[maybe_unused]] auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
+        [[maybe_unused]] auto *foo_podq = p_optical_depth_QSR;
+        [[maybe_unused]] const auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
         if constexpr (qed_control == has_qed) {
             if (local_has_quantum_sync) {
                 evolve_opt(ux[ip], uy[ip], uz[ip],
