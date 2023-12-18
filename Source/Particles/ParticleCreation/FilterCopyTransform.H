@@ -92,6 +92,7 @@ Index filterCopyTransformParticles (DstPC& pc, DstTile& dst, SrcTile& src,
                                        pc.getUserRealAttribParser(),
                                        pc.getUserIntAttribParser(),
 #ifdef WARPX_QED
+                                       false,
                                        pc.get_breit_wheeler_engine_ptr(),
                                        pc.get_quantum_sync_engine_ptr(),
 #endif
@@ -260,6 +261,7 @@ Index filterCopyTransformParticles (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTi
                                        pc1.getUserRealAttribParser(),
                                        pc1.getUserIntAttribParser(),
 #ifdef WARPX_QED
+                                       false,
                                        pc1.get_breit_wheeler_engine_ptr(),
                                        pc1.get_quantum_sync_engine_ptr(),
 #endif
@@ -272,6 +274,7 @@ Index filterCopyTransformParticles (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTi
                                        pc2.getUserRealAttribParser(),
                                        pc2.getUserIntAttribParser(),
 #ifdef WARPX_QED
+                                       false,
                                        pc2.get_breit_wheeler_engine_ptr(),
                                        pc2.get_quantum_sync_engine_ptr(),
 #endif

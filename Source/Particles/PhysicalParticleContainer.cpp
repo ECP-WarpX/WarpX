@@ -787,6 +787,7 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                                        amrex::GetVecOfPtrs(m_user_real_attrib_parser),
                                        amrex::GetVecOfPtrs(m_user_int_attrib_parser),
 #ifdef WARPX_QED
+                                       true,
                                        m_shr_p_bw_engine.get(),
                                        m_shr_p_qs_engine.get(),
 #endif
