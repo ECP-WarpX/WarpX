@@ -7,72 +7,112 @@
 
 #include "RadiationHandler.H"
 
+#include "Particles/Pusher/GetAndSetPosition.H"
+
 #include "Utils/TextMsg.H"
 
 #include <AMReX_ParmParse.H>
 
 #include <ablastr/constant.H>
 #include <ablastr/math/Complex.H>
+#include <ablastr/math/Utils.H>
 
 #include <vector>
 
 using namespace ablastr::math;
 
+namespace
+{
+    auto compute_detector_positions(
+        const amrex::Array<amrex::Real,3>& center,
+        const amrex::Array<amrex::Real,3>& direction,
+        amrex::Real distance,
+        const amrex::Array<amrex::Real,3>& orientation,
+        amrex::Array<int,2>& det_points,
+        amrex::Array<amrex::Real,2>& theta_range
+        )
+    {
+        
+    }
+}
+
+
 RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
 {
-    // Read in radiation input
-    const amrex::ParmParse pp_radiations("radiations");
-
-    // Verify if there is a detector
-    pp_radiations.query("put_a_detector", m_get_a_detector);
-
-
 #if defined  WARPX_DIM_RZ
     WARPX_ABORT_WITH_MESSAGE("Radiation is not supported yet with RZ.");
 #endif
 
-    //Compute the radiation
-    if(m_get_a_detector){
-        //Resolution in frequency of the detector
-        pp_radiations.queryarr("omega_range", m_omega_range);
-        pp_radiations.query("omega_points", m_omega_points);
-        //Angle theta AND phi
-        pp_radiations.queryarr("angle_aperture", m_theta_range);
+    // Read in radiation input
+    const amrex::ParmParse pp_radiation("radiation");
 
-        //Type of detector
-        pp_radiations.getarr("detector_number_points", m_det_pts,0,2);
-        pp_radiations.getarr("detector_direction", m_det_direction,0,3);
-        pp_radiations.query("detector_distance", m_det_distance);
+    //Resolution in frequency of the detector
+    auto omega_range std::vector<amrex::Real>(2);
+    pp_radiation.getarr("omega_range", omega_range);
+    std::copy(omega_range.begin(), omega_range.end(), m_omega_range.begin());
+    pp_radiation.get("omega_points", m_omega_points);
 
-        add_detector(center);
-         /* Initialize the Fab with the field in function of angle and frequency */
-         //int numcomps = 4;
-        //BaseFab<Complex> fab(bx,numcomps);
-        // Box of angle and frequency
-        //const amrex::Box detect_box({0,0,0}, {m_det_pts[0], m_det_pts[1], m_omega_points});
-        ncomp = 6; //Real and complex part
-        //amrex::FArrayBox fab_detect(detect_box, ncomp);
-        //fab_detect.setval(0,0)
-        m_radiation_data = amrex::Gpu::DeviceVector<amrex::Real>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
-        m_radiation_calculation = amrex::Gpu::DeviceVector<amrex::Real>(m_det_pts[0]*m_det_pts[1]*m_omega_points);
+    //Angle theta AND phi
+    auto theta_range std::vector<amrex::Real>(2);
+    pp_radiation.get("angle_aperture", theta_range);
+    std::copy(theta_range.begin(), theta_range.end(), m_theta_range.begin());
 
-        det_pos.resize(2);
-        det_pos[0].resize(m_det_pts[0]);
-        det_pos[1].resize(m_det_pts[1]);
-        omega_calc.resize(m_omega_points);
+    //Detector parameters
+    auto det_pts std::vector<int>(2);
+    pp_radiation.getarr("detector_number_points", det_pts);
+    std::copy(det_pts.begin(), det_pts.end(), m_det_pts.begin());
 
-        //Initialization :
-        for(int i=0; i<m_det_pts[0];i++){
-            det_pos[0][i]=det_bornes[0][0]+i*m_d_d[0];
-                    }
-        for(int i=0; i<m_det_pts[1];i++){
-            det_pos[1][i]=det_bornes[1][0]+i*m_d_d[1];
-                    }
-        for(int i=0; i<m_omega_points;i++){
-            omega_calc[i]=m_omega_range[0]+i*m_d_omega;
-                    }
+    auto det_direction std::vector<amrex::Real>(3);
+    pp_radiation.getarr("detector_direction", det_direction);
+    std::copy(det_direction.begin(), det_direction.end(), m_det_direction.begin());
+
+    auto det_orientation std::vector<amrex::Real>(3);
+    pp_radiation.getarr("detector_orientation", det_orientation);
+    std::copy(det_orientation.begin(), det_orientation.end(), m_det_orientation.begin());
+
+    pp_radiation.get("detector_distance", m_det_distance);
+
+    //Calculation of angle resolution
+    const auto d_theta = amrex::Array<amrex::Real,2>{
+        2*m_theta_range[0]/m_det_pts[0],
+        2*m_theta_range[1]/m_det_pts[1]};
+
+    //Set the resolution of the detector
+    m_d_d.resize(3);
+
+    for(int idi = 0; idi<3; ++idi){
+        if(m_det_direction[idi]==1){
+            m_d_d[(idi+1)%3]=2*m_det_distance*tan(m_d_theta[0]/2);
+            m_d_d[(idi+2)%3]=2*m_det_distance*tan(m_d_theta[1]/2);
+        }
+
+    m_d_omega=m_omega_range[1]-m_omega_range[0]/static_cast<double>(m_omega_points);
+
+    //Calculate the sides of the detector
+    det_bornes.resize(2);
+    det_bornes[0].resize(2);
+    det_bornes[1].resize(2);
+
+    for(int idim = 0; idim<2; ++idim){
+        det_bornes[idim][0]=center[idim]-std::tan(m_theta_range[idim]/2)*m_det_distance;
+        det_bornes[idim][1]=center[idim]+std::tan(m_theta_range[idim]/2)*m_det_distance;
+    }
+    //pos_det_y
+    //omega_calc
 
     }
+    constexpr auto ncomp = 6;
+    m_radiation_data = amrex::Gpu::DeviceVector<amrex::Real>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
+
+    det_pos.resize(2);
+    det_pos[0].resize(m_det_pts[0]);
+    det_pos[1].resize(m_det_pts[1]);
+    omega_calc.resize(m_omega_points);
+
+    ablastr::math::LinSpaceFill(det_bornes[0][0], det_bornes[0][1], m_det_pts[0], det_pos[0].being());
+    ablastr::math::LinSpaceFill(det_bornes[1][0], det_bornes[1][1], m_det_pts[1], det_pos[1].being());
+
+    ablastr::math::LinSpaceFill(m_omega_range[0], m_omega_range[1], m_omega_points, omega_calc.being());
 }
 
 void RadiationHandler::add_radiation_contribution
@@ -199,38 +239,6 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
         }
 
         of.close();
-    }
-}
-void RadiationHandler::add_detector(const amrex::Array<amrex::Real,3>& center){
-
-    //Calculation of angle resolution
-    m_d_theta.resize(2);
-    for(int i=0; i<2; i++){
-        m_d_theta[i] = 2*m_theta_range[i]/static_cast<double>(m_det_pts[i]);
-    }
-    //Set the resolution of the detector
-    m_d_d.resize(3);
-
-    for(int idi = 0; idi<3; ++idi){
-        if(m_det_direction[idi]==1){
-            m_d_d[(idi+1)%3]=2*m_det_distance*tan(m_d_theta[0]/2);
-            m_d_d[(idi+2)%3]=2*m_det_distance*tan(m_d_theta[1]/2);
-        }
-
-    m_d_omega=m_omega_range[1]-m_omega_range[0]/static_cast<double>(m_omega_points);
-
-    //Calculate the sides of the detector
-    det_bornes.resize(2);
-    det_bornes[0].resize(2);
-    det_bornes[1].resize(2);
-
-    for(int idim = 0; idim<2; ++idim){
-        det_bornes[idim][0]=center[idim]-std::tan(m_theta_range[idim]/2)*m_det_distance;
-        det_bornes[idim][1]=center[idim]+std::tan(m_theta_range[idim]/2)*m_det_distance;
-    }
-    //pos_det_y
-    //omega_calc
-
     }
 }
 
