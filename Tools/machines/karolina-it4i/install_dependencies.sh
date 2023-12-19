@@ -26,12 +26,24 @@ if [ ! -d "$WORK/spack" ]
 then
     git clone -c feature.manyFiles=true -b v0.21.0 https://github.com/spack/spack.git $WORK/spack
     source $WORK/spack/share/spack/setup-env.sh
+else
+    # If the directory exists, checkout v0.21.0 branch
+    cd $WORK/spack
+    git checkout v0.21.0
+    git pull origin v0.21.0
+    source $WORK/spack/share/spack/setup-env.sh
 
-    # create and activate the spack environment
-    spack env create warpx-karolina-cuda $WORK/src/warpx/Tools/machines/karolina-it4i/spack-karolina-cuda.yaml
-    spack env activate warpx-karolina-cuda
-    spack install
+    # Delete spack env if present
+    if spack env list | grep -q warpx-karolina-cuda; then
+        spack env deactivate
+        spack env rm -y warpx-karolina-cuda
+    fi
 fi
+
+# create and activate the spack environment
+spack env create warpx-karolina-cuda $WORK/src/warpx/Tools/machines/karolina-it4i/spack-karolina-cuda.yaml
+spack env activate warpx-karolina-cuda
+spack install
 
 # Python ##########################################################
 #
