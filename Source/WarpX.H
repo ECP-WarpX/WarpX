@@ -1373,7 +1373,7 @@ private:
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, bool aux_is_nodal);
 
-    void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
+    void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geometry,
         int num_shift, int dir, int lev, bool update_cost_flag,
         amrex::Real external_field=0.0, bool useparser = false,
         amrex::ParserExecutor<3> const& field_parser={});

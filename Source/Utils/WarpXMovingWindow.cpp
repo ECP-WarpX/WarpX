@@ -456,7 +456,7 @@ WarpX::MoveWindow (const int step, bool move_j)
 }
 
 void
-WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
+WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geometry,
                 int num_shift, int dir, const int lev, bool update_cost_flag,
                 amrex::Real external_field, bool useparser,
                 amrex::ParserExecutor<3> const& field_parser)
@@ -475,7 +475,7 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
 
     if ( WarpX::safe_guard_cells ) {
         // Fill guard cells.
-        ablastr::utils::communication::FillBoundary(tmpmf, WarpX::do_single_precision_comms, geom.periodicity());
+        ablastr::utils::communication::FillBoundary(tmpmf, WarpX::do_single_precision_comms, geometry.periodicity());
     } else {
         amrex::IntVect ng_mw = amrex::IntVect::TheUnitVector();
         // Enough guard cells in the MW direction
@@ -483,12 +483,12 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
         // Make sure we don't exceed number of guard cells allocated
         ng_mw = ng_mw.min(ng);
         // Fill guard cells.
-        ablastr::utils::communication::FillBoundary(tmpmf, ng_mw, WarpX::do_single_precision_comms, geom.periodicity());
+        ablastr::utils::communication::FillBoundary(tmpmf, ng_mw, WarpX::do_single_precision_comms, geometry.periodicity());
     }
 
     // Make a box that covers the region that the window moved into
     const amrex::IndexType& typ = ba.ixType();
-    const amrex::Box& domainBox = geom.Domain();
+    const amrex::Box& domainBox = geometry.Domain();
     amrex::Box adjBox;
     if (num_shift > 0) {
         adjBox = adjCellHi(domainBox, dir, ng[dir]);
@@ -514,8 +514,8 @@ WarpX::shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
     shiftiv[dir] = num_shift;
     const amrex::Dim3 shift = shiftiv.dim3();
 
-    const amrex::RealBox& real_box = geom.ProbDomain();
-    const auto dx = geom.CellSizeArray();
+    const amrex::RealBox& real_box = geometry.ProbDomain();
+    const auto dx = geometry.CellSizeArray();
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 #ifdef AMREX_USE_OMP
