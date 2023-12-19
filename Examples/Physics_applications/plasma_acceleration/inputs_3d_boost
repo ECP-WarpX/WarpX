@@ -32,7 +32,6 @@ warpx.moving_window_v = 1.0
 
 my_constants.dens = 1e+23
 my_constants.lramp = 0.008
-my_constants.pi = 3.141592653589793
 
 # Order of particle shape factors
 algo.particle_shape = 3
@@ -78,7 +77,7 @@ driver.injection_style = gaussian_beam
 driver.mass = m_e
 driver.momentum_distribution_type = gaussian
 driver.npart = 1000
-driver.q_tot = -9.999999999999999e-11
+driver.q_tot = -1e-10
 driver.rigid_advance = 1
 driver.ux_m = 0.0
 driver.ux_th = 2.0
