@@ -11,6 +11,9 @@
 
 #include "RadiationHandler_fwd.H"
 
+#include <ablastr/math/Complex.H>
+
+
 #include <AMReX_GpuContainers.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
@@ -38,6 +41,8 @@ private:
 
     // Frequency range
     amrex::Array<amrex::Real,2> m_omega_range;
+    int m_omega_points;
+    amrex::Gpu::DeviceVector<amrex::Real> m_omegas;
 
     // Dimensions of the detector
     amrex::Array<amrex::Real,2> m_theta_range;
@@ -47,12 +52,11 @@ private:
     amrex::Array<amrex::Real,3> m_det_direction;
     amrex::Array<amrex::Real,3> m_det_orientation;
 
-    amrex::Gpu::DeviceVector<amrex::Real> m_radiation_data;
+    amrex::Gpu::DeviceVector<amrex::Real> det_pos_x;
+    amrex::Gpu::DeviceVector<amrex::Real> det_pos_y;
+    amrex::Gpu::DeviceVector<amrex::Real> det_pos_z;
 
-    amrex::Real dephas;
-
-    amrex::Vector<amrex::Vector<amrex::Real>> det_pos;
-    amrex::Vector<amrex::Real> omega_calc;
+    amrex::Gpu::DeviceVector<ablastr::math::Complex> m_radiation_data;
 
 };
 #endif // WARPX_PARTICLES_RADIATION_H

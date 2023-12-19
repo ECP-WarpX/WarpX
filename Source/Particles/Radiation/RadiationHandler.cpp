@@ -8,14 +8,12 @@
 #include "RadiationHandler.H"
 
 #include "Particles/Pusher/GetAndSetPosition.H"
-
 #include "Utils/TextMsg.H"
 
-#include <AMReX_ParmParse.H>
-
 #include <ablastr/constant.H>
-#include <ablastr/math/Complex.H>
 #include <ablastr/math/Utils.H>
+
+#include <AMReX_ParmParse.H>
 
 #include <vector>
 
@@ -26,13 +24,70 @@ namespace
     auto compute_detector_positions(
         const amrex::Array<amrex::Real,3>& center,
         const amrex::Array<amrex::Real,3>& direction,
-        amrex::Real distance,
+        const amrex::Real distance,
         const amrex::Array<amrex::Real,3>& orientation,
-        amrex::Array<int,2>& det_points,
-        amrex::Array<amrex::Real,2>& theta_range
-        )
+        const amrex::Array<int,2>& det_points,
+        const amrex::Array<amrex::Real,2>& theta_range)
     {
-        
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            direction[0]*orientation[0] +
+            direction[1]*orientation[1] +
+            direction[2]*orientation[2] != 0,
+            "Radiation detector orientation cannot be aligned with detector direction");
+
+        auto u = amrex::Array<amrex::Real,3>{
+            orientation[0] - direction[0]*orientation[0],
+            orientation[1] - direction[1]*orientation[1],
+            orientation[2] - direction[2]*orientation[2]};
+        const auto one_over_u = 1.0_rt/std::sqrt(u[0]*u[0]+u[1]*u[1]+u[2]*u[2]);
+        u[0] *= one_over_u;
+        u[1] *= one_over_u;
+        u[2] *= one_over_u;
+
+        auto v = amrex::Array<amrex::Real,3>{
+            direction[1]*u[2]-direction[2]*u[1],
+            direction[2]*u[0]-direction[0]*u[2],
+            direction[0]*u[1]-direction[1]*u[0]};
+        const auto one_over_v = 1.0_rt/std::sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+        v[0] *= one_over_v;
+        v[1] *= one_over_v;
+        v[2] *= one_over_v;
+
+        auto us = amrex::Vector<amrex::Real>(det_points[0]);
+        const auto ulim = distance*std::tan(theta_range[0]*0.5_rt);
+        ablastr::math::LinSpaceFill(-ul,ul, det_points[0], us.being());
+
+        auto vs = amrex::Vector<amrex::Real>(det_points[1]);
+        const auto vlim = distance*std::tan(theta_range[1]*0.5_rt);
+        ablastr::math::LinSpaceFill(-vlim, vlim, det_points[1], vs.being());
+
+        const auto how_many = det_points[0]*det_points[1];
+
+        auto det_x = amrex::GPU::DeviceVector<amrex::Real>(how_many);
+        auto det_y = amrex::GPU::DeviceVector<amrex::Real>(how_many);
+        auto det_z = amrex::GPU::DeviceVector<amrex::Real>(how_many);
+
+        const auto one_over_direction = 1.0_rt/std::sqrt(
+            direction[0]*direction[0]+direction[1]*direction[1]+direction[2]*direction[2]);
+        const auto norm_direction = amrex::Array<amrex::Real,3>{
+            direction[0]*one_over_direction,
+            direction[1]*one_over_direction,
+            direction[2]*one_over_direction};
+
+        for (int i = 0; i < det_points[0]; ++i)
+        {
+            for (int j = 0; j < det_points[1]; ++j)
+            {
+                det_x[i*det_points[1] + j] = center[0] + distance * norm_direction[0] + us[i]*u[0] + vs[j]*v[0];
+                det_x[i*det_points[1] + j] = center[1] + distance * norm_direction[1] + us[i]*u[1] + vs[j]*v[1];
+                det_x[i*det_points[1] + j] = center[2] + distance * norm_direction[2] + us[i]*u[2] + vs[j]*v[2];
+            }
+        }
+
+        amrex::GPU::synchronize();
+
+        return {det_x, det_y, det_z}
+
     }
 }
 
@@ -72,57 +127,30 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
 
     pp_radiation.get("detector_distance", m_det_distance);
 
-    //Calculation of angle resolution
-    const auto d_theta = amrex::Array<amrex::Real,2>{
-        2*m_theta_range[0]/m_det_pts[0],
-        2*m_theta_range[1]/m_det_pts[1]};
+    [det_pos_x, det_pos_y, det_pos_z] = compute_detector_positions(
+        center, det_direction, m_det_distance,
+        m_det_orientation, m_det_pts, m_theta_range);
 
-    //Set the resolution of the detector
-    m_d_d.resize(3);
+    constexpr auto ncomp = 3;
+    m_radiation_data = amrex::Gpu::DeviceVector<ablastr::math::Complex>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
 
-    for(int idi = 0; idi<3; ++idi){
-        if(m_det_direction[idi]==1){
-            m_d_d[(idi+1)%3]=2*m_det_distance*tan(m_d_theta[0]/2);
-            m_d_d[(idi+2)%3]=2*m_det_distance*tan(m_d_theta[1]/2);
-        }
-
-    m_d_omega=m_omega_range[1]-m_omega_range[0]/static_cast<double>(m_omega_points);
-
-    //Calculate the sides of the detector
-    det_bornes.resize(2);
-    det_bornes[0].resize(2);
-    det_bornes[1].resize(2);
-
-    for(int idim = 0; idim<2; ++idim){
-        det_bornes[idim][0]=center[idim]-std::tan(m_theta_range[idim]/2)*m_det_distance;
-        det_bornes[idim][1]=center[idim]+std::tan(m_theta_range[idim]/2)*m_det_distance;
-    }
-    //pos_det_y
-    //omega_calc
-
-    }
-    constexpr auto ncomp = 6;
-    m_radiation_data = amrex::Gpu::DeviceVector<amrex::Real>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
-
-    det_pos.resize(2);
-    det_pos[0].resize(m_det_pts[0]);
-    det_pos[1].resize(m_det_pts[1]);
-    omega_calc.resize(m_omega_points);
-
-    ablastr::math::LinSpaceFill(det_bornes[0][0], det_bornes[0][1], m_det_pts[0], det_pos[0].being());
-    ablastr::math::LinSpaceFill(det_bornes[1][0], det_bornes[1][1], m_det_pts[1], det_pos[1].being());
-
+    m_omegas = amrex::Gpu::DeviceVector<amrex::Real>(m_omega_points);
     ablastr::math::LinSpaceFill(m_omega_range[0], m_omega_range[1], m_omega_points, omega_calc.being());
 }
 
+
 void RadiationHandler::add_radiation_contribution
-    (const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time){
-        const auto level0=0;
+    (const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time)
+    {
+
+        for (int lev = 0; lev <= pc->finestLevel(); ++lev)
+        {
 #ifdef AMREX_USE_OMP
-#pragma omp parallel
+            #pragma omp parallel
 #endif
-{
-            for (WarpXParIter pti(*pc, level0); pti.isValid(); ++pti) {
+            {
+                for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti)
+                {
                     long const np = pti.numParticles();
                     auto& attribs = pti.GetAttribs();
                     auto& p_w = attribs[PIdx::w];
@@ -131,39 +159,23 @@ void RadiationHandler::add_radiation_contribution
                     auto& p_uz = attribs[PIdx::uz];
 
                     auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
-                    auto& part=pc->GetParticles(level0)[index];
+                    auto& part=pc->GetParticles(lev)[index];
                     auto& soa = part.GetStructOfArrays();
 
-                    const auto old_u_x_idx =pc->GetRealCompIndex("old_u_x");
-                    const auto old_u_y_idx =pc->GetRealCompIndex("old_u_y");
-                    const auto old_u_z_idx =pc->GetRealCompIndex("old_u_z");
-
-                    auto* p_ux_old = soa.GetRealData(old_u_x_idx).data();
-                    auto* p_uy_old = soa.GetRealData(old_u_y_idx).data();
-                    auto* p_uz_old = soa.GetRealData(old_u_z_idx).data();
+                    auto* p_ux_old = soa.GetRealData(pc->GetRealCompIndex("old_u_x")).data();
+                    auto* p_uy_old = soa.GetRealData(pc->GetRealCompIndex("old_u_y")).data();
+                    auto* p_uz_old = soa.GetRealData(pc->GetRealCompIndex("old_u_z")).data();
 
                     auto GetPosition = GetParticlePosition<PIdx>(pti);
                     amrex::ParticleReal const q = pc->getCharge();
 
-                amrex::ParallelFor(np,
-                 [=] AMREX_GPU_DEVICE(int ip)
-                 {   amrex::ParticleReal xp, yp, zp;
+                    amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE(int ip){
+                        amrex::ParticleReal xp, yp, zp;
+                        GetPosition.AsStored(ip,xp, yp, zp);
 
-                    GetPosition.AsStored(ip,xp, yp, zp);
-                    amrex::GpuArray<amrex::Real, 3> Part_pos{xp,yp,zp};
 
-                    amrex::ParticleReal p_ux_old_unit=p_ux_old[ip];
-                    amrex::ParticleReal p_uy_old_unit=p_uy_old[ip];
-                    amrex::ParticleReal p_uz_old_unit=p_uz_old[ip];
-
-                    amrex::ParticleReal p_ux_unit=p_ux[ip];
-                    amrex::ParticleReal p_uy_unit=p_uy[ip];
-                    amrex::ParticleReal p_uz_unit=p_uz[ip];
-
-                    amrex::ParticleReal p_u = std::sqrt(std::pow(p_ux_unit,2)+std::pow(p_uy_unit,2)+std::pow(p_uz_unit,2));
-
-                    //Calculation of gamma
-                    amrex::ParticleReal gamma = 1/(1-std::pow(p_u,2)/std::pow(ablastr::constant::SI::c,2));
+                    amrex::ParticleReal u2 = p_ux[ip]*p_ux[ip]+)p_uy[ip]*p_uy[ip]+p_uz[ip]*p_uz[ip];
+                    amrex::ParticleReal gamma = sdt::sqrt(1.0_rt + u2);
 
                     //Calculation of ei(omegat-n.r)
                     n.resize(3);
@@ -218,9 +230,16 @@ void RadiationHandler::add_radiation_contribution
                     }
 
                 });
-            }
+
+
+
                 }
             }
+
+        }
+
+    }
+
 
 void RadiationHandler::gather_and_write_radiation(const std::string& filename)
 {
