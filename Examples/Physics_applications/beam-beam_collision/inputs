@@ -204,63 +204,22 @@ warpx.do_qed_schwinger = 0.
 ######### DIAGNOSTICS ###########
 #################################
 # FULL
-diagnostics.diags_names = field_zx field_zy some_part
+diagnostics.diags_names = full
 
-field_zx.intervals = floor(0.40*coll_step):floor(1.60*coll_step):1
-field_zx.diag_type = Full
-field_zx.write_species = 0
-field_zx.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam1 rho_beam2 rho_ele_nlbw1 rho_pos_nlbw1 rho_ele_nlbw2 rho_pos_nlbw2 rho_ele rho_pos
-field_zx.format = openpmd
-field_zx.openpmd_backend = bp
-field_zx.dump_last_timestep = 1
-field_zx.diag_lo = -0.5*Lx  0. -0.5*Lz
-field_zx.diag_hi =  0.5*Lx  0.  0.5*Lz
-
-field_zy.intervals = floor(0.40*coll_step):floor(1.60*coll_step):1
-field_zy.diag_type = Full
-field_zy.write_species = 0
-field_zy.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam1 rho_beam2 rho_ele_nlbw1 rho_pos_nlbw1 rho_ele_nlbw2 rho_pos_nlbw2 rho_ele rho_pos
-field_zy.format = openpmd
-field_zy.openpmd_backend = bp
-field_zy.dump_last_timestep = 1
-field_zy.diag_lo = 0. -0.5*Ly -0.5*Lz
-field_zy.diag_hi = 0.  0.5*Ly  0.5*Lz
-
-some_part.intervals = 0 #floor(0.40*coll_step):floor(1.60*coll_step):1
-some_part.diag_type = Full
-some_part.species = pho1 pho2 pho ele_nlbw1 pos_nlbw1 ele_nlbw2 pos_nlbw2 ele pos beam1 beam2 
-some_part.fields_to_plot = none
-some_part.format = openpmd
-some_part.openpmd_backend = bp
-some_part.dump_last_timestep = 1
-some_part.beam1.random_fracion = 0.01
-some_part.beam2.random_fracion = 0.01
+full.intervals = 0
+full.diag_type = Full
+full.write_species = 1
+full.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam1 rho_beam2 rho_ele_nlbw1 rho_pos_nlbw1 rho_ele_nlbw2 rho_pos_nlbw2 rho_ele rho_pos
+full.format = openpmd
+full.openpmd_backend = bp
+full.dump_last_timestep = 1
+full.species = pho1 pho2 pho ele_nlbw1 pos_nlbw1 ele_nlbw2 pos_nlbw2 ele pos beam1 beam2 
+full.beam1.random_fracion = 0.01
+full.beam2.random_fracion = 0.01
 
 
 # REDUCED
-warpx.reduced_diags_names = ColliderRelevant_beam1_beam2 FieldEnergy FieldMomentum FieldMaximum ParticleEnergy ParticleMomentum RhoMaximum ParticleNumber        
-
-ColliderRelevant_beam1_beam2.type = ColliderRelevant
-ColliderRelevant_beam1_beam2.intervals = every_red
-ColliderRelevant_beam1_beam2.species = beam1 beam2
-
-FieldEnergy.type = FieldEnergy
-FieldEnergy.intervals = every_red
-
-FieldMomentum.type = FieldMomentum
-FieldMomentum.intervals = every_red
-
-FieldMaximum.type = FieldMaximum
-FieldMaximum.intervals = every_red
-
-ParticleEnergy.type = ParticleEnergy
-ParticleEnergy.intervals = every_red
-
-ParticleMomentum.type = ParticleMomentum
-ParticleMomentum.intervals = every_red
-
-RhoMaximum.type = RhoMaximum
-RhoMaximum.intervals = every_red
+warpx.reduced_diags_names = ParticleNumber        
 
 ParticleNumber.type = ParticleNumber
 ParticleNumber.intervals = every_red
