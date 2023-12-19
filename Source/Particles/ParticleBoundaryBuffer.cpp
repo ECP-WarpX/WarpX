@@ -116,8 +116,7 @@ struct FindBoundaryIntersection {
         dst.m_aos[dst_i].pos(0) = x_temp;
         dst.m_aos[dst_i].pos(1) = z_temp;
 #elif (defined WARPX_DIM_RZ)
-        dst.m_aos[dst_i].pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
-        std::cout << "x_temp : " << x_temp << std::endl;
+        dst.m_aos[dst_i].pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp)
         // Note: this fails to change the angle theta of the particle
         dst.m_aos[dst_i].pos(1) = z_temp;
 #elif (defined WARPX_DIM_1D_Z)
