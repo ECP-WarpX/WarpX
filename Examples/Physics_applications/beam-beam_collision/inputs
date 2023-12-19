@@ -10,24 +10,24 @@ my_constants.GeV = q_e*1.e9
 # BEAMS
 my_constants.beam_energy = 125.*GeV
 my_constants.beam_uz = beam_energy/(mc2) 
-my_constants.beam_npart = 8.7e8
-my_constants.beam_charge = q_e * beam_npart
+my_constants.beam_charge = 0.14*nano
+my_constants.beam_npart = beam_charge/q_e
 my_constants.sigmax = 10*nano 
 my_constants.sigmay = 10*nano
 my_constants.sigmaz = 10*nano
-my_constants.beam_uth = 0.
+my_constants.beam_uth = 0.1/100.*beam_uz
 my_constants.n0 = beam_charge / (q_e * sigmax * sigmay * sigmaz * (2.*pi)**(3./2.)) 
 my_constants.omegab = sqrt(n0 * q_e**2 / (epsilon0*m_e)) 
 my_constants.mux = 0.0
 my_constants.muy = 0.0
-my_constants.muz = -0.5*Lz+3.5*sigmaz
+my_constants.muz = -0.5*Lz+3.2*sigmaz
 my_constants.coll_time = abs(muz)/clight
 my_constants.coll_step = floor(nt*coll_time/T)
 
 # BOX
-my_constants.Lx = 8*sigmax
-my_constants.Ly = 8*sigmay
-my_constants.Lz = 16*sigmaz
+my_constants.Lx = 100.0*clight/omegab
+my_constants.Ly = 100.0*clight/omegab
+my_constants.Lz = 180.0*clight/omegab
 my_constants.nx = 64
 my_constants.ny = 64
 my_constants.nz = 128
@@ -37,7 +37,7 @@ my_constants.dz = Lz/nz
 
 # TIME
 my_constants.T = 0.7*Lz/clight
-my_constants.dt = sigmaz/clight/10. 
+my_constants.dt = sigmaz/clight/10.
 my_constants.nt = floor(T/dt)
 
 # DIAGS
