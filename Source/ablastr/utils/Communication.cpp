@@ -124,7 +124,7 @@ void
 FillBoundary (amrex::Vector<amrex::MultiFab *> const &mf, bool do_single_precision_comms,
              const amrex::Periodicity &period, std::optional<bool> nodal_sync)
 {
-    for (auto x : mf) {
+    for (auto *x : mf) {
         ablastr::utils::communication::FillBoundary(*x, do_single_precision_comms, period, nodal_sync);
     }
 }

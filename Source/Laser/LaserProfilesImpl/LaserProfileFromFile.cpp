@@ -441,7 +441,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cartes
     const auto tmp_y_max = m_params.y_max;
     const auto tmp_nx = m_params.nx;
     const auto tmp_ny = m_params.ny;
-    const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
+    const auto *const p_E_lasy_data = m_params.E_lasy_data.dataPtr();
     const auto tmp_idx_first_time = m_params.first_time_index;
     const int idx_t_right = idx_t_left+1;
     const auto t_left = idx_t_left*
@@ -524,7 +524,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_cylind
     const auto tmp_r_max = m_params.r_max;
     const auto tmp_nr = m_params.nr;
     const auto tmp_n_rz_azimuthal_components = m_params.n_rz_azimuthal_components;
-    const auto p_E_lasy_data = m_params.E_lasy_data.dataPtr();
+    const auto *const p_E_lasy_data = m_params.E_lasy_data.dataPtr();
     const auto tmp_idx_first_time = m_params.first_time_index;
     const int idx_t_right = idx_t_left+1;
     const auto t_left = idx_t_left*
@@ -626,7 +626,7 @@ WarpXLaserProfiles::FromFileLaserProfile::internal_fill_amplitude_uniform_binary
     const auto tmp_ny = m_params.ny;
 #endif
     const auto tmp_nx = m_params.nx;
-    const auto p_E_binary_data = m_params.E_binary_data.dataPtr();
+    const auto *const p_E_binary_data = m_params.E_binary_data.dataPtr();
     const auto tmp_idx_first_time = m_params.first_time_index;
     const int idx_t_right = idx_t_left+1;
     const auto t_left = idx_t_left*

@@ -343,7 +343,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                     const amrex::Real time, bool isBTD) const
 {
 
-    for (auto& part_diag : particle_diags) {
+    for (const auto& part_diag : particle_diags) {
         WarpXParticleContainer* pc = part_diag.getParticleContainer();
         PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
         auto tmp = isBTD ?

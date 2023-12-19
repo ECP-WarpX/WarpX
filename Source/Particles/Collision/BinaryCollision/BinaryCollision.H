@@ -109,8 +109,8 @@ public:
 
     BinaryCollision ( BinaryCollision const &)             = default;
     BinaryCollision& operator= ( BinaryCollision const & ) = default;
-    BinaryCollision ( BinaryCollision&& )                  = default;
-    BinaryCollision& operator= ( BinaryCollision&& )       = default;
+    BinaryCollision ( BinaryCollision&& )            noexcept = default;
+    BinaryCollision& operator= ( BinaryCollision&& ) noexcept = default;
 
     /** Perform the collisions
      *
@@ -157,8 +157,8 @@ public:
         auto copy_species1_data = device_copy_species1.data();
         auto copy_species2_data = device_copy_species2.data();
 #else
-        auto copy_species1_data = copy_species1.data();
-        auto copy_species2_data = copy_species2.data();
+        auto *copy_species1_data = copy_species1.data();
+        auto *copy_species2_data = copy_species2.data();
 #endif
         if (m_have_product_species){
             species1.defineAllParticleTiles();
@@ -240,7 +240,7 @@ public:
             products_np.push_back(ptile_product.numParticles());
             products_mass.push_back(product_species_vector[i]->getMass());
         }
-        auto tile_products_data = tile_products.data();
+        auto *tile_products_data = tile_products.data();
 
         if ( m_isSameSpecies ) // species_1 == species_2
         {
