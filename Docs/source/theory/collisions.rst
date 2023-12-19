@@ -5,13 +5,13 @@ Collisions
 
 WarpX includes several different models to capture collisional processes
 including collisions between kinetic particles (Coulomb collisions, DSMC,
-nuclear fusion) as well as collisions between kinetic particles and a fluid
-background species (MCC, background stopping).
+nuclear fusion) as well as collisions between kinetic particles and a fixed
+(i.e. non-evolving) background species (MCC, background stopping).
 
 .. _theory-collisions-mcc:
 
-Monte Carlo Collisions
-----------------------
+Background Monte Carlo Collisions (MCC)
+---------------------------------------
 
 Several types of collisions between simulation particles and a neutral
 background gas are supported including elastic scattering, back scattering,
@@ -54,10 +54,21 @@ Once a particle is selected for a specific collision process, that process deter
 
 .. _theory-collisions-dsmc:
 
-Direct Simulation Monte Carlo
------------------------------
+Direct Simulation Monte Carlo (DSMC)
+------------------------------------
 
-(Under construction)
+The algorithm by which binary collisions are treated is outlined below. The
+description assumes collisions between different species.
+
+1. Particles from both species are sorted by grid-cells.
+2. The order of the particles in each cell is shuffled.
+3. Within each cell, particles are paired to form collision partners. Particles
+   of the species with fewer members in a given cell is split in half so that
+   each particle has exactly one partner of the other species.
+4. Each collision pair is considered for a collision using the same logic as in
+   the MCC description above.
+5. Particles that are chosen for collision are scattered according to the
+   selected collision process.
 
 Scattering processes
 --------------------
@@ -72,7 +83,7 @@ with the neutral velocity and vice-versa.
 Elastic scattering
 ^^^^^^^^^^^^^^^^^^
 
-The ``elastic`` option uses hard-sphere scattering, with a differential
+The ``elastic`` option uses isotropic scattering, i.e., with a differential
 cross section that is independent of angle.
 This scattering process as well as the ones below that relate to it, are all
 performed in the center-of-momentum (COM) frame. Designating the COM velocity of
@@ -120,7 +131,7 @@ The process is also the same as for elastic scattering except the excitation ene
 Benchmarks
 ----------
 
-See the :ref:`MCC example <examples-mcc-turner>` for a bencmark of the MCC
+See the :ref:`MCC example <examples-mcc-turner>` for a benchmark of the MCC
 implementation against literature results.
 
 Particle cooling due to elastic collisions

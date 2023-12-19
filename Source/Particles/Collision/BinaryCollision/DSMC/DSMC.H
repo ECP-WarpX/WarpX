@@ -27,7 +27,7 @@
 
 
 /**
- * \brief This class perfoms DSMC (direct simulation Monte Carlo) collisions
+ * \brief This class performs DSMC (direct simulation Monte Carlo) collisions
  * within a cell. Particles are paired up and for each pair a stochastic process
  * determines whether a collision occurs. The algorithm is similar to the one
  * used for binary Coulomb collisions and the nuclear fusion module.
