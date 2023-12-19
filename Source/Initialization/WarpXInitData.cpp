@@ -476,8 +476,9 @@ WarpX::InitData ()
         ExecutePythonCallback("beforeInitEsolve");
         ComputeSpaceChargeField(reset_fields);
         ExecutePythonCallback("afterInitEsolve");
-        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)
+        if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
             ComputeMagnetostaticField();
+        }
 
         // Set up an invariant condition through the rest of
         // execution, that any code besides the field solver that
@@ -552,7 +553,7 @@ WarpX::InitPML ()
             do_pml_Hi[0][idim] = 1; // on level 0
         }
     }
-    if (finest_level > 0) do_pml = 1;
+    if (finest_level > 0) { do_pml = 1; }
     if (do_pml)
     {
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
@@ -583,10 +584,12 @@ WarpX::InitPML ()
             // Domain box at level, lev
             const amrex::Box DomainBox = Geom(lev).Domain();
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                if (levelBox.smallEnd(idim) == DomainBox.smallEnd(idim))
+                if (levelBox.smallEnd(idim) == DomainBox.smallEnd(idim)) {
                     do_pml_Lo[lev][idim] = do_pml_Lo[0][idim];
-                if (levelBox.bigEnd(idim) == DomainBox.bigEnd(idim))
+                }
+                if (levelBox.bigEnd(idim) == DomainBox.bigEnd(idim)) {
                     do_pml_Hi[lev][idim] = do_pml_Hi[0][idim];
+                }
             }
 
 #ifdef WARPX_DIM_RZ
@@ -619,8 +622,9 @@ WarpX::ComputePMLFactors ()
     {
         for (int lev = 0; lev <= finest_level; ++lev)
         {
-            if (pml[lev])
+            if (pml[lev]) {
                 pml[lev]->ComputePMLFactors(dt[lev]);
+            }
         }
     }
 }
@@ -745,14 +749,16 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if ( is_B_ext_const && (lev <= maxlevel_extEMfield_init) )
         {
             Bfield_fp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
-            if (fft_do_time_averaging)
+            if (fft_do_time_averaging) {
                 Bfield_avg_fp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
+            }
 
            if (lev > 0) {
                 Bfield_aux[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
                 Bfield_cp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
-                if (fft_do_time_averaging)
+                if (fft_do_time_averaging) {
                     Bfield_avg_cp[lev][i]->setVal(m_p_ext_field_params->B_external_grid[i]);
+                }
            }
         }
 
@@ -764,14 +770,16 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         if ( is_E_ext_const && (lev <= maxlevel_extEMfield_init) )
         {
             Efield_fp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
-            if (fft_do_time_averaging)
+            if (fft_do_time_averaging) {
                 Efield_avg_fp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
+            }
 
             if (lev > 0) {
                 Efield_aux[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
                 Efield_cp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
-                if (fft_do_time_averaging)
+                if (fft_do_time_averaging) {
                     Efield_avg_cp[lev][i]->setVal(m_p_ext_field_params->E_external_grid[i]);
+                }
             }
         }
     }

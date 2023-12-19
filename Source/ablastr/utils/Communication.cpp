@@ -180,7 +180,7 @@ void OverrideSync (amrex::MultiFab &mf,
 {
     BL_PROFILE("ablastr::utils::communication::OverrideSync");
 
-    if (mf.ixType().cellCentered()) return;
+    if (mf.ixType().cellCentered()) { return; }
 
     if (do_single_precision_comms)
     {
