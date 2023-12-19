@@ -47,12 +47,17 @@ void WarpX::HybridPICEvolveFields ()
     // SyncCurrent does not include a call to FillBoundary, but it is needed
     // for the hybrid-PIC solver since current values are interpolated to
     // a nodal grid
-    for (int lev = 0; lev <= finest_level; ++lev)
-        for (int idim = 0; idim < 3; ++idim)
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        for (int idim = 0; idim < 3; ++idim) {
             current_fp[lev][idim]->FillBoundary(Geom(lev).periodicity());
+        }
+    }
 
     // Get requested number of substeps to use
     int sub_steps = m_hybrid_pic_model->m_substeps / 2;
+
+    // Get the external current
+    m_hybrid_pic_model->GetCurrentExternal(m_edge_lengths);
 
     // Reference hybrid-PIC multifabs
     auto& rho_fp_temp = m_hybrid_pic_model->rho_fp_temp;

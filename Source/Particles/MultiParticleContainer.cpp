@@ -133,14 +133,6 @@ MultiParticleContainer::ReadParameters ()
     {
         const ParmParse pp_particles("particles");
 
-        // allocating and initializing default values of external fields for particles
-        m_E_external_particle.resize(3);
-        m_B_external_particle.resize(3);
-        // initialize E and B fields to 0.0
-        for (int idim = 0; idim < 3; ++idim) {
-            m_E_external_particle[idim] = 0.0;
-            m_B_external_particle[idim] = 0.0;
-        }
         // default values of E_external_particle and B_external_particle
         // are used to set the E and B field when "constant" or "parser"
         // is not explicitly used in the input
@@ -154,19 +146,6 @@ MultiParticleContainer::ReadParameters ()
                        m_E_ext_particle_s.end(),
                        m_E_ext_particle_s.begin(),
                        ::tolower);
-        // if the input string for B_external on particles is "constant"
-        // then the values for the external B on particles must
-        // be provided in the input file.
-        if (m_B_ext_particle_s == "constant")
-            utils::parser::getArrWithParser(
-                pp_particles, "B_external_particle", m_B_external_particle);
-
-        // if the input string for E_external on particles is "constant"
-        // then the values for the external E on particles must
-        // be provided in the input file.
-        if (m_E_ext_particle_s == "constant")
-            utils::parser::getArrWithParser(
-                pp_particles, "E_external_particle", m_E_external_particle);
 
         // if the input string for B_ext_particle_s is
         // "parse_b_ext_particle_function" then the mathematical expression
@@ -482,11 +461,11 @@ MultiParticleContainer::Evolve (int lev,
         jx.setVal(0.0);
         jy.setVal(0.0);
         jz.setVal(0.0);
-        if (cjx) cjx->setVal(0.0);
-        if (cjy) cjy->setVal(0.0);
-        if (cjz) cjz->setVal(0.0);
-        if (rho) rho->setVal(0.0);
-        if (crho) crho->setVal(0.0);
+        if (cjx) { cjx->setVal(0.0); }
+        if (cjy) { cjy->setVal(0.0); }
+        if (cjz) { cjz->setVal(0.0); }
+        if (rho) { rho->setVal(0.0); }
+        if (crho) { crho->setVal(0.0); }
     }
     for (auto& pc : allcontainers) {
         pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
@@ -528,8 +507,9 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
     const bool is_PSATD_RZ = false;
 #endif
 
-    if( !is_PSATD_RZ )
+    if( !is_PSATD_RZ ) {
         nba.surroundingNodes();
+    }
 
     auto zero_rho = std::make_unique<MultiFab>(nba, dmap, WarpX::ncomps, ng_rho);
     zero_rho->setVal(amrex::Real(0.0));
@@ -576,7 +556,7 @@ MultiParticleContainer::DepositCharge (
     }
 
     // Push the particles in time, if needed
-    if (relative_time != 0.) PushX(relative_time);
+    if (relative_time != 0.) { PushX(relative_time); }
 
     bool const local = true;
     bool const reset = false;
@@ -585,13 +565,13 @@ MultiParticleContainer::DepositCharge (
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
     {
-        if (pc->do_not_deposit) continue;
+        if (pc->do_not_deposit) { continue; }
         pc->DepositCharge(rho, local, reset, apply_boundary_and_scale_volume,
                               interpolate_across_levels);
     }
 
     // Push the particles back in time
-    if (relative_time != 0.) PushX(-relative_time);
+    if (relative_time != 0.) { PushX(-relative_time); }
 
 #ifdef WARPX_DIM_RZ
     for (int lev = 0; lev < rho.size(); ++lev)
@@ -607,7 +587,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
     std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
 
     for (auto& container : allcontainers) {
-        if (container->do_not_deposit) continue;
+        if (container->do_not_deposit) { continue; }
         const std::unique_ptr<MultiFab> rhoi = container->GetChargeDensity(lev, true);
         MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
     }
@@ -731,7 +711,7 @@ MultiParticleContainer::SetParticleDistributionMap (int lev, DistributionMapping
 void
 MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
 {
-    for (auto& pc : allcontainers){
+    for (const auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             pc->ContinuousInjection(injection_box);
         }
@@ -741,7 +721,7 @@ MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
 void
 MultiParticleContainer::UpdateAntennaPosition (const amrex::Real dt) const
 {
-    for (auto& pc : allcontainers){
+    for (const auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             pc->UpdateAntennaPosition(dt);
         }
@@ -752,7 +732,7 @@ int
 MultiParticleContainer::doContinuousInjection () const
 {
     int warpx_do_continuous_injection = 0;
-    for (auto& pc : allcontainers){
+    for (const auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             warpx_do_continuous_injection = 1;
         }
@@ -767,7 +747,7 @@ MultiParticleContainer::doContinuousInjection () const
 void
 MultiParticleContainer::ContinuousFluxInjection (amrex::Real t, amrex::Real dt) const
 {
-    for (auto& pc : allcontainers){
+    for (const auto& pc : allcontainers){
         pc->ContinuousFluxInjection(t, dt);
     }
 }
@@ -811,10 +791,10 @@ MultiParticleContainer::mapSpeciesProduct ()
 
 #ifdef WARPX_QED
     if (m_do_qed_schwinger) {
-    m_qed_schwinger_ele_product =
-        getSpeciesID(m_qed_schwinger_ele_product_name);
-    m_qed_schwinger_pos_product =
-        getSpeciesID(m_qed_schwinger_pos_product_name);
+        m_qed_schwinger_ele_product =
+            getSpeciesID(m_qed_schwinger_ele_product_name);
+        m_qed_schwinger_pos_product =
+            getSpeciesID(m_qed_schwinger_pos_product_name);
     }
 #endif
 }
@@ -826,13 +806,13 @@ MultiParticleContainer::getSpeciesID (std::string product_str) const
 {
     auto species_and_lasers_names = GetSpeciesAndLasersNames();
     int i_product = 0;
-    bool found = 0;
+    bool found = false;
     // Loop over species
     for (int i=0; i < static_cast<int>(species_and_lasers_names.size()); i++){
         // If species name matches, store its ID
         // into i_product
         if (species_and_lasers_names[i] == product_str){
-            found = 1;
+            found = true;
             i_product = i;
         }
     }
@@ -853,12 +833,12 @@ MultiParticleContainer::SetDoBackTransformedParticles (const bool do_back_transf
 void
 MultiParticleContainer::SetDoBackTransformedParticles (std::string species_name, const bool do_back_transformed_particles) {
     auto species_names_list = GetSpeciesNames();
-    bool found = 0;
+    bool found = false;
     // Loop over species
     for (int i = 0; i < static_cast<int>(species_names.size()); ++i) {
         // If species name matches, set back-transformed particles parameters
         if (species_names_list[i] == species_name) {
-           found = 1;
+           found = true;
            auto& pc = allcontainers[i];
            pc->SetDoBackTransformedParticles(do_back_transformed_particles);
         }
@@ -891,7 +871,7 @@ MultiParticleContainer::doFieldIonization (int lev,
         auto& pc_product = allcontainers[pc_source->ionization_product];
 
         const SmartCopyFactory copy_factory(*pc_source, *pc_product);
-        auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
+        auto *phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
 
         auto Copy      = copy_factory.getSmartCopy();
         auto Transform = IonizationTransformFunc();
@@ -997,11 +977,13 @@ void MultiParticleContainer::InitQED ()
         }
     }
 
-    if(m_nspecies_quantum_sync != 0)
+    if(m_nspecies_quantum_sync != 0) {
         InitQuantumSync();
+    }
 
-    if(m_nspecies_breit_wheeler !=0)
+    if(m_nspecies_breit_wheeler !=0) {
         InitBreitWheeler();
+    }
 
 }
 
@@ -1086,8 +1068,9 @@ void MultiParticleContainer::InitBreitWheeler ()
     // considered for pair production. If a photon has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real bw_minimum_chi_part;
-    if(!utils::parser::queryWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part))
+    if(!utils::parser::queryWithParser(pp_qed_bw, "chi_min", bw_minimum_chi_part)) {
         WARPX_ABORT_WITH_MESSAGE("qed_bw.chi_min should be provided!");
+    }
 
     pp_qed_bw.query("lookup_table_mode", lookup_table_mode);
     if(lookup_table_mode.empty()){
@@ -1509,7 +1492,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
     // in pc_product_ele and positrons in pc_product_pos
 
     for (auto& pc_source : allcontainers){
-        if(!pc_source->has_breit_wheeler()) continue;
+        if(!pc_source->has_breit_wheeler()) { continue; }
 
         // Get product species
         auto& pc_product_ele =
@@ -1519,7 +1502,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 
         const SmartCopyFactory copy_factory_ele(*pc_source, *pc_product_ele);
         const SmartCopyFactory copy_factory_pos(*pc_source, *pc_product_pos);
-        auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
+        auto *phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
 
         const auto Filter  = phys_pc_ptr->getPairGenerationFilterFunc();
         const auto CopyEle = copy_factory_ele.getSmartCopy();
@@ -1547,7 +1530,9 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
             auto Transform = PairGenerationTransformFunc(pair_gen_functor,
                                                          pti, lev, Ex.nGrowVect(),
                                                          Ex[pti], Ey[pti], Ez[pti],
-                                                         Bx[pti], By[pti], Bz[pti]);
+                                                         Bx[pti], By[pti], Bz[pti],
+                                                         phys_pc_ptr->m_E_external_particle,
+                                                         phys_pc_ptr->m_B_external_particle);
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
             auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, pti);
@@ -1597,7 +1582,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             allcontainers[pc_source->m_qed_quantum_sync_phot_product];
 
         const SmartCopyFactory copy_factory_phot(*pc_source, *pc_product_phot);
-        auto phys_pc_ptr =
+        auto *phys_pc_ptr =
             static_cast<PhysicalParticleContainer*>(pc_source.get());
 
         const auto Filter   = phys_pc_ptr->getPhotonEmissionFilterFunc();
@@ -1625,7 +1610,9 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                   m_shr_p_qs_engine->build_phot_em_functor(),
                   pti, lev, Ex.nGrowVect(),
                   Ex[pti], Ey[pti], Ez[pti],
-                  Bx[pti], By[pti], Bz[pti]);
+                  Bx[pti], By[pti], Bz[pti],
+                  phys_pc_ptr->m_E_external_particle,
+                  phys_pc_ptr->m_B_external_particle);
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
             auto& dst_tile = pc_product_phot->ParticlesAt(lev, pti);

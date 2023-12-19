@@ -20,7 +20,7 @@
 #include <map>
 #include <utility>
 
-// Define dictionary with correspondance between user-input strings,
+// Define dictionary with correspondence between user-input strings,
 // and corresponding integer for use inside the code
 
 const std::map<std::string, int> grid_to_int = {
@@ -159,8 +159,9 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = current_deposition_algo_to_int;
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD ||
             WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ||
-            WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None)
+            WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::None) {
             algo_to_int["default"] = CurrentDepositionAlgo::Direct;
+        }
     } else if (0 == std::strcmp(pp_search_key, "charge_deposition")) {
         algo_to_int = charge_deposition_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "field_gathering")) {

@@ -58,7 +58,7 @@ namespace{
             q0 = static_cast<amrex::Real>(jn(n, p0));
             q1 = static_cast<amrex::Real>(jn(n, p1));
             for (int it=1; it <= nitmx; it++) {
-                if (q1 == q0) break;
+                if (q1 == q0) { break; }
                 p = p1 - q1*(p1 - p0)/(q1 - q0);
                 dp = p - p1;
                 if (it > 1 && std::abs(dp) < tol) {
@@ -139,10 +139,10 @@ void GetBesselRoots(int n, int nk, amrex::Vector<amrex::Real>& roots, amrex::Vec
 
         zeroj = b0 - (t1/b1) - (t3/b3) - (t5/b5) - (t7/b7);
 
-        const amrex::Real errj = static_cast<amrex::Real>(std::abs(jn(n, zeroj)));
+        const auto errj = static_cast<amrex::Real>(std::abs(jn(n, zeroj)));
 
         // improve solution using procedure SecantRootFinder
-        if (errj > tol) ::SecantRootFinder(n, nitmx, tol, &zeroj, &ierror);
+        if (errj > tol) { ::SecantRootFinder(n, nitmx, tol, &zeroj, &ierror); }
 
         roots[ik] = zeroj;
         ier[ik] = ierror;

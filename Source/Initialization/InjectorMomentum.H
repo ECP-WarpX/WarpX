@@ -34,6 +34,7 @@ struct InjectorMomentumConstant
     InjectorMomentumConstant (amrex::Real a_ux, amrex::Real a_uy, amrex::Real a_uz) noexcept
         : m_ux(a_ux), m_uy(a_uy), m_uz(a_uz) {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real, amrex::Real, amrex::Real,
@@ -42,6 +43,7 @@ struct InjectorMomentumConstant
         return amrex::XDim3{m_ux,m_uy,m_uz};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real, amrex::Real, amrex::Real) const noexcept
@@ -64,6 +66,7 @@ struct InjectorMomentumGaussian
           m_ux_th(a_ux_th), m_uy_th(a_uy_th), m_uz_th(a_uz_th)
         {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
@@ -74,6 +77,7 @@ struct InjectorMomentumGaussian
                             amrex::RandomNormal(m_uz_m, m_uz_th, engine)};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
@@ -94,6 +98,7 @@ namespace {
       * @param u_th Momentum spread
       * @param engine Object used to generate random numbers
       */
+    [[nodiscard]]
     AMREX_FORCE_INLINE
     AMREX_GPU_HOST_DEVICE
     amrex::Real
@@ -125,7 +130,7 @@ namespace {
                 u = approx_u_th * std::sqrt(2._rt*std::log(1._rt/xrand));
                 // Rejection method
                 xrand = amrex::Random(engine);
-                if (xrand < std::exp(-reject_prefactor*(u - umsign*u_th)*(u - umsign*u_th))) reject = false;
+                if (xrand < std::exp(-reject_prefactor*(u - umsign*u_th)*(u - umsign*u_th))) { reject = false; }
             }
         } else {
             // Mean velocity magnitude is greater than thermal velocity
@@ -146,7 +151,7 @@ namespace {
                 }
                 // Rejection method
                 const amrex::Real xrand = amrex::Random(engine);
-                if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) reject = false;
+                if (xrand < u*inv_um* std::exp(1._rt - u*inv_um)) { reject = false; }
             }
         }
 
@@ -171,6 +176,7 @@ struct InjectorMomentumGaussianFlux
     {
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
@@ -191,7 +197,7 @@ struct InjectorMomentumGaussianFlux
             u_th = m_uz_th;
         }
         amrex::Real u = generateGaussianFluxDist(u_m, u_th, engine);
-        if (m_flux_direction < 0) u = -u;
+        if (m_flux_direction < 0) { u = -u; }
 
         // Note: Here, in RZ geometry, the variables `ux` and `uy` actually
         // correspond to the radial and azimuthal component of the momentum
@@ -202,6 +208,7 @@ struct InjectorMomentumGaussianFlux
         return amrex::XDim3{ux, uy, uz};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
@@ -234,6 +241,7 @@ struct InjectorMomentumUniform
           m_uz_h(amrex::Real(0.5) * (m_uz_max + m_uz_min))
         {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
@@ -244,6 +252,7 @@ struct InjectorMomentumUniform
                             m_uz_min + amrex::Random(engine) * m_Duz};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
@@ -269,6 +278,7 @@ struct InjectorMomentumBoltzmann
         : velocity(b), temperature(t)
         {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z,
@@ -299,7 +309,7 @@ struct InjectorMomentumBoltzmann
 
         // The following condition is equation 32 in Zenitani 2015
         // (Phys. Plasmas 22, 042116) , called the flipping method. It
-        // transforms the intergral: d3x' -> d3x  where d3x' is the volume
+        // transforms the integral: d3x' -> d3x  where d3x' is the volume
         // element for positions in the boosted frame. The particle positions
         // and densities can be initialized in the simulation frame.
         // The flipping method can transform any symmetric distribution from one
@@ -321,16 +331,17 @@ struct InjectorMomentumBoltzmann
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z) const noexcept
     {
         using namespace amrex::literals;
         amrex::Real u[3];
-        for (auto& el : u) el = 0.0_rt;
+        for (auto& el : u) { el = 0.0_rt; }
         const amrex::Real beta = velocity(x,y,z);
         int const dir = velocity.direction();
-        const amrex::Real gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
+        const auto gamma = 1._rt/std::sqrt(1._rt-beta*beta);
         u[dir] = gamma*beta;
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
@@ -340,7 +351,7 @@ private:
     GetTemperature temperature;
 };
 
-// struct whose getMomentum returns momentum for 1 particle with relativistc
+// struct whose getMomentum returns momentum for 1 particle with relativistic
 // drift velocity beta, from the Maxwell-Juttner distribution. Method is from
 // Zenitani 2015 (Phys. Plasmas 22, 042116).
 struct InjectorMomentumJuttner
@@ -352,6 +363,7 @@ struct InjectorMomentumJuttner
         : velocity(b), temperature(t)
         {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z,
@@ -397,8 +409,8 @@ struct InjectorMomentumJuttner
         // The value of dir is the boost direction to be transformed.
         u[dir] = u[dir]*(2._rt*x1-1._rt);
         x1 = amrex::Random(engine);
-        // The following condition is equtaion 32 in Zenitani, called
-        // The flipping method. It transforms the intergral: d3x' -> d3x
+        // The following condition is equation 32 in Zenitani, called
+        // The flipping method. It transforms the integral: d3x' -> d3x
         // where d3x' is the volume element for positions in the boosted frame.
         // The particle positions and densities can be initialized in the
         // simulation frame with this method.
@@ -422,16 +434,17 @@ struct InjectorMomentumJuttner
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real const x, amrex::Real const y, amrex::Real const z) const noexcept
     {
         using namespace amrex::literals;
         amrex::Real u[3];
-        for (auto& el : u) el = 0.0_rt;
+        for (auto& el : u) { el = 0.0_rt; }
         amrex::Real const beta = velocity(x,y,z);
         int const dir = velocity.direction();
-        amrex::Real const gamma = static_cast<amrex::Real>(1._rt/sqrt(1._rt-beta*beta));
+        auto const gamma = 1._rt/std::sqrt(1._rt-beta*beta);
         u[dir] = gamma*beta;
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
@@ -454,6 +467,7 @@ struct InjectorMomentumRadialExpansion
         : u_over_r(a_u_over_r)
         {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
@@ -462,6 +476,7 @@ struct InjectorMomentumRadialExpansion
         return {x*u_over_r, y*u_over_r, z*u_over_r};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -473,7 +488,7 @@ private:
     amrex::Real u_over_r;
 };
 
-// struct whose getMomentumm returns local momentum computed from parser.
+// struct whose getMomentum returns local momentum computed from parser.
 struct InjectorMomentumParser
 {
     InjectorMomentumParser (amrex::ParserExecutor<3> const& a_ux_parser,
@@ -482,6 +497,7 @@ struct InjectorMomentumParser
         : m_ux_parser(a_ux_parser), m_uy_parser(a_uy_parser),
           m_uz_parser(a_uz_parser) {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
@@ -490,6 +506,7 @@ struct InjectorMomentumParser
         return amrex::XDim3{m_ux_parser(x,y,z),m_uy_parser(x,y,z),m_uz_parser(x,y,z)};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -500,7 +517,7 @@ struct InjectorMomentumParser
     amrex::ParserExecutor<3> m_ux_parser, m_uy_parser, m_uz_parser;
 };
 
-// struct whose getMomentumm returns local momentum and thermal spread computed from parser.
+// struct whose getMomentum returns local momentum and thermal spread computed from parser.
 struct InjectorMomentumGaussianParser
 {
     InjectorMomentumGaussianParser (amrex::ParserExecutor<3> const& a_ux_m_parser,
@@ -512,6 +529,7 @@ struct InjectorMomentumGaussianParser
         : m_ux_m_parser(a_ux_m_parser), m_uy_m_parser(a_uy_m_parser), m_uz_m_parser(a_uz_m_parser),
           m_ux_th_parser(a_ux_th_parser), m_uy_th_parser(a_uy_th_parser), m_uz_th_parser(a_uz_th_parser) {}
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
@@ -528,6 +546,7 @@ struct InjectorMomentumGaussianParser
                             amrex::RandomNormal(uz_m, uz_th, engine)};
     }
 
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
@@ -640,6 +659,7 @@ struct InjectorMomentum
 
     // call getMomentum from the object stored in the union
     // (the union is called Object, and the instance is called object).
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
@@ -693,6 +713,7 @@ struct InjectorMomentum
 
     // call getBulkMomentum from the object stored in the union
     // (the union is called Object, and the instance is called object).
+    [[nodiscard]]
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
     getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept

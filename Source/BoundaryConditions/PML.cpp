@@ -513,7 +513,7 @@ MultiSigmaBox::MultiSigmaBox (const BoxArray& ba, const DistributionMapping& dm,
 void
 MultiSigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
 {
-    if (dt == dt_B) return;
+    if (dt == dt_B) { return; }
 
     dt_B = dt;
 
@@ -529,7 +529,7 @@ MultiSigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
 void
 MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 {
-    if (dt == dt_E) return;
+    if (dt == dt_E) { return; }
 
     dt_E = dt;
 
@@ -594,11 +594,13 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     }
 
     // Define the number of guard cells in each direction, for E, B, and F
-    IntVect nge = IntVect(AMREX_D_DECL(2, 2, 2));
-    IntVect ngb = IntVect(AMREX_D_DECL(2, 2, 2));
+    auto nge = IntVect(AMREX_D_DECL(2, 2, 2));
+    auto ngb = IntVect(AMREX_D_DECL(2, 2, 2));
     int ngf_int = 0;
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) ngf_int = std::max( ngf_int, 1 );
-    IntVect ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) {
+        ngf_int = std::max( ngf_int, 1 );
+    }
+    auto ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
 
     if (do_moving_window) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(lev <= 1,
@@ -622,11 +624,11 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         utils::parser::queryWithParser(pp_psatd, "nz_guard", ngFFt_z);
 
 #if defined(WARPX_DIM_3D)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #elif defined(WARPX_DIM_1D_Z)
-        IntVect ngFFT = IntVect(ngFFt_z);
+        auto ngFFT = IntVect(ngFFt_z);
 #endif
 
         // Set the number of guard cells to the maximum of each field
@@ -1074,9 +1076,9 @@ void PML::Exchange (const std::array<amrex::MultiFab*,3>& mf_pml,
                     const int do_pml_in_domain)
 {
     const amrex::Geometry& geom = (patch_type == PatchType::fine) ? *m_geom : *m_cgeom;
-    if (mf_pml[0] && mf[0]) Exchange(*mf_pml[0], *mf[0], geom, do_pml_in_domain);
-    if (mf_pml[1] && mf[1]) Exchange(*mf_pml[1], *mf[1], geom, do_pml_in_domain);
-    if (mf_pml[2] && mf[2]) Exchange(*mf_pml[2], *mf[2], geom, do_pml_in_domain);
+    if (mf_pml[0] && mf[0]) { Exchange(*mf_pml[0], *mf[0], geom, do_pml_in_domain); }
+    if (mf_pml[1] && mf[1]) { Exchange(*mf_pml[1], *mf[1], geom, do_pml_in_domain); }
+    if (mf_pml[2] && mf[2]) { Exchange(*mf_pml[2], *mf[2], geom, do_pml_in_domain); }
 }
 
 void

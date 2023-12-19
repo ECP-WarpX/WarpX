@@ -122,7 +122,7 @@ HankelTransform::HankelTransform (int const hankel_order,
     // Calculate the matrix M by inverting invM
     if (azimuthal_mode !=0 && hankel_order != azimuthal_mode-1) {
         // In this case, invM is singular, thus we calculate the pseudo-inverse.
-        // The Moore-Penrose psuedo-inverse is calculated using the SVD method.
+        // The Moore-Penrose pseudo-inverse is calculated using the SVD method.
 
         M.resize(m_nk*m_nr, 0.);
         amrex::Vector<amrex::Real> invMcopy(invM);
@@ -132,7 +132,7 @@ HankelTransform::HankelTransform (int const hankel_order,
         amrex::Vector<amrex::Real> sp((m_nr)*(m_nk-1), 0.);
         amrex::Vector<amrex::Real> temp((m_nr)*(m_nk-1), 0.);
 
-        // Calculate the singlular-value-decomposition of invM (leaving out the first row).
+        // Calculate the singular-value-decomposition of invM (leaving out the first row).
         // invM = u*sdiag*vt
         // Note that invMcopy.dataPtr()+1 is passed in so that the first ik row is skipped
         // A copy is passed in since the matrix is destroyed

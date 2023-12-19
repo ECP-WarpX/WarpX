@@ -31,7 +31,7 @@
  * \param ux, uy, uz                Particle momentum
  * \param Ex, Ey, Ez                Electric field on particles.
  * \param Bx, By, Bz                Magnetic field on particles.
- * \param ion_lev                   Ionization level of this particle (0 if ioniziation not on)
+ * \param ion_lev                   Ionization level of this particle (0 if ionization not on)
  * \param m                         Mass of this species.
  * \param a_q                       Charge of this species.
  * \param pusher_algo               0: Boris, 1: Vay, 2: HigueraCary
@@ -70,7 +70,7 @@ void doParticlePush(const GetParticlePosition<PIdx>& GetPosition,
     amrex::ParticleReal qp = a_q;
     if (ion_lev) { qp *= ion_lev; }
 
-    if (do_copy) copyAttribs(i);
+    if (do_copy) { copyAttribs(i); }
     if (do_crr) {
 #ifdef WARPX_QED
         amrex::ignore_unused(t_chi_max);
