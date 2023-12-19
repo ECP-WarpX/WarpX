@@ -191,21 +191,22 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                     // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
-                    pos[0] = xp ;
-                    pos[1] = yp ;
-                    pos[2] = zp ;
+                    pos[0] = xp;
+                    pos[1] = yp;
+                    pos[2] = zp;
 #elif (defined WARPX_DIM_XZ)
-                    pos[0] = xp ;
-                    pos[1] = zp ;
+                    pos[0] = xp;
+                    pos[1] = zp;
 #elif (defined WARPX_DIM_RZ)
-                    pos[0] = std::sqrt(xp*xp + yp*yp) ;
-                    pos[1] = zp ;
+                    pos[0] = std::sqrt(xp*xp + yp*yp);
+                    pos[1] = zp;
 #elif (defined WARPX_DIM_1D_Z)
-                    pos[0] = zp ;
+                    pos[0] = zp;
 #endif
                     DistanceToEB::normalize(normal);
 
                     f(ptd, ip, pos, normal, engine);
+                    
                 }
             });
         }
