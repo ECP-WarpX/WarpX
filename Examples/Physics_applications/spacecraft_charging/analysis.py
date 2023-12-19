@@ -3,6 +3,21 @@ import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
 from scipy.optimize import curve_fit
 
+import os
+import sys
+import yt
+
+yt.funcs.mylog.setLevel(0)
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
+
+# Open plotfile specified in command line
+filename = sys.argv[1]
+ds = yt.load( filename )
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)
+
+
 ts = OpenPMDTimeSeries('./diags/diag1/')
 dt = 1.27e-8
 t=[]
@@ -28,9 +43,9 @@ popt, pcov = curve_fit(func, t, phi)
 plt.plot(t,phi, label='modelisation')
 plt.plot(t, func(t, *popt), 'r-',label='fit: v0=%5.3f, tau=%5.9f' % (popt[0], popt[1]))
 plt.legend()
-plt.savefig('min_phi_analysis2.png')
+plt.savefig('min_phi_analysis.png')
 
-print('parameters of the fit between the curve of min(phi) over the time and the function v0(1-exp(-t/tau)):')
+print('fit parameters between the min(phi) curve over the time and the function v0(1-exp(-t/tau)):')
 print('v0=%5.3f, tau=%5.9f' % (popt[0], popt[1]))
 
 
@@ -39,13 +54,13 @@ tolerance_tau=0.1
 print("tolerance for v0 = "+ str(tolerance_v0 *100) + '%')
 print("tolerance for tau = "+ str(tolerance_tau*100) + '%')
 
-moy_v0=-147.075
-moy_tau=0.0000038725
+mean_v0=-147.075
+mean_tau=0.0000038725
 
-diff_v0=np.abs((popt[0]-moy_v0)/moy_v0)
-diff_tau=np.abs((popt[1]-moy_tau)/moy_tau)
+diff_v0=np.abs((popt[0]-mean_v0)/mean_v0)
+diff_tau=np.abs((popt[1]-mean_tau)/mean_tau)
 
-print("pourcentage error for v0 = "+ str(diff_v0 *100) + '%')
-print("pourcentage error for tau = "+ str(diff_tau*100) + '%')
+print("percentage error for v0 = "+ str(diff_v0 *100) + '%')
+print("percentage error for tau = "+ str(diff_tau*100) + '%')
 
 assert (diff_v0 < tolerance_v0) and (diff_tau < tolerance_tau), 'Test spacecraft_charging did not pass'
