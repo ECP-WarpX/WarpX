@@ -1,10 +1,10 @@
+import os
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
 from scipy.optimize import curve_fit
-
-import os
-import sys
 import yt
 
 yt.funcs.mylog.setLevel(0)
