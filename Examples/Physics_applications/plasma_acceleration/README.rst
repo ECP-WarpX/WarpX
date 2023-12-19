@@ -22,7 +22,7 @@ In the Beam, Plasma & Accelerator Simulation Toolkit (BLAST), `HiPACE++ <https:/
 Lorentz boosted frame
 ---------------------
 
-    WarpX simulations can be done in the laboratory or `Lorentz-boosted <https://warpx.readthedocs.io/en/latest/theory/boosted_frame.html>`_ frames.
+    WarpX simulations can be done in the laboratory or a :ref:`Lorentz-boosted <theory-boostedframe>` frame.
     In the laboratory frame, there is typically no need to model the plasma ions species, since they are mainly stationary during the short time scales associated with the motion of plasma electrons.
     In the boosted frame, that argument is no longer valid, as ions have relativistic velocities.
 
@@ -30,7 +30,7 @@ Lorentz boosted frame
     Translating this condition to the cell transverse (:math:`d_{x}`) and longitudinal dimensions (:math:`d_{z}`) in the laboratory frame leads to: :math:`d_{x} > (d_{z} (1+\beta_{b}) \gamma_{b})`,
     where :math:`\beta_{b}` is the boosted frame velocity in units of :math:`c`.
 
-    To determine the total number of time steps of the simulation, we could either set the `<zmax_plasma_to_compute_max_step>` parameter to the end of the plasma (:math:`z_{\textrm{end}}`), or compute it using:
+    To determine the total number of time steps of the simulation, we could either set the ``<zmax_plasma_to_compute_max_step>`` parameter to the end of the plasma (:math:`z_{\textrm{end}}`), or compute it using:
 
     * boosted frame edge of the simulation box, :math:`\textrm{corner} = l_{e}/ ((1-\beta_{b}) \gamma_{b})`
     * time of interaction in the boosted frame, :math:`T = \frac{z_{\textrm{end}}/\gamma_{b}-\textrm{corner}}{c (1+\beta_{b})}`
