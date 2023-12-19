@@ -2188,7 +2188,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             E_fields_list = ['Ex', 'Ey', 'Ez']
             B_fields_list = ['Bx', 'By', 'Bz']
             J_fields_list = ['Jx', 'Jy', 'Jz']
-            Je_fields_list = ['Jx_e', 'Jy_e', 'Jz_e'] # Je_fields_list = ['Jex', 'Jey', 'Jez']
+            Je_fields_list = ['Jx_e', 'Jy_e', 'Jz_e']
             A_fields_list = ['Ax', 'Ay', 'Az']
         if self.data_list is not None:
             for dataname in self.data_list:
