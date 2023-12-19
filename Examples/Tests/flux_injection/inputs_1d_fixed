@@ -106,14 +106,10 @@ ions.flux_right.momentum_distribution_type = gaussianflux
 ions.flux_right.uz_m = -mean_velocity/clight
 
 # Diagnostics
-diagnostics.diags_names = diag1 openpmd
-diag1.intervals = 100
-diag1.diag_type = Full
-
 openpmd.intervals = 100
 openpmd.diag_type = Full
 openpmd.format = openpmd
-openpmd.write_species = 0
+openpmd.write_species = 1
 openpmd.particle_fields_to_plot = nn vx vy vz vxvx vyvy vzvz
 openpmd.particle_fields.nn(x,y,z,ux,uy,uz) = 1.
 openpmd.particle_fields.nn.do_average = 0

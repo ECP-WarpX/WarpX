@@ -84,6 +84,6 @@ assert T_ions_error.max() < 0.03
 fn = sys.argv[1]
 test_name = os.path.split(os.getcwd())[1]
 if re.search( 'single_precision', fn ):
-    checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)
+    checksumAPI.evaluate_checksum(test_name, fn, output_format='openpmd', rtol=1.e-3)
 else:
-    checksumAPI.reset_benchmark(test_name, fn)
+    checksumAPI.evaluate_checksum(test_name, fn, output_format='openpmd')
