@@ -1132,6 +1132,11 @@ public:
 
     FiniteDifferenceSolver * get_pointer_fdtd_solver_fp (int lev) { return m_fdtd_solver_fp[lev].get(); }
 
+    void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geometry,
+        int num_shift, int dir, int lev, bool update_cost_flag,
+        amrex::Real external_field=0.0, bool useparser = false,
+        amrex::ParserExecutor<3> const& field_parser={});
+
 protected:
 
     /**
@@ -1373,10 +1378,6 @@ private:
                         const amrex::IntVect& ngRho, const amrex::IntVect& ngF,
                         const amrex::IntVect& ngG, bool aux_is_nodal);
 
-    void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geometry,
-        int num_shift, int dir, int lev, bool update_cost_flag,
-        amrex::Real external_field=0.0, bool useparser = false,
-        amrex::ParserExecutor<3> const& field_parser={});
 
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
