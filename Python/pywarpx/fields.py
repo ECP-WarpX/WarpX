@@ -343,20 +343,26 @@ class _MultiFABWrapper(object):
             The slice of the intersection relative to the global array where the data from individual block will go
         """
         box = mfi.tilebox()
+        box_small_end = box.small_end
+        box_big_end = box.big_end
         if self.include_ghosts:
             nghosts = self.mf.n_grow_vect
+            box.grow(nghosts)
             if with_internal_ghosts:
-                box.grow(nghosts)
+                box_small_end = box.small_end
+                box_big_end = box.big_end
             else:
                 min_box = self.mf.box_array().minimal_box()
                 for i in range(self.dim):
-                    if box.small_end[i] == min_box.small_end[i]:
-                        box.grow_low(i, nghosts[i])
-                    if box.big_end[i] == min_box.big_end[i]:
-                        box.grow_high(i, nghosts[i])
+                    if box_small_end[i] == min_box.small_end[i]:
+                        box_small_end[i] -= nghosts[i]
+                    if box_big_end[i] == min_box.big_end[i]:
+                        box_big_end[i] += nghosts[i]
 
-        ilo = self._get_indices(box.small_end, 0)
-        ihi = self._get_indices(box.big_end, 0)
+        boxlo = self._get_indices(box.small_end, 0)
+        boxhi = self._get_indices(box.big_end, 0)
+        ilo = self._get_indices(box_small_end, 0)
+        ihi = self._get_indices(box_big_end, 0)
 
         # Add 1 to the upper end to be consistent with the slicing notation
         ihi_p1 = [i + 1 for i in ihi]
@@ -368,7 +374,7 @@ class _MultiFABWrapper(object):
             block_slices = []
             global_slices = []
             for i in range(3):
-                block_slices.append(slice(i1[i] - ilo[i], i2[i] - ilo[i]))
+                block_slices.append(slice(i1[i] - boxlo[i], i2[i] - boxlo[i]))
                 global_slices.append(slice(i1[i] - starts[i], i2[i] - starts[i]))
 
             block_slices.append(slice(icstart, icstop))
