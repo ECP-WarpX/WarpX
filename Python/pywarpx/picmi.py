@@ -1159,9 +1159,20 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.Jy_external_function = Jy_external_function
         self.Jz_external_function = Jz_external_function
 
+        # Handle keyword arguments used in expressions
+        self.user_defined_kw = {}
+        for k in list(kw.keys()):
+            self.user_defined_kw[k] = kw[k]
+            del kw[k]
+
         self.handle_init(kw)
 
     def initialize_inputs(self):
+
+        # Add the user defined keywords to my_constants
+        # The keywords are mangled if there is a conflicting variable already
+        # defined in my_constants with the same name but different value.
+        self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
         self.grid.initialize_inputs()
 
@@ -1172,17 +1183,21 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         pywarpx.hybridpicmodel.gamma = self.gamma
         pywarpx.hybridpicmodel.n_floor = self.n_floor
         pywarpx.hybridpicmodel.__setattr__(
-            'plasma_resistivity(rho)', self.plasma_resistivity
+            'plasma_resistivity(rho)',
+            pywarpx.my_constants.mangle_expression(self.plasma_resistivity, self.mangle_dict)
         )
         pywarpx.hybridpicmodel.substeps = self.substeps
         pywarpx.hybridpicmodel.__setattr__(
-            'Jx_external_grid_function(x,y,z,t)', self.Jx_external_function
+            'Jx_external_grid_function(x,y,z,t)',
+            pywarpx.my_constants.mangle_expression(self.Jx_external_function, self.mangle_dict)
         )
         pywarpx.hybridpicmodel.__setattr__(
-            'Jy_external_grid_function(x,y,z,t)', self.Jy_external_function
+            'Jy_external_grid_function(x,y,z,t)',
+            pywarpx.my_constants.mangle_expression(self.Jy_external_function, self.mangle_dict)
         )
         pywarpx.hybridpicmodel.__setattr__(
-            'Jz_external_grid_function(x,y,z,t)', self.Jz_external_function
+            'Jz_external_grid_function(x,y,z,t)',
+            pywarpx.my_constants.mangle_expression(self.Jz_external_function, self.mangle_dict)
         )
 
 
