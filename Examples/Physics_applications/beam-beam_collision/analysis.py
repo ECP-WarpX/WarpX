@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2019-2023 Arianna Formenti
+# Copyright 2019-2023
 #
 #
 # This file is part of WarpX.
@@ -13,10 +13,6 @@
 import os
 import sys
 
-import matplotlib
-
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import openpmd_api as io
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
