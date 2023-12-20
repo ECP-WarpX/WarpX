@@ -2,7 +2,6 @@
 #
 # --- Simple example of Langmuir oscillations in a uniform plasma
 # --- in two dimensions
-import os
 import sys
 
 import numpy as np
@@ -13,7 +12,6 @@ from pywarpx import picmi
 
 sys.path.insert(1, '../../../Regression/Checksum/')
 import checksumAPI
-
 
 constants = picmi.constants
 
