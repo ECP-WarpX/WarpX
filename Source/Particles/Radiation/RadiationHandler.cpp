@@ -16,7 +16,11 @@
 
 #include <AMReX_ParmParse.H>
 
-#include <utility>
+#ifdef AMREX_USE_OMP
+#   include <omp.h>
+#endif
+
+#include <tuple>
 #include <vector>
 
 using namespace amrex;
@@ -130,15 +134,15 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
 
     pp_radiation.get("detector_distance", m_det_distance);
 
-    [det_pos_x, det_pos_y, det_pos_z] = compute_detector_positions(
-        center, det_direction, m_det_distance,
+    std::tie(det_pos_x, det_pos_y, det_pos_z) = compute_detector_positions(
+        center, m_det_direction, m_det_distance,
         m_det_orientation, m_det_pts, m_theta_range);
 
     constexpr auto ncomp = 3;
     m_radiation_data = amrex::Gpu::DeviceVector<ablastr::math::Complex>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
 
     m_omegas = amrex::Gpu::DeviceVector<amrex::Real>(m_omega_points);
-    ablastr::math::LinSpaceFill(m_omega_range[0], m_omega_range[1], m_omega_points, omega_calc.being());
+    ablastr::math::LinSpaceFill(m_omega_range[0], m_omega_range[1], m_omega_points, m_omegas.begin());
 }
 
 
@@ -192,7 +196,7 @@ void RadiationHandler::add_radiation_contribution
                         auto const u2 = ux*ux + uy*uy + uz*uz;
 
                         constexpr auto inv_c2 = 1._prt/(PhysConst::c*PhysConst::c);
-                        auto const one_over_gamma = 1._prt/sdt::sqrt(1.0_rt + u2*inv_c2);
+                        auto const one_over_gamma = 1._prt/std::sqrt(1.0_rt + u2*inv_c2);
                         auto const one_over_gamma_c = one_over_gamma/PhysConst::c;
                         const auto bx = ux*one_over_gamma_c;
                         const auto by = uy*one_over_gamma_c;
@@ -276,7 +280,7 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
 {
     auto radiation_data_cpu = amrex::Vector<amrex::Real>(m_det_pts[0]*m_det_pts[1]*m_omega_points);
     amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
-        m_radiation_calculation.begin(), m_radiation_calculation.end(), radiation_data_cpu.begin());
+        m_radiation_data.begin(), m_radiation_data.end(), m_radiation_data.begin());
     amrex::Gpu::streamSynchronize();
 
     amrex::ParallelDescriptor::ReduceRealSum(radiation_data_cpu.data(), radiation_data_cpu.size());
