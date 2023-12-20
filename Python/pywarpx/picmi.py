@@ -517,6 +517,38 @@ class AnalyticFluxDistribution(picmistandard.PICMI_UniformFluxDistribution, Flux
 
 
 class ThermalPLasmaFluxDistributionBase(FluxDistributionBase):
+    def __init__(self, density, flux_normal_axis,
+                 surface_flux_position, flux_direction,
+                 lower_bound = [None,None,None],
+                 upper_bound = [None,None,None],
+                 rms_velocity = [0.,0.,0.],
+                 directed_velocity = [0.,0.,0.],
+                 flux_tmin = None,
+                 flux_tmax = None,
+                 gaussian_flux_momentum_distribution = None,
+                 **kw):
+        # In order to reuse FluxDistributionBase, this puts the density in the flux variable
+        # since it plays the same role
+        self.flux = density
+        self.flux_normal_axis = flux_normal_axis
+        self.surface_flux_position = surface_flux_position
+        self.flux_direction = flux_direction
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.rms_velocity = rms_velocity
+        self.directed_velocity = directed_velocity
+        self.flux_tmin = flux_tmin
+        self.flux_tmax = flux_tmax
+        self.gaussian_flux_momentum_distribution = gaussian_flux_momentum_distribution
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self, species_number, layout, species, density_scale, source_name):
+        species.add_new_group_attr(source_name, 'profile', self.density_profile)
+        FluxDistributionBase.initialize_inputs(self, species_number, layout, species, density_scale, source_name)
+
+
+class UniformThermalPLasmaFluxDistribution(picmistandard.base._ClassWithInit, ThermalPLasmaFluxDistributionBase):
     """
     Describes a flux of particles emitted from a plane, with the flux determined
     dynamically to maintain a thermal plasma at the boundary
@@ -559,44 +591,54 @@ class ThermalPLasmaFluxDistributionBase(FluxDistributionBase):
         in the direction normal to the plane. Otherwise,
         the momentum distribution is simply Gaussian.
     """
-    def __init__(self, density, flux_normal_axis,
-                 surface_flux_position, flux_direction,
-                 lower_bound = [None,None,None],
-                 upper_bound = [None,None,None],
-                 rms_velocity = [0.,0.,0.],
-                 directed_velocity = [0.,0.,0.],
-                 flux_tmin = None,
-                 flux_tmax = None,
-                 gaussian_flux_momentum_distribution = None,
-                 **kw):
-        # In order to reuse FluxDistributionBase, this puts the density in the flux variable
-        # since it plays the same role
-        self.flux = density
-        self.flux_normal_axis = flux_normal_axis
-        self.surface_flux_position = surface_flux_position
-        self.flux_direction = flux_direction
-        self.lower_bound = lower_bound
-        self.upper_bound = upper_bound
-        self.rms_velocity = rms_velocity
-        self.directed_velocity = directed_velocity
-        self.flux_tmin = flux_tmin
-        self.flux_tmax = flux_tmax
-        self.gaussian_flux_momentum_distribution = gaussian_flux_momentum_distribution
-
-        self.handle_init(kw)
-
-    def initialize_inputs(self, species_number, layout, species, density_scale, source_name):
-        species.add_new_group_attr(source_name, 'profile', self.density_profile)
-        FluxDistributionBase.initialize_inputs(self, species_number, layout, species, density_scale, source_name)
-
-
-class UniformThermalPLasmaFluxDistribution(picmistandard.base._ClassWithInit, ThermalPLasmaFluxDistributionBase):
     flux_profile = 'fixed_num_particles_per_cell'
     flux_name = 'density'
     density_profile = 'constant'
 
 
 class AnalyticThermalPLasmaFluxDistribution(picmistandard.base._ClassWithInit, ThermalPLasmaFluxDistributionBase):
+    """
+    Describes a flux of particles emitted from a plane, with the flux determined
+    dynamically to maintain a thermal plasma at the boundary
+
+    Parameters
+    ----------
+    density: string
+        Density of particles in the plasma
+
+    flux_normal_axis: string
+        x, y, or z for 3D, x or z for 2D, or r, t, or z in RZ geometry
+
+    surface_flux_position: double
+        location of the injection plane [m] along the direction
+        specified by `flux_normal_axis`
+
+    flux_direction: int
+        Direction of the flux relative to the plane: -1 or +1
+
+    lower_bound: vector of floats, optional
+        Lower bound of the distribution [m]
+
+    upper_bound: vector of floats, optional
+        Upper bound of the distribution [m]
+
+    rms_velocity: vector of floats, default=[0.,0.,0.]
+        Thermal velocity spread [m/s]
+
+    directed_velocity: vector of floats, default=[0.,0.,0.]
+        Directed, average, velocity [m/s]
+
+    flux_tmin: float, optional
+        Time at which the flux injection will be turned on.
+
+    flux_tmax: float, optional
+        Time at which the flux injection will be turned off.
+
+    gaussian_flux_momentum_distribution: bool, optional
+        If True, the momentum distribution is v*Gaussian,
+        in the direction normal to the plane. Otherwise,
+        the momentum distribution is simply Gaussian.
+    """
     flux_profile = 'fixed_num_particles_per_cell'
     flux_name = 'density_function(x,y,z)'
     density_profile = 'parse_density_function'
