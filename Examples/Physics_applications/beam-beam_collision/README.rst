@@ -3,16 +3,16 @@
 Beam-beam collision
 ====================
 
-This example shows how to simulate the collision between two ultra-relativistic particle beams. 
-This is representative of what happens at the interaction point of a linear collider. 
-We consider a right-propagating electron bunch colliding against a left-propagating positron bunch. 
+This example shows how to simulate the collision between two ultra-relativistic particle beams.
+This is representative of what happens at the interaction point of a linear collider.
+We consider a right-propagating electron bunch colliding against a left-propagating positron bunch.
 
-We turn on the Quantum Synchrotron QED module for photon emission (also known as beamstrahlung in the collider community) and 
-the Breit-Wheeler QED module for the generation of electron-positron pairs (also known as coherent pair generation in the collider community). 
+We turn on the Quantum Synchrotron QED module for photon emission (also known as beamstrahlung in the collider community) and
+the Breit-Wheeler QED module for the generation of electron-positron pairs (also known as coherent pair generation in the collider community).
 
-To solve for the electromagnetic field we use the nodal version of the electrostatic relativistic solver. 
-This solver computes the average velocity of each species, moves to the rest frame of each species where it solves the relativistic Poisson equation, 
-and goes back to the lab frame where it adds up all the fields of all species. 
+To solve for the electromagnetic field we use the nodal version of the electrostatic relativistic solver.
+This solver computes the average velocity of each species, moves to the rest frame of each species where it solves the relativistic Poisson equation,
+and goes back to the lab frame where it adds up all the fields of all species.
 This solver showed good field cancellation properties that are crucial in simulations of relativistic particles.
 
 
@@ -22,7 +22,7 @@ This example is based on the following paper :cite:t:`ex-Yakimenko2019`.
 Run
 ---
 
-The PICMI input file is not available for this example yet. 
+The PICMI input file is not available for this example yet.
 
 For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with ``mpiexec -n 4 ...`` or ``srun -n 4 ...``, depending on the system.
 
@@ -34,7 +34,7 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 Visualize
 ---------
 
-The figure below shows the number of photons emitted per beam particle (left) and the number of secondary pairs generated per beam particle (right). 
+The figure below shows the number of photons emitted per beam particle (left) and the number of secondary pairs generated per beam particle (right).
 
 We compare different results:
 * (red) simplified WarpX simulation as the example stored in the directory ``/Examples/Physics_applications/beam-beam_collision``;
@@ -55,7 +55,7 @@ The small-scale simulation has been performed with a resolution of ``nx = 64, ny
    qed_qs.tab_em_chi_how_many=512
    qed_qs.tab_em_frac_how_many=512
    qed_qs.tab_em_frac_min=1e-12
-   qed_qs.save_table_in=my_qs_table.txt 
+   qed_qs.save_table_in=my_qs_table.txt
    qed_bw.tab_dndt_chi_min=1e-2
    qed_bw.tab_dndt_chi_max=2e3
    qed_bw.tab_dndt_how_many=512
