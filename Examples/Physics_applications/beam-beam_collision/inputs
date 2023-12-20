@@ -3,15 +3,12 @@
 #################################
 my_constants.mc2 = m_e*clight*clight
 my_constants.nano = 1.0e-9
-my_constants.micro = 1.e-6
-my_constants.milli = 1.e-3
 my_constants.GeV = q_e*1.e9
 
 # BEAMS
 my_constants.beam_energy = 125.*GeV
 my_constants.beam_uz = beam_energy/(mc2) 
 my_constants.beam_charge = 0.14*nano
-my_constants.beam_npart = beam_charge/q_e
 my_constants.sigmax = 10*nano 
 my_constants.sigmay = 10*nano
 my_constants.sigmaz = 10*nano
@@ -21,8 +18,6 @@ my_constants.omegab = sqrt(n0 * q_e**2 / (epsilon0*m_e))
 my_constants.mux = 0.0
 my_constants.muy = 0.0
 my_constants.muz = -0.5*Lz+3.2*sigmaz
-my_constants.coll_time = abs(muz)/clight
-my_constants.coll_step = floor(nt*coll_time/T)
 
 # BOX
 my_constants.Lx = 100.0*clight/omegab
@@ -31,18 +26,13 @@ my_constants.Lz = 180.0*clight/omegab
 my_constants.nx = 64
 my_constants.ny = 64
 my_constants.nz = 128
-my_constants.dx = Lx/nx
-my_constants.dy = Ly/ny
-my_constants.dz = Lz/nz
 
 # TIME
 my_constants.T = 0.7*Lz/clight
 my_constants.dt = sigmaz/clight/10.
-my_constants.nt = floor(T/dt)
 
 # DIAGS
 my_constants.every_red = 1.
-my_constants.every_full = floor(nt/10.)
 warpx.used_inputs_file = warpx_used_inputs.txt
 
 #################################
@@ -204,19 +194,16 @@ warpx.do_qed_schwinger = 0.
 ######### DIAGNOSTICS ###########
 #################################
 # FULL
-diagnostics.diags_names = full
+diagnostics.diags_names = diag1
 
-full.intervals = 0
-full.diag_type = Full
-full.write_species = 1
-full.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam1 rho_beam2 rho_ele_nlbw1 rho_pos_nlbw1 rho_ele_nlbw2 rho_pos_nlbw2 rho_ele rho_pos
-full.format = openpmd
-full.openpmd_backend = bp
-full.dump_last_timestep = 1
-full.species = pho1 pho2 pho ele_nlbw1 pos_nlbw1 ele_nlbw2 pos_nlbw2 ele pos beam1 beam2 
-full.beam1.random_fracion = 0.01
-full.beam2.random_fracion = 0.01
-
+diag1.intervals = 0
+diag1.diag_type = Full
+diag1.write_species = 1
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam1 rho_beam2 rho_ele_nlbw1 rho_pos_nlbw1 rho_ele_nlbw2 rho_pos_nlbw2 rho_ele rho_pos
+diag1.format = openpmd
+diag1.openpmd_backend = bp
+diag1.dump_last_timestep = 1
+diag1.species = pho1 pho2 pho ele_nlbw1 pos_nlbw1 ele_nlbw2 pos_nlbw2 ele pos beam1 beam2 
 
 # REDUCED
 warpx.reduced_diags_names = ParticleNumber        
