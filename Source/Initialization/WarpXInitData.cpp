@@ -728,12 +728,42 @@ void
 WarpX::PostRestart ()
 {
     mypc->PostRestart();
+
+    int const lev = 0;
+    // Read external field to set on the grid
+    if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
+#if defined(WARPX_DIM_RZ)
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                         "External field reading is not implemented for more than one RZ mode (see #3829)");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][0].get(), "B", "r");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][1].get(), "B", "t");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][2].get(), "B", "z");
+#else
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][0].get(), "B", "x");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][1].get(), "B", "y");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Bfield_fp_external[lev][2].get(), "B", "z");
+#endif
+    }    
+    if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
+#if defined(WARPX_DIM_RZ)
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(n_rz_azimuthal_modes == 1,
+                                         "External field reading is not implemented for more than one RZ mode (see #3829)");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][0].get(), "E", "r");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][1].get(), "E", "t");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][2].get(), "E", "z");
+#else
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][0].get(), "E", "x");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][1].get(), "E", "y");
+        ReadExternalFieldFromFile(m_p_ext_field_params->external_fields_path, Efield_fp_external[lev][2].get(), "E", "z");
+#endif
+    }
+    
 }
 
 
 void
 WarpX::InitLevelData (int lev, Real /*time*/)
-{
+{ 
     // initialize the averaged fields only if the averaged algorithm
     // is activated ('psatd.do_time_averaging=1')
     const ParmParse pp_psatd("psatd");
@@ -1329,7 +1359,7 @@ void
 WarpX::ReadExternalFieldFromFile (
        std::string read_fields_from_path, amrex::MultiFab* mf,
        std::string F_name, std::string F_component)
-{
+{ 
     // Get WarpX domain info
     auto& warpx = WarpX::GetInstance();
     amrex::Geometry const& geom0 = warpx.Geom(0);
