@@ -34,10 +34,10 @@ else
     source $WORK/spack/share/spack/setup-env.sh
 
     # Delete spack env if present
-    if spack env list | grep -q warpx-karolina-cuda; then
-        spack env deactivate
-        spack env rm -y warpx-karolina-cuda
-    fi
+    spack env deactivate || true
+    spack env rm -y warpx-karolina-cuda || true
+
+    cd -
 fi
 
 # create and activate the spack environment
