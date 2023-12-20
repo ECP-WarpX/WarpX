@@ -16,6 +16,7 @@
 
 #include <AMReX_ParmParse.H>
 
+#include <utility>
 #include <vector>
 
 using namespace amrex;
@@ -65,9 +66,9 @@ namespace
 
         const auto how_many = det_points[0]*det_points[1];
 
-        auto det_x = amrex::GPU::DeviceVector<amrex::Real>(how_many);
-        auto det_y = amrex::GPU::DeviceVector<amrex::Real>(how_many);
-        auto det_z = amrex::GPU::DeviceVector<amrex::Real>(how_many);
+        auto det_x = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
+        auto det_y = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
+        auto det_z = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
 
         const auto one_over_direction = 1.0_rt/std::sqrt(
             direction[0]*direction[0]+direction[1]*direction[1]+direction[2]*direction[2]);
@@ -86,9 +87,9 @@ namespace
             }
         }
 
-        amrex::GPU::synchronize();
+        amrex::Gpu::synchronize();
 
-        return {det_x, det_y, det_z}
+        return std::make_tuple(det_x, det_y, det_z);
 
     }
 }
@@ -104,26 +105,26 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
     const amrex::ParmParse pp_radiation("radiation");
 
     //Resolution in frequency of the detector
-    auto omega_range std::vector<amrex::Real>(2);
+    auto omega_range = std::vector<amrex::Real>(2);
     pp_radiation.getarr("omega_range", omega_range);
     std::copy(omega_range.begin(), omega_range.end(), m_omega_range.begin());
     pp_radiation.get("omega_points", m_omega_points);
 
     //Angle theta AND phi
-    auto theta_range std::vector<amrex::Real>(2);
+    auto theta_range = std::vector<amrex::Real>(2);
     pp_radiation.get("angle_aperture", theta_range);
     std::copy(theta_range.begin(), theta_range.end(), m_theta_range.begin());
 
     //Detector parameters
-    auto det_pts std::vector<int>(2);
+    auto det_pts = std::vector<int>(2);
     pp_radiation.getarr("detector_number_points", det_pts);
     std::copy(det_pts.begin(), det_pts.end(), m_det_pts.begin());
 
-    auto det_direction std::vector<amrex::Real>(3);
+    auto det_direction = std::vector<amrex::Real>(3);
     pp_radiation.getarr("detector_direction", det_direction);
     std::copy(det_direction.begin(), det_direction.end(), m_det_direction.begin());
 
-    auto det_orientation std::vector<amrex::Real>(3);
+    auto det_orientation = std::vector<amrex::Real>(3);
     pp_radiation.getarr("detector_orientation", det_orientation);
     std::copy(det_orientation.begin(), det_orientation.end(), m_det_orientation.begin());
 
@@ -213,7 +214,7 @@ void RadiationHandler::add_radiation_contribution
                                 const auto part_det_x = xp - p_det_pos_x[i_det];
                                 const auto part_det_y = yp - p_det_pos_y[i_det];
                                 const auto part_det_z = zp - p_det_pos_z[i_det];
-                                const auto d_part_det = std:sqrt(
+                                const auto d_part_det = std::sqrt(
                                     part_det_x*part_det_x + part_det_y*part_det_y + part_det_z*part_det_z);
                                 const auto one_over_d_part_det = 1.0_prt/d_part_det;
 
