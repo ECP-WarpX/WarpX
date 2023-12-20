@@ -343,7 +343,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp_species_name.query("do_field_ionization", do_field_ionization);
 
     pp_species_name.query("do_resampling", do_resampling);
-    if (do_resampling) m_resampler = Resampling(species_name);
+    if (do_resampling) { m_resampler = Resampling(species_name); }
 
     //check if Radiation Reaction is enabled and do consistency checks
     pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
@@ -365,12 +365,14 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
 #ifdef WARPX_QED
     pp_species_name.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
-    if (m_do_qed_quantum_sync)
+    if (m_do_qed_quantum_sync) {
         AddRealComp("opticalDepthQSR");
+    }
 
     pp_species_name.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
-    if (m_do_qed_breit_wheeler)
+    if (m_do_qed_breit_wheeler) {
         AddRealComp("opticalDepthBW");
+    }
 
     if(m_do_qed_quantum_sync){
         pp_species_name.get("qed_quantum_sync_phot_product_species",
@@ -999,7 +1001,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
     // If no part_realbox is provided, initialize particles in the whole domain
     const Geometry& geom = Geom(lev);
-    if (!part_realbox.ok()) part_realbox = geom.ProbDomain();
+    if (!part_realbox.ok()) { part_realbox = geom.ProbDomain(); }
 
     const int num_ppc = plasma_injector.num_particles_per_cell;
 #ifdef WARPX_DIM_RZ
@@ -1107,7 +1109,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         // count the number of particles that each cell in overlap_box could add
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
-        auto pcounts = counts.data();
+        auto *pcounts = counts.data();
         const amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
@@ -1135,12 +1137,15 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 const auto zlim = GpuArray<Real, 3>{lo.z,(lo.z+hi.z)/2._rt,hi.z};
 
                 const auto checker = [&](){
-                    for (const auto& x : xlim)
-                        for (const auto& y : ylim)
-                            for (const auto& z : zlim)
+                    for (const auto& x : xlim) {
+                        for (const auto& y : ylim) {
+                            for (const auto& z : zlim) {
                                 if (inj_pos->insideBounds(x,y,z) and (inj_rho->getDensity(x,y,z) > 0) ) {
                                     return 1;
                                 }
+                            }
+                        }
+                    }
                     return 0;
                 };
                 const int flag_pcount = checker();
@@ -1248,12 +1253,14 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         // has to be initialized
         const bool loc_has_quantum_sync = has_quantum_sync();
         const bool loc_has_breit_wheeler = has_breit_wheeler();
-        if (loc_has_quantum_sync)
+        if (loc_has_quantum_sync) {
             p_optical_depth_QSR = soa.GetRealData(
                 particle_comps["opticalDepthQSR"]).data() + old_size;
-        if(loc_has_breit_wheeler)
+        }
+        if(loc_has_breit_wheeler) {
             p_optical_depth_BW = soa.GetRealData(
                 particle_comps["opticalDepthBW"]).data() + old_size;
+        }
 
         //If needed, get the appropriate functors from the engines
         QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
@@ -1275,7 +1282,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         // particles, in particular does not consider xmin, xmax etc.).
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
-        const auto poffset = offset.data();
+        auto *const poffset = offset.data();
 #ifdef WARPX_DIM_RZ
         const bool rz_random_theta = m_rz_random_theta;
 #endif
@@ -1286,7 +1293,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             const auto index = overlap_box.index(iv);
 #ifdef WARPX_DIM_RZ
             Real theta_offset = 0._rt;
-            if (rz_random_theta) theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi;
+            if (rz_random_theta) { theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi; }
 #endif
 
             Real scale_fac = 0.0_rt;
@@ -1538,15 +1545,15 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     scale_fac = dx[0]*dx[1]/num_ppc_real;
     // When emission is in the r direction, the emitting surface is a cylinder.
     // The factor 2*pi*r is added later below.
-    if (plasma_injector.flux_normal_axis == 0) scale_fac /= dx[0];
+    if (plasma_injector.flux_normal_axis == 0) { scale_fac /= dx[0]; }
     // When emission is in the z direction, the emitting surface is an annulus
     // The factor 2*pi*r is added later below.
-    if (plasma_injector.flux_normal_axis == 2) scale_fac /= dx[1];
+    if (plasma_injector.flux_normal_axis == 2) { scale_fac /= dx[1]; }
     // When emission is in the theta direction (flux_normal_axis == 1),
     // the emitting surface is a rectangle, within the plane of the simulation
 #elif defined(WARPX_DIM_1D_Z)
     scale_fac = dx[0]/num_ppc_real;
-    if (plasma_injector.flux_normal_axis == 2) scale_fac /= dx[0];
+    if (plasma_injector.flux_normal_axis == 2) { scale_fac /= dx[0]; }
 #endif
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
@@ -1679,7 +1686,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         // count the number of particles that each cell in overlap_box could add
         Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts());
-        auto pcounts = counts.data();
+        auto *pcounts = counts.data();
         const amrex::IntVect lrrfac = rrfac;
         Box fine_overlap_box; // default Box is NOT ok().
         if (refine_injection) {
@@ -1798,12 +1805,14 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         // has to be initialized
         const bool loc_has_quantum_sync = has_quantum_sync();
         const bool loc_has_breit_wheeler = has_breit_wheeler();
-        if (loc_has_quantum_sync)
+        if (loc_has_quantum_sync) {
             p_optical_depth_QSR = soa.GetRealData(
                 particle_comps["opticalDepthQSR"]).data() + old_size;
-        if(loc_has_breit_wheeler)
+        }
+        if(loc_has_breit_wheeler) {
             p_optical_depth_BW = soa.GetRealData(
                 particle_comps["opticalDepthBW"]).data() + old_size;
+        }
 
         //If needed, get the appropriate functors from the engines
         QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
@@ -1828,7 +1837,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         // particles, in particular does not consider xmin, xmax etc.).
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
-        const auto poffset = offset.data();
+        auto *const poffset = offset.data();
         amrex::ParallelForRNG(overlap_box,
         [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
@@ -2062,8 +2071,9 @@ PhysicalParticleContainer::Evolve (int lev,
             const auto t_lev = pti.GetLevel();
             const auto index = pti.GetPairIndex();
             tmp_particle_data.resize(finestLevel()+1);
-            for (int i = 0; i < TmpIdx::nattribs; ++i)
+            for (int i = 0; i < TmpIdx::nattribs; ++i) {
                 tmp_particle_data[t_lev][index][i].resize(np);
+            }
         }
     }
 
@@ -2548,7 +2558,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 {
     WARPX_PROFILE("PhysicalParticleContainer::PushP()");
 
-    if (do_not_push) return;
+    if (do_not_push) { return; }
 
     const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev,0));
 
@@ -2654,7 +2664,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 }
 
                 // Externally applied E and B-field in Cartesian co-ordinates
-                [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
+                [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;
                 if constexpr (exteb_control == has_exteb) {
                     getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
                 }
@@ -2744,7 +2754,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything
-    if (np_to_push == 0) return;
+    if (np_to_push == 0) { return; }
 
     // Get cell size on gather_lev
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(gather_lev,0));
@@ -2843,7 +2853,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #ifdef WARPX_QED
     const auto do_sync = m_do_qed_quantum_sync;
     amrex::Real t_chi_max = 0.0;
-    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_minimum_chi_part();
+    if (do_sync) { t_chi_max = m_shr_p_qs_engine->get_minimum_chi_part(); }
 
     QuantumSynchrotronEvolveOpticalDepth evolve_opt;
     amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR = nullptr;
@@ -2904,7 +2914,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            nox, galerkin_interpolation);
         }
 
-        [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
+        [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;
         if constexpr (exteb_control == has_exteb) {
             getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
         }
@@ -2941,8 +2951,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
 #ifdef WARPX_QED
         [[maybe_unused]] auto foo_local_has_quantum_sync = local_has_quantum_sync;
-        [[maybe_unused]] auto foo_podq = p_optical_depth_QSR;
-        [[maybe_unused]] auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
+        [[maybe_unused]] auto *foo_podq = p_optical_depth_QSR;
+        [[maybe_unused]] const auto& foo_evolve_opt = evolve_opt; // have to do all these for nvcc
         if constexpr (qed_control == has_qed) {
             if (local_has_quantum_sync) {
                 evolve_opt(ux[ip], uy[ip], uz[ip],
@@ -2959,7 +2969,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 void
 PhysicalParticleContainer::InitIonizationModule ()
 {
-    if (!do_field_ionization) return;
+    if (!do_field_ionization) { return; }
     const ParmParse pp_species_name(species_name);
     if (charge != PhysConst::q_e){
         ablastr::warn_manager::WMRecordWarning("Species",

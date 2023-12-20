@@ -70,7 +70,7 @@ void doParticlePush(const GetParticlePosition<PIdx>& GetPosition,
     amrex::ParticleReal qp = a_q;
     if (ion_lev) { qp *= ion_lev; }
 
-    if (do_copy) copyAttribs(i);
+    if (do_copy) { copyAttribs(i); }
     if (do_crr) {
 #ifdef WARPX_QED
         amrex::ignore_unused(t_chi_max);

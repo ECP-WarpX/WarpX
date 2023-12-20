@@ -75,9 +75,9 @@ Usage
    :hidden:
 
    usage/how_to_run
+   usage/examples
    usage/python
    usage/parameters
-   usage/examples
    usage/workflows
    usage/faq
 
@@ -107,9 +107,9 @@ Theory
    :hidden:
 
    theory/intro
-   theory/picsar_theory
+   theory/pic
    theory/amr
-   theory/PML
+   theory/boundary_conditions
    theory/boosted_frame
    theory/input_output
    theory/collisions

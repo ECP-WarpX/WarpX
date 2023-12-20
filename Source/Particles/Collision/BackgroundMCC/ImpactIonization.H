@@ -77,7 +77,7 @@ public:
         using std::sqrt;
 
         // determine if this particle should collide
-        if (Random(engine) > m_total_collision_prob) return false;
+        if (Random(engine) > m_total_collision_prob) { return false; }
 
         // get references to the particle to get its position
         const auto& p = ptd.getSuperParticle(i);
