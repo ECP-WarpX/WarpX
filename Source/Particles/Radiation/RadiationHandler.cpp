@@ -57,11 +57,11 @@ namespace
 
         auto us = amrex::Vector<amrex::Real>(det_points[0]);
         const auto ulim = distance*std::tan(theta_range[0]*0.5_rt);
-        ablastr::math::LinSpaceFill(-ul,ul, det_points[0], us.being());
+        ablastr::math::LinSpaceFill(-ulim,ulim, det_points[0], us.begin());
 
         auto vs = amrex::Vector<amrex::Real>(det_points[1]);
         const auto vlim = distance*std::tan(theta_range[1]*0.5_rt);
-        ablastr::math::LinSpaceFill(-vlim, vlim, det_points[1], vs.being());
+        ablastr::math::LinSpaceFill(-vlim, vlim, det_points[1], vs.begin());
 
         const auto how_many = det_points[0]*det_points[1];
 
