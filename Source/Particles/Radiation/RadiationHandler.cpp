@@ -8,6 +8,7 @@
 #include "RadiationHandler.H"
 
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
 #include "Utils/TextMsg.H"
 
 #include <ablastr/constant.H>
