@@ -112,7 +112,7 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
 
     //Angle theta AND phi
     auto theta_range = std::vector<amrex::Real>(2);
-    pp_radiation.get("angle_aperture", theta_range);
+    pp_radiation.getarr("angle_aperture", theta_range);
     std::copy(theta_range.begin(), theta_range.end(), m_theta_range.begin());
 
     //Detector parameters
