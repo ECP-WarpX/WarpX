@@ -15,7 +15,7 @@
  * \brief Function that performs the particle scattering and injection due
  * to binary collisions.
  *
- * \return num_added the number of particles that were written to dst.
+ * \return num_added the number of particles added to each species.
  */
 template <typename index_type, typename Tile, typename Index, typename CopyFunc,
           amrex::EnableIf_t<std::is_integral<Index>::value, int> foo = 0>

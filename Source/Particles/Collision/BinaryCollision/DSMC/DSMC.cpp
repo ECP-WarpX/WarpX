@@ -141,7 +141,7 @@ DSMC::doCollisionsWithinTile(
     using namespace amrex::literals;
 
     // get collision processes
-    auto scattering_processes = m_scattering_processes_exe.data();
+    auto *scattering_processes = m_scattering_processes_exe.data();
     int const process_count   = static_cast<int>(m_scattering_processes_exe.size());
 
     // Extract particles in the tile that `mfi` points to
