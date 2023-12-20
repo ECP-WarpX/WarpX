@@ -18,6 +18,7 @@
 
 #include <vector>
 
+using namespace amrex;
 using namespace ablastr::math;
 
 namespace
