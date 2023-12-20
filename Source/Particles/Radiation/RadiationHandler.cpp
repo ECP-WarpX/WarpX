@@ -184,7 +184,7 @@ void RadiationHandler::add_radiation_contribution
                     const auto p_det_pos_y = det_pos_y.dataPtr();
                     const auto p_det_pos_z = det_pos_z.dataPtr();
 
-                    const auto p_radiation_data = m_radiation_data.dataPtr();
+                    auto p_radiation_data = m_radiation_data.dataPtr();
 
                     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE(int ip){
                         amrex::ParticleReal xp, yp, zp;
@@ -252,18 +252,27 @@ void RadiationHandler::add_radiation_contribution
                                 const auto cz = coeff*n_cross_n_minus_beta_cross_bp_z;
 
                                 const int ncomp = 3;
-                                const int idx = (i_om*how_many_det_pos + i_det)*ncomp;
+                                const int idx0 = (i_om*how_many_det_pos + i_det)*ncomp;
+                                const int idx1 = idx0 + 1;
+                                const int idx2 = idx0 + 2;
+
 #ifdef AMREX_USE_OMP
                                 #pragma omp atomic
-                                p_radiation_data[idx + 0] += cx;
+                                p_radiation_data[idx0].m_real += cx.m_real;
                                 #pragma omp atomic
-                                p_radiation_data[idx + 1] += cy;
+                                p_radiation_data[idx0].m_imag += cx.m_imag;
                                 #pragma omp atomic
-                                p_radiation_data[idx + 2] += cz;
+                                p_radiation_data[idx1].m_real += cy.m_real;
+                                #pragma omp atomic
+                                p_radiation_data[idx1].m_imag += cy.m_imag;
+                                #pragma omp atomic
+                                p_radiation_data[idx2].m_real += cz.m_real;
+                                #pragma omp atomic
+                                p_radiation_data[idx2].m_imag += cz.m_imag;
 #else
-                                p_radiation_data[idx + 0] += cx;
-                                p_radiation_data[idx + 1] += cy;
-                                p_radiation_data[idx + 2] += cz;
+                                p_radiation_data[idx0] += cx;
+                                p_radiation_data[idx1] += cy;
+                                p_radiation_data[idx2] += cz;
 
 #endif
                             }
