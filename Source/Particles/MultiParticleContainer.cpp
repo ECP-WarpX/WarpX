@@ -29,6 +29,7 @@
 #include "Particles/ParticleCreation/SmartUtils.H"
 #include "Particles/PhotonParticleContainer.H"
 #include "Particles/PhysicalParticleContainer.H"
+#include "Particles/Radiation/RadiationHandler.H"
 #include "Particles/RigidInjectedParticleContainer.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "SpeciesPhysicalProperties.H"
@@ -122,8 +123,23 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
 
     // Setup particle collisions
     collisionhandler = std::make_unique<CollisionHandler>(this);
+    //Initialization of the radiation
+    for (auto& s : allcontainers) {
+        if (s->has_radiation()) {
+            m_at_least_one_has_radiation = true;
 
+            const auto& lev_0_geom = amr_core->Geom(0);
+            auto center = amrex::Array<amrex::Real,3>{};
+            for(int idim=0; idim<AMREX_SPACEDIM; idim++){
+                center[idim] = (lev_0_geom.ProbHi()[idim]+lev_0_geom.ProbLo()[idim])*0.5;
+            }
+            m_p_radiation_handler = std::make_unique<RadiationHandler>(center);
+            break;
+        }
+    }
 }
+
+MultiParticleContainer::~MultiParticleContainer() {}
 
 void
 MultiParticleContainer::ReadParameters ()
@@ -367,8 +383,7 @@ MultiParticleContainer::ReadParameters ()
                 m_qed_schwinger_threshold_poisson_gaussian);
             utils::parser::queryWithParser(
                 pp_qed_schwinger, "xmin", m_qed_schwinger_xmin);
-            utils::parser::queryWithParser(
-                pp_qed_schwinger, "xmax", m_qed_schwinger_xmax);
+
 #if defined(WARPX_DIM_3D)
             utils::parser::queryWithParser(
                 pp_qed_schwinger, "ymin", m_qed_schwinger_ymin);
@@ -384,7 +399,6 @@ MultiParticleContainer::ReadParameters ()
         initialized = true;
     }
 }
-
 WarpXParticleContainer&
 MultiParticleContainer::GetParticleContainerFromName (const std::string& name) const
 {
@@ -915,6 +929,14 @@ MultiParticleContainer::doFieldIonization (int lev,
     }
 }
 
+void MultiParticleContainer::RecordOldMomenta(){
+    for (auto& pc : allcontainers) {
+        if (pc->has_radiation()){
+            pc->RecordOldMomenta();
+        }
+    }
+}
+
 void
 MultiParticleContainer::doCollisions ( Real cur_time, amrex::Real dt )
 {
@@ -955,6 +977,24 @@ void MultiParticleContainer::ScrapeParticles (const amrex::Vector<const amrex::M
 #endif
 }
 
+void MultiParticleContainer::doRadiation (const amrex::Real dt, amrex::Real cur_time)
+{
+    if (m_at_least_one_has_radiation){
+    for (auto& pc : allcontainers) {
+        if (pc->has_radiation()){
+            m_p_radiation_handler->add_radiation_contribution(dt,pc,cur_time);
+            }
+        }
+    }
+}
+
+
+void MultiParticleContainer::Dump_radiations(){
+    if (m_at_least_one_has_radiation){
+            m_p_radiation_handler->Integral_overtime();
+            m_p_radiation_handler->gather_and_write_radiation("Radiation");
+        }
+}
 #ifdef WARPX_QED
 void MultiParticleContainer::InitQED ()
 {

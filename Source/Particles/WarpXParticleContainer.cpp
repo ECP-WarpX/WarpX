@@ -1067,7 +1067,6 @@ WarpXParticleContainer::DepositCharge (std::unique_ptr<amrex::MultiFab>& rho,
     }
 #endif
 }
-
 std::unique_ptr<MultiFab>
 WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 {
@@ -1413,6 +1412,47 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                     }
                 }
             );
+        }
+    }
+}
+
+void WarpXParticleContainer::AllocateOldMomenta()
+{
+    AddRealComp("old_u_x");
+    AddRealComp("old_u_y");
+    AddRealComp("old_u_z");
+}
+
+void WarpXParticleContainer::RecordOldMomenta()
+{
+    auto const nlevs = std::max(0, finestLevel()+1);
+    for (int lev = 0; lev < nlevs; ++lev) {
+
+#ifdef AMREX_USE_OMP
+        #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        {
+            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti) {
+                auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
+                auto& part= GetParticles(lev)[index];
+                auto const np = pti.numParticles();
+                auto& soa = part.GetStructOfArrays();
+
+                const auto* ux = soa.GetRealData(PIdx::ux).data();
+                const auto* uy = soa.GetRealData(PIdx::uy).data();
+                const auto* uz = soa.GetRealData(PIdx::uz).data();
+
+                auto* old_ux = soa.GetRealData(GetRealCompIndex("old_u_x")).data();
+                auto* old_uy = soa.GetRealData(GetRealCompIndex("old_u_y")).data();
+                auto* old_uz = soa.GetRealData(GetRealCompIndex("old_u_z")).data();
+
+                amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int ip) {
+                    old_ux[ip] = ux[ip];
+                    old_uy[ip] = uy[ip];
+                    old_uz[ip] = uz[ip];
+                });
+
+            }
         }
     }
 }

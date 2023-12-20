@@ -11,7 +11,8 @@
 #include "Particles/Gather/GetExternalFields.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
-#include "Utils/WarpX_Complex.H"
+
+#include <ablastr/math/Complex.H>
 
 #include <AMReX.H>
 
@@ -62,6 +63,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      const int n_rz_azimuthal_modes)
 {
     using namespace amrex;
+    using namespace ablastr::math;
 
 #if defined(WARPX_DIM_XZ)
     amrex::ignore_unused(yp);

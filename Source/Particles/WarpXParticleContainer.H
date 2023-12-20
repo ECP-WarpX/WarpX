@@ -375,6 +375,8 @@ public:
     int DoQED() const { return false; }
 #endif
 
+    virtual bool has_radiation() const {return false;}
+
     /* \brief This function tests if the current species
     *  is of a given PhysicalSpecies (specified as a template parameter).
     * @tparam PhysSpec the PhysicalSpecies to test against
@@ -405,6 +407,19 @@ public:
     void defineAllParticleTiles () noexcept;
 
 protected:
+
+    /**
+     * This function allocates three real components:
+     * old_u_x, old_u_y, old_u_z.
+     */
+    void AllocateOldMomenta();
+
+    /**
+     * This function copies the momenta of the particles into:
+     * old_u_x, old_u_y, old_u_z.
+     */
+    void RecordOldMomenta();
+
     int species_id;
 
     amrex::ParticleReal charge;
@@ -430,6 +445,7 @@ protected:
     int do_continuous_injection = 0;
 
     int do_field_ionization = 0;
+
     int ionization_product;
     std::string ionization_product_name;
     int ion_atomic_number;

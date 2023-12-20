@@ -20,6 +20,7 @@
 #   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper_fwd.H"
 #endif
 #include "PhysicalParticleContainer.H"
+#include "Particles/Radiation/RadiationHandler_fwd.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpXParticleContainer.H"
@@ -68,7 +69,7 @@ public:
 
     MultiParticleContainer (amrex::AmrCore* amr_core);
 
-    ~MultiParticleContainer() = default;
+    ~MultiParticleContainer();
 
     MultiParticleContainer (MultiParticleContainer const &)             = delete;
     MultiParticleContainer& operator= (MultiParticleContainer const & ) = delete;
@@ -329,6 +330,11 @@ public:
                       const amrex::MultiFab& Bz);
 #endif
 
+    void doRadiation(amrex::Real dt, amrex::Real cur_time);
+
+    void RecordOldMomenta();
+
+    void Dump_radiations();
     [[nodiscard]] int getSpeciesID (std::string product_str) const;
 
 protected:
@@ -480,6 +486,12 @@ protected:
     amrex::Real m_qed_schwinger_zmin = std::numeric_limits<amrex::Real>::lowest();
     amrex::Real m_qed_schwinger_zmax = std::numeric_limits<amrex::Real>::max();
 
+    /**
+     * For Radiation module
+     */
+    bool m_at_least_one_particle_radiate = 0;
+    int m_nspecies_radiate;
+
 #endif
 
 private:
@@ -527,6 +539,8 @@ private:
     void CheckQEDProductSpecies();
 #endif
 
-
+// Radiation Handler
+std::unique_ptr<RadiationHandler> m_p_radiation_handler;
+bool m_at_least_one_has_radiation = false;
 };
 #endif /*WARPX_ParticleContainer_H_*/

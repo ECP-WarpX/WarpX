@@ -21,6 +21,7 @@
  */
 void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v );
 
+
 /** \brief Find the indices that would reorder the elements of `predicate`
  * so that the elements with non-zero value precede the other elements
  *

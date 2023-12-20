@@ -33,6 +33,7 @@
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Particles/Radiation/RadiationHandler.H"
 
 #include <ablastr/utils/SignalHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -245,6 +246,7 @@ WarpX::Evolve (int numsteps)
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],
                             *Bfield_aux[lev][2]);
             }
+            mypc->Dump_radiations();
             is_synchronized = true;
         }
 
@@ -426,7 +428,19 @@ WarpX::OneStep_nosub (Real cur_time)
     ExecutePythonCallback("particlescraper");
     ExecutePythonCallback("beforedeposition");
 
+    //Save particles' old momenta
+    mypc->RecordOldMomenta();
+
     PushParticlesandDeposit(cur_time);
+
+    //Radiation contribution at each timestep
+   //Only level 0 is supported
+    mypc->doRadiation(dt[0],cur_time);
+
+
+
+
+
 
     ExecutePythonCallback("afterdeposition");
 

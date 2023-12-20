@@ -347,6 +347,11 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     //check if Radiation Reaction is enabled and do consistency checks
     pp_species_name.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
+
+    //check if Radiations are enables for species and add old momentum attribute
+    pp_species_name.query("do_radiation", m_do_radiation);
+    if (m_do_radiation==1) {AllocateOldMomenta();}
+
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

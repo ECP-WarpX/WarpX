@@ -7,7 +7,8 @@
 #include "SpectralBaseAlgorithm.H"
 
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
-#include "Utils/WarpX_Complex.H"
+
+#include <ablastr/math/Complex.H>
 
 #include <AMReX_Array4.H>
 #include <AMReX_BaseFab.H>
@@ -23,6 +24,7 @@
 #include <memory>
 
 using namespace amrex;
+using namespace ablastr::math;
 
 /**
  * \brief Constructor

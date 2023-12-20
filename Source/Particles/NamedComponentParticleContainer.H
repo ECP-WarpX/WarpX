@@ -177,6 +177,23 @@ public:
     /** Return the name-to-index map for the runtime-time integer components */
     [[nodiscard]] std::map<std::string, int> getParticleRuntimeiComps () const noexcept { return particle_runtime_icomps;}
 
+    /** Get the index of a real component
+     *
+     * @param name Name of the new component
+     */
+    int GetRealCompIndex (const std::string& name)
+    {
+        return particle_comps.at(name);
+    }
+     /** Initialize value at a component
+     *
+     * @param name Name of the new component
+     */
+    //    void InitializeComp (const std::string& name)
+    //{
+    //    particle_runtime_comps.at(name);
+    //}
+
 protected:
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
