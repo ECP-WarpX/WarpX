@@ -188,6 +188,10 @@ void RadiationHandler::add_radiation_contribution
 
                     const auto& omega_points = m_omega_points;
 
+                    constexpr auto c = PhysConst::c;
+                    constexpr auto inv_c = 1._prt/(PhysConst::c);
+                    constexpr auto inv_c2 = 1._prt/(PhysConst::c* PhysConst::c);
+
                     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE(int ip){
                         amrex::ParticleReal xp, yp, zp;
                         GetPosition.AsStored(ip,xp, yp, zp);
@@ -197,9 +201,8 @@ void RadiationHandler::add_radiation_contribution
                         const auto uz = 0.5_prt*(p_uz[ip] + p_uz_old[ip]);
                         auto const u2 = ux*ux + uy*uy + uz*uz;
 
-                        constexpr auto inv_c2 = 1._prt/(PhysConst::c*PhysConst::c);
                         auto const one_over_gamma = 1._prt/std::sqrt(1.0_rt + u2*inv_c2);
-                        auto const one_over_gamma_c = one_over_gamma/PhysConst::c;
+                        auto const one_over_gamma_c = one_over_gamma*inv_c;
                         const auto bx = ux*one_over_gamma_c;
                         const auto by = uy*one_over_gamma_c;
                         const auto bz = uz*one_over_gamma_c;
@@ -213,7 +216,7 @@ void RadiationHandler::add_radiation_contribution
 
                         for(int i_om=0; i_om < omega_points; ++i_om){
 
-                            const auto i_omega_over_c = Complex{0.0_prt, 1.0_prt}*p_omegas[i_om]/PhysConst::c;
+                            const auto i_omega_over_c = Complex{0.0_prt, 1.0_prt}*p_omegas[i_om]*inv_c;
 
                             for (int i_det = 0; i_det < how_many_det_pos; ++i_det){
 
@@ -245,7 +248,7 @@ void RadiationHandler::add_radiation_contribution
                                 const auto n_cross_n_minus_beta_cross_bp_y =nz*n_minus_beta_cross_bp_x-nx*n_minus_beta_cross_bp_z;
                                 const auto n_cross_n_minus_beta_cross_bp_z =nx*n_minus_beta_cross_bp_y-ny*n_minus_beta_cross_bp_x;
 
-                                const auto phase_term = amrex::exp(i_omega_over_c*(PhysConst::c*current_time - d_part_det));
+                                const auto phase_term = amrex::exp(i_omega_over_c*(c*current_time - d_part_det));
 
                                 const auto coeff = tot_q*phase_term/(one_minus_b_dot_n*one_minus_b_dot_n);
 
