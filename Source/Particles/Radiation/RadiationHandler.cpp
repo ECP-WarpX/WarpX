@@ -186,6 +186,8 @@ void RadiationHandler::add_radiation_contribution
 
                     auto p_radiation_data = m_radiation_data.dataPtr();
 
+                    const auto& omega_points = m_omega_points;
+
                     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE(int ip){
                         amrex::ParticleReal xp, yp, zp;
                         GetPosition.AsStored(ip,xp, yp, zp);
@@ -209,7 +211,7 @@ void RadiationHandler::add_radiation_contribution
 
                         const auto tot_q = q*p_w[ip];
 
-                        for(int i_om=0; i_om < m_omega_points; ++i_om){
+                        for(int i_om=0; i_om < omega_points; ++i_om){
 
                             const auto i_omega_over_c = Complex{0.0_prt, 1.0_prt}*p_omegas[i_om]/PhysConst::c;
 
