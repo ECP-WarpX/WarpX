@@ -713,29 +713,48 @@ Particle initialization
 
     * ``SingleParticle``: Inject a single macroparticle.
       This requires the additional parameters:
-      ``<species_name>.single_particle_pos`` (`3 doubles`, particle 3D position [meter])
-      ``<species_name>.single_particle_u`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
-      ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
+
+      * ``<species_name>.single_particle_pos`` (`3 doubles`, particle 3D position [meter])
+
+      * ``<species_name>.single_particle_u`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
+
+      * ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
 
     * ``MultipleParticles``: Inject multiple macroparticles.
       This requires the additional parameters:
-      ``<species_name>.multiple_particles_pos_x`` (list of `doubles`, X positions of the particles [meter])
-      ``<species_name>.multiple_particles_pos_y`` (list of `doubles`, Y positions of the particles [meter])
-      ``<species_name>.multiple_particles_pos_z`` (list of `doubles`, Z positions of the particles [meter])
-      ``<species_name>.multiple_particles_ux`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
-      ``<species_name>.multiple_particles_uy`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
-      ``<species_name>.multiple_particles_uz`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
-      ``<species_name>.multiple_particles_weight`` (list of `doubles`, macroparticle weights, i.e. number of physical particles each represents)
+
+      * ``<species_name>.multiple_particles_pos_x`` (list of `doubles`, X positions of the particles [meter])
+
+      * ``<species_name>.multiple_particles_pos_y`` (list of `doubles`, Y positions of the particles [meter])
+
+      * ``<species_name>.multiple_particles_pos_z`` (list of `doubles`, Z positions of the particles [meter])
+
+      * ``<species_name>.multiple_particles_ux`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
+
+      * ``<species_name>.multiple_particles_uy`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
+
+      * ``<species_name>.multiple_particles_uz`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
+
+      * ``<species_name>.multiple_particles_weight`` (list of `doubles`, macroparticle weights, i.e. number of physical particles each represents)
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
       space in all directions. This requires additional parameters:
-      ``<species_name>.q_tot`` (beam charge),
-      ``<species_name>.npart`` (number of particles in the beam),
-      ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
-      ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
-      ``<species_name>.x/y/z_cut`` (optional, particles with ``abs(x-x_m) > x_cut*x_rms`` are not injected, same for y and z. ``<species_name>.q_tot`` is the charge of the un-cut beam, so that cutting the distribution is likely to result in a lower total charge),
-      and optional arguments ``<species_name>.do_symmetrize`` (whether to
-      symmetrize the beam) and ``<species_name>.symmetrization_order`` (order of symmetrization, default is 4, can be 4 or 8).
+
+      * ``<species_name>.q_tot`` (beam charge),
+
+      * ``<species_name>.npart`` (number of particles in the beam),
+
+      * ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
+
+      * ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
+
+      There are additional optional parameters:
+
+      * ``<species_name>.x/y/z_cut`` (optional, particles with ``abs(x-x_m) > x_cut*x_rms`` are not injected, same for y and z. ``<species_name>.q_tot`` is the charge of the un-cut beam, so that cutting the distribution is likely to result in a lower total charge),
+      * ``<species_name>.do_symmetrize`` (optional, whether to symmetrize the beam)
+
+      * ``<species_name>.symmetrization_order`` (order of symmetrization, default is 4, can be 4 or 8).
+
       If ``<species_name>.do_symmetrize`` is 0, no symmetrization occurs.  If ``<species_name>.do_symmetrize`` is 1,
       then the beam is symmetrized according to the value of ``<species_name>.symmetrization_order``.
       If set to 4, symmetrization is in the x and y direction, (x,y) (-x,y) (x,-y) (-x,-y).
@@ -743,11 +762,17 @@ Particle initialization
 
     * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
       With it users can specify the additional arguments:
-      ``<species_name>.injection_file`` (`string`) openPMD file name and
-      ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
-      ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
-      ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
-      ``<species_name>.impose_t_lab_from_file`` (`bool`) optional (default is false) only read if warpx.gamma_boost > 1., it allows to set t_lab for the Lorentz Transform as being the time stored in the openPMD file.
+
+      * ``<species_name>.injection_file`` (`string`) openPMD file name and
+
+      * ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
+
+      * ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
+
+      * ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
+
+      * ``<species_name>.impose_t_lab_from_file`` (`bool`) optional (default is false) only read if warpx.gamma_boost > 1., it allows to set t_lab for the Lorentz Transform as being the time stored in the openPMD file.
+
       Warning: ``q_tot!=0`` is not supported with the ``external_file`` injection style. If a value is provided, it is ignored and no re-scaling is done.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
@@ -756,13 +781,20 @@ Particle initialization
 
     * ``NFluxPerCell``: Continuously inject a flux of macroparticles from a planar surface.
       This requires the additional parameters:
-      ``<species_name>.flux_profile`` (see the description of this parameter further below)
-      ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
-      ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r`, `t`, or `z` for RZ. When `flux_normal_axis` is `r` or `t`, the `x` and `y` components of the user-specified momentum distribution are interpreted as the `r` and `t` components respectively)
-      ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
-      ``<species_name>.num_particles_per_cell`` (`double`)
-      ``<species_name>.flux_tmin`` (`double`, Optional time at which the flux will be turned on. Ignored when negative.)
-      ``<species_name>.flux_tmax`` (`double`, Optional time at which the flux will be turned off. Ignored when negative.)
+
+      * ``<species_name>.flux_profile`` (see the description of this parameter further below)
+
+      * ``<species_name>.surface_flux_pos`` (`double`, location of the injection plane [meter])
+
+      * ``<species_name>.flux_normal_axis`` (`x`, `y`, or `z` for 3D, `x` or `z` for 2D, or `r`, `t`, or `z` for RZ. When `flux_normal_axis` is `r` or `t`, the `x` and `y` components of the user-specified momentum distribution are interpreted as the `r` and `t` components respectively)
+
+      * ``<species_name>.flux_direction`` (`-1` or `+1`, direction of flux relative to the plane)
+
+      * ``<species_name>.num_particles_per_cell`` (`double`)
+
+      * ``<species_name>.flux_tmin`` (`double`, Optional time at which the flux will be turned on. Ignored when negative.)
+
+      * ``<species_name>.flux_tmax`` (`double`, Optional time at which the flux will be turned off. Ignored when negative.)
 
     * ``none``: Do not inject macro-particles (for example, in a simulation that starts with neutral, ionizable atoms, one may want to create the electrons species -- where ionized electrons can be stored later on -- without injecting electron macro-particles).
 
