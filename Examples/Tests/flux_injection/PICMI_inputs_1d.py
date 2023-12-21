@@ -10,7 +10,7 @@ from scipy.constants import c, e, m_e, m_p
 
 from pywarpx import picmi
 
-sys.path.insert(1, '../../../Regression/Checksum/')
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
 constants = picmi.constants
