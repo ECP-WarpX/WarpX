@@ -10,6 +10,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/Parser/ParserUtils.H"
+#include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
 
 #include <ablastr/constant.H>
