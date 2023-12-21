@@ -13,7 +13,6 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
 
-#include <ablastr/constant.H>
 #include <ablastr/math/Utils.H>
 
 #ifdef AMREX_USE_OMP
