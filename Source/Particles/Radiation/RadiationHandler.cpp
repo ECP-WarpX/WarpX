@@ -70,9 +70,9 @@ namespace
 
         const auto how_many = det_points[0]*det_points[1];
 
-        auto det_x = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
-        auto det_y = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
-        auto det_z = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
+        auto host_det_x = amrex::Vector<amrex::Real>(how_many);
+        auto host_det_y = amrex::Vector<amrex::Real>(how_many);
+        auto host_det_z = amrex::Vector<amrex::Real>(how_many);
 
         const auto one_over_direction = 1.0_rt/std::sqrt(
             direction[0]*direction[0]+direction[1]*direction[1]+direction[2]*direction[2]);
@@ -85,15 +85,26 @@ namespace
         {
             for (int j = 0; j < det_points[1]; ++j)
             {
-                det_x[i*det_points[1] + j] = center[0] + distance * norm_direction[0] + us[i]*u[0] + vs[j]*v[0];
-                det_y[i*det_points[1] + j] = center[1] + distance * norm_direction[1] + us[i]*u[1] + vs[j]*v[1];
-                det_z[i*det_points[1] + j] = center[2] + distance * norm_direction[2] + us[i]*u[2] + vs[j]*v[2];
+                host_det_x[i*det_points[1] + j] = center[0] + distance * norm_direction[0] + us[i]*u[0] + vs[j]*v[0];
+                host_det_y[i*det_points[1] + j] = center[1] + distance * norm_direction[1] + us[i]*u[1] + vs[j]*v[1];
+                host_det_z[i*det_points[1] + j] = center[2] + distance * norm_direction[2] + us[i]*u[2] + vs[j]*v[2];
             }
         }
 
-        amrex::Gpu::synchronize();
+        auto gpu_det_x = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
+        auto gpu_det_y = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
+        auto gpu_det_z = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
 
-        return std::make_tuple(det_x, det_y, det_z);
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+            host_det_x.begin(), host_det_x.end(), gpu_det_x.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+            host_det_y.begin(), host_det_y.end(), gpu_det_y.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+            host_det_z.begin(), host_det_z.end(), gpu_det_z.begin());
+
+        amrex::Gpu::Device::streamSynchronize();
+
+        return std::make_tuple(gpu_det_x, gpu_det_y, gpu_det_z);
 
     }
 }
@@ -141,8 +152,13 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
     constexpr auto ncomp = 3;
     m_radiation_data = amrex::Gpu::DeviceVector<ablastr::math::Complex>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
 
+    auto t_omegas = amrex::Vector<amrex::Real>(m_omega_points);
+    ablastr::math::LinSpaceFill(m_omega_range[0], m_omega_range[1], m_omega_points, t_omegas.begin());
     m_omegas = amrex::Gpu::DeviceVector<amrex::Real>(m_omega_points);
-    ablastr::math::LinSpaceFill(m_omega_range[0], m_omega_range[1], m_omega_points, m_omegas.begin());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+            t_omegas.begin(), t_omegas.end(), m_omegas.begin());
+
+    amrex::Gpu::Device::streamSynchronize();
 }
 
 
