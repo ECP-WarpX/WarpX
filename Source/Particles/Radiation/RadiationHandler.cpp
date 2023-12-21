@@ -9,12 +9,11 @@
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 
 #include <ablastr/constant.H>
 #include <ablastr/math/Utils.H>
-
-#include <AMReX_ParmParse.H>
 
 #ifdef AMREX_USE_OMP
 #   include <omp.h>
@@ -25,6 +24,7 @@
 
 using namespace amrex;
 using namespace ablastr::math;
+using namespace utils::parser;
 
 namespace
 {
@@ -110,29 +110,29 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
 
     //Resolution in frequency of the detector
     auto omega_range = std::vector<amrex::Real>(2);
-    pp_radiation.getarr("omega_range", omega_range);
+    getArrWithParser(pp_radiation, "omega_range", omega_range);
     std::copy(omega_range.begin(), omega_range.end(), m_omega_range.begin());
-    pp_radiation.get("omega_points", m_omega_points);
+    getWithParser(pp_radiation, "omega_points", m_omega_points);
 
     //Angle theta AND phi
     auto theta_range = std::vector<amrex::Real>(2);
-    pp_radiation.getarr("angle_aperture", theta_range);
+    getArrWithParser(pp_radiation, "angle_aperture", theta_range);
     std::copy(theta_range.begin(), theta_range.end(), m_theta_range.begin());
 
     //Detector parameters
     auto det_pts = std::vector<int>(2);
-    pp_radiation.getarr("detector_number_points", det_pts);
+    getArrWithParser(pp_radiation, "detector_number_points", det_pts);
     std::copy(det_pts.begin(), det_pts.end(), m_det_pts.begin());
 
     auto det_direction = std::vector<amrex::Real>(3);
-    pp_radiation.getarr("detector_direction", det_direction);
+    getArrWithParser(pp_radiation, "detector_direction", det_direction);
     std::copy(det_direction.begin(), det_direction.end(), m_det_direction.begin());
 
     auto det_orientation = std::vector<amrex::Real>(3);
-    pp_radiation.getarr("detector_orientation", det_orientation);
+    getArrWithParser(pp_radiation, "detector_orientation", det_orientation);
     std::copy(det_orientation.begin(), det_orientation.end(), m_det_orientation.begin());
 
-    pp_radiation.get("detector_distance", m_det_distance);
+    getWithParser(pp_radiation, "detector_distance", m_det_distance);
 
     std::tie(det_pos_x, det_pos_y, det_pos_z) = compute_detector_positions(
         center, m_det_direction, m_det_distance,
