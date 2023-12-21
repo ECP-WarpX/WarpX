@@ -19,10 +19,10 @@ import numpy as np
 import openpmd_viewer
 from scipy.constants import c, e, m_e, m_p
 
-sys.path.insert(1, '../../../Regression/Checksum/')
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-sys.path.append('../../../Tools/Parser/')
+sys.path.append('../../../../warpx/Tools/Parser/')
 from input_file_parser import parse_input_file
 
 input_dict = parse_input_file('inputs_1d_fixed')
