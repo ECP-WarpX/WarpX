@@ -84,9 +84,9 @@ void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
                        const int zdir, const int NODE, const int CELL, const int dir)
 {
     using namespace amrex::literals;
-    using namespace ablastr::math;
 
 #if !defined(WARPX_DIM_RZ)
+    using namespace ablastr::math;
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
