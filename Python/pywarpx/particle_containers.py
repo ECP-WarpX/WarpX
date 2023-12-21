@@ -117,8 +117,10 @@ class ParticleContainerWrapper(object):
                 kwargs[key] = np.full(maxlen, val)
 
         # --- The number of built in attributes
+        # --- The positions
+        built_in_attrs = libwarpx.dim
         # --- The three velocities
-        built_in_attrs = 3
+        built_in_attrs += 3
         if libwarpx.geometry_dim == 'rz':
             # --- With RZ, there is also theta
             built_in_attrs += 1
