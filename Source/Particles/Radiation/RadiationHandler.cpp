@@ -160,10 +160,10 @@ void RadiationHandler::add_radiation_contribution
                 {
                     long const np = pti.numParticles();
                     const auto& attribs = pti.GetAttribs();
-                    const auto& p_w = attribs[PIdx::w];
-                    const auto& p_ux = attribs[PIdx::ux];
-                    const auto& p_uy = attribs[PIdx::uy];
-                    const auto& p_uz = attribs[PIdx::uz];
+                    const auto* p_w = attribs[PIdx::w].data();
+                    const auto* p_ux = attribs[PIdx::ux].data();
+                    const auto* p_uy = attribs[PIdx::uy].data();
+                    const auto* p_uz = attribs[PIdx::uz].data();
 
                     const auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
                     auto& part=pc->GetParticles(lev)[index];
