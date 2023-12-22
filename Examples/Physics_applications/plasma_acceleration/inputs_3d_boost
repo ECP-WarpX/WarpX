@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 800
+max_step = 10
 amr.n_cell = 64 64 64
 amr.blocking_factor = 32
 amr.max_grid_size = 128
@@ -141,11 +141,11 @@ diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez jx jy jz part_per_cell
 diag1.file_prefix = diags/diag1
 diag1.format = openpmd
-diag1.intervals = 200
+diag1.intervals = 10
 diag1.species = driver beam plasma_e
 diag1.write_species = 1
 
 warpx.reduced_diags_names = beamrel
-beamrel.intervals = 10
+beamrel.intervals = 1
 beamrel.species = beam
 beamrel.type = BeamRelevant

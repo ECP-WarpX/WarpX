@@ -22,7 +22,7 @@ gamma_boost = 10.0
 npc_x = 1
 npc_z = 1
 
-max_steps = 800
+max_steps = 10
 
 field_bc_z='open'
 field_bc_x='open'
@@ -140,7 +140,7 @@ sim.add_species(
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
-    period = 200,
+    period = max_steps,
     data_list = ['Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz', 'part_per_cell'],
     write_dir='diags',
     warpx_format='openpmd',
@@ -148,7 +148,7 @@ field_diag = picmi.FieldDiagnostic(
 
 part_diag = picmi.ParticleDiagnostic(
     name = 'diag1',
-    period = 200,
+    period = max_steps,
     species = [driver, beam, plasma_e],
     write_dir='diags',
     warpx_format='openpmd',

@@ -19,6 +19,7 @@ from openpmd_viewer import OpenPMDTimeSeries
 ts = OpenPMDTimeSeries('diags/diag1')
 
 iteration=ts.iterations[-1]
+select = {'y':[-3e-6,3e-6]}
 
 pez, pex = ts.get_particle(species='plasma_e',
                            iteration=iteration,
