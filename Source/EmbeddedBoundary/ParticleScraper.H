@@ -189,7 +189,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                     amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
 
                     // the exact coordinates are already calculated in the file Source/Particles/ParticleBoundaryBuffer.cpp
-       
+
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
                     pos[0] = xp;
@@ -207,7 +207,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                     DistanceToEB::normalize(normal);
 
                     f(ptd, ip, pos, normal, engine);
-                    
+
                 }
             });
         }

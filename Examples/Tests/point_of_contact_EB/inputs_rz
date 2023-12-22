@@ -51,4 +51,3 @@ diag1.format = openpmd
 
 diag2.diag_type = BoundaryScraping
 diag2.format = openpmd
-
