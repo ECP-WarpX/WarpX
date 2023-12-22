@@ -52,7 +52,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (const int lev,
     tmpSpectralField = SpectralField(spectralspace_ba, dm, n_rz_azimuthal_modes, 0);
 
     // By default, we assume the z FFT is done from/to a nodal grid in real space.
-    // It the FFT is performed from/to a cell-centered grid in real space,
+    // If the FFT is performed from/to a cell-centered grid in real space,
     // a correcting "shift" factor must be applied in spectral space.
     zshift_FFTfromCell = k_space.getSpectralShiftFactor(dm, 1,
                                     ShiftType::TransformFromCellCentered);
@@ -331,7 +331,7 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
     [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
         Complex spectral_field_value = tmp_arr(i,j,k,mode);
         // Apply proper shift.
-        if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
+        if (!is_nodal_z) { spectral_field_value *= zshift_arr[j]; }
         // Copy field into the correct index.
         int const ic = field_index + mode*n_fields;
         fields_arr(i,j,k,ic) = spectral_field_value*inv_nz;
@@ -369,7 +369,7 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
         int const ic = field_index + mode*n_fields;
         Complex spectral_field_value = fields_arr(i,j,k,ic);
         // Apply proper shift.
-        if (!is_nodal_z) spectral_field_value *= zshift_arr[j];
+        if (!is_nodal_z) { spectral_field_value *= zshift_arr[j]; }
         // Copy field into the right index.
         tmp_arr(i,j,k,mode) = spectral_field_value;
     });

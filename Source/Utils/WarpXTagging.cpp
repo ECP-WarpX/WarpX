@@ -32,7 +32,7 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
     const auto dx = Geom(lev).CellSizeArray();
 
     amrex::ParserExecutor<3> ref_parser;
-    if (ref_patch_parser) ref_parser = ref_patch_parser->compile<3>();
+    if (ref_patch_parser) { ref_parser = ref_patch_parser->compile<3>(); }
     const auto ftlo = fine_tag_lo;
     const auto fthi = fine_tag_hi;
 #ifdef AMREX_USE_OMP

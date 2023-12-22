@@ -58,7 +58,7 @@ struct GetExternalEBField
 
     std::optional<LatticeElementFinderDevice> d_lattice_element_finder;
 
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    [[nodiscard]] AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool isNoOp () const { return (m_Etype == None && m_Btype == None && !d_lattice_element_finder.has_value()); }
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -78,7 +78,7 @@ struct GetExternalEBField
                                            field_Bx, field_By, field_Bz);
         }
 
-        if (m_Etype == None && m_Btype == None) return;
+        if (m_Etype == None && m_Btype == None) { return; }
 
         amrex::ParticleReal Ex = 0._prt;
         amrex::ParticleReal Ey = 0._prt;

@@ -121,7 +121,7 @@ Perlmutter Example
 """"""""""""""""""
 
 Example on how to create traces on a multi-GPU system that uses the Slurm scheduler (e.g., NERSC's Perlmutter system).
-You can either run this on an interactive node or use the Slurm batch script header :ref:`documented here <running-cpp-perlmutter-A100-GPUs>`.
+You can either run this on an interactive node or use the Slurm batch script header :ref:`documented here <running-cpp-perlmutter>`.
 
 .. code-block:: bash
 
@@ -247,7 +247,7 @@ node, or without a workload management system.
 .. note::
 
     To collect full statistics, Nsight-Compute reruns kernels,
-    temporarilly saving device memory in host memory. This makes it
+    temporarily saving device memory in host memory. This makes it
     slower than Nsight-Systems, so the provided script profiles only a single
     step of a single process. This is generally enough to extract relevant
     information.

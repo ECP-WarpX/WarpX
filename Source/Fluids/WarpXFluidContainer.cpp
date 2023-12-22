@@ -27,8 +27,8 @@ WarpXFluidContainer::WarpXFluidContainer(int nlevs_max, int ispecies, const std:
 
     // Initialize injection objects
     const ParmParse pp_species_name(species_name);
-    SpeciesUtils::parseDensity(species_name, h_inj_rho, density_parser);
-    SpeciesUtils::parseMomentum(species_name, "none", h_inj_mom,
+    SpeciesUtils::parseDensity(species_name, "", h_inj_rho, density_parser);
+    SpeciesUtils::parseMomentum(species_name, "", "none", h_inj_mom,
         ux_parser, uy_parser, uz_parser, ux_th_parser, uy_th_parser, uz_th_parser, h_mom_temp, h_mom_vel);
     if (h_inj_rho) {
 #ifdef AMREX_USE_GPU
@@ -332,7 +332,7 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
 
-                // If the cell is is first gaurd cell & the dimension is non
+                // If the cell is is first guard cell & the dimension is non
                 // periodic, then copy Q_{i+1} = Q_{i-1}.
                 // Don't check r-dir in Z:
 #if defined(WARPX_DIM_3D)
@@ -495,7 +495,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #endif
 
         //N and NU are always defined at the nodes, the tmp_Q_* are defined
-        //inbetween the nodes (i.e. on the staggered Yee grid) and store the
+        //in between the nodes (i.e. on the staggered Yee grid) and store the
         //values of N and U at these points.
         //(i.e. the 4 components correspond to N + the 3 components of U)
         // Extract the temporary arrays for edge values
@@ -594,7 +594,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     // Select the specific implementation depending on dimensionality
 #if defined(WARPX_DIM_3D)
 
-                    // Compute U ([ N, U]) at the halfsteps (U_tidle) using the slopes (dU)
+                    // Compute U ([ N, U]) at the halfsteps (U_tilde) using the slopes (dU)
                     amrex::Real JdU0x = J00x*dU0x + J01x*dU1x + J02x*dU2x + J03x*dU3x;
                     amrex::Real JdU1x = J11x*dU1x ;
                     amrex::Real JdU2x = J22x*dU2x ;
@@ -636,7 +636,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 #elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
 
-                    // Have no RZ-intertial source for primative vars if in XZ
+                    // Have no RZ-inertial source for primitive vars if in XZ
                     amrex::Real N_source = 0.0;
 
 #if defined(WARPX_DIM_RZ)
@@ -652,7 +652,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                         // NUz -> -NUz (NUz_arr(i-1,j,k) -> NUz_arr(i+1,j,k))
                         dU0x = ave( -UpDx_N(N_arr,i,j,k) , UpDx_N(N_arr,i,j,k) );
                         // First term in the ave is: U_{x,y} + U_{x,y}_p,
-                        // which can be writen as 2*U_{x,y} + UpDx_U(U_{x,y})
+                        // which can be written as 2*U_{x,y} + UpDx_U(U_{x,y})
                         dU1x = ave( 2.0_rt*Ux + UpDx_U(N_arr,NUx_arr,Ux,i,j,k) , UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
                         dU2x = ave( 2.0_rt*Uy + UpDx_U(N_arr,NUy_arr,Uy,i,j,k) , UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
                         dU3x = ave( -UpDx_U(N_arr,NUz_arr,Uz,i,j,k) , UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
@@ -669,7 +669,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     }
 #endif
 
-                    // Compute U ([ N, U]) at the halfsteps (U_tidle) using the slopes (dU)
+                    // Compute U ([ N, U]) at the halfsteps (U_tilde) using the slopes (dU)
                     amrex::Real  JdU0x = J00x*dU0x + J01x*dU1x + J02x*dU2x + J03x*dU3x;
                     amrex::Real  JdU1x = J11x*dU1x;
                     amrex::Real  JdU2x = J22x*dU2x;
@@ -699,7 +699,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 
 #else
 
-                    // Compute U ([ N, U]) at the halfsteps (U_tidle) using the slopes (dU)
+                    // Compute U ([ N, U]) at the halfsteps (U_tilde) using the slopes (dU)
                     amrex::Real  JdU0z = J00z*dU0z + J01z*dU1z + J02z*dU2z + J03z*dU3z;
                     amrex::Real  JdU1z = J11z*dU1z;
                     amrex::Real  JdU2z = J22z*dU2z;
@@ -734,7 +734,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         );
     }
 
-    // Given the values of `U_minus` and `U_plus`, compute fluxes inbetween nodes, and update N, NU accordingly
+    // Given the values of `U_minus` and `U_plus`, compute fluxes in between nodes, and update N, NU accordingly
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -821,10 +821,12 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                 // Radial Surfaces
                 amrex::Real S_Ar_plus = 2.0_rt*MathConst::pi*(r + dr/2.0_rt)*dz;
                 amrex::Real S_Ar_minus = 2.0_rt*MathConst::pi*(r - dr/2.0_rt)*dz;
-                if (i == domain.smallEnd(0))
+                if (i == domain.smallEnd(0)) {
                     S_Ar_minus = 0.0_rt;
-                if (i == domain.bigEnd(0)+1)
+                }
+                if (i == domain.bigEnd(0)+1) {
                     S_Ar_plus = 2.0_rt*MathConst::pi*(r)*dz;
+                }
 
                 // Impose "none" boundaries
                 // Condition: Vx(r) = 0 at boundaries
@@ -1222,7 +1224,7 @@ void WarpXFluidContainer::DepositCharge (int lev, amrex::MultiFab &rho, int icom
         amrex::ParallelFor(tile_box,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                if ( owner_mask_rho_arr(i,j,k) ) rho_arr(i,j,k,icomp) += q*N_arr(i,j,k);
+                if ( owner_mask_rho_arr(i,j,k) ) { rho_arr(i,j,k,icomp) += q*N_arr(i,j,k); }
             }
         );
     }
@@ -1333,19 +1335,19 @@ void WarpXFluidContainer::DepositCurrent(
             {
                 amrex::Real jx_tmp = ablastr::coarsen::sample::Interp(tmp_jx_fluid_arr,
                     j_nodal_type, jx_type, coarsening_ratio, i, j, k, 0);
-                if ( owner_mask_x_arr(i,j,k) ) jx_arr(i, j, k) += jx_tmp;
+                if ( owner_mask_x_arr(i,j,k) ) { jx_arr(i, j, k) += jx_tmp; }
             },
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
                 amrex::Real jy_tmp = ablastr::coarsen::sample::Interp(tmp_jy_fluid_arr,
                     j_nodal_type, jy_type, coarsening_ratio, i, j, k, 0);
-                if ( owner_mask_y_arr(i,j,k) ) jy_arr(i, j, k) += jy_tmp;
+                if ( owner_mask_y_arr(i,j,k) ) { jy_arr(i, j, k) += jy_tmp; }
             },
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
                 amrex::Real jz_tmp = ablastr::coarsen::sample::Interp(tmp_jz_fluid_arr,
                     j_nodal_type, jz_type, coarsening_ratio, i, j, k, 0);
-                if ( owner_mask_z_arr(i,j,k) ) jz_arr(i, j, k) += jz_tmp;
+                if ( owner_mask_z_arr(i,j,k) ) { jz_arr(i, j, k) += jz_tmp; }
             }
         );
     }

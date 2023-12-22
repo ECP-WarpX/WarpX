@@ -513,7 +513,7 @@ MultiSigmaBox::MultiSigmaBox (const BoxArray& ba, const DistributionMapping& dm,
 void
 MultiSigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
 {
-    if (dt == dt_B) return;
+    if (dt == dt_B) { return; }
 
     dt_B = dt;
 
@@ -529,7 +529,7 @@ MultiSigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
 void
 MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 {
-    if (dt == dt_E) return;
+    if (dt == dt_E) { return; }
 
     dt_E = dt;
 
@@ -597,7 +597,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     auto nge = IntVect(AMREX_D_DECL(2, 2, 2));
     auto ngb = IntVect(AMREX_D_DECL(2, 2, 2));
     int ngf_int = 0;
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) ngf_int = std::max( ngf_int, 1 );
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) {
+        ngf_int = std::max( ngf_int, 1 );
+    }
     auto ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
 
     if (do_moving_window) {
@@ -1074,9 +1076,9 @@ void PML::Exchange (const std::array<amrex::MultiFab*,3>& mf_pml,
                     const int do_pml_in_domain)
 {
     const amrex::Geometry& geom = (patch_type == PatchType::fine) ? *m_geom : *m_cgeom;
-    if (mf_pml[0] && mf[0]) Exchange(*mf_pml[0], *mf[0], geom, do_pml_in_domain);
-    if (mf_pml[1] && mf[1]) Exchange(*mf_pml[1], *mf[1], geom, do_pml_in_domain);
-    if (mf_pml[2] && mf[2]) Exchange(*mf_pml[2], *mf[2], geom, do_pml_in_domain);
+    if (mf_pml[0] && mf[0]) { Exchange(*mf_pml[0], *mf[0], geom, do_pml_in_domain); }
+    if (mf_pml[1] && mf[1]) { Exchange(*mf_pml[1], *mf[1], geom, do_pml_in_domain); }
+    if (mf_pml[2] && mf[2]) { Exchange(*mf_pml[2], *mf[2], geom, do_pml_in_domain); }
 }
 
 void

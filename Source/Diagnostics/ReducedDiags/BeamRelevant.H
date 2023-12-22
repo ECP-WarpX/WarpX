@@ -29,7 +29,7 @@ public:
     std::string m_beam_name;
 
     /**
-     * This function computes beam relevant quantites.
+     * This function computes beam relevant quantities.
      *
      * @param[in] step current time step
      */

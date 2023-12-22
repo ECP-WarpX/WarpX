@@ -44,7 +44,7 @@ using namespace amrex;
 
 /* \brief
  *  The functions creates the slice for diagnostics based on the user-input.
- *  The slice can be 1D, 2D, or 3D and it inherts the index type of the underlying data.
+ *  The slice can be 1D, 2D, or 3D and it inherits the index type of the underlying data.
  *  The implementation assumes that the slice is aligned with the coordinate axes.
  *  The input parameters are modified if the user-input does not comply with requirements of coarsenability or if the slice extent is not contained within the simulation domain.
  *  First a slice multifab (smf) with cell size equal to that of the simulation grid is created such that it extends from slice.dim_lo to slice.dim_hi and shares the same index space as the source multifab (mf)
@@ -151,7 +151,7 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
     const amrex::IntVect nghost_vect(AMREX_D_DECL(nghost, nghost, nghost));
     ablastr::utils::communication::ParallelCopy(*smf, mf, 0, 0, ncomp, nghost_vect, nghost_vect, WarpX::do_single_precision_comms);
 
-    // inteprolate if required on refined slice //
+    // interpolate if required on refined slice //
     if (interpolate == 1 ) {
        InterpolateSliceValues( *smf, interp_lo, slice_cc_nd_box, dom_geom,
                                ncomp, nghost, slice_lo, slice_hi, SliceType, real_box);
@@ -309,7 +309,7 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
             slice_cc_nd_box.setLo( idim, slice_realbox.lo(idim) );
             slice_cc_nd_box.setHi( idim, slice_realbox.hi(idim) );
 
-            if ( slice_cr_ratio[idim] > 1) slice_cr_ratio[idim] = 1;
+            if ( slice_cr_ratio[idim] > 1) { slice_cr_ratio[idim] = 1; }
 
             // check for interpolation -- compute index lo with floor and ceil
             if ( slice_cc_nd_box.lo(idim) - real_box.lo(idim) >= fac ) {
@@ -349,7 +349,7 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
         }
         else
         {
-            // moving realbox.lo and reabox.hi to nearest coarsenable grid point //
+            // moving realbox.lo and realbox.hi to nearest coarsenable grid point //
             auto index_lo = static_cast<int>(floor(((slice_realbox.lo(idim) +  very_small_number
                             - (real_box.lo(idim))) / dom_geom[0].CellSize(idim))) );
             auto index_hi = static_cast<int>(ceil(((slice_realbox.hi(idim)  - very_small_number

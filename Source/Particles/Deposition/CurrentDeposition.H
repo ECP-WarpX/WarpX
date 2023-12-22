@@ -37,7 +37,7 @@
                          since q is a scalar. For non-ionizable species,
                          ion_lev is a null pointer.
  * \param jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile.
- * \param np_to_depose Number of particles for which current is deposited.
+ * \param np_to_deposit Number of particles for which current is deposited.
  * \param relative_time Time at which to deposit J, relative to the time of the
  *                      current positions of the particles. When different than 0,
  *                      the particle position will be temporarily modified to match
@@ -60,7 +60,7 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          amrex::FArrayBox& jx_fab,
                          amrex::FArrayBox& jy_fab,
                          amrex::FArrayBox& jz_fab,
-                         long np_to_depose,
+                         long np_to_deposit,
                          amrex::Real relative_time,
                          const std::array<amrex::Real,3>& dx,
                          const std::array<amrex::Real,3>& xyzmin,
@@ -126,8 +126,8 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
     }
 #endif
     amrex::ParallelFor(
-        np_to_depose,
-        [=] AMREX_GPU_DEVICE (long ip) {
+            np_to_deposit,
+            [=] AMREX_GPU_DEVICE (long ip) {
 #if defined(WARPX_USE_GPUCLOCK)
             const auto KernelTimer = ablastr::parallelization::KernelTimer(
                 cost && (load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock),
@@ -152,7 +152,7 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             // wqx, wqy wqz are particle current in each direction
 #if defined(WARPX_DIM_RZ)
             // In RZ, wqx is actually wqr, and wqy is wqtheta
-            // Convert to cylinderical at the mid point
+            // Convert to cylindrical at the mid point
             const amrex::Real xpmid = xp + relative_time*vx;
             const amrex::Real ypmid = yp + relative_time*vy;
             const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
@@ -350,7 +350,7 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                          since q is a scalar. For non-ionizable species,
                          ion_lev is a null pointer.
  * \param jx_fab,jy_fab,jz_fab FArrayBox of current density, either full array or tile.
- * \param np_to_depose Number of particles for which current is deposited.
+ * \param np_to_deposit Number of particles for which current is deposited.
  * \param dt           Time step for particle level
  * \param relative_time Time at which to deposit J, relative to the time of the
  *                      current positions of the particles. When different than 0,
@@ -374,7 +374,7 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                amrex::FArrayBox& jx_fab,
                                amrex::FArrayBox& jy_fab,
                                amrex::FArrayBox& jz_fab,
-                               long np_to_depose,
+                               long np_to_deposit,
                                const amrex::Real relative_time,
                                const std::array<amrex::Real,3>& dx,
                                const std::array<amrex::Real,3>& xyzmin,
@@ -437,7 +437,7 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
                                      "Tile size too big for GPU shared memory current deposition");
 
-    amrex::ignore_unused(np_to_depose);
+    amrex::ignore_unused(np_to_deposit);
     // Launch one thread-block per bin
     amrex::launch(
             nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
@@ -545,7 +545,7 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
     // Note, you should never reach this part of the code. This funcion cannot be called unless
     // using HIP/CUDA, and those things are checked prior
     //don't use any args
-    ignore_unused( GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
+    ignore_unused(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size);
     WARPX_ABORT_WITH_MESSAGE("Shared memory only implemented for HIP/CUDA");
 #endif
 }
@@ -562,7 +562,7 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
                        since q is a scalar. For non-ionizable species,
                        ion_lev is a null pointer.
  * \param Jx_arr,Jy_arr,Jz_arr Array4 of current density, either full array or tile.
- * \param np_to_depose Number of particles for which current is deposited.
+ * \param np_to_deposit Number of particles for which current is deposited.
  * \param dt           Time step for particle level
  * \param[in] relative_time Time at which to deposit J, relative to the time of the
  *                          current positions of the particles. When different than 0,
@@ -586,7 +586,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                   const amrex::Array4<amrex::Real>& Jx_arr,
                                   const amrex::Array4<amrex::Real>& Jy_arr,
                                   const amrex::Array4<amrex::Real>& Jz_arr,
-                                  long np_to_depose,
+                                  long np_to_deposit,
                                   amrex::Real dt,
                                   amrex::Real relative_time,
                                   const std::array<amrex::Real,3>& dx,
@@ -656,7 +656,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
     }
 #endif
     amrex::ParallelFor(
-        np_to_depose,
+        np_to_deposit,
         [=] AMREX_GPU_DEVICE (long const ip) {
 #if defined(WARPX_USE_GPUCLOCK)
             const auto KernelTimer = ablastr::parallelization::KernelTimer(
@@ -790,17 +790,17 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             // computes min/max positions of current contributions
 #if !defined(WARPX_DIM_1D_Z)
             int dil = 1, diu = 1;
-            if (i_old < i_new) dil = 0;
-            if (i_old > i_new) diu = 0;
+            if (i_old < i_new) { dil = 0; }
+            if (i_old > i_new) { diu = 0; }
 #endif
 #if defined(WARPX_DIM_3D)
             int djl = 1, dju = 1;
-            if (j_old < j_new) djl = 0;
-            if (j_old > j_new) dju = 0;
+            if (j_old < j_new) { djl = 0; }
+            if (j_old > j_new) { dju = 0; }
 #endif
             int dkl = 1, dku = 1;
-            if (k_old < k_new) dkl = 0;
-            if (k_old > k_new) dku = 0;
+            if (k_old < k_new) { dkl = 0; }
+            if (k_old > k_new) { dku = 0; }
 
 #if defined(WARPX_DIM_3D)
 
@@ -941,7 +941,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                            required to have the charge of each macroparticle since \c q
                            is a scalar. For non-ionizable species, \c ion_lev is \c null
  * \param[in,out] Dx_fab,Dy_fab,Dz_fab FArrayBox of Vay current density, either full array or tile
- * \param[in] np_to_depose Number of particles for which current is deposited
+ * \param[in] np_to_deposit Number of particles for which current is deposited
  * \param[in] dt           Time step for particle level
  * \param[in] relative_time Time at which to deposit D, relative to the time of the
  *                          current positions of the particles. When different than 0,
@@ -966,7 +966,7 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                             amrex::FArrayBox& Dx_fab,
                             amrex::FArrayBox& Dy_fab,
                             amrex::FArrayBox& Dz_fab,
-                            long np_to_depose,
+                            long np_to_deposit,
                             amrex::Real dt,
                             amrex::Real relative_time,
                             const std::array<amrex::Real,3>& dx,
@@ -982,14 +982,14 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 #if defined(WARPX_DIM_RZ)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
-        np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
+        np_to_deposit, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
     WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in RZ geometry");
 #endif
 
 #if defined(WARPX_DIM_1D_Z)
     amrex::ignore_unused(GetPosition,
         wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
-        np_to_depose, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
+        np_to_deposit, dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
     WARPX_ABORT_WITH_MESSAGE("Vay deposition not implemented in cartesian 1D geometry");
 #endif
 
@@ -1054,7 +1054,7 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
         *cost_real = 0._rt;
     }
 #endif
-    amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)
+    amrex::ParallelFor(np_to_deposit, [=] AMREX_GPU_DEVICE (long ip)
     {
 #if defined(WARPX_USE_GPUCLOCK)
         const auto KernelTimer = ablastr::parallelization::KernelTimer(
@@ -1068,7 +1068,7 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                                            + uzp[ip] * uzp[ip] * invcsq);
         // Product of particle charges and weights
         amrex::Real wq = q * wp[ip];
-        if (do_ionization) wq *= ion_lev[ip];
+        if (do_ionization) { wq *= ion_lev[ip]; }
 
         // Current particle positions (in physical units)
         amrex::ParticleReal xp, yp, zp;
