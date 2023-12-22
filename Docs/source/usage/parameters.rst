@@ -102,7 +102,7 @@ Overall simulation parameters
 
 * ``algo.picard_iteration_tolerance`` (`float`, default: 1.e-7)
     When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets the convergence tolerance of
-    the iterations, the maximum of the fractional change of the field from one iteration to the next.
+    the iterations, the maximum of the relative change of the L2 norm of the field from one iteration to the next.
     If this is set to zero, the maximum number of iterations will always be done with the change only calculated on the last
     iteration (for a slight optimization).
 
