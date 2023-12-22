@@ -2997,9 +2997,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
 /* \brief Perform the implicit particle push operation in one fused kernel
  *        The main difference from PushPX is the order of operations:
- *         - push position 1/2 dt
+ *         - push position by 1/2 dt
  *         - gather fields
- *         - push velocity dt
+ *         - push velocity by dt
  *         - average old and new velocity to get time centered value
  *        The routines ends with both position and velocity at the half time level.
  */
