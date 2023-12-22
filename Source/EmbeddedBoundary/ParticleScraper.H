@@ -188,7 +188,8 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 {
                     amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
 
-                    // the closest point on the surface to pos is pos - grad phi(pos) * phi(pos)
+                    // the exact coordinates are already calculated in the file Source/Particles/ParticleBoundaryBuffer.cpp
+       
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
                     pos[0] = xp;
