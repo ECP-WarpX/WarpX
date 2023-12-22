@@ -107,7 +107,7 @@ namespace ParticleCreation {
      * @param[in] user_real_attrib_parser the parser functions used to initialize the user real components
      * @param[in] user_int_attrib_parser the parser functions used to initialize the user int components
      * @param[in] do_qed_comps whether to initialize the qed components (these are usually handled by
-     * SmartCopy, but NOT when adding particles in AddNParticles
+     * SmartCopy, but NOT when adding particles in AddNParticles)
      * @param[in] p_bw_engine the engine to use for setting the breit-wheeler component for QED
      * @param[in] p_qs_engine the engine to use for setting the quantum synchrotron component for QED
      * @param[in] ionization_initial_level the ionization level particles created should start at
@@ -157,12 +157,14 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 if (!do_qed_comps) { continue; }
                 const QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt =
                                                 p_qs_engine->build_optical_depth_functor();
+                // If the particle tile was allocated in a memory pool that can run on GPU, launch GPU kernel
                 if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<amrex::Real>>::value) {
                         amrex::ParallelForRNG(stop - start,
                                               [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept {
                                                   int ip = i + start;
                                                   attr_ptr[ip] = quantum_sync_get_opt(engine);
                                               });
+                // Otherwise (e.g. particle tile allocated in pinned memory), run on CPU
                 } else {
                     for (int ip = start; ip < stop; ++ip) {
                         attr_ptr[ip] = quantum_sync_get_opt(amrex::RandomEngine{});
@@ -177,12 +179,14 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 if (!do_qed_comps) { continue; }
                 const BreitWheelerGetOpticalDepth breit_wheeler_get_opt =
                                                 p_bw_engine->build_optical_depth_functor();;
+                // If the particle tile was allocated in a memory pool that can run on GPU, launch GPU kernel
                 if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<amrex::Real>>::value) {
                         amrex::ParallelForRNG(stop - start,
                                               [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept {
                                                   int ip = i + start;
                                                   attr_ptr[ip] = breit_wheeler_get_opt(engine);
                                               });
+                // Otherwise (e.g. particle tile allocated in pinned memory), run on CPU
                 } else {
                     for (int ip = start; ip < stop; ++ip) {
                         attr_ptr[ip] = breit_wheeler_get_opt(amrex::RandomEngine{});
@@ -199,6 +203,7 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                 {
                     const amrex::ParserExecutor<7> user_real_attrib_parserexec =
                                              user_real_attrib_parser[ia]->compile<7>();
+                    // If the particle tile was allocated in a memory pool that can run on GPU, launch GPU kernel
                     if constexpr (amrex::RunOnGpu<typename PTile::template AllocatorType<amrex::Real>>::value) {
                         amrex::ParallelFor(stop - start,
                                            [=] AMREX_GPU_DEVICE (int i) noexcept {
@@ -208,6 +213,7 @@ void DefaultInitializeRuntimeAttributes (PTile& ptile,
                                                attr_ptr[ip] = user_real_attrib_parserexec(xp, yp, zp,
                                                                                           ux[ip], uy[ip], uz[ip], t);
                                            });
+                    // Otherwise (e.g. particle tile allocated in pinned memory), run on CPU
                     } else {
                         for (int ip = start; ip < stop; ++ip) {
                             amrex::ParticleReal xp, yp, zp;
