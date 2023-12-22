@@ -16,7 +16,10 @@
 
 
 /** \brief Push the particle's positions over one timestep,
- *    given the value of its momenta `ux`, `uy`, `uz` */
+ *    given the value of its momenta `ux`, `uy`, `uz`.
+ *    This uses the standard leapfrog algorithm
+ *    x^{n+1} - x^{n} = dt*u^{n+1/2}/gamma^{n+1/2}
+ */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                     const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz,
@@ -43,7 +46,11 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
 }
 
 /** \brief Push the particle's positions over one timestep,
- *    given the value of its momenta `ux`, `uy`, `uz` */
+ *    given the value of its momenta `ux`, `uy`, `uz`.
+ *    The implicit version is the Crank-Nicolson scheme,
+ *    x^{n+1} - x^{n} = dt*(u^{n+1} + u^{n})/(gamma^{n+1} + gamma^{n})
+ *    See Eqs. 15 and 17 in Chen, JCP 407 (2020) 109228.
+ */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void UpdatePositionImplicit(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                             const amrex::ParticleReal ux_n, const amrex::ParticleReal uy_n, const amrex::ParticleReal uz_n,
