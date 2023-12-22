@@ -406,6 +406,8 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 
 /**
  * \brief Direct current deposition for thread thread_num for the implicit scheme
+ *        The only difference from doDepositionShapeN is in how the particle gamma
+ *        is calculated.
  * \tparam depos_order deposition order
  * \param GetPosition  A functor for returning the particle position.
  * \param wp           Pointer to array of particle weights.
