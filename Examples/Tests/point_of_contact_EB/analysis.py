@@ -17,7 +17,7 @@ ds = yt.load( filename )
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
 
-ts_scraping = OpenPMDTimeSeries('../../../../warpx/Examples/Tests/point_of_contact_EB/diags/diag3/particles_at_eb/')
+ts_scraping = OpenPMDTimeSeries('../../../../warpx/Examples/Tests/point_of_contact_EB/diags/diag2/particles_at_eb/')
 
 
 it=ts_scraping.iterations
