@@ -95,7 +95,6 @@ Overall simulation parameters
     * ``semi_implicit_picard``: Use an energy conserving semi-implicit solver that uses a Picard iteration to solve the system.
       Note that this method has the CFL limitation :math:`\Delta t < c/\sqrt( \sum_i 1/\Delta x_i^2 )`. It is inefficient and does not work well when :math:`\omega_{pe} \Delta t` is close to or greater than one.
       The method is described in `Chen et al., A semi-implicit, energy- and charge-conserving particle-in-cell algorithm for the relativistic Vlasov-Maxwell equations <https://doi.org/10.1016/j.jcp.2020.109228>`__.
-      The version implemented is an updated version that is relativistically correct, including the relativistic gamma factor for the particles.
 
 * ``algo.max_picard_iterations`` (`integer`, default: 10)
     When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets the maximum number of Picard
