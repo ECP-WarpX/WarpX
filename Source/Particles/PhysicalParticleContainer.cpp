@@ -2975,7 +2975,7 @@ PhysicalParticleContainer::InitIonizationModule ()
     pp_species_name.get("physical_element", physical_element);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         physical_element == "H" || !do_adk_correction,
-        "Correction to ADK by Zhang et al., PRA 90, 043410 (2014) only workds with Hydrogen");
+        "Correction to ADK by Zhang et al., PRA 90, 043410 (2014) only works with Hydrogen");
     // Add runtime integer component for ionization level
     AddIntComp("ionizationLevel");
     // Get atomic number and ionization energies from file

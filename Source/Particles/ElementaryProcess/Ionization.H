@@ -84,7 +84,7 @@ struct IonizationFilterFunc
                           const amrex::Real* AMREX_RESTRICT a_adk_prefactor,
                           const amrex::Real* AMREX_RESTRICT a_adk_exp_prefactor,
                           const amrex::Real* AMREX_RESTRICT a_adk_power,
-                          const amrex::Real* const AMREX_RESTRICT a_adk_correction_factors,
+                          const amrex::Real* AMREX_RESTRICT a_adk_correction_factors,
                           int a_comp,
                           int a_atomic_number,
                           int a_do_adk_correction,
