@@ -52,7 +52,6 @@ struct FindBoundaryIntersection {
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& m_dxi;
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& m_plo;
     const amrex::ParticleReal m_ux, m_uy, m_uz;
-    //int m_ip;
 
 
     template <typename DstData, typename SrcData>
@@ -79,7 +78,6 @@ struct FindBoundaryIntersection {
         // (which is found by using a bisection algorithm)
 
         const auto& p = dst.getSuperParticle(dst_i);
-
 
         amrex::ParticleReal xp, yp, zp;
         get_particle_position( p, xp, yp, zp );
@@ -108,6 +106,7 @@ struct FindBoundaryIntersection {
         // Save the corresponding position of the particle at the boundary
         amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
         UpdatePosition(x_temp, y_temp, z_temp, m_ux, m_uy, m_uz, -dt_fraction*m_dt);
+        
 #if (defined WARPX_DIM_3D)
         dst.m_aos[dst_i].pos(0) = x_temp;
         dst.m_aos[dst_i].pos(1) = y_temp;
@@ -117,7 +116,7 @@ struct FindBoundaryIntersection {
         dst.m_aos[dst_i].pos(1) = z_temp;
 #elif (defined WARPX_DIM_RZ)
         dst.m_aos[dst_i].pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
-        // Note: this fails to change the angle theta of the particle
+        dst.m_rdata[PIdx::theta][dst_i] = std::atan2(y_temp, x_temp);
         dst.m_aos[dst_i].pos(1) = z_temp;
 #elif (defined WARPX_DIM_1D_Z)
         dst.m_aos[dst_i].pos(0) = z_temp;
@@ -425,24 +424,10 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 
                 const auto ptile_data = ptile.getConstParticleTileData();
                 
-                //defining ux,uy,uz for FindBoundaryIntersection
-                //auto& attribs = pti.GetAttribs();
-                //const amrex::ParticleReal* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
-                //const amrex::ParticleReal* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
-                //const amrex::ParticleReal* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-                
                 auto attribs = pti.GetStructOfArrays().GetRealData();
                 auto ux = attribs[PIdx::ux].dataPtr();
                 auto uy = attribs[PIdx::uy].dataPtr();
                 auto uz = attribs[PIdx::uz].dataPtr();
-                
-                //auto& soa = ptile.GetStructOfArrays();
-                //amrex::ParticleReal ux = soa.GetRealData(PIdx::ux).data();
-                //amrex::ParticleReal uy = soa.GetRealData(PIdx::uy).data();
-                //amrex::ParticleReal uz = soa.GetRealData(PIdx::uz).data(); 
-                //auto ux_value = ux;
-                //auto uy_value = uy;
-                //auto uz_value = uz;
                     
                 amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
                 amrex::ReduceData<int> reduce_data(reduce_op);
@@ -462,6 +447,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 const int timestep = warpx_instance.getistep(0);
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
+                
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
