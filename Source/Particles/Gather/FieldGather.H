@@ -1039,7 +1039,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 /**
  * \brief Field gather for a single particle
  *
- * \param xp,yp,zp                Particle position coordinates
+ * \param xp_n,yp_n,zp_n          Particle position coordinates at start of step
+ * \param xp_nph,yp_nph,zp_nph    Particle position coordinates at half time level (n + half)
  * \param Exp,Eyp,Ezp             Electric field on particles.
  * \param Bxp,Byp,Bzp             Magnetic field on particles.
  * \param ex_arr,ey_arr,ez_arr    Array4 of the electric field, either full array or tile.
@@ -1058,9 +1059,9 @@ void doGatherShapeNImplicit (
                      const amrex::ParticleReal xp_n,
                      const amrex::ParticleReal yp_n,
                      const amrex::ParticleReal zp_n,
-                     const amrex::ParticleReal xp,
-                     const amrex::ParticleReal yp,
-                     const amrex::ParticleReal zp,
+                     const amrex::ParticleReal xp_nph,
+                     const amrex::ParticleReal yp_nph,
+                     const amrex::ParticleReal zp_nph,
                      amrex::ParticleReal& Exp,
                      amrex::ParticleReal& Eyp,
                      amrex::ParticleReal& Ezp,
@@ -1088,34 +1089,37 @@ void doGatherShapeNImplicit (
 {
     if (galerkin_interpolation) {
         if (nox == 1) {
-            doGatherShapeNEsirkepovStencilImplicit<1>(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+            doGatherShapeNEsirkepovStencilImplicit<1>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
+                                                      Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
-            doGatherShapeNEsirkepovStencilImplicit<2>(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+            doGatherShapeNEsirkepovStencilImplicit<2>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
+                                                      Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
-            doGatherShapeNEsirkepovStencilImplicit<3>(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+            doGatherShapeNEsirkepovStencilImplicit<3>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
+                                                      Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
     } else {
         if (nox == 1) {
-            doGatherShapeN<1,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+            doGatherShapeN<1,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
-            doGatherShapeN<2,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+            doGatherShapeN<2,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
-            doGatherShapeN<3,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+            doGatherShapeN<3,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
