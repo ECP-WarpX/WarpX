@@ -1244,18 +1244,24 @@ WarpX::ReadParameters ()
                 "Only the Yee EM solver is supported with the implicit and semi-implicit schemes");
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                particle_pusher_algo == ParticlePusherAlgo::Boris,
-                "Only the Boris particle pusher is supported with the implicit and semi-implicit schemes");
+                particle_pusher_algo == ParticlePusherAlgo::Boris ||
+                particle_pusher_algo == ParticlePusherAlgo::HigueraCary,
+                "Only the Boris and Higuera particle pushers are supported with the implicit and semi-implicit schemes");
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                field_gathering_algo != GatheringAlgo::MomentumConserving,
+                    "With implicit and semi-implicit schemes, the momentum conserving field gather is not supported as it would not conserve energy");
 
             if (current_deposition_algo == CurrentDepositionAlgo::Direct) {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    field_gathering_algo == GatheringAlgo::MomentumConserving,
-                    "With implicit and semi-implicit schemes and direct deposition, the field gathering must be momentum conserving, algo.field_gathering = momentum-conserving");
+                    !galerkin_interpolation,
+                    "With implicit and semi-implicit schemes and direct deposition, the Galerkin field gathering must be turned off in order to conserve energy");
             }
+
             if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    field_gathering_algo == GatheringAlgo::EnergyConserving,
-                    "With implicit and semi-implicit schemes and Esirkepov deposition, the field gathering must be energy conserving, algo.field_gathering = energy-conserving");
+                    galerkin_interpolation,
+                    "With implicit and semi-implicit schemes and Esirkepov deposition, the Galerkin field gathering must be turned on in order to conserve energy");
             }
         }
 
