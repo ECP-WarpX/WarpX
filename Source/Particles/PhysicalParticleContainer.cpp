@@ -1613,7 +1613,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
     info.SetDynamic(true);
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (WarpXParIter pti(*this, level_zero); pti.isValid(); ++pti)
+    for (MFIter mfi = MakeMFIter(0, info); mfi.isValid(); ++mfi)
     {
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
@@ -1621,7 +1621,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         }
         auto wt = static_cast<amrex::Real>(amrex::second());
 
-        const Box& tile_box = pti.tilebox();
+        const Box& tile_box = mfi.tilebox();
         const RealBox tile_realbox = WarpX::getRealBox(tile_box, 0);
 
         // Find the cells of part_realbox that overlap with tile_realbox
@@ -1694,8 +1694,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             continue; // Go to the next tile
         }
 
-        const int grid_id = pti.index();
-        const int tile_id = pti.LocalTileIndex();
+        const int grid_id = mfi.index();
+        const int tile_id = mfi.LocalTileIndex();
 
         const GpuArray<Real,AMREX_SPACEDIM> overlap_corner
             {AMREX_D_DECL(overlap_realbox.lo(0),
@@ -1714,6 +1714,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
         if (fixed_ppc_is_specified) {
             // count the current number of particles in the cells
+            auto& pti = ParticlesAt(0, mfi);
             const auto np = pti.numParticles();
             const auto GetPosition = GetParticlePosition(pti);
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
@@ -2079,7 +2080,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             wt = static_cast<amrex::Real>(amrex::second()) - wt;
-            amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 
