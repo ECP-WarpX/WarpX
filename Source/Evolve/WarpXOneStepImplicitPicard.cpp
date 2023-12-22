@@ -118,7 +118,7 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
     // Save the values at the start of the time step,
     // copying particle data to x_n etc.
     for (auto const& pc : *mypc) {
-        SaveParticlesAtStepStart (*pc, 0);
+        SaveParticlesAtImplicitStepStart (*pc, 0);
     }
 
     // Save the fields at the start of the step
@@ -265,7 +265,7 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
 }
 
 void
-WarpX::SaveParticlesAtStepStart (WarpXParticleContainer& pc, int lev)
+WarpX::SaveParticlesAtImplicitStepStart (WarpXParticleContainer& pc, int lev)
 {
 
 #ifdef AMREX_USE_OMP
