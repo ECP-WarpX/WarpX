@@ -2058,9 +2058,7 @@ WarpX::ClearLevel (int lev)
 void
 WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
-    const bool aux_is_nodal = ((field_gathering_algo == GatheringAlgo::MomentumConserving) &&
-                               (evolve_scheme != EvolveScheme::ImplicitPicard &&
-                                evolve_scheme != EvolveScheme::SemiImplicitPicard));
+    const bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
 #if   defined(WARPX_DIM_1D_Z)
     const amrex::RealVect dx(WarpX::CellSize(lev)[2]);
