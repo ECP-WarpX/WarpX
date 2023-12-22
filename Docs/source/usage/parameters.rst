@@ -88,7 +88,7 @@ Overall simulation parameters
 
     * ``implicit_picard``: Use an energy conserving implicit solver that uses a Picard iteration to solve the system.
       Note that this method is for demonstration only. It is inefficient and does not work well when
-      :math:`\omega_{pe} \delta t` is close to or greater than one.
+      :math:`\omega_{pe} \Delta t` is close to or greater than one.
       The method is described in `Angus et al., On numerical energy conservation for an implicit particle-in-cell method coupled with a binary Monte-Carlo algorithm for Coulomb collisions <https://doi.org/10.1016/j.jcp.2022.111030>`__.
       The version implemented is an updated version that is relativistically correct, including the relativistic gamma factor for the particles.
 
