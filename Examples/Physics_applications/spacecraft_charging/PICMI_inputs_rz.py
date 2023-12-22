@@ -9,7 +9,6 @@ from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper
 from pywarpx.particle_containers import ParticleBoundaryBufferWrapper
 
 
-
 # Utilities
 class SpaceChargeFieldCorrector(object):
 
