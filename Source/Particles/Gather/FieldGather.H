@@ -452,7 +452,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 }
 
 /**
- * \brief Energy conserving field gather for thread thread_num for the implicit scheme
+ * \brief Energy and charge conserving field gather for thread thread_num for the implicit scheme
+ *        This uses the same stencil for the gather that is used for Esirkepov current deposition.
  *
  * \tparam depos_order              Particle shape order
  * \param xp_n,yp_n,zp_n                  Particle position coordinates at start of step
@@ -470,7 +471,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
  */
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void doGatherShapeNImplicit (
+void doChargeConservingGatherShapeNImplicit (
                      [[maybe_unused]] const amrex::ParticleReal xp_n,
                      [[maybe_unused]] const amrex::ParticleReal yp_n,
                      const amrex::ParticleReal zp_n,
@@ -1087,20 +1088,20 @@ void doGatherShapeNImplicit (
 {
     if (galerkin_interpolation) {
         if (nox == 1) {
-            doGatherShapeNImplicit<1>(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+            doChargeConservingGatherShapeNImplicit<1>(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                                      ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                                      ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                                      dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 2) {
-            doGatherShapeNImplicit<2>(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+            doChargeConservingGatherShapeNImplicit<2>(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                                      ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                                      ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                                      dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
-            doGatherShapeNImplicit<3>(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+            doChargeConservingGatherShapeNImplicit<3>(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                                      ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                                      ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                                      dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
     } else {
         if (nox == 1) {

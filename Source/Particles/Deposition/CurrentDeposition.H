@@ -1138,6 +1138,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 
 /**
  * \brief Esirkepov Current Deposition for thread thread_num for implicit scheme
+ *        The difference from doEsirkepovDepositionShapeN is in how the old and new
+ *        particles positions are determined and in how the particle gamma is calculated.
  *
  * \tparam depos_order  deposition order
  * \param GetPosition  A functor for returning the particle position.
