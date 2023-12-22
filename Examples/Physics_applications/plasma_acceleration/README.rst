@@ -11,7 +11,7 @@ On the other hand, for physical situation with strong asymmetries (e.g., non-rou
 
 Additionally, to speed up computation, this example uses the :ref:`boosted frame method <theory-boostedframe>` to effectively model long acceleration lengths.
 
-Alternatively, an other common approximation for PWFAs is quasi-static modeling, e.g., if effects such as self-injection can be ignored.
+Alternatively, another common approximation for PWFAs is quasi-static modeling, useful if effects such as self-injection can be ignored.
 In the Beam, Plasma & Accelerator Simulation Toolkit (BLAST), `HiPACE++ <https://hipace.readthedocs.io>`__ provides such methods.
 
 .. note::
@@ -38,10 +38,6 @@ Lorentz boosted frame
 
     where :math:`l_{e}` is the position of the left edge of the simulation box (in respect to propagation direction).
 
-.. note::
-
-   TODO: The Python (PICMI) input file should use the boosted frame method, like the ``inputs_3d_boost`` file.
-
 
 Run
 ---
@@ -57,7 +53,7 @@ For `MPI-parallel <https://www.mpi-forum.org>`__ runs, prefix these lines with `
 
    .. tab-item:: Python: Script
 
-      .. literalinclude:: PICMI_inputs_plasma_acceleration.py
+      .. literalinclude:: PICMI_inputs_plasma_acceleration_3d.py
          :language: python3
          :caption: You can copy this file from ``Examples/Physics_applications/plasma_acceleration/PICMI_inputs_plasma_acceleration.py``.
 
@@ -72,19 +68,30 @@ Visualize
 
 The plasma has a density profile that consists of a long up-ramp followed by a uniform plateau.
 
-With this configuration the driver excites a nonlinear plasma wake and drives the bubble depleted of plasma electrons where the beam accelerates, as can be seen in Fig
-.. figure:: https://user-images.githubusercontent.com/10621396/290962794-7bdbbff7-39fa-4d2e-8b5f-2030f811d257.png
+With this configuration the driver expels the plasma electrons, creating a bubble depleted of plasma electrons.
+This bubble is the characteristic shape of the nonlinear 3D plasma wake.
+This creates an accelerating field :math:`E_z`, as can be seen in :numref:`fig_pwfa_wake`, and transverse focusing forces (not shown).
 
-   :alt: Electron beam, in black, accelerated by wakefield, in red-blue colormap, driven by drive electron beam, in purple.  Set max_steps to 800 in WarpX simulation to generate data for this figure.
+.. _fig_pwfa_wake:
 
-   Electron beam, in black, accelerated by wakefield, in red-blue colormap, driven by drive electron beam, in purple.  Set ``max_steps`` to 800 in a WarpX simulation to generate data for this figure.
+.. figure:: https://user-images.githubusercontent.com/10621396/292573839-8d6d7296-48f8-4942-94bd-548683fd35fe.png
+   :alt: Electron beam, in black, accelerated by wakefield, in red-blue colormap, driven by drive electron beam, in purple. Plasma particles are plotted in green. Set max_steps to 800 in the input to generate data for this figure.
+   :width: 100%
 
-The beam increases in energy as it propagates in the wake, as shown in Fig.
+   Electron beam, in black, accelerated by wakefield, in red-blue colormap, driven by drive electron beam, in purple. Plasma particles are plotted in green. Set ``max_steps`` to 800 in the input to generate data for this figure. Note that the :math:`E_z` field is plotted with an interpolation option and appears smoother than the numerical resolution would suggest.
+
+The beam increases in energy as it propagates in the wake, as shown in :numref:`fig_pwfa_energy`.
+There is a slight inflection point in the evolution of the beam energy, showing how the beam accelerates as the wake forms around the electron beam and then gains energy linearly in time once the wake stabilizes.
+Note that this is the mean energy in the boosted frame.
+:ref:`Lab Frame <python_lab_frame_diag>`  or :ref:`back-transformed <running-cpp-parameters-diagnostics-btd>` diagnostics can be used to analyze beam energy in the lab frame. See also the :ref:`FAQ <faq-btd>`.
+
+.. _fig_pwfa_energy:
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290962801-97d994f9-d48d-4f76-a37e-d14f6781d680.png
-   :alt: Energy gain of electron beam in wake through this simulation (this is the mean beam energy in the boosted frame, NOT the lab frame). Set ``max_steps`` to 800 in a WarpX simulation to generate data for this figure.
+   :alt: Energy gain of electron beam in wake through this simulation (this is the mean beam energy in the boosted frame, NOT the lab frame). Set ``max_steps`` to 800 in the input to generate data for this figure.
+   :width: 80%
 
-   Energy gain of electron beam in wake through this simulation (this is the mean beam energy in the boosted frame, NOT the lab frame). Set ``max_steps`` to 800 in a WarpX simulation to generate data for this figure.
+   Energy gain of electron beam in wake through this simulation (this is the mean beam energy in the boosted frame, NOT the lab frame). Set ``max_steps`` to 800 in the input to generate data for this figure.
 
 The plots can be generated with the following script:
 
