@@ -12,21 +12,6 @@
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
-#include <AMReX_MultiFab.H>
-#include <AMReX_REAL.H>
-#include <AMReX_MLLinOp.H>
-#include <AMReX_Vector.H>
-#include <AMReX_Array.H>
-#include <AMReX_MLNodeTensorLaplacian.H>
-#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
-#   include <AMReX_MLEBNodeFDLaplacian.H>
-#endif
-#ifdef AMREX_USE_EB
-#   include <AMReX_EBFabFactory.H>
-#endif
-#include <AMReX_Parser.H>
-#include <AMReX_REAL.H>
-#include <AMReX_MFInterp_C.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -45,12 +30,21 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_LO_BCTYPES.H>
 #include <AMReX_MFIter.H>
+#include <AMReX_MFInterp_C.H>
 #include <AMReX_MLMG.H>
+#include <AMReX_MLLinOp.H>
+#include <AMReX_MLNodeTensorLaplacian.H>
 #include <AMReX_MultiFab.H>
+#include <AMReX_Parser.H>
 #include <AMReX_REAL.H>
 #include <AMReX_SPACE.H>
 #include <AMReX_Vector.H>
-#include <AMReX_MFInterp_C.H>
+#if defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ)
+#   include <AMReX_MLEBNodeFDLaplacian.H>
+#endif
+#ifdef AMREX_USE_EB
+#   include <AMReX_EBFabFactory.H>
+#endif
 
 #include <array>
 #include <optional>
@@ -168,7 +162,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
     const bool always_use_bnorm = (max_norm_b > 0);
     if (!always_use_bnorm) {
-        if (absolute_tolerance == 0.0) absolute_tolerance = amrex::Real(1e-6);
+        if (absolute_tolerance == 0.0) { absolute_tolerance = amrex::Real(1e-6); }
         ablastr::warn_manager::WMRecordWarning(
                 "ElectrostaticSolver",
                 "Max norm of rho is 0",
@@ -312,9 +306,11 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         }
 
         // Run additional operations, such as calculation of the E field for embedded boundaries
-        if constexpr (!std::is_same<T_PostPhiCalculationFunctor, std::nullopt_t>::value)
-            if (post_phi_calculation.has_value())
+        if constexpr (!std::is_same<T_PostPhiCalculationFunctor, std::nullopt_t>::value) {
+            if (post_phi_calculation.has_value()) {
                 post_phi_calculation.value()(mlmg, lev);
+            }
+        }
 
     } // loop over lev(els)
 }

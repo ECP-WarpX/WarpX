@@ -104,7 +104,7 @@ void ElasticCollisionPerez (
       n12 = n12 / dV;
     }
     // Intra-species: Apply correction in collision rate
-    if (isSameSpecies) n12 *= T_PR(2.0);
+    if (isSameSpecies) { n12 *= T_PR(2.0); }
 
     // compute Debye length lmdD
     T_PR lmdD;

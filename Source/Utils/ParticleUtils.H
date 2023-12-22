@@ -181,8 +181,8 @@ namespace ParticleUtils {
      */
     AMREX_GPU_HOST_DEVICE AMREX_INLINE
     bool containsInclusive (amrex::RealBox const& tilebox, amrex::XDim3 const point) {
-        const auto xlo = tilebox.lo();
-        const auto xhi = tilebox.hi();
+        const auto *const xlo = tilebox.lo();
+        const auto *const xhi = tilebox.hi();
         return  AMREX_D_TERM((xlo[0] <= point.x) && (point.x <= xhi[0]),
                           && (xlo[1] <= point.y) && (point.y <= xhi[1]),
                           && (xlo[2] <= point.z) && (point.z <= xhi[2]));

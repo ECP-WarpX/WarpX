@@ -157,14 +157,14 @@ struct GeometryFilter
     GeometryFilter(bool a_is_active, amrex::RealBox a_domain)
         : m_is_active(a_is_active), m_domain(a_domain) {}
     /**
-     * \brief return 1 if the partcile is within the region described by the RealBox
+     * \brief return 1 if the particle is within the region described by the RealBox
      * \param p one particle
      * \return whether or not the particle is inside the region defined by m_domain
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
-        if ( !m_is_active ) return true;
+        if ( !m_is_active ) { return true; }
         return ! (AMREX_D_TERM( (p.pos(0) < m_domain.lo(0)) || (p.pos(0) > m_domain.hi(0) ),
                             ||  (p.pos(1) < m_domain.lo(1)) || (p.pos(1) > m_domain.hi(1) ),
                             ||  (p.pos(2) < m_domain.lo(2)) || (p.pos(2) > m_domain.hi(2) )));

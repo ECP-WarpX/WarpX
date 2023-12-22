@@ -8,8 +8,7 @@
 /**
  * \brief Functor to compute charge density rho into mf_out
  */
-class
-RhoFunctor final : public ComputeDiagFunctor
+class RhoFunctor final : public ComputeDiagFunctor
 {
 
 public:

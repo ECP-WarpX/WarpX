@@ -135,8 +135,8 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
                     const amrex::ParticleReal uy = p.rdata(PIdx::uy) / PhysConst::c;
                     const amrex::ParticleReal uz = p.rdata(PIdx::uz) / PhysConst::c;
                     amrex::Real filter;
-                    if ((do_filter) && (filter_fn(xw, yw, zw, ux, uy, uz) == 0._rt)) filter = 0._rt;
-                    else filter = 1._rt;
+                    if ((do_filter) && (filter_fn(xw, yw, zw, ux, uy, uz) == 0._rt)) { filter = 0._rt;
+                    } else { filter = 1._rt; }
                     amrex::Gpu::Atomic::AddNoRet(&out_array(ii, jj, kk, 0), (amrex::Real)(p.rdata(PIdx::w) * filter));
                 });
         // Divide value by number of particles for average. Set average to zero if there are no particles
@@ -147,8 +147,8 @@ ParticleReductionFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, 
             amrex::Array4<amrex::Real const> const& a_ppc = ppc_mf.const_array(mfi);
             amrex::ParallelFor(box,
                     [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                        if (a_ppc(i,j,k,0) == 0) a_red(i,j,k,0) = 0;
-                        else a_red(i,j,k,0) = a_red(i,j,k,0) / a_ppc(i,j,k,0);
+                        if (a_ppc(i,j,k,0) == 0) { a_red(i,j,k,0) = 0;
+                        } else { a_red(i,j,k,0) = a_red(i,j,k,0) / a_ppc(i,j,k,0); }
                     });
         }
     }

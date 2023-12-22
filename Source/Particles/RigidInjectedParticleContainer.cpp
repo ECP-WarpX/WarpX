@@ -117,9 +117,9 @@ RigidInjectedParticleContainer::RemapParticles()
                 for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
                 {
                     const auto& attribs = pti.GetAttribs();
-                    const auto uxp = attribs[PIdx::ux].dataPtr();
-                    const auto uyp = attribs[PIdx::uy].dataPtr();
-                    const auto uzp = attribs[PIdx::uz].dataPtr();
+                    const auto *const uxp = attribs[PIdx::ux].dataPtr();
+                    const auto *const uyp = attribs[PIdx::uy].dataPtr();
+                    const auto *const uzp = attribs[PIdx::uz].dataPtr();
 
                     const auto GetPosition = GetParticlePosition<PIdx>(pti);
                           auto SetPosition = SetParticlePosition<PIdx>(pti);
@@ -307,7 +307,7 @@ RigidInjectedParticleContainer::Evolve (int lev,
     zinject_plane_levels[lev] -= dt*WarpX::beta_boost*PhysConst::c;
     zinject_plane_lev = zinject_plane_levels[lev];
 
-    // Set the done injecting flag whan the inject plane moves out of the
+    // Set the done injecting flag when the inject plane moves out of the
     // simulation domain.
     // It is much easier to do this check, rather than checking if all of the
     // particles have crossed the inject plane.
@@ -334,7 +334,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 {
     WARPX_PROFILE("RigidInjectedParticleContainer::PushP");
 
-    if (do_not_push) return;
+    if (do_not_push) { return; }
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(lev,0));
 
@@ -447,7 +447,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
 
-                [[maybe_unused]] auto& getExternalEB_tmp = getExternalEB;
+                [[maybe_unused]] const auto& getExternalEB_tmp = getExternalEB;
                 if constexpr (exteb_control == has_exteb) {
                     getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
                 }

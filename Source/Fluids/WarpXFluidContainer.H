@@ -23,7 +23,7 @@
  *
  * WarpXFluidContainer contains the main functions for initialization,
  * interaction with the grid (field gather and current deposition), fluid
- * source and push, advective update and updates for non-intertial terms.
+ * source and push, advective update and updates for non-inertial terms.
  */
 class WarpXFluidContainer
 {
@@ -45,7 +45,7 @@ public:
     void ReadParameters ();
 
     /**
-     * Evolve updates a single timestep (dt) of the cold relativistic fluid eqautions
+     * Evolve updates a single timestep (dt) of the cold relativistic fluid equations
      */
     void Evolve (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
@@ -99,12 +99,12 @@ public:
      * \param[in] Bx Yee magnetic field (x)
      * \param[in] By Yee magnetic field (y)
      * \param[in] Bz Yee magnetic field (z)
-     * \param[in] cur_time Current time
+     * \param[in] t Current time
      */
     void GatherAndPush (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
         const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-        amrex::Real cur_time);
+        amrex::Real t);
 
     /**
      * DepositCurrent interpolates the fluid current density comps. onto the Yee grid and

@@ -378,7 +378,7 @@ class HybridPICBeamInstability(object):
         self.prev_step = step
 
     def energy_diagnostic(self):
-        """Diangostic to get the total, magnetic and kinetic energies in the
+        """Diagnostic to get the total, magnetic and kinetic energies in the
         simulation."""
         step = simulation.extension.warpx.getistep(lev=0) - 1
 

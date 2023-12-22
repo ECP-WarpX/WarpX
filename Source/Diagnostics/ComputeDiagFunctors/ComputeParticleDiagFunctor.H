@@ -15,8 +15,7 @@
 /**
  * \brief Functor to compute a diagnostic and store the result in existing ParticleContainer.
  */
-class
-ComputeParticleDiagFunctor
+class ComputeParticleDiagFunctor
 {
 public:
 
@@ -30,7 +29,7 @@ public:
     ComputeParticleDiagFunctor(ComputeParticleDiagFunctor&&) = default;
     ComputeParticleDiagFunctor& operator=(ComputeParticleDiagFunctor&&) = default;
 
-    /** \brief Prepare data required to back-transform particle attribtutes for
+    /** \brief Prepare data required to back-transform particle attributes for
      *         lab-frame snapshot, with index i_buffer.
      *         Note that this function has parameters that are specific to
      *         back-transformed diagnostics, that are unused for regular diagnostics.

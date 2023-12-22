@@ -1,66 +1,79 @@
-# Copyright 2017-2022 The WarpX Community
+# Copyright 2017-2023 The WarpX Community
 #
 # This file is part of WarpX.
 #
-# Authors: David Grote, Roelof Groenewald
+# Authors: David Grote, Roelof Groenewald, Axel Huebl
 #
 # License: BSD-3-Clause-LBNL
 
-"""call back operations
-=====================
+"""Callback Locations
+------------------
 
 These are the functions which allow installing user created functions so that
 they are called at various places along the time step.
 
 The following three functions allow the user to install, uninstall and verify
 the different call back types.
- - installcallback: Installs a function to be called at that specified time
- - uninstallcallback: Uninstalls the function (so it won't be called anymore)
- - isinstalled: Checks if the function is installed
+
+* :py:func:`installcallback`: Installs a function to be called at that specified time
+* :py:func:`uninstallcallback`: Uninstalls the function (so it won't be called anymore)
+* :py:func:`isinstalled`: Checks if the function is installed
 
 These functions all take a callback location name (string) and function or
 instance method as an argument. Note that if an instance method is used, an
 extra reference to the method's object is saved.
 
-The install can be done using a decorator, which has the prefix "callfrom". See
-example below.
-
 Functions can be called at the following times:
- - beforeInitEsolve: before the initial solve for the E fields (i.e. before the PIC loop starts)
- - afterinit: immediately after the init is complete
- - beforeEsolve: before the solve for E fields
- - poissonsolver: In place of the computePhi call but only in an electrostatic simulation
- - afterEsolve: after the solve for E fields
- - beforedeposition: before the particle deposition (for charge and/or current)
- - afterdeposition: after particle deposition (for charge and/or current)
- - beforestep: before the time step
- - afterstep: after the time step
- - afterdiagnostics: after diagnostic output
- - oncheckpointsignal: on a checkpoint signal
- - onbreaksignal: on a break signal. These callbacks will be the last ones executed before the simulation ends.
- - particlescraper: just after the particle boundary conditions are applied
-                    but before lost particles are processed
- - particleloader: at the time that the standard particle loader is called
- - particleinjection: called when particle injection happens, after the position
-                      advance and before deposition is called, allowing a user
-                      defined particle distribution to be injected each time step
- - appliedfields: allows directly specifying any fields to be applied to the particles
-                  during the advance
 
-To use a decorator, the syntax is as follows. This will install the function
-``myplots`` to be called after each step.
+* ``beforeInitEsolve``: before the initial solve for the E fields (i.e. before the PIC loop starts)
+* ``afterinit``: immediately after the init is complete
+* ``beforeEsolve``: before the solve for E fields
+* ``poissonsolver``: In place of the computePhi call but only in an electrostatic simulation
+* ``afterEsolve``: after the solve for E fields
+* ``beforedeposition``: before the particle deposition (for charge and/or current)
+* ``afterdeposition``: after particle deposition (for charge and/or current)
+* ``beforestep``: before the time step
+* ``afterstep``: after the time step
+* ``afterdiagnostics``: after diagnostic output
+* ``oncheckpointsignal``: on a checkpoint signal
+* ``onbreaksignal``: on a break signal. These callbacks will be the last ones executed before the simulation ends.
+* ``particlescraper``: just after the particle boundary conditions are applied
+  but before lost particles are processed
+* ``particleloader``: at the time that the standard particle loader is called
+* ``particleinjection``: called when particle injection happens, after the position
+  advance and before deposition is called, allowing a user
+  defined particle distribution to be injected each time step
 
-@callfromafterstep
-def myplots():
-  ppzx()
+Example that calls the Python function ``myplots`` after each step:
 
-This is equivalent to the following:
+.. code-block:: python3
 
-def myplots():
-  ppzx()
-installcallback('afterstep', myplots)
+   from pywarpx.callbacks import installcallback
 
+   def myplots():
+       # do something here
+
+   installcallback('afterstep', myplots)
+
+   # run simulation
+   sim.step(nsteps=100)
+
+The install can also be done using a `Python decorator <https://docs.python.org/3/glossary.html#term-decorator>`__, which has the prefix ``callfrom``.
+To use a decorator, the syntax is as follows. This will install the function ``myplots`` to be called after each step.
+The above example is quivalent to the following:
+
+.. code-block:: python3
+
+   from pywarpx.callbacks import callfromafterstep
+
+   @callfromafterstep
+   def myplots():
+       # do something here
+
+   # run simulation
+   sim.step(nsteps=100)
 """
+
 import copy
 import sys
 import time
@@ -81,7 +94,7 @@ class CallbackFunctions(object):
     original reference. This is good since the user does not need to keep
     the reference to the object (for example it can be created using a local
     variable in a function). It may be bad if the user thinks an object was
-    deleted, but it actually isn't since it had (unkown to the user)
+    deleted, but it actually isn't since it had (unknown to the user)
     installed a method in one of the call back lists.
     """
 
@@ -282,15 +295,20 @@ for key, val in callback_instances.items():
     callback_instances[key] = CallbackFunctions(name=key, **val)
 
 def installcallback(name, f):
-    "Adds a function to the list of functions called by this callback"
+    """Installs a function to be called at that specified time.
+
+    Adds a function to the list of functions called by this callback.
+    """
     callback_instances[name].installfuncinlist(f)
 
 def uninstallcallback(name, f):
-    "Removes the function from the list of functions called by this callback"
+    """Uninstalls the function (so it won't be called anymore).
+
+    Removes the function from the list of functions called by this callback."""
     callback_instances[name].uninstallfuncinlist(f)
 
 def isinstalled(name, f):
-    "Checks if the function is called by this callback"
+    """Checks if a function is installed for this callback."""
     return callback_instances[name].isinstalledfuncinlist(f)
 
 def clear_all():

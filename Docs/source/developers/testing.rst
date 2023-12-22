@@ -18,14 +18,14 @@ We slightly modify this file in ``Regression/prepare_file_ci.py``.
 
 For example, if you like to change the compiler to compilation to build on Nvidia GPUs, modify this block to add ``-DWarpX_COMPUTE=CUDA``:
 
-.. code-block:: toml
+.. code-block:: ini
 
    [source]
    dir = /home/regtester/AMReX_RegTesting/warpx
    branch = development
    cmakeSetupOpts = -DAMReX_ASSERTIONS=ON -DAMReX_TESTING=ON -DWarpX_COMPUTE=CUDA
 
-We also support changing compilation options via the usual :ref:`build enviroment variables <building-cmake-envvars>`.
+We also support changing compilation options via the usual :ref:`build environment variables <building-cmake-envvars>`.
 For instance, compiling with ``clang++ -Werror`` would be:
 
 .. code-block:: sh

@@ -124,7 +124,7 @@ class ParticleContainerWrapper(object):
             built_in_attrs += 1
 
         # --- The number of extra attributes (including the weight)
-        nattr = self.particle_container.num_real_comps() - built_in_attrs
+        nattr = self.particle_container.num_real_comps - built_in_attrs
         attr = np.zeros((maxlen, nattr))
         attr[:,0] = w
 
@@ -200,7 +200,7 @@ class ParticleContainerWrapper(object):
 
         Note that cupy does not support structs:
         https://github.com/cupy/cupy/issues/2031
-        and will return arrays of binary blobs for the AoS (DP: "|V24"). If copied
+        and will return arrays of binary blobs for the AoS (DP: ``"|V24"``). If copied
         to host via copy_to_host, we correct for the right numpy AoS type.
 
         Parameters
@@ -652,9 +652,10 @@ class ParticleContainerWrapper(object):
 
 
     def deposit_charge_density(self, level, clear_rho=True, sync_rho=True):
-        '''
+        """
         Deposit this species' charge density in rho_fp in order to
         access that data via pywarpx.fields.RhoFPWrapper().
+
         Parameters
         ----------
         species_name   : str
@@ -665,7 +666,7 @@ class ParticleContainerWrapper(object):
             If True, zero out rho_fp before deposition.
         sync_rho       : bool
             If True, perform MPI exchange and properly set boundary cells for rho_fp.
-        '''
+        """
         rho_fp = libwarpx.warpx.multifab(f'rho_fp[level={level}]')
 
         if rho_fp is None:
@@ -734,7 +735,7 @@ class ParticleBoundaryBufferWrapper(object):
 
         Note that cupy does not support structs:
         https://github.com/cupy/cupy/issues/2031
-        and will return arrays of binary blobs for the AoS (DP: "|V24"). If copied
+        and will return arrays of binary blobs for the AoS (DP: ``"|V24"``). If copied
         to host via copy_to_host, we correct for the right numpy AoS type.
 
         Parameters
@@ -817,7 +818,7 @@ class ParticleBoundaryBufferWrapper(object):
         data_array = []
         if comp_name == 'step_scraped':
             # the step scraped is always the final integer component
-            comp_idx = part_container.num_int_comps() - 1
+            comp_idx = part_container.num_int_comps - 1
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
                 data_array.append(xp.array(soa.GetIntData(comp_idx), copy=False))
