@@ -1545,6 +1545,49 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
                 collision.add_new_attr(process+'_'+key, val)
 
 
+class DSMCCollisions(picmistandard.base._ClassWithInit):
+    """
+    Custom class to handle setup of DSMC collisions in WarpX. If collision
+    initialization is added to picmistandard this can be changed to inherit
+    that functionality.
+
+    Parameters
+    ----------
+    name: string
+        Name of instance (used in the inputs file)
+
+    species: species instance
+        The species involved in the collision
+
+    scattering_processes: dictionary
+        The scattering process to use and any needed information
+
+    ndt: integer, optional
+        The collisions will be applied every "ndt" steps. Must be 1 or larger.
+    """
+
+    def __init__(self, name, species, scattering_processes, ndt=None, **kw):
+        self.name = name
+        self.species = species
+        self.scattering_processes = scattering_processes
+        self.ndt = ndt
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+        collision = pywarpx.Collisions.newcollision(self.name)
+        collision.type = 'dsmc'
+        collision.species = [species.name for species in self.species]
+        collision.ndt = self.ndt
+
+        collision.scattering_processes = self.scattering_processes.keys()
+        for process, kw in self.scattering_processes.items():
+            for key, val in kw.items():
+                if key == 'species':
+                    val = val.name
+                collision.add_new_attr(process+'_'+key, val)
+
+
 class EmbeddedBoundary(picmistandard.base._ClassWithInit):
     """
     Custom class to handle set up of embedded boundaries specific to WarpX.
