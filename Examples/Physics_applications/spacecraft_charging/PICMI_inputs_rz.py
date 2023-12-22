@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-
-import matplotlib.pyplot as plt
 from mpi4py import MPI as mpi
 import numpy as np
 import scipy.constants as scc
@@ -8,10 +6,8 @@ import scipy.constants as scc
 from pywarpx import picmi
 from pywarpx.callbacks import installafterEsolve, installafterInitEsolve
 from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper
-from pywarpx.particle_containers import (
-    ParticleBoundaryBufferWrapper,
-    ParticleContainerWrapper,
-)
+from pywarpx.particle_containers import ParticleBoundaryBufferWrapper
+
 
 
 # Utilities
