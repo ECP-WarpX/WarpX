@@ -11,6 +11,7 @@
 #define WARPX_PhysicalParticleContainer_H_
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Initialization/PlasmaInjector.H"
 #include "Particles/ElementaryProcess/Ionization.H"
 #ifdef WARPX_QED
@@ -105,6 +106,7 @@ public:
      * \param dt time step by which particles are advanced
      * \param a_dt_type type of time step (used for sub-cycling)
      * \param skip_deposition Skip the charge and current deposition.
+     * \param push_type Type of particle push, explicit or implicit. Defaults to explicit
      *
      * Evolve iterates over particle iterator (each box) and performs filtering,
      * field gather, particle push and current deposition for all particles
@@ -134,9 +136,24 @@ public:
                          amrex::Real t,
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full,
-                         bool skip_deposition=false ) override;
+                         bool skip_deposition=false,
+                         PushType push_type=PushType::Explicit) override;
 
     virtual void PushPX (WarpXParIter& pti,
+                         amrex::FArrayBox const * exfab,
+                         amrex::FArrayBox const * eyfab,
+                         amrex::FArrayBox const * ezfab,
+                         amrex::FArrayBox const * bxfab,
+                         amrex::FArrayBox const * byfab,
+                         amrex::FArrayBox const * bzfab,
+                         amrex::IntVect ngEB, int /*e_is_nodal*/,
+                         long offset,
+                         long np_to_push,
+                         int lev, int gather_lev,
+                         amrex::Real dt, ScaleFields scaleFields,
+                         DtType a_dt_type=DtType::Full);
+
+    void ImplicitPushXP (WarpXParIter& pti,
                          amrex::FArrayBox const * exfab,
                          amrex::FArrayBox const * eyfab,
                          amrex::FArrayBox const * ezfab,
