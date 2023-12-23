@@ -272,8 +272,7 @@ public:
                                         NArrayReal, NArrayInt,
                                         amrex::PinnedArenaAllocator>& pinned_tile,
                     int n_external_attr_real,
-                    int n_external_attr_int,
-                    const amrex::RandomEngine& engine) final;
+                    int n_external_attr_int) final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
@@ -370,10 +369,34 @@ public:
         (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
     //__________
 
+    BreitWheelerEngine* get_breit_wheeler_engine_ptr () const override {
+        return m_shr_p_bw_engine.get();
+    }
+
+    QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const override {
+        return m_shr_p_qs_engine.get();
+    }
+
     PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
 
     PairGenerationFilterFunc getPairGenerationFilterFunc ();
 #endif
+
+    std::vector<std::string> getUserIntAttribs () const override {
+        return m_user_int_attribs;
+    }
+
+    std::vector<std::string> getUserRealAttribs () const override {
+        return m_user_real_attribs;
+    }
+
+    amrex::Vector< amrex::Parser* > getUserIntAttribParser () const override {
+        return GetVecOfPtrs(m_user_int_attrib_parser);
+    }
+
+    amrex::Vector< amrex::Parser* > getUserRealAttribParser () const override {
+        return GetVecOfPtrs(m_user_real_attrib_parser);
+    }
 
 protected:
     std::string species_name;
@@ -425,9 +448,9 @@ protected:
     /* Vector of user-defined real attributes for species, species_name */
     std::vector<std::string> m_user_real_attribs;
     /* Vector of user-defined parser for initializing user-defined integer attributes */
-    std::vector< std::unique_ptr<amrex::Parser> > m_user_int_attrib_parser;
+    amrex::Vector< std::unique_ptr<amrex::Parser> > m_user_int_attrib_parser;
     /* Vector of user-defined parser for initializing user-defined real attributes */
-    std::vector< std::unique_ptr<amrex::Parser> > m_user_real_attrib_parser;
+    amrex::Vector< std::unique_ptr<amrex::Parser> > m_user_real_attrib_parser;
 
 };
 

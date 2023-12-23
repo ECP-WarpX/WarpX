@@ -59,8 +59,7 @@ public:
                         amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
                                             NArrayReal, NArrayInt, amrex::PinnedArenaAllocator>& /*pinned_tile*/,
                         const int /*n_external_attr_real*/,
-                        const int /*n_external_attr_int*/,
-                        const amrex::RandomEngine& /*engine*/) final {}
+                        const int /*n_external_attr_int*/) final {}
 
     void ReadHeader (std::istream& is) final;
 

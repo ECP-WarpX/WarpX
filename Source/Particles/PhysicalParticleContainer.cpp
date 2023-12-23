@@ -21,6 +21,7 @@
 #endif
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Gather/GetExternalFields.H"
+#include "Particles/ParticleCreation/DefaultInitialization.H"
 #include "Particles/Pusher/CopyParticleAttribs.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/PushSelector.H"
@@ -779,110 +780,21 @@ PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
                                         NArrayReal, NArrayInt,
                                         amrex::PinnedArenaAllocator>& pinned_tile,
                     const int n_external_attr_real,
-                    const int n_external_attr_int,
-                    const amrex::RandomEngine& engine)
+                    const int n_external_attr_int)
 {
-        using namespace amrex::literals;
-
-        const int np = pinned_tile.numParticles();
-
-        // Preparing data needed for user defined attributes
-        const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
-        const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
-        const auto get_position = GetParticlePosition<PIdx>(pinned_tile);
-        const auto soa = pinned_tile.getParticleTileData();
-        const amrex::ParticleReal* AMREX_RESTRICT ux = soa.m_rdata[PIdx::ux];
-        const amrex::ParticleReal* AMREX_RESTRICT uy = soa.m_rdata[PIdx::uy];
-        const amrex::ParticleReal* AMREX_RESTRICT uz = soa.m_rdata[PIdx::uz];
-        constexpr int lev = 0;
-        const amrex::Real t = WarpX::GetInstance().gett_new(lev);
-
-#ifndef WARPX_QED
-        amrex::ignore_unused(engine);
-#endif
-
-        // Initialize the last NumRuntimeRealComps() - n_external_attr_real runtime real attributes
-        for (int j = PIdx::nattribs + n_external_attr_real; j < NumRealComps() ; ++j)
-        {
-            amrex::Vector<amrex::ParticleReal> attr_temp(np, 0.0_prt);
+    ParticleCreation::DefaultInitializeRuntimeAttributes(pinned_tile,
+                                       n_external_attr_real, n_external_attr_int,
+                                       m_user_real_attribs, m_user_int_attribs,
+                                       particle_comps, particle_icomps,
+                                       amrex::GetVecOfPtrs(m_user_real_attrib_parser),
+                                       amrex::GetVecOfPtrs(m_user_int_attrib_parser),
 #ifdef WARPX_QED
-            // Current runtime comp is quantum synchrotron optical depth
-            if (particle_comps.find("opticalDepthQSR") != particle_comps.end() &&
-                particle_comps["opticalDepthQSR"] == j)
-            {
-                const QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt =
-                                                m_shr_p_qs_engine->build_optical_depth_functor();;
-                for (int i = 0; i < np; ++i) {
-                    attr_temp[i] = quantum_sync_get_opt(engine);
-                }
-            }
-
-             // Current runtime comp is Breit-Wheeler optical depth
-            if (particle_comps.find("opticalDepthBW") != particle_comps.end() &&
-                particle_comps["opticalDepthBW"] == j)
-            {
-                const BreitWheelerGetOpticalDepth breit_wheeler_get_opt =
-                                                m_shr_p_bw_engine->build_optical_depth_functor();;
-                for (int i = 0; i < np; ++i) {
-                    attr_temp[i] = breit_wheeler_get_opt(engine);
-                }
-            }
+                                       true,
+                                       m_shr_p_bw_engine.get(),
+                                       m_shr_p_qs_engine.get(),
 #endif
-
-            for (int ia = 0; ia < n_user_real_attribs; ++ia)
-            {
-                // Current runtime comp is ia-th user defined attribute
-                if (particle_comps.find(m_user_real_attribs[ia]) != particle_comps.end() &&
-                    particle_comps[m_user_real_attribs[ia]] == j)
-                {
-                    amrex::ParticleReal xp, yp, zp;
-                    const amrex::ParserExecutor<7> user_real_attrib_parserexec =
-                                             m_user_real_attrib_parser[ia]->compile<7>();
-                    for (int i = 0; i < np; ++i) {
-                        get_position(i, xp, yp, zp);
-                        attr_temp[i] = user_real_attrib_parserexec(xp, yp, zp,
-                                                                   ux[i], uy[i], uz[i], t);
-                    }
-                }
-            }
-
-            pinned_tile.push_back_real(j, attr_temp.data(), attr_temp.data() + np);
-        }
-
-        // Initialize the last NumRuntimeIntComps() - n_external_attr_int runtime int attributes
-        for (int j = n_external_attr_int; j < NumIntComps() ; ++j)
-        {
-            amrex::Vector<int> attr_temp(np, 0);
-
-            // Current runtime comp is ionization level
-            if (particle_icomps.find("ionizationLevel") != particle_icomps.end() &&
-                particle_icomps["ionizationLevel"] == j)
-            {
-                for (int i = 0; i < np; ++i) {
-                    attr_temp[i] = ionization_initial_level;
-                }
-            }
-
-            for (int ia = 0; ia < n_user_int_attribs; ++ia)
-            {
-                // Current runtime comp is ia-th user defined attribute
-                if (particle_icomps.find(m_user_int_attribs[ia]) != particle_icomps.end() &&
-                    particle_icomps[m_user_int_attribs[ia]] == j)
-                {
-                    amrex::ParticleReal xp, yp, zp;
-                    const amrex::ParserExecutor<7> user_int_attrib_parserexec =
-                                             m_user_int_attrib_parser[ia]->compile<7>();
-                    for (int i = 0; i < np; ++i) {
-                        get_position(i, xp, yp, zp);
-                        attr_temp[i] = static_cast<int>(
-                                user_int_attrib_parserexec(xp, yp, zp, ux[i], uy[i], uz[i], t));
-                    }
-                }
-            }
-
-            pinned_tile.push_back_int(j, attr_temp.data(), attr_temp.data() + np);
-        }
-
+                                       ionization_initial_level,
+                                       0,pinned_tile.numParticles());
 }
 
 

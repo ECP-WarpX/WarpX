@@ -100,6 +100,7 @@ public:
     amrex::Vector<int> operator() (
                     const index_type& n_total_pairs,
                     const SoaData_type& soa_1, const SoaData_type& soa_2,
+                    const amrex::Vector<WarpXParticleContainer*>& pc_products,
                     ParticleTileType** AMREX_RESTRICT tile_products,
                     ParticleType* particle_ptr_1, ParticleType*  particle_ptr_2,
                     const amrex::ParticleReal& m1, const amrex::ParticleReal& m2,
@@ -251,6 +252,27 @@ public:
             }
         });
 
+        // Initialize the user runtime components
+        for (int i = 0; i < m_num_product_species; i++)
+        {
+            int start_index = int(products_np[i]);
+            int stop_index  = int(products_np[i] + num_added_vec[i]);
+            ParticleCreation::DefaultInitializeRuntimeAttributes(*tile_products[i],
+                                       0, 0,
+                                       pc_products[i]->getUserRealAttribs(), pc_products[i]->getUserIntAttribs(),
+                                       pc_products[i]->getParticleComps(), pc_products[i]->getParticleiComps(),
+                                       pc_products[i]->getUserRealAttribParser(),
+                                       pc_products[i]->getUserIntAttribParser(),
+#ifdef WARPX_QED
+                                       false, // do not initialize QED quantities, since they were initialized
+                                              // when calling the SmartCopy functors
+                                       pc_products[i]->get_breit_wheeler_engine_ptr(),
+                                       pc_products[i]->get_quantum_sync_engine_ptr(),
+#endif
+                                       pc_products[i]->getIonizationInitialLevel(),
+                                       start_index, stop_index);
+        }
+
         amrex::Gpu::synchronize();
 
         return num_added_vec;
@@ -289,6 +311,7 @@ public:
     amrex::Vector<int> operator() (
                     const index_type& /*n_total_pairs*/,
                     const SoaData_type& /*soa_1*/, const SoaData_type& /*soa_2*/,
+                    amrex::Vector<WarpXParticleContainer*>& /*pc_products*/,
                     ParticleTileType** /*tile_products*/,
                     ParticleType* /*particle_ptr_1*/, ParticleType* /*particle_ptr_2*/,
                     const amrex::ParticleReal& /*m1*/, const amrex::ParticleReal& /*m2*/,

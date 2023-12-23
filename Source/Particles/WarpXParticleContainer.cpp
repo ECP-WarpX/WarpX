@@ -279,9 +279,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
             pinned_tile.push_back_int(j, attr_int[j].data() + ibegin, attr_int[j].data() + iend);
         }
 
+        pinned_tile.resize(np);
         // Default initialize the other real and integer runtime attributes
-        DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int,
-                                           amrex::RandomEngine{});
+        DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int);
 
         auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();
