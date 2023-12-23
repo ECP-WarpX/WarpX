@@ -54,7 +54,7 @@ def calctemperature(species, mass, it):
     T = mass/3.*(vxvx - vx*vx/nn1 + vyvy - vy*vy/nn1 + vzvz - vz*vz/nn1)*c**2/nn1
     return T/e, info
 
-ts = openpmd_viewer.OpenPMDTimeSeries('diags/openpmd')
+ts = openpmd_viewer.OpenPMDTimeSeries('FluxInjection1D_plt')
 
 it = 100
 
