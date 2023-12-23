@@ -713,29 +713,48 @@ Particle initialization
 
     * ``SingleParticle``: Inject a single macroparticle.
       This requires the additional parameters:
-      ``<species_name>.single_particle_pos`` (`3 doubles`, particle 3D position [meter])
-      ``<species_name>.single_particle_u`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
-      ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
+
+      * ``<species_name>.single_particle_pos`` (`3 doubles`, particle 3D position [meter])
+
+      * ``<species_name>.single_particle_u`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
+
+      * ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
 
     * ``MultipleParticles``: Inject multiple macroparticles.
       This requires the additional parameters:
-      ``<species_name>.multiple_particles_pos_x`` (list of `doubles`, X positions of the particles [meter])
-      ``<species_name>.multiple_particles_pos_y`` (list of `doubles`, Y positions of the particles [meter])
-      ``<species_name>.multiple_particles_pos_z`` (list of `doubles`, Z positions of the particles [meter])
-      ``<species_name>.multiple_particles_ux`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
-      ``<species_name>.multiple_particles_uy`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
-      ``<species_name>.multiple_particles_uz`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
-      ``<species_name>.multiple_particles_weight`` (list of `doubles`, macroparticle weights, i.e. number of physical particles each represents)
+
+      * ``<species_name>.multiple_particles_pos_x`` (list of `doubles`, X positions of the particles [meter])
+
+      * ``<species_name>.multiple_particles_pos_y`` (list of `doubles`, Y positions of the particles [meter])
+
+      * ``<species_name>.multiple_particles_pos_z`` (list of `doubles`, Z positions of the particles [meter])
+
+      * ``<species_name>.multiple_particles_ux`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
+
+      * ``<species_name>.multiple_particles_uy`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
+
+      * ``<species_name>.multiple_particles_uz`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
+
+      * ``<species_name>.multiple_particles_weight`` (list of `doubles`, macroparticle weights, i.e. number of physical particles each represents)
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
       space in all directions. This requires additional parameters:
-      ``<species_name>.q_tot`` (beam charge),
-      ``<species_name>.npart`` (number of particles in the beam),
-      ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
-      ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
-      ``<species_name>.x/y/z_cut`` (optional, particles with ``abs(x-x_m) > x_cut*x_rms`` are not injected, same for y and z. ``<species_name>.q_tot`` is the charge of the un-cut beam, so that cutting the distribution is likely to result in a lower total charge),
-      and optional arguments ``<species_name>.do_symmetrize`` (whether to
-      symmetrize the beam) and ``<species_name>.symmetrization_order`` (order of symmetrization, default is 4, can be 4 or 8).
+
+      * ``<species_name>.q_tot`` (beam charge),
+
+      * ``<species_name>.npart`` (number of particles in the beam),
+
+      * ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
+
+      * ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
+
+      There are additional optional parameters:
+
+      * ``<species_name>.x/y/z_cut`` (optional, particles with ``abs(x-x_m) > x_cut*x_rms`` are not injected, same for y and z. ``<species_name>.q_tot`` is the charge of the un-cut beam, so that cutting the distribution is likely to result in a lower total charge),
+      * ``<species_name>.do_symmetrize`` (optional, whether to symmetrize the beam)
+
+      * ``<species_name>.symmetrization_order`` (order of symmetrization, default is 4, can be 4 or 8).
+
       If ``<species_name>.do_symmetrize`` is 0, no symmetrization occurs.  If ``<species_name>.do_symmetrize`` is 1,
       then the beam is symmetrized according to the value of ``<species_name>.symmetrization_order``.
       If set to 4, symmetrization is in the x and y direction, (x,y) (-x,y) (x,-y) (-x,-y).
@@ -743,11 +762,17 @@ Particle initialization
 
     * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
       With it users can specify the additional arguments:
-      ``<species_name>.injection_file`` (`string`) openPMD file name and
-      ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
-      ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
-      ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
-      ``<species_name>.impose_t_lab_from_file`` (`bool`) optional (default is false) only read if warpx.gamma_boost > 1., it allows to set t_lab for the Lorentz Transform as being the time stored in the openPMD file.
+
+      * ``<species_name>.injection_file`` (`string`) openPMD file name and
+
+      * ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
+
+      * ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
+
+      * ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
+
+      * ``<species_name>.impose_t_lab_from_file`` (`bool`) optional (default is false) only read if warpx.gamma_boost > 1., it allows to set t_lab for the Lorentz Transform as being the time stored in the openPMD file.
+
       Warning: ``q_tot!=0`` is not supported with the ``external_file`` injection style. If a value is provided, it is ignored and no re-scaling is done.
       The external file must include the species ``openPMD::Record`` labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records`` for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ``<species_name>.charge`` or ``<species_name>.species_type``).
@@ -1694,6 +1719,7 @@ Collision models
 ----------------
 
 WarpX provides several particle collision models, using varying degrees of approximation.
+Details about the collision models can be found in the :ref:`theory section <theory-collisions>`.
 
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type.
@@ -1703,29 +1729,29 @@ WarpX provides several particle collision models, using varying degrees of appro
 * ``<collision_name>.type`` (`string`) optional
     The type of collision. The types implemented are:
 
-    - ``pairwisecoulomb`` for pairwise Coulomb collisions, the default if unspecified.
+    - ``pairwisecoulomb`` for pair-wise Coulomb collisions, the default if unspecified.
       This provides a pair-wise relativistic elastic Monte Carlo binary Coulomb collision model,
-      following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`__.
+      following the algorithm given by :cite:t:`param-Perez2012`.
       When the RZ mode is used, `warpx.n_rz_azimuthal_modes` must be set to 1 at the moment,
       since the current implementation of the collision module assumes axisymmetry.
     - ``nuclearfusion`` for fusion reactions.
-      This implements the pair-wise fusion model by `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`__.
+      This implements the pair-wise fusion model by :cite:t:`param-Higginson2019`.
       Currently, WarpX supports deuterium-deuterium, deuterium-tritium, deuterium-helium and proton-boron fusion.
       When initializing the reactant and product species, you need to use ``species_type`` (see the documentation
       for this parameter), so that WarpX can identify the type of reaction to use.
       (e.g. ``<species_name>.species_type = 'deuterium'``)
+    - ``dsmc`` for pair-wise, non-Coulomb collisions between kinetic species.
+      This is a "direct simulation Monte Carlo" treatment of collisions between
+      kinetic species. See :ref:`DSMC section <theory-collisions-dsmc>`.
     - ``background_mcc`` for collisions between particles and a neutral background.
       This is a relativistic Monte Carlo treatment for particles colliding
-      with a neutral background gas. The implementation follows the so-called
-      null collision strategy discussed for example in `Birdsall (IEEE Transactions on
-      Plasma Science, vol. 19, no. 2, pp. 65-85, 1991) <https://ieeexplore.ieee.org/document/106800>`_.
-      See also :ref:`collisions section <theory-collisions>`.
+      with a neutral background gas. See :ref:`MCC section <theory-collisions-mcc>`.
     - ``background_stopping`` for slowing of ions due to collisions with electrons or ions.
       This implements the approximate formulae as derived in Introduction to Plasma Physics,
       from Goldston and Rutherford, section 14.2.
 
 * ``<collision_name>.species`` (`strings`)
-    If using ``pairwisecoulomb`` or ``nuclearfusion``, this should be the name(s) of the species,
+    If using ``dsmc``, ``pairwisecoulomb`` or ``nuclearfusion``, this should be the name(s) of the species,
     between which the collision will be considered. (Provide only one name for intra-species collisions.)
     If using ``background_mcc`` or ``background_stopping`` type this should be the name of the
     species for which collisions with a background will be included.
@@ -1748,7 +1774,7 @@ WarpX provides several particle collision models, using varying degrees of appro
     :math:`A` is the mass number.
     If this is not provided, or if a non-positive value is provided,
     a Coulomb logarithm will be computed automatically according to the algorithm in
-    `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`__.
+    :cite:t:`param-Perez2012`.
 
 * ``<collision_name>.fusion_multiplier`` (`float`) optional.
     Only for ``nuclearfusion``.
@@ -1759,8 +1785,8 @@ WarpX provides several particle collision models, using varying degrees of appro
     More specifically, in a fusion reaction between two macroparticles with weight ``w_1`` and ``w_2``,
     the weight of the product macroparticles will be ``min(w_1,w_2)/fusion_multiplier``.
     (And the weights of the reactant macroparticles are reduced correspondingly after the reaction.)
-    See `Higginson et al. (JCP 388, 439-453, 2019) <https://doi.org/10.1016/j.jcp.2019.03.020>`__
-    for more details. The default value of ``fusion_multiplier`` is 1.
+    See :cite:t:`param-Higginson2019` for more details.
+    The default value of ``fusion_multiplier`` is 1.
 
 * ``<collision_name>.fusion_probability_threshold`` (`float`) optional.
     Only for ``nuclearfusion``.
@@ -1830,25 +1856,21 @@ WarpX provides several particle collision models, using varying degrees of appro
     where :math:`\beta` is the term on the r.h.s except :math:`W_b`.
 
 * ``<collision_name>.scattering_processes`` (`strings` separated by spaces)
-    Only for ``background_mcc``. The MCC scattering processes that should be
+    Only for ``dsmc`` and ``background_mcc``. The scattering processes that should be
     included. Available options are ``elastic``, ``back`` & ``charge_exchange``
     for ions and ``elastic``, ``excitationX`` & ``ionization`` for electrons.
-    The ``elastic`` option uses hard-sphere scattering, with a differential
-    cross section that is independent of angle.
-    With ``charge_exchange``, the ion velocity is replaced with the neutral
-    velocity, chosen from a Maxwellian based on the value of
-    ``<collision_name>.background_temperature``.
     Multiple excitation events can be included for electrons corresponding to
     excitation to different levels, the ``X`` above can be changed to a unique
     identifier for each excitation process. For each scattering process specified
-    a path to a cross-section data file must  also be given. We use
+    a path to a cross-section data file must also be given. We use
     ``<scattering_process>`` as a placeholder going forward.
 
 * ``<collision_name>.<scattering_process>_cross_section`` (`string`)
-    Only for ``background_mcc``. Path to the file containing cross-section data
+    Only for ``dsmc`` and ``background_mcc``. Path to the file containing cross-section data
     for the given scattering processes. The cross-section file must have exactly
     2 columns of data, the first containing equally spaced energies in eV and the
-    second the corresponding cross-section in :math:`m^2`.
+    second the corresponding cross-section in :math:`m^2`. The energy column should
+    represent the kinetic energy of the colliding particles in the center-of-mass frame.
 
 * ``<collision_name>.<scattering_process>_energy`` (`float`)
     Only for ``background_mcc``. If the scattering process is either

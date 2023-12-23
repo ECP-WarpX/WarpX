@@ -134,6 +134,8 @@ Other operations related to particles:
 
 .. autoclass:: pywarpx.picmi.CoulombCollisions
 
+.. autoclass:: pywarpx.picmi.DSMCCollisions
+
 .. autoclass:: pywarpx.picmi.MCCCollisions
 
 .. autoclass:: pywarpx.picmi.FieldIonization

@@ -27,6 +27,7 @@
 
 # OpenMP threads per MPI rank
 export OMP_NUM_THREADS=16
+export SRUN_CPUS_PER_TASK=16
 
 # set user rights to u=rwx;g=r-x;o=---
 umask 0027
