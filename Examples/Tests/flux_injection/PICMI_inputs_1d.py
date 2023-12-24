@@ -126,7 +126,7 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     period = diagnostic_intervals,
                                     warpx_particle_fields_to_plot = particle_diags,
                                     write_dir = '.',
-                                    warpx_file_prefix = 'diags/openpmd')
+                                    warpx_file_prefix = 'Python_FluxInjection1D_plt')
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       warpx_format = 'openpmd',
@@ -190,7 +190,7 @@ def calctemperature(species, mass, it):
     T = mass/3.*(vxvx - vx*vx/nn1 + vyvy - vy*vy/nn1 + vzvz - vz*vz/nn1)*c**2/nn1
     return T/e, info
 
-ts = openpmd_viewer.OpenPMDTimeSeries('diags/openpmd')
+ts = openpmd_viewer.OpenPMDTimeSeries('Python_FluxInjection1D_plt')
 
 it = 100
 
