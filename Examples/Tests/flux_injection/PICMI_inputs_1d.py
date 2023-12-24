@@ -2,16 +2,10 @@
 #
 # --- Simple example of Langmuir oscillations in a uniform plasma
 # --- in two dimensions
-import sys
-
 import numpy as np
 import openpmd_viewer
-from scipy.constants import c, e, m_e, m_p
 
 from pywarpx import picmi
-
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-import checksumAPI
 
 constants = picmi.constants
 
@@ -91,7 +85,7 @@ ions_flux_right = picmi.UniformThermalPLasmaFluxDistribution(density = N,
 electrons = picmi.Species(particle_type='electron', mass=e_mass, name='electrons',
                           initial_distribution=[electrons_fill, electrons_flux_left, electrons_flux_right])
 ions = picmi.Species(particle_type='proton', name='ions',
-                          initial_distribution=[ions_fill, ions_flux_left, ions_flux_right])
+                     initial_distribution=[ions_fill, ions_flux_left, ions_flux_right])
 
 ##########################
 # numerics components
@@ -124,6 +118,7 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     warpx_format = 'openpmd',
                                     grid = grid,
                                     period = diagnostic_intervals,
+                                    data_list = ['Ez', 'Jz'],
                                     warpx_particle_fields_to_plot = particle_diags,
                                     write_dir = '.',
                                     warpx_file_prefix = 'Python_FluxInjection1D_plt')
@@ -131,7 +126,7 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       warpx_format = 'openpmd',
                                       period = diagnostic_intervals,
-                                      species = [electrons])
+                                      species = [electrons, ions])
 
 ##########################
 # simulation setup
@@ -187,8 +182,8 @@ def calctemperature(species, mass, it):
     vyvy, info = ts.get_field(f'vyvy_{species}', iteration=it)
     vzvz, info = ts.get_field(f'vzvz_{species}', iteration=it)
     nn1 = nn.clip(1)
-    T = mass/3.*(vxvx - vx*vx/nn1 + vyvy - vy*vy/nn1 + vzvz - vz*vz/nn1)*c**2/nn1
-    return T/e, info
+    T = mass/3.*(vxvx - vx*vx/nn1 + vyvy - vy*vy/nn1 + vzvz - vz*vz/nn1)*constants.c**2/nn1
+    return T/constants.q_e, info
 
 ts = openpmd_viewer.OpenPMDTimeSeries('Python_FluxInjection1D_plt')
 
@@ -205,10 +200,10 @@ nn_ions_error = np.abs((nn_ions/N - 1.))
 T_electrons_error = np.abs((T_electrons/T - 1.))
 T_ions_error = np.abs((T_ions/T - 1.))
 
-print(f'nn_electrons_error.max() = {nn_electrons_error.max()}')
-print(f'nn_ions_error.max() = {nn_ions_error.max()}')
-print(f'T_electrons_error.max() = {T_electrons_error.max()}')
-print(f'T_ions_error.max() = {T_ions_error.max()}')
+print(f'nn_electrons_error.max() = {nn_electrons_error.max()}, tolerance = 0.03')
+print(f'nn_ions_error.max() = {nn_ions_error.max()}, tolerance = 0.03')
+print(f'T_electrons_error.max() = {T_electrons_error.max()}, tolerance = 0.03')
+print(f'T_ions_error.max() = {T_ions_error.max()}, tolerance = 0.03')
 
 assert nn_electrons_error.max() < 0.03
 assert nn_ions_error.max() < 0.03
