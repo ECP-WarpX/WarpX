@@ -1,4 +1,4 @@
-/* Copyright 2019 Axel Huebl, David Grote, Maxence Thevenet
+/* Copyright 2023 Axel Huebl, David Grote, Maxence Thevenet
  * Revathi Jambunathan, Weiqun Zhang
  *
  * This file is part of WarpX.
@@ -924,10 +924,10 @@ void doGatherShapeNEsirkepovStencilImplicit (
         }
 
         // Convert Erp and Ethetap to Ex and Ey
-        Exp += costheta*Erp - sintheta*Ethetap;
-        Eyp += costheta*Ethetap + sintheta*Erp;
-        Bxp += costheta*Brp - sintheta*Bthetap;
-        Byp += costheta*Bthetap + sintheta*Brp;
+        Exp += costheta_mid*Erp - sintheta_mid*Ethetap;
+        Eyp += costheta_mid*Ethetap + sintheta_mid*Erp;
+        Bxp += costheta_mid*Brp - sintheta_mid*Bthetap;
+        Byp += costheta_mid*Bthetap + sintheta_mid*Brp;
 
 #elif defined(WARPX_DIM_1D_Z)
 
