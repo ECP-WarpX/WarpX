@@ -1919,10 +1919,10 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
                 // This assumes the flux_pos is of type InjectorPositionRandomPlane
                 const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
-                  // In the refined injection region: use refinement ratio `lrrfac`
-                  flux_pos->getPositionUnitBox(i_part, lrrfac, engine) :
-                  // Otherwise: use 1 as the refinement ratio
-                  flux_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
+                    // In the refined injection region: use refinement ratio `lrrfac`
+                    flux_pos->getPositionUnitBox(i_part, lrrfac, engine) :
+                    // Otherwise: use 1 as the refinement ratio
+                    flux_pos->getPositionUnitBox(i_part, amrex::IntVect::TheUnitVector(), engine);
                 auto pos = getCellCoords(emitting_cell_location, dx, r, iv);
                 auto ppos = PDim3(pos);
 
@@ -2036,27 +2036,6 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // so as to produce a continuous-looking flow of particles
                 const amrex::Real t_fract = amrex::Random(engine)*dt;
                 UpdatePosition(ppos.x, ppos.y, ppos.z, pu.x, pu.y, pu.z, t_fract);
-
-                // Check if the updated particle location is within the domain.
-                // If not, skip it.
-#if defined(WARPX_DIM_3D)
-                if (!tile_realbox.contains(XDim3{ppos.x, ppos.y, ppos.z})) {
-                    p.id() = -1;
-                    continue;
-                }
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                amrex::ignore_unused(k);
-                if (!tile_realbox.contains(XDim3{ppos.x, ppos.z, 0.0_prt})) {
-                    p.id() = -1;
-                    continue;
-                }
-#else
-                amrex::ignore_unused(j, k);
-                if (!tile_realbox.contains(XDim3{ppos.z, 0.0_prt, 0.0_prt})) {
-                    p.id() = -1;
-                    continue;
-                }
-#endif
 
 #if defined(WARPX_DIM_3D)
                 p.pos(0) = ppos.x;
