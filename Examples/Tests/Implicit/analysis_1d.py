@@ -10,8 +10,8 @@
 # This is a script that analyses the simulation results from
 # the script `inputs_1d`. This simulates a 1D periodic plasma using the implicit solver.
 import os
-import sys
 import re
+import sys
 
 import numpy as np
 
