@@ -33,17 +33,25 @@ grid = picmi.Cartesian3DGrid(number_of_cells = [nx, ny, nz],
 
 # Particles
 vel_z = 0.5*c
-multiparticles_distribution = picmi.ParticleListDistribution(x = [0.05, 0.],
-                                                             y = [0., 0.04],
-                                                             z = [0.05, 0.05],
-                                                             ux = [0., 0.],
-                                                             uy = [0., 0.],
-                                                             uz = [vel_z, vel_z],
-                                                             weight = [1., 1.])
+offset_x_particle = picmi.ParticleListDistribution(x = [0.05],
+                                                   y = [0.],
+                                                   z = [0.05],
+                                                   ux = [0.],
+                                                   uy = [0.],
+                                                   uz = [vel_z],
+                                                   weight = [1.])
+
+offset_y_particle = picmi.ParticleListDistribution(x = [0.],
+                                                   y = [0.04],
+                                                   z = [0.05],
+                                                   ux = [0.],
+                                                   uy = [0.],
+                                                   uz = [vel_z],
+                                                   weight = [1.])
 
 electrons = picmi.Species(particle_type = 'electron',
                           name = 'electrons',
-                          initial_distribution = multiparticles_distribution)
+                          initial_distribution = [offset_x_particle, offset_y_particle])
 
 # Plasma lenses
 plasma_lenses = picmi.PlasmaLens(period = 0.5,
@@ -61,10 +69,16 @@ solver = picmi.ElectromagneticSolver(grid = grid,
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = max_steps,
                                       species = [electrons],
-                                      data_list = ['ux', 'uy', 'uz'],
+                                      data_list = ['ux', 'uy', 'uz', 'x', 'y', 'z'],
                                       write_dir = '.',
                                       warpx_file_prefix = 'Python_plasma_lens_plt')
 
+field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
+                                   grid = grid,
+                                   period = max_steps,
+                                   data_list = ['Bx', 'By', 'Bz', 'Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz'],
+                                   write_dir = '.',
+                                   warpx_file_prefix = 'Python_plasma_lens_plt')
 # Set up simulation
 sim = picmi.Simulation(solver = solver,
                        max_steps = max_steps,
@@ -81,6 +95,7 @@ sim.add_applied_field(plasma_lenses)
 
 # Add diagnostics
 sim.add_diagnostic(part_diag1)
+sim.add_diagnostic(field_diag1)
 
 # Write input file that can be used to run with the compiled version
 #sim.write_input_file(file_name = 'inputs_3d_picmi')

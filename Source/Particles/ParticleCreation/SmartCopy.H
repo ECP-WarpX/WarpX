@@ -52,16 +52,20 @@ struct SmartCopy
         dst.m_aos[i_dst] = src.m_aos[i_src];
 
         // initialize the real components
-        for (int j = 0; j < DstData::NAR; ++j)
+        for (int j = 0; j < DstData::NAR; ++j) {
             dst.m_rdata[j][i_dst] = initializeRealValue(m_policy_real[j], engine);
-        for (int j = 0; j < dst.m_num_runtime_real; ++j)
+        }
+        for (int j = 0; j < dst.m_num_runtime_real; ++j) {
             dst.m_runtime_rdata[j][i_dst] = initializeRealValue(m_policy_real[j+DstData::NAR], engine);
+        }
 
         // initialize the int components
-        for (int j = 0; j < DstData::NAI; ++j)
+        for (int j = 0; j < DstData::NAI; ++j) {
             dst.m_idata[j][i_dst] = initializeIntValue(m_policy_int[j]);
-        for (int j = 0; j < dst.m_num_runtime_int; ++j)
+        }
+        for (int j = 0; j < dst.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][i_dst] = initializeIntValue(m_policy_int[j+DstData::NAI]);
+        }
 
         // copy the shared real components
         for (int j = 0; j < m_num_copy_real; ++j)
@@ -134,23 +138,19 @@ class SmartCopyFactory
     SmartCopyTag m_tag_int;
     PolicyVec m_policy_real;
     PolicyVec m_policy_int;
-    bool m_defined;
+    bool m_defined = false;
 
 public:
     template <class SrcPC, class DstPC>
-    SmartCopyFactory (const SrcPC& src, const DstPC& dst) noexcept
-        : m_defined(false)
-    {
-        m_tag_real = getSmartCopyTag(src.getParticleComps(),  dst.getParticleComps());
-        m_tag_int  = getSmartCopyTag(src.getParticleiComps(), dst.getParticleiComps());
+    SmartCopyFactory (const SrcPC& src, const DstPC& dst) noexcept :
+        m_tag_real{getSmartCopyTag(src.getParticleComps(), dst.getParticleComps())},
+        m_tag_int{getSmartCopyTag(src.getParticleiComps(), dst.getParticleiComps())},
+        m_policy_real{getPolicies(dst.getParticleComps())},
+        m_policy_int{getPolicies(dst.getParticleiComps())},
+        m_defined{true}
+    {}
 
-        m_policy_real = getPolicies(dst.getParticleComps());
-        m_policy_int  = getPolicies(dst.getParticleiComps());
-
-        m_defined = true;
-    }
-
-    SmartCopy getSmartCopy () const noexcept
+    [[nodiscard]] SmartCopy getSmartCopy () const noexcept
     {
         AMREX_ASSERT(m_defined);
         return SmartCopy{m_tag_real.size(),
@@ -163,7 +163,7 @@ public:
                          m_policy_int.dataPtr()};
     }
 
-    bool isDefined () const noexcept { return m_defined; }
+    [[nodiscard]] bool isDefined () const noexcept { return m_defined; }
 };
 
 #endif

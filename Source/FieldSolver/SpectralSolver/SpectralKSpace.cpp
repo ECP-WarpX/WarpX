@@ -68,14 +68,9 @@ SpectralKSpace::SpectralKSpace( const BoxArray& realspace_ba,
     spectralspace_ba.define( spectral_bl );
 
     // Allocate the components of the k vector: kx, ky (only in 3D), kz
-    bool only_positive_k;
     for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++) {
-        if (i_dim==0) {
-            // Real-to-complex FFTs: first axis contains only the positive k
-            only_positive_k = true;
-        } else {
-            only_positive_k = false;
-        }
+        // Real-to-complex FFTs: first axis contains only the positive k
+        const auto only_positive_k = (i_dim==0);
         k_vec[i_dim] = getKComponent(dm, realspace_ba, i_dim, only_positive_k);
     }
 }
@@ -142,7 +137,7 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
  * specified by `i_dim`.
  *
  * (By default, we assume the FFT is done from/to a collocated grid in real space
- * It the FFT is performed from/to a cell-centered grid in real space,
+ * If the FFT is performed from/to a cell-centered grid in real space,
  * a correcting "shift" factor must be applied in spectral space.)
  */
 SpectralShiftFactor
@@ -152,14 +147,14 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
 {
     // Initialize an empty DeviceVector in each box
     SpectralShiftFactor shift_factor( spectralspace_ba, dm );
-   // Loop over boxes and allocate the corresponding DeviceVector
+    // Loop over boxes and allocate the corresponding DeviceVector
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
         const Gpu::DeviceVector<Real>& k = k_vec[i_dim][mfi];
         Gpu::DeviceVector<Complex>& shift = shift_factor[mfi];
 
         // Allocate shift coefficients
-        const int N = k.size();
+        const auto N = static_cast<int>(k.size());
         shift.resize(N);
         Real const* pk = k.data();
         Complex* pshift = shift.data();
@@ -207,7 +202,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             Gpu::DeviceVector<Real>& modified_k = modified_k_comp[mfi];
 
             // Allocate modified_k to the same size as k
-            const int N = k.size();
+            const auto N = static_cast<int>(k.size());;
             modified_k.resize(N);
 
             // Fill the modified k vector
@@ -221,7 +216,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
         Gpu::copyAsync(Gpu::hostToDevice, h_stencil_coef.begin(), h_stencil_coef.end(),
                        d_stencil_coef.begin());
         Gpu::synchronize();
-        const int nstencil = d_stencil_coef.size();
+        const auto nstencil = static_cast<int>(d_stencil_coef.size());
         Real const* p_stencil_coef = d_stencil_coef.data();
 
         // Loop over boxes and allocate the corresponding DeviceVector
@@ -232,7 +227,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             Gpu::DeviceVector<Real>& modified_k = modified_k_comp[mfi];
 
             // Allocate modified_k to the same size as k
-            const int N = k.size();
+            const auto N = static_cast<int>(k.size());;
             modified_k.resize(N);
             Real const* p_k = k.data();
             Real * p_modified_k = modified_k.data();
@@ -247,7 +242,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                             std::sin( p_k[i]*(n+1)*delta_x )/( (n+1)*delta_x );
                     } else {
                         p_modified_k[i] += p_stencil_coef[n]* \
-                            std::sin( p_k[i]*(n+0.5)*delta_x )/( (n+0.5)*delta_x );
+                            std::sin( p_k[i]*(n+0.5_rt)*delta_x )/( (n+0.5_rt)*delta_x );
                     }
                 }
 

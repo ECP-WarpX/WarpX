@@ -147,7 +147,7 @@ using namespace amrex;
                                 amrex::GpuArray<int, 3> const& fbndry_lo,
                                 amrex::GpuArray<int, 3> const& fbndry_hi )
     {
-        // Tangential Efield componentes in guard cells set equal and opposite to cells
+        // Tangential Efield components in guard cells set equal and opposite to cells
         // in the mirror locations across the PEC boundary, whereas normal E-field
         // components are set equal to values in the mirror locations across the PEC
         // boundary. Here we just initialize it.
@@ -166,23 +166,22 @@ using namespace amrex;
                 // For 2D : for icomp==1, (Ey in XZ, Etheta in RZ),
                 //          icomp=1 is tangential to both x and z boundaries
                 //          The logic below ensures that the flags are set right for 2D
-                const bool is_tangent_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
-                                             ? false : true );
+                const bool is_tangent_to_PEC = (icomp != AMREX_SPACEDIM*idim);
 #elif (defined WARPX_DIM_1D_Z)
                 // For 1D : icomp=0 and icomp=1 (Ex and Ey are tangential to the z boundary)
                 //          The logic below ensures that the flags are set right for 1D
-                const bool is_tangent_to_PEC = ( ( icomp == idim+2) ? false : true );
+                const bool is_tangent_to_PEC = (icomp != idim+2);
 #else
-                const bool is_tangent_to_PEC = ( ( icomp == idim) ? false : true );
+                const bool is_tangent_to_PEC = (icomp != idim);
 #endif
-                if (isPECBoundary == true) {
+                if (isPECBoundary) {
                     // grid point ijk_vec is ig number of points pass the
                     // domain boundary in direction, idim
                     const int ig = get_cell_count_to_boundary(
                         dom_lo, dom_hi, ijk_vec, is_nodal, idim, iside);
 
                     if (ig == 0) {
-                        if (is_tangent_to_PEC == true and is_nodal[idim] == 1) {
+                        if (is_tangent_to_PEC && is_nodal[idim] == 1) {
                             OnPECBoundary = true;
                         }
                     } else if (ig > 0) {
@@ -192,15 +191,25 @@ using namespace amrex;
                                         : (dom_hi[idim] + 1 - ig));
                         GuardCell = true;
                         // tangential components are inverted across PEC boundary
-                        if (is_tangent_to_PEC == true) sign *= -1._rt;
+                        if (is_tangent_to_PEC) { sign *= -1._rt; }
+#if (defined WARPX_DIM_RZ)
+                        if (icomp == 0 && idim == 0 && iside == 1) {
+                            // Add radial scale so that drEr/dr = 0.
+                            // This only works for the first guard cell and with
+                            // Er cell centered in r.
+                            const amrex::Real rguard = ijk_vec[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
+                            const amrex::Real rmirror = ijk_mirror[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
+                            sign *= rmirror/rguard;
+                        }
+#endif
                     }
                 } // is PEC boundary
             } // loop over iside
         } // loop over dimensions
-        if (OnPECBoundary == true) {
+        if (OnPECBoundary) {
             // if ijk_vec is on a PEC boundary in any direction, set Etangential to 0.
             Efield(ijk_vec,n) = 0._rt;
-        } else if (GuardCell == true) {
+        } else if (GuardCell) {
             Efield(ijk_vec,n) = sign * Efield(ijk_mirror,n);
         }
     }
@@ -288,19 +297,18 @@ using namespace amrex;
                 const bool isPECBoundary = ( (iside == 0 )
                                         ? is_boundary_PEC(fbndry_lo, idim)
                                         : is_boundary_PEC(fbndry_hi, idim) );
-                if (isPECBoundary == true) {
+                if (isPECBoundary) {
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                     // For 2D : for icomp==1, (By in XZ, Btheta in RZ),
                     //          icomp=1 is not normal to x or z boundary
                     //          The logic below ensures that the flags are set right for 2D
-                    const bool is_normal_to_PEC = ( (icomp == AMREX_SPACEDIM*idim)
-                                                ? true : false );
+                    const bool is_normal_to_PEC = (icomp == (AMREX_SPACEDIM*idim));
 #elif (defined WARPX_DIM_1D_Z)
                     // For 1D : icomp=0 and icomp=1 (Bx and By are not normal to the z boundary)
                     //          The logic below ensures that the flags are set right for 1D
-                    const bool is_normal_to_PEC = ( ( icomp == idim+2) ? true : false );
+                    const bool is_normal_to_PEC = (icomp == (idim+2));
 #else
-                    const bool is_normal_to_PEC = ( ( icomp == idim) ? true : false );
+                    const bool is_normal_to_PEC = (icomp == idim);
 #endif
 
                     // grid point ijk_vec is ig number of points pass the
@@ -310,7 +318,7 @@ using namespace amrex;
 
                     if (ig == 0) {
                         // Only normal component is set to 0
-                        if (is_normal_to_PEC == true and is_nodal[idim]==1) {
+                        if (is_normal_to_PEC && is_nodal[idim]==1) {
                             OnPECBoundary = true;
                         }
                     } else if ( ig > 0) {
@@ -321,16 +329,24 @@ using namespace amrex;
                                         : (dom_hi[idim] + 1 - ig));
                         GuardCell = true;
                         // Sign of the normal component in guard cell is inverted
-                        if (is_normal_to_PEC == true) sign *= -1._rt;
+                        if (is_normal_to_PEC) { sign *= -1._rt; }
+#if (defined WARPX_DIM_RZ)
+                        if (icomp == 0 && idim == 0 && iside == 1) {
+                            // Add radial scale so that drBr/dr = 0.
+                            const amrex::Real rguard = ijk_vec[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
+                            const amrex::Real rmirror = ijk_mirror[idim] + 0.5_rt*(1._rt - is_nodal[idim]);
+                            sign *= rmirror/rguard;
+                        }
+#endif
                     }
                 } // if PEC Boundary
             } // loop over sides
         } // loop of dimensions
 
-        if (OnPECBoundary == true) {
+        if (OnPECBoundary) {
             // if ijk_vec is on a PEC boundary in any direction, set Bnormal to 0.
             Bfield(ijk_vec,n) = 0._rt;
-        } else if (GuardCell == true) {
+        } else if (GuardCell) {
             // Bnormal and Btangential is set opposite and equal to the value
             // in the mirror location, respectively.
             Bfield(ijk_vec,n) = sign * Bfield(ijk_mirror,n);
@@ -375,37 +391,38 @@ using namespace amrex;
         {
             for (int iside = 0; iside < 2; ++iside)
             {
-                if (!is_pec[idim][iside]) continue;
+                if (!is_pec[idim][iside]) { continue; }
 
                 // Get the mirror guard cell index
                 amrex::IntVect iv_mirror = ijk_vec;
                 iv_mirror[idim] = mirrorfac[idim][iside] - ijk_vec[idim];
 
-                // On the PEC boundary the current density is set to 0
-                if (ijk_vec == iv_mirror) field(ijk_vec, n) = 0._rt;
+                // On the PEC boundary the charge/current density is set to 0
+                if (ijk_vec == iv_mirror) {
+                    field(ijk_vec, n) = 0._rt;
                 // otherwise update the internal cell if the mirror guard cell exists
-                else if (fabbox.contains(iv_mirror))
-                {
+                } else if (fabbox.contains(iv_mirror)) {
                     field(ijk_vec,n) += psign[idim][iside] * field(iv_mirror,n);
                 }
             }
         }
         // 2) The guard cells are updated with the appropriate image
-        //    charge current based on the current in the valid cells
+        //    charge based on the charge/current in the valid cells
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
         {
             for (int iside = 0; iside < 2; ++iside)
             {
-                if (!is_pec[idim][iside]) continue;
+                if (!is_pec[idim][iside]) { continue; }
 
                 amrex::IntVect iv_mirror = ijk_vec;
                 iv_mirror[idim] = mirrorfac[idim][iside] - ijk_vec[idim];
                 if (ijk_vec != iv_mirror && fabbox.contains(iv_mirror))
                 {
-                    if (tangent_to_bndy[idim])
+                    if (tangent_to_bndy[idim]) {
                         field(iv_mirror, n) = -field(ijk_vec, n);
-                    else
+                    } else {
                         field(iv_mirror, n) = field(ijk_vec, n);
+                    }
                 }
             }
         }
@@ -438,7 +455,7 @@ using namespace amrex;
         {
             for (int iside = 0; iside < 2; ++iside)
             {
-                if (!is_pec[idim][iside]) continue;
+                if (!is_pec[idim][iside]) { continue; }
 
                 // Get the mirror guard cell index
                 amrex::IntVect iv_mirror = ijk_vec;
@@ -448,7 +465,7 @@ using namespace amrex;
                 // first value in the domain (nodal fields)
                 if (ijk_vec == iv_mirror) {
                     iv_mirror[idim] += (iside == 0) ? 1 : -1;
-                    if (fabbox.contains(iv_mirror)) field(ijk_vec, n) = field(iv_mirror, n);
+                    if (fabbox.contains(iv_mirror)) { field(ijk_vec, n) = field(iv_mirror, n); }
                 }
                 // otherwise set the mirror guard cell equal to the internal cell value
                 else if (fabbox.contains(iv_mirror))
@@ -474,8 +491,8 @@ using namespace amrex;
      *                                split pml field
      */
     void ApplyPECtoEfield ( std::array<amrex::MultiFab*, 3> Efield,
-                            const int lev, PatchType patch_type,
-                            const bool split_pml_field = false);
+                            int lev, PatchType patch_type,
+                            bool split_pml_field = false);
     /**
      * \brief Sets the normal component of the magnetic field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell
@@ -486,7 +503,7 @@ using namespace amrex;
      * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoBfield ( std::array<amrex::MultiFab*, 3> Bfield,
-                            const int lev, PatchType patch_type);
+                            int lev, PatchType patch_type);
 
     /**
      * \brief Reflects charge density deposited over the PEC boundary back into
@@ -496,7 +513,7 @@ using namespace amrex;
      * \param[in]     lev        level of the Multifab
      * \param[in]     patch_type coarse or fine
      */
-    void ApplyPECtoRhofield(amrex::MultiFab* rho, const int lev,
+    void ApplyPECtoRhofield(amrex::MultiFab* rho, int lev,
                             PatchType patch_type);
 
     /**
@@ -508,7 +525,7 @@ using namespace amrex;
      * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
-                          amrex::MultiFab* Jz, const int lev,
+                          amrex::MultiFab* Jz, int lev,
                           PatchType patch_type);
 
     /**
@@ -519,6 +536,6 @@ using namespace amrex;
      * \param[in]     patch_type coarse or fine
      */
     void ApplyPECtoElectronPressure (amrex::MultiFab* Pefield,
-                                     const int lev, PatchType patch_type);
+                                     int lev, PatchType patch_type);
 }
 #endif // WarpX_PEC_KERNELS_H_
