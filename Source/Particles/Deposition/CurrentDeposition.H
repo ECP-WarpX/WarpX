@@ -1412,12 +1412,12 @@ void doEsirkepovDepositionShapeNImplicit (const amrex::ParticleReal * const xp_n
                 double const z_old_i = z_old + delz*istep;,
                 double const x_old_i = x_old + delx*istep;,
                 double const y_old_i = y_old + dely*istep;)
-                
+
                 AMREX_D_TERM(
                 double const z_new_i = z_old + delz*(istep + 1);,
                 double const x_new_i = x_old + delx*(istep + 1);,
                 double const y_new_i = y_old + dely*(istep + 1);)
-                
+
                 doEsirkepovDepositionShapeNKernel<depos_order>(AMREX_D_DECL(z_old_i, x_old_i, y_old_i),
                                                                AMREX_D_DECL(z_new_i, x_new_i, y_new_i),
                                                                AMREX_D_DECL(wqz, wqx, wqy),
