@@ -28,7 +28,7 @@
 #if WARPX_USE_PSATD
 
 using namespace amrex;
-using namespace ablsatr::math;
+using namespace ablastr::math;
 
 PsatdAlgorithmJConstantInTime::PsatdAlgorithmJConstantInTime(
     const SpectralKSpace& spectral_kspace,

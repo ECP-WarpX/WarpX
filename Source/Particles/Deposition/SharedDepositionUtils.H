@@ -84,10 +84,11 @@ void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
                        const int zdir, const int NODE, const int CELL, const int dir)
 {
     using namespace amrex::literals;
-    using namespace ablastr::math;
 
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
+#else
+    using namespace ablastr::math;
 #endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer

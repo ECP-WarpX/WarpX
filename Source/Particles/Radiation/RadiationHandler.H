@@ -11,6 +11,8 @@
 
 #include "RadiationHandler_fwd.H"
 
+#include "Particles/WarpXParticleContainer_fwd.H"
+
 #include <ablastr/math/Complex.H>
 
 #include <AMReX_GpuContainers.H>
@@ -33,8 +35,6 @@ public:
     void add_radiation_contribution(const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time);
 
     void gather_and_write_radiation(const std::string& filename);
-
-    void Integral_overtime();
 
 private:
 

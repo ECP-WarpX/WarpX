@@ -8,16 +8,23 @@
 #include "RadiationHandler.H"
 
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
 
-#include <ablastr/constant.H>
 #include <ablastr/math/Utils.H>
 
-#include <AMReX_ParmParse.H>
+#ifdef AMREX_USE_OMP
+#   include <omp.h>
+#endif
 
+#include <tuple>
 #include <vector>
 
+using namespace amrex;
 using namespace ablastr::math;
+using namespace utils::parser;
 
 namespace
 {
@@ -55,17 +62,17 @@ namespace
 
         auto us = amrex::Vector<amrex::Real>(det_points[0]);
         const auto ulim = distance*std::tan(theta_range[0]*0.5_rt);
-        ablastr::math::LinSpaceFill(-ul,ul, det_points[0], us.being());
+        ablastr::math::LinSpaceFill(-ulim,ulim, det_points[0], us.begin());
 
         auto vs = amrex::Vector<amrex::Real>(det_points[1]);
         const auto vlim = distance*std::tan(theta_range[1]*0.5_rt);
-        ablastr::math::LinSpaceFill(-vlim, vlim, det_points[1], vs.being());
+        ablastr::math::LinSpaceFill(-vlim, vlim, det_points[1], vs.begin());
 
         const auto how_many = det_points[0]*det_points[1];
 
-        auto det_x = amrex::GPU::DeviceVector<amrex::Real>(how_many);
-        auto det_y = amrex::GPU::DeviceVector<amrex::Real>(how_many);
-        auto det_z = amrex::GPU::DeviceVector<amrex::Real>(how_many);
+        auto host_det_x = amrex::Vector<amrex::Real>(how_many);
+        auto host_det_y = amrex::Vector<amrex::Real>(how_many);
+        auto host_det_z = amrex::Vector<amrex::Real>(how_many);
 
         const auto one_over_direction = 1.0_rt/std::sqrt(
             direction[0]*direction[0]+direction[1]*direction[1]+direction[2]*direction[2]);
@@ -78,15 +85,26 @@ namespace
         {
             for (int j = 0; j < det_points[1]; ++j)
             {
-                det_x[i*det_points[1] + j] = center[0] + distance * norm_direction[0] + us[i]*u[0] + vs[j]*v[0];
-                det_x[i*det_points[1] + j] = center[1] + distance * norm_direction[1] + us[i]*u[1] + vs[j]*v[1];
-                det_x[i*det_points[1] + j] = center[2] + distance * norm_direction[2] + us[i]*u[2] + vs[j]*v[2];
+                host_det_x[i*det_points[1] + j] = center[0] + distance * norm_direction[0] + us[i]*u[0] + vs[j]*v[0];
+                host_det_y[i*det_points[1] + j] = center[1] + distance * norm_direction[1] + us[i]*u[1] + vs[j]*v[1];
+                host_det_z[i*det_points[1] + j] = center[2] + distance * norm_direction[2] + us[i]*u[2] + vs[j]*v[2];
             }
         }
 
-        amrex::GPU::synchronize();
+        auto gpu_det_x = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
+        auto gpu_det_y = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
+        auto gpu_det_z = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
 
-        return {det_x, det_y, det_z}
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+            host_det_x.begin(), host_det_x.end(), gpu_det_x.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+            host_det_y.begin(), host_det_y.end(), gpu_det_y.begin());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+            host_det_z.begin(), host_det_z.end(), gpu_det_z.begin());
+
+        amrex::Gpu::Device::streamSynchronize();
+
+        return std::make_tuple(gpu_det_x, gpu_det_y, gpu_det_z);
 
     }
 }
@@ -102,40 +120,45 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
     const amrex::ParmParse pp_radiation("radiation");
 
     //Resolution in frequency of the detector
-    auto omega_range std::vector<amrex::Real>(2);
-    pp_radiation.getarr("omega_range", omega_range);
+    auto omega_range = std::vector<amrex::Real>(2);
+    getArrWithParser(pp_radiation, "omega_range", omega_range);
     std::copy(omega_range.begin(), omega_range.end(), m_omega_range.begin());
-    pp_radiation.get("omega_points", m_omega_points);
+    getWithParser(pp_radiation, "omega_points", m_omega_points);
 
     //Angle theta AND phi
-    auto theta_range std::vector<amrex::Real>(2);
-    pp_radiation.get("angle_aperture", theta_range);
+    auto theta_range = std::vector<amrex::Real>(2);
+    getArrWithParser(pp_radiation, "angle_aperture", theta_range);
     std::copy(theta_range.begin(), theta_range.end(), m_theta_range.begin());
 
     //Detector parameters
-    auto det_pts std::vector<int>(2);
-    pp_radiation.getarr("detector_number_points", det_pts);
+    auto det_pts = std::vector<int>(2);
+    getArrWithParser(pp_radiation, "detector_number_points", det_pts);
     std::copy(det_pts.begin(), det_pts.end(), m_det_pts.begin());
 
-    auto det_direction std::vector<amrex::Real>(3);
-    pp_radiation.getarr("detector_direction", det_direction);
+    auto det_direction = std::vector<amrex::Real>(3);
+    getArrWithParser(pp_radiation, "detector_direction", det_direction);
     std::copy(det_direction.begin(), det_direction.end(), m_det_direction.begin());
 
-    auto det_orientation std::vector<amrex::Real>(3);
-    pp_radiation.getarr("detector_orientation", det_orientation);
+    auto det_orientation = std::vector<amrex::Real>(3);
+    getArrWithParser(pp_radiation, "detector_orientation", det_orientation);
     std::copy(det_orientation.begin(), det_orientation.end(), m_det_orientation.begin());
 
-    pp_radiation.get("detector_distance", m_det_distance);
+    getWithParser(pp_radiation, "detector_distance", m_det_distance);
 
-    [det_pos_x, det_pos_y, det_pos_z] = compute_detector_positions(
-        center, det_direction, m_det_distance,
+    std::tie(det_pos_x, det_pos_y, det_pos_z) = compute_detector_positions(
+        center, m_det_direction, m_det_distance,
         m_det_orientation, m_det_pts, m_theta_range);
 
     constexpr auto ncomp = 3;
     m_radiation_data = amrex::Gpu::DeviceVector<ablastr::math::Complex>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
 
+    auto t_omegas = amrex::Vector<amrex::Real>(m_omega_points);
+    ablastr::math::LinSpaceFill(m_omega_range[0], m_omega_range[1], m_omega_points, t_omegas.begin());
     m_omegas = amrex::Gpu::DeviceVector<amrex::Real>(m_omega_points);
-    ablastr::math::LinSpaceFill(m_omega_range[0], m_omega_range[1], m_omega_points, omega_calc.being());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+            t_omegas.begin(), t_omegas.end(), m_omegas.begin());
+
+    amrex::Gpu::Device::streamSynchronize();
 }
 
 
@@ -153,10 +176,10 @@ void RadiationHandler::add_radiation_contribution
                 {
                     long const np = pti.numParticles();
                     const auto& attribs = pti.GetAttribs();
-                    const auto& p_w = attribs[PIdx::w];
-                    const auto& p_ux = attribs[PIdx::ux];
-                    const auto& p_uy = attribs[PIdx::uy];
-                    const auto& p_uz = attribs[PIdx::uz];
+                    const auto* p_w = attribs[PIdx::w].data();
+                    const auto* p_ux = attribs[PIdx::ux].data();
+                    const auto* p_uy = attribs[PIdx::uy].data();
+                    const auto* p_uz = attribs[PIdx::uz].data();
 
                     const auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
                     auto& part=pc->GetParticles(lev)[index];
@@ -177,7 +200,13 @@ void RadiationHandler::add_radiation_contribution
                     const auto p_det_pos_y = det_pos_y.dataPtr();
                     const auto p_det_pos_z = det_pos_z.dataPtr();
 
-                    const auto p_radiation_data = m_radiation_data.dataPtr();
+                    auto p_radiation_data = m_radiation_data.dataPtr();
+
+                    const auto& omega_points = m_omega_points;
+
+                    constexpr auto c = PhysConst::c;
+                    constexpr auto inv_c = 1._prt/(PhysConst::c);
+                    constexpr auto inv_c2 = 1._prt/(PhysConst::c* PhysConst::c);
 
                     amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE(int ip){
                         amrex::ParticleReal xp, yp, zp;
@@ -188,9 +217,8 @@ void RadiationHandler::add_radiation_contribution
                         const auto uz = 0.5_prt*(p_uz[ip] + p_uz_old[ip]);
                         auto const u2 = ux*ux + uy*uy + uz*uz;
 
-                        constexpr auto inv_c2 = 1._prt/(PhysConst::c*PhysConst::c);
-                        auto const one_over_gamma = 1._prt/sdt::sqrt(1.0_rt + u2*inv_c2);
-                        auto const one_over_gamma_c = one_over_gamma/PhysConst::c;
+                        auto const one_over_gamma = 1._prt/std::sqrt(1.0_rt + u2*inv_c2);
+                        auto const one_over_gamma_c = one_over_gamma*inv_c;
                         const auto bx = ux*one_over_gamma_c;
                         const auto by = uy*one_over_gamma_c;
                         const auto bz = uz*one_over_gamma_c;
@@ -202,16 +230,16 @@ void RadiationHandler::add_radiation_contribution
 
                         const auto tot_q = q*p_w[ip];
 
-                        for(int i_om=0; i_om < m_omega_points; ++i_om){
+                        for(int i_om=0; i_om < omega_points; ++i_om){
 
-                            const auto i_omega_over_c = Complex{0.0_prt, 1.0_prt}*p_omegas[i_om]/PhysConst::c;
+                            const auto i_omega_over_c = Complex{0.0_prt, 1.0_prt}*p_omegas[i_om]*inv_c;
 
                             for (int i_det = 0; i_det < how_many_det_pos; ++i_det){
 
                                 const auto part_det_x = xp - p_det_pos_x[i_det];
                                 const auto part_det_y = yp - p_det_pos_y[i_det];
                                 const auto part_det_z = zp - p_det_pos_z[i_det];
-                                const auto d_part_det = std:sqrt(
+                                const auto d_part_det = std::sqrt(
                                     part_det_x*part_det_x + part_det_y*part_det_y + part_det_z*part_det_z);
                                 const auto one_over_d_part_det = 1.0_prt/d_part_det;
 
@@ -236,7 +264,7 @@ void RadiationHandler::add_radiation_contribution
                                 const auto n_cross_n_minus_beta_cross_bp_y =nz*n_minus_beta_cross_bp_x-nx*n_minus_beta_cross_bp_z;
                                 const auto n_cross_n_minus_beta_cross_bp_z =nx*n_minus_beta_cross_bp_y-ny*n_minus_beta_cross_bp_x;
 
-                                const auto phase_term = amrex::exp(i_omega_over_c*(PhysConst::c*current_time - d_part_det));
+                                const auto phase_term = amrex::exp(i_omega_over_c*(c*current_time - d_part_det));
 
                                 const auto coeff = tot_q*phase_term/(one_minus_b_dot_n*one_minus_b_dot_n);
 
@@ -245,18 +273,27 @@ void RadiationHandler::add_radiation_contribution
                                 const auto cz = coeff*n_cross_n_minus_beta_cross_bp_z;
 
                                 const int ncomp = 3;
-                                const int idx = (i_om*how_many_det_pos + i_det)*ncomp;
+                                const int idx0 = (i_om*how_many_det_pos + i_det)*ncomp;
+                                const int idx1 = idx0 + 1;
+                                const int idx2 = idx0 + 2;
+
 #ifdef AMREX_USE_OMP
                                 #pragma omp atomic
-                                p_radiation_data[idx + 0] += cx;
+                                p_radiation_data[idx0].m_real += cx.m_real;
                                 #pragma omp atomic
-                                p_radiation_data[idx + 1] += cy;
+                                p_radiation_data[idx0].m_imag += cx.m_imag;
                                 #pragma omp atomic
-                                p_radiation_data[idx + 2] += cz;
+                                p_radiation_data[idx1].m_real += cy.m_real;
+                                #pragma omp atomic
+                                p_radiation_data[idx1].m_imag += cy.m_imag;
+                                #pragma omp atomic
+                                p_radiation_data[idx2].m_real += cz.m_real;
+                                #pragma omp atomic
+                                p_radiation_data[idx2].m_imag += cz.m_imag;
 #else
-                                p_radiation_data[idx + 0] += cx;
-                                p_radiation_data[idx + 1] += cy;
-                                p_radiation_data[idx + 2] += cz;
+                                p_radiation_data[idx0] += cx;
+                                p_radiation_data[idx1] += cy;
+                                p_radiation_data[idx2] += cz;
 
 #endif
                             }
@@ -273,7 +310,7 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
 {
     auto radiation_data_cpu = amrex::Vector<amrex::Real>(m_det_pts[0]*m_det_pts[1]*m_omega_points);
     amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
-        m_radiation_calculation.begin(), m_radiation_calculation.end(), radiation_data_cpu.begin());
+        m_radiation_data.begin(), m_radiation_data.end(), m_radiation_data.begin());
     amrex::Gpu::streamSynchronize();
 
     amrex::ParallelDescriptor::ReduceRealSum(radiation_data_cpu.data(), radiation_data_cpu.size());

@@ -13,8 +13,8 @@
 namespace ablastr::math
 {
     template <typename T, typename Iter>
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void LinSpaceFill(T start, T end, int size, Iter& it)
+    AMREX_FORCE_INLINE
+    void LinSpaceFill(T start, T end, int size, Iter it)
     {
         const auto delta = static_cast<T>((end - start)/(size-1));
 

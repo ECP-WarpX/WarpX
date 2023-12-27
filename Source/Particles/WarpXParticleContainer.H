@@ -406,6 +406,12 @@ public:
      */
     void defineAllParticleTiles () noexcept;
 
+    /**
+     * This function copies the momenta of the particles into:
+     * old_u_x, old_u_y, old_u_z.
+     */
+    void RecordOldMomenta();
+
 protected:
 
     /**
@@ -414,11 +420,6 @@ protected:
      */
     void AllocateOldMomenta();
 
-    /**
-     * This function copies the momenta of the particles into:
-     * old_u_x, old_u_y, old_u_z.
-     */
-    void RecordOldMomenta();
 
     int species_id;
 
