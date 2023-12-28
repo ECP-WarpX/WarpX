@@ -1171,7 +1171,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                                            fx, fy, wq,
                                                            Jx_arr, Jy_arr, Jz_arr, lo
 #if defined(WARPX_DIM_RZ)
-                                                           , xy_new0, xy_mid0, xy_old0, 
+                                                           , xy_new0, xy_mid0, xy_old0,
                                                            xmin*dxi, invdtdx, n_rz_azimuthal_modes
 #endif
                                                            );
