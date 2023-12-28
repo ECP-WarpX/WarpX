@@ -776,14 +776,25 @@ void doEsirkepovDepositionShapeNKernel (AMREX_D_DECL(double z_old,
                                         const amrex::Array4<amrex::Real>& Jx_arr,
                                         const amrex::Array4<amrex::Real>& Jy_arr,
                                         const amrex::Array4<amrex::Real>& Jz_arr,
-                                        amrex::Dim3 lo,
-                                        [[maybe_unused]]int n_rz_azimuthal_modes)
+                                        amrex::Dim3 lo
+#if defined(WARPX_DIM_RZ)
+                                        , Complex xy_new0,
+                                        Complex xy_mid0,
+                                        Complex xy_old0,
+                                        amrex::Real ixmin,
+                                        amrex::Real invdtdx,
+                                        int n_rz_azimuthal_modes
+#endif
+                                        )
 {
     using namespace amrex::literals;
 
 #if !defined(WARPX_DIM_1D_Z)
     amrex::Real constexpr one_third = 1.0_rt / 3.0_rt;
     amrex::Real constexpr one_sixth = 1.0_rt / 6.0_rt;
+#endif
+#if defined(WARPX_DIM_RZ)
+    Complex const I = Complex{0._rt, 1._rt};
 #endif
 
     // Shape factor arrays
@@ -906,7 +917,7 @@ void doEsirkepovDepositionShapeNKernel (AMREX_D_DECL(double z_old,
             for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                 // The factor 2 comes from the normalization of the modes
                 // The minus sign comes from the different convention with respect to Davidson et al.
-                const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + xmin*dxi)*wq*invdtdx/(amrex::Real)imode
+                const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + ixmin)*wq*invdtdx/(amrex::Real)imode
                                           *(Complex(sx_new[i]*sz_new[k], 0._rt)*(xy_new - xy_mid)
                                           + Complex(sx_old[i]*sz_old[k], 0._rt)*(xy_mid - xy_old));
                 amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 2*imode-1), djt_cmplx.real());
@@ -1041,10 +1052,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
     Real const invvol = 1.0_rt / (dx[2]);
 #endif
 
-#if defined(WARPX_DIM_RZ)
-    Complex const I = Complex{0._rt, 1._rt};
-#endif
-
     Real const clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
 
     // Loop over particles and deposit into Jx_arr, Jy_arr and Jz_arr
@@ -1162,7 +1169,12 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                                            AMREX_D_DECL(z_new, x_new, y_new),
                                                            AMREX_D_DECL(wqz, wqx, wqy),
                                                            fx, fy, wq,
-                                                           Jx_arr, Jy_arr, Jz_arr, lo, n_rz_azimuthal_modes);
+                                                           Jx_arr, Jy_arr, Jz_arr, lo
+#if defined(WARPX_DIM_RZ)
+                                                           , xy_new0, xy_mid0, xy_old0, 
+                                                           xmin*dxi, invdtdx, n_rz_azimuthal_modes
+#endif
+                                                           );
 
         }
     );
@@ -1261,10 +1273,6 @@ void doEsirkepovDepositionShapeNImplicit (const amrex::ParticleReal * const xp_n
 #elif defined(WARPX_DIM_1D_Z)
     amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
     amrex::Real const invvol = 1.0_rt / (dx[2]);
-#endif
-
-#if defined(WARPX_DIM_RZ)
-    Complex const I = Complex{0._rt, 1._rt};
 #endif
 
     // Loop over particles and deposit into Jx_arr, Jy_arr and Jz_arr
@@ -1423,7 +1431,12 @@ void doEsirkepovDepositionShapeNImplicit (const amrex::ParticleReal * const xp_n
                                                                AMREX_D_DECL(z_new_i, x_new_i, y_new_i),
                                                                AMREX_D_DECL(wqz, wqx, wqy),
                                                                fx, fy, wq,
-                                                               Jx_arr, Jy_arr, Jz_arr, lo, n_rz_azimuthal_modes);
+                                                               Jx_arr, Jy_arr, Jz_arr, lo
+#if defined(WARPX_DIM_RZ)
+                                                               , xy_new0, xy_mid0, xy_old0,
+                                                               xmin*dxi, invdtdx, n_rz_azimuthal_modes
+#endif
+                                                               );
 
             }
 
