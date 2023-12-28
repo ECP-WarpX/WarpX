@@ -62,7 +62,7 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
          *
          * \param[in,out] f all the fields in spectral space
          */
-        virtual void pushSpectralFields (SpectralFieldData& f) const override final;
+        void pushSpectralFields (SpectralFieldData& f) const final;
 
         /**
          * \brief Virtual function for current correction in Fourier space
@@ -73,7 +73,7 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void CurrentCorrection (SpectralFieldData& field_data) override final;
+        void CurrentCorrection (SpectralFieldData& field_data) final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -84,7 +84,7 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void VayDeposition (SpectralFieldData& field_data) override final;
+        void VayDeposition (SpectralFieldData& field_data) final;
 
     private:
 

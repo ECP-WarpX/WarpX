@@ -88,6 +88,7 @@ public:
    * @param engine_type ADIOS engine for output
    * @param engine_parameters map of parameters for the engine
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
+   * @param authors a string specifying the authors of the simulation (can be empty)
    */
   WarpXOpenPMDPlot (openPMD::IterationEncoding ie,
                     std::string filetype,
@@ -95,9 +96,15 @@ public:
                     std::map< std::string, std::string > operator_parameters,
                     std::string engine_type,
                     std::map< std::string, std::string > engine_parameters,
-                    std::vector<bool> fieldPMLdirections);
+                    std::vector<bool> fieldPMLdirections,
+                    const std::string& authors);
 
   ~WarpXOpenPMDPlot ();
+
+  WarpXOpenPMDPlot ( WarpXOpenPMDPlot const &)             = delete;
+  WarpXOpenPMDPlot& operator= ( WarpXOpenPMDPlot const & ) = delete;
+  WarpXOpenPMDPlot ( WarpXOpenPMDPlot&& )                  = default;
+  WarpXOpenPMDPlot& operator= ( WarpXOpenPMDPlot&& )       = default;
 
   /** Set Iteration Step for the series
    *
@@ -160,7 +167,7 @@ private:
    * @param[in] isBTD is this a backtransformed diagnostics write?
    * @return the iteration object
    */
-  inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
+  [[nodiscard]] inline openPMD::Iteration GetIteration (int const iteration, bool const isBTD) const
   {
     if (isBTD)
     {
@@ -198,15 +205,15 @@ private:
    * @param[in] varname       name from WarpX
    * @param[out] field_name   field name for openPMD-api output
    * @param[in] comp_name     comp name for openPMD-api output
-   * @param[in] is_theta_mode indicate if this field will be output with theta
-   *                          modes (instead of a reconstructed 2D slice)
+   * @param[in] var_in_theta_mode indicate if this field will be output with theta
+   *                              modes (instead of a reconstructed 2D slice)
    */
   void GetMeshCompNames (
       int meshLevel,
       const std::string& varname,
       std::string& field_name,
       std::string& comp_name,
-      bool is_theta_mode
+      bool var_in_theta_mode
   ) const;
 
   /** This function sets up the entries for storing the particle positions and global IDs
@@ -334,6 +341,9 @@ private:
 
   // meta data
   std::vector< bool > m_fieldPMLdirections; //! @see WarpX::getPMLdirections()
+
+  // The authors' string
+  std::string m_authors;
 };
 #endif // WARPX_USE_OPENPMD
 

@@ -40,8 +40,8 @@ namespace ablastr::particles
  * \param num_rho_deposition_guards number of ghost cells to use for rho (default: rho.nGrowVect())
  * \param depos_lev the level to deposit the particles to (default: lev)
  * \param rel_ref_ratio mesh refinement ratio between lev and depos_lev (default: 1)
- * \param offset index to start at when looping over particles to depose (default: 0)
- * \param np_to_depose number of particles to depose (default: pti.numParticles())
+ * \param offset index to start at when looping over particles to deposit (default: 0)
+ * \param np_to_deposit number of particles to deposit (default: pti.numParticles())
  * \param icomp component in MultiFab to start depositing to
  * \param nc number of components to deposit
  * \param cost pointer to (load balancing) cost corresponding to box where present
@@ -65,7 +65,7 @@ deposit_charge (typename T_PC::ParIterType& pti,
                 std::optional<int> depos_lev = std::nullopt,
                 std::optional<amrex::IntVect> rel_ref_ratio = std::nullopt,
                 long const offset = 0,
-                std::optional<long> np_to_depose = std::nullopt,
+                std::optional<long> np_to_deposit = std::nullopt,
                 int const icomp = 0, int const nc = 1,
                 amrex::Real * const AMREX_RESTRICT cost = nullptr,
                 long const load_balance_costs_update_algo = 0,
@@ -73,8 +73,9 @@ deposit_charge (typename T_PC::ParIterType& pti,
 {
     // deposition guards
     amrex::IntVect ng_rho = rho->nGrowVect();
-    if (num_rho_deposition_guards.has_value())
+    if (num_rho_deposition_guards.has_value()) {
         ng_rho = num_rho_deposition_guards.value();
+    }
     ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(ng_rho <= rho->nGrowVect(),
                                        "num_rho_deposition_guards are larger than allocated!");
     // particle shape
@@ -82,14 +83,16 @@ deposit_charge (typename T_PC::ParIterType& pti,
 
     // used for MR when we want to deposit for a subset of the particles on the level in the
     // current box; with offset, we start at a later particle index
-    if (!np_to_depose.has_value())
-        np_to_depose = pti.numParticles();
-    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(np_to_depose.value() + offset <= pti.numParticles(),
-                                       "np_to_depose + offset are out-of-bounds for particle iterator");
+    if (!np_to_deposit.has_value()) {
+        np_to_deposit = pti.numParticles();
+    }
+    ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(np_to_deposit.value() + offset <= pti.numParticles(),
+                                       "np_to_deposit + offset are out-of-bounds for particle iterator");
 
     int const lev = pti.GetLevel();
-    if (!depos_lev.has_value())
+    if (!depos_lev.has_value()) {
         depos_lev = lev;
+    }
     ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev.value() == (lev-1)) ||
                                        (depos_lev.value() == (lev  )),
                                        "Deposition buffers only work for lev or lev-1");
@@ -100,7 +103,7 @@ deposit_charge (typename T_PC::ParIterType& pti,
     }
 
     // If no particles, do not do anything
-    if (np_to_depose == 0) return;
+    if (np_to_deposit == 0) { return; }
 
     // Extract deposition order and check that particles shape fits within the guard cells.
     // NOTE: In specific situations where the staggering of rho and the charge deposition algorithm
@@ -170,7 +173,7 @@ deposit_charge (typename T_PC::ParIterType& pti,
     auto & rho_fab = local_rho;
 #endif
 
-    const auto GetPosition = GetParticlePosition(pti, offset);
+    const auto GetPosition = GetParticlePosition<PIdx>(pti, offset);
 
     // Indices of the lower bound
     const amrex::Dim3 lo = lbound(tilebox);
@@ -179,17 +182,17 @@ deposit_charge (typename T_PC::ParIterType& pti,
 
     if        (nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose.value(), dx, xyzmin, lo, charge,
+                                    rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
                                     n_rz_azimuthal_modes, cost,
                                     load_balance_costs_update_algo);
     } else if (nox == 2){
         doChargeDepositionShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose.value(), dx, xyzmin, lo, charge,
+                                    rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
                                     n_rz_azimuthal_modes, cost,
                                     load_balance_costs_update_algo);
     } else if (nox == 3){
         doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_fab, np_to_depose.value(), dx, xyzmin, lo, charge,
+                                    rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
                                     n_rz_azimuthal_modes, cost,
                                     load_balance_costs_update_algo);
     }

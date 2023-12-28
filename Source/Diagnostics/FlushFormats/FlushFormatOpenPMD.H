@@ -28,7 +28,7 @@ public:
 
     /** Flush fields and particles to plotfile */
     void WriteToFile (
-        amrex::Vector<std::string> varnames,
+        const amrex::Vector<std::string>& varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,
@@ -44,6 +44,11 @@ public:
         const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
 
     ~FlushFormatOpenPMD () override = default;
+
+    FlushFormatOpenPMD ( FlushFormatOpenPMD const &)             = delete;
+    FlushFormatOpenPMD& operator= ( FlushFormatOpenPMD const & ) = delete;
+    FlushFormatOpenPMD ( FlushFormatOpenPMD&& )                  = default;
+    FlushFormatOpenPMD& operator= ( FlushFormatOpenPMD&& )       = default;
 
 private:
     /** This is responsible for dumping to file */

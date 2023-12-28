@@ -13,14 +13,20 @@
  * \brief Functor to compute a diagnostic and store the result in existing
  * MultiFab
  */
-class
-ComputeDiagFunctor
+class ComputeDiagFunctor
 {
 public:
     ComputeDiagFunctor( int ncomp, amrex::IntVect crse_ratio) :
                         m_ncomp(ncomp), m_crse_ratio(crse_ratio) {}
     //** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~ComputeDiagFunctor() = default;
+
+    // Default move and copy operations
+    ComputeDiagFunctor(const ComputeDiagFunctor&) = default;
+    ComputeDiagFunctor& operator=(const ComputeDiagFunctor&) = default;
+    ComputeDiagFunctor(ComputeDiagFunctor&&) = default;
+    ComputeDiagFunctor& operator=(ComputeDiagFunctor&&) = default;
+
     /** Compute a field and store the result in mf_dst
      *
      * \param[out] mf_dst output MultiFab where the result is written
@@ -31,7 +37,7 @@ public:
     virtual void operator() (amrex::MultiFab& mf_dst, int dcomp, int i_buffer = 0) const = 0;
     /** Number of component from the input multifab to write to the output
      * multifab */
-    int nComp () const { return m_ncomp; }
+    [[nodiscard]] int nComp () const { return m_ncomp; }
 
     /** \brief Prepare data required to process fields in the operator()
      *         Note that this function has parameters that are specific to

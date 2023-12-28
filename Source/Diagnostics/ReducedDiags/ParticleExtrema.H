@@ -31,11 +31,11 @@ public:
     std::string m_species_name;
 
     /**
-     * This funciton computes the particle extrema
+     * This function computes the particle extrema
      *
      * @param[in] step current time step
      */
-    void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) final;
 
 private:
     /// auxiliary structure to store headers and indices of the reduced diagnostics

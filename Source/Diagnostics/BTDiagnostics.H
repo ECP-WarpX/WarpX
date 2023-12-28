@@ -24,8 +24,7 @@
 #include <memory>
 #include <string>
 
-class
-BTDiagnostics final : public Diagnostics
+class BTDiagnostics final : public Diagnostics
 {
 public:
 
@@ -47,7 +46,7 @@ private:
      * can be defined and implemented in Diagnostics.H, such that,
      * the function call to flush out buffer data for
      * FullDiagnostics and BTDiagnostics is the same */
-    void Flush (int i_buffer) override;
+    void Flush (int i_buffer, bool force_flush) override;
     /** whether to write output files at this time step
      *  The data is flushed when the buffer is full and/or
      *  when the simulation ends or when forced.
@@ -381,8 +380,8 @@ private:
     /** Interleave meta-data of the buffer multifabs to be consistent
      *  with the merged plotfile lab-frame data.
      */
-    void InterleaveFabArrayHeader( std::string Buffer_FabHeaderFilename,
-                                   std::string snapshot_FabHeaderFilename,
+    void InterleaveFabArrayHeader (std::string Buffer_FabHeader_path,
+                                   std::string snapshot_FabHeader_path,
                                    std::string newsnapshot_FabFilename);
     /** Interleave lab-frame metadata of the species header file in the buffers to
      *  be consistent with the merged plotfile lab-frame data

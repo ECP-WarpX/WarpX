@@ -120,7 +120,7 @@ class _MultiFABWrapper(object):
         min_box = self.mf.box_array().minimal_box()
         shape = list(min_box.size - min_box.small_end)
         if self.include_ghosts:
-            nghosts = self.mf.n_grow_vect()
+            nghosts = self.mf.n_grow_vect
             shape = [shape[i] + 2*nghosts[i] for i in range(self.dim)]
         shape.append(self.mf.nComp)
         return tuple(shape)
@@ -159,16 +159,9 @@ class _MultiFABWrapper(object):
 
         if self.include_ghosts:
             # The ghost cells are added to the upper and lower end of the global domain.
-            nghosts = self.mf.n_grow_vect()
-            ilo = list(ilo)
-            ihi = list(ihi)
-            min_box = self.mf.box_array().minimal_box()
-            imax = min_box.big_end
-            for i in range(self.dim):
-                if ilo[i] == 0:
-                    ilo[i] -= nghosts[i]
-                if ihi[i] == imax[i]:
-                    ihi[i] += nghosts[i]
+            nghosts = self.mf.n_grow_vect
+            ilo -= nghosts[idir]
+            ihi += nghosts[idir]
 
         # Cell size in the direction
         warpx = libwarpx.libwarpx_so.get_instance()
@@ -206,7 +199,7 @@ class _MultiFABWrapper(object):
 
     def _get_n_ghosts(self):
         """Return the list of number of ghosts. This includes the component dimension."""
-        nghosts = list(self._get_indices(self.mf.n_grow_vect(), 0))
+        nghosts = list(self._get_indices(self.mf.n_grow_vect, 0))
         # The components always has nghosts = 0
         nghosts.append(0)
         return nghosts
@@ -215,7 +208,7 @@ class _MultiFABWrapper(object):
         """Returns the minimum indices, expanded to length 3"""
         min_box = self.mf.box_array().minimal_box()
         if self.include_ghosts:
-            min_box.grow(self.mf.n_grow_vect())
+            min_box.grow(self.mf.n_grow_vect)
         imin = self._get_indices(min_box.small_end, 0)
         return imin
 
@@ -224,7 +217,7 @@ class _MultiFABWrapper(object):
         """
         min_box = self.mf.box_array().minimal_box()
         if self.include_ghosts:
-            min_box.grow(self.mf.n_grow_vect())
+            min_box.grow(self.mf.n_grow_vect)
         imax = self._get_indices(min_box.big_end, 0)
         return imax
 
@@ -298,10 +291,14 @@ class _MultiFABWrapper(object):
         # self.mf.array(mfi) is in C ordering.
         # Note: transposing creates a view and not a copy.
         device_arr4 = self.mf.array(mfi)
-        if cp is not None:
-            device_arr = cp.array(device_arr4, copy=False).T
+        if libwarpx.libwarpx_so.Config.have_gpu:
+            if cp is not None:
+                device_arr = device_arr4.to_cupy(copy=False)
+            else:
+                # Relies on managed memory
+                device_arr = device_arr4.to_numpy(copy=False)
         else:
-            device_arr = np.array(device_arr4, copy=False).T
+            device_arr = device_arr4.to_numpy(copy=False)
         if not self.include_ghosts:
             nghosts = self._get_n_ghosts()
             device_arr = device_arr[tuple([slice(ng, -ng) for ng in nghosts[:self.dim]])]
@@ -344,7 +341,7 @@ class _MultiFABWrapper(object):
         """
         box = mfi.tilebox()
         if self.include_ghosts:
-            box.grow(self.mf.n_grow_vect())
+            box.grow(self.mf.n_grow_vect)
 
         ilo = self._get_indices(box.small_end, 0)
         ihi = self._get_indices(box.big_end, 0)
@@ -412,7 +409,7 @@ class _MultiFABWrapper(object):
         ixstart, ixstop = self._find_start_stop(ii[0], ixmin, ixmax+1, 0)
         iystart, iystop = self._find_start_stop(ii[1], iymin, iymax+1, 1)
         izstart, izstop = self._find_start_stop(ii[2], izmin, izmax+1, 2)
-        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp(), 3)
+        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp, 3)
 
         # Gather the data to be included in a list to be sent to other processes
         starts = [ixstart, iystart, izstart]
@@ -423,11 +420,10 @@ class _MultiFABWrapper(object):
             if global_slices is not None:
                 # Note that the array will always have 4 dimensions.
                 device_arr = self._get_field(mfi)
-                if cp is not None:
-                    # Copy the data from the device to the host
-                    slice_arr = cp.asnumpy(device_arr[block_slices])
-                else:
-                    slice_arr = device_arr[block_slices]
+                slice_arr = device_arr[block_slices]
+                if (cp is not None) and (type(slice_arr) is cp.ndarray):
+                    # Copy data from host to device using cupy syntax
+                    slice_arr = slice_arr.get()
                 datalist.append((global_slices, slice_arr))
 
         # Gather the data from all processors
@@ -503,7 +499,7 @@ class _MultiFABWrapper(object):
         ixstart, ixstop = self._find_start_stop(ii[0], ixmin, ixmax+1, 0)
         iystart, iystop = self._find_start_stop(ii[1], iymin, iymax+1, 1)
         izstart, izstop = self._find_start_stop(ii[2], izmin, izmax+1, 2)
-        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp(), 3)
+        icstart, icstop = self._find_start_stop(ic, 0, self.mf.n_comp, 3)
 
         if isinstance(value, np.ndarray):
             # Expand the shape of the input array to match the shape of the global array
@@ -528,9 +524,9 @@ class _MultiFABWrapper(object):
                 mf_arr = self._get_field(mfi)
                 if isinstance(value, np.ndarray):
                     slice_value = value3d[global_slices]
-                    if cp is not None:
+                    if libwarpx.libwarpx_so.Config.have_gpu:
                         # Copy data from host to device
-                        slice_value = cp.asarray(value3d[global_slices])
+                        slice_value = cp.asarray(slice_value)
                     mf_arr[block_slices] = slice_value
                 else:
                     mf_arr[block_slices] = value

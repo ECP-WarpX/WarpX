@@ -139,22 +139,24 @@ class FiniteDifferenceSolver
           * \param[out] Efield  vector of electric field MultiFabs updated at a given level
           * \param[in] Jfield   vector of total current MultiFabs at a given level
           * \param[in] Jifield  vector of ion current density MultiFabs at a given level
+          * \param[in] Jextfield  vector of external current density MultiFabs at a given level
           * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
           * \param[in] rhofield scalar ion charge density Multifab at a given level
           * \param[in] Pefield  scalar electron pressure MultiFab at a given level
           * \param[in] edge_lengths length of edges along embedded boundaries
           * \param[in] lev  level number for the calculation
-          * \param[in] hybrid_pic_model instance of the hybrid-PIC model
+          * \param[in] hybrid_model instance of the hybrid-PIC model
           * \param[in] include_resistivity_term boolean flag for whether to include resistivity
           */
         void HybridPICSolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3>& Jfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jifield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                       std::unique_ptr<amrex::MultiFab> const& rhofield,
                       std::unique_ptr<amrex::MultiFab> const& Pefield,
                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-                      int lev, HybridPICModel const* hybrid_pic_model,
+                      int lev, HybridPICModel const* hybrid_model,
                       bool include_resistivity_term );
 
         /**
@@ -233,11 +235,12 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-            int lev, HybridPICModel const* hybrid_pic_model,
+            int lev, HybridPICModel const* hybrid_model,
             bool include_resistivity_term );
 
         template<typename T_Algo>
@@ -337,11 +340,12 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Jifield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jextfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
             std::unique_ptr<amrex::MultiFab> const& rhofield,
             std::unique_ptr<amrex::MultiFab> const& Pefield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
-            int lev, HybridPICModel const* hybrid_pic_model,
+            int lev, HybridPICModel const* hybrid_model,
             bool include_resistivity_term );
 
         template<typename T_Algo>

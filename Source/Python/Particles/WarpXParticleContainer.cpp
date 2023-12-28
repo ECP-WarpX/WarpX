@@ -85,7 +85,6 @@ void init_WarpXParticleContainer (py::module& m)
             py::arg("nattr_int"), py::arg("attr_int"),
             py::arg("uniqueparticles"), py::arg("id")=-1
         )
-        .def("num_real_comps", &WarpXParticleContainer::NumRealComps)
         .def("get_comp_index",
             [](WarpXParticleContainer& pc, std::string comp_name)
             {
@@ -101,6 +100,10 @@ void init_WarpXParticleContainer (py::module& m)
         .def("total_number_of_particles",
             &WarpXParticleContainer::TotalNumberOfParticles,
             py::arg("valid_particles_only"), py::arg("local")
+        )
+        .def("sum_particle_charge",
+            &WarpXParticleContainer::sumParticleCharge,
+            py::arg("local")
         )
         .def("deposit_charge",
             [](WarpXParticleContainer& pc,
