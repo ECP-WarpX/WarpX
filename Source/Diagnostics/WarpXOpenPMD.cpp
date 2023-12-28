@@ -527,7 +527,7 @@ WarpXOpenPMDPlot::WriteJobInfo()
     auto & warpx = WarpX::GetInstance();
 
     m_Series->setAttribute("MPI nprocs", amrex::ParallelDescriptor::NProcs());
-    m_Series->setAttribute("nthreads", omp_get_max_threads());
+    m_Series->setAttribute("nthreads", amrex::OpenMP::get_max_threads());
     m_Series->setAttribute("build date", amrex::buildInfoGetBuildDate());
     m_Series->setAttribute("build machine", amrex::buildInfoGetBuildMachine());
     m_Series->setAttribute("build dir", amrex::buildInfoGetBuildDir());
