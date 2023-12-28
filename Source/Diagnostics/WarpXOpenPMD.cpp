@@ -517,7 +517,7 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
     m_Series->setOpenPMDextension( openPMD_ED_PIC );
     // meta info
     m_Series->setSoftware( "WarpX", WarpX::Version() );
-    
+
     WriteJobInfo();
 }
 
