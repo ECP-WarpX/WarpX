@@ -1,4 +1,3 @@
-CEXE_sources += FlushFormat.cpp
 CEXE_sources += FlushFormatPlotfile.cpp
 CEXE_sources += FlushFormatCheckpoint.cpp
 CEXE_sources += FlushFormatAscent.cpp

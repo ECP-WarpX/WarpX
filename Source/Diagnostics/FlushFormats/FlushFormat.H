@@ -34,9 +34,6 @@ public:
     FlushFormat& operator= ( FlushFormat const & ) = default;
     FlushFormat ( FlushFormat&& )                  = default;
     FlushFormat& operator= ( FlushFormat&& )       = default;
-
-    /** Write general info of the run into the plotfile */
-    void WriteJobInfo(const std::string& dir) const;
 };
 
 #endif // WARPX_FLUSHFORMAT_H_
