@@ -770,20 +770,24 @@ void doEsirkepovDepositionShapeNKernel (AMREX_D_DECL(double z_old,
                                         AMREX_D_DECL(amrex::ParticleReal wqz,
                                                      amrex::ParticleReal wqx,
                                                      amrex::ParticleReal wqy),
-                                        [[maybe_unused]]amrex::ParticleReal fx,
-                                        [[maybe_unused]]amrex::ParticleReal fy,
-                                        [[maybe_unused]]amrex::ParticleReal wq,
                                         const amrex::Array4<amrex::Real>& Jx_arr,
                                         const amrex::Array4<amrex::Real>& Jy_arr,
                                         const amrex::Array4<amrex::Real>& Jz_arr,
                                         amrex::Dim3 lo
+#if (AMREX_SPACEDIM <= 2)
+                                        , [[maybe_unused]]amrex::ParticleReal vx,
+                                        amrex::ParticleReal vy,
+                                        amrex::ParticleReal invvol,
+                                        amrex::ParticleReal wq
 #if defined(WARPX_DIM_RZ)
                                         , Complex xy_new0,
                                         Complex xy_mid0,
                                         Complex xy_old0,
-                                        amrex::Real ixmin,
+                                        amrex::Real xmin,
+                                        amrex::Real dxi,
                                         amrex::Real invdtdx,
                                         int n_rz_azimuthal_modes
+#endif
 #endif
                                         )
 {
@@ -904,7 +908,7 @@ void doEsirkepovDepositionShapeNKernel (AMREX_D_DECL(double z_old,
     }
     for (int k=dkl; k<=depos_order+2-dku; k++) {
         for (int i=dil; i<=depos_order+2-diu; i++) {
-            amrex::Real const sdyj = wq*fy*(
+            amrex::Real const sdyj = wq*vy*invvol*(
                 one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
                +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
             amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdyj);
@@ -917,7 +921,7 @@ void doEsirkepovDepositionShapeNKernel (AMREX_D_DECL(double z_old,
             for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                 // The factor 2 comes from the normalization of the modes
                 // The minus sign comes from the different convention with respect to Davidson et al.
-                const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + ixmin)*wq*invdtdx/(amrex::Real)imode
+                const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + xmin*dxi)*wq*invdtdx/(amrex::Real)imode
                                           *(Complex(sx_new[i]*sz_new[k], 0._rt)*(xy_new - xy_mid)
                                           + Complex(sx_old[i]*sz_old[k], 0._rt)*(xy_mid - xy_old));
                 amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 2*imode-1), djt_cmplx.real());
@@ -949,11 +953,11 @@ void doEsirkepovDepositionShapeNKernel (AMREX_D_DECL(double z_old,
 #elif defined(WARPX_DIM_1D_Z)
 
     for (int k=dkl; k<=depos_order+2-dku; k++) {
-        amrex::Real const sdxi = wq*fx*0.5_rt*(sz_old[k] + sz_new[k]);
+        amrex::Real const sdxi = wq*vx*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
         amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k_new-1+k, 0, 0, 0), sdxi);
     }
     for (int k=dkl; k<=depos_order+2-dku; k++) {
-        amrex::Real const sdyj = wq*fy*0.5_rt*(sz_old[k] + sz_new[k]);
+        amrex::Real const sdyj = wq*vy*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
         amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k_new-1+k, 0, 0, 0), sdyj);
     }
     amrex::Real sdzk = 0._rt;
@@ -1152,27 +1156,26 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 
             // "f" is the flux, velocity/volume
 #if defined(WARPX_DIM_RZ)
-            Real const fx = 0.;
-            Real const fy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv*invvol;
+            Real const vx = 0.;
+            Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
 #elif defined(WARPX_DIM_XZ)
-            Real const fx = 0.;
-            Real const fy = uyp[ip]*gaminv*invvol;
+            Real const vx = 0.;
+            Real const vy = uyp[ip]*gaminv;
 #elif defined(WARPX_DIM_1D_Z)
-            Real const fx = uxp[ip]*gaminv*invvol;
-            Real const fy = uyp[ip]*gaminv*invvol;
-#else
-            Real const fx = 0.;
-            Real const fy = 0.;
+            Real const vx = uxp[ip]*gaminv;
+            Real const vy = uyp[ip]*gaminv;
 #endif
 
             doEsirkepovDepositionShapeNKernel<depos_order>(AMREX_D_DECL(z_old, x_old, y_old),
                                                            AMREX_D_DECL(z_new, x_new, y_new),
                                                            AMREX_D_DECL(wqz, wqx, wqy),
-                                                           fx, fy, wq,
                                                            Jx_arr, Jy_arr, Jz_arr, lo
+#if (AMREX_SPACEDIM <= 2)
+                                                           , vx, vy, invvol, wq
 #if defined(WARPX_DIM_RZ)
-                                                           , xy_new0, xy_mid0, xy_old0,
-                                                           xmin*dxi, invdtdx, n_rz_azimuthal_modes
+                                                           , xy_new0, xy_mid0, xy_old0, 
+                                                           xmin, dxi, invdtdx, n_rz_azimuthal_modes
+#endif
 #endif
                                                            );
 
@@ -1385,17 +1388,14 @@ void doEsirkepovDepositionShapeNImplicit (const amrex::ParticleReal * const xp_n
 
             // "f" is the flux, velocity/volume
 #if defined(WARPX_DIM_RZ)
-            amrex::Real const fx = 0.;
-            amrex::Real const fy = (-uxp_nph[ip]*sintheta_mid + uyp_nph[ip]*costheta_mid)*gaminv*invvol;
+            amrex::Real const vx = 0.;
+            amrex::Real const vy = (-uxp_nph[ip]*sintheta_mid + uyp_nph[ip]*costheta_mid)*gaminv;
 #elif defined(WARPX_DIM_XZ)
-            amrex::Real const fx = 0.;
-            amrex::Real const fy = uyp_nph[ip]*gaminv*invvol;
+            amrex::Real const vx = 0.;
+            amrex::Real const vy = uyp_nph[ip]*gaminv;
 #elif defined(WARPX_DIM_1D_Z)
-            amrex::Real const fx = uxp_nph[ip]*gaminv*invvol;
-            amrex::Real const fy = uyp_nph[ip]*gaminv*invvol;
-#else
-            amrex::Real const fx = 0.;
-            amrex::Real const fy = 0.;
+            amrex::Real const vx = uxp_nph[ip]*gaminv;
+            amrex::Real const vy = uyp_nph[ip]*gaminv;
 #endif
 
             AMREX_D_TERM(
@@ -1430,11 +1430,13 @@ void doEsirkepovDepositionShapeNImplicit (const amrex::ParticleReal * const xp_n
                 doEsirkepovDepositionShapeNKernel<depos_order>(AMREX_D_DECL(z_old_i, x_old_i, y_old_i),
                                                                AMREX_D_DECL(z_new_i, x_new_i, y_new_i),
                                                                AMREX_D_DECL(wqz, wqx, wqy),
-                                                               fx, fy, wq,
                                                                Jx_arr, Jy_arr, Jz_arr, lo
+#if (AMREX_SPACEDIM <= 2)
+                                                               , vx, vy, invvol, wq
 #if defined(WARPX_DIM_RZ)
                                                                , xy_new0, xy_mid0, xy_old0,
-                                                               xmin*dxi, invdtdx, n_rz_azimuthal_modes
+                                                               xmin, dxi, invdtdx, n_rz_azimuthal_modes
+#endif
 #endif
                                                                );
 
