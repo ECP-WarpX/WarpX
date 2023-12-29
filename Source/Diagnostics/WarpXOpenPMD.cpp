@@ -558,12 +558,10 @@ WarpXOpenPMDPlot::WriteJobInfo()
         levelnum << "level " << i;
         m_Series->setAttribute(levelnum.str() + " number of boxes", warpx.boxArray(i).size());
         std::stringstream maxzones;
-        for (int n = 0; n < AMREX_SPACEDIM; n++)
+        maxzones << warpx.Geom(i).Domain().length(0);
+        for (int n = 1; n < AMREX_SPACEDIM; n++)
         {
-            maxzones << warpx.Geom(i).Domain().length(n);
-            if (n < AMREX_SPACEDIM-1) {
-                maxzones << " ";
-            }
+            maxzones << " " << warpx.Geom(i).Domain().length(n);
         }
         m_Series->setAttribute(levelnum.str() + " maximum zones", maxzones.str());
     }
