@@ -594,11 +594,19 @@ void doGatherShapeNEsirkepovStencilImplicit (
         double const x_old_i = x_old + delx*istep;,
         double const y_old_i = y_old + dely*istep;)
 
-        AMREX_D_TERM(
-        double const z_new_i = z_old + delz*(istep + 1);,
-        double const x_new_i = x_old + delx*(istep + 1);,
-        double const y_new_i = y_old + dely*(istep + 1);)
-
+        double AMREX_D_DECL(z_new_i, x_new_i, y_new_i);
+        if (istep+1 < nsteps) {
+            AMREX_D_TERM(
+            z_new_i = z_old + delz*(istep + 1);,
+            x_new_i = x_old + delx*(istep + 1);,
+            y_new_i = y_old + dely*(istep + 1);)
+        } else {
+            // Set the exact value to avoid possible roundoff problem
+            AMREX_D_TERM(
+            z_new_i = z_new;,
+            x_new_i = x_new;,
+            y_new_i = y_new;)
+        }
 
         // Shape factor arrays
         // Note that there are extra values above and below
