@@ -8,6 +8,7 @@
 
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Utils/TextMsg.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
 
@@ -65,10 +66,12 @@ RecordingPlaneParticleFunctor::RecordingPlaneParticleFunctor (
                         WarpXParticleContainer *pc_src, std::string species_name, int num_station_buffers)
     : m_pc_src(pc_src), m_species_name(species_name), m_num_station_buffers(num_station_buffers)
 {
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_num_station_buffers == 1,
+                                     "RecordingPlaneParticleFunctor: num of station buffers must be 1");
 }
 
 void
-RecordingPlaneParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int &TotalParticleCounter, int i_buffer) const
+RecordingPlaneParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int &TotalParticleCounter, int /*i_buffer*/) const
 {
     amrex::Print() << " in station particle operator " << m_record_particles << "\n";
     if (!m_record_particles) return;
@@ -134,7 +137,7 @@ RecordingPlaneParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_ds
 }
 
 void
-RecordingPlaneParticleFunctor::PrepareFunctorData (const int i_buffer, bool record_particles,
+RecordingPlaneParticleFunctor::PrepareFunctorData (int /*i_buffer*/, bool record_particles,
                                             amrex::Real z_location, amrex::Real current_z_boost, amrex::Real tlab, int snapshot_full)
 {
     amrex::ignore_unused(current_z_boost, tlab, snapshot_full);

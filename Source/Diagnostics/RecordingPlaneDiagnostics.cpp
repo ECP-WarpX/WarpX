@@ -296,7 +296,7 @@ RecordingPlaneDiagnostics::PrepareParticleDataForOutput ()
     }
     for (int isp = 0; isp < m_all_particle_functors.size(); ++isp)
     {
-        m_all_particle_functors[isp]->PrepareFunctorData(0, GetZSliceInDomain(0), m_station_loc, 0._rt, 0._rt, 0._rt);
+        m_all_particle_functors[isp]->PrepareFunctorData(0, GetZSliceInDomain(0), m_station_loc, 0._rt, 0._rt, 0);
     }
 }
 
@@ -305,7 +305,6 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 {
     if (m_slice_counter == 0) return;
 
-    // const std::string filename = amrex::Concatenate(m_file_prefix, i_buffer, 1);
     const std::string filename = m_file_prefix;
     constexpr int permission_flag_rwxrxrx = 0755;
     if (amrex::ParallelDescriptor::IOProcessor()) {

@@ -51,7 +51,7 @@ public:
 
     void operator () (PinnedMemoryParticleContainer& pc_dst, int &TotalParticleCounter, int i_buffer) const override;
 
-    void PrepareFunctorData (const int i_buffer, bool record_particles, amrex::Real z_location, amrex::Real current_z_boost = 0., amrex::Real tlab = 0., int snapshot_full = 0) override;
+    void PrepareFunctorData (int i_buffer, bool record_particles, amrex::Real z_location, amrex::Real current_z_boost, amrex::Real tlab, int snapshot_full) override;
 
 private:
 
