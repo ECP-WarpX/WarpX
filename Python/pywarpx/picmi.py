@@ -45,7 +45,7 @@ picmistandard.register_constants(constants)
 
 class Species(picmistandard.PICMI_Species):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
     ----------
@@ -79,7 +79,7 @@ class Species(picmistandard.PICMI_Species):
         Whether or not to push this species
 
     warpx_do_not_gather: bool, default=False
-        Whether or not to gahter the fields from grids for this species
+        Whether or not to gather the fields from grids for this species
 
     warpx_random_theta: bool, default=True
         Whether or not to add random angle to the particles in theta
@@ -558,10 +558,10 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     """
     This assumes that WarpX was compiled with USE_RZ = TRUE
 
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -678,10 +678,10 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
 class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -767,10 +767,10 @@ class Cartesian1DGrid(picmistandard.PICMI_Cartesian1DGrid):
 
 class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -876,10 +876,10 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
 
 class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
-    ---------
+    ----------
     warpx_max_grid_size: integer, default=32
        Maximum block size in either direction
 
@@ -1004,7 +1004,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
 class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
     ----------
@@ -1159,9 +1159,20 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.Jy_external_function = Jy_external_function
         self.Jz_external_function = Jz_external_function
 
+        # Handle keyword arguments used in expressions
+        self.user_defined_kw = {}
+        for k in list(kw.keys()):
+            self.user_defined_kw[k] = kw[k]
+            del kw[k]
+
         self.handle_init(kw)
 
     def initialize_inputs(self):
+
+        # Add the user defined keywords to my_constants
+        # The keywords are mangled if there is a conflicting variable already
+        # defined in my_constants with the same name but different value.
+        self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
         self.grid.initialize_inputs()
 
@@ -1172,23 +1183,27 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         pywarpx.hybridpicmodel.gamma = self.gamma
         pywarpx.hybridpicmodel.n_floor = self.n_floor
         pywarpx.hybridpicmodel.__setattr__(
-            'plasma_resistivity(rho)', self.plasma_resistivity
+            'plasma_resistivity(rho)',
+            pywarpx.my_constants.mangle_expression(self.plasma_resistivity, self.mangle_dict)
         )
         pywarpx.hybridpicmodel.substeps = self.substeps
         pywarpx.hybridpicmodel.__setattr__(
-            'Jx_external_grid_function(x,y,z,t)', self.Jx_external_function
+            'Jx_external_grid_function(x,y,z,t)',
+            pywarpx.my_constants.mangle_expression(self.Jx_external_function, self.mangle_dict)
         )
         pywarpx.hybridpicmodel.__setattr__(
-            'Jy_external_grid_function(x,y,z,t)', self.Jy_external_function
+            'Jy_external_grid_function(x,y,z,t)',
+            pywarpx.my_constants.mangle_expression(self.Jy_external_function, self.mangle_dict)
         )
         pywarpx.hybridpicmodel.__setattr__(
-            'Jz_external_grid_function(x,y,z,t)', self.Jz_external_function
+            'Jz_external_grid_function(x,y,z,t)',
+            pywarpx.my_constants.mangle_expression(self.Jz_external_function, self.mangle_dict)
         )
 
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
     ----------
@@ -1196,7 +1211,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         Whether to use the relativistic solver or lab frame solver
 
     warpx_absolute_tolerance: float, default=0.
-        Absolute tolerance on the lab fram solver
+        Absolute tolerance on the lab frame solver
 
     warpx_self_fields_verbosity: integer, default=2
         Level of verbosity for the lab frame solver
@@ -1422,7 +1437,7 @@ class FieldIonization(picmistandard.PICMI_FieldIonization):
 
 class CoulombCollisions(picmistandard.base._ClassWithInit):
     """
-    Custom class to handle setup of binary Coulmb collisions in WarpX. If
+    Custom class to handle setup of binary Coulomb collisions in WarpX. If
     collision initialization is added to picmistandard this can be changed to
     inherit that functionality.
 
@@ -1520,6 +1535,49 @@ class MCCCollisions(picmistandard.base._ClassWithInit):
             collision.background_temperature = self.background_temperature
         collision.background_mass = self.background_mass
         collision.max_background_density = self.max_background_density
+        collision.ndt = self.ndt
+
+        collision.scattering_processes = self.scattering_processes.keys()
+        for process, kw in self.scattering_processes.items():
+            for key, val in kw.items():
+                if key == 'species':
+                    val = val.name
+                collision.add_new_attr(process+'_'+key, val)
+
+
+class DSMCCollisions(picmistandard.base._ClassWithInit):
+    """
+    Custom class to handle setup of DSMC collisions in WarpX. If collision
+    initialization is added to picmistandard this can be changed to inherit
+    that functionality.
+
+    Parameters
+    ----------
+    name: string
+        Name of instance (used in the inputs file)
+
+    species: species instance
+        The species involved in the collision
+
+    scattering_processes: dictionary
+        The scattering process to use and any needed information
+
+    ndt: integer, optional
+        The collisions will be applied every "ndt" steps. Must be 1 or larger.
+    """
+
+    def __init__(self, name, species, scattering_processes, ndt=None, **kw):
+        self.name = name
+        self.species = species
+        self.scattering_processes = scattering_processes
+        self.ndt = ndt
+
+        self.handle_init(kw)
+
+    def initialize_inputs(self):
+        collision = pywarpx.Collisions.newcollision(self.name)
+        collision.type = 'dsmc'
+        collision.species = [species.name for species in self.species]
         collision.ndt = self.ndt
 
         collision.scattering_processes = self.scattering_processes.keys()
@@ -1649,13 +1707,13 @@ class PlasmaLens(picmistandard.base._ClassWithInit):
 
     The field that is applied depends on the transverse position of the particle, (x,y)
 
-    - Ex = x*stengths_E
+    - Ex = x*strengths_E
 
-    - Ey = y*stengths_E
+    - Ey = y*strengths_E
 
-    - Bx = +y*stengths_B
+    - Bx = +y*strengths_B
 
-    - By = -x*stengths_B
+    - By = -x*strengths_B
 
     """
     def __init__(self, period, starts, lengths, strengths_E=None, strengths_B=None, **kw):
@@ -1683,7 +1741,7 @@ class PlasmaLens(picmistandard.base._ClassWithInit):
 
 class Simulation(picmistandard.PICMI_Simulation):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
     ----------
@@ -1828,9 +1886,11 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_sort_idx_type: list of int, optional (default: 0 0 0)
         This controls the type of grid used to sort the particles when sort_particles_for_deposition is true.
         Possible values are:
-            idx_type = {0, 0, 0}: Sort particles to a cell centered grid,
-            idx_type = {1, 1, 1}: Sort particles to a node centered grid,
-            idx_type = {2, 2, 2}: Compromise between a cell and node centered grid.
+
+        * idx_type = {0, 0, 0}: Sort particles to a cell centered grid,
+        * idx_type = {1, 1, 1}: Sort particles to a node centered grid,
+        * idx_type = {2, 2, 2}: Compromise between a cell and node centered grid.
+
         In 2D (XZ and RZ), only the first two elements are read. In 1D, only the first element is read.
 
     warpx_sort_bin_size: list of int, optional (default 1 1 1)
@@ -2110,7 +2170,7 @@ class ParticleFieldDiagnostic:
 
 class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
     ----------
@@ -2271,7 +2331,7 @@ class Checkpoint(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     """
     Sets up checkpointing of the simulation, allowing for later restarts
 
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
     ----------
@@ -2310,7 +2370,7 @@ class Checkpoint(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnosticBase):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`_ for more information.
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html>`__ for more information.
 
     Parameters
     ----------
@@ -2429,7 +2489,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic, WarpXDiagnostic
 class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
                               WarpXDiagnosticBase):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`__
     for more information.
 
     Parameters
@@ -2538,7 +2598,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic,
 class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic,
                                  WarpXDiagnosticBase):
     """
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`_
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#backtransformed-diagnostics>`__
     for more information.
 
     Parameters
@@ -2644,7 +2704,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     """
     Sets up a reduced diagnostic in the simulation.
 
-    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#reduced-diagnostics>`_
+    See `Input Parameters <https://warpx.readthedocs.io/en/latest/usage/parameters.html#reduced-diagnostics>`__
     for more information.
 
     Parameters
@@ -2700,7 +2760,7 @@ class ReducedDiagnostic(picmistandard.base._ClassWithInit, WarpXDiagnosticBase):
     reduction_type: {'Maximum', 'Minimum', or 'Integral'}
         For diagnostic type 'FieldReduction', the type of reduction
 
-    probe_geometry: {'Point', 'Line', 'Plane'}, defaut='Point'
+    probe_geometry: {'Point', 'Line', 'Plane'}, default='Point'
         For diagnostic type 'FieldProbe', the geometry of the probe
 
     integrate: bool, default=false

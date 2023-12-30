@@ -11,6 +11,7 @@
 #include "Diagnostics/MultiDiagnostics.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "EmbeddedBoundary/WarpXFaceInfoBox.H"
+#include "Initialization/ExternalField.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/WarpXParticleContainer.H"
@@ -150,11 +151,11 @@ template <typename MultiFabType> void
 RemakeMultiFab (std::unique_ptr<MultiFabType>& mf, const DistributionMapping& dm,
                 const bool redistribute, const int lev)
 {
-    if (mf == nullptr) return;
+    if (mf == nullptr) { return; }
     const IntVect& ng = mf->nGrowVect();
     std::unique_ptr<MultiFabType> pmf;
     WarpX::AllocInitMultiFab(pmf, mf->boxArray(), dm, mf->nComp(), ng, lev, mf->tags()[0]);
-    if (redistribute) pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng);
+    if (redistribute) { pmf->Redistribute(*mf, 0, 0, mf->nComp(), ng); }
     mf = std::move(pmf);
 }
 
@@ -163,17 +164,17 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 {
     if (ba == boxArray(lev))
     {
-        if (ParallelDescriptor::NProcs() == 1) return;
+        if (ParallelDescriptor::NProcs() == 1) { return; }
 
         // Fine patch
         for (int idim=0; idim < 3; ++idim)
         {
             RemakeMultiFab(Bfield_fp[lev][idim], dm, true ,lev);
             RemakeMultiFab(Efield_fp[lev][idim], dm, true ,lev);
-            if (add_external_B_field) {
+            if (m_p_ext_field_params->B_ext_grid_type == ExternalFieldType::read_from_file) {
                 RemakeMultiFab(Bfield_fp_external[lev][idim], dm, true ,lev);
             }
-            if (add_external_E_field) {
+            if (m_p_ext_field_params->E_ext_grid_type == ExternalFieldType::read_from_file) {
                 RemakeMultiFab(Efield_fp_external[lev][idim], dm, true ,lev);
             }
             RemakeMultiFab(current_fp[lev][idim], dm, false ,lev);
@@ -334,8 +335,9 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             RemakeMultiFab(current_buffer_masks[lev], dm, false ,lev);
             RemakeMultiFab(gather_buffer_masks[lev], dm, false ,lev);
 
-            if (current_buffer_masks[lev] || gather_buffer_masks[lev])
+            if (current_buffer_masks[lev] || gather_buffer_masks[lev]) {
                 BuildBufferMasks();
+            }
         }
 
         // Re-initialize the lattice element finder with the new ba and dm.

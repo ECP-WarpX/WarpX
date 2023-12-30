@@ -9,6 +9,7 @@
 #define WARPX_RigidInjectedParticleContainer_H_
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Particles/Gather/ScaleFields.H"
 #include "PhysicalParticleContainer.H"
 
@@ -84,7 +85,8 @@ public:
                          amrex::Real t,
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full,
-                         bool skip_deposition=false ) override;
+                         bool skip_deposition=false,
+                         PushType push_type=PushType::Explicit) override;
 
     void PushPX (WarpXParIter& pti,
                          amrex::FArrayBox const * exfab,
@@ -122,7 +124,7 @@ private:
 
     amrex::Vector<amrex::ParticleReal> zinject_plane_levels;
 
-    // Temporary quantites
+    // Temporary quantities
     amrex::ParticleReal zinject_plane_lev;
     amrex::ParticleReal zinject_plane_lev_previous;
     bool done_injecting_lev;

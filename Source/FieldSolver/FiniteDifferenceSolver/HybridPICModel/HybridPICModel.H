@@ -121,12 +121,12 @@ public:
      * charge density (and assumption of quasi-neutrality) using the user
      * specified electron equation of state.
      *
-     * \param[out] Pe   scalar electron pressure MultiFab at a given level
-     * \param[in] rhofield scalar ion chrge density Multifab at a given level
+     * \param[out] Pe_filed scalar electron pressure MultiFab at a given level
+     * \param[in] rho_field scalar ion charge density Multifab at a given level
      */
     void FillElectronPressureMF (
-        std::unique_ptr<amrex::MultiFab> const& Pe,
-        amrex::MultiFab* const& rhofield );
+        std::unique_ptr<amrex::MultiFab> const& Pe_field,
+        amrex::MultiFab* const& rho_field );
 
     // Declare variables to hold hybrid-PIC model parameters
     /** Number of substeps to take when evolving B */

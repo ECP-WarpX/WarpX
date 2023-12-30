@@ -20,6 +20,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties_fwd.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel_fwd.H"
 #include "Filter/NCIGodfreyFilter_fwd.H"
+#include "Initialization/ExternalField_fwd.H"
 #include "Particles/ParticleBoundaryBuffer_fwd.H"
 #include "Particles/MultiParticleContainer_fwd.H"
 #include "Particles/WarpXParticleContainer_fwd.H"
@@ -34,12 +35,13 @@
 #       include "FieldSolver/SpectralSolver/SpectralSolver_fwd.H"
 #   endif
 #endif
+#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
-#include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Utils/Parser/IntervalsParser.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/export.H"
@@ -119,6 +121,12 @@ public:
 
     void Evolve (int numsteps = -1);
 
+    void EvolveImplicitPicardInit (int lev);
+    void SaveParticlesAtImplicitStepStart (WarpXParticleContainer& pc, int lev);
+    void FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev);
+    void FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_fp,
+                                   amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_n);
+
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
@@ -154,20 +162,8 @@ public:
     //! Whether to apply the effect of an externally-defined magnetic field
     static bool add_external_B_field;
 
+    //! The beginning time of boosted frame simulation
     static inline amrex::Real m_t_boost_offset = 0;
-
-    //! User-defined parser to initialize x-component of the magnetic field on the grid
-    std::unique_ptr<amrex::Parser> Bxfield_parser;
-    //! User-defined parser to initialize y-component of the magnetic field on the grid
-    std::unique_ptr<amrex::Parser> Byfield_parser;
-    //! User-defined parser to initialize z-component of the magnetic field on the grid
-    std::unique_ptr<amrex::Parser> Bzfield_parser;
-    //! User-defined parser to initialize x-component of the electric field on the grid
-    std::unique_ptr<amrex::Parser> Exfield_parser;
-    //! User-defined parser to initialize y-component of the electric field on the grid
-    std::unique_ptr<amrex::Parser> Eyfield_parser;
-    //! User-defined parser to initialize z-component of the electric field on the grid
-    std::unique_ptr<amrex::Parser> Ezfield_parser;
 
     /** Maximum level up to which the externally defined electric and magnetic fields are initialized.
      *  The default value is set to the max levels in the simulation.
@@ -186,6 +182,14 @@ public:
     static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
     static short electromagnetic_solver_id;
+    //! Integer that corresponds to the evolve scheme (explicit, implicit_picard, semi_implicit_picard)
+    static short evolve_scheme;
+    //! The maximum number of Picard iterations to do each time step
+    static int max_picard_iterations;
+    //! The tolerance for the Picard iteration convergence
+    static amrex::Real picard_iteration_tolerance;
+    //! Flags whether the Picard iterations are required to converge
+    static bool require_picard_convergence;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
@@ -449,6 +453,25 @@ public:
         const std::string& name,
         std::optional<const amrex::Real> initial_value);
 
+    /**
+     * \brief
+     * Allocate the MultiFab so that is like the specified MultiFab (same ba and dm)
+     * and optionally initialize it. This also adds the MultiFab
+     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
+     * interface
+     *
+     * \param mf[out] The MultiFab unique pointer to be allocated
+     * \param mf_model[in] The MultiFab to model
+     * \param name[in] The name of the MultiFab to use in the map
+     * \param initial_value[in] The optional initial value
+     */
+    static void AllocInitMultiFabFromModel (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        amrex::MultiFab& mf_model,
+        int level,
+        const std::string& name,
+        std::optional<const amrex::Real> initial_value = {});
+
     // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
     // This is a convenience for the Python interface, allowing all MultiFabs
     // to be easily referenced from Python.
@@ -565,7 +588,7 @@ public:
     amrex::Vector<amrex::Real> mirror_z_width;
     amrex::Vector<int> mirror_z_npoints;
 
-    /// object with all reduced diagnotics, similar to MultiParticleContainer for species.
+    /// object with all reduced diagnostics, similar to MultiParticleContainer for species.
     std::unique_ptr<MultiReducedDiags> reduced_diags;
 
     void applyMirrors(amrex::Real time);
@@ -731,6 +754,11 @@ public:
     void ApplyEfieldBoundary (int lev, PatchType patch_type);
     void ApplyBfieldBoundary (int lev, PatchType patch_type, DtType dt_type);
 
+#ifdef WARPX_DIM_RZ
+    // Applies the boundary conditions that are specific to the axis when in RZ.
+    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev);
+#endif
+
     /**
      * \brief When the Ohm's law solver is used, the electron pressure values
      * on PEC boundaries are set to enforce a zero derivative Neumann condition,
@@ -774,8 +802,10 @@ public:
     void doQEDEvents (int lev);
 #endif
 
-    void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full, bool skip_current=false);
-    void PushParticlesandDepose (         amrex::Real cur_time, bool skip_current=false);
+    void PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full, bool skip_current=false,
+                                 PushType push_type=PushType::Explicit);
+    void PushParticlesandDeposit (amrex::Real cur_time, bool skip_current=false,
+                                 PushType push_type=PushType::Explicit);
 
     // This function does aux(lev) = fp(lev) + I(aux(lev-1)-cp(lev)).
     // Caller must make sure fp and cp have ghost cells filled.
@@ -1188,11 +1218,11 @@ protected:
      *  then, the E and B fields at all the levels are initialized with
      *  user-defined values for E_external_grid and B_external_grid.
      *  If the initialization type for B-field is set to
-     *  "parse_B_ext_grid_function", then, the parser is used to read
+     *  "parse_ext_grid_function", then, the parser is used to read
      *  Bx_external_grid_function(x,y,z), By_external_grid_function(x,y,z),
      *  and Bz_external_grid_function(x,y,z).
      *  Similarly, if the E-field initialization type is set to
-     *  "parse_E_ext_grid_function", then, the parser is used to read
+     *  "parse_ext_grid_function", then, the parser is used to read
      *  Ex_external_grid_function(x,y,z), Ey_external_grid_function(x,y,z),
      *  and Ex_external_grid_function(x,y,z). The parser for the E and B
      *  initialization assumes that the function has three independent
@@ -1208,8 +1238,8 @@ protected:
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
     //! by AmrCoreInitFromScratch.
-    void MakeNewLevelFromScratch (int lev, amrex::Real time, const amrex::BoxArray& ba,
-                                          const amrex::DistributionMapping& dm) final;
+    void MakeNewLevelFromScratch (int lev, amrex::Real time, const amrex::BoxArray& new_grids,
+                                          const amrex::DistributionMapping& new_dmap) final;
 
     //! Make a new level using provided BoxArray and
     //! DistributionMapping and fill with interpolated coarse level
@@ -1258,13 +1288,15 @@ private:
 
     void AddExternalFields ();
 
-    void OneStep_nosub (amrex::Real t);
-    void OneStep_sub1 (amrex::Real t);
+    void OneStep_nosub (amrex::Real cur_time);
+    void OneStep_sub1 (amrex::Real cur_time);
+
+    void OneStep_ImplicitPicard(amrex::Real cur_time);
 
     /**
      * \brief Perform one PIC iteration, with the multiple J deposition per time step
      */
-    void OneStep_multiJ (amrex::Real t);
+    void OneStep_multiJ (amrex::Real cur_time);
 
     void RestrictCurrentFromFineToCoarsePatch (
         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>>& J_fp,
@@ -1333,8 +1365,8 @@ private:
 
     void InitFromScratch ();
 
-    void AllocLevelData (int lev, const amrex::BoxArray& new_grids,
-                         const amrex::DistributionMapping& new_dmap);
+    void AllocLevelData (int lev, const amrex::BoxArray& ba,
+                         const amrex::DistributionMapping& dm);
 
     [[nodiscard]] amrex::DistributionMapping
     GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, int lev) const;
@@ -1468,6 +1500,12 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
 
+    // Implicit, fields at start of step and from the previous iteration
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_n;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_n;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_save;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_save;
+
     // Memory buffers for computing magnetostatic fields
     // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > vector_potential_fp_nodal;
@@ -1566,6 +1604,9 @@ private:
     amrex::Vector<std::unique_ptr<PML_RZ> > pml_rz;
 #endif
     amrex::Real v_particle_pml;
+
+    // External fields parameters
+    std::unique_ptr<ExternalFieldParams> m_p_ext_field_params;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
 

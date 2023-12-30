@@ -87,8 +87,9 @@ public:
     BinaryCollision (std::string collision_name, MultiParticleContainer const * const mypc)
         : CollisionBase(collision_name)
     {
-        if(m_species_names.size() != 2)
+        if(m_species_names.size() != 2) {
             WARPX_ABORT_WITH_MESSAGE("Binary collision " + collision_name + " must have exactly two species.");
+        }
 
         m_isSameSpecies = (m_species_names[0] == m_species_names[1]);
 
@@ -108,8 +109,8 @@ public:
 
     BinaryCollision ( BinaryCollision const &)             = default;
     BinaryCollision& operator= ( BinaryCollision const & ) = default;
-    BinaryCollision ( BinaryCollision&& )                  = default;
-    BinaryCollision& operator= ( BinaryCollision&& )       = default;
+    BinaryCollision ( BinaryCollision&& )            noexcept = default;
+    BinaryCollision& operator= ( BinaryCollision&& ) noexcept = default;
 
     /** Perform the collisions
      *
@@ -156,8 +157,8 @@ public:
         auto copy_species1_data = device_copy_species1.data();
         auto copy_species2_data = device_copy_species2.data();
 #else
-        auto copy_species1_data = copy_species1.data();
-        auto copy_species2_data = copy_species2.data();
+        auto *copy_species1_data = copy_species1.data();
+        auto *copy_species2_data = copy_species2.data();
 #endif
         if (m_have_product_species){
             species1.defineAllParticleTiles();
@@ -166,14 +167,14 @@ public:
 
         // Enable tiling
         amrex::MFItInfo info;
-        if (amrex::Gpu::notInLaunchRegion()) info.EnableTiling(species1.tile_size);
+        if (amrex::Gpu::notInLaunchRegion()) { info.EnableTiling(species1.tile_size); }
 
         // Loop over refinement levels
         for (int lev = 0; lev <= species1.finestLevel(); ++lev){
 
         amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
-            // Loop over all grids/tiles at this level
+        // Loop over all grids/tiles at this level
 #ifdef AMREX_USE_OMP
             info.SetDynamic(true);
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -239,7 +240,7 @@ public:
             products_np.push_back(ptile_product.numParticles());
             products_mass.push_back(product_species_vector[i]->getMass());
         }
-        auto tile_products_data = tile_products.data();
+        auto *tile_products_data = tile_products.data();
 
         if ( m_isSameSpecies ) // species_1 == species_2
         {
@@ -341,7 +342,7 @@ public:
                                                            p_pair_offsets[i_cell] : 0;
 
                     // Do not collide if there is only one particle in the cell
-                    if ( cell_stop_1 - cell_start_1 <= 1 ) return;
+                    if ( cell_stop_1 - cell_start_1 <= 1 ) { return; }
 
                     // shuffle
                     ShuffleFisherYates(
@@ -367,7 +368,9 @@ public:
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
-                                                    soa_1, soa_1, tile_products_data,
+                                                    soa_1, soa_1,
+                                                    product_species_vector,
+                                                    tile_products_data,
                                                     particle_ptr_1, particle_ptr_1, m1, m1,
                                                     products_mass, p_mask, products_np,
                                                     copy_species1, copy_species2,
@@ -447,11 +450,12 @@ public:
                     const auto n_part_in_cell_1 = cell_offsets_1[i_cell+1] - cell_offsets_1[i_cell];
                     const auto n_part_in_cell_2 = cell_offsets_2[i_cell+1] - cell_offsets_2[i_cell];
                     // Particular case: no pair if a species has no particle in that cell
-                    if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0)
+                    if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0) {
                         p_n_pairs_in_each_cell[i_cell] = 0;
-                    else
+                    } else {
                         p_n_pairs_in_each_cell[i_cell] =
                                                       amrex::max(n_part_in_cell_1,n_part_in_cell_2);
+                    }
                 }
             );
 
@@ -502,7 +506,7 @@ public:
 
                     // Do not collide if one species is missing in the cell
                     if ( cell_stop_1 - cell_start_1 < 1 ||
-                        cell_stop_2 - cell_start_2 < 1 ) return;
+                         cell_stop_2 - cell_start_2 < 1 ) { return; }
 
                     // shuffle
                     ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
@@ -528,7 +532,9 @@ public:
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
-                                                    soa_1, soa_2, tile_products_data,
+                                                    soa_1, soa_2,
+                                                    product_species_vector,
+                                                    tile_products_data,
                                                     particle_ptr_1, particle_ptr_2, m1, m2,
                                                     products_mass, p_mask, products_np,
                                                     copy_species1, copy_species2,

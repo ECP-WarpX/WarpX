@@ -148,7 +148,7 @@ void ConvertLabParamsToBoost ()
 
     ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
 
-    if (gamma_boost < 1.) return;
+    if (gamma_boost < 1.) { return; }
 
     Vector<Real> prob_lo(AMREX_SPACEDIM);
     Vector<Real> prob_hi(AMREX_SPACEDIM);
@@ -350,8 +350,9 @@ void CheckGriddingForRZSpectral ()
     const int electromagnetic_solver_id = GetAlgorithmInteger(pp_algo, "maxwell_solver");
 
     // only check for PSATD in RZ
-    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
+    if (electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
         return;
+    }
 
     int max_level;
     Vector<int> n_cell(AMREX_SPACEDIM, -1);
@@ -456,10 +457,12 @@ void ReadBCParams ()
     const ParmParse pp_boundary("boundary");
     pp_boundary.queryarr("field_lo", field_BC_lo, 0, AMREX_SPACEDIM);
     pp_boundary.queryarr("field_hi", field_BC_hi, 0, AMREX_SPACEDIM);
-    if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM))
+    if (pp_boundary.queryarr("particle_lo", particle_BC_lo, 0, AMREX_SPACEDIM)) {
         particle_boundary_specified = true;
-    if (pp_boundary.queryarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM))
+    }
+    if (pp_boundary.queryarr("particle_hi", particle_BC_hi, 0, AMREX_SPACEDIM)) {
         particle_boundary_specified = true;
+    }
     AMREX_ALWAYS_ASSERT(field_BC_lo.size() == AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(field_BC_hi.size() == AMREX_SPACEDIM);
     AMREX_ALWAYS_ASSERT(particle_BC_lo.size() == AMREX_SPACEDIM);
