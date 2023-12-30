@@ -133,14 +133,14 @@ RecordingPlaneDiagnostics::ReadParameters ()
 }
 
 bool
-RecordingPlaneDiagnostics::DoDump (int step, int /* i_buffer*/, bool force_flush)
+RecordingPlaneDiagnostics::DoDump (int /*step*/, int /* i_buffer*/, bool force_flush)
 {
     // Determine criterion to dump output
     return ( (m_slice_counter == m_buffer_size) || force_flush || m_last_timeslice_filled);
 }
 
 bool
-RecordingPlaneDiagnostics::DoComputeAndPack (int step, bool force_flush)
+RecordingPlaneDiagnostics::DoComputeAndPack (int step, bool /*force_flush*/)
 {
     // we may have to compute and pack everytimestep, but only store at user-defined intervals
     return ( step>=0 );
@@ -197,7 +197,6 @@ RecordingPlaneDiagnostics::PrepareFieldDataForOutput ()
 {
     const int num_station_functors = 1;
     const int nlev = 1;
-    int k_index = m_slice_counter;
     for (int lev = 0; lev < nlev; ++lev) {
         for (int i = 0; i < num_station_functors; ++i) {
             // number of slices = 1
@@ -286,7 +285,6 @@ RecordingPlaneDiagnostics::PrepareParticleDataForOutput ()
             amrex::Box domain = (warpx.boxArray(lev)).minimalBox();
             domain.setSmall(WARPX_ZINDEX, 0);
             domain.setBig(WARPX_ZINDEX, (m_buffer_size - 1));
-            const amrex::Box particle_buffer_box = domain;
             amrex::BoxArray diag_ba;
             diag_ba.define(m_buffer_box);
             amrex::BoxArray ba = diag_ba.maxSize(256);
@@ -367,13 +365,6 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
             amrex::VisMF::Write(tmp, prefix);
         }
     }
-
-#if 0
-    // plotfile particles
-    for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
-        FlushParticleBuffer(filename, m_output_species_names[isp], isp, i_buffer);
-    }
-#endif
 
     // Particle stuff
     {
@@ -460,217 +451,6 @@ RecordingPlaneDiagnostics::WriteRecordingPlaneHeader (const std::string& filenam
         HeaderFile << m_station_loc << "\n";
     }
     HeaderFile << m_tmin << " " << m_tmax << "\n";
-}
-
-// Currently not used
-void
-RecordingPlaneDiagnostics::FlushParticleBuffer (std::string path, std::string species_name, int isp, int i_buffer)
-{
-
-    amrex::Vector<std::string> real_names;
-    amrex::Vector<std::string> int_names;
-    amrex::Vector<int> int_flags;
-    amrex::Vector<int> real_flags;
-
-    real_names.push_back("weight");
-    real_names.push_back("momentum_x");
-    real_names.push_back("momentum_y");
-    real_names.push_back("momentum_z");
-
-    real_names.resize(m_particles_buffer[i_buffer][isp]->NumRealComps());
-    auto runtime_rnames = m_particles_buffer[i_buffer][isp]->getParticleRuntimeComps();
-    for (auto const& x : runtime_rnames) {real_names[x.second+PIdx::nattribs] = x.first;}
-
-    real_flags.resize(m_particles_buffer[i_buffer][isp]->NumRealComps(), 1);
-
-    int_names.resize(m_particles_buffer[i_buffer][isp]->NumIntComps());
-    auto runtime_inames = m_particles_buffer[i_buffer][isp]->getParticleRuntimeiComps();
-    for (auto const& x : runtime_inames) { int_names[x.second + 0] = x.first; }
-
-    int_flags.resize(m_particles_buffer[i_buffer][isp]->NumIntComps(), 1);
-
-    std::string species_dir = path + "/" + species_name;
-    // create directory for recorded species
-    if (amrex::ParallelDescriptor::IOProcessor())
-    {
-        if ( ! amrex::UtilCreateDirectory(species_dir, 0755))
-        {
-            amrex::CreateDirectoryFailed(species_dir);
-        }
-    }
-    amrex::ParallelDescriptor::Barrier();
-    // create direcotry for buffer
-    std::string buffer_string = amrex::Concatenate("pbuffer-", m_flush_counter, m_file_min_digits);
-    std::string buffer_dir = species_dir + "/" + buffer_string;
-    if (amrex::ParallelDescriptor::IOProcessor())
-    {
-        if ( ! amrex::UtilCreateDirectory(buffer_dir, 0755))
-        {
-            amrex::CreateDirectoryFailed(buffer_dir);
-        }
-    }
-    amrex::ParallelDescriptor::Barrier();
-
-    if (amrex::ParallelDescriptor::IOProcessor())
-    {
-        WriteHeaderFile(buffer_dir, real_names, int_names, isp);
-        WriteParticleData(buffer_dir, real_names, int_names, real_flags, int_flags, isp);
-    }
-}
-
-void
-RecordingPlaneDiagnostics::WriteHeaderFile (std::string pdir, amrex::Vector<std::string> real_names,
-                                     amrex::Vector<std::string> int_names, int isp)
-{
-    std::string HdrFileName = pdir;
-    if ( ! HdrFileName.empty() && HdrFileName[HdrFileName.size()-1] != '/') {
-        HdrFileName += '/';
-    }
-
-    HdrFileName += "Header";
-
-    std::ofstream HdrFile;
-
-    HdrFile.open(HdrFileName.c_str(), std::ios::out|std::ios::trunc);
-
-    if ( ! HdrFile.good()) { amrex::FileOpenFailed(HdrFileName); }
-
-    HdrFile << AMREX_SPACEDIM << "\n";
-
-    // number of real parameters
-    HdrFile << real_names.size() << "\n";
-
-    // Real component names
-    for (int i = 0; i < real_names.size(); ++i)
-    {
-        HdrFile << real_names[i] << "\n";
-    }
-
-    // number of int parameters
-    HdrFile << int_names.size() << "\n";
-
-    // int component names
-    for (int i = 0; i < int_names.size(); ++i)
-    {
-        HdrFile << int_names[i] << "\n";
-    }
-
-    // number of particles
-    HdrFile << m_totalParticles_in_buffer[0][isp] << "\n";
-
-    // finest level
-    HdrFile << m_particles_buffer[0][isp]->finestLevel() << "\n";
-
-    // Box Array size
-    for (int lev = 0; lev <= m_particles_buffer[0][isp]->finestLevel(); ++lev)
-    {
-        HdrFile << m_particles_buffer[0][isp]->ParticleBoxArray(lev).size() << "\n";
-    }
-
-    HdrFile.flush();
-    HdrFile.close();
-    if ( ! HdrFile.good())
-    {
-        amrex::Abort("ParticleContainer::Checkpoint(): problem writing HdrFile");
-    }
-}
-
-void
-RecordingPlaneDiagnostics::WriteParticleData (std::string pdir, amrex::Vector<std::string> real_names,
-                                       amrex::Vector<std::string> int_names,
-                                       amrex::Vector<int> real_flags, amrex::Vector<int> int_flags,
-                                       int isp)
-{
-    const int NProcs = amrex::ParallelDescriptor::NProcs();
-    const int IOProcNumber = amrex::ParallelDescriptor::IOProcessorNumber();
-
-    // Writing data out in parallel
-    // Allow upto nOutFiles activate writers at a time
-    int nOutFiles = 256;
-    nOutFiles = std::max(1, std::min(nOutFiles, NProcs));
-
-    bool gotsomeParticles = (m_particles_buffer[0][isp] > 0);
-    amrex::Print() << " got some particles " << gotsomeParticles << "\n";
-    const int lev = 0;
-
-    // flags to determine which particles to output
-    amrex::Vector<std::map<std::pair<int,int>, typename PinnedMemoryParticleContainer::IntVector > > particle_io_flags(m_particles_buffer[0][isp]->GetParticles().size());
-    const auto pmap = m_particles_buffer[0][isp]->GetParticles(lev);
-    for (const auto & kv : pmap)
-    {
-        auto& flags = particle_io_flags[lev][kv.first];
-        const auto np = kv.second.numParticles();
-        flags.resize(np,1);
-    }
-    amrex::Gpu::Device::streamSynchronize();
-
-    amrex::MFInfo info;
-    info.SetAlloc(false);
-    amrex::MultiFab state(m_particles_buffer[0][isp]->ParticleBoxArray(lev),
-                          m_particles_buffer[0][isp]->ParticleDistributionMap(lev),
-                          1,0,info);
-    // We eventually want to write out the file name and the offset
-    // into that file into which each grid of particles is written.
-    amrex::Vector<int>  which(state.size(),0);
-    amrex::Vector<int > count(state.size(),0);
-    amrex::Vector<amrex::Long> where(state.size(),0);
-
-    if (gotsomeParticles) {
-        std::string LevelDir = pdir;
-        if ( ! LevelDir.empty() && LevelDir[LevelDir.size()-1] != '/') { LevelDir += '/'; }
-        LevelDir = amrex::Concatenate(LevelDir.append("Level_"), lev, 1);
-        if (amrex::ParallelDescriptor::IOProcessor())
-        {
-            if ( ! amrex::UtilCreateDirectory(LevelDir, 0755)) {
-                amrex::CreateDirectoryFailed(LevelDir);
-            }
-        }
-        amrex::ParallelDescriptor::Barrier();
-
-        std::string filePrefix = LevelDir;
-        filePrefix += '/';
-        filePrefix += amrex::ParticleContainerBase::DataPrefix();
-        bool groupSets(false), setBuf(true);
-
-        for ( amrex::NFilesIter nfi(nOutFiles, filePrefix, groupSets, setBuf); nfi.ReadyToWrite(); ++nfi)
-        {
-            auto& myStream = (std::ofstream&) nfi.Stream();
-//           pc.WriteParticles(lev, myStream, nfi.FileNumber(), which, count, where,
-//                             write_real_comp, write_int_comp, particle_io_flags, is_checkpoint);
-
-            std::map<int, amrex::Vector<int> > tile_map;
-
-            for (const auto& kv : m_particles_buffer[0][isp]->GetParticles(lev))
-            {
-                const int grid = kv.first.first;
-                const int tile = kv.first.second;
-                tile_map[grid].push_back(tile);
-                const auto flags = particle_io_flags[lev].at(kv.first);
-
-                count[grid] += amrex::particle_detail::countFlags(flags);
-            }
-
-
-            for (amrex::MFIter mfi(state); mfi.isValid(); ++mfi)
-            {
-                const int grid = mfi.index();
-
-                if (count[grid] == 0) continue;
-                amrex::Vector<int> istuff;
-                amrex::Vector<amrex::ParticleReal> rstuff;
-                amrex::particle_detail::packIOData(istuff, rstuff, *m_particles_buffer[0][isp], lev, grid,
-                                                   real_flags, int_flags,
-                                                   particle_io_flags, tile_map[grid], count[grid], true);
-
-                amrex::writeIntData(istuff.dataPtr(), istuff.size(), myStream);
-                myStream.flush();
-
-                amrex::writeDoubleData( (double*) rstuff.dataPtr(), rstuff.size(), myStream);
-                myStream.flush();
-            }
-
-        }
-    }
 }
 
 void

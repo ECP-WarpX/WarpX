@@ -32,10 +32,6 @@ private:
     enum struct StationNormalDir {x=0, y, z};
 #endif
     StationNormalDir m_station_normal = StationNormalDir::z;
-    /** Whether to plot raw fields*/
-    bool m_plot_raw_fields = true;
-    /** Whether to plot guard cells of raw fields*/
-    bool m_plot_raw_fields_guards = true;
 
     /** whether to flush at this time step
      * \param[in] step current time step
@@ -70,13 +66,6 @@ private:
     void PrepareParticleDataForOutput () override;
 
     void UpdateBufferData () override;
-
-    void FlushParticleBuffer (std::string path, std::string species_name, int isp, int i_buffer=0);
-    void WriteHeaderFile (std::string pdir, amrex::Vector<std::string> real_names,
-                          amrex::Vector<std::string> int_names, int isp);
-    void WriteParticleData (std::string pdir, amrex::Vector<std::string> real_names,
-                            amrex::Vector<std::string> int_names,
-                            amrex::Vector<int> real_flags, amrex::Vector<int> int_flags, int isp);
 
     void ClearParticlesBuffer (int i_buffer);
 
