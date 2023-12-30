@@ -15,7 +15,7 @@ For example, a simulation determined by the following input script
        :language: python
 
 In this section we walk through a workflow for data processing and model training.
-This workflow was developed and first presented in Refs. :cite:t:`SandbergIPAC23` and :cite:t:`SandbergPASC24`.
+This workflow was developed and first presented in :cite:t:`ml-SandbergIPAC23,ml-SandbergPASC24`.
 
 This assumes you have an up-to-date environment with PyTorch and openPMD.
 
@@ -25,21 +25,26 @@ Data Cleaning
 It is important to inspect the data for artifacts to
 check that input/output data make sense.
 If we plot the final phase space for beams 1-8,
-the particle data is distributed in a single blob.
+the particle data is distributed in a single blob,
+as shown by :numref:`fig_phase_space_beam_1` for beam 1.
+This is as we expect and what is optimal for training neural networks.
+
+.. _fig_phase_space_beam_1:
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290010209-c55baf1c-dd98-4d56-a675-ad3729481eee.png
-   :alt: Plot comparing model prediction with simulation output.
+   :alt: Plot showing the final phase space projections for beam 1 of the training data, for a surrogate to stage 1.
 
-   Plot showing the final phase space projections of the training data for stage 1.
+   The final phase space projections for beam 1 of the training data, for a surrogate to stage 1.
 
-This is as we expect and what is optimal for training neural networks.
-On the other hand, the final phase space for beam 0 has a halo of outlying particles.
+.. _fig_phase_space_beam_0:
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290010282-40560ac4-8509-4599-82ca-167bb1739cff.png
-   :alt: Plot comparing model prediction with simulation output.
+   :alt: Plot showing the final phase space projections for beam 0 of the training data, for a surrogate to stage 0.
 
-   Plot showing the final phase space projections of the training data for stage 1.
+   The final phase space projections for beam 0 of the training data, for a surrogate to stage 0
 
+On the other hand, the final phase space for beam 0, shown in :numref:`fig_phase_space_beam_1`,
+has a halo of outlying particles.
 Looking closer at the z-pz space, we see that some particles got caught in a decelerating
 region of the wake, have slipped back and are much slower than the rest of the beam.
 To assist our neural network in learning dynamics of interest, we filter out these particles.
@@ -126,7 +131,7 @@ use in training and inference.
 Neural Network Structure
 ------------------------
 
-It was found in Ref. :cite:p:`SandbergPASC24` that reasonable surrogate models are obtained with
+It was found in :cite:t:`ml-SandbergPASC24` that reasonable surrogate models are obtained with
 shallow feedforward neural networks consisting of fewer than 10 hidden layers and
 just under 1000 nodes per layer.
 The example shown here uses 3 hidden layers and 20 nodes per layer
@@ -200,7 +205,7 @@ Save Neural Network Parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The model weights are saved after training to record the updates to the model parameters.
-Addtionally, we save some model metainformation with the model for convenience,
+Additionally, we save some model metainformation with the model for convenience,
 including the model hyperparameters, the training and testing losses, and how long the training took.
 
 .. literalinclude:: ml_materials/train.py
@@ -212,7 +217,7 @@ Evaluate
 --------
 
 In this section we show two ways to diagnose how well the neural network is learning the data.
-First we consider the train-test loss curves, shown in Fig. `[fig:train_test_loss] <#fig:train-test>`__ .
+First we consider the train-test loss curves, shown in :numref:`fig_train_test_loss`.
 This figure shows the model error on the training data (in blue) and testing data (in green) as a function of the number of epochs seen.
 The training data is used to update the model parameters, so training error should be lower than testing error.
 A key feature to look for in the train-test loss curve is the inflection point in the test loss trend.
@@ -221,22 +226,25 @@ The testing error serves as a metric of model generalizability, indicating how w
 on data it hasn't seen yet.
 When the test-loss starts to trend flat or even upward, the neural network is no longer improving its ability to generalize to new data.
 
+.. _fig_train_test_loss:
+
 .. figure:: https://user-images.githubusercontent.com/10621396/290010428-f83725ab-a08f-494c-b075-314b0d26cb9a.png
-   :alt: Plot of training and testing loss curves
+   :alt: Plot of training and testing loss curves versus number of training epochs.
 
-   Plot of training (in blue) and testing (in green) loss curves versus number of training epochs.
+   Training (in blue) and testing (in green) loss curves versus number of training epochs.
 
-A visual inspection of the model prediction can be seen in Fig. `[fig:train_evaluation]` .
-This plot compares the model prediction, with dots colored by mean-square error, on the testing data with the actual simulation output in black.
+.. _fig_train_evaluation:
 
 .. figure:: https://user-images.githubusercontent.com/10621396/290010486-4a3541e7-e0be-4cf1-b33b-57d5e5985196.png
    :alt: Plot comparing model prediction with simulation output.
 
-   Plot comparing model prediction (yellow-red dots, colored by mean-squared error) with simulation output (black dots).
+   A comparison of model prediction (yellow-red dots, colored by mean-squared error) with simulation output (black dots).
 
+A visual inspection of the model prediction can be seen in :numref:`fig_train_evaluation`.
+This plot compares the model prediction, with dots colored by mean-square error, on the testing data with the actual simulation output in black.
 The model obtained with the hyperparameters chosen here trains quickly but is not very accurate.
 A more accurate model is obtained with 5 hidden layers and 800 nodes per layer,
-as discussed in :cite:t:`SandbergPASC24`.
+as discussed in :cite:t:`ml-SandbergPASC24`.
 
 These figures can be generated with the following Python script.
 
@@ -254,3 +262,6 @@ Surrogate Usage in Accelerator Physics
 
 A neural network such as the one we trained here can be incorporated in other BLAST codes.
 `Consider the example using neural networks in ImpactX <https://impactx.readthedocs.io/en/latest/usage/examples/pytorch_surrogate_model/README.html>`__.
+
+.. bibliography::
+   :keyprefix: ml-

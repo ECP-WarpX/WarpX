@@ -81,11 +81,12 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
                     applySilverMueller = true;
                 }
             }
-            if(applySilverMueller) m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
+            if(applySilverMueller) { m_fdtd_solver_fp[0]->ApplySilverMuellerBoundary(
                                          Efield_fp[lev], Bfield_fp[lev],
                                          Geom(lev).Domain(), dt[lev],
                                          WarpX::field_boundary_lo,
                                          WarpX::field_boundary_hi);
+            }
         }
     }
 
@@ -105,14 +106,14 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, DtType a_d
 void WarpX::ApplyRhofieldBoundary (const int lev, MultiFab* rho,
                                    PatchType patch_type)
 {
-    if (PEC::isAnyBoundaryPEC()) PEC::ApplyPECtoRhofield(rho, lev, patch_type);
+    if (PEC::isAnyBoundaryPEC()) { PEC::ApplyPECtoRhofield(rho, lev, patch_type); }
 }
 
 void WarpX::ApplyJfieldBoundary (const int lev, amrex::MultiFab* Jx,
                                  amrex::MultiFab* Jy, amrex::MultiFab* Jz,
                                  PatchType patch_type)
 {
-    if (PEC::isAnyBoundaryPEC()) PEC::ApplyPECtoJfield(Jx, Jy, Jz, lev, patch_type);
+    if (PEC::isAnyBoundaryPEC()) { PEC::ApplyPECtoJfield(Jx, Jy, Jz, lev, patch_type); }
 }
 
 #ifdef WARPX_DIM_RZ
@@ -139,7 +140,7 @@ WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex
         const amrex::Real rmin = xyzmin[0];
 
         // Skip blocks that don't touch the axis
-        if (rmin > 0._rt) continue;
+        if (rmin > 0._rt) { continue; }
 
         amrex::Array4<amrex::Real> const& Er_arr = Er->array(mfi);
         amrex::Array4<amrex::Real> const& Et_arr = Et->array(mfi);
