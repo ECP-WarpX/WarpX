@@ -147,21 +147,6 @@ public:
      */
     [[nodiscard]] std::string GetAuthors () const { return m_authors; }
 
-    //! Initial electric field on the grid
-    static amrex::Vector<amrex::Real> E_external_grid;
-    //! Initial magnetic field on the grid
-    static amrex::Vector<amrex::Real> B_external_grid;
-
-    //! Initialization type for external magnetic field on the grid
-    static std::string B_ext_grid_s;
-    //! Initialization type for external electric field on the grid
-    static std::string E_ext_grid_s;
-
-    //! Whether to apply the effect of an externally-defined electric field
-    static bool add_external_E_field;
-    //! Whether to apply the effect of an externally-defined magnetic field
-    static bool add_external_B_field;
-
     //! The beginning time of boosted frame simulation
     static inline amrex::Real m_t_boost_offset = 0;
 

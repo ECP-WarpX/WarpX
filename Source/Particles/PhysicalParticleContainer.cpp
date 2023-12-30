@@ -2304,13 +2304,13 @@ PhysicalParticleContainer::SplitParticles (int lev)
     long np_split;
     if(split_type==0)
     {
-        #if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D)
            np_split = 8;
-        #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
            np_split = 4;
-        #else
+#else
            np_split = 2;
-        #endif
+#endif
     } else {
         np_split = 2*AMREX_SPACEDIM;
     }

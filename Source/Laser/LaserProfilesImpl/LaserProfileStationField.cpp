@@ -177,7 +177,7 @@ void StationFieldLaserProfile::fill_amplitude (
 #elif (AMREX_SPACEDIM == 3)
             auto const yj = (Yp[ip]-plo[1])*dyi;
             auto const j = static_cast<int>(std::floor(yj));
-            amrex::Real const wy = yi - amrex::Real(j);
+            amrex::Real const wy = yj - amrex::Real(j);
             amplitude[ip] = (1._rt-wx)*(1._rt-wy)*a(i  ,j  ,0)
                 +                  wx *(1._rt-wy)*a(i+1,j  ,0)
                 +           (1._rt-wx)*       wy *a(i  ,j+1,0)

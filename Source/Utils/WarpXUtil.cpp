@@ -192,11 +192,13 @@ void ConvertLabParamsToBoost ()
     Vector<int> dim_map {2};
 #endif
 
-    pp_warpx.query("B_ext_grid_init_style", WarpX::B_ext_grid_s);
-    pp_warpx.query("E_ext_grid_init_style", WarpX::E_ext_grid_s);
+    std::string B_ext_grid_s, E_ext_grid_s;
 
-    if ((WarpX::B_ext_grid_s == "impose_field_in_plane") ||
-        (WarpX::E_ext_grid_s == "impose_field_in_plane")) {
+    pp_warpx.query("B_ext_grid_init_style", B_ext_grid_s);
+    pp_warpx.query("E_ext_grid_init_style", E_ext_grid_s);
+
+    if ((B_ext_grid_s == "impose_field_in_plane") ||
+        (E_ext_grid_s == "impose_field_in_plane")) {
         Real zstation;
         Real tmin = std::numeric_limits<Real>::max();
         Real tmax = std::numeric_limits<Real>::lowest();
