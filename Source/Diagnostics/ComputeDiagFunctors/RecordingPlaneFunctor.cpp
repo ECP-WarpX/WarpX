@@ -52,15 +52,15 @@ amrex::Real interp_to_slice (int i, int j,
 
 }
 
-RecordingPlaneFunctor::RecordingPlaneFunctor(const std::array<const amrex::MultiFab* const, 6> arr_mf_src,
-                               amrex::Real zlocation, const int lev,
-                               amrex::IntVect crse_ratio, const int ncomp)
+RecordingPlaneFunctor::RecordingPlaneFunctor (std::array<const amrex::MultiFab* const, 6> const& arr_mf_src,
+                                              amrex::Real zlocation, int lev,
+                                              amrex::IntVect const& crse_ratio, int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_arr_mf_src(arr_mf_src), m_lev(lev), m_z_location(zlocation)
 {
 }
 
 void
-RecordingPlaneFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, const int i_buffer) const
+RecordingPlaneFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, int /*i_buffer*/) const
 {
     if (! m_slice_in_domain) { return; }
 
@@ -125,8 +125,8 @@ RecordingPlaneFunctor::operator() (amrex::MultiFab& mf_dst, const int dcomp, con
 
 void
 RecordingPlaneFunctor::PrepareFunctorData (int i_station, bool slice_in_domain, amrex::Real zlocation,
-                                    amrex::Box buffer_box, int k_index,
-                                    const int buffer_full)
+                                           amrex::Box const& buffer_box, int k_index,
+                                           int buffer_full)
 {
     amrex::ignore_unused(i_station, slice_in_domain, zlocation, buffer_full);
     m_buffer_box = buffer_box;

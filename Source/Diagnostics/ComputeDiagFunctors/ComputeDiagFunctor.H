@@ -34,7 +34,7 @@ public:
      *            to the output diagnostic MultiFab, mf_dst.
      * \param[in] i_buffer index of a back-transformed snapshot
      */
-    virtual void operator() (amrex::MultiFab& mf_dst, int dcomp, int i_buffer = 0) const = 0;
+    virtual void operator() (amrex::MultiFab& mf_dst, int dcomp, int i_buffer) const = 0;
     /** Number of component from the input multifab to write to the output
      * multifab */
     [[nodiscard]] int nComp () const { return m_ncomp; }
@@ -57,8 +57,8 @@ public:
      */
     virtual void PrepareFunctorData ( int i_buffer, bool z_slice_in_domain,
                                       amrex::Real current_z_boost,
-                                      amrex::Box buffer_box, const int k_index_zlab,
-                                      const int snapshot_full) {
+                                      amrex::Box const& buffer_box, int k_index_zlab,
+                                      int snapshot_full) {
                                           amrex::ignore_unused(i_buffer,
                                           z_slice_in_domain,
                                           current_z_boost, buffer_box,

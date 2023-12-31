@@ -15,12 +15,12 @@ class
 RecordingPlaneFunctor final : public ComputeDiagFunctor
 {
 public:
-    RecordingPlaneFunctor (const std::array<const amrex::MultiFab* const, 6> arr_mf_src, amrex::Real zlocation,
-                    const int lev, amrex::IntVect crse_ratio, const int ncomp = 1);
-    virtual void operator () (amrex::MultiFab & mf_dst, const int dcomp, const int i_buffer) const override;
-    void PrepareFunctorData (int i_station, bool slice_in_domain, amrex::Real zlocation, amrex::Box buffer_box,
-                             int k_index, const int buffer_full) override;
-    std::unique_ptr<amrex::MultiFab> AllocateSlice(amrex::Vector<int>& slice_to_full_ba_map, int slice_k) const;
+    RecordingPlaneFunctor (std::array<const amrex::MultiFab* const, 6> const& arr_mf_src, amrex::Real zlocation,
+                           int lev, amrex::IntVect const& crse_ratio, int ncomp = 1);
+    void operator () (amrex::MultiFab & mf_dst, int dcomp, int i_buffer) const override;
+    void PrepareFunctorData (int i_station, bool slice_in_domain, amrex::Real zlocation, amrex::Box const& buffer_box,
+                             int k_index, int buffer_full) override;
+    std::unique_ptr<amrex::MultiFab> AllocateSlice (amrex::Vector<int>& slice_to_full_ba_map, int slice_k) const;
 
 private:
     std::array<const amrex::MultiFab * const, 6> m_arr_mf_src;

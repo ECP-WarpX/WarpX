@@ -81,7 +81,7 @@ public:
      */
     void PrepareFunctorData ( int i_buffer, bool z_slice_in_domain,
                               amrex::Real current_z_boost,
-                              amrex::Box buffer_box, int k_index_zlab,
+                              amrex::Box const& buffer_box, int k_index_zlab,
                               int snapshot_full ) override;
     /** Allocate and initialize member variables and arrays required to back-transform
      *  field-data from boosted-frame to lab-frame.
