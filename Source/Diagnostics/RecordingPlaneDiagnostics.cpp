@@ -195,14 +195,13 @@ RecordingPlaneDiagnostics::InitializeBufferData (int /*i_buffer*/, int lev, bool
 void
 RecordingPlaneDiagnostics::PrepareFieldDataForOutput ()
 {
-    const int num_station_functors = 1;
-    const int nlev = 1;
-    for (int lev = 0; lev < nlev; ++lev) {
-        for (int i = 0; i < num_station_functors; ++i) {
-            // number of slices = 1
-            const bool ZSliceInDomain = GetZSliceInDomain(lev);
-            m_all_field_functors[lev][i]->PrepareFunctorData(0, ZSliceInDomain, m_station_loc, m_buffer_box,
-                                                             m_slice_counter, m_buffer_size);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(this->nlev == 1 && m_all_field_functors[0].size() == 1,
+                                     "RecordingPlaneDiagnostics: Single level and single station only");
+    for (int lev = 0; lev < this->nlev; ++lev) {
+        const bool ZSliceInDomain = GetZSliceInDomain(lev);
+        for (auto& f : m_all_field_functors[lev]) {
+            f->PrepareFunctorData(0, ZSliceInDomain, m_station_loc, m_buffer_box,
+                                  m_slice_counter, m_buffer_size);
         }
     }
 }
@@ -212,7 +211,7 @@ RecordingPlaneDiagnostics::GetZSliceInDomain (const int lev)
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::RealBox& prob_domain = warpx.Geom(lev).ProbDomain();
-    if ( ( m_station_loc <= prob_domain.lo(WARPX_ZINDEX) ) or
+    if ( ( m_station_loc <= prob_domain.lo(WARPX_ZINDEX) ) ||
          ( m_station_loc >= prob_domain.hi(WARPX_ZINDEX) ) )
     {
         return false;
