@@ -155,6 +155,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
                 lasers.str());
         }
     }
+
     //Check if profile exists
     if(laser_profiles_dictionary.count(laser_type_s) == 0 ){
         WARPX_ABORT_WITH_MESSAGE(std::string("Unknown laser type: ").append(laser_type_s));
