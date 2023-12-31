@@ -2301,7 +2301,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
     RealVector psplit_x, psplit_y, psplit_z, psplit_w;
     RealVector psplit_ux, psplit_uy, psplit_uz;
     long np_split_to_add = 0;
-    long np_split;
+    long np_split = 2*AMREX_SPACEDIM;
     if(split_type==0)
     {
 #if defined(WARPX_DIM_3D)
@@ -2311,8 +2311,6 @@ PhysicalParticleContainer::SplitParticles (int lev)
 #else
            np_split = 2;
 #endif
-    } else {
-        np_split = 2*AMREX_SPACEDIM;
     }
 
     // Loop over particle interator

@@ -21,7 +21,7 @@ amrex::Real interp_to_slice (int i, int j,
     int const iz = static_cast<int>(std::floor(z));
     Real const w = z - Real(iz);
 #if (AMREX_SPACEDIM == 1)
-    amrex::ignore_unused(i,j);
+    amrex::ignore_unused(i,j,src,w);
     amrex::Abort("interp_to_slice: 1D not supported");
     return 0;
 #elif (AMREX_SPACEDIM == 2)
