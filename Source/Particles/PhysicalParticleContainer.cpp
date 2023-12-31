@@ -671,10 +671,10 @@ PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector & plasma_injector,
         openPMD::Iteration it = series->iterations.begin()->second;
         const ParmParse pp_species_name(species_name);
         pp_species_name.query("impose_t_lab_from_file", impose_t_lab_from_file);
-        double t_lab = 0._prt;
+        auto t_lab = 0._prt;
         if (impose_t_lab_from_file) {
             // Impose t_lab as being the time stored in the openPMD file
-            t_lab = it.time<double>() * it.timeUnitSI();
+            t_lab = amrex::ParticleReal(it.time<double>() * it.timeUnitSI());
         }
         bool injection_from_recording_plane = false;
         pp_species_name.query("injection_from_recording_plane", injection_from_recording_plane);
