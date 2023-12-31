@@ -403,9 +403,9 @@ WarpXOpenPMDPlot::GetFileName (std::string& filepath)
 {
     filepath.append("/");
     // transform paths for Windows
-    #ifdef _WIN32
+#ifdef _WIN32
     filepath = openPMD::auxiliary::replace_all(filepath, "/", "\\");
-    #endif
+#endif
 
     std::string filename = "openpmd";
     //

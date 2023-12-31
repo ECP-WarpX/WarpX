@@ -480,7 +480,7 @@ public:
             Efield_aux[lev][2].get()
         };
     }
-    std::array<const amrex::MultiFab* const, 6>
+    [[nodiscard]] std::array<const amrex::MultiFab* const, 6>
     get_array_EBfield_fp (const int lev) const{
         return {
             Efield_fp[lev][0].get(),

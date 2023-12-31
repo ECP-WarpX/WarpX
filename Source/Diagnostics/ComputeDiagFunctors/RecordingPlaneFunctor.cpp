@@ -82,7 +82,7 @@ RecordingPlaneFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, int /*i_b
     // slice is cell-centered in z-direction and nodal in others. There is
     // only one cell in the z-direction.
 
-    for (auto& smf : m_arr_mf_src) {
+    for (auto const& smf : m_arr_mf_src) {
         AMREX_ALWAYS_ASSERT(smf->nGrowVect().allGE(amrex::IntVect(1)));
         const_cast<amrex::MultiFab*>(smf)->FillBoundary
             (0,1,amrex::IntVect(1),geom.periodicity());

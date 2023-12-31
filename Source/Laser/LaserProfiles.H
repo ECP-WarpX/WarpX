@@ -389,11 +389,11 @@ public:
 
     void update (amrex::Real t) override;
 
-    void fill_amplitude (const int np,
-                         amrex::Real const * AMREX_RESTRICT const Xp,
-                         amrex::Real const * AMREX_RESTRICT const Yp,
+    void fill_amplitude (int np,
+                         amrex::Real const * AMREX_RESTRICT Xp,
+                         amrex::Real const * AMREX_RESTRICT Yp,
                          amrex::Real t,
-                         amrex::Real * AMREX_RESTRICT const amplitude) const override;
+                         amrex::Real * AMREX_RESTRICT amplitude) const override;
 
 private:
     CommonLaserParameters m_common_params;

@@ -37,12 +37,15 @@ RecordParticles::RecordParticles (const WarpXParIter &a_pti, TmpParticles& tmp_p
 PlaneCrossingTime::PlaneCrossingTime (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
                                       amrex::Real current_time,
                                       amrex::Real z_station_location, int a_index, int a_offset)
-    : m_z_station(z_station_location), m_current_time(current_time), m_index(a_index)
+    : m_z_station(z_station_location),
+      m_current_time(current_time),
+      m_index(a_index),
+      m_inv_c2(amrex::Real(1.0)/(PhysConst::c * PhysConst::c))
 {
     using namespace amrex::literals;
     m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
 
-    auto& attribs = a_pti.GetAttribs();
+    auto const& attribs = a_pti.GetAttribs();
     m_wpnew = attribs[PIdx::w].dataPtr();
     m_uxnew = attribs[PIdx::ux].dataPtr();
     m_uynew = attribs[PIdx::uy].dataPtr();
@@ -57,14 +60,11 @@ PlaneCrossingTime::PlaneCrossingTime (const WarpXParIter& a_pti, TmpParticles& t
     m_uxpold = tmp_particle_data[lev][index][TmpIdx::uxold].dataPtr();
     m_uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr();
     m_uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
-
-    m_Phys_c = PhysConst::c;
-    m_inv_c2 = 1._rt/(m_Phys_c * m_Phys_c);
 }
 
 RecordingPlaneParticleFunctor::RecordingPlaneParticleFunctor (
                         WarpXParticleContainer *pc_src, std::string species_name, int num_station_buffers)
-    : m_pc_src(pc_src), m_species_name(species_name), m_num_station_buffers(num_station_buffers)
+    : m_pc_src(pc_src), m_species_name(std::move(species_name)), m_num_station_buffers(num_station_buffers)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_num_station_buffers == 1,
                                      "RecordingPlaneParticleFunctor: num of station buffers must be 1");
@@ -74,7 +74,7 @@ void
 RecordingPlaneParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int &TotalParticleCounter, int /*i_buffer*/) const
 {
     amrex::Print() << " in station particle operator " << m_record_particles << "\n";
-    if (!m_record_particles) return;
+    if (!m_record_particles) { return; }
     auto & warpx = WarpX::GetInstance();
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
     amrex::Print() << " got tmp particle ddata in operator \n";
@@ -132,7 +132,7 @@ RecordingPlaneParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_ds
             }
         }
     }
-    TotalParticleCounter = pc_dst.TotalNumberOfParticles();
+    TotalParticleCounter = int(pc_dst.TotalNumberOfParticles());
     amrex::Print() << " end of operator : " << TotalParticleCounter << "\n";
 }
 

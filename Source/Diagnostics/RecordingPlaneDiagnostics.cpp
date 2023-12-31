@@ -113,11 +113,12 @@ RecordingPlaneDiagnostics::ReadParameters ()
     MultiParticleContainer& mpc = warpx.GetPartContainer();
     int write_species = 1;
     pp_diag_name.query("write_species", write_species);
-    if (m_output_species_names.size() == 0 and write_species == 1)
+    if (m_output_species_names.empty() && write_species == 1) {
         m_output_species_names = mpc.GetSpeciesNames();
+    }
 
     bool m_record_particles = false;
-    if (m_output_species_names.size() > 0 and write_species == 1) {
+    if (! m_output_species_names.empty() && write_species == 1) {
         m_record_particles = true;
     }
     if (m_record_particles) {
@@ -207,16 +208,12 @@ RecordingPlaneDiagnostics::PrepareFieldDataForOutput ()
 }
 
 bool
-RecordingPlaneDiagnostics::GetZSliceInDomain (const int lev)
+RecordingPlaneDiagnostics::GetZSliceInDomain (int lev)
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::RealBox& prob_domain = warpx.Geom(lev).ProbDomain();
-    if ( ( m_station_loc <= prob_domain.lo(WARPX_ZINDEX) ) ||
-         ( m_station_loc >= prob_domain.hi(WARPX_ZINDEX) ) )
-    {
-        return false;
-    }
-    return true;
+    return m_station_loc > prob_domain.lo(WARPX_ZINDEX)
+        && m_station_loc < prob_domain.hi(WARPX_ZINDEX);
 }
 
 void
@@ -302,7 +299,7 @@ RecordingPlaneDiagnostics::PrepareParticleDataForOutput ()
 void
 RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 {
-    if (m_slice_counter == 0) return;
+    if (m_slice_counter == 0) { return; }
 
     const std::string filename = m_file_prefix;
     constexpr int permission_flag_rwxrxrx = 0755;
@@ -392,11 +389,11 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
         }
 
         for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
-            m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
+            m_totalParticles_flushed_already[i_buffer][isp] += int(m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles());
             m_totalParticles_in_buffer[i_buffer][isp] = 0;
         }
 
-        if (m_output_species_names.size() > 0)
+        if (! m_output_species_names.empty())
         {
             ClearParticlesBuffer(i_buffer);
         }

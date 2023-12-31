@@ -135,7 +135,9 @@ void StationFieldLaserProfile::update (amrex::Real t)
         auto const& a = m_slice_fab->array();
         amrex::ParallelFor(b, [=] AMREX_GPU_DEVICE (int i, int j, int)
         {
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+            amrex::ignore_unused(i,j,w,a);
+#elif (AMREX_SPACEDIM == 2)
             a(i,j,0) = (a(i,0,0)*(amrex::Real(1.0)-w) + a(i,1,0)*w);
 #elif (AMREX_SPACEDIM == 3)
             a(i,j,0) = (a(i,j,0)*(amrex::Real(1.0)-w) + a(i,j,1)*w);
@@ -149,11 +151,11 @@ void StationFieldLaserProfile::update (amrex::Real t)
 }
 
 void StationFieldLaserProfile::fill_amplitude (
-    const int np,
-    amrex::Real const * AMREX_RESTRICT const Xp,
-    amrex::Real const * AMREX_RESTRICT const Yp,
+    int np,
+    amrex::Real const * AMREX_RESTRICT Xp,
+    amrex::Real const * AMREX_RESTRICT Yp,
     amrex::Real /*t*/,
-    amrex::Real * AMREX_RESTRICT const amplitude) const
+    amrex::Real * AMREX_RESTRICT amplitude) const
 {
     amrex::ignore_unused(Yp);
     using namespace amrex::literals;
@@ -171,7 +173,9 @@ void StationFieldLaserProfile::fill_amplitude (
             auto const xi = (Xp[ip]-plo[0])*dxi;
             auto const i = static_cast<int>(std::floor(xi));
             amrex::Real const wx = xi - amrex::Real(i);
-#if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 1)
+            amrex::ignore_unused(wx,a);
+#elif (AMREX_SPACEDIM == 2)
             amplitude[ip] = (1._rt-wx)*a(i  ,0,0)
                 +                  wx *a(i+1,0,0);
 #elif (AMREX_SPACEDIM == 3)
