@@ -89,7 +89,7 @@ struct FindBoundaryIntersection {
                 amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
                 UpdatePosition(x_temp, y_temp, z_temp, m_ux, m_uy, m_uz, -dt_frac*m_dt);
                 ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, m_plo, m_dxi, i, j, k, W);
-                phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, m_phiarr);
+                amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, m_phiarr);
                 return phi_value;
             } );
             // Record the corresponding position
