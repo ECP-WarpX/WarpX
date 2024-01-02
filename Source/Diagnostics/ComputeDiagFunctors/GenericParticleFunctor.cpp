@@ -18,8 +18,9 @@
 /**
  * \brief Functor to select particles to be written and copy them to `pc_src`
  */
+template <typename PC>
 GenericParticleFunctor::GenericParticleFunctor (
-                              WarpXParticleContainer *pc_src,
+                              PC *pc_src,
                               std::string species_name )
     : m_pc_src{pc_src}, m_species_name{std::move(species_name)}
 {

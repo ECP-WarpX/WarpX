@@ -11,7 +11,6 @@ foreach(D IN LISTS WarpX_DIMS)
         PartPerGridFunctor.cpp
         BackTransformFunctor.cpp
         BackTransformParticleFunctor.cpp
-        GenericParticleFunctor.cpp
         ParticleReductionFunctor.cpp
     )
 endforeach()
