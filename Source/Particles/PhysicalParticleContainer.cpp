@@ -1268,8 +1268,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
                 // Save the x and y values to use in the insideBounds checks.
                 // This is needed with WARPX_DIM_RZ since x and y are modified.
-                Real xb = pos.x;
-                Real yb = pos.y;
+                const Real xb = pos.x;
+                const Real yb = pos.y;
 
 #ifdef WARPX_DIM_RZ
                 // Replace the x and y, setting an angle theta.
@@ -1396,8 +1396,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 } else {
                     // This is not correct since it might shift the particle
                     // out of the local grid
-                    xb = std::sqrt(xb*rmax);
-                    weight *= MathConst::pi * rmax;
+                    pos.x = std::sqrt(xb*rmax);
+                    weight *= dx[0];
                 }
 #endif
                 pa[PIdx::w ][ip] = weight;
@@ -1879,8 +1879,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                     } else {
                          // This is not correct since it might shift the particle
                          // out of the local grid
-                         ppos.x *= std::sqrt(radial_position/rmax);
-                         ppos.y *= std::sqrt(radial_position/rmax);
+                         ppos.x = std::sqrt(radial_position*rmax);
                          t_weight *= dx[0];
                     }
                 }
