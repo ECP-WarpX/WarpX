@@ -1,5 +1,6 @@
 import os
 import sys
+
 import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
 import yt
