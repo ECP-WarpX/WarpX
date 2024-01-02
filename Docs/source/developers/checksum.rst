@@ -32,7 +32,7 @@ You can execute ``checksumAPI.py`` as a Python script for that, and pass the plo
 
 .. code-block:: bash
 
-   ./checksumAPI.py --evaluate --plotfile <path/to/plotfile> --test-name <test name>
+   ./checksumAPI.py --evaluate --output-file <path/to/plotfile> --format <'openpmd' or 'plotfile'> --test-name <test name>
 
 See additional options
 
@@ -41,17 +41,17 @@ See additional options
 * ``--rtol`` relative tolerance for the comparison
 * ``--atol`` absolute tolerance for the comparison (a sum of both is used by ``numpy.isclose()``)
 
-Reset a benchmark with new values that you know are correct
------------------------------------------------------------
+Create/Reset a benchmark with new values that you know are correct
+------------------------------------------------------------------
 
-Reset a benchmark from a plotfile generated locally
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Create/Reset a benchmark from a plotfile generated locally
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This is using ``checksumAPI.py`` as a Python script.
 
 .. code-block:: bash
 
-   ./checksumAPI.py --reset-benchmark --plotfile <path/to/plotfile> --test-name <test name>
+   ./checksumAPI.py --reset-benchmark --output-file <path/to/plotfile> --format <'openpmd' or 'plotfile'> --test-name <test name>
 
 See additional options
 

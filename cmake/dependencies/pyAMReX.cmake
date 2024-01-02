@@ -79,7 +79,7 @@ option(WarpX_pyamrex_internal "Download & build pyAMReX" ON)
 set(WarpX_pyamrex_repo "https://github.com/AMReX-Codes/pyamrex.git"
     CACHE STRING
     "Repository URI to pull and build pyamrex from if(WarpX_pyamrex_internal)")
-set(WarpX_pyamrex_branch "91bbbbab13a0651781b6830f64d362dc3d15a3ea"
+set(WarpX_pyamrex_branch "eb24d03fac522d36fb27d20c6e026d8b59dfa908"
     CACHE STRING
     "Repository branch for WarpX_pyamrex_repo if(WarpX_pyamrex_internal)")
 
