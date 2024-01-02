@@ -71,8 +71,6 @@ struct FindBoundaryIntersection {
         // Also record the integer timestep on the destination
         dst.m_runtime_idata[m_index][dst_i] = m_step;
 
-
-
         // Modify the position of the destination particle:
         // Move it to the point of intersection with the embedded boundary
         // (which is found by using a bisection algorithm)
