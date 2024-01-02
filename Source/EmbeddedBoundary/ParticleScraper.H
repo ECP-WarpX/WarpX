@@ -64,9 +64,9 @@
  */
 template <class PC, class F, std::enable_if_t<amrex::IsParticleContainer<PC>::value, int> foo = 0>
 void
-scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f,const amrex::Real dt)
+scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, int lev, F&& f)
 {
-    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f),dt);
+    scrapeParticles(pc, distance_to_eb, lev, lev, std::forward<F>(f));
 }
 
 /**
@@ -186,10 +186,6 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 
                 if (phi_value < 0.0)
                 {
-                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
-
-                    // the exact coordinates are already calculated in the file Source/Particles/ParticleBoundaryBuffer.cpp
-
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
                     pos[0] = xp;
@@ -204,8 +200,6 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 #elif (defined WARPX_DIM_1D_Z)
                     pos[0] = zp;
 #endif
-                    DistanceToEB::normalize(normal);
-
                     f(ptd, ip, pos, normal, engine);
 
                 }

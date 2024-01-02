@@ -295,7 +295,7 @@ public:
 
     PhysicalParticleContainer& GetPCtmp () { return *pc_tmp; }
 
-    void ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb, const amrex::Real dt);
+    void ScrapeParticles (const amrex::Vector<const amrex::MultiFab*>& distance_to_eb);
 
     std::string m_B_ext_particle_s = "none";
     std::string m_E_ext_particle_s = "none";
