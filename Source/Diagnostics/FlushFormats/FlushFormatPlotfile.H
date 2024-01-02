@@ -22,8 +22,8 @@ class FlushFormatPlotfile : public FlushFormat
 {
 public:
     /** Flush fields and particles to plotfile */
-    virtual void WriteToFile (
-        amrex::Vector<std::string> varnames,
+    void WriteToFile (
+        const amrex::Vector<std::string>& varnames,
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,
@@ -46,17 +46,23 @@ public:
                             const std::string& plotfilename,
                             bool plot_raw_fields_guards) const;
     /** \brief Write particles data to file.
-     * \param[in] filename name of output directory
+     * \param[in] dir name of output directory
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
      * \param[in] time the simulation time on the coarsest level
      * \param[in] isBTD whether this is a back-transformed diagnostic
      */
-    void WriteParticles(const std::string& filename,
+    void WriteParticles(const std::string& dir,
                         const amrex::Vector<ParticleDiag>& particle_diags,
                         amrex::Real time,
                         bool isBTD = false) const;
 
-    ~FlushFormatPlotfile() {}
+    FlushFormatPlotfile () = default;
+    ~FlushFormatPlotfile() override = default;
+
+    FlushFormatPlotfile ( FlushFormatPlotfile const &)             = default;
+    FlushFormatPlotfile& operator= ( FlushFormatPlotfile const & ) = default;
+    FlushFormatPlotfile ( FlushFormatPlotfile&& )                  = default;
+    FlushFormatPlotfile& operator= ( FlushFormatPlotfile&& )       = default;
 };
 
 #endif // WARPX_FLUSHFORMATPLOTFILE_H_

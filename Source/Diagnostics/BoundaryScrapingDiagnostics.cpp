@@ -105,7 +105,7 @@ BoundaryScrapingDiagnostics::InitializeParticleBuffer ()
     // Initialize total number of particles flushed
     m_totalParticles_flushed_already.resize(m_num_buffers);
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        int const n_species = m_output_species_names.size();
+        int const n_species = static_cast<int>(m_output_species_names.size());
         m_totalParticles_flushed_already[i_buffer].resize(n_species);
         for (int i_species=0; i_species<n_species; i_species++) {
             m_totalParticles_flushed_already[i_buffer][i_species] = 0;
@@ -130,7 +130,7 @@ BoundaryScrapingDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flus
 }
 
 void
-BoundaryScrapingDiagnostics::Flush (int i_buffer)
+BoundaryScrapingDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 {
     auto & warpx = WarpX::GetInstance();
     ParticleBoundaryBuffer& particle_buffer = warpx.GetParticleBoundaryBuffer();
@@ -142,7 +142,7 @@ BoundaryScrapingDiagnostics::Flush (int i_buffer)
 
     // If the saving of the particles was not set up for any of the species for this boundary
     // or if no particles have been lost, then don't write anything out.
-    if (n_particles == 0) return;
+    if (n_particles == 0) { return; }
 
     // This is not a backtransform diagnostics
     bool const isBTD = false;

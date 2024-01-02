@@ -64,8 +64,8 @@ function(find_pyamrex)
         endif()
     elseif(NOT WarpX_pyamrex_internal)
         # TODO: MPI control
-        find_package(pyAMReX 23.10 CONFIG REQUIRED)
-        message(STATUS "pyAMReX: Found version '${pyamrex_VERSION}'")
+        find_package(pyAMReX 23.12 CONFIG REQUIRED)
+        message(STATUS "pyAMReX: Found version '${pyAMReX_VERSION}'")
     endif()
 endfunction()
 
@@ -79,7 +79,7 @@ option(WarpX_pyamrex_internal "Download & build pyAMReX" ON)
 set(WarpX_pyamrex_repo "https://github.com/AMReX-Codes/pyamrex.git"
     CACHE STRING
     "Repository URI to pull and build pyamrex from if(WarpX_pyamrex_internal)")
-set(WarpX_pyamrex_branch "23.10"
+set(WarpX_pyamrex_branch "eb24d03fac522d36fb27d20c6e026d8b59dfa908"
     CACHE STRING
     "Repository branch for WarpX_pyamrex_repo if(WarpX_pyamrex_internal)")
 

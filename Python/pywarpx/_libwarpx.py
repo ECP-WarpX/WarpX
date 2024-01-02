@@ -14,7 +14,6 @@
 
 import atexit
 import os
-import sys
 
 import numpy as np
 
@@ -114,46 +113,6 @@ class LibWarpX():
 
         self.__version__ = self.libwarpx_so.__version__
 
-    def getNProcs(self):
-        '''
-
-        Get the number of processors
-
-        '''
-        return self.libwarpx_so.getNProcs()
-
-    def getMyProc(self):
-        '''
-
-        Get the number of the processor
-
-        '''
-        return self.libwarpx_so.getMyProc()
-
-    def get_nattr(self):
-        '''
-
-        Get the number of extra particle attributes.
-
-        '''
-        # --- The -3 is because the comps include the velocites
-        return self.libwarpx_so.warpx_nComps() - 3
-
-    def get_nattr_species(self, species_name):
-        '''
-        Get the number of real attributes for the given species.
-
-        Parameters
-        ----------
-
-        species_name: str
-            Name of the species
-        '''
-        warpx = self.libwarpx_so.get_instance()
-        mpc = warpx.multi_particle_container()
-        pc = mpc.get_particle_container_from_name(species_name)
-        return pc.num_real_comps()
-
     def amrex_init(self, argv, mpi_comm=None):
         if mpi_comm is None: # or MPI is None:
             self.libwarpx_so.amrex_init(argv)
@@ -162,9 +121,7 @@ class LibWarpX():
 
     def initialize(self, argv=None, mpi_comm=None):
         '''
-
         Initialize WarpX and AMReX. Must be called before doing anything else.
-
         '''
         if argv is None:
             argv = sys.argv
@@ -180,9 +137,7 @@ class LibWarpX():
 
     def finalize(self, finalize_mpi=1):
         '''
-
         Call finalize for WarpX and AMReX. Registered to run at program exit.
-
         '''
         # TODO: simplify, part of pyAMReX already
         if self.initialized:
@@ -193,194 +148,5 @@ class LibWarpX():
 
             from pywarpx import callbacks
             callbacks.clear_all()
-
-    def getistep(self, level=0):
-        '''
-        Get the current time step number for the specified level
-
-        Parameter
-        ---------
-
-        level : int
-            The refinement level to reference
-        '''
-
-        return self.warpx.getistep(level)
-
-    def gett_new(self, level=0):
-        '''
-
-        Get the next time for the specified level.
-
-        Parameters
-        ----------
-
-        level        : int
-            The refinement level to reference
-        '''
-
-        return self.warpx.gett_new(level)
-
-    def evolve(self, num_steps=-1):
-        '''
-        Evolve the simulation for num_steps steps. If num_steps=-1,
-        the simulation will be run until the end as specified in the
-        inputs file.
-
-        Parameters
-        ----------
-
-        num_steps: int
-            The number of steps to take
-        '''
-
-        self.warpx.evolve(num_steps)
-
-    def getProbLo(self, direction, level=0):
-        '''
-        Get the values of the lower domain boundary.
-
-        Parameters
-        ----------
-
-        direction    : int
-            Direction of interest
-        '''
-
-        assert 0 <= direction < self.dim, 'Inappropriate direction specified'
-        return self.warpx.Geom(level).ProbLo(direction)
-
-    def getProbHi(self, direction, level=0):
-        '''
-        Get the values of the upper domain boundary.
-
-        Parameters
-        ----------
-
-        direction    : int
-            Direction of interest
-        '''
-
-        assert 0 <= direction < self.dim, 'Inappropriate direction specified'
-        return self.warpx.Geom(level).ProbHi(direction)
-
-    def getCellSize(self, direction, level=0):
-        '''
-        Get the cell size in the given direction and on the given level.
-
-        Parameters
-        ----------
-
-        direction    : int
-            Direction of interest
-
-        level        : int
-            The refinement level to reference
-        '''
-
-        assert 0 <= direction < 3, 'Inappropriate direction specified'
-        assert 0 <= level and level <= self.libwarpx_so.warpx_finestLevel(), 'Inappropriate level specified'
-        return self.libwarpx_so.warpx_getCellSize(direction, level)
-
-    #def get_sigma(self, direction):
-    #    '''
-    #
-    #    Return the 'sigma' PML coefficients for the electric field
-    #    in a given direction.
-    #
-    #    '''
-    #
-    #    size = ctypes.c_int(0)
-    #    data = self.libwarpx_so.warpx_getPMLSigma(direction, ctypes.byref(size))
-    #    arr = np.ctypeslib.as_array(data, (size.value,))
-    #    arr.setflags(write=1)
-    #    return arr
-    #
-    #
-    #def get_sigma_star(self, direction):
-    #    '''
-    #
-    #    Return the 'sigma*' PML coefficients for the magnetic field
-    #    in the given direction.
-    #
-    #    '''
-    #
-    #    size = ctypes.c_int(0)
-    #    data = self.libwarpx_so.warpx_getPMLSigmaStar(direction, ctypes.byref(size))
-    #    arr = np.ctypeslib.as_array(data, (size.value,))
-    #    arr.setflags(write=1)
-    #    return arr
-    #
-    #
-    #def compute_pml_factors(self, lev, dt):
-    #    '''
-    #
-    #    This recomputes the PML coefficients for a given level, using the
-    #    time step dt. This needs to be called after modifying the coefficients
-    #    from Python.
-    #
-    #    '''
-    #
-    #    self.libwarpx_so.warpx_ComputePMLFactors(lev, dt)
-
-
-
-    def depositChargeDensity(self, species_name, level, clear_rho=True, sync_rho=True):
-        '''
-        Deposit the specified species' charge density in rho_fp in order to
-        access that data via pywarpx.fields.RhoFPWrapper().
-
-        Parameters
-        ----------
-
-        species_name   : str
-            The species name that will be deposited.
-
-        level          : int
-            Which AMR level to retrieve scraped particle data from.
-
-        clear_rho      : bool
-            If True, zero out rho_fp before deposition.
-
-        sync_rho       : bool
-            If True, perform MPI exchange and properly set boundary cells for rho_fp.
-        '''
-        rho_fp = self.warpx.multifab(f'rho_fp[level={level}]')
-
-        if rho_fp is None:
-            raise RuntimeError("Multifab `rho_fp` is not allocated.")
-            # ablastr::warn_manager::WMRecordWarning(
-            #     "WarpXWrappers", "rho_fp is not allocated",
-            #     ablastr::warn_manager::WarnPriority::low
-            # );
-            # return
-
-        if clear_rho:
-            rho_fp.set_val(0.0)
-
-        # deposit the charge density from the desired species
-        mypc = self.warpx.multi_particle_container()
-        myspc = mypc.get_particle_container_from_name(species_name)
-        myspc.deposit_charge(rho_fp, level)
-
-        if self.geometry_dim == 'rz':
-            self.warpx.apply_inverse_volume_scaling_to_charge_density(rho_fp, level)
-
-        if sync_rho:
-            self.warpx.sync_rho()
-
-
-    def set_potential_EB(self, potential):
-        """
-        Set the expression string for the embedded boundary potential
-
-        Parameters
-        ----------
-
-        potential : str
-            The expression string
-        """
-        self.warpx.set_potential_on_eb(potential)
-
 
 libwarpx = LibWarpX()

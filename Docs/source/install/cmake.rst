@@ -130,7 +130,7 @@ CMake Option                  Default & Values                               Des
 ``WarpX_picsar_repo``         ``https://github.com/ECP-WarpX/picsar.git``    Repository URI to pull and build PICSAR from
 ``WarpX_picsar_branch``       *we set and maintain a compatible commit*      Repository branch for ``WarpX_picsar_repo``
 ``WarpX_picsar_internal``     **ON**/OFF                                     Needs a pre-installed PICSAR library if set to ``OFF``
-``WarpX_pyamrex_src``        *None*                                          Path to PICSAR source directory (preferred if set)
+``WarpX_pyamrex_src``         *None*                                         Path to PICSAR source directory (preferred if set)
 ``WarpX_pyamrex_repo``        ``https://github.com/AMReX-Codes/pyamrex.git`` Repository URI to pull and build pyAMReX from
 ``WarpX_pyamrex_branch``      *we set and maintain a compatible commit*      Repository branch for ``WarpX_pyamrex_repo``
 ``WarpX_pyamrex_internal``    **ON**/OFF                                     Needs a pre-installed pyAMReX library if set to ``OFF``
@@ -211,7 +211,8 @@ PICMI Python Bindings
 
    .. code-block:: bash
 
-      python3 -m pip install -U pip setuptools wheel
+      python3 -m pip install -U pip
+      python3 -m pip install -U build packaging setuptools wheel
       python3 -m pip install -U cmake
       python3 -m pip install -r requirements.txt
 

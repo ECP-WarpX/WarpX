@@ -65,7 +65,7 @@ void addLocalToGlobal (const amrex::Box& bx,
 #if defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void depositComponent (const GetParticlePosition& GetPosition,
+void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
                        const amrex::ParticleReal * const wp,
                        const amrex::ParticleReal * const uxp,
                        const amrex::ParticleReal * const uyp,
@@ -132,7 +132,7 @@ void depositComponent (const GetParticlePosition& GetPosition,
     // pcurrent is the particle current in the deposited direction
 #if defined(WARPX_DIM_RZ)
     // In RZ, wqx is actually wqr, and wqy is wqtheta
-    // Convert to cylinderical at the mid point
+    // Convert to cylindrical at the mid point
     const amrex::Real xpmid = xp + relative_time*vx;
     const amrex::Real ypmid = yp + relative_time*vy;
     const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);

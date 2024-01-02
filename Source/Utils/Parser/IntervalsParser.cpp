@@ -16,9 +16,9 @@
 
 #include <algorithm>
 
-utils::parser::SliceParser::SliceParser (const std::string& instr, const bool isBTD)
+utils::parser::SliceParser::SliceParser (const std::string& instr, const bool isBTD):
+    m_isBTD{isBTD}
 {
-    m_isBTD = isBTD;
     // split string and trim whitespaces
     auto insplit = ablastr::utils::text::split_string<std::vector<std::string>>(
         instr, m_separator, true);
@@ -92,7 +92,7 @@ utils::parser::IntervalsParser::IntervalsParser (
     const std::vector<std::string>& instr_vec)
 {
     std::string inconcatenated;
-    for (const auto& instr_element : instr_vec) inconcatenated +=instr_element;
+    for (const auto& instr_element : instr_vec) { inconcatenated +=instr_element; }
 
     auto insplit = ablastr::utils::text::split_string<std::vector<std::string>>(
         inconcatenated, m_separator);
@@ -102,7 +102,7 @@ utils::parser::IntervalsParser::IntervalsParser (
         const SliceParser temp_slice(inslc);
         m_slices.push_back(temp_slice);
         if ((temp_slice.getPeriod() > 0) &&
-               (temp_slice.getStop() >= temp_slice.getStart())) m_activated = true;
+               (temp_slice.getStop() >= temp_slice.getStart())) { m_activated = true; }
     }
 }
 
@@ -155,7 +155,7 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
     const std::vector<std::string>& instr_vec)
 {
     std::string inconcatenated;
-    for (const auto& instr_element : instr_vec) inconcatenated +=instr_element;
+    for (const auto& instr_element : instr_vec) { inconcatenated +=instr_element; }
 
     auto const insplit = ablastr::utils::text::split_string<std::vector<std::string>>(
         inconcatenated, std::string(1,m_separator));
@@ -205,7 +205,7 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
         }
         else
         {
-            btd_iter_ind = m_btd_iterations.size() - 1;
+            btd_iter_ind = static_cast<int>(m_btd_iterations.size() - 1);
             while (start < m_btd_iterations.at(btd_iter_ind) and btd_iter_ind>0)
             {
                 btd_iter_ind--;
@@ -256,7 +256,7 @@ utils::parser::BTDIntervalsParser::BTDIntervalsParser (
 
 int utils::parser::BTDIntervalsParser::NumSnapshots () const
 {
-    return m_btd_iterations.size();
+    return static_cast<int>(m_btd_iterations.size());
 }
 
 

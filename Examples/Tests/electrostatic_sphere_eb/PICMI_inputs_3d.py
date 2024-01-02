@@ -119,6 +119,6 @@ sim.add_diagnostic(reduced_diag_one_eighth)
 
 sim.step(1)
 
-sim.extension.set_potential_EB("2.")
+sim.extension.warpx.set_potential_on_eb("2.")
 
 sim.step(1)

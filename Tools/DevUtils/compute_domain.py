@@ -11,7 +11,7 @@ This Python script helps a user to parallelize a WarpX simulation.
 
 The user specifies the minimal size of the physical domain and the resolution
 in each dimension, and the scripts computes:
-- the number of cells and physical domain to satify the user-specified domain
+- the number of cells and physical domain to satisfy the user-specified domain
   size and resolution AND make sure that the number of cells along each
   direction is a multiple of max_grid_size.
 - a starting point on how to parallelize on Cori KNL (number of nodes, etc.).
