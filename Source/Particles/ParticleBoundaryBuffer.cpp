@@ -63,10 +63,12 @@ struct FindBoundaryIntersection {
         dst.m_aos[dst_i] = src.m_aos[src_i];
         for (int j = 0; j < SrcData::NAR; ++j)
             dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
-        for (int j = 0; j < src.m_num_runtime_real; ++j)
+        for (int j = 0; j < src.m_num_runtime_real; ++j) {
             dst.m_runtime_rdata[j][dst_i] = src.m_runtime_rdata[j][src_i];
-        for (int j = 0; j < src.m_num_runtime_int; ++j)
+        }
+        for (int j = 0; j < src.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
+        }
 
         // Also record the integer timestep on the destination
         dst.m_runtime_idata[m_index][dst_i] = m_step;
