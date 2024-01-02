@@ -20,7 +20,6 @@
 # tolerance: 0
 # Possible running time: < 1 s
 
-import os
 import sys
 
 import numpy as np
