@@ -82,11 +82,7 @@ struct FindBoundaryIntersection {
         amrex::ParticleReal xp, yp, zp;
         get_particle_position( p, xp, yp, zp );
 
-        // Bisection algorithm to find the point phi=0 (i.e. on the embedded boundary)
-        //int i, j, k;
-        //amrex::Real W[AMREX_SPACEDIM][2];
-        //ablastr::particles::compute_weights_nodal(xp, yp, zp, m_plo, m_dxi, i, j, k, W);
-        //amrex::Real phi_value = ablastr::particles::interp_field_nodal(i,j,k,W,m_phiarr);
+        // Bisection algorithm to find the point where phi(x,y,z)=0 (i.e. on the embedded boundary)
 
         amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
             [=] AMREX_GPU_DEVICE (amrex::Real dt_frac) {
