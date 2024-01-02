@@ -376,8 +376,8 @@ private:
     /** Interleave meta-data of the buffer multifabs to be consistent
      *  with the merged plotfile lab-frame data.
      */
-    void InterleaveFabArrayHeader( std::string Buffer_FabHeaderFilename,
-                                   std::string snapshot_FabHeaderFilename,
+    void InterleaveFabArrayHeader (std::string Buffer_FabHeader_path,
+                                   std::string snapshot_FabHeader_path,
                                    std::string newsnapshot_FabFilename);
     /** Interleave lab-frame metadata of the species header file in the buffers to
      *  be consistent with the merged plotfile lab-frame data

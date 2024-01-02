@@ -36,16 +36,16 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
         amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_temp;
         current_fp_temp.resize(1);
 
-        auto& current_fp_x = warpx.getcurrent_fp(m_lev,0);
+        const auto& current_fp_x = warpx.getcurrent_fp(m_lev,0);
         current_fp_temp[0][0] = std::make_unique<amrex::MultiFab>(
             current_fp_x, amrex::make_alias, 0, current_fp_x.nComp()
         );
 
-        auto& current_fp_y = warpx.getcurrent_fp(m_lev,1);
+        const auto& current_fp_y = warpx.getcurrent_fp(m_lev,1);
         current_fp_temp[0][1] = std::make_unique<amrex::MultiFab>(
             current_fp_y, amrex::make_alias, 0, current_fp_y.nComp()
         );
-        auto& current_fp_z = warpx.getcurrent_fp(m_lev,2);
+        const auto& current_fp_z = warpx.getcurrent_fp(m_lev,2);
         current_fp_temp[0][2] = std::make_unique<amrex::MultiFab>(
             current_fp_z, amrex::make_alias, 0, current_fp_z.nComp()
         );

@@ -261,7 +261,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
 {
     using namespace amrex;
 
-    auto permutation = a_bins.permutationPtr();
+    const auto *permutation = a_bins.permutationPtr();
 
 #if !defined(AMREX_USE_GPU)
     amrex::ignore_unused(ix_type, cost, load_balance_costs_update_algo, a_bins, box, geom, a_tbox_max_size, bin_size);

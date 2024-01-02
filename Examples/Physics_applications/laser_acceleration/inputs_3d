@@ -77,6 +77,7 @@ diagnostics.diags_names = diag1
 diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+diag1.format = openpmd
 
 # Reduced Diagnostics
 warpx.reduced_diags_names               = FP
