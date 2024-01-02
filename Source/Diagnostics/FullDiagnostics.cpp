@@ -8,6 +8,7 @@
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/ParticleReductionFunctor.H"
 #include "ComputeDiagFunctors/RhoFunctor.H"
+#include "ComputeDiagFunctors/GenericParticleFunctor.H"
 #include "Diagnostics/Diagnostics.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 #include "FlushFormats/FlushFormat.H"
@@ -787,6 +788,20 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift (int step)
             m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );
         }
     }
+}
 
-
+void
+FullDiagnostics::InitializeParticleFunctors ()
+{
+    auto & warpx = WarpX::GetInstance();
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    // allocate with total number of species diagnostics
+    m_all_particle_functors.resize(m_output_species_names.size());
+    // Create an object of class GenericParticleFunctor
+    for (int i = 0; i < m_all_particle_functors.size(); ++i)
+    {
+        // species id corresponding to ith diag species
+        const int idx = mpc.getSpeciesID(m_output_species_names[i]);
+        m_all_particle_functors[i] = std::make_unique<GenericParticleFunctor>(mpc.GetParticleContainerPtr(idx), m_output_species_names[i]);
+    }
 }

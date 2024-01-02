@@ -56,6 +56,7 @@ private:
       * \param[in] lev level on which source multifabs are defined
       */
     void InitializeBufferData ( int i_buffer, int lev, bool restart=false ) override;
+    void InitializeParticleFunctors () override;
     /** Initialize functors that store pointers to the RZ fields requested by the user.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
