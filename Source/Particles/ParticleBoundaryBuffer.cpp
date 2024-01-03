@@ -84,14 +84,21 @@ struct FindBoundaryIntersection {
 
         // Bisection algorithm to find the point where phi(x,y,z)=0 (i.e. on the embedded boundary)
 
+        // Temporary variables to avoid implicit capture
+        amrex::Real dt = m_dt;
+        amrex::Array4<const amrex::Real> phiarr = m_phiarr;
+        amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dxi = m_dxi;
+        amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> plo = m_plo;
+        amrex::ParticleReal ux=m_ux, uy=m_uy, uz=m_uz;
+        
         amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
             [=] AMREX_GPU_DEVICE (amrex::Real dt_frac) {
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
                 amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
-                UpdatePosition(x_temp, y_temp, z_temp, m_ux, m_uy, m_uz, -dt_frac*m_dt);
-                ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, m_plo, m_dxi, i, j, k, W);
-                amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, m_phiarr);
+                UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_frac*dt);
+                ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
+                amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phiarr);
                 return phi_value;
             } );
             // Record the corresponding position
