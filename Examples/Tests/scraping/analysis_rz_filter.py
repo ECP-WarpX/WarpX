@@ -20,7 +20,10 @@
 # tolerance: 0
 # Possible running time: < 1 s
 
+<<<<<<< HEAD
 import os
+=======
+>>>>>>> development
 import sys
 
 import numpy as np

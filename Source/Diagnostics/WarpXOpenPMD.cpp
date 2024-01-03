@@ -589,7 +589,6 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
                                            particle_diags[i].m_diag_domain);
 
     if (isBTD || use_pinned_pc) {
-        // pinned pc, but not BTD (i.e., boundary scraping diagnostic)
         particlesConvertUnits(ConvertDirection::WarpX_to_SI, pinned_pc, mass);
         using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
         tmp.copyParticles(*pinned_pc,

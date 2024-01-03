@@ -55,4 +55,8 @@ diag2.format = openpmd
 
 diag3.diag_type = BoundaryScraping
 diag3.format = openpmd
+<<<<<<< HEAD
 diag3.electron.plot_filter_function(t,x,y,z,ux,uy,uz) = "z > 0"
+=======
+diag3.electron.plot_filter_function(t,x,y,z,ux,uy,uz) = "z > 0"
+>>>>>>> development
