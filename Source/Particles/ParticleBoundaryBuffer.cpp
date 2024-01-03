@@ -90,7 +90,7 @@ struct FindBoundaryIntersection {
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dxi = m_dxi;
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> plo = m_plo;
         amrex::ParticleReal ux=m_ux, uy=m_uy, uz=m_uz;
-        
+
         amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
             [=] AMREX_GPU_DEVICE (amrex::Real dt_frac) {
                 int i, j, k;
