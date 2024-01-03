@@ -1098,6 +1098,11 @@ Particle initialization
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
 
+* ``<species>.do_adk_correction`` (`0` or `1`) optional (default `0`)
+    Whether to apply the correction to the ADK theory proposed by Zhang, Lan and Lu in `Q. Zhang et al. (Phys. Rev. A 90, 043410, 2014) <https://doi.org/10.1103/PhysRevA.90.043410>`__.
+    If so, the probability of ionization is modified using an empirical model that should be more accurate in the regime of high electric fields.
+    Currently, this is only implemented for Hydrogen, although Argon is also available in the same reference.
+
 * ``<species>.physical_element`` (`string`)
     Only read if `do_field_ionization = 1`. Symbol of chemical element for
     this species. Example: for Helium, use ``physical_element = He``.
