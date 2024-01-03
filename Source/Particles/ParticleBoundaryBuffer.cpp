@@ -103,7 +103,7 @@ struct FindBoundaryIntersection {
 
         // Also record the real time on the destination
         dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
-        std::cout << 'dt_fraction' << endl;
+      
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
         amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
