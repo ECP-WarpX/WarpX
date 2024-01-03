@@ -104,7 +104,7 @@ struct FindBoundaryIntersection {
         // Also record the integer time on the destination
         //dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
         //dst.m_runtime_rdata[m_index][dst_i] = 0.0;
-        dst.m_runtime_idata[m_index][dst_i] = m_step + dt_fraction;
+        dst.m_runtime_rdata[m_index][dst_i] = (m_step + dt_fraction)*dt;
 
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
@@ -149,7 +149,7 @@ struct CopyAndTimestamp {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
         //dst.m_runtime_rdata[m_index][dst_i] = 0.0;
-        dst.m_runtime_idata[m_index][dst_i] = m_step;
+        dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt;
     }
 };
 
