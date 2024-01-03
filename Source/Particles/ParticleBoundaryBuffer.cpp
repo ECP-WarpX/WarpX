@@ -103,7 +103,7 @@ struct FindBoundaryIntersection {
 
         // Also record the real time on the destination
         dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
-      
+
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
         amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
@@ -145,7 +145,7 @@ struct CopyAndTimestamp {
         }
         for (int j = 0; j < src.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
-        } 
+        }
         dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt;
     }
 };
