@@ -101,11 +101,9 @@ struct FindBoundaryIntersection {
             } );
             // Record the corresponding position
 
-        // Also record the integer time on the destination
-        //dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
-        //dst.m_runtime_rdata[m_index][dst_i] = 0.0;
-        dst.m_runtime_rdata[m_index][dst_i] = (m_step + dt_fraction)*dt;
-
+        // Also record the real time on the destination
+        dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
+        std::cout << 'dt_fraction' << endl;
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
         amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
@@ -147,8 +145,7 @@ struct CopyAndTimestamp {
         }
         for (int j = 0; j < src.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
-        }
-        //dst.m_runtime_rdata[m_index][dst_i] = 0.0;
+        } 
         dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt;
     }
 };
@@ -336,7 +333,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 if (!buffer[i].isDefined())
                 {
                     buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-                    buffer[i].AddIntComp("timestamp", false);
+                    buffer[i].AddRealComp("timestamp", false);
                 }
                 auto& species_buffer = buffer[i];
                 for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -378,7 +375,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
                           auto& warpx = WarpX::GetInstance();
                           const auto dt = warpx.getdt(pti.GetLevel());
-                          const int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
+                          const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-1;
                           const int timestep = warpx_instance.getistep(0);
 
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
@@ -403,7 +400,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         if (!buffer[i].isDefined())
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-            buffer[i].AddIntComp("timestamp", false);
+            buffer[i].AddRealComp("timestamp", false);
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -461,10 +458,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 }
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
-                const int timestamp_index = ptile_buffer.NumRuntimeIntComps()-1;
+                const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-1;
                 const int timestep = warpx_instance.getistep(0);
-                
-                
 
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
