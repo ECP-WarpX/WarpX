@@ -37,6 +37,7 @@
 #endif
 #include "AcceleratorLattice/AcceleratorLattice.H"
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
 #include "Filter/BilinearFilter.H"
@@ -120,6 +121,12 @@ public:
 
     void Evolve (int numsteps = -1);
 
+    void EvolveImplicitPicardInit (int lev);
+    void SaveParticlesAtImplicitStepStart (WarpXParticleContainer& pc, int lev);
+    void FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev);
+    void FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_fp,
+                                   amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_n);
+
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
     MacroscopicProperties& GetMacroscopicProperties () { return *m_macroscopic_properties; }
@@ -157,6 +164,14 @@ public:
     static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
     static short electromagnetic_solver_id;
+    //! Integer that corresponds to the evolve scheme (explicit, implicit_picard, semi_implicit_picard)
+    static short evolve_scheme;
+    //! The maximum number of Picard iterations to do each time step
+    static int max_picard_iterations;
+    //! The tolerance for the Picard iteration convergence
+    static amrex::Real picard_iteration_tolerance;
+    //! Flags whether the Picard iterations are required to converge
+    static bool require_picard_convergence;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
@@ -419,6 +434,25 @@ public:
         int level,
         const std::string& name,
         std::optional<const amrex::Real> initial_value);
+
+    /**
+     * \brief
+     * Allocate the MultiFab so that is like the specified MultiFab (same ba and dm)
+     * and optionally initialize it. This also adds the MultiFab
+     * to the map of MultiFabs (used to ease the access to MultiFabs from the Python
+     * interface
+     *
+     * \param mf[out] The MultiFab unique pointer to be allocated
+     * \param mf_model[in] The MultiFab to model
+     * \param name[in] The name of the MultiFab to use in the map
+     * \param initial_value[in] The optional initial value
+     */
+    static void AllocInitMultiFabFromModel (
+        std::unique_ptr<amrex::MultiFab>& mf,
+        amrex::MultiFab& mf_model,
+        int level,
+        const std::string& name,
+        std::optional<const amrex::Real> initial_value = {});
 
     // Maps of all of the MultiFabs and iMultiFabs used (this can include MFs from other classes)
     // This is a convenience for the Python interface, allowing all MultiFabs
@@ -739,8 +773,10 @@ public:
     void doQEDEvents (int lev);
 #endif
 
-    void PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full, bool skip_current=false);
-    void PushParticlesandDeposit (amrex::Real cur_time, bool skip_current=false);
+    void PushParticlesandDeposit (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full, bool skip_current=false,
+                                 PushType push_type=PushType::Explicit);
+    void PushParticlesandDeposit (amrex::Real cur_time, bool skip_current=false,
+                                 PushType push_type=PushType::Explicit);
 
     // This function does aux(lev) = fp(lev) + I(aux(lev-1)-cp(lev)).
     // Caller must make sure fp and cp have ghost cells filled.
@@ -1226,6 +1262,8 @@ private:
     void OneStep_nosub (amrex::Real cur_time);
     void OneStep_sub1 (amrex::Real cur_time);
 
+    void OneStep_ImplicitPicard(amrex::Real cur_time);
+
     /**
      * \brief Perform one PIC iteration, with the multiple J deposition per time step
      */
@@ -1432,6 +1470,12 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
+
+    // Implicit, fields at start of step and from the previous iteration
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_n;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_n;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_save;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_save;
 
     // Memory buffers for computing magnetostatic fields
     // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order

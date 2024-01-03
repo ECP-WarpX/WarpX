@@ -214,14 +214,21 @@ void BeamRelevant::ComputeDiags (int step)
                 const ParticleReal p_pos0 = p.pos(0);
                 const ParticleReal p_w = p.rdata(PIdx::w);
 
-#if (defined WARPX_DIM_RZ)
-                const ParticleReal p_theta = p.rdata(PIdx::theta);
-                const ParticleReal p_x_mean = p_pos0*std::cos(p_theta)*p_w;
-                const ParticleReal p_y_mean = p_pos0*std::sin(p_theta)*p_w;
-#else
+#if defined(WARPX_DIM_3D)
                 const ParticleReal p_pos1 = p.pos(1);
                 const ParticleReal p_x_mean = p_pos0*p_w;
                 const ParticleReal p_y_mean = p_pos1*p_w;
+#elif defined(WARPX_DIM_RZ)
+                const ParticleReal p_theta = p.rdata(PIdx::theta);
+                const ParticleReal p_x_mean = p_pos0*std::cos(p_theta)*p_w;
+                const ParticleReal p_y_mean = p_pos0*std::sin(p_theta)*p_w;
+#elif defined(WARPX_DIM_XZ)
+                const ParticleReal p_x_mean = p_pos0*p_w;
+                const ParticleReal p_y_mean = 0;
+#elif defined(WARPX_DIM_1D_Z)
+                amrex::ignore_unused(p_pos0);
+                const ParticleReal p_x_mean = 0;
+                const ParticleReal p_y_mean = 0;
 #endif
                 const ParticleReal p_z_mean = p.pos(index_z)*p_w;
 
