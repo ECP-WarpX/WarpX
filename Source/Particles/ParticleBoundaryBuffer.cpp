@@ -49,8 +49,8 @@ struct FindBoundaryIntersection {
     const int m_step;
     const amrex::Real m_dt;
     amrex::Array4<const amrex::Real> m_phiarr;
-    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& m_dxi;
-    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& m_plo;
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_dxi;
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
     const amrex::ParticleReal m_ux, m_uy, m_uz;
 
 
