@@ -227,7 +227,6 @@ diag1.diag_type = Full
 diag1.write_species = 1
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam1 rho_beam2 rho_ele_nlbw1 rho_pos_nlbw1 rho_ele_nlbw2 rho_pos_nlbw2 rho_ele rho_pos
 diag1.format = openpmd
-diag1.openpmd_backend = bp
 diag1.dump_last_timestep = 1
 diag1.species = pho1 pho2 pho ele_nlbw1 pos_nlbw1 ele_nlbw2 pos_nlbw2 ele pos beam1 beam2
 
