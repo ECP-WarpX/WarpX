@@ -640,20 +640,30 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
                                            particle_diags[i].m_diag_domain);
 
     if (isBTD || use_pinned_pc) {
-        tmp.copyParticles(*pinned_pc, true);
-        particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
+        particlesConvertUnits(ConvertDirection::WarpX_to_SI, pinned_pc, mass);
+        using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+        tmp.copyParticles(*pinned_pc,
+            [random_filter,uniform_filter,parser_filter,geometry_filter]
+            AMREX_GPU_HOST_DEVICE
+            (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+            {
+                const SuperParticleType& p = src.getSuperParticle(ip);
+                return random_filter(p, engine) * uniform_filter(p, engine)
+                        * parser_filter(p, engine) * geometry_filter(p, engine);
+            }, true);
+        particlesConvertUnits(ConvertDirection::SI_to_WarpX, pinned_pc, mass);
     } else {
         particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
         using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
         tmp.copyParticles(*pc,
-                        [random_filter,uniform_filter,parser_filter,geometry_filter]
-                        AMREX_GPU_HOST_DEVICE
-                        (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-                        {
-                            const SuperParticleType& p = src.getSuperParticle(ip);
-                            return random_filter(p, engine) * uniform_filter(p, engine)
-                                 * parser_filter(p, engine) * geometry_filter(p, engine);
-                        }, true);
+            [random_filter,uniform_filter,parser_filter,geometry_filter]
+            AMREX_GPU_HOST_DEVICE
+            (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+            {
+                const SuperParticleType& p = src.getSuperParticle(ip);
+                return random_filter(p, engine) * uniform_filter(p, engine)
+                        * parser_filter(p, engine) * geometry_filter(p, engine);
+            }, true);
         particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
     }
 
