@@ -122,3 +122,4 @@ diag2.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
 diag2.format = openpmd
 diag2.buffer_size = 32
 diag2.openpmd_backend = h5
+diag2.beam.random_fraction = 0.5
