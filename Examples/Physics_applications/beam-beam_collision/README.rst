@@ -11,9 +11,7 @@ We turn on the Quantum Synchrotron QED module for photon emission (also known as
 the Breit-Wheeler QED module for the generation of electron-positron pairs (also known as coherent pair generation in the collider community).
 
 To solve for the electromagnetic field we use the nodal version of the electrostatic relativistic solver.
-This solver computes the average velocity of each species, moves to the rest frame of each species where it solves the relativistic Poisson equation,
-and goes back to the lab frame where it adds up all the fields of all species.
-This solver showed good field cancellation properties that are crucial in simulations of relativistic particles.
+This solver computes the average velocity of each species, and solves the corresponding relativistic Poisson equation (see the WarpX documentation for `warpx.do_electrostatic = relativistic` for more detail). This solver accurately reproduced the subtle cancellation that occur for some component of the ``E + v x B`` terms which are crucial in simulations of relativistic particles.
 
 
 This example is based on the following paper :cite:t:`ex-Yakimenko2019`.
