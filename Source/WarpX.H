@@ -984,6 +984,8 @@ public:
          char field,
          int lev, PatchType patch_type);
 
+    void LoadExternalFieldsFromFile (int const lev);
+
     void ReadExternalFieldFromFile (
          std::string read_fields_from_path, amrex::MultiFab* mf,
          std::string F_name, std::string F_component);
