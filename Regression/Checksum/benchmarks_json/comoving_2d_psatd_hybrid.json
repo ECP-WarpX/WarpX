@@ -1,40 +1,5 @@
 {
   "lev=0": {
-<<<<<<< Updated upstream
-    "Bx": 1118808.3734374465,
-    "By": 3248957.1122179274,
-    "Bz": 280612.78289064515,
-    "Ex": 975532732112639.6,
-    "Ey": 402861836732114.4,
-    "Ez": 159049610399317.66,
-    "jx": 2.9997053130250828e+16,
-    "jy": 8.866654890775573e+16,
-    "jz": 3.163974708948631e+17,
-    "rho": 1059977729.0184418
-  },
-  "ions": {
-    "particle_momentum_x": 1.6150569180478943e-18,
-    "particle_momentum_y": 2.2334266828401142e-18,
-    "particle_momentum_z": 4.2792495306800117e-13,
-    "particle_position_x": 1.4883816864865955,
-    "particle_position_y": 16.45238650413084,
-    "particle_weight": 1.234867369440658e+18
-  },
-  "electrons": {
-    "particle_momentum_x": 7.05821754019506e-19,
-    "particle_momentum_y": 2.2042393263043917e-18,
-    "particle_momentum_z": 2.5305214316289944e-16,
-    "particle_position_x": 1.5006580331362074,
-    "particle_position_y": 16.45438830674347,
-    "particle_weight": 1.234867020725368e+18
-  },
-  "beam": {
-    "particle_momentum_x": 6.874634694077579e-19,
-    "particle_momentum_y": 4.374677735660533e-19,
-    "particle_momentum_z": 6.432600800266472e-18,
-    "particle_position_x": 0.0012933700124436584,
-    "particle_position_y": 0.358720803656086,
-=======
     "Bx": 1118808.3686978193,
     "By": 3248970.5506422943,
     "Bz": 280612.7921641442,
@@ -68,7 +33,6 @@
     "particle_momentum_z": 6.4523206583503136e-18,
     "particle_position_x": 0.001290816359726098,
     "particle_position_y": 0.3586691102823157,
->>>>>>> Stashed changes
     "particle_weight": 3120754537230.3823
   }
 }
