@@ -877,11 +877,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 
 {
   auto const numParticleOnTile = pti.numParticles();
-<<<<<<< HEAD
-  uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
-=======
   auto const numParticleOnTile64 = static_cast<uint64_t>(numParticleOnTile);
->>>>>>> 514df482be5a2565be56acf5fc4b9bcc9d89273b
   auto const& soa = pti.GetStructOfArrays();
 
   auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
