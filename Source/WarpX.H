@@ -150,6 +150,11 @@ public:
     //! The beginning time of boosted frame simulation
     static inline amrex::Real m_t_boost_offset = 0;
 
+    //! For boosted frame simulation restarting from a previous lab frame
+    //! run w/ recording plane, this is the path to the data. This also
+    //! serves as a boolean flag.
+    static inline std::string m_impose_field_file_path;
+
     /** Maximum level up to which the externally defined electric and magnetic fields are initialized.
      *  The default value is set to the max levels in the simulation.
      *  if lev > maxlevel_extEMfield_init, the fields on those levels will have a default value of 0

@@ -192,21 +192,14 @@ void ConvertLabParamsToBoost ()
     Vector<int> dim_map {2};
 #endif
 
-    std::string B_ext_grid_s, E_ext_grid_s;
-
-    pp_warpx.query("B_ext_grid_init_style", B_ext_grid_s);
-    pp_warpx.query("E_ext_grid_init_style", E_ext_grid_s);
-
-    if ((B_ext_grid_s == "impose_field_in_plane") ||
-        (E_ext_grid_s == "impose_field_in_plane")) {
+    pp_warpx.query("impose_field_file_path", WarpX::m_impose_field_file_path);
+    if ( ! WarpX::m_impose_field_file_path.empty() ) {
         Real zstation;
         Real tmin = std::numeric_limits<Real>::max();
         Real tmax = std::numeric_limits<Real>::lowest();
         {
-            std::string impose_field_file_path;
-            pp_warpx.get("read_fields_from_path", impose_field_file_path);
             Vector<char> headerfile;
-            ParallelDescriptor::ReadAndBcastFile(impose_field_file_path+"/StationHeader", headerfile);
+            ParallelDescriptor::ReadAndBcastFile(WarpX::m_impose_field_file_path+"/StationHeader", headerfile);
             std::istringstream is(std::string(headerfile.data()));
             is >> zstation;
             std::string tt;
