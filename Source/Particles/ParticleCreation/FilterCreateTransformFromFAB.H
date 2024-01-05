@@ -8,6 +8,7 @@
 #ifndef FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 #define FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 
+#include "Particles/ParticleCreation/DefaultInitialization.H"
 #include "WarpX.H"
 
 #include <AMReX_REAL.H>
@@ -42,14 +43,15 @@
  *
  * \return num_added the number of particles that were written to dst1 and dst2.
  */
-template <int N, typename DstTile, typename FAB, typename Index,
+template <int N, typename DstPC, typename DstTile, typename FAB, typename Index,
           typename CreateFunc1, typename CreateFunc2, typename TransFunc,
           amrex::EnableIf_t<std::is_integral<Index>::value, int> foo = 0>
-Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::Box box,
-                                const FAB *src_FAB, const Index* mask,
-                                const Index dst1_index, const Index dst2_index,
-                                CreateFunc1&& create1, CreateFunc2&& create2,
-                                TransFunc&& transform) noexcept
+Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2,
+                                    DstTile& dst1, DstTile& dst2, const amrex::Box box,
+                                    const FAB *src_FAB, const Index* mask,
+                                    const Index dst1_index, const Index dst2_index,
+                                    CreateFunc1&& create1, CreateFunc2&& create2,
+                                    TransFunc&& transform) noexcept
 {
     using namespace amrex;
 
@@ -83,8 +85,13 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     Gpu::DeviceVector<Index> offsets(ncells);
     auto total = amrex::Scan::ExclusiveSum(ncells, mask, offsets.data());
     const Index num_added = N*total;
-    dst1.resize(std::max(dst1_index + num_added, dst1.numParticles()));
-    dst2.resize(std::max(dst2_index + num_added, dst2.numParticles()));
+    auto old_np1 = dst1.size();
+    auto new_np1 = std::max(dst1_index + num_added, dst1.numParticles());
+    dst1.resize(new_np1);
+
+    auto old_np2 = dst2.size();
+    auto new_np2 = std::max(dst2_index + num_added, dst2.numParticles());
+    dst2.resize(new_np2);
 
     auto *p_offsets = offsets.dataPtr();
 
@@ -130,6 +137,35 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
         }
     });
 
+    ParticleCreation::DefaultInitializeRuntimeAttributes(dst1,
+                                       0, 0,
+                                       pc1.getUserRealAttribs(), pc1.getUserIntAttribs(),
+                                       pc1.getParticleComps(), pc1.getParticleiComps(),
+                                       pc1.getUserRealAttribParser(),
+                                       pc1.getUserIntAttribParser(),
+#ifdef WARPX_QED
+                                       false, // do not initialize QED quantities, since they were initialized
+                                              // when calling the CreateFunc functor
+                                       pc1.get_breit_wheeler_engine_ptr(),
+                                       pc1.get_quantum_sync_engine_ptr(),
+#endif
+                                       pc1.getIonizationInitialLevel(),
+                                       old_np1, new_np1);
+    ParticleCreation::DefaultInitializeRuntimeAttributes(dst2,
+                                       0, 0,
+                                       pc2.getUserRealAttribs(), pc2.getUserIntAttribs(),
+                                       pc2.getParticleComps(), pc2.getParticleiComps(),
+                                       pc2.getUserRealAttribParser(),
+                                       pc2.getUserIntAttribParser(),
+#ifdef WARPX_QED
+                                       false, // do not initialize QED quantities, since they were initialized
+                                              // when calling the CreateFunc functor
+                                       pc2.get_breit_wheeler_engine_ptr(),
+                                       pc2.get_quantum_sync_engine_ptr(),
+#endif
+                                       pc2.getIonizationInitialLevel(),
+                                       old_np2, new_np2);
+
     Gpu::synchronize();
     return num_added;
 }
@@ -166,10 +202,10 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
  *
  * \return num_added the number of particles that were written to dst1 and dst2.
  */
-template <int N, typename DstTile, typename FABs, typename Index,
+template <int N, typename DstPC, typename DstTile, typename FABs, typename Index,
           typename FilterFunc, typename CreateFunc1, typename CreateFunc2,
            typename TransFunc>
-Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::Box box,
+Index filterCreateTransformFromFAB (DstPC& pc1, DstPC& pc2, DstTile& dst1, DstTile& dst2, const amrex::Box box,
                                 const FABs& src_FABs, const Index dst1_index,
                                 const Index dst2_index, FilterFunc&& filter,
                                 CreateFunc1&& create1, CreateFunc2&& create2,
@@ -201,7 +237,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
         p_mask[mask_position] = (arrNumPartCreation(i,j,k) > 0);
     });
 
-    return filterCreateTransformFromFAB<N>(dst1, dst2, box, &NumPartCreation,
+    return filterCreateTransformFromFAB<N>(pc1, pc2, dst1, dst2, box, &NumPartCreation,
                                         mask.dataPtr(), dst1_index, dst2_index,
                                         std::forward<CreateFunc1>(create1),
                                         std::forward<CreateFunc2>(create2),

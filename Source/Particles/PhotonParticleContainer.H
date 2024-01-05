@@ -9,6 +9,7 @@
 #define WARPX_PhotonParticleContainer_H_
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Particles/Gather/ScaleFields.H"
 #include "PhysicalParticleContainer.H"
 
@@ -69,7 +70,8 @@ public:
                          amrex::Real t,
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full,
-                         bool skip_deposition=false) override;
+                         bool skip_deposition=false,
+                         PushType push_type=PushType::Explicit) override;
 
     void PushPX(WarpXParIter& pti,
                         amrex::FArrayBox const * exfab,
@@ -124,7 +126,8 @@ public:
                                  int const /*lev*/,
                                  int const /*depos_lev*/,
                                  amrex::Real const /*dt*/,
-                                 amrex::Real const /*relative_time*/) override {}
+                                 amrex::Real const /*relative_time*/,
+                                 PushType /*push_type*/) override {}
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_

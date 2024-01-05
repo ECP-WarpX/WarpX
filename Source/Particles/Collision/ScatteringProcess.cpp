@@ -1,15 +1,17 @@
-/* Copyright 2021 Modern Electron
+/* Copyright 2021-2023 The WarpX Community
  *
  * This file is part of WarpX.
  *
+ * Authors: Modern Electron, Roelof Groenewald (TAE Technologies)
+ *
  * License: BSD-3-Clause-LBNL
  */
-#include "MCCProcess.H"
+#include "ScatteringProcess.H"
 
 #include "Utils/TextMsg.H"
 #include "WarpX.H"
 
-MCCProcess::MCCProcess (
+ScatteringProcess::ScatteringProcess (
                         const std::string& scattering_process,
                         const std::string& cross_section_file,
                         const amrex::ParticleReal energy )
@@ -21,7 +23,7 @@ MCCProcess::MCCProcess (
 }
 
 template <typename InputVector>
-MCCProcess::MCCProcess (
+ScatteringProcess::ScatteringProcess (
                         const std::string& scattering_process,
                         const InputVector&& energies,
                         const InputVector&& sigmas,
@@ -34,7 +36,7 @@ MCCProcess::MCCProcess (
 }
 
 void
-MCCProcess::init (const std::string& scattering_process, const amrex::ParticleReal energy)
+ScatteringProcess::init (const std::string& scattering_process, const amrex::ParticleReal energy)
 {
     using namespace amrex::literals;
     m_exe_h.m_sigmas_data = m_sigmas_h.data();
@@ -72,26 +74,26 @@ MCCProcess::init (const std::string& scattering_process, const amrex::ParticleRe
 #endif
 }
 
-MCCProcessType
-MCCProcess::parseProcessType(const std::string& scattering_process)
+ScatteringProcessType
+ScatteringProcess::parseProcessType(const std::string& scattering_process)
 {
     if (scattering_process == "elastic") {
-        return MCCProcessType::ELASTIC;
+        return ScatteringProcessType::ELASTIC;
     } else if (scattering_process == "back") {
-        return MCCProcessType::BACK;
+        return ScatteringProcessType::BACK;
     } else if (scattering_process == "charge_exchange") {
-        return MCCProcessType::CHARGE_EXCHANGE;
+        return ScatteringProcessType::CHARGE_EXCHANGE;
     } else if (scattering_process == "ionization") {
-        return MCCProcessType::IONIZATION;
+        return ScatteringProcessType::IONIZATION;
     } else if (scattering_process.find("excitation") != std::string::npos) {
-        return MCCProcessType::EXCITATION;
+        return ScatteringProcessType::EXCITATION;
     } else {
-        return MCCProcessType::INVALID;
+        return ScatteringProcessType::INVALID;
     }
 }
 
 void
-MCCProcess::readCrossSectionFile (
+ScatteringProcess::readCrossSectionFile (
                                   const std::string cross_section_file,
                                   amrex::Vector<amrex::ParticleReal>& energies,
                                   amrex::Gpu::HostVector<amrex::ParticleReal>& sigmas )
@@ -109,7 +111,7 @@ MCCProcess::readCrossSectionFile (
 }
 
 void
-MCCProcess::sanityCheckEnergyGrid (
+ScatteringProcess::sanityCheckEnergyGrid (
                                    const amrex::Vector<amrex::ParticleReal>& energies,
                                    amrex::ParticleReal dE
                                    )
