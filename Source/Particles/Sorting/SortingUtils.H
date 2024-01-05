@@ -100,11 +100,7 @@ class fillBufferFlag
 
 
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-<<<<<<< HEAD
-        void operator()( const long i ) const {
-=======
         void operator()( const int i ) const {
->>>>>>> 514df482be5a2565be56acf5fc4b9bcc9d89273b
             // Find the index of the cell where this particle is located
             amrex::IntVect const iv = amrex::getParticleCell( m_ptd, i,
                                 m_prob_lo, m_inv_cell_size, m_domain );
