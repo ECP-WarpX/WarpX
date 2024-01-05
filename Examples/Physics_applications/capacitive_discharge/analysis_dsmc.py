@@ -15,9 +15,7 @@ import checksumAPI
 fn = sys.argv[1]
 test_name = os.path.split(os.getcwd())[1]
 
-my_check = checksumAPI.evaluate_checksum(
-    test_name, fn, do_particles=True, rtol=0.01
-)
+my_check = checksumAPI.evaluate_checksum(test_name, fn, do_particles=True)
 
 ref_density = np.array([
        1.27953969e+14, 2.23553999e+14, 2.55384510e+14, 2.55663110e+14,
@@ -57,4 +55,4 @@ ref_density = np.array([
 
 density_data = np.load( 'ion_density_case_1.npy' )
 print(repr(density_data))
-assert np.allclose(density_data, ref_density, rtol=0.01)
+assert np.allclose(density_data, ref_density, rtol=1e-3)
