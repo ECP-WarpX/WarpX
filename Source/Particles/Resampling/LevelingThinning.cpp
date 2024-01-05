@@ -113,7 +113,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
                 // Remove particle with probability 1 - particle_weight/level_weight
                 if (random_number > w[indices[i]]/level_weight)
                 {
-                    idcpu[indices[i]] = -1;
+                    amrex::ParticleIDWrapper{idcpu[indices[i]]} = -1;
                 }
                 // Set particle weight to level weight otherwise
                 else

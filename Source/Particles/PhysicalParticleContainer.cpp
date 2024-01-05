@@ -234,7 +234,7 @@ namespace
         if (has_breit_wheeler) {p_optical_depth_BW[ip] = 0._rt;}
 #endif
 
-        idcpu[ip] = uint64_t(-1);
+        amrex::ParticleIDWrapper{idcpu[ip]} = uint64_t(-1);
     }
 }
 
