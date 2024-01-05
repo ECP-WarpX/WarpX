@@ -728,7 +728,7 @@ void
 WarpX::PostRestart ()
 {
     mypc->PostRestart();
-    for (int lev = 1; lev <= maxLevel(); ++lev) {
+    for (int lev = 0; lev <= maxLevel(); ++lev) {
         LoadExternalFieldsFromFile(lev);
     }
 }
