@@ -5,6 +5,7 @@ d/
 f/
 o/
 build/
+diag*/
 tmp_build_dir/
 test_dir
 test_dir/
@@ -12,6 +13,7 @@ AMReX_buildInfo.cpp
 Backtrace.*
 *.vth
 *.sw[opqrs]
+warpx_used_inputs*
 
 ####################
 # AMReX data files #
