@@ -52,10 +52,14 @@ void ElasticCollisionPerez (
     T_PR const  T1, T_PR const  T2,
     T_R const  dt, T_PR const   L, T_R const dV,
     amrex::RandomEngine const& engine,
-    bool const isSameSpecies)
+    bool const isSameSpecies, int coll_idx)
 {
     const T_index NI1 = I1e - I1s;
     const T_index NI2 = I2e - I2s;
+    const T_index max_N = amrex::max(NI1,NI2);
+
+    // ensure this
+    AMREX_ASSERT(max_N == NI1);
 
     T_PR * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
     T_PR * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
@@ -95,7 +99,7 @@ void ElasticCollisionPerez (
     n1 = n1 / dV; n2 = n2 / dV;
     {
       T_index i1 = I1s; T_index i2 = I2s;
-      for (T_index k = 0; k < amrex::max(NI1,NI2); ++k)
+      for (T_index k = 0; k < max_N; ++k)
       {
         n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
         ++i1; if ( i1 == I1e ) { i1 = I1s; }
@@ -126,10 +130,17 @@ void ElasticCollisionPerez (
 
     // call UpdateMomentumPerezElastic()
     {
-      T_index i1 = I1s; T_index i2 = I2s;
-      for (T_index k = 0; k < amrex::max(NI1,NI2); ++k)
-      {
+      T_index i1 = I1s + coll_idx;
+      const T_index i2 = I2s + coll_idx;
 
+      // NI2 is always the smaller set
+      const auto stride = NI2;
+
+      // we will start from collision number = coll_idx and then add
+      // stride (smaller set size) until we do all NI1 (laarger set size)
+      // collisions as needed
+      for (T_index k = coll_idx; k < max_N; k += stride)
+      {
 #if (defined WARPX_DIM_RZ)
           /* In RZ geometry, macroparticles can collide with other macroparticles
            * in the same *cylindrical* cell. For this reason, collisions between macroparticles
@@ -159,8 +170,9 @@ void ElasticCollisionPerez (
           u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
 #endif
 
-          ++i1; if ( i1 == I1e ) { i1 = I1s; }
-          ++i2; if ( i2 == I2e ) { i2 = I2s; }
+          // update the i1
+          i1 += stride;
+          //if ( i1 >= I1e ) { i1 = I1s + i1 - I1e; }
       }
     }
 

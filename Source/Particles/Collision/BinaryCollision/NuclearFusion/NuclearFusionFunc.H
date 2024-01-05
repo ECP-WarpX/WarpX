@@ -54,12 +54,9 @@ public:
      * @param[in] isSameSpecies whether the two colliding species are the same
      */
     NuclearFusionFunc (const std::string collision_name, MultiParticleContainer const * const mypc,
-                       const bool isSameSpecies):
-        m_fusion_multiplier{amrex::ParticleReal{1.0}}, // default fusion multiplier
-        m_probability_threshold{amrex::ParticleReal{0.02}}, // default fusion probability threshold
-        m_probability_target_value{amrex::ParticleReal{0.002}}, // default fusion probability target_value
-        m_isSameSpecies{isSameSpecies}
+                       const bool isSameSpecies) : m_isSameSpecies(isSameSpecies)
     {
+        using namespace amrex::literals;
 
 #ifdef AMREX_SINGLE_PRECISION_PARTICLES
         WARPX_ABORT_WITH_MESSAGE("Nuclear fusion module does not currently work with single precision");
@@ -68,10 +65,16 @@ public:
         m_fusion_type = BinaryCollisionUtils::get_nuclear_fusion_type(collision_name, mypc);
 
         const amrex::ParmParse pp_collision_name(collision_name);
+        // default fusion multiplier
+        m_fusion_multiplier = 1.0_prt;
         utils::parser::queryWithParser(
             pp_collision_name, "fusion_multiplier", m_fusion_multiplier);
+        // default fusion probability threshold
+        m_probability_threshold = 0.02_prt;
         utils::parser::queryWithParser(
             pp_collision_name, "fusion_probability_threshold", m_probability_threshold);
+        // default fusion probability target_value
+        m_probability_target_value = 0.002_prt;
         utils::parser::queryWithParser(
             pp_collision_name, "fusion_probability_target_value",
             m_probability_target_value);
@@ -123,7 +126,7 @@ public:
         GetParticlePosition<PIdx> /*get_position_1*/, GetParticlePosition<PIdx> /*get_position_2*/,
         amrex::ParticleReal const  /*q1*/, amrex::ParticleReal const  /*q2*/,
         amrex::ParticleReal const  m1, amrex::ParticleReal const  m2,
-        amrex::Real const  dt, amrex::Real const dV,
+        amrex::Real const  dt, amrex::Real const dV, int coll_idx,
         index_type const cell_start_pair, index_type* AMREX_RESTRICT p_mask,
         index_type* AMREX_RESTRICT p_pair_indices_1, index_type* AMREX_RESTRICT p_pair_indices_2,
         amrex::ParticleReal* AMREX_RESTRICT p_pair_reaction_weight,
@@ -145,9 +148,10 @@ public:
             const index_type NI2 = I2e - I2s;
             const index_type max_N = amrex::max(NI1,NI2);
 
-            index_type i1 = I1s;
-            index_type i2 = I2s;
-            index_type pair_index = cell_start_pair;
+            // ensure this
+            AMREX_ASSERT(max_N == NI1);
+
+            index_type pair_index = cell_start_pair + coll_idx;
 
             // Because the number of particles of each species is not always equal (NI1 != NI2
             // in general), some macroparticles will be paired with multiple macroparticles of the
@@ -165,8 +169,14 @@ public:
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
             amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
 #endif
-
-            for (index_type k = 0; k < max_N; ++k)
+            // NI2 is always the smaller set
+            const auto stride = NI2;
+            index_type i1 = I1s + coll_idx;
+            const index_type i2 = I2s + coll_idx;
+            // we will start from collision number = coll_idx and then add
+            // stride (smaller set size) until we do all NI1 (laarger set size)
+            // collisions as needed
+            for (index_type k = coll_idx; k < max_N; k += stride)
             {
                 // c1k : how many times the current particle of species 1 is paired with a particle
                 // of species 2. Same for c2k.
@@ -206,11 +216,11 @@ public:
 
                 p_pair_indices_1[pair_index] = I1[i1];
                 p_pair_indices_2[pair_index] = I2[i2];
-                ++i1; if ( i1 == I1e ) { i1 = I1s; }
-                ++i2; if ( i2 == I2e ) { i2 = I2s; }
-                ++pair_index;
+                // update i1 and pair_index
+                i1 += stride;
+                pair_index += stride;
+                // if ( i1 >= I1e ) { i1 = I1s + (i1 - I1e); }
             }
-
         }
 
 private:

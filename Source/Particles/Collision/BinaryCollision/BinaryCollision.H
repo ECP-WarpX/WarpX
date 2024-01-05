@@ -308,6 +308,31 @@ public:
                                                     p_n_pairs_in_each_cell, pair_offsets.data());
             index_type* AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
+            // ------------------------------------------------------------------------------------------- //
+            //
+            // MH: preprocessing for the same species
+            //
+            amrex::Gpu::DeviceVector<index_type> n_ind_pairs_in_each_cell(n_cells+1);
+            index_type* AMREX_RESTRICT p_n_ind_pairs_in_each_cell = n_ind_pairs_in_each_cell.dataPtr();
+
+            amrex::ParallelFor( n_cells+1,
+                [=] AMREX_GPU_DEVICE (int i_cell) noexcept
+                {
+                    const auto n_part_in_cell = (i_cell < n_cells)? cell_offsets_1[i_cell+1] - cell_offsets_1[i_cell]: 0;
+                    // number of independent collisions in each cell
+                    p_n_ind_pairs_in_each_cell[i_cell] = n_part_in_cell/2;
+                }
+            );
+
+            // start indices of independent collisions.
+            amrex::Gpu::DeviceVector<index_type> coll_offsets(n_cells+1);
+            // number of total independent collision pairs
+            const int n_independent_pairs =  amrex::Scan::ExclusiveSum(n_cells+1,
+                                                    p_n_ind_pairs_in_each_cell, coll_offsets.data(), amrex::Scan::RetSum{true});
+            index_type* AMREX_RESTRICT p_coll_offsets = coll_offsets.dataPtr();
+
+            // ------------------------------------------------------------------------------------------- //
+
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
             amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
             index_type* AMREX_RESTRICT p_mask = mask.dataPtr();
@@ -326,7 +351,6 @@ public:
               End of calculations only required when creating product particles
             */
 
-
             // Loop over cells
             amrex::ParallelForRNG( n_cells,
                 [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
@@ -337,31 +361,94 @@ public:
                     index_type const cell_stop_1  = cell_offsets_1[i_cell+1];
                     index_type const cell_half_1 = (cell_start_1+cell_stop_1)/2;
 
-                    // Same but for the pairs
-                    index_type const cell_start_pair = have_product_species?
-                                                           p_pair_offsets[i_cell] : 0;
-
                     // Do not collide if there is only one particle in the cell
                     if ( cell_stop_1 - cell_start_1 <= 1 ) { return; }
 
                     // shuffle
                     ShuffleFisherYates(
                         indices_1, cell_start_1, cell_half_1, engine );
+                }
+            );
+
+            //amrex::Gpu::DeviceVector<int> idx(n_independent_pairs);
+            //auto idxs = idx.dataPtr();
+
+            // Loop over cells
+            amrex::ParallelForRNG( n_independent_pairs,
+                [=] AMREX_GPU_DEVICE (int i_coll, amrex::RandomEngine const& engine) noexcept
+                {
+                    // compute i_cell = upper_bound(p_coll_offsets[0:n_independent_pairs], i_coll);
+                    int i_cell = 0;
+                    {
+                        int left = 0;
+                        int right = n_cells;
+
+                        for (;;)
+                        {
+                            int mid = left + (right - left) / 2;
+
+                            if (p_coll_offsets[mid] <= i_coll)
+                            {
+                                if (p_coll_offsets[mid+1] > i_coll)
+                                {
+                                    i_cell = mid;
+                                    break;
+                                }
+                                else
+                                    left = mid+1;
+                            }
+                            else
+                                right = mid;
+                        }
+                    }
+
+                    // The particles from species1 that are in the cell `i_cell` are
+                    // given by the `indices_1[cell_start_1:cell_stop_1]`
+                    index_type const cell_start_1 = cell_offsets_1[i_cell];
+                    index_type const cell_stop_1  = cell_offsets_1[i_cell+1];
+                    index_type const cell_half_1 = (cell_start_1+cell_stop_1)/2;
+
+                    // collision number of the cell
+                    const int coll_idx = i_coll - p_coll_offsets[i_cell];
+
+                    // Same but for the pairs
+                    index_type const cell_start_pair = have_product_species?
+                                                           p_pair_offsets[i_cell] : 0;
+
 #if defined WARPX_DIM_RZ
                     const int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
-                    // Call the function in order to perform collisions
-                    // If there are product species, mask, p_pair_indices_1/2, and
-                    // p_pair_reaction_weight are filled here
-                    binary_collision_functor(
-                        cell_start_1, cell_half_1,
-                        cell_half_1, cell_stop_1,
-                        indices_1, indices_1,
-                        soa_1, soa_1, get_position_1, get_position_1,
-                        q1, q1, m1, m1, dt, dV,
-                        cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
-                        p_pair_reaction_weight, engine );
+                    // we will fix species_1 to be the larger set. i.e., max(NI1, NI2)
+                    // to reduce redundant computations and extra params in the functor
+                    if ((cell_half_1 - cell_start_1) > (cell_stop_1 - cell_half_1))
+                    {
+                        // Call the function in order to perform collisions
+                        // If there are product species, mask, p_pair_indices_1/2, and
+                        // p_pair_reaction_weight are filled here
+                        binary_collision_functor(
+                            cell_start_1, cell_half_1,
+                            cell_half_1, cell_stop_1,
+                            indices_1, indices_1,
+                            soa_1, soa_1, get_position_1, get_position_1,
+                            q1, q1, m1, m1, dt, dV, coll_idx,
+                            cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
+                            p_pair_reaction_weight, engine);
+                    }
+                    else
+                    {
+                        // Call the function in order to perform collisions
+                        // If there are product species, mask, p_pair_indices_1/2, and
+                        // p_pair_reaction_weight are filled here
+                        binary_collision_functor(
+                            cell_half_1, cell_stop_1,
+                            cell_start_1, cell_half_1,
+                            indices_1, indices_1,
+                            soa_1, soa_1, get_position_1, get_position_1,
+                            q1, q1, m1, m1, dt, dV, coll_idx,
+                            cell_start_pair, p_mask, p_pair_indices_2, p_pair_indices_1,
+                            p_pair_reaction_weight, engine);
+                    }
                 }
             );
 
@@ -433,7 +520,6 @@ public:
             auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
-
             /*
               The following calculations are only required when creating product particles
             */
@@ -466,6 +552,34 @@ public:
                                                     p_n_pairs_in_each_cell, pair_offsets.data());
             index_type* AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
+            // ------------------------------------------------------------------------------------------- //
+            //
+            // MH: preprocessing for the different species
+            //
+            amrex::Gpu::DeviceVector<index_type> n_ind_pairs_in_each_cell(n_cells);
+            index_type* AMREX_RESTRICT p_n_ind_pairs_in_each_cell = n_ind_pairs_in_each_cell.dataPtr();
+
+            amrex::ParallelFor( n_cells+1,
+                [=] AMREX_GPU_DEVICE (int i_cell) noexcept
+                {
+                    const auto n_part_in_cell_1 = cell_offsets_1[i_cell+1] - cell_offsets_1[i_cell];
+                    const auto n_part_in_cell_2 = cell_offsets_2[i_cell+1] - cell_offsets_2[i_cell];
+                    // Particular case: no pair if a species has no particle in that cell
+                    if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0 || i_cell == n_cells)
+                        p_n_ind_pairs_in_each_cell[i_cell] = 0;
+                    else
+                        p_n_ind_pairs_in_each_cell[i_cell] = n_part_in_cell_1 > n_part_in_cell_2)? n_part_in_cell_1: n_part_in_cell_2;
+
+                }
+            );
+            // start indices of independent collisions.
+            amrex::Gpu::DeviceVector<index_type> coll_offsets(n_cells+1);
+            // number of total independent collision pairs
+            const int n_independent_pairs = amrex::Scan::ExclusiveSum(n_cells+1,
+                                                    p_n_ind_pairs_in_each_cell, coll_offsets.data(), amrex::Scan::RetSum{true});
+            index_type* AMREX_RESTRICT p_coll_offsets = coll_offsets.dataPtr();
+            // ------------------------------------------------------------------------------------------- //
+
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
             amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
             index_type* AMREX_RESTRICT p_mask = mask.dataPtr();
@@ -496,9 +610,6 @@ public:
                     // Same for species 2
                     index_type const cell_start_2 = cell_offsets_2[i_cell];
                     index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
-                    // Same but for the pairs
-                    index_type const cell_start_pair = have_product_species?
-                                                           p_pair_offsets[i_cell] : 0;
 
                     // ux from species1 can be accessed like this:
                     // ux_1[ indices_1[i] ], where i is between
@@ -511,23 +622,90 @@ public:
                     // shuffle
                     ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
                     ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
+                }
+            );
+
+            // Loop over independent particle pairs
+            amrex::ParallelForRNG( n_independent_pairs,
+                [=] AMREX_GPU_DEVICE (int i_coll, amrex::RandomEngine const& engine) noexcept
+                {
+                    // compute i_cell = upper_bound(coll_offsets[0:n_independent_pairs], i_coll);
+                    int i_cell = 0;
+                    {
+                        int left = 0;
+                        int right = n_cells;
+
+                        for (;;)
+                        {
+                            int mid = left + (right - left) / 2;
+                            if (p_coll_offsets[mid] <= i_coll)
+                            {
+                                if (p_coll_offsets[mid+1] > i_coll)
+                                {
+                                    i_cell = mid;
+                                    break;
+                                }
+                                else
+                                    left = mid+1;
+                            }
+                            else
+                                right = mid;
+                        }
+                    }
+
+                    // The particles from species1 that are in the cell `i_cell` are
+                    // given by the `indices_1[cell_start_1:cell_stop_1]`
+                    index_type const cell_start_1 = cell_offsets_1[i_cell];
+                    index_type const cell_stop_1  = cell_offsets_1[i_cell+1];
+                    // Same for species 2
+                    index_type const cell_start_2 = cell_offsets_2[i_cell];
+                    index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
+
+                    // collision number of the cell
+                    const int coll_idx = i_coll - p_coll_offsets[i_cell];
+
+                    // Same but for the pairs
+                    index_type const cell_start_pair = have_product_species?
+                                                           p_pair_offsets[i_cell]: 0;
+
+                    // ux from species1 can be accessed like this:
+                    // ux_1[ indices_1[i] ], where i is between
+                    // cell_start_1 (inclusive) and cell_start_2 (exclusive)
+
 #if defined WARPX_DIM_RZ
                     const int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
-                    // Call the function in order to perform collisions
-                    // If there are product species, p_mask, p_pair_indices_1/2, and
-                    // p_pair_reaction_weight are filled here
-                    binary_collision_functor(
-                        cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
-                        indices_1, indices_2,
-                        soa_1, soa_2, get_position_1, get_position_2,
-                        q1, q2, m1, m2, dt, dV,
-                        cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
-                        p_pair_reaction_weight, engine );
+                    // we will fix species_1 to be the larger set. i.e., max(NI1, NI2)
+                    // to reduce redundant computations and extra params in the functor
+                    if ((cell_stop_1 - cell_start_1) > ((cell_stop_2 - cell_start_2)))
+                    {
+                        // Call the function in order to perform collisions
+                        // If there are product species, p_mask, p_pair_indices_1/2, and
+                        // p_pair_reaction_weight are filled here
+                        binary_collision_functor(
+                            cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
+                            indices_1, indices_2,
+                            soa_1, soa_2, get_position_1, get_position_2,
+                            q1, q2, m1, m2, dt, dV, coll_idx,
+                            cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
+                            p_pair_reaction_weight, engine);
+                    }
+                    else
+                    {
+                        // Call the function in order to perform collisions
+                        // If there are product species, p_mask, p_pair_indices_1/2, and
+                        // p_pair_reaction_weight are filled here
+                        binary_collision_functor(
+                            cell_start_2, cell_stop_2, cell_start_1, cell_stop_1,
+                            indices_2, indices_1,
+                            soa_2, soa_1, get_position_2, get_position_1,
+                            q1, q2, m1, m2, dt, dV, coll_idx,
+                            cell_start_pair, p_mask, p_pair_indices_2, p_pair_indices_1,
+                            p_pair_reaction_weight, engine);
+                    }
                 }
             );
-
 
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
