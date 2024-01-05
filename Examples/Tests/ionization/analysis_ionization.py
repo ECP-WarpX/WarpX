@@ -93,5 +93,13 @@ print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
 
+# Check that the user runtime component (if it exists) worked as expected
+try:
+    orig_z = ad['electrons', 'particle_orig_z'].v
+    assert np.all( (orig_z > 0) & (orig_z < 1.5e-5) )
+    print('particle_orig_z has reasonable values')
+except yt.utilities.exceptions.YTFieldNotFound:
+    pass # Some of the tested script to not have the quantity orig_z
+
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

@@ -455,7 +455,8 @@ MultiParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                 const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                Real t, Real dt, DtType a_dt_type, bool skip_deposition)
+                                Real t, Real dt, DtType a_dt_type, bool skip_deposition,
+                                PushType push_type)
 {
     if (! skip_deposition) {
         jx.setVal(0.0);
@@ -469,7 +470,7 @@ MultiParticleContainer::Evolve (int lev,
     }
     for (auto& pc : allcontainers) {
         pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
-                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition);
+                   rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type, skip_deposition, push_type);
     }
 }
 
@@ -900,7 +901,7 @@ MultiParticleContainer::doFieldIonization (int lev,
                                                          Bx[pti], By[pti], Bz[pti]);
 
             const auto np_dst = dst_tile.numParticles();
-            const auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+            const auto num_added = filterCopyTransformParticles<1>(*pc_product, dst_tile, src_tile, np_dst,
                                                                    Filter, Copy, Transform);
 
             setNewParticleIDs(dst_tile, np_dst, num_added);
@@ -1387,7 +1388,7 @@ MultiParticleContainer::doQEDSchwinger ()
 
         const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size, PIdx::w};
 
-        const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
+        const auto num_added = filterCreateTransformFromFAB<1>( *pc_product_ele, *pc_product_pos, dst_ele_tile,
                                dst_pos_tile, box, fieldsEB, np_ele_dst,
                                np_pos_dst,Filter, CreateEle, CreatePos,
                                Transform);
@@ -1540,7 +1541,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 
             const auto np_dst_ele = dst_ele_tile.numParticles();
             const auto np_dst_pos = dst_pos_tile.numParticles();
-            const auto num_added = filterCopyTransformParticles<1>(
+            const auto num_added = filterCopyTransformParticles<1>(*pc_product_ele, *pc_product_pos,
                                                       dst_ele_tile, dst_pos_tile,
                                                       src_tile, np_dst_ele, np_dst_pos,
                                                       Filter, CopyEle, CopyPos, Transform);
@@ -1620,7 +1621,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
             const auto np_dst = dst_tile.numParticles();
 
             const auto num_added =
-                filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                filterCopyTransformParticles<1>(*pc_product_phot, dst_tile, src_tile, np_dst,
                                                 Filter, CopyPhot, Transform);
 
             setNewParticleIDs(dst_tile, np_dst, num_added);

@@ -81,6 +81,43 @@ Overall simulation parameters
     one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
+* ``algo.evolve_scheme`` (`string`, default: `explicit`)
+    Specifies the evolve scheme used by WarpX.
+
+    * ``explicit``: Use an explicit solver, such as the standard FDTD or PSATD
+
+    * ``implicit_picard``: Use an implicit solver with exact energy conservation that uses a Picard iteration to solve the system.
+      Note that this method is for demonstration only. It is inefficient and does not work well when
+      :math:`\omega_{pe} \Delta t` is close to or greater than one.
+      The method is described in `Angus et al., On numerical energy conservation for an implicit particle-in-cell method coupled with a binary Monte-Carlo algorithm for Coulomb collisions <https://doi.org/10.1016/j.jcp.2022.111030>`__.
+      The version implemented is an updated version that is relativistically correct, including the relativistic gamma factor for the particles.
+      For exact energy conservation, ``algo.current_deposition = direct`` must be used with ``interpolation.galerkin_scheme = 0``,
+      and ``algo.current_deposition = Esirkepov`` must be used with ``interpolation.galerkin_scheme = 1`` (which is the default, in
+      which case charge will also be conserved).
+
+    * ``semi_implicit_picard``: Use an energy conserving semi-implicit solver that uses a Picard iteration to solve the system.
+      Note that this method has the CFL limitation :math:`\Delta t < c/\sqrt( \sum_i 1/\Delta x_i^2 )`. It is inefficient and does not work well or at all when :math:`\omega_{pe} \Delta t` is close to or greater than one.
+      The method is described in `Chen et al., A semi-implicit, energy- and charge-conserving particle-in-cell algorithm for the relativistic Vlasov-Maxwell equations <https://doi.org/10.1016/j.jcp.2020.109228>`__.
+      For energy conservation, ``algo.current_deposition = direct`` must be used with ``interpolation.galerkin_scheme = 0``,
+      and ``algo.current_deposition = Esirkepov`` must be used with ``interpolation.galerkin_scheme = 1`` (which is the default, in
+      which case charge will also be conserved).
+
+* ``algo.max_picard_iterations`` (`integer`, default: 10)
+    When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets the maximum number of Picard
+    itearations that are done each time step.
+
+* ``algo.picard_iteration_tolerance`` (`float`, default: 1.e-7)
+    When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets the convergence tolerance of
+    the iterations, the maximum of the relative change of the L2 norm of the field from one iteration to the next.
+    If this is set to zero, the maximum number of iterations will always be done with the change only calculated on the last
+    iteration (for a slight optimization).
+
+* ``algo.require_picard_convergence`` (`bool`, default: 1)
+    When `algo.evolve_scheme` is either `implicit_picard` or `semi_implicit_picard`, this sets whether the iteration each step
+    is required to converge.
+    If it is required, an abort is raised if it does not converge and the code then exits.
+    If not, then a warning is issued and the calculation continues.
+
 * ``warpx.do_electrostatic`` (`string`) optional (default `none`)
     Specifies the electrostatic mode. When turned on, instead of updating
     the fields at each iteration with the full Maxwell equations, the fields

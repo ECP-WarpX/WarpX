@@ -281,9 +281,9 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
             pinned_tile.push_back_int(j, attr_int[j].data() + ibegin, attr_int[j].data() + iend);
         }
 
+        pinned_tile.resize(np);
         // Default initialize the other real and integer runtime attributes
-        DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int,
-                                           amrex::RandomEngine{});
+        DefaultInitializeRuntimeAttributes(pinned_tile, nattr_real - 1, nattr_int);
 
         auto old_np = particle_tile.numParticles();
         auto new_np = old_np + pinned_tile.numParticles();
@@ -325,7 +325,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                                         amrex::MultiFab * const jx, amrex::MultiFab * const jy, amrex::MultiFab * const jz,
                                         long const offset, long const np_to_deposit,
                                         int const thread_num, const int lev, int const depos_lev,
-                                        amrex::Real const dt, amrex::Real const relative_time)
+                                        amrex::Real const dt, amrex::Real const relative_time, PushType push_type)
 {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
@@ -503,6 +503,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         WARPX_PROFILE_VAR_STOP(blp_get_max_tilesize);
 
         // Now pick current deposition algorithm
+        if (push_type == PushType::Implicit) {
+            amrex::Abort("Cannot do shared memory deposition with implicit algorithm");
+        }
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
             WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Esirkepov algorithm");
         }
@@ -539,29 +542,80 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // If not doing shared memory deposition, call normal kernels
     else {
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-            if        (WarpX::nox == 1){
-                doEsirkepovDepositionShapeN<1>(
+            if (push_type == PushType::Explicit) {
+                if        (WarpX::nox == 1){
+                    doEsirkepovDepositionShapeN<1>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                         jx_arr, jy_arr, jz_arr, np_to_deposit, dt, relative_time, dx, xyzmin, lo, q,
                         WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
-            } else if (WarpX::nox == 2){
-                doEsirkepovDepositionShapeN<2>(
+                } else if (WarpX::nox == 2){
+                    doEsirkepovDepositionShapeN<2>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                         jx_arr, jy_arr, jz_arr, np_to_deposit, dt, relative_time, dx, xyzmin, lo, q,
                         WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
-            } else if (WarpX::nox == 3){
-                doEsirkepovDepositionShapeN<3>(
+                } else if (WarpX::nox == 3){
+                    doEsirkepovDepositionShapeN<3>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                         jx_arr, jy_arr, jz_arr, np_to_deposit, dt, relative_time, dx, xyzmin, lo, q,
                         WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
+                }
+            } else if (push_type == PushType::Implicit) {
+#if (AMREX_SPACEDIM >= 2)
+                auto& xp_n = pti.GetAttribs(particle_comps["x_n"]);
+                const ParticleReal* xp_n_data = xp_n.dataPtr() + offset;
+#else
+                const ParticleReal* xp_n_data = nullptr;
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+                auto& yp_n = pti.GetAttribs(particle_comps["y_n"]);
+                const ParticleReal* yp_n_data = yp_n.dataPtr() + offset;
+#else
+                const ParticleReal* yp_n_data = nullptr;
+#endif
+                auto& zp_n = pti.GetAttribs(particle_comps["z_n"]);
+                const ParticleReal* zp_n_data = zp_n.dataPtr() + offset;
+                auto& uxp_n = pti.GetAttribs(particle_comps["ux_n"]);
+                auto& uyp_n = pti.GetAttribs(particle_comps["uy_n"]);
+                auto& uzp_n = pti.GetAttribs(particle_comps["uz_n"]);
+                if        (WarpX::nox == 1){
+                    doChargeConservingDepositionShapeNImplicit<1>(
+                        xp_n_data, yp_n_data, zp_n_data,
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                } else if (WarpX::nox == 2){
+                    doChargeConservingDepositionShapeNImplicit<2>(
+                        xp_n_data, yp_n_data, zp_n_data,
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                } else if (WarpX::nox == 3){
+                    doChargeConservingDepositionShapeNImplicit<3>(
+                        xp_n_data, yp_n_data, zp_n_data,
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                }
             }
         } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+            if (push_type == PushType::Implicit) {
+                WARPX_ABORT_WITH_MESSAGE("The Vay algorithm cannot be used with implicit algorithm.");
+            }
             if        (WarpX::nox == 1){
                 doVayDepositionShapeN<1>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -585,27 +639,61 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         WarpX::load_balance_costs_update_algo);
             }
         } else { // Direct deposition
-            if        (WarpX::nox == 1){
-                doDepositionShapeN<1>(
+            if (push_type == PushType::Explicit) {
+                if        (WarpX::nox == 1){
+                    doDepositionShapeN<1>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                         jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx,
                         xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
-            } else if (WarpX::nox == 2){
-                doDepositionShapeN<2>(
+                } else if (WarpX::nox == 2){
+                    doDepositionShapeN<2>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                         jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx,
                         xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
-            } else if (WarpX::nox == 3){
-                doDepositionShapeN<3>(
+                } else if (WarpX::nox == 3){
+                    doDepositionShapeN<3>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                    uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                         jx_fab, jy_fab, jz_fab, np_to_deposit, relative_time, dx,
                         xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
+                }
+            } else if (push_type == PushType::Implicit) {
+                auto& uxp_n = pti.GetAttribs(particle_comps["ux_n"]);
+                auto& uyp_n = pti.GetAttribs(particle_comps["uy_n"]);
+                auto& uzp_n = pti.GetAttribs(particle_comps["uz_n"]);
+                if        (WarpX::nox == 1){
+                    doDepositionShapeNImplicit<1>(
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset,
+                        ion_lev,
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, dx,
+                        xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                } else if (WarpX::nox == 2){
+                    doDepositionShapeNImplicit<2>(
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset,
+                        ion_lev,
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, dx,
+                        xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                } else if (WarpX::nox == 3){
+                    doDepositionShapeNImplicit<3>(
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset,
+                        ion_lev,
+                        jx_fab, jy_fab, jz_fab, np_to_deposit, dx,
+                        xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                }
             }
         }
     }
@@ -654,7 +742,7 @@ WarpXParticleContainer::DepositCurrent (
 
             DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev,
                            J[lev][0].get(), J[lev][1].get(), J[lev][2].get(),
-                           0, np, thread_num, lev, lev, dt, relative_time);
+                           0, np, thread_num, lev, lev, dt, relative_time, PushType::Explicit);
         }
 #ifdef AMREX_USE_OMP
         }
@@ -837,7 +925,8 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                    const auto bin_start = offsets_ptr[ibin];
                                    const auto bin_stop = offsets_ptr[ibin+1];
                                    if (bin_start < bin_stop) {
-                                       auto const i = permutation[bin_start];
+                                       // static_cast until https://github.com/AMReX-Codes/amrex/pull/3684
+                                       auto const i = static_cast<int>(permutation[bin_start]);
                                        Box tbx;
                                        auto iv = getParticleCell(ptd, i, plo, dxi, domain);
                                        AMREX_ASSERT(box.contains(iv));
@@ -1383,7 +1472,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                 [=] AMREX_GPU_DEVICE (long i, amrex::RandomEngine const& engine) {
                     // skip particles that are already flagged for removal
                     auto const id = amrex::ParticleIDWrapper{idcpu[i]};
-                    if (id < 0) return;
+                    if (id < 0) { return; }
 
                     ParticleReal x, y, z;
                     GetPosition.AsStored(i, x, y, z);

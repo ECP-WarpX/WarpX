@@ -13,6 +13,7 @@
 #include "WarpXParticleContainer_fwd.H"
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Initialization/PlasmaInjector.H"
 #include "Particles/ParticleBoundaries.H"
 #include "SpeciesPhysicalProperties.H"
@@ -151,7 +152,8 @@ public:
                          amrex::MultiFab* rho, amrex::MultiFab* crho,
                          const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
                          const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-                         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false) = 0;
+                         amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false,
+                         PushType push_type=PushType::Explicit) = 0;
 
     virtual void PostRestart () = 0;
 
@@ -163,9 +165,8 @@ public:
      */
     virtual void DefaultInitializeRuntimeAttributes (
         typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType& pinned_tile,
-        const int n_external_attr_real,
-        const int n_external_attr_int,
-        const amrex::RandomEngine& engine) = 0;
+        int n_external_attr_real,
+        int n_external_attr_int) = 0;
 
     ///
     /// This pushes the particle positions by one half time step.
@@ -248,7 +249,8 @@ public:
                                 int lev,
                                 int depos_lev,
                                 amrex::Real dt,
-                                amrex::Real relative_time);
+                                amrex::Real relative_time,
+                                PushType push_type);
 
     // If particles start outside of the domain, ContinuousInjection
     // makes sure that they are initialized when they enter the domain, and
@@ -402,6 +404,19 @@ public:
      */
     void defineAllParticleTiles () noexcept;
 
+    virtual std::vector<std::string> getUserIntAttribs () const { return std::vector<std::string>{}; }
+
+    virtual std::vector<std::string> getUserRealAttribs () const { return std::vector<std::string>{}; }
+
+    virtual amrex::Vector< amrex::Parser* > getUserIntAttribParser () const { return amrex::Vector<amrex::Parser*>{}; }
+
+    virtual amrex::Vector< amrex::Parser* > getUserRealAttribParser () const { return amrex::Vector<amrex::Parser*>{}; }
+
+#ifdef WARPX_QED
+    virtual BreitWheelerEngine* get_breit_wheeler_engine_ptr () const {return nullptr;}
+    virtual QuantumSynchrotronEngine* get_quantum_sync_engine_ptr () const {return nullptr;}
+#endif
+
 protected:
     int species_id;
 
@@ -471,6 +486,9 @@ public:
     using TmpParticles = amrex::Vector<std::map<PairIndex, TmpParticleTile> >;
 
     TmpParticles getTmpParticleData () const noexcept {return tmp_particle_data;}
+
+    int getIonizationInitialLevel () const noexcept {return ionization_initial_level;}
+
 protected:
     TmpParticles tmp_particle_data;
 

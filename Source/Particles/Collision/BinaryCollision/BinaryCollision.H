@@ -175,7 +175,7 @@ public:
 
         amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
-            // Loop over all grids/tiles at this level
+        // Loop over all grids/tiles at this level
 #ifdef AMREX_USE_OMP
             info.SetDynamic(true);
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -366,7 +366,9 @@ public:
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
-                                                    soa_1, soa_1, tile_products_data,
+                                                    soa_1, soa_1,
+                                                    product_species_vector,
+                                                    tile_products_data,
                                                     m1, m1,
                                                     products_mass, p_mask, products_np,
                                                     copy_species1, copy_species2,
@@ -522,7 +524,9 @@ public:
             // Create the new product particles and define their initial values
             // num_added: how many particles of each product species have been created
             const amrex::Vector<int> num_added = m_copy_transform_functor(n_total_pairs,
-                                                    soa_1, soa_2, tile_products_data,
+                                                    soa_1, soa_2,
+                                                    product_species_vector,
+                                                    tile_products_data,
                                                     m1, m2,
                                                     products_mass, p_mask, products_np,
                                                     copy_species1, copy_species2,
