@@ -1300,7 +1300,6 @@ void WarpX::CheckKnownIssues()
 #endif
 }
 
-#if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z) && !defined(WARPX_DIM_XZ)
 void
 WarpX::LoadExternalFieldsFromFile (int const lev)
 {
@@ -1332,6 +1331,7 @@ WarpX::LoadExternalFieldsFromFile (int const lev)
     }
 }
 
+#if defined(WARPX_USE_OPENPMD) && !defined(WARPX_DIM_1D_Z) && !defined(WARPX_DIM_XZ)
 void
 WarpX::ReadExternalFieldFromFile (
        std::string read_fields_from_path, amrex::MultiFab* mf,
