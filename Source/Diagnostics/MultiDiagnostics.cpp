@@ -90,7 +90,7 @@ MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush, bool BackT
                 diag->FilterComputePackFlush (step, force_flush);
             }
         } else {
-            if ((diags_types[i] != DiagTypes::BackTransformed) && (diags_types[i] !=DiagTypes::RecordingPlane)) {
+            if ((diags_types[i] != DiagTypes::BackTransformed) && (diags_types[i] != DiagTypes::RecordingPlane)) {
                 diag->FilterComputePackFlush (step, force_flush);
             }
         }

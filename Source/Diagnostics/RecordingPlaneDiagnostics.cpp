@@ -70,6 +70,8 @@ RecordingPlaneDiagnostics::ReadParameters ()
     amrex::Abort("RecordingPlaneDiagnostics is not implemented for RZ, yet");
 #endif
 
+    m_format = "openpmd"; // Default to openpmd
+
     BaseReadParameters();
     const amrex::ParmParse pp_diag_name(m_diag_name);
 
@@ -227,7 +229,7 @@ RecordingPlaneDiagnostics::UpdateBufferData ()
             m_tmin = m_tmax;
         }
     }
-    if (m_slice_counter > 0 and !GetZSliceInDomain(0)) {
+    if (m_slice_counter > 0 && !GetZSliceInDomain(0)) {
         m_last_timeslice_filled = true;
     }
 }
@@ -365,7 +367,6 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
     {
         int nparticles = 0;
         for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
-            amrex::Print() << " isp : " << m_totalParticles_in_buffer[i_buffer][isp] << "\n";
             nparticles += m_totalParticles_in_buffer[i_buffer][isp];
         }
 

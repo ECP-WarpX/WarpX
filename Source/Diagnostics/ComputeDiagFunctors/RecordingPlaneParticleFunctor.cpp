@@ -13,7 +13,6 @@
 #include "WarpX.H"
 
 #include <AMReX.H>
-#include <AMReX_Print.H>
 #include <AMReX_BaseFwd.H>
 #include <AMReX_Particle.H>
 #include <AMReX_ParticleContainerBase.H>
@@ -73,11 +72,9 @@ RecordingPlaneParticleFunctor::RecordingPlaneParticleFunctor (
 void
 RecordingPlaneParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_dst, int &TotalParticleCounter, int /*i_buffer*/) const
 {
-    amrex::Print() << " in station particle operator " << m_record_particles << "\n";
     if (!m_record_particles) { return; }
     auto & warpx = WarpX::GetInstance();
     auto tmp_particle_data = m_pc_src->getTmpParticleData();
-    amrex::Print() << " got tmp particle ddata in operator \n";
     for (int lev = 0; lev < 1; ++lev) {
         for (WarpXParIter pti(*m_pc_src, lev); pti.isValid(); ++pti) {
             auto ptile_dst = pc_dst.DefineAndReturnParticleTile(lev, pti.index(), pti.LocalTileIndex() );
@@ -133,7 +130,6 @@ RecordingPlaneParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_ds
         }
     }
     TotalParticleCounter = int(pc_dst.TotalNumberOfParticles());
-    amrex::Print() << " end of operator : " << TotalParticleCounter << "\n";
 }
 
 void
@@ -141,7 +137,6 @@ RecordingPlaneParticleFunctor::PrepareFunctorData (int /*i_buffer*/, bool record
                                             amrex::Real z_location, amrex::Real current_z_boost, amrex::Real tlab, int snapshot_full)
 {
     amrex::ignore_unused(current_z_boost, tlab, snapshot_full);
-    amrex::Print() << " record particles " << record_particles << "\n";
     m_record_particles = record_particles;
     m_z_location = z_location;
 }

@@ -216,8 +216,8 @@ void ConvertLabParamsToBoost ()
         int const zdir = AMREX_SPACEDIM-1;
         prob_hi[zdir] = gamma_boost * (zstation - beta_boost*PhysConst::c*tmin);
         prob_lo[zdir] = prob_hi[zdir] - gamma_boost*(1._rt+beta_boost)*PhysConst::c*(tmax-tmin);
-        auto const dz = (prob_hi[zdir]-prob_lo[zdir])/Real(1.e6); // xxxxx TODO
-        prob_hi[zdir] += dz;
+        auto const dz = (prob_hi[zdir]-prob_lo[zdir])/Real(1.e6);
+        prob_hi[zdir] += dz; // Shift the domain in z-direction a little. Might not be needed.
         prob_lo[zdir] += dz;
         WarpX::m_t_boost_offset = gamma_boost*(tmin - beta_boost*zstation/PhysConst::c);
     } else {
