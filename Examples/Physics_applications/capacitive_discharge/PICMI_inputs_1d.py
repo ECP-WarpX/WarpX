@@ -187,6 +187,9 @@ class CapacitiveDischargeExample(object):
         else:
             self.mcc_subcycling_steps = None
 
+        if self.dsmc:
+            self.rng = np.random.default_rng(23094290)
+
         self.ion_density_array = np.zeros(self.nz + 1)
 
         self.setup_run()
@@ -397,9 +400,9 @@ class CapacitiveDischargeExample(object):
         vel_std = np.sqrt(constants.kb * self.gas_temp / self.m_ion)
         for ii in range(len(ux_arrays)):
             nps = len(ux_arrays[ii])
-            ux_arrays[ii][:] = vel_std * np.random.normal(size=nps)
-            uy_arrays[ii][:] = vel_std * np.random.normal(size=nps)
-            uz_arrays[ii][:] = vel_std * np.random.normal(size=nps)
+            ux_arrays[ii][:] = vel_std * self.rng.normal(size=nps)
+            uy_arrays[ii][:] = vel_std * self.rng.normal(size=nps)
+            uz_arrays[ii][:] = vel_std * self.rng.normal(size=nps)
 
     def _get_rho_ions(self):
         # deposit the ion density in rho_fp
