@@ -1508,8 +1508,14 @@ Laser initialization
 External fields
 ---------------
 
-Grid initialization
+Applied to the grid
 ^^^^^^^^^^^^^^^^^^^
+
+The external fields defined with input parameters that start with ``warpx.B_ext_grid_init_`` or ``warpx.E_ext_grid_init_``
+are applied to the grid directly. In particular, these fields can be seen in the diagnostics that output the fields on the grid.
+
+    - When using an **electromagnetic** field solver, these fields are applied to the grid at the beginning of the simulation, and serve as initial condition for the Maxwell solver.
+    - When using an **electrostatic** or **magnetostatic** field solver, these fields are added to the fields computed by the Poisson solver, at each timestep.
 
 * ``warpx.B_ext_grid_init_style`` (string) optional
     This parameter determines the type of initialization for the external
@@ -1597,6 +1603,9 @@ Grid initialization
 Applied to Particles
 ^^^^^^^^^^^^^^^^^^^^
 
+The external fields defined with input parameters that start with ``warpx.B_ext_particle_init_`` or ``warpx.E_ext_particle_init_``
+are applied to the particles directly, at each timestep. As a results, these fields **cannot** be seen in the diagnostics that output the fields on the grid.
+
 * ``particles.E_ext_particle_init_style`` & ``particles.B_ext_particle_init_style`` (string) optional (default "none")
     These parameters determine the type of the external electric and
     magnetic fields respectively that are applied directly to the particles at every timestep.
@@ -1656,6 +1665,9 @@ Applied to Particles
 
 Applied to Cold Relativistic Fluids
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The external fields defined with input parameters that start with ``warpx.B_ext_init_`` or ``warpx.E_ext_init_``
+are applied to the fluids directly, at each timestep. As a results, these fields **cannot** be seen in the diagnostics that output the fields on the grid.
 
 * ``<fluid_species_name>.E_ext_init_style`` & ``<fluid_species_name>.B_ext_init_style`` (string) optional (default "none")
     These parameters determine the type of the external electric and
