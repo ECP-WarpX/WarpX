@@ -88,8 +88,9 @@ AcceleratorLattice::InitElementFinder (int const lev, amrex::BoxArray const & ba
 }
 
 void
-AcceleratorLattice::UpdateElementFinder (int const lev)
-{
+AcceleratorLattice::UpdateElementFinder (int const lev) // NOLINT(readability-make-member-function-const)
+{                                                       // Techniquely clang-tidy is correct because
+                                                        // m_element_finder is unique_ptr, not const*.
     if (m_lattice_defined) {
         for (amrex::MFIter mfi(*m_element_finder); mfi.isValid(); ++mfi)
         {

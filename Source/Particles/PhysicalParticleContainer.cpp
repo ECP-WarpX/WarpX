@@ -471,7 +471,7 @@ void PhysicalParticleContainer::InitData ()
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame (
-    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz, Real t_lab)
+    ParticleReal& x, ParticleReal& y, ParticleReal& z, ParticleReal& ux, ParticleReal& uy, ParticleReal& uz, Real t_lab) const
 {
     // Map the particles from the lab frame to the boosted frame.
     // This boosts the particle to the lab frame and calculates
@@ -810,7 +810,7 @@ PhysicalParticleContainer::CheckAndAddParticle (
     Gpu::HostVector<ParticleReal>& particle_uy,
     Gpu::HostVector<ParticleReal>& particle_uz,
     Gpu::HostVector<ParticleReal>& particle_w,
-    Real t_lab)
+    Real t_lab) const
 {
     if (WarpX::gamma_boost > 1.) {
         MapParticletoBoostedFrame(x, y, z, ux, uy, uz, t_lab);

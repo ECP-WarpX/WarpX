@@ -727,7 +727,7 @@ public:
 
 #ifdef WARPX_DIM_RZ
     // Applies the boundary conditions that are specific to the axis when in RZ.
-    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev);
+    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev) const;
 #endif
 
     /**
