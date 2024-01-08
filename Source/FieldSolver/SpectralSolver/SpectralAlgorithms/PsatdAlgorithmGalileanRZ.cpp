@@ -11,6 +11,8 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <AMReX_Math.H>
+
 #include <cmath>
 
 using namespace amrex::literals;
@@ -221,8 +223,9 @@ void PsatdAlgorithmGalileanRZ::InitializeSpectralCoefficients (SpectralFieldData
             // Calculate coefficients
             if (k_norm != 0._rt){
 
-                C(i,j,k,mode) = std::cos(c*k_norm*dt);
-                S_ck(i,j,k,mode) = std::sin(c*k_norm*dt)/(c*k_norm);
+                auto const [sin_theta, cos_theta] = amrex::Math::sincos(c*k_norm*dt);
+                C(i,j,k,mode) = cos_theta;
+                S_ck(i,j,k,mode) = sin_theta/(c*k_norm);
 
                 // Calculate dot product with galilean velocity
                 amrex::Real const kv = kz*vz;

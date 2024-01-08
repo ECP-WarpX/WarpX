@@ -13,6 +13,7 @@
 #include "WarpX.H"
 
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
@@ -220,8 +221,9 @@ void BeamRelevant::ComputeDiags (int step)
                 const ParticleReal p_y_mean = p_pos1*p_w;
 #elif defined(WARPX_DIM_RZ)
                 const ParticleReal p_theta = p.rdata(PIdx::theta);
-                const ParticleReal p_x_mean = p_pos0*std::cos(p_theta)*p_w;
-                const ParticleReal p_y_mean = p_pos0*std::sin(p_theta)*p_w;
+                auto const [sin_p_theta, cos_p_theta] = amrex::Math::sincos(p_theta);
+                const ParticleReal p_x_mean = p_pos0*cos_p_theta*p_w;
+                const ParticleReal p_y_mean = p_pos0*sin_p_theta*p_w;
 #elif defined(WARPX_DIM_XZ)
                 const ParticleReal p_x_mean = p_pos0*p_w;
                 const ParticleReal p_y_mean = 0;

@@ -18,6 +18,7 @@
 #include <AMReX_GpuComplex.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Math.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
@@ -146,10 +147,11 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     amrex::ParallelFor(
         np,
         [=] AMREX_GPU_DEVICE (int i) {
+            auto const [sin_tmp_theta_stc, cos_tmp_theta_stc] = amrex::Math::sincos(tmp_theta_stc);
             const Complex stc_exponent = 1._rt / stretch_factor * inv_tau2 *
                 amrex::pow((t - tmp_profile_t_peak -
-                    tmp_beta*k0*(Xp[i]*std::cos(tmp_theta_stc) + Yp[i]*std::sin(tmp_theta_stc)) -
-                    2._rt *I*(Xp[i]*std::cos(tmp_theta_stc) + Yp[i]*std::sin(tmp_theta_stc))
+                    tmp_beta*k0*(Xp[i]*cos_tmp_theta_stc + Yp[i]*sin_tmp_theta_stc) -
+                    2._rt *I*(Xp[i]*cos_tmp_theta_stc + Yp[i]*sin_tmp_theta_stc)
                     *( tmp_zeta - tmp_beta*tmp_profile_focal_distance ) * inv_complex_waist_2),2);
             // stcfactor = everything but complex transverse envelope
             const Complex stcfactor = prefactor * amrex::exp( - stc_exponent );

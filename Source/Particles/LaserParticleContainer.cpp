@@ -524,8 +524,9 @@ LaserParticleContainer::InitData (int lev)
                     for (int spoke = 0 ; spoke < n_spokes ; spoke++) {
                         const Real phase = 2._rt*MathConst::pi*spoke/n_spokes;
                         for (int k = 0; k<2; ++k) {
-                            particle_x.push_back(pos[0]*std::cos(phase));
-                            particle_y.push_back(pos[0]*std::sin(phase));
+                            auto const [sin_phase, cos_phase] = amrex::Math::sincos(phase);
+                            particle_x.push_back(pos[0]*cos_phase);
+                            particle_y.push_back(pos[0]*sin_phase);
                             particle_z.push_back(pos[2]);
                         }
                         const Real r_weight = m_weight*2._rt*MathConst::pi*pos[0]/n_spokes;

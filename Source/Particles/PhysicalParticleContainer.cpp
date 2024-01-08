@@ -1279,8 +1279,9 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 const Real theta = (nmodes == 1 && rz_random_theta)?
                     (2._rt*MathConst::pi*amrex::Random(engine)):
                     (2._rt*MathConst::pi*r.y + theta_offset);
-                pos.x = xb*std::cos(theta);
-                pos.y = xb*std::sin(theta);
+                auto const [sin_theta, cos_theta] = amrex::Math::sincos(theta);
+                pos.x = xb*cos_theta;
+                pos.y = xb*sin_theta;
 #endif
 
                 Real dens;
@@ -1818,8 +1819,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 const Real theta = (nmodes == 1 && rz_random_theta)?
                     (2._prt*MathConst::pi*amrex::Random(engine)):
                     (2._prt*MathConst::pi*r.y);
-                Real const cos_theta = std::cos(theta);
-                Real const sin_theta = std::sin(theta);
+                auto const [sin_theta, cos_theta] = amrex::Math::sincos(theta);
                 // Rotate the position
                 amrex::Real radial_position = ppos.x;
                 ppos.x = radial_position*cos_theta;

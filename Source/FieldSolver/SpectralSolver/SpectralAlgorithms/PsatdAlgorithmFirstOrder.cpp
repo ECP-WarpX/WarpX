@@ -19,6 +19,7 @@
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_Math.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_PODVector.H>
 
@@ -151,8 +152,7 @@ PsatdAlgorithmFirstOrder::pushSpectralFields (SpectralFieldData& f) const
             const amrex::Real inv_knorm2 = 1._rt/knorm2;
             const amrex::Real inv_knorm4 = 1._rt/knorm4;
 
-            const amrex::Real C = std::cos(c*knorm*dt);
-            const amrex::Real S = std::sin(c*knorm*dt);
+            auto const [S, C] = amrex::Math::sincos(c*knorm*dt);
 
             // Update equations
 

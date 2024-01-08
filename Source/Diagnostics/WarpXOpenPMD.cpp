@@ -31,6 +31,7 @@
 #include <AMReX_FabArray.H>
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_Math.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_PODVector.H>
@@ -768,8 +769,9 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     );
                     for (auto i=0; i<numParticleOnTile; i++) {
                         auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
-                        x.get()[i] = r * std::cos(theta[i]);
-                        y.get()[i] = r * std::sin(theta[i]);
+                        auto const [sin_theta, cos_theta] = amrex::Math::sincos(theta[i]);
+                        x.get()[i] = r * sin_theta;
+                        y.get()[i] = r * cos_theta;
                     }
                     currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
                     currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
