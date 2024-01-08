@@ -1276,10 +1276,10 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 // These x and y are used to get the momentum and density
                 // With only 1 mode, the angle doesn't matter so
                 // choose it randomly.
-                const Real tt = (nmodes == 1 && rz_random_theta)?
+                const Real theta = (nmodes == 1 && rz_random_theta)?
                     (2._rt*amrex::Random(engine)):
                     (2._rt*r.y + tt_offset);
-                auto const [sin_theta, cos_theta] = amrex::Math::sincospi(tt);
+                auto const [sin_theta, cos_theta] = amrex::Math::sincospi(theta);
                 pos.x = xb*cos_theta;
                 pos.y = xb*sin_theta;
 #endif
