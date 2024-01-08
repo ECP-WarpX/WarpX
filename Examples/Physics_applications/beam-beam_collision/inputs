@@ -71,8 +71,8 @@ algo.particle_pusher = vay
 #################################
 ########### PARTICLES ###########
 #################################
-particles.species_names = beam1 beam2 pho1 pho2 ele_nlbw1 pos_nlbw1 ele_nlbw2 pos_nlbw2 pho ele pos
-particles.photon_species = pho1 pho2 pho
+particles.species_names = beam1 beam2 pho1 pho2 ele1 pos1 ele2 pos2
+particles.photon_species = pho1 pho2
 
 beam1.species_type = electron
 beam1.injection_style = NUniformPerCell
@@ -117,68 +117,58 @@ beam2.do_classical_radiation_reaction = 0
 pho1.species_type = photon
 pho1.injection_style = none
 pho1.do_qed_breit_wheeler = 1
-pho1.qed_breit_wheeler_ele_product_species = ele_nlbw1
-pho1.qed_breit_wheeler_pos_product_species = pos_nlbw1
+pho1.qed_breit_wheeler_ele_product_species = ele1
+pho1.qed_breit_wheeler_pos_product_species = pos1
 
 pho2.species_type = photon
 pho2.injection_style = none
 pho2.do_qed_breit_wheeler = 1
-pho2.qed_breit_wheeler_ele_product_species = ele_nlbw2
-pho2.qed_breit_wheeler_pos_product_species = pos_nlbw2
+pho2.qed_breit_wheeler_ele_product_species = ele2
+pho2.qed_breit_wheeler_pos_product_species = pos2
 
-ele_nlbw1.species_type = electron
-ele_nlbw1.injection_style = none
-ele_nlbw1.self_fields_required_precision = 1e-11
-ele_nlbw1.self_fields_max_iters = 10000
-ele_nlbw1.do_qed_quantum_sync = 1
-ele_nlbw1.qed_quantum_sync_phot_product_species = pho
-ele_nlbw1.do_classical_radiation_reaction = 0
+ele1.species_type = electron
+ele1.injection_style = none
+ele1.self_fields_required_precision = 1e-11
+ele1.self_fields_max_iters = 10000
+ele1.do_qed_quantum_sync = 1
+ele1.qed_quantum_sync_phot_product_species = pho1
+ele1.do_classical_radiation_reaction = 0
 
-pos_nlbw1.species_type = positron
-pos_nlbw1.injection_style = none
-pos_nlbw1.self_fields_required_precision = 1e-11
-pos_nlbw1.self_fields_max_iters = 10000
-pos_nlbw1.do_qed_quantum_sync = 1
-pos_nlbw1.qed_quantum_sync_phot_product_species = pho
-pos_nlbw1.do_classical_radiation_reaction = 0
+pos1.species_type = positron
+pos1.injection_style = none
+pos1.self_fields_required_precision = 1e-11
+pos1.self_fields_max_iters = 10000
+pos1.do_qed_quantum_sync = 1
+pos1.qed_quantum_sync_phot_product_species = pho1
+pos1.do_classical_radiation_reaction = 0
 
-ele_nlbw2.species_type = electron
-ele_nlbw2.injection_style = none
-ele_nlbw2.self_fields_required_precision = 1e-11
-ele_nlbw2.self_fields_max_iters = 10000
-ele_nlbw2.do_qed_quantum_sync = 1
-ele_nlbw2.qed_quantum_sync_phot_product_species = pho
-ele_nlbw2.do_classical_radiation_reaction = 0
+ele2.species_type = electron
+ele2.injection_style = none
+ele2.self_fields_required_precision = 1e-11
+ele2.self_fields_max_iters = 10000
+ele2.do_qed_quantum_sync = 1
+ele2.qed_quantum_sync_phot_product_species = pho2
+ele2.do_classical_radiation_reaction = 0
 
-pos_nlbw2.species_type = positron
-pos_nlbw2.injection_style = none
-pos_nlbw2.self_fields_required_precision = 1e-11
-pos_nlbw2.self_fields_max_iters = 10000
-pos_nlbw2.do_qed_quantum_sync = 1
-pos_nlbw2.qed_quantum_sync_phot_product_species = pho
-pos_nlbw2.do_classical_radiation_reaction = 0
+pos2.species_type = positron
+pos2.injection_style = none
+pos2.self_fields_required_precision = 1e-11
+pos2.self_fields_max_iters = 10000
+pos2.do_qed_quantum_sync = 1
+pos2.qed_quantum_sync_phot_product_species = pho2
+pos2.do_classical_radiation_reaction = 0
 
-pho.species_type = photon
-pho.injection_style = none
-pho.do_qed_breit_wheeler = 1
-pho.qed_breit_wheeler_ele_product_species = ele
-pho.qed_breit_wheeler_pos_product_species = pos
+pho1.species_type = photon
+pho1.injection_style = none
+pho1.do_qed_breit_wheeler = 1
+pho1.qed_breit_wheeler_ele_product_species = ele1
+pho1.qed_breit_wheeler_pos_product_species = pos1
 
-ele.species_type = electron
-ele.injection_style = none
-ele.self_fields_required_precision = 1e-11
-ele.self_fields_max_iters = 10000
-ele.do_qed_quantum_sync = 1
-ele.qed_quantum_sync_phot_product_species = pho
-ele.do_classical_radiation_reaction = 0
-
-pos.species_type = positron
-pos.injection_style = none
-pos.self_fields_required_precision = 1e-11
-pos.self_fields_max_iters = 10000
-pos.do_qed_quantum_sync = 1
-pos.qed_quantum_sync_phot_product_species = pho
-pos.do_classical_radiation_reaction = 0
+pho2.species_type = photon
+pho2.injection_style = none
+pho2.do_qed_breit_wheeler = 1
+pho2.qed_breit_wheeler_ele_product_species = ele2
+pho2.qed_breit_wheeler_pos_product_species = pos2
 
 #################################
 ############# QED ###############
@@ -225,10 +215,10 @@ diagnostics.diags_names = diag1
 diag1.intervals = 0
 diag1.diag_type = Full
 diag1.write_species = 1
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam1 rho_beam2 rho_ele_nlbw1 rho_pos_nlbw1 rho_ele_nlbw2 rho_pos_nlbw2 rho_ele rho_pos
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz rho_beam1 rho_beam2 rho_ele1 rho_pos1 rho_ele2 rho_pos2
 diag1.format = openpmd
 diag1.dump_last_timestep = 1
-diag1.species = pho1 pho2 pho ele_nlbw1 pos_nlbw1 ele_nlbw2 pos_nlbw2 ele pos beam1 beam2
+diag1.species = pho1 pho2 ele1 pos1 ele2 pos2 beam1 beam2
 
 # REDUCED
 warpx.reduced_diags_names = ParticleNumber ColliderRelevant_beam1_beam2
