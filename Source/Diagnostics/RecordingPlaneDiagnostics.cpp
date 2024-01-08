@@ -210,7 +210,7 @@ RecordingPlaneDiagnostics::PrepareFieldDataForOutput ()
 }
 
 bool
-RecordingPlaneDiagnostics::GetZSliceInDomain (int lev)
+RecordingPlaneDiagnostics::GetZSliceInDomain (int lev) const
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::RealBox& prob_domain = warpx.Geom(lev).ProbDomain();
@@ -422,7 +422,7 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
 }
 
 void
-RecordingPlaneDiagnostics::WriteRecordingPlaneHeader (const std::string& filename)
+RecordingPlaneDiagnostics::WriteRecordingPlaneHeader (const std::string& filename) const
 {
     amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::IO_Buffer_Size);
     std::ofstream HeaderFile;

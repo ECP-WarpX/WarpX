@@ -59,7 +59,7 @@ private:
 
     void Flush (int i_buffer, bool /*force_flush */) override;
 
-    void WriteRecordingPlaneHeader (const std::string& filename);
+    void WriteRecordingPlaneHeader (const std::string& filename) const;
 
     void PrepareFieldDataForOutput () override;
 
@@ -76,7 +76,7 @@ private:
     amrex::Box m_buffer_box;
     int m_flush_counter = 0;
 
-    bool GetZSliceInDomain (int lev);
+    bool GetZSliceInDomain (int lev) const;
     bool m_last_timeslice_filled = false;
 };
 
