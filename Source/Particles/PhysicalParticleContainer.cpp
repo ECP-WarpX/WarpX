@@ -1204,8 +1204,8 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             const IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
 #ifdef WARPX_DIM_RZ
-            Real theta_offset = 0._rt;
-            if (rz_random_theta) { theta_offset = amrex::Random(engine) * 2._rt * MathConst::pi; }
+            Real tt_offset = 0._rt;
+            if (rz_random_theta) { tt_offset = amrex::Random(engine) * 2._rt; }
 #endif
 
             Real scale_fac = 0.0_rt;
@@ -1278,7 +1278,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 // choose it randomly.
                 const Real tt = (nmodes == 1 && rz_random_theta)?
                     (2._rt*amrex::Random(engine)):
-                    (2._rt*r.y + theta_offset);
+                    (2._rt*r.y + tt_offset);
                 auto const [sin_theta, cos_theta] = amrex::Math::sincospi(tt);
                 pos.x = xb*cos_theta;
                 pos.y = xb*sin_theta;
