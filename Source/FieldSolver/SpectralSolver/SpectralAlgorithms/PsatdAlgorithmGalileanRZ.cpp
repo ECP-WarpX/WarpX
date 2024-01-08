@@ -225,8 +225,8 @@ void PsatdAlgorithmGalileanRZ::InitializeSpectralCoefficients (SpectralFieldData
 
                 auto const phi = c*k_norm*dt;
                 auto const [sin_phi, cos_phi] = amrex::Math::sincos(phi);
-                C(i,j,k,mode) = cos_theta;
-                S_ck(i,j,k,mode) = sin_theta/(c*k_norm);
+                C(i,j,k,mode) = cos_phi;
+                S_ck(i,j,k,mode) = sin_phi/(c*k_norm);
 
                 // Calculate dot product with galilean velocity
                 amrex::Real const kv = kz*vz;
