@@ -1816,10 +1816,10 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // These x and y are used to get the momentum and flux
                 // With only 1 mode, the angle doesn't matter so
                 // choose it randomly.
-                const Real tt = (nmodes == 1 && rz_random_theta)?
+                const Real theta = (nmodes == 1 && rz_random_theta)?
                     (2._prt*amrex::Random(engine)):
                     (2._prt*r.y);
-                auto const [sin_theta, cos_theta] = amrex::Math::sincospi(tt);
+                auto const [sin_theta, cos_theta] = amrex::Math::sincospi(theta);
                 // Rotate the position
                 amrex::Real radial_position = ppos.x;
                 ppos.x = radial_position*cos_theta;
