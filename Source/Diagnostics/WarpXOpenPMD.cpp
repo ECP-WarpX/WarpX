@@ -769,9 +769,9 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     );
                     for (auto i=0; i<numParticleOnTile; i++) {
                         auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
-                        auto const [sin_theta, cos_theta] = amrex::Math::sincos(theta[i]);
-                        x.get()[i] = r * sin_theta;
-                        y.get()[i] = r * cos_theta;
+                        auto const [sin_theta_i, cos_theta_i] = amrex::Math::sincos(theta[i]);
+                        x.get()[i] = r * sin_theta_i;
+                        y.get()[i] = r * cos_theta_i;
                     }
                     currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
                     currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
