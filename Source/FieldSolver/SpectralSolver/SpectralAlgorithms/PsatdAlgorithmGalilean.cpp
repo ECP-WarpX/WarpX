@@ -778,18 +778,18 @@ PsatdAlgorithmGalilean::VayDeposition (SpectralFieldData& field_data)
 #endif
 
             // Compute Jx
-            if (kx_mod != 0._rt) fields(i,j,k,Idx.Jx_mid) = I * Dx / kx_mod;
-            else                 fields(i,j,k,Idx.Jx_mid) = 0._rt;
+            if (kx_mod != 0._rt) { fields(i,j,k,Idx.Jx_mid) = I * Dx / kx_mod; }
+            else                 { fields(i,j,k,Idx.Jx_mid) = 0._rt; }
 
 #if defined(WARPX_DIM_3D)
             // Compute Jy
-            if (ky_mod != 0._rt) fields(i,j,k,Idx.Jy_mid) = I * Dy / ky_mod;
-            else                 fields(i,j,k,Idx.Jy_mid) = 0._rt;
+            if (ky_mod != 0._rt) { fields(i,j,k,Idx.Jy_mid) = I * Dy / ky_mod; }
+            else                 { fields(i,j,k,Idx.Jy_mid) = 0._rt; }
 #endif
 
             // Compute Jz
-            if (kz_mod != 0._rt) fields(i,j,k,Idx.Jz_mid) = I * Dz / kz_mod;
-            else                 fields(i,j,k,Idx.Jz_mid) = 0._rt;
+            if (kz_mod != 0._rt) { fields(i,j,k,Idx.Jz_mid) = I * Dz / kz_mod; }
+            else                 { fields(i,j,k,Idx.Jz_mid) = 0._rt; }
         });
     }
 }

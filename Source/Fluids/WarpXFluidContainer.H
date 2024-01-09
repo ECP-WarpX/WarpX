@@ -23,7 +23,7 @@
  *
  * WarpXFluidContainer contains the main functions for initialization,
  * interaction with the grid (field gather and current deposition), fluid
- * source and push, advective update and updates for non-intertial terms.
+ * source and push, advective update and updates for non-inertial terms.
  */
 class WarpXFluidContainer
 {
@@ -31,7 +31,7 @@ public:
     friend MultiFluidContainer;
 
     WarpXFluidContainer (int nlevs_max, int ispecies, const std::string& name);
-    ~WarpXFluidContainer() {}
+    ~WarpXFluidContainer() = default;
 
     WarpXFluidContainer (WarpXFluidContainer const &)             = delete;
     WarpXFluidContainer& operator= (WarpXFluidContainer const & ) = delete;
@@ -45,7 +45,7 @@ public:
     void ReadParameters ();
 
     /**
-     * Evolve updates a single timestep (dt) of the cold relativistic fluid eqautions
+     * Evolve updates a single timestep (dt) of the cold relativistic fluid equations
      */
     void Evolve (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
@@ -99,12 +99,12 @@ public:
      * \param[in] Bx Yee magnetic field (x)
      * \param[in] By Yee magnetic field (y)
      * \param[in] Bz Yee magnetic field (z)
-     * \param[in] cur_time Current time
+     * \param[in] t Current time
      */
     void GatherAndPush (int lev,
         const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
         const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-        amrex::Real cur_time);
+        amrex::Real t);
 
     /**
      * DepositCurrent interpolates the fluid current density comps. onto the Yee grid and
@@ -131,8 +131,8 @@ public:
      */
     void DepositCharge (int lev, amrex::MultiFab &rho, int icomp = 0);
 
-    amrex::Real getCharge () const {return charge;}
-    amrex::Real getMass () const {return mass;}
+    [[nodiscard]] amrex::Real getCharge () const {return charge;}
+    [[nodiscard]] amrex::Real getMass () const {return mass;}
 
 protected:
     int species_id;
@@ -174,6 +174,9 @@ protected:
     std::unique_ptr<amrex::Parser> ux_parser;
     std::unique_ptr<amrex::Parser> uy_parser;
     std::unique_ptr<amrex::Parser> uz_parser;
+    std::unique_ptr<amrex::Parser> ux_th_parser;
+    std::unique_ptr<amrex::Parser> uy_th_parser;
+    std::unique_ptr<amrex::Parser> uz_th_parser;
 
     // Keep a pointer to TemperatureProperties to ensure the lifetime of the
     // contained Parser
@@ -182,7 +185,7 @@ protected:
 
 public:
 
-   // MultiFabs that contain the density (N) and momentum density (NU) of this fluid species, for each refinement level
+    // MultiFabs that contain the density (N) and momentum density (NU) of this fluid species, for each refinement level
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > N;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > NU;
 

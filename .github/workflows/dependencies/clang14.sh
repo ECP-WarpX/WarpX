@@ -15,7 +15,6 @@ echo 'Acquire::Retries "3";' | sudo tee /etc/apt/apt.conf.d/80-retries
 sudo apt-get -qqq update
 sudo apt-get install -y \
     cmake               \
-    ccache              \
     clang-14            \
     clang-tidy-14       \
     libblas-dev         \
@@ -28,6 +27,9 @@ sudo apt-get install -y \
     libopenmpi-dev      \
     libomp-dev          \
     ninja-build
+
+# ccache
+$(dirname "$0")/ccache.sh
 
 # cmake-easyinstall
 #

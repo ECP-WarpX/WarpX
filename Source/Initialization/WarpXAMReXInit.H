@@ -7,8 +7,6 @@
 #ifndef WARPX_AMREX_INIT_H_
 #define WARPX_AMREX_INIT_H_
 
-#include <AMReX_ccse-mpi.H>
-
 #include <AMReX_BaseFwd.H>
 
 namespace warpx::initialization

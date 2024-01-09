@@ -52,7 +52,7 @@ namespace ElectrostaticSolver {
         void buildParsers ();
         void buildParsersEB ();
 
-        /* \brief Sets the EB potential string and updates the parsers
+        /* \brief Sets the EB potential string and updates the function parser
          *
          * \param [in] potential The string value of the potential
          */
@@ -61,7 +61,9 @@ namespace ElectrostaticSolver {
             buildParsersEB();
         }
 
-        PhiCalculatorEB getPhiEB(amrex::Real t) const noexcept {
+        [[nodiscard]] PhiCalculatorEB
+        getPhiEB(amrex::Real t) const noexcept
+        {
             return PhiCalculatorEB{t, potential_eb};
         }
 

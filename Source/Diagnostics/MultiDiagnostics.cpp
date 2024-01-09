@@ -70,9 +70,9 @@ MultiDiagnostics::ReadParameters ()
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             diag_type_str == "Full" || diag_type_str == "BackTransformed" || diag_type_str == "BoundaryScraping",
             "<diag>.diag_type must be Full or BackTransformed or BoundaryScraping");
-        if (diag_type_str == "Full") diags_types[i] = DiagTypes::Full;
-        if (diag_type_str == "BackTransformed") diags_types[i] = DiagTypes::BackTransformed;
-        if (diag_type_str == "BoundaryScraping") diags_types[i] = DiagTypes::BoundaryScraping;
+        if (diag_type_str == "Full") { diags_types[i] = DiagTypes::Full; }
+        if (diag_type_str == "BackTransformed") { diags_types[i] = DiagTypes::BackTransformed; }
+        if (diag_type_str == "BoundaryScraping") { diags_types[i] = DiagTypes::BoundaryScraping; }
     }
 }
 
@@ -82,11 +82,13 @@ MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush, bool BackT
     int i = 0;
     for (auto& diag : alldiags){
         if (BackTransform) {
-            if (diags_types[i] == DiagTypes::BackTransformed)
+            if (diags_types[i] == DiagTypes::BackTransformed) {
                 diag->FilterComputePackFlush (step, force_flush);
+            }
         } else {
-            if (diags_types[i] != DiagTypes::BackTransformed)
+            if (diags_types[i] != DiagTypes::BackTransformed) {
                 diag->FilterComputePackFlush (step, force_flush);
+            }
         }
         ++i;
     }
