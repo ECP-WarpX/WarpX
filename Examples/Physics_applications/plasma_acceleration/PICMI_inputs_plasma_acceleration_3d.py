@@ -138,19 +138,19 @@ sim.add_species(
 )
 
 field_diag = picmi.FieldDiagnostic(
-    name = 'diag1',
+    name = 'Python_PlasmaAcceleration_plt',
     grid = grid,
     period = max_steps,
     data_list = ['Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz', 'part_per_cell'],
-    write_dir='diags',
+    # write_dir='Python_PlasmaAcceleration_plt',
     warpx_format='openpmd',
 )
 
 part_diag = picmi.ParticleDiagnostic(
-    name = 'diag1',
+    name = 'Python_PlasmaAcceleration_plt',
     period = max_steps,
     species = [driver, beam, plasma_e],
-    write_dir='diags',
+    # write_dir='Python_PlasmaAcceleration_plt',
     warpx_format='openpmd',
 )
 
