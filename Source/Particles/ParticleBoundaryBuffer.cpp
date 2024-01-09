@@ -101,7 +101,7 @@ struct FindBoundaryIntersection {
 
         // record the real time on the destination
         dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
-        
+
         // record the components of the normal on the destination
         int i, j, k;
         amrex::Real W[AMREX_SPACEDIM][2];
@@ -111,8 +111,8 @@ struct FindBoundaryIntersection {
         // Save the corresponding position of the particle at the boundary
         amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
         UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_fraction*m_dt);
-        
-     
+
+
 
 #if (defined WARPX_DIM_3D)
         dst.m_aos[dst_i].pos(0) = x_temp;
@@ -427,10 +427,10 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
             buffer[i].AddRealComp("nx", false);
             buffer[i].AddRealComp("ny", false);
             buffer[i].AddRealComp("nz", false);
-    #elif defined(WARPX_DIM_XZ) 
+    #elif defined(WARPX_DIM_XZ)
             buffer[i].AddRealComp("nx", false);
             buffer[i].AddRealComp("nz", false);
-    #elif defined(WARPX_DIM_RZ) 
+    #elif defined(WARPX_DIM_RZ)
             buffer[i].AddRealComp("nr", false);
             buffer[i].AddRealComp("nz", false);
     #endif
@@ -490,7 +490,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-4;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-3;
-#else 
+#else
                 const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-1;
 #endif
                 const int timestep = warpx_instance.getistep(0);
