@@ -111,7 +111,8 @@ struct FindBoundaryIntersection {
         // Save the corresponding position of the particle at the boundary
         amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
         UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_fraction*m_dt);
-        
+        amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phiarr, dxi);
+        DistanceToEB::normalize(normal);
      
 
 #if (defined WARPX_DIM_3D)
@@ -119,8 +120,6 @@ struct FindBoundaryIntersection {
         dst.m_aos[dst_i].pos(1) = y_temp;
         dst.m_aos[dst_i].pos(2) = z_temp;
         //save normal components
-        amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phiarr, dxi);
-        DistanceToEB::normalize(normal);
         dst.m_runtime_rdata[m_index+1][dst_i] = normal[0];
         dst.m_runtime_rdata[m_index+2][dst_i] = normal[1];
         dst.m_runtime_rdata[m_index+3][dst_i] = normal[2];
@@ -128,22 +127,24 @@ struct FindBoundaryIntersection {
         dst.m_aos[dst_i].pos(0) = x_temp;
         dst.m_aos[dst_i].pos(1) = z_temp;
         //save normal components
-        amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phiarr, dxi);
-        DistanceToEB::normalize(normal);
         dst.m_runtime_rdata[m_index+1][dst_i] = normal[0];
-        dst.m_runtime_rdata[m_index+2][dst_i] = normal[1];
+        dst.m_runtime_rdata[m_index+2][dst_i] = 0.0;
+        dst.m_runtime_rdata[m_index+3][dst_i] = normal[1];
 #elif (defined WARPX_DIM_RZ)
         dst.m_aos[dst_i].pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
         dst.m_rdata[PIdx::theta][dst_i] = std::atan2(y_temp, x_temp);
         dst.m_aos[dst_i].pos(1) = z_temp;
         //save normal components
-        amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phiarr, dxi);
-        DistanceToEB::normalize(normal);
-        dst.m_runtime_rdata[m_index+1][dst_i] = normal[0];
-        dst.m_runtime_rdata[m_index+2][dst_i] = normal[1];
+        amrex::Real theta=std::atan2(y_temp, x_temp);
+        dst.m_runtime_rdata[m_index+1][dst_i] = normal[0]*std::cos(theta);
+        dst.m_runtime_rdata[m_index+2][dst_i] = normal[0]*std::sin(theta);
+        dst.m_runtime_rdata[m_index+3][dst_i] = normal[1];
 #elif (defined WARPX_DIM_1D_Z)
         dst.m_aos[dst_i].pos(0) = z_temp;
         //normal not defined
+        dst.m_runtime_rdata[m_index+1][dst_i] = 0.0;
+        dst.m_runtime_rdata[m_index+2][dst_i] = 0.0;
+        dst.m_runtime_rdata[m_index+3][dst_i] = 0.0;
 #endif
     }
 };
@@ -423,17 +424,9 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
             buffer[i].AddRealComp("timestamp", false);
-    #if (defined WARPX_DIM_3D)
             buffer[i].AddRealComp("nx", false);
             buffer[i].AddRealComp("ny", false);
             buffer[i].AddRealComp("nz", false);
-    #elif defined(WARPX_DIM_XZ) 
-            buffer[i].AddRealComp("nx", false);
-            buffer[i].AddRealComp("nz", false);
-    #elif defined(WARPX_DIM_RZ) 
-            buffer[i].AddRealComp("nr", false);
-            buffer[i].AddRealComp("nz", false);
-    #endif
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -486,13 +479,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 }
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
-#if (defined WARPX_DIM_3D)
                 const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-4;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-3;
-#else 
-                const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-1;
-#endif
                 const int timestep = warpx_instance.getistep(0);
 
                 {
