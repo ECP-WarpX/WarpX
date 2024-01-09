@@ -103,7 +103,6 @@ struct FindBoundaryIntersection {
         dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
         
         // record the components of the normal on the destination
-        
         int i, j, k;
         amrex::Real W[AMREX_SPACEDIM][2];
         ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
@@ -412,7 +411,9 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
             buffer[i].AddRealComp("timestamp", false);
-            buffer[i].AddRealComp("normal", false);
+            buffer[i].AddRealComp("nx", false);
+            buffer[i].AddRealComp("ny", false);
+            buffer[i].AddRealComp("nz", false);
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
