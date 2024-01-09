@@ -51,8 +51,6 @@ struct FindBoundaryIntersection {
     amrex::Array4<const amrex::Real> m_phiarr;
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_dxi;
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
-    const amrex::ParticleReal m_ux, m_uy, m_uz;
-
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
@@ -79,9 +77,11 @@ struct FindBoundaryIntersection {
         // (which is found by using a bisection algorithm)
 
         const auto& p = dst.getSuperParticle(dst_i);
-
         amrex::ParticleReal xp, yp, zp;
         get_particle_position( p, xp, yp, zp );
+        amrex::ParticleReal const ux = dst.m_rdata[PIdx::ux][dst_i];
+        amrex::ParticleReal const uy = dst.m_rdata[PIdx::uy][dst_i];
+        amrex::ParticleReal const uz = dst.m_rdata[PIdx::uz][dst_i];
 
         // Bisection algorithm to find the point where phi(x,y,z)=0 (i.e. on the embedded boundary)
 
@@ -90,7 +90,6 @@ struct FindBoundaryIntersection {
         amrex::Array4<const amrex::Real> phiarr = m_phiarr;
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dxi = m_dxi;
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> plo = m_plo;
-        amrex::ParticleReal ux=m_ux, uy=m_uy, uz=m_uz;
 
         amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
             [=] (amrex::Real dt_frac) {
@@ -102,12 +101,11 @@ struct FindBoundaryIntersection {
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phiarr);
                 return phi_value;
             } );
-            // Record the corresponding position
 
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
         amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
-        UpdatePosition(x_temp, y_temp, z_temp, m_ux, m_uy, m_uz, -dt_fraction*m_dt);
+        UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_fraction*m_dt);
 
 #if (defined WARPX_DIM_3D)
         dst.m_aos[dst_i].pos(0) = x_temp;
@@ -429,11 +427,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 
                 const auto ptile_data = ptile.getConstParticleTileData();
 
-                auto attribs = pti.GetStructOfArrays().GetRealData();
-                auto ux = attribs[PIdx::ux].dataPtr();
-                auto uy = attribs[PIdx::uy].dataPtr();
-                auto uz = attribs[PIdx::uz].dataPtr();
-
                 amrex::ReduceOps<amrex::ReduceOpSum> reduce_op;
                 amrex::ReduceData<int> reduce_data(reduce_op);
                 {
@@ -456,7 +449,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
-                                                     FindBoundaryIntersection{timestamp_index, timestep, dt, phiarr, dxi, plo, *ux, *uy, *uz}, 0, dst_index);
+                                                     FindBoundaryIntersection{timestamp_index, timestep, dt, phiarr, dxi, plo}, 0, dst_index);
                 }
             }
         }
