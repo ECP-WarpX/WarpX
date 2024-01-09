@@ -99,8 +99,17 @@ struct FindBoundaryIntersection {
                 return phi_value;
             } );
 
-        // Also record the real time on the destination
+        // record the real time on the destination
         dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
+        
+        // record the components of the normal on the destination
+        int i, j, k;
+        amrex::Real W[AMREX_SPACEDIM][2];
+        amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phiarr, dxi);
+        DistanceToEB::normalize(normal);
+        dst.m_runtime_rdata[m_index+1][dst_i] = normal[0];
+        dst.m_runtime_rdata[m_index+2][dst_i] = normal[1];
+        dst.m_runtime_rdata[m_index+3][dst_i] = normal[2];
 
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
@@ -399,6 +408,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
             buffer[i].AddRealComp("timestamp", false);
+            buffer[i].AddRealComp("normal", false);
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -451,7 +461,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 }
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
-                const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-1;
+                const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-4;
                 const int timestep = warpx_instance.getistep(0);
 
                 {
