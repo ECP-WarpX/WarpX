@@ -146,6 +146,24 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
            (deltaE > picard_iteration_tolerance || deltaB > picard_iteration_tolerance)) {
         iteration_count++;
 
+        if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
+            // Save the E at n+1/2 from the previous iteration so that the change
+            // in this iteration can be calculated
+            amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, ncomps, 0);
+            amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, ncomps, 0);
+            amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, ncomps, 0);
+
+            if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+                // Save the B at n+1/2 from the previous iteration so that the change
+                // in this iteration can be calculated
+                amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, ncomps, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, ncomps, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, ncomps, 0);
+            }
+        }
+
+        if (use_filter) { ApplyFilterJ(Efield_fp, 0); }
+
         // Advance the particle positions by 1/2 dt,
         // particle velocities by dt, then take average of old and new v,
         // deposit currents, giving J at n+1/2
@@ -155,14 +173,6 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
         PushParticlesandDeposit(cur_time, skip_current, push_type);
 
         SyncCurrentAndRho();
-
-        if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
-            // Save the E at n+1/2 from the previous iteration so that the change
-            // in this iteration can be calculated
-            amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, ncomps, 0);
-            amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, ncomps, 0);
-            amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, ncomps, 0);
-        }
 
         // Copy Efield_n into Efield_fp since EvolveE updates Efield_fp in place
         amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, ncomps, Efield_n[0][0]->nGrowVect());
@@ -176,14 +186,6 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
         ApplyEfieldBoundary(0, PatchType::fine);
 
         if (evolve_scheme == EvolveScheme::ImplicitPicard) {
-            if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
-                // Save the B at n+1/2 from the previous iteration so that the change
-                // in this iteration can be calculated
-                amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, ncomps, 0);
-                amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, ncomps, 0);
-                amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, ncomps, 0);
-            }
-
             // Copy Bfield_n into Bfield_fp since EvolveB updates Bfield_fp in place
             amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bfield_n[0][0], 0, 0, ncomps, Bfield_n[0][0]->nGrowVect());
             amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bfield_n[0][1], 0, 0, ncomps, Bfield_n[0][1]->nGrowVect());
