@@ -17,6 +17,7 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 #include "OpenPMDHelpFunction.H"
+#include "ablastr/particles/NodalFieldGather.H"
 
 #include <ablastr/particles/IndexHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
@@ -539,6 +540,13 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         pinned_pc->make_alike<amrex::PinnedArenaAllocator>() :
         pc->make_alike<amrex::PinnedArenaAllocator>();
 
+    // TODO: Replace by something that is controlled by the user
+    if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
+        // TODO: raise error when BTD and boundary buffer are used
+        // (because then phi is gathered at the wrong time)
+        tmp.AddRealComp("phi");
+    }
+
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
@@ -614,6 +622,53 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
                         * parser_filter(p, engine) * geometry_filter(p, engine);
             }, true);
         particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
+    }
+
+    // Gather the phi potential
+    if (WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrame) {
+
+        int const phi_index = tmp.getParticleComps().at("phi");
+        auto& warpx = WarpX::GetInstance();
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for (int lev=0; lev<=warpx.finestLevel(); lev++) {
+
+            const amrex::Geometry& geom = warpx.Geom(lev);
+            auto plo = geom.ProbLoArray();
+            auto dxi = geom.InvCellSizeArray();
+
+            for (amrex::ParIter<0,0,PIdx::nattribs,0,amrex::PinnedArenaAllocator> pti(tmp, lev); pti.isValid(); ++pti) {
+
+                auto phi_grid = warpx.getphi_fp(lev)[pti].array();
+                const auto &aos = pti.GetArrayOfStructs();
+                amrex::Real* phi_particle = pti.GetStructOfArrays().GetRealData(phi_index).dataPtr();
+
+                // Loop over the particles and update their position
+                amrex::ParallelFor( pti.numParticles(),
+                    [=] AMREX_GPU_DEVICE (long ip) {
+
+#if (defined WARPX_DIM_3D)
+                        amrex::ParticleReal xp = aos[ip].pos(0);
+                        amrex::ParticleReal yp = aos[ip].pos(1);
+                        amrex::ParticleReal zp = aos[ip].pos(2);
+#elif ((defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ))
+                        amrex::ParticleReal xp = aos[ip].pos(0);
+                        amrex::ParticleReal yp = 0;
+                        amrex::ParticleReal zp = aos[ip].pos(1);
+#elif (defined WARPX_DIM_1D_Z)
+                        amrex::ParticleReal xp = 0, yp = 0;
+                        amrex::ParticleReal zp = aos[ip].pos(0);
+#endif
+                        int i, j, k;
+                        amrex::Real W[AMREX_SPACEDIM][2];
+                        ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
+                        amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi_grid);
+                        phi_particle[ip] = phi_value;
+                    }
+                );
+            }
+        }
     }
 
     // real_names contains a list of all real particle attributes.
