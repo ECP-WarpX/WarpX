@@ -303,12 +303,10 @@ void depositEsirkepovComponent (const GetParticlePosition<PIdx>& GetPosition,
                        //const int zdir, const int NODE, const int CELL,
                        const int dir)
 {
+    using namespace amrex::literals;
+
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
-#endif
-
-#if !defined(AMREX_USE_GPU)
-    amrex::ignore_unused(cost, load_balance_costs_update_algo);
 #endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
@@ -646,12 +644,10 @@ void depositEsirkepovComponentX (const GetParticlePosition<PIdx>& GetPosition,
                        //const int zdir, const int NODE, const int CELL,
                        //const int dir)
 {
+    using namespace amrex::literals;
+
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
-#endif
-
-#if !defined(AMREX_USE_GPU)
-    amrex::ignore_unused(cost, load_balance_costs_update_algo);
 #endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
@@ -877,6 +873,8 @@ void depositEsirkepovComponentY (const GetParticlePosition<PIdx>& GetPosition,
                        //const int zdir, const int NODE, const int CELL,
                        //const int dir)
 {
+    using namespace amrex::literals;
+
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
@@ -1127,6 +1125,8 @@ void depositEsirkepovComponentZ (const GetParticlePosition<PIdx>& GetPosition,
                        const unsigned int ip)
                        //const int zdir, const int NODE, const int CELL, const int dir)
 {
+    using namespace amrex::literals;
+
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif

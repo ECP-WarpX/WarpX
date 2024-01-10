@@ -1940,7 +1940,7 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
+void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
                                const amrex::ParticleReal * const wp,
                                const amrex::ParticleReal * const uxp,
                                const amrex::ParticleReal * const uyp,
