@@ -111,14 +111,10 @@ struct FindBoundaryIntersection {
         // Save the corresponding position of the particle at the boundary
         amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
         UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_fraction*m_dt);
-<<<<<<< HEAD
         amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phiarr, dxi);
         DistanceToEB::normalize(normal);
 
-=======
 
-
->>>>>>> eee5c9b5028464a7cf80767c741cc2e6f20ba898
 
 #if (defined WARPX_DIM_3D)
         dst.m_aos[dst_i].pos(0) = x_temp;
