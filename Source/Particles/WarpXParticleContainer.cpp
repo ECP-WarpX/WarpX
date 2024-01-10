@@ -511,21 +511,21 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 doEsirkepovDepositionSharedShapeN<1>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
+                    jx_fab, jy_fab, jz_fab, np_to_deposit, dt, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                     WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             } else if (WarpX::nox == 2){
                 doEsirkepovDepositionSharedShapeN<2>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
+                    jx_fab, jy_fab, jz_fab, np_to_deposit, dt, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                     WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             } else if (WarpX::nox == 3){
                 doEsirkepovDepositionSharedShapeN<3>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                    jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
+                    jx_fab, jy_fab, jz_fab, np_to_deposit, dt, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                     WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
             }

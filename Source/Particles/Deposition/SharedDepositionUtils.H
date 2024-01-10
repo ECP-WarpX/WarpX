@@ -284,7 +284,7 @@ void depositComponent (const GetParticlePosition<PIdx>& GetPosition,
 
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void depositEsirkepovComponent (const GetParticlePosition& GetPosition,
+void depositEsirkepovComponent (const GetParticlePosition<PIdx>& GetPosition,
                        const amrex::ParticleReal * const wp,
                        const amrex::ParticleReal * const uxp,
                        const amrex::ParticleReal * const uyp,
@@ -627,7 +627,7 @@ void depositEsirkepovComponent (const GetParticlePosition& GetPosition,
 
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
+void depositEsirkepovComponentX (const GetParticlePosition<PIdx>& GetPosition,
                        const amrex::ParticleReal * const wp,
                        const amrex::ParticleReal * const uxp,
                        const amrex::ParticleReal * const uyp,
@@ -858,7 +858,7 @@ void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
 
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void depositEsirkepovComponentY (const GetParticlePosition& GetPosition,
+void depositEsirkepovComponentY (const GetParticlePosition<PIdx>& GetPosition,
                        const amrex::ParticleReal * const wp,
                        const amrex::ParticleReal * const uxp,
                        const amrex::ParticleReal * const uyp,
@@ -1113,7 +1113,7 @@ void depositEsirkepovComponentY (const GetParticlePosition& GetPosition,
 
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void depositEsirkepovComponentZ (const GetParticlePosition& GetPosition,
+void depositEsirkepovComponentZ (const GetParticlePosition<PIdx>& GetPosition,
                        const amrex::ParticleReal * const wp,
                        const amrex::ParticleReal * const uxp,
                        const amrex::ParticleReal * const uyp,
