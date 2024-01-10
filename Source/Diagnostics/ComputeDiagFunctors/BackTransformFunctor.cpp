@@ -162,7 +162,7 @@ BackTransformFunctor::PrepareFunctorData (int i_buffer,
     m_current_z_boost[i_buffer] = current_z_boost;
     m_k_index_zlab[i_buffer] = k_index_zlab;
     m_perform_backtransform[i_buffer] = 0;
-    if (z_slice_in_domain && (snapshot_full == 0)) m_perform_backtransform[i_buffer] = 1;
+    if (z_slice_in_domain && (snapshot_full == 0)) { m_perform_backtransform[i_buffer] = 1; }
 }
 
 void

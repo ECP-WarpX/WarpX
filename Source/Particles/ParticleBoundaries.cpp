@@ -54,7 +54,7 @@ ParticleBoundaries::SetBoundsZ (ParticleBoundaryType bc_lo, ParticleBoundaryType
 }
 
 bool
-ParticleBoundaries::CheckAll (ParticleBoundaryType bc)
+ParticleBoundaries::CheckAll (ParticleBoundaryType bc) const
 {
     return (data.xmin_bc == bc && data.xmax_bc == bc
 #ifdef WARPX_DIM_3D
