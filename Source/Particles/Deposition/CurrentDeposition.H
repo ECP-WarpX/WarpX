@@ -1975,13 +1975,6 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosi
     amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
     amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
     amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
-    amrex::IntVect const jx_type = jx_fab.box().type();
-    amrex::IntVect const jy_type = jy_fab.box().type();
-    amrex::IntVect const jz_type = jz_fab.box().type();
-
-    //constexpr int zdir = WARPX_ZINDEX;
-    //constexpr int NODE = amrex::IndexType::NODE;
-    //constexpr int CELL = amrex::IndexType::CELL;
 
     // Loop over particles and deposit into jx_fab, jy_fab and jz_fab
 #if defined(WARPX_USE_GPUCLOCK)
@@ -1993,6 +1986,10 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosi
 #endif
 
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+    amrex::IntVect const jx_type = jx_fab.box().type();
+    amrex::IntVect const jy_type = jy_fab.box().type();
+    amrex::IntVect const jz_type = jz_fab.box().type();
+
     const auto dxiarr = geom.InvCellSizeArray();
     const auto plo = geom.ProbLoArray();
     const auto domain = geom.Domain();
@@ -2014,7 +2011,7 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosi
 
     const std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
     const amrex::IntVect bin_size = WarpX::shared_tilesize;
-    //amrex::Print() << "current deposition shared mem request " << shared_mem_bytes << "\n";
+
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
                                      "Tile size too big for GPU shared memory current deposition");
