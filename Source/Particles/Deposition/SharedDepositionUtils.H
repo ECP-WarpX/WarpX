@@ -881,10 +881,6 @@ void depositEsirkepovComponentY (const GetParticlePosition<PIdx>& GetPosition,
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
-#if !defined(AMREX_USE_GPU)
-    amrex::ignore_unused(cost, load_balance_costs_update_algo);
-#endif
-
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
@@ -1133,10 +1129,6 @@ void depositEsirkepovComponentZ (const GetParticlePosition<PIdx>& GetPosition,
 {
 #if !defined(WARPX_DIM_RZ)
     amrex::ignore_unused(n_rz_azimuthal_modes);
-#endif
-
-#if !defined(AMREX_USE_GPU)
-    amrex::ignore_unused(cost, load_balance_costs_update_algo);
 #endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
