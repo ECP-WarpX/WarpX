@@ -2039,7 +2039,7 @@ Particle push, charge and current deposition, field gathering
 
 * ``warpx.nguards`` (`integers, one per space dimension`, optional)
     The number of guard cells for the charge and current density arrays.
-    This overrides the default setting, which depends on the particle shape factor, the particle Courant limit, and other factors. 
+    This overrides the default setting, which depends on the particle shape factor, the particle Courant limit, and other factors.
     The intended use is with the implicit solver where the CFL for electromagnetic waves does not apply and particles can cross mupltiple cells per time step.
     Warning, if this is set incorrectly (i.e. too small), out of bounds errors can occur crashing the simulation.
 
