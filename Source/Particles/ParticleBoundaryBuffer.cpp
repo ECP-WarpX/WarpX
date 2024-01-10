@@ -428,16 +428,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
             buffer[i].AddRealComp("nx", false);
             buffer[i].AddRealComp("ny", false);
             buffer[i].AddRealComp("nz", false);
-<<<<<<< HEAD
-=======
-    #elif defined(WARPX_DIM_XZ)
-            buffer[i].AddRealComp("nx", false);
-            buffer[i].AddRealComp("nz", false);
-    #elif defined(WARPX_DIM_RZ)
-            buffer[i].AddRealComp("nr", false);
-            buffer[i].AddRealComp("nz", false);
-    #endif
->>>>>>> eee5c9b5028464a7cf80767c741cc2e6f20ba898
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -491,14 +481,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
                 const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-4;
-<<<<<<< HEAD
-=======
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-3;
-#else
-                const int timestamp_index = ptile_buffer.NumRuntimeRealComps()-1;
-#endif
->>>>>>> eee5c9b5028464a7cf80767c741cc2e6f20ba898
                 const int timestep = warpx_instance.getistep(0);
 
                 {
