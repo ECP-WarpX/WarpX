@@ -114,7 +114,7 @@ struct FindBoundaryIntersection {
 <<<<<<< HEAD
         amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phiarr, dxi);
         DistanceToEB::normalize(normal);
-     
+
 =======
 
 

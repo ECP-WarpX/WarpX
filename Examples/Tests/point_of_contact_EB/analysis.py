@@ -5,15 +5,15 @@ import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
 import yt
 
-#yt.funcs.mylog.setLevel(0)
-#sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-#import checksumAPI
+yt.funcs.mylog.setLevel(0)
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # Open plotfile specified in command line
-#filename = sys.argv[1]
-#ds = yt.load( filename )
-#test_name = os.path.split(os.getcwd())[1]
-#checksumAPI.evaluate_checksum(test_name, filename)
+filename = sys.argv[1]
+ds = yt.load( filename )
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)
 
 ts_scraping = OpenPMDTimeSeries('../../../../warpx/Examples/Tests/point_of_contact_EB/diags/diag2/particles_at_eb/')
 
