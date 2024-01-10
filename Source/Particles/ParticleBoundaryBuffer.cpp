@@ -4,9 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
-#include "WarpX.H"
 #include "EmbeddedBoundary/DistanceToEB.H"
+#include "WarpX.H"
 #include "Particles/ParticleBoundaryBuffer.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/TextMsg.H"
@@ -22,15 +21,6 @@
 #include <AMReX_Tuple.H>
 #include <AMReX.H>
 #include <AMReX_Algorithm.H>
-#include <AMReX_MultiFab.H>
-#include <AMReX_Particle.H>
-#include <AMReX_RandomEngine.H>
-#include <AMReX_REAL.H>
-#include <AMReX_TypeTraits.H>
-#include <AMReX_Vector.H>
-#include <type_traits>
-#include <utility>
-
 
 struct IsOutsideDomainBoundary {
     amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_plo;
