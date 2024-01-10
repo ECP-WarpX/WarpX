@@ -42,7 +42,7 @@ struct IsOutsideDomainBoundary {
         return 0;
     }
 };
-
+#ifdef AMREX_USE_EB
 struct FindBoundaryIntersection {
     const int m_index;
     const int m_step;
@@ -148,6 +148,7 @@ struct FindBoundaryIntersection {
 #endif
     }
 };
+#endif
 
 struct CopyAndTimestamp {
     int m_index;
