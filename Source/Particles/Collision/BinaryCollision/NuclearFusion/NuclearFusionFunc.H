@@ -219,7 +219,6 @@ public:
                 // update i1 and pair_index
                 i1 += stride;
                 pair_index += stride;
-                // if ( i1 >= I1e ) { i1 = I1s + (i1 - I1e); }
             }
         }
 

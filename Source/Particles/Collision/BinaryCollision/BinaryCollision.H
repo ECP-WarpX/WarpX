@@ -700,7 +700,7 @@ public:
                             cell_start_2, cell_stop_2, cell_start_1, cell_stop_1,
                             indices_2, indices_1,
                             soa_2, soa_1, get_position_2, get_position_1,
-                            q1, q2, m1, m2, dt, dV, coll_idx,
+                            q2, q1, m2, m1, dt, dV, coll_idx,
                             cell_start_pair, p_mask, p_pair_indices_2, p_pair_indices_1,
                             p_pair_reaction_weight, engine);
                     }

@@ -172,7 +172,6 @@ void ElasticCollisionPerez (
 
           // update the i1
           i1 += stride;
-          //if ( i1 >= I1e ) { i1 = I1s + i1 - I1e; }
       }
     }
 
