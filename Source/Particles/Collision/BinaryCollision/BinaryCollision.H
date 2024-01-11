@@ -568,7 +568,7 @@ public:
                     if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0 || i_cell == n_cells)
                         p_n_ind_pairs_in_each_cell[i_cell] = 0;
                     else
-                        p_n_ind_pairs_in_each_cell[i_cell] = n_part_in_cell_1 > n_part_in_cell_2)? n_part_in_cell_1: n_part_in_cell_2;
+                        p_n_ind_pairs_in_each_cell[i_cell] = (n_part_in_cell_1 > n_part_in_cell_2)? n_part_in_cell_1: n_part_in_cell_2;
 
                 }
             );
