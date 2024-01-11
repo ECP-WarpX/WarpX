@@ -66,6 +66,7 @@ const std::map<std::string, int> current_deposition_algo_to_int = {
     {"esirkepov", CurrentDepositionAlgo::Esirkepov },
     {"direct",    CurrentDepositionAlgo::Direct },
     {"vay",       CurrentDepositionAlgo::Vay },
+    {"villasenor-and-buneman", CurrentDepositionAlgo::VillasenorAndBuneman },
     {"default",   CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD and Hybrid-PIC below
 };
 
