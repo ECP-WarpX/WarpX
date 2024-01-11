@@ -1167,6 +1167,11 @@ Particle initialization
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
     Do field ionization for this species (using the ADK theory).
 
+* ``<species>.do_adk_correction`` (`0` or `1`) optional (default `0`)
+    Whether to apply the correction to the ADK theory proposed by Zhang, Lan and Lu in `Q. Zhang et al. (Phys. Rev. A 90, 043410, 2014) <https://doi.org/10.1103/PhysRevA.90.043410>`__.
+    If so, the probability of ionization is modified using an empirical model that should be more accurate in the regime of high electric fields.
+    Currently, this is only implemented for Hydrogen, although Argon is also available in the same reference.
+
 * ``<species>.physical_element`` (`string`)
     Only read if `do_field_ionization = 1`. Symbol of chemical element for
     this species. Example: for Helium, use ``physical_element = He``.
@@ -1508,8 +1513,14 @@ Laser initialization
 External fields
 ---------------
 
-Grid initialization
+Applied to the grid
 ^^^^^^^^^^^^^^^^^^^
+
+The external fields defined with input parameters that start with ``warpx.B_ext_grid_init_`` or ``warpx.E_ext_grid_init_``
+are applied to the grid directly. In particular, these fields can be seen in the diagnostics that output the fields on the grid.
+
+    - When using an **electromagnetic** field solver, these fields are applied to the grid at the beginning of the simulation, and serve as initial condition for the Maxwell solver.
+    - When using an **electrostatic** or **magnetostatic** field solver, these fields are added to the fields computed by the Poisson solver, at each timestep.
 
 * ``warpx.B_ext_grid_init_style`` (string) optional
     This parameter determines the type of initialization for the external
@@ -1597,6 +1608,9 @@ Grid initialization
 Applied to Particles
 ^^^^^^^^^^^^^^^^^^^^
 
+The external fields defined with input parameters that start with ``warpx.B_ext_particle_init_`` or ``warpx.E_ext_particle_init_``
+are applied to the particles directly, at each timestep. As a results, these fields **cannot** be seen in the diagnostics that output the fields on the grid.
+
 * ``particles.E_ext_particle_init_style`` & ``particles.B_ext_particle_init_style`` (string) optional (default "none")
     These parameters determine the type of the external electric and
     magnetic fields respectively that are applied directly to the particles at every timestep.
@@ -1656,6 +1670,9 @@ Applied to Particles
 
 Applied to Cold Relativistic Fluids
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The external fields defined with input parameters that start with ``warpx.B_ext_init_`` or ``warpx.E_ext_init_``
+are applied to the fluids directly, at each timestep. As a results, these fields **cannot** be seen in the diagnostics that output the fields on the grid.
 
 * ``<fluid_species_name>.E_ext_init_style`` & ``<fluid_species_name>.B_ext_init_style`` (string) optional (default "none")
     These parameters determine the type of the external electric and
@@ -2585,8 +2602,8 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Only works with ``<diag_name>.format = plotfile``.
 
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
-    Reduce size of the field output by this ratio in each dimension.
-    (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).
+    Reduce size of the selected diagnostic fields output by this ratio in each dimension.
+    (For a ratio of N, this is done by averaging the fields over N or (N+1) points depending on the staggering).
     If ``blocking_factor`` and ``max_grid_size`` are used for the domain decomposition, as detailed in
     the :ref:`domain decomposition <usage_domain_decomposition>` section, ``coarsening_ratio`` should be an integer
     divisor of ``blocking_factor``. If ``warpx.numprocs`` is used instead, the total number of cells in a given

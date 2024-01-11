@@ -445,6 +445,7 @@ protected:
     int do_continuous_injection = 0;
 
     int do_field_ionization = 0;
+    int do_adk_correction = 0;
     int ionization_product;
     std::string ionization_product_name;
     int ion_atomic_number;
@@ -453,6 +454,8 @@ protected:
     amrex::Gpu::DeviceVector<amrex::Real> adk_power;
     amrex::Gpu::DeviceVector<amrex::Real> adk_prefactor;
     amrex::Gpu::DeviceVector<amrex::Real> adk_exp_prefactor;
+    /** for correction in Zhang et al., PRA 90, 043410 (2014). a1, a2, a3, Ecrit. */
+    amrex::Gpu::DeviceVector<amrex::Real> adk_correction_factors;
     std::string physical_element;
 
     int do_resampling = 0;

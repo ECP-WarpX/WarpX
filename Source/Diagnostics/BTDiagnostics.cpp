@@ -863,13 +863,14 @@ BTDiagnostics::PrepareFieldDataForOutput ()
 
 
 amrex::Real
-BTDiagnostics::dz_lab (amrex::Real dt, amrex::Real ref_ratio){
+BTDiagnostics::dz_lab (amrex::Real dt, amrex::Real ref_ratio) const
+{
     return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
 }
 
 
 int
-BTDiagnostics::k_index_zlab (int i_buffer, int lev)
+BTDiagnostics::k_index_zlab (int i_buffer, int lev) const
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::Real prob_domain_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );

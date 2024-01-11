@@ -6,6 +6,12 @@ export MY_PROFILE=$(cd $(dirname $BASH_SOURCE) && pwd)"/"$(basename $BASH_SOURCE
 if [ -z ${proj-} ]; then echo "WARNING: The 'proj' variable is not yet set in your $MY_PROFILE file! Please edit its line 2 to continue!"; return; fi
 
 # required dependencies
+module load gpu
+module load PrgEnv-gnu
+module load craype
+module load craype-x86-milan
+module load craype-accel-nvidia80
+module load cudatoolkit
 module load cmake/3.22.0
 
 # optional: for QED support with detailed tables

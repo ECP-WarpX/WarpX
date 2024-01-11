@@ -501,18 +501,15 @@ void PlasmaInjector::setupExternalFile (amrex::ParmParse const& pp_species)
     } // IOProcessor
 
     // Broadcast charge and mass to non-IO processors if read in from the file
-    if (!charge_is_specified && !species_is_specified) {
-        // Use ReduceBoolOr since Bcast(bool) doesn't compile
-        amrex::ParallelDescriptor::ReduceBoolOr(charge_from_source, amrex::ParallelDescriptor::IOProcessorNumber());
-        if (charge_from_source) {
-            amrex::ParallelDescriptor::Bcast(&charge, 1, amrex::ParallelDescriptor::IOProcessorNumber());
-        }
+    std::array<int,2> flags{charge_from_source, mass_from_source};
+    amrex::ParallelDescriptor::Bcast(flags.data(), flags.size(), amrex::ParallelDescriptor::IOProcessorNumber());
+    charge_from_source = flags[0];
+    mass_from_source   = flags[1];
+    if (charge_from_source) {
+        amrex::ParallelDescriptor::Bcast(&charge, 1, amrex::ParallelDescriptor::IOProcessorNumber());
     }
-    if (!mass_is_specified && !species_is_specified) {
-        amrex::ParallelDescriptor::ReduceBoolOr(mass_from_source, amrex::ParallelDescriptor::IOProcessorNumber());
-        if (mass_from_source) {
-            amrex::ParallelDescriptor::Bcast(&mass, 1, amrex::ParallelDescriptor::IOProcessorNumber());
-        }
+    if (mass_from_source) {
+        amrex::ParallelDescriptor::Bcast(&mass, 1, amrex::ParallelDescriptor::IOProcessorNumber());
     }
 #else
     WARPX_ABORT_WITH_MESSAGE(
