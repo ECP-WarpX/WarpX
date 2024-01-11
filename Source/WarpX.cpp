@@ -1182,6 +1182,15 @@ WarpX::ReadParameters ()
                 "Vay deposition not implemented with multi-J algorithm");
         }
 
+	if (current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman) {
+	    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                evolve_scheme == EvolveScheme::ImplicitPicard ||
+                evolve_scheme == EvolveScheme::SemiImplicitPicard,
+                "VillasenorAndBuneman current deposition can only"
+                "be used with Implicit evolve schemes.");
+
+	}
+
         // Query algo.field_gathering from input, set field_gathering_algo to
         // "default" if not found (default defined in Utils/WarpXAlgorithmSelection.cpp)
         field_gathering_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "field_gathering"));
