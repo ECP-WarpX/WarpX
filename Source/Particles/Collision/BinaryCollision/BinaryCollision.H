@@ -308,10 +308,9 @@ public:
                                                     p_n_pairs_in_each_cell, pair_offsets.data());
             index_type* AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
-            // ------------------------------------------------------------------------------------------- //
-            //
-            // MH: preprocessing for the same species
-            //
+            /*
+               preprocessing calculations for efficient gpu acceleration
+            */
             amrex::Gpu::DeviceVector<index_type> n_ind_pairs_in_each_cell(n_cells+1);
             index_type* AMREX_RESTRICT p_n_ind_pairs_in_each_cell = n_ind_pairs_in_each_cell.dataPtr();
 
@@ -330,8 +329,9 @@ public:
             const int n_independent_pairs =  amrex::Scan::ExclusiveSum(n_cells+1,
                                                     p_n_ind_pairs_in_each_cell, coll_offsets.data(), amrex::Scan::RetSum{true});
             index_type* AMREX_RESTRICT p_coll_offsets = coll_offsets.dataPtr();
-
-            // ------------------------------------------------------------------------------------------- //
+            /*
+               end of preprocessing calculations
+            */
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
             amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
@@ -369,9 +369,6 @@ public:
                         indices_1, cell_start_1, cell_half_1, engine );
                 }
             );
-
-            //amrex::Gpu::DeviceVector<int> idx(n_independent_pairs);
-            //auto idxs = idx.dataPtr();
 
             // Loop over cells
             amrex::ParallelForRNG( n_independent_pairs,
@@ -552,10 +549,9 @@ public:
                                                     p_n_pairs_in_each_cell, pair_offsets.data());
             index_type* AMREX_RESTRICT p_pair_offsets = pair_offsets.dataPtr();
 
-            // ------------------------------------------------------------------------------------------- //
-            //
-            // MH: preprocessing for the different species
-            //
+            /*
+               preprocessing calculations for efficient gpu acceleration
+            */
             amrex::Gpu::DeviceVector<index_type> n_ind_pairs_in_each_cell(n_cells);
             index_type* AMREX_RESTRICT p_n_ind_pairs_in_each_cell = n_ind_pairs_in_each_cell.dataPtr();
 
@@ -572,13 +568,16 @@ public:
 
                 }
             );
+
             // start indices of independent collisions.
             amrex::Gpu::DeviceVector<index_type> coll_offsets(n_cells+1);
             // number of total independent collision pairs
             const int n_independent_pairs = amrex::Scan::ExclusiveSum(n_cells+1,
                                                     p_n_ind_pairs_in_each_cell, coll_offsets.data(), amrex::Scan::RetSum{true});
             index_type* AMREX_RESTRICT p_coll_offsets = coll_offsets.dataPtr();
-            // ------------------------------------------------------------------------------------------- //
+            /*
+               end of preprocessing calculations
+            */
 
             // mask: equal to 1 if particle creation occurs for a given pair, 0 otherwise
             amrex::Gpu::DeviceVector<index_type> mask(n_total_pairs);
