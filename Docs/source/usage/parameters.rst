@@ -1795,9 +1795,7 @@ Details about the collision models can be found in the :ref:`theory section <the
       kinetic species. See :ref:`DSMC section <theory-collisions-dsmc>`.
     - ``background_mcc`` for collisions between particles and a neutral background.
       This is a relativistic Monte Carlo treatment for particles colliding
-      with a neutral background gas. The implementation follows the so-called
-      null collision strategy discussed for example in :cite:t:`param-Birdsall1991`.
-      See also :ref:`collisions section <theory-collisions>`.
+      with a neutral background gas. See :ref:`MCC section <theory-collisions-mcc>`.
     - ``background_stopping`` for slowing of ions due to collisions with electrons or ions.
       This implements the approximate formulae as derived in Introduction to Plasma Physics,
       from Goldston and Rutherford, section 14.2.
@@ -1837,8 +1835,8 @@ Details about the collision models can be found in the :ref:`theory section <the
     More specifically, in a fusion reaction between two macroparticles with weight ``w_1`` and ``w_2``,
     the weight of the product macroparticles will be ``min(w_1,w_2)/fusion_multiplier``.
     (And the weights of the reactant macroparticles are reduced correspondingly after the reaction.)
-    See :cite:t:`param-HigginsonJCP2019`
-    for more details. The default value of ``fusion_multiplier`` is 1.
+    See :cite:t:`param-HigginsonJCP2019` for more details.
+    The default value of ``fusion_multiplier`` is 1.
 
 * ``<collision_name>.fusion_probability_threshold`` (`float`) optional.
     Only for ``nuclearfusion``.
