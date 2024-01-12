@@ -36,6 +36,8 @@ ions.physical_element = N
 electrons.mass = m_e
 electrons.charge = -q_e
 electrons.injection_style = none
+electrons.addRealAttributes = orig_z
+electrons.attribute.orig_z(x,y,z,ux,uy,uz,t) = z
 
 lasers.names        = laser1
 laser1.profile      = Gaussian
