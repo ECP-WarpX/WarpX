@@ -66,7 +66,8 @@ Compiling With Pre-Compiled Dependencies
 
 This workflow is the best and fastest to compile WarpX, when you just want to change code in WarpX and have the above central dependencies already made available *in the right configurations* (e.g., w/ or w/o MPI or GPU support) from a :ref:`module system <install-hpc>` or :ref:`package manager <install-dependencies>`.
 
-Instead of downloading the source code of the above central dependencies, or using a local copy of their source, we can compile and install those once and instruct CMake to `find their install locations and configurations <https://hsf-training.github.io/hsf-training-cmake-webpage/09-findingpackages/index.html>`__.
+Instead of downloading the source code of the above central dependencies, or using a local copy of their source, we can compile and install those dependencies once.
+By setting the `CMAKE_PREFIX_PATH <https://cmake.org/cmake/help/latest/envvar/CMAKE_PREFIX_PATH.html>`__ environment variable to the respective dependency install location prefixes, we can instruct CMake to `find their install locations and configurations <https://hsf-training.github.io/hsf-training-cmake-webpage/09-findingpackages/index.html>`__.
 
 WarpX supports this with :ref:`the following CMake flags <building-cmake-options>`:
 
