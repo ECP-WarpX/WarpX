@@ -87,3 +87,38 @@ WarpX supports this with :ref:`the following CMake flags <building-cmake-options
    cmake --build build -j 8
 
 As a background, this is also the workflow how WarpX is built in :ref:`package managers such as Spack and Conda-Forge <install-dependencies>`.
+
+
+.. _developers-local-compile-pylto:
+
+Faster Python Builds
+--------------------
+
+The Python bindings of WarpX and AMReX (pyAMReX) use `pybind11 <https://pybind11.readthedocs.io>`__.
+Since pybind11 relies heavily on `C++ metaprogramming <https://pybind11.readthedocs.io/en/stable/faq.html#how-can-i-create-smaller-binaries>`__, speeding up the generated binding code requires that we perform a `link-time optimization (LTO) <https://pybind11.readthedocs.io/en/stable/compiling.html#pybind11-add-module>`__ step, also known as `interprocedural optimization (IPO) <https://en.wikipedia.org/wiki/Interprocedural_optimization>`__.
+
+For fast local development cycles, one can skip LTO/IPO with the following flags:
+
+.. code-block:: bash
+
+   cd src/warpx
+
+   cmake -S . -B build       \
+     -DWarpX_PYTHON=ON       \
+     -DWarpX_PYTHON_IPO=OFF  \
+     -DpyAMReX_IPO=OFF
+
+   cmake --build build -j 8 --target pip_install
+
+.. note::
+
+   We might transition to `nanobind <https://github.com/wjakob/nanobind>`__ in the future, which `does not rely on LTO/IPO <https://nanobind.readthedocs.io/en/latest/benchmark.html>`__ for optimal binaries.
+   You can contribute to `this pyAMReX pull request <https://github.com/AMReX-Codes/pyamrex/pull/127>`__ to help exploring this library (and if it works for the HPC/GPU compilers that we need to support).
+
+For robustness, our ``pip_install`` target performs a regular ``wheel`` build and then installs it with ``pip``.
+This step will check every time of WarpX dependencies are properly installed, to avoid broken installations.
+When developing without internet or after the first ``pip_install`` succeeded in repeated installations in rapid development cycles, this check of ``pip`` can be skipped by using the ``pip_install_nodeps`` target instead:
+
+.. code-block:: bash
+
+   cmake --build build -j 8 --target pip_install_nodeps
