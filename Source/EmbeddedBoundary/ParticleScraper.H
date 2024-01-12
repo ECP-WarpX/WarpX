@@ -190,8 +190,8 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 if (phi_value < 0.0)
                 {
 
-                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
-                    DistanceToEB::normalize(normal);
+//                    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, phi, dxi);
+//                    DistanceToEB::normalize(normal);
 
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
