@@ -83,6 +83,67 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
         m_repeated_plasma_lens_strengths_B = mypc.d_repeated_plasma_lens_strengths_B.data();
     }
 
+#if defined(WARPX_DIM_3D)
+
+    if (mypc.m_E_ext_particle_s == "read_from_file" || 
+        mypc.m_B_ext_particle_s == "read_from_file") 
+    {
+        if (mypc.m_E_ext_particle_s == "read_from_file") m_Etype = ReadFromFile;
+        if (mypc.m_B_ext_particle_s == "read_from_file") m_Btype = ReadFromFile;
+
+        auto series = openPMD::Series(mypc.m_read_fields_from_path, openPMD::Access::READ_ONLY);
+        auto iseries = series.iterations.begin()->second;
+        auto F = iseries.meshes["B"];
+
+        auto axisLabels = F.getAttribute("axisLabels").get<std::vector<std::string>>();
+        auto fileGeom = F.getAttribute("geometry").get<std::string>();
+
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fileGeom == "cartesian", "3D can only read from files with cartesian geometry");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "x" && axisLabels[1] == "y" && axisLabels[2] == "z",
+                                        "3D expects axisLabels {x, y, z}");
+
+        const auto offset = F.gridGlobalOffset();
+        const auto gridSpacing = F.gridSpacing<long double>();
+        auto FCx = F["x"];
+        auto FCy = F["y"];
+        auto FCz = F["z"];
+        const auto extent = FCx.getExtent();
+
+        const openPMD::Offset chunk_offset = {0,0,0};
+        const openPMD::Extent chunk_extent = {extent[0], extent[1], extent[2]};
+
+        auto FCx_chunk_data = FCx.loadChunk<amrex::Real>(chunk_offset,chunk_extent);
+        auto FCy_chunk_data = FCy.loadChunk<amrex::Real>(chunk_offset,chunk_extent);
+        auto FCz_chunk_data = FCz.loadChunk<amrex::Real>(chunk_offset,chunk_extent);
+        series.flush();
+        auto FCx_data_host = FCx_chunk_data.get();
+        auto FCy_data_host = FCy_chunk_data.get();
+        auto FCz_data_host = FCz_chunk_data.get();
+        const size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
+        amrex::Gpu::DeviceVector<amrex::Real> FCx_data_gpu(total_extent);
+        amrex::Gpu::DeviceVector<amrex::Real> FCy_data_gpu(total_extent);
+        amrex::Gpu::DeviceVector<amrex::Real> FCz_data_gpu(total_extent);
+
+        auto FCx_data = FCx_data_gpu.data();
+        auto FCy_data = FCy_data_gpu.data();
+        auto FCz_data = FCz_data_gpu.data();
+
+        amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCx_data_host, FCx_data_host + total_extent, FCx_data);
+        amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCy_data_host, FCy_data_host + total_extent, FCy_data);
+        amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCz_data_host, FCz_data_host + total_extent, FCz_data);
+
+        const amrex::Array4<amrex::Real> fcx_array(FCx_data, {0,0,0}, {extent[0], extent[1], extent[2]}, 1);
+        const amrex::Array4<amrex::Real> fcy_array(FCy_data, {0,0,0}, {extent[0], extent[1], extent[2]}, 1);
+        const amrex::Array4<amrex::Real> fcz_array(FCz_data, {0,0,0}, {extent[0], extent[1], extent[2]}, 1);
+
+        Bfield_file_external_particle = new ExternalFieldFromFile(
+            amrex::RealVect {gridSpacing[0], gridSpacing[1], gridSpacing[2] }, 
+            amrex::RealVect {offset[0], offset[1], offset[2] }, 
+            fcx_array, fcy_array, fcz_array
+        ); 
+    }
+#endif
+
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Etype != Unknown, "Unknown E_ext_particle_init_style");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Btype != Unknown, "Unknown B_ext_particle_init_style");
 

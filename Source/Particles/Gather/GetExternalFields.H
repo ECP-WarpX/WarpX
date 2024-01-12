@@ -4,6 +4,7 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 
 #include "Particles/WarpXParticleContainer_fwd.H"
+#include "Utils/Algorithms/LinearInterpolation.H"
 #include "Utils/WarpXConst.H"
 
 #include "AcceleratorLattice/LatticeElementFinder.H"
@@ -18,12 +19,85 @@
 #include <optional>
 
 
+struct ExternalFieldFromFile 
+{
+    const amrex::RealVect dx;
+    const amrex::RealVect origin;
+    const amrex::Array4<amrex::Real> arrayx;
+    const amrex::Array4<amrex::Real> arrayy;
+    const amrex::Array4<amrex::Real> arrayz;
+    public:
+    ExternalFieldFromFile(
+        const amrex::RealVect dx_,
+        const amrex::RealVect origin_,
+        const amrex::Array4<amrex::Real> arrayx_,
+        const amrex::Array4<amrex::Real> arrayy_,
+        const amrex::Array4<amrex::Real> arrayz_
+        ) :
+        dx(dx_), origin(origin_), arrayx(arrayx_), arrayy(arrayy_), arrayz(arrayz_)
+    {
+        assert(arrayx.begin.x == arrayy.begin.x);
+        assert(arrayx.begin.y == arrayy.begin.y);
+        assert(arrayx.begin.z == arrayy.begin.z);
+        assert(arrayx.begin.x == arrayz.begin.x);
+        assert(arrayx.begin.y == arrayz.begin.y);
+        assert(arrayx.begin.z == arrayz.begin.z);
+        assert(arrayx.end.x == arrayy.end.x);
+        assert(arrayx.end.y == arrayy.end.y);
+        assert(arrayx.end.z == arrayy.end.z);
+        assert(arrayx.end.x == arrayz.end.x);
+        assert(arrayx.end.y == arrayz.end.y);
+        assert(arrayx.end.z == arrayz.end.z);
+    }
+
+    amrex::Real interp_(const amrex::Array4<amrex::Real> array, int ix, int iy, int iz, amrex::Real x, amrex::Real y, amrex::Real z) const noexcept {
+        const amrex::Real
+                f000 = array(iz  , iy  , ix  ),
+                f001 = array(iz+1, iy  , ix  ),
+                f010 = array(iz  , iy+1, ix  ),
+                f011 = array(iz+1, iy+1, ix  ),
+                f100 = array(iz  , iy  , ix+1),
+                f101 = array(iz+1, iy  , ix+1),
+                f110 = array(iz  , iy+1, ix+1),
+                f111 = array(iz+1, iy+1, ix+1);
+        
+        return static_cast<amrex::Real>(utils::algorithms::trilinear_interp<amrex::Real, amrex::Real>(
+            static_cast<amrex::Real>(ix * dx[0]), static_cast<amrex::Real>((ix + 1) * dx[0]),
+            static_cast<amrex::Real>(iy * dx[1]), static_cast<amrex::Real>((iy + 1) * dx[1]),
+            static_cast<amrex::Real>(iz * dx[2]), static_cast<amrex::Real>((iz + 1) * dx[2]), 
+            f000, f001, f010, f011, f100, f101, f110, f111,
+            x, y, z));
+    }
+
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    amrex::RealVect interpolate(amrex::Real x, amrex::Real y, amrex::Real z) const noexcept {
+        // Get index of the external field array
+        int ix = floor( (x-origin[0])/dx[0] );
+        int iy = floor( (y-origin[1])/dx[1] );
+        int iz = floor( (z-origin[2])/dx[2] );
+        amrex::Real fx = x/dx[0] - ix;
+        amrex::Real fy = y/dx[1] - iy;
+        amrex::Real fz = z/dx[2] - iz;
+
+        if (ix < arrayx.begin.x || iy < arrayx.begin.y || iz < arrayx.begin.z || ix > arrayx.end.x || iy > arrayx.end.y || iz > arrayx.end.z)
+            return amrex::RealVect();
+
+        amrex::RealVect retvect = {
+            interp_(arrayx, ix, iy, iz, x, y, z), 
+            interp_(arrayy, ix, iy, iz, x, y, z), 
+            interp_(arrayz, ix, iy, iz, x, y, z)
+        };
+
+        return retvect;
+    }
+};
+
 /** \brief Functor class that assigns external
  *         field values (E and B) to particles.
 */
 struct GetExternalEBField
 {
-    enum ExternalFieldInitType { None, Parser, RepeatedPlasmaLens, Unknown };
+    enum ExternalFieldInitType { None, Parser, RepeatedPlasmaLens, ReadFromFile, Unknown };
 
     GetExternalEBField () = default;
 
@@ -55,6 +129,8 @@ struct GetExternalEBField
     const amrex::ParticleReal* AMREX_RESTRICT m_ux = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uz = nullptr;
+
+    const ExternalFieldFromFile* Bfield_file_external_particle = nullptr;
 
     std::optional<LatticeElementFinderDevice> d_lattice_element_finder;
 
@@ -115,6 +191,22 @@ struct GetExternalEBField
             Bx = m_Bxfield_partparser(x, y, z, lab_time);
             By = m_Byfield_partparser(x, y, z, lab_time);
             Bz = m_Bzfield_partparser(x, y, z, lab_time);
+        }
+        else if (m_Btype == ExternalFieldInitType::ReadFromFile)
+        {
+            amrex::ParticleReal x, y, z;
+            m_get_position(i, x, y, z);
+            if (m_gamma_boost > 1._prt) {
+                z = m_gamma_boost*z + m_uz_boost*m_time;
+            }
+
+
+            const auto B = Bfield_file_external_particle->interpolate(x, y, z);
+
+            // TODO: rho: Shape functions?
+            Bx = B[0];
+            By = B[1];
+            Bz = B[2];
         }
 
         if (m_Etype == RepeatedPlasmaLens ||
