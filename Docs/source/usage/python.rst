@@ -114,6 +114,16 @@ Particle distributions can be used for to initialize particles in a particle spe
 
 .. autoclass:: pywarpx.picmi.ParticleListDistribution
 
+Particle distributions can be continuously injected from a boundary
+
+.. autoclass:: pywarpx.picmi.UniformFluxDistribution
+
+.. autoclass:: pywarpx.picmi.AnalyticFluxDistribution
+
+.. autoclass:: pywarpx.picmi.UniformThermalPLasmaFluxDistribution
+
+.. autoclass:: pywarpx.picmi.AnalyticThermalPLasmaFluxDistribution
+
 Particle layouts determine how to microscopically place macro particles in a grid cell.
 
 .. autoclass:: pywarpx.picmi.GriddedLayout

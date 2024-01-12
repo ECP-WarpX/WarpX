@@ -128,6 +128,7 @@ public:
     // When compiled in cylindrical geometry, 0 = radial, 1 = azimuthal, 2 = z
     int flux_normal_axis;
     int flux_direction; // -1 for left, +1 for right
+    bool fixed_ppc_is_specified = false;
 
     bool radially_weighted = true;
 
