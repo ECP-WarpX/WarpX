@@ -374,7 +374,10 @@ public:
             amrex::ParallelForRNG( n_independent_pairs,
                 [=] AMREX_GPU_DEVICE (int i_coll, amrex::RandomEngine const& engine) noexcept
                 {
-                    // compute i_cell = upper_bound(p_coll_offsets[0:n_independent_pairs], i_coll);
+                    // to avoid type mismatch errors
+                    index_type ui_coll = (index_type)i_coll;
+
+                    // compute i_cell = upper_bound(p_coll_offsets[0:n_independent_
                     int i_cell = 0;
                     {
                         int left = 0;
@@ -384,18 +387,22 @@ public:
                         {
                             int mid = left + (right - left) / 2;
 
-                            if (p_coll_offsets[mid] <= i_coll)
+                            if (p_coll_offsets[mid] <= ui_coll)
                             {
-                                if (p_coll_offsets[mid+1] > i_coll)
+                                if (p_coll_offsets[mid+1] > ui_coll)
                                 {
                                     i_cell = mid;
                                     break;
                                 }
                                 else
+                                {
                                     left = mid+1;
+                                }
                             }
                             else
+                            {
                                 right = mid;
+                            }
                         }
                     }
 
@@ -406,7 +413,7 @@ public:
                     index_type const cell_half_1 = (cell_start_1+cell_stop_1)/2;
 
                     // collision number of the cell
-                    const int coll_idx = i_coll - p_coll_offsets[i_cell];
+                    const index_type coll_idx = ui_coll - p_coll_offsets[i_cell];
 
                     // Same but for the pairs
                     index_type const cell_start_pair = have_product_species?
@@ -562,10 +569,13 @@ public:
                     const auto n_part_in_cell_2 = cell_offsets_2[i_cell+1] - cell_offsets_2[i_cell];
                     // Particular case: no pair if a species has no particle in that cell
                     if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0 || i_cell == n_cells)
+                    {
                         p_n_ind_pairs_in_each_cell[i_cell] = 0;
+                    }
                     else
+                    {
                         p_n_ind_pairs_in_each_cell[i_cell] = (n_part_in_cell_1 > n_part_in_cell_2)? n_part_in_cell_1: n_part_in_cell_2;
-
+                    }
                 }
             );
 
@@ -628,6 +638,9 @@ public:
             amrex::ParallelForRNG( n_independent_pairs,
                 [=] AMREX_GPU_DEVICE (int i_coll, amrex::RandomEngine const& engine) noexcept
                 {
+                    // to avoid type mismatch errors
+                    index_type ui_coll = (index_type)i_coll;
+
                     // compute i_cell = upper_bound(coll_offsets[0:n_independent_pairs], i_coll);
                     int i_cell = 0;
                     {
@@ -637,18 +650,22 @@ public:
                         for (;;)
                         {
                             int mid = left + (right - left) / 2;
-                            if (p_coll_offsets[mid] <= i_coll)
+                            if (p_coll_offsets[mid] <= ui_coll)
                             {
-                                if (p_coll_offsets[mid+1] > i_coll)
+                                if (p_coll_offsets[mid+1] > ui_coll)
                                 {
                                     i_cell = mid;
                                     break;
                                 }
                                 else
+                                {
                                     left = mid+1;
+                                }
                             }
                             else
+                            {
                                 right = mid;
+                            }
                         }
                     }
 
@@ -661,7 +678,7 @@ public:
                     index_type const cell_stop_2  = cell_offsets_2[i_cell+1];
 
                     // collision number of the cell
-                    const int coll_idx = i_coll - p_coll_offsets[i_cell];
+                    const index_type coll_idx = ui_coll - p_coll_offsets[i_cell];
 
                     // Same but for the pairs
                     index_type const cell_start_pair = have_product_species?
@@ -690,18 +707,18 @@ public:
                             cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
                             p_pair_reaction_weight, engine);
                     }
-                    else
+                    else // swap sets 1 and 2 so that particle 1 remains the larger set
                     {
                         // Call the function in order to perform collisions
                         // If there are product species, p_mask, p_pair_indices_1/2, and
                         // p_pair_reaction_weight are filled here
                         binary_collision_functor(
-                            cell_start_2, cell_stop_2, cell_start_1, cell_stop_1,
-                            indices_2, indices_1,
-                            soa_2, soa_1, get_position_2, get_position_1,
-                            q2, q1, m2, m1, dt, dV, coll_idx,
-                            cell_start_pair, p_mask, p_pair_indices_2, p_pair_indices_1,
-                            p_pair_reaction_weight, engine);
+                            cell_start_2, cell_stop_2, cell_start_1, cell_stop_1, // NOLINT(readability-suspicious-call-argument)
+                            indices_2, indices_1, // NOLINT(readability-suspicious-call-argument)
+                            soa_2, soa_1, get_position_2, get_position_1, // NOLINT(readability-suspicious-call-argument)
+                            q2, q1, m2, m1, dt, dV, coll_idx, // NOLINT(readability-suspicious-call-argument)
+                            cell_start_pair, p_mask, p_pair_indices_2, p_pair_indices_1, // NOLINT(readability-suspicious-call-argument)
+                            p_pair_reaction_weight, engine); // NOLINT(readability-suspicious-call-argument)
                     }
                 }
             );

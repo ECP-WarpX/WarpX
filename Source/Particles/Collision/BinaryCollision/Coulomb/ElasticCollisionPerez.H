@@ -37,6 +37,7 @@
  * @param[in] dV is the volume of the corresponding cell.
  * @param[in] engine the random number generator state & factory
  * @param[in] isSameSpecies whether this is an intra-species collision process
+ * @param[in] coll_idx is the collision index offset.
 */
 
 template <typename T_index, typename T_PR, typename T_R, typename SoaData_type>
@@ -52,7 +53,7 @@ void ElasticCollisionPerez (
     T_PR const  T1, T_PR const  T2,
     T_R const  dt, T_PR const   L, T_R const dV,
     amrex::RandomEngine const& engine,
-    bool const isSameSpecies, int coll_idx)
+    bool const isSameSpecies, T_index coll_idx)
 {
     const T_index NI1 = I1e - I1s;
     const T_index NI2 = I2e - I2s;
