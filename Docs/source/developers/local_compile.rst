@@ -13,7 +13,7 @@ For simplicity, WarpX :ref:`compilation with CMake <building-cmake>` by default 
 
 on-the-fly, which is called a *superbuild*.
 
-In some scenarios, e.g., when compiling without or with slow internet access or when working on WarpX and its dependencies, other strategies might be preferable.
+In some scenarios, e.g., when compiling without internet, with slow internet access, or when working on WarpX and its dependencies, other strategies might be preferable.
 In the below workflows, you as the developer need to make sure to use compatible versions of the dependencies you provide.
 
 
@@ -26,7 +26,7 @@ This workflow is best for developers that make changes to WarpX, AMReX, PICSAR, 
 For instance, use this if you add a feature in AMReX and want to try it in WarpX before it is proposed as a pull request for inclusion in AMReX.
 
 Instead of downloading the source code of the above dependencies, one can also use an already cloned source copy.
-For instance, clone these three dependencies to ``$HOME/src``:
+For instance, clone these dependencies to ``$HOME/src``:
 
 .. code-block:: bash
 
@@ -64,7 +64,7 @@ When building WarpX, :ref:`the following CMake flags <building-cmake-options>` w
 Compiling With Pre-Compiled Dependencies
 ----------------------------------------
 
-This workflow is best the fastest to compile WarpX, when you just want to change code in WarpX and have the above central dependencies already made available *in the right configurations* (e.g., w/ or w/o MPI or GPU support) from a :ref:`module system <install-hpc>` or :ref:`package manager <install-dependencies>`.
+This workflow is the best and fastest to compile WarpX, when you just want to change code in WarpX and have the above central dependencies already made available *in the right configurations* (e.g., w/ or w/o MPI or GPU support) from a :ref:`module system <install-hpc>` or :ref:`package manager <install-dependencies>`.
 
 Instead of downloading the source code of the above central dependencies, or using a local copy of their source, we can compile and install those once and instruct CMake to `find their install locations and configurations <https://hsf-training.github.io/hsf-training-cmake-webpage/09-findingpackages/index.html>`__.
 
