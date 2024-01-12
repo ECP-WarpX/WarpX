@@ -309,7 +309,7 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
             slice_cc_nd_box.setLo( idim, slice_realbox.lo(idim) );
             slice_cc_nd_box.setHi( idim, slice_realbox.hi(idim) );
 
-            if ( slice_cr_ratio[idim] > 1) slice_cr_ratio[idim] = 1;
+            if ( slice_cr_ratio[idim] > 1) { slice_cr_ratio[idim] = 1; }
 
             // check for interpolation -- compute index lo with floor and ceil
             if ( slice_cc_nd_box.lo(idim) - real_box.lo(idim) >= fac ) {

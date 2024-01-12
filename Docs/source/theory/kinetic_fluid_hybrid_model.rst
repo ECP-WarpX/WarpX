@@ -18,8 +18,8 @@ has to resolve the electron Debye length and CFL-condition based on the speed
 of light.
 
 Many authors have described variations of the kinetic ion & fluid electron model,
-generally referred to as particle-fluid hybrid or just hybrid-PIC models. The implementation
-in WarpX follows the outline from :cite:t:`c-winske2022hybrid`.
+generally referred to as particle-fluid hybrid or just hybrid-PIC models. The
+implementation in WarpX is described in detail in :cite:t:`kfhm-Groenewald2023`.
 This description follows mostly from that reference.
 
 Model
@@ -29,7 +29,7 @@ The basic justification for the hybrid model is that the system to which it is
 applied is dominated by ion kinetics, with ions moving much slower than electrons
 and photons. In this scenario two critical approximations can be made, namely,
 neutrality (:math:`n_e=n_i`) and the Maxwell-Ampere equation can be simplified by
-neglecting the displacement current term :cite:p:`c-NIELSON1976`, giving,
+neglecting the displacement current term :cite:p:`kfhm-Nielson1976`, giving,
 
     .. math::
 
@@ -168,4 +168,4 @@ The isothermal limit is given by :math:`\gamma = 1` while :math:`\gamma = 5/3`
 (default) produces the adiabatic limit.
 
 .. bibliography::
-    :keyprefix: c-
+    :keyprefix: kfhm-

@@ -86,7 +86,7 @@ void ReducedDiags::LoadBalance ()
     // load balancing operations
 }
 
-void ReducedDiags::BackwardCompatibility ()
+void ReducedDiags::BackwardCompatibility () const
 {
     const amrex::ParmParse pp_rd_name(m_rd_name);
     std::vector<std::string> backward_strings;
@@ -116,7 +116,7 @@ void ReducedDiags::WriteToFile (int step) const
     ofs << WarpX::GetInstance().gett_new(0);
 
     // loop over data size and write
-    for (const auto& item : m_data) ofs << m_sep << item;
+    for (const auto& item : m_data) { ofs << m_sep << item; }
 
     // end loop over data size
 

@@ -140,10 +140,10 @@ namespace ApplyParticleBoundaries {
             uy = ur*std::sin(y) + ut*std::cos(y);
         }
 #else
-        if (change_sign_ux) ux = -ux;
-        if (change_sign_uy) uy = -uy;
+        if (change_sign_ux) { ux = -ux; }
+        if (change_sign_uy) { uy = -uy; }
 #endif
-        if (change_sign_uz) uz = -uz;
+        if (change_sign_uz) { uz = -uz; }
     }
 
 }
