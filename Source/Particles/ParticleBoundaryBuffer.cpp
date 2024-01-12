@@ -533,4 +533,3 @@ ParticleBoundaryBuffer::getParticleBufferPointer(const std::string species_name,
 
     return &buffer[index];
 }
-
