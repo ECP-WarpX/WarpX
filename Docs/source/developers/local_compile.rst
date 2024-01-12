@@ -13,7 +13,7 @@ For simplicity, WarpX :ref:`compilation with CMake <building-cmake>` by default 
 
 on-the-fly, which is called a *superbuild*.
 
-In some scenarios, e.g., when compiling without internet, with slow internet access, or when working on WarpX and its dependencies, other strategies might be preferable.
+In some scenarios, e.g., when compiling without internet, with slow internet access, or when working on WarpX and its dependencies, modifications to the superbuild strategy might be preferable.
 In the below workflows, you as the developer need to make sure to use compatible versions of the dependencies you provide.
 
 
@@ -123,3 +123,14 @@ When developing without internet or after the first ``pip_install`` succeeded in
 .. code-block:: bash
 
    cmake --build build -j 8 --target pip_install_nodeps
+
+
+.. _developers-local-compile-ccache:
+
+CCache
+------
+
+WarpX builds will automatically search for `CCache <https://ccache.dev>`__ to speed up subsequent compilations in development cycles.
+Make sure a :ref:`recent CCache version <install-dependencies>` is installed to make use of this feature.
+
+For power developers that switch a lot between fundamentally different WarpX configurations (e.g., 1D to 3D, GPU and CPU builds, many branches with different bases, developing AMReX and WarpX at the same time), also consider increasing the `CCache cache size <https://ccache.dev/manual/4.9.html#_cache_size_management>`__ and changing the `cache directory <https://ccache.dev/manual/4.9.html#config_cache_dir>`__ if needed, e.g., due to storage quota constraints or to choose a fast(er) filesystem for the cache files.
