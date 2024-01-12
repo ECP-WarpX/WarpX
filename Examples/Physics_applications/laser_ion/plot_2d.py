@@ -10,15 +10,16 @@
 # This script plots the densities and fields of a 2D laser-ion acceleration simulation.
 
 
-import os
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import TwoSlopeNorm
-from openpmd_viewer import OpenPMDTimeSeries
-import scipy.constants as sc
 import argparse
-import pandas as pd
+import os
 import re
+
+from matplotlib.colors import TwoSlopeNorm
+import matplotlib.pyplot as plt
+import numpy as np
+from openpmd_viewer import OpenPMDTimeSeries
+import pandas as pd
+import scipy.constants as sc
 
 plt.rcParams.update({'font.size':16})
 

@@ -4,9 +4,9 @@
 
 import argparse
 
-import numpy as np
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
+import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
 
 parser = argparse.ArgumentParser(description='Process a 2D histogram name and an integer.')
