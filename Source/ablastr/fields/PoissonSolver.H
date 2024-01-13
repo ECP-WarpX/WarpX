@@ -51,6 +51,20 @@
 
 namespace {
 
+// Implements equation 2 in https://journals.aps.org/prab/pdf/10.1103/PhysRevSTAB.10.129901
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real IntegratedPotential( amrex::Real x, amrex::Real y, amrex::Real z ) {
+    amrex::Real const r = std::sqrt( x*x + y*y + z*z );
+    amrex::Real const G =
+        - 0.5 * z*z * std::atan( x*y/(z*r) )
+        - 0.5 * y*y * std::atan( x*z/(y*r) )
+        - 0.5 * x*x * std::atan( y*z/(x*r) )
+        + y*z*std::log( x + r )
+        + x*z*std::log( y + r )
+        + x*y*std::log( z + r );
+    return G;
+}
+
 void
 computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::MultiFab & phi,
