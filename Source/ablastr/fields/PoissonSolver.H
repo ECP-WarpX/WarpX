@@ -61,7 +61,8 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ba.size() == 1, "IGF only works with a single box right now" );
 
-    // Allocate 2x wider array for rho and copy values
+    // Allocate 2x wider array for rho
+    // TODO This could probaby be more compact
     amrex::IntVect hivect = ba.enclosedCells()[0].length(); // even number of cells
     for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
         hivect[idim] = 2*hivect[idim] - 1;
@@ -74,6 +75,22 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::MultiFab tmp_rho = amrex::MultiFab(extended_ba, dm, 1, 0);
     tmp_rho.setVal(0);
 
+    // Copy values of rho to tmp_rho
+    // TODO This could probably be replaced by a parallel copy
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+        const amrex::Box& bx = mfi.tilebox();
+        amrex::Array4<const amrex::Real> const& rho_arr = rho.array(mfi);
+        auto tmp_rho_arr = tmp_rho.array(mfi);
+        amrex::ParallelFor( bx,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+                tmp_rho_arr(i,j,k) = rho_arr(i,j,k);
+            }
+        );
+    }
 }
 
 }
