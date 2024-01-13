@@ -68,8 +68,7 @@ amrex::Real IntegratedPotential( amrex::Real x, amrex::Real y, amrex::Real z ) {
 void
 computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::MultiFab & phi,
-                std::array<amrex::Real, 3> const beta,
-                amrex::Geometry const geom,
+                std::array<amrex::Real, 3> const cell_size,
                 amrex::DistributionMapping const dm,
                 amrex::BoxArray ba ) {
 
@@ -113,9 +112,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
         );
 
         // Fill values of the Green function
-        amrex::Real dx = geom.CellSize(0);
-        amrex::Real dy = geom.CellSize(1);
-        amrex::Real dz = geom.CellSize(2);
+        amrex::Real dx = cell_size[0];
+        amrex::Real dy = cell_size[1];
+        amrex::Real dz = cell_size[2];
 //        amrex::Print() << "computePhiIGF: " << bx.lo() << std::endl;
         // TODO: check that indices start at 0
         amrex::Array4<amrex::Real> tmp_G_arr = tmp_G.array(mfi);
@@ -150,7 +149,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
             }
         );
     }
-    // Todo: check max value of G
+    // Todo: check max value of G and of G[0,0,0]
 
 }
 
@@ -279,6 +278,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
     amrex::LPInfo info;
     for (int lev=0; lev<=finest_level; lev++) {
+
         // Set the value of beta
         amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
 #if defined(WARPX_DIM_1D_Z)
@@ -288,6 +288,18 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 #else
                 {{ beta[0], beta[1], beta[2] }};
 #endif
+
+        // IGS SOLVER HACK:
+        // CALL IT IN ALL CASES
+        amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_igf
+                {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
+                              geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
+                              geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
+
+        computePhiIGF( *rho[lev], *phi[lev], dx_igf, dmap[lev], grids[lev] );
+
+        continue;
+        // IGF SOLVER HACK: END
 
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
