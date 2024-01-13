@@ -49,6 +49,35 @@
 #include <array>
 #include <optional>
 
+namespace {
+
+void
+computePhiIGF ( amrex::MultiFab const & rho,
+                amrex::MultiFab & phi,
+                std::array<amrex::Real, 3> const beta,
+                amrex::Geometry const geom,
+                amrex::DistributionMapping const dm,
+                amrex::BoxArray ba ) {
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ba.size() == 1, "IGF only works with a single box right now" );
+
+    // Allocate 2x wider array for rho and copy values
+    amrex::IntVect hivect = ba.enclosedCells()[0].length(); // even number of cells
+    for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
+        hivect[idim] = 2*hivect[idim] - 1;
+    }
+    amrex::Box const extended_box = amrex::Box( amrex::IntVect::TheZeroVector(), hivect );
+    amrex::BoxList extended_bl;
+    extended_bl.push_back( extended_box );
+    amrex::BoxArray extended_ba;
+    extended_ba.define(extended_bl);
+    amrex::MultiFab tmp_rho = amrex::MultiFab(extended_ba, dm, 1, 0);
+    tmp_rho.setVal(0);
+
+}
+
+}
+
 
 namespace ablastr::fields {
 
