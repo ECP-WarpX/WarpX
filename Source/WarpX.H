@@ -295,6 +295,7 @@ public:
     //! in all directions). This scheme is momentum conserving in the limit of infinitely
     //! small time steps.
     static bool galerkin_interpolation;
+    static bool angus_interpolation;
 
     //! Flag whether the Verboncoeur correction is applied to the current and charge density
     //! on the axis when using RZ.

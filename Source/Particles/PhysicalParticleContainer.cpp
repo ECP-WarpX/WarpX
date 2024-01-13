@@ -2969,6 +2969,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
     const Dim3 lo = lbound(box);
 
     bool galerkin_interpolation = WarpX::galerkin_interpolation;
+    bool angus_interpolation = WarpX::angus_interpolation;
     int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
@@ -3092,7 +3093,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                                   nox, galerkin_interpolation);
+                                   nox, galerkin_interpolation, angus_interpolation);
         }
 
         // Externally applied E and B-field in Cartesian co-ordinates

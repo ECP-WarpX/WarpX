@@ -586,58 +586,77 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 auto& uxp_n = pti.GetAttribs(particle_comps["ux_n"]);
                 auto& uyp_n = pti.GetAttribs(particle_comps["uy_n"]);
                 auto& uzp_n = pti.GetAttribs(particle_comps["uz_n"]);
-                if (WarpX::current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman) {
-                    if (WarpX::nox == 1){
-                        doVillasenorAndBunemanDepositionShapeNImplicit<1>(
-                            xp_n_data, yp_n_data, zp_n_data,
-                            GetPosition, wp.dataPtr() + offset,
-                            uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
-                            uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                            jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
-                            WarpX::n_rz_azimuthal_modes, cost,
-                            WarpX::load_balance_costs_update_algo);
-                    } else if (WarpX::nox == 2){
-                        doVillasenorAndBunemanDepositionShapeNImplicit<2>(
-                            xp_n_data, yp_n_data, zp_n_data,
-                            GetPosition, wp.dataPtr() + offset,
-                            uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
-                            uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                            jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
-                            WarpX::n_rz_azimuthal_modes, cost,
-                            WarpX::load_balance_costs_update_algo);
-                    }
-		}
-		else {
-                    if (WarpX::nox == 1){
-                        doChargeConservingDepositionShapeNImplicit<1>(
-                            xp_n_data, yp_n_data, zp_n_data,
-                            GetPosition, wp.dataPtr() + offset,
-                            uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
-                            uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                            jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
-                            WarpX::n_rz_azimuthal_modes, cost,
-                            WarpX::load_balance_costs_update_algo);
-                    } else if (WarpX::nox == 2){
-                        doChargeConservingDepositionShapeNImplicit<2>(
-                            xp_n_data, yp_n_data, zp_n_data,
-                            GetPosition, wp.dataPtr() + offset,
-                            uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
-                            uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                            jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
-                            WarpX::n_rz_azimuthal_modes, cost,
-                            WarpX::load_balance_costs_update_algo);
-                    } else if (WarpX::nox == 3){
-                        doChargeConservingDepositionShapeNImplicit<3>(
-                            xp_n_data, yp_n_data, zp_n_data,
-                            GetPosition, wp.dataPtr() + offset,
-                            uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
-                            uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                            jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
-                            WarpX::n_rz_azimuthal_modes, cost,
-                            WarpX::load_balance_costs_update_algo);
-                    }
-		}
+                if (WarpX::nox == 1){
+                    doChargeConservingDepositionShapeNImplicit<1>(
+                        xp_n_data, yp_n_data, zp_n_data,
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                } else if (WarpX::nox == 2){
+                    doChargeConservingDepositionShapeNImplicit<2>(
+                        xp_n_data, yp_n_data, zp_n_data,
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                } else if (WarpX::nox == 3){
+                    doChargeConservingDepositionShapeNImplicit<3>(
+                        xp_n_data, yp_n_data, zp_n_data,
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                }
             }
+	} else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman) {
+            if (push_type == PushType::Implicit) {
+#if (AMREX_SPACEDIM >= 2)
+                auto& xp_n = pti.GetAttribs(particle_comps["x_n"]);
+                const ParticleReal* xp_n_data = xp_n.dataPtr() + offset;
+#else
+                const ParticleReal* xp_n_data = nullptr;
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+                auto& yp_n = pti.GetAttribs(particle_comps["y_n"]);
+                const ParticleReal* yp_n_data = yp_n.dataPtr() + offset;
+#else
+                const ParticleReal* yp_n_data = nullptr;
+#endif
+                auto& zp_n = pti.GetAttribs(particle_comps["z_n"]);
+                const ParticleReal* zp_n_data = zp_n.dataPtr() + offset;
+                auto& uxp_n = pti.GetAttribs(particle_comps["ux_n"]);
+                auto& uyp_n = pti.GetAttribs(particle_comps["uy_n"]);
+                auto& uzp_n = pti.GetAttribs(particle_comps["uz_n"]);
+                if (WarpX::nox == 1){
+                    doVillasenorAndBunemanDepositionShapeNImplicit<1>(
+                        xp_n_data, yp_n_data, zp_n_data,
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                } else if (WarpX::nox == 2){
+                    doVillasenorAndBunemanDepositionShapeNImplicit<2>(
+                        xp_n_data, yp_n_data, zp_n_data,
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
+                }
+	    }
+	    else {
+                WARPX_ABORT_WITH_MESSAGE("The VillasenorAndBunemen algorithm can only be used with implicit algorithm.");
+	    }
         } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
             if (push_type == PushType::Implicit) {
                 WARPX_ABORT_WITH_MESSAGE("The Vay algorithm cannot be used with implicit algorithm.");

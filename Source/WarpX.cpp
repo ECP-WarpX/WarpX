@@ -164,6 +164,7 @@ int WarpX::current_centering_noz = 2;
 
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
+bool WarpX::angus_interpolation = false;
 
 bool WarpX::verboncoeur_axis_correction = true;
 
@@ -526,6 +527,18 @@ WarpX::ReadParameters ()
     {
         const ParmParse pp_algo("algo");
         electromagnetic_solver_id = static_cast<short>(GetAlgorithmInteger(pp_algo, "maxwell_solver"));
+    }
+    
+    {
+        const ParmParse pp_interpolation("interpolation");
+
+        pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
+        pp_interpolation.query("angus_scheme",angus_interpolation);
+	if(angus_interpolation) {
+	    amrex::Print() << "angus_interpolation is on" << std::endl;
+	    galerkin_interpolation = false; 
+	}
+
     }
 
     {
@@ -1281,9 +1294,8 @@ WarpX::ReadParameters ()
             }
             if (current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman) {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    galerkin_interpolation,
-                    //vandb_interpolation, // JRA
-                    "With implicit and semi-implicit schemes and VillasenorAndBuneman deposition, the VandB field gathering must be turned on in order to conserve energy");
+                    angus_interpolation,
+                    "With implicit and semi-implicit schemes and VillasenorAndBuneman deposition, the angus field gathering must be turned on in order to conserve energy");
             }
         }
 
@@ -1402,12 +1414,6 @@ WarpX::ReadParameters ()
             }
         }
 
-    }
-
-    {
-        const ParmParse pp_interpolation("interpolation");
-
-        pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
     }
 
     {

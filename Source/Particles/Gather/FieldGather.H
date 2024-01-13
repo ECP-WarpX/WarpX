@@ -1085,7 +1085,8 @@ void doGatherShapeNImplicit (
                      const amrex::Dim3& lo,
                      const int n_rz_azimuthal_modes,
                      const int nox,
-                     const bool galerkin_interpolation)
+                     const bool galerkin_interpolation,
+                     const bool angus_interpolation)
 {
     if (galerkin_interpolation) {
         if (nox == 1) {
@@ -1106,6 +1107,14 @@ void doGatherShapeNImplicit (
                                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        }
+    }
+    else if (angus_interpolation) {
+        if (nox == 2) { // shape_factor = 1 used below is temporary. Will add new function
+            doGatherShapeN<1,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
     } else {
         if (nox == 1) {
