@@ -117,17 +117,40 @@ computePhiIGF ( amrex::MultiFab const & rho,
         amrex::Real dy = geom.CellSize(1);
         amrex::Real dz = geom.CellSize(2);
 //        amrex::Print() << "computePhiIGF: " << bx.lo() << std::endl;
+        // TODO: check that indices start at 0
         amrex::Array4<amrex::Real> tmp_G_arr = tmp_G.array(mfi);
         amrex::ParallelFor( bx,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                amrex::Real x = i*dx;
-                amrex::Real y = j*dy;
-                amrex::Real z = k*dz;
+                amrex::Real const x = i*dx;
+                amrex::Real const y = j*dy;
+                amrex::Real const z = k*dz;
 
+                amrex::Real pi = 3.14159265359;
+                amrex::Real const G_value = 1./(4*pi*dx*dy*dz) * (
+                    IntegratedPotential( x+0.5*dx, y+0.5*dy, z+0.5*dz )
+                  - IntegratedPotential( x-0.5*dx, y+0.5*dy, z+0.5*dz )
+                  - IntegratedPotential( x+0.5*dx, y-0.5*dy, z+0.5*dz )
+                  - IntegratedPotential( x+0.5*dx, y+0.5*dy, z-0.5*dz )
+                  + IntegratedPotential( x+0.5*dx, y-0.5*dy, z-0.5*dz )
+                  + IntegratedPotential( x-0.5*dx, y+0.5*dy, z-0.5*dz )
+                  + IntegratedPotential( x-0.5*dx, y-0.5*dy, z+0.5*dz )
+                  - IntegratedPotential( x-0.5*dx, y-0.5*dy, z-0.5*dz )
+                );
+
+                tmp_G_arr(i,j,k) = G_value;
+                // Fill the rest of the array by periodicity
+                tmp_G_arr(hivect[0]-i, j          , k          ) = G_value;
+                tmp_G_arr(i          , hivect[1]-j, k          ) = G_value;
+                tmp_G_arr(i          , hivect[1]-j, hivect[2]-k) = G_value;
+                tmp_G_arr(hivect[0]-i, hivect[1]-j, k          ) = G_value;
+                tmp_G_arr(i          , hivect[1]-j, hivect[2]-k) = G_value;
+                tmp_G_arr(hivect[0]-i, j          , hivect[2]-k) = G_value;
+                tmp_G_arr(hivect[0]-i, hivect[1]-j, hivect[2]-k) = G_value;
             }
         );
     }
+    // Todo: check max value of G
 
 }
 
@@ -268,6 +291,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
+
+        // TODO: Call computePhiIGF with dx_scaled
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
                 {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
                               geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
