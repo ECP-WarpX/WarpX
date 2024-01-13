@@ -1759,8 +1759,8 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
             double sz_bar_node[2] = {0.};
             double sz_bar_cell[2] = {0.};
             double const z_bar = (zp_nph - zmin)*dzi;
-            const int k_bar_node = compute_shifted_shape_factor_cic(sz_bar_node, z_bar);
-            const int k_bar_cell = compute_shifted_shape_factor_cic(sz_bar_cell, z_bar-0.5);
+            const int k_bar_node = compute_shape_factor_cic(sz_bar_node, z_bar);
+            const int k_bar_cell = compute_shape_factor_cic(sz_bar_cell, z_bar-0.5);
 #endif
 
 #if defined(WARPX_DIM_3D)
