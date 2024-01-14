@@ -115,7 +115,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
         amrex::Real dx = cell_size[0];
         amrex::Real dy = cell_size[1];
         amrex::Real dz = cell_size[2];
-//        amrex::Print() << "computePhiIGF: " << bx.lo() << std::endl;
+        amrex::Print() << "computePhiIGF: box low" << bx.smallEnd() << std::endl;
         // TODO: check that indices start at 0
         amrex::Array4<amrex::Real> tmp_G_arr = tmp_G.array(mfi);
         amrex::ParallelFor( bx,
@@ -139,18 +139,22 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
                 tmp_G_arr(i,j,k) = G_value;
                 // Fill the rest of the array by periodicity
-                tmp_G_arr(hivect[0]-i, j          , k          ) = G_value;
-                tmp_G_arr(i          , hivect[1]-j, k          ) = G_value;
-                tmp_G_arr(i          , hivect[1]-j, hivect[2]-k) = G_value;
-                tmp_G_arr(hivect[0]-i, hivect[1]-j, k          ) = G_value;
-                tmp_G_arr(i          , hivect[1]-j, hivect[2]-k) = G_value;
-                tmp_G_arr(hivect[0]-i, j          , hivect[2]-k) = G_value;
-                tmp_G_arr(hivect[0]-i, hivect[1]-j, hivect[2]-k) = G_value;
+                if (i>0) tmp_G_arr(hivect[0]+1-i, j            , k            ) = G_value;
+                if (j>0) tmp_G_arr(i            , hivect[1]+1-j, k            ) = G_value;
+                if (k>0) tmp_G_arr(i            , j            , hivect[2]+1-k) = G_value;
+                if ((i>0)&&(j>0)) tmp_G_arr(hivect[0]+1-i, hivect[1]+1-j, k            ) = G_value;
+                if ((j>0)&&(k>0)) tmp_G_arr(i            , hivect[1]+1-j, hivect[2]+1-k) = G_value;
+                if ((i>0)&&(k>0)) tmp_G_arr(hivect[0]+1-i, j            , hivect[2]+1-k) = G_value;
+                if ((i>0)&&(j>0)&&(k>0)) tmp_G_arr(hivect[0]+1-i, hivect[1]+1-j, hivect[2]+1-k) = G_value;
             }
         );
+
+       amrex::Print() << "tmp_G_arr(0,0,0) " << tmp_G_arr(0,0,0) << std::endl;
+       amrex::Print() << "tmp_G_arr(255,0,0) " << tmp_G_arr(255,0,0) << std::endl;
+
+
     }
     // Todo: check max value of G and of G[0,0,0]
-
 }
 
 }

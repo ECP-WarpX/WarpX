@@ -1,0 +1,45 @@
+max_step = 2
+amr.n_cell = 128 128 128
+amr.max_level = 0
+amr.max_grid_size = 128
+geometry.dims = 3
+
+my_constants.sigmaz = 300e-6
+my_constants.sigmax = 516e-9
+my_constants.sigmay = 7.7e-9
+my_constants.Q = 3.2e-9
+
+geometry.prob_lo = -5*sigmax -5*sigmay -5*sigmaz
+geometry.prob_hi = +5*sigmax +5*sigmay +5*sigmaz
+boundary.field_lo = pec pec pec
+boundary.field_hi = pec pec pec
+warpx.const_dt = 1e-6
+warpx.do_electrostatic = relativistic
+
+particles.species_names = electron
+
+algo.field_gathering = momentum-conserving
+
+# Order of particle shape factors
+algo.particle_shape = 1
+
+electron.charge = q_e
+electron.mass = m_e
+electron.injection_style = "gaussian_beam"
+electron.x_rms = sigmax
+electron.y_rms = sigmay
+electron.z_rms = sigmaz
+electron.x_m = 0.
+electron.y_m = 0.
+electron.z_m = 0.
+electron.npart = 20000
+electron.q_tot = Q
+electron.momentum_distribution_type = "constant"
+electron.ux = 0.0
+electron.uy = 0.0
+electron.uz = 25000
+
+diagnostics.diags_names = diag1
+diag1.intervals = 1
+diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez rho
