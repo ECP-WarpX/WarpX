@@ -13,7 +13,7 @@ geometry.prob_lo = -5*sigmax -5*sigmay -5*sigmaz
 geometry.prob_hi = +5*sigmax +5*sigmay +5*sigmaz
 boundary.field_lo = pec pec pec
 boundary.field_hi = pec pec pec
-warpx.const_dt = 1e-6
+warpx.const_dt = 1e-14
 warpx.do_electrostatic = relativistic
 
 particles.species_names = electron
@@ -43,3 +43,4 @@ diagnostics.diags_names = diag1
 diag1.intervals = 1
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez rho
+diag1.format = openpmd

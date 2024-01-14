@@ -11,7 +11,7 @@
 #include <ablastr/utils/Communication.H>
 #include <ablastr/utils/TextMsg.H>
 #include <ablastr/warn_manager/WarnManager.H>
-
+#include <ablastr/math/fft/AnyFFT.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -79,24 +79,34 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::IntVect hivect = ba.enclosedCells()[0].length(); // even number of cells
     for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
         hivect[idim] = 2*hivect[idim] - 1;
-        amrex::Print() << "computePhiIGF: hivect[" << idim << "]: " << hivect[idim] << std::endl;
     }
-    amrex::Box const extended_box = amrex::Box( amrex::IntVect::TheZeroVector(), hivect );
-    amrex::BoxList extended_bl;
-    extended_bl.push_back( extended_box );
-    amrex::BoxArray extended_ba;
-    extended_ba.define(extended_bl);
-    amrex::MultiFab tmp_rho = amrex::MultiFab(extended_ba, dm, 1, 0);
-    tmp_rho.setVal(0);
+    amrex::BoxList realspace_bl, spectralspace_bl;
+    {
+        // Define realspace box
+        amrex::Box const realspace_box = amrex::Box( amrex::IntVect::TheZeroVector(), hivect );
+        realspace_bl.push_back( realspace_box );
+        // Define spectralspace box
+        amrex::Box const spectralspace_box = amrex::Box( amrex::IntVect::TheZeroVector(),
+            {(hivect[0]+1)/2, hivect[1], hivect[2]} ); // half the size along x: real to complex transform
+        spectralspace_bl.push_back( spectralspace_box );
+    }
+    amrex::BoxArray realspace_ba, spectralspace_ba;
+    realspace_ba.define(realspace_bl);
+    spectralspace_ba.define(spectralspace_bl);
 
-    // Allocate
-    amrex::MultiFab tmp_G = amrex::MultiFab(extended_ba, dm, 1, 0);
-    tmp_G.setVal(0);
+    // Allocate required arrays
+    amrex::MultiFab tmp_rho = amrex::MultiFab(realspace_ba, dm, 1, 0);
+    tmp_rho.setVal(0);
+    amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, dm, 1, 0);
+    using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
+    SpectralField tmp_rho_fft = SpectralField( spectralspace_ba, dm, 1, 0 );
+    SpectralField tmp_G_fft = SpectralField( spectralspace_ba, dm, 1, 0 );
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (amrex::MFIter mfi(rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+   // for (amrex::MFIter mfi(rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(rho); mfi.isValid(); ++mfi) {
 
         const amrex::Box& bx = mfi.tilebox();
 
@@ -115,7 +125,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
         amrex::Real dx = cell_size[0];
         amrex::Real dy = cell_size[1];
         amrex::Real dz = cell_size[2];
-        amrex::Print() << "computePhiIGF: box low" << bx.smallEnd() << std::endl;
         // TODO: check that indices start at 0
         amrex::Array4<amrex::Real> tmp_G_arr = tmp_G.array(mfi);
         amrex::ParallelFor( bx,
@@ -125,7 +134,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::Real const y = j*dy;
                 amrex::Real const z = k*dz;
 
-                amrex::Real pi = 3.14159265359;
+                amrex::Real const pi = 3.14159265359;
                 amrex::Real const G_value = 1./(4*pi*dx*dy*dz) * (
                     IntegratedPotential( x+0.5*dx, y+0.5*dy, z+0.5*dz )
                   - IntegratedPotential( x-0.5*dx, y+0.5*dy, z+0.5*dz )
@@ -148,13 +157,60 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 if ((i>0)&&(j>0)&&(k>0)) tmp_G_arr(hivect[0]+1-i, hivect[1]+1-j, hivect[2]+1-k) = G_value;
             }
         );
+    }
 
-       amrex::Print() << "tmp_G_arr(0,0,0) " << tmp_G_arr(0,0,0) << std::endl;
-       amrex::Print() << "tmp_G_arr(255,0,0) " << tmp_G_arr(255,0,0) << std::endl;
+    // Perform forward FFTs
+    auto forward_plan_rho = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
+    auto forward_plan_G = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
+    // Loop over boxes perform FFTs
+    for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
 
+        // Note: the size of the real-space box and spectral-space box
+        // differ when using real-to-complex FFT. When initializing
+        // the FFT plan, the valid dimensions are those of the real-space box.
+        const IntVect fft_size = realspace_ba[mfi].length();
+
+        // FFT of rho
+        forward_plan_rho[mfi] = ablastr::math::anyfft::CreatePlan(
+            fft_size, tmp_rho[mfi].dataPtr(),
+            reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_rho_fft[mfi].dataPtr()),
+            ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
+        ablastr::math::anyfft::Execute(forward_plan_rho[mfi]);
+        ablastr::math::anyfft::DestroyPlan(forward_plan_rho[mfi]);
+
+        // FFT of G
+        forward_plan_G[mfi] = ablastr::math::anyfft::CreatePlan(
+            fft_size, tmp_G[mfi].dataPtr(),
+            reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft[mfi].dataPtr()),
+            ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
+        ablastr::math::anyfft::Execute(forward_plan_G[mfi]);
+        ablastr::math::anyfft::DestroyPlan(forward_plan_G[mfi]);
 
     }
-    // Todo: check max value of G and of G[0,0,0]
+
+    // Multiply tmp_G_fft and tmp_rho_fft in spectral space
+    // Store the result in-place in Gtmp_G_fft, to save memory
+    amrex::FabArrayMultiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
+
+    // Perform inverse FFTs
+    auto backward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
+    // Loop over boxes perform FFTs
+    for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+
+        // Note: the size of the real-space box and spectral-space box
+        // differ when using real-to-complex FFT. When initializing
+        // the FFT plan, the valid dimensions are those of the real-space box.
+        const IntVect fft_size = realspace_ba[mfi].length();
+
+        // Inverse FFT: is done in-place, in the array of G
+        backward_plan[mfi] = ablastr::math::anyfft::CreatePlan(
+            fft_size, tmp_G[mfi].dataPtr(),
+            reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft[mfi].dataPtr()),
+            ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM);
+        ablastr::math::anyfft::Execute(backward_plan[mfi]);
+        ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
+    }
+
 }
 
 }
@@ -253,6 +309,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 {
     using namespace amrex::literals;
 
+    amrex::Print() << "computePhi" << std::endl;
+
     if (!rel_ref_ratio.has_value()) {
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(rho.size() == 1u,
                                            "rel_ref_ratio must be set if mesh-refinement is used");
@@ -296,19 +354,20 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         // IGS SOLVER HACK:
         // CALL IT IN ALL CASES
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_igf
-                {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
-                              geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
-                              geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
-
-        computePhiIGF( *rho[lev], *phi[lev], dx_igf, dmap[lev], grids[lev] );
+                {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-0*beta_solver[0]*beta_solver[0]),
+                              geom[lev].CellSize(1)/std::sqrt(1._rt-0*beta_solver[1]*beta_solver[1]),
+                              geom[lev].CellSize(2)/std::sqrt(1._rt-0*beta_solver[2]*beta_solver[2]))};
+        if ( max_norm_b == 0 ) {
+            phi[lev]->setVal(0);
+        } else {
+            computePhiIGF( *rho[lev], *phi[lev], dx_igf, dmap[lev], grids[lev] );
+        }
 
         continue;
         // IGF SOLVER HACK: END
 
 #if !(defined(AMREX_USE_EB) || defined(WARPX_DIM_RZ))
         // Determine whether to use semi-coarsening
-
-        // TODO: Call computePhiIGF with dx_scaled
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_scaled
                 {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
                               geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),

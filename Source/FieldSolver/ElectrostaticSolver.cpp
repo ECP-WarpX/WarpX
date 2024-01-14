@@ -294,6 +294,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    int const max_iters,
                    int const verbosity) const
 {
+
     // create a vector to our fields, sorted by level
     amrex::Vector<amrex::MultiFab*> sorted_rho;
     amrex::Vector<amrex::MultiFab*> sorted_phi;
