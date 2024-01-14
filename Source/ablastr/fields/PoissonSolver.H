@@ -105,8 +105,8 @@ computePhiIGF ( amrex::MultiFab const & rho,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-   // for (amrex::MFIter mfi(rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-    for (amrex::MFIter mfi(rho); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+//    for (amrex::MFIter mfi(rho); mfi.isValid(); ++mfi) {
 
         const amrex::Box& bx = mfi.tilebox();
 
@@ -192,7 +192,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Store the result in-place in Gtmp_G_fft, to save memory
     amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
 
-    // Perform inverse FFTs
+    // Perform inverse FFT
     auto backward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
     // Loop over boxes perform FFTs
     for ( amrex::MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
@@ -211,6 +211,27 @@ computePhiIGF ( amrex::MultiFab const & rho,
         ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
     }
 
+    // Copy values to phi
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+    for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+//    for (amrex::MFIter mfi(rho); mfi.isValid(); ++mfi) {
+
+        const amrex::Box& bx = mfi.tilebox();
+
+        // Copy values from tmp_G_fft to phi
+        // TODO This could probably be replaced by a parallel copy
+        amrex::Array4<const amrex::Real> const& tmp_G_arr = tmp_G.array(mfi);
+        amrex::Array4<amrex::Real> phi_arr = phi.array(mfi);
+        amrex::ParallelFor( bx,
+            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
+                phi_arr(i,j,k) = tmp_G_arr(i,j,k);
+            }
+        );
+        // TODO: Exchange guard cells of phi
+    }
 }
 
 }
