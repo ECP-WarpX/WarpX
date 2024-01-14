@@ -135,7 +135,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::Real const y = j*dy;
                 amrex::Real const z = k*dz;
 
-                amrex::Real const G_value = 1./(4*MathConst::pi*PhysConst::ep0*dx*dy*dz) * (
+                amrex::Real const G_value = 1./(4*MathConst::pi*PhysConst::ep0) * (
                     IntegratedPotential( x+0.5*dx, y+0.5*dy, z+0.5*dz )
                   - IntegratedPotential( x-0.5*dx, y+0.5*dy, z+0.5*dz )
                   - IntegratedPotential( x+0.5*dx, y-0.5*dy, z+0.5*dz )
@@ -216,7 +216,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 //    for (amrex::MFIter mfi(rho); mfi.isValid(); ++mfi) {
 
-        const amrex::Real normalization = cell_size[0]*cell_size[1]*cell_size[2] / realspace_box.numPts();
+        const amrex::Real normalization = 1. / realspace_box.numPts();
 
         const amrex::Box& bx = mfi.tilebox();
 
