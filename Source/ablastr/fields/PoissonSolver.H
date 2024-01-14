@@ -381,9 +381,9 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         // IGS SOLVER HACK:
         // CALL IT IN ALL CASES
         amrex::Array<amrex::Real,AMREX_SPACEDIM> dx_igf
-                {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-0*beta_solver[0]*beta_solver[0]),
-                              geom[lev].CellSize(1)/std::sqrt(1._rt-0*beta_solver[1]*beta_solver[1]),
-                              geom[lev].CellSize(2)/std::sqrt(1._rt-0*beta_solver[2]*beta_solver[2]))};
+                {AMREX_D_DECL(geom[lev].CellSize(0)/std::sqrt(1._rt-beta_solver[0]*beta_solver[0]),
+                              geom[lev].CellSize(1)/std::sqrt(1._rt-beta_solver[1]*beta_solver[1]),
+                              geom[lev].CellSize(2)/std::sqrt(1._rt-beta_solver[2]*beta_solver[2]))};
         if ( max_norm_b == 0 ) {
             phi[lev]->setVal(0);
         } else {
