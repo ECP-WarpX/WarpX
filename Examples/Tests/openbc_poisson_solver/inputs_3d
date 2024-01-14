@@ -23,17 +23,12 @@ algo.field_gathering = momentum-conserving
 # Order of particle shape factors
 algo.particle_shape = 1
 
-electron.charge = q_e
+electron.charge = -q_e
 electron.mass = m_e
-electron.injection_style = "gaussian_beam"
-electron.x_rms = sigmax
-electron.y_rms = sigmay
-electron.z_rms = sigmaz
-electron.x_m = 0.
-electron.y_m = 0.
-electron.z_m = 0.
-electron.npart = 20000
-electron.q_tot = Q
+electron.injection_style = "NUniformPerCell"
+electron.num_particles_per_cell_each_dim = 2 2 2
+electron.profile = parse_density_function
+electron.density_function(x,y,z) = "Q/(sqrt(2*pi)**3 * sigmax*sigmay*sigmaz * q_e) * exp( -x*x/(2*sigmax*sigmax) -y*y/(2*sigmay*sigmay) - z*z/(2*sigmaz*sigmaz) )"
 electron.momentum_distribution_type = "constant"
 electron.ux = 0.0
 electron.uy = 0.0
