@@ -163,12 +163,12 @@ computePhiIGF ( amrex::MultiFab const & rho,
     auto forward_plan_rho = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
     auto forward_plan_G = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
     // Loop over boxes perform FFTs
-    for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+    for ( amrex::MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
 
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
         // the FFT plan, the valid dimensions are those of the real-space box.
-        const IntVect fft_size = realspace_ba[mfi].length();
+        const amrex::IntVect fft_size = realspace_ba[mfi].length();
 
         // FFT of rho
         forward_plan_rho[mfi] = ablastr::math::anyfft::CreatePlan(
@@ -190,17 +190,17 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Multiply tmp_G_fft and tmp_rho_fft in spectral space
     // Store the result in-place in Gtmp_G_fft, to save memory
-    amrex::FabArrayMultiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
+    amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
 
     // Perform inverse FFTs
     auto backward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
     // Loop over boxes perform FFTs
-    for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+    for ( amrex::MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
 
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
         // the FFT plan, the valid dimensions are those of the real-space box.
-        const IntVect fft_size = realspace_ba[mfi].length();
+        const amrex::IntVect fft_size = realspace_ba[mfi].length();
 
         // Inverse FFT: is done in-place, in the array of G
         backward_plan[mfi] = ablastr::math::anyfft::CreatePlan(
