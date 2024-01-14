@@ -76,20 +76,19 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Allocate 2x wider array for rho
     // TODO This could probaby be more compact
-    amrex::IntVect hivect = ba.enclosedCells()[0].length(); // even number of cells
+    ba.enclosedCells();
+    amrex::IntVect hivect = ba[0].length(); // even number of cells
     for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
         hivect[idim] = 2*hivect[idim] - 1;
     }
     amrex::BoxList realspace_bl, spectralspace_bl;
-    {
-        // Define realspace box
-        amrex::Box const realspace_box = amrex::Box( amrex::IntVect::TheZeroVector(), hivect );
-        realspace_bl.push_back( realspace_box );
-        // Define spectralspace box
-        amrex::Box const spectralspace_box = amrex::Box( amrex::IntVect::TheZeroVector(),
-            {(hivect[0]+1)/2, hivect[1], hivect[2]} ); // half the size along x: real to complex transform
-        spectralspace_bl.push_back( spectralspace_box );
-    }
+    // Define realspace box
+    amrex::Box const realspace_box = amrex::Box( amrex::IntVect::TheZeroVector(), hivect );
+    realspace_bl.push_back( realspace_box );
+    // Define spectralspace box
+    amrex::Box const spectralspace_box = amrex::Box( amrex::IntVect::TheZeroVector(),
+        {(hivect[0]+1)/2, hivect[1], hivect[2]} ); // half the size along x: real to complex transform
+    spectralspace_bl.push_back( spectralspace_box );
     amrex::BoxArray realspace_ba, spectralspace_ba;
     realspace_ba.define(realspace_bl);
     spectralspace_ba.define(spectralspace_bl);
@@ -98,6 +97,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::MultiFab tmp_rho = amrex::MultiFab(realspace_ba, dm, 1, 0);
     tmp_rho.setVal(0);
     amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, dm, 1, 0);
+    tmp_G.setVal(0);
     using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
     SpectralField tmp_rho_fft = SpectralField( spectralspace_ba, dm, 1, 0 );
     SpectralField tmp_G_fft = SpectralField( spectralspace_ba, dm, 1, 0 );
@@ -105,10 +105,11 @@ computePhiIGF ( amrex::MultiFab const & rho,
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (amrex::MFIter mfi(rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-//    for (amrex::MFIter mfi(rho); mfi.isValid(); ++mfi) {
+//    for (amrex::MFIter mfi(rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(rho); mfi.isValid(); ++mfi) {
 
-        const amrex::Box& bx = mfi.tilebox();
+        amrex::Box bx = mfi.tilebox();
+        bx.enclosedCells();
 
         // Copy values of rho to tmp_rho
         // TODO This could probably be replaced by a parallel copy
@@ -134,8 +135,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::Real const y = j*dy;
                 amrex::Real const z = k*dz;
 
-                amrex::Real const pi = 3.14159265359;
-                amrex::Real const G_value = 1./(4*pi*dx*dy*dz) * (
+                amrex::Real const G_value = 1./(4*MathConst::pi*PhysConst::ep0*dx*dy*dz) * (
                     IntegratedPotential( x+0.5*dx, y+0.5*dy, z+0.5*dz )
                   - IntegratedPotential( x-0.5*dx, y+0.5*dy, z+0.5*dz )
                   - IntegratedPotential( x+0.5*dx, y-0.5*dy, z+0.5*dz )
@@ -176,7 +176,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
             reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_rho_fft[mfi].dataPtr()),
             ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
         ablastr::math::anyfft::Execute(forward_plan_rho[mfi]);
-        ablastr::math::anyfft::DestroyPlan(forward_plan_rho[mfi]);
 
         // FFT of G
         forward_plan_G[mfi] = ablastr::math::anyfft::CreatePlan(
@@ -184,7 +183,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
             reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft[mfi].dataPtr()),
             ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
         ablastr::math::anyfft::Execute(forward_plan_G[mfi]);
-        ablastr::math::anyfft::DestroyPlan(forward_plan_G[mfi]);
 
     }
 
@@ -208,29 +206,38 @@ computePhiIGF ( amrex::MultiFab const & rho,
             reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft[mfi].dataPtr()),
             ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM);
         ablastr::math::anyfft::Execute(backward_plan[mfi]);
-        ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
     }
 
-    // Copy values to phi
+    // Copy from tmp_G to phi and normalize
+    // since (FFT + inverse FFT) results in a factor N
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 //    for (amrex::MFIter mfi(rho); mfi.isValid(); ++mfi) {
 
+        const amrex::Real normalization = cell_size[0]*cell_size[1]*cell_size[2] / realspace_box.numPts();
+
         const amrex::Box& bx = mfi.tilebox();
 
-        // Copy values from tmp_G_fft to phi
+        // Copy values from tmp_G to phi
         // TODO This could probably be replaced by a parallel copy
         amrex::Array4<const amrex::Real> const& tmp_G_arr = tmp_G.array(mfi);
         amrex::Array4<amrex::Real> phi_arr = phi.array(mfi);
         amrex::ParallelFor( bx,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                phi_arr(i,j,k) = tmp_G_arr(i,j,k);
+                phi_arr(i,j,k) = tmp_G_arr(i,j,k) * normalization;
             }
         );
         // TODO: Exchange guard cells of phi
+    }
+
+    // Loop to destroy FFT plans
+    for ( amrex::MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+        ablastr::math::anyfft::DestroyPlan(forward_plan_G[mfi]);
+        ablastr::math::anyfft::DestroyPlan(forward_plan_rho[mfi]);
+        ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
     }
 }
 
@@ -330,8 +337,6 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 {
     using namespace amrex::literals;
 
-    amrex::Print() << "computePhi" << std::endl;
-
     if (!rel_ref_ratio.has_value()) {
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(rho.size() == 1u,
                                            "rel_ref_ratio must be set if mesh-refinement is used");
@@ -344,7 +349,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
     amrex::Real max_norm_b = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
         using namespace ablastr::constant::SI;
-        rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
+        // HACK FOR IGF SOLVER: REMOVE RHO MULTIPLIER THAT WAS HERE FOR AMREX MULTIGRID SOLVERS
+        // rho[lev]->mult(-1._rt/ep0);  // TODO: when do we "un-multiply" this? We need to document this side-effect!
         max_norm_b = amrex::max(max_norm_b, rho[lev]->norm0());
     }
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_b);
