@@ -75,20 +75,18 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::Box domain = ba.minimalBox();
     domain.enclosedCells(); // even number of cells
 
-    // Allocate 2x wider array for rho
-    // TODO This could probaby be more compact
-    AMREX_ALWAYS_ASSERT( domain.smallEnd() == amrex::IntVect::TheZeroVector() );
-    amrex::IntVect hivect = domain.length();
-    for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
-        hivect[idim] = 2*hivect[idim] - 1;
-    }
+    int nx = domain.length(0);
+    int ny = domain.length(1);
+    int nz = domain.length(2);
+
+    // Allocate 2x wider arrays for the convolution of rho with the Green function
     amrex::BoxList realspace_bl, spectralspace_bl;
     // Define realspace box
-    amrex::Box const realspace_box = amrex::Box( amrex::IntVect::TheZeroVector(), hivect );
+    AMREX_ALWAYS_ASSERT( domain.smallEnd() == amrex::IntVect::TheZeroVector() );
+    amrex::Box const realspace_box = amrex::Box( {0,0,0}, {2*nx-1, 2*ny-1, 2*nz-1} );
     realspace_bl.push_back( realspace_box );
     // Define spectralspace box
-    amrex::Box const spectralspace_box = amrex::Box( amrex::IntVect::TheZeroVector(),
-        {(hivect[0]+1)/2, hivect[1], hivect[2]} ); // half the size along x: real to complex transform
+    amrex::Box const spectralspace_box = amrex::Box( {0,0,0}, {nx, 2*ny-1, 2*nz-1} );
     spectralspace_bl.push_back( spectralspace_box );
     amrex::BoxArray realspace_ba, spectralspace_ba;
     // Define corresponding box arrays for the global FFT: contains only one box
@@ -147,13 +145,13 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
                 tmp_G_arr(i,j,k) = G_value;
                 // Fill the rest of the array by periodicity
-                if (i>0) tmp_G_arr(hivect[0]+1-i, j            , k            ) = G_value;
-                if (j>0) tmp_G_arr(i            , hivect[1]+1-j, k            ) = G_value;
-                if (k>0) tmp_G_arr(i            , j            , hivect[2]+1-k) = G_value;
-                if ((i>0)&&(j>0)) tmp_G_arr(hivect[0]+1-i, hivect[1]+1-j, k            ) = G_value;
-                if ((j>0)&&(k>0)) tmp_G_arr(i            , hivect[1]+1-j, hivect[2]+1-k) = G_value;
-                if ((i>0)&&(k>0)) tmp_G_arr(hivect[0]+1-i, j            , hivect[2]+1-k) = G_value;
-                if ((i>0)&&(j>0)&&(k>0)) tmp_G_arr(hivect[0]+1-i, hivect[1]+1-j, hivect[2]+1-k) = G_value;
+                if (i>0) tmp_G_arr(2*nx-i, j     , k     ) = G_value;
+                if (j>0) tmp_G_arr(i     , 2*ny-j, k     ) = G_value;
+                if (k>0) tmp_G_arr(i     , j     , 2*nz-k) = G_value;
+                if ((i>0)&&(j>0)) tmp_G_arr(2*nx-i, 2*ny-j, k     ) = G_value;
+                if ((j>0)&&(k>0)) tmp_G_arr(i     , 2*ny-j, 2*nz-k) = G_value;
+                if ((i>0)&&(k>0)) tmp_G_arr(2*nx-i, j     , 2*nz-k) = G_value;
+                if ((i>0)&&(j>0)&&(k>0)) tmp_G_arr(2*nx-i, 2*ny-j, 2*nz-k) = G_value;
             }
         );
     }
