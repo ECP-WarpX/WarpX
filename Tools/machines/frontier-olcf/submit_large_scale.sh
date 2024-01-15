@@ -40,7 +40,7 @@ export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$(pkg-config --variable=libdir libfab
 srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} --ntasks-per-node=1 --label -D /mnt/bb/$USER/${exe}_libs \
     bash -c "if [ -f libhsa-runtime64.so.1 ]; then ln -s libhsa-runtime64.so.1 libhsa-runtime64.so; fi;
     if [ -f libamdhip64.so.5 ]; then ln -s libamdhip64.so.5 libamdhip64.so; fi"
-# You may notice that some libraries are still linked from /sw/crusher, even after SBCASTing.
+# You may notice that some libraries are still linked from /sw/frontier, even after SBCASTing.
 # This is because the Spack-build modules use RPATH to find their dependencies. This behavior cannot be changed.
 echo "*****ldd /mnt/bb/$USER/${exe}*****"
 ldd /mnt/bb/$USER/${exe}
