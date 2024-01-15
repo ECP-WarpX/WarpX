@@ -80,28 +80,21 @@ computePhiIGF ( amrex::MultiFab const & rho,
     int nz = domain.length(2);
 
     // Allocate 2x wider arrays for the convolution of rho with the Green function
-    amrex::BoxList realspace_bl, spectralspace_bl;
-    // Define realspace box
+    // This also defines the box arrays for the global FFT: contains only one box
     AMREX_ALWAYS_ASSERT( domain.smallEnd() == amrex::IntVect::TheZeroVector() );
     amrex::Box const realspace_box = amrex::Box( {0,0,0}, {2*nx-1, 2*ny-1, 2*nz-1} );
-    realspace_bl.push_back( realspace_box );
-    // Define spectralspace box
+    amrex::BoxArray realspace_ba = amrex::BoxArray( realspace_box );
     amrex::Box const spectralspace_box = amrex::Box( {0,0,0}, {nx, 2*ny-1, 2*nz-1} );
-    spectralspace_bl.push_back( spectralspace_box );
-    amrex::BoxArray realspace_ba, spectralspace_ba;
-    // Define corresponding box arrays for the global FFT: contains only one box
-    realspace_ba.define(realspace_bl);
-    spectralspace_ba.define(spectralspace_bl);
-
+    amrex::BoxArray spectralspace_ba = amrex::BoxArray( spectralspace_box );
     // Define a distribution mapping for the global FFT, with only one box
     amrex::DistributionMapping dm_global_fft;
     dm_global_fft.define( realspace_ba );
-
     // Allocate required arrays
     amrex::MultiFab tmp_rho = amrex::MultiFab(realspace_ba, dm_global_fft, 1, 0);
     tmp_rho.setVal(0);
     amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, dm_global_fft, 1, 0);
     tmp_G.setVal(0);
+    // Allocate corresponding arrays in Fourier space
     using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
     SpectralField tmp_rho_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
     SpectralField tmp_G_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
@@ -110,11 +103,11 @@ computePhiIGF ( amrex::MultiFab const & rho,
     tmp_rho.ParallelCopy( rho, 0, 0, 1, amrex::IntVect::TheZeroVector(), amrex::IntVect::TheZeroVector() );
 
     // Compute the integrated Green function
+    amrex::BoxArray domain_ba = amrex::BoxArray( domain );
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-//    for (amrex::MFIter mfi(rho, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-    for (amrex::MFIter mfi(rho); mfi.isValid(); ++mfi) {
+    for (amrex::MFIter mfi(domain_ba, dm_global_fft,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
         amrex::Box bx = mfi.tilebox();
         bx.enclosedCells();
