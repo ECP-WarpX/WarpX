@@ -69,7 +69,6 @@ void
 computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::MultiFab & phi,
                 std::array<amrex::Real, 3> const cell_size,
-                amrex::DistributionMapping const dm,
                 amrex::BoxArray const ba ) {
 
     // Define box that encompasses the full domain
@@ -160,10 +159,10 @@ computePhiIGF ( amrex::MultiFab const & rho,
     }
 
     // Perform forward FFTs
-    auto forward_plan_rho = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
-    auto forward_plan_G = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
+    auto forward_plan_rho = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
+    auto forward_plan_G = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
     // Loop over boxes perform FFTs
-    for ( amrex::MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+    for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
 
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
@@ -191,9 +190,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
     amrex::Multiply( tmp_G_fft, tmp_rho_fft, 0, 0, 1, 0);
 
     // Perform inverse FFT
-    auto backward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm);
+    auto backward_plan = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
     // Loop over boxes perform FFTs
-    for ( amrex::MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+    for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
 
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
@@ -215,7 +214,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     phi.mult( normalization );
 
     // Loop to destroy FFT plans
-    for ( amrex::MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+    for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
         ablastr::math::anyfft::DestroyPlan(forward_plan_G[mfi]);
         ablastr::math::anyfft::DestroyPlan(forward_plan_rho[mfi]);
         ablastr::math::anyfft::DestroyPlan(backward_plan[mfi]);
@@ -368,7 +367,7 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
         if ( max_norm_b == 0 ) {
             phi[lev]->setVal(0);
         } else {
-            computePhiIGF( *rho[lev], *phi[lev], dx_igf, dmap[lev], grids[lev] );
+            computePhiIGF( *rho[lev], *phi[lev], dx_igf, grids[lev] );
         }
 
         continue;
