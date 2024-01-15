@@ -1743,19 +1743,19 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
 	    // --- Compute CIC shape factors for virtual (out-of-plane) components
             Compute_shape_factor< 1 > compute_shape_factor_cic;
             double sz_bar_node[2] = {0.};
-            double sz_bar_cell[2] = {0.};
+            //double sz_bar_cell[2] = {0.};
             double const z_bar = (zp_nph - zmin)*dzi;
             const int k_bar_node = compute_shape_factor_cic(sz_bar_node, z_bar);
-            const int k_bar_cell = compute_shape_factor_cic(sz_bar_cell, z_bar-0.5);
+            //const int k_bar_cell = compute_shape_factor_cic(sz_bar_cell, z_bar-0.5);
             double sx_bar_node[2] = {0.};
-            double sx_bar_cell[2] = {0.};
+            //double sx_bar_cell[2] = {0.};
 #if defined(WARPX_DIM_RZ)
             double const x_bar = (rp_mid - xmin)*dxi;
 #else
             double const x_bar = (xp_nph - xmin)*dxi;
 #endif
             const int i_bar_node = compute_shape_factor_cic(sx_bar_node, x_bar);
-            const int i_bar_cell = compute_shape_factor_cic(sx_bar_cell, x_bar-0.5);
+            //const int i_bar_cell = compute_shape_factor_cic(sx_bar_cell, x_bar-0.5);
 #elif defined(WARPX_DIM_1D_Z)
             Compute_shape_factor< 1 > compute_shape_factor_cic;
             double sz_bar_node[2] = {0.};
@@ -1802,9 +1802,9 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
 	    // need to assert that the number of cell crossings in each direction
 	    // is within the range permitted by the number of guard cells
             if(num_segments > 3 ) {
-               std::cout << "Notice: num_segments = " << num_segments << std::endl;
-               std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
-               std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
+                std::cout << "Notice: num_segments = " << num_segments << std::endl;
+                std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
+                std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
 	    }
 
 	    // compute the initial Xcell in each direction used to find the
@@ -1820,8 +1820,6 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
             const int k_old_tsc = compute_shape_factor_tsc(sz_old_tsc, z_old);
    
 	    // loop over the number of segments and deposit
-	    int i0_old_cic = i_old_cic;
-	    int k0_old_cic = k_old_cic;
 	    int i0_old_tsc = i_old_tsc;
 	    int k0_old_tsc = k_old_tsc;
 	    double dxp_seg = dxp;
@@ -1880,12 +1878,16 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
                 auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
 
 		// compute cell-based cic weights for new position
-                double const x0_new = (xpnew0 - xmin)*dxi;
-                double const z0_new = (zpnew0 - zmin)*dzi;
-                const int i0_new_cic = compute_shape_factor_cic(sx_new_cic, x0_new-0.5);
-                const int k0_new_cic = compute_shape_factor_cic(sz_new_cic, z0_new-0.5);
+                double const x0_bar = ((xpnew0+xpold0)/2.0 - xmin)*dxi;
+                double const z0_bar = ((zpnew0+zpold0)/2.0 - zmin)*dzi;
+                double sx_bar_cic[2] = {0.};
+                double sz_bar_cic[2] = {0.};
+                const int i0_bar_cic = compute_shape_factor_cic(sx_bar_cic, x0_bar-0.5);
+                const int k0_bar_cic = compute_shape_factor_cic(sz_bar_cic, z0_bar-0.5);
 		
 		// compute node-based tsc weights for new position
+                double const x0_new = (xpnew0 - xmin)*dxi;
+                double const z0_new = (zpnew0 - zmin)*dzi;
                 double sx_new_tsc[3] = {0.};
                 double sz_new_tsc[3] = {0.};
                 const int i0_new_tsc = compute_shape_factor_tsc(sx_new_tsc, x0_new);
@@ -1897,12 +1899,12 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
                     for (int k=0; k<=2; k++) {
 
 			// deposit Jx from old position for this segment    
-                        this_Jx = wqx*sx_old_cic[i]*sz_old_tsc[k]*seg_factor_x/2.0;
-                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_old_cic+i, lo.y+k0_old_tsc+k, 0, 0), this_Jx);
+                        this_Jx = wqx*sx_bar_cic[i]*sz_old_tsc[k]*seg_factor_x/2.0;
+                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_bar_cic+i, lo.y+k0_old_tsc+k, 0, 0), this_Jx);
 
 			// deposit Jx from new position for this segment
-                        this_Jx = wqx*sx_new_cic[i]*sz_new_tsc[k]*seg_factor_x/2.0;
-                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_new_cic+i, lo.y+k0_new_tsc+k, 0, 0), this_Jx);
+                        this_Jx = wqx*sx_bar_cic[i]*sz_new_tsc[k]*seg_factor_x/2.0;
+                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_bar_cic+i, lo.y+k0_new_tsc+k, 0, 0), this_Jx);
 
                     }
                 }
@@ -1913,26 +1915,20 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
                     for (int k=0; k<=1; k++) {
 
 			// deposit Jz from old position for this segment    
-                        this_Jz = wqz*sx_old_tsc[i]*sz_old_cic[k]*seg_factor_z/2.0;
-                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_old_tsc+i, lo.y+k0_old_cic+k, 0, 0), this_Jz);
+                        this_Jz = wqz*sx_old_tsc[i]*sz_bar_cic[k]*seg_factor_z/2.0;
+                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_old_tsc+i, lo.y+k0_bar_cic+k, 0, 0), this_Jz);
 
 			// deposit Jz from new position for this segment
-                        this_Jz = wqz*sx_new_tsc[i]*sz_new_cic[k]*seg_factor_z/2.0;
-                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_new_tsc+i, lo.y+k0_new_cic+k, 0, 0), this_Jz);
+                        this_Jz = wqz*sx_new_tsc[i]*sz_bar_cic[k]*seg_factor_z/2.0;
+                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_new_tsc+i, lo.y+k0_bar_cic+k, 0, 0), this_Jz);
 
                     }
                 }
 
 		// update old segment values
                 if (ns<num_segments-1) {
-		    i0_old_cic = i0_new_cic;
-		    k0_old_cic = k0_new_cic;
 		    i0_old_tsc = i0_new_tsc;
 		    k0_old_tsc = k0_new_tsc;
-                    for (int m=0; m<=1; m++) {
-		        sx_old_cic[m] = sx_new_cic[m];
-		        sz_old_cic[m] = sz_new_cic[m];
-		    }
                     for (int m=0; m<=2; m++) {
 		        sx_old_tsc[m] = sx_new_tsc[m];
 		        sz_old_tsc[m] = sz_new_tsc[m];

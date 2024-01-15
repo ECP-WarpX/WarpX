@@ -979,21 +979,25 @@ void doGatherPicnicShapeN (
     // Keep these double to avoid bug in single precision
     double const x_new = (rp_new - xmin)*dxi;
     double const x_old = (rp_old - xmin)*dxi;
+    double const dxp = rp_new - rp_old;
 #else
 #if !defined(WARPX_DIM_1D_Z)
     // Keep these double to avoid bug in single precision
     double const x_new = (xp_np1 - xmin)*dxi;
     double const x_old = (xp_n - xmin)*dxi;
+    double const dxp = xp_np1 - xp_n;
 #endif
 #endif
 #if defined(WARPX_DIM_3D)
     // Keep these double to avoid bug in single precision
     double const y_new = (yp_np1 - ymin)*dyi;
     double const y_old = (yp_n - ymin)*dyi;
+    double const dyp = yp_np1 - yp_n;
 #endif
     // Keep these double to avoid bug in single precision
     double const z_new = (zp_np1 - zmin)*dzi;
     double const z_old = (zp_n - zmin)*dzi;
+    double const dzp = zp_np1 - zp_n;
 
     // Compute CIC shape factors for virtual (out-of-plane) components of E
     // and for all components of B
@@ -1028,10 +1032,176 @@ void doGatherPicnicShapeN (
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
+    // compute slopes and directional signs
+    auto slope = static_cast<amrex::Real>(dxp == 0. ? 0. : dzp/dxp);
+    auto slope_inv = static_cast<amrex::Real>(dzp == 0. ? 0. : dxp/dzp);
+    int dirX_sign, dirZ_sign;
+    if(x_new < x_old) { dirX_sign = -1; }
+    else { dirX_sign = 1; }
+    if(z_new < z_old) { dirZ_sign = -1; }
+    else { dirZ_sign = 1; }
+
+    // compute cell crossings in X-direction
+    int num_segments = 1;
+    double sx_old_cic[2] = {0.};
+    double sx_new_cic[2] = {0.};
+    const int i_old_cic = compute_shape_factor_cic(sx_old_cic, x_old-0.5);
+    const int i_new_cic = compute_shape_factor_cic(sx_new_cic, x_new-0.5);
+    int cell_crossings_x = std::abs(i_new_cic-i_old_cic);
+    num_segments += cell_crossings_x;
+
+    // compute cell crossings in Z-direction
+    double sz_old_cic[2] = {0.};
+    double sz_new_cic[2] = {0.};
+    const int k_old_cic = compute_shape_factor_cic(sz_old_cic, z_old-0.5);
+    const int k_new_cic = compute_shape_factor_cic(sz_new_cic, z_new-0.5);
+    int cell_crossings_z = std::abs(k_new_cic-k_old_cic);
+    num_segments += cell_crossings_z;
+
+    // need to assert that the number of cell crossings in each direction
+    // is within the range permitted by the number of guard cells
+    if(num_segments > 3 ) {
+        std::cout << "Notice: num_segments = " << num_segments << std::endl;
+        std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
+        std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
+    }
+
+    // compute the initial Xcell in each direction used to find the
+    // position vector at cell crossings (defined at cell centers)
+    double Xcell = (lo.x + i_old_cic + 0.5 + 0.5*(1-dirX_sign) )*dx[0];
+    double Zcell = (lo.y + k_old_cic + 0.5 + 0.5*(1-dirZ_sign) )*dx[2];
+
+    // compute TSC shape factors for old position
+    Compute_shape_factor< 2 > compute_shape_factor_tsc;
+    double sx_old_tsc[3] = {0.};
+    double sz_old_tsc[3] = {0.};
+    const int i_old_tsc = compute_shape_factor_tsc(sx_old_tsc, x_old);
+    const int k_old_tsc = compute_shape_factor_tsc(sz_old_tsc, z_old);
+   
+    // loop over the number of segments and deposit
+    int i0_old_tsc = i_old_tsc;
+    int k0_old_tsc = k_old_tsc;
+    double dxp_seg = dxp;
+    double dzp_seg = dzp;
+    double xpold0 = xp_n;
+    double zpold0 = zp_n;
+    double xpnew0, zpnew0;
+
+    for (int ns=0; ns<num_segments; ns++) {
+		    
+        if(ns==num_segments-1) { // final segment
+            xpnew0 = xp_np1;
+            zpnew0 = zp_np1;
+	    dxp_seg = xpnew0-xpold0;
+	    dzp_seg = zpnew0-zpold0;
+        }
+	else if (cell_crossings_x==0) { // only crossings in z-dir remain
+            Zcell = Zcell + dirZ_sign*dx[2];
+            zpnew0 = Zcell;
+            dzp_seg = zpnew0 - zpold0;
+            dxp_seg = slope_inv*dzp_seg;
+	    xpnew0 = xpold0 + dxp_seg;
+            cell_crossings_z -= 1;
+	}
+	else if (cell_crossings_z==0) { // only crossings in x-dir remain
+            Xcell = Xcell + dirX_sign*dx[0];
+            xpnew0 = Xcell;
+            dxp_seg = xpnew0 - xpold0;
+            dzp_seg = slope*dxp_seg;
+	    zpnew0 = zpold0 + dzp_seg;
+            cell_crossings_x -= 1;
+	}
+	else { // crossings in x-dir and z-dir
+            xpnew0 = Xcell + dirX_sign*dx[0];
+            zpnew0 = Zcell + dirZ_sign*dx[2];
+            dxp_seg = xpnew0 - xpold0;
+            dzp_seg = zpnew0 - zpold0;
+		    
+            double const dxp_seg2 = slope_inv*dzp_seg;
+            if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+	        dzp_seg = slope*dxp_seg;
+		zpnew0 = zpold0 + dzp_seg;
+		Xcell = xpnew0;
+		cell_crossings_x -= 1;
+	    }
+	    else { // z-dir crossing
+	        dxp_seg = slope_inv*dzp_seg;
+		xpnew0 = xpold0 + dxp_seg;
+		Zcell = zpnew0;
+		cell_crossings_z -= 1;
+            }
+	}
+
+	// compute the segment factors
+        auto seg_factor_x = static_cast<amrex::Real>(dxp == 0. ? 1. : dxp_seg/dxp);
+        auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
+
+	// compute cell-based cic weights for half (i.e., bar) position
+        double const x0_bar = ((xpnew0+xpold0)/2.0 - xmin)*dxi;
+        double const z0_bar = ((zpnew0+zpold0)/2.0 - zmin)*dzi;
+        double sx_bar_cic[2] = {0.};
+        double sz_bar_cic[2] = {0.};
+        const int i0_bar_cic = compute_shape_factor_cic(sx_bar_cic, x0_bar-0.5);
+        const int k0_bar_cic = compute_shape_factor_cic(sz_bar_cic, z0_bar-0.5);
+		
+	// compute node-based tsc weights for new position
+        double const x0_new = (xpnew0 - xmin)*dxi;
+        double const z0_new = (zpnew0 - zmin)*dzi;
+        double sx_new_tsc[3] = {0.};
+        double sz_new_tsc[3] = {0.};
+        const int i0_new_tsc = compute_shape_factor_tsc(sx_new_tsc, x0_new);
+        const int k0_new_tsc = compute_shape_factor_tsc(sz_new_tsc, z0_new);
+
+        // gather Exp
+	amrex::Real weight;
+        for (int i=0; i<=1; i++) {
+            for (int k=0; k<=2; k++) {
+
+	        // gather Ex from old position for this segment    
+                weight = sx_bar_cic[i]*sz_old_tsc[k]*seg_factor_x/2.0;
+                Exp += Ex_arr(lo.x+i0_bar_cic+i, lo.y+k0_old_tsc+k, 0, 0)*weight;
+
+	        // gather Ex from new position for this segment
+                weight = sx_bar_cic[i]*sz_new_tsc[k]*seg_factor_x/2.0;
+                Exp += Ex_arr(lo.x+i0_bar_cic+i, lo.y+k0_new_tsc+k, 0, 0)*weight;
+
+            }
+        }
+       
+        // gather Ezp	
+	for (int i=0; i<=2; i++) {
+            for (int k=0; k<=1; k++) {
+
+	        // gather Ez from old position for this segment    
+                weight = sx_old_tsc[i]*sz_bar_cic[k]*seg_factor_z/2.0;
+                Ezp += Ez_arr(lo.x+i0_old_tsc+i, lo.y+k0_bar_cic+k, 0, 0)*weight;
+
+	        // gather Ez from new position for this segment
+                weight = sx_new_tsc[i]*sz_bar_cic[k]*seg_factor_z/2.0;
+                Ezp += Ez_arr(lo.x+i0_new_tsc+i, lo.y+k0_bar_cic+k, 0, 0)*weight;
+
+            }
+        }
+
+	// update old segment values
+        if (ns<num_segments-1) {
+	    i0_old_tsc = i0_new_tsc;
+	    k0_old_tsc = k0_new_tsc;
+            for (int m=0; m<=2; m++) {
+		sx_old_tsc[m] = sx_new_tsc[m];
+		sz_old_tsc[m] = sz_new_tsc[m];
+	    }
+            xpold0 = xpnew0;
+	    zpold0 = zpnew0;
+	}
+
+    }
+
+    // gather magnetic field and out-of-plane electric field
     for (int i=0; i<=1; i++) {
         for (int k=0; k<=1; k++) {
             auto weight = sx_bar_cell[i]*sz_bar_node[k];
-            Exp += Ex_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 0)*weight;
+            //Exp += Ex_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 0)*weight;
             Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 0)*weight;
         }
     }
@@ -1044,7 +1214,7 @@ void doGatherPicnicShapeN (
     for (int i=0; i<=1; i++) {
         for (int k=0; k<=1; k++) {
             auto weight = sx_bar_node[i]*sz_bar_cell[k];
-            Ezp += Ez_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 0)*weight;
+            //Ezp += Ez_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 0)*weight;
             Bxp += Bx_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 0)*weight;
         }
     }
