@@ -109,6 +109,10 @@ computePhiIGF ( amrex::MultiFab const & rho,
     SpectralField tmp_rho_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
     SpectralField tmp_G_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
 
+    // Copy from rho to tmp_rho
+    tmp_rho.ParallelCopy( rho, 0, 0, 1, amrex::IntVect::TheZeroVector(), amrex::IntVect::TheZeroVector() );
+
+    // Compute the integrated Green function
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
@@ -117,17 +121,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
         amrex::Box bx = mfi.tilebox();
         bx.enclosedCells();
-
-        // Copy values of rho to tmp_rho
-        // TODO This could probably be replaced by a parallel copy
-        amrex::Array4<const amrex::Real> const& rho_arr = rho.array(mfi);
-        amrex::Array4<amrex::Real> tmp_rho_arr = tmp_rho.array(mfi);
-        amrex::ParallelFor( bx,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-            {
-                tmp_rho_arr(i,j,k) = rho_arr(i,j,k);
-            }
-        );
 
         // Fill values of the Green function
         amrex::Real dx = cell_size[0];
@@ -215,30 +208,11 @@ computePhiIGF ( amrex::MultiFab const & rho,
         ablastr::math::anyfft::Execute(backward_plan[mfi]);
     }
 
-    // Copy from tmp_G to phi and normalize
-    // since (FFT + inverse FFT) results in a factor N
-#ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-    for (amrex::MFIter mfi(phi, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
-//    for (amrex::MFIter mfi(rho); mfi.isValid(); ++mfi) {
-
-        const amrex::Real normalization = 1. / realspace_box.numPts();
-
-        const amrex::Box& bx = mfi.tilebox();
-
-        // Copy values from tmp_G to phi
-        // TODO This could probably be replaced by a parallel copy
-        amrex::Array4<const amrex::Real> const& tmp_G_arr = tmp_G.array(mfi);
-        amrex::Array4<amrex::Real> phi_arr = phi.array(mfi);
-        amrex::ParallelFor( bx,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-            {
-                phi_arr(i,j,k) = tmp_G_arr(i,j,k) * normalization;
-            }
-        );
-        // TODO: Exchange guard cells of phi
-    }
+    // Copy from tmp_G to phi
+    phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
+    // Normalize, since (FFT + inverse FFT) results in a factor N
+    const amrex::Real normalization = 1. / realspace_box.numPts();
+    phi.mult( normalization );
 
     // Loop to destroy FFT plans
     for ( amrex::MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
