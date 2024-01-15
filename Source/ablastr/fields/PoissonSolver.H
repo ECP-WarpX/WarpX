@@ -70,14 +70,16 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 amrex::MultiFab & phi,
                 std::array<amrex::Real, 3> const cell_size,
                 amrex::DistributionMapping const dm,
-                amrex::BoxArray ba ) {
+                amrex::BoxArray const ba ) {
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ba.size() == 1, "IGF only works with a single box right now" );
+    // Define box that encompasses the full domain
+    amrex::Box domain = ba.minimalBox();
+    domain.enclosedCells(); // even number of cells
 
     // Allocate 2x wider array for rho
     // TODO This could probaby be more compact
-    ba.enclosedCells();
-    amrex::IntVect hivect = ba[0].length(); // even number of cells
+    AMREX_ALWAYS_ASSERT( domain.smallEnd() == amrex::IntVect::TheZeroVector() );
+    amrex::IntVect hivect = domain.length();
     for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
         hivect[idim] = 2*hivect[idim] - 1;
     }
@@ -90,17 +92,22 @@ computePhiIGF ( amrex::MultiFab const & rho,
         {(hivect[0]+1)/2, hivect[1], hivect[2]} ); // half the size along x: real to complex transform
     spectralspace_bl.push_back( spectralspace_box );
     amrex::BoxArray realspace_ba, spectralspace_ba;
+    // Define corresponding box arrays for the global FFT: contains only one box
     realspace_ba.define(realspace_bl);
     spectralspace_ba.define(spectralspace_bl);
 
+    // Define a distribution mapping for the global FFT, with only one box
+    amrex::DistributionMapping dm_global_fft;
+    dm_global_fft.define( realspace_ba );
+
     // Allocate required arrays
-    amrex::MultiFab tmp_rho = amrex::MultiFab(realspace_ba, dm, 1, 0);
+    amrex::MultiFab tmp_rho = amrex::MultiFab(realspace_ba, dm_global_fft, 1, 0);
     tmp_rho.setVal(0);
-    amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, dm, 1, 0);
+    amrex::MultiFab tmp_G = amrex::MultiFab(realspace_ba, dm_global_fft, 1, 0);
     tmp_G.setVal(0);
     using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
-    SpectralField tmp_rho_fft = SpectralField( spectralspace_ba, dm, 1, 0 );
-    SpectralField tmp_G_fft = SpectralField( spectralspace_ba, dm, 1, 0 );
+    SpectralField tmp_rho_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
+    SpectralField tmp_G_fft = SpectralField( spectralspace_ba, dm_global_fft, 1, 0 );
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
