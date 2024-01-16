@@ -19,7 +19,9 @@
 #include <optional>
 
 
-struct ExternalFieldFromFile 
+
+
+struct ExternalFieldFromFile3DCart 
 {
     const amrex::RealVect dx;
     const amrex::RealVect origin;
@@ -27,7 +29,7 @@ struct ExternalFieldFromFile
     const amrex::Array4<amrex::Real> arrayy;
     const amrex::Array4<amrex::Real> arrayz;
     public:
-    ExternalFieldFromFile(
+    ExternalFieldFromFile3DCart(
         const amrex::RealVect dx_,
         const amrex::RealVect origin_,
         const amrex::Array4<amrex::Real> arrayx_,
@@ -71,26 +73,27 @@ struct ExternalFieldFromFile
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::RealVect interpolate(amrex::Real x, amrex::Real y, amrex::Real z) const noexcept {
+        amrex::Real rel_x = x - origin[0];
+        amrex::Real rel_y = y - origin[1];
+        amrex::Real rel_z = z - origin[2];
         // Get index of the external field array
-        int ix = floor( (x-origin[0])/dx[0] );
-        int iy = floor( (y-origin[1])/dx[1] );
-        int iz = floor( (z-origin[2])/dx[2] );
-        amrex::Real fx = x/dx[0] - ix;
-        amrex::Real fy = y/dx[1] - iy;
-        amrex::Real fz = z/dx[2] - iz;
+        int ix = floor( rel_x / dx[0] );
+        int iy = floor( rel_y / dx[1] );
+        int iz = floor( rel_z / dx[2] );
 
         if (ix < arrayx.begin.x || iy < arrayx.begin.y || iz < arrayx.begin.z || ix > arrayx.end.x || iy > arrayx.end.y || iz > arrayx.end.z)
             return amrex::RealVect();
 
         amrex::RealVect retvect = {
-            interp_(arrayx, ix, iy, iz, x, y, z), 
-            interp_(arrayy, ix, iy, iz, x, y, z), 
-            interp_(arrayz, ix, iy, iz, x, y, z)
+            interp_(arrayx, ix, iy, iz, rel_x, rel_y, rel_z), 
+            interp_(arrayy, ix, iy, iz, rel_x, rel_y, rel_z), 
+            interp_(arrayz, ix, iy, iz, rel_x, rel_y, rel_z)
         };
 
         return retvect;
     }
 };
+
 
 /** \brief Functor class that assigns external
  *         field values (E and B) to particles.
@@ -130,7 +133,7 @@ struct GetExternalEBField
     const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uz = nullptr;
 
-    const ExternalFieldFromFile* Bfield_file_external_particle = nullptr;
+    const ExternalFieldFromFile3DCart* Bfield_file_external_particle = nullptr;
 
     std::optional<LatticeElementFinderDevice> d_lattice_element_finder;
 
@@ -200,10 +203,8 @@ struct GetExternalEBField
                 z = m_gamma_boost*z + m_uz_boost*m_time;
             }
 
-
             const auto B = Bfield_file_external_particle->interpolate(x, y, z);
 
-            // TODO: rho: Shape functions?
             Bx = B[0];
             By = B[1];
             Bz = B[2];
