@@ -1140,8 +1140,8 @@ WarpXOpenPMDPlot::SetConstParticleRecordsEDPIC (
                 return "Esirkepov";
             case CurrentDepositionAlgo::Vay :
                 return "Vay";
-            case CurrentDepositionAlgo::VillasenorAndBuneman :
-                return "VillasenorAndBuneman";
+            case CurrentDepositionAlgo::Villasenor :
+                return "Villasenor";
             default:
                 return "directMorseNielson";
         }

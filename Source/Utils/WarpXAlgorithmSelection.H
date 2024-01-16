@@ -88,7 +88,7 @@ struct CurrentDepositionAlgo {
         Esirkepov = 0,
         Direct = 1,
         Vay = 2,
-	VillasenorAndBuneman = 3
+	Villasenor = 3
     };
 };
 

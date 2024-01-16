@@ -1548,6 +1548,7 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
                        ion_lev is a null pointer.
  * \param Jx_arr,Jy_arr,Jz_arr Array4 of current density, either full array or tile.
  * \param np_to_deposit Number of particles for which current is deposited.
+ * \param dt           Time step for particle level
  * \param dx           3D cell size
  * \param xyzmin       Physical lower bounds of domain.
  * \param lo           Index lower bounds of domain.
@@ -1557,30 +1558,30 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
 template <int depos_order>
-void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal * const xp_n,
-                                                     const amrex::ParticleReal * const yp_n,
-                                                     const amrex::ParticleReal * const zp_n,
-                                                     const GetParticlePosition<PIdx>& GetPosition,
-                                                     const amrex::ParticleReal * const wp,
-                                                     [[maybe_unused]]const amrex::ParticleReal * const uxp_n,
-                                                     [[maybe_unused]]const amrex::ParticleReal * const uyp_n,
-                                                     [[maybe_unused]]const amrex::ParticleReal * const uzp_n,
-                                                     [[maybe_unused]]const amrex::ParticleReal * const uxp_nph,
-                                                     [[maybe_unused]]const amrex::ParticleReal * const uyp_nph,
-                                                     [[maybe_unused]]const amrex::ParticleReal * const uzp_nph,
-                                                     const int * const ion_lev,
-                                                     const amrex::Array4<amrex::Real>& Jx_arr,
-                                                     const amrex::Array4<amrex::Real>& Jy_arr,
-                                                     const amrex::Array4<amrex::Real>& Jz_arr,
-                                                     const long np_to_deposit,
-                                                     const amrex::Real dt,
-                                                     const std::array<amrex::Real,3>& dx,
-                                                     const std::array<amrex::Real, 3> xyzmin,
-                                                     const amrex::Dim3 lo,
-                                                     const amrex::Real q,
-                                                     const int n_rz_azimuthal_modes,
-                                                     amrex::Real * const cost,
-                                                     const long load_balance_costs_update_algo)
+void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_n,
+                                           const amrex::ParticleReal * const yp_n,
+                                           const amrex::ParticleReal * const zp_n,
+                                           const GetParticlePosition<PIdx>& GetPosition,
+                                           const amrex::ParticleReal * const wp,
+                                           [[maybe_unused]]const amrex::ParticleReal * const uxp_n,
+                                           [[maybe_unused]]const amrex::ParticleReal * const uyp_n,
+                                           [[maybe_unused]]const amrex::ParticleReal * const uzp_n,
+                                           [[maybe_unused]]const amrex::ParticleReal * const uxp_nph,
+                                           [[maybe_unused]]const amrex::ParticleReal * const uyp_nph,
+                                           [[maybe_unused]]const amrex::ParticleReal * const uzp_nph,
+                                           const int * const ion_lev,
+                                           const amrex::Array4<amrex::Real>& Jx_arr,
+                                           const amrex::Array4<amrex::Real>& Jy_arr,
+                                           const amrex::Array4<amrex::Real>& Jz_arr,
+                                           const long np_to_deposit,
+                                           const amrex::Real dt,
+                                           const std::array<amrex::Real,3>& dx,
+                                           const std::array<amrex::Real, 3> xyzmin,
+                                           const amrex::Dim3 lo,
+                                           const amrex::Real q,
+                                           const int n_rz_azimuthal_modes,
+                                           amrex::Real * const cost,
+                                           const long load_balance_costs_update_algo)
 {
     using namespace amrex;
 #if !defined(WARPX_DIM_RZ)

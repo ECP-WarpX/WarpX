@@ -1162,9 +1162,9 @@ WarpX::ReadParameters ()
             "Please set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
         
 	WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            current_deposition_algo != CurrentDepositionAlgo::VillasenorAndBuneman ||
+            current_deposition_algo != CurrentDepositionAlgo::Villasenor ||
             !do_current_centering,
-            "Current centering (nodal deposition) cannot be used with VillasenorAndBuneman deposition."
+            "Current centering (nodal deposition) cannot be used with Villasenor deposition."
             "Please set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1189,11 +1189,11 @@ WarpX::ReadParameters ()
                 "Vay deposition not implemented with multi-J algorithm");
         }
 
-	if (current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman) {
+	if (current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
 	    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 evolve_scheme == EvolveScheme::ImplicitPicard ||
                 evolve_scheme == EvolveScheme::SemiImplicitPicard,
-                "VillasenorAndBuneman current deposition can only"
+                "Villasenor current deposition can only"
                 "be used with Implicit evolve schemes.");
 	}
 
@@ -1256,9 +1256,9 @@ WarpX::ReadParameters ()
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
-                current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman ||
+                current_deposition_algo == CurrentDepositionAlgo::Villasenor ||
                 current_deposition_algo == CurrentDepositionAlgo::Direct,
-                "Only Esirkepov, VillasenorAndBuneman, or Direct current deposition supported with the implicit and semi-implicit schemes");
+                "Only Esirkepov, Villasenor, or Direct current deposition supported with the implicit and semi-implicit schemes");
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
@@ -1359,9 +1359,9 @@ WarpX::ReadParameters ()
         }
 	
 	WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            current_deposition_algo != CurrentDepositionAlgo::VillasenorAndBuneman ||
+            current_deposition_algo != CurrentDepositionAlgo::Villasenor ||
             particle_shape <= 2,
-            "algo.particle_shape must be 1 or 2 when using the VillasenorAndBuneman deposition.");
+            "algo.particle_shape must be 1 or 2 when using the Villasenor deposition.");
 
         const amrex::ParmParse pp_warpx("warpx");
         pp_warpx.queryarr("sort_intervals", sort_intervals_string_vec);
@@ -1488,7 +1488,7 @@ WarpX::ReadParameters ()
         // are used
         current_correction = true;
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
-            WarpX::current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman ||
+            WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor ||
             WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay ||
             WarpX::do_dive_cleaning)
         {
@@ -1503,7 +1503,7 @@ WarpX::ReadParameters ()
 
         if (!current_correction &&
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov &&
-            current_deposition_algo != CurrentDepositionAlgo::VillasenorAndBuneman &&
+            current_deposition_algo != CurrentDepositionAlgo::Villasenor &&
             current_deposition_algo != CurrentDepositionAlgo::Vay)
         {
             ablastr::warn_manager::WMRecordWarning(
@@ -1595,14 +1595,14 @@ WarpX::ReadParameters ()
 
 
         if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
-	    current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman) {
+	    current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
 
             // The comoving PSATD algorithm is not implemented nor tested with Esirkepov current deposition
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_comoving_is_zero,
-                "charge-conserving current depositions (Esirkepov and VillasenorAndBuneman) cannot be used with the comoving PSATD algorithm");
+                "charge-conserving current depositions (Esirkepov and Villasenor) cannot be used with the comoving PSATD algorithm");
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_galilean_is_zero,
-                "charge-conserving current depositions (Esirkepov and VillasenorAndBuneman) cannot be used with the Galilean algorithm.");
+                "charge-conserving current depositions (Esirkepov and Villasenor) cannot be used with the Galilean algorithm.");
         }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(

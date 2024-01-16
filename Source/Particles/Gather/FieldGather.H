@@ -1506,7 +1506,7 @@ void doGatherShapeNImplicit (
                                                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
     }
-    else if (depos_type==3) { // CurrentDepositionAlgo::VillasenorAndBuneman 
+    else if (depos_type==3) { // CurrentDepositionAlgo::Villasenor 
         if (nox == 1) {
             doGatherPicnicShapeN<1>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                     Exp, Eyp, Ezp, Bxp, Byp, Bzp,

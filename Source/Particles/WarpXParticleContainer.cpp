@@ -444,9 +444,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, 0.5_rt*dt);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov || 
-        WarpX::current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman) {
+        WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
         if (WarpX::grid_type == GridType::Collocated) {
-          WARPX_ABORT_WITH_MESSAGE("Charge-conserving current depositions (Esirkepov and VillasenorAndBuneman) cannot be used with a collocated grid.");
+          WARPX_ABORT_WITH_MESSAGE("Charge-conserving current depositions (Esirkepov and Villasenor) cannot be used with a collocated grid.");
         }
     }
 
@@ -512,8 +512,8 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
             WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Vay algorithm");
         }
-	else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman) {
-            WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with VillasenorAndBuneman algorithm");
+	else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
+            WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Villasenor algorithm");
         }
         else {
             WARPX_PROFILE_VAR_START(direct_current_dep_kernel);
@@ -615,7 +615,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         WarpX::load_balance_costs_update_algo);
                 }
             }
-	} else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman) {
+	} else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
             if (push_type == PushType::Implicit) {
 #if (AMREX_SPACEDIM >= 2)
                 auto& xp_n = pti.GetAttribs(particle_comps["x_n"]);
@@ -635,7 +635,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 auto& uyp_n = pti.GetAttribs(particle_comps["uy_n"]);
                 auto& uzp_n = pti.GetAttribs(particle_comps["uz_n"]);
                 if (WarpX::nox == 1){
-                    doVillasenorAndBunemanDepositionShapeNImplicit<1>(
+                    doVillasenorDepositionShapeNImplicit<1>(
                         xp_n_data, yp_n_data, zp_n_data,
                         GetPosition, wp.dataPtr() + offset,
                         uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
@@ -644,7 +644,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
                 } else if (WarpX::nox == 2){
-                    doVillasenorAndBunemanDepositionShapeNImplicit<2>(
+                    doVillasenorDepositionShapeNImplicit<2>(
                         xp_n_data, yp_n_data, zp_n_data,
                         GetPosition, wp.dataPtr() + offset,
                         uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
@@ -655,7 +655,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 }
 	    }
 	    else {
-                WARPX_ABORT_WITH_MESSAGE("The VillasenorAndBunemen algorithm can only be used with implicit algorithm.");
+                WARPX_ABORT_WITH_MESSAGE("The Villasenor algorithm can only be used with implicit algorithm.");
 	    }
         } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
             if (push_type == PushType::Implicit) {
