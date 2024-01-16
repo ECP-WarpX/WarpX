@@ -109,6 +109,8 @@ computePhiIGF ( amrex::MultiFab const & rho,
     tmp_rho.ParallelCopy( rho, 0, 0, 1, amrex::IntVect::TheZeroVector(), amrex::IntVect::TheZeroVector() );
 
     // Compute the integrated Green function
+    {
+    WARPX_PROFILE("Initialize Green function");
     amrex::BoxArray domain_ba = amrex::BoxArray( domain );
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -153,6 +155,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
                 if ((i>0)&&(j>0)&&(k>0)) tmp_G_arr(2*nx-i, 2*ny-j, 2*nz-k) = G_value;
             }
         );
+    }
     }
 
     // Perform forward FFTs
