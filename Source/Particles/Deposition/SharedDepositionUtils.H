@@ -708,14 +708,7 @@ void depositEsirkepovComponentX (const GetParticlePosition<PIdx>& GetPosition,
     amrex::Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
     amrex::Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
     amrex::Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
-    amrex::Real costheta_new, sintheta_new;
-    if (rp_new > 0._rt) {
-        costheta_new = xp_new/rp_new;
-        sintheta_new = yp_new/rp_new;
-    } else {
-        costheta_new = 1._rt;
-        sintheta_new = 0._rt;
-    }
+
     amrex::Real costheta_mid, sintheta_mid;
     if (rp_mid > 0._rt) {
         costheta_mid = xp_mid/rp_mid;
@@ -724,14 +717,7 @@ void depositEsirkepovComponentX (const GetParticlePosition<PIdx>& GetPosition,
         costheta_mid = 1._rt;
         sintheta_mid = 0._rt;
     }
-    amrex::Real costheta_old, sintheta_old;
-    if (rp_old > 0._rt) {
-        costheta_old = xp_old/rp_old;
-        sintheta_old = yp_old/rp_old;
-    } else {
-        costheta_old = 1._rt;
-        sintheta_old = 0._rt;
-    }
+
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
     // Keep these double to avoid bug in single precision
     double const x_new = (rp_new - xmin)*dxi;
@@ -1187,14 +1173,7 @@ void depositEsirkepovComponentZ (const GetParticlePosition<PIdx>& GetPosition,
     amrex::Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
     amrex::Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
     amrex::Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
-    amrex::Real costheta_new, sintheta_new;
-    if (rp_new > 0._rt) {
-        costheta_new = xp_new/rp_new;
-        sintheta_new = yp_new/rp_new;
-    } else {
-        costheta_new = 1._rt;
-        sintheta_new = 0._rt;
-    }
+
     amrex::Real costheta_mid, sintheta_mid;
     if (rp_mid > 0._rt) {
         costheta_mid = xp_mid/rp_mid;
@@ -1203,14 +1182,7 @@ void depositEsirkepovComponentZ (const GetParticlePosition<PIdx>& GetPosition,
         costheta_mid = 1._rt;
         sintheta_mid = 0._rt;
     }
-    amrex::Real costheta_old, sintheta_old;
-    if (rp_old > 0._rt) {
-        costheta_old = xp_old/rp_old;
-        sintheta_old = yp_old/rp_old;
-    } else {
-        costheta_old = 1._rt;
-        sintheta_old = 0._rt;
-    }
+
     const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
     // Keep these double to avoid bug in single precision
     double const x_new = (rp_new - xmin)*dxi;
