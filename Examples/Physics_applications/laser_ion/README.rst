@@ -56,11 +56,15 @@ Analyze
    :alt: Longitudinal phase space of forward-flying electrons in a 2 degree opening angle.
    :width: 100%
 
+   Longitudinal phase space of forward-flying electrons in a 2 degree opening angle.
+
 .. _fig-tnsa-ps-protons-pinhole:
 
 .. figure:: https://user-images.githubusercontent.com/5416860/295003988-dea3dfb7-0d55-4616-b32d-061fb429f9ac.png
    :alt: Longitudinal phase space of forward-flying protons in a 2 degree opening angle.
    :width: 100%
+
+   Longitudinal phase space of forward-flying protons in a 2 degree opening angle.
 
 Time-resolved phase electron space analysis as in :numref:`fig-tnsa-ps-electrons-pinhole` gives information about, e.g., how laser energy is locally converted into electron kinetic energy.
 Later in time, ion phase spaces like :numref:`fig-tnsa-ps-protons-pinhole` can reveal where accelerated ion populations originate.
@@ -84,14 +88,18 @@ Visualize
    :alt: Particle densities for electrons (top), protons (middle), and electrons again in logarithmic scale (bottom).
    :width: 80%
 
+    Particle densities for electrons (top), protons (middle), and electrons again in logarithmic scale (bottom).
+
 Particle density output illustrates the evolution of the target in time and space.
 Logarithmic scales can help to identify where the target becomes transparent for the laser pulse (bottom panel in :numref:`fig-tnsa-densities` ).
 
 .. _fig-tnsa-fields:
 
 .. figure:: https://user-images.githubusercontent.com/5416860/296338609-a49eee7f-6793-4b55-92f1-0b887e6437ab.png
-   :alt: Electromagnetic fields for E_x (top), B_y (middle), and E_z (bottom).
+   :alt: Electromagnetic field visualization for E_x (top), B_y (middle), and E_z (bottom).
    :width: 80%
+
+   Electromagnetic field visualization for :math:`E_x` (top), :math:`B_y` (middle), and :math:`E_z` (bottom).
 
 Electromagnetic field output shows where the laser field is strongest at a given point in time, and where accelerating fields build up :numref:`fig-tnsa-fields`.
 
