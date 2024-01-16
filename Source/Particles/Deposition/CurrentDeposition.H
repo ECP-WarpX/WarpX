@@ -1767,19 +1767,10 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
 	    // In progress...
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-            
-	    // compute slopes and directional signs
-            const auto slope = static_cast<amrex::Real>(dxp == 0. ? 0. : dzp/dxp);
-            const auto slope_inv = static_cast<amrex::Real>(dzp == 0. ? 0. : dxp/dzp);
 	    
-	    int dirX_sign, dirZ_sign;
-	    if(x_new < x_old) { dirX_sign = -1; }
-	    else { dirX_sign = 1; }
-	    if(z_new < z_old) { dirZ_sign = -1; }
-	    else { dirZ_sign = 1; }
-	    
-	    // compute cell crossings in X-direction
 	    int num_segments = 1;
+           
+	    // compute cell crossings in X-direction
 	    const auto i_old_cic = static_cast<int>(x_old-0.5);
 	    const auto i_new_cic = static_cast<int>(x_new-0.5);
             int cell_crossings_x = std::abs(i_new_cic-i_old_cic);
@@ -1798,11 +1789,24 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
                 std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
                 std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
 	    }
-
-	    // compute the initial Xcell in each direction used to find the
-	    // position vector at cell crossings (defined at cell centers)
-	    double Xcell = (lo.x + i_old_cic + 0.5 + 0.5*(1-dirX_sign) )*dx[0];
-	    double Zcell = (lo.y + k_old_cic + 0.5 + 0.5*(1-dirZ_sign) )*dx[2];
+            
+	    // compute the slopes and the initial cell locations in each direction 
+	    // used to find the position at cell crossings (defined at cell centers)
+	    double slope, slope_inv;
+	    double Xcell, Zcell;
+	    int dirX_sign, dirZ_sign;
+	    if (cell_crossings_x > 0) {
+	        if(x_new < x_old) { dirX_sign = -1; }
+	        else { dirX_sign = 1; }
+	        Xcell = ( lo.x + i_old_cic + 0.5 + 0.5*(1-dirX_sign) )*dx[0];
+                slope = dzp/dxp;
+	    }
+	    if (cell_crossings_z > 0) {
+	        if(z_new < z_old) { dirZ_sign = -1; }
+	        else { dirZ_sign = 1; }
+	        Zcell = ( lo.y + k_old_cic + 0.5 + 0.5*(1-dirZ_sign) )*dx[2];
+                slope_inv = dxp/dzp;
+	    }
 
 	    // loop over the number of segments and deposit
             Compute_shape_factor< 1 > compute_shape_factor_cic;
@@ -1865,18 +1869,18 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
                 auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
 
 		// compute cell-based cic weights using the average segment position
-                double const x0_bar = ((xpnew0+xpold0)/2.0 - xmin)*dxi;
-                double const z0_bar = ((zpnew0+zpold0)/2.0 - zmin)*dzi;
                 double sx_cic[2] = {0.};
                 double sz_cic[2] = {0.};
+                double const x0_bar = ((xpnew0+xpold0)/2.0 - xmin)*dxi;
+                double const z0_bar = ((zpnew0+zpold0)/2.0 - zmin)*dzi;
                 const int i0_cic = compute_shape_factor_cic( sx_cic, x0_bar-0.5 );
                 const int k0_cic = compute_shape_factor_cic( sz_cic, z0_bar-0.5 );
 		
 		// compute average node-based tsc weights using old and new segment positions
-                double const x0_new = (xpnew0 - xmin)*dxi;
-                double const z0_new = (zpnew0 - zmin)*dzi;
                 double sx_tsc[3] = {0.};
                 double sz_tsc[3] = {0.};
+                double const x0_new = (xpnew0 - xmin)*dxi;
+                double const z0_new = (zpnew0 - zmin)*dzi;
 		const int i0_tsc = compute_avg_shape_factor_tsc( sx_tsc, x0_old, x0_new );
 		const int k0_tsc = compute_avg_shape_factor_tsc( sz_tsc, z0_old, z0_new );
 

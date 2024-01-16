@@ -979,82 +979,51 @@ void doGatherPicnicShapeN (
     // Keep these double to avoid bug in single precision
     double const x_new = (rp_new - xmin)*dxi;
     double const x_old = (rp_old - xmin)*dxi;
+    double const x_bar = (rp_mid - xmin)*dxi;
     double const dxp = rp_new - rp_old;
 #else
 #if !defined(WARPX_DIM_1D_Z)
     // Keep these double to avoid bug in single precision
     double const x_new = (xp_np1 - xmin)*dxi;
     double const x_old = (xp_n - xmin)*dxi;
+    double const x_bar = (xp_nph - xmin)*dxi;
     double const dxp = xp_np1 - xp_n;
 #endif
 #endif
 #if defined(WARPX_DIM_3D)
     // Keep these double to avoid bug in single precision
     double const y_new = (yp_np1 - ymin)*dyi;
-    double const y_old = (yp_n - ymin)*dyi;
+    double const y_old = (yp_n   - ymin)*dyi;
+    double const y_bar = (yp_nph - ymin)*dyi;
     double const dyp = yp_np1 - yp_n;
 #endif
     // Keep these double to avoid bug in single precision
     double const z_new = (zp_np1 - zmin)*dzi;
-    double const z_old = (zp_n - zmin)*dzi;
+    double const z_old = (zp_n   - zmin)*dzi;
+    double const z_bar = (zp_nph - zmin)*dzi;
     double const dzp = zp_np1 - zp_n;
 
-    // Compute CIC shape factors for virtual (out-of-plane) components of E
-    // and for all components of B
-#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    Compute_shape_factor< 1 > compute_shape_factor_cic;
-    double sz_bar_node[2] = {0.};
-    double sz_bar_cell[2] = {0.};
-    double const z_bar = (zp_nph - zmin)*dzi;
-    const int k_bar_node = compute_shape_factor_cic(sz_bar_node, z_bar);
-    const int k_bar_cell = compute_shape_factor_cic(sz_bar_cell, z_bar-0.5);
-    double sx_bar_node[2] = {0.};
-    double sx_bar_cell[2] = {0.};
-#if defined(WARPX_DIM_RZ)
-    double const x_bar = (rp_mid - xmin)*dxi;
-#else
-    double const x_bar = (xp_nph - xmin)*dxi;
-#endif
-    const int i_bar_node = compute_shape_factor_cic(sx_bar_node, x_bar);
-    const int i_bar_cell = compute_shape_factor_cic(sx_bar_cell, x_bar-0.5);
-#elif defined(WARPX_DIM_1D_Z)
-    Compute_shape_factor< 1 > compute_shape_factor_cic;
-    double sz_bar_node[2] = {0.};
-    double sz_bar_cell[2] = {0.};
-    double const z_bar = (zp_nph - zmin)*dzi;
-    const int k_bar_node = compute_shape_factor_cic(sz_bar_node, z_bar);
-    const int k_bar_cell = compute_shape_factor_cic(sz_bar_cell, z_bar-0.5);
-#endif
+    // 1) Determine the number of segments. 
+    // 2) Loop over segments and gather in-plane electric field.
+    // 3) Deposit magnetic field and out-of-plane electric field.
 
 #if defined(WARPX_DIM_3D)
 
-            // In progress...
+    // In progress...
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
-    // compute slopes and directional signs
-    auto slope = static_cast<amrex::Real>(dxp == 0. ? 0. : dzp/dxp);
-    auto slope_inv = static_cast<amrex::Real>(dzp == 0. ? 0. : dxp/dzp);
-    int dirX_sign, dirZ_sign;
-    if(x_new < x_old) { dirX_sign = -1; }
-    else { dirX_sign = 1; }
-    if(z_new < z_old) { dirZ_sign = -1; }
-    else { dirZ_sign = 1; }
+    int num_segments = 1;
 
     // compute cell crossings in X-direction
-    int num_segments = 1;
-    double sx_old_cic[2] = {0.};
-    double sx_new_cic[2] = {0.};
-    const int i_old_cic = compute_shape_factor_cic(sx_old_cic, x_old-0.5);
-    const int i_new_cic = compute_shape_factor_cic(sx_new_cic, x_new-0.5);
+    const auto i_old_cic = static_cast<int>(x_old-0.5);
+    const auto i_new_cic = static_cast<int>(x_new-0.5);
     int cell_crossings_x = std::abs(i_new_cic-i_old_cic);
     num_segments += cell_crossings_x;
 
     // compute cell crossings in Z-direction
-    double sz_old_cic[2] = {0.};
-    double sz_new_cic[2] = {0.};
-    const int k_old_cic = compute_shape_factor_cic(sz_old_cic, z_old-0.5);
-    const int k_new_cic = compute_shape_factor_cic(sz_new_cic, z_new-0.5);
+    const auto k_old_cic = static_cast<int>(z_old-0.5);
+    const auto k_new_cic = static_cast<int>(z_new-0.5);
     int cell_crossings_z = std::abs(k_new_cic-k_old_cic);
     num_segments += cell_crossings_z;
 
@@ -1066,25 +1035,33 @@ void doGatherPicnicShapeN (
         std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
     }
 
-    // compute the initial Xcell in each direction used to find the
-    // position vector at cell crossings (defined at cell centers)
-    double Xcell = (lo.x + i_old_cic + 0.5 + 0.5*(1-dirX_sign) )*dx[0];
-    double Zcell = (lo.y + k_old_cic + 0.5 + 0.5*(1-dirZ_sign) )*dx[2];
+    // compute the slopes and the initial cell locations in each direction 
+    // used to find the position at cell crossings (defined at cell centers)
+    double slope, slope_inv;
+    double Xcell, Zcell;
+    int dirX_sign, dirZ_sign;
+    if (cell_crossings_x > 0) {
+        if(x_new < x_old) { dirX_sign = -1; }
+        else { dirX_sign = 1; }
+        Xcell = ( lo.x + i_old_cic + 0.5 + 0.5*(1-dirX_sign) )*dx[0];
+               slope = dzp/dxp;
+    }
+    if (cell_crossings_z > 0) {
+        if(z_new < z_old) { dirZ_sign = -1; }
+        else { dirZ_sign = 1; }
+        Zcell = ( lo.y + k_old_cic + 0.5 + 0.5*(1-dirZ_sign) )*dx[2];
+        slope_inv = dxp/dzp;
+    }
 
-    // compute TSC shape factors for old position
-    Compute_shape_factor< 2 > compute_shape_factor_tsc;
-    double sx_old_tsc[3] = {0.};
-    double sz_old_tsc[3] = {0.};
-    const int i_old_tsc = compute_shape_factor_tsc(sx_old_tsc, x_old);
-    const int k_old_tsc = compute_shape_factor_tsc(sz_old_tsc, z_old);
-   
     // loop over the number of segments and deposit
-    int i0_old_tsc = i_old_tsc;
-    int k0_old_tsc = k_old_tsc;
+    Compute_shape_factor< 1 > compute_shape_factor_cic;
+    Compute_average_shape_factor< 2 > compute_avg_shape_factor_tsc;
     double dxp_seg = dxp;
     double dzp_seg = dzp;
     double xpold0 = xp_n;
     double zpold0 = zp_n;
+    double x0_old = (xpold0 - xmin)*dxi;
+    double z0_old = (zpold0 - zmin)*dzi;
     double xpnew0, zpnew0;
 
     for (int ns=0; ns<num_segments; ns++) {
@@ -1137,100 +1114,61 @@ void doGatherPicnicShapeN (
         auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
 
 	// compute cell-based cic weights for half (i.e., bar) position
+        double sx_cic[2] = {0.};
+        double sz_cic[2] = {0.};
         double const x0_bar = ((xpnew0+xpold0)/2.0 - xmin)*dxi;
         double const z0_bar = ((zpnew0+zpold0)/2.0 - zmin)*dzi;
-        double sx_bar_cic[2] = {0.};
-        double sz_bar_cic[2] = {0.};
-        const int i0_bar_cic = compute_shape_factor_cic(sx_bar_cic, x0_bar-0.5);
-        const int k0_bar_cic = compute_shape_factor_cic(sz_bar_cic, z0_bar-0.5);
+        const int i0_cic = compute_shape_factor_cic(sx_cic, x0_bar-0.5);
+        const int k0_cic = compute_shape_factor_cic(sz_cic, z0_bar-0.5);
 		
-	// compute node-based tsc weights for new position
+        // compute average node-based tsc weights using old and new segment positions
+        double sx_tsc[3] = {0.};
+        double sz_tsc[3] = {0.};
         double const x0_new = (xpnew0 - xmin)*dxi;
         double const z0_new = (zpnew0 - zmin)*dzi;
-        double sx_new_tsc[3] = {0.};
-        double sz_new_tsc[3] = {0.};
-        const int i0_new_tsc = compute_shape_factor_tsc(sx_new_tsc, x0_new);
-        const int k0_new_tsc = compute_shape_factor_tsc(sz_new_tsc, z0_new);
-		
-	// average old and new x-dir tsc weights
-        double sx_tsc[4] = {0.};
-	int i0_tsc;
-	if (i0_new_tsc==i0_old_tsc) {
-	    i0_tsc = i0_new_tsc;
-	    for (int m=0; m<=2; m++) { sx_tsc[m] = (sx_old_tsc[m] + sx_new_tsc[m])/2.0; }
-	} else if (i0_new_tsc<i0_old_tsc) {
-	    i0_tsc = i0_new_tsc;
-	    sx_tsc[0] = sx_new_tsc[0]/2.0;
-	    for (int m=1; m<=2; m++) { sx_tsc[m] = (sx_old_tsc[m-1] + sx_new_tsc[m])/2.0; }
-	    sx_tsc[3] = sx_old_tsc[2]/2.0;
-	} else { // i0_old_tsc < i0_new_tsc
-	    i0_tsc = i0_old_tsc;
-            sx_tsc[0] = sx_old_tsc[0]/2.0;
-            for (int m=1; m<=2; m++) { sx_tsc[m] = (sx_old_tsc[m] + sx_new_tsc[m-1])/2.0; }
-	    sx_tsc[3] = sx_new_tsc[2]/2.0;
-	}
-		
-	// average old and new z-dir tsc weights
-        double sz_tsc[4] = {0.};
-	int k0_tsc;
-	if (k0_new_tsc==k0_old_tsc) {
-	    k0_tsc = k0_new_tsc;
-	    for (int m=0; m<=2; m++) { sz_tsc[m] = (sz_old_tsc[m] + sz_new_tsc[m])/2.0; }
-	} else if (k0_new_tsc<k0_old_tsc) {
-	    k0_tsc = k0_new_tsc;
-	    sz_tsc[0] = sz_new_tsc[0]/2.0;
-	    for (int m=1; m<=2; m++) { sz_tsc[m] = (sz_old_tsc[m-1] + sz_new_tsc[m])/2.0; }
-	    sz_tsc[3] = sz_old_tsc[2]/2.0;
-	} else { // k0_old_tsc < k0_new_tsc
-	    k0_tsc = k0_old_tsc;
-	    sz_tsc[0] = sz_old_tsc[0]/2.0;
-            for (int m=1; m<=2; m++) { sz_tsc[m] = (sz_old_tsc[m] + sz_new_tsc[m-1])/2.0; }
-	    sz_tsc[3] = sz_new_tsc[2]/2.0;
-	}
-		
-	// the averge tsc weight vectors will have a zero at one end.
-	// No need to deposit that value
-	int i_tsc_start = 0;
-	int k_tsc_start = 0;
-	if(sx_tsc[0]<sx_tsc[3]) { i_tsc_start = 1; }
-	if(sz_tsc[0]<sz_tsc[3]) { k_tsc_start = 1; }
+        const int i0_tsc = compute_avg_shape_factor_tsc( sx_tsc, x0_old, x0_new );
+        const int k0_tsc = compute_avg_shape_factor_tsc( sz_tsc, z0_old, z0_new );
 
         // gather Exp
 	amrex::Real weight;
         for (int i=0; i<=1; i++) {
-            for (int k=k_tsc_start; k<=k_tsc_start+2; k++) {
-                weight = sx_bar_cic[i]*sz_tsc[k]*seg_factor_x;
-                Exp += Ex_arr(lo.x+i0_bar_cic+i, lo.y+k0_tsc+k, 0, 0)*weight;
+            for (int k=0; k<=2; k++) {
+                weight = sx_cic[i]*sz_tsc[k]*seg_factor_x;
+                Exp += Ex_arr(lo.x+i0_cic+i, lo.y+k0_tsc+k, 0, 0)*weight;
             }
         }
        
         // gather Ezp	
-	for (int i=i_tsc_start; i<=i_tsc_start+2; i++) {
+	for (int i=0; i<=2; i++) {
             for (int k=0; k<=1; k++) {
-                weight = sx_tsc[i]*sz_bar_cic[k]*seg_factor_z;
-                Ezp += Ez_arr(lo.x+i0_tsc+i, lo.y+k0_bar_cic+k, 0, 0)*weight;
+                weight = sx_tsc[i]*sz_cic[k]*seg_factor_z;
+                Ezp += Ez_arr(lo.x+i0_tsc+i, lo.y+k0_cic+k, 0, 0)*weight;
             }
         }
 
 	// update old segment values
         if (ns<num_segments-1) {
-	    i0_old_tsc = i0_new_tsc;
-	    k0_old_tsc = k0_new_tsc;
-            for (int m=0; m<=2; m++) {
-		sx_old_tsc[m] = sx_new_tsc[m];
-		sz_old_tsc[m] = sz_new_tsc[m];
-	    }
             xpold0 = xpnew0;
 	    zpold0 = zpnew0;
+	    x0_old = x0_new;
+	    z0_old = z0_new;
 	}
 
     }
 
     // gather magnetic field and out-of-plane electric field
+    double sz_bar_node[2] = {0.};
+    double sz_bar_cell[2] = {0.};
+    const int k_bar_node = compute_shape_factor_cic(sz_bar_node, z_bar);
+    const int k_bar_cell = compute_shape_factor_cic(sz_bar_cell, z_bar-0.5);
+    double sx_bar_node[2] = {0.};
+    double sx_bar_cell[2] = {0.};
+    const int i_bar_node = compute_shape_factor_cic(sx_bar_node, x_bar);
+    const int i_bar_cell = compute_shape_factor_cic(sx_bar_cell, x_bar-0.5);
+
     for (int i=0; i<=1; i++) {
         for (int k=0; k<=1; k++) {
             auto weight = sx_bar_cell[i]*sz_bar_node[k];
-            //Exp += Ex_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 0)*weight;
             Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 0)*weight;
         }
     }
@@ -1243,7 +1181,6 @@ void doGatherPicnicShapeN (
     for (int i=0; i<=1; i++) {
         for (int k=0; k<=1; k++) {
             auto weight = sx_bar_node[i]*sz_bar_cell[k];
-            //Ezp += Ez_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 0)*weight;
             Bxp += Bx_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 0)*weight;
         }
     }
@@ -1267,6 +1204,12 @@ void doGatherPicnicShapeN (
 #endif
 
 #elif defined(WARPX_DIM_1D_Z)
+
+    Compute_shape_factor< 1 > compute_shape_factor_cic;
+    double sz_bar_node[2] = {0.};
+    double sz_bar_cell[2] = {0.};
+    const int k_bar_node = compute_shape_factor_cic(sz_bar_node, z_bar);
+    const int k_bar_cell = compute_shape_factor_cic(sz_bar_cell, z_bar-0.5);
 
     for (int k=0; k<=1; k++) {
         auto weight = sz_bar_node[k];
