@@ -55,13 +55,19 @@ namespace {
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real IntegratedPotential( amrex::Real x, amrex::Real y, amrex::Real z ) {
     amrex::Real const r = std::sqrt( x*x + y*y + z*z );
-    amrex::Real const G =
+    amrex::Real G =
         - 0.5 * z*z * std::atan( x*y/(z*r) )
         - 0.5 * y*y * std::atan( x*z/(y*r) )
         - 0.5 * x*x * std::atan( y*z/(x*r) )
         + y*z*std::log( x + r )
-        + x*z*std::log( y + r )
-        + x*y*std::log( z + r );
+        + x*z*std::log( y + r );
+    if (z >= 0) {
+        G += x*y*std::log( z + r );
+    } else {
+        // When z is negative and much larger than x and y (in absolute value), floating point operation can cause issues
+        // Thus, here we use z+r = (z+r)(r-z)/(r-z)
+        G += x*y*std::log( (x*x + y*y)/(r-z) );
+    }
     return G;
 }
 
