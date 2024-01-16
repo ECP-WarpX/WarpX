@@ -145,6 +145,8 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
 {
     WARPX_PROFILE("WarpX::AddSpaceChargeField");
 
+    if (pc.getCharge() == 0) return;
+
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
     if (!m_poisson_boundary_handler.bcs_set) {
@@ -195,7 +197,6 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
-
 }
 
 void

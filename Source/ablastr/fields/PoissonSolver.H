@@ -205,7 +205,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
     }
 
     // Copy from tmp_G to phi
-    phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
+    phi.setVal(0, phi.nGrowVect() );
+    phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), amrex::IntVect::TheZeroVector() );
+    phi.FillBoundary();
     // Normalize, since (FFT + inverse FFT) results in a factor N
     const amrex::Real normalization = 1. / realspace_box.numPts();
     phi.mult( normalization );
@@ -313,6 +315,8 @@ computePhi (amrex::Vector<amrex::MultiFab*> const & rho,
 )
 {
     using namespace amrex::literals;
+
+    WARPX_PROFILE("computePhi");
 
     if (!rel_ref_ratio.has_value()) {
         ABLASTR_ALWAYS_ASSERT_WITH_MESSAGE(rho.size() == 1u,
