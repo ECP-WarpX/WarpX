@@ -79,7 +79,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
     // Define box that encompasses the full domain
     amrex::Box domain = ba.minimalBox();
-    domain.enclosedCells(); // even number of cells
+    domain.surroundingNodes(); // get nodal points, since `phi` and `rho` are nodal
 
     int nx = domain.length(0);
     int ny = domain.length(1);
@@ -88,9 +88,9 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Allocate 2x wider arrays for the convolution of rho with the Green function
     // This also defines the box arrays for the global FFT: contains only one box
     AMREX_ALWAYS_ASSERT( domain.smallEnd() == amrex::IntVect::TheZeroVector() );
-    amrex::Box const realspace_box = amrex::Box( {0,0,0}, {2*nx-1, 2*ny-1, 2*nz-1} );
+    amrex::Box const realspace_box = amrex::Box( {0,0,0}, {2*nx-1, 2*ny-1, 2*nz-1}, amrex::IntVect::TheNodeVector() );
     amrex::BoxArray realspace_ba = amrex::BoxArray( realspace_box );
-    amrex::Box const spectralspace_box = amrex::Box( {0,0,0}, {nx, 2*ny-1, 2*nz-1} );
+    amrex::Box const spectralspace_box = amrex::Box( {0,0,0}, {nx, 2*ny-1, 2*nz-1}, amrex::IntVect::TheNodeVector() );
     amrex::BoxArray spectralspace_ba = amrex::BoxArray( spectralspace_box );
     // Define a distribution mapping for the global FFT, with only one box
     amrex::DistributionMapping dm_global_fft;
@@ -118,7 +118,6 @@ computePhiIGF ( amrex::MultiFab const & rho,
     for (amrex::MFIter mfi(domain_ba, dm_global_fft,amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
 
         amrex::Box bx = mfi.tilebox();
-        bx.enclosedCells();
 
         // Fill values of the Green function
         amrex::Real dx = cell_size[0];
