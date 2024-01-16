@@ -1573,7 +1573,7 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
                                                      const amrex::Array4<amrex::Real>& Jy_arr,
                                                      const amrex::Array4<amrex::Real>& Jz_arr,
                                                      const long np_to_deposit,
-                                                     //const amrex::Real dt,
+                                                     const amrex::Real dt,
                                                      const std::array<amrex::Real,3>& dx,
                                                      const std::array<amrex::Real, 3> xyzmin,
                                                      const amrex::Dim3 lo,
@@ -1728,20 +1728,31 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
             double const dzp = zp_np1 - zp_n[ip];
 
 #if defined(WARPX_DIM_RZ)
-            amrex::Real const vx = (uxp_nph[ip]*costheta_mid + uyp_nph[ip]*sintheta_mid)*gaminv;
+            //amrex::Real const vx = (uxp_nph[ip]*costheta_mid + uyp_nph[ip]*sintheta_mid)*gaminv;
             amrex::Real const vy = (-uxp_nph[ip]*sintheta_mid + uyp_nph[ip]*costheta_mid)*gaminv;
 #else
-            amrex::Real const vx = uxp_nph[ip]*gaminv;
+            //amrex::Real const vx = uxp_nph[ip]*gaminv;
             amrex::Real const vy = uyp_nph[ip]*gaminv;
 #endif
-            amrex::Real const vz = uzp_nph[ip]*gaminv;
+            //amrex::Real const vz = uzp_nph[ip]*gaminv;
 
+	    // set the velocity kernals to deposit
+            //amrex::Real const wqx = wq*vx*invvol;
+            //amrex::Real const wqy = wq*vy*invvol;
+            //amrex::Real const wqz = wq*vz*invvol;
+#if defined(WARPX_DIM_3D)
+            amrex::Real const wqx = wq*dxp/dt*invvol;
+            amrex::Real const wqy = wq*dyp/dt*invvol;
+            amrex::Real const wqz = wq*dzp/dt*invvol;
+#elif defined(WARPX_DIM_1D_Z)
             amrex::Real const wqx = wq*vx*invvol;
             amrex::Real const wqy = wq*vy*invvol;
-            amrex::Real const wqz = wq*vz*invvol;
-            //amrex::Real const wqx = wq*dxp/dt*invvol;
-            //amrex::Real const wqy = wq*vy*invvol;
-            //amrex::Real const wqz = wq*dzp/dt*invvol;
+            amrex::Real const wqz = wq*dzp/dt*invvol;
+#else
+            amrex::Real const wqx = wq*dxp/dt*invvol;
+            amrex::Real const wqy = wq*vy*invvol;
+            amrex::Real const wqz = wq*dzp/dt*invvol;
+#endif
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 	    // --- Compute CIC shape factors for virtual (out-of-plane) components
