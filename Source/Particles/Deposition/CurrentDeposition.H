@@ -1573,6 +1573,7 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
                                                      const amrex::Array4<amrex::Real>& Jy_arr,
                                                      const amrex::Array4<amrex::Real>& Jz_arr,
                                                      const long np_to_deposit,
+                                                     //const amrex::Real dt,
                                                      const std::array<amrex::Real,3>& dx,
                                                      const std::array<amrex::Real, 3> xyzmin,
                                                      const amrex::Dim3 lo,
@@ -1738,6 +1739,9 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
             amrex::Real const wqx = wq*vx*invvol;
             amrex::Real const wqy = wq*vy*invvol;
             amrex::Real const wqz = wq*vz*invvol;
+            //amrex::Real const wqx = wq*dxp/dt*invvol;
+            //amrex::Real const wqy = wq*vy*invvol;
+            //amrex::Real const wqz = wq*dzp/dt*invvol;
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 	    // --- Compute CIC shape factors for virtual (out-of-plane) components
@@ -1893,35 +1897,64 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
                 const int i0_new_tsc = compute_shape_factor_tsc(sx_new_tsc, x0_new);
                 const int k0_new_tsc = compute_shape_factor_tsc(sz_new_tsc, z0_new);
            
+		// average old and new x-dir tsc weights
+                double sx_tsc[4] = {0.};
+		int i0_tsc;
+		if (i0_new_tsc==i0_old_tsc) {
+	            i0_tsc = i0_new_tsc;
+		    for (int m=0; m<=2; m++) { sx_tsc[m] = (sx_old_tsc[m] + sx_new_tsc[m])/2.0; }
+		} else if (i0_new_tsc<i0_old_tsc) {
+	            i0_tsc = i0_new_tsc;
+		    sx_tsc[0] = sx_new_tsc[0]/2.0;
+		    for (int m=1; m<=2; m++) { sx_tsc[m] = (sx_old_tsc[m-1] + sx_new_tsc[m])/2.0; }
+		    sx_tsc[3] = sx_old_tsc[2]/2.0;
+		} else { // i0_old_tsc < i0_new_tsc
+	            i0_tsc = i0_old_tsc;
+		    sx_tsc[0] = sx_old_tsc[0]/2.0;
+		    for (int m=1; m<=2; m++) { sx_tsc[m] = (sx_old_tsc[m] + sx_new_tsc[m-1])/2.0; }
+		    sx_tsc[3] = sx_new_tsc[2]/2.0;
+		}
+		
+		// average old and new z-dir tsc weights
+                double sz_tsc[4] = {0.};
+		int k0_tsc;
+		if (k0_new_tsc==k0_old_tsc) {
+	            k0_tsc = k0_new_tsc;
+		    for (int m=0; m<=2; m++) { sz_tsc[m] = (sz_old_tsc[m] + sz_new_tsc[m])/2.0; }
+		} else if (k0_new_tsc<k0_old_tsc) {
+	            k0_tsc = k0_new_tsc;
+		    sz_tsc[0] = sz_new_tsc[0]/2.0;
+		    for (int m=1; m<=2; m++) { sz_tsc[m] = (sz_old_tsc[m-1] + sz_new_tsc[m])/2.0; }
+		    sz_tsc[3] = sz_old_tsc[2]/2.0;
+		} else { // k0_old_tsc < k0_new_tsc
+	            k0_tsc = k0_old_tsc;
+		    sz_tsc[0] = sz_old_tsc[0]/2.0;
+		    for (int m=1; m<=2; m++) { sz_tsc[m] = (sz_old_tsc[m] + sz_new_tsc[m-1])/2.0; }
+		    sz_tsc[3] = sz_new_tsc[2]/2.0;
+		}
+
+		// the averge tsc weight vectors will have a zero at one end.
+		// No need to deposit that value
+		int i_tsc_start = 0;
+		int k_tsc_start = 0;
+		if(sx_tsc[0]<sx_tsc[3]) { i_tsc_start = 1; }
+		if(sz_tsc[0]<sz_tsc[3]) { k_tsc_start = 1; }
+
 		// deposit Jx for this segment
 	        amrex::Real this_Jx;
 		for (int i=0; i<=1; i++) {
-                    for (int k=0; k<=2; k++) {
-
-			// deposit Jx from old position for this segment    
-                        this_Jx = wqx*sx_bar_cic[i]*sz_old_tsc[k]*seg_factor_x/2.0;
-                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_bar_cic+i, lo.y+k0_old_tsc+k, 0, 0), this_Jx);
-
-			// deposit Jx from new position for this segment
-                        this_Jx = wqx*sx_bar_cic[i]*sz_new_tsc[k]*seg_factor_x/2.0;
-                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_bar_cic+i, lo.y+k0_new_tsc+k, 0, 0), this_Jx);
-
+                    for (int k=k_tsc_start; k<=k_tsc_start+2; k++) {
+                        this_Jx = wqx*sx_bar_cic[i]*sz_tsc[k]*seg_factor_x;
+                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_bar_cic+i, lo.y+k0_tsc+k, 0, 0), this_Jx);
                     }
                 }
 		
 		// deposit Jz for this segment
 	        amrex::Real this_Jz;
-		for (int i=0; i<=2; i++) {
+		for (int i=i_tsc_start; i<=i_tsc_start+2; i++) {
                     for (int k=0; k<=1; k++) {
-
-			// deposit Jz from old position for this segment    
-                        this_Jz = wqz*sx_old_tsc[i]*sz_bar_cic[k]*seg_factor_z/2.0;
-                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_old_tsc+i, lo.y+k0_bar_cic+k, 0, 0), this_Jz);
-
-			// deposit Jz from new position for this segment
-                        this_Jz = wqz*sx_new_tsc[i]*sz_bar_cic[k]*seg_factor_z/2.0;
-                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_new_tsc+i, lo.y+k0_bar_cic+k, 0, 0), this_Jz);
-
+                        this_Jz = wqz*sx_tsc[i]*sz_bar_cic[k]*seg_factor_z;
+                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_tsc+i, lo.y+k0_bar_cic+k, 0, 0), this_Jz);
                     }
                 }
 
