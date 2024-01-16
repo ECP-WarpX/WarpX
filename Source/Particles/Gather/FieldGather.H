@@ -1003,28 +1003,60 @@ void doGatherPicnicShapeN (
     double const z_bar = (zp_nph - zmin)*dzi;
     double const dzp = zp_np1 - zp_n;
 
+    double shift;
+    if(depos_order==1) { shift = 0.0; }
+    else if(depos_order==2) { shift = 0.5; }
+    else {  } // not implemented
+
     // 1) Determine the number of segments. 
     // 2) Loop over segments and gather in-plane electric field.
     // 3) Deposit magnetic field and out-of-plane electric field.
 
 #if defined(WARPX_DIM_3D)
 
-    // In progress...
+    int num_segments = 1;
+
+    // compute cell crossings in X-direction
+    const auto i_old = static_cast<int>(x_old-shift);
+    const auto i_new = static_cast<int>(x_new-shift);
+    int cell_crossings_x = std::abs(i_new-i_old);
+    num_segments += cell_crossings_x;
+    
+    // compute cell crossings in Y-direction
+    const auto j_old = static_cast<int>(y_old-shift);
+    const auto j_new = static_cast<int>(y_new-shift);
+    int cell_crossings_y = std::abs(j_new-j_old);
+    num_segments += cell_crossings_y;
+
+    // compute cell crossings in Z-direction
+    const auto k_old = static_cast<int>(z_old-shift);
+    const auto k_new = static_cast<int>(z_new-shift);
+    int cell_crossings_z = std::abs(k_new-k_old);
+    num_segments += cell_crossings_z;
+
+    // need to assert that the number of cell crossings in each direction
+    // is within the range permitted by the number of guard cells
+    if(num_segments > 5 ) {
+        std::cout << "Notice: num_segments = " << num_segments << std::endl;
+        std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
+        std::cout << "Notice: cell_crossings_y = " << cell_crossings_y << std::endl;
+        std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
+    }
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     int num_segments = 1;
 
     // compute cell crossings in X-direction
-    const auto i_old_cic = static_cast<int>(x_old-0.5);
-    const auto i_new_cic = static_cast<int>(x_new-0.5);
-    int cell_crossings_x = std::abs(i_new_cic-i_old_cic);
+    const auto i_old = static_cast<int>(x_old-shift);
+    const auto i_new = static_cast<int>(x_new-shift);
+    int cell_crossings_x = std::abs(i_new-i_old);
     num_segments += cell_crossings_x;
 
     // compute cell crossings in Z-direction
-    const auto k_old_cic = static_cast<int>(z_old-0.5);
-    const auto k_new_cic = static_cast<int>(z_new-0.5);
-    int cell_crossings_z = std::abs(k_new_cic-k_old_cic);
+    const auto k_old = static_cast<int>(z_old-shift);
+    const auto k_new = static_cast<int>(z_new-shift);
+    int cell_crossings_z = std::abs(k_new-k_old);
     num_segments += cell_crossings_z;
 
     // need to assert that the number of cell crossings in each direction
@@ -1036,26 +1068,28 @@ void doGatherPicnicShapeN (
     }
 
     // compute the slopes and the initial cell locations in each direction 
-    // used to find the position at cell crossings (defined at cell centers)
+    // used to find the position at cell crossings.
+    // depos_order = 1:  cell crossings defined at cell edges
+    // depos_order = 2:  cell crossings defined at cell centers
     double slope, slope_inv;
     double Xcell, Zcell;
     int dirX_sign, dirZ_sign;
     if (cell_crossings_x > 0) {
         if(x_new < x_old) { dirX_sign = -1; }
         else { dirX_sign = 1; }
-        Xcell = ( lo.x + i_old_cic + 0.5 + 0.5*(1-dirX_sign) )*dx[0];
-               slope = dzp/dxp;
+        Xcell = ( lo.x + i_old + shift + 0.5*(1-dirX_sign) )*dx[0];
+        slope = dzp/dxp;
     }
     if (cell_crossings_z > 0) {
         if(z_new < z_old) { dirZ_sign = -1; }
         else { dirZ_sign = 1; }
-        Zcell = ( lo.y + k_old_cic + 0.5 + 0.5*(1-dirZ_sign) )*dx[2];
+        Zcell = ( lo.y + k_old + shift + 0.5*(1-dirZ_sign) )*dx[2];
         slope_inv = dxp/dzp;
     }
 
     // loop over the number of segments and deposit
-    Compute_shape_factor< 1 > compute_shape_factor_cic;
-    Compute_average_shape_factor< 2 > compute_avg_shape_factor_tsc;
+    Compute_shape_factor< depos_order-1 > compute_shape_factor_normal;
+    Compute_average_shape_factor< depos_order > compute_avg_shape_factor_transverse;
     double dxp_seg = dxp;
     double dzp_seg = dzp;
     double xpold0 = xp_n;
@@ -1113,36 +1147,36 @@ void doGatherPicnicShapeN (
         auto seg_factor_x = static_cast<amrex::Real>(dxp == 0. ? 1. : dxp_seg/dxp);
         auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
 
-	// compute cell-based cic weights for half (i.e., bar) position
-        double sx_cic[2] = {0.};
-        double sz_cic[2] = {0.};
+	// compute cell-based weights using the average segment position
+        double sx_cell[depos_order] = {0.};
+        double sz_cell[depos_order] = {0.};
         double const x0_bar = ((xpnew0+xpold0)/2.0 - xmin)*dxi;
         double const z0_bar = ((zpnew0+zpold0)/2.0 - zmin)*dzi;
-        const int i0_cic = compute_shape_factor_cic(sx_cic, x0_bar-0.5);
-        const int k0_cic = compute_shape_factor_cic(sz_cic, z0_bar-0.5);
+        const int i0_cell = compute_shape_factor_normal(sx_cell, x0_bar-0.5);
+        const int k0_cell = compute_shape_factor_normal(sz_cell, z0_bar-0.5);
 		
-        // compute average node-based tsc weights using old and new segment positions
-        double sx_tsc[3] = {0.};
-        double sz_tsc[3] = {0.};
+	// compute node-based weights using the old and new segment positions
+        double sx_node[depos_order+1] = {0.};
+        double sz_node[depos_order+1] = {0.};
         double const x0_new = (xpnew0 - xmin)*dxi;
         double const z0_new = (zpnew0 - zmin)*dzi;
-        const int i0_tsc = compute_avg_shape_factor_tsc( sx_tsc, x0_old, x0_new );
-        const int k0_tsc = compute_avg_shape_factor_tsc( sz_tsc, z0_old, z0_new );
+        const int i0_node = compute_avg_shape_factor_transverse( sx_node, x0_old, x0_new );
+        const int k0_node = compute_avg_shape_factor_transverse( sz_node, z0_old, z0_new );
 
         // gather Exp
 	amrex::Real weight;
-        for (int i=0; i<=1; i++) {
-            for (int k=0; k<=2; k++) {
-                weight = sx_cic[i]*sz_tsc[k]*seg_factor_x;
-                Exp += Ex_arr(lo.x+i0_cic+i, lo.y+k0_tsc+k, 0, 0)*weight;
+        for (int i=0; i<=depos_order-1; i++) {
+            for (int k=0; k<=depos_order; k++) {
+                weight = sx_cell[i]*sz_node[k]*seg_factor_x;
+                Exp += Ex_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 0)*weight;
             }
         }
        
         // gather Ezp	
-	for (int i=0; i<=2; i++) {
-            for (int k=0; k<=1; k++) {
-                weight = sx_tsc[i]*sz_cic[k]*seg_factor_z;
-                Ezp += Ez_arr(lo.x+i0_tsc+i, lo.y+k0_cic+k, 0, 0)*weight;
+	for (int i=0; i<=depos_order; i++) {
+            for (int k=0; k<=depos_order-1; k++) {
+                weight = sx_node[i]*sz_cell[k]*seg_factor_z;
+                Ezp += Ez_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 0)*weight;
             }
         }
 
@@ -1157,6 +1191,7 @@ void doGatherPicnicShapeN (
     }
 
     // gather magnetic field and out-of-plane electric field
+    Compute_shape_factor< 1 > compute_shape_factor_cic;
     double sz_bar_node[2] = {0.};
     double sz_bar_cell[2] = {0.};
     const int k_bar_node = compute_shape_factor_cic(sz_bar_node, z_bar);
@@ -1204,6 +1239,21 @@ void doGatherPicnicShapeN (
 #endif
 
 #elif defined(WARPX_DIM_1D_Z)
+    
+    int num_segments = 1;
+
+    // compute cell crossings in Z-direction
+    const auto k_old = static_cast<int>(z_old-shift);
+    const auto k_new = static_cast<int>(z_new-shift);
+    int cell_crossings_z = std::abs(k_new-k_old);
+    num_segments += cell_crossings_z;
+
+    // need to assert that the number of cell crossings in each direction
+    // is within the range permitted by the number of guard cells
+    if(num_segments > 2 ) {
+        std::cout << "Notice: num_segments = " << num_segments << std::endl;
+        std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
+    }
 
     Compute_shape_factor< 1 > compute_shape_factor_cic;
     double sz_bar_node[2] = {0.};
