@@ -10,6 +10,7 @@
 #include "EmbeddedBoundary/DistanceToEB.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 
+
 #include <ablastr/particles/NodalFieldGather.H>
 
 #include <AMReX.H>
@@ -181,9 +182,21 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
+                
+                //int i, j, k;
+                //amrex::Real W[AMREX_SPACEDIM][2];
+                //ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
+                
+                
+                //do we have to create a function that calculate the normalized normal directly, from i,j,k,W and phi,dxi only?
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
                 ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
+                int ic, jc, kc; // Cell-centered indices
+                amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weights
+                ablastr::particles::compute_weights_nodal(xp-0.5/dxi[0], yp-0.5/dxi[1], zp-0.5/dxi[2], plo, dxi, ic, jc, kc, Wc);
+                amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);
+                DistanceToEB::normalize(normal);
 
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phi);
 
