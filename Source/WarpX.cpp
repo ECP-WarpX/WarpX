@@ -164,7 +164,6 @@ int WarpX::current_centering_noz = 2;
 
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
-bool WarpX::angus_interpolation = false;
 
 bool WarpX::verboncoeur_axis_correction = true;
 
@@ -533,11 +532,6 @@ WarpX::ReadParameters ()
         const ParmParse pp_interpolation("interpolation");
 
         pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
-        pp_interpolation.query("angus_scheme",angus_interpolation);
-	if(angus_interpolation) {
-	    amrex::Print() << "angus_interpolation is on" << std::endl;
-	    galerkin_interpolation = false; 
-	}
 
     }
 
@@ -1201,7 +1195,6 @@ WarpX::ReadParameters ()
                 evolve_scheme == EvolveScheme::SemiImplicitPicard,
                 "VillasenorAndBuneman current deposition can only"
                 "be used with Implicit evolve schemes.");
-
 	}
 
         // Query algo.field_gathering from input, set field_gathering_algo to
@@ -1291,11 +1284,6 @@ WarpX::ReadParameters ()
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     galerkin_interpolation,
                     "With implicit and semi-implicit schemes and Esirkepov deposition, the Galerkin field gathering must be turned on in order to conserve energy");
-            }
-            if (current_deposition_algo == CurrentDepositionAlgo::VillasenorAndBuneman) {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    angus_interpolation,
-                    "With implicit and semi-implicit schemes and VillasenorAndBuneman deposition, the angus field gathering must be turned on in order to conserve energy");
             }
         }
 

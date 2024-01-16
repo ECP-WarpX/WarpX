@@ -1824,8 +1824,8 @@ void doVillasenorAndBunemanDepositionShapeNImplicit (const amrex::ParticleReal *
             
 	    // compute the slopes and the initial cell locations in each direction 
 	    // used to find the position at cell crossings.
-	    // depose_order = 1:  cell crossings defined at cell edges
-	    // depose_order = 2:  cell crossings defined at cell centers
+	    // depos_order = 1:  cell crossings defined at cell edges
+	    // depos_order = 2:  cell crossings defined at cell centers
 	    double slope, slope_inv;
 	    double Xcell, Zcell;
 	    int dirX_sign, dirZ_sign;

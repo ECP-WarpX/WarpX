@@ -1449,6 +1449,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
  * \param lo                      Index lower bounds of domain.
  * \param n_rz_azimuthal_modes    Number of azimuthal modes when using RZ geometry
  * \param nox                     order of the particle shape function
+ * \param gather_type             integer identifier for which algorithm to use
  * \param galerkin_interpolation  whether to use lower order in v
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -1482,10 +1483,9 @@ void doGatherShapeNImplicit (
                      const amrex::Dim3& lo,
                      const int n_rz_azimuthal_modes,
                      const int nox,
-                     const bool galerkin_interpolation,
-                     const bool angus_interpolation)
+                     const int depos_type )
 {
-    if (galerkin_interpolation) {
+    if (depos_type==0) { // CurrentDepositionAlgo::Esirkepov 
         if (nox == 1) {
             doGatherShapeNEsirkepovStencilImplicit<1>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
@@ -1506,15 +1506,24 @@ void doGatherShapeNImplicit (
                                                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
     }
-    else if (angus_interpolation) {
-        if (nox == 2) { // shape_factor = 1 used below is temporary. Will add new function
+    else if (depos_type==3) { // CurrentDepositionAlgo::VillasenorAndBuneman 
+        if (nox == 1) {
+            doGatherPicnicShapeN<1>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
+                                    Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        } else if (nox == 2) {
             doGatherPicnicShapeN<2>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                     Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                     ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                     ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                     dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
-        }
-    } else {
+        } else if (nox == 3) {
+	    // not implemented yet
+	}
+    } 
+    else if (depos_type==1) { // CurrentDepositionAlgo::Direct
         if (nox == 1) {
             doGatherShapeN<1,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
