@@ -1273,18 +1273,6 @@ WarpX::ReadParameters ()
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 field_gathering_algo != GatheringAlgo::MomentumConserving,
                     "With implicit and semi-implicit schemes, the momentum conserving field gather is not supported as it would not conserve energy");
-
-            if (current_deposition_algo == CurrentDepositionAlgo::Direct) {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    !galerkin_interpolation,
-                    "With implicit and semi-implicit schemes and direct deposition, the Galerkin field gathering must be turned off in order to conserve energy");
-            }
-
-            if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    galerkin_interpolation,
-                    "With implicit and semi-implicit schemes and Esirkepov deposition, the Galerkin field gathering must be turned on in order to conserve energy");
-            }
         }
 
         // Load balancing parameters
