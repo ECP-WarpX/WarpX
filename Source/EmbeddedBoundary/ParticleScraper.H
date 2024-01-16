@@ -182,12 +182,12 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
-                
+
                 //int i, j, k;
                 //amrex::Real W[AMREX_SPACEDIM][2];
                 //ablastr::particles::compute_weights_nodal(xp, yp, zp, plo, dxi, i, j, k, W);
-                
-                
+
+
                 //do we have to create a function that calculate the normalized normal directly, from i,j,k,W and phi,dxi only?
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
