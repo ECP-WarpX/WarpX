@@ -288,10 +288,11 @@ WarpX::WarpX ()
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
-    if (do_moving_window){
-        // Loop over species (particles and lasers)
-        // and set current injection position per species
-        mypc = std::make_unique<MultiParticleContainer>(this);
+    mypc = std::make_unique<MultiParticleContainer>(this);
+
+    // Loop over species (particles and lasers)
+    // and set current injection position per species
+     if (do_moving_window){
         const int n_containers = mypc->nContainers();
         for (int i=0; i<n_containers; i++)
         {
