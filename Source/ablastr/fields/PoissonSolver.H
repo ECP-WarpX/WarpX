@@ -59,8 +59,10 @@ amrex::Real IntegratedPotential( amrex::Real x, amrex::Real y, amrex::Real z ) {
         - 0.5 * z*z * std::atan( x*y/(z*r) )
         - 0.5 * y*y * std::atan( x*z/(y*r) )
         - 0.5 * x*x * std::atan( y*z/(x*r) )
-        + y*z*std::log( x + r )
-        + x*z*std::log( y + r );
+/*        + y*z*std::log( x + r )
+          + x*z*std::log( y + r ) */
+        + x*y // First order Taylor expansion of the above, when x, y << z ; we removed the dominating term
+        + x*y; // y*z*log(z), since it cancels out in the differences between x+0.5*dx and x-0.5*dx
     if (z >= 0) {
         G += x*y*std::log( z + r );
     } else {
