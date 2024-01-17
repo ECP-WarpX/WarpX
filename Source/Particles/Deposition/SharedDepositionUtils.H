@@ -673,7 +673,6 @@ void depositEsirkepovComponentX (const GetParticlePosition<PIdx>& GetPosition,
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     amrex::Real const invdtdx = 1.0_rt / (dt*dx[2]);
 #elif defined(WARPX_DIM_1D_Z)
-    amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
     amrex::Real const invvol = 1.0_rt / (dx[2]);
 #endif
 
@@ -740,7 +739,6 @@ void depositEsirkepovComponentX (const GetParticlePosition<PIdx>& GetPosition,
 
 #if defined(WARPX_DIM_1D_Z)
     amrex::Real const vx = uxp[ip]*gaminv;
-    amrex::Real const vy = uyp[ip]*gaminv;
 #endif
 
     // Shape factor arrays
@@ -889,7 +887,6 @@ void depositEsirkepovComponentY (const GetParticlePosition<PIdx>& GetPosition,
     amrex::Real const invdtdx = 1.0_rt / (dt*dx[2]);
     amrex::Real const invvol = 1.0_rt / (dx[0]*dx[2]);
 #elif defined(WARPX_DIM_1D_Z)
-    amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
     amrex::Real const invvol = 1.0_rt / (dx[2]);
 #endif
 
@@ -983,7 +980,6 @@ void depositEsirkepovComponentY (const GetParticlePosition<PIdx>& GetPosition,
 #elif defined(WARPX_DIM_XZ)
     amrex::Real const vy = uyp[ip]*gaminv;
 #elif defined(WARPX_DIM_1D_Z)
-    amrex::Real const vx = uxp[ip]*gaminv;
     amrex::Real const vy = uyp[ip]*gaminv;
 #endif
 
@@ -1141,7 +1137,6 @@ void depositEsirkepovComponentZ (const GetParticlePosition<PIdx>& GetPosition,
     amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
 #elif defined(WARPX_DIM_1D_Z)
     amrex::Real const invdtdz = 1.0_rt / (dt*dx[0]);
-    amrex::Real const invvol = 1.0_rt / (dx[2]);
 #endif
 
     amrex::Real const clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
@@ -1202,11 +1197,6 @@ void depositEsirkepovComponentZ (const GetParticlePosition<PIdx>& GetPosition,
     // Keep these double to avoid bug in single precision
     double const z_new = (zp - zmin + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv)*dzi;
     double const z_old = z_new - dt*dzi*uzp[ip]*gaminv;
-
-#if defined(WARPX_DIM_1D_Z)
-    amrex::Real const vx = uxp[ip]*gaminv;
-    amrex::Real const vy = uyp[ip]*gaminv;
-#endif
 
     // Shape factor arrays
     // Note that there are extra values above and below
