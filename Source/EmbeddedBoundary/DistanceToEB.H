@@ -115,7 +115,7 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
     normal[1] += phi(i  , jc+2, k) * dxi[1] * W[0][0] * Wc[1][1];
     normal[1] -= phi(i+1, jc+1, k) * dxi[1] * W[0][1] * Wc[1][1];
     normal[1] += phi(i+1, jc+2, k) * dxi[1] * W[0][1] * Wc[1][1];
-    
+
     amrex::ignore_unused(kc);
 #else
     amrex::RealVect normal{0.0, 0.0};
