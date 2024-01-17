@@ -63,6 +63,12 @@ ParticleBoundaries::CheckAll (ParticleBoundaryType bc) const
          && data.zmin_bc == bc && data.zmax_bc == bc);
 }
 
+void 
+ParticleBoundaries::SetThermalVelocity (amrex::Real u_th)
+{
+    data.u_th = u_th;
+}
+
 void
 ParticleBoundaries::BuildReflectionModelParsers ()
 {
