@@ -149,7 +149,12 @@ Please see :ref:`this section <acknowledge_warpx_all_refs>`.
 Nuclear Fusion - Magnetically Confined Plasmas
 **********************************************
 
-#. Nicks, B. S., Putvinski, S. and Tajima, T.
+#. Nicks B. S., Putvinski S. and Tajima T.
    **Stabilization of the Alfvén-ion cyclotron instability through short plasmas: Fully kinetic simulations in a high-beta regime**.
    Physics of Plasmas **30**, 102108, 2023.
    `DOI:10.1063/5.0163889 <https://doi.org/10.1063/5.0163889>`__
+
+#. Groenewald R. E., Veksler A., Ceccherini F., Necas A., Nicks B. S., Barnes D. C., Tajima T. and Dettrick S. A.
+   **Accelerated kinetic model for global macro stability studies of high-beta fusion reactors**.
+   Physics of Plasmas **30**, 122508, 2023.
+   `DOI:10.1063/5.0178288 <https://doi.org/10.1063/5.0178288>`__

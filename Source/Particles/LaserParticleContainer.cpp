@@ -9,6 +9,7 @@
 #include "LaserParticleContainer.H"
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Laser/LaserProfiles.H"
 #include "Particles/LaserParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
@@ -561,7 +562,7 @@ LaserParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
-                                Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition)
+                                Real t, Real dt, DtType /*a_dt_type*/, bool skip_deposition, PushType push_type)
 {
     WARPX_PROFILE("LaserParticleContainer::Evolve()");
     WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
@@ -664,14 +665,14 @@ LaserParticleContainer::Evolve (int lev,
                 // Deposit inside domains
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
-                               lev, lev, dt, relative_time);
+                               lev, lev, dt, relative_time, push_type);
 
                 if (has_buffer)
                 {
                     // Deposit in buffers
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
-                                   lev, lev-1, dt, relative_time);
+                                   lev, lev-1, dt, relative_time, push_type);
                 }
             }
 
@@ -869,7 +870,7 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
         np,
         [=] AMREX_GPU_DEVICE (int i) {
             // Calculate the velocity according to the amplitude of E
-            const Real sign_charge = (pwp[i]>0) ? 1 : -1;
+            const Real sign_charge = (pwp[i]>0) ? -1 : 1;
             const Real v_over_c = sign_charge * tmp_mobility * amplitude[i];
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(amrex::Math::abs(v_over_c) < amrex::Real(1.),
                             "Error: calculated laser particle velocity greater than c."

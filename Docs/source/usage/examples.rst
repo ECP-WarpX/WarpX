@@ -25,14 +25,6 @@ Plasma-Based Acceleration
    examples/pwfa/README.rst
    pwfa.rst
 
-Coming soon:
-
-* LWFA: External injection in the boosted frame
-* LWFA: Ionization injection in the lab frame using a LASY data file
-* PWFA: External injection in the boosted frame
-* PWFA: Self-injection in the lab frame
-* MR case?
-
 
 Laser-Plasma Interaction
 ------------------------
@@ -43,11 +35,6 @@ Laser-Plasma Interaction
    examples/laser_ion/README.rst
    examples/plasma_mirror/README.rst
 
-Coming soon:
-
-* MVA (3D & RZ)
-* MR for the planar example?
-
 
 Particle Accelerator & Beam Physics
 -----------------------------------
@@ -56,12 +43,7 @@ Particle Accelerator & Beam Physics
    :maxdepth: 1
 
    examples/gaussian_beam/README.rst
-
-Coming soon:
-
-* Beam-Beam Collision
-* Beam Transport or Injector
-* Cathode/source
+   examples/beam-beam_collision/README.rst
 
 
 High Energy Astrophysical Plasma Physics
@@ -89,11 +71,6 @@ Nuclear Fusion
 
    TODO
 
-Coming soon:
-
-* Microchannel
-* Magnetically Confined Plasma with a Single Coil - Magnetic bottle: simple geometry with an external field
-
 
 Fundamental Plasma Physics
 --------------------------
@@ -104,9 +81,6 @@ Fundamental Plasma Physics
    examples/langmuir/README.rst
    examples/capacitive_discharge/README.rst
 
-Coming soon:
-
-* Expanding Sphere example
 
 .. _examples-hybrid-model:
 
@@ -149,7 +123,7 @@ Manipulating fields via Python
 
 .. note::
 
-   TODO: The section needs to be sorted into either science cases (above) or later sections (workflows and Python API details).
+   TODO: The section needs to be sorted into either science cases (above) or later sections (:ref:`workflows and Python API details <usage-python-extend>`).
 
 An example of using Python to access the simulation charge density, solve the Poisson equation (using ``superLU``) and write the resulting electrostatic potential back to the simulation is given in the input file below. This example uses the ``fields.py`` module included in the ``pywarpx`` library.
 

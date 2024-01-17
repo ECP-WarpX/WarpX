@@ -18,8 +18,8 @@ has to resolve the electron Debye length and CFL-condition based on the speed
 of light.
 
 Many authors have described variations of the kinetic ion & fluid electron model,
-generally referred to as particle-fluid hybrid or just hybrid-PIC models. The implementation
-in WarpX follows the outline from :cite:t:`kfhm-WinskeInBook2023`.
+generally referred to as particle-fluid hybrid or just hybrid-PIC models. The
+implementation in WarpX is described in detail in :cite:t:`kfhm-Groenewald2023`.
 This description follows mostly from that reference.
 
 Model

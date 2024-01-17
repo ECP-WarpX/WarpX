@@ -8,6 +8,7 @@
 #include "Initialization/WarpXAMReXInit.H"
 
 #include <AMReX.H>
+#include <AMReX_ccse-mpi.H>
 #include <AMReX_ParmParse.H>
 
 #include <memory>
