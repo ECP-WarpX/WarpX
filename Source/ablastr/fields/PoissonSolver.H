@@ -51,7 +51,7 @@
 
 namespace {
 
-// Implements equation 2 in https://journals.aps.org/prab/pdf/10.1103/PhysRevSTAB.10.129901
+// Implements equation 2 in https://journals.aps.org/prab/pdf/10.1103/PhysRevSTAB.10.129901 with some modification to symmetrize the function
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 amrex::Real IntegratedPotential( amrex::Real x, amrex::Real y, amrex::Real z ) {
     amrex::Real const r = std::sqrt( x*x + y*y + z*z );
