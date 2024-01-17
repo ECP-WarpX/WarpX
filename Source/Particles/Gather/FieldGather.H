@@ -1086,8 +1086,8 @@ void doGatherPicnicShapeN (
     }
 
     // loop over the number of segments and deposit
-    Compute_shape_factor< depos_order-1 > compute_shape_factor_normal;
-    Compute_average_shape_factor< depos_order > compute_avg_shape_factor_transverse;
+    Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+    Compute_average_shape_factor< depos_order > compute_avg_shape_factor_node;
     double dxp_seg = dxp;
     double dzp_seg = dzp;
     double xpold0 = xp_n;
@@ -1150,16 +1150,29 @@ void doGatherPicnicShapeN (
         double sz_cell[depos_order] = {0.};
         double const x0_bar = ((xpnew0+xpold0)/2.0 - xmin)*dxi;
         double const z0_bar = ((zpnew0+zpold0)/2.0 - zmin)*dzi;
-        const int i0_cell = compute_shape_factor_normal(sx_cell, x0_bar-0.5);
-        const int k0_cell = compute_shape_factor_normal(sz_cell, z0_bar-0.5);
+        const int i0_cell = compute_shape_factor_cell(sx_cell, x0_bar-0.5);
+        const int k0_cell = compute_shape_factor_cell(sz_cell, z0_bar-0.5);
 		
 	// compute node-based weights using the old and new segment positions
         double sx_node[depos_order+1] = {0.};
         double sz_node[depos_order+1] = {0.};
         double const x0_new = (xpnew0 - xmin)*dxi;
         double const z0_new = (zpnew0 - zmin)*dzi;
-        const int i0_node = compute_avg_shape_factor_transverse( sx_node, x0_old, x0_new );
-        const int k0_node = compute_avg_shape_factor_transverse( sz_node, z0_old, z0_new );
+        const int i0_node = compute_avg_shape_factor_node( sx_node, x0_old, x0_new );
+        const int k0_node = compute_avg_shape_factor_node( sz_node, z0_old, z0_new );
+		
+	if (depos_order==3) { // have to do cell-based interp a bit different for order 3
+            Compute_average_shape_factor<2> compute_avg_shape_factor_cell;
+            double sx_cell_2[3] = {0.};
+            double sz_cell_2[3] = {0.};
+            const int i0_cell_2 = compute_avg_shape_factor_cell( sx_cell_2, x0_old-0.5, x0_new-0.5 );
+            const int k0_cell_2 = compute_avg_shape_factor_cell( sz_cell_2, z0_old-0.5, z0_new-0.5 );
+            ignore_unused(i0_cell_2, k0_cell_2);
+	    for (int m=0; m<3; m++) {
+	        sx_cell[m] = (4.0*sx_cell[m] + 2.0*sx_cell_2[m])/6.0;
+	        sz_cell[m] = (4.0*sz_cell[m] + 2.0*sz_cell_2[m])/6.0;
+	    }
+	}
 
         // gather Exp
 	amrex::Real weight;
