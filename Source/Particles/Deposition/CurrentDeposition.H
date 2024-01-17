@@ -1791,6 +1791,129 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 std::cout << "Notice: cell_crossings_y = " << cell_crossings_y << std::endl;
                 std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
 	    }
+	    
+	    // compute the slopes and the initial cell locations in each direction 
+	    // used to find the position at cell crossings.
+	    // depos_order = 1,3:  cell crossings defined at cell edges
+	    // depos_order = 2:  cell crossings defined at cell centers
+	    double slope, slope_inv;
+	    double Xcell, Ycell, Zcell;
+	    int dirX_sign, dirY_sign, dirZ_sign;
+	    if (cell_crossings_x > 0) {
+	        if(x_new < x_old) { dirX_sign = -1; }
+	        else { dirX_sign = 1; }
+	        Xcell = ( lo.x + i_old + shift + 0.5*(1-dirX_sign) )*dx[0];
+                //slope = dzp/dxp;
+	    }
+	    if (cell_crossings_y > 0) {
+	        if(y_new < y_old) { dirY_sign = -1; }
+	        else { dirY_sign = 1; }
+	        Ycell = ( lo.y + j_old + shift + 0.5*(1-dirY_sign) )*dx[1];
+                //slope_inv = dxp/dzp;
+	    }
+	    if (cell_crossings_z > 0) {
+	        if(z_new < z_old) { dirZ_sign = -1; }
+	        else { dirZ_sign = 1; }
+	        Zcell = ( lo.z + k_old + shift + 0.5*(1-dirZ_sign) )*dx[2];
+                //slope_inv = dxp/dzp;
+	    }
+
+	    // loop over the number of segments and deposit
+            Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+            Compute_average_shape_factor< depos_order > compute_avg_shape_factor_node;
+	    double dxp_seg = dxp;
+	    double dyp_seg = dxp;
+	    double dzp_seg = dzp;
+	    double xpold0 = xp_n[ip];
+	    double ypold0 = yp_n[ip];
+	    double zpold0 = zp_n[ip];
+            double x0_old = (xpold0 - xmin)*dxi;
+            double y0_old = (ypold0 - ymin)*dyi;
+            double z0_old = (zpold0 - zmin)*dzi;
+	    double xpnew0, ypnew0, zpnew0;
+	    
+	    for (int ns=0; ns<num_segments; ns++) {
+		    
+                if(ns==num_segments-1) { // final segment
+		    xpnew0 = xp_np1;
+		    ypnew0 = yp_np1;
+		    zpnew0 = zp_np1;
+		    dxp_seg = xpnew0-xpold0;
+		    dyp_seg = ypnew0-ypold0;
+		    dzp_seg = zpnew0-zpold0;
+		}
+
+		// compute the segment factors
+                auto seg_factor_x = static_cast<amrex::Real>(dxp == 0. ? 1. : dxp_seg/dxp);
+                auto seg_factor_y = static_cast<amrex::Real>(dyp == 0. ? 1. : dyp_seg/dyp);
+                auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
+
+		// compute cell-based weights using the average segment position
+                double sx_cell[depos_order] = {0.};
+                double sy_cell[depos_order] = {0.};
+                double sz_cell[depos_order] = {0.};
+                double const x0_bar = ((xpnew0+xpold0)/2.0 - xmin)*dxi;
+                double const y0_bar = ((ypnew0+ypold0)/2.0 - ymin)*dyi;
+                double const z0_bar = ((zpnew0+zpold0)/2.0 - zmin)*dzi;
+                const int i0_cell = compute_shape_factor_cell( sx_cell, x0_bar-0.5 );
+                const int j0_cell = compute_shape_factor_cell( sy_cell, y0_bar-0.5 );
+                const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5 );
+		
+		// compute node-based weights using the old and new segment positions
+                double sx_node[depos_order+1] = {0.};
+                double sy_node[depos_order+1] = {0.};
+                double sz_node[depos_order+1] = {0.};
+                double const x0_new = (xpnew0 - xmin)*dxi;
+                double const y0_new = (ypnew0 - ymin)*dyi;
+                double const z0_new = (zpnew0 - zmin)*dzi;
+		const int i0_node = compute_avg_shape_factor_node( sx_node, x0_old, x0_new );
+		const int j0_node = compute_avg_shape_factor_node( sy_node, y0_old, y0_new );
+		const int k0_node = compute_avg_shape_factor_node( sz_node, z0_old, z0_new );
+                
+		// deposit Jx for this segment
+	        amrex::Real this_Jx;
+		for (int i=0; i<=depos_order-1; i++) {
+                    for (int j=0; j<=depos_order; j++) {
+                        for (int k=0; k<=depos_order; k++) {
+                            this_Jx = wqx*sx_cell[i]*sy_node[k]*sz_node[k]*seg_factor_x;
+                            amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+j0_node+j, lo.z+k0_node+k), this_Jx);
+                        }
+		    }
+                }
+		
+		// deposit Jy for this segment
+	        amrex::Real this_Jy;
+		for (int i=0; i<=depos_order; i++) {
+                    for (int j=0; j<=depos_order-1; j++) {
+                        for (int k=0; k<=depos_order; k++) {
+                            this_Jy = wqy*sx_node[i]*sy_cell[k]*sz_node[k]*seg_factor_y;
+                            amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_node+i, lo.y+j0_cell+j, lo.z+k0_node+k), this_Jy);
+                        }
+		    }
+                }
+		
+		// deposit Jz for this segment
+	        amrex::Real this_Jz;
+		for (int i=0; i<=depos_order; i++) {
+                    for (int j=0; j<=depos_order; j++) {
+                        for (int k=0; k<=depos_order-1; k++) {
+                            this_Jz = wqz*sx_node[i]*sy_node[j]*sz_cell[k]*seg_factor_z;
+                            amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+j0_node+j, lo.z+k0_cell+k), this_Jz);
+                        }
+		    }
+                }
+
+		// update old segment values
+                if (ns<num_segments-1) {
+		    xpold0 = xpnew0;
+		    ypold0 = ypnew0;
+		    zpold0 = zpnew0;
+                    x0_old = x0_new;
+                    y0_old = y0_new;
+                    z0_old = z0_new;
+		}
+
+	    } // end loop over segments
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
            

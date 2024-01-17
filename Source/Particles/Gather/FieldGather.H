@@ -1040,6 +1040,148 @@ void doGatherPicnicShapeN (
         std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
     }
 
+    // compute the slopes and the initial cell locations in each direction 
+    // used to find the position at cell crossings.
+    // depos_order = 1,3:  cell crossings defined at cell edges
+    // depos_order = 2:  cell crossings defined at cell centers
+    double slope, slope_inv;
+    double Xcell, Ycell, Zcell;
+    int dirX_sign, dirY_sign, dirZ_sign;
+    if (cell_crossings_x > 0) {
+        if(x_new < x_old) { dirX_sign = -1; }
+        else { dirX_sign = 1; }
+        Xcell = ( lo.x + i_old + shift + 0.5*(1-dirX_sign) )*dx[0];
+        //slope = dzp/dxp;
+    }
+    if (cell_crossings_y > 0) {
+        if(y_new < y_old) { dirY_sign = -1; }
+        else { dirY_sign = 1; }
+        Ycell = ( lo.y + j_old + shift + 0.5*(1-dirY_sign) )*dx[1];
+        //slope = dzp/dxp;
+    }
+    if (cell_crossings_z > 0) {
+        if(z_new < z_old) { dirZ_sign = -1; }
+        else { dirZ_sign = 1; }
+        Zcell = ( lo.z + k_old + shift + 0.5*(1-dirZ_sign) )*dx[2];
+        slope_inv = dxp/dzp;
+    }
+    
+    // loop over the number of segments and deposit
+    Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+    Compute_average_shape_factor< depos_order > compute_avg_shape_factor_node;
+    double dxp_seg = dxp;
+    double dyp_seg = dyp;
+    double dzp_seg = dzp;
+    double xpold0 = xp_n;
+    double ypold0 = yp_n;
+    double zpold0 = zp_n;
+    double x0_old = (xpold0 - xmin)*dxi;
+    double y0_old = (ypold0 - ymin)*dyi;
+    double z0_old = (zpold0 - zmin)*dzi;
+    double xpnew0, ypnew0, zpnew0;
+	    
+    for (int ns=0; ns<num_segments; ns++) {
+	    
+        if(ns==num_segments-1) { // final segment
+	    xpnew0 = xp_np1;
+	    ypnew0 = yp_np1;
+	    zpnew0 = zp_np1;
+	    dxp_seg = xpnew0-xpold0;
+	    dyp_seg = ypnew0-ypold0;
+	    dzp_seg = zpnew0-zpold0;
+	}
+
+	// compute the segment factors
+        auto seg_factor_x = static_cast<amrex::Real>(dxp == 0. ? 1. : dxp_seg/dxp);
+        auto seg_factor_y = static_cast<amrex::Real>(dyp == 0. ? 1. : dyp_seg/dyp);
+        auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
+
+	// compute cell-based weights using the average segment position
+        double sx_cell[depos_order] = {0.};
+        double sy_cell[depos_order] = {0.};
+        double sz_cell[depos_order] = {0.};
+        double const x0_bar = ((xpnew0+xpold0)/2.0 - xmin)*dxi;
+        double const y0_bar = ((ypnew0+ypold0)/2.0 - ymin)*dyi;
+        double const z0_bar = ((zpnew0+zpold0)/2.0 - zmin)*dzi;
+        const int i0_cell = compute_shape_factor_cell( sx_cell, x0_bar-0.5 );
+        const int j0_cell = compute_shape_factor_cell( sy_cell, y0_bar-0.5 );
+        const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5 );
+		
+	// compute node-based weights using the old and new segment positions
+        double sx_node[depos_order+1] = {0.};
+        double sy_node[depos_order+1] = {0.};
+        double sz_node[depos_order+1] = {0.};
+        double const x0_new = (xpnew0 - xmin)*dxi;
+        double const y0_new = (ypnew0 - ymin)*dyi;
+        double const z0_new = (zpnew0 - zmin)*dzi;
+	const int i0_node = compute_avg_shape_factor_node( sx_node, x0_old, x0_new );
+	const int j0_node = compute_avg_shape_factor_node( sy_node, y0_old, y0_new );
+	const int k0_node = compute_avg_shape_factor_node( sz_node, z0_old, z0_new );
+                
+        // gather Exp for this segment
+        amrex::Real weight;
+	for (int i=0; i<=depos_order-1; i++) {
+            for (int j=0; j<=depos_order; j++) {
+                for (int k=0; k<=depos_order; k++) {
+                    weight = sx_cell[i]*sy_node[j]*sz_node[k]*seg_factor_x;
+                    Exp += Ex_arr(lo.x+i0_cell+i, lo.y+j0_node+j, lo.z+k0_node+k)*weight;
+		}
+	    }
+	}
+
+        // gather Eyp for this segment
+	for (int i=0; i<=depos_order; i++) {
+            for (int j=0; j<=depos_order-1; j++) {
+                for (int k=0; k<=depos_order; k++) {
+                    weight = sx_node[i]*sy_cell[j]*sz_node[k]*seg_factor_y;
+                    Eyp += Ey_arr(lo.x+i0_node+i, lo.y+j0_cell+j, lo.z+k0_node+k)*weight;
+		}
+	    }
+	}
+
+        // gather Ezp for this segment
+	for (int i=0; i<=depos_order; i++) {
+            for (int j=0; j<=depos_order; j++) {
+                for (int k=0; k<=depos_order-1; k++) {
+                    weight = sx_node[i]*sy_node[j]*sz_cell[k]*seg_factor_z;
+                    Ezp += Ez_arr(lo.x+i0_node+i, lo.y+j0_node+j, lo.z+k0_cell+k)*weight;
+		}
+	    }
+	}
+
+    }
+
+    // gather magnetic field and out-of-plane electric field
+    Compute_shape_factor<1> compute_shape_factor_cic;
+    double sz_bar_node[2] = {0.};
+    double sz_bar_cell[2] = {0.};
+    const int k_bar_node = compute_shape_factor_cic(sz_bar_node, z_bar);
+    const int k_bar_cell = compute_shape_factor_cic(sz_bar_cell, z_bar-0.5);
+    double sy_bar_node[2] = {0.};
+    double sy_bar_cell[2] = {0.};
+    const int j_bar_node = compute_shape_factor_cic(sy_bar_node, y_bar);
+    const int j_bar_cell = compute_shape_factor_cic(sy_bar_cell, y_bar-0.5);
+    double sx_bar_node[2] = {0.};
+    double sx_bar_cell[2] = {0.};
+    const int i_bar_node = compute_shape_factor_cic(sx_bar_node, x_bar);
+    const int i_bar_cell = compute_shape_factor_cic(sx_bar_cell, x_bar-0.5);
+
+    amrex::Real weight;
+    for (int i=0; i<=1; i++) {
+        for (int j=0; j<=1; j++) {
+            for (int k=0; k<=1; k++) {
+                weight = sx_bar_node[i]*sy_bar_cell[j]*sz_bar_cell[k];
+                Bxp += Bx_arr(lo.x+i_bar_node+i, lo.y+j_bar_cell+j, lo.z+k_bar_cell+k)*weight;
+		//
+                weight = sx_bar_cell[i]*sy_bar_node[j]*sz_bar_cell[k];
+                Byp += By_arr(lo.x+i_bar_cell+i, lo.y+j_bar_node+j, lo.z+k_bar_cell+k)*weight;
+		//
+                weight = sx_bar_cell[i]*sy_bar_cell[j]*sz_bar_node[k];
+                Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+j_bar_cell+j, lo.z+k_bar_node+k)*weight;
+	    }
+        }
+    }
+
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     // compute cell crossings in X-direction
@@ -1171,7 +1313,7 @@ void doGatherPicnicShapeN (
 	    }
 	}
 
-        // gather Exp
+        // gather Exp for this segment
 	amrex::Real weight;
         for (int i=0; i<=depos_order-1; i++) {
             for (int k=0; k<=depos_order; k++) {
@@ -1180,7 +1322,7 @@ void doGatherPicnicShapeN (
             }
         }
        
-        // gather Ezp	
+        // gather Ezp for this segment	
 	for (int i=0; i<=depos_order; i++) {
             for (int k=0; k<=depos_order-1; k++) {
                 weight = sx_node[i]*sz_cell[k]*seg_factor_z;
