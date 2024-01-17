@@ -57,6 +57,7 @@ When building WarpX, :ref:`the following CMake flags <building-cmake-options>` w
      -DWarpX_pybind11_src=$HOME/src/pybind11
 
    cmake --build build -j 8
+   cmake --build build -j 8 --target pip_install
 
 
 .. _developers-local-compile-findpackage:
@@ -86,6 +87,7 @@ WarpX supports this with :ref:`the following CMake flags <building-cmake-options
      -DWarpX_pybind11_internal=OFF
 
    cmake --build build -j 8
+   cmake --build build -j 8 --target pip_install
 
 As a background, this is also the workflow how WarpX is built in :ref:`package managers such as Spack and Conda-Forge <install-dependencies>`.
 

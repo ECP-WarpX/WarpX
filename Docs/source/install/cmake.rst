@@ -329,6 +329,7 @@ This is the workflow most developers will prefer as it allows rapid re-compiles:
    # build & install Python only
    cmake --build build -j 4 --target pip_install
 
+There is also a ``--target pip_install_nodeps`` option that :ref:`skips pip-based dependency checks <developers-local-compile-pylto>`.
 
 WarpX release managers might also want to generate a self-contained source package that can be distributed to exotic architectures:
 
