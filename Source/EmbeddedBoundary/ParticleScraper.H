@@ -194,29 +194,29 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
                 {
                     amrex::RealVect pos;
 #if (defined WARPX_DIM_3D)
-		    ablastr::particles::compute_weights_nodal(xp-0.5/dxi[0], yp-0.5/dxi[1], zp-0.5/dxi[2], plo, dxi, ic, jc, kc, Wc);
+            ablastr::particles::compute_weights_nodal(xp-0.5/dxi[0], yp-0.5/dxi[1], zp-0.5/dxi[2], plo, dxi, ic, jc, kc, Wc);
                     amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);
                     DistanceToEB::normalize(normal);
                     pos[0] = xp;
                     pos[1] = yp;
                     pos[2] = zp;
 #elif (defined WARPX_DIM_XZ)
-	            ablastr::particles::compute_weights_nodal(xp-0.5/dxi[0], yp, zp-0.5/dxi[1], plo, dxi, ic, jc, kc, Wc);
-        	    amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);
-        	    DistanceToEB::normalize(normal);
+                ablastr::particles::compute_weights_nodal(xp-0.5/dxi[0], yp, zp-0.5/dxi[1], plo, dxi, ic, jc, kc, Wc);
+                amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);
+                DistanceToEB::normalize(normal);
                     pos[0] = xp;
                     pos[1] = zp;
 #elif (defined WARPX_DIM_RZ)
-		    amrex::Real theta=std::atan2(yp, xp);
-        	    amrex::Real dx=dxi[0]/std::cos(theta);
+            amrex::Real theta=std::atan2(yp, xp);
+                amrex::Real dx=dxi[0]/std::cos(theta);
                     amrex::Real dy=dxi[0]/std::sin(theta);
                     ablastr::particles::compute_weights_nodal(xp-0.5/dx, yp-0.5/dy, zp-0.5/dxi[1], plo, dxi, ic, jc, kc, Wc);
                     amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phi, dxi);
-        	    DistanceToEB::normalize(normal);
+                DistanceToEB::normalize(normal);
                     pos[0] = std::sqrt(xp*xp + yp*yp);
                     pos[1] = zp;
 #elif (defined WARPX_DIM_1D_Z)
-		    amrex::RealVect normal{0.0, 0.0};
+            amrex::RealVect normal{0.0, 0.0};
                     pos[0] = zp;
 #endif
                     f(ptd, ip, pos, normal, engine);

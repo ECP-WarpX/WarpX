@@ -112,7 +112,7 @@ struct FindBoundaryIntersection {
         ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
         int ic, jc, kc; // Cell-centered indices
         amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weight
-    
+
 
 #if (defined WARPX_DIM_3D)
         dst.m_aos[dst_i].pos(0) = x_temp;
@@ -140,7 +140,7 @@ struct FindBoundaryIntersection {
         dst.m_rdata[PIdx::theta][dst_i] = std::atan2(y_temp, x_temp);
         dst.m_aos[dst_i].pos(1) = z_temp;
         amrex::Real theta=std::atan2(y_temp, x_temp);
-        amrex::Real dx=dxi[0]/std::cos(theta); 
+        amrex::Real dx=dxi[0]/std::cos(theta);
         amrex::Real dy=dxi[0]/std::sin(theta);
         //save normal components
         ablastr::particles::compute_weights_nodal(x_temp-0.5/dx, y_temp-0.5/dy, z_temp-0.5/dxi[1], plo, dxi, ic, jc, kc, Wc);
