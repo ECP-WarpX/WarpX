@@ -1759,10 +1759,8 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             amrex::Real const wqz = wq*dzp/dt*invvol;
 #endif
 
-	    double shift;
-	    if(depos_order==1) { shift = 0.0; }
-	    else if(depos_order==2) { shift = 0.5; }
-            else {  } // not implemented
+	    double shift = 0.0;
+	    if(depos_order==2) { shift = 0.5; }
 
 	    // 1) Determine the number of segments. 
 	    // 2) Loop over segments and deposit in-plane current.

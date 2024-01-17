@@ -1358,11 +1358,13 @@ WarpX::ReadParameters ()
 #endif
         }
 	
+	// JRA: The algorithm will run with particle_shape = 3, but charge conservation
+	// is not exact for an unknown reason. For now, assert shape < 3
 	WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Villasenor ||
-            particle_shape <= 2,
+            particle_shape < 3,
             "algo.particle_shape must be 1 or 2 when using the Villasenor deposition.");
-
+        
         const amrex::ParmParse pp_warpx("warpx");
         pp_warpx.queryarr("sort_intervals", sort_intervals_string_vec);
         sort_intervals = utils::parser::IntervalsParser(sort_intervals_string_vec);

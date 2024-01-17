@@ -1003,10 +1003,8 @@ void doGatherPicnicShapeN (
     double const z_bar = (zp_nph - zmin)*dzi;
     double const dzp = zp_np1 - zp_n;
 
-    double shift;
-    if(depos_order==1) { shift = 0.0; }
-    else if(depos_order==2) { shift = 0.5; }
-    else {  } // not implemented
+    double shift = 0.0;
+    if(depos_order==2) { shift = 0.5; }
 
     // 1) Determine the number of segments. 
     // 2) Loop over segments and gather in-plane electric field.
@@ -1520,7 +1518,11 @@ void doGatherShapeNImplicit (
                                     ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                     dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
-	    // not implemented yet
+            doGatherPicnicShapeN<3>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
+                                    Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
 	}
     } 
     else if (depos_type==1) { // CurrentDepositionAlgo::Direct
