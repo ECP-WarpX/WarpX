@@ -224,6 +224,8 @@ PEC::ApplyPECtoBfield (std::array<amrex::MultiFab*, 3> Bfield, const int lev,
 void
 PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_type)
 {
+
+    amrex::Print() << "ApplyPECtoRhofield" << std::endl;
     auto& warpx = WarpX::GetInstance();
 
     amrex::Box domain_box = warpx.Geom(lev).Domain();
@@ -248,8 +250,8 @@ PEC::ApplyPECtoRhofield (amrex::MultiFab* rho, const int lev, PatchType patch_ty
     amrex::GpuArray<GpuArray<amrex::Real,2>, AMREX_SPACEDIM> psign;
     amrex::GpuArray<GpuArray<int,2>, AMREX_SPACEDIM> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        is_pec[idim][0] = WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC;
-        is_pec[idim][1] = WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC;
+        is_pec[idim][0] = true;
+        is_pec[idim][1] = true;
         if (!is_pec[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
         if (!is_pec[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
@@ -340,8 +342,8 @@ PEC::ApplyPECtoJfield(amrex::MultiFab* Jx, amrex::MultiFab* Jy,
     amrex::GpuArray<GpuArray<GpuArray<amrex::Real, 2>, AMREX_SPACEDIM>, 3> psign;
     amrex::GpuArray<GpuArray<GpuArray<int, 2>, AMREX_SPACEDIM>, 3> mirrorfac;
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        is_pec[idim][0] = WarpX::field_boundary_lo[idim] == FieldBoundaryType::PEC;
-        is_pec[idim][1] = WarpX::field_boundary_hi[idim] == FieldBoundaryType::PEC;
+        is_pec[idim][0] = true;
+        is_pec[idim][1] = true;
         if (!is_pec[idim][0]) { grown_domain_box.growLo(idim, ng_fieldgather[idim]); }
         if (!is_pec[idim][1]) { grown_domain_box.growHi(idim, ng_fieldgather[idim]); }
 
