@@ -1003,16 +1003,15 @@ void doGatherPicnicShapeN (
     double const z_bar = (zp_nph - zmin)*dzi;
     double const dzp = zp_np1 - zp_n;
 
+    // 1) Determine the number of segments. 
+    // 2) Loop over segments and gather in-plane electric field.
+    // 3) Gather magnetic field and out-of-plane electric field.
+
+    int num_segments = 1;
     double shift = 0.0;
     if(depos_order==2) { shift = 0.5; }
 
-    // 1) Determine the number of segments. 
-    // 2) Loop over segments and gather in-plane electric field.
-    // 3) Deposit magnetic field and out-of-plane electric field.
-
 #if defined(WARPX_DIM_3D)
-
-    int num_segments = 1;
 
     // compute cell crossings in X-direction
     const auto i_old = static_cast<int>(x_old-shift);
@@ -1043,8 +1042,6 @@ void doGatherPicnicShapeN (
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
-    int num_segments = 1;
-
     // compute cell crossings in X-direction
     const auto i_old = static_cast<int>(x_old-shift);
     const auto i_new = static_cast<int>(x_new-shift);
@@ -1067,7 +1064,7 @@ void doGatherPicnicShapeN (
 
     // compute the slopes and the initial cell locations in each direction 
     // used to find the position at cell crossings.
-    // depos_order = 1:  cell crossings defined at cell edges
+    // depos_order = 1,3:  cell crossings defined at cell edges
     // depos_order = 2:  cell crossings defined at cell centers
     double slope, slope_inv;
     double Xcell, Zcell;
@@ -1250,8 +1247,6 @@ void doGatherPicnicShapeN (
 #endif
 
 #elif defined(WARPX_DIM_1D_Z)
-    
-    int num_segments = 1;
 
     // compute cell crossings in Z-direction
     const auto k_old = static_cast<int>(z_old-shift);
@@ -1265,7 +1260,70 @@ void doGatherPicnicShapeN (
         std::cout << "Notice: num_segments = " << num_segments << std::endl;
         std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
     }
+	    
+    // compute the initial cell locations used to find the cell crossings.
+    // depos_order = 1,3:  cell crossings defined at cell edges
+    // depos_order = 2:  cell crossings defined at cell centers
+    double Zcell;
+    int dirZ_sign;
+    if (cell_crossings_z > 0) {
+        if(z_new < z_old) { dirZ_sign = -1; }
+        else { dirZ_sign = 1; }
+        Zcell = ( lo.x + k_old + shift + 0.5*(1-dirZ_sign) )*dx[2];
+    }
 
+    // loop over the number of segments and deposit
+    Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+    double dzp_seg = dzp;
+    double zpold0 = zp_n;
+    double zpnew0;
+
+    for (int ns=0; ns<num_segments; ns++) {
+		    
+        if(ns==num_segments-1) { // final segment
+	    zpnew0 = zp_np1;
+	    dzp_seg = zpnew0-zpold0;
+	}
+	else { 
+            Zcell = Zcell + dirZ_sign*dx[2];
+            zpnew0 = Zcell;
+            dzp_seg = zpnew0 - zpold0;
+	}
+
+	// compute the segment factors
+        auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
+		
+	// compute cell-based weights using the average segment position
+        double sz_cell[depos_order] = {0.};
+        double const z0_bar = ((zpnew0+zpold0)/2.0 - zmin)*dzi;
+        const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5 );
+		
+	if (depos_order==3) { // have to do cell-based interp a bit different for order 3
+            Compute_average_shape_factor<2> compute_avg_shape_factor_cell;
+            double sz_cell_2[3] = {0.};
+            double const z0_old = (zpold0 - zmin)*dzi;
+            double const z0_new = (zpnew0 - zmin)*dzi;
+            const int k0_cell_2 = compute_avg_shape_factor_cell( sz_cell_2, z0_old-0.5, z0_new-0.5 );
+            ignore_unused(k0_cell_2);
+	    for (int m=0; m<3; m++) {
+	        sz_cell[m] = (4.0*sz_cell[m] + 2.0*sz_cell_2[m])/6.0;
+	    }
+	}
+        
+	// gather Ezp	
+        for (int k=0; k<=depos_order-1; k++) {
+            auto weight = sz_cell[k]*seg_factor_z;
+            Ezp += Ez_arr(lo.x+k0_cell+k, 0, 0)*weight;
+        }
+		
+	// update old segment values
+        if (ns<num_segments-1) {
+	    zpold0 = zpnew0;
+	}
+
+    }
+
+    // gather magnetic field and out-of-plane electric field
     Compute_shape_factor< 1 > compute_shape_factor_cic;
     double sz_bar_node[2] = {0.};
     double sz_bar_cell[2] = {0.};
@@ -1275,14 +1333,13 @@ void doGatherPicnicShapeN (
     for (int k=0; k<=1; k++) {
         auto weight = sz_bar_node[k];
         Exp += Ex_arr(lo.x+k_bar_node+k, 0, 0)*weight;
-        Eyp += Ex_arr(lo.x+k_bar_node+k, 0, 0)*weight;
+        Eyp += Ey_arr(lo.x+k_bar_node+k, 0, 0)*weight;
         Bzp += Bz_arr(lo.x+k_bar_node+k, 0, 0)*weight;
     }
     for (int k=0; k<=1; k++) {
         auto weight = sz_bar_cell[k];
         Bxp += Bx_arr(lo.x+k_bar_cell+k, 0, 0)*weight;
         Byp += By_arr(lo.x+k_bar_cell+k, 0, 0)*weight;
-        Ezp += Ez_arr(lo.x+k_bar_cell+k, 0, 0)*weight;
     }
 
 #endif
