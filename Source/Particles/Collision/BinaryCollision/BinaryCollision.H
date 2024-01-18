@@ -559,22 +559,29 @@ public:
             /*
                preprocessing calculations for efficient gpu acceleration
             */
-            amrex::Gpu::DeviceVector<index_type> n_ind_pairs_in_each_cell(n_cells);
+            amrex::Gpu::DeviceVector<index_type> n_ind_pairs_in_each_cell(n_cells+1);
             index_type* AMREX_RESTRICT p_n_ind_pairs_in_each_cell = n_ind_pairs_in_each_cell.dataPtr();
 
             amrex::ParallelFor( n_cells+1,
                 [=] AMREX_GPU_DEVICE (int i_cell) noexcept
                 {
-                    const auto n_part_in_cell_1 = cell_offsets_1[i_cell+1] - cell_offsets_1[i_cell];
-                    const auto n_part_in_cell_2 = cell_offsets_2[i_cell+1] - cell_offsets_2[i_cell];
-                    // Particular case: no pair if a species has no particle in that cell
-                    if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0 || i_cell == n_cells)
+                    if (i_cell < n_cells)
                     {
-                        p_n_ind_pairs_in_each_cell[i_cell] = 0;
+                        const auto n_part_in_cell_1 = cell_offsets_1[i_cell+1] - cell_offsets_1[i_cell];
+                        const auto n_part_in_cell_2 = cell_offsets_2[i_cell+1] - cell_offsets_2[i_cell];
+                        // Particular case: no pair if a species has no particle in that cell
+                        if (n_part_in_cell_1 == 0 || n_part_in_cell_2 == 0)
+                        {
+                            p_n_ind_pairs_in_each_cell[i_cell] = 0;
+                        }
+                        else
+                        {
+                            p_n_ind_pairs_in_each_cell[i_cell] = std::min(n_part_in_cell_1, n_part_in_cell_2);
+                        }
                     }
                     else
                     {
-                        p_n_ind_pairs_in_each_cell[i_cell] = (n_part_in_cell_1 > n_part_in_cell_2)? n_part_in_cell_1: n_part_in_cell_2;
+                        p_n_ind_pairs_in_each_cell[i_cell] = 0;
                     }
                 }
             );
