@@ -1,5 +1,5 @@
-#ifndef WARPX_JEFUNCTOR_H_
-#define WARPX_JEFUNCTOR_H_
+#ifndef WARPX_JDISPFUNCTOR_H_
+#define WARPX_JDISPFUNCTOR_H_
 
 #include "ComputeDiagFunctor.H"
 
@@ -10,7 +10,7 @@
  * Hybrid model and store result in mf_out.
  */
 class
-JeFunctor final: public ComputeDiagFunctor
+JdispFunctor final: public ComputeDiagFunctor
 {
 public:
     /**
@@ -21,7 +21,7 @@ public:
      *            to the output diagnostic MultiFab, mf_dst.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
     */
-    JeFunctor (int dir, int lev, amrex::IntVect crse_ratio, int ncomp=1);
+    JdispFunctor (int dir, int lev, amrex::IntVect crse_ratio, int ncomp=1);
     /** \brief Cell-center m_mf_src and write the result in mf_dst.
      *
      * Currently, the Kinetic-Fluid Hybrid model only supports the m=0 mode, so only
@@ -39,4 +39,4 @@ private:
     int m_lev;
 };
 
-#endif // WARPX_JEFUNCTOR_H_
+#endif // WARPX_JDISPFUNCTOR_H_

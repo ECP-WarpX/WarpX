@@ -4,7 +4,7 @@
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
 #include "ComputeDiagFunctors/JFunctor.H"
-#include "ComputeDiagFunctors/JeFunctor.H"
+#include "ComputeDiagFunctors/JdispFunctor.H"
 #include "ComputeDiagFunctors/PartPerCellFunctor.H"
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/ParticleReductionFunctor.H"
@@ -267,20 +267,20 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jz"), ncomp);
             }
-        } else if ( m_varnames_fields[comp] == "jr_e" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){
-            m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
+        } else if ( m_varnames_fields[comp] == "jr_disp" ){
+            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("jr_e"), ncomp);
+                AddRZModesToOutputNames(std::string("jr_disp"), ncomp);
             }
-        } else if ( m_varnames_fields[comp] == "jt_e" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){
-            m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
+        } else if ( m_varnames_fields[comp] == "jt_disp" ){
+            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("jt_e"), ncomp);
+                AddRZModesToOutputNames(std::string("jt_disp"), ncomp);
             }
-        } else if ( m_varnames_fields[comp] == "jz_e" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC){
-            m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(2, lev, m_crse_ratio);
+        } else if ( m_varnames_fields[comp] == "jz_disp" ){
+            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(2, lev, m_crse_ratio);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("jz_e"), ncomp);
+                AddRZModesToOutputNames(std::string("jz_disp"), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "rho" ){
             // Initialize rho functor to dump total rho
@@ -652,8 +652,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(2, lev, m_crse_ratio, true, deposit_current);
             deposit_current = false;
-        } else if ( m_varnames[comp] == "jz_e" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(2, lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "jz_disp" ) {
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(2, lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "Az" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
@@ -695,10 +695,10 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "jt" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;
-            } else if  (m_varnames[comp] == "jr_e" &&  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
-            } else if  (m_varnames[comp] == "jt_e" &&  WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
+            } else if  (m_varnames[comp] == "jr_disp" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio);
+            } else if  (m_varnames[comp] == "jt_disp" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "Ar" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "At" ){
@@ -724,10 +724,10 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "jy" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;
-            } else if ( m_varnames[comp] == "jx_e" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(0, lev, m_crse_ratio);
-            } else if ( m_varnames[comp] == "jy_e" && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC ){
-                m_all_field_functors[lev][comp] = std::make_unique<JeFunctor>(1, lev, m_crse_ratio);
+            } else if ( m_varnames[comp] == "jx_disp" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio);
+            } else if ( m_varnames[comp] == "jy_disp" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio);
             }
             else if ( m_varnames[comp] == "Ax" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);

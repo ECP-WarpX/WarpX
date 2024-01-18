@@ -6,7 +6,7 @@ foreach(D IN LISTS WarpX_DIMS)
         DivBFunctor.cpp
         DivEFunctor.cpp
         JFunctor.cpp
-        JeFunctor.cpp
+        JdispFunctor.cpp
         RhoFunctor.cpp
         PartPerCellFunctor.cpp
         PartPerGridFunctor.cpp
