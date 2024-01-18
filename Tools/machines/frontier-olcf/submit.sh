@@ -12,6 +12,39 @@
 #SBATCH --gpus-per-task=1
 #SBATCH --gpu-bind=closest
 #SBATCH -N 20
+# In order to broadcast the WarpX executable and the linked libraries to each node we need to
+# use the Non-Volatile Memory (NVMe) on node storage devices
+# https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#sbcasting-a-binary-with-libraries-stored-on-shared-file-systems
+#SBATCH -C nvme
+
+# Replace this with the name of the WarpX executable
+exe="warpx"
+
+# From the documentation:
+# SBCAST executable from Orion to NVMe -- NOTE: ``-C nvme`` is needed in SBATCH headers to use the NVMe drive
+# NOTE: dlopen'd files will NOT be picked up by sbcast
+sbcast --send-libs --exclude=NONE -pf ${exe} /mnt/bb/$USER/${exe}
+if [ ! "$?" == "0" ]; then
+    # CHECK EXIT CODE. When SBCAST fails, it may leave partial files on the compute nodes, and if you continue to launch srun,
+    # your application may pick up partially complete shared library files, which would give you confusing errors.
+    echo "SBCAST failed!"
+    exit 1
+fi
+# SBCAST sends all libraries detected by `ld` (minus any excluded), and stores them in the same directory in each node's node-local storage
+# Any libraries opened by `dlopen` are NOT sent, since they are not known by the linker at run-time.
+# All required libraries now reside in /mnt/bb/$USER/${exe}_libs
+export LD_LIBRARY_PATH="/mnt/bb/$USER/${exe}_libs"
+# libfabric dlopen's several libraries:
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$(pkg-config --variable=libdir libfabric)"
+# cray-mpich dlopen's libhsa-runtime64.so and libamdhip64.so (non-versioned), so symlink on each node:
+srun -N ${SLURM_NNODES} -n ${SLURM_NNODES} --ntasks-per-node=1 --label -D /mnt/bb/$USER/${exe}_libs \
+    bash -c "if [ -f libhsa-runtime64.so.1 ]; then ln -s libhsa-runtime64.so.1 libhsa-runtime64.so; fi;
+    if [ -f libamdhip64.so.5 ]; then ln -s libamdhip64.so.5 libamdhip64.so; fi"
+# You may notice that some libraries are still linked from /sw/frontier, even after SBCASTing.
+# This is because the Spack-build modules use RPATH to find their dependencies. This behavior cannot be changed.
+echo "*****ldd /mnt/bb/$USER/${exe}*****"
+ldd /mnt/bb/$USER/${exe}
+echo "*************************************"
 
 # load cray libs and ROCm libs
 #export LD_LIBRARY_PATH=${CRAY_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}
@@ -46,4 +79,4 @@ export OMP_NUM_THREADS=1
 export WARPX_NMPI_PER_NODE=8
 export TOTAL_NMPI=$(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} ))
 srun -N${SLURM_JOB_NUM_NODES} -n${TOTAL_NMPI} --ntasks-per-node=${WARPX_NMPI_PER_NODE} \
-    ./warpx inputs > output.txt
+    /mnt/bb/$USER/${exe} inputs > output.txt

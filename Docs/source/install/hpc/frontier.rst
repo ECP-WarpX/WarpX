@@ -170,14 +170,18 @@ Or in non-interactive runs:
    :language: bash
    :caption: You can copy this file from ``$HOME/src/warpx/Tools/machines/frontier-olcf/submit.sh``.
 
-For large-scale simulations (more than approximately 1000 nodes) it is highly recommended to manually broadcast the WarpX binary and
-the linked libraries to the local storage of each node, in order to reduce the overhead on Frontier's shared filesystems and
-on the simulation startup. This is achieved by using the ``sbcast`` utility and by modifying the ``LD_LIBRARY_PATH`` environment variable:
-(see the `Frontier User Guide <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#sbcasting-a-binary-with-libraries-stored-on-shared-file-systems>`_) page on this topic):
+Note that this script manually broadcasts the WarpX binary and the linked libraries to the local storage of each node,
+in order to reduce the overhead on Frontier's shared filesystems and on the simulation startup.
+This is achieved by using the ``sbcast`` utility and by modifying the ``LD_LIBRARY_PATH`` environment variable
+(see the `Frontier User Guide <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#sbcasting-a-binary-with-libraries-stored-on-shared-file-systems>`_) page on this topic.
 
-.. literalinclude:: ../../../../Tools/machines/frontier-olcf/submit_large_scale.sh
+Broadcasting the WarpX binary and the linked libraries to the local storage of each node is highly recommended,
+especially for large-scale simulations (more than approximately 1000 nodes). However, for testing purposes, we also provide
+a simpler script that does not make use of this strategy:
+
+.. literalinclude:: ../../../../Tools/machines/frontier-olcf/submit_no_sbcast.sh
    :language: bash
-   :caption: You can copy this file from ``$HOME/src/warpx/Tools/machines/frontier-olcf/submit_large_scale.sh``.
+   :caption: You can copy this file from ``$HOME/src/warpx/Tools/machines/frontier-olcf/submit_no_sbcast.sh``.
 
 
 .. _post-processing-frontier:
