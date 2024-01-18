@@ -1210,6 +1210,11 @@ WarpX::ReadParameters ()
         // Use same shape factors in all directions, for gathering
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) { galerkin_interpolation = false; }
 
+        {
+            const ParmParse pp_interpolation("interpolation");
+            pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
+        }
+
         // With the PSATD solver, momentum-conserving field gathering
         // combined with mesh refinement does not seem to work correctly
         // TODO Needs debugging
@@ -1375,12 +1380,6 @@ WarpX::ReadParameters ()
             }
         }
 
-    }
-
-    {
-        const ParmParse pp_interpolation("interpolation");
-
-        pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
     }
 
     {
