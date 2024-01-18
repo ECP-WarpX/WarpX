@@ -1525,6 +1525,15 @@ void doGatherPicnicShapeN (
             for (int k=0; k<=depos_order; k++) {
                 weight = sx_cell[i]*(sz_old_node[k] + sz_new_node[k])/2.0_rt*seg_factor_x;
                 Exp += Ex_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 0)*weight;
+#if defined(WARPX_DIM_RZ)
+                Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
+                for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+                    const auto dEx = (+ Ex_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 2*imode-1)*xy_mid.real()
+                                      - Ex_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 2*imode)*xy_mid.imag());
+		    Exp += weight*dEx;
+                    xy_mid = xy_mid*xy_mid0;
+                }
+#endif
             }
         }
        
@@ -1533,6 +1542,15 @@ void doGatherPicnicShapeN (
             for (int k=0; k<=depos_order-1; k++) {
                 weight = sz_cell[k]*(sx_old_node[i] + sx_new_node[i])/2.0_rt*seg_factor_z;
                 Ezp += Ez_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 0)*weight;
+#if defined(WARPX_DIM_RZ)
+                Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
+                for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+                    const auto dEz = (+ Ez_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 2*imode-1)*xy_mid.real()
+                                      - Ez_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 2*imode)*xy_mid.imag());
+		    Ezp += weight*dEz;
+                    xy_mid = xy_mid*xy_mid0;
+                }
+#endif
             }
         }
 
@@ -1558,20 +1576,37 @@ void doGatherPicnicShapeN (
     const int i_bar_node = compute_shape_factor_B(sx_bar_node, x_bar);
     const int i_bar_cell = compute_shape_factor_B(sx_bar_cell, x_bar-0.5_rt);
 
-    amrex::Real weight;
     for (int i=0; i<=depos_order_B; i++) {
         for (int k=0; k<=depos_order_B; k++) {
-            weight = sx_bar_cell[i]*sz_bar_node[k];
-            Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 0)*weight;
+            auto weight_Bz = sx_bar_cell[i]*sz_bar_node[k];
+            Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 0)*weight_Bz;
 	    //
-            weight = sx_bar_node[i]*sz_bar_node[k];
-            Eyp += Ey_arr(lo.x+i_bar_node+i, lo.y+k_bar_node+k, 0, 0)*weight;
+            auto weight_Ey = sx_bar_node[i]*sz_bar_node[k];
+            Eyp += Ey_arr(lo.x+i_bar_node+i, lo.y+k_bar_node+k, 0, 0)*weight_Ey;
             //
-	    weight = sx_bar_node[i]*sz_bar_cell[k];
-            Bxp += Bx_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 0)*weight;
+	    auto weight_Bx = sx_bar_node[i]*sz_bar_cell[k];
+            Bxp += Bx_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 0)*weight_Bx;
             //
-	    weight = sx_bar_cell[i]*sz_bar_cell[k];
-            Byp += By_arr(lo.x+i_bar_cell+i, lo.y+k_bar_cell+k, 0, 0)*weight;
+	    auto weight_By = sx_bar_cell[i]*sz_bar_cell[k];
+            Byp += By_arr(lo.x+i_bar_cell+i, lo.y+k_bar_cell+k, 0, 0)*weight_By;
+#if defined(WARPX_DIM_RZ)
+            Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
+            for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+                const auto dBx = (+ Bx_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 2*imode-1)*xy_mid.real()
+                                  - Bx_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 2*imode)*xy_mid.imag());
+                const auto dBy = (+ By_arr(lo.x+i_bar_cell+i, lo.y+k_bar_cell+k, 0, 2*imode-1)*xy_mid.real()
+                                  - By_arr(lo.x+i_bar_cell+i, lo.y+k_bar_cell+k, 0, 2*imode)*xy_mid.imag());
+                const auto dBz = (+ Bz_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 2*imode-1)*xy_mid.real()
+                                  - Bz_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 2*imode)*xy_mid.imag());
+                const auto dEy = (+ Ey_arr(lo.x+i_bar_node+i, lo.y+k_bar_node+k, 0, 2*imode-1)*xy_mid.real()
+                                  - Ey_arr(lo.x+i_bar_node+i, lo.y+k_bar_node+k, 0, 2*imode)*xy_mid.imag());
+                Bxp += weight_Bx*dBx;
+                Byp += weight_By*dBy;
+                Bzp += weight_Bz*dBz;
+                Eyp += weight_Ey*dEy;
+                xy_mid = xy_mid*xy_mid0;
+            }
+#endif
         }
     }
 
