@@ -1846,14 +1846,6 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		    dxp_seg = xpnew0-xpold0;
 		    dyp_seg = ypnew0-ypold0;
 		    dzp_seg = zpnew0-zpold0;
-		    int cell_crossings_left = cell_crossings_x + cell_crossings_y + cell_crossings_z;
-		    if(cell_crossings_left>0) {
-			amrex::Print() << "JRA: cell crossings are not zero as they should be." << std::endl;
-			amrex::Print() << "JRA: num_segments = " << num_segments << std::endl;
-			amrex::Print() << "JRA: cell_crossings_x = " << cell_crossings_x << std::endl;
-			amrex::Print() << "JRA: cell_crossings_y = " << cell_crossings_y << std::endl;
-			amrex::Print() << "JRA: cell_crossings_z = " << cell_crossings_z << std::endl;
-		    }
 		}
 		else if (cell_crossings_x==0) {
 
@@ -1877,7 +1869,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	                zpnew0 = zpold0 + dzp_seg;
 		        cell_crossings_y -= 1;
 		    }
-		    else { // crossings in y-dir and z-dir
+		    else { // crossings in y-dir and z-dir remain
                         ypnew0 = Ycell + dirY_sign*dx[1];
                         zpnew0 = Zcell + dirZ_sign*dx[2];
 		        dyp_seg = ypnew0 - ypold0;
@@ -1905,17 +1897,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		}
 		else if (cell_crossings_y==0) {
 
-  		    if (cell_crossings_x==0) { // only crossings in z-dir remain
-                        Zcell = Zcell + dirZ_sign*dx[2];
-                        zpnew0 = Zcell;
-                        dzp_seg = zpnew0 - zpold0;
-                        dxp_seg = slope_dxdz*dzp_seg;
-                        dyp_seg = slope_dydz*dzp_seg;
-	                xpnew0 = xpold0 + dxp_seg;
-	                ypnew0 = ypold0 + dyp_seg;
-		        cell_crossings_z -= 1;
-		    }
-		    else if (cell_crossings_z==0) { // only crossings in x-dir remain
+		    if (cell_crossings_z==0) { // only crossings in x-dir remain
                         Xcell = Xcell + dirX_sign*dx[0];
                         xpnew0 = Xcell;
                         dxp_seg = xpnew0 - xpold0;
@@ -1925,7 +1907,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	                zpnew0 = zpold0 + dzp_seg;
 		        cell_crossings_x -= 1;
 		    }
-		    else { // crossings in x-dir and z-dir
+		    else { // crossings in x-dir and z-dir remain
                         xpnew0 = Xcell + dirX_sign*dx[0];
                         zpnew0 = Zcell + dirZ_sign*dx[2];
 		        dxp_seg = xpnew0 - xpold0;
@@ -1951,56 +1933,35 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		    }
 
 		}
-		else if (cell_crossings_z==0) {
+		else if (cell_crossings_z==0) { // crossings in x-dir and y-dir remain
 
-  		    if (cell_crossings_x==0) { // only crossings in y-dir remain
-                        Ycell = Ycell + dirY_sign*dx[1];
-                        ypnew0 = Ycell;
-                        dyp_seg = ypnew0 - ypold0;
-                        dxp_seg = slope_dxdy*dyp_seg;
-                        dzp_seg = slope_dzdy*dyp_seg;
-	                xpnew0 = xpold0 + dxp_seg;
-	                zpnew0 = zpold0 + dzp_seg;
-		        cell_crossings_y -= 1;
-		    }
-		    else if (cell_crossings_y==0) { // only crossings in x-dir remain
-                        Xcell = Xcell + dirX_sign*dx[0];
-                        xpnew0 = Xcell;
-                        dxp_seg = xpnew0 - xpold0;
-                        dyp_seg = slope_dydx*dxp_seg;
-                        dzp_seg = slope_dzdx*dxp_seg;
-	                ypnew0 = ypold0 + dyp_seg;
-	                zpnew0 = zpold0 + dzp_seg;
-		        cell_crossings_x -= 1;
-		    }
-		    else { // crossings in x-dir and y-dir
-                        xpnew0 = Xcell + dirX_sign*dx[0];
-                        ypnew0 = Ycell + dirY_sign*dx[1];
-		        dxp_seg = xpnew0 - xpold0;
-		        dyp_seg = ypnew0 - ypold0;
+   		    xpnew0 = Xcell + dirX_sign*dx[0];
+                    ypnew0 = Ycell + dirY_sign*dx[1];
+		    dxp_seg = xpnew0 - xpold0;
+		    dyp_seg = ypnew0 - ypold0;
 		    
-		        double const dxp_seg2 = slope_dxdy*dyp_seg;
-		        if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
-			    dyp_seg = slope_dydx*dxp_seg;
-			    dzp_seg = slope_dzdx*dxp_seg;
-			    ypnew0 = ypold0 + dyp_seg;
-			    zpnew0 = zpold0 + dzp_seg;
-			    Xcell = xpnew0;
-			    cell_crossings_x -= 1;
-		        }
-		        else { // y-dir crossing
-			    dxp_seg = slope_dxdy*dyp_seg;
-			    dzp_seg = slope_dzdy*dyp_seg;
-			    xpnew0 = xpold0 + dxp_seg;
-			    zpnew0 = zpold0 + dzp_seg;
-			    Ycell = ypnew0;
-			    cell_crossings_y -= 1;
-		        }
+		    double const dxp_seg2 = slope_dxdy*dyp_seg;
+		    if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+			dyp_seg = slope_dydx*dxp_seg;
+			dzp_seg = slope_dzdx*dxp_seg;
+			ypnew0 = ypold0 + dyp_seg;
+			zpnew0 = zpold0 + dzp_seg;
+			Xcell = xpnew0;
+			cell_crossings_x -= 1;
+		    }
+		    else { // y-dir crossing
+			dxp_seg = slope_dxdy*dyp_seg;
+			dzp_seg = slope_dzdy*dyp_seg;
+			xpnew0 = xpold0 + dxp_seg;
+			zpnew0 = zpold0 + dzp_seg;
+			Ycell = ypnew0;
+			cell_crossings_y -= 1;
 		    }
 
 		}
-	        else { // crossings in x-dir, y-dir, and z-dir
-                    xpnew0 = Xcell + dirX_sign*dx[0];
+	        else { // crossings in x-dir, y-dir, and z-dir remain
+                    
+		    xpnew0 = Xcell + dirX_sign*dx[0];
                     ypnew0 = Ycell + dirY_sign*dx[1];
                     zpnew0 = Zcell + dirZ_sign*dx[2];
 	            dxp_seg = xpnew0 - xpold0;
@@ -2037,6 +1998,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 			Zcell = zpnew0;
 			cell_crossings_z -= 1;
 		    }
+
 		}
 
 		// compute the segment factors
@@ -2066,7 +2028,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 double const y0_new = (ypnew0 - ymin)*dyi;
                 double const z0_new = (zpnew0 - zmin)*dzi;
 		const int i0_node = compute_pair_shape_factor_node( sx_old_node, sx_new_node, x0_old, x0_new );
-		const int j0_node = compute_pair_shape_factor_node( sy_old_node, sx_new_node, y0_old, y0_new );
+		const int j0_node = compute_pair_shape_factor_node( sy_old_node, sy_new_node, y0_old, y0_new );
 		const int k0_node = compute_pair_shape_factor_node( sz_old_node, sz_new_node, z0_old, z0_new );
                 
 		// deposit Jx for this segment
