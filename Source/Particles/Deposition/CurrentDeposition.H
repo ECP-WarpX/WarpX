@@ -1715,21 +1715,21 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             // Keep these double to avoid bug in single precision
             double const x_new = (xp_np1 - xmin)*dxi;
             double const x_old = (xp_n[ip] - xmin)*dxi;
-            double const x_bar = (xp_nph - xmin)*dxi;
             double const dxp = xp_np1 - xp_n[ip];
+#if !defined(WARPX_DIM_3D)
+            double const x_bar = (xp_nph - xmin)*dxi;
+#endif
 #endif
 #endif
 #if defined(WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
             double const y_new = (yp_np1 - ymin)*dyi;
             double const y_old = (yp_n[ip] - ymin)*dyi;
-            double const y_bar = (yp_nph - ymin)*dyi;
             double const dyp = yp_np1 - yp_n[ip];
 #endif
             // Keep these double to avoid bug in single precision
             double const z_new = (zp_np1 - zmin)*dzi;
             double const z_old = (zp_n[ip] - zmin)*dzi;
-            double const z_bar = (zp_nph - zmin)*dzi;
             double const dzp = zp_np1 - zp_n[ip];
 
 	    // set the velocity kernal to deposit
@@ -1827,7 +1827,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
             Compute_pair_shape_factor< depos_order > compute_pair_shape_factor_node;
 	    double dxp_seg = dxp;
-	    double dyp_seg = dxp;
+	    double dyp_seg = dyp;
 	    double dzp_seg = dzp;
 	    double xpold0 = xp_n[ip];
 	    double ypold0 = yp_n[ip];
@@ -1846,6 +1846,197 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		    dxp_seg = xpnew0-xpold0;
 		    dyp_seg = ypnew0-ypold0;
 		    dzp_seg = zpnew0-zpold0;
+		    int cell_crossings_left = cell_crossings_x + cell_crossings_y + cell_crossings_z;
+		    if(cell_crossings_left>0) {
+			amrex::Print() << "JRA: cell crossings are not zero as they should be." << std::endl;
+			amrex::Print() << "JRA: num_segments = " << num_segments << std::endl;
+			amrex::Print() << "JRA: cell_crossings_x = " << cell_crossings_x << std::endl;
+			amrex::Print() << "JRA: cell_crossings_y = " << cell_crossings_y << std::endl;
+			amrex::Print() << "JRA: cell_crossings_z = " << cell_crossings_z << std::endl;
+		    }
+		}
+		else if (cell_crossings_x==0) {
+
+  		    if (cell_crossings_y==0) { // only crossings in z-dir remain
+                        Zcell = Zcell + dirZ_sign*dx[2];
+                        zpnew0 = Zcell;
+                        dzp_seg = zpnew0 - zpold0;
+                        dxp_seg = slope_dxdz*dzp_seg;
+                        dyp_seg = slope_dydz*dzp_seg;
+	                xpnew0 = xpold0 + dxp_seg;
+	                ypnew0 = ypold0 + dyp_seg;
+		        cell_crossings_z -= 1;
+		    }
+		    else if (cell_crossings_z==0) { // only crossings in y-dir remain
+                        Ycell = Ycell + dirY_sign*dx[1];
+                        ypnew0 = Ycell;
+                        dyp_seg = ypnew0 - ypold0;
+                        dxp_seg = slope_dxdy*dyp_seg;
+                        dzp_seg = slope_dzdy*dyp_seg;
+	                xpnew0 = xpold0 + dxp_seg;
+	                zpnew0 = zpold0 + dzp_seg;
+		        cell_crossings_y -= 1;
+		    }
+		    else { // crossings in y-dir and z-dir
+                        ypnew0 = Ycell + dirY_sign*dx[1];
+                        zpnew0 = Zcell + dirZ_sign*dx[2];
+		        dyp_seg = ypnew0 - ypold0;
+		        dzp_seg = zpnew0 - zpold0;
+		    
+		        double const dyp_seg2 = slope_dydz*dzp_seg;
+		        if (std::abs(dyp_seg)<std::abs(dyp_seg2)) { // y-dir crossing
+			    dxp_seg = slope_dxdy*dyp_seg;
+			    dzp_seg = slope_dzdy*dyp_seg;
+			    xpnew0 = xpold0 + dxp_seg;
+			    zpnew0 = zpold0 + dzp_seg;
+			    Ycell = ypnew0;
+			    cell_crossings_y -= 1;
+		        }
+		        else { // z-dir crossing
+			    dxp_seg = slope_dxdz*dzp_seg;
+			    dyp_seg = slope_dydz*dzp_seg;
+			    xpnew0 = xpold0 + dxp_seg;
+			    ypnew0 = ypold0 + dyp_seg;
+			    Zcell = zpnew0;
+			    cell_crossings_z -= 1;
+		        }
+		    }
+
+		}
+		else if (cell_crossings_y==0) {
+
+  		    if (cell_crossings_x==0) { // only crossings in z-dir remain
+                        Zcell = Zcell + dirZ_sign*dx[2];
+                        zpnew0 = Zcell;
+                        dzp_seg = zpnew0 - zpold0;
+                        dxp_seg = slope_dxdz*dzp_seg;
+                        dyp_seg = slope_dydz*dzp_seg;
+	                xpnew0 = xpold0 + dxp_seg;
+	                ypnew0 = ypold0 + dyp_seg;
+		        cell_crossings_z -= 1;
+		    }
+		    else if (cell_crossings_z==0) { // only crossings in x-dir remain
+                        Xcell = Xcell + dirX_sign*dx[0];
+                        xpnew0 = Xcell;
+                        dxp_seg = xpnew0 - xpold0;
+                        dyp_seg = slope_dydx*dxp_seg;
+                        dzp_seg = slope_dzdx*dxp_seg;
+	                ypnew0 = ypold0 + dyp_seg;
+	                zpnew0 = zpold0 + dzp_seg;
+		        cell_crossings_x -= 1;
+		    }
+		    else { // crossings in x-dir and z-dir
+                        xpnew0 = Xcell + dirX_sign*dx[0];
+                        zpnew0 = Zcell + dirZ_sign*dx[2];
+		        dxp_seg = xpnew0 - xpold0;
+		        dzp_seg = zpnew0 - zpold0;
+		    
+		        double const dxp_seg2 = slope_dxdz*dzp_seg;
+		        if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+			    dyp_seg = slope_dydx*dxp_seg;
+			    dzp_seg = slope_dzdx*dxp_seg;
+			    ypnew0 = ypold0 + dyp_seg;
+			    zpnew0 = zpold0 + dzp_seg;
+			    Xcell = xpnew0;
+			    cell_crossings_x -= 1;
+		        }
+		        else { // z-dir crossing
+			    dxp_seg = slope_dxdz*dzp_seg;
+			    dyp_seg = slope_dydz*dzp_seg;
+			    xpnew0 = xpold0 + dxp_seg;
+			    ypnew0 = ypold0 + dyp_seg;
+			    Zcell = zpnew0;
+			    cell_crossings_z -= 1;
+		        }
+		    }
+
+		}
+		else if (cell_crossings_z==0) {
+
+  		    if (cell_crossings_x==0) { // only crossings in y-dir remain
+                        Ycell = Ycell + dirY_sign*dx[1];
+                        ypnew0 = Ycell;
+                        dyp_seg = ypnew0 - ypold0;
+                        dxp_seg = slope_dxdy*dyp_seg;
+                        dzp_seg = slope_dzdy*dyp_seg;
+	                xpnew0 = xpold0 + dxp_seg;
+	                zpnew0 = zpold0 + dzp_seg;
+		        cell_crossings_y -= 1;
+		    }
+		    else if (cell_crossings_y==0) { // only crossings in x-dir remain
+                        Xcell = Xcell + dirX_sign*dx[0];
+                        xpnew0 = Xcell;
+                        dxp_seg = xpnew0 - xpold0;
+                        dyp_seg = slope_dydx*dxp_seg;
+                        dzp_seg = slope_dzdx*dxp_seg;
+	                ypnew0 = ypold0 + dyp_seg;
+	                zpnew0 = zpold0 + dzp_seg;
+		        cell_crossings_x -= 1;
+		    }
+		    else { // crossings in x-dir and y-dir
+                        xpnew0 = Xcell + dirX_sign*dx[0];
+                        ypnew0 = Ycell + dirY_sign*dx[1];
+		        dxp_seg = xpnew0 - xpold0;
+		        dyp_seg = ypnew0 - ypold0;
+		    
+		        double const dxp_seg2 = slope_dxdy*dyp_seg;
+		        if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+			    dyp_seg = slope_dydx*dxp_seg;
+			    dzp_seg = slope_dzdx*dxp_seg;
+			    ypnew0 = ypold0 + dyp_seg;
+			    zpnew0 = zpold0 + dzp_seg;
+			    Xcell = xpnew0;
+			    cell_crossings_x -= 1;
+		        }
+		        else { // y-dir crossing
+			    dxp_seg = slope_dxdy*dyp_seg;
+			    dzp_seg = slope_dzdy*dyp_seg;
+			    xpnew0 = xpold0 + dxp_seg;
+			    zpnew0 = zpold0 + dzp_seg;
+			    Ycell = ypnew0;
+			    cell_crossings_y -= 1;
+		        }
+		    }
+
+		}
+	        else { // crossings in x-dir, y-dir, and z-dir
+                    xpnew0 = Xcell + dirX_sign*dx[0];
+                    ypnew0 = Ycell + dirY_sign*dx[1];
+                    zpnew0 = Zcell + dirZ_sign*dx[2];
+	            dxp_seg = xpnew0 - xpold0;
+	            dyp_seg = ypnew0 - ypold0;
+	            dzp_seg = zpnew0 - zpold0;
+		    
+	            double const dxp_seg2 = slope_dxdz*dzp_seg;
+	            double const dxp_seg3 = slope_dxdy*dyp_seg;
+	            double const dyp_seg2 = slope_dydx*dxp_seg;
+	            double const dyp_seg3 = slope_dydz*dzp_seg;
+	            if (std::abs(dxp_seg)<std::abs(dxp_seg2) &&
+			std::abs(dxp_seg)<std::abs(dxp_seg3)) { // x-dir crossing
+	    	        dyp_seg = slope_dydx*dxp_seg;
+			dzp_seg = slope_dzdx*dxp_seg;
+			ypnew0 = ypold0 + dyp_seg;
+			zpnew0 = zpold0 + dzp_seg;
+			Xcell = xpnew0;
+			cell_crossings_x -= 1;
+		    }
+		    else if (std::abs(dyp_seg)<std::abs(dyp_seg2) &&
+			     std::abs(dyp_seg)<std::abs(dyp_seg3)) { // y-dir crossing
+	    	        dxp_seg = slope_dxdy*dyp_seg;
+			dzp_seg = slope_dzdy*dyp_seg;
+			xpnew0 = xpold0 + dxp_seg;
+			zpnew0 = zpold0 + dzp_seg;
+			Ycell = ypnew0;
+			cell_crossings_y -= 1;
+		    }
+		    else { // z-dir crossing
+			dxp_seg = slope_dxdz*dzp_seg;
+			dyp_seg = slope_dydz*dzp_seg;
+			xpnew0 = xpold0 + dxp_seg;
+			ypnew0 = ypold0 + dyp_seg;
+			Zcell = zpnew0;
+			cell_crossings_z -= 1;
+		    }
 		}
 
 		// compute the segment factors
@@ -1901,7 +2092,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 					             + sx_old_node[i]*sz_new_node[k]/2.0
 					             + sx_new_node[i]*sz_old_node[k]/2.0
 					             + sx_new_node[i]*sz_new_node[k] )/3.0*seg_factor_y;
-                            amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_node+i, lo.y+j0_cell+j, lo.z+k0_node+k), this_Jy);
+                            amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+j0_cell+j, lo.z+k0_node+k), this_Jy);
                         }
 		    }
                 }
@@ -2095,6 +2286,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             double sz_bar_node[2] = {0.};
             double sx_bar_node[2] = {0.};
             Compute_shape_factor< 1 > compute_shape_factor_cic;
+            double const z_bar = (zp_nph - zmin)*dzi;
             const int k_bar_node = compute_shape_factor_cic(sz_bar_node, z_bar);
             const int i_bar_node = compute_shape_factor_cic(sx_bar_node, x_bar);
             
@@ -2186,6 +2378,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	    // deposit out-of-plane current density
 	    Compute_shape_factor< 1 > compute_shape_factor_cic;
             double sz_bar_node[2] = {0.};
+            double const z_bar = (zp_nph - zmin)*dzi;
             const int k_bar_node = compute_shape_factor_cic(sz_bar_node, z_bar);
 
             for (int k=0; k<=1; k++) {

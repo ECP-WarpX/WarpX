@@ -1095,6 +1095,189 @@ void doGatherPicnicShapeN (
 	    dyp_seg = ypnew0-ypold0;
 	    dzp_seg = zpnew0-zpold0;
 	}
+	else if (cell_crossings_x==0) {
+
+  	    if (cell_crossings_y==0) { // only crossings in z-dir remain
+                Zcell = Zcell + dirZ_sign*dx[2];
+                zpnew0 = Zcell;
+                dzp_seg = zpnew0 - zpold0;
+                dxp_seg = slope_dxdz*dzp_seg;
+                dyp_seg = slope_dydz*dzp_seg;
+	        xpnew0 = xpold0 + dxp_seg;
+	        ypnew0 = ypold0 + dyp_seg;
+	        cell_crossings_z -= 1;
+	    }
+	    else if (cell_crossings_z==0) { // only crossings in y-dir remain
+                Ycell = Ycell + dirY_sign*dx[1];
+                ypnew0 = Ycell;
+                dyp_seg = ypnew0 - ypold0;
+                dxp_seg = slope_dxdy*dyp_seg;
+                dzp_seg = slope_dzdy*dyp_seg;
+	        xpnew0 = xpold0 + dxp_seg;
+	        zpnew0 = zpold0 + dzp_seg;
+	        cell_crossings_y -= 1;
+	    }
+	    else { // crossings in y-dir and z-dir
+                ypnew0 = Ycell + dirY_sign*dx[1];
+                zpnew0 = Zcell + dirZ_sign*dx[2];
+	        dyp_seg = ypnew0 - ypold0;
+	        dzp_seg = zpnew0 - zpold0;
+		    
+	        double const dyp_seg2 = slope_dydz*dzp_seg;
+	        if (std::abs(dyp_seg)<std::abs(dyp_seg2)) { // y-dir crossing
+		    dxp_seg = slope_dxdy*dyp_seg;
+		    dzp_seg = slope_dzdy*dyp_seg;
+		    xpnew0 = xpold0 + dxp_seg;
+		    zpnew0 = zpold0 + dzp_seg;
+		    Ycell = ypnew0;
+		    cell_crossings_y -= 1;
+	        }
+	        else { // z-dir crossing
+		    dxp_seg = slope_dxdz*dzp_seg;
+		    dyp_seg = slope_dydz*dzp_seg;
+		    xpnew0 = xpold0 + dxp_seg;
+		    ypnew0 = ypold0 + dyp_seg;
+		    Zcell = zpnew0;
+		    cell_crossings_z -= 1;
+	        }
+	    }
+
+	}
+	else if (cell_crossings_y==0) {
+
+  	    if (cell_crossings_x==0) { // only crossings in z-dir remain
+                Zcell = Zcell + dirZ_sign*dx[2];
+                zpnew0 = Zcell;
+                dzp_seg = zpnew0 - zpold0;
+                dxp_seg = slope_dxdz*dzp_seg;
+                dyp_seg = slope_dydz*dzp_seg;
+	        xpnew0 = xpold0 + dxp_seg;
+	        ypnew0 = ypold0 + dyp_seg;
+	        cell_crossings_z -= 1;
+	    }
+	    else if (cell_crossings_z==0) { // only crossings in x-dir remain
+                Xcell = Xcell + dirX_sign*dx[0];
+                xpnew0 = Xcell;
+                dxp_seg = xpnew0 - xpold0;
+                dyp_seg = slope_dydx*dxp_seg;
+                dzp_seg = slope_dzdx*dxp_seg;
+	        ypnew0 = ypold0 + dyp_seg;
+	        zpnew0 = zpold0 + dzp_seg;
+	        cell_crossings_x -= 1;
+	    }
+	    else { // crossings in x-dir and z-dir
+                xpnew0 = Xcell + dirX_sign*dx[0];
+                zpnew0 = Zcell + dirZ_sign*dx[2];
+	        dxp_seg = xpnew0 - xpold0;
+	        dzp_seg = zpnew0 - zpold0;
+		    
+	        double const dxp_seg2 = slope_dxdz*dzp_seg;
+	        if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+		    dyp_seg = slope_dydx*dxp_seg;
+		    dzp_seg = slope_dzdx*dxp_seg;
+		    ypnew0 = ypold0 + dyp_seg;
+		    zpnew0 = zpold0 + dzp_seg;
+		    Xcell = xpnew0;
+		    cell_crossings_x -= 1;
+	        }
+	        else { // z-dir crossing
+		    dxp_seg = slope_dxdz*dzp_seg;
+		    dyp_seg = slope_dydz*dzp_seg;
+		    xpnew0 = xpold0 + dxp_seg;
+		    ypnew0 = ypold0 + dyp_seg;
+		    Zcell = zpnew0;
+		    cell_crossings_z -= 1;
+	        }
+	    }
+
+	}
+	else if (cell_crossings_z==0) {
+
+  	    if (cell_crossings_x==0) { // only crossings in y-dir remain
+                Ycell = Ycell + dirY_sign*dx[1];
+                ypnew0 = Ycell;
+                dyp_seg = ypnew0 - ypold0;
+                dxp_seg = slope_dxdy*dyp_seg;
+                dzp_seg = slope_dzdy*dyp_seg;
+	        xpnew0 = xpold0 + dxp_seg;
+	        zpnew0 = zpold0 + dzp_seg;
+	        cell_crossings_y -= 1;
+	    }
+	    else if (cell_crossings_y==0) { // only crossings in x-dir remain
+                Xcell = Xcell + dirX_sign*dx[0];
+                xpnew0 = Xcell;
+                dxp_seg = xpnew0 - xpold0;
+                dyp_seg = slope_dydx*dxp_seg;
+                dzp_seg = slope_dzdx*dxp_seg;
+	        ypnew0 = ypold0 + dyp_seg;
+	        zpnew0 = zpold0 + dzp_seg;
+	        cell_crossings_x -= 1;
+	    }
+	    else { // crossings in x-dir and y-dir
+                xpnew0 = Xcell + dirX_sign*dx[0];
+                ypnew0 = Ycell + dirY_sign*dx[1];
+	        dxp_seg = xpnew0 - xpold0;
+	        dyp_seg = ypnew0 - ypold0;
+		    
+	        double const dxp_seg2 = slope_dxdy*dyp_seg;
+	        if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+		    dyp_seg = slope_dydx*dxp_seg;
+		    dzp_seg = slope_dzdx*dxp_seg;
+		    ypnew0 = ypold0 + dyp_seg;
+		    zpnew0 = zpold0 + dzp_seg;
+		    Xcell = xpnew0;
+		    cell_crossings_x -= 1;
+	        }
+	        else { // y-dir crossing
+		    dxp_seg = slope_dxdy*dyp_seg;
+		    dzp_seg = slope_dzdy*dyp_seg;
+		    xpnew0 = xpold0 + dxp_seg;
+		    zpnew0 = zpold0 + dzp_seg;
+		    Ycell = ypnew0;
+		    cell_crossings_y -= 1;
+	        }
+	    }
+
+	}
+	else { // crossings in x-dir, y-dir, and z-dir
+            xpnew0 = Xcell + dirX_sign*dx[0];
+            ypnew0 = Ycell + dirY_sign*dx[1];
+            zpnew0 = Zcell + dirZ_sign*dx[2];
+	    dxp_seg = xpnew0 - xpold0;
+	    dyp_seg = ypnew0 - ypold0;
+	    dzp_seg = zpnew0 - zpold0;
+		    
+	    double const dxp_seg2 = slope_dxdz*dzp_seg;
+	    double const dxp_seg3 = slope_dxdy*dyp_seg;
+	    double const dyp_seg2 = slope_dydx*dxp_seg;
+	    double const dyp_seg3 = slope_dydz*dzp_seg;
+	    if (std::abs(dxp_seg)<std::abs(dxp_seg2) &&
+		std::abs(dxp_seg)<std::abs(dxp_seg3)) { // x-dir crossing
+	        dyp_seg = slope_dydx*dxp_seg;
+		dzp_seg = slope_dzdx*dxp_seg;
+		ypnew0 = ypold0 + dyp_seg;
+		zpnew0 = zpold0 + dzp_seg;
+		Xcell = xpnew0;
+		cell_crossings_x -= 1;
+	    }
+	    else if (std::abs(dyp_seg)<std::abs(dyp_seg2) &&
+	             std::abs(dyp_seg)<std::abs(dyp_seg3)) { // y-dir crossing
+	        dxp_seg = slope_dxdy*dyp_seg;
+		dzp_seg = slope_dzdy*dyp_seg;
+		xpnew0 = xpold0 + dxp_seg;
+		zpnew0 = zpold0 + dzp_seg;
+		Ycell = ypnew0;
+		cell_crossings_y -= 1;
+	    }
+	    else { // z-dir crossing
+		dxp_seg = slope_dxdz*dzp_seg;
+		dyp_seg = slope_dydz*dzp_seg;
+		xpnew0 = xpold0 + dxp_seg;
+		ypnew0 = ypold0 + dyp_seg;
+		Zcell = zpnew0;
+		cell_crossings_z -= 1;
+	    }
+	}
 
 	// compute the segment factors
         auto seg_factor_x = static_cast<amrex::Real>(dxp == 0. ? 1. : dxp_seg/dxp);
@@ -1165,8 +1348,18 @@ void doGatherPicnicShapeN (
 		}
 	    }
 	}
+		
+	// update old segment values
+        if (ns<num_segments-1) {
+	    xpold0 = xpnew0;
+	    ypold0 = ypnew0;
+	    zpold0 = zpnew0;
+            x0_old = x0_new;
+            y0_old = y0_new;
+            z0_old = z0_new;
+	}
 
-    }
+    } // end loop over segments
 
     // gather magnetic field and out-of-plane electric field
     Compute_shape_factor<1> compute_shape_factor_cic;
@@ -1195,6 +1388,15 @@ void doGatherPicnicShapeN (
 		//
                 weight = sx_bar_cell[i]*sy_bar_cell[j]*sz_bar_node[k];
                 Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+j_bar_cell+j, lo.z+k_bar_node+k)*weight;
+                //
+		//weight = sx_bar_cell[i]*sy_bar_node[j]*sz_bar_node[k];
+                //Exp += Ex_arr(lo.x+i_bar_cell+i, lo.y+j_bar_node+j, lo.z+k_bar_node+k)*weight;
+		//
+                //weight = sx_bar_node[i]*sy_bar_cell[j]*sz_bar_node[k];
+                //Eyp += Ey_arr(lo.x+i_bar_node+i, lo.y+j_bar_cell+j, lo.z+k_bar_node+k)*weight;
+		//
+                //weight = sx_bar_node[i]*sy_bar_node[j]*sz_bar_cell[k];
+                //Ezp += Ez_arr(lo.x+i_bar_node+i, lo.y+j_bar_node+j, lo.z+k_bar_cell+k)*weight;
 	    }
         }
     }
