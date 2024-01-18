@@ -44,7 +44,7 @@ public:
   using ParticleIter = typename amrex::ParIterSoA<PIdx::nattribs, 0, amrex::PinnedArenaAllocator>;
 
   WarpXParticleCounter (ParticleContainer* pc);
-  unsigned long GetTotalNumParticles () {return m_Total;}
+  [[nodiscard]] unsigned long GetTotalNumParticles () const {return m_Total;}
 
   std::vector<unsigned long long> m_ParticleOffsetAtRank;
   std::vector<unsigned long long> m_ParticleSizeAtRank;

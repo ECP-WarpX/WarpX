@@ -546,6 +546,13 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
     // see openPMD ED-PIC extension for namings
     // note: an underscore separates the record name from its component
     //       for non-scalar records
+#if !defined (WARPX_DIM_1D_Z)
+    real_names.push_back("position_x");
+#endif
+#if defined (WARPX_DIM_3D)
+    real_names.push_back("position_y");
+#endif
+    real_names.push_back("position_z");
     real_names.push_back("weighting");
     real_names.push_back("momentum_x");
     real_names.push_back("momentum_y");
@@ -587,20 +594,30 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
                                            particle_diags[i].m_diag_domain);
 
     if (isBTD || use_pinned_pc) {
-        tmp.copyParticles(*pinned_pc, true);
-        particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
+        particlesConvertUnits(ConvertDirection::WarpX_to_SI, pinned_pc, mass);
+        using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+        tmp.copyParticles(*pinned_pc,
+            [random_filter,uniform_filter,parser_filter,geometry_filter]
+            AMREX_GPU_HOST_DEVICE
+            (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+            {
+                const SuperParticleType& p = src.getSuperParticle(ip);
+                return random_filter(p, engine) * uniform_filter(p, engine)
+                        * parser_filter(p, engine) * geometry_filter(p, engine);
+            }, true);
+        particlesConvertUnits(ConvertDirection::SI_to_WarpX, pinned_pc, mass);
     } else {
         particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
         using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
         tmp.copyParticles(*pc,
-                        [random_filter,uniform_filter,parser_filter,geometry_filter]
-                        AMREX_GPU_HOST_DEVICE
-                        (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-                        {
-                            const SuperParticleType& p = src.getSuperParticle(ip);
-                            return random_filter(p, engine) * uniform_filter(p, engine)
-                                 * parser_filter(p, engine) * geometry_filter(p, engine);
-                        }, true);
+            [random_filter,uniform_filter,parser_filter,geometry_filter]
+            AMREX_GPU_HOST_DEVICE
+            (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+            {
+                const SuperParticleType& p = src.getSuperParticle(ip);
+                return random_filter(p, engine) * uniform_filter(p, engine)
+                        * parser_filter(p, engine) * geometry_filter(p, engine);
+            }, true);
         particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
     }
 
@@ -821,10 +838,9 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
 
     std::set< std::string > addedRecords; // add meta-data per record only once
     for (auto idx=0; idx<pc->NumRealComps(); idx++) {
-        auto ii = ParticleContainer::NStructReal + idx; // jump over extra AoS names
-        if (write_real_comp[ii]) {
+        if (write_real_comp[idx]) {
             // handle scalar and non-scalar records by name
-            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[ii]);
+            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
@@ -845,10 +861,9 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
         }
     }
     for (auto idx=0; idx<int_counter; idx++) {
-        auto ii = ParticleContainer::NStructInt + idx; // jump over extra AoS names
-        if (write_int_comp[ii]) {
+        if (write_int_comp[idx]) {
             // handle scalar and non-scalar records by name
-            const auto [record_name, component_name] = detail::name2openPMD(int_comp_names[ii]);
+            const auto [record_name, component_name] = detail::name2openPMD(int_comp_names[idx]);
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
@@ -907,9 +922,8 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
   {
     auto const int_counter = std::min(write_int_comp.size(), int_comp_names.size());
     for (auto idx=0; idx<int_counter; idx++) {
-        auto ii = ParticleIter::ContainerType::NStructInt + idx;  // jump over extra AoS names
-        if (write_int_comp[ii]) {
-            getComponentRecord(int_comp_names[ii]).storeChunkRaw(
+        if (write_int_comp[idx]) {
+            getComponentRecord(int_comp_names[idx]).storeChunkRaw(
                 soa.GetIntData(idx).data(), {offset}, {numParticleOnTile64});
         }
     }

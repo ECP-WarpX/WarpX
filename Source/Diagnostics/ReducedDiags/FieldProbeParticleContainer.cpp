@@ -109,9 +109,12 @@ FieldProbeParticleContainer::AddNParticles (int lev,
 #ifdef WARPX_DIM_RZ
     pinned_tile.push_back_real(FieldProbePIdx::theta, np, 0.0);
 #endif
-
+#if !defined (WARPX_DIM_1D_Z)
     pinned_tile.push_back_real(FieldProbePIdx::x, x);
+#endif
+#if defined (WARPX_DIM_3D)
     pinned_tile.push_back_real(FieldProbePIdx::y, y);
+#endif
     pinned_tile.push_back_real(FieldProbePIdx::z, z);
     pinned_tile.push_back_real(FieldProbePIdx::Ex, np, 0.0);
     pinned_tile.push_back_real(FieldProbePIdx::Ey, np, 0.0);

@@ -24,7 +24,13 @@ struct FieldProbePIdx
 {
     enum
     {
-        x, y, z,
+#if !defined (WARPX_DIM_1D_Z)
+        x,
+#endif
+#if defined (WARPX_DIM_3D)
+        y,
+#endif
+        z,
         Ex, Ey, Ez,
         Bx, By, Bz,
         S, //!< the Poynting vector

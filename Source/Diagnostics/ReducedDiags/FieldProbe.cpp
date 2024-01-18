@@ -556,8 +556,7 @@ void FieldProbe::ComputeDiags (int step)
                         amrex::ParticleReal xp, yp, zp;
                         getPosition(ip, xp, yp, zp);
                         long idx = ip*noutputs;
-                        dvp[idx++] = idcpu[ip];
-                        dvp[idx++] = 0;
+                        dvp[idx++] = amrex::ParticleIDWrapper{idcpu[ip]};  // all particles created on IO cpu
                         dvp[idx++] = xp;
                         dvp[idx++] = yp;
                         dvp[idx++] = zp;

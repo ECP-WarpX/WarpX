@@ -79,6 +79,13 @@ public:
     NamedComponentParticleContainer (amrex::AmrParGDB* amr_pgdb)
     : amrex::ParticleContainerPureSoA<PIdx::nattribs, 0, T_Allocator>(amr_pgdb) {
         // build up the map of string names to particle component numbers
+#if !defined (WARPX_DIM_1D_Z)
+        particle_comps["x"]  = PIdx::x;
+#endif
+#if defined (WARPX_DIM_3D)
+        particle_comps["y"]  = PIdx::y;
+#endif
+        particle_comps["z"]  = PIdx::z;
         particle_comps["w"]  = PIdx::w;
         particle_comps["ux"] = PIdx::ux;
         particle_comps["uy"] = PIdx::uy;

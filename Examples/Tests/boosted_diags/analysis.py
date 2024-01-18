@@ -21,6 +21,7 @@ import sys
 
 import numpy as np
 import openpmd_api as io
+from openpmd_viewer import OpenPMDTimeSeries
 import yt
 
 yt.funcs.mylog.setLevel(0)
@@ -48,9 +49,13 @@ ds_openpmd = series.iterations[3]
 Ez_openpmd = ds_openpmd.meshes['E']['z'].load_chunk()
 Ez_openpmd = Ez_openpmd.transpose()
 series.flush()
-
 # Compare arrays to check consistency between new BTD formats (plotfile and openPMD)
 assert(np.allclose(Ez_plotfile, Ez_openpmd, rtol=rtol, atol=atol))
+
+# Check that particle random sub-selection has been applied
+ts = OpenPMDTimeSeries('./diags/diag2/')
+w, = ts.get_particle(['w'], species='beam', iteration=3)
+assert (400 < len(w)) & (len(w) < 600)
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

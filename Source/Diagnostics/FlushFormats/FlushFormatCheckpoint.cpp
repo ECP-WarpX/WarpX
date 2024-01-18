@@ -178,8 +178,8 @@ FlushFormatCheckpoint::CheckpointParticles (
         Vector<std::string> real_names;
         Vector<std::string> int_names;
 
+        // note: positions skipped here, since we reconstruct a plotfile SoA from them
         real_names.push_back("weight");
-
         real_names.push_back("momentum_x");
         real_names.push_back("momentum_y");
         real_names.push_back("momentum_z");

@@ -355,8 +355,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         Vector<int> int_flags;
         Vector<int> real_flags;
 
+        // note: positions skipped here, since we reconstruct a plotfile SoA from them
         real_names.push_back("weight");
-
         real_names.push_back("momentum_x");
         real_names.push_back("momentum_y");
         real_names.push_back("momentum_z");
