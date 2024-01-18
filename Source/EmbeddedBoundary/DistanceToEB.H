@@ -110,9 +110,7 @@ amrex::RealVect interp_normal (int i, int j, int k, const amrex::Real W[AMREX_SP
     normal[1] -= phi(i,   jc  , k) * dxi[1] * W[0][0] * Wc[1][0];
     normal[1] += phi(i  , jc+1, k) * dxi[1] * W[0][0] * Wc[1][0];
     normal[1] -= phi(i+1, jc  , k) * dxi[1] * W[0][1] * Wc[1][0];
-    std::cout << "coucou" << std::endl;
     normal[1] += phi(i+1, jc+1, k) * dxi[1] * W[0][1] * Wc[1][0];
-    std::cout << "coucou2" << std::endl;
     normal[1] -= phi(i,   jc+1, k) * dxi[1] * W[0][0] * Wc[1][1];
     normal[1] += phi(i  , jc+2, k) * dxi[1] * W[0][0] * Wc[1][1];
     normal[1] -= phi(i+1, jc+1, k) * dxi[1] * W[0][1] * Wc[1][1];
