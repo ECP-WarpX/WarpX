@@ -80,17 +80,23 @@ computePhiIGF ( amrex::MultiFab const & rho,
     // Define box that encompasses the full domain
     amrex::Box domain = ba.minimalBox();
     domain.surroundingNodes(); // get nodal points, since `phi` and `rho` are nodal
+    domain.grow( phi.nGrowVect() ); // include guard cells
 
     int nx = domain.length(0);
     int ny = domain.length(1);
     int nz = domain.length(2);
 
     // Allocate 2x wider arrays for the convolution of rho with the Green function
-    // This also defines the box arrays for the global FFT: contains only one box
-    AMREX_ALWAYS_ASSERT( domain.smallEnd() == amrex::IntVect::TheZeroVector() );
-    amrex::Box const realspace_box = amrex::Box( {0,0,0}, {2*nx-1, 2*ny-1, 2*nz-1}, amrex::IntVect::TheNodeVector() );
+    // This also defines the box arrays for the global FFT: contains only one box;
+    amrex::Box const realspace_box = amrex::Box(
+        {domain.smallEnd(0), domain.smallEnd(1), domain.smallEnd(2)},
+        {2*nx-1+domain.smallEnd(0), 2*ny-1+domain.smallEnd(1), 2*nz-1+domain.smallEnd(2)},
+        amrex::IntVect::TheNodeVector() );
     amrex::BoxArray realspace_ba = amrex::BoxArray( realspace_box );
-    amrex::Box const spectralspace_box = amrex::Box( {0,0,0}, {nx, 2*ny-1, 2*nz-1}, amrex::IntVect::TheNodeVector() );
+    amrex::Box const spectralspace_box = amrex::Box(
+        {0,0,0},
+        {nx, 2*ny-1, 2*nz-1},
+        amrex::IntVect::TheNodeVector() );
     amrex::BoxArray spectralspace_ba = amrex::BoxArray( spectralspace_box );
     // Define a distribution mapping for the global FFT, with only one box
     amrex::DistributionMapping dm_global_fft;
@@ -119,18 +125,23 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
         amrex::Box bx = mfi.tilebox();
 
+        amrex::IntVect lo = realspace_box.smallEnd();
+        amrex::IntVect hi = realspace_box.bigEnd();
+
         // Fill values of the Green function
         amrex::Real dx = cell_size[0];
         amrex::Real dy = cell_size[1];
         amrex::Real dz = cell_size[2];
-        // TODO: check that indices start at 0
         amrex::Array4<amrex::Real> tmp_G_arr = tmp_G.array(mfi);
         amrex::ParallelFor( bx,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
-                amrex::Real const x = i*dx;
-                amrex::Real const y = j*dy;
-                amrex::Real const z = k*dz;
+                int i0 = i - lo[0];
+                int j0 = j - lo[1];
+                int k0 = k - lo[2];
+                amrex::Real const x = i0*dx;
+                amrex::Real const y = j0*dy;
+                amrex::Real const z = k0*dz;
 
                 amrex::Real const G_value = 1./(4*MathConst::pi*PhysConst::ep0) * (
                     IntegratedPotential( x+0.5*dx, y+0.5*dy, z+0.5*dz )
@@ -145,13 +156,13 @@ computePhiIGF ( amrex::MultiFab const & rho,
 
                 tmp_G_arr(i,j,k) = G_value;
                 // Fill the rest of the array by periodicity
-                if (i>0) tmp_G_arr(2*nx-i, j     , k     ) = G_value;
-                if (j>0) tmp_G_arr(i     , 2*ny-j, k     ) = G_value;
-                if (k>0) tmp_G_arr(i     , j     , 2*nz-k) = G_value;
-                if ((i>0)&&(j>0)) tmp_G_arr(2*nx-i, 2*ny-j, k     ) = G_value;
-                if ((j>0)&&(k>0)) tmp_G_arr(i     , 2*ny-j, 2*nz-k) = G_value;
-                if ((i>0)&&(k>0)) tmp_G_arr(2*nx-i, j     , 2*nz-k) = G_value;
-                if ((i>0)&&(j>0)&&(k>0)) tmp_G_arr(2*nx-i, 2*ny-j, 2*nz-k) = G_value;
+                if (i0>0) tmp_G_arr(hi[0]+1-i0, j         , k         ) = G_value;
+                if (j0>0) tmp_G_arr(i         , hi[1]+1-j0, k         ) = G_value;
+                if (k0>0) tmp_G_arr(i         , j         , hi[2]+1-k0) = G_value;
+                if ((i0>0)&&(j0>0)) tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, k         ) = G_value;
+                if ((j0>0)&&(k0>0)) tmp_G_arr(i         , hi[1]+1-j0, hi[2]+1-k0) = G_value;
+                if ((i0>0)&&(k0>0)) tmp_G_arr(hi[0]+1-i0, j         , hi[2]+1-k0) = G_value;
+                if ((i0>0)&&(j0>0)&&(k0>0)) tmp_G_arr(hi[0]+1-i0, hi[1]+1-j0, hi[2]+1-k0) = G_value;
             }
         );
     }
@@ -161,7 +172,7 @@ computePhiIGF ( amrex::MultiFab const & rho,
     auto forward_plan_rho = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
     auto forward_plan_G = ablastr::math::anyfft::FFTplans(spectralspace_ba, dm_global_fft);
     // Loop over boxes perform FFTs
-    for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
+    for ( amrex::MFIter mfi(realspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
 
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
@@ -171,14 +182,14 @@ computePhiIGF ( amrex::MultiFab const & rho,
         // FFT of rho
         forward_plan_rho[mfi] = ablastr::math::anyfft::CreatePlan(
             fft_size, tmp_rho[mfi].dataPtr(),
-            reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_rho_fft[mfi].dataPtr()),
+            reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_rho_fft[mfi].dataPtr()),
             ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
         ablastr::math::anyfft::Execute(forward_plan_rho[mfi]);
 
         // FFT of G
         forward_plan_G[mfi] = ablastr::math::anyfft::CreatePlan(
             fft_size, tmp_G[mfi].dataPtr(),
-            reinterpret_cast<ablastr::math::anyfft::Complex*>( tmp_G_fft[mfi].dataPtr()),
+            reinterpret_cast<ablastr::math::anyfft::Complex*>(tmp_G_fft[mfi].dataPtr()),
             ablastr::math::anyfft::direction::R2C, AMREX_SPACEDIM);
         ablastr::math::anyfft::Execute(forward_plan_G[mfi]);
 
@@ -205,14 +216,12 @@ computePhiIGF ( amrex::MultiFab const & rho,
             ablastr::math::anyfft::direction::C2R, AMREX_SPACEDIM);
         ablastr::math::anyfft::Execute(backward_plan[mfi]);
     }
-
-    // Copy from tmp_G to phi
-    phi.setVal(0, phi.nGrowVect() );
-    phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), amrex::IntVect::TheZeroVector() );
-    phi.FillBoundary();
     // Normalize, since (FFT + inverse FFT) results in a factor N
     const amrex::Real normalization = 1. / realspace_box.numPts();
-    phi.mult( normalization );
+    tmp_G.mult( normalization );
+
+    // Copy from tmp_G to phi
+    phi.ParallelCopy( tmp_G, 0, 0, 1, amrex::IntVect::TheZeroVector(), phi.nGrowVect() );
 
     // Loop to destroy FFT plans
     for ( amrex::MFIter mfi(spectralspace_ba, dm_global_fft); mfi.isValid(); ++mfi ){
