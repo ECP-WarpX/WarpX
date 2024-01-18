@@ -719,7 +719,6 @@ class ParticleBoundaryBufferWrapper(object):
             local=local
         )
 
-
     def get_particle_boundary_buffer_structs(
             self, species_name, boundary, level, copy_to_host=False
         ):
