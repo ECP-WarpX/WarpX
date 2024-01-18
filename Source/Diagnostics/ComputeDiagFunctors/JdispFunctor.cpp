@@ -35,7 +35,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         // amrex::MultiFab* m_mf_j_external = hybrid_pic_model->get_pointer_current_fp_external(m_lev, m_dir);
         m_mf_j_external = hybrid_pic_model->get_pointer_current_fp_external(m_lev, m_dir);
     } else {
-        // To finish this implementation, we need to implement a method to 
+        // To finish this implementation, we need to implement a method to
         // calculate (∇ x B).
         WARPX_ABORT_WITH_MESSAGE(
             "Displacement current diagnostic is only implemented for the HybridPICModel.");
@@ -44,7 +44,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     amrex::MultiFab Jdisp( m_mf_j->boxArray(), m_mf_j->DistributionMap(), 1, m_mf_j->nGrowVect() );
 
     if (hybrid_pic_model) {
-        // Jdisp = Jamp - Ji 
+        // Jdisp = Jamp - Ji
         amrex::MultiFab::LinComb(
             Jdisp, 1, *m_mf_j_ampere, 0,
             -1, *m_mf_j, 0, 0, 1, Jdisp.nGrowVect()
@@ -52,13 +52,13 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
 
         amrex::MultiFab::Subtract(Jdisp, *m_mf_j_external, 0, 0, 1, Jdisp.nGrowVect());
     } /** else { // Skeleton for future implementation for solvers other than HybridPIC.
-        
+
         Divide curl_b multifab by mu0
-        
+
         amrex::MultiFab::LinComb(
             Jdisp, 1, *m_mf_curl_b, 0,
             -1, *m_mf_j, 0, 0, 1, Jdisp.nGrowVect()
-        )  
+        )
     } */
 
     InterpolateMFForDiag(mf_dst, Jdisp, dcomp, warpx.DistributionMap(m_lev), false);
