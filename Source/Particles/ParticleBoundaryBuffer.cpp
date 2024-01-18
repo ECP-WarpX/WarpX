@@ -93,7 +93,7 @@ struct FindBoundaryIntersection {
                 amrex::Real W[AMREX_SPACEDIM][2];
                 amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
                 UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_frac*dt);
-                ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
+                ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phiarr);
                 return phi_value;
             } );
@@ -109,19 +109,19 @@ struct FindBoundaryIntersection {
         // record the components of the normal on the destination
         int i, j, k;
         amrex::Real W[AMREX_SPACEDIM][2];
-        ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
+        ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
         int ic, jc, kc; // Cell-centered indices
         amrex::Real Wc[AMREX_SPACEDIM][2]; // Cell-centered weight
-
+        int nodal;
+        ablastr::particles::compute_weights(x_temp, y_temp, z_temp, plo, dxi, ic, jc, kc, Wc, nodal=0); // nodal=0 to calculate the weights in respect to the cell-centered nodes
+        amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phiarr, dxi);
+        DistanceToEB::normalize(normal);
 
 #if (defined WARPX_DIM_3D)
         dst.m_aos[dst_i].pos(0) = x_temp;
         dst.m_aos[dst_i].pos(1) = y_temp;
         dst.m_aos[dst_i].pos(2) = z_temp;
         //save normal components
-        ablastr::particles::compute_weights_nodal(x_temp-0.5/dxi[0], y_temp-0.5/dxi[1], z_temp-0.5/dxi[2], plo, dxi, ic, jc, kc, Wc);
-        amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phiarr, dxi);
-        DistanceToEB::normalize(normal);
         dst.m_runtime_rdata[m_index+1][dst_i] = normal[0];
         dst.m_runtime_rdata[m_index+2][dst_i] = normal[1];
         dst.m_runtime_rdata[m_index+3][dst_i] = normal[2];
@@ -129,9 +129,6 @@ struct FindBoundaryIntersection {
         dst.m_aos[dst_i].pos(0) = x_temp;
         dst.m_aos[dst_i].pos(1) = z_temp;
         //save normal components
-        ablastr::particles::compute_weights_nodal(x_temp-0.5/dxi[0], y_temp, z_temp-0.5/dxi[1], plo, dxi, ic, jc, kc, Wc);
-        amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phiarr, dxi);
-        DistanceToEB::normalize(normal);
         dst.m_runtime_rdata[m_index+1][dst_i] = normal[0];
         dst.m_runtime_rdata[m_index+2][dst_i] = 0.0;
         dst.m_runtime_rdata[m_index+3][dst_i] = normal[1];
@@ -139,13 +136,8 @@ struct FindBoundaryIntersection {
         dst.m_aos[dst_i].pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
         dst.m_rdata[PIdx::theta][dst_i] = std::atan2(y_temp, x_temp);
         dst.m_aos[dst_i].pos(1) = z_temp;
-        amrex::Real theta=std::atan2(y_temp, x_temp);
-        amrex::Real dx=dxi[0]/std::cos(theta);
-        amrex::Real dy=dxi[0]/std::sin(theta);
         //save normal components
-        ablastr::particles::compute_weights_nodal(x_temp-0.5/dx, y_temp-0.5/dy, z_temp-0.5/dxi[1], plo, dxi, ic, jc, kc, Wc);
-        amrex::RealVect normal = DistanceToEB::interp_normal(i, j, k, W, ic, jc, kc, Wc, phiarr, dxi);
-        DistanceToEB::normalize(normal);
+        amrex::Real theta=std::atan2(y_temp, x_temp);
         dst.m_runtime_rdata[m_index+1][dst_i] = normal[0]*std::cos(theta);
         dst.m_runtime_rdata[m_index+2][dst_i] = normal[0]*std::sin(theta);
         dst.m_runtime_rdata[m_index+3][dst_i] = normal[1];
