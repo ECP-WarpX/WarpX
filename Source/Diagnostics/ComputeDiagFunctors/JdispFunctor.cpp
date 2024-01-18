@@ -21,7 +21,7 @@ void
 JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
 {
     auto& warpx = WarpX::GetInstance();
-    auto* hybrid_pic_model = warpx.get_pointer_HybridPICModel(); // warpx.GetHybridPICModel();
+    auto* hybrid_pic_model = warpx.get_pointer_HybridPICModel(); 
 
     /** pointer to source1 (Ji) multifab */
     amrex::MultiFab* m_mf_j = warpx.get_pointer_current_fp(m_lev, m_dir);
@@ -29,10 +29,8 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     amrex::MultiFab* m_mf_j_external;
     if (hybrid_pic_model) {
         /** pointer to source2 (Jamp) multifab */
-        // amrex::MultiFab* m_mf_j_ampere = hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);
         m_mf_j_ampere = hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);
         /** pointer to source3 (Jext) multifab */
-        // amrex::MultiFab* m_mf_j_external = hybrid_pic_model->get_pointer_current_fp_external(m_lev, m_dir);
         m_mf_j_external = hybrid_pic_model->get_pointer_current_fp_external(m_lev, m_dir);
     } else {
         // To finish this implementation, we need to implement a method to
