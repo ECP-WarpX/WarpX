@@ -21,7 +21,7 @@ void
 JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
 {
     auto& warpx = WarpX::GetInstance();
-    auto* hybrid_pic_model = warpx.get_pointer_HybridPICModel(); 
+    auto* hybrid_pic_model = warpx.get_pointer_HybridPICModel();
 
     /** pointer to source1 (Ji) multifab */
     amrex::MultiFab* m_mf_j = warpx.get_pointer_current_fp(m_lev, m_dir);
