@@ -1828,7 +1828,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 	    // loop over the number of segments and deposit
             Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-            Compute_pair_shape_factor< depos_order > compute_pair_shape_factor_node;
+            Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
 	    double dxp_seg = dxp;
 	    double dyp_seg = dyp;
 	    double dzp_seg = dzp;
@@ -2030,9 +2030,29 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 double const x0_new = (xpnew0 - xmin)*dxi;
                 double const y0_new = (ypnew0 - ymin)*dyi;
                 double const z0_new = (zpnew0 - zmin)*dzi;
-		const int i0_node = compute_pair_shape_factor_node( sx_old_node, sx_new_node, x0_old, x0_new );
-		const int j0_node = compute_pair_shape_factor_node( sy_old_node, sy_new_node, y0_old, y0_new );
-		const int k0_node = compute_pair_shape_factor_node( sz_old_node, sz_new_node, z0_old, z0_new );
+		const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
+		const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
+		const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
+		
+		if (depos_order==3) { // have to do cell-based interp a bit different for order 3
+                    Compute_shape_factor_pair<2> compute_shape_factors_cell;
+                    double sx_old_cell[3] = {0.};
+                    double sx_new_cell[3] = {0.};
+                    double sy_old_cell[3] = {0.};
+                    double sy_new_cell[3] = {0.};
+                    double sz_old_cell[3] = {0.};
+                    double sz_new_cell[3] = {0.};
+                    const int i0_cell_2 = compute_shape_factors_cell( sx_old_cell, sx_new_cell, x0_old-0.5_rt, x0_new-0.5_rt );
+                    const int j0_cell_2 = compute_shape_factors_cell( sy_old_cell, sy_new_cell, y0_old-0.5_rt, y0_new-0.5_rt );
+                    const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
+                    ignore_unused(i0_cell_2, j0_cell_2, k0_cell_2);
+		    for (int m=0; m<3; m++) {
+		        sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
+		        sy_cell[m] = (4.0_rt*sy_cell[m] + sy_old_cell[m] + sy_new_cell[m])/6.0_rt;
+		        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
+		    }
+		}
+
                 
 		// deposit Jx for this segment
 	        amrex::Real this_Jx;
@@ -2132,7 +2152,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 	    // loop over the number of segments and deposit
             Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-            Compute_average_shape_factor< depos_order > compute_avg_shape_factor_node;
+            Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
 	    double dxp_seg = dxp;
 	    double dzp_seg = dzp;
 	    double xpold0 = xp_n[ip];
@@ -2199,23 +2219,27 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
 		
 		// compute node-based weights using the old and new segment positions
-                double sx_node[depos_order+1] = {0.};
-                double sz_node[depos_order+1] = {0.};
+                double sx_old_node[depos_order+1] = {0.};
+                double sx_new_node[depos_order+1] = {0.};
+                double sz_old_node[depos_order+1] = {0.};
+                double sz_new_node[depos_order+1] = {0.};
                 double const x0_new = (xpnew0 - xmin)*dxi;
                 double const z0_new = (zpnew0 - zmin)*dzi;
-		const int i0_node = compute_avg_shape_factor_node( sx_node, x0_old, x0_new );
-		const int k0_node = compute_avg_shape_factor_node( sz_node, z0_old, z0_new );
+		const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
+		const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
                 
 		if (depos_order==3) { // have to do cell-based interp a bit different for order 3
-                    Compute_average_shape_factor<2> compute_avg_shape_factor_cell;
-                    double sx_cell_2[3] = {0.};
-                    double sz_cell_2[3] = {0.};
-                    const int i0_cell_2 = compute_avg_shape_factor_cell( sx_cell_2, x0_old-0.5_rt, x0_new-0.5_rt );
-                    const int k0_cell_2 = compute_avg_shape_factor_cell( sz_cell_2, z0_old-0.5_rt, z0_new-0.5_rt );
+                    Compute_shape_factor_pair<2> compute_shape_factors_cell;
+                    double sx_old_cell[3] = {0.};
+                    double sx_new_cell[3] = {0.};
+                    double sz_old_cell[3] = {0.};
+                    double sz_new_cell[3] = {0.};
+                    const int i0_cell_2 = compute_shape_factors_cell( sx_old_cell, sx_new_cell, x0_old-0.5_rt, x0_new-0.5_rt );
+                    const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
                     ignore_unused(i0_cell_2, k0_cell_2);
 		    for (int m=0; m<3; m++) {
-		        sx_cell[m] = (4.0_rt*sx_cell[m] + 2.0_rt*sx_cell_2[m])/6.0_rt;
-		        sz_cell[m] = (4.0_rt*sz_cell[m] + 2.0_rt*sz_cell_2[m])/6.0_rt;
+		        sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
+		        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
 		    }
 		}
 
@@ -2223,7 +2247,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	        amrex::Real this_Jx;
 		for (int i=0; i<=depos_order-1; i++) {
                     for (int k=0; k<=depos_order; k++) {
-                        this_Jx = wqx*sx_cell[i]*sz_node[k]*seg_factor_x;
+                        this_Jx = wqx*sx_cell[i]*(sz_old_node[k] + sz_new_node[k])/2.0_rt*seg_factor_x;
                         amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 0), this_Jx);
                     }
                 }
@@ -2232,7 +2256,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	        amrex::Real this_Jz;
 		for (int i=0; i<=depos_order; i++) {
                     for (int k=0; k<=depos_order-1; k++) {
-                        this_Jz = wqz*sx_node[i]*sz_cell[k]*seg_factor_z;
+                        this_Jz = wqz*sz_cell[k]*(sx_old_node[i] + sx_new_node[i])/2.0_rt*seg_factor_z;
                         amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 0), this_Jz);
                     }
                 }
@@ -2318,14 +2342,15 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_prt );
 		
 		if (depos_order==3) { // have to do cell-based interp a bit different for order 3
-                    Compute_average_shape_factor<2> compute_avg_shape_factor_cell;
-                    double sz_cell_2[3] = {0.};
+                    Compute_shape_factor_pair<2> compute_shape_factors_cell;
+                    double sz_old_cell[3] = {0.};
+                    double sz_new_cell[3] = {0.};
                     double const z0_old = (zpold0 - zmin)*dzi;
                     double const z0_new = (zpnew0 - zmin)*dzi;
-                    const int k0_cell_2 = compute_avg_shape_factor_cell( sz_cell_2, z0_old-0.5_prt, z0_new-0.5_prt );
+                    const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_prt, z0_new-0.5_prt );
                     ignore_unused(k0_cell_2);
 		    for (int m=0; m<3; m++) {
-		        sz_cell[m] = (4.0_rt*sz_cell[m] + 2.0_rt*sz_cell_2[m])/6.0_rt;
+		        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
 		    }
 		}
 		

@@ -133,73 +133,15 @@ struct Compute_shifted_shape_factor
 };
 
 /**
- *  Compute average shape factor for two positions that are within
- *  half a grid cell of the same cell interface and return index of 
- *  leftmost cell where particle writes. This is used for computing
- *  the segment weights transverse to the current direction in the 
- *  Villasenor and Buneman current deposition algorithm. 
+ *  Compute shape factors for two positions that are within
+ *  half a grid cell of the same cell interface and return the common
+ *  index of the leftmost cell where particle writes, which is correctly
+ *  determined by the average of the positions.
+ *  This is used for computing the segment weights transverse to the 
+ *  current density direction in the Villasenor deposition algorithm.
  */
 template <int depos_order>
-struct Compute_average_shape_factor
-{
-    template< typename T >
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    int operator()(
-        T* const sx,
-        T xold,
-        T xnew) const
-    {
-	const T xmid = T(0.5)*(xnew + xold);	
-        if constexpr (depos_order == 1){
-            const auto j = static_cast<int>(xmid);
-            const T xint_old = xold - T(j);
-            const T xint_new = xnew - T(j);
-            sx[0] = T(1.0) - T(0.5)*(xint_old + xint_new);
-            sx[1] = T(0.5)*(xint_old + xint_new);
-            return j;
-        }
-        else if constexpr (depos_order == 2){
-            const auto j = static_cast<int>(xmid + T(0.5));
-            const T xint_old = xold - T(j);
-            const T xint_new = xnew - T(j);
-            sx[0] = T(0.25)*( (T(0.5) - xint_old)*(T(0.5) - xint_old) + (T(0.5) - xint_new)*(T(0.5) - xint_new) );
-            sx[1] = T(0.75) - T(0.5)*(xint_old*xint_old + xint_new*xint_new);
-            sx[2] = T(0.25)*( (T(0.5) + xint_old)*(T(0.5) + xint_old) + (T(0.5) + xint_new)*(T(0.5) + xint_new) );
-            // index of the leftmost cell where particle deposits
-            return j-1;
-        }
-        else if constexpr (depos_order == 3){
-            const auto j = static_cast<int>(xmid);
-            const T xint_old = xold - T(j);
-            const T xint_new = xnew - T(j);
-            sx[0] = T(1.0)/T(12.0)*(T(1.0) - xint_old)*(T(1.0) - xint_old)*(T(1.0) - xint_old)
-                  + T(1.0)/T(12.0)*(T(1.0) - xint_new)*(T(1.0) - xint_new)*(T(1.0) - xint_new);
-            sx[1] = T(0.5)*(T(2.0)/T(3.0) - xint_old*xint_old*(T(1.0) - xint_old/T(2.0))
-                  +         T(2.0)/T(3.0) - xint_new*xint_new*(T(1.0) - xint_new/T(2.0)));
-            sx[2] = T(0.5)*(T(2.0)/T(3.0) - (T(1.0) - xint_old)*(T(1.0) - xint_old)*(T(1.0) - T(0.5)*(T(1.0) - xint_old))
-                  +         T(2.0)/T(3.0) - (T(1.0) - xint_new)*(T(1.0) - xint_new)*(T(1.0) - T(0.5)*(T(1.0) - xint_new)));
-            sx[3] = T(1.0)/T(12.0)*xint_old*xint_old*xint_old
-                  + T(1.0)/T(12.0)*xint_new*xint_new*xint_new;
-            // index of the leftmost cell where particle deposits
-            return j-1;
-        }
-        else{
-            WARPX_ABORT_WITH_MESSAGE("Unknown particle shape selected in Compute_average_shape_factor");
-            amrex::ignore_unused(sx, xold, xnew);
-        }
-        return 0;
-    }
-};
-
-/**
- *  Compute average shape factor for two positions that are within
- *  half a grid cell of the same cell interface and return index of 
- *  leftmost cell where particle writes. This is used for computing
- *  the segment weights transverse to the current direction in the 
- *  Villasenor and Buneman current deposition algorithm. 
- */
-template <int depos_order>
-struct Compute_pair_shape_factor
+struct Compute_shape_factor_pair
 {
     template< typename T >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -239,20 +181,20 @@ struct Compute_pair_shape_factor
             const auto j = static_cast<int>(xmid);
             const T xint_old = xold - T(j);
             const T xint_new = xnew - T(j);
-            sx_old[0] = (T(1.0))/(T(6.0))*(T(1.0) - xint_old)*(T(1.0) - xint_old)*(T(1.0) - xint_old);
-            sx_old[1] = (T(2.0))/(T(3.0)) - xint_old*xint_old*(T(1.0) - xint_old/(T(2.0)));
-            sx_old[2] = (T(2.0))/(T(3.0)) - (T(1.0) - xint_old)*(T(1.0) - xint_old)*(T(1.0) - T(0.5)*(T(1.0) - xint_old));
-            sx_old[3] = (T(1.0))/(T(6.0))*xint_old*xint_old*xint_old;
+            sx_old[0] = T(1.0)/T(6.0)*(T(1.0) - xint_old)*(T(1.0) - xint_old)*(T(1.0) - xint_old);
+            sx_old[1] = T(2.0)/T(3.0) - xint_old*xint_old*(T(1.0) - xint_old/(T(2.0)));
+            sx_old[2] = T(2.0)/T(3.0) - (T(1.0) - xint_old)*(T(1.0) - xint_old)*(T(1.0) - T(0.5)*(T(1.0) - xint_old));
+            sx_old[3] = T(1.0)/T(6.0)*xint_old*xint_old*xint_old;
 	    //
-            sx_new[0] = (T(1.0))/(T(6.0))*(T(1.0) - xint_new)*(T(1.0) - xint_new)*(T(1.0) - xint_new);
-            sx_new[1] = (T(2.0))/(T(3.0)) - xint_new*xint_new*(T(1.0) - xint_new/(T(2.0)));
-            sx_new[2] = (T(2.0))/(T(3.0)) - (T(1.0) - xint_new)*(T(1.0) - xint_new)*(T(1.0) - T(0.5)*(T(1.0) - xint_new));
-            sx_new[3] = (T(1.0))/(T(6.0))*xint_new*xint_new*xint_new;
+            sx_new[0] = T(1.0)/T(6.0)*(T(1.0) - xint_new)*(T(1.0) - xint_new)*(T(1.0) - xint_new);
+            sx_new[1] = T(2.0)/T(3.0) - xint_new*xint_new*(T(1.0) - xint_new/(T(2.0)));
+            sx_new[2] = T(2.0)/T(3.0) - (T(1.0) - xint_new)*(T(1.0) - xint_new)*(T(1.0) - T(0.5)*(T(1.0) - xint_new));
+            sx_new[3] = T(1.0)/T(6.0)*xint_new*xint_new*xint_new;
             // index of the leftmost cell where particle deposits
             return j-1;
         }
         else{
-            WARPX_ABORT_WITH_MESSAGE("Unknown particle shape selected in Compute_average_shape_factor");
+            WARPX_ABORT_WITH_MESSAGE("Unknown particle shape selected in Compute_shape_factor_pair");
             amrex::ignore_unused(sx_old, sx_new, xold, xnew);
         }
         return 0;
