@@ -1003,8 +1003,10 @@ void doGatherPicnicShapeN (
     double const z_new = (zp_np1 - zmin)*dzi;
     double const z_old = (zp_n   - zmin)*dzi;
     double const z_bar = (zp_nph - zmin)*dzi;
+#if !defined(WARPX_DIM_1D_Z)
+    // JRA: temporary to keep 2D and 3D working while refactoring
     double const dzp = zp_np1 - zp_n;
-
+#endif
     // 1) Determine the number of segments. 
     // 2) Loop over segments and gather in-plane electric field.
     // 3) Gather magnetic field and out-of-plane electric field.
@@ -1645,41 +1647,41 @@ void doGatherPicnicShapeN (
     if (cell_crossings_z > 0) {
         if(z_new < z_old) { dirZ_sign = -1; }
         else { dirZ_sign = 1; }
-	Zcell = zmin + ( k_old + shift + 0.5_rt*(1-dirZ_sign) )*dx[2];
+	//Zcell = zmin + ( k_old + shift + 0.5_rt*(1-dirZ_sign) )*dx[2];
+	Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
     }
 
     // loop over the number of segments and deposit
     Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-    double dzp_seg = dzp;
-    double zpold0 = zp_n;
-    double zpnew0;
+    double dzp_seg;
+    double const dzp_tot = z_new - z_old;
+    double z0_old = z_old;
+    double z0_new;
 
     for (int ns=0; ns<num_segments; ns++) {
 		    
         if(ns==num_segments-1) { // final segment
-	    zpnew0 = zp_np1;
-	    dzp_seg = zpnew0-zpold0;
+	    z0_new = z_new;
+	    dzp_seg = z0_new - z0_old;
 	}
 	else { 
-            Zcell = Zcell + dirZ_sign*dx[2];
-            zpnew0 = Zcell;
-            dzp_seg = zpnew0 - zpold0;
+            Zcell = Zcell + dirZ_sign;
+            z0_new = Zcell;
+            dzp_seg = z0_new - z0_old;
 	}
 
 	// compute the segment factors
-        auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
+        auto seg_factor_z = static_cast<amrex::Real>(dzp_tot == 0. ? 1. : dzp_seg/dzp_tot);
 		
 	// compute cell-based weights using the average segment position
         double sz_cell[depos_order] = {0.};
-        double const z0_bar = ((zpnew0+zpold0)/2.0_rt - zmin)*dzi;
+        double const z0_bar = (z0_new + z0_old)/2.0_rt;
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
 		
 	if (depos_order==3) { // have to do cell-based interp a bit different for order 3
             Compute_shape_factor_pair<2> compute_shape_factors_cell;
             double sz_old_cell[3] = {0.};
             double sz_new_cell[3] = {0.};
-            double const z0_old = (zpold0 - zmin)*dzi;
-            double const z0_new = (zpnew0 - zmin)*dzi;
             const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
             ignore_unused(k0_cell_2);
 	    for (int m=0; m<3; m++) {
@@ -1695,7 +1697,7 @@ void doGatherPicnicShapeN (
 		
 	// update old segment values
         if (ns<num_segments-1) {
-	    zpold0 = zpnew0;
+	    z0_old = z0_new;
 	}
 
     }
