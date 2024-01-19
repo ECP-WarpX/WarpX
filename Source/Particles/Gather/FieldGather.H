@@ -1054,21 +1054,21 @@ void doGatherPicnicShapeN (
     if (cell_crossings_x > 0) {
         if(x_new < x_old) { dirX_sign = -1; }
         else { dirX_sign = 1; }
-        Xcell = ( lo.x + i_old + shift + 0.5_rt*(1-dirX_sign) )*dx[0];
+        Xcell = xmin + ( i_old + shift + 0.5_rt*(1-dirX_sign) )*dx[0];
         slope_dydx = dyp/dxp;
         slope_dzdx = dzp/dxp;
     }
     if (cell_crossings_y > 0) {
         if(y_new < y_old) { dirY_sign = -1; }
         else { dirY_sign = 1; }
-        Ycell = ( lo.y + j_old + shift + 0.5_rt*(1-dirY_sign) )*dx[1];
+        Ycell = ymin + ( j_old + shift + 0.5_rt*(1-dirY_sign) )*dx[1];
         slope_dxdy = dxp/dyp;
         slope_dzdy = dzp/dyp;
     }
     if (cell_crossings_z > 0) {
         if(z_new < z_old) { dirZ_sign = -1; }
         else { dirZ_sign = 1; }
-        Zcell = ( lo.z + k_old + shift + 0.5_rt*(1-dirZ_sign) )*dx[2];
+        Zcell = zmin + ( k_old + shift + 0.5_rt*(1-dirZ_sign) )*dx[2];
         slope_dxdz = dxp/dzp;
         slope_dydz = dyp/dzp;
     }
@@ -1416,13 +1416,13 @@ void doGatherPicnicShapeN (
     if (cell_crossings_x > 0) {
         if(x_new < x_old) { dirX_sign = -1; }
         else { dirX_sign = 1; }
-        Xcell = ( lo.x + i_old + shift + 0.5_rt*(1-dirX_sign) )*dx[0];
+        Xcell = xmin + ( i_old + shift + 0.5_rt*(1-dirX_sign) )*dx[0];
         slope = dzp/dxp;
     }
     if (cell_crossings_z > 0) {
         if(z_new < z_old) { dirZ_sign = -1; }
         else { dirZ_sign = 1; }
-        Zcell = ( lo.y + k_old + shift + 0.5_rt*(1-dirZ_sign) )*dx[2];
+	Zcell = zmin + ( k_old + shift + 0.5_rt*(1-dirZ_sign) )*dx[2];
         slope_inv = dxp/dzp;
     }
 
@@ -1645,7 +1645,7 @@ void doGatherPicnicShapeN (
     if (cell_crossings_z > 0) {
         if(z_new < z_old) { dirZ_sign = -1; }
         else { dirZ_sign = 1; }
-        Zcell = ( lo.x + k_old + shift + 0.5_rt*(1-dirZ_sign) )*dx[2];
+	Zcell = zmin + ( k_old + shift + 0.5_rt*(1-dirZ_sign) )*dx[2];
     }
 
     // loop over the number of segments and deposit
