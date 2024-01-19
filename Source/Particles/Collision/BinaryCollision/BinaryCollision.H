@@ -326,7 +326,7 @@ public:
             // start indices of independent collisions.
             amrex::Gpu::DeviceVector<index_type> coll_offsets(n_cells+1);
             // number of total independent collision pairs
-            const int n_independent_pairs =  amrex::Scan::ExclusiveSum(n_cells+1,
+            const auto n_independent_pairs =  (int) amrex::Scan::ExclusiveSum(n_cells+1,
                                                     p_n_ind_pairs_in_each_cell, coll_offsets.data(), amrex::Scan::RetSum{true});
             index_type* AMREX_RESTRICT p_coll_offsets = coll_offsets.dataPtr();
             /*
@@ -375,7 +375,7 @@ public:
                 [=] AMREX_GPU_DEVICE (int i_coll, amrex::RandomEngine const& engine) noexcept
                 {
                     // to avoid type mismatch errors
-                    index_type ui_coll = (index_type)i_coll;
+                    auto ui_coll = (index_type)i_coll;
 
                     // compute i_cell = upper_bound(p_coll_offsets[0:n_independent_
                     int i_cell = 0;
@@ -444,14 +444,14 @@ public:
                         // Call the function in order to perform collisions
                         // If there are product species, mask, p_pair_indices_1/2, and
                         // p_pair_reaction_weight are filled here
-                        binary_collision_functor(
-                            cell_half_1, cell_stop_1,
-                            cell_start_1, cell_half_1,
-                            indices_1, indices_1,
-                            soa_1, soa_1, get_position_1, get_position_1,
-                            q1, q1, m1, m1, dt, dV, coll_idx,
-                            cell_start_pair, p_mask, p_pair_indices_2, p_pair_indices_1,
-                            p_pair_reaction_weight, engine);
+                        binary_collision_functor( // NOLINT(readability-suspicious-call-argument)
+                            cell_half_1, cell_stop_1, // NOLINT(readability-suspicious-call-argument)
+                            cell_start_1, cell_half_1, // NOLINT(readability-suspicious-call-argument)
+                            indices_1, indices_1, // NOLINT(readability-suspicious-call-argument)
+                            soa_1, soa_1, get_position_1, get_position_1, // NOLINT(readability-suspicious-call-argument)
+                            q1, q1, m1, m1, dt, dV, coll_idx, // NOLINT(readability-suspicious-call-argument)
+                            cell_start_pair, p_mask, p_pair_indices_2, p_pair_indices_1, // NOLINT(readability-suspicious-call-argument)
+                            p_pair_reaction_weight, engine); // NOLINT(readability-suspicious-call-argument)
                     }
                 }
             );
@@ -589,7 +589,7 @@ public:
             // start indices of independent collisions.
             amrex::Gpu::DeviceVector<index_type> coll_offsets(n_cells+1);
             // number of total independent collision pairs
-            const int n_independent_pairs = amrex::Scan::ExclusiveSum(n_cells+1,
+            const auto n_independent_pairs = (int) amrex::Scan::ExclusiveSum(n_cells+1,
                                                     p_n_ind_pairs_in_each_cell, coll_offsets.data(), amrex::Scan::RetSum{true});
             index_type* AMREX_RESTRICT p_coll_offsets = coll_offsets.dataPtr();
             /*
@@ -646,7 +646,7 @@ public:
                 [=] AMREX_GPU_DEVICE (int i_coll, amrex::RandomEngine const& engine) noexcept
                 {
                     // to avoid type mismatch errors
-                    index_type ui_coll = (index_type)i_coll;
+                    auto ui_coll = (index_type)i_coll;
 
                     // compute i_cell = upper_bound(coll_offsets[0:n_independent_pairs], i_coll);
                     int i_cell = 0;
@@ -719,7 +719,7 @@ public:
                         // Call the function in order to perform collisions
                         // If there are product species, p_mask, p_pair_indices_1/2, and
                         // p_pair_reaction_weight are filled here
-                        binary_collision_functor(
+                        binary_collision_functor( // NOLINT(readability-suspicious-call-argument)
                             cell_start_2, cell_stop_2, cell_start_1, cell_stop_1, // NOLINT(readability-suspicious-call-argument)
                             indices_2, indices_1, // NOLINT(readability-suspicious-call-argument)
                             soa_2, soa_1, get_position_2, get_position_1, // NOLINT(readability-suspicious-call-argument)
