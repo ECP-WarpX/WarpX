@@ -83,7 +83,7 @@ void compute_weights (const amrex::ParticleReal xp,
 
     k = 0;
 #else
-    amrex::ignore_unused(xp, yp, zp, plo, dxi, i, j, k, W);
+    amrex::ignore_unused(xp, yp, zp, plo, dxi, i, j, k, W, nodal);
     ABLASTR_ABORT_WITH_MESSAGE("Error: compute_weights not yet implemented in 1D");
 #endif
 }
