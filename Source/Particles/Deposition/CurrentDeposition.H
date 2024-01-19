@@ -1534,9 +1534,12 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
 }
 
 /**
- * \brief Esirkepov Current Deposition for thread thread_num for implicit scheme
- *        The difference from doEsirkepovDepositionShapeN is in how the old and new
- *        particles positions are determined and in how the particle gamma is calculated.
+ * \brief Villasenor and Buneman Current Deposition for thread thread_num for implicit scheme.
+ *        The specifics for the implicit scheme are in how gamma is determined. This is a charge-
+ *        conserving deposition. The difference from Esirkepov is that the deposit is done segment 
+ *        by segment, where the segments are determined by cell crossings. In general, this results 
+ *        in a tighter stencil. The implementation is valid for an arbitrary number of cell crossings.
+ *        For D<3, the out-of-plane current is deposited using direct deposition.
  *
  * \tparam depos_order  deposition order
  * \param GetPosition  A functor for returning the particle position.

@@ -882,7 +882,8 @@ void doGatherShapeNEsirkepovStencilImplicit (
 
 /**
  * \brief Energy conserving field gather for thread thread_num for the implicit scheme
- *        This uses the same stencil for the gather that is used for Esirkepov current deposition.
+ *        This uses the same stencil for the gather that is used for Villasenor current deposition.
+ *        The magnetic field (and the out-of-plane current density for D<3) is deposited using direct deposition.
  *
  * \tparam depos_order              Particle shape order
  * \param xp_n,yp_n,zp_n                  Particle position coordinates at start of step
