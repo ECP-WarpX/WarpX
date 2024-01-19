@@ -576,7 +576,7 @@ public:
                         }
                         else
                         {
-                            p_n_ind_pairs_in_each_cell[i_cell] = std::min(n_part_in_cell_1, n_part_in_cell_2);
+                            p_n_ind_pairs_in_each_cell[i_cell] = amrex::min(n_part_in_cell_1, n_part_in_cell_2);
                         }
                     }
                     else
