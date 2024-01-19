@@ -28,7 +28,7 @@ namespace ablastr::particles
  * \param dxi      inverse 3D cell spacing
  * \param i,j,k    Variables to store indices of position on grid
  * \param W        2D array of weights to store each neighbouring node (or cell-centered node)
- * \param nodal    Int that tells if the weights are calculated in respect to the nodes (nodal=1) of the cell-centered nodes (nodal=0) 
+ * \param nodal    Int that tells if the weights are calculated in respect to the nodes (nodal=1) of the cell-centered nodes (nodal=0)
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void compute_weights (const amrex::ParticleReal xp,
