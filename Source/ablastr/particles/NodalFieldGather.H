@@ -28,7 +28,7 @@ namespace ablastr::particles
  * \param dxi      inverse 3D cell spacing
  * \param i,j,k    Variables to store indices of position on grid
  * \param W        2D array of weights to store each neighbouring node (or cell-centered node)
- * \param nodal    Int that tells if the weights are calculated in respect to the nodes (nodal=1) of the cell-centered nodes (nodal=0)
+ * \param nodal    Int that tells if the weights are calculated in respect to the nodes (nodal=1) of the cell-centered nodes (nodal=0) 
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void compute_weights (const amrex::ParticleReal xp,
@@ -45,9 +45,9 @@ void compute_weights (const amrex::ParticleReal xp,
 #endif
 
 #if (defined WARPX_DIM_3D)
-    const amrex::Real x = (xp - plo[0]) * dxi[0] * (nodal-1)*0.5;
-    const amrex::Real y = (yp - plo[1]) * dxi[1] * (nodal-1)*0.5;
-    const amrex::Real z = (zp - plo[2]) * dxi[2] * (nodal-1)*0.5;
+    const amrex::Real x = (xp - plo[0]) * dxi[0] + (nodal-1)*0.5;
+    const amrex::Real y = (yp - plo[1]) * dxi[1] + (nodal-1)*0.5;
+    const amrex::Real z = (zp - plo[2]) * dxi[2] + (nodal-1)*0.5;
 
     i = static_cast<int>(amrex::Math::floor(x));
     j = static_cast<int>(amrex::Math::floor(y));
@@ -64,17 +64,17 @@ void compute_weights (const amrex::ParticleReal xp,
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
 #   if (defined WARPX_DIM_XZ)
-    const amrex::Real x = (xp - plo[0]) * dxi[0] * (nodal-1)*0.5;
+    const amrex::Real x = (xp - plo[0]) * dxi[0] + (nodal-1)*0.5;
     amrex::ignore_unused(yp);
     i = static_cast<int>(amrex::Math::floor(x));
     W[0][1] = x - i;
 #   elif (defined WARPX_DIM_RZ)
-    const amrex::Real r = (std::sqrt(xp*xp+yp*yp) - plo[0]) * dxi[0] * (nodal-1)*0.5;
+    const amrex::Real r = (std::sqrt(xp*xp+yp*yp) - plo[0]) * dxi[0] + (nodal-1)*0.5;
     i = static_cast<int>(amrex::Math::floor(r));
     W[0][1] = r - i;
 #   endif
 
-    const amrex::Real z = (zp - plo[1]) * dxi[1] * (nodal-1)*0.5;
+    const amrex::Real z = (zp - plo[1]) * dxi[1] + (nodal-1)*0.5;
     j = static_cast<int>(amrex::Math::floor(z));
     W[1][1] = z - j;
 
