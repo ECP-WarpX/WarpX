@@ -756,9 +756,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 #ifndef AMREX_USE_GPU
     // CPU, tiling: atomicAdd local_j<xyz> into j<xyz>
     WARPX_PROFILE_VAR_START(blp_accumulate);
-    (*jx)[pti].atomicAdd(local_jx[thread_num], tbx, tbx, 0, 0, jx->nComp());
-    (*jy)[pti].atomicAdd(local_jy[thread_num], tby, tby, 0, 0, jy->nComp());
-    (*jz)[pti].atomicAdd(local_jz[thread_num], tbz, tbz, 0, 0, jz->nComp());
+    (*jx)[pti].lockAdd(local_jx[thread_num], tbx, tbx, 0, 0, jx->nComp());
+    (*jy)[pti].lockAdd(local_jy[thread_num], tby, tby, 0, 0, jy->nComp());
+    (*jz)[pti].lockAdd(local_jz[thread_num], tbz, tbz, 0, 0, jz->nComp());
     WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
 }
@@ -1051,7 +1051,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 #ifndef AMREX_USE_GPU
         // CPU, tiling: atomicAdd local_rho into rho
         WARPX_PROFILE_VAR_START(blp_accumulate);
-        (*rho)[pti].atomicAdd(local_rho[thread_num], tb, tb, 0, icomp*nc, nc);
+        (*rho)[pti].lockAdd(local_rho[thread_num], tb, tb, 0, icomp*nc, nc);
         WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
     } else {
@@ -1342,7 +1342,7 @@ std::array<ParticleReal, 3> WarpXParticleContainer::meanParticleVelocity(bool lo
         ParallelDescriptor::ReduceLongSum(np_total);
     }
 
-    std::array<amrex::ParticleReal, 3> mean_v;
+    std::array<amrex::ParticleReal, 3> mean_v = {0,0,0};
     if (np_total > 0) {
         mean_v[0] = vx_total / np_total;
         mean_v[1] = vy_total / np_total;
