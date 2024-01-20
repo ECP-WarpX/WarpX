@@ -155,10 +155,10 @@ struct Compute_shape_factor_pair
         if constexpr (depos_order == 1){
             const auto j = static_cast<int>(xmid);
             const T xint_old = xold - T(j);
-            const T xint_new = xnew - T(j);
             sx_old[0] = T(1.0) - xint_old;
             sx_old[1] = xint_old;
 	    //
+            const T xint_new = xnew - T(j);
             sx_new[0] = T(1.0) - xint_new;
             sx_new[1] = xint_new;
             return j;
@@ -166,11 +166,11 @@ struct Compute_shape_factor_pair
         else if constexpr (depos_order == 2){
             const auto j = static_cast<int>(xmid + T(0.5));
             const T xint_old = xold - T(j);
-            const T xint_new = xnew - T(j);
             sx_old[0] = T(0.5)*(T(0.5) - xint_old)*(T(0.5) - xint_old);
             sx_old[1] = T(0.75) - xint_old*xint_old;
             sx_old[2] = T(0.5)*(T(0.5) + xint_old)*(T(0.5) + xint_old);
 	    //
+            const T xint_new = xnew - T(j);
             sx_new[0] = T(0.5)*(T(0.5) - xint_new)*(T(0.5) - xint_new);
             sx_new[1] = T(0.75) - xint_new*xint_new;
             sx_new[2] = T(0.5)*(T(0.5) + xint_new)*(T(0.5) + xint_new);
@@ -180,12 +180,12 @@ struct Compute_shape_factor_pair
         else if constexpr (depos_order == 3){
             const auto j = static_cast<int>(xmid);
             const T xint_old = xold - T(j);
-            const T xint_new = xnew - T(j);
             sx_old[0] = T(1.0)/T(6.0)*(T(1.0) - xint_old)*(T(1.0) - xint_old)*(T(1.0) - xint_old);
             sx_old[1] = T(2.0)/T(3.0) - xint_old*xint_old*(T(1.0) - xint_old/(T(2.0)));
             sx_old[2] = T(2.0)/T(3.0) - (T(1.0) - xint_old)*(T(1.0) - xint_old)*(T(1.0) - T(0.5)*(T(1.0) - xint_old));
             sx_old[3] = T(1.0)/T(6.0)*xint_old*xint_old*xint_old;
 	    //
+            const T xint_new = xnew - T(j);
             sx_new[0] = T(1.0)/T(6.0)*(T(1.0) - xint_new)*(T(1.0) - xint_new)*(T(1.0) - xint_new);
             sx_new[1] = T(2.0)/T(3.0) - xint_new*xint_new*(T(1.0) - xint_new/(T(2.0)));
             sx_new[2] = T(2.0)/T(3.0) - (T(1.0) - xint_new)*(T(1.0) - xint_new)*(T(1.0) - T(0.5)*(T(1.0) - xint_new));
