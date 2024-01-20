@@ -529,13 +529,6 @@ WarpX::ReadParameters ()
     }
     
     {
-        const ParmParse pp_interpolation("interpolation");
-
-        pp_interpolation.query("galerkin_scheme",galerkin_interpolation);
-
-    }
-
-    {
         const ParmParse pp_warpx("warpx");
 
         //"Synthetic" warning messages may be injected in the Warning Manager via
