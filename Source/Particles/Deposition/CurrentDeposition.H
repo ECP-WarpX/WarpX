@@ -2247,7 +2247,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	    } // end loop over segments
 
 	    // deposit out-of-plane current density
-	    const int depos_order_Jv = 1;
+	    const int depos_order_Jv = 1; // second template parameter?
             Compute_shape_factor< depos_order_Jv > compute_shape_factor_Jv;
             double sz_bar_node[depos_order_Jv+1] = {0.};
             double sx_bar_node[depos_order_Jv+1] = {0.};
@@ -2354,8 +2354,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	    }
 
 	    // deposit out-of-plane current density
-	    //
-	    const int depos_order_Jv = 1;
+	    const int depos_order_Jv = 1; // second template parameter?
 	    Compute_shape_factor< depos_order_Jv > compute_shape_factor_Jv;
             double sz_bar_node[depos_order_Jv+1] = {0.};
             double const z_bar = (z_new + z_old)/2.0_rt;

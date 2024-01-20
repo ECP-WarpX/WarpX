@@ -1340,7 +1340,7 @@ void doGatherPicnicShapeN (
     } // end loop over segments
 
     // gather magnetic field
-    const int depos_order_B = 1;
+    const int depos_order_B = 1; // second template parameter?
     Compute_shape_factor< depos_order_B > compute_shape_factor_B;
     double sz_bar_node[depos_order_B+1] = {0.};
     double sz_bar_cell[depos_order_B+1] = {0.};
@@ -1547,7 +1547,7 @@ void doGatherPicnicShapeN (
     }
 
     // gather magnetic field and out-of-plane electric field
-    const int depos_order_B = 1;
+    const int depos_order_B = 1; // second template parameter?
     Compute_shape_factor< depos_order_B > compute_shape_factor_B;
     double sz_bar_node[depos_order_B+1] = {0.};
     double sz_bar_cell[depos_order_B+1] = {0.};
@@ -1682,7 +1682,7 @@ void doGatherPicnicShapeN (
     }
 
     // gather magnetic field and out-of-plane electric field
-    const int depos_order_B = 1;
+    const int depos_order_B = 1; // second template parameter?
     Compute_shape_factor< depos_order_B > compute_shape_factor_B;
     double sz_bar_node[depos_order_B+1] = {0.};
     double sz_bar_cell[depos_order_B+1] = {0.};
