@@ -13,8 +13,10 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 
-JdispFunctor::JdispFunctor (int dir, int lev, amrex::IntVect crse_ratio, int ncomp)
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_dir(dir), m_lev(lev)
+JdispFunctor::JdispFunctor (int dir, int lev, 
+        amrex::IntVect crse_ratio, bool convertRZmodes2cartesian, int ncomp)
+    : ComputeDiagFunctor(ncomp, crse_ratio), m_dir(dir), m_lev(lev),
+    m_convertRZmodes2cartesian(convertRZmodes2cartesian)
 { }
 
 void
@@ -23,14 +25,14 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     auto& warpx = WarpX::GetInstance();
     auto* hybrid_pic_model = warpx.get_pointer_HybridPICModel(); 
 
-    /** pointer to source1 (Ji) multifab */
+    /** pointer to source1 (total simulation current J) multifab */
     amrex::MultiFab* m_mf_j = warpx.get_pointer_current_fp(m_lev, m_dir);
     amrex::MultiFab* m_mf_j_ampere;
     amrex::MultiFab* m_mf_j_external;
     if (hybrid_pic_model) {
-        /** pointer to source2 (Jamp) multifab */
+        /** pointer to source2 (current calculated from Ampere's Law, Jamp) multifab */
         m_mf_j_ampere = hybrid_pic_model->get_pointer_current_fp_ampere(m_lev, m_dir);
-        /** pointer to source3 (Jext) multifab */
+        /** pointer to source3 (external currents, Jext) multifab */
         m_mf_j_external = hybrid_pic_model->get_pointer_current_fp_external(m_lev, m_dir);
     } else {
         // To finish this implementation, we need to implement a method to
@@ -59,5 +61,6 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         )
     } */
 
-    InterpolateMFForDiag(mf_dst, Jdisp, dcomp, warpx.DistributionMap(m_lev), false);
+    InterpolateMFForDiag(mf_dst, Jdisp, dcomp, warpx.DistributionMap(m_lev), 
+                         m_convertRZmodes2cartesian);
 }

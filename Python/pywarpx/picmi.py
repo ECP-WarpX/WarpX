@@ -2241,13 +2241,13 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
             E_fields_list = ['Er', 'Et', 'Ez']
             B_fields_list = ['Br', 'Bt', 'Bz']
             J_fields_list = ['Jr', 'Jt', 'Jz']
-            Jdisp_fields_list = ['Jr_disp', 'Jt_disp', 'Jz_disp']
+            J_displacement_fields_list = ['Jr_displacement', 'Jt_displacement', 'Jz_displacement']
             A_fields_list = ['Ar', 'At', 'Az']
         else:
             E_fields_list = ['Ex', 'Ey', 'Ez']
             B_fields_list = ['Bx', 'By', 'Bz']
             J_fields_list = ['Jx', 'Jy', 'Jz']
-            Jdisp_fields_list = ['Jx_disp', 'Jy_disp', 'Jz_disp']
+            J_displacement_fields_list = ['Jx_displacement', 'Jy_displacement', 'Jz_displacement']
             A_fields_list = ['Ax', 'Ay', 'Az']
         if self.data_list is not None:
             for dataname in self.data_list:
@@ -2260,8 +2260,8 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                 elif dataname == 'J':
                     for field_name in J_fields_list:
                         fields_to_plot.add(field_name.lower())
-                elif dataname == 'J_disp':
-                    for field_name in Jdisp_fields_list:
+                elif dataname == 'J_displacement':
+                    for field_name in J_displacement_fields_list:
                         fields_to_plot.add(field_name.lower())
                 elif dataname == 'A':
                     for field_name in A_fields_list:
@@ -2276,7 +2276,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic, WarpXDiagnosticBase):
                     fields_to_plot.add(dataname)
                 elif dataname in J_fields_list:
                     fields_to_plot.add(dataname.lower())
-                elif dataname in Jdisp_fields_list:
+                elif dataname in J_displacement_fields_list:
                     fields_to_plot.add(dataname.lower())
                 elif dataname.startswith('rho_'):
                     # Adds rho_species diagnostic

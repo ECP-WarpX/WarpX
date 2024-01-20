@@ -267,20 +267,23 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jz"), ncomp);
             }
-        } else if ( m_varnames_fields[comp] == "jr_disp" ){
-            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio);
+        } else if ( m_varnames_fields[comp] == "jr_displacement" ){
+            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio,
+                                                        false, ncomp);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("jr_disp"), ncomp);
+                AddRZModesToOutputNames(std::string("jr_displacement"), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "jt_disp" ){
-            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio
+                                                        false, ncomp);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("jt_disp"), ncomp);
+                AddRZModesToOutputNames(std::string("jt_displacement"), ncomp);
             }
-        } else if ( m_varnames_fields[comp] == "jz_disp" ){
-            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(2, lev, m_crse_ratio);
+        } else if ( m_varnames_fields[comp] == "jz_displacement" ){
+            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(2, lev, m_crse_ratio,
+                                                        false, ncomp);
             if (update_varnames) {
-                AddRZModesToOutputNames(std::string("jz_disp"), ncomp);
+                AddRZModesToOutputNames(std::string("jz_displacement"), ncomp);
             }
         } else if ( m_varnames_fields[comp] == "rho" ){
             // Initialize rho functor to dump total rho
@@ -652,8 +655,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(2, lev, m_crse_ratio, true, deposit_current);
             deposit_current = false;
-        } else if ( m_varnames[comp] == "jz_disp" ) {
-                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(2, lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "jz_displacement" ) {
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(2, lev, m_crse_ratio, true);
         } else if ( m_varnames[comp] == "Az" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
@@ -695,10 +698,10 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "jt" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;
-            } else if  (m_varnames[comp] == "jr_disp" ){
-                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio);
-            } else if  (m_varnames[comp] == "jt_disp" ){
-                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio);
+            } else if  (m_varnames[comp] == "jr_displacement" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio, true);
+            } else if  (m_varnames[comp] == "jt_displacement" ){
+                m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio, true);
             } else if ( m_varnames[comp] == "Ar" ){
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_vector_potential_fp(lev, 0), lev, m_crse_ratio);
             } else if ( m_varnames[comp] == "At" ){
@@ -724,9 +727,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             } else if ( m_varnames[comp] == "jy" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JFunctor>(1, lev, m_crse_ratio, true, deposit_current);
                 deposit_current = false;
-            } else if ( m_varnames[comp] == "jx_disp" ){
+            } else if ( m_varnames[comp] == "jx_displacement" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(0, lev, m_crse_ratio);
-            } else if ( m_varnames[comp] == "jy_disp" ){
+            } else if ( m_varnames[comp] == "jy_displacement" ){
                 m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio);
             }
             else if ( m_varnames[comp] == "Ax" ){
