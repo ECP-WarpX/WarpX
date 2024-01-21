@@ -1325,10 +1325,18 @@ WarpX::ReadParameters ()
         if (!species_names.empty() || !lasers_names.empty()) {
             if (utils::parser::queryWithParser(pp_algo, "particle_shape", particle_shape)){
 
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    (particle_shape >= 1) && (particle_shape <=3),
-                    "algo.particle_shape can be only 1, 2, or 3"
-                );
+                if(current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        (particle_shape >= 1) && (particle_shape <=4),
+                        "algo.particle_shape can be only 1, 2, 3, or 4 with villasenor deposition"
+                    );
+		}
+		else {
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        (particle_shape >= 1) && (particle_shape <=3),
+                        "algo.particle_shape can be only 1, 2, or 3"
+		    );
+		}
 
                 nox = particle_shape;
                 noy = particle_shape;
@@ -1337,7 +1345,8 @@ WarpX::ReadParameters ()
             else{
                 WARPX_ABORT_WITH_MESSAGE(
                     "algo.particle_shape must be set in the input file:"
-                    " please set algo.particle_shape to 1, 2, or 3");
+                    " please set algo.particle_shape to 1, 2, or 3."
+		    " if using the villasenor deposition, can use 4 also.");
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))

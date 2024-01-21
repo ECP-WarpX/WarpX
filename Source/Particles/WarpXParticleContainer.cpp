@@ -661,6 +661,15 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
                         WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
+                } else if (WarpX::nox == 4){
+                    doVillasenorDepositionShapeNImplicit<4>(
+                        xp_n_data, yp_n_data, zp_n_data,
+                        GetPosition, wp.dataPtr() + offset,
+                        uxp_n.dataPtr() + offset, uyp_n.dataPtr() + offset, uzp_n.dataPtr() + offset,
+                        uxp.dataPtr() + offset, uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                        jx_arr, jy_arr, jz_arr, np_to_deposit, dt, dx, xyzmin, lo, q,
+                        WarpX::n_rz_azimuthal_modes, cost,
+                        WarpX::load_balance_costs_update_algo);
                 }
 	    }
 	    else {
