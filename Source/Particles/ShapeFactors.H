@@ -64,6 +64,19 @@ struct Compute_shape_factor
             // index of the leftmost cell where particle deposits
             return j-1;
         }
+        else if constexpr (depos_order == 4){
+            const auto j = static_cast<int>(xmid + T(0.5));
+            const T xint = xmid - T(j);
+	    const T xint_p1 = xint + T(1.0);
+	    const T xint_m1 = xint - T(1.0);
+            sx[0] = T(1.0)/T(384.0)*(T(1.0) - T(2.0)*xint)*(T(1.0) - T(2.0)*xint)*(T(1.0) - T(2.0)*xint)*(T(1.0) - T(2.0)*xint);
+            sx[1] = T(1.0)/T(96.0)*(T(55.0) + T(4.0)*xint_p1*(T(5.0) - T(2.0)*xint_p1*(T(15.0) + T(2.0)*xint_p1*(xint_p1 - T(5.0)))));
+            sx[2] = T(115.0)/T(192.0) + xint*xint*(xint*xint/T(4.0) - T(5.0)/T(8.0));
+            sx[3] = T(1.0)/T(96.0)*(T(55.0) - T(4.0)*xint_m1*(T(5.0) + T(2.0)*xint_m1*(T(15.0) - T(2.0)*xint_m1*(-xint_m1 - T(5.0)))));
+            sx[4] = T(1.0)/T(384.0)*(T(1.0) + T(2.0)*xint)*(T(1.0) + T(2.0)*xint)*(T(1.0) + T(2.0)*xint)*(T(1.0) + T(2.0)*xint);
+            // index of the leftmost cell where particle deposits
+            return j-2;
+        }
         else{
             WARPX_ABORT_WITH_MESSAGE("Unknown particle shape selected in Compute_shape_factor");
             amrex::ignore_unused(sx, xmid);
@@ -192,6 +205,29 @@ struct Compute_shape_factor_pair
             sx_new[3] = T(1.0)/T(6.0)*xint_new*xint_new*xint_new;
             // index of the leftmost cell where particle deposits
             return j-1;
+        }
+        else if constexpr (depos_order == 4){
+            const auto j = static_cast<int>(xmid + T(0.5));
+            const T xint_old = xold - T(j);
+	    T xint_p1 = xint_old + T(1.0);
+	    T xint_m1 = xint_old - T(1.0);
+            sx_old[0] = T(1.0)/T(384.0)*(T(1.0) - T(2.0)*xint_old)*(T(1.0) - T(2.0)*xint_old)*(T(1.0) - T(2.0)*xint_old)*(T(1.0) - T(2.0)*xint_old);
+            sx_old[1] = T(1.0)/T(96.0)*(T(55.0) + T(4.0)*xint_p1*(T(5.0) - T(2.0)*xint_p1*(T(15.0) + T(2.0)*xint_p1*(xint_p1 - T(5.0)))));
+            sx_old[2] = T(115.0)/T(192.0) + xint_old*xint_old*(xint_old*xint_old/T(4.0) - T(5.0)/T(8.0));
+            sx_old[3] = T(1.0)/T(96.0)*(T(55.0) - T(4.0)*xint_m1*(T(5.0) + T(2.0)*xint_m1*(T(15.0) - T(2.0)*xint_m1*(-xint_m1 - T(5.0)))));
+            sx_old[4] = T(1.0)/T(384.0)*(T(1.0) + T(2.0)*xint_old)*(T(1.0) + T(2.0)*xint_old)*(T(1.0) + T(2.0)*xint_old)*(T(1.0) + T(2.0)*xint_old);
+	    //
+            const T xint_new = xnew - T(j);
+	    xint_p1 = xint_new + T(1.0);
+	    xint_m1 = xint_new - T(1.0);
+            sx_new[0] = T(1.0)/T(384.0)*(T(1.0) - T(2.0)*xint_new)*(T(1.0) - T(2.0)*xint_new)*(T(1.0) - T(2.0)*xint_new)*(T(1.0) - T(2.0)*xint_new);
+            sx_new[1] = T(1.0)/T(96.0)*(T(55.0) + T(4.0)*xint_p1*(T(5.0) - T(2.0)*xint_p1*(T(15.0) + T(2.0)*xint_p1*(xint_p1 - T(5.0)))));
+            sx_new[2] = T(115.0)/T(192.0) + xint_new*xint_new*(xint_new*xint_new/T(4.0) - T(5.0)/T(8.0));
+            sx_new[3] = T(1.0)/T(96.0)*(T(55.0) - T(4.0)*xint_m1*(T(5.0) + T(2.0)*xint_m1*(T(15.0) - T(2.0)*xint_m1*(-xint_m1 - T(5.0)))));
+            sx_new[4] = T(1.0)/T(384.0)*(T(1.0) + T(2.0)*xint_new)*(T(1.0) + T(2.0)*xint_new)*(T(1.0) + T(2.0)*xint_new)*(T(1.0) + T(2.0)*xint_new);
+	    //
+            // index of the leftmost cell where particle deposits
+            return j-2;
         }
         else{
             WARPX_ABORT_WITH_MESSAGE("Unknown particle shape selected in Compute_shape_factor_pair");
