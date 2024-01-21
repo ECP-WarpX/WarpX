@@ -1770,7 +1770,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	    // depos_order even ==> cell crossings defined at cell centers
 	    double slope_dydx, slope_dzdx;
 	    double slope_dxdy, slope_dzdy;
-	    double slope_dxdy, slope_dydz;
+	    double slope_dxdz, slope_dydz;
             double const dxp = x_new - x_old;
             double const dyp = y_new - y_old;
             double const dzp = z_new - z_old;
