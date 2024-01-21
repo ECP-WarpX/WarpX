@@ -1005,8 +1005,8 @@ void doGatherPicnicShapeN (
     // 3) Gather magnetic field and out-of-plane electric field.
 
     int num_segments = 1;
-    amrex::Real shift = 0.0;
-    if(depos_order==2) { shift = 0.5; }
+    amrex::Real shift = 0.0_rt;
+    if ( (depos_order % 2) == 0 ) { shift = 0.5_rt; }
 
 #if defined(WARPX_DIM_3D)
 
@@ -1041,9 +1041,9 @@ void doGatherPicnicShapeN (
     // used to find the position at cell crossings.
     // depos_order odd  ==> cell crossings defined at cell edges
     // depos_order even ==> cell crossings defined at cell centers
-    double slope_dxdy, slope_dxdz;
-    double slope_dydx, slope_dydz;
-    double slope_dzdx, slope_dzdy;
+    double slope_dydx, slope_dzdx;
+    double slope_dxdy, slope_dzdy;
+    double slope_dxdz, slope_dydz;
     double const dxp = x_new - x_old;
     double const dyp = y_new - y_old;
     double const dzp = z_new - z_old;
@@ -1271,19 +1271,19 @@ void doGatherPicnicShapeN (
 	const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
 	const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
 		
-	if (depos_order==3) { // have to do cell-based interp a bit different for order 3
-            Compute_shape_factor_pair<2> compute_shape_factors_cell;
-            double sx_old_cell[3] = {0.};
-            double sx_new_cell[3] = {0.};
-            double sy_old_cell[3] = {0.};
-            double sy_new_cell[3] = {0.};
-            double sz_old_cell[3] = {0.};
-            double sz_new_cell[3] = {0.};
+	if (depos_order>=3) { // have to do cell-based interp a bit different for order 3
+            Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
+            double sx_old_cell[depos_order] = {0.};
+            double sx_new_cell[depos_order] = {0.};
+            double sy_old_cell[depos_order] = {0.};
+            double sy_new_cell[depos_order] = {0.};
+            double sz_old_cell[depos_order] = {0.};
+            double sz_new_cell[depos_order] = {0.};
             const int i0_cell_2 = compute_shape_factors_cell( sx_old_cell, sx_new_cell, x0_old-0.5_rt, x0_new-0.5_rt );
             const int j0_cell_2 = compute_shape_factors_cell( sy_old_cell, sy_new_cell, y0_old-0.5_rt, y0_new-0.5_rt );
             const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
             ignore_unused(i0_cell_2, j0_cell_2, k0_cell_2);
-	    for (int m=0; m<3; m++) {
+	    for (int m=0; m<depos_ordr; m++) {
 	        sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
 	        sy_cell[m] = (4.0_rt*sy_cell[m] + sy_old_cell[m] + sy_new_cell[m])/6.0_rt;
 	        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
@@ -1419,9 +1419,9 @@ void doGatherPicnicShapeN (
     Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
     Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
     double dxp_seg, dzp_seg;
+    double x0_new, z0_new;
     double x0_old = x_old;
     double z0_old = z_old;
-    double x0_new, z0_new;
 
     for (int ns=0; ns<num_segments; ns++) {
 		    
@@ -1488,16 +1488,16 @@ void doGatherPicnicShapeN (
         const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
 		
-	if (depos_order==3) { // have to do cell-based interp a bit different for order 3
-            Compute_shape_factor_pair<2> compute_shape_factors_cell;
-            double sx_old_cell[3] = {0.};
-            double sx_new_cell[3] = {0.};
-            double sz_old_cell[3] = {0.};
-            double sz_new_cell[3] = {0.};
+	if (depos_order>=3) { // have to do cell-based interp a bit different for order 3
+            Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
+            double sx_old_cell[depos_order] = {0.};
+            double sx_new_cell[depos_order] = {0.};
+            double sz_old_cell[depos_order] = {0.};
+            double sz_new_cell[depos_order] = {0.};
             const int i0_cell_2 = compute_shape_factors_cell( sx_old_cell, sx_new_cell, x0_old-0.5_rt, x0_new-0.5_rt );
             const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
             ignore_unused(i0_cell_2, k0_cell_2);
-	    for (int m=0; m<3; m++) {
+	    for (int m=0; m<depos_order; m++) {
 	        sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
 	        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
 	    }
@@ -1634,8 +1634,8 @@ void doGatherPicnicShapeN (
     // loop over the number of segments and deposit
     Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
     double dzp_seg;
-    double z0_old = z_old;
     double z0_new;
+    double z0_old = z_old;
 
     for (int ns=0; ns<num_segments; ns++) {
 		    
@@ -1657,13 +1657,13 @@ void doGatherPicnicShapeN (
         double const z0_bar = (z0_new + z0_old)/2.0_rt;
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
 		
-	if (depos_order==3) { // have to do cell-based interp a bit different for order 3
-            Compute_shape_factor_pair<2> compute_shape_factors_cell;
-            double sz_old_cell[3] = {0.};
-            double sz_new_cell[3] = {0.};
+	if (depos_order>=3) { // have to do cell-based interp a bit different for order 3
+            Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
+            double sz_old_cell[depos_order] = {0.};
+            double sz_new_cell[depos_order] = {0.};
             const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
             ignore_unused(k0_cell_2);
-	    for (int m=0; m<3; m++) {
+	    for (int m=0; m<depos_order; m++) {
 	        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
 	    }
 	}
@@ -1948,6 +1948,12 @@ void doGatherShapeNImplicit (
                                     dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         } else if (nox == 3) {
             doGatherPicnicShapeN<3>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
+                                    Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        } else if (nox == 4) {
+            doGatherPicnicShapeN<4>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                     Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                     ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                     ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
