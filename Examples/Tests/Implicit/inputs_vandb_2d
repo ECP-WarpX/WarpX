@@ -90,5 +90,3 @@ particle_energy.type = ParticleEnergy
 particle_energy.intervals = 1
 field_energy.type = FieldEnergy
 field_energy.intervals = 1
-
-

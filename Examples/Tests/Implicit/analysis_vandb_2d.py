@@ -7,15 +7,14 @@
 #
 # License: BSD-3-Clause-LBNL
 #
-# This is a script that analyses the simulation results from the script `inputs_vandb_2d`. 
+# This is a script that analyses the simulation results from the script `inputs_vandb_2d`.
 # This simulates a 2D periodic plasma using the implicit solver
 # with the Villasenor deposition using shape factor 2.
 import os
-import re
 import sys
 
 import numpy as np
-from scipy.constants import epsilon_0, e
+from scipy.constants import e, epsilon_0
 import yt
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
