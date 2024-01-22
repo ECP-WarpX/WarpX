@@ -443,7 +443,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     // Take into account Galilean shift
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev, 0.5_rt*dt);
 
-    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov || 
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
         WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
         if (WarpX::grid_type == GridType::Collocated) {
           WARPX_ABORT_WITH_MESSAGE("Charge-conserving current depositions (Esirkepov and Villasenor) cannot be used with a collocated grid.");

@@ -1153,7 +1153,7 @@ WarpX::ReadParameters ()
             !do_current_centering,
             "Current centering (nodal deposition) cannot be used with Esirkepov deposition."
             "Please set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
-        
+
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Villasenor ||
             !do_current_centering,
@@ -1364,7 +1364,7 @@ WarpX::ReadParameters ()
             sort_intervals_string_vec = {"-1"};
 #endif
         }
-        
+
         const amrex::ParmParse pp_warpx("warpx");
         pp_warpx.queryarr("sort_intervals", sort_intervals_string_vec);
         sort_intervals = utils::parser::IntervalsParser(sort_intervals_string_vec);

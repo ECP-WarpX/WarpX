@@ -956,7 +956,7 @@ void doGatherPicnicShapeN (
     ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
 #endif
     ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
-    
+
 #if !defined(WARPX_DIM_1D_Z)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
     Real constexpr one_sixth = 1.0_rt / 6.0_rt;
@@ -1003,10 +1003,10 @@ void doGatherPicnicShapeN (
     double const z_old = (zp_n   - zmin)*dzi;
     double const z_bar = (zp_nph - zmin)*dzi;
 
-    // 1) Determine the number of segments. 
+    // 1) Determine the number of segments.
     // 2) Loop over segments and gather electric field.
     // 3) Gather magnetic field.
-            
+
     // cell crossings are defined at cell edges if depos_order is odd
     // cell crossings are defined at cell centers if depos_order is even
 
@@ -1021,7 +1021,7 @@ void doGatherPicnicShapeN (
     const auto i_new = static_cast<int>(x_new-shift);
     int cell_crossings_x = std::abs(i_new-i_old);
     num_segments += cell_crossings_x;
-    
+
     // compute cell crossings in Y-direction
     const auto j_old = static_cast<int>(y_old-shift);
     const auto j_new = static_cast<int>(y_new-shift);
@@ -1043,7 +1043,7 @@ void doGatherPicnicShapeN (
         //std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
     }
 
-    // compute the slopes and the initial cell locations in each direction 
+    // compute the slopes and the initial cell locations in each direction
     // used to find the position at cell crossings.
     double slope_dydx, slope_dzdx;
     double slope_dxdy, slope_dzdy;
@@ -1074,7 +1074,7 @@ void doGatherPicnicShapeN (
         slope_dxdz = dxp/dzp;
         slope_dydz = dyp/dzp;
     }
-    
+
     // loop over the number of segments and deposit
     Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
     Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
@@ -1085,7 +1085,7 @@ void doGatherPicnicShapeN (
     double z0_old = z_old;
 
     for (int ns=0; ns<num_segments; ns++) {
-            
+
         if (ns==num_segments-1) { // final segment
             x0_new = x_new;
             y0_new = y_new;
@@ -1121,7 +1121,7 @@ void doGatherPicnicShapeN (
                 z0_new = Zcell + dirZ_sign;
                 dyp_seg = y0_new - y0_old;
                 dzp_seg = z0_new - z0_old;
-                    
+
                 double const dyp_seg2 = slope_dydz*dzp_seg;
                 if (std::abs(dyp_seg)<std::abs(dyp_seg2)) { // y-dir crossing
                     dxp_seg = slope_dxdy*dyp_seg;
@@ -1159,7 +1159,7 @@ void doGatherPicnicShapeN (
                 z0_new = Zcell + dirZ_sign;
                 dxp_seg = x0_new - x0_old;
                 dzp_seg = z0_new - z0_old;
-                    
+
                 double const dxp_seg2 = slope_dxdz*dzp_seg;
                 if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
                     dyp_seg = slope_dydx*dxp_seg;
@@ -1186,7 +1186,7 @@ void doGatherPicnicShapeN (
             y0_new = Ycell + dirY_sign;
             dxp_seg = x0_new - x0_old;
             dyp_seg = y0_new - y0_old;
-                    
+
             double const dxp_seg2 = slope_dxdy*dyp_seg;
             if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
                 dyp_seg = slope_dydx*dxp_seg;
@@ -1214,7 +1214,7 @@ void doGatherPicnicShapeN (
             dxp_seg = x0_new - x0_old;
             dyp_seg = y0_new - y0_old;
             dzp_seg = z0_new - z0_old;
-                    
+
             double const dxp_seg2 = slope_dxdz*dzp_seg;
             double const dxp_seg3 = slope_dxdy*dyp_seg;
             double const dyp_seg2 = slope_dydx*dxp_seg;
@@ -1263,7 +1263,7 @@ void doGatherPicnicShapeN (
         const int i0_cell = compute_shape_factor_cell( sx_cell, x0_bar-0.5_rt );
         const int j0_cell = compute_shape_factor_cell( sy_cell, y0_bar-0.5_rt );
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
-                
+
         if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sx_old_cell[depos_order] = {0.};
@@ -1282,7 +1282,7 @@ void doGatherPicnicShapeN (
                 sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
             }
         }
-        
+
         // compute node-based weights using the old and new segment positions
         double sx_old_node[depos_order+1] = {0.};
         double sx_new_node[depos_order+1] = {0.};
@@ -1293,7 +1293,7 @@ void doGatherPicnicShapeN (
         const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
         const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-                
+
         // gather Ex for this segment
         amrex::Real weight;
         for (int i=0; i<=depos_order-1; i++) {
@@ -1333,7 +1333,7 @@ void doGatherPicnicShapeN (
                 }
             }
         }
-                
+
         // update old segment values
         if (ns<num_segments-1) {
             x0_old = x0_new;
@@ -1397,7 +1397,7 @@ void doGatherPicnicShapeN (
         //std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
     }
 
-    // compute the slopes and the initial cell locations in each direction 
+    // compute the slopes and the initial cell locations in each direction
     // used to find the position at cell crossings.
     double slope_dzdx, slope_dxdz;
     double const dxp = x_new - x_old;
@@ -1426,7 +1426,7 @@ void doGatherPicnicShapeN (
     double z0_old = z_old;
 
     for (int ns=0; ns<num_segments; ns++) {
-                    
+
         if (ns==num_segments-1) { // final segment
             x0_new = x_new;
             z0_new = z_new;
@@ -1454,7 +1454,7 @@ void doGatherPicnicShapeN (
             z0_new = Zcell + dirZ_sign;
             dxp_seg = x0_new - x0_old;
             dzp_seg = z0_new - z0_old;
-                    
+
             double const dxp_seg2 = slope_dxdz*dzp_seg;
             if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
                 dzp_seg = slope_dzdx*dxp_seg;
@@ -1481,7 +1481,7 @@ void doGatherPicnicShapeN (
         double const z0_bar = (z0_new + z0_old)/2.0_rt;
         const int i0_cell = compute_shape_factor_cell(sx_cell, x0_bar-0.5_rt);
         const int k0_cell = compute_shape_factor_cell(sz_cell, z0_bar-0.5_rt);
-                
+
         if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sx_old_cell[depos_order] = {0.};
@@ -1504,7 +1504,7 @@ void doGatherPicnicShapeN (
         double sz_new_node[depos_order+1] = {0.};
         const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-                
+
         // gather Ex for this segment
         amrex::Real weight;
         for (int i=0; i<=depos_order-1; i++) {
@@ -1543,8 +1543,8 @@ void doGatherPicnicShapeN (
 #endif
             }
         }
-       
-        // gather Ez for this segment        
+
+        // gather Ez for this segment
         for (int i=0; i<=depos_order; i++) {
             for (int k=0; k<=depos_order-1; k++) {
                 weight = sz_cell[k]*(sx_old_node[i] + sx_new_node[i])/2.0_rt*seg_factor_z;
@@ -1635,7 +1635,7 @@ void doGatherPicnicShapeN (
         //std::cout << "Notice: num_segments = " << num_segments << std::endl;
         //std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
     }
-            
+
     // compute the initial cell locations used to find the cell crossings.
     double Zcell;
     double const dzp = z_new - z_old;
@@ -1654,12 +1654,12 @@ void doGatherPicnicShapeN (
     double z0_old = z_old;
 
     for (int ns=0; ns<num_segments; ns++) {
-                    
+
         if (ns==num_segments-1) { // final segment
             z0_new = z_new;
             dzp_seg = z0_new - z0_old;
         }
-        else { 
+        else {
             Zcell = Zcell + dirZ_sign;
             z0_new = Zcell;
             dzp_seg = z0_new - z0_old;
@@ -1667,12 +1667,12 @@ void doGatherPicnicShapeN (
 
         // compute the segment factor (equal to dt_seg/dt for nonzero dzp)
         const auto seg_factor = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
-                
+
         // compute cell-based weights using the average segment position
         double sz_cell[depos_order] = {0.};
         double const z0_bar = (z0_new + z0_old)/2.0_rt;
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
-        
+
         if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sz_old_cell[depos_order] = {0.};
@@ -1683,25 +1683,25 @@ void doGatherPicnicShapeN (
                 sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
             }
         }
-        
+
         // compute node-based weights using the old and new segment positions
         double sz_old_node[depos_order+1] = {0.};
         double sz_new_node[depos_order+1] = {0.};
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-                
+
         // gather out-of-plane Ex and Ey for this segment
         for (int k=0; k<=depos_order; k++) {
             auto weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor;
             Exp += Ex_arr(lo.x+k0_node+k, 0, 0)*weight;
             Eyp += Ey_arr(lo.x+k0_node+k, 0, 0)*weight;
         }
-        
+
         // gather Ez for this segment
         for (int k=0; k<=depos_order-1; k++) {
             auto weight = sz_cell[k]*seg_factor;
             Ezp += Ez_arr(lo.x+k0_cell+k, 0, 0)*weight;
         }
-                
+
         // update old segment values
         if (ns<num_segments-1) {
             z0_old = z0_new;
@@ -1938,7 +1938,7 @@ void doGatherShapeNImplicit (
                      const int nox,
                      const int depos_type )
 {
-    if (depos_type==0) { // CurrentDepositionAlgo::Esirkepov 
+    if (depos_type==0) { // CurrentDepositionAlgo::Esirkepov
         if (nox == 1) {
             doGatherShapeNEsirkepovStencilImplicit<1>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
@@ -1959,7 +1959,7 @@ void doGatherShapeNImplicit (
                                                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
     }
-    else if (depos_type==3) { // CurrentDepositionAlgo::Villasenor 
+    else if (depos_type==3) { // CurrentDepositionAlgo::Villasenor
         if (nox == 1) {
             doGatherPicnicShapeN<1>(xp_n, yp_n, zp_n, xp_nph, yp_nph, zp_nph,
                                     Exp, Eyp, Ezp, Bxp, Byp, Bzp,
@@ -1985,7 +1985,7 @@ void doGatherShapeNImplicit (
                                     ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                     dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
-    } 
+    }
     else if (depos_type==1) { // CurrentDepositionAlgo::Direct
         if (nox == 1) {
             doGatherShapeN<1,0>(xp_nph, yp_nph, zp_nph, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
