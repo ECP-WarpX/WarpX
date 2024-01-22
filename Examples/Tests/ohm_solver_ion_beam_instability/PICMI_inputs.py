@@ -54,7 +54,7 @@ class HybridPICBeamInstability(object):
     # Plasma resistivity - used to dampen the mode excitation
     eta = 1e-7
     # Number of substeps used to update B
-    substeps = 400
+    substeps = 10
 
     # Beam parameters
     n_beam = [0.02, 0.1]
@@ -95,11 +95,9 @@ class HybridPICBeamInstability(object):
         diag_period = 1 / 4.0 # Output interval (ion cyclotron periods)
         self.diag_steps = int(diag_period / self.DT)
 
-        # if this is a test case run for only 25 cyclotron periods and use
-        # fewer substeps to speed up the simulation
+        # if this is a test case run for only 25 cyclotron periods
         if self.test:
             self.LT = 25.0
-            self.substeps = 100
 
         self.total_steps = int(np.ceil(self.LT / self.DT))
 

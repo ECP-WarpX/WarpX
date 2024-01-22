@@ -53,7 +53,7 @@ class CylindricalNormalModes(object):
     # Plasma resistivity - used to dampen the mode excitation
     eta = 5e-4
     # Number of substeps used to update B
-    substeps = 250
+    substeps = 20
 
     def __init__(self, test, verbose):
         """Get input parameters for the specific case desired."""
