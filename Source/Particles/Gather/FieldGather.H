@@ -1264,7 +1264,7 @@ void doGatherPicnicShapeN (
         const int j0_cell = compute_shape_factor_cell( sy_cell, y0_bar-0.5_rt );
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
 		
-	if (depos_order>=3) { // higher-order correction to the cell-based weights
+	if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sx_old_cell[depos_order] = {0.};
             double sx_new_cell[depos_order] = {0.};
@@ -1482,7 +1482,7 @@ void doGatherPicnicShapeN (
         const int i0_cell = compute_shape_factor_cell(sx_cell, x0_bar-0.5_rt);
         const int k0_cell = compute_shape_factor_cell(sz_cell, z0_bar-0.5_rt);
 		
-	if (depos_order>=3) { // higher-order correction to the cell-based weights
+	if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sx_old_cell[depos_order] = {0.};
             double sx_new_cell[depos_order] = {0.};
@@ -1673,7 +1673,7 @@ void doGatherPicnicShapeN (
         double const z0_bar = (z0_new + z0_old)/2.0_rt;
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
 	
-	if (depos_order>=3) { // higher-order correction to the cell-based weights
+	if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sz_old_cell[depos_order] = {0.};
             double sz_new_cell[depos_order] = {0.};
