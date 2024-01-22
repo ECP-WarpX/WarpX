@@ -1613,13 +1613,15 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 #if defined(WARPX_DIM_3D)
     Real const invvol = 1.0_rt / (dx[0]*dx[1]*dx[2]);
-    Real constexpr one_third = 1.0_rt / 3.0_rt;
-    Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     Real const invvol = 1.0_rt / (dx[0]*dx[2]);
-    //Real constexpr one_half = 1.0_rt / 2.0_rt;
 #elif defined(WARPX_DIM_1D_Z)
     Real const invvol = 1.0_rt / (dx[2]);
+#endif
+    
+#if !defined(WARPX_DIM_1D_Z)
+    Real constexpr one_third = 1.0_rt / 3.0_rt;
+    Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 #endif
 
     // Loop over particles and deposit into Jx_arr, Jy_arr and Jz_arr
@@ -1693,6 +1695,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 sintheta_mid = 0._rt;
             }
             const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
+
             // Keep these double to avoid bug in single precision
             double const x_new = (rp_new - xmin)*dxi;
             double const x_old = (rp_old - xmin)*dxi;
@@ -1728,8 +1731,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             amrex::Real const wqz = wq*vz*invvol;
 
 	    // 1) Determine the number of segments. 
-	    // 2) Loop over segments and deposit in-plane current.
-	    // 3) Deposit out-of-plane current.
+	    // 2) Loop over segments and deposit current.
 	    
 	    int num_segments = 1;
 	    amrex::Real shift = 0.0_rt;
@@ -1971,7 +1973,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 		}
 
-		// compute the segment factors
+		// compute the segment factors (each equal to dt_seg/dt for nonzero dxp, dyp, or dzp)
                 auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
                 auto seg_factor_y = static_cast<amrex::Real>(dyp == 0._rt ? 1._rt : dyp_seg/dyp);
                 auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
@@ -1998,7 +2000,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
 		const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
 		
-		if (depos_order>=3) { // have to do cell-based interp a bit different for order 3
+		if (depos_order>=3) { // have to do cell-based interp a bit different for order >= 3
                     Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sx_old_cell[depos_order] = {0.};
                     double sx_new_cell[depos_order] = {0.};
@@ -2165,7 +2167,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		    }
 		}
 
-		// compute the segment factors
+		// compute the segment factors (each equal to dt_seg/dt for nonzero dxp, or dzp)
                 auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
                 auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 
@@ -2185,7 +2187,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
 		const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
                 
-		if (depos_order>=3) { // have to do cell-based interp a bit different for order 3
+		if (depos_order>=3) { // have to do cell-based interp a bit different for order >= 3
                     Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sx_old_cell[depos_order] = {0.};
                     double sx_new_cell[depos_order] = {0.};
@@ -2213,6 +2215,30 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                             const Complex djr_cmplx = 2._rt*this_Jx*xy_mid;
                             amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 2*imode-1), djr_cmplx.real());
                             amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 2*imode), djr_cmplx.imag());
+                            xy_mid = xy_mid*xy_mid0;
+                        }
+#endif
+                    }
+                }
+
+	        // deposit out-of-plane Jy current density
+		const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
+		amrex::Real this_Jy;
+	        for (int i=0; i<=depos_order; i++) {
+                    for (int k=0; k<=depos_order; k++) {
+                        this_Jy = wqy*( sx_old_node[i]*sz_old_node[k]*one_third
+			              + sx_old_node[i]*sz_new_node[k]*one_sixth
+			              + sx_new_node[i]*sz_old_node[k]*one_sixth
+			              + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
+                        amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 0), this_Jy);
+#if defined(WARPX_DIM_RZ)
+                        Complex xy_mid = xy_mid0;
+                        // Throughout the following loop, xy_ takes the value e^{i m theta_}
+                        for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+                            // The factor 2 comes from the normalization of the modes
+                            const Complex djy_cmplx = 2._rt*this_Jy*xy_mid;
+                            amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 2*imode-1), djy_cmplx.real());
+                            amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 2*imode), djy_cmplx.imag());
                             xy_mid = xy_mid*xy_mid0;
                         }
 #endif
@@ -2246,36 +2272,6 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 	    } // end loop over segments
 
-	    // deposit out-of-plane current density
-	    const int depos_order_Jv = 1; // second template parameter?
-            Compute_shape_factor< depos_order_Jv > compute_shape_factor_Jv;
-            double sz_bar_node[depos_order_Jv+1] = {0.};
-            double sx_bar_node[depos_order_Jv+1] = {0.};
-            double const x_bar = (x_new + x_old)/2.0_rt;
-            double const z_bar = (z_new + z_old)/2.0_rt;
-            const int k_bar_node = compute_shape_factor_Jv(sz_bar_node, z_bar);
-            const int i_bar_node = compute_shape_factor_Jv(sx_bar_node, x_bar);
-            
-	    amrex::Real this_Jy;
-	    for (int i=0; i<=depos_order_Jv; i++) {
-                for (int k=0; k<=depos_order_Jv; k++) {
-                    this_Jy = wqy*sx_bar_node[i]*sz_bar_node[k];
-                    amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_bar_node+i, lo.y+k_bar_node+k, 0, 0), this_Jy);
-#if defined(WARPX_DIM_RZ)
-                    Complex xy_mid = xy_mid0;
-                    // Throughout the following loop, xy_ takes the value e^{i m theta_}
-                    for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-                        // The factor 2 comes from the normalization of the modes
-                        // The minus sign comes from the different convention with respect to Davidson et al.
-                        const Complex djt_cmplx = 2._rt*this_Jy*xy_mid;
-                        amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_bar_node+i, lo.y+k_bar_node+k, 0, 2*imode-1), djt_cmplx.real());
-                        amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_bar_node+i, lo.y+k_bar_node+k, 0, 2*imode), djt_cmplx.imag());
-                        xy_mid = xy_mid*xy_mid0;
-                    }
-#endif
-                }
-            }
-            
 #elif defined(WARPX_DIM_1D_Z)
            
 	    // compute cell crossings in Z-direction
@@ -2305,6 +2301,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 	    // loop over the number of segments and deposit
             Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+            Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
 	    double dzp_seg;
 	    double z0_new;
 	    double z0_old = z_old;
@@ -2321,15 +2318,20 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		    dzp_seg = z0_new - z0_old;
 		}
 
-		// compute the segment factors
+		// compute the segment factors (equal to dt_seg/dt for nonzero dzp)
                 auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 		
 		// compute cell-based weights using the average segment position
                 double sz_cell[depos_order] = {0.};
                 double const z0_bar = (z0_new + z0_old)/2.0_rt;
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
+	
+		// compute node-based weights using the old and new segment position
+                double sz_old_node[depos_order+1] = {0.};
+                double sz_new_node[depos_order+1] = {0.};
+                const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
 		
-		if (depos_order>=3) { // have to do cell-based interp a bit different for order 3
+		if (depos_order>=3) { // have to do cell-based interp a bit different for order >= 3
                     Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sz_old_cell[depos_order] = {0.};
                     double sz_new_cell[depos_order] = {0.};
@@ -2340,6 +2342,13 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		    }
 		}
 		
+		// deposit out-of-plane Jx and Jy for this segment
+                for (int k=0; k<=depos_order; k++) {
+                    const amrex::Real weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor_z;
+                    amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k0_node+k, 0, 0), wqx*weight);
+                    amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k0_node+k, 0, 0), wqy*weight);
+                }
+
 		// deposit Jz for this segment
                 for (int k=0; k<=depos_order-1; k++) {
                     const amrex::Real this_Jz = wqz*sz_cell[k]*seg_factor_z;
@@ -2353,19 +2362,6 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 	    }
 
-	    // deposit out-of-plane current density
-	    const int depos_order_Jv = 1; // second template parameter?
-	    Compute_shape_factor< depos_order_Jv > compute_shape_factor_Jv;
-            double sz_bar_node[depos_order_Jv+1] = {0.};
-            double const z_bar = (z_new + z_old)/2.0_rt;
-            const int k_bar_node = compute_shape_factor_Jv(sz_bar_node, z_bar);
-
-            for (int k=0; k<=depos_order_Jv; k++) {
-                amrex::Real const this_Jx = wqx*sz_bar_node[k];
-                amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k_bar_node+k, 0, 0, 0), this_Jx);
-                amrex::Real const this_Jy = wqy*sz_bar_node[k];
-                amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k_bar_node+k, 0, 0, 0), this_Jy);
-            }
 #endif
         }
     );
