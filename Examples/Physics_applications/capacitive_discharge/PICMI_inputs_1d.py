@@ -38,7 +38,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
             required_precision=1, **kwargs
         )
 
-    def initialize_inputs(self):
+    def solver_initialize_inputs(self):
         """Grab geometrical quantities from the grid. The boundary potentials
         are also obtained from the grid using 'warpx_potential_zmin' for the
         left_voltage and 'warpx_potential_zmax' for the right_voltage.
