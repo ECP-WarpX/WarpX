@@ -1006,6 +1006,9 @@ void doGatherPicnicShapeN (
     // 1) Determine the number of segments. 
     // 2) Loop over segments and gather electric field.
     // 3) Gather magnetic field.
+	    
+    // cell crossings are defined at cell edges if depos_order is odd
+    // cell crossings are defined at cell centers if depos_order is even
 
     int num_segments = 1;
     amrex::Real shift = 0.0_rt;
@@ -1033,7 +1036,7 @@ void doGatherPicnicShapeN (
 
     // need to assert that the number of cell crossings in each direction
     // is within the range permitted by the number of guard cells
-    if(num_segments > 5 ) {
+    if (num_segments > 5) {
         std::cout << "Notice: num_segments = " << num_segments << std::endl;
         std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
         std::cout << "Notice: cell_crossings_y = " << cell_crossings_y << std::endl;
@@ -1042,8 +1045,6 @@ void doGatherPicnicShapeN (
 
     // compute the slopes and the initial cell locations in each direction 
     // used to find the position at cell crossings.
-    // depos_order odd  ==> cell crossings defined at cell edges
-    // depos_order even ==> cell crossings defined at cell centers
     double slope_dydx, slope_dzdx;
     double slope_dxdy, slope_dzdy;
     double slope_dxdz, slope_dydz;
@@ -1053,21 +1054,21 @@ void doGatherPicnicShapeN (
     double Xcell, Ycell, Zcell;
     int dirX_sign, dirY_sign, dirZ_sign;
     if (cell_crossings_x > 0) {
-        if(x_new < x_old) { dirX_sign = -1; }
+        if (x_new < x_old) { dirX_sign = -1; }
         else { dirX_sign = 1; }
         Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
         slope_dydx = dyp/dxp;
         slope_dzdx = dzp/dxp;
     }
     if (cell_crossings_y > 0) {
-        if(y_new < y_old) { dirY_sign = -1; }
+        if (y_new < y_old) { dirY_sign = -1; }
         else { dirY_sign = 1; }
         Ycell = j_old + shift + 0.5_rt*(1-dirY_sign);
         slope_dxdy = dxp/dyp;
         slope_dzdy = dzp/dyp;
     }
     if (cell_crossings_z > 0) {
-        if(z_new < z_old) { dirZ_sign = -1; }
+        if (z_new < z_old) { dirZ_sign = -1; }
         else { dirZ_sign = 1; }
         Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
         slope_dxdz = dxp/dzp;
@@ -1085,7 +1086,7 @@ void doGatherPicnicShapeN (
 
     for (int ns=0; ns<num_segments; ns++) {
 	    
-        if(ns==num_segments-1) { // final segment
+        if (ns==num_segments-1) { // final segment
 	    x0_new = x_new;
 	    y0_new = y_new;
 	    z0_new = z_new;
@@ -1390,7 +1391,7 @@ void doGatherPicnicShapeN (
 
     // need to assert that the number of cell crossings in each direction
     // is within the range permitted by the number of guard cells
-    if(num_segments > 3 ) {
+    if (num_segments > 3) {
         std::cout << "Notice: num_segments = " << num_segments << std::endl;
         std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
         std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
@@ -1398,21 +1399,19 @@ void doGatherPicnicShapeN (
 
     // compute the slopes and the initial cell locations in each direction 
     // used to find the position at cell crossings.
-    // depos_order odd  ==> cell crossings defined at cell edges
-    // depos_order even ==> cell crossings defined at cell centers
     double slope_dzdx, slope_dxdz;
     double const dxp = x_new - x_old;
     double const dzp = z_new - z_old;
     double Xcell, Zcell;
     int dirX_sign, dirZ_sign;
     if (cell_crossings_x > 0) {
-        if(x_new < x_old) { dirX_sign = -1; }
+        if (x_new < x_old) { dirX_sign = -1; }
         else { dirX_sign = 1; }
         Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
         slope_dzdx = dzp/dxp;
     }
     if (cell_crossings_z > 0) {
-        if(z_new < z_old) { dirZ_sign = -1; }
+        if (z_new < z_old) { dirZ_sign = -1; }
         else { dirZ_sign = 1; }
 	Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
         slope_dxdz = dxp/dzp;
@@ -1428,7 +1427,7 @@ void doGatherPicnicShapeN (
 
     for (int ns=0; ns<num_segments; ns++) {
 		    
-        if(ns==num_segments-1) { // final segment
+        if (ns==num_segments-1) { // final segment
             x0_new = x_new;
             z0_new = z_new;
 	    dxp_seg = x0_new - x0_old;
@@ -1632,19 +1631,17 @@ void doGatherPicnicShapeN (
 
     // need to assert that the number of cell crossings in each direction
     // is within the range permitted by the number of guard cells
-    if(num_segments > 2 ) {
+    if (num_segments > 2) {
         std::cout << "Notice: num_segments = " << num_segments << std::endl;
         std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
     }
 	    
     // compute the initial cell locations used to find the cell crossings.
-    // depos_order odd  ==> cell crossings defined at cell edges
-    // depos_order even ==> cell crossings defined at cell centers
     double Zcell;
     double const dzp = z_new - z_old;
     int dirZ_sign;
     if (cell_crossings_z > 0) {
-        if(z_new < z_old) { dirZ_sign = -1; }
+        if (z_new < z_old) { dirZ_sign = -1; }
         else { dirZ_sign = 1; }
 	Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
     }
@@ -1658,7 +1655,7 @@ void doGatherPicnicShapeN (
 
     for (int ns=0; ns<num_segments; ns++) {
 		    
-        if(ns==num_segments-1) { // final segment
+        if (ns==num_segments-1) { // final segment
 	    z0_new = z_new;
 	    dzp_seg = z0_new - z0_old;
 	}

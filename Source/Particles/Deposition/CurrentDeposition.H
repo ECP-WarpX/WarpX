@@ -1731,6 +1731,9 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 	    // 1) Determine the number of segments. 
 	    // 2) Loop over segments and deposit current.
+
+	    // cell crossings are defined at cell edges if depos_order is odd
+	    // cell crossings are defined at cell centers if depos_order is even
 	    
 	    int num_segments = 1;
 	    amrex::Real shift = 0.0_rt;
@@ -1741,25 +1744,25 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	    // compute cell crossings in X-direction
 	    const auto i_old = static_cast<int>(x_old-shift);
 	    const auto i_new = static_cast<int>(x_new-shift);
-            int cell_crossings_x = std::abs(i_new-i_old);
-            num_segments += cell_crossings_x;
+	    int cell_crossings_x = std::abs(i_new-i_old);
+	    num_segments += cell_crossings_x;
 	    
 	    // compute cell crossings in Y-direction
 	    const auto j_old = static_cast<int>(y_old-shift);
 	    const auto j_new = static_cast<int>(y_new-shift);
-            int cell_crossings_y = std::abs(j_new-j_old);
-            num_segments += cell_crossings_y;
+	    int cell_crossings_y = std::abs(j_new-j_old);
+	    num_segments += cell_crossings_y;
 
 	    // compute cell crossings in Z-direction
 	    const auto k_old = static_cast<int>(z_old-shift);
 	    const auto k_new = static_cast<int>(z_new-shift);
-            int cell_crossings_z = std::abs(k_new-k_old);
-            num_segments += cell_crossings_z;
+	    int cell_crossings_z = std::abs(k_new-k_old);
+	    num_segments += cell_crossings_z;
 
 	    // need to assert that the number of cell crossings in each direction
 	    // is within the range permitted by the number of guard cells
-            if(num_segments > 5 ) {
-                std::cout << "Notice: num_segments = " << num_segments << std::endl;
+	    if (num_segments > 5) {
+		std::cout << "Notice: num_segments = " << num_segments << std::endl;
                 std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
                 std::cout << "Notice: cell_crossings_y = " << cell_crossings_y << std::endl;
                 std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
@@ -1767,41 +1770,39 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	    
 	    // compute the slopes and the initial cell locations in each direction 
 	    // used to find the position at cell crossings.
-	    // depos_order odd  ==> cell crossings defined at cell edges
-	    // depos_order even ==> cell crossings defined at cell centers
 	    double slope_dydx, slope_dzdx;
 	    double slope_dxdy, slope_dzdy;
 	    double slope_dxdz, slope_dydz;
-            double const dxp = x_new - x_old;
-            double const dyp = y_new - y_old;
-            double const dzp = z_new - z_old;
+	    double const dxp = x_new - x_old;
+	    double const dyp = y_new - y_old;
+	    double const dzp = z_new - z_old;
 	    double Xcell, Ycell, Zcell;
 	    int dirX_sign, dirY_sign, dirZ_sign;
 	    if (cell_crossings_x > 0) {
-	        if(x_new < x_old) { dirX_sign = -1; }
+	        if (x_new < x_old) { dirX_sign = -1; }
 	        else { dirX_sign = 1; }
 	        Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
-                slope_dydx = dyp/dxp;
-                slope_dzdx = dzp/dxp;
+		slope_dydx = dyp/dxp;
+		slope_dzdx = dzp/dxp;
 	    }
 	    if (cell_crossings_y > 0) {
-	        if(y_new < y_old) { dirY_sign = -1; }
+	        if (y_new < y_old) { dirY_sign = -1; }
 	        else { dirY_sign = 1; }
 	        Ycell = j_old + shift + 0.5_rt*(1-dirY_sign);
-                slope_dxdy = dxp/dyp;
-                slope_dzdy = dzp/dyp;
+		slope_dxdy = dxp/dyp;
+		slope_dzdy = dzp/dyp;
 	    }
 	    if (cell_crossings_z > 0) {
-	        if(z_new < z_old) { dirZ_sign = -1; }
+	        if (z_new < z_old) { dirZ_sign = -1; }
 	        else { dirZ_sign = 1; }
 	        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
-                slope_dxdz = dxp/dzp;
-                slope_dydz = dyp/dzp;
+		slope_dxdz = dxp/dzp;
+		slope_dydz = dyp/dzp;
 	    }
 
 	    // loop over the number of segments and deposit
-            Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-            Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+	    Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+	    Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
 	    double dxp_seg, dyp_seg, dzp_seg;
 	    double x0_new, y0_new, z0_new;
 	    double x0_old = x_old;
@@ -1810,7 +1811,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 	    
 	    for (int ns=0; ns<num_segments; ns++) {
 		    
-                if(ns==num_segments-1) { // final segment
+		if (ns==num_segments-1) { // final segment
 		    x0_new = x_new;
 		    y0_new = y_new;
 		    z0_new = z_new;
@@ -2085,7 +2086,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 	    // need to assert that the number of cell crossings in each direction
 	    // is within the range permitted by the number of guard cells
-            if(num_segments > 3 ) {
+            if (num_segments > 3) {
                 std::cout << "Notice: num_segments = " << num_segments << std::endl;
                 std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
                 std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
@@ -2093,21 +2094,19 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             
 	    // compute the slopes and the initial cell locations in each direction 
 	    // used to find the position at cell crossings.
-	    // depos_order odd  ==> cell crossings defined at cell edges
-	    // depos_order even ==> cell crossings defined at cell centers
 	    double slope_dzdx, slope_dxdz;
             double const dxp = x_new - x_old;
             double const dzp = z_new - z_old;
 	    double Xcell, Zcell;
 	    int dirX_sign, dirZ_sign;
 	    if (cell_crossings_x > 0) {
-	        if(x_new < x_old) { dirX_sign = -1; }
+	        if (x_new < x_old) { dirX_sign = -1; }
 	        else { dirX_sign = 1; }
 	        Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
                 slope_dzdx = dzp/dxp;
 	    }
 	    if (cell_crossings_z > 0) {
-	        if(z_new < z_old) { dirZ_sign = -1; }
+	        if (z_new < z_old) { dirZ_sign = -1; }
 	        else { dirZ_sign = 1; }
 	        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
                 slope_dxdz = dxp/dzp;
@@ -2123,7 +2122,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 	    for (int ns=0; ns<num_segments; ns++) {
 		    
-                if(ns==num_segments-1) { // final segment
+                if (ns==num_segments-1) { // final segment
 		    x0_new = x_new;
 		    z0_new = z_new;
 		    dxp_seg = x0_new - x0_old;
@@ -2281,19 +2280,17 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 	    // need to assert that the number of cell crossings in each direction
 	    // is within the range permitted by the number of guard cells
-            if(num_segments > 2 ) {
+            if (num_segments > 2) {
                 std::cout << "Notice: num_segments = " << num_segments << std::endl;
                 std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
 	    }
 
 	    // compute the initial cell locations used to find the cell crossings.
-	    // depos_order odd  ==> cell crossings defined at cell edges
-	    // depos_order even ==> cell crossings defined at cell centers
 	    double Zcell;
             double const dzp = z_new - z_old;
 	    int dirZ_sign;
 	    if (cell_crossings_z > 0) {
-	        if(z_new < z_old) { dirZ_sign = -1; }
+	        if (z_new < z_old) { dirZ_sign = -1; }
 	        else { dirZ_sign = 1; }
 	        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
 	    }
@@ -2307,7 +2304,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
 	    for (int ns=0; ns<num_segments; ns++) {
 		    
-                if(ns==num_segments-1) { // final segment
+                if (ns==num_segments-1) { // final segment
 		    z0_new = z_new;
 		    dzp_seg = z0_new - z0_old;
 		}
