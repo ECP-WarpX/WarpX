@@ -527,7 +527,7 @@ WarpX::ReadParameters ()
         const ParmParse pp_algo("algo");
         electromagnetic_solver_id = static_cast<short>(GetAlgorithmInteger(pp_algo, "maxwell_solver"));
     }
-    
+
     {
         const ParmParse pp_warpx("warpx");
 
