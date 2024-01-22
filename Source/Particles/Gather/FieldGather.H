@@ -883,21 +883,21 @@ void doGatherShapeNEsirkepovStencilImplicit (
 /**
  * \brief Energy conserving field gather for thread thread_num for the implicit scheme
  *        This uses the same stencil for the gather that is used for Villasenor current deposition.
- *        The magnetic field (and the out-of-plane current density for D<3) is deposited using direct deposition.
+ *        The magnetic field is deposited using direct deposition.
  *
  * \tparam depos_order              Particle shape order
- * \param xp_n,yp_n,zp_n                  Particle position coordinates at start of step
- * \param xp_nph,yp_nph,zp_nph            Particle position coordinates at half step
- * \param Exp,Eyp,Ezp                     Electric field on particles.
- * \param Bxp,Byp,Bzp                     Magnetic field on particles.
- * \param Ex_arr,Ey_arr,Ez_arr            Array4 of the electric field, either full array or tile.
- * \param Bx_arr,By_arr,Bz_arr            Array4 of the magnetic field, either full array or tile.
- * \param Ex_type,Ey_type,Ez_type         IndexType of the electric field
- * \param Bx_type,By_type,Bz_type         IndexType of the magnetic field
+ * \param xp_n,yp_n,zp_n            Particle position coordinates at start of step
+ * \param xp_nph,yp_nph,zp_nph      Particle position coordinates at half step
+ * \param Exp,Eyp,Ezp               Electric field on particles.
+ * \param Bxp,Byp,Bzp               Magnetic field on particles.
+ * \param Ex_arr,Ey_arr,Ez_arr      Array4 of the electric field, either full array or tile.
+ * \param Bx_arr,By_arr,Bz_arr      Array4 of the magnetic field, either full array or tile.
+ * \param Ex_type,Ey_type,Ez_type   IndexType of the electric field
+ * \param Bx_type,By_type,Bz_type   IndexType of the magnetic field
  * \param dx                        3D cell spacing
  * \param xyzmin                    Physical lower bounds of domain in x, y, z.
  * \param lo                        Index lower bounds of domain.
- * \param n_rz_azimuthal_modes       Number of azimuthal modes when using RZ geometry
+ * \param n_rz_azimuthal_modes      Number of azimuthal modes when using RZ geometry
  */
 template <int depos_order>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -1248,9 +1248,9 @@ void doGatherPicnicShapeN (
 	}
 
 	// compute the segment factors (each equal to dt_seg/dt for nonzero dxp, dyp, or dzp)
-        auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
-        auto seg_factor_y = static_cast<amrex::Real>(dyp == 0._rt ? 1._rt : dyp_seg/dyp);
-        auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
+        const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
+        const auto seg_factor_y = static_cast<amrex::Real>(dyp == 0._rt ? 1._rt : dyp_seg/dyp);
+        const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 
 	// compute cell-based weights using the average segment position
         double sx_cell[depos_order] = {0.};
@@ -1263,18 +1263,7 @@ void doGatherPicnicShapeN (
         const int j0_cell = compute_shape_factor_cell( sy_cell, y0_bar-0.5_rt );
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
 		
-	// compute node-based weights using the old and new segment positions
-        double sx_old_node[depos_order+1] = {0.};
-        double sx_new_node[depos_order+1] = {0.};
-        double sy_old_node[depos_order+1] = {0.};
-        double sy_new_node[depos_order+1] = {0.};
-        double sz_old_node[depos_order+1] = {0.};
-        double sz_new_node[depos_order+1] = {0.};
-	const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
-	const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
-	const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-		
-	if (depos_order>=3) { // have to do cell-based interp a bit different for order >= 3
+	if (depos_order>=3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sx_old_cell[depos_order] = {0.};
             double sx_new_cell[depos_order] = {0.};
@@ -1292,8 +1281,19 @@ void doGatherPicnicShapeN (
 	        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
 	    }
 	}
+	
+	// compute node-based weights using the old and new segment positions
+        double sx_old_node[depos_order+1] = {0.};
+        double sx_new_node[depos_order+1] = {0.};
+        double sy_old_node[depos_order+1] = {0.};
+        double sy_new_node[depos_order+1] = {0.};
+        double sz_old_node[depos_order+1] = {0.};
+        double sz_new_node[depos_order+1] = {0.};
+	const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
+	const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
+	const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
                 
-        // gather Exp for this segment
+        // gather Ex for this segment
         amrex::Real weight;
 	for (int i=0; i<=depos_order-1; i++) {
             for (int j=0; j<=depos_order; j++) {
@@ -1307,7 +1307,7 @@ void doGatherPicnicShapeN (
 	    }
 	}
 
-        // gather Eyp for this segment
+        // gather Ey for this segment
 	for (int i=0; i<=depos_order; i++) {
             for (int j=0; j<=depos_order-1; j++) {
                 for (int k=0; k<=depos_order; k++) {
@@ -1320,7 +1320,7 @@ void doGatherPicnicShapeN (
 	    }
 	}
 
-        // gather Ezp for this segment
+        // gather Ez for this segment
 	for (int i=0; i<=depos_order; i++) {
             for (int j=0; j<=depos_order; j++) {
                 for (int k=0; k<=depos_order-1; k++) {
@@ -1472,8 +1472,8 @@ void doGatherPicnicShapeN (
 	}
 
 	// compute the segment factors (each equal to dt_seg/dt for nonzero dxp, or dzp)
-        auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
-        auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
+        const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
+        const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 
 	// compute cell-based weights using the average segment position
         double sx_cell[depos_order] = {0.};
@@ -1483,15 +1483,7 @@ void doGatherPicnicShapeN (
         const int i0_cell = compute_shape_factor_cell(sx_cell, x0_bar-0.5_rt);
         const int k0_cell = compute_shape_factor_cell(sz_cell, z0_bar-0.5_rt);
 		
-	// compute node-based weights using the old and new segment positions
-        double sx_old_node[depos_order+1] = {0.};
-        double sx_new_node[depos_order+1] = {0.};
-        double sz_old_node[depos_order+1] = {0.};
-        double sz_new_node[depos_order+1] = {0.};
-        const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
-        const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-		
-	if (depos_order>=3) { // have to do cell-based interp a bit different for order >= 3
+	if (depos_order>=3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sx_old_cell[depos_order] = {0.};
             double sx_new_cell[depos_order] = {0.};
@@ -1506,7 +1498,15 @@ void doGatherPicnicShapeN (
 	    }
 	}
 
-        // gather Exp for this segment
+	// compute node-based weights using the old and new segment positions
+        double sx_old_node[depos_order+1] = {0.};
+        double sx_new_node[depos_order+1] = {0.};
+        double sz_old_node[depos_order+1] = {0.};
+        double sz_new_node[depos_order+1] = {0.};
+        const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
+        const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
+		
+        // gather Ex for this segment
 	amrex::Real weight;
         for (int i=0; i<=depos_order-1; i++) {
             for (int k=0; k<=depos_order; k++) {
@@ -1524,7 +1524,7 @@ void doGatherPicnicShapeN (
             }
         }
 
-	// gather out-of-plane Eyp for this segment
+	// gather out-of-plane Ey for this segment
 	const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
         for (int i=0; i<=depos_order; i++) {
             for (int k=0; k<=depos_order; k++) {
@@ -1545,7 +1545,7 @@ void doGatherPicnicShapeN (
             }
         }
        
-        // gather Ezp for this segment	
+        // gather Ez for this segment	
 	for (int i=0; i<=depos_order; i++) {
             for (int k=0; k<=depos_order-1; k++) {
                 weight = sz_cell[k]*(sx_old_node[i] + sx_new_node[i])/2.0_rt*seg_factor_z;
@@ -1668,20 +1668,15 @@ void doGatherPicnicShapeN (
             dzp_seg = z0_new - z0_old;
 	}
 
-	// compute the segment factors (equal to dt_seg/dt for nonzero dzp)
-        auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
+	// compute the segment factor (equal to dt_seg/dt for nonzero dzp)
+        const auto seg_factor = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 		
 	// compute cell-based weights using the average segment position
         double sz_cell[depos_order] = {0.};
         double const z0_bar = (z0_new + z0_old)/2.0_rt;
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
 	
-	// compute node-based weights using the old and new segment position
-        double sz_old_node[depos_order+1] = {0.};
-        double sz_new_node[depos_order+1] = {0.};
-        const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-		
-	if (depos_order>=3) { // have to do cell-based interp a bit different for order >= 3
+	if (depos_order>=3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sz_old_cell[depos_order] = {0.};
             double sz_new_cell[depos_order] = {0.};
@@ -1692,16 +1687,21 @@ void doGatherPicnicShapeN (
 	    }
 	}
 	
-	// gather out-of-plane Exp and Eyp	
+	// compute node-based weights using the old and new segment positions
+        double sz_old_node[depos_order+1] = {0.};
+        double sz_new_node[depos_order+1] = {0.};
+        const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
+		
+	// gather out-of-plane Ex and Ey for this segment
         for (int k=0; k<=depos_order; k++) {
-            auto weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor_z;
+            auto weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor;
             Exp += Ex_arr(lo.x+k0_node+k, 0, 0)*weight;
             Eyp += Ey_arr(lo.x+k0_node+k, 0, 0)*weight;
         }
 	
-	// gather Ezp	
+	// gather Ez for this segment
         for (int k=0; k<=depos_order-1; k++) {
-            auto weight = sz_cell[k]*seg_factor_z;
+            auto weight = sz_cell[k]*seg_factor;
             Ezp += Ez_arr(lo.x+k0_cell+k, 0, 0)*weight;
         }
 		

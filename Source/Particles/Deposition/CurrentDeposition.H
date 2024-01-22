@@ -1539,9 +1539,8 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
  *        conserving deposition. The difference from Esirkepov is that the deposit is done segment 
  *        by segment, where the segments are determined by cell crossings. In general, this results 
  *        in a tighter stencil. The implementation is valid for an arbitrary number of cell crossings.
- *        For D<3, the out-of-plane current is deposited using direct deposition.
  *
- * \tparam depos_order  deposition order
+ * \param depos_order  deposition order
  * \param GetPosition  A functor for returning the particle position.
  * \param wp           Pointer to array of particle weights.
  * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
@@ -1549,14 +1548,14 @@ void doChargeConservingDepositionShapeNImplicit (const amrex::ParticleReal * con
                        required to have the charge of each macroparticle
                        since q is a scalar. For non-ionizable species,
                        ion_lev is a null pointer.
- * \param Jx_arr,Jy_arr,Jz_arr Array4 of current density, either full array or tile.
- * \param np_to_deposit Number of particles for which current is deposited.
- * \param dt           Time step for particle level
- * \param dx           3D cell size
- * \param xyzmin       Physical lower bounds of domain.
- * \param lo           Index lower bounds of domain.
- * \param q            species charge.
- * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
+ * \param Jx_arr,Jy_arr,Jz_arr  Array4 of current density, either full array or tile.
+ * \param np_to_deposit         Number of particles for which current is deposited.
+ * \param dt                    Time step for particle level
+ * \param dx                    3D cell size
+ * \param xyzmin                Physical lower bounds of domain.
+ * \param lo                    Index lower bounds of domain.
+ * \param q                     species charge.
+ * \param n_rz_azimuthal_modes  Number of azimuthal modes when using RZ geometry.
  * \param cost Pointer to (load balancing) cost corresponding to box where present particles deposit current.
  * \param load_balance_costs_update_algo Selected method for updating load balance costs.
  */
@@ -1974,9 +1973,9 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		}
 
 		// compute the segment factors (each equal to dt_seg/dt for nonzero dxp, dyp, or dzp)
-                auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
-                auto seg_factor_y = static_cast<amrex::Real>(dyp == 0._rt ? 1._rt : dyp_seg/dyp);
-                auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
+                const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
+                const auto seg_factor_y = static_cast<amrex::Real>(dyp == 0._rt ? 1._rt : dyp_seg/dyp);
+                const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 
 		// compute cell-based weights using the average segment position
                 double sx_cell[depos_order] = {0.};
@@ -1989,18 +1988,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 const int j0_cell = compute_shape_factor_cell( sy_cell, y0_bar-0.5_rt );
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
 		
-		// compute node-based weights using the old and new segment positions
-                double sx_old_node[depos_order+1] = {0.};
-                double sx_new_node[depos_order+1] = {0.};
-                double sy_old_node[depos_order+1] = {0.};
-                double sy_new_node[depos_order+1] = {0.};
-                double sz_old_node[depos_order+1] = {0.};
-                double sz_new_node[depos_order+1] = {0.};
-		const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
-		const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
-		const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-		
-		if (depos_order>=3) { // have to do cell-based interp a bit different for order >= 3
+		if (depos_order>=3) { // higher-order correction to the cell-based weights
                     Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sx_old_cell[depos_order] = {0.};
                     double sx_new_cell[depos_order] = {0.};
@@ -2019,6 +2007,17 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		    }
 		}
                 
+		// compute node-based weights using the old and new segment positions
+                double sx_old_node[depos_order+1] = {0.};
+                double sx_new_node[depos_order+1] = {0.};
+                double sy_old_node[depos_order+1] = {0.};
+                double sy_new_node[depos_order+1] = {0.};
+                double sz_old_node[depos_order+1] = {0.};
+                double sz_new_node[depos_order+1] = {0.};
+		const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
+		const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
+		const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
+		
 		// deposit Jx for this segment
 	        amrex::Real this_Jx;
 		for (int i=0; i<=depos_order-1; i++) {
@@ -2168,8 +2167,8 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		}
 
 		// compute the segment factors (each equal to dt_seg/dt for nonzero dxp, or dzp)
-                auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
-                auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
+                const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
+                const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 
 		// compute cell-based weights using the average segment position
                 double sx_cell[depos_order] = {0.};
@@ -2179,15 +2178,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 const int i0_cell = compute_shape_factor_cell( sx_cell, x0_bar-0.5_rt );
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
 		
-		// compute node-based weights using the old and new segment positions
-                double sx_old_node[depos_order+1] = {0.};
-                double sx_new_node[depos_order+1] = {0.};
-                double sz_old_node[depos_order+1] = {0.};
-                double sz_new_node[depos_order+1] = {0.};
-		const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
-		const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-                
-		if (depos_order>=3) { // have to do cell-based interp a bit different for order >= 3
+		if (depos_order>=3) { // higher-order correction to the cell-based weights
                     Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sx_old_cell[depos_order] = {0.};
                     double sx_new_cell[depos_order] = {0.};
@@ -2202,6 +2193,14 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		    }
 		}
 
+		// compute node-based weights using the old and new segment positions
+                double sx_old_node[depos_order+1] = {0.};
+                double sx_new_node[depos_order+1] = {0.};
+                double sz_old_node[depos_order+1] = {0.};
+                double sz_new_node[depos_order+1] = {0.};
+		const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
+		const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
+                
 		// deposit Jx for this segment
 	        amrex::Real this_Jx;
 		for (int i=0; i<=depos_order-1; i++) {
@@ -2221,7 +2220,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                     }
                 }
 
-	        // deposit out-of-plane Jy current density
+	        // deposit out-of-plane Jy for this segment
 		const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
 		amrex::Real this_Jy;
 	        for (int i=0; i<=depos_order; i++) {
@@ -2318,20 +2317,15 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		    dzp_seg = z0_new - z0_old;
 		}
 
-		// compute the segment factors (equal to dt_seg/dt for nonzero dzp)
-                auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
+		// compute the segment factor (equal to dt_seg/dt for nonzero dzp)
+                const auto seg_factor = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 		
 		// compute cell-based weights using the average segment position
                 double sz_cell[depos_order] = {0.};
                 double const z0_bar = (z0_new + z0_old)/2.0_rt;
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
 	
-		// compute node-based weights using the old and new segment position
-                double sz_old_node[depos_order+1] = {0.};
-                double sz_new_node[depos_order+1] = {0.};
-                const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-		
-		if (depos_order>=3) { // have to do cell-based interp a bit different for order >= 3
+		if (depos_order>=3) { // higher-order correction to the cell-based weights
                     Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sz_old_cell[depos_order] = {0.};
                     double sz_new_cell[depos_order] = {0.};
@@ -2342,16 +2336,21 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 		    }
 		}
 		
+		// compute node-based weights using the old and new segment positions
+                double sz_old_node[depos_order+1] = {0.};
+                double sz_new_node[depos_order+1] = {0.};
+                const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
+		
 		// deposit out-of-plane Jx and Jy for this segment
                 for (int k=0; k<=depos_order; k++) {
-                    const amrex::Real weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor_z;
+                    const amrex::Real weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor;
                     amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k0_node+k, 0, 0), wqx*weight);
                     amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k0_node+k, 0, 0), wqy*weight);
                 }
 
 		// deposit Jz for this segment
                 for (int k=0; k<=depos_order-1; k++) {
-                    const amrex::Real this_Jz = wqz*sz_cell[k]*seg_factor_z;
+                    const amrex::Real this_Jz = wqz*sz_cell[k]*seg_factor;
                     amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+k0_cell+k, 0, 0), this_Jz);
                 }
 
