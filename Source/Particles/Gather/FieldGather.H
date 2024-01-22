@@ -1006,7 +1006,7 @@ void doGatherPicnicShapeN (
     // 1) Determine the number of segments. 
     // 2) Loop over segments and gather electric field.
     // 3) Gather magnetic field.
-	    
+            
     // cell crossings are defined at cell edges if depos_order is odd
     // cell crossings are defined at cell centers if depos_order is even
 
@@ -1085,175 +1085,175 @@ void doGatherPicnicShapeN (
     double z0_old = z_old;
 
     for (int ns=0; ns<num_segments; ns++) {
-	    
+            
         if (ns==num_segments-1) { // final segment
-	    x0_new = x_new;
-	    y0_new = y_new;
-	    z0_new = z_new;
-	    dxp_seg = x0_new - x0_old;
-	    dyp_seg = y0_new - y0_old;
-	    dzp_seg = z0_new - z0_old;
-	}
-	else if (cell_crossings_x==0) {
+            x0_new = x_new;
+            y0_new = y_new;
+            z0_new = z_new;
+            dxp_seg = x0_new - x0_old;
+            dyp_seg = y0_new - y0_old;
+            dzp_seg = z0_new - z0_old;
+        }
+        else if (cell_crossings_x==0) {
 
-  	    if (cell_crossings_y==0) { // only crossings in z-dir remain
+              if (cell_crossings_y==0) { // only crossings in z-dir remain
                 Zcell = Zcell + dirZ_sign;
                 z0_new = Zcell;
                 dzp_seg = z0_new - z0_old;
                 dxp_seg = slope_dxdz*dzp_seg;
                 dyp_seg = slope_dydz*dzp_seg;
-	        x0_new = x0_old + dxp_seg;
-	        y0_new = y0_old + dyp_seg;
-	        cell_crossings_z -= 1;
-	    }
-	    else if (cell_crossings_z==0) { // only crossings in y-dir remain
+                x0_new = x0_old + dxp_seg;
+                y0_new = y0_old + dyp_seg;
+                cell_crossings_z -= 1;
+            }
+            else if (cell_crossings_z==0) { // only crossings in y-dir remain
                 Ycell = Ycell + dirY_sign;
                 y0_new = Ycell;
                 dyp_seg = y0_new - y0_old;
                 dxp_seg = slope_dxdy*dyp_seg;
                 dzp_seg = slope_dzdy*dyp_seg;
-	        x0_new = x0_old + dxp_seg;
-	        z0_new = z0_old + dzp_seg;
-	        cell_crossings_y -= 1;
-	    }
-	    else { // crossings in y-dir and z-dir remain
+                x0_new = x0_old + dxp_seg;
+                z0_new = z0_old + dzp_seg;
+                cell_crossings_y -= 1;
+            }
+            else { // crossings in y-dir and z-dir remain
                 y0_new = Ycell + dirY_sign;
                 z0_new = Zcell + dirZ_sign;
-	        dyp_seg = y0_new - y0_old;
-	        dzp_seg = z0_new - z0_old;
-		    
-	        double const dyp_seg2 = slope_dydz*dzp_seg;
-	        if (std::abs(dyp_seg)<std::abs(dyp_seg2)) { // y-dir crossing
-		    dxp_seg = slope_dxdy*dyp_seg;
-		    dzp_seg = slope_dzdy*dyp_seg;
-		    x0_new = x0_old + dxp_seg;
-		    z0_new = z0_old + dzp_seg;
-		    Ycell = y0_new;
-		    cell_crossings_y -= 1;
-	        }
-	        else { // z-dir crossing
-		    dxp_seg = slope_dxdz*dzp_seg;
-		    dyp_seg = slope_dydz*dzp_seg;
-		    x0_new = x0_old + dxp_seg;
-		    y0_new = y0_old + dyp_seg;
-		    Zcell = z0_new;
-		    cell_crossings_z -= 1;
-	        }
-	    }
+                dyp_seg = y0_new - y0_old;
+                dzp_seg = z0_new - z0_old;
+                    
+                double const dyp_seg2 = slope_dydz*dzp_seg;
+                if (std::abs(dyp_seg)<std::abs(dyp_seg2)) { // y-dir crossing
+                    dxp_seg = slope_dxdy*dyp_seg;
+                    dzp_seg = slope_dzdy*dyp_seg;
+                    x0_new = x0_old + dxp_seg;
+                    z0_new = z0_old + dzp_seg;
+                    Ycell = y0_new;
+                    cell_crossings_y -= 1;
+                }
+                else { // z-dir crossing
+                    dxp_seg = slope_dxdz*dzp_seg;
+                    dyp_seg = slope_dydz*dzp_seg;
+                    x0_new = x0_old + dxp_seg;
+                    y0_new = y0_old + dyp_seg;
+                    Zcell = z0_new;
+                    cell_crossings_z -= 1;
+                }
+            }
 
-	}
-	else if (cell_crossings_y==0) {
+        }
+        else if (cell_crossings_y==0) {
 
-	    if (cell_crossings_z==0) { // only crossings in x-dir remain
+            if (cell_crossings_z==0) { // only crossings in x-dir remain
                 Xcell = Xcell + dirX_sign;
                 x0_new = Xcell;
                 dxp_seg = x0_new - x0_old;
                 dyp_seg = slope_dydx*dxp_seg;
                 dzp_seg = slope_dzdx*dxp_seg;
-	        y0_new = y0_old + dyp_seg;
-	        z0_new = z0_old + dzp_seg;
-	        cell_crossings_x -= 1;
-	    }
-	    else { // crossings in x-dir and z-dir remain
+                y0_new = y0_old + dyp_seg;
+                z0_new = z0_old + dzp_seg;
+                cell_crossings_x -= 1;
+            }
+            else { // crossings in x-dir and z-dir remain
                 x0_new = Xcell + dirX_sign;
                 z0_new = Zcell + dirZ_sign;
-	        dxp_seg = x0_new - x0_old;
-	        dzp_seg = z0_new - z0_old;
-		    
-	        double const dxp_seg2 = slope_dxdz*dzp_seg;
-	        if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
-		    dyp_seg = slope_dydx*dxp_seg;
-		    dzp_seg = slope_dzdx*dxp_seg;
-		    y0_new = y0_old + dyp_seg;
-		    z0_new = z0_old + dzp_seg;
-		    Xcell = x0_new;
-		    cell_crossings_x -= 1;
-	        }
-	        else { // z-dir crossing
-		    dxp_seg = slope_dxdz*dzp_seg;
-		    dyp_seg = slope_dydz*dzp_seg;
-		    x0_new = x0_old + dxp_seg;
-		    y0_new = y0_old + dyp_seg;
-		    Zcell = z0_new;
-		    cell_crossings_z -= 1;
-	        }
-	    }
+                dxp_seg = x0_new - x0_old;
+                dzp_seg = z0_new - z0_old;
+                    
+                double const dxp_seg2 = slope_dxdz*dzp_seg;
+                if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+                    dyp_seg = slope_dydx*dxp_seg;
+                    dzp_seg = slope_dzdx*dxp_seg;
+                    y0_new = y0_old + dyp_seg;
+                    z0_new = z0_old + dzp_seg;
+                    Xcell = x0_new;
+                    cell_crossings_x -= 1;
+                }
+                else { // z-dir crossing
+                    dxp_seg = slope_dxdz*dzp_seg;
+                    dyp_seg = slope_dydz*dzp_seg;
+                    x0_new = x0_old + dxp_seg;
+                    y0_new = y0_old + dyp_seg;
+                    Zcell = z0_new;
+                    cell_crossings_z -= 1;
+                }
+            }
 
-	}
-	else if (cell_crossings_z==0) { // crossings in x-dir and y-dir remain
+        }
+        else if (cell_crossings_z==0) { // crossings in x-dir and y-dir remain
 
             x0_new = Xcell + dirX_sign;
             y0_new = Ycell + dirY_sign;
-	    dxp_seg = x0_new - x0_old;
-	    dyp_seg = y0_new - y0_old;
-		    
-	    double const dxp_seg2 = slope_dxdy*dyp_seg;
-	    if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
-		dyp_seg = slope_dydx*dxp_seg;
-		dzp_seg = slope_dzdx*dxp_seg;
-		y0_new = y0_old + dyp_seg;
-		z0_new = z0_old + dzp_seg;
-		Xcell = x0_new;
-		cell_crossings_x -= 1;
-	    }
-	    else { // y-dir crossing
-		dxp_seg = slope_dxdy*dyp_seg;
-		dzp_seg = slope_dzdy*dyp_seg;
-		x0_new = x0_old + dxp_seg;
-		z0_new = z0_old + dzp_seg;
-		Ycell = y0_new;
-		cell_crossings_y -= 1;
-	    }
+            dxp_seg = x0_new - x0_old;
+            dyp_seg = y0_new - y0_old;
+                    
+            double const dxp_seg2 = slope_dxdy*dyp_seg;
+            if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+                dyp_seg = slope_dydx*dxp_seg;
+                dzp_seg = slope_dzdx*dxp_seg;
+                y0_new = y0_old + dyp_seg;
+                z0_new = z0_old + dzp_seg;
+                Xcell = x0_new;
+                cell_crossings_x -= 1;
+            }
+            else { // y-dir crossing
+                dxp_seg = slope_dxdy*dyp_seg;
+                dzp_seg = slope_dzdy*dyp_seg;
+                x0_new = x0_old + dxp_seg;
+                z0_new = z0_old + dzp_seg;
+                Ycell = y0_new;
+                cell_crossings_y -= 1;
+            }
 
-	}
-	else { // crossings in x-dir, y-dir, and z-dir
+        }
+        else { // crossings in x-dir, y-dir, and z-dir
 
-    	    x0_new = Xcell + dirX_sign;
+                x0_new = Xcell + dirX_sign;
             y0_new = Ycell + dirY_sign;
             z0_new = Zcell + dirZ_sign;
-	    dxp_seg = x0_new - x0_old;
-	    dyp_seg = y0_new - y0_old;
-	    dzp_seg = z0_new - z0_old;
-		    
-	    double const dxp_seg2 = slope_dxdz*dzp_seg;
-	    double const dxp_seg3 = slope_dxdy*dyp_seg;
-	    double const dyp_seg2 = slope_dydx*dxp_seg;
-	    double const dyp_seg3 = slope_dydz*dzp_seg;
-	    if (std::abs(dxp_seg)<std::abs(dxp_seg2) &&
-		std::abs(dxp_seg)<std::abs(dxp_seg3)) { // x-dir crossing
-	        dyp_seg = slope_dydx*dxp_seg;
-		dzp_seg = slope_dzdx*dxp_seg;
-		y0_new = y0_old + dyp_seg;
-		z0_new = z0_old + dzp_seg;
-		Xcell = x0_new;
-		cell_crossings_x -= 1;
-	    }
-	    else if (std::abs(dyp_seg)<std::abs(dyp_seg2) &&
-	             std::abs(dyp_seg)<std::abs(dyp_seg3)) { // y-dir crossing
-	        dxp_seg = slope_dxdy*dyp_seg;
-		dzp_seg = slope_dzdy*dyp_seg;
-		x0_new = x0_old + dxp_seg;
-		z0_new = z0_old + dzp_seg;
-		Ycell = y0_new;
-		cell_crossings_y -= 1;
-	    }
-	    else { // z-dir crossing
-		dxp_seg = slope_dxdz*dzp_seg;
-		dyp_seg = slope_dydz*dzp_seg;
-		x0_new = x0_old + dxp_seg;
-		y0_new = y0_old + dyp_seg;
-		Zcell = z0_new;
-		cell_crossings_z -= 1;
-	    }
+            dxp_seg = x0_new - x0_old;
+            dyp_seg = y0_new - y0_old;
+            dzp_seg = z0_new - z0_old;
+                    
+            double const dxp_seg2 = slope_dxdz*dzp_seg;
+            double const dxp_seg3 = slope_dxdy*dyp_seg;
+            double const dyp_seg2 = slope_dydx*dxp_seg;
+            double const dyp_seg3 = slope_dydz*dzp_seg;
+            if (std::abs(dxp_seg)<std::abs(dxp_seg2) &&
+                std::abs(dxp_seg)<std::abs(dxp_seg3)) { // x-dir crossing
+                dyp_seg = slope_dydx*dxp_seg;
+                dzp_seg = slope_dzdx*dxp_seg;
+                y0_new = y0_old + dyp_seg;
+                z0_new = z0_old + dzp_seg;
+                Xcell = x0_new;
+                cell_crossings_x -= 1;
+            }
+            else if (std::abs(dyp_seg)<std::abs(dyp_seg2) &&
+                     std::abs(dyp_seg)<std::abs(dyp_seg3)) { // y-dir crossing
+                dxp_seg = slope_dxdy*dyp_seg;
+                dzp_seg = slope_dzdy*dyp_seg;
+                x0_new = x0_old + dxp_seg;
+                z0_new = z0_old + dzp_seg;
+                Ycell = y0_new;
+                cell_crossings_y -= 1;
+            }
+            else { // z-dir crossing
+                dxp_seg = slope_dxdz*dzp_seg;
+                dyp_seg = slope_dydz*dzp_seg;
+                x0_new = x0_old + dxp_seg;
+                y0_new = y0_old + dyp_seg;
+                Zcell = z0_new;
+                cell_crossings_z -= 1;
+            }
 
-	}
+        }
 
-	// compute the segment factors (each equal to dt_seg/dt for nonzero dxp, dyp, or dzp)
+        // compute the segment factors (each equal to dt_seg/dt for nonzero dxp, dyp, or dzp)
         const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
         const auto seg_factor_y = static_cast<amrex::Real>(dyp == 0._rt ? 1._rt : dyp_seg/dyp);
         const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 
-	// compute cell-based weights using the average segment position
+        // compute cell-based weights using the average segment position
         double sx_cell[depos_order] = {0.};
         double sy_cell[depos_order] = {0.};
         double sz_cell[depos_order] = {0.};
@@ -1263,8 +1263,8 @@ void doGatherPicnicShapeN (
         const int i0_cell = compute_shape_factor_cell( sx_cell, x0_bar-0.5_rt );
         const int j0_cell = compute_shape_factor_cell( sy_cell, y0_bar-0.5_rt );
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
-		
-	if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
+                
+        if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sx_old_cell[depos_order] = {0.};
             double sx_new_cell[depos_order] = {0.};
@@ -1276,70 +1276,70 @@ void doGatherPicnicShapeN (
             const int j0_cell_2 = compute_shape_factors_cell( sy_old_cell, sy_new_cell, y0_old-0.5_rt, y0_new-0.5_rt );
             const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
             ignore_unused(i0_cell_2, j0_cell_2, k0_cell_2);
-	    for (int m=0; m<depos_order; m++) {
-	        sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
-	        sy_cell[m] = (4.0_rt*sy_cell[m] + sy_old_cell[m] + sy_new_cell[m])/6.0_rt;
-	        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
-	    }
-	}
-	
-	// compute node-based weights using the old and new segment positions
+            for (int m=0; m<depos_order; m++) {
+                sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
+                sy_cell[m] = (4.0_rt*sy_cell[m] + sy_old_cell[m] + sy_new_cell[m])/6.0_rt;
+                sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
+            }
+        }
+        
+        // compute node-based weights using the old and new segment positions
         double sx_old_node[depos_order+1] = {0.};
         double sx_new_node[depos_order+1] = {0.};
         double sy_old_node[depos_order+1] = {0.};
         double sy_new_node[depos_order+1] = {0.};
         double sz_old_node[depos_order+1] = {0.};
         double sz_new_node[depos_order+1] = {0.};
-	const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
-	const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
-	const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
+        const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
+        const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
+        const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
                 
         // gather Ex for this segment
         amrex::Real weight;
-	for (int i=0; i<=depos_order-1; i++) {
+        for (int i=0; i<=depos_order-1; i++) {
             for (int j=0; j<=depos_order; j++) {
                 for (int k=0; k<=depos_order; k++) {
                     weight = sx_cell[i]*( sy_old_node[j]*sz_old_node[k]*one_third
-				        + sy_old_node[j]*sz_new_node[k]*one_sixth
-				        + sy_new_node[j]*sz_old_node[k]*one_sixth
-				        + sy_new_node[j]*sz_new_node[k]*one_third )*seg_factor_x;
+                                        + sy_old_node[j]*sz_new_node[k]*one_sixth
+                                        + sy_new_node[j]*sz_old_node[k]*one_sixth
+                                        + sy_new_node[j]*sz_new_node[k]*one_third )*seg_factor_x;
                     Exp += Ex_arr(lo.x+i0_cell+i, lo.y+j0_node+j, lo.z+k0_node+k)*weight;
-		}
-	    }
-	}
+                }
+            }
+        }
 
         // gather Ey for this segment
-	for (int i=0; i<=depos_order; i++) {
+        for (int i=0; i<=depos_order; i++) {
             for (int j=0; j<=depos_order-1; j++) {
                 for (int k=0; k<=depos_order; k++) {
                     weight = sy_cell[j]*( sx_old_node[i]*sz_old_node[k]*one_third
-				        + sx_old_node[i]*sz_new_node[k]*one_sixth
-				        + sx_new_node[i]*sz_old_node[k]*one_sixth
-				        + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
+                                        + sx_old_node[i]*sz_new_node[k]*one_sixth
+                                        + sx_new_node[i]*sz_old_node[k]*one_sixth
+                                        + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
                     Eyp += Ey_arr(lo.x+i0_node+i, lo.y+j0_cell+j, lo.z+k0_node+k)*weight;
-		}
-	    }
-	}
+                }
+            }
+        }
 
         // gather Ez for this segment
-	for (int i=0; i<=depos_order; i++) {
+        for (int i=0; i<=depos_order; i++) {
             for (int j=0; j<=depos_order; j++) {
                 for (int k=0; k<=depos_order-1; k++) {
                     weight = sz_cell[k]*( sx_old_node[i]*sy_old_node[j]*one_third
-				        + sx_old_node[i]*sy_new_node[j]*one_sixth
-				        + sx_new_node[i]*sy_old_node[j]*one_sixth
-				        + sx_new_node[i]*sy_new_node[j]*one_third )*seg_factor_z;
+                                        + sx_old_node[i]*sy_new_node[j]*one_sixth
+                                        + sx_new_node[i]*sy_old_node[j]*one_sixth
+                                        + sx_new_node[i]*sy_new_node[j]*one_third )*seg_factor_z;
                     Ezp += Ez_arr(lo.x+i0_node+i, lo.y+j0_node+j, lo.z+k0_cell+k)*weight;
-		}
-	    }
-	}
-		
-	// update old segment values
+                }
+            }
+        }
+                
+        // update old segment values
         if (ns<num_segments-1) {
             x0_old = x0_new;
             y0_old = y0_new;
             z0_old = z0_new;
-	}
+        }
 
     } // end loop over segments
 
@@ -1365,13 +1365,13 @@ void doGatherPicnicShapeN (
             for (int k=0; k<=depos_order_B; k++) {
                 weight = sx_bar_node[i]*sy_bar_cell[j]*sz_bar_cell[k];
                 Bxp += Bx_arr(lo.x+i_bar_node+i, lo.y+j_bar_cell+j, lo.z+k_bar_cell+k)*weight;
-		//
+                //
                 weight = sx_bar_cell[i]*sy_bar_node[j]*sz_bar_cell[k];
                 Byp += By_arr(lo.x+i_bar_cell+i, lo.y+j_bar_node+j, lo.z+k_bar_cell+k)*weight;
-		//
+                //
                 weight = sx_bar_cell[i]*sy_bar_cell[j]*sz_bar_node[k];
                 Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+j_bar_cell+j, lo.z+k_bar_node+k)*weight;
-	    }
+            }
         }
     }
 
@@ -1413,7 +1413,7 @@ void doGatherPicnicShapeN (
     if (cell_crossings_z > 0) {
         if (z_new < z_old) { dirZ_sign = -1; }
         else { dirZ_sign = 1; }
-	Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
+        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
         slope_dxdz = dxp/dzp;
     }
 
@@ -1426,63 +1426,63 @@ void doGatherPicnicShapeN (
     double z0_old = z_old;
 
     for (int ns=0; ns<num_segments; ns++) {
-		    
+                    
         if (ns==num_segments-1) { // final segment
             x0_new = x_new;
             z0_new = z_new;
-	    dxp_seg = x0_new - x0_old;
-	    dzp_seg = z0_new - z0_old;
+            dxp_seg = x0_new - x0_old;
+            dzp_seg = z0_new - z0_old;
         }
-	else if (cell_crossings_x==0) { // only crossings in z-dir remain
+        else if (cell_crossings_x==0) { // only crossings in z-dir remain
             Zcell = Zcell + dirZ_sign;
             z0_new = Zcell;
             dzp_seg = z0_new - z0_old;
             dxp_seg = slope_dxdz*dzp_seg;
-	    x0_new = x0_old + dxp_seg;
+            x0_new = x0_old + dxp_seg;
             cell_crossings_z -= 1;
-	}
-	else if (cell_crossings_z==0) { // only crossings in x-dir remain
+        }
+        else if (cell_crossings_z==0) { // only crossings in x-dir remain
             Xcell = Xcell + dirX_sign;
             x0_new = Xcell;
             dxp_seg = x0_new - x0_old;
             dzp_seg = slope_dzdx*dxp_seg;
-	    z0_new = z0_old + dzp_seg;
+            z0_new = z0_old + dzp_seg;
             cell_crossings_x -= 1;
-	}
-	else { // crossings in x-dir and z-dir remain
+        }
+        else { // crossings in x-dir and z-dir remain
             x0_new = Xcell + dirX_sign;
             z0_new = Zcell + dirZ_sign;
             dxp_seg = x0_new - x0_old;
             dzp_seg = z0_new - z0_old;
-		    
+                    
             double const dxp_seg2 = slope_dxdz*dzp_seg;
             if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
-	        dzp_seg = slope_dzdx*dxp_seg;
-		z0_new = z0_old + dzp_seg;
-		Xcell = x0_new;
-		cell_crossings_x -= 1;
-	    }
-	    else { // z-dir crossing
-	        dxp_seg = slope_dxdz*dzp_seg;
-		x0_new = x0_old + dxp_seg;
-		Zcell = z0_new;
-		cell_crossings_z -= 1;
+                dzp_seg = slope_dzdx*dxp_seg;
+                z0_new = z0_old + dzp_seg;
+                Xcell = x0_new;
+                cell_crossings_x -= 1;
             }
-	}
+            else { // z-dir crossing
+                dxp_seg = slope_dxdz*dzp_seg;
+                x0_new = x0_old + dxp_seg;
+                Zcell = z0_new;
+                cell_crossings_z -= 1;
+            }
+        }
 
-	// compute the segment factors (each equal to dt_seg/dt for nonzero dxp, or dzp)
+        // compute the segment factors (each equal to dt_seg/dt for nonzero dxp, or dzp)
         const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
         const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 
-	// compute cell-based weights using the average segment position
+        // compute cell-based weights using the average segment position
         double sx_cell[depos_order] = {0.};
         double sz_cell[depos_order] = {0.};
         double const x0_bar = (x0_new + x0_old)/2.0_rt;
         double const z0_bar = (z0_new + z0_old)/2.0_rt;
         const int i0_cell = compute_shape_factor_cell(sx_cell, x0_bar-0.5_rt);
         const int k0_cell = compute_shape_factor_cell(sz_cell, z0_bar-0.5_rt);
-		
-	if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
+                
+        if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sx_old_cell[depos_order] = {0.};
             double sx_new_cell[depos_order] = {0.};
@@ -1491,22 +1491,22 @@ void doGatherPicnicShapeN (
             const int i0_cell_2 = compute_shape_factors_cell( sx_old_cell, sx_new_cell, x0_old-0.5_rt, x0_new-0.5_rt );
             const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
             ignore_unused(i0_cell_2, k0_cell_2);
-	    for (int m=0; m<depos_order; m++) {
-	        sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
-	        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
-	    }
-	}
+            for (int m=0; m<depos_order; m++) {
+                sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
+                sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
+            }
+        }
 
-	// compute node-based weights using the old and new segment positions
+        // compute node-based weights using the old and new segment positions
         double sx_old_node[depos_order+1] = {0.};
         double sx_new_node[depos_order+1] = {0.};
         double sz_old_node[depos_order+1] = {0.};
         double sz_new_node[depos_order+1] = {0.};
         const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-		
+                
         // gather Ex for this segment
-	amrex::Real weight;
+        amrex::Real weight;
         for (int i=0; i<=depos_order-1; i++) {
             for (int k=0; k<=depos_order; k++) {
                 weight = sx_cell[i]*(sz_old_node[k] + sz_new_node[k])/2.0_rt*seg_factor_x;
@@ -1516,36 +1516,36 @@ void doGatherPicnicShapeN (
                 for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                     const auto dEx = (+ Ex_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 2*imode-1)*xy_mid.real()
                                       - Ex_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 2*imode)*xy_mid.imag());
-		    Exp += weight*dEx;
+                    Exp += weight*dEx;
                     xy_mid = xy_mid*xy_mid0;
                 }
 #endif
             }
         }
 
-	// gather out-of-plane Ey for this segment
-	const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
+        // gather out-of-plane Ey for this segment
+        const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
         for (int i=0; i<=depos_order; i++) {
             for (int k=0; k<=depos_order; k++) {
                 weight = ( sx_old_node[i]*sz_old_node[k]*one_third
-		       +   sx_old_node[i]*sz_new_node[k]*one_sixth
-		       +   sx_new_node[i]*sz_old_node[k]*one_sixth
-		       +   sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
+                       +   sx_old_node[i]*sz_new_node[k]*one_sixth
+                       +   sx_new_node[i]*sz_old_node[k]*one_sixth
+                       +   sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
                 Eyp += Ey_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 0)*weight;
 #if defined(WARPX_DIM_RZ)
                 Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
                 for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                     const auto dEy = (+ Ey_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 2*imode-1)*xy_mid.real()
                                       - Ey_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 2*imode)*xy_mid.imag());
-		    Eyp += weight*dEy;
+                    Eyp += weight*dEy;
                     xy_mid = xy_mid*xy_mid0;
                 }
 #endif
             }
         }
        
-        // gather Ez for this segment	
-	for (int i=0; i<=depos_order; i++) {
+        // gather Ez for this segment        
+        for (int i=0; i<=depos_order; i++) {
             for (int k=0; k<=depos_order-1; k++) {
                 weight = sz_cell[k]*(sx_old_node[i] + sx_new_node[i])/2.0_rt*seg_factor_z;
                 Ezp += Ez_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 0)*weight;
@@ -1554,18 +1554,18 @@ void doGatherPicnicShapeN (
                 for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                     const auto dEz = (+ Ez_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 2*imode-1)*xy_mid.real()
                                       - Ez_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 2*imode)*xy_mid.imag());
-		    Ezp += weight*dEz;
+                    Ezp += weight*dEz;
                     xy_mid = xy_mid*xy_mid0;
                 }
 #endif
             }
         }
 
-	// update old segment values
+        // update old segment values
         if (ns<num_segments-1) {
-	    x0_old = x0_new;
-	    z0_old = z0_new;
-	}
+            x0_old = x0_new;
+            z0_old = z0_new;
+        }
 
     }
 
@@ -1586,10 +1586,10 @@ void doGatherPicnicShapeN (
             auto weight_Bz = sx_bar_cell[i]*sz_bar_node[k];
             Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 0)*weight_Bz;
             //
-	    auto weight_Bx = sx_bar_node[i]*sz_bar_cell[k];
+            auto weight_Bx = sx_bar_node[i]*sz_bar_cell[k];
             Bxp += Bx_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 0)*weight_Bx;
             //
-	    auto weight_By = sx_bar_cell[i]*sz_bar_cell[k];
+            auto weight_By = sx_bar_cell[i]*sz_bar_cell[k];
             Byp += By_arr(lo.x+i_bar_cell+i, lo.y+k_bar_cell+k, 0, 0)*weight_By;
 #if defined(WARPX_DIM_RZ)
             Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
@@ -1635,7 +1635,7 @@ void doGatherPicnicShapeN (
         std::cout << "Notice: num_segments = " << num_segments << std::endl;
         std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
     }
-	    
+            
     // compute the initial cell locations used to find the cell crossings.
     double Zcell;
     double const dzp = z_new - z_old;
@@ -1643,7 +1643,7 @@ void doGatherPicnicShapeN (
     if (cell_crossings_z > 0) {
         if (z_new < z_old) { dirZ_sign = -1; }
         else { dirZ_sign = 1; }
-	Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
+        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
     }
 
     // loop over the number of segments and deposit
@@ -1654,58 +1654,58 @@ void doGatherPicnicShapeN (
     double z0_old = z_old;
 
     for (int ns=0; ns<num_segments; ns++) {
-		    
+                    
         if (ns==num_segments-1) { // final segment
-	    z0_new = z_new;
-	    dzp_seg = z0_new - z0_old;
-	}
-	else { 
+            z0_new = z_new;
+            dzp_seg = z0_new - z0_old;
+        }
+        else { 
             Zcell = Zcell + dirZ_sign;
             z0_new = Zcell;
             dzp_seg = z0_new - z0_old;
-	}
+        }
 
-	// compute the segment factor (equal to dt_seg/dt for nonzero dzp)
+        // compute the segment factor (equal to dt_seg/dt for nonzero dzp)
         const auto seg_factor = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
-		
-	// compute cell-based weights using the average segment position
+                
+        // compute cell-based weights using the average segment position
         double sz_cell[depos_order] = {0.};
         double const z0_bar = (z0_new + z0_old)/2.0_rt;
         const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
-	
-	if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
+        
+        if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
             Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
             double sz_old_cell[depos_order] = {0.};
             double sz_new_cell[depos_order] = {0.};
             const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
             ignore_unused(k0_cell_2);
-	    for (int m=0; m<depos_order; m++) {
-	        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
-	    }
-	}
-	
-	// compute node-based weights using the old and new segment positions
+            for (int m=0; m<depos_order; m++) {
+                sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
+            }
+        }
+        
+        // compute node-based weights using the old and new segment positions
         double sz_old_node[depos_order+1] = {0.};
         double sz_new_node[depos_order+1] = {0.};
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-		
-	// gather out-of-plane Ex and Ey for this segment
+                
+        // gather out-of-plane Ex and Ey for this segment
         for (int k=0; k<=depos_order; k++) {
             auto weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor;
             Exp += Ex_arr(lo.x+k0_node+k, 0, 0)*weight;
             Eyp += Ey_arr(lo.x+k0_node+k, 0, 0)*weight;
         }
-	
-	// gather Ez for this segment
+        
+        // gather Ez for this segment
         for (int k=0; k<=depos_order-1; k++) {
             auto weight = sz_cell[k]*seg_factor;
             Ezp += Ez_arr(lo.x+k0_cell+k, 0, 0)*weight;
         }
-		
-	// update old segment values
+                
+        // update old segment values
         if (ns<num_segments-1) {
-	    z0_old = z0_new;
-	}
+            z0_old = z0_new;
+        }
 
     }
 
@@ -1721,7 +1721,7 @@ void doGatherPicnicShapeN (
     for (int k=0; k<=depos_order_B; k++) {
         weight = sz_bar_node[k];
         Bzp += Bz_arr(lo.x+k_bar_node+k, 0, 0)*weight;
-	//
+        //
         weight = sz_bar_cell[k];
         Bxp += Bx_arr(lo.x+k_bar_cell+k, 0, 0)*weight;
         Byp += By_arr(lo.x+k_bar_cell+k, 0, 0)*weight;
@@ -1984,7 +1984,7 @@ void doGatherShapeNImplicit (
                                     ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                     ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                     dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
-	}
+        }
     } 
     else if (depos_type==1) { // CurrentDepositionAlgo::Direct
         if (nox == 1) {

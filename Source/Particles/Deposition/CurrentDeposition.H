@@ -1723,262 +1723,262 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             double const z_new = (zp_np1 - zmin)*dzi;
             double const z_old = (zp_n[ip] - zmin)*dzi;
             amrex::Real const vz = (zp_np1 - zp_n[ip])/dt;
-	    
-	    // Define velocity kernals to deposit
-	    amrex::Real const wqx = wq*vx*invvol;
+            
+            // Define velocity kernals to deposit
+            amrex::Real const wqx = wq*vx*invvol;
             amrex::Real const wqy = wq*vy*invvol;
             amrex::Real const wqz = wq*vz*invvol;
 
-	    // 1) Determine the number of segments. 
-	    // 2) Loop over segments and deposit current.
+            // 1) Determine the number of segments. 
+            // 2) Loop over segments and deposit current.
 
-	    // cell crossings are defined at cell edges if depos_order is odd
-	    // cell crossings are defined at cell centers if depos_order is even
-	    
-	    int num_segments = 1;
-	    amrex::Real shift = 0.0_rt;
-	    if ( (depos_order % 2) == 0 ) { shift = 0.5_rt; }
+            // cell crossings are defined at cell edges if depos_order is odd
+            // cell crossings are defined at cell centers if depos_order is even
+            
+            int num_segments = 1;
+            amrex::Real shift = 0.0_rt;
+            if ( (depos_order % 2) == 0 ) { shift = 0.5_rt; }
 
 #if defined(WARPX_DIM_3D)
            
-	    // compute cell crossings in X-direction
-	    const auto i_old = static_cast<int>(x_old-shift);
-	    const auto i_new = static_cast<int>(x_new-shift);
-	    int cell_crossings_x = std::abs(i_new-i_old);
-	    num_segments += cell_crossings_x;
-	    
-	    // compute cell crossings in Y-direction
-	    const auto j_old = static_cast<int>(y_old-shift);
-	    const auto j_new = static_cast<int>(y_new-shift);
-	    int cell_crossings_y = std::abs(j_new-j_old);
-	    num_segments += cell_crossings_y;
+            // compute cell crossings in X-direction
+            const auto i_old = static_cast<int>(x_old-shift);
+            const auto i_new = static_cast<int>(x_new-shift);
+            int cell_crossings_x = std::abs(i_new-i_old);
+            num_segments += cell_crossings_x;
+            
+            // compute cell crossings in Y-direction
+            const auto j_old = static_cast<int>(y_old-shift);
+            const auto j_new = static_cast<int>(y_new-shift);
+            int cell_crossings_y = std::abs(j_new-j_old);
+            num_segments += cell_crossings_y;
 
-	    // compute cell crossings in Z-direction
-	    const auto k_old = static_cast<int>(z_old-shift);
-	    const auto k_new = static_cast<int>(z_new-shift);
-	    int cell_crossings_z = std::abs(k_new-k_old);
-	    num_segments += cell_crossings_z;
+            // compute cell crossings in Z-direction
+            const auto k_old = static_cast<int>(z_old-shift);
+            const auto k_new = static_cast<int>(z_new-shift);
+            int cell_crossings_z = std::abs(k_new-k_old);
+            num_segments += cell_crossings_z;
 
-	    // need to assert that the number of cell crossings in each direction
-	    // is within the range permitted by the number of guard cells
-	    if (num_segments > 5) {
-		std::cout << "Notice: num_segments = " << num_segments << std::endl;
+            // need to assert that the number of cell crossings in each direction
+            // is within the range permitted by the number of guard cells
+            if (num_segments > 5) {
+                std::cout << "Notice: num_segments = " << num_segments << std::endl;
                 std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
                 std::cout << "Notice: cell_crossings_y = " << cell_crossings_y << std::endl;
                 std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
-	    }
-	    
-	    // compute the slopes and the initial cell locations in each direction 
-	    // used to find the position at cell crossings.
-	    double slope_dydx, slope_dzdx;
-	    double slope_dxdy, slope_dzdy;
-	    double slope_dxdz, slope_dydz;
-	    double const dxp = x_new - x_old;
-	    double const dyp = y_new - y_old;
-	    double const dzp = z_new - z_old;
-	    double Xcell, Ycell, Zcell;
-	    int dirX_sign, dirY_sign, dirZ_sign;
-	    if (cell_crossings_x > 0) {
-	        if (x_new < x_old) { dirX_sign = -1; }
-	        else { dirX_sign = 1; }
-	        Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
-		slope_dydx = dyp/dxp;
-		slope_dzdx = dzp/dxp;
-	    }
-	    if (cell_crossings_y > 0) {
-	        if (y_new < y_old) { dirY_sign = -1; }
-	        else { dirY_sign = 1; }
-	        Ycell = j_old + shift + 0.5_rt*(1-dirY_sign);
-		slope_dxdy = dxp/dyp;
-		slope_dzdy = dzp/dyp;
-	    }
-	    if (cell_crossings_z > 0) {
-	        if (z_new < z_old) { dirZ_sign = -1; }
-	        else { dirZ_sign = 1; }
-	        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
-		slope_dxdz = dxp/dzp;
-		slope_dydz = dyp/dzp;
-	    }
+            }
+            
+            // compute the slopes and the initial cell locations in each direction 
+            // used to find the position at cell crossings.
+            double slope_dydx, slope_dzdx;
+            double slope_dxdy, slope_dzdy;
+            double slope_dxdz, slope_dydz;
+            double const dxp = x_new - x_old;
+            double const dyp = y_new - y_old;
+            double const dzp = z_new - z_old;
+            double Xcell, Ycell, Zcell;
+            int dirX_sign, dirY_sign, dirZ_sign;
+            if (cell_crossings_x > 0) {
+                if (x_new < x_old) { dirX_sign = -1; }
+                else { dirX_sign = 1; }
+                Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
+                slope_dydx = dyp/dxp;
+                slope_dzdx = dzp/dxp;
+            }
+            if (cell_crossings_y > 0) {
+                if (y_new < y_old) { dirY_sign = -1; }
+                else { dirY_sign = 1; }
+                Ycell = j_old + shift + 0.5_rt*(1-dirY_sign);
+                slope_dxdy = dxp/dyp;
+                slope_dzdy = dzp/dyp;
+            }
+            if (cell_crossings_z > 0) {
+                if (z_new < z_old) { dirZ_sign = -1; }
+                else { dirZ_sign = 1; }
+                Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
+                slope_dxdz = dxp/dzp;
+                slope_dydz = dyp/dzp;
+            }
 
-	    // loop over the number of segments and deposit
-	    Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-	    Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
-	    double dxp_seg, dyp_seg, dzp_seg;
-	    double x0_new, y0_new, z0_new;
-	    double x0_old = x_old;
-	    double y0_old = y_old;
-	    double z0_old = z_old;
-	    
-	    for (int ns=0; ns<num_segments; ns++) {
-		    
-		if (ns==num_segments-1) { // final segment
-		    x0_new = x_new;
-		    y0_new = y_new;
-		    z0_new = z_new;
-		    dxp_seg = x0_new - x0_old;
-		    dyp_seg = y0_new - y0_old;
-		    dzp_seg = z0_new - z0_old;
-		}
-		else if (cell_crossings_x==0) {
+            // loop over the number of segments and deposit
+            Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+            Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+            double dxp_seg, dyp_seg, dzp_seg;
+            double x0_new, y0_new, z0_new;
+            double x0_old = x_old;
+            double y0_old = y_old;
+            double z0_old = z_old;
+            
+            for (int ns=0; ns<num_segments; ns++) {
+                    
+                if (ns==num_segments-1) { // final segment
+                    x0_new = x_new;
+                    y0_new = y_new;
+                    z0_new = z_new;
+                    dxp_seg = x0_new - x0_old;
+                    dyp_seg = y0_new - y0_old;
+                    dzp_seg = z0_new - z0_old;
+                }
+                else if (cell_crossings_x==0) {
 
-  		    if (cell_crossings_y==0) { // only crossings in z-dir remain
+                      if (cell_crossings_y==0) { // only crossings in z-dir remain
                         Zcell = Zcell + dirZ_sign;
                         z0_new = Zcell;
                         dzp_seg = z0_new - z0_old;
                         dxp_seg = slope_dxdz*dzp_seg;
                         dyp_seg = slope_dydz*dzp_seg;
-	                x0_new = x0_old + dxp_seg;
-	                y0_new = y0_old + dyp_seg;
-		        cell_crossings_z -= 1;
-		    }
-		    else if (cell_crossings_z==0) { // only crossings in y-dir remain
+                        x0_new = x0_old + dxp_seg;
+                        y0_new = y0_old + dyp_seg;
+                        cell_crossings_z -= 1;
+                    }
+                    else if (cell_crossings_z==0) { // only crossings in y-dir remain
                         Ycell = Ycell + dirY_sign;
                         y0_new = Ycell;
                         dyp_seg = y0_new - y0_old;
                         dxp_seg = slope_dxdy*dyp_seg;
                         dzp_seg = slope_dzdy*dyp_seg;
-	                x0_new = x0_old + dxp_seg;
-	                z0_new = z0_old + dzp_seg;
-		        cell_crossings_y -= 1;
-		    }
-		    else { // crossings in y-dir and z-dir remain
+                        x0_new = x0_old + dxp_seg;
+                        z0_new = z0_old + dzp_seg;
+                        cell_crossings_y -= 1;
+                    }
+                    else { // crossings in y-dir and z-dir remain
                         y0_new = Ycell + dirY_sign;
                         z0_new = Zcell + dirZ_sign;
-		        dyp_seg = y0_new - y0_old;
-		        dzp_seg = z0_new - z0_old;
-		    
-		        double const dyp_seg2 = slope_dydz*dzp_seg;
-		        if (std::abs(dyp_seg)<std::abs(dyp_seg2)) { // y-dir crossing
-			    dxp_seg = slope_dxdy*dyp_seg;
-			    dzp_seg = slope_dzdy*dyp_seg;
-			    x0_new = x0_old + dxp_seg;
-			    z0_new = z0_old + dzp_seg;
-			    Ycell = y0_new;
-			    cell_crossings_y -= 1;
-		        }
-		        else { // z-dir crossing
-			    dxp_seg = slope_dxdz*dzp_seg;
-			    dyp_seg = slope_dydz*dzp_seg;
-			    x0_new = x0_old + dxp_seg;
-			    y0_new = y0_old + dyp_seg;
-			    Zcell = z0_new;
-			    cell_crossings_z -= 1;
-		        }
-		    }
+                        dyp_seg = y0_new - y0_old;
+                        dzp_seg = z0_new - z0_old;
+                    
+                        double const dyp_seg2 = slope_dydz*dzp_seg;
+                        if (std::abs(dyp_seg)<std::abs(dyp_seg2)) { // y-dir crossing
+                            dxp_seg = slope_dxdy*dyp_seg;
+                            dzp_seg = slope_dzdy*dyp_seg;
+                            x0_new = x0_old + dxp_seg;
+                            z0_new = z0_old + dzp_seg;
+                            Ycell = y0_new;
+                            cell_crossings_y -= 1;
+                        }
+                        else { // z-dir crossing
+                            dxp_seg = slope_dxdz*dzp_seg;
+                            dyp_seg = slope_dydz*dzp_seg;
+                            x0_new = x0_old + dxp_seg;
+                            y0_new = y0_old + dyp_seg;
+                            Zcell = z0_new;
+                            cell_crossings_z -= 1;
+                        }
+                    }
 
-		}
-		else if (cell_crossings_y==0) {
+                }
+                else if (cell_crossings_y==0) {
 
-		    if (cell_crossings_z==0) { // only crossings in x-dir remain
+                    if (cell_crossings_z==0) { // only crossings in x-dir remain
                         Xcell = Xcell + dirX_sign;
                         x0_new = Xcell;
                         dxp_seg = x0_new - x0_old;
                         dyp_seg = slope_dydx*dxp_seg;
                         dzp_seg = slope_dzdx*dxp_seg;
-	                y0_new = y0_old + dyp_seg;
-	                z0_new = z0_old + dzp_seg;
-		        cell_crossings_x -= 1;
-		    }
-		    else { // crossings in x-dir and z-dir remain
+                        y0_new = y0_old + dyp_seg;
+                        z0_new = z0_old + dzp_seg;
+                        cell_crossings_x -= 1;
+                    }
+                    else { // crossings in x-dir and z-dir remain
                         x0_new = Xcell + dirX_sign;
                         z0_new = Zcell + dirZ_sign;
-		        dxp_seg = x0_new - x0_old;
-		        dzp_seg = z0_new - z0_old;
-		    
-		        double const dxp_seg2 = slope_dxdz*dzp_seg;
-		        if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
-			    dyp_seg = slope_dydx*dxp_seg;
-			    dzp_seg = slope_dzdx*dxp_seg;
-			    y0_new = y0_old + dyp_seg;
-			    z0_new = z0_old + dzp_seg;
-			    Xcell = x0_new;
-			    cell_crossings_x -= 1;
-		        }
-		        else { // z-dir crossing
-			    dxp_seg = slope_dxdz*dzp_seg;
-			    dyp_seg = slope_dydz*dzp_seg;
-			    x0_new = x0_old + dxp_seg;
-			    y0_new = y0_old + dyp_seg;
-			    Zcell = z0_new;
-			    cell_crossings_z -= 1;
-		        }
-		    }
-
-		}
-		else if (cell_crossings_z==0) { // crossings in x-dir and y-dir remain
-
-   		    x0_new = Xcell + dirX_sign;
-                    y0_new = Ycell + dirY_sign;
-		    dxp_seg = x0_new - x0_old;
-		    dyp_seg = y0_new - y0_old;
-		    
-		    double const dxp_seg2 = slope_dxdy*dyp_seg;
-		    if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
-			dyp_seg = slope_dydx*dxp_seg;
-			dzp_seg = slope_dzdx*dxp_seg;
-			y0_new = y0_old + dyp_seg;
-			z0_new = z0_old + dzp_seg;
-			Xcell = x0_new;
-			cell_crossings_x -= 1;
-		    }
-		    else { // y-dir crossing
-			dxp_seg = slope_dxdy*dyp_seg;
-			dzp_seg = slope_dzdy*dyp_seg;
-			x0_new = x0_old + dxp_seg;
-			z0_new = z0_old + dzp_seg;
-			Ycell = y0_new;
-			cell_crossings_y -= 1;
-		    }
-
-		}
-	        else { // crossings in x-dir, y-dir, and z-dir remain
+                        dxp_seg = x0_new - x0_old;
+                        dzp_seg = z0_new - z0_old;
                     
-		    x0_new = Xcell + dirX_sign;
+                        double const dxp_seg2 = slope_dxdz*dzp_seg;
+                        if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+                            dyp_seg = slope_dydx*dxp_seg;
+                            dzp_seg = slope_dzdx*dxp_seg;
+                            y0_new = y0_old + dyp_seg;
+                            z0_new = z0_old + dzp_seg;
+                            Xcell = x0_new;
+                            cell_crossings_x -= 1;
+                        }
+                        else { // z-dir crossing
+                            dxp_seg = slope_dxdz*dzp_seg;
+                            dyp_seg = slope_dydz*dzp_seg;
+                            x0_new = x0_old + dxp_seg;
+                            y0_new = y0_old + dyp_seg;
+                            Zcell = z0_new;
+                            cell_crossings_z -= 1;
+                        }
+                    }
+
+                }
+                else if (cell_crossings_z==0) { // crossings in x-dir and y-dir remain
+
+                       x0_new = Xcell + dirX_sign;
+                    y0_new = Ycell + dirY_sign;
+                    dxp_seg = x0_new - x0_old;
+                    dyp_seg = y0_new - y0_old;
+                    
+                    double const dxp_seg2 = slope_dxdy*dyp_seg;
+                    if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+                        dyp_seg = slope_dydx*dxp_seg;
+                        dzp_seg = slope_dzdx*dxp_seg;
+                        y0_new = y0_old + dyp_seg;
+                        z0_new = z0_old + dzp_seg;
+                        Xcell = x0_new;
+                        cell_crossings_x -= 1;
+                    }
+                    else { // y-dir crossing
+                        dxp_seg = slope_dxdy*dyp_seg;
+                        dzp_seg = slope_dzdy*dyp_seg;
+                        x0_new = x0_old + dxp_seg;
+                        z0_new = z0_old + dzp_seg;
+                        Ycell = y0_new;
+                        cell_crossings_y -= 1;
+                    }
+
+                }
+                else { // crossings in x-dir, y-dir, and z-dir remain
+                    
+                    x0_new = Xcell + dirX_sign;
                     y0_new = Ycell + dirY_sign;
                     z0_new = Zcell + dirZ_sign;
-	            dxp_seg = x0_new - x0_old;
-	            dyp_seg = y0_new - y0_old;
-	            dzp_seg = z0_new - z0_old;
-		    
-	            double const dxp_seg2 = slope_dxdz*dzp_seg;
-	            double const dxp_seg3 = slope_dxdy*dyp_seg;
-	            double const dyp_seg2 = slope_dydx*dxp_seg;
-	            double const dyp_seg3 = slope_dydz*dzp_seg;
-	            if (std::abs(dxp_seg)<std::abs(dxp_seg2) &&
-			std::abs(dxp_seg)<std::abs(dxp_seg3)) { // x-dir crossing
-	    	        dyp_seg = slope_dydx*dxp_seg;
-			dzp_seg = slope_dzdx*dxp_seg;
-			y0_new = y0_old + dyp_seg;
-			z0_new = z0_old + dzp_seg;
-			Xcell = x0_new;
-			cell_crossings_x -= 1;
-		    }
-		    else if (std::abs(dyp_seg)<std::abs(dyp_seg2) &&
-			     std::abs(dyp_seg)<std::abs(dyp_seg3)) { // y-dir crossing
-	    	        dxp_seg = slope_dxdy*dyp_seg;
-			dzp_seg = slope_dzdy*dyp_seg;
-			x0_new = x0_old + dxp_seg;
-			z0_new = z0_old + dzp_seg;
-			Ycell = y0_new;
-			cell_crossings_y -= 1;
-		    }
-		    else { // z-dir crossing
-			dxp_seg = slope_dxdz*dzp_seg;
-			dyp_seg = slope_dydz*dzp_seg;
-			x0_new = x0_old + dxp_seg;
-			y0_new = y0_old + dyp_seg;
-			Zcell = z0_new;
-			cell_crossings_z -= 1;
-		    }
+                    dxp_seg = x0_new - x0_old;
+                    dyp_seg = y0_new - y0_old;
+                    dzp_seg = z0_new - z0_old;
+                    
+                    double const dxp_seg2 = slope_dxdz*dzp_seg;
+                    double const dxp_seg3 = slope_dxdy*dyp_seg;
+                    double const dyp_seg2 = slope_dydx*dxp_seg;
+                    double const dyp_seg3 = slope_dydz*dzp_seg;
+                    if (std::abs(dxp_seg)<std::abs(dxp_seg2) &&
+                        std::abs(dxp_seg)<std::abs(dxp_seg3)) { // x-dir crossing
+                            dyp_seg = slope_dydx*dxp_seg;
+                        dzp_seg = slope_dzdx*dxp_seg;
+                        y0_new = y0_old + dyp_seg;
+                        z0_new = z0_old + dzp_seg;
+                        Xcell = x0_new;
+                        cell_crossings_x -= 1;
+                    }
+                    else if (std::abs(dyp_seg)<std::abs(dyp_seg2) &&
+                             std::abs(dyp_seg)<std::abs(dyp_seg3)) { // y-dir crossing
+                            dxp_seg = slope_dxdy*dyp_seg;
+                        dzp_seg = slope_dzdy*dyp_seg;
+                        x0_new = x0_old + dxp_seg;
+                        z0_new = z0_old + dzp_seg;
+                        Ycell = y0_new;
+                        cell_crossings_y -= 1;
+                    }
+                    else { // z-dir crossing
+                        dxp_seg = slope_dxdz*dzp_seg;
+                        dyp_seg = slope_dydz*dzp_seg;
+                        x0_new = x0_old + dxp_seg;
+                        y0_new = y0_old + dyp_seg;
+                        Zcell = z0_new;
+                        cell_crossings_z -= 1;
+                    }
 
-		}
+                }
 
-		// compute the segment factors (each equal to dt_seg/dt for nonzero dxp, dyp, or dzp)
+                // compute the segment factors (each equal to dt_seg/dt for nonzero dxp, dyp, or dzp)
                 const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
                 const auto seg_factor_y = static_cast<amrex::Real>(dyp == 0._rt ? 1._rt : dyp_seg/dyp);
                 const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 
-		// compute cell-based weights using the average segment position
+                // compute cell-based weights using the average segment position
                 double sx_cell[depos_order] = {0.};
                 double sy_cell[depos_order] = {0.};
                 double sz_cell[depos_order] = {0.};
@@ -1988,8 +1988,8 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 const int i0_cell = compute_shape_factor_cell( sx_cell, x0_bar-0.5_rt );
                 const int j0_cell = compute_shape_factor_cell( sy_cell, y0_bar-0.5_rt );
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
-		
-		if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
+                
+                if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
                     Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sx_old_cell[depos_order] = {0.};
                     double sx_new_cell[depos_order] = {0.};
@@ -2001,183 +2001,183 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                     const int j0_cell_2 = compute_shape_factors_cell( sy_old_cell, sy_new_cell, y0_old-0.5_rt, y0_new-0.5_rt );
                     const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
                     ignore_unused(i0_cell_2, j0_cell_2, k0_cell_2);
-		    for (int m=0; m<depos_order; m++) {
-		        sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
-		        sy_cell[m] = (4.0_rt*sy_cell[m] + sy_old_cell[m] + sy_new_cell[m])/6.0_rt;
-		        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
-		    }
-		}
+                    for (int m=0; m<depos_order; m++) {
+                        sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
+                        sy_cell[m] = (4.0_rt*sy_cell[m] + sy_old_cell[m] + sy_new_cell[m])/6.0_rt;
+                        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
+                    }
+                }
                 
-		// compute node-based weights using the old and new segment positions
+                // compute node-based weights using the old and new segment positions
                 double sx_old_node[depos_order+1] = {0.};
                 double sx_new_node[depos_order+1] = {0.};
                 double sy_old_node[depos_order+1] = {0.};
                 double sy_new_node[depos_order+1] = {0.};
                 double sz_old_node[depos_order+1] = {0.};
                 double sz_new_node[depos_order+1] = {0.};
-		const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
-		const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
-		const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-		
-		// deposit Jx for this segment
-	        amrex::Real this_Jx;
-		for (int i=0; i<=depos_order-1; i++) {
+                const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
+                const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
+                const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
+                
+                // deposit Jx for this segment
+                amrex::Real this_Jx;
+                for (int i=0; i<=depos_order-1; i++) {
                     for (int j=0; j<=depos_order; j++) {
                         for (int k=0; k<=depos_order; k++) {
                             this_Jx = wqx*sx_cell[i]*( sy_old_node[j]*sz_old_node[k]*one_third
-					             + sy_old_node[j]*sz_new_node[k]*one_sixth
-					             + sy_new_node[j]*sz_old_node[k]*one_sixth
-					             + sy_new_node[j]*sz_new_node[k]*one_third )*seg_factor_x;
+                                                     + sy_old_node[j]*sz_new_node[k]*one_sixth
+                                                     + sy_new_node[j]*sz_old_node[k]*one_sixth
+                                                     + sy_new_node[j]*sz_new_node[k]*one_third )*seg_factor_x;
                             amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+j0_node+j, lo.z+k0_node+k), this_Jx);
                         }
-		    }
+                    }
                 }
-		
-		// deposit Jy for this segment
-	        amrex::Real this_Jy;
-		for (int i=0; i<=depos_order; i++) {
+                
+                // deposit Jy for this segment
+                amrex::Real this_Jy;
+                for (int i=0; i<=depos_order; i++) {
                     for (int j=0; j<=depos_order-1; j++) {
                         for (int k=0; k<=depos_order; k++) {
                             this_Jy = wqy*sy_cell[j]*( sx_old_node[i]*sz_old_node[k]*one_third
-					             + sx_old_node[i]*sz_new_node[k]*one_sixth
-					             + sx_new_node[i]*sz_old_node[k]*one_sixth
-					             + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
+                                                     + sx_old_node[i]*sz_new_node[k]*one_sixth
+                                                     + sx_new_node[i]*sz_old_node[k]*one_sixth
+                                                     + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
                             amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+j0_cell+j, lo.z+k0_node+k), this_Jy);
                         }
-		    }
+                    }
                 }
-		
-		// deposit Jz for this segment
-	        amrex::Real this_Jz;
-		for (int i=0; i<=depos_order; i++) {
+                
+                // deposit Jz for this segment
+                amrex::Real this_Jz;
+                for (int i=0; i<=depos_order; i++) {
                     for (int j=0; j<=depos_order; j++) {
                         for (int k=0; k<=depos_order-1; k++) {
                             this_Jz = wqz*sz_cell[k]*( sx_old_node[i]*sy_old_node[j]*one_third
-					             + sx_old_node[i]*sy_new_node[j]*one_sixth
-					             + sx_new_node[i]*sy_old_node[j]*one_sixth
-					             + sx_new_node[i]*sy_new_node[j]*one_third )*seg_factor_z;
+                                                     + sx_old_node[i]*sy_new_node[j]*one_sixth
+                                                     + sx_new_node[i]*sy_old_node[j]*one_sixth
+                                                     + sx_new_node[i]*sy_new_node[j]*one_third )*seg_factor_z;
                             amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+j0_node+j, lo.z+k0_cell+k), this_Jz);
                         }
-		    }
+                    }
                 }
 
-		// update old segment values
+                // update old segment values
                 if (ns<num_segments-1) {
                     x0_old = x0_new;
                     y0_old = y0_new;
                     z0_old = z0_new;
-		}
+                }
 
-	    } // end loop over segments
+            } // end loop over segments
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
            
-	    // compute cell crossings in X-direction
-	    const auto i_old = static_cast<int>(x_old-shift);
-	    const auto i_new = static_cast<int>(x_new-shift);
+            // compute cell crossings in X-direction
+            const auto i_old = static_cast<int>(x_old-shift);
+            const auto i_new = static_cast<int>(x_new-shift);
             int cell_crossings_x = std::abs(i_new-i_old);
             num_segments += cell_crossings_x;
 
-	    // compute cell crossings in Z-direction
-	    const auto k_old = static_cast<int>(z_old-shift);
-	    const auto k_new = static_cast<int>(z_new-shift);
+            // compute cell crossings in Z-direction
+            const auto k_old = static_cast<int>(z_old-shift);
+            const auto k_new = static_cast<int>(z_new-shift);
             int cell_crossings_z = std::abs(k_new-k_old);
             num_segments += cell_crossings_z;
 
-	    // need to assert that the number of cell crossings in each direction
-	    // is within the range permitted by the number of guard cells
+            // need to assert that the number of cell crossings in each direction
+            // is within the range permitted by the number of guard cells
             if (num_segments > 3) {
                 std::cout << "Notice: num_segments = " << num_segments << std::endl;
                 std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
                 std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
-	    }
+            }
             
-	    // compute the slopes and the initial cell locations in each direction 
-	    // used to find the position at cell crossings.
-	    double slope_dzdx, slope_dxdz;
+            // compute the slopes and the initial cell locations in each direction 
+            // used to find the position at cell crossings.
+            double slope_dzdx, slope_dxdz;
             double const dxp = x_new - x_old;
             double const dzp = z_new - z_old;
-	    double Xcell, Zcell;
-	    int dirX_sign, dirZ_sign;
-	    if (cell_crossings_x > 0) {
-	        if (x_new < x_old) { dirX_sign = -1; }
-	        else { dirX_sign = 1; }
-	        Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
+            double Xcell, Zcell;
+            int dirX_sign, dirZ_sign;
+            if (cell_crossings_x > 0) {
+                if (x_new < x_old) { dirX_sign = -1; }
+                else { dirX_sign = 1; }
+                Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
                 slope_dzdx = dzp/dxp;
-	    }
-	    if (cell_crossings_z > 0) {
-	        if (z_new < z_old) { dirZ_sign = -1; }
-	        else { dirZ_sign = 1; }
-	        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
+            }
+            if (cell_crossings_z > 0) {
+                if (z_new < z_old) { dirZ_sign = -1; }
+                else { dirZ_sign = 1; }
+                Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
                 slope_dxdz = dxp/dzp;
-	    }
+            }
 
-	    // loop over the number of segments and deposit
+            // loop over the number of segments and deposit
             Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
             Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
-	    double dxp_seg, dzp_seg;
-	    double x0_new, z0_new;
+            double dxp_seg, dzp_seg;
+            double x0_new, z0_new;
             double x0_old = x_old;
             double z0_old = z_old;
 
-	    for (int ns=0; ns<num_segments; ns++) {
-		    
+            for (int ns=0; ns<num_segments; ns++) {
+                    
                 if (ns==num_segments-1) { // final segment
-		    x0_new = x_new;
-		    z0_new = z_new;
-		    dxp_seg = x0_new - x0_old;
-		    dzp_seg = z0_new - z0_old;
-		}
-		else if (cell_crossings_x==0) { // only crossings in z-dir remain
+                    x0_new = x_new;
+                    z0_new = z_new;
+                    dxp_seg = x0_new - x0_old;
+                    dzp_seg = z0_new - z0_old;
+                }
+                else if (cell_crossings_x==0) { // only crossings in z-dir remain
                     Zcell = Zcell + dirZ_sign;
                     z0_new = Zcell;
                     dzp_seg = z0_new - z0_old;
                     dxp_seg = slope_dxdz*dzp_seg;
-	            x0_new = x0_old + dxp_seg;
-		    cell_crossings_z -= 1;
-		}
-		else if (cell_crossings_z==0) { // only crossings in x-dir remain
+                    x0_new = x0_old + dxp_seg;
+                    cell_crossings_z -= 1;
+                }
+                else if (cell_crossings_z==0) { // only crossings in x-dir remain
                     Xcell = Xcell + dirX_sign;
                     x0_new = Xcell;
                     dxp_seg = x0_new - x0_old;
                     dzp_seg = slope_dzdx*dxp_seg;
-	            z0_new = z0_old + dzp_seg;
-		    cell_crossings_x -= 1;
-		}
-		else { // crossings in x-dir and z-dir
+                    z0_new = z0_old + dzp_seg;
+                    cell_crossings_x -= 1;
+                }
+                else { // crossings in x-dir and z-dir
                     x0_new = Xcell + dirX_sign;
                     z0_new = Zcell + dirZ_sign;
-		    dxp_seg = x0_new - x0_old;
-		    dzp_seg = z0_new - z0_old;
-		    
-		    double const dxp_seg2 = slope_dxdz*dzp_seg;
-		    if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
-			dzp_seg = slope_dzdx*dxp_seg;
-			z0_new = z0_old + dzp_seg;
-			Xcell = x0_new;
-			cell_crossings_x -= 1;
-		    }
-		    else { // z-dir crossing
-			dxp_seg = slope_dxdz*dzp_seg;
-			x0_new = x0_old + dxp_seg;
-			Zcell = z0_new;
-			cell_crossings_z -= 1;
-		    }
-		}
+                    dxp_seg = x0_new - x0_old;
+                    dzp_seg = z0_new - z0_old;
+                    
+                    double const dxp_seg2 = slope_dxdz*dzp_seg;
+                    if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
+                        dzp_seg = slope_dzdx*dxp_seg;
+                        z0_new = z0_old + dzp_seg;
+                        Xcell = x0_new;
+                        cell_crossings_x -= 1;
+                    }
+                    else { // z-dir crossing
+                        dxp_seg = slope_dxdz*dzp_seg;
+                        x0_new = x0_old + dxp_seg;
+                        Zcell = z0_new;
+                        cell_crossings_z -= 1;
+                    }
+                }
 
-		// compute the segment factors (each equal to dt_seg/dt for nonzero dxp, or dzp)
+                // compute the segment factors (each equal to dt_seg/dt for nonzero dxp, or dzp)
                 const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
                 const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
 
-		// compute cell-based weights using the average segment position
+                // compute cell-based weights using the average segment position
                 double sx_cell[depos_order] = {0.};
                 double sz_cell[depos_order] = {0.};
                 double const x0_bar = (x0_new + x0_old)/2.0_rt;
                 double const z0_bar = (z0_new + z0_old)/2.0_rt;
                 const int i0_cell = compute_shape_factor_cell( sx_cell, x0_bar-0.5_rt );
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
-		
-		if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
+                
+                if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
                     Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sx_old_cell[depos_order] = {0.};
                     double sx_new_cell[depos_order] = {0.};
@@ -2186,23 +2186,23 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                     const int i0_cell_2 = compute_shape_factors_cell( sx_old_cell, sx_new_cell, x0_old-0.5_rt, x0_new-0.5_rt );
                     const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
                     ignore_unused(i0_cell_2, k0_cell_2);
-		    for (int m=0; m<depos_order; m++) {
-		        sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
-		        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
-		    }
-		}
+                    for (int m=0; m<depos_order; m++) {
+                        sx_cell[m] = (4.0_rt*sx_cell[m] + sx_old_cell[m] + sx_new_cell[m])/6.0_rt;
+                        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
+                    }
+                }
 
-		// compute node-based weights using the old and new segment positions
+                // compute node-based weights using the old and new segment positions
                 double sx_old_node[depos_order+1] = {0.};
                 double sx_new_node[depos_order+1] = {0.};
                 double sz_old_node[depos_order+1] = {0.};
                 double sz_new_node[depos_order+1] = {0.};
-		const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
-		const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
+                const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
+                const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
                 
-		// deposit Jx for this segment
-	        amrex::Real this_Jx;
-		for (int i=0; i<=depos_order-1; i++) {
+                // deposit Jx for this segment
+                amrex::Real this_Jx;
+                for (int i=0; i<=depos_order-1; i++) {
                     for (int k=0; k<=depos_order; k++) {
                         this_Jx = wqx*sx_cell[i]*(sz_old_node[k] + sz_new_node[k])/2.0_rt*seg_factor_x;
                         amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 0), this_Jx);
@@ -2219,15 +2219,15 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                     }
                 }
 
-	        // deposit out-of-plane Jy for this segment
-		const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
-		amrex::Real this_Jy;
-	        for (int i=0; i<=depos_order; i++) {
+                // deposit out-of-plane Jy for this segment
+                const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
+                amrex::Real this_Jy;
+                for (int i=0; i<=depos_order; i++) {
                     for (int k=0; k<=depos_order; k++) {
                         this_Jy = wqy*( sx_old_node[i]*sz_old_node[k]*one_third
-			              + sx_old_node[i]*sz_new_node[k]*one_sixth
-			              + sx_new_node[i]*sz_old_node[k]*one_sixth
-			              + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
+                                      + sx_old_node[i]*sz_new_node[k]*one_sixth
+                                      + sx_new_node[i]*sz_old_node[k]*one_sixth
+                                      + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
                         amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 0), this_Jy);
 #if defined(WARPX_DIM_RZ)
                         Complex xy_mid = xy_mid0;
@@ -2242,10 +2242,10 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 #endif
                     }
                 }
-		
-		// deposit Jz for this segment
-	        amrex::Real this_Jz;
-		for (int i=0; i<=depos_order; i++) {
+                
+                // deposit Jz for this segment
+                amrex::Real this_Jz;
+                for (int i=0; i<=depos_order; i++) {
                     for (int k=0; k<=depos_order-1; k++) {
                         this_Jz = wqz*sz_cell[k]*(sx_old_node[i] + sx_new_node[i])/2.0_rt*seg_factor_z;
                         amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 0), this_Jz);
@@ -2262,101 +2262,101 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                     }
                 }
 
-		// update old segment values
+                // update old segment values
                 if (ns<num_segments-1) {
                     x0_old = x0_new;
                     z0_old = z0_new;
-		}
+                }
 
-	    } // end loop over segments
+            } // end loop over segments
 
 #elif defined(WARPX_DIM_1D_Z)
            
-	    // compute cell crossings in Z-direction
-	    const auto k_old = static_cast<int>(z_old-shift);
-	    const auto k_new = static_cast<int>(z_new-shift);
+            // compute cell crossings in Z-direction
+            const auto k_old = static_cast<int>(z_old-shift);
+            const auto k_new = static_cast<int>(z_new-shift);
             int cell_crossings_z = std::abs(k_new-k_old);
             num_segments += cell_crossings_z;
 
-	    // need to assert that the number of cell crossings in each direction
-	    // is within the range permitted by the number of guard cells
+            // need to assert that the number of cell crossings in each direction
+            // is within the range permitted by the number of guard cells
             if (num_segments > 2) {
                 std::cout << "Notice: num_segments = " << num_segments << std::endl;
                 std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
-	    }
+            }
 
-	    // compute the initial cell locations used to find the cell crossings.
-	    double Zcell;
+            // compute the initial cell locations used to find the cell crossings.
+            double Zcell;
             double const dzp = z_new - z_old;
-	    int dirZ_sign;
-	    if (cell_crossings_z > 0) {
-	        if (z_new < z_old) { dirZ_sign = -1; }
-	        else { dirZ_sign = 1; }
-	        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
-	    }
+            int dirZ_sign;
+            if (cell_crossings_z > 0) {
+                if (z_new < z_old) { dirZ_sign = -1; }
+                else { dirZ_sign = 1; }
+                Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
+            }
 
-	    // loop over the number of segments and deposit
+            // loop over the number of segments and deposit
             Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
             Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
-	    double dzp_seg;
-	    double z0_new;
-	    double z0_old = z_old;
+            double dzp_seg;
+            double z0_new;
+            double z0_old = z_old;
 
-	    for (int ns=0; ns<num_segments; ns++) {
-		    
+            for (int ns=0; ns<num_segments; ns++) {
+                    
                 if (ns==num_segments-1) { // final segment
-		    z0_new = z_new;
-		    dzp_seg = z0_new - z0_old;
-		}
-		else { 
+                    z0_new = z_new;
+                    dzp_seg = z0_new - z0_old;
+                }
+                else { 
                     Zcell = Zcell + dirZ_sign;
                     z0_new = Zcell;
-		    dzp_seg = z0_new - z0_old;
-		}
+                    dzp_seg = z0_new - z0_old;
+                }
 
-		// compute the segment factor (equal to dt_seg/dt for nonzero dzp)
+                // compute the segment factor (equal to dt_seg/dt for nonzero dzp)
                 const auto seg_factor = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
-		
-		// compute cell-based weights using the average segment position
+                
+                // compute cell-based weights using the average segment position
                 double sz_cell[depos_order] = {0.};
                 double const z0_bar = (z0_new + z0_old)/2.0_rt;
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5_rt );
-	
-		if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
+        
+                if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
                     Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sz_old_cell[depos_order] = {0.};
                     double sz_new_cell[depos_order] = {0.};
                     const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5_rt, z0_new-0.5_rt );
                     ignore_unused(k0_cell_2);
-		    for (int m=0; m<depos_order; m++) {
-		        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
-		    }
-		}
-		
-		// compute node-based weights using the old and new segment positions
+                    for (int m=0; m<depos_order; m++) {
+                        sz_cell[m] = (4.0_rt*sz_cell[m] + sz_old_cell[m] + sz_new_cell[m])/6.0_rt;
+                    }
+                }
+                
+                // compute node-based weights using the old and new segment positions
                 double sz_old_node[depos_order+1] = {0.};
                 double sz_new_node[depos_order+1] = {0.};
                 const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
-		
-		// deposit out-of-plane Jx and Jy for this segment
+                
+                // deposit out-of-plane Jx and Jy for this segment
                 for (int k=0; k<=depos_order; k++) {
                     const amrex::Real weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor;
                     amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k0_node+k, 0, 0), wqx*weight);
                     amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k0_node+k, 0, 0), wqy*weight);
                 }
 
-		// deposit Jz for this segment
+                // deposit Jz for this segment
                 for (int k=0; k<=depos_order-1; k++) {
                     const amrex::Real this_Jz = wqz*sz_cell[k]*seg_factor;
                     amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+k0_cell+k, 0, 0), this_Jz);
                 }
 
-		// update old segment values
+                // update old segment values
                 if (ns<num_segments-1) {
-		    z0_old = z0_new;
-		}
+                    z0_old = z0_new;
+                }
 
-	    }
+            }
 
 #endif
         }

@@ -512,7 +512,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
             WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Vay algorithm");
         }
-	else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
+        else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
             WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Villasenor algorithm");
         }
         else {
@@ -615,7 +615,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         WarpX::load_balance_costs_update_algo);
                 }
             }
-	} else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
+        } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
             if (push_type == PushType::Implicit) {
 #if (AMREX_SPACEDIM >= 2)
                 auto& xp_n = pti.GetAttribs(particle_comps["x_n"]);
@@ -671,10 +671,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         WarpX::n_rz_azimuthal_modes, cost,
                         WarpX::load_balance_costs_update_algo);
                 }
-	    }
-	    else {
+            }
+            else {
                 WARPX_ABORT_WITH_MESSAGE("The Villasenor algorithm can only be used with implicit algorithm.");
-	    }
+            }
         } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
             if (push_type == PushType::Implicit) {
                 WARPX_ABORT_WITH_MESSAGE("The Vay algorithm cannot be used with implicit algorithm.");

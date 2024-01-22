@@ -1154,7 +1154,7 @@ WarpX::ReadParameters ()
             "Current centering (nodal deposition) cannot be used with Esirkepov deposition."
             "Please set warpx.do_current_centering = 0 or algo.current_deposition = direct.");
         
-	WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Villasenor ||
             !do_current_centering,
             "Current centering (nodal deposition) cannot be used with Villasenor deposition."
@@ -1182,13 +1182,13 @@ WarpX::ReadParameters ()
                 "Vay deposition not implemented with multi-J algorithm");
         }
 
-	if (current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
-	    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        if (current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 evolve_scheme == EvolveScheme::ImplicitPicard ||
                 evolve_scheme == EvolveScheme::SemiImplicitPicard,
                 "Villasenor current deposition can only"
                 "be used with Implicit evolve schemes.");
-	}
+        }
 
         // Query algo.field_gathering from input, set field_gathering_algo to
         // "default" if not found (default defined in Utils/WarpXAlgorithmSelection.cpp)
@@ -1330,13 +1330,13 @@ WarpX::ReadParameters ()
                         (particle_shape >= 1) && (particle_shape <=4),
                         "algo.particle_shape can be only 1, 2, 3, or 4 with villasenor deposition"
                     );
-		}
-		else {
+                }
+                else {
                     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                         (particle_shape >= 1) && (particle_shape <=3),
                         "algo.particle_shape can be only 1, 2, or 3"
-		    );
-		}
+                    );
+                }
 
                 nox = particle_shape;
                 noy = particle_shape;
@@ -1346,7 +1346,7 @@ WarpX::ReadParameters ()
                 WARPX_ABORT_WITH_MESSAGE(
                     "algo.particle_shape must be set in the input file:"
                     " please set algo.particle_shape to 1, 2, or 3."
-		    " if using the villasenor deposition, can use 4 also.");
+                    " if using the villasenor deposition, can use 4 also.");
             }
 
             if ((maxLevel() > 0) && (particle_shape > 1) && (do_pml_j_damping == 1))
@@ -1364,7 +1364,7 @@ WarpX::ReadParameters ()
             sort_intervals_string_vec = {"-1"};
 #endif
         }
-	
+        
         const amrex::ParmParse pp_warpx("warpx");
         pp_warpx.queryarr("sort_intervals", sort_intervals_string_vec);
         sort_intervals = utils::parser::IntervalsParser(sort_intervals_string_vec);
@@ -1597,7 +1597,7 @@ WarpX::ReadParameters ()
 
 
         if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
-	    current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
+            current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
 
             // The comoving PSATD algorithm is not implemented nor tested with Esirkepov current deposition
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(v_comoving_is_zero,
