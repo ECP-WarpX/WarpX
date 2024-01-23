@@ -709,6 +709,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     }
 
     if (is_last_flush_to_step) {
+        SetupPos(currSpecies, NewParticleVectorSize, isBTD); // workaround for issue 4604
         SetConstParticleRecordsEDPIC(currSpecies, NewParticleVectorSize, charge, mass);
     }
 
