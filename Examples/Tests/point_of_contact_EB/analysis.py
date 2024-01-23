@@ -39,7 +39,7 @@ print('time_stamp=%5.2f, x=%5.4f, y=%5.4f, z=%5.4f, nx=%5.4f, ny=%5.4f, nz=%5.4f
 
 tolerance=0.001
 tolerance_t=0.003
-tolerance_n=0.15
+tolerance_n=0.01
 print('\n')
 print("tolerance = "+ str(tolerance *100) + '%')
 print("tolerance for the time_stamp = "+ str(tolerance_t *100) + '%')
