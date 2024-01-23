@@ -1355,13 +1355,13 @@ void doGatherPicnicShapeN (
     for (int i=0; i<=depos_order_B; i++) {
         for (int j=0; j<=depos_order_B; j++) {
             for (int k=0; k<=depos_order_B; k++) {
-                weight = sx_bar_node[i]*sy_bar_cell[j]*sz_bar_cell[k];
+                weight = static_cast<amrex::Real>(sx_bar_node[i]*sy_bar_cell[j]*sz_bar_cell[k]);
                 Bxp += Bx_arr(lo.x+i_bar_node+i, lo.y+j_bar_cell+j, lo.z+k_bar_cell+k)*weight;
                 //
-                weight = sx_bar_cell[i]*sy_bar_node[j]*sz_bar_cell[k];
+                weight = static_cast<amrex::Real>(sx_bar_cell[i]*sy_bar_node[j]*sz_bar_cell[k]);
                 Byp += By_arr(lo.x+i_bar_cell+i, lo.y+j_bar_node+j, lo.z+k_bar_cell+k)*weight;
                 //
-                weight = sx_bar_cell[i]*sy_bar_cell[j]*sz_bar_node[k];
+                weight = static_cast<amrex::Real>(sx_bar_cell[i]*sy_bar_cell[j]*sz_bar_node[k]);
                 Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+j_bar_cell+j, lo.z+k_bar_node+k)*weight;
             }
         }
@@ -1699,12 +1699,12 @@ void doGatherPicnicShapeN (
     const int k_bar_node = compute_shape_factor_B(sz_bar_node, z_bar);
     const int k_bar_cell = compute_shape_factor_B(sz_bar_cell, z_bar-0.5_rt);
 
-    double weight;
+    amrex::Real weight;
     for (int k=0; k<=depos_order_B; k++) {
-        weight = sz_bar_node[k];
+        weight = static_cast<amrex::Real>(sz_bar_node[k]);
         Bzp += Bz_arr(lo.x+k_bar_node+k, 0, 0)*weight;
         //
-        weight = sz_bar_cell[k];
+        weight = static_cast<amrex::Real>(sz_bar_cell[k]);
         Bxp += Bx_arr(lo.x+k_bar_cell+k, 0, 0)*weight;
         Byp += By_arr(lo.x+k_bar_cell+k, 0, 0)*weight;
     }
