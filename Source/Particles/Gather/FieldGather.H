@@ -1036,12 +1036,7 @@ void doGatherPicnicShapeN (
 
     // need to assert that the number of cell crossings in each direction
     // is within the range permitted by the number of guard cells
-    if (num_segments > 5) {
-        //std::cout << "Notice: num_segments = " << num_segments << std::endl;
-        //std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
-        //std::cout << "Notice: cell_crossings_y = " << cell_crossings_y << std::endl;
-        //std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
-    }
+    // e.g., if (num_segments > 5) ...
 
     // compute the slopes and the initial cell locations in each direction
     // used to find the position at cell crossings.
@@ -1388,11 +1383,7 @@ void doGatherPicnicShapeN (
 
     // need to assert that the number of cell crossings in each direction
     // is within the range permitted by the number of guard cells
-    if (num_segments > 3) {
-        //std::cout << "Notice: num_segments = " << num_segments << std::endl;
-        //std::cout << "Notice: cell_crossings_x = " << cell_crossings_x << std::endl;
-        //std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
-    }
+    // e.g., if (num_segments > 3) ...
 
     // compute the slopes and the initial cell locations in each direction
     // used to find the position at cell crossings.
@@ -1626,10 +1617,7 @@ void doGatherPicnicShapeN (
 
     // need to assert that the number of cell crossings in each direction
     // is within the range permitted by the number of guard cells
-    if (num_segments > 2) {
-        //std::cout << "Notice: num_segments = " << num_segments << std::endl;
-        //std::cout << "Notice: cell_crossings_z = " << cell_crossings_z << std::endl;
-    }
+    // e.g., if (num_segments > 2) ...
 
     // compute the initial cell locations used to find the cell crossings.
     double Zcell = 0.0;
