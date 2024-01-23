@@ -1578,13 +1578,13 @@ void doGatherPicnicShapeN (
 
     for (int i=0; i<=depos_order_B; i++) {
         for (int k=0; k<=depos_order_B; k++) {
-            auto weight_Bz = sx_bar_cell[i]*sz_bar_node[k];
+            const amrex::Real weight_Bz = sx_bar_cell[i]*sz_bar_node[k];
             Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 0)*weight_Bz;
             //
-            auto weight_Bx = sx_bar_node[i]*sz_bar_cell[k];
+            const amrex::Real weight_Bx = sx_bar_node[i]*sz_bar_cell[k];
             Bxp += Bx_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 0)*weight_Bx;
             //
-            auto weight_By = sx_bar_cell[i]*sz_bar_cell[k];
+            const amrex::Real weight_By = sx_bar_cell[i]*sz_bar_cell[k];
             Byp += By_arr(lo.x+i_bar_cell+i, lo.y+k_bar_cell+k, 0, 0)*weight_By;
 #if defined(WARPX_DIM_RZ)
             Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
@@ -1711,7 +1711,7 @@ void doGatherPicnicShapeN (
     const int k_bar_node = compute_shape_factor_B(sz_bar_node, z_bar);
     const int k_bar_cell = compute_shape_factor_B(sz_bar_cell, z_bar-0.5_rt);
 
-    amrex::Real weight;
+    double weight;
     for (int k=0; k<=depos_order_B; k++) {
         weight = sz_bar_node[k];
         Bzp += Bz_arr(lo.x+k_bar_node+k, 0, 0)*weight;
