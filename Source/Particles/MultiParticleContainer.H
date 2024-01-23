@@ -334,7 +334,7 @@ public:
 
     void RecordOldMomenta();
 
-    void Dump_radiations();
+    void Dump_radiations(amrex::Real dt);
     [[nodiscard]] int getSpeciesID (std::string product_str) const;
 
 protected:

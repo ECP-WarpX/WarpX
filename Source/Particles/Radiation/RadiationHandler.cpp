@@ -79,7 +79,7 @@ namespace
         const auto norm_direction = amrex::Array<amrex::Real,3>{
             direction[0]*one_over_direction,
             direction[1]*one_over_direction,
-            direction[2]*one_over_direction};
+            direction[2]*one_over_direction};       
 
         for (int i = 0; i < det_points[0]; ++i)
         {
@@ -159,19 +159,21 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
             t_omegas.begin(), t_omegas.end(), m_omegas.begin());
 
     amrex::Gpu::Device::streamSynchronize();
+    
 }
 
 
 void RadiationHandler::add_radiation_contribution
     (const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time)
     {
-
+        
         for (int lev = 0; lev <= pc->finestLevel(); ++lev)
         {
 #ifdef AMREX_USE_OMP
             #pragma omp parallel
 #endif
-            {
+            {   amrex::Print() << "Je brille <<" << std::endl;
+
                 for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti)
                 {
                     long const np = pti.numParticles();
@@ -231,7 +233,7 @@ void RadiationHandler::add_radiation_contribution
                         const auto tot_q = q*p_w[ip];
 
                         for(int i_om=0; i_om < omega_points; ++i_om){
-
+                        
                             const auto i_omega_over_c = Complex{0.0_prt, 1.0_prt}*p_omegas[i_om]*inv_c;
 
                             for (int i_det = 0; i_det < how_many_det_pos; ++i_det){
@@ -258,6 +260,7 @@ void RadiationHandler::add_radiation_contribution
                                 const auto n_minus_beta_cross_bp_x = n_minus_beta_y*bpz - n_minus_beta_z*bpy;
                                 const auto n_minus_beta_cross_bp_y = n_minus_beta_z*bpx - n_minus_beta_x*bpz;
                                 const auto n_minus_beta_cross_bp_z = n_minus_beta_x*bpy - n_minus_beta_y*bpx;
+                                amrex::Print() << "A" << bx << "b" << p_ux_old << std::endl;
 
                                 //Calculation of nxnxbeta
                                 const auto n_cross_n_minus_beta_cross_bp_x =ny*n_minus_beta_cross_bp_z-nz*n_minus_beta_cross_bp_y;
@@ -294,7 +297,7 @@ void RadiationHandler::add_radiation_contribution
                                 p_radiation_data[idx0] += cx;
                                 p_radiation_data[idx1] += cy;
                                 p_radiation_data[idx2] += cz;
-
+                                
 #endif
                             }
                         }
@@ -310,7 +313,7 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
 {
     auto radiation_data_cpu = amrex::Vector<amrex::Real>(m_det_pts[0]*m_det_pts[1]*m_omega_points);
     amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
-        m_radiation_data.begin(), m_radiation_data.end(), m_radiation_data.begin());
+        m_radiation_calculation.begin(), m_radiation_calculation.end(), m_radiation_calculation.begin());
     amrex::Gpu::streamSynchronize();
 
     amrex::ParallelDescriptor::ReduceRealSum(radiation_data_cpu.data(), radiation_data_cpu.size());
@@ -326,13 +329,21 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
     }
 }
 
-/*void RadiationHandler::Integral_overtime()
-{
+void RadiationHandler::Integral_overtime(const amrex::Real dt)
+{   
+    const auto factor = dt/16/std::pow(ablastr::constant::math::pi,3)/PhysConst::ep0;
+    const auto how_many = m_det_pts[0]*m_det_pts[1];
+    auto p_radiation_data = m_radiation_data.dataPtr();
     for(int i_om=0; i_om<m_omega_points;i_om++){
-                        for(int i_x=0; i_x<m_det_pts[0]; i_x++){
-                            for(int i_y=0; i_y<m_det_pts[1]; i_y++){
-                                 m_radiation_calculation[i_x,i_y,i_om]=std::pow(m_radiation_data[i_x,i_y,i_om,0],2)+std::pow(m_radiation_data[i_x,i_y,i_om,1],2)+std::pow(m_radiation_data[i_x,i_y,i_om,2],2)+std::pow(m_radiation_data[i_x,i_y,i_om,3],2)+std::pow(m_radiation_data[i_x,i_y,i_om,4],2)+std::pow(m_radiation_data[i_x,i_y,i_om,5],2);
+        for (int i_det = 0; i_det < how_many; ++i_det){
+            const int ncomp = 3;
+            const int idx0 = (i_om*how_many+i_det)*ncomp;
+            const int idx1 = idx0 + 1;
+            const int idx2 = idx0 + 2;
+            auto i_x=i_det%m_det_pts[0];
+            auto i_y=std::floor(i_det/m_det_pts[0]);
+            amrex::Print() << (amrex::norm(p_radiation_data[idx0])+amrex::norm(p_radiation_data[idx1])+amrex::norm(p_radiation_data[idx2])) << std::endl;
+            m_radiation_calculation[i_om,i_x,i_y]=(amrex::norm(p_radiation_data[idx0])+amrex::norm(p_radiation_data[idx1])+amrex::norm(p_radiation_data[idx2]))*factor;
                             }
                         }
-    }
-}*/
+}

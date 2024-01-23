@@ -36,6 +36,8 @@ public:
 
     void gather_and_write_radiation(const std::string& filename);
 
+    void Integral_overtime(const amrex::Real dt);
+
 private:
 
     // Frequency range
@@ -56,6 +58,8 @@ private:
     amrex::Gpu::DeviceVector<amrex::Real> det_pos_z;
 
     amrex::Gpu::DeviceVector<ablastr::math::Complex> m_radiation_data;
+    amrex::Gpu::DeviceVector<amrex::Real> m_radiation_calculation;
+
 
 };
 #endif // WARPX_PARTICLES_RADIATION_H
