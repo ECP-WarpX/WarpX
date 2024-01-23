@@ -7,7 +7,7 @@ cd Regression/
 
 # Put the name of all CI tests into a text file
 python prepare_file_ci.py
-grep "\[" ci-tests.ini > ci_all_tests.txt
+grep "^\[" ci-tests.ini > ci_all_tests.txt
 
 
 export WARPX_CI_PSATD=TRUE
