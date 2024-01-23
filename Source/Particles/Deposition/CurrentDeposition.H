@@ -1813,7 +1813,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 }
                 else if (cell_crossings_x==0) {
 
-                      if (cell_crossings_y==0) { // only crossings in z-dir remain
+                    if (cell_crossings_y==0) { // only crossings in z-dir remain
                         Zcell = Zcell + dirZ_sign;
                         z0_new = Zcell;
                         dzp_seg = z0_new - z0_old;
