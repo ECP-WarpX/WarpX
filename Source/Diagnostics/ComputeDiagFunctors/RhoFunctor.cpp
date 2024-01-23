@@ -58,20 +58,6 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     // apply the filtering if requested.
     warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-    // Apply k-space filtering when using the PSATD solver
-    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
-    {
-        if (WarpX::use_kspace_filter) {
-            auto & solver = warpx.get_spectral_solver_fp(m_lev);
-            const SpectralFieldIndex& Idx = solver.m_spectral_index;
-            solver.ForwardTransform(m_lev, *rho, Idx.rho_new);
-            solver.ApplyFilter(m_lev, Idx.rho_new);
-            solver.BackwardTransform(m_lev, *rho, Idx.rho_new);
-        }
-    }
-#endif
-
     InterpolateMFForDiag(mf_dst, *rho, dcomp, warpx.DistributionMap(m_lev),
                          m_convertRZmodes2cartesian);
 }
