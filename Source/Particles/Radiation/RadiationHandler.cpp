@@ -260,7 +260,6 @@ void RadiationHandler::add_radiation_contribution
                                 const auto n_minus_beta_cross_bp_x = n_minus_beta_y*bpz - n_minus_beta_z*bpy;
                                 const auto n_minus_beta_cross_bp_y = n_minus_beta_z*bpx - n_minus_beta_x*bpz;
                                 const auto n_minus_beta_cross_bp_z = n_minus_beta_x*bpy - n_minus_beta_y*bpx;
-                                amrex::Print() << "A" << bx << "b" << p_ux_old << std::endl;
 
                                 //Calculation of nxnxbeta
                                 const auto n_cross_n_minus_beta_cross_bp_x =ny*n_minus_beta_cross_bp_z-nz*n_minus_beta_cross_bp_y;
