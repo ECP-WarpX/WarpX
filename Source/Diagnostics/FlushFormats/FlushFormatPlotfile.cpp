@@ -366,13 +366,14 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 #endif
 
         // get the names of the real comps
-        real_names.resize(tmp.NumRealComps());
+        real_names.resize(tmp.NumRealComps()-AMREX_SPACEDIM);  // skip positions for pure SoA plotfiles
         auto runtime_rnames = tmp.getParticleRuntimeComps();
         for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
         // plot any "extra" fields by default
         real_flags = part_diag.m_plot_flags;
         real_flags.resize(tmp.NumRealComps(), 1);
+        real_flags.erase(real_flags.begin(), real_flags.begin()+AMREX_SPACEDIM);  // skip positions for pure SoA plotfiles
 
         // and the names
         int_names.resize(tmp.NumIntComps());
