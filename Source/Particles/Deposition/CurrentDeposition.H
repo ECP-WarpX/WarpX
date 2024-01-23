@@ -1770,31 +1770,28 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
             // compute the slopes and the initial cell locations in each direction
             // used to find the position at cell crossings.
-            double slope_dydx, slope_dzdx;
-            double slope_dxdy, slope_dzdy;
-            double slope_dxdz, slope_dydz;
+            double slope_dydx = 0.0, slope_dzdx = 0.0;
+            double slope_dxdy = 0.0, slope_dzdy = 0.0;
+            double slope_dxdz = 0.0, slope_dydz = 0.0;
             double const dxp = x_new - x_old;
             double const dyp = y_new - y_old;
             double const dzp = z_new - z_old;
-            double Xcell, Ycell, Zcell;
-            int dirX_sign, dirY_sign, dirZ_sign;
+            double Xcell = 0.0, Ycell = 0.0, Zcell = 0.0;
+            int dirX_sign = 1, dirY_sign = 1, dirZ_sign = 1;
             if (cell_crossings_x > 0) {
                 if (x_new < x_old) { dirX_sign = -1; }
-                else { dirX_sign = 1; }
                 Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
                 slope_dydx = dyp/dxp;
                 slope_dzdx = dzp/dxp;
             }
             if (cell_crossings_y > 0) {
                 if (y_new < y_old) { dirY_sign = -1; }
-                else { dirY_sign = 1; }
                 Ycell = j_old + shift + 0.5_rt*(1-dirY_sign);
                 slope_dxdy = dxp/dyp;
                 slope_dzdy = dzp/dyp;
             }
             if (cell_crossings_z > 0) {
                 if (z_new < z_old) { dirZ_sign = -1; }
-                else { dirZ_sign = 1; }
                 Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
                 slope_dxdz = dxp/dzp;
                 slope_dydz = dyp/dzp;
@@ -2094,20 +2091,18 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
             // compute the slopes and the initial cell locations in each direction
             // used to find the position at cell crossings.
-            double slope_dzdx, slope_dxdz;
+            double slope_dzdx = 0.0, slope_dxdz = 0.0;
             double const dxp = x_new - x_old;
             double const dzp = z_new - z_old;
-            double Xcell, Zcell;
-            int dirX_sign, dirZ_sign;
+            double Xcell = 0.0, Zcell = 0.0;
+            int dirX_sign = 1, dirZ_sign = 1;
             if (cell_crossings_x > 0) {
                 if (x_new < x_old) { dirX_sign = -1; }
-                else { dirX_sign = 1; }
                 Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
                 slope_dzdx = dzp/dxp;
             }
             if (cell_crossings_z > 0) {
                 if (z_new < z_old) { dirZ_sign = -1; }
-                else { dirZ_sign = 1; }
                 Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
                 slope_dxdz = dxp/dzp;
             }
@@ -2286,12 +2281,11 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             }
 
             // compute the initial cell locations used to find the cell crossings.
-            double Zcell;
+            double Zcell = 0.0;
             double const dzp = z_new - z_old;
-            int dirZ_sign;
+            int dirZ_sign = 1;
             if (cell_crossings_z > 0) {
                 if (z_new < z_old) { dirZ_sign = -1; }
-                else { dirZ_sign = 1; }
                 Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
             }
 
