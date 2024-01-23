@@ -1569,13 +1569,13 @@ void doGatherPicnicShapeN (
 
     for (int i=0; i<=depos_order_B; i++) {
         for (int k=0; k<=depos_order_B; k++) {
-            const amrex::Real weight_Bz = static_cast<amrex::Real>(sx_bar_cell[i]*sz_bar_node[k]);
+            const auto weight_Bz = static_cast<amrex::Real>(sx_bar_cell[i]*sz_bar_node[k]);
             Bzp += Bz_arr(lo.x+i_bar_cell+i, lo.y+k_bar_node+k, 0, 0)*weight_Bz;
             //
-            const amrex::Real weight_Bx = static_cast<amrex::Real>(sx_bar_node[i]*sz_bar_cell[k]);
+            const auto weight_Bx = static_cast<amrex::Real>(sx_bar_node[i]*sz_bar_cell[k]);
             Bxp += Bx_arr(lo.x+i_bar_node+i, lo.y+k_bar_cell+k, 0, 0)*weight_Bx;
             //
-            const amrex::Real weight_By = static_cast<amrex::Real>(sx_bar_cell[i]*sz_bar_cell[k]);
+            const auto weight_By = static_cast<amrex::Real>(sx_bar_cell[i]*sz_bar_cell[k]);
             Byp += By_arr(lo.x+i_bar_cell+i, lo.y+k_bar_cell+k, 0, 0)*weight_By;
 #if defined(WARPX_DIM_RZ)
             Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
