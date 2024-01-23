@@ -56,7 +56,7 @@ class IonLandauDamping(object):
     # Plasma resistivity - used to dampen the mode excitation
     eta = 1e-7
     # Number of substeps used to update B
-    substeps = 100
+    substeps = 10
 
 
     def __init__(self, test, dim, m, T_ratio, verbose):

@@ -201,7 +201,7 @@ deposit_charge (typename T_PC::ParIterType& pti,
 #ifndef AMREX_USE_GPU
     // CPU, tiling: atomicAdd local_rho into rho
     ABLASTR_PROFILE_VAR_START(blp_accumulate, do_device_synchronize);
-    (*rho)[pti].atomicAdd(local_rho, tb, tb, 0, icomp*nc, nc);
+    (*rho)[pti].lockAdd(local_rho, tb, tb, 0, icomp*nc, nc);
     ABLASTR_PROFILE_VAR_STOP(blp_accumulate, do_device_synchronize);
 #endif
 }
