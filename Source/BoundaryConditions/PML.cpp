@@ -574,12 +574,14 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
                 if (do_pml_Lo[idim]) {
                     Box const& bb = amrex::adjCellLo(b, idim);
                     if ( ! grid_ba.intersects(bb) ) {
+                        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(b.length(idim) > ncell, " box length must be greater that pml size");
                         b.growLo(idim, -ncell);
                     }
                 }
                 if (do_pml_Hi[idim]) {
                     Box const& bb = amrex::adjCellHi(b, idim);
                     if ( ! grid_ba.intersects(bb) ) {
+                        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(b.length(idim) > ncell, " box length must be greater that pml size");
                         b.growHi(idim, -ncell);
                     }
                 }
