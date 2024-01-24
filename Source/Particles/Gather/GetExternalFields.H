@@ -21,81 +21,6 @@
 #include <fstream>
 
 
-struct ExternalFieldFromFile3DCart 
-{
-    const amrex::RealVect dx;
-    const amrex::RealVect origin;
-    const amrex::Array4<amrex::Real> arrayx;
-    const amrex::Array4<amrex::Real> arrayy;
-    const amrex::Array4<amrex::Real> arrayz;
-    public:
-    ExternalFieldFromFile3DCart(
-        const amrex::RealVect dx_,
-        const amrex::RealVect origin_,
-        const amrex::Array4<amrex::Real> arrayx_,
-        const amrex::Array4<amrex::Real> arrayy_,
-        const amrex::Array4<amrex::Real> arrayz_
-        ) :
-        dx(dx_), origin(origin_), arrayx(arrayx_), arrayy(arrayy_), arrayz(arrayz_)
-    {
-        assert(arrayx.begin.x == arrayy.begin.x);
-        assert(arrayx.begin.y == arrayy.begin.y);
-        assert(arrayx.begin.z == arrayy.begin.z);
-        assert(arrayx.begin.x == arrayz.begin.x);
-        assert(arrayx.begin.y == arrayz.begin.y);
-        assert(arrayx.begin.z == arrayz.begin.z);
-        assert(arrayx.end.x == arrayy.end.x);
-        assert(arrayx.end.y == arrayy.end.y);
-        assert(arrayx.end.z == arrayy.end.z);
-        assert(arrayx.end.x == arrayz.end.x);
-        assert(arrayx.end.y == arrayz.end.y);
-        assert(arrayx.end.z == arrayz.end.z);
-    }
-
-    amrex::Real interp_(const amrex::Array4<amrex::Real> array, int ix, int iy, int iz, amrex::Real x, amrex::Real y, amrex::Real z) const noexcept {
-        const amrex::Real
-                f000 = array(iz  , iy  , ix  ),
-                f001 = array(iz+1, iy  , ix  ),
-                f010 = array(iz  , iy+1, ix  ),
-                f011 = array(iz+1, iy+1, ix  ),
-                f100 = array(iz  , iy  , ix+1),
-                f101 = array(iz+1, iy  , ix+1),
-                f110 = array(iz  , iy+1, ix+1),
-                f111 = array(iz+1, iy+1, ix+1);
-        
-        return static_cast<amrex::Real>(utils::algorithms::trilinear_interp<amrex::Real, amrex::Real>(
-            static_cast<amrex::Real>(ix * dx[0]), static_cast<amrex::Real>((ix + 1) * dx[0]),
-            static_cast<amrex::Real>(iy * dx[1]), static_cast<amrex::Real>((iy + 1) * dx[1]),
-            static_cast<amrex::Real>(iz * dx[2]), static_cast<amrex::Real>((iz + 1) * dx[2]), 
-            f000, f001, f010, f011, f100, f101, f110, f111,
-            x, y, z));
-    }
-
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    amrex::RealVect interpolate(amrex::Real x, amrex::Real y, amrex::Real z) const noexcept {
-        amrex::Real rel_x = x - origin[0];
-        amrex::Real rel_y = y - origin[1];
-        amrex::Real rel_z = z - origin[2];
-        // Get index of the external field array
-        int ix = floor( rel_x / dx[0] );
-        int iy = floor( rel_y / dx[1] );
-        int iz = floor( rel_z / dx[2] );
-
-        if (ix < arrayx.begin.x || iy < arrayx.begin.y || iz < arrayx.begin.z || (ix + 1) >= arrayx.end.x || (iy + 1) >= arrayx.end.y || (iz + 1) >= arrayx.end.z)
-            return amrex::RealVect();
-
-        amrex::RealVect retvect = {
-            interp_(arrayx, ix, iy, iz, rel_x, rel_y, rel_z), 
-            interp_(arrayy, ix, iy, iz, rel_x, rel_y, rel_z), 
-            interp_(arrayz, ix, iy, iz, rel_x, rel_y, rel_z)
-        };
-
-        return retvect;
-    }
-};
-
-
-
 struct ExternalFieldFromFile3DCyl 
 {
     const amrex::RealVect dx;
@@ -203,7 +128,6 @@ struct GetExternalEBField
     const amrex::ParticleReal* AMREX_RESTRICT m_uy = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT m_uz = nullptr;
 
-    const ExternalFieldFromFile3DCart* Bfield_file_external_particle_cart = nullptr;
     const ExternalFieldFromFile3DCyl* Bfield_file_external_particle_cyl = nullptr;
 
     std::optional<LatticeElementFinderDevice> d_lattice_element_finder;
@@ -274,12 +198,7 @@ struct GetExternalEBField
                 z = m_gamma_boost*z + m_uz_boost*m_time;
             }
 
-            amrex::RealVect B; 
-
-            if (Bfield_file_external_particle_cart != nullptr)
-                B = Bfield_file_external_particle_cart->interpolate(x, y, z);
-            else
-                B = Bfield_file_external_particle_cyl->interpolate(x, y, z);
+            auto B = Bfield_file_external_particle_cyl->interpolate(x, y, z);
 
             Bx = B[0];
             By = B[1];
