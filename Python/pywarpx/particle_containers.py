@@ -816,7 +816,7 @@ class ParticleBoundaryBufferWrapper(object):
             species_name, self._get_boundary_number(boundary)
         )
         data_array = []
-       
+
         comp_idx = part_container.get_comp_index(comp_name)
         for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
             soa = pti.soa()
