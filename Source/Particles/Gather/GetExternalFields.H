@@ -86,12 +86,14 @@ struct ExternalFieldFromFile3DCyl
             Bz
         };
 
+#ifdef DEBUG_EXTERNAL_FIELD_INTERPOLATION
         { 
             std::ofstream myfile;
             myfile.open ("/tmp/ptcls-interpolate-rz.csv", std::ios_base::app);
             myfile << ir << " " << iz << " " << r << " " << z << " " << Br << " " << Bz << std::endl;
             myfile.close();   
         }
+#endif
 
         return retvect;
     }
