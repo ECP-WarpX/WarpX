@@ -565,7 +565,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     // In order to implement this, a reduced domain is created here (decreased by ncells in all direction)
     // and passed to `MakeBoxArray`, which surrounds it by PML boxes
     // (thus creating the PML boxes at the right position, where they overlap with the original domain)
-    // minimalBox provides the bounding box around grid_ba for level, lev.
 
     BoxArray grid_ba_reduced = grid_ba;
     if (do_pml_in_domain) {
