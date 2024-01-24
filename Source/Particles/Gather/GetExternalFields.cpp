@@ -123,20 +123,17 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
             amrex::Gpu::DeviceVector<amrex::Real> FCr_data_gpu(total_extent);
             amrex::Gpu::DeviceVector<amrex::Real> FCz_data_gpu(total_extent);
 
-            auto FCr_data = FCr_data_gpu.data();
-            auto FCz_data = FCz_data_gpu.data();
-
-            amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCr_data_host, FCr_data_host + total_extent, FCr_data);
-            amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCz_data_host, FCz_data_host + total_extent, FCz_data);
-
-            const amrex::Array4<amrex::Real> fcr_array(FCr_data, {0,0,0}, {static_cast<int>(extent[0]), static_cast<int>(extent[2]), static_cast<int>(extent[1])}, 1);
-            const amrex::Array4<amrex::Real> fcz_array(FCz_data, {0,0,0}, {static_cast<int>(extent[0]), static_cast<int>(extent[2]), static_cast<int>(extent[1])}, 1);
+            amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCr_data_host, FCr_data_host + total_extent, FCr_data_gpu.data());
+            amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCz_data_host, FCz_data_host + total_extent, FCz_data_gpu.data());
 
             Bfield_file_external_particle_cyl = new ExternalFieldFromFile3DCyl(
                 amrex::RealVect {gridSpacing[0], gridSpacing[1], 0}, 
                 amrex::RealVect {offset[0], offset[1], offset[2] }, 
-                fcr_array, fcz_array
+                {static_cast<int>(extent[0]), static_cast<int>(extent[2]), static_cast<int>(extent[1])},
+                FCr_data_gpu, FCz_data_gpu
             );
+            assert(FCr_data_gpu.data() == nullptr);
+            assert(FCz_data_gpu.data() == nullptr);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false, "3D can only read external fields from files with thetaMode geometry");
         }

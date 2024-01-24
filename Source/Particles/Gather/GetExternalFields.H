@@ -27,14 +27,22 @@ struct ExternalFieldFromFile3DCyl
     const amrex::RealVect origin;
     const amrex::Array4<amrex::Real const> arrayr;
     const amrex::Array4<amrex::Real const> arrayz;
+    const amrex::Gpu::DeviceVector<amrex::Real> datar;
+    const amrex::Gpu::DeviceVector<amrex::Real> dataz;
     public:
     ExternalFieldFromFile3DCyl(
         const amrex::RealVect dx_,
         const amrex::RealVect origin_,
-        const amrex::Array4<amrex::Real const> arrayr_,
-        const amrex::Array4<amrex::Real const> arrayz_
+        const amrex::Dim3 shape_,
+        amrex::Gpu::DeviceVector<amrex::Real>& datar_,
+        amrex::Gpu::DeviceVector<amrex::Real>& dataz_
         ) :
-        dx(dx_), origin(origin_), arrayr(arrayr_), arrayz(arrayz_)
+        dx(dx_), 
+        origin(origin_), 
+        arrayr(datar_.data(), {0,0,0}, shape_, 1),
+        arrayz(dataz_.data(), {0,0,0}, shape_, 1),
+        datar(std::move(datar_)), 
+        dataz(std::move(dataz_))
     {
         assert(arrayr.begin.x == arrayz.begin.x);
         assert(arrayr.begin.y == arrayz.begin.y);
