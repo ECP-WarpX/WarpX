@@ -342,6 +342,21 @@ void AMReX_warpxWriter::SetConstantMassCharge(openPMD::ParticleSpecies& currSpec
   //    - setConstants so record "positonOffset" is defined
 void AMReX_warpxWriter::SetParticleSpecieAttributes(openPMD::ParticleSpecies& currSpecies) const
   {
+    //This defines labels not mentioned in getParticlePositionComponentLabels()
+    //   to make up 3D components for all cases
+    //   convention: in 1D3V and 2D3V, omitted positions are set to zero
+#if defined(WARPX_DIM_1D_Z)
+    currSpecies["position"]["x"].resetDataset( realType );
+    currSpecies["position"]["y"].resetDataset( realType );
+
+    currSpecies["position"]["x"].makeConstant( 0._prt );
+    currSpecies["position"]["y"].makeConstant( 0._prt );
+#endif
+#if defined(WARPX_DIM_XZ)
+    currSpecies["position"]["y"].resetDataset( realType );
+
+    currSpecies["position"]["y"].makeConstant( 0._prt );
+#endif
 
     // ED-PIC extention
     currSpecies["id"].setAttribute( "macroWeighted", 0u );
