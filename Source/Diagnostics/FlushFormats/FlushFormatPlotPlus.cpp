@@ -275,12 +275,12 @@ void FlushFormatPlotPlus::DefaultWriter(const std::string& prefix,
       PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
       PinnedMemoryParticleContainer tmp;
       if (use_pinned_pc) {
-	tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
+    tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
 
-	CopyPtls(tmp, time, pc, pinned_pc, part_diag);
+    CopyPtls(tmp, time, pc, pinned_pc, part_diag);
       } else {
-	tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-	CopyPtls(tmp, time, pc, pc, part_diag);
+    tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
+    CopyPtls(tmp, time, pc, pc, part_diag);
       }
 
 
