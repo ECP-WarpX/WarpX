@@ -106,7 +106,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
                                             "RZ expects axisLabels {r, z}");
 
             const auto offset = F.gridGlobalOffset();
-            const auto gridSpacing = F.gridSpacing<long double>();
+            const auto gridSpacing = F.gridSpacing<amrex::Real>();
             auto FCr = F["r"];
             auto FCz = F["z"];
             const auto extent = FCr.getExtent();
@@ -129,8 +129,8 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
             amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCr_data_host, FCr_data_host + total_extent, FCr_data);
             amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCz_data_host, FCz_data_host + total_extent, FCz_data);
 
-            const amrex::Array4<amrex::Real> fcr_array(FCr_data, {0,0,0}, {extent[0], extent[2], extent[1]}, 1);
-            const amrex::Array4<amrex::Real> fcz_array(FCz_data, {0,0,0}, {extent[0], extent[2], extent[1]}, 1);
+            const amrex::Array4<amrex::Real> fcr_array(FCr_data, {0,0,0}, {static_cast<int>(extent[0]), static_cast<int>(extent[2]), static_cast<int>(extent[1])}, 1);
+            const amrex::Array4<amrex::Real> fcz_array(FCz_data, {0,0,0}, {static_cast<int>(extent[0]), static_cast<int>(extent[2]), static_cast<int>(extent[1])}, 1);
 
             Bfield_file_external_particle_cyl = new ExternalFieldFromFile3DCyl(
                 amrex::RealVect {gridSpacing[0], gridSpacing[1], 0}, 

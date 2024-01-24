@@ -25,14 +25,14 @@ struct ExternalFieldFromFile3DCyl
 {
     const amrex::RealVect dx;
     const amrex::RealVect origin;
-    const amrex::Array4<amrex::Real> arrayr;
-    const amrex::Array4<amrex::Real> arrayz;
+    const amrex::Array4<amrex::Real const> arrayr;
+    const amrex::Array4<amrex::Real const> arrayz;
     public:
     ExternalFieldFromFile3DCyl(
         const amrex::RealVect dx_,
         const amrex::RealVect origin_,
-        const amrex::Array4<amrex::Real> arrayr_,
-        const amrex::Array4<amrex::Real> arrayz_
+        const amrex::Array4<amrex::Real const> arrayr_,
+        const amrex::Array4<amrex::Real const> arrayz_
         ) :
         dx(dx_), origin(origin_), arrayr(arrayr_), arrayz(arrayz_)
     {
@@ -44,7 +44,7 @@ struct ExternalFieldFromFile3DCyl
         assert(arrayr.end.z == arrayz.end.z);
     }
 
-    amrex::Real interp_(const amrex::Array4<amrex::Real> array, int ir, int iz, amrex::Real r, amrex::Real z) const noexcept {
+    amrex::Real interp_(const amrex::Array4<amrex::Real const> array, int ir, int iz, amrex::Real r, amrex::Real z) const noexcept {
         const amrex::Real
                     f00 = array(0, iz  , ir  ),
                     f01 = array(0, iz  , ir+1),
