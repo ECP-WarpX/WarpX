@@ -796,7 +796,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         // Assuming that refinement ratio is equal in all dimensions
         const BoxArray& cba = MakeBoxArray(is_single_box_domain, cdomain, *cgeom, grid_cba_reduced,
                                            cncells, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-        amrex::Print() << " cba : " << cba << "\n";
         DistributionMapping cdm;
         if (WarpX::do_similar_dm_pml) {
             auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);
@@ -878,10 +877,8 @@ PML::MakeBoxArray (bool is_single_box_domain, const amrex::Box& regular_domain,
                    const amrex::IntVect& do_pml_Lo, const amrex::IntVect& do_pml_Hi)
 {
     if (is_single_box_domain) {
-        amrex::Print() << " calling MakeBoxArraySingle \n";
         return MakeBoxArray_single(regular_domain, grid_ba, ncell, do_pml_Lo, do_pml_Hi);
     } else { // the union of the regular grids is *not* a single rectangular domain
-        amrex::Print() << " calling MakeBoxArrayMultiple \n";
         return MakeBoxArray_multiple(geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
     }
 }
