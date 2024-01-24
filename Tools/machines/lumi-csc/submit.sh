@@ -49,10 +49,16 @@ sleep 1
 # LUMI documentation suggests using the following CPU bind
 # in order to have 6 threads per GPU (blosc compression in adios2 uses threads)
 # see https://docs.lumi-supercomputer.eu/runjobs/scheduled-jobs/lumig-job/
+#
+# WARNING: the following CPU_BIND options don't work on the dev-g partition.
+#          If you want to run your simulation on dev-g, please comment them
+#          out and replace them with CPU_BIND="map_cpu:49,57,17,25,1,9,33,41"
+#
 CPU_BIND="mask_cpu:7e000000000000,7e00000000000000"
 CPU_BIND="${CPU_BIND},7e0000,7e000000"
 CPU_BIND="${CPU_BIND},7e,7e00"
 CPU_BIND="${CPU_BIND},7e00000000,7e0000000000"
+
 export OMP_NUM_THREADS=6
 
 srun --cpu-bind=${CPU_BIND} ./select_gpu ./warpx inputs | tee outputs.txt
