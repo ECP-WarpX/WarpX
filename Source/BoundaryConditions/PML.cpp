@@ -568,7 +568,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
     BoxArray grid_ba_reduced = grid_ba;
     if (do_pml_in_domain) {
-        BoxList bl = grid_ba.boxList();
+        BoxList bl = grid_ba.simplified_list();
         for (auto& b : bl) {
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                 if (do_pml_Lo[idim]) {
@@ -770,20 +770,18 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
         BoxArray grid_cba_reduced = grid_cba;
         if (do_pml_in_domain) {
-            BoxList bl = grid_cba.boxList();
+            BoxList bl = grid_cba.simplified_list();
             for (auto& b : bl) {
                 for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                     if (do_pml_Lo[idim]) {
                         Box const& bb = amrex::adjCellLo(b, idim);
                         if ( ! grid_cba.intersects(bb) ) {
-                            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(b.length(idim) > ncell/ref_ratio[idim], " box length must be greater that pml size");
                             b.growLo(idim, -ncell/ref_ratio[idim]);
                         }
                     }
                     if (do_pml_Hi[idim]) {
                         Box const& bb = amrex::adjCellHi(b, idim);
                         if ( ! grid_cba.intersects(bb) ) {
-                            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(b.length(idim) > ncell/ref_ratio[idim], " box length must be greater that pml size");
                             b.growHi(idim, -ncell/ref_ratio[idim]);
                         }
                     }
