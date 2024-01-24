@@ -18,6 +18,8 @@
 
 #include <optional>
 
+#include <fstream>
+
 
 struct ExternalFieldFromFile3DCart 
 {
@@ -79,7 +81,7 @@ struct ExternalFieldFromFile3DCart
         int iy = floor( rel_y / dx[1] );
         int iz = floor( rel_z / dx[2] );
 
-        if (ix < arrayx.begin.x || iy < arrayx.begin.y || iz < arrayx.begin.z || ix > arrayx.end.x || iy > arrayx.end.y || iz > arrayx.end.z)
+        if (ix < arrayx.begin.x || iy < arrayx.begin.y || iz < arrayx.begin.z || (ix + 1) >= arrayx.end.x || (iy + 1) >= arrayx.end.y || (iz + 1) >= arrayx.end.z)
             return amrex::RealVect();
 
         amrex::RealVect retvect = {
@@ -126,7 +128,7 @@ struct ExternalFieldFromFile3DCyl
         
         return static_cast<amrex::Real>(utils::algorithms::bilinear_interp<double>
                     (ir * dx[0], (ir+1) * dx[0], iz * dx[1], (iz+1) * dx[1],
-                     f00, f01, f10, f11,
+                     f00, f10, f01, f11,
                      r, z));
     }
 
@@ -139,16 +141,24 @@ struct ExternalFieldFromFile3DCyl
         int ir = floor( rel_r / dx[0] );
         int iz = floor( rel_z / dx[1] );
 
-        if (ir < arrayr.begin.z || iz < arrayr.begin.y || ir > arrayr.end.z || iz > arrayr.end.y)
+        if (ir < arrayr.begin.z || iz < arrayr.begin.y || (ir + 1) >= arrayr.end.z || (iz + 1) >= arrayr.end.y)
             return amrex::RealVect();
 
         auto Br = interp_(arrayr, ir, iz, rel_r, rel_z);
+        auto Bz = interp_(arrayz, ir, iz, rel_r, rel_z);
 
         amrex::RealVect retvect = {
             Br * x / r,
             Br * y / r, 
-            interp_(arrayz, ir, iz, rel_r, rel_z)
+            Bz
         };
+
+        { 
+            std::ofstream myfile;
+            myfile.open ("/tmp/ptcls-interpolate-rz.csv", std::ios_base::app);
+            myfile << ir << " " << iz << " " << r << " " << z << " " << Br << " " << Bz << std::endl;
+            myfile.close();   
+        }
 
         return retvect;
     }

@@ -177,7 +177,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
             const amrex::Array4<amrex::Real> fcz_array(FCz_data, {0,0,0}, {extent[0], extent[2], extent[1]}, 1);
 
             Bfield_file_external_particle_cyl = new ExternalFieldFromFile3DCyl(
-                amrex::RealVect {gridSpacing[0], gridSpacing[1] }, 
+                amrex::RealVect {gridSpacing[0], gridSpacing[1], 0}, 
                 amrex::RealVect {offset[0], offset[1], offset[2] }, 
                 fcr_array, fcz_array
             );
