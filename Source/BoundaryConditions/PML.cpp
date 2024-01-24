@@ -784,7 +784,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         amrex::Box cdomain = grid_cba.minimalBox();
         amrex::BoxList cbl = grid_cba.simplified_list();
         if (do_pml_in_domain) {
-            for (amrex::Box cb : cbl) {
+            for (amrex::Box &cb : cbl) {
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                // if (do_pml_Lo[idim]){
                //     // ncell is divided by refinement ratio to ensure that the
