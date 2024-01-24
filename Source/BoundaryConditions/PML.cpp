@@ -568,7 +568,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
     BoxArray grid_ba_reduced = grid_ba;
     if (do_pml_in_domain) {
-        BoxList bl = grid_ba.simplified_list();
+        BoxList bl = grid_ba.boxList();
         for (auto& b : bl) {
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                 if (do_pml_Lo[idim]) {
@@ -770,7 +770,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
         BoxArray grid_cba_reduced = grid_cba;
         if (do_pml_in_domain) {
-            BoxList bl = grid_cba.simplified_list();
+            BoxList bl = grid_cba.boxList();
             for (auto& b : bl) {
                 for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
                     if (do_pml_Lo[idim]) {
