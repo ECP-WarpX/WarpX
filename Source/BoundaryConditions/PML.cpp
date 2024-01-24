@@ -566,42 +566,30 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     // and passed to `MakeBoxArray`, which surrounds it by PML boxes
     // (thus creating the PML boxes at the right position, where they overlap with the original domain)
     // minimalBox provides the bounding box around grid_ba for level, lev.
-    // Note that this is okay to build pml inside domain for a single patch, or joint patches
-    // with same [min,max]. But it does not support multiple disjoint refinement patches.
-    amrex::Print() << " grid ba : " << grid_ba << " simplified box " << grid_ba.simplified_list() << "\n";
-    Box domain0 = grid_ba.minimalBox();
-    amrex::BoxList bl = grid_ba.simplified_list();
-    amrex::Print() << " domain 0 is : " << domain0 << "\n";
+
+    BoxArray grid_ba_reduced = grid_ba;
     if (do_pml_in_domain) {
-        for (Box& b : bl) {
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            //if (do_pml_Lo[idim]){
-            //    domain0.growLo(idim, -ncell);
-            //    amrex::Print() << " pml LO : " << domain0 << "\n";
-            //}
-            //if (do_pml_Hi[idim]){
-            //    domain0.growHi(idim, -ncell);
-            //    amrex::Print() << " pml Hi : " << domain0 << "\n";
-            //}
-                if (do_pml_Lo[idim]){
-                    b.growLo(idim, -ncell);
-                    amrex::Print() << " pml LO : " << b << "\n";
+        BoxList bl = grid_ba.boxList();
+        for (auto& b : bl) {
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                if (do_pml_Lo[idim]) {
+                    Box const& bb = amrex::adjCellLo(b, idim);
+                    if ( ! grid_ba.intersects(bb) ) {
+                        b.growLo(idim, -ncell);
+                    }
                 }
-                if (do_pml_Hi[idim]){
-                    b.growHi(idim, -ncell);
-                    amrex::Print() << " pml Hi : " << b << "\n";
+                if (do_pml_Hi[idim]) {
+                    Box const& bb = amrex::adjCellHi(b, idim);
+                    if ( ! grid_ba.intersects(bb) ) {
+                        b.growHi(idim, -ncell);
+                    }
                 }
             }
         }
+        grid_ba_reduced = BoxArray(std::move(bl));
     }
-    amrex::Print() << "bl :  " << bl << "\n";
-    const BoxArray grid_ba_reduced = (do_pml_in_domain) ?
-        //BoxArray(grid_ba.boxList().intersect(domain0)) : grid_ba;
-        BoxArray(grid_ba.boxList().intersect(bl)) : grid_ba;
-//    amrex::Print() << " grid_ba box list " << grid_ba.boxList() << " that interesects with domain 0 " << BoxArray(grid_ba.boxList().intersect(domain0)) << " \n";
-
+    Box const domain0 = grid_ba_reduced.minimalBox();
     const bool is_single_box_domain = domain0.numPts() == grid_ba_reduced.numPts();
-    amrex::Print() << " is single box domain : " << is_single_box_domain << " doamin0numpts : " << domain0.numPts() << " grid ba reduced num pts " << grid_ba_reduced.numPts() << "\n";
     const BoxArray& ba = MakeBoxArray(is_single_box_domain, domain0, *geom, grid_ba_reduced,
                                       IntVect(ncell), do_pml_in_domain, do_pml_Lo, do_pml_Hi);
 
@@ -612,7 +600,6 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     } else {
         m_ok = true;
     }
-    amrex::Print() << " Box Array : " << ba << "\n";
     // Define the number of guard cells in each di;rection, for E, B, and F
     auto nge = IntVect(AMREX_D_DECL(2, 2, 2));
     auto ngb = IntVect(AMREX_D_DECL(2, 2, 2));
@@ -779,40 +766,29 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
         BoxArray grid_cba = grid_ba;
         grid_cba.coarsen(ref_ratio);
-        amrex::Print() << " grid cba : " << grid_cba << "\n";
-        // assuming that the bounding box around grid_cba is a single patch, and not disjoint patches, similar to fine patch.
-        amrex::Box cdomain = grid_cba.minimalBox();
-        amrex::BoxList cbl = grid_cba.simplified_list();
+
+        BoxArray grid_cba_reduced = grid_cba;
         if (do_pml_in_domain) {
-            for (amrex::Box &cb : cbl) {
-            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-               // if (do_pml_Lo[idim]){
-               //     // ncell is divided by refinement ratio to ensure that the
-               //     // physical width of the PML region is equal in fine and coarse patch
-               //     cdomain.growLo(idim, -ncell/ref_ratio[idim]);
-               // }
-               // if (do_pml_Hi[idim]){
-               //     // ncell is divided by refinement ratio to ensure that the
-               //     // physical width of the PML region is equal in fine and coarse patch
-               //     cdomain.growHi(idim, -ncell/ref_ratio[idim]);
-               // }
-                if (do_pml_Lo[idim]){
-                    // ncell is divided by refinement ratio to ensure that the
-                    // physical width of the PML region is equal in fine and coarse patch
-                    cb.growLo(idim, -ncell/ref_ratio[idim]);
-                }
-                if (do_pml_Hi[idim]){
-                    // ncell is divided by refinement ratio to ensure that the
-                    // physical width of the PML region is equal in fine and coarse patch
-                    cb.growHi(idim, -ncell/ref_ratio[idim]);
+            BoxList bl = grid_cba.boxList();
+            for (auto& b : bl) {
+                for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                    if (do_pml_Lo[idim]) {
+                        Box const& bb = amrex::adjCellLo(b, idim);
+                        if ( ! grid_cba.intersects(bb) ) {
+                            b.growLo(idim, -ncell/ref_ratio[idim]);
+                        }
+                    }
+                    if (do_pml_Hi[idim]) {
+                        Box const& bb = amrex::adjCellHi(b, idim);
+                        if ( ! grid_cba.intersects(bb) ) {
+                            b.growHi(idim, -ncell/ref_ratio[idim]);
+                        }
+                    }
                 }
             }
-            }
+            grid_cba_reduced = BoxArray(std::move(bl));
         }
-        const BoxArray grid_cba_reduced = (do_pml_in_domain) ?
-            //BoxArray(grid_cba.boxList().intersect(cdomain)) : grid_cba;
-            BoxArray(grid_cba.boxList().intersect(cbl)) : grid_cba;
-        amrex::Print() << " grid cba reduced : " << grid_ba_reduced << "\n";
+        Box const cdomain = grid_cba_reduced.minimalBox();
 
         const IntVect cncells = IntVect(ncell)/ref_ratio;
         const IntVect cdelta = IntVect(delta)/ref_ratio;
