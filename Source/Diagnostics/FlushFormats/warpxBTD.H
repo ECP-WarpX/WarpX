@@ -24,6 +24,8 @@ class AMReX_warpxBTDWriter final : public AMReX_warpxWriter
   //~AMReX_warpxBTDWriter() override = default;
   ~AMReX_warpxBTDWriter() override;
 
+  void EnforceEncoding();
+
   // BTD does not support streams
   openPMD::Iteration GetIteration (int const iteration) const override
     {
@@ -102,6 +104,11 @@ AMReX_warpxBTDWriter::AMReX_warpxBTDWriter(
 AMReX_warpxBTDWriter::~AMReX_warpxBTDWriter()
 {}
 
+void AMReX_warpxBTDWriter::EnforceEncoding()
+{
+  if (m_openPMDEncoding == openPMD::IterationEncoding::variableBased)
+      m_openPMDEncoding = openPMD::IterationEncoding::groupBased;
+}
 
 void AMReX_warpxBTDWriter::CloseStep(int ts)
 {
@@ -138,12 +145,16 @@ bool AMReX_warpxBTDWriter::AllocatePtlProperties(openPMD::ParticleSpecies& currS
   if ( m_LastFlush && ( m_AssignedPtlOffset == 0 ) )
     {
       // properties were never allocated
-      //AMReX_openPMDWriter::SetupPos(currSpecies, np);
       return AMReX_openPMDWriter::AllocatePtlProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, np);
     }
 
   if (m_LastFlush) {
-      return true; // no need to do more allocation
+      // Just calling SetupPos is not enough, need to resize the ptl datasets as well
+      // example:  np=0 for all the writes, and at the last flush, offset > 0  (see issue 4604)
+      // which means Allocate was never called. And subsequent calls might fail
+      bool result  =  AMReX_openPMDWriter::AllocatePtlProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, np+GetGrandOffset());
+      amrex::ignore_unused(result);
+      return true;
   }
 
   return false;
