@@ -138,10 +138,11 @@ void FlushFormatPlotPlus::BTDWriter(const std::string& prefix,
 
     if ( m_Writer->InitLocalHandler(prefix) )
       {
-    AMReX_warpxBTDWriter* testWriter = new AMReX_warpxBTDWriter(warpx.getPMLdirections(),
-                                    openPMD::IterationEncoding::fileBased
-                                    );
-    m_Writer->SetWriter(testWriter);
+         AMReX_warpxBTDWriter* testWriter = new AMReX_warpxBTDWriter(warpx.getPMLdirections(),
+                                                                     openPMD::IterationEncoding::groupBased
+                                                                    );
+         m_Writer->SetWriter(testWriter);
+         testWriter->EnforceEncoding();
       }
 
     AMReX_warpxBTDWriter* btdWriter =  (AMReX_warpxBTDWriter*) (m_Writer->m_UserHandler->m_Writer.get());
@@ -166,55 +167,20 @@ void FlushFormatPlotPlus::BTDWriter(const std::string& prefix,
       const ParticleDiag& part_diag = particle_diags[whichDiag];
       WarpXParticleContainer* pc = part_diag.getParticleContainer();
 
-      const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
-      RandomFilter const random_filter(part_diag.m_do_random_filter,
-                                       part_diag.m_random_fraction);
-      UniformFilter const uniform_filter(part_diag.m_do_uniform_filter,
-                                         part_diag.m_uniform_stride);
-
-      ParserFilter parser_filter(part_diag.m_do_parser_filter,
-                                utils::parser::compileParser<ParticleDiag::m_nvars>
-                 (part_diag.m_particle_filter_parser.get()),
-                                 pc->getMass(), time);
-      parser_filter.m_units = InputUnits::SI;
-      GeometryFilter const geometry_filter(part_diag.m_do_geom_filter,
-                                           part_diag.m_diag_domain);
-
       PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
       PinnedMemoryParticleContainer tmp;
-
-      if ( use_pinned_pc )
-    {
-      if (!pinned_pc->isDefined()) {
-        continue; // Skip to the next particle container
-      }
       tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
-          tmp.copyParticles(*pinned_pc, true);
-          particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
-    }
-      else
-    {
-      particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
-      tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
 
-          using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-          tmp.copyParticles(*pc,
-                            [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-          {
-              const SuperParticleType& p = src.getSuperParticle(ip);
-              return random_filter(p, engine) * uniform_filter(p, engine)
-                     * parser_filter(p, engine) * geometry_filter(p, engine);
-          }, true);
-    }
+      CopyPtls(tmp, time, pc, pinned_pc, part_diag);
 
     tmp.CountParticles();
 
     btdWriter -> AssignPtlOffset(totalParticlesFlushedAlready[whichDiag]);
 
-        Vector<std::string> real_names;
-        Vector<std::string> int_names;
-        Vector<int> int_flags;
-        Vector<int> real_flags;
+    Vector<std::string> real_names;
+    Vector<std::string> int_names;
+    Vector<int> int_flags;
+    Vector<int> real_flags;
     GetNames(part_diag, real_names, int_names, int_flags, real_flags);
 
     //m_Writer->WriteParticles(tmp, part_diag.getSpeciesName(), real_names, int_names, real_flags, int_flags,
@@ -305,53 +271,25 @@ void FlushFormatPlotPlus::DefaultWriter(const std::string& prefix,
     // write particles
     for (auto& part_diag : particle_diags) {
       WarpXParticleContainer* pc = part_diag.getParticleContainer();
-      const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
-      RandomFilter const random_filter(part_diag.m_do_random_filter,
-                                       part_diag.m_random_fraction);
-      UniformFilter const uniform_filter(part_diag.m_do_uniform_filter,
-                                         part_diag.m_uniform_stride);
-      ParserFilter parser_filter(part_diag.m_do_parser_filter,
-                                utils::parser::compileParser<ParticleDiag::m_nvars>
-                 (part_diag.m_particle_filter_parser.get()),
-                                 pc->getMass(), time);
-      parser_filter.m_units = InputUnits::SI;
-      GeometryFilter const geometry_filter(part_diag.m_do_geom_filter,
-                                           part_diag.m_diag_domain);
 
       PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
       PinnedMemoryParticleContainer tmp;
+      if (use_pinned_pc) {
+	tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
 
-      if ( use_pinned_pc )
-    {
-      if (!pinned_pc->isDefined()) {
-        continue; // Skip to the next particle container
+	CopyPtls(tmp, time, pc, pinned_pc, part_diag);
+      } else {
+	tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
+	CopyPtls(tmp, time, pc, pc, part_diag);
       }
-      tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
 
-      tmp.copyParticles(*pinned_pc, true);
-      particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
-    }
-      else
-    {
-      particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
-      tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-
-          using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
-          tmp.copyParticles(*pc,
-                            [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
-          {
-              const SuperParticleType& p = src.getSuperParticle(ip);
-              return random_filter(p, engine) * uniform_filter(p, engine)
-                     * parser_filter(p, engine) * geometry_filter(p, engine);
-          }, true);
-    }
 
     tmp.CountParticles();
 
     Vector<std::string> real_names;
-        Vector<std::string> int_names;
-        Vector<int> int_flags;
-        Vector<int> real_flags;
+    Vector<std::string> int_names;
+    Vector<int> int_flags;
+    Vector<int> real_flags;
     GetNames(part_diag, real_names, int_names, int_flags, real_flags);
     m_Writer->m_UserHandler->m_Writer->DumpParticles(tmp,
                           part_diag.getSpeciesName(),

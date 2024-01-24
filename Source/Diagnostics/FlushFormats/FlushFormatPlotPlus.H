@@ -4,6 +4,9 @@
 #include "FlushFormat.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
+#include "Particles/Filter/FilterFunctors.H"
+#include "Particles/ParticleIO.H"
+#include "Utils/Parser/ParserUtils.H"
 
 #include <AMReX_Geometry.H>
 #include <AMReX_Vector.H>
@@ -116,6 +119,44 @@ public:
          const amrex::Vector<int>& totalParticlesFlushedAlready
          ) const;
 
+//
+// copies ptls
+// general purpose for both BTD and default use cases
+//
+template< typename T_ParticleContainer >
+  void CopyPtls(PinnedMemoryParticleContainer& tmp,
+                const double time,
+                WarpXParticleContainer* pc,
+                T_ParticleContainer* ptlSrc,
+                const ParticleDiag& part_diag) const
+  {
+      const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
+      RandomFilter const random_filter(part_diag.m_do_random_filter,
+                                       part_diag.m_random_fraction);
+      UniformFilter const uniform_filter(part_diag.m_do_uniform_filter,
+                                         part_diag.m_uniform_stride);
+
+      ParserFilter parser_filter(part_diag.m_do_parser_filter,
+                                 utils::parser::compileParser<ParticleDiag::m_nvars>
+                                   (part_diag.m_particle_filter_parser.get()),
+                                 pc->getMass(), time);
+      parser_filter.m_units = InputUnits::SI;
+      GeometryFilter const geometry_filter(part_diag.m_do_geom_filter,
+                                           part_diag.m_diag_domain);
+
+      particlesConvertUnits(ConvertDirection::WarpX_to_SI, ptlSrc, mass);
+      using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+      tmp.copyParticles(*ptlSrc,
+            [random_filter,uniform_filter,parser_filter,geometry_filter]
+            AMREX_GPU_HOST_DEVICE
+            (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+            {
+                const SuperParticleType& p = src.getSuperParticle(ip);
+                return random_filter(p, engine) * uniform_filter(p, engine)
+                        * parser_filter(p, engine) * geometry_filter(p, engine);
+            }, true);
+        particlesConvertUnits(ConvertDirection::SI_to_WarpX, ptlSrc, mass);
+  }
 };
 #endif // AMREX_USE_OPENPMD_API
 #endif // WARPX_FLUSHFORMATPLOTPLUS_H_
