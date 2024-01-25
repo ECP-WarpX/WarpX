@@ -578,8 +578,8 @@ PhysicalParticleContainer::AddGaussianBeam (
 
                 amrex::AllPrint() << "AFTER x = " << x << " y = " << y << std::endl;
 =======
-                x = x -  vx * t; 
-                y = y -  vy * t; 
+                x = x -  vx * t;
+                y = y -  vy * t;
 
 >>>>>>> Stashed changes
                 u.x *= PhysConst::c;
