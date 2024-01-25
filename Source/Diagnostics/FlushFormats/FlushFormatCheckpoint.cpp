@@ -189,9 +189,12 @@ FlushFormatCheckpoint::CheckpointParticles (
 #endif
 
         // get the names of the real comps
-        real_names.resize(pc->NumRealComps());
+        //   note: skips the mandatory AMREX_SPACEDIM positions for pure SoA
+        real_names.resize(pc->NumRealComps() - AMREX_SPACEDIM);
         auto runtime_rnames = pc->getParticleRuntimeComps();
-        for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
+        for (auto const& x : runtime_rnames) {
+            real_names[x.second + PIdx::nattribs - AMREX_SPACEDIM] = x.first;
+        }
 
         // and the int comps
         int_names.resize(pc->NumIntComps());

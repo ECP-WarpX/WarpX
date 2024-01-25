@@ -167,7 +167,7 @@ public:
             p_ux, p_uy, p_uz,
             engine);
 
-        src.m_idata[0][i_src] = -1;  // destroy photon after pair generation
+        amrex::ParticleIDWrapper{src.m_idcpu[i_src]} = -1;  // destroy photon after pair generation
     }
 
 private:

@@ -50,6 +50,7 @@ struct CopyAndTimestamp {
     void operator() (const DstData& dst, const SrcData& src,
                      int src_i, int dst_i) const noexcept
     {
+        dst.m_idcpu[dst_i] = src.m_idcpu[src_i];
         for (int j = 0; j < SrcData::NAR; ++j) {
             dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
         }
