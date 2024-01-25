@@ -46,6 +46,7 @@ struct ExternalFieldFromFile3DCyl
     {
     }
 
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real interp_(const amrex::Array4<amrex::Real const> array, int ir, int iz, amrex::Real r, amrex::Real z) const noexcept {
         const amrex::Real
                     f00 = array(0, iz  , ir  ),
