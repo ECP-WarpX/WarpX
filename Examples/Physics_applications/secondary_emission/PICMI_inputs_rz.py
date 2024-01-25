@@ -6,7 +6,6 @@ import numpy as np
 
 from pywarpx import callbacks, libwarpx, particle_containers, picmi
 
-
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -145,9 +144,9 @@ def mirror_reflection():
         w=w,
         unique_particles=args.unique
         )
-    
 
-    
+
+
 
 callbacks.installafterstep(mirror_reflection)
 
