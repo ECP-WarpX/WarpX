@@ -524,7 +524,7 @@ PhysicalParticleContainer::AddGaussianBeam (
     const Real x_cut, const Real y_cut, const Real z_cut,
     const Real q_tot, long npart,
     const int do_symmetrize,
-    const int symmetrization_order) {
+    const int symmetrization_order, const Real z_f) {
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
@@ -545,8 +545,8 @@ PhysicalParticleContainer::AddGaussianBeam (
         for (long i = 0; i < npart; ++i) {
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             const Real weight = q_tot/(npart*charge);
-            const Real x = amrex::RandomNormal(x_m, x_rms);
-            const Real y = amrex::RandomNormal(y_m, y_rms);
+            Real x = amrex::RandomNormal(x_m, x_rms);
+            Real y = amrex::RandomNormal(y_m, y_rms);
             const Real z = amrex::RandomNormal(z_m, z_rms);
 #elif defined(WARPX_DIM_XZ)
             const Real weight = q_tot/(npart*charge*y_rms);
@@ -564,9 +564,22 @@ PhysicalParticleContainer::AddGaussianBeam (
                 std::abs( y - y_m ) <= y_cut * y_rms     &&
                 std::abs( z - z_m ) <= z_cut * z_rms   ) {
                 XDim3 u = plasma_injector.getMomentum(x, y, z);
+                amrex::Real gamma = std::sqrt( 1._rt+(u.x*u.x+u.y*u.y+u.z*u.z) );
+                amrex::Real vx = u.x / gamma * PhysConst::c;
+                amrex::Real vy = u.y / gamma * PhysConst::c;
+                amrex::Real vz = u.z / gamma * PhysConst::c;
+                amrex::Real t = (z_f - z)/vz; 
+
+                amrex::AllPrint() << "BEFORE x = " << x << " y = " << y << std::endl;
+
+                x = x -  vx * t; 
+                y = y -  vy * t; 
+                
+                amrex::AllPrint() << "AFTER x = " << x << " y = " << y << std::endl;
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
+
                 if (do_symmetrize && symmetrization_order == 8){
                     // Add eight particles to the beam:
                     CheckAndAddParticle(x, y, z, u.x, u.y, u.z, weight/8._rt,
@@ -630,12 +643,27 @@ PhysicalParticleContainer::AddGaussianBeam (
     }
     // Add the temporary CPU vectors to the particle structure
     auto const np = static_cast<long>(particle_z.size());
+    /*
+    amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) {
+         amrex::Real gamma = std::sqrt( 1._rt+(particle_ux[i]*particle_ux[i]+particle_uy[i]*particle_uy[i]+particle_uz[i]*particle_uz[i]) );
+         amrex::Real vx = particle_ux[i] / gamma * PhysConst::c;
+         amrex::Real vy = particle_uy[i] / gamma * PhysConst::c;
+         amrex::Real vz = particle_uz[i] / gamma * PhysConst::c;
+         amrex::Real t = (z_f - particle_z[i])/vz; 
+         particle_x.data()[i] = particle_x[i] -  vx * t; 
+         particle_y[i] = particle_y[i] -  vy * t; 
+    });
+    */
+
+
     amrex::Vector<ParticleReal> xp(particle_x.data(), particle_x.data() + np);
     amrex::Vector<ParticleReal> yp(particle_y.data(), particle_y.data() + np);
     amrex::Vector<ParticleReal> zp(particle_z.data(), particle_z.data() + np);
     amrex::Vector<ParticleReal> uxp(particle_ux.data(), particle_ux.data() + np);
     amrex::Vector<ParticleReal> uyp(particle_uy.data(), particle_uy.data() + np);
     amrex::Vector<ParticleReal> uzp(particle_uz.data(), particle_uz.data() + np);
+
+
 
     amrex::Vector<amrex::Vector<ParticleReal>> attr;
     amrex::Vector<ParticleReal> wp(particle_w.data(), particle_w.data() + np);
@@ -891,7 +919,8 @@ PhysicalParticleContainer::AddParticles (int lev)
                             plasma_injector->q_tot,
                             plasma_injector->npart,
                             plasma_injector->do_symmetrize,
-                            plasma_injector->symmetrization_order);
+                            plasma_injector->symmetrization_order, 
+                            plasma_injector->z_f);
         }
 
         if (plasma_injector->external_file) {
