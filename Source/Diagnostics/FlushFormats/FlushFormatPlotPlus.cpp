@@ -153,13 +153,14 @@ void FlushFormatPlotPlus::BTDWriter(const std::string& prefix,
     StepMgr sm(output_iteration, m_Writer.get());
 
     // write mesh
-    m_Writer->StoreMesh(//parms.nlevs,
+    if (!mf.empty()) {
+        m_Writer->StoreMesh(//parms.nlevs,
             amrex::GetVecOfConstPtrs(mf),
             varnames,
             geom,
             static_cast<Real>(time)
             );
-
+    }
     // write particles
     //for (auto& part_diag : particle_diags) {
     for (unsigned whichDiag = 0, n = particle_diags.size(); whichDiag < n; ++whichDiag)
