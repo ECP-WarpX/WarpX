@@ -6,7 +6,6 @@ import numpy as np
 
 from pywarpx import callbacks, libwarpx, particle_containers, picmi
 
-
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -137,8 +136,8 @@ def mirror_reflection():
     time_steps = buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0) #real
     print(len(time_steps))
     print(nb_steps_scraping)
-    #we ensure that at each step at least one particle has been scraped 
-    
+    #we ensure that at each step at least one particle has been scraped
+
     if (len(time_steps)>nb_steps_scraping):
         nb_steps_scraping=len(time_steps)
         #step 1: extract the different parameters of the scraping buffer (normal, time, position)
@@ -168,10 +167,10 @@ def mirror_reflection():
                 w=w[i],
                 unique_particles=args.unique
                 )
-    
+
     return nb_steps_scraping
 
-    
+
 
 callbacks.installafterstep(mirror_reflection)
 
