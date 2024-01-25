@@ -128,7 +128,7 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
 
             Bfield_file_external_particle_cyl = new ExternalFieldFromFile3DCyl(
                 amrex::RealVect {gridSpacing[0], gridSpacing[1], 0}, 
-                amrex::RealVect {offset[0], offset[1], offset[2] }, 
+                amrex::RealVect {static_cast<amrex::Real>(offset[0]), static_cast<amrex::Real>(offset[1]), static_cast<amrex::Real>(offset[2]) }, 
                 {static_cast<int>(extent[0]), static_cast<int>(extent[2]), static_cast<int>(extent[1])},
                 FCr_data_gpu, FCz_data_gpu
             );
