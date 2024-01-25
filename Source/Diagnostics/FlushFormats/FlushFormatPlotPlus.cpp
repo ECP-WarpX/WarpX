@@ -326,13 +326,7 @@ void AMReXWithOpenPMD::SetWriter(amrex::openpmd_api::AMReX_openPMDWriter* w)
   BL_ASSERT ( m_UserHandler != nullptr );
   BL_ASSERT ( w != nullptr );
 
-  // so the openpmd filepath assigned from input file is still in use
-  w->m_openPMDPrefix = m_UserHandler->m_Writer->m_openPMDPrefix;
-  w->m_openPMDEncoding = m_UserHandler->m_Writer->m_openPMDEncoding;
-  w->m_openPMDFileType = m_UserHandler->m_Writer->m_openPMDFileType;
-  w->m_openPMDSeriesOptions = m_UserHandler->m_Writer->m_openPMDSeriesOptions;
-
-  m_UserHandler->m_Writer.reset(w);
+  m_UserHandler->SetWriter(w);
 }
 
 AMReXWithOpenPMD::~AMReXWithOpenPMD()
