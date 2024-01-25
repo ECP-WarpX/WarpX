@@ -116,8 +116,7 @@ be interpolated to the correct time, using :math:`\vec{J}_i^n = 1/2(\vec{J}_i^{n
 The electron pressure is simply calculated using :math:`\rho^n` and the B-field is also already
 known at the correct time since it was calculated for :math:`t=t_n` at the end of the last step.
 Once :math:`\vec{E}^n` is calculated, it is used to push :math:`\vec{B}^n` forward in time
-(using the Maxwell-Faraday equation, i.e. the same as in the regular PIC routine with ``WarpX::EvolveB()``)
-to :math:`\vec{B}^{n+1/2}`.
+(using the Maxwell-Faraday equation) to :math:`\vec{B}^{n+1/2}`.
 
 Second half step
 """"""""""""""""
@@ -147,10 +146,11 @@ Sub-stepping
 ^^^^^^^^^^^^
 
 It is also well known that hybrid PIC routines require the B-field to be
-updated with a smaller timestep than needed for the particles. The update steps
-as outlined above are therefore wrapped in loops that enable the B-field to be
-sub-stepped. The exact number of sub-steps used can be specified by the user
-through a runtime simulation parameter (see :ref:`input parameters section <running-cpp-parameters-hybrid-model>`).
+updated with a smaller timestep than needed for the particles. A 4th order
+Runge-Kutta scheme is used to update the B-field. The RK scheme is repeated a
+number of times during each half-step outlined above. The number of sub-steps
+used can be specified by the user through a runtime simulation parameter
+(see :ref:`input parameters section <running-cpp-parameters-hybrid-model>`).
 
 .. _theory-hybrid-model-elec-temp:
 
