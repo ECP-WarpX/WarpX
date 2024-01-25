@@ -568,13 +568,13 @@ PhysicalParticleContainer::AddGaussianBeam (
                 amrex::Real vx = u.x / gamma * PhysConst::c;
                 amrex::Real vy = u.y / gamma * PhysConst::c;
                 amrex::Real vz = u.z / gamma * PhysConst::c;
-                amrex::Real t = (z_f - z)/vz; 
+                amrex::Real t = (z_f - z)/vz;
 
                 amrex::AllPrint() << "BEFORE x = " << x << " y = " << y << std::endl;
 
-                x = x -  vx * t; 
-                y = y -  vy * t; 
-                
+                x = x -  vx * t;
+                y = y -  vy * t;
+
                 amrex::AllPrint() << "AFTER x = " << x << " y = " << y << std::endl;
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
@@ -649,9 +649,9 @@ PhysicalParticleContainer::AddGaussianBeam (
          amrex::Real vx = particle_ux[i] / gamma * PhysConst::c;
          amrex::Real vy = particle_uy[i] / gamma * PhysConst::c;
          amrex::Real vz = particle_uz[i] / gamma * PhysConst::c;
-         amrex::Real t = (z_f - particle_z[i])/vz; 
-         particle_x.data()[i] = particle_x[i] -  vx * t; 
-         particle_y[i] = particle_y[i] -  vy * t; 
+         amrex::Real t = (z_f - particle_z[i])/vz;
+         particle_x.data()[i] = particle_x[i] -  vx * t;
+         particle_y[i] = particle_y[i] -  vy * t;
     });
     */
 
@@ -919,7 +919,7 @@ PhysicalParticleContainer::AddParticles (int lev)
                             plasma_injector->q_tot,
                             plasma_injector->npart,
                             plasma_injector->do_symmetrize,
-                            plasma_injector->symmetrization_order, 
+                            plasma_injector->symmetrization_order,
                             plasma_injector->z_f);
         }
 

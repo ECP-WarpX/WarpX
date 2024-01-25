@@ -228,7 +228,7 @@ public:
 
     void AddGaussianBeam (
         PlasmaInjector const& plasma_injector,
-        amrex::Real x_m, amrex::Real y_m, amrex::Real z_m, 
+        amrex::Real x_m, amrex::Real y_m, amrex::Real z_m,
         amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
         amrex::Real x_cut, amrex::Real y_cut, amrex::Real z_cut,
         amrex::Real q_tot, long npart, int do_symmetrize, int symmetrization_order, amrex::Real z_f);
