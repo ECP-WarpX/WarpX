@@ -46,6 +46,7 @@ This section documents quick-start guides for a selection of supercomputers that
    hpc/lxplus
    hpc/ookami
    hpc/perlmutter
+   hpc/polaris
    hpc/quartz
    hpc/spock
    hpc/summit

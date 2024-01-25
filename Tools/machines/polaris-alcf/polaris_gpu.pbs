@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 #PBS -A <proj>
-#PBS -l select=1:system=polaris
+#PBS -l select=<NODES>:system=polaris
 #PBS -l place=scatter
 #PBS -l walltime=0:10:00
 #PBS -l filesystems=home:eagle
@@ -26,7 +26,7 @@ INPUTS=input1d
 
 # MPI and OpenMP settings
 NNODES=`wc -l < $PBS_NODEFILE`
-NRANKS_PER_NODE=1
+NRANKS_PER_NODE=4
 NDEPTH=1
 NTHREADS=1
 
@@ -34,4 +34,3 @@ NTOTRANKS=$(( NNODES * NRANKS_PER_NODE ))
 echo "NUM_OF_NODES= ${NNODES} TOTAL_NUM_RANKS= ${NTOTRANKS} RANKS_PER_NODE= ${NRANKS_PER_NODE} THREADS_PER_RANK= ${NTHREADS}"
 
 mpiexec -np ${NTOTRANKS} ${EXE} ${INPUTS} > output.txt
-
