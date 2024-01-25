@@ -129,7 +129,7 @@ RecordingPlaneParticleFunctor::operator () (PinnedMemoryParticleContainer& pc_ds
             }
         }
     }
-    TotalParticleCounter = int(pc_dst.TotalNumberOfParticles());
+    TotalParticleCounter = int(pc_dst.TotalNumberOfParticles(false));
 }
 
 void
