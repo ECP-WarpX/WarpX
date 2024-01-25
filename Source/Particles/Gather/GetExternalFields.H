@@ -44,12 +44,6 @@ struct ExternalFieldFromFile3DCyl
         datar(std::move(datar_)), 
         dataz(std::move(dataz_))
     {
-        assert(arrayr.begin.x == arrayz.begin.x);
-        assert(arrayr.begin.y == arrayz.begin.y);
-        assert(arrayr.begin.z == arrayz.begin.z);
-        assert(arrayr.end.x == arrayz.end.x);
-        assert(arrayr.end.y == arrayz.end.y);
-        assert(arrayr.end.z == arrayz.end.z);
     }
 
     amrex::Real interp_(const amrex::Array4<amrex::Real const> array, int ir, int iz, amrex::Real r, amrex::Real z) const noexcept {

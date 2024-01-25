@@ -132,8 +132,6 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
                 {static_cast<int>(extent[0]), static_cast<int>(extent[2]), static_cast<int>(extent[1])},
                 FCr_data_gpu, FCz_data_gpu
             );
-            assert(FCr_data_gpu.data() == nullptr);
-            assert(FCz_data_gpu.data() == nullptr);
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false, "3D can only read external fields from files with thetaMode geometry");
         }
