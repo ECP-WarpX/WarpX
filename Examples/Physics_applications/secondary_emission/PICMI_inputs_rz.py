@@ -17,8 +17,6 @@ parser.add_argument(
 args, left = parser.parse_known_args()
 sys.argv = sys.argv[:1] + left
 
-print('code debute')
-
 ##########################
 # numerics parameters
 ##########################
