@@ -6,6 +6,7 @@ import numpy as np
 
 from pywarpx import callbacks, libwarpx, particle_containers, picmi
 
+
 # Create the parser and add the argument
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -70,8 +71,18 @@ embedded_boundary = picmi.EmbeddedBoundary(
 # physics components
 ##########################
 
+
+n = 7.0e9 #plasma density #particles/m^3
+Te = 85 #Electron temp in eV
+qe = picmi.constants.q_e #elementary charge
+m_e = picmi.constants.m_e #electron mass
+v_eth = (qe * Te / m_e) ** 0.5
+
+# nothing to change in the distribution function?
+e_dist = picmi.UniformDistribution(density = n, rms_velocity=[v_eth, v_eth, v_eth] )
+
 electrons = picmi.Species(
-    particle_type='electron', name='electrons'
+    particle_type='electron', name='electrons', initial_distribution=e_dist, warpx_save_particles_at_eb=1
 )
 
 ##########################
@@ -89,16 +100,17 @@ part_diag = picmi.ParticleDiagnostic(name = 'diag1',
 ##########################
 
 sim = picmi.Simulation(
-    solver = solver,
+    solver=solver,
     time_step_size = dt,
     max_steps = max_steps,
-    verbose = 1
+    warpx_embedded_boundary=embedded_boundary,
+    warpx_amrex_the_arena_is_managed=1,
 )
 
 sim.add_species(
     electrons,
     layout = picmi.GriddedLayout(
-        n_macroparticle_per_cell=[0, 0], grid=grid
+        n_macroparticle_per_cell=[10, 1, 1], grid=grid
     )
 )
 sim.add_diagnostic(part_diag)
@@ -106,6 +118,7 @@ sim.add_diagnostic(part_diag)
 
 sim.initialize_inputs()
 sim.initialize_warpx()
+sim.step(1)
 
 ##########################
 # python particle data access
@@ -115,38 +128,50 @@ sim.initialize_warpx()
 #damping_coef=
 #number=
 
+
+
+nb_steps_scraping=0
 def mirror_reflection():
-    #step 1: extract the different parameters of the scraping buffer (normal, time, position)
+    global nb_steps_scraping
     buffer = particle_containers.ParticleBoundaryBufferWrapper()
-    #this doesn't work because we are not sure that at each step particles have been scraped --> we have to ensure that just before
-    time = buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0)[-1] #real
-    x = buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0)[-1] #array of reals
-    y = buffer.get_particle_boundary_buffer("electrons", 'eb', 'y', 0)[-1] #array of reals
-    z = buffer.get_particle_boundary_buffer("electrons", 'eb', 'z', 0)[-1] #array of reals
-    ux = buffer.get_particle_boundary_buffer("electrons", 'eb', 'ux', 0)[-1] #array of reals
-    uy = buffer.get_particle_boundary_buffer("electrons", 'eb', 'uy', 0)[-1] #array of reals
-    uz = buffer.get_particle_boundary_buffer("electrons", 'eb', 'uz', 0)[-1] #array of reals
-    w = buffer.get_particle_boundary_buffer("electrons", 'eb', 'w', 0)[-1] #array of reals
-    nx = buffer.get_particle_boundary_buffer("electrons", 'eb', 'nx', 0)[-1] #array of reals
-    ny = buffer.get_particle_boundary_buffer("electrons", 'eb', 'ny', 0)[-1] #array of reals
-    nz = buffer.get_particle_boundary_buffer("electrons", 'eb', 'nz', 0)[-1] #array of reals
+    time_steps = buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0) #real
+    print(len(time_steps))
+    print(nb_steps_scraping)
+    #we ensure that at each step at least one particle has been scraped 
+    
+    if (len(time_steps)>nb_steps_scraping):
+        nb_steps_scraping=len(time_steps)
+        #step 1: extract the different parameters of the scraping buffer (normal, time, position)
+        x = buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0)[-1] #array of reals
+        y = buffer.get_particle_boundary_buffer("electrons", 'eb', 'y', 0)[-1] #array of reals
+        z = buffer.get_particle_boundary_buffer("electrons", 'eb', 'z', 0)[-1] #array of reals
+        ux = buffer.get_particle_boundary_buffer("electrons", 'eb', 'ux', 0)[-1] #array of reals
+        uy = buffer.get_particle_boundary_buffer("electrons", 'eb', 'uy', 0)[-1] #array of reals
+        uz = buffer.get_particle_boundary_buffer("electrons", 'eb', 'uz', 0)[-1] #array of reals
+        w = buffer.get_particle_boundary_buffer("electrons", 'eb', 'w', 0)[-1] #array of reals
+
+        nx = buffer.get_particle_boundary_buffer("electrons", 'eb', 'nx', 0)[-1] #array of reals
+        ny = buffer.get_particle_boundary_buffer("electrons", 'eb', 'ny', 0)[-1] #array of reals
+        nz = buffer.get_particle_boundary_buffer("electrons", 'eb', 'nz', 0)[-1] #array of reals
 
 
-    #step 2: use these parameters to inject from the same position electrons in the plasma
-    elect_pc = particle_containers.ParticleContainerWrapper('electrons')
-    un=ux*nx+uy*ny+uz*nz
-    ux_reflect=2*un*nx-ux
-    uy_reflect=2*un*ny-uy
-    uz_reflect=2*un*nz-uz
-    elect_pc.add_particles(
-    #for a "mirror reflection" u(sym)=2(u.n)n-u
-        x=x, y=y, z=z, ux=ux_reflect, uy=uy_reflect, uz=uz_reflect,
-        w=w,
-        unique_particles=args.unique
-        )
+        #step 2: use these parameters to inject from the same position electrons in the plasma
+        elect_pc = particle_containers.ParticleContainerWrapper('electrons')
+        for i in len(x): #loop on the particles scraped since the last step
+            un=ux[i]*nx[i]+uy[i]*ny[i]+uz[i]*nz[i]
+            ux_reflect=2*un[i]*nx[i]-ux[i]
+            uy_reflect=2*un[i]*ny[i]-uy[i]
+            uz_reflect=2*un[i]*nz[i]-uz[i]
+            elect_pc.add_particles(
+                #for a "mirror reflection" u(sym)=2(u.n)n-u
+                x=x[i], y=y[i], z=z[i], ux=ux_reflect, uy=uy_reflect, uz=uz_reflect,
+                w=w[i],
+                unique_particles=args.unique
+                )
+    
+    return nb_steps_scraping
 
-
-
+    
 
 callbacks.installafterstep(mirror_reflection)
 
@@ -154,4 +179,4 @@ callbacks.installafterstep(mirror_reflection)
 # simulation run
 ##########################
 
-sim.step(max_steps)
+sim.step(max_steps-1)
