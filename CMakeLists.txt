@@ -38,14 +38,6 @@ endif()
 set_cxx17_superbuild()
 
 
-# CCache Support ##############################################################
-#
-# this is an optional tool that stores compiled object files; allows fast
-# re-builds even with "make clean" in between. Mainly used to store AMReX
-# objects
-set_ccache()
-
-
 # Output Directories ##########################################################
 #
 # temporary build directories
@@ -144,6 +136,16 @@ mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 option(ABLASTR_FFT "compile AnyFFT wrappers" ${WarpX_PSATD})
 if(WarpX_PSATD)
     set(ABLASTR_FFT ON CACHE STRING "compile AnyFFT wrappers" FORCE)
+endif()
+
+# CCache Support ##############################################################
+#
+# this is an optional tool that stores compiled object files; allows fast
+# re-builds even with "make clean" in between. Mainly used to store AMReX
+# objects
+option(WarpX_CCACHE "Enable ccache for faster rebuilds" OFF)
+if(WarpX_CCACHE)
+    set_ccache()
 endif()
 
 # this defined the variable BUILD_TESTING which is ON by default
