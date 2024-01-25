@@ -570,18 +570,9 @@ PhysicalParticleContainer::AddGaussianBeam (
                 amrex::Real vz = u.z / gamma * PhysConst::c;
                 amrex::Real t = (z_f - z)/vz;
 
-<<<<<<< Updated upstream
-                amrex::AllPrint() << "BEFORE x = " << x << " y = " << y << std::endl;
-
                 x = x -  vx * t;
                 y = y -  vy * t;
 
-                amrex::AllPrint() << "AFTER x = " << x << " y = " << y << std::endl;
-=======
-                x = x -  vx * t;
-                y = y -  vy * t;
-
->>>>>>> Stashed changes
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
