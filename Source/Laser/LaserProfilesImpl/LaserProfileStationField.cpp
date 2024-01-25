@@ -143,11 +143,36 @@ void StationFieldLaserProfile::update (amrex::Real t)
             a(i,j,0) = (a(i,j,0)*(amrex::Real(1.0)-w) + a(i,j,1)*w);
 #endif
         });
+        amrex::Gpu::streamSynchronize();
     }
 
-    amrex::Box b = m_slice_fab->box();
-    b.setBig(AMREX_SPACEDIM-1,0);
-    amrex::ParallelDescriptor::Bcast(m_slice_fab->dataPtr(), b.numPts());
+    if (amrex::ParallelDescriptor::NProcs() > 1) {
+        amrex::Box b = m_slice_fab->box();
+        b.setBig(AMREX_SPACEDIM-1,0);
+#ifdef AMREX_USE_GPU
+        if ( ! amrex::ParallelDescriptor::UseGpuAwareMpi() &&
+             ! m_slice_fab->arena()->isHostAccessible() )
+        {
+            amrex::FArrayBox host_fab(b, 1, amrex::The_Pinned_Arena());
+            if (amrex::ParallelDescriptor::MyProc() == 0) {
+                amrex::Gpu::dtoh_memcpy_async(host_fab.dataPtr(),
+                                              m_slice_fab->dataPtr(),
+                                              host_fab.nBytes());
+                amrex::Gpu::streamSynchronize();
+            }
+            amrex::ParallelDescriptor::Bcast(host_fab.dataPtr(), b.numPts());
+            if (amrex::ParallelDescriptor::MyProc() != 0) {
+                amrex::Gpu::htod_memcpy_async(m_slice_fab->dataPtr(),
+                                              host_fab.dataPtr(),
+                                              host_fab.nBytes());
+                amrex::Gpu::streamSynchronize();
+            }
+        } else
+#endif
+        {
+            amrex::ParallelDescriptor::Bcast(m_slice_fab->dataPtr(), b.numPts());
+        }
+    }
 }
 
 void StationFieldLaserProfile::fill_amplitude (
