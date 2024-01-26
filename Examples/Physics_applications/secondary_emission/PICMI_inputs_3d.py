@@ -137,8 +137,8 @@ def mirror_reflection():
         time_steps = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0))
         #np_steps_scraping+=len(time_steps)
         #step 1: extract the different parameters of the scraping buffer (normal, time, position)
-        x = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0)) 
-        y = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'y', 0)) 
+        x = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0))
+        y = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'y', 0))
         z = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'z', 0))
         ux = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'ux', 0))
         uy = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'uy', 0))
@@ -150,7 +150,7 @@ def mirror_reflection():
 
         #step 2: use these parameters to inject from the same position electrons in the plasma
         elect_pc = particle_containers.ParticleContainerWrapper('electrons')
-   
+
         un=ux*nx+uy*ny+uz*nz
         ux_reflect=2*un*nx-ux
         uy_reflect=2*un*ny-uy
@@ -162,7 +162,7 @@ def mirror_reflection():
             w=w,
             unique_particles=args.unique
             )
-    
+
         buffer.clear_buffer()
 
 
