@@ -47,14 +47,14 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
             const SpectralKSpace& spectral_kspace,
             const amrex::DistributionMapping& dm,
             const SpectralFieldIndex& spectral_index,
-            const int norder_x,
-            const int norder_y,
-            const int norder_z,
-            const short grid_type,
-            const amrex::Real dt,
-            const bool div_cleaning,
-            const int J_in_time,
-            const int rho_in_time);
+            int norder_x,
+            int norder_y,
+            int norder_z,
+            short grid_type,
+            amrex::Real dt,
+            bool div_cleaning,
+            int J_in_time,
+            int rho_in_time);
 
         /**
          * \brief Updates E, B, F, and G fields in spectral space,
@@ -62,7 +62,7 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
          *
          * \param[in,out] f all the fields in spectral space
          */
-        virtual void pushSpectralFields (SpectralFieldData& f) const override final;
+        void pushSpectralFields (SpectralFieldData& f) const final;
 
         /**
          * \brief Virtual function for current correction in Fourier space
@@ -73,7 +73,7 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void CurrentCorrection (SpectralFieldData& field_data) override final;
+        void CurrentCorrection (SpectralFieldData& field_data) final;
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
@@ -84,7 +84,7 @@ class PsatdAlgorithmFirstOrder : public SpectralBaseAlgorithm
          *
          * \param[in,out] field_data All fields in Fourier space
          */
-        virtual void VayDeposition (SpectralFieldData& field_data) override final;
+        void VayDeposition (SpectralFieldData& field_data) final;
 
     private:
 

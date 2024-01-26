@@ -72,20 +72,22 @@ namespace ablastr::coarsen::average
 
         // Compute number of points
         for (int l = 0; l < 3; ++l) {
-            if (cr[l] == 1)
+            if (cr[l] == 1) {
                 np[l] = 1; // no coarsening
-            else
+            } else {
                 np[l] = cr[l] * (1 - sf[l]) * (1 - sc[l])        // cell-centered
                         + (2 * (cr[l] - 1) + 1) * sf[l] * sc[l]; // nodal
+            }
         }
 
         // Compute starting indices of source array (fine)
         for (int l = 0; l < 3; ++l) {
-            if (cr[l] == 1)
+            if (cr[l] == 1) {
                 idx_min[l] = ic[l]; // no coarsening
-            else
+            } else {
                 idx_min[l] = ic[l] * cr[l] * (1 - sf[l]) * (1 - sc[l])      // cell-centered
                              + (ic[l] * cr[l] - cr[l] + 1) * sf[l] * sc[l]; // nodal
+            }
         }
 
         // Auxiliary integer variables
@@ -159,9 +161,9 @@ namespace ablastr::coarsen::average
     Loop (
         amrex::MultiFab & mf_dst,
         amrex::MultiFab const & mf_src,
-        int const ncomp,
-        amrex::IntVect const ngrow,
-        amrex::IntVect const crse_ratio
+        int ncomp,
+        amrex::IntVect ngrow,
+        amrex::IntVect crse_ratio
     );
 
     /**
@@ -178,7 +180,7 @@ namespace ablastr::coarsen::average
     Coarsen (
         amrex::MultiFab & mf_dst,
         amrex::MultiFab const & mf_src,
-        amrex::IntVect const crse_ratio
+        amrex::IntVect crse_ratio
     );
 
 } // namespace ablastr::coarsen::average

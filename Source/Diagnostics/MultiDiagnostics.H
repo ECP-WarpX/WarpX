@@ -38,7 +38,7 @@ public:
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration ();
     Diagnostics& GetDiag(int idiag) {return *alldiags[idiag]; }
-    int GetTotalDiags() {return ndiags;}
+    [[nodiscard]] int GetTotalDiags() const {return ndiags;}
     DiagTypes diagstypes(int idiag) {return diags_types[idiag];}
 private:
     /** Vector of pointers to all diagnostics */

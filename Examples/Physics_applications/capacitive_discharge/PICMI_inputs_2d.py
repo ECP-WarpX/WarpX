@@ -75,7 +75,7 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
         self.phi_wrapper = None
         self.time_sum = 0.0
 
-    def initialize_inputs(self):
+    def solver_initialize_inputs(self):
         """Grab geometrical quantities from the grid.
         """
         self.right_voltage = self.grid.potential_xmax
@@ -89,7 +89,7 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
         self.grid.potential_zmin = None
         self.grid.potential_zmax = None
 
-        super(PoissonSolverPseudo1D, self).initialize_inputs()
+        super(PoissonSolverPseudo1D, self).solver_initialize_inputs()
 
         self.nx = self.grid.number_of_cells[0]
         self.nz = self.grid.number_of_cells[1]
@@ -177,7 +177,7 @@ class PoissonSolverPseudo1D(picmi.ElectrostaticSolver):
         calculating phi from rho."""
         right_voltage = eval(
             self.right_voltage,
-            {'t':sim.extension.gett_new(0), 'sin':np.sin, 'pi':np.pi}
+            {'t': sim.extension.warpx.gett_new(0), 'sin': np.sin, 'pi': np.pi}
         )
         left_voltage = 0.0
 
@@ -312,6 +312,12 @@ solver = PoissonSolverPseudo1D(grid=grid)
 # diagnostics
 ##########################
 
+particle_diag = picmi.ParticleDiagnostic(
+    name = 'diag1',
+    period = diagnostic_intervals,
+    write_dir = '.',
+    warpx_file_prefix = 'Python_background_mcc_plt'
+)
 field_diag = picmi.FieldDiagnostic(
     name = 'diag1',
     grid = grid,
@@ -345,6 +351,7 @@ sim.add_species(
     )
 )
 
+sim.add_diagnostic(particle_diag)
 sim.add_diagnostic(field_diag)
 
 ##########################
@@ -352,3 +359,6 @@ sim.add_diagnostic(field_diag)
 ##########################
 
 sim.step(max_steps)
+
+# confirm that the external solver was run
+assert hasattr(solver, 'phi')

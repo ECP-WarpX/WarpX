@@ -13,7 +13,9 @@ $ run stencil.py --input_file path_to_input_file
 
 import argparse
 import os
+import sys
 
+sys.path.append('../Parser/')
 from input_file_parser import parse_input_file
 import matplotlib.pyplot as plt
 import numpy as np

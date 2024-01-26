@@ -115,26 +115,31 @@ Diagnostics::BaseReadParameters ()
     if (!pfield_varnames_specified){
         m_pfield_varnames = {};
     }
+
 #ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_pfield_varnames.size() == 0,
-        "Input error: cannot use particle_fields_to_plot with RZ"
-    );
+    if (pfield_varnames_specified){
+        ablastr::warn_manager::WMRecordWarning(
+            "Diagnostics",
+            "Particle field diagnostics will output the 0th mode only.",
+            ablastr::warn_manager::WarnPriority::low
+        );
+    }
 #endif
 
     // Get parser strings for particle fields and generate map of parsers
     std::string parser_str;
-    std::string filter_parser_str = "";
+    std::string filter_parser_str;
     const amrex::ParmParse pp_diag_pfield(m_diag_name + ".particle_fields");
     for (const auto& var : m_pfield_varnames) {
+
         bool do_average = true;
         pp_diag_pfield.query((var + ".do_average").c_str(), do_average);
         m_pfield_do_average.push_back(do_average);
         utils::parser::Store_parserString(
-            pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)").c_str(), parser_str);
+            pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)"), parser_str);
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            parser_str != "",
+            !parser_str.empty(),
             std::string("Input error: cannot find parser string for ").append(var).append(" in file. ").append(
                 m_diag_name).append(".particle_fields.").append(var).append("(x,y,z,ux,uy,uz) is required"));
 
@@ -330,7 +335,7 @@ Diagnostics::InitDataAfterRestart ()
         InitializeParticleBuffer();
         InitializeParticleFunctors();
     }
-   if (write_species == 0) {
+    if (write_species == 0) {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_format != "checkpoint",
             "For checkpoint format, write_species flag must be 1."
@@ -569,9 +574,7 @@ Diagnostics::FilterComputePackFlush (int step, bool force_flush)
     }
 
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        if ( !DoDump (step, i_buffer, force_flush) ) continue;
-        Flush(i_buffer);
+        if ( !DoDump (step, i_buffer, force_flush) ) { continue; }
+        Flush(i_buffer, force_flush);
     }
-
-
 }

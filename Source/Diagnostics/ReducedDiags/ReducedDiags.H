@@ -59,6 +59,13 @@ public:
      */
     virtual ~ReducedDiags () = default;
 
+    // Default move and copy operations
+    ReducedDiags(const ReducedDiags&) = default;
+    ReducedDiags& operator=(const ReducedDiags&) = default;
+    ReducedDiags(ReducedDiags&&) = default;
+    ReducedDiags& operator=(ReducedDiags&&) = default;
+
+
     /**
      * function to initialize data after amr
      * levels are initialized.
@@ -87,7 +94,7 @@ public:
      * This function queries deprecated input parameters and aborts
      * the run if one of them is specified.
      */
-    void BackwardCompatibility ();
+    void BackwardCompatibility () const;
 
 };
 

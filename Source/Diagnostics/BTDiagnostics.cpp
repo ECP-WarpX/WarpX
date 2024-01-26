@@ -112,11 +112,12 @@ void BTDiagnostics::DerivedInitData ()
     const amrex::ParmParse pp_diag_name(m_diag_name);
     int write_species = 1;
     pp_diag_name.query("write_species", write_species);
-    if ((m_output_species_names.size() == 0) && (write_species == 1))
+    if ((m_output_species_names.empty()) && (write_species == 1)) {
         m_output_species_names = mpc.GetSpeciesNames();
+    }
 
     m_do_back_transformed_particles =
-        ((m_output_species_names.size() > 0) && (write_species == 1));
+        ((!m_output_species_names.empty()) && (write_species == 1));
 
     // Turn on do_back_transformed_particles in the particle containers so that
     // the tmp_particle_data is allocated and the data of the corresponding species is
@@ -233,7 +234,7 @@ BTDiagnostics::ReadParameters ()
     pp_diag_name.query("do_back_transformed_fields", m_do_back_transformed_fields);
     pp_diag_name.query("do_back_transformed_particles", m_do_back_transformed_particles);
     AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
-    if (!m_do_back_transformed_fields) m_varnames.clear();
+    if (!m_do_back_transformed_fields) { m_varnames.clear(); }
 
 
     std::vector<std::string> intervals_string_vec = {"0"};
@@ -259,9 +260,7 @@ BTDiagnostics::ReadParameters ()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
-    if (utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size)) {
-        if(m_max_box_size < m_buffer_size) m_max_box_size = m_buffer_size;
-    }
+    utils::parser::queryWithParser(pp_diag_name, "buffer_size", m_buffer_size);
 #ifdef WARPX_DIM_RZ
     const amrex::Vector< std::string > BTD_varnames_supported = {"Er", "Et", "Ez",
                                                            "Br", "Bt", "Bz",
@@ -284,7 +283,7 @@ BTDiagnostics::ReadParameters ()
 
     const bool particle_fields_to_plot_specified = pp_diag_name.queryarr("particle_fields_to_plot", m_pfield_varnames);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!particle_fields_to_plot_specified, "particle_fields_to_plot is currently not supported for BackTransformed Diagnostics");
-    if (m_varnames.size() == 0) {
+    if (m_varnames.empty()) {
         m_do_back_transformed_fields = false;
     }
 
@@ -350,7 +349,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     amrex::RealBox diag_dom;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim ) {
         // Setting lo-coordinate for the diag domain by taking the max of user-defined
-        // lo-cordinate and lo-coordinat of the simulation domain at level, lev
+        // lo-cordinate and lo-coordinate of the simulation domain at level, lev
         diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
         // Setting hi-coordinate for the diag domain by taking the max of user-defined
         // hi-cordinate and hi-coordinate of the simulation domain at level, lev
@@ -396,7 +395,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
         diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) +
             diag_ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
         diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) +
-            (diag_ba.getCellCenteredBox( diag_ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
+            (diag_ba.getCellCenteredBox( static_cast<int>(diag_ba.size()-1) ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
     }
 
     // Define buffer_domain in lab-frame for the i^th snapshot.
@@ -425,12 +424,12 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
     // For the z-dimension, number of cells in the lab-frame is
     // computed using the coarsened cell-size in the lab-frame obtained using
     // the ref_ratio at level, lev-1.
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
-    if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
+    auto ref_ratio = amrex::IntVect(1);
+    if (lev > 0 ) { ref_ratio = WarpX::RefRatio(lev-1); }
     // Number of lab-frame cells in z-direction at level, lev
     const int num_zcells_lab = static_cast<int>( std::floor (
                                    ( zmax_buffer_lab - zmin_buffer_lab)
-                                   / dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir])                               ) );
+                                   / dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir])));
     // Take the max of 0 and num_zcells_lab
     const int Nz_lab = std::max( 0, num_zcells_lab );
 #if (AMREX_SPACEDIM >= 2)
@@ -504,7 +503,7 @@ BTDiagnostics::InitializeBufferData ( int i_buffer , int lev, bool restart)
 void
 BTDiagnostics::DefineCellCenteredMultiFab(int lev)
 {
-    if (!m_do_back_transformed_fields) return;
+    if (!m_do_back_transformed_fields) { return; }
     // Creating MultiFab to store cell-centered data in boosted-frame for the entire-domain
     // This MultiFab will store all the user-requested fields in the boosted-frame
     auto & warpx = WarpX::GetInstance();
@@ -526,7 +525,7 @@ void
 BTDiagnostics::InitializeFieldFunctors (int lev)
 {
     // Initialize fields functors only if do_back_transformed_fields is selected
-    if (!m_do_back_transformed_fields) return;
+    if (!m_do_back_transformed_fields) { return; }
 
 #ifdef WARPX_DIM_RZ
     // For RZ, initialize field functors RZ for openpmd
@@ -563,7 +562,9 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // Fill vector of cell-center functors for all field-components, namely,
     // Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho are included in the
     // cell-center functors for BackTransform Diags
-    for (int comp=0, n=m_cell_center_functors.at(lev).size(); comp<n; comp++){
+    const auto m_cell_center_functors_at_lev_size = static_cast<int>(
+        m_cell_center_functors.at(lev).size());
+    for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames[comp] == "Ex" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "Ey" ){
@@ -602,24 +603,25 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
 
     const bool update_varnames = true;
     if (update_varnames) {
-        const int n_rz = ncomp * m_varnames_fields.size();
+        const auto n_rz = ncomp * static_cast<int>(m_varnames_fields.size());
         m_varnames.clear();
         m_varnames.reserve(n_rz);
     }
     // AddRZ modes to output names for the back-transformed data
     if (update_varnames) {
-        for (int comp=0, n=m_varnames_fields.size(); comp<n; comp++)
+        const auto m_varnames_fields_size = static_cast<int>(m_varnames_fields.size());
+        for (int comp=0; comp<m_varnames_fields_size; comp++)
         {
-            if (m_varnames_fields[comp] == "Er")  AddRZModesToOutputNames(std::string("Er"), ncomp, false);
-            if (m_varnames_fields[comp] == "Et")  AddRZModesToOutputNames(std::string("Et"), ncomp, false);
-            if (m_varnames_fields[comp] == "Ez")  AddRZModesToOutputNames(std::string("Ez"), ncomp, false);
-            if (m_varnames_fields[comp] == "Br")  AddRZModesToOutputNames(std::string("Br"), ncomp, false);
-            if (m_varnames_fields[comp] == "Bt")  AddRZModesToOutputNames(std::string("Bt"), ncomp, false);
-            if (m_varnames_fields[comp] == "Bz")  AddRZModesToOutputNames(std::string("Bz"), ncomp, false);
-            if (m_varnames_fields[comp] == "jr")  AddRZModesToOutputNames(std::string("jr"), ncomp, false);
-            if (m_varnames_fields[comp] == "jt")  AddRZModesToOutputNames(std::string("jt"), ncomp, false);
-            if (m_varnames_fields[comp] == "jz")  AddRZModesToOutputNames(std::string("jz"), ncomp, false);
-            if (m_varnames_fields[comp] == "rho") AddRZModesToOutputNames(std::string("rho"),ncomp, false);
+            if (m_varnames_fields[comp] == "Er") {  AddRZModesToOutputNames(std::string("Er"), ncomp, false); }
+            if (m_varnames_fields[comp] == "Et") {  AddRZModesToOutputNames(std::string("Et"), ncomp, false); }
+            if (m_varnames_fields[comp] == "Ez") {  AddRZModesToOutputNames(std::string("Ez"), ncomp, false); }
+            if (m_varnames_fields[comp] == "Br") {  AddRZModesToOutputNames(std::string("Br"), ncomp, false); }
+            if (m_varnames_fields[comp] == "Bt") {  AddRZModesToOutputNames(std::string("Bt"), ncomp, false); }
+            if (m_varnames_fields[comp] == "Bz") {  AddRZModesToOutputNames(std::string("Bz"), ncomp, false); }
+            if (m_varnames_fields[comp] == "jr") {  AddRZModesToOutputNames(std::string("jr"), ncomp, false); }
+            if (m_varnames_fields[comp] == "jt") {  AddRZModesToOutputNames(std::string("jt"), ncomp, false); }
+            if (m_varnames_fields[comp] == "jz") {  AddRZModesToOutputNames(std::string("jz"), ncomp, false); }
+            if (m_varnames_fields[comp] == "rho") { AddRZModesToOutputNames(std::string("rho"),ncomp, false); }
         }
     }
 
@@ -627,21 +629,22 @@ BTDiagnostics::UpdateVarnamesForRZopenPMD ()
     // but the `varnames` need only be updated once.
     const bool update_cellcenter_varnames = true;
     if (update_cellcenter_varnames) {
-        const int n_rz = ncomp * m_cellcenter_varnames.size();
+        const auto n_rz = ncomp * static_cast<int>(m_cellcenter_varnames.size());
         m_cellcenter_varnames.clear();
         m_cellcenter_varnames.reserve(n_rz);
-        for (int comp=0, n=m_cellcenter_varnames_fields.size(); comp<n; comp++)
+        const auto m_cellcenter_varnames_fields_size = static_cast<int>(m_cellcenter_varnames_fields.size());
+        for (int comp=0; comp<m_cellcenter_varnames_fields_size; comp++)
         {
-            if ( m_cellcenter_varnames_fields[comp] == "Er" ) AddRZModesToOutputNames(std::string("Er"), ncomp, true);
-            if ( m_cellcenter_varnames_fields[comp] == "Et" ) AddRZModesToOutputNames(std::string("Et"), ncomp, true);
-            if ( m_cellcenter_varnames_fields[comp] == "Ez" ) AddRZModesToOutputNames(std::string("Ez"), ncomp, true);
-            if ( m_cellcenter_varnames_fields[comp] == "Br" ) AddRZModesToOutputNames(std::string("Br"), ncomp, true);
-            if ( m_cellcenter_varnames_fields[comp] == "Bt" ) AddRZModesToOutputNames(std::string("Bt"), ncomp, true);
-            if ( m_cellcenter_varnames_fields[comp] == "Bz" ) AddRZModesToOutputNames(std::string("Bz"), ncomp, true);
-            if ( m_cellcenter_varnames_fields[comp] == "jr" ) AddRZModesToOutputNames(std::string("jr"), ncomp, true);
-            if ( m_cellcenter_varnames_fields[comp] == "jt" ) AddRZModesToOutputNames(std::string("jt"), ncomp, true);
-            if ( m_cellcenter_varnames_fields[comp] == "jz" ) AddRZModesToOutputNames(std::string("jz"), ncomp, true);
-            if ( m_cellcenter_varnames_fields[comp] == "rho" ) AddRZModesToOutputNames(std::string("rho"), ncomp, true);
+            if ( m_cellcenter_varnames_fields[comp] == "Er" ) { AddRZModesToOutputNames(std::string("Er"), ncomp, true); }
+            if ( m_cellcenter_varnames_fields[comp] == "Et" ) { AddRZModesToOutputNames(std::string("Et"), ncomp, true); }
+            if ( m_cellcenter_varnames_fields[comp] == "Ez" ) { AddRZModesToOutputNames(std::string("Ez"), ncomp, true); }
+            if ( m_cellcenter_varnames_fields[comp] == "Br" ) { AddRZModesToOutputNames(std::string("Br"), ncomp, true); }
+            if ( m_cellcenter_varnames_fields[comp] == "Bt" ) { AddRZModesToOutputNames(std::string("Bt"), ncomp, true); }
+            if ( m_cellcenter_varnames_fields[comp] == "Bz" ) { AddRZModesToOutputNames(std::string("Bz"), ncomp, true); }
+            if ( m_cellcenter_varnames_fields[comp] == "jr" ) { AddRZModesToOutputNames(std::string("jr"), ncomp, true); }
+            if ( m_cellcenter_varnames_fields[comp] == "jt" ) { AddRZModesToOutputNames(std::string("jt"), ncomp, true); }
+            if ( m_cellcenter_varnames_fields[comp] == "jz" ) { AddRZModesToOutputNames(std::string("jz"), ncomp, true); }
+            if ( m_cellcenter_varnames_fields[comp] == "rho" ) { AddRZModesToOutputNames(std::string("rho"), ncomp, true); }
         }
     }
 
@@ -676,7 +679,8 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
     m_cell_center_functors[lev].clear();
     m_cell_center_functors[lev].resize(m_cellcenter_varnames_fields.size());
 
-    for (int comp=0, n=m_cell_center_functors.at(lev).size(); comp<n; comp++){
+    const auto m_cell_center_functors_at_lev_size = static_cast<int>(m_cell_center_functors.at(lev).size());
+    for (int comp=0; comp<m_cell_center_functors_at_lev_size; comp++){
         if        ( m_cellcenter_varnames_fields[comp] == "Er" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "Et" ){
@@ -767,10 +771,11 @@ BTDiagnostics::UpdateBufferData ()
             for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer )
             {
                 const bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
-                if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
+                if (ZSliceInDomain) { ++m_buffer_counter[i_buffer]; }
                 // when the z-index is equal to the smallEnd of the snapshot box, then set lastValidZSlice to 1
-                if (k_index_zlab(i_buffer, lev) == m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir))
+                if (k_index_zlab(i_buffer, lev) == m_snapshot_box[i_buffer].smallEnd(m_moving_window_dir)) {
                     m_lastValidZSlice[i_buffer] = 1;
+                }
             }
         }
    }
@@ -780,15 +785,16 @@ void
 BTDiagnostics::PrepareFieldDataForOutput ()
 {
     // Initialize fields functors only if do_back_transformed_fields is selected
-    if (!m_do_back_transformed_fields) return;
+    if (!m_do_back_transformed_fields) { return; }
 
     auto & warpx = WarpX::GetInstance();
     // In this function, we will get cell-centered data for every level, lev,
-    // using the cell-center functors and their respective opeators()
+    // using the cell-center functors and their respective operators()
     // Call m_cell_center_functors->operator
     for (int lev = 0; lev < nmax_lev; ++lev) {
         int icomp_dst = 0;
-        for (int icomp = 0, n=m_cell_center_functors.at(lev).size(); icomp<n; ++icomp) {
+        const auto m_cell_center_fuctors_at_lev_size = static_cast<int>(m_cell_center_functors.at(lev).size());
+        for (int icomp = 0; icomp<m_cell_center_fuctors_at_lev_size; ++icomp) {
             // Call all the cell-center functors in m_cell_center_functors.
             // Each of them computes cell-centered data for a field and
             // stores it in cell-centered MultiFab, m_cell_centered_data[lev].
@@ -806,7 +812,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
 
     for (int lev = warpx.finestLevel(); lev > 0; --lev) {
         ablastr::coarsen::sample::Coarsen(*m_cell_centered_data[lev - 1], *m_cell_centered_data[lev], 0, 0,
-                                          m_cellcenter_varnames.size(), 0, WarpX::RefRatio(lev-1) );
+                                          static_cast<int>(m_cellcenter_varnames.size()), 0, WarpX::RefRatio(lev-1) );
     }
 
     const int num_BT_functors = 1;
@@ -847,7 +853,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
                                              m_buffer_box[i_buffer],
-                                             k_index_zlab(i_buffer, lev), m_max_box_size,
+                                             k_index_zlab(i_buffer, lev),
                                              m_snapshot_full[i_buffer] );
 
             }
@@ -857,19 +863,20 @@ BTDiagnostics::PrepareFieldDataForOutput ()
 
 
 amrex::Real
-BTDiagnostics::dz_lab (amrex::Real dt, amrex::Real ref_ratio){
+BTDiagnostics::dz_lab (amrex::Real dt, amrex::Real ref_ratio) const
+{
     return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
 }
 
 
 int
-BTDiagnostics::k_index_zlab (int i_buffer, int lev)
+BTDiagnostics::k_index_zlab (int i_buffer, int lev) const
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::Real prob_domain_zmin_lab = m_snapshot_domain_lab[i_buffer].lo( m_moving_window_dir );
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
-    if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
-    const int k_lab = static_cast<int>(floor (
+    auto ref_ratio = amrex::IntVect(1);
+    if (lev > 0 ) { ref_ratio = WarpX::RefRatio(lev-1); }
+    const int k_lab = static_cast<int>(std::floor (
                           ( m_current_z_lab[i_buffer]
                             - (prob_domain_zmin_lab  ) )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
@@ -880,35 +887,33 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
 void
 BTDiagnostics::SetSnapshotFullStatus (const int i_buffer)
 {
-   if (m_snapshot_full[i_buffer] == 1) return;
-   // if the last valid z-index of the snapshot, which is 0, is filled, then
-   // set the snapshot full integer to 1
-   if (m_lastValidZSlice[i_buffer] == 1) m_snapshot_full[i_buffer] = 1;
-
+    if (m_snapshot_full[i_buffer] == 1) { return; }
+    // if the last valid z-index of the snapshot, which is 0, is filled, then
+    // set the snapshot full integer to 1
+    if (m_lastValidZSlice[i_buffer] == 1) { m_snapshot_full[i_buffer] = 1; }
 }
 
 void
 BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
 {
-    if (m_field_buffer_multifab_defined[i_buffer] == 1) return;
+    if (m_field_buffer_multifab_defined[i_buffer] == 1) { return; }
     auto & warpx = WarpX::GetInstance();
 
     const int hi_k_lab = m_buffer_k_index_hi[i_buffer];
     m_buffer_box[i_buffer].setSmall( m_moving_window_dir, hi_k_lab - m_buffer_size + 1);
     m_buffer_box[i_buffer].setBig( m_moving_window_dir, hi_k_lab );
     amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
-    buffer_ba.maxSize(m_max_box_size);
     // Generate a new distribution map for the back-transformed buffer multifab
     const amrex::DistributionMapping buffer_dmap(buffer_ba);
     // Number of guard cells for the output buffer is zero.
     // Unlike FullDiagnostics, "m_format == sensei" option is not included here.
     const int ngrow = 0;
     m_mf_output[i_buffer][lev] = amrex::MultiFab( buffer_ba, buffer_dmap,
-                                              m_varnames.size(), ngrow );
+                                              static_cast<int>(m_varnames.size()), ngrow );
     m_mf_output[i_buffer][lev].setVal(0.);
 
-    amrex::IntVect ref_ratio = amrex::IntVect(1);
-    if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
+    auto ref_ratio = amrex::IntVect(1);
+    if (lev > 0 ) { ref_ratio = WarpX::RefRatio(lev-1); }
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         const amrex::Real cellsize = (idim < WARPX_ZINDEX)?
             warpx.Geom(lev).CellSize(idim):
@@ -918,7 +923,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
                                   - m_snapshot_box[i_buffer].smallEnd(idim)
                                   ) * cellsize;
         const amrex::Real buffer_hi = m_snapshot_domain_lab[i_buffer].lo(idim)
-                                + ( buffer_ba.getCellCenteredBox( buffer_ba.size()-1 ).bigEnd(idim)
+                                + ( buffer_ba.getCellCenteredBox( static_cast<int>(buffer_ba.size()-1) ).bigEnd(idim)
                                   - m_snapshot_box[i_buffer].smallEnd(idim)
                                   + 1 ) * cellsize;
         m_buffer_domain_lab[i_buffer].setLo(idim, buffer_lo);
@@ -943,13 +948,15 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
                                                       WarpX::RefRatio(lev-1) );
     }
     m_field_buffer_multifab_defined[i_buffer] = 1;
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_mf_output[i_buffer][lev].boxArray().size() == 1,
+        "BoxArray size must be 1 for back-transformed diagnostics multifab that stores buffers");
 }
 
 
 void
 BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 {
-    if (m_snapshot_geometry_defined[i_buffer] == 1) return;
+    if (m_snapshot_geometry_defined[i_buffer] == 1) { return; }
 
     if (lev == 0) {
         // Default non-periodic geometry for diags
@@ -995,7 +1002,7 @@ BTDiagnostics::GetKIndexInSnapshotBoxFlag (const int i_buffer, const int lev)
 }
 
 void
-BTDiagnostics::Flush (int i_buffer)
+BTDiagnostics::Flush (int i_buffer, bool force_flush)
 {
     auto & warpx = WarpX::GetInstance();
     std::string file_name = m_file_prefix;
@@ -1004,7 +1011,7 @@ BTDiagnostics::Flush (int i_buffer)
         file_name = file_name+"/buffer";
     }
     SetSnapshotFullStatus(i_buffer);
-    const bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 );
+    const bool isLastBTDFlush = ( m_snapshot_full[i_buffer] == 1 ) || force_flush;
     bool const use_pinned_pc = true;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
@@ -1013,7 +1020,7 @@ BTDiagnostics::Flush (int i_buffer)
     amrex::Vector<amrex::DistributionMapping> vdmap;
     amrex::Vector<amrex::Geometry> vgeom;
     amrex::Vector<amrex::IntVect> vrefratio;
-    if (m_particles_buffer.at(i_buffer).size() > 0) {
+    if (!m_particles_buffer.at(i_buffer).empty()) {
         const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
         for (int lev = 0 ; lev < nlevels; ++lev) {
             // Store BoxArray, dmap, geometry, and refratio for every level
@@ -1035,7 +1042,6 @@ BTDiagnostics::Flush (int i_buffer)
         m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) + 1) );
         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
         amrex::BoxArray buffer_ba( particle_buffer_box );
-        buffer_ba.maxSize(m_max_box_size*2);
         m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0, buffer_ba);
         for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
             // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
@@ -1046,13 +1052,15 @@ BTDiagnostics::Flush (int i_buffer)
 
     // Reset buffer box and particle box array
     if (m_format == "openpmd") {
-        if (m_particles_buffer.at(i_buffer).size() > 0 ) {
+        if (!m_particles_buffer.at(i_buffer).empty()) {
             m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
             m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
             m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
             for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
+                    "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
             }
         }
     }
@@ -1064,15 +1072,17 @@ BTDiagnostics::Flush (int i_buffer)
         m_max_buffer_multifabs[i_buffer], m_geom_snapshot[i_buffer][0], isLastBTDFlush,
         m_totalParticles_flushed_already[i_buffer]);
 
-    // Note : test if this is needed before or after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. Hence rescaling the box after WriteToFile
+    // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
-        if (m_particles_buffer.at(i_buffer).size() > 0 ) {
+        if (!m_particles_buffer.at(i_buffer).empty()) {
             m_buffer_box[i_buffer].setSmall(m_moving_window_dir, (m_buffer_box[i_buffer].smallEnd(m_moving_window_dir) + 1) );
             m_buffer_box[i_buffer].setBig(m_moving_window_dir, (m_buffer_box[i_buffer].bigEnd(m_moving_window_dir) - 1) );
             m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
             for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
                 // BTD output is single level. Setting particle geometry, dmap, boxarray to level0
                 m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][isp]->ParticleBoxArray(0).size() == 1,
+                    "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
             }
         }
     }
@@ -1093,7 +1103,7 @@ BTDiagnostics::Flush (int i_buffer)
     IncrementBufferFlushCounter(i_buffer);
     NullifyFirstFlush(i_buffer);
     // if particles are selected for output then update and reset counters
-    if (m_output_species_names.size() > 0) {
+    if (!m_output_species_names.empty()) {
         UpdateTotalParticlesFlushed(i_buffer);
         ResetTotalParticlesInBuffer(i_buffer);
         ClearParticleBuffer(i_buffer);
@@ -1143,17 +1153,20 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         // Create directory only when the first buffer is flushed out.
         if (m_buffer_flush_counter[i_snapshot] == 0 || m_first_flush_after_restart[i_snapshot] == 1) {
             // Create Level_0 directory to store all Cell_D and Cell_H files
-            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, permission_flag_rwxrxrx) )
+            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, permission_flag_rwxrxrx) ) {
                 amrex::CreateDirectoryFailed(snapshot_Level0_path);
+            }
             // Create directory for each species selected for diagnostic
             for (int i = 0; i < m_particles_buffer[i_snapshot].size(); ++i) {
                 const std::string snapshot_species_path = snapshot_path + "/" + m_output_species_names[i];
-                if ( !amrex::UtilCreateDirectory(snapshot_species_path, permission_flag_rwxrxrx))
+                if ( !amrex::UtilCreateDirectory(snapshot_species_path, permission_flag_rwxrxrx)) {
                     amrex::CreateDirectoryFailed(snapshot_species_path);
+                }
                 // Create Level_0 directory for particles to store Particle_H and DATA files
                 const std::string species_Level0_path = snapshot_species_path + "/Level_0";
-                if ( !amrex::UtilCreateDirectory(species_Level0_path, permission_flag_rwxrxrx))
+                if ( !amrex::UtilCreateDirectory(species_Level0_path, permission_flag_rwxrxrx)) {
                     amrex::CreateDirectoryFailed(species_Level0_path);
+                }
             }
             const std::string buffer_WarpXHeader_path = recent_Buffer_filepath + "/WarpXHeader";
             const std::string snapshot_WarpXHeader_path = snapshot_path + "/WarpXHeader";
@@ -1246,7 +1259,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_species_Header.c_str(), snapshot_species_Header.c_str()) == 0,
                     std::string("Renaming ").append(recent_species_Header).append(" to ").append(snapshot_species_Header).append(" has failed"));
-                if (BufferSpeciesHeader.m_total_particles == 0) continue;
+                if (BufferSpeciesHeader.m_total_particles == 0) { continue; }
                 // if finite number of particles in the output, copy ParticleHdr and Data file
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str()) == 0,
@@ -1257,7 +1270,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
             } else {
                 InterleaveSpeciesHeader(recent_species_Header,snapshot_species_Header,
                                         m_output_species_names[i], m_buffer_flush_counter[i_snapshot]);
-                if (BufferSpeciesHeader.m_total_particles == 0) continue;
+                if (BufferSpeciesHeader.m_total_particles == 0) { continue; }
                 if (m_totalParticles_flushed_already[i_snapshot][i]==0) {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str()) == 0,
@@ -1324,9 +1337,9 @@ BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_pat
 
 
 void
-BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
-                                        std::string snapshot_FabHeader_path,
-                                        std::string newsnapshot_FabFilename)
+BTDiagnostics::InterleaveFabArrayHeader (std::string Buffer_FabHeader_path,
+                                         std::string snapshot_FabHeader_path,
+                                         std::string newsnapshot_FabFilename)
 {
     BTDMultiFabHeaderImpl snapshot_FabHeader(snapshot_FabHeader_path);
     snapshot_FabHeader.ReadMultiFabHeader();
@@ -1448,9 +1461,10 @@ BTDiagnostics::PrepareParticleDataForOutput()
             {
                 // Check if the zslice is in domain
                 const bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
-                if (ZSliceInDomain) {
-                    if ( m_totalParticles_in_buffer[i_buffer][i] == 0) {
-                        if (!m_do_back_transformed_fields || m_varnames_fields.size()==0) {
+                const bool kindexInSnapshotBox = GetKIndexInSnapshotBoxFlag (i_buffer, lev);
+                if (kindexInSnapshotBox) {
+                    if ( buffer_empty(i_buffer) ) {
+                        if (!m_do_back_transformed_fields || m_varnames_fields.empty()) {
                             if ( m_buffer_flush_counter[i_buffer] == 0) {
                                 DefineSnapshotGeometry(i_buffer, lev);
                             }
@@ -1458,11 +1472,12 @@ BTDiagnostics::PrepareParticleDataForOutput()
                         }
                         const amrex::Box particle_buffer_box = m_buffer_box[i_buffer];
                         amrex::BoxArray buffer_ba( particle_buffer_box );
-                        buffer_ba.maxSize(m_max_box_size);
                         const amrex::DistributionMapping buffer_dmap(buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleBoxArray(lev, buffer_ba);
                         m_particles_buffer[i_buffer][i]->SetParticleDistributionMap(lev, buffer_dmap);
                         m_particles_buffer[i_buffer][i]->SetParticleGeometry(lev, m_geom_snapshot[i_buffer][lev]);
+                        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_particles_buffer[i_buffer][i]->ParticleBoxArray(lev).size() == 1,
+                            "ParticleBoxArray size must be 1 for back-transformed diagnostic particle buffer");
                     }
                 }
                 m_all_particle_functors[i]->PrepareFunctorData (
@@ -1478,7 +1493,8 @@ void
 BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
 {
     for (int isp = 0; isp < m_totalParticles_flushed_already[i_buffer].size(); ++isp) {
-        m_totalParticles_flushed_already[i_buffer][isp] += m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles();
+        m_totalParticles_flushed_already[i_buffer][isp] += static_cast<int>(
+            m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles());
     }
 }
 

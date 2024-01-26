@@ -55,7 +55,7 @@ namespace
 
 void
 FlushFormatPlotfile::WriteToFile (
-    const amrex::Vector<std::string> varnames,
+    const amrex::Vector<std::string>& varnames,
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
@@ -86,7 +86,7 @@ FlushFormatPlotfile::WriteToFile (
     Vector<std::string> rfs;
     const VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
-    if (plot_raw_fields) rfs.emplace_back("raw_fields");
+    if (plot_raw_fields) { rfs.emplace_back("raw_fields"); }
     amrex::WriteMultiLevelPlotfile(filename, nlev,
                                    amrex::GetVecOfConstPtrs(mf),
                                    varnames, geom,
@@ -99,7 +99,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
-    WriteParticles(filename, particle_diags, time, isBTD);
+    WriteParticles(filename, particle_diags, static_cast<amrex::Real>(time), isBTD);
 
     WriteJobInfo(filename);
 
@@ -245,8 +245,9 @@ FlushFormatPlotfile::WriteWarpXHeader(
         HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
                                                 std::ofstream::trunc |
                                                 std::ofstream::binary);
-        if( ! HeaderFile.good())
+        if( ! HeaderFile.good()) {
             amrex::FileOpenFailed(HeaderFileName);
+        }
 
         HeaderFile.precision(17);
 
@@ -342,10 +343,11 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                     const amrex::Real time, bool isBTD) const
 {
 
-    for (auto& part_diag : particle_diags) {
+    for (const auto& part_diag : particle_diags) {
         WarpXParticleContainer* pc = part_diag.getParticleContainer();
+        PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
         auto tmp = isBTD ?
-            part_diag.getPinnedParticleContainer()->make_alike<amrex::PinnedArenaAllocator>() :
+            pinned_pc->make_alike<amrex::PinnedArenaAllocator>() :
             pc->make_alike<amrex::PinnedArenaAllocator>();
 
         Vector<std::string> real_names;
@@ -364,21 +366,21 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 #endif
 
         // get the names of the real comps
-        real_names.resize(pc->NumRealComps());
-        auto runtime_rnames = pc->getParticleRuntimeComps();
+        real_names.resize(tmp.NumRealComps());
+        auto runtime_rnames = tmp.getParticleRuntimeComps();
         for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
         // plot any "extra" fields by default
         real_flags = part_diag.m_plot_flags;
-        real_flags.resize(pc->NumRealComps(), 1);
+        real_flags.resize(tmp.NumRealComps(), 1);
 
         // and the names
-        int_names.resize(pc->NumIntComps());
-        auto runtime_inames = pc->getParticleRuntimeiComps();
+        int_names.resize(tmp.NumIntComps());
+        auto runtime_inames = tmp.getParticleRuntimeiComps();
         for (auto const& x : runtime_inames) { int_names[x.second+0] = x.first; }
 
         // plot by default
-        int_flags.resize(pc->NumIntComps(), 1);
+        int_flags.resize(tmp.NumIntComps(), 1);
 
         const auto mass = pc->AmIA<PhysicalSpecies::photon>() ? PhysConst::m_e : pc->getMass();
         RandomFilter const random_filter(part_diag.m_do_random_filter,
@@ -397,7 +399,9 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             particlesConvertUnits(ConvertDirection::WarpX_to_SI, pc, mass);
             using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
             tmp.copyParticles(*pc,
-                              [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+                              [random_filter,uniform_filter,parser_filter,geometry_filter]
+                              AMREX_GPU_HOST_DEVICE
+                              (const SrcData& src, int ip, const amrex::RandomEngine& engine)
             {
                 const SuperParticleType& p = src.getSuperParticle(ip);
                 return random_filter(p, engine) * uniform_filter(p, engine)
@@ -405,7 +409,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             }, true);
             particlesConvertUnits(ConvertDirection::SI_to_WarpX, pc, mass);
         } else {
-            PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
             tmp.copyParticles(*pinned_pc, true);
             particlesConvertUnits(ConvertDirection::WarpX_to_SI, &tmp, mass);
         }
@@ -482,7 +485,7 @@ WriteCoarseVector( const std::string field_name,
     const int lev, const bool plot_guards )
 {
     IntVect ng(0);
-    if (plot_guards) ng = Fx_fp->nGrowVect();
+    if (plot_guards) { ng = Fx_fp->nGrowVect(); }
 
     if (lev == 0) {
         // No coarse field for level 0: instead write a MultiFab
@@ -519,7 +522,7 @@ WriteCoarseScalar( const std::string field_name,
     const int icomp )
 {
     IntVect ng(0);
-    if (plot_guards) ng = F_fp->nGrowVect();
+    if (plot_guards) { ng = F_fp->nGrowVect(); }
 
     if (lev == 0) {
         // No coarse field for level 0: instead write a MultiFab
@@ -542,7 +545,7 @@ FlushFormatPlotfile::WriteAllRawFields(
     const bool plot_raw_fields, const int nlevels, const std::string& plotfilename,
     const bool plot_raw_fields_guards) const
 {
-    if (!plot_raw_fields) return;
+    if (!plot_raw_fields) { return; }
     auto & warpx = WarpX::GetInstance();
     for (int lev = 0; lev < nlevels; ++lev)
     {

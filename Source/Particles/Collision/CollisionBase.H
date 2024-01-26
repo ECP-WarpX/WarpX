@@ -25,10 +25,11 @@ public:
     CollisionBase(CollisionBase const &) = delete;
     CollisionBase(CollisionBase &&) = delete;
     CollisionBase & operator=(CollisionBase const &) = delete;
+    CollisionBase & operator=(CollisionBase const &&) = delete;
 
     virtual ~CollisionBase() = default;
 
-    int get_ndt() {return m_ndt;}
+    [[nodiscard]] int get_ndt() const {return m_ndt;}
 
 protected:
 

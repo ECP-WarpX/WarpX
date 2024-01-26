@@ -31,7 +31,7 @@ PsatdAlgorithmComoving::PsatdAlgorithmComoving (const SpectralKSpace& spectral_k
                                                 const amrex::Vector<amrex::Real>& v_comoving,
                                                 const amrex::Real dt,
                                                 const bool update_with_rho)
-     // Members initialization
+    // Members initialization
      : SpectralBaseAlgorithm{spectral_kspace, dm, spectral_index, norder_x, norder_y, norder_z, grid_type},
        // Initialize the infinite-order k vectors (the argument n_order = -1 selects
        // the infinite order option, the argument grid_type=GridType::Staggered is then irrelevant)

@@ -90,7 +90,7 @@ SignalHandling::parseSignalNameToNumber (const std::string &str)
         std::string name_upper = sp.abbrev;
         std::string name_lower = name_upper;
         for (char &c : name_lower) {
-            c = std::tolower(c);
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
         }
 
         signals_parser.setConstant(name_upper, sp.value);
@@ -146,8 +146,9 @@ SignalHandling::CheckSignals ()
 {
     // Is any signal handling action configured?
     // If not, we can skip all handling and the MPI communication as well.
-    if (!m_any_signal_action_active)
+    if (!m_any_signal_action_active) {
         return;
+    }
 
     // We assume that signals will definitely be delivered to rank 0,
     // and may be delivered to other ranks as well. For coordination,
@@ -171,12 +172,12 @@ SignalHandling::CheckSignals ()
     }
 
 #if defined(AMREX_USE_MPI)
-    auto comm = amrex::ParallelDescriptor::Communicator();
     // Due to a bug in Cray's MPICH 8.1.13 implementation (CUDA builds on Perlmutter@NERSC in 2022),
     // we cannot use the MPI_CXX_BOOL C++ datatype here. See WarpX PR #3029 and NERSC INC0183281
     static_assert(sizeof(bool) == 1, "We communicate bools as 1 byte-sized type in MPI");
     BL_MPI_REQUIRE(MPI_Ibcast(signal_actions_requested, SIGNAL_REQUESTS_SIZE,
-                              MPI_BYTE, 0, comm,&signal_mpi_ibcast_request));
+                              MPI_BYTE, 0, amrex::ParallelDescriptor::Communicator(),
+                              &signal_mpi_ibcast_request));
 #endif
 }
 
@@ -185,8 +186,9 @@ SignalHandling::WaitSignals ()
 {
     // Is any signal handling action configured?
     // If not, we can skip all handling and the MPI communication as well.
-    if (!m_any_signal_action_active)
+    if (!m_any_signal_action_active) {
         return;
+    }
 
 #if defined(AMREX_USE_MPI)
     BL_MPI_REQUIRE(MPI_Wait(&signal_mpi_ibcast_request, MPI_STATUS_IGNORE));
