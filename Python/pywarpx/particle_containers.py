@@ -818,7 +818,7 @@ class ParticleBoundaryBufferWrapper(object):
         data_array = []
 
         if comp_name=='step_scraped':
-            comp_idx = part_container.num_int_comps-4 #with the components of the normal, the time is not the last one
+            comp_idx = part_container.num_real_comps-4 #with the components of the normal, the time is not the last one
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
                 data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
