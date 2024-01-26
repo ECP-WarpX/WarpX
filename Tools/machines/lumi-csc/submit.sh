@@ -12,8 +12,6 @@
 
 date
 
-export MPICH_GPU_SUPPORT_ENABLED=1
-
 # note (12-12-22)
 # this environment setting is currently needed on LUMI to work-around a
 # known issue with Libfabric
@@ -66,6 +64,8 @@ CPU_BIND="${CPU_BIND},7e,7e00"
 CPU_BIND="${CPU_BIND},7e00000000,7e0000000000"
 
 export OMP_NUM_THREADS=6
+
+export MPICH_GPU_SUPPORT_ENABLED=1
 
 srun --cpu-bind=${CPU_BIND} ./select_gpu ./warpx inputs | tee outputs.txt
 rm -rf ./select_gpu

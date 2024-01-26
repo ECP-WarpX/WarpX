@@ -41,9 +41,13 @@ export MPICH_GPU_SUPPORT_ENABLED=1
 export AMREX_AMD_ARCH=gfx90a
 
 # compiler environment hints
-export CC=$(which cc)
-export CXX=$(which CC)
-export FC=$(which ftn)
+# Warning: using the compiler wrappers cc and CC
+#          instead of amdclang and amdclang++
+#          currently results in a significant
+#          loss of performances
+export CC=$(which amdclang)
+export CXX=$(which amdclang++)
+export FC=$(which amdflang)
 export CFLAGS="-I${ROCM_PATH}/include"
 export CXXFLAGS="-I${ROCM_PATH}/include -Wno-pass-failed"
 export LDFLAGS="-L${ROCM_PATH}/lib -lamdhip64"
