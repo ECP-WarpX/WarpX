@@ -115,7 +115,7 @@ sim.add_diagnostic(part_diag)
 
 sim.initialize_inputs()
 sim.initialize_warpx()
-sim.step(1)
+
 
 ##########################
 # python particle data access
@@ -127,47 +127,41 @@ sim.step(1)
 
 
 
-nb_steps_scraping=0
+#nb_steps_scraping=0
 def mirror_reflection():
-    global nb_steps_scraping
+    #global nb_steps_scraping
     buffer = particle_containers.ParticleBoundaryBufferWrapper()
-    time_steps = buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0) #real
-    print(len(time_steps))
-    print(nb_steps_scraping)
-    #we ensure that at each step at least one particle has been scraped
-
-    if (len(time_steps)>nb_steps_scraping):
-        nb_steps_scraping=len(time_steps)
+    if (len(buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0))!=0): #otherwise np.concatenate doesnt work
+        time_steps = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0))
+        np_steps_scraping+=len(time_steps)
         #step 1: extract the different parameters of the scraping buffer (normal, time, position)
-        x = buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0)[-1] #array of reals
-        y = buffer.get_particle_boundary_buffer("electrons", 'eb', 'y', 0)[-1] #array of reals
-        z = buffer.get_particle_boundary_buffer("electrons", 'eb', 'z', 0)[-1] #array of reals
-        ux = buffer.get_particle_boundary_buffer("electrons", 'eb', 'ux', 0)[-1] #array of reals
-        uy = buffer.get_particle_boundary_buffer("electrons", 'eb', 'uy', 0)[-1] #array of reals
-        uz = buffer.get_particle_boundary_buffer("electrons", 'eb', 'uz', 0)[-1] #array of reals
-        w = buffer.get_particle_boundary_buffer("electrons", 'eb', 'w', 0)[-1] #array of reals
-
-        nx = buffer.get_particle_boundary_buffer("electrons", 'eb', 'nx', 0)[-1] #array of reals
-        ny = buffer.get_particle_boundary_buffer("electrons", 'eb', 'ny', 0)[-1] #array of reals
-        nz = buffer.get_particle_boundary_buffer("electrons", 'eb', 'nz', 0)[-1] #array of reals
-
+        x = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0)) 
+        y = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'y', 0)) 
+        z = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'z', 0))
+        ux = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'ux', 0))
+        uy = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'uy', 0))
+        uz = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'uz', 0))
+        w = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'w', 0))
+        nx = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'nx', 0))
+        ny = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'ny', 0))
+        nz = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'nz', 0))
 
         #step 2: use these parameters to inject from the same position electrons in the plasma
         elect_pc = particle_containers.ParticleContainerWrapper('electrons')
-        for i in len(x): #loop on the particles scraped since the last step
-            un=ux[i]*nx[i]+uy[i]*ny[i]+uz[i]*nz[i]
-            ux_reflect=2*un[i]*nx[i]-ux[i]
-            uy_reflect=2*un[i]*ny[i]-uy[i]
-            uz_reflect=2*un[i]*nz[i]-uz[i]
-            elect_pc.add_particles(
-                #for a "mirror reflection" u(sym)=2(u.n)n-u
-                x=x[i], y=y[i], z=z[i], ux=ux_reflect, uy=uy_reflect, uz=uz_reflect,
-                w=w[i],
-                unique_particles=args.unique
-                )
+   
+        un=ux*nx+uy*ny+uz*nz
+        ux_reflect=2*un*nx-ux
+        uy_reflect=2*un*ny-uy
+        uz_reflect=2*un*nz-uz
 
-    return nb_steps_scraping
-
+        elect_pc.add_particles(
+            #for a "mirror reflection" u(sym)=2(u.n)n-u
+            x=x, y=y, z=z, ux=ux_reflect, uy=uy_reflect, uz=uz_reflect,
+            w=w,
+            unique_particles=args.unique
+            )
+    
+        buffer.clear_buffer()
 
 
 callbacks.installafterstep(mirror_reflection)
@@ -176,4 +170,4 @@ callbacks.installafterstep(mirror_reflection)
 # simulation run
 ##########################
 
-sim.step(max_steps-1)
+sim.step(max_steps)
