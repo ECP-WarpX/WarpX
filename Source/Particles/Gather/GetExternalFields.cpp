@@ -126,12 +126,19 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
             amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCr_data_host, FCr_data_host + total_extent, FCr_data_gpu.data());
             amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCz_data_host, FCz_data_host + total_extent, FCz_data_gpu.data());
 
-            Bfield_file_external_particle_cyl = new ExternalFieldFromFile3DCyl(
+            auto eff = new ExternalFieldFromFile3DCyl(
                 amrex::RealVect {gridSpacing[0], gridSpacing[1], 0}, 
                 amrex::RealVect {static_cast<amrex::Real>(offset[0]), static_cast<amrex::Real>(offset[1]), 0 }, 
                 {static_cast<int>(extent[0]), static_cast<int>(extent[2]), static_cast<int>(extent[1])},
                 FCr_data_gpu, FCz_data_gpu
             );
+#ifdef AMREX_USE_GPU
+            Bfield_file_external_particle_cyl = static_cast<ExternalFieldFromFile3DCyl*>
+                (amrex::The_Arena()->alloc(sizeof(ExternalFieldFromFile3DCyl)));
+            amrex::Gpu::htod_memcpy_async((void*)Bfield_file_external_particle_cyl, eff, sizeof(ExternalFieldFromFile3DCyl));
+#else
+            Bfield_file_external_particle_cyl = eff;
+#endif
         } else {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false, "3D can only read external fields from files with thetaMode geometry");
         }
