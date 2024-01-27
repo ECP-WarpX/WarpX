@@ -59,15 +59,9 @@ amrex::Real IntegratedPotential( amrex::Real x, amrex::Real y, amrex::Real z ) {
         - 0.5 * z*z * std::atan( x*y/(z*r) )
         - 0.5 * y*y * std::atan( x*z/(y*r) )
         - 0.5 * x*x * std::atan( y*z/(x*r) )
-        + 0.5 * y*z*std::log( (1 + x/r)/(1 - x/r) )
-        + 0.5 * x*z*std::log( (1 + y/r)/(1 - y/r) );
-    if (z >= 0) {
-        G += x*y*std::log( z + r );
-    } else {
-        // When z is negative and much larger than x and y (in absolute value), floating point operation can cause issues
-        // Thus, here we use z+r = (z+r)(r-z)/(r-z)
-        G += x*y*std::log( (x*x + y*y)/(r-z) );
-    }
+        + y*z*std::asinh( x/std::sqrt(y*y + z*z) )
+        + x*z*std::asinh( y/std::sqrt(x*x + z*z) )
+        + x*y*std::asinh( z/std::sqrt(x*x + y*y) );
     return G;
 }
 
