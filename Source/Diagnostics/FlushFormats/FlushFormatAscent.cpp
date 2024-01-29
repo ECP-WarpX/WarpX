@@ -94,9 +94,6 @@ FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_di
         // get names of real comps
         std::map<std::string, int> real_comps_map = pc->getParticleComps();
 
-        // WarpXParticleContainer compile-time extra AoS attributes (Real): 0
-        // WarpXParticleContainer compile-time extra AoS attributes (int): 0
-
         // WarpXParticleContainer compile-time extra SoA attributes (Real): PIdx::nattribs
         // not an efficient search, but N is small...
         for(int j = 0; j < PIdx::nattribs; ++j)
