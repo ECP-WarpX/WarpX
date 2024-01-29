@@ -76,7 +76,8 @@ m_e = picmi.constants.m_e #electron mass
 v_eth = (qe * Te / m_e) ** 0.5
 
 # nothing to change in the distribution function?
-e_dist = picmi.UniformDistribution(density = n, rms_velocity=[v_eth, v_eth, v_eth] )
+#e_dist = picmi.UniformDistribution(density = n, rms_velocity=[v_eth, v_eth, v_eth] )
+e_dist=picmi.ParticleListDistribution(x=0.0, y=0.0, z=-0.4, ux=0.5e10, uy=0.0, uz=1.0e10, weight=1)
 
 electrons = picmi.Species(
     particle_type='electron', name='electrons', initial_distribution=e_dist, warpx_save_particles_at_eb=1
@@ -126,14 +127,13 @@ sim.initialize_warpx()
 #number=
 
 
-
-#nb_steps_scraping=0
 def mirror_reflection():
     #global nb_steps_scraping
     buffer = particle_containers.ParticleBoundaryBufferWrapper()
     if (len(buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0))!=0): #otherwise np.concatenate doesnt work
+        print('the particle hitted the EB')
         time_steps = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0))
-        np_steps_scraping+=len(time_steps)
+
         #step 1: extract the different parameters of the scraping buffer (normal, time, position)
         x = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0))
         y = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'y', 0))
