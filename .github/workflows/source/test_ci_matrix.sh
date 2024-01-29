@@ -7,26 +7,26 @@ cd Regression/
 
 # Put the name of all CI tests into a text file
 python prepare_file_ci.py
-grep "\[" ci-tests.ini > ci_all_tests.txt
+grep "^\[" ci-tests.ini > ci_all_tests.txt
 
 
 export WARPX_CI_PSATD=TRUE
 
 # Concatenate the names of all elements in CI matrix into another test file
 WARPX_CI_REGULAR_CARTESIAN_1D=TRUE python prepare_file_ci.py
-grep "\[" ci-tests.ini >  ci_matrix_elements.txt
+grep "^\[" ci-tests.ini >  ci_matrix_elements.txt
 WARPX_CI_REGULAR_CARTESIAN_2D=TRUE python prepare_file_ci.py
-grep "\[" ci-tests.ini >>  ci_matrix_elements.txt
+grep "^\[" ci-tests.ini >>  ci_matrix_elements.txt
 WARPX_CI_REGULAR_CARTESIAN_3D=TRUE python prepare_file_ci.py
-grep "\[" ci-tests.ini >>  ci_matrix_elements.txt
+grep "^\[" ci-tests.ini >>  ci_matrix_elements.txt
 WARPX_CI_SINGLE_PRECISION=TRUE  python prepare_file_ci.py
-grep "\[" ci-tests.ini >> ci_matrix_elements.txt
+grep "^\[" ci-tests.ini >> ci_matrix_elements.txt
 WARPX_CI_RZ_OR_NOMPI=TRUE      python prepare_file_ci.py
-grep "\[" ci-tests.ini >> ci_matrix_elements.txt
+grep "^\[" ci-tests.ini >> ci_matrix_elements.txt
 WARPX_CI_QED=TRUE               python prepare_file_ci.py
-grep "\[" ci-tests.ini >> ci_matrix_elements.txt
+grep "^\[" ci-tests.ini >> ci_matrix_elements.txt
 WARPX_CI_EB=TRUE               python prepare_file_ci.py
-grep "\[" ci-tests.ini >> ci_matrix_elements.txt
+grep "^\[" ci-tests.ini >> ci_matrix_elements.txt
 
 # Check that the resulting lists are equal
 {
