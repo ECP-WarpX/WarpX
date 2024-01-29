@@ -133,7 +133,7 @@ struct CopyAndTimestamp {
     void operator() (const DstData& dst, const SrcData& src,
                      int src_i, int dst_i) const noexcept
     {
-        dst.m_aos[dst_i] = src.m_aos[src_i];
+        dst.m_idcpu[dst_i] = src.m_idcpu[src_i];
         for (int j = 0; j < SrcData::NAR; ++j) {
             dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
         }
@@ -305,7 +305,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 {
     WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles");
 
-    using PIter = amrex::ParConstIter<0,0,PIdx::nattribs>;
+    using PIter = amrex::ParConstIterSoA<PIdx::nattribs, 0>;
     const auto& warpx_instance = WarpX::GetInstance();
     const amrex::Geometry& geom = warpx_instance.Geom(0);
     auto plo = geom.ProbLoArray();
