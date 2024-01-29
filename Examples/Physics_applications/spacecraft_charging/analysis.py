@@ -15,10 +15,8 @@ import checksumAPI
 
 # Open plotfile specified in command line
 filename = sys.argv[1]
-ds = yt.load( filename )
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
-
+checksumAPI.evaluate_checksum(test_name, filename, output_format='openpmd')
 
 ts = OpenPMDTimeSeries('./diags/diag1/')
 dt = 1.27e-8
