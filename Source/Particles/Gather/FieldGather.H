@@ -1200,7 +1200,7 @@ void doGatherPicnicShapeN (
         }
         else { // crossings in x-dir, y-dir, and z-dir
 
-                x0_new = Xcell + dirX_sign;
+            x0_new = Xcell + dirX_sign;
             y0_new = Ycell + dirY_sign;
             z0_new = Zcell + dirZ_sign;
             dxp_seg = x0_new - x0_old;

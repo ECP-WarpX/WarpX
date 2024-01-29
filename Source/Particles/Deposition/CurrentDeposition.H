@@ -1899,7 +1899,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 }
                 else if (cell_crossings_z==0) { // crossings in x-dir and y-dir remain
 
-                       x0_new = Xcell + dirX_sign;
+                    x0_new = Xcell + dirX_sign;
                     y0_new = Ycell + dirY_sign;
                     dxp_seg = x0_new - x0_old;
                     dyp_seg = y0_new - y0_old;
@@ -1938,7 +1938,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                     double const dyp_seg3 = slope_dydz*dzp_seg;
                     if (std::abs(dxp_seg)<std::abs(dxp_seg2) &&
                         std::abs(dxp_seg)<std::abs(dxp_seg3)) { // x-dir crossing
-                            dyp_seg = slope_dydx*dxp_seg;
+                        dyp_seg = slope_dydx*dxp_seg;
                         dzp_seg = slope_dzdx*dxp_seg;
                         y0_new = y0_old + dyp_seg;
                         z0_new = z0_old + dzp_seg;
@@ -1947,7 +1947,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                     }
                     else if (std::abs(dyp_seg)<std::abs(dyp_seg2) &&
                              std::abs(dyp_seg)<std::abs(dyp_seg3)) { // y-dir crossing
-                            dxp_seg = slope_dxdy*dyp_seg;
+                        dxp_seg = slope_dxdy*dyp_seg;
                         dzp_seg = slope_dzdy*dyp_seg;
                         x0_new = x0_old + dxp_seg;
                         z0_new = z0_old + dzp_seg;
