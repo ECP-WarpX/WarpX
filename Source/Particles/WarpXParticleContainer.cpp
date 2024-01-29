@@ -60,7 +60,10 @@
 #include <AMReX_ParticleUtil.H>
 #include <AMReX_Random.H>
 #include <AMReX_Utility.H>
-
+#ifdef AMREX_USE_EB
+#   include "EmbeddedBoundary/ParticleBoundaryProcess.H"
+#   include "EmbeddedBoundary/ParticleScraper.H"
+#endif
 
 #ifdef AMREX_USE_OMP
 #   include <omp.h>
@@ -292,6 +295,12 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
             particle_tile, pinned_tile, 0, old_np, pinned_tile.numParticles()
         );
     }
+
+    // Remove particles that are inside the embedded boundaries
+#ifdef AMREX_USE_EB
+    auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
+    scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+#endif
 
     Redistribute();
 }
