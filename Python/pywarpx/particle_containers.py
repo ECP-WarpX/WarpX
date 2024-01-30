@@ -785,7 +785,7 @@ class ParticleBoundaryBufferWrapper(object):
             species_name, self._get_boundary_number(boundary)
         )
         data_array = []
-        
+
         if comp_name == 'step_scraped':
             # the step scraped is stored before the normal components
             comp_idx = part_container.num_real_comps - 4
