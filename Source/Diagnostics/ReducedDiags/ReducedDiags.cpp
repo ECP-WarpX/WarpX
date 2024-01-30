@@ -86,7 +86,7 @@ void ReducedDiags::LoadBalance ()
     // load balancing operations
 }
 
-void ReducedDiags::BackwardCompatibility ()
+void ReducedDiags::BackwardCompatibility () const
 {
     const amrex::ParmParse pp_rd_name(m_rd_name);
     std::vector<std::string> backward_strings;

@@ -162,7 +162,7 @@ BackgroundMCCCollision::BackgroundMCCCollision (std::string const collision_name
  *  ranges from 1e-4 to 5000 eV in 0.2 eV increments
  */
 amrex::ParticleReal
-BackgroundMCCCollision::get_nu_max(amrex::Vector<ScatteringProcess> const& mcc_processes)
+BackgroundMCCCollision::get_nu_max(amrex::Vector<ScatteringProcess> const& mcc_processes) const
 {
     using namespace amrex::literals;
     amrex::ParticleReal nu, nu_max = 0.0;

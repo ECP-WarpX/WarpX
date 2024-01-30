@@ -38,7 +38,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
             required_precision=1, **kwargs
         )
 
-    def initialize_inputs(self):
+    def solver_initialize_inputs(self):
         """Grab geometrical quantities from the grid. The boundary potentials
         are also obtained from the grid using 'warpx_potential_zmin' for the
         left_voltage and 'warpx_potential_zmax' for the right_voltage.
@@ -57,7 +57,7 @@ class PoissonSolver1D(picmi.ElectrostaticSolver):
         self.grid.potential_zmin = None
         self.grid.potential_zmax = None
 
-        super(PoissonSolver1D, self).initialize_inputs()
+        super(PoissonSolver1D, self).solver_initialize_inputs()
 
         self.nz = self.grid.number_of_cells[0]
         self.dz = (self.grid.upper_bound[0] - self.grid.lower_bound[0]) / self.nz
@@ -420,6 +420,10 @@ class CapacitiveDischargeExample(object):
         callbacks.installafterstep(self._get_rho_ions)
 
         self.sim.step(self.diag_steps)
+
+        if self.pythonsolver:
+            # confirm that the external solver was run
+            assert hasattr(self.solver, 'phi')
 
         if libwarpx.amr.ParallelDescriptor.MyProc() == 0:
             np.save(f'ion_density_case_{self.n+1}.npy', self.ion_density_array)

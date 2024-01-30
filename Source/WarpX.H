@@ -729,7 +729,7 @@ public:
 
 #ifdef WARPX_DIM_RZ
     // Applies the boundary conditions that are specific to the axis when in RZ.
-    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev);
+    void ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex::MultiFab* Ez, int lev) const;
 #endif
 
     /**
@@ -1022,6 +1022,16 @@ public:
          char field,
          int lev, PatchType patch_type);
 
+    /**
+     * \brief Load field values from a user-specified openPMD file,
+     * for the fields Ex, Ey, Ez, Bx, By, Bz
+     */
+    void LoadExternalFieldsFromFile (int lev);
+
+    /**
+     * \brief Load field values from a user-specified openPMD file
+     * for a specific field (specified by `F_name`)
+     */
     void ReadExternalFieldFromFile (
          std::string read_fields_from_path, amrex::MultiFab* mf,
          std::string F_name, std::string F_component);

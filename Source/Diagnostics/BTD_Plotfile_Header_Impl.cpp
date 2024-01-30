@@ -516,7 +516,7 @@ BTDParticleDataHeaderImpl::ReadHeader ()
 }
 
 void
-BTDParticleDataHeaderImpl::WriteHeader ()
+BTDParticleDataHeaderImpl::WriteHeader () const
 {
     if (amrex::FileExists(m_Header_path)) {
         amrex::FileSystem::Remove(m_Header_path);

@@ -10,6 +10,9 @@
 #define SPLIT_AND_SCATTER_FUNC_H_
 
 #include "Particles/Collision/ScatteringProcess.H"
+#include "Particles/NamedComponentParticleContainer.H"
+
+#include <AMReX_Particle.H>
 
 /**
  * \brief Function that performs the particle scattering and injection due
@@ -55,8 +58,6 @@ int splitScatteringParticles (
     const auto ptile1_data = ptile1.getParticleTileData();
     const auto ptile2_data = ptile2.getParticleTileData();
 
-    const Long minus_one_long = -1;
-
     ParallelForRNG(n_total_pairs,
     [=] AMREX_GPU_DEVICE (int i, RandomEngine const& engine) noexcept
     {
@@ -70,20 +71,37 @@ int splitScatteringParticles (
             // starting with the parent particles
             auto& w1 = ptile1_data.m_rdata[PIdx::w][p_pair_indices_1[i]];
             auto& w2 = ptile2_data.m_rdata[PIdx::w][p_pair_indices_2[i]];
+            uint64_t* AMREX_RESTRICT idcpu1 = ptile1_data.m_idcpu;
+            uint64_t* AMREX_RESTRICT idcpu2 = ptile2_data.m_idcpu;
+
+            // Note: Particle::atomicSetID should also be provided as a standalone helper function in AMReX
+            //       to replace the following lambda.
+            auto const atomicSetIdMinus = [] AMREX_GPU_DEVICE (uint64_t & idcpu)
+            {
+                constexpr amrex::Long minus_one_long = -1;
+                uint64_t tmp = 0;
+                amrex::ParticleIDWrapper wrapper(tmp);
+                wrapper = minus_one_long;
+#if defined(AMREX_USE_OMP)
+#pragma omp atomic write
+                idcpu = wrapper.m_idata;
+#else
+                auto *old_ptr = reinterpret_cast<unsigned long long*>(&idcpu);
+                    amrex::Gpu::Atomic::Exch(old_ptr, (unsigned long long) wrapper.m_idata);
+#endif
+            };
 
             // Remove p_pair_reaction_weight[i] from the colliding particles' weights.
             // If the colliding particle weight decreases to zero, remove particle by
             // setting its id to -1.
             Gpu::Atomic::AddNoRet(&w1, -p_pair_reaction_weight[i]);
             if (w1 <= 0._prt) {
-                auto& p = ptile1_data.m_aos[p_pair_indices_1[i]];
-                p.atomicSetID(minus_one_long);
+                atomicSetIdMinus(idcpu1[p_pair_indices_1[i]]);
             }
 
             Gpu::Atomic::AddNoRet(&w2, -p_pair_reaction_weight[i]);
             if (w2 <= 0._prt) {
-                auto& p = ptile2_data.m_aos[p_pair_indices_2[i]];
-                p.atomicSetID(minus_one_long);
+                atomicSetIdMinus(idcpu2[p_pair_indices_2[i]]);
             }
 
             // Set the child particle properties appropriately
