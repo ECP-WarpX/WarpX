@@ -65,8 +65,7 @@ void setNewParticleIDs (PTile& ptile, int old_size, int num_added)
     amrex::ParallelFor(num_added, [=] AMREX_GPU_DEVICE (int ip) noexcept
     {
         auto const new_id = ip + old_size;
-        amrex::ParticleIDWrapper{ptd.m_idcpu[new_id]} = pid+ip;
-        amrex::ParticleCPUWrapper{ptd.m_idcpu[new_id]} = cpuid;
+        ptd.m_idcpu[new_id] = amrex::SetParticleIDandCPU(pid+ip, cpuid);
     });
 }
 

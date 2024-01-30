@@ -212,13 +212,12 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
     for (auto i = ibegin; i < iend; ++i)
     {
         auto & idcpu_data = pinned_tile.GetStructOfArrays().GetIdCPUData();
-        idcpu_data.push_back(0);
-        if (id==-1) {
-            amrex::ParticleIDWrapper{idcpu_data.back()} = ParticleType::NextID();
-        } else {
-            amrex::ParticleIDWrapper{idcpu_data.back()} = id;
+
+        amrex::Long current_id = id;  // copy input
+        if (id == -1) {
+            current_id = ParticleType::NextID();
         }
-        amrex::ParticleCPUWrapper(idcpu_data.back()) = ParallelDescriptor::MyProc();
+        idcpu_data.push_back(amrex::SetParticleIDandCPU(current_id, ParallelDescriptor::MyProc()));
 
 #ifdef WARPX_DIM_RZ
         r[i-ibegin] = std::sqrt(x[i]*x[i] + y[i]*y[i]);
@@ -1544,8 +1543,8 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                 pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i, amrex::RandomEngine const& engine) {
                     // skip particles that are already flagged for removal
-                    auto const id = amrex::ParticleIDWrapper{idcpu[i]};
-                    if (id < 0) { return; }
+                    auto pidw = amrex::ParticleIDWrapper{idcpu[i]};
+                    if (!pidw.is_valid()) { return; }
 
                     ParticleReal x, y, z;
                     GetPosition.AsStored(i, x, y, z);
@@ -1567,7 +1566,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                                                               boundary_conditions, engine);
 
                     if (particle_lost) {
-                        amrex::ParticleIDWrapper{idcpu[i]} = -id;
+                        pidw.make_invalid();
                     } else {
                         SetPosition.AsStored(i, x, y, z);
                     }

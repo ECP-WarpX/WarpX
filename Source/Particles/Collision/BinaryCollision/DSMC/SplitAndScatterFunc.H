@@ -78,16 +78,14 @@ int splitScatteringParticles (
             //       to replace the following lambda.
             auto const atomicSetIdMinus = [] AMREX_GPU_DEVICE (uint64_t & idcpu)
             {
-                constexpr amrex::Long minus_one_long = -1;
-                uint64_t tmp = 0;
-                amrex::ParticleIDWrapper wrapper(tmp);
-                wrapper = minus_one_long;
 #if defined(AMREX_USE_OMP)
 #pragma omp atomic write
-                idcpu = wrapper.m_idata;
+                idcpu = amrex::ParticleIdCpus::Invalid;
 #else
-                auto *old_ptr = reinterpret_cast<unsigned long long*>(&idcpu);
-                    amrex::Gpu::Atomic::Exch(old_ptr, (unsigned long long) wrapper.m_idata);
+                amrex::Gpu::Atomic::Exch(
+                    (unsigned long long *)&idcpu,
+                    (unsigned long long)amrex::ParticleIdCpus::Invalid
+                );
 #endif
             };
 

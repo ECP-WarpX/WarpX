@@ -239,7 +239,7 @@ namespace
         if (has_breit_wheeler) {p_optical_depth_BW[ip] = 0._rt;}
 #endif
 
-        amrex::ParticleIDWrapper{idcpu[ip]} = -1;
+        idcpu[ip] = amrex::ParticleIdCpus::Invalid;
     }
 }
 
@@ -1225,8 +1225,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 long ip = poffset[index] + i_part;
-                amrex::ParticleIDWrapper{pa_idcpu[ip]} = pid+ip;
-                amrex::ParticleCPUWrapper{pa_idcpu[ip]} = cpuid;
+                pa_idcpu[ip] = amrex::SetParticleIDandCPU(pid+ip, cpuid);
                 const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
                   // In the refined injection region: use refinement ratio `lrrfac`
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
@@ -1766,8 +1765,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 const long ip = poffset[index] + i_part;
-                amrex::ParticleIDWrapper{pa_idcpu[ip]} = pid+ip;
-                amrex::ParticleCPUWrapper{pa_idcpu[ip]} = cpuid;
+                pa_idcpu[ip] = amrex::SetParticleIDandCPU(pid+ip, cpuid);
 
                 // This assumes the flux_pos is of type InjectorPositionRandomPlane
                 const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
@@ -1792,19 +1790,19 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // the particles will be within the domain.
 #if defined(WARPX_DIM_3D)
                 if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.x,ppos.y,ppos.z})) {
-                    amrex::ParticleIDWrapper{pa_idcpu[ip]} = -1;
+                    pa_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
                     continue;
                 }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
                 if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.x,ppos.z,0.0_prt})) {
-                    amrex::ParticleIDWrapper{pa_idcpu[ip]} = -1;
+                    pa_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
                     continue;
                 }
 #else
                 amrex::ignore_unused(j,k);
                 if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.z,0.0_prt,0.0_prt})) {
-                    amrex::ParticleIDWrapper{pa_idcpu[ip]} = -1;
+                    pa_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
                     continue;
                 }
 #endif
@@ -1812,7 +1810,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // If the particle's initial position is not within or on the species's
                 // xmin, xmax, ymin, ymax, zmin, zmax, go to the next generated particle.
                 if (!flux_pos->insideBoundsInclusive(ppos.x, ppos.y, ppos.z)) {
-                    amrex::ParticleIDWrapper{pa_idcpu[ip]} = -1;
+                    pa_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
                     continue;
                 }
 
@@ -1845,8 +1843,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #endif
                 Real flux = inj_flux->getFlux(ppos.x, ppos.y, ppos.z, t);
                 // Remove particle if flux is negative or 0
-                if ( flux <=0 ){
-                    amrex::ParticleIDWrapper{pa_idcpu[ip]} = -1;
+                if (flux <= 0) {
+                    pa_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
                     continue;
                 }
 
@@ -1855,7 +1853,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 }
 
 #ifdef WARPX_QED
-                if(loc_has_quantum_sync){
+                if (loc_has_quantum_sync) {
                     p_optical_depth_QSR[ip] = quantum_sync_get_opt(engine);
                 }
 
@@ -2459,7 +2457,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                 }
 #endif
                 // invalidate the particle
-                amrex::ParticleIDWrapper{idcpu[i]} = -1;
+                idcpu[i] = amrex::ParticleIdCpus::Invalid;
             }
         }
     }

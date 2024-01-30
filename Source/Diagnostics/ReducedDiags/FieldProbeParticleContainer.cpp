@@ -97,9 +97,7 @@ FieldProbeParticleContainer::AddNParticles (int lev,
     for (int i = 0; i < np; i++)
     {
         auto & idcpu_data = pinned_tile.GetStructOfArrays().GetIdCPUData();
-        idcpu_data.push_back(0);
-        amrex::ParticleIDWrapper{idcpu_data.back()} = ParticleType::NextID();
-        amrex::ParticleCPUWrapper(idcpu_data.back()) = ParallelDescriptor::MyProc();
+        idcpu_data.push_back(amrex::SetParticleIDandCPU(ParticleType::NextID(), ParallelDescriptor::MyProc()));
     }
 
     // write Real attributes (SoA) to particle initialized zero

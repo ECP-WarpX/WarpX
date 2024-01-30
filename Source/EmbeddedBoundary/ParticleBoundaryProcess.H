@@ -7,9 +7,11 @@
 #ifndef PARTICLEBOUNDARYPROCESS_H_
 #define PARTICLEBOUNDARYPROCESS_H_
 
+#include <AMReX_Particle.H>
 #include <AMReX_REAL.H>
 #include <AMReX_RealVect.H>
 #include <AMReX_Random.H>
+
 
 namespace ParticleBoundaryProcess {
 
@@ -29,7 +31,7 @@ struct Absorb {
                      const amrex::RealVect& /*pos*/, const amrex::RealVect& /*normal*/,
                      amrex::RandomEngine const& /*engine*/) const noexcept
     {
-        ptd.id(i) = -ptd.id(i);
+        amrex::ParticleIDWrapper{ptd.m_idcpu[i]}.make_invalid();
     }
 };
 }

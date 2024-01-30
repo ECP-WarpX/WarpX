@@ -61,8 +61,7 @@ struct SmartCreate
         amrex::ignore_unused(x,y);
 #endif
 
-        amrex::ParticleIDWrapper{prt.m_idcpu[i_prt]} = id;
-        amrex::ParticleCPUWrapper{prt.m_idcpu[i_prt]} = cpu;
+        prt.m_idcpu[i_prt] = amrex::SetParticleIDandCPU(id, cpu);
 
         // initialize the real components after position
         for (int j = AMREX_SPACEDIM; j < PartData::NAR; ++j) {

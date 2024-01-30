@@ -261,7 +261,7 @@ void cleanLowEnergyPhotons(
         const auto phot_energy2 = (ux*ux + uy*uy + uz*uz)*me_c*me_c;
 
         if (phot_energy2 < energy_threshold2) {
-            amrex::ParticleIDWrapper{p_idcpu[ip]} = -1;
+            p_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
         }
     });
 }

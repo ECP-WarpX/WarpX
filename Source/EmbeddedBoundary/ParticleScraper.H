@@ -38,7 +38,7 @@
  *  passed in to this function as an argument. This function can access the
  *  position at which the particle hit the boundary, and also the associated
  *  normal vector. Particles can be `absorbed` by setting their ids to negative
- *  to flag them for removal. Likewise, the can be reflected back into the domain
+ *  to flag them for removal. Likewise, they can be reflected back into the domain
  *  by modifying their data appropriately and leaving their ids alone.
  *
  *  This version operates only at the specified level.
@@ -82,7 +82,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
  *  passed in to this function as an argument. This function can access the
  *  position at which the particle hit the boundary, and also the associated
  *  normal vector. Particles can be `absorbed` by setting their ids to negative
- *  to flag them for removal. Likewise, the can be reflected back into the domain
+ *  to flag them for removal. Likewise, they can be reflected back into the domain
  *  by modifying their data appropriately and leaving their ids alone.
  *
  *  This version operates over all the levels in the pc.
@@ -175,7 +175,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
             [=] AMREX_GPU_DEVICE (const int ip, amrex::RandomEngine const& engine) noexcept
             {
                 // skip particles that are already flagged for removal
-                if (ptd.id(ip) < 0) return;
+                if (!amrex::ParticleIDWrapper{ptd.m_idcpu[ip]}.is_valid()) return;
 
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
