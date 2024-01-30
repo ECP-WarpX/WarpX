@@ -59,7 +59,7 @@ class ForceFreeSheetReconnection(object):
     # Plasma resistivity - used to dampen the mode excitation
     eta = 6e-3  # normalized resistivity
     # Number of substeps used to update B
-    substeps = 750
+    substeps = 20
 
     def __init__(self, test, verbose):
 

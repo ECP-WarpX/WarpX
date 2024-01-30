@@ -224,7 +224,7 @@ public:
 
     void MapParticletoBoostedFrame (amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
                                     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
-                                    amrex::Real t_lab = 0.);
+                                    amrex::Real t_lab = 0.) const;
 
     void AddGaussianBeam (
         PlasmaInjector const& plasma_injector,
@@ -253,7 +253,7 @@ public:
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uy,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_uz,
         amrex::Gpu::HostVector<amrex::ParticleReal>& particle_w,
-        amrex::Real t_lab= 0.);
+        amrex::Real t_lab= 0.) const;
 
     /**
      * \brief Default initialize runtime attributes in a tile. This routine does not initialize the
@@ -268,11 +268,9 @@ public:
      * @param[in] engine the random engine, used in initialization of QED optical depths
      */
     void DefaultInitializeRuntimeAttributes (
-                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
-                                        NArrayReal, NArrayInt,
-                                        amrex::PinnedArenaAllocator>& pinned_tile,
-                    int n_external_attr_real,
-                    int n_external_attr_int) final;
+        typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType& pinned_tile,
+        int n_external_attr_real,
+        int n_external_attr_int) final;
 
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather

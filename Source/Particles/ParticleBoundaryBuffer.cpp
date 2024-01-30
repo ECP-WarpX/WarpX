@@ -118,35 +118,18 @@ struct FindBoundaryIntersection {
         DistanceToEB::normalize(normal);
 
 #if (defined WARPX_DIM_3D)
-        dst.m_aos[dst_i].pos(0) = x_temp;
-        dst.m_aos[dst_i].pos(1) = y_temp;
-        dst.m_aos[dst_i].pos(2) = z_temp;
-        //save normal components
-        dst.m_runtime_rdata[m_index+1][dst_i] = normal[0];
-        dst.m_runtime_rdata[m_index+2][dst_i] = normal[1];
-        dst.m_runtime_rdata[m_index+3][dst_i] = normal[2];
+        dst.m_rdata[PIdx::x][dst_i] = x_temp;
+        dst.m_rdata[PIdx::y][dst_i] = y_temp;
+        dst.m_rdata[PIdx::z][dst_i] = z_temp;
 #elif (defined WARPX_DIM_XZ)
-        dst.m_aos[dst_i].pos(0) = x_temp;
-        dst.m_aos[dst_i].pos(1) = z_temp;
-        //save normal components
-        dst.m_runtime_rdata[m_index+1][dst_i] = normal[0];
-        dst.m_runtime_rdata[m_index+2][dst_i] = 0.0;
-        dst.m_runtime_rdata[m_index+3][dst_i] = normal[1];
+        dst.m_rdata[PIdx::x][dst_i] = x_temp;
+        dst.m_rdata[PIdx::z][dst_i] = z_temp;
 #elif (defined WARPX_DIM_RZ)
-        dst.m_aos[dst_i].pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
+        dst.m_rdata[PIdx::x][dst_i] = std::sqrt(x_temp*x_temp + y_temp*y_temp);
         dst.m_rdata[PIdx::theta][dst_i] = std::atan2(y_temp, x_temp);
-        dst.m_aos[dst_i].pos(1) = z_temp;
-        //save normal components
-        amrex::Real theta=std::atan2(y_temp, x_temp);
-        dst.m_runtime_rdata[m_index+1][dst_i] = normal[0]*std::cos(theta);
-        dst.m_runtime_rdata[m_index+2][dst_i] = normal[0]*std::sin(theta);
-        dst.m_runtime_rdata[m_index+3][dst_i] = normal[1];
+        dst.m_rdata[PIdx::z][dst_i] = z_temp;
 #elif (defined WARPX_DIM_1D_Z)
-        dst.m_aos[dst_i].pos(0) = z_temp;
-        //normal not defined
-        dst.m_runtime_rdata[m_index+1][dst_i] = 0.0;
-        dst.m_runtime_rdata[m_index+2][dst_i] = 0.0;
-        dst.m_runtime_rdata[m_index+3][dst_i] = 0.0;
+        dst.m_rdata[PIdx::z][dst_i] = z_temp;
 #endif
     }
 };
@@ -162,7 +145,7 @@ struct CopyAndTimestamp {
     void operator() (const DstData& dst, const SrcData& src,
                      int src_i, int dst_i) const noexcept
     {
-        dst.m_aos[dst_i] = src.m_aos[src_i];
+        dst.m_idcpu[dst_i] = src.m_idcpu[src_i];
         for (int j = 0; j < SrcData::NAR; ++j) {
             dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
         }
@@ -339,7 +322,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 {
     WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles");
 
-    using PIter = amrex::ParConstIter<0,0,PIdx::nattribs>;
+    using PIter = amrex::ParConstIterSoA<PIdx::nattribs, 0>;
     const auto& warpx_instance = WarpX::GetInstance();
     const amrex::Geometry& geom = warpx_instance.Geom(0);
     auto plo = geom.ProbLoArray();

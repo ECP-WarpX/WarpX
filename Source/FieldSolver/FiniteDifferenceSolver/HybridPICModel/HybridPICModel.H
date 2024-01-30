@@ -107,6 +107,33 @@ public:
         std::array< std::unique_ptr<amrex::MultiFab>, 3> const& edge_lengths,
         int lev, PatchType patch_type, bool include_resistivity_term);
 
+    void BfieldEvolveRK (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real dt, DtType a_dt_type,
+        amrex::IntVect ng, std::optional<bool> nodal_sync);
+
+    void BfieldEvolveRK (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real dt, int lev, DtType dt_type,
+        amrex::IntVect ng, std::optional<bool> nodal_sync);
+
+    void FieldPush (
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Bfield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>>& Efield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& Jfield,
+        amrex::Vector<std::unique_ptr<amrex::MultiFab>> const& rhofield,
+        amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3>> const& edge_lengths,
+        amrex::Real dt, DtType dt_type,
+        amrex::IntVect ng, std::optional<bool> nodal_sync);
+
     /**
      * \brief
      * Function to calculate the electron pressure at a given timestep type
@@ -126,11 +153,11 @@ public:
      */
     void FillElectronPressureMF (
         std::unique_ptr<amrex::MultiFab> const& Pe_field,
-        amrex::MultiFab* const& rho_field );
+        amrex::MultiFab* const& rho_field ) const;
 
     // Declare variables to hold hybrid-PIC model parameters
     /** Number of substeps to take when evolving B */
-    int m_substeps = 100;
+    int m_substeps = 10;
 
     /** Electron temperature in eV */
     amrex::Real m_elec_temp;
