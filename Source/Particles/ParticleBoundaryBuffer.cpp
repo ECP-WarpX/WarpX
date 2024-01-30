@@ -108,18 +108,18 @@ struct FindBoundaryIntersection {
         UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_fraction*m_dt);
 
 #if (defined WARPX_DIM_3D)
-        dst.m_aos[dst_i].pos(0) = x_temp;
-        dst.m_aos[dst_i].pos(1) = y_temp;
-        dst.m_aos[dst_i].pos(2) = z_temp;
+        dst.pos(PIdx::x) = x_temp;
+        dst.pos(PIdx::y) = y_temp;
+        dst.pos(PIdx::z) = z_temp;
 #elif (defined WARPX_DIM_XZ)
-        dst.m_aos[dst_i].pos(0) = x_temp;
-        dst.m_aos[dst_i].pos(1) = z_temp;
+        dstp.pos(PIdx::x) = x_temp;
+        dst.pos(PIdx::z) = z_temp;
 #elif (defined WARPX_DIM_RZ)
-        dst.m_aos[dst_i].pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
-        dst.m_rdata[PIdx::theta][dst_i] = std::atan2(y_temp, x_temp);
-        dst.m_aos[dst_i].pos(1) = z_temp;
+        dst.pos(T_PIdx::x) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
+        dst.rdata(T_PIdx::theta) = std::atan2(y_temp, x_temp);
+        dst.pos(PIdx::z) = z_temp;
 #elif (defined WARPX_DIM_1D_Z)
-        dst.m_aos[dst_i].pos(0) = z_temp;
+        dst.pos(PIdx::z) = z_temp;
 #endif
     }
 };
