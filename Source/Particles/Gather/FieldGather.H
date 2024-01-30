@@ -1038,34 +1038,17 @@ void doGatherPicnicShapeN (
     // is within the range permitted by the number of guard cells
     // e.g., if (num_segments > 5) ...
 
-    // compute the slopes and the initial cell locations in each direction
-    // used to find the position at cell crossings.
-    double slope_dydx = 0.0, slope_dzdx = 0.0;
-    double slope_dxdy = 0.0, slope_dzdy = 0.0;
-    double slope_dxdz = 0.0, slope_dydz = 0.0;
+    // compute total change in particle position and the initial cell 
+    // locations in each direction used to find the position at cell crossings.
     double const dxp = x_new - x_old;
     double const dyp = y_new - y_old;
     double const dzp = z_new - z_old;
-    double Xcell = 0.0, Ycell = 0.0, Zcell = 0.0;
-    int dirX_sign = 1, dirY_sign = 1, dirZ_sign = 1;
-    if (cell_crossings_x > 0) {
-        if (x_new < x_old) { dirX_sign = -1; }
-        Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
-        slope_dydx = dyp/dxp;
-        slope_dzdx = dzp/dxp;
-    }
-    if (cell_crossings_y > 0) {
-        if (y_new < y_old) { dirY_sign = -1; }
-        Ycell = j_old + shift + 0.5_rt*(1-dirY_sign);
-        slope_dxdy = dxp/dyp;
-        slope_dzdy = dzp/dyp;
-    }
-    if (cell_crossings_z > 0) {
-        if (z_new < z_old) { dirZ_sign = -1; }
-        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
-        slope_dxdz = dxp/dzp;
-        slope_dydz = dyp/dzp;
-    }
+    const auto dirX_sign = static_cast<int>(dxp < 0. ? -1 : 1);
+    const auto dirY_sign = static_cast<int>(dyp < 0. ? -1 : 1);
+    const auto dirZ_sign = static_cast<int>(dzp < 0. ? -1 : 1);
+    double Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
+    double Ycell = j_old + shift + 0.5_rt*(1-dirY_sign);
+    double Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
 
     // loop over the number of segments and deposit
     Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
@@ -1079,171 +1062,48 @@ void doGatherPicnicShapeN (
     for (int ns=0; ns<num_segments; ns++) {
 
         if (ns==num_segments-1) { // final segment
+
             x0_new = x_new;
             y0_new = y_new;
             z0_new = z_new;
             dxp_seg = x0_new - x0_old;
             dyp_seg = y0_new - y0_old;
             dzp_seg = z0_new - z0_old;
-        }
-        else if (cell_crossings_x==0) {
-
-            if (cell_crossings_y==0) { // only crossings in z-dir remain
-                Zcell = Zcell + dirZ_sign;
-                z0_new = Zcell;
-                dzp_seg = z0_new - z0_old;
-                dxp_seg = slope_dxdz*dzp_seg;
-                dyp_seg = slope_dydz*dzp_seg;
-                x0_new = x0_old + dxp_seg;
-                y0_new = y0_old + dyp_seg;
-                cell_crossings_z -= 1;
-            }
-            else if (cell_crossings_z==0) { // only crossings in y-dir remain
-                Ycell = Ycell + dirY_sign;
-                y0_new = Ycell;
-                dyp_seg = y0_new - y0_old;
-                dxp_seg = slope_dxdy*dyp_seg;
-                dzp_seg = slope_dzdy*dyp_seg;
-                x0_new = x0_old + dxp_seg;
-                z0_new = z0_old + dzp_seg;
-                cell_crossings_y -= 1;
-            }
-            else { // crossings in y-dir and z-dir remain
-                y0_new = Ycell + dirY_sign;
-                z0_new = Zcell + dirZ_sign;
-                dyp_seg = y0_new - y0_old;
-                dzp_seg = z0_new - z0_old;
-
-                double const dyp_seg2 = slope_dydz*dzp_seg;
-                if (std::abs(dyp_seg)<std::abs(dyp_seg2)) { // y-dir crossing
-                    dxp_seg = slope_dxdy*dyp_seg;
-                    dzp_seg = slope_dzdy*dyp_seg;
-                    x0_new = x0_old + dxp_seg;
-                    z0_new = z0_old + dzp_seg;
-                    Ycell = y0_new;
-                    cell_crossings_y -= 1;
-                }
-                else { // z-dir crossing
-                    dxp_seg = slope_dxdz*dzp_seg;
-                    dyp_seg = slope_dydz*dzp_seg;
-                    x0_new = x0_old + dxp_seg;
-                    y0_new = y0_old + dyp_seg;
-                    Zcell = z0_new;
-                    cell_crossings_z -= 1;
-                }
-            }
 
         }
-        else if (cell_crossings_y==0) {
+        else {
 
-            if (cell_crossings_z==0) { // only crossings in x-dir remain
-                Xcell = Xcell + dirX_sign;
-                x0_new = Xcell;
-                dxp_seg = x0_new - x0_old;
-                dyp_seg = slope_dydx*dxp_seg;
-                dzp_seg = slope_dzdx*dxp_seg;
-                y0_new = y0_old + dyp_seg;
-                z0_new = z0_old + dzp_seg;
-                cell_crossings_x -= 1;
+            dxp_seg = Xcell + dirX_sign - x0_old;
+            dyp_seg = Ycell + dirY_sign - y0_old;
+            dzp_seg = Zcell + dirZ_sign - z0_old;
+
+            if ( (dyp == 0. || std::abs(dxp_seg) < std::abs(dxp/dyp*dyp_seg))
+              && (dzp == 0. || std::abs(dxp_seg) < std::abs(dxp/dzp*dzp_seg)) ) {
+                Xcell += dirX_sign;
+                dyp_seg = dyp/dxp*dxp_seg;
+                dzp_seg = dzp/dxp*dxp_seg;
             }
-            else { // crossings in x-dir and z-dir remain
-                x0_new = Xcell + dirX_sign;
-                z0_new = Zcell + dirZ_sign;
-                dxp_seg = x0_new - x0_old;
-                dzp_seg = z0_new - z0_old;
-
-                double const dxp_seg2 = slope_dxdz*dzp_seg;
-                if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
-                    dyp_seg = slope_dydx*dxp_seg;
-                    dzp_seg = slope_dzdx*dxp_seg;
-                    y0_new = y0_old + dyp_seg;
-                    z0_new = z0_old + dzp_seg;
-                    Xcell = x0_new;
-                    cell_crossings_x -= 1;
-                }
-                else { // z-dir crossing
-                    dxp_seg = slope_dxdz*dzp_seg;
-                    dyp_seg = slope_dydz*dzp_seg;
-                    x0_new = x0_old + dxp_seg;
-                    y0_new = y0_old + dyp_seg;
-                    Zcell = z0_new;
-                    cell_crossings_z -= 1;
-                }
+            else if (dzp == 0. || std::abs(dyp_seg) < std::abs(dyp/dzp*dzp_seg)) {
+                Ycell += dirY_sign;
+                dxp_seg = dxp/dyp*dyp_seg;
+                dzp_seg = dzp/dyp*dyp_seg;
+            }
+            else {
+                Zcell += dirZ_sign;
+                dxp_seg = dxp/dzp*dzp_seg;
+                dyp_seg = dyp/dzp*dzp_seg;
             }
 
-        }
-        else if (cell_crossings_z==0) { // crossings in x-dir and y-dir remain
-
-            x0_new = Xcell + dirX_sign;
-            y0_new = Ycell + dirY_sign;
-            dxp_seg = x0_new - x0_old;
-            dyp_seg = y0_new - y0_old;
-
-            double const dxp_seg2 = slope_dxdy*dyp_seg;
-            if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
-                dyp_seg = slope_dydx*dxp_seg;
-                dzp_seg = slope_dzdx*dxp_seg;
-                y0_new = y0_old + dyp_seg;
-                z0_new = z0_old + dzp_seg;
-                Xcell = x0_new;
-                cell_crossings_x -= 1;
-            }
-            else { // y-dir crossing
-                dxp_seg = slope_dxdy*dyp_seg;
-                dzp_seg = slope_dzdy*dyp_seg;
-                x0_new = x0_old + dxp_seg;
-                z0_new = z0_old + dzp_seg;
-                Ycell = y0_new;
-                cell_crossings_y -= 1;
-            }
-
-        }
-        else { // crossings in x-dir, y-dir, and z-dir
-
-            x0_new = Xcell + dirX_sign;
-            y0_new = Ycell + dirY_sign;
-            z0_new = Zcell + dirZ_sign;
-            dxp_seg = x0_new - x0_old;
-            dyp_seg = y0_new - y0_old;
-            dzp_seg = z0_new - z0_old;
-
-            double const dxp_seg2 = slope_dxdz*dzp_seg;
-            double const dxp_seg3 = slope_dxdy*dyp_seg;
-            double const dyp_seg2 = slope_dydx*dxp_seg;
-            double const dyp_seg3 = slope_dydz*dzp_seg;
-            if (std::abs(dxp_seg)<std::abs(dxp_seg2) &&
-                std::abs(dxp_seg)<std::abs(dxp_seg3)) { // x-dir crossing
-                dyp_seg = slope_dydx*dxp_seg;
-                dzp_seg = slope_dzdx*dxp_seg;
-                y0_new = y0_old + dyp_seg;
-                z0_new = z0_old + dzp_seg;
-                Xcell = x0_new;
-                cell_crossings_x -= 1;
-            }
-            else if (std::abs(dyp_seg)<std::abs(dyp_seg2) &&
-                     std::abs(dyp_seg)<std::abs(dyp_seg3)) { // y-dir crossing
-                dxp_seg = slope_dxdy*dyp_seg;
-                dzp_seg = slope_dzdy*dyp_seg;
-                x0_new = x0_old + dxp_seg;
-                z0_new = z0_old + dzp_seg;
-                Ycell = y0_new;
-                cell_crossings_y -= 1;
-            }
-            else { // z-dir crossing
-                dxp_seg = slope_dxdz*dzp_seg;
-                dyp_seg = slope_dydz*dzp_seg;
-                x0_new = x0_old + dxp_seg;
-                y0_new = y0_old + dyp_seg;
-                Zcell = z0_new;
-                cell_crossings_z -= 1;
-            }
+            x0_new = x0_old + dxp_seg;
+            y0_new = y0_old + dyp_seg;
+            z0_new = z0_old + dzp_seg;
 
         }
 
         // compute the segment factors (each equal to dt_seg/dt for nonzero dxp, dyp, or dzp)
-        const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
-        const auto seg_factor_y = static_cast<amrex::Real>(dyp == 0._rt ? 1._rt : dyp_seg/dyp);
-        const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
+        const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0. ? 1. : dxp_seg/dxp);
+        const auto seg_factor_y = static_cast<amrex::Real>(dyp == 0. ? 1. : dyp_seg/dyp);
+        const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
 
         // compute cell-based weights using the average segment position
         double sx_cell[depos_order] = {0.};
@@ -1385,23 +1245,14 @@ void doGatherPicnicShapeN (
     // is within the range permitted by the number of guard cells
     // e.g., if (num_segments > 3) ...
 
-    // compute the slopes and the initial cell locations in each direction
-    // used to find the position at cell crossings.
-    double slope_dzdx = 0.0, slope_dxdz = 0.0;
+    // compute total change in particle position and the initial cell 
+    // locations in each direction used to find the position at cell crossings.
     double const dxp = x_new - x_old;
     double const dzp = z_new - z_old;
-    double Xcell = 0.0, Zcell = 0.0;
-    int dirX_sign = 1, dirZ_sign = 1;
-    if (cell_crossings_x > 0) {
-        if (x_new < x_old) { dirX_sign = -1; }
-        Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
-        slope_dzdx = dzp/dxp;
-    }
-    if (cell_crossings_z > 0) {
-        if (z_new < z_old) { dirZ_sign = -1; }
-        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
-        slope_dxdz = dxp/dzp;
-    }
+    const auto dirX_sign = static_cast<int>(dxp < 0. ? -1 : 1);
+    const auto dirZ_sign = static_cast<int>(dzp < 0. ? -1 : 1);
+    double Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
+    double Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
 
     // loop over the number of segments and deposit
     Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
@@ -1414,51 +1265,35 @@ void doGatherPicnicShapeN (
     for (int ns=0; ns<num_segments; ns++) {
 
         if (ns==num_segments-1) { // final segment
+
             x0_new = x_new;
             z0_new = z_new;
             dxp_seg = x0_new - x0_old;
             dzp_seg = z0_new - z0_old;
-        }
-        else if (cell_crossings_x==0) { // only crossings in z-dir remain
-            Zcell = Zcell + dirZ_sign;
-            z0_new = Zcell;
-            dzp_seg = z0_new - z0_old;
-            dxp_seg = slope_dxdz*dzp_seg;
-            x0_new = x0_old + dxp_seg;
-            cell_crossings_z -= 1;
-        }
-        else if (cell_crossings_z==0) { // only crossings in x-dir remain
-            Xcell = Xcell + dirX_sign;
-            x0_new = Xcell;
-            dxp_seg = x0_new - x0_old;
-            dzp_seg = slope_dzdx*dxp_seg;
-            z0_new = z0_old + dzp_seg;
-            cell_crossings_x -= 1;
-        }
-        else { // crossings in x-dir and z-dir remain
-            x0_new = Xcell + dirX_sign;
-            z0_new = Zcell + dirZ_sign;
-            dxp_seg = x0_new - x0_old;
-            dzp_seg = z0_new - z0_old;
 
-            double const dxp_seg2 = slope_dxdz*dzp_seg;
-            if (std::abs(dxp_seg)<std::abs(dxp_seg2)) { // x-dir crossing
-                dzp_seg = slope_dzdx*dxp_seg;
-                z0_new = z0_old + dzp_seg;
-                Xcell = x0_new;
-                cell_crossings_x -= 1;
+        }
+        else {
+
+            dxp_seg = Xcell + dirX_sign - x0_old;
+            dzp_seg = Zcell + dirZ_sign - z0_old;
+
+            if (dzp == 0. || std::abs(dxp_seg) < std::abs(dxp/dzp*dzp_seg)) {
+                Xcell += dirX_sign;
+                dzp_seg = dzp/dxp*dxp_seg;
             }
-            else { // z-dir crossing
-                dxp_seg = slope_dxdz*dzp_seg;
-                x0_new = x0_old + dxp_seg;
-                Zcell = z0_new;
-                cell_crossings_z -= 1;
+            else {
+                Zcell += dirZ_sign;
+                dxp_seg = dxp/dzp*dzp_seg;
             }
+
+            x0_new = x0_old + dxp_seg;
+            z0_new = z0_old + dzp_seg;
+
         }
 
         // compute the segment factors (each equal to dt_seg/dt for nonzero dxp, or dzp)
-        const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0._rt ? 1._rt : dxp_seg/dxp);
-        const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
+        const auto seg_factor_x = static_cast<amrex::Real>(dxp == 0. ? 1. : dxp_seg/dxp);
+        const auto seg_factor_z = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
 
         // compute cell-based weights using the average segment position
         double sx_cell[depos_order] = {0.};
@@ -1619,14 +1454,10 @@ void doGatherPicnicShapeN (
     // is within the range permitted by the number of guard cells
     // e.g., if (num_segments > 2) ...
 
-    // compute the initial cell locations used to find the cell crossings.
-    double Zcell = 0.0;
+    // compute dzp and the initial cell location used to find the cell crossings.
     double const dzp = z_new - z_old;
-    int dirZ_sign = 1;
-    if (cell_crossings_z > 0) {
-        if (z_new < z_old) { dirZ_sign = -1; }
-        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
-    }
+    const auto dirZ_sign = static_cast<int>(dzp < 0. ? -1 : 1);
+    double Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
 
     // loop over the number of segments and deposit
     Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
@@ -1648,7 +1479,7 @@ void doGatherPicnicShapeN (
         }
 
         // compute the segment factor (equal to dt_seg/dt for nonzero dzp)
-        const auto seg_factor = static_cast<amrex::Real>(dzp == 0._rt ? 1._rt : dzp_seg/dzp);
+        const auto seg_factor = static_cast<amrex::Real>(dzp == 0. ? 1. : dzp_seg/dzp);
 
         // compute cell-based weights using the average segment position
         double sz_cell[depos_order] = {0.};
