@@ -252,8 +252,7 @@ Particles can be added to the simulation at specific positions and with specific
 .. autoclass:: pywarpx.particle_containers.ParticleContainerWrapper
    :members:
 
-The ``get_particle_real_arrays()``, ``get_particle_int_arrays()`` and
-``get_particle_idcpu_arrays()`` functions are called
+The ``get_particle_structs()`` and ``get_particle_arrays()`` functions are called
 by several utility functions of the form ``get_particle_{comp_name}`` where
 ``comp_name`` is one of ``x``, ``y``, ``z``, ``r``, ``theta``, ``id``, ``cpu``,
 ``weight``, ``ux``, ``uy`` or ``uz``.
