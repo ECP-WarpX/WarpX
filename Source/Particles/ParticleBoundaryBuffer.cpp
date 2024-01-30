@@ -108,18 +108,18 @@ struct FindBoundaryIntersection {
         UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_fraction*m_dt);
 
 #if (defined WARPX_DIM_3D)
-        dst.pos(PIdx::x) = x_temp;
-        dst.pos(PIdx::y) = y_temp;
-        dst.pos(PIdx::z) = z_temp;
+        dst.pos(0) = x_temp;
+        dst.pos(1) = y_temp;
+        dst.pos(2) = z_temp;
 #elif (defined WARPX_DIM_XZ)
-        dstp.pos(PIdx::x) = x_temp;
-        dst.pos(PIdx::z) = z_temp;
+        dstp.pos(0) = x_temp;
+        dst.pos(2) = z_temp;
 #elif (defined WARPX_DIM_RZ)
-        dst.pos(T_PIdx::x) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
-        dst.rdata(T_PIdx::theta) = std::atan2(y_temp, x_temp);
-        dst.pos(PIdx::z) = z_temp;
+        dst.pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
+        dst.rdata(PIdx::theta) = std::atan2(y_temp, x_temp);
+        dst.pos(2) = z_temp;
 #elif (defined WARPX_DIM_1D_Z)
-        dst.pos(PIdx::z) = z_temp;
+        dst.pos(2) = z_temp;
 #endif
     }
 };
