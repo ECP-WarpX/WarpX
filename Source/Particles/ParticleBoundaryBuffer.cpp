@@ -112,7 +112,7 @@ struct FindBoundaryIntersection {
         dst.pos(1) = y_temp;
         dst.pos(2) = z_temp;
 #elif (defined WARPX_DIM_XZ)
-        dstp.pos(0) = x_temp;
+        dst.pos(0) = x_temp;
         dst.pos(2) = z_temp;
 #elif (defined WARPX_DIM_RZ)
         dst.pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
