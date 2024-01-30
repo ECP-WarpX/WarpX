@@ -158,10 +158,10 @@ sim.step(max_steps - 1 - step_number)
 ##########################
 
 assert electron_wrapper.nps == 90
-assert electron_wrapper.particle_container.get_comp_index("w") == 2
-assert electron_wrapper.particle_container.get_comp_index("newPid") == 6
+assert electron_wrapper.particle_container.get_comp_index("w") == 0
+assert electron_wrapper.particle_container.get_comp_index("newPid") == 4
 
-new_pid_vals = electron_wrapper.get_particle_real_arrays("newPid", 0)
+new_pid_vals = electron_wrapper.get_particle_arrays("newPid", 0)
 for vals in new_pid_vals:
     assert np.allclose(vals, 5)
 

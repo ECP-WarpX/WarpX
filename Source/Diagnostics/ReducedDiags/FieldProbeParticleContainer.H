@@ -24,14 +24,7 @@ struct FieldProbePIdx
 {
     enum
     {
-#if !defined (WARPX_DIM_1D_Z)
-        x,
-#endif
-#if defined (WARPX_DIM_3D)
-        y,
-#endif
-        z,
-        Ex, Ey, Ez,
+        Ex = 0, Ey, Ez,
         Bx, By, Bz,
         S, //!< the Poynting vector
 #ifdef WARPX_DIM_RZ
@@ -47,14 +40,9 @@ struct FieldProbePIdx
  * nattribs tells the particle container to allot 7 SOA values.
  */
 class FieldProbeParticleContainer
-    : public amrex::ParticleContainerPureSoA<FieldProbePIdx::nattribs, 0>
+    : public amrex::ParticleContainer<0, 0, FieldProbePIdx::nattribs>
 {
 public:
-    static constexpr int NStructReal = 0;
-    static constexpr int NStructInt = 0;
-    static constexpr int NReal = FieldProbePIdx::nattribs;
-    static constexpr int NInt = 0;
-
     FieldProbeParticleContainer (amrex::AmrCore* amr_core);
     ~FieldProbeParticleContainer() override = default;
 
@@ -64,9 +52,9 @@ public:
     FieldProbeParticleContainer& operator= ( FieldProbeParticleContainer&& )       = default;
 
     //! amrex iterator for our number of attributes
-    using iterator = amrex::ParIterSoA<FieldProbePIdx::nattribs, 0>;
+    using iterator = amrex::ParIter<0, 0, FieldProbePIdx::nattribs, 0>;
     //! amrex iterator for our number of attributes (read-only)
-    using const_iterator = amrex::ParConstIterSoA<FieldProbePIdx::nattribs, 0>;
+    using const_iterator = amrex::ParConstIter<0, 0, FieldProbePIdx::nattribs, 0>;
 
     //! similar to WarpXParticleContainer::AddNParticles but does not include u(x,y,z)
     void AddNParticles (int lev, amrex::Vector<amrex::ParticleReal> const & x, amrex::Vector<amrex::ParticleReal> const & y, amrex::Vector<amrex::ParticleReal> const & z);
