@@ -1043,18 +1043,15 @@ void doGatherPicnicShapeN (
     const double dxp = x_new - x_old;
     const double dyp = y_new - y_old;
     const double dzp = z_new - z_old;
-    const auto dydx = static_cast<double>(dxp == 0. ? 1.0e20 : dyp/dxp);
-    const auto dzdx = static_cast<double>(dxp == 0. ? 1.0e20 : dzp/dxp);
-    const auto dxdy = static_cast<double>(dyp == 0. ? 1.0e20 : dxp/dyp);
-    const auto dzdy = static_cast<double>(dyp == 0. ? 1.0e20 : dzp/dyp);
-    const auto dxdz = static_cast<double>(dzp == 0. ? 1.0e20 : dxp/dzp);
-    const auto dydz = static_cast<double>(dzp == 0. ? 1.0e20 : dyp/dzp);
     const auto dirX_sign = static_cast<int>(dxp < 0. ? -1 : 1);
     const auto dirY_sign = static_cast<int>(dyp < 0. ? -1 : 1);
     const auto dirZ_sign = static_cast<int>(dzp < 0. ? -1 : 1);
-    double Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
-    double Ycell = j_old + shift + 0.5_rt*(1-dirY_sign);
-    double Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
+    double Xcell = 0., Ycell = 0., Zcell = 0.;
+    if (num_segments > 1) {
+        Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
+        Ycell = j_old + shift + 0.5_rt*(1-dirY_sign);
+        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
+    }
 
     // loop over the number of segments and deposit
     Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
@@ -1086,25 +1083,25 @@ void doGatherPicnicShapeN (
             dyp_seg = y0_new - y0_old;
             dzp_seg = z0_new - z0_old;
 
-            if ( std::abs(dxp_seg) < std::abs(dxdy*dyp_seg)
-              && std::abs(dxp_seg) < std::abs(dxdz*dzp_seg) ) {
+            if ( (dyp == 0. || std::abs(dxp_seg) < std::abs(dxp/dyp*dyp_seg))
+              && (dzp == 0. || std::abs(dxp_seg) < std::abs(dxp/dzp*dzp_seg)) ) {
                 Xcell = x0_new;
-                dyp_seg = dydx*dxp_seg;
-                dzp_seg = dzdx*dxp_seg;
+                dyp_seg = dyp/dxp*dxp_seg;
+                dzp_seg = dzp/dxp*dxp_seg;
                 y0_new = y0_old + dyp_seg;
                 z0_new = z0_old + dzp_seg;
             }
-            else if (std::abs(dyp_seg) < std::abs(dydz*dzp_seg)) {
+            else if (dzp == 0. || std::abs(dyp_seg) < std::abs(dyp/dzp*dzp_seg)) {
                 Ycell = y0_new;
-                dxp_seg = dxdy*dyp_seg;
-                dzp_seg = dzdy*dyp_seg;
+                dxp_seg = dxp/dyp*dyp_seg;
+                dzp_seg = dzp/dyp*dyp_seg;
                 x0_new = x0_old + dxp_seg;
                 z0_new = z0_old + dzp_seg;
             }
             else {
                 Zcell = z0_new;
-                dxp_seg = dxdz*dzp_seg;
-                dyp_seg = dydz*dzp_seg;
+                dxp_seg = dxp/dzp*dzp_seg;
+                dyp_seg = dyp/dzp*dzp_seg;
                 x0_new = x0_old + dxp_seg;
                 y0_new = y0_old + dyp_seg;
             }
@@ -1260,12 +1257,13 @@ void doGatherPicnicShapeN (
     // locations in each direction used to find the position at cell crossings.
     const double dxp = x_new - x_old;
     const double dzp = z_new - z_old;
-    const auto dzdx = static_cast<double>(dxp == 0. ? 1.0e20 : dzp/dxp);
-    const auto dxdz = static_cast<double>(dzp == 0. ? 1.0e20 : dxp/dzp);
     const auto dirX_sign = static_cast<int>(dxp < 0. ? -1 : 1);
     const auto dirZ_sign = static_cast<int>(dzp < 0. ? -1 : 1);
-    double Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
-    double Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
+    double Xcell = 0., Zcell = 0.;
+    if (num_segments > 1) {
+        Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
+        Zcell = k_old + shift + 0.5_rt*(1-dirZ_sign);
+    }
 
     // loop over the number of segments and deposit
     Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
@@ -1292,14 +1290,14 @@ void doGatherPicnicShapeN (
             dxp_seg = x0_new - x0_old;
             dzp_seg = z0_new - z0_old;
 
-            if (std::abs(dxp_seg) < std::abs(dxdz*dzp_seg)) {
+            if (dzp == 0. || std::abs(dxp_seg) < std::abs(dxp/dzp*dzp_seg)) {
                 Xcell = x0_new;
-                dzp_seg = dzdx*dxp_seg;
+                dzp_seg = dzp/dxp*dxp_seg;
                 z0_new = z0_old + dzp_seg;
             }
             else {
                 Zcell = z0_new;
-                dxp_seg = dxdz*dzp_seg;
+                dxp_seg = dxp/dzp*dzp_seg;
                 x0_new = x0_old + dxp_seg;
             }
 
