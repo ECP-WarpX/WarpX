@@ -1763,7 +1763,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             // is within the range permitted by the number of guard cells
             // e.g., if (num_segments > 5) ...
 
-            // compute total change in particle position and the initial cell 
+            // compute total change in particle position and the initial cell
             // locations in each direction used to find the position at cell crossings.
             const double dxp = x_new - x_old;
             const double dyp = y_new - y_old;
@@ -1833,7 +1833,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                         x0_new = x0_old + dxp_seg;
                         y0_new = y0_old + dyp_seg;
                     }
-                        
+
                 }
 
                 // compute the segment factors (each equal to dt_seg/dt for nonzero dxp, dyp, or dzp)
@@ -1951,7 +1951,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             // is within the range permitted by the number of guard cells
             // e.g., if (num_segments > 3) ...
 
-            // compute total change in particle position and the initial cell 
+            // compute total change in particle position and the initial cell
             // locations in each direction used to find the position at cell crossings.
             const double dxp = x_new - x_old;
             const double dzp = z_new - z_old;

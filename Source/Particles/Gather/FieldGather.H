@@ -1038,7 +1038,7 @@ void doGatherPicnicShapeN (
     // is within the range permitted by the number of guard cells
     // e.g., if (num_segments > 5) ...
 
-    // compute total change in particle position and the initial cell 
+    // compute total change in particle position and the initial cell
     // locations in each direction used to find the position at cell crossings.
     const double dxp = x_new - x_old;
     const double dyp = y_new - y_old;
@@ -1256,7 +1256,7 @@ void doGatherPicnicShapeN (
     // is within the range permitted by the number of guard cells
     // e.g., if (num_segments > 3) ...
 
-    // compute total change in particle position and the initial cell 
+    // compute total change in particle position and the initial cell
     // locations in each direction used to find the position at cell crossings.
     const double dxp = x_new - x_old;
     const double dzp = z_new - z_old;
