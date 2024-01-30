@@ -1765,9 +1765,15 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
             // compute total change in particle position and the initial cell 
             // locations in each direction used to find the position at cell crossings.
-            double const dxp = x_new - x_old;
-            double const dyp = y_new - y_old;
-            double const dzp = z_new - z_old;
+            const double dxp = x_new - x_old;
+            const double dyp = y_new - y_old;
+            const double dzp = z_new - z_old;
+            const auto dydx = static_cast<double>(dxp == 0. ? 1.0e20 : dyp/dxp);
+            const auto dzdx = static_cast<double>(dxp == 0. ? 1.0e20 : dzp/dxp);
+            const auto dxdy = static_cast<double>(dyp == 0. ? 1.0e20 : dxp/dyp);
+            const auto dzdy = static_cast<double>(dyp == 0. ? 1.0e20 : dzp/dyp);
+            const auto dxdz = static_cast<double>(dzp == 0. ? 1.0e20 : dxp/dzp);
+            const auto dydz = static_cast<double>(dzp == 0. ? 1.0e20 : dyp/dzp);
             const auto dirX_sign = static_cast<int>(dxp < 0. ? -1 : 1);
             const auto dirY_sign = static_cast<int>(dyp < 0. ? -1 : 1);
             const auto dirZ_sign = static_cast<int>(dzp < 0. ? -1 : 1);
@@ -1786,7 +1792,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
             for (int ns=0; ns<num_segments; ns++) {
 
-                if (ns==num_segments-1) { // final segment
+                if (ns == num_segments-1) { // final segment
 
                     x0_new = x_new;
                     y0_new = y_new;
@@ -1798,31 +1804,36 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 }
                 else {
 
-                    dxp_seg = Xcell + dirX_sign - x0_old;
-                    dyp_seg = Ycell + dirY_sign - y0_old;
-                    dzp_seg = Zcell + dirZ_sign - z0_old;
+                    x0_new = Xcell + dirX_sign;
+                    y0_new = Ycell + dirY_sign;
+                    z0_new = Zcell + dirZ_sign;
+                    dxp_seg = x0_new - x0_old;
+                    dyp_seg = y0_new - y0_old;
+                    dzp_seg = z0_new - z0_old;
 
-                    if ( (dyp == 0. || std::abs(dxp_seg) < std::abs(dxp/dyp*dyp_seg))
-                      && (dzp == 0. || std::abs(dxp_seg) < std::abs(dxp/dzp*dzp_seg)) ) {
-                        Xcell += dirX_sign;
-                        dyp_seg = dyp/dxp*dxp_seg;
-                        dzp_seg = dzp/dxp*dxp_seg;
+                    if ( std::abs(dxp_seg) < std::abs(dxdy*dyp_seg)
+                      && std::abs(dxp_seg) < std::abs(dxdz*dzp_seg) ) {
+                        Xcell = x0_new;
+                        dyp_seg = dydx*dxp_seg;
+                        dzp_seg = dzdx*dxp_seg;
+                        y0_new = y0_old + dyp_seg;
+                        z0_new = z0_old + dzp_seg;
                     }
-                    else if (dzp == 0. || std::abs(dyp_seg) < std::abs(dyp/dzp*dzp_seg)) {
-                        Ycell += dirY_sign;
-                        dxp_seg = dxp/dyp*dyp_seg;
-                        dzp_seg = dzp/dyp*dyp_seg;
+                    else if (std::abs(dyp_seg) < std::abs(dydz*dzp_seg)) {
+                        Ycell = y0_new;
+                        dxp_seg = dxdy*dyp_seg;
+                        dzp_seg = dzdy*dyp_seg;
+                        x0_new = x0_old + dxp_seg;
+                        z0_new = z0_old + dzp_seg;
                     }
                     else {
-                        Zcell += dirZ_sign;
-                        dxp_seg = dxp/dzp*dzp_seg;
-                        dyp_seg = dyp/dzp*dzp_seg;
+                        Zcell = z0_new;
+                        dxp_seg = dxdz*dzp_seg;
+                        dyp_seg = dydz*dzp_seg;
+                        x0_new = x0_old + dxp_seg;
+                        y0_new = y0_old + dyp_seg;
                     }
                         
-                    x0_new = x0_old + dxp_seg;
-                    y0_new = y0_old + dyp_seg;
-                    z0_new = z0_old + dzp_seg;
-
                 }
 
                 // compute the segment factors (each equal to dt_seg/dt for nonzero dxp, dyp, or dzp)
@@ -1914,7 +1925,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 }
 
                 // update old segment values
-                if (ns<num_segments-1) {
+                if (ns < num_segments-1) {
                     x0_old = x0_new;
                     y0_old = y0_new;
                     z0_old = z0_new;
@@ -1942,8 +1953,10 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
             // compute total change in particle position and the initial cell 
             // locations in each direction used to find the position at cell crossings.
-            double const dxp = x_new - x_old;
-            double const dzp = z_new - z_old;
+            const double dxp = x_new - x_old;
+            const double dzp = z_new - z_old;
+            const auto dzdx = static_cast<double>(dxp == 0. ? 1.0e20 : dzp/dxp);
+            const auto dxdz = static_cast<double>(dzp == 0. ? 1.0e20 : dxp/dzp);
             const auto dirX_sign = static_cast<int>(dxp < 0. ? -1 : 1);
             const auto dirZ_sign = static_cast<int>(dzp < 0. ? -1 : 1);
             double Xcell = i_old + shift + 0.5_rt*(1-dirX_sign);
@@ -1959,7 +1972,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
             for (int ns=0; ns<num_segments; ns++) {
 
-                if (ns==num_segments-1) { // final segment
+                if (ns == num_segments-1) { // final segment
 
                     x0_new = x_new;
                     z0_new = z_new;
@@ -1969,20 +1982,21 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 }
                 else {
 
-                    dxp_seg = Xcell + dirX_sign - x0_old;
-                    dzp_seg = Zcell + dirZ_sign - z0_old;
+                    x0_new = Xcell + dirX_sign;
+                    z0_new = Zcell + dirZ_sign;
+                    dxp_seg = x0_new - x0_old;
+                    dzp_seg = z0_new - z0_old;
 
-                    if (dzp == 0. || std::abs(dxp_seg) < std::abs(dxp/dzp*dzp_seg)) {
-                        Xcell += dirX_sign;
-                        dzp_seg = dzp/dxp*dxp_seg;
+                    if (std::abs(dxp_seg) < std::abs(dxdz*dzp_seg)) {
+                        Xcell = x0_new;
+                        dzp_seg = dzdx*dxp_seg;
+                        z0_new = z0_old + dzp_seg;
                     }
                     else {
-                        Zcell += dirZ_sign;
-                        dxp_seg = dxp/dzp*dzp_seg;
+                        Zcell = z0_new;
+                        dxp_seg = dxdz*dzp_seg;
+                        x0_new = x0_old + dxp_seg;
                     }
-
-                    x0_new = x0_old + dxp_seg;
-                    z0_new = z0_old + dzp_seg;
 
                 }
 
@@ -2084,7 +2098,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 }
 
                 // update old segment values
-                if (ns<num_segments-1) {
+                if (ns < num_segments-1) {
                     x0_old = x0_new;
                     z0_old = z0_new;
                 }
@@ -2117,7 +2131,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
 
             for (int ns=0; ns<num_segments; ns++) {
 
-                if (ns==num_segments-1) { // final segment
+                if (ns == num_segments-1) { // final segment
                     z0_new = z_new;
                     dzp_seg = z0_new - z0_old;
                 }
@@ -2165,7 +2179,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 }
 
                 // update old segment values
-                if (ns<num_segments-1) {
+                if (ns < num_segments-1) {
                     z0_old = z0_new;
                 }
 
