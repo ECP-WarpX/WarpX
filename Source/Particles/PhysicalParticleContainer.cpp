@@ -2859,7 +2859,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
             doParticleMomentumPush<0>(ux[ip], uy[ip], uz[ip],
                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                      ion_lev ? ion_lev[ip] : 0, ion_lev,
+                                      ion_lev ? ion_lev[ip] : 1,
                                       m, q, pusher_algo, do_crr,
 #ifdef WARPX_QED
                                       t_chi_max,
@@ -2879,7 +2879,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
                 doParticleMomentumPush<1>(ux[ip], uy[ip], uz[ip],
                                           Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                          ion_lev ? ion_lev[ip] : 0, ion_lev,
+                                          ion_lev ? ion_lev[ip] : 1,
                                           m, q, pusher_algo, do_crr,
                                           t_chi_max,
                                           dt);
@@ -3119,7 +3119,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
         {
             doParticleMomentumPush<0>(ux[ip], uy[ip], uz[ip],
                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                      ion_lev ? ion_lev[ip] : 0, ion_lev,
+                                      ion_lev ? ion_lev[ip] : 1,
                                       m, q, pusher_algo, do_crr,
 #ifdef WARPX_QED
                                       t_chi_max,
@@ -3131,7 +3131,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
             if constexpr (qed_control == has_qed) {
                 doParticleMomentumPush<1>(ux[ip], uy[ip], uz[ip],
                                           Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                          ion_lev ? ion_lev[ip] : 0, ion_lev,
+                                          ion_lev ? ion_lev[ip] : 1,
                                           m, q, pusher_algo, do_crr,
                                           t_chi_max,
                                           dt);
