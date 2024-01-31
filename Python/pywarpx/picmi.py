@@ -1184,7 +1184,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         pywarpx.hybridpicmodel.gamma = self.gamma
         pywarpx.hybridpicmodel.n_floor = self.n_floor
         pywarpx.hybridpicmodel.__setattr__(
-            'plasma_resistivity(rho)',
+            'plasma_resistivity(rho,J)',
             pywarpx.my_constants.mangle_expression(self.plasma_resistivity, self.mangle_dict)
         )
         pywarpx.hybridpicmodel.substeps = self.substeps
