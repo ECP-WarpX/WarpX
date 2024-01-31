@@ -116,7 +116,7 @@ struct FindBoundaryIntersection {
         dst.m_rdata[PIdx::z][dst_i] = z_temp;
 #elif (defined WARPX_DIM_RZ)
         dst.m_rdata[PIdx::x][dst_i] = std::sqrt(x_temp*x_temp + y_temp*y_temp);
-        dst.m_rdata[PIdx::theta][dst_i] = std::atan2(y_temp, x_temp);
+        dst.m_rdata[PIdx::y][dst_i] = std::atan2(y_temp, x_temp);
         dst.m_rdata[PIdx::z][dst_i] = z_temp;
 #elif (defined WARPX_DIM_1D_Z)
         dst.m_rdata[PIdx::z][dst_i] = z_temp;
