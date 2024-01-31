@@ -6,7 +6,6 @@
 #SBATCH --exclusive
 #SBATCH --output=%x-%j.out
 #SBATCH --time=00:10:00
-#
 
 module purge
 
