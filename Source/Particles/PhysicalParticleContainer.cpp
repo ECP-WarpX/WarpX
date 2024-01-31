@@ -39,6 +39,10 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#ifdef AMREX_USE_EB
+#   include "EmbeddedBoundary/ParticleBoundaryProcess.H"
+#   include "EmbeddedBoundary/ParticleScraper.H"
+#endif
 #include "WarpX.H"
 
 #include <ablastr/warn_manager/WarnManager.H>
@@ -1430,6 +1434,12 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         }
     }
 
+    // Remove particles that are inside the embedded boundaries
+#ifdef AMREX_USE_EB
+    auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
+    scrapeParticles( *this, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+#endif
+
     // The function that calls this is responsible for redistributing particles.
 }
 
@@ -1922,6 +1932,12 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
+
+    // Remove particles that are inside the embedded boundaries
+#ifdef AMREX_USE_EB
+    auto & distance_to_eb = WarpX::GetInstance().GetDistanceToEB();
+    scrapeParticles(tmp_pc, amrex::GetVecOfConstPtrs(distance_to_eb), ParticleBoundaryProcess::Absorb());
+#endif
 
     // Redistribute the new particles that were added to the temporary container.
     // (This eliminates invalid particles, and makes sure that particles
@@ -2859,7 +2875,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
             doParticleMomentumPush<0>(ux[ip], uy[ip], uz[ip],
                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                      ion_lev ? ion_lev[ip] : 0,
+                                      ion_lev ? ion_lev[ip] : 1,
                                       m, q, pusher_algo, do_crr,
 #ifdef WARPX_QED
                                       t_chi_max,
@@ -2879,7 +2895,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
                 doParticleMomentumPush<1>(ux[ip], uy[ip], uz[ip],
                                           Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                          ion_lev ? ion_lev[ip] : 0,
+                                          ion_lev ? ion_lev[ip] : 1,
                                           m, q, pusher_algo, do_crr,
                                           t_chi_max,
                                           dt);
@@ -3119,7 +3135,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
         {
             doParticleMomentumPush<0>(ux[ip], uy[ip], uz[ip],
                                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                      ion_lev ? ion_lev[ip] : 0,
+                                      ion_lev ? ion_lev[ip] : 1,
                                       m, q, pusher_algo, do_crr,
 #ifdef WARPX_QED
                                       t_chi_max,
@@ -3131,7 +3147,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
             if constexpr (qed_control == has_qed) {
                 doParticleMomentumPush<1>(ux[ip], uy[ip], uz[ip],
                                           Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                          ion_lev ? ion_lev[ip] : 0,
+                                          ion_lev ? ion_lev[ip] : 1,
                                           m, q, pusher_algo, do_crr,
                                           t_chi_max,
                                           dt);

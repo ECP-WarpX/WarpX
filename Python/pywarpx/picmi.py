@@ -1575,7 +1575,7 @@ class DSMCCollisions(picmistandard.base._ClassWithInit):
 
         self.handle_init(kw)
 
-    def initialize_inputs(self):
+    def collision_initialize_inputs(self):
         collision = pywarpx.Collisions.newcollision(self.name)
         collision.type = 'dsmc'
         collision.species = [species.name for species in self.species]
