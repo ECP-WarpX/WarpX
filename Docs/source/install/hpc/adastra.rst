@@ -31,18 +31,26 @@ If you are new to this system, **please see the following resources**:
 Preparation
 -----------
 
+The following instructions will install WarpX in the ``$SHAREDHOMEDIR`` directory,
+which is shared among all the members of a given project. Due to the inode
+quota enforced for this machine, a shared installation of WarpX is advised.
+
 Use the following commands to download the WarpX source code:
 
 .. code-block:: bash
 
-   git clone https://github.com/ECP-WarpX/WarpX.git $HOME/src/warpx
+   # If you have multiple projects, activate the project that you want to use with:
+   #
+   # myproject -a YOUR_PROJECT_NAME
+   #
+   git clone https://github.com/ECP-WarpX/WarpX.git $SHAREDHOMEDIR/src/warpx
 
-We use system software modules, add environment hints and further dependencies via the file ``$HOME/adastra_warpx.profile``.
+We use system software modules, add environment hints and further dependencies via the file ``$SHAREDHOMEDIR/adastra_warpx.profile``.
 Create it now:
 
 .. code-block:: bash
 
-   cp $HOME/src/warpx/Tools/machines/adastra-cines/adastra_warpx.profile.example $HOME/adastra_warpx.profile
+   cp $SHAREDHOMEDIR/src/warpx/Tools/machines/adastra-cines/adastra_warpx.profile.example $SHAREDHOMEDIR/adastra_warpx.profile
 
 .. dropdown:: Script Details
    :color: light
@@ -53,8 +61,8 @@ Create it now:
       :language: bash
 
 Edit the 2nd line of this script, which sets the ``export proj=""`` variable using a text editor
-such as ``nano``, ``emacs``, or ``vim`` (all available by default on
-Adastra login nodes).
+such as ``nano``, ``emacs``, or ``vim`` (all available by default on Adastra login nodes) and
+uncomment the 3rd line (which sets ``$proj`` as the active project).
 
 .. important::
 
@@ -68,8 +76,8 @@ Finally, since Adastra does not yet provide software modules for some of our dep
 
 .. code-block:: bash
 
-   bash $HOME/src/warpx/Tools/machines/adastra-cines/install_dependencies.sh
-   source $HOME/sw/adastra/gpu/venvs/warpx-adastra/bin/activate
+   bash $SHAREDHOMEDIR/src/warpx/Tools/machines/adastra-cines/install_dependencies.sh
+   source $SHAREDHOMEDIR/sw/adastra/gpu/venvs/warpx-adastra/bin/activate
 
 .. dropdown:: Script Details
    :color: light
@@ -89,7 +97,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   cd $SHAREDHOMEDIR/src/warpx
    rm -rf build_adastra
 
    cmake -S . -B build_adastra -DWarpX_COMPUTE=HIP -DWarpX_PSATD=ON -DWarpX_QED_TABLE_GEN=ON -DWarpX_LIB=ON -DWarpX_DIMS="1;2;RZ;3"
@@ -97,7 +105,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile:
    cmake --build build_adastra -j 16 --target pip_install
 
 **That's it!**
-The WarpX application executables are now in ``$HOME/src/warpx/build_adastra/bin/`` and we installed the ``pywarpx`` Python module.
+The WarpX application executables are now in ``$SHAREDHOMEDIR/src/warpx/build_adastra/bin/`` and we installed the ``pywarpx`` Python module.
 
 Now, you can :ref:`submit Adstra compute jobs <running-cpp-adastra>` for WarpX :ref:`Python (PICMI) scripts <usage-picmi>` (:ref:`example scripts <usage-examples>`).
 Or, you can use the WarpX executables to submit Adastra jobs (:ref:`example inputs <usage-examples>`).
@@ -113,7 +121,7 @@ If you already installed WarpX in the past and want to update it, start by getti
 
 .. code-block:: bash
 
-   cd $HOME/src/warpx
+   cd $SHAREDHOMEDIR/src/warpx
 
    # read the output of this command - does it look ok?
    git status
