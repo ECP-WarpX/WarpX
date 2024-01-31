@@ -74,7 +74,7 @@ else
   git clone -b v1.21.1 https://github.com/Blosc/c-blosc.git $SHAREDHOMEDIR/src/c-blosc
 fi
 rm -rf $SHAREDHOMEDIR/src/c-blosc-ad-build
-cmake -S $SHAREDHOMEDIR/src/c-blosc -B $SHAREDHOMEDIR/src/c-blosc-ad-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/adastra/gpu/c-blosc-1.21.1
+cmake -S $SHAREDHOMEDIR/src/c-blosc -B $SHAREDHOMEDIR/src/c-blosc-ad-build -DBUILD_TESTS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/sw/adastra/gpu/c-blosc-1.21.1
 cmake --build $SHAREDHOMEDIR/src/c-blosc-ad-build --target install --parallel 16
 rm -rf $SHAREDHOMEDIR/src/c-blosc-ad-build
 
@@ -87,7 +87,7 @@ else
   git clone -b v2.8.3 https://github.com/ornladios/ADIOS2.git $SHAREDHOMEDIR/src/adios2
 fi
 rm -rf $SHAREDHOMEDIR/src/adios2-ad-build
-cmake -S $SHAREDHOMEDIR/src/adios2 -B $SHAREDHOMEDIR/src/adios2-ad-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/sw/adastra/gpu/adios2-2.8.3
+cmake -S $SHAREDHOMEDIR/src/adios2 -B $SHAREDHOMEDIR/src/adios2-ad-build -DADIOS2_USE_Blosc=ON -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/sw/adastra/gpu/adios2-2.8.3
 cmake --build $SHAREDHOMEDIR/src/adios2-ad-build --target install -j 16
 rm -rf $SHAREDHOMEDIR/src/adios2-ad-build
 
