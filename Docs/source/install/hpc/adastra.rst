@@ -70,7 +70,7 @@ uncomment the 3rd line (which sets ``$proj`` as the active project).
 
    .. code-block:: bash
 
-      source $HOME/adastra_warpx.profile
+      source $SHAREDHOMEDIR/adastra_warpx.profile
 
 Finally, since Adastra does not yet provide software modules for some of our dependencies, install them once:
 
