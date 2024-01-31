@@ -25,3 +25,6 @@ export CC=$(which mpifcc)
 export CXX=$(which mpiFCC)
 export CFLAGS="-O3 -Nclang -Nlibomp -Klib -g -DNDEBUG"
 export CXXFLAGS="${CFLAGS}"
+
+# avoid harmless warning messages "[WARN] xos LPG [...]"
+export LD_LIBRARY_PATH=/lib64:$LD_LIBRARY_PATH
