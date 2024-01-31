@@ -66,7 +66,7 @@ WarpX::GetRestartDMap (const std::string& chkfile, const amrex::BoxArray& ba, in
     ParallelDescriptor::ReadAndBcastFile(DMFileName, fileCharPtr);
     const std::string fileCharPtrString(fileCharPtr.dataPtr());
     std::istringstream DMFile(fileCharPtrString, std::istringstream::in);
-    if ( ! DMFile.good()) amrex::FileOpenFailed(DMFileName);
+    if ( ! DMFile.good()) { amrex::FileOpenFailed(DMFileName); }
     DMFile.exceptions(std::ios_base::failbit | std::ios_base::badbit);
 
     int nprocs_in_checkpoint;
@@ -223,13 +223,11 @@ WarpX::InitFromCheckpoint ()
         is >> time_of_last_gal_shift;
         ablastr::utils::text::goto_next_line(is);
 
-
-        auto & warpx = WarpX::GetInstance();
-        for (int idiag = 0; idiag < warpx.GetMultiDiags().GetTotalDiags(); ++idiag)
+        for (int idiag = 0; idiag < multi_diags->GetTotalDiags(); ++idiag)
         {
-            if( warpx.GetMultiDiags().diagstypes(idiag) == DiagTypes::BackTransformed )
+            if( multi_diags->diagstypes(idiag) == DiagTypes::BackTransformed )
             {
-                auto& diag = warpx.GetMultiDiags().GetDiag(idiag);
+                auto& diag = multi_diags->GetDiag(idiag);
                 if (diag.getnumbuffers() > 0) {
                     diag.InitDataBeforeRestart();
                     for (int i_buffer=0; i_buffer<diag.getnumbuffers(); ++i_buffer){
@@ -269,7 +267,7 @@ WarpX::InitFromCheckpoint ()
                     diag.InitData();
                 }
             } else {
-                warpx.GetMultiDiags().GetDiag(idiag).InitData();
+                multi_diags->GetDiag(idiag).InitData();
             }
         }
     }
@@ -384,11 +382,13 @@ WarpX::InitFromCheckpoint ()
     if (do_pml)
     {
         for (int lev = 0; lev < nlevs; ++lev) {
-            if (pml[lev])
+            if (pml[lev]) {
                 pml[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml"));
+            }
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-            if (pml_rz[lev])
+            if (pml_rz[lev]) {
                 pml_rz[lev]->Restart(amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pml_rz"));
+            }
 #endif
         }
     }

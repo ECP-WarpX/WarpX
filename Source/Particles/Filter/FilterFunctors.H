@@ -93,12 +93,12 @@ struct ParserFilter
      * \param time simulation time on the coarsest level
      */
     ParserFilter(bool a_is_active, amrex::ParserExecutor<7> const& a_filter_parser,
-        const amrex::Real a_mass, const amrex::Real time):
+        const amrex::ParticleReal a_mass, const amrex::Real time):
             m_is_active{a_is_active},
             m_function_partparser{a_filter_parser},
             m_mass{a_mass},
-            m_t{time},
-            m_units{InputUnits::WarpX}{}
+            m_t{time}
+    {}
 
     /**
      * \brief return 1 if the particle is selected by the parser
@@ -108,6 +108,8 @@ struct ParserFilter
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
+        using namespace amrex::literals;
+
         if (!m_is_active){
             return true;
         }
@@ -139,9 +141,9 @@ public:
     /** Mass of particle species */
     amrex::ParticleReal m_mass;
     /** Store physical time on the coarsest level. */
-    amrex::ParticleReal m_t;
+    amrex::Real m_t;
     /** keep track of momentum units particles will come in with **/
-    InputUnits m_units;
+    InputUnits m_units{InputUnits::WarpX};
 };
 
 
@@ -155,14 +157,14 @@ struct GeometryFilter
     GeometryFilter(bool a_is_active, amrex::RealBox a_domain)
         : m_is_active(a_is_active), m_domain(a_domain) {}
     /**
-     * \brief return 1 if the partcile is within the region described by the RealBox
+     * \brief return 1 if the particle is within the region described by the RealBox
      * \param p one particle
      * \return whether or not the particle is inside the region defined by m_domain
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
-        if ( !m_is_active ) return 1;
+        if ( !m_is_active ) { return true; }
         return ! (AMREX_D_TERM( (p.pos(0) < m_domain.lo(0)) || (p.pos(0) > m_domain.hi(0) ),
                             ||  (p.pos(1) < m_domain.lo(1)) || (p.pos(1) > m_domain.hi(1) ),
                             ||  (p.pos(2) < m_domain.lo(2)) || (p.pos(2) > m_domain.hi(2) )));

@@ -340,8 +340,8 @@ bool FieldProbe::ProbeInDomain () const
     auto & warpx = WarpX::GetInstance();
     int const lev = 0;
     const amrex::Geometry& gm = warpx.Geom(lev);
-    const auto prob_lo = gm.ProbLo();
-    const auto prob_hi = gm.ProbHi();
+    const auto *const prob_lo = gm.ProbLo();
+    const auto *const prob_hi = gm.ProbHi();
 
     /*
      * Determine if probe exists within simulation boundaries. During 2D simulations,
@@ -429,8 +429,8 @@ void FieldProbe::ComputeDiags (int step)
 
         for (MyParIter pti(m_probe, lev); pti.isValid(); ++pti)
         {
-            const auto getPosition = GetParticlePosition(pti);
-            auto setPosition = SetParticlePosition(pti);
+            const auto getPosition = GetParticlePosition<FieldProbePIdx>(pti);
+            auto setPosition = SetParticlePosition<FieldProbePIdx>(pti);
             const auto& aos = pti.GetArrayOfStructs();
             const auto* AMREX_RESTRICT m_structs = aos().dataPtr();
 
@@ -591,7 +591,7 @@ void FieldProbe::ComputeDiags (int step)
             if (amrex::ParallelDescriptor::IOProcessor()) {
                 length_vector.resize(mpisize, 0);
             }
-            localsize.resize(1, m_data.size());
+            localsize.resize(1, static_cast<int>(m_data.size()));
 
             // gather size of m_data from each processor
             amrex::ParallelDescriptor::Gather(localsize.data(), 1,
@@ -600,7 +600,7 @@ void FieldProbe::ComputeDiags (int step)
 
             // IO processor sums values from length_array to get size of total output array.
             /* displs records the size of each m_data as well as previous displs. This array
-             * tells Gatherv where in the m_data_out array allocation to write incomming data. */
+             * tells Gatherv where in the m_data_out array allocation to write incoming data. */
             long total_data_size = 0;
             amrex::Vector<int> displs_vector;
             if (amrex::ParallelDescriptor::IOProcessor()) {
@@ -628,14 +628,15 @@ void FieldProbe::ComputeDiags (int step)
 
 void FieldProbe::WriteToFile (int step) const
 {
-    if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) return;
+    if (!(ProbeInDomain() && amrex::ParallelDescriptor::IOProcessor())) { return; }
 
     // loop over num valid particles to find the lowest particle ID for later sorting
-    long int first_id = static_cast<long int>(m_data_out[0]);
+    auto first_id = static_cast<long int>(m_data_out[0]);
     for (long int i = 0; i < m_valid_particles; i++)
     {
-        if (m_data_out[i*noutputs] < first_id)
+        if (m_data_out[i*noutputs] < first_id) {
             first_id = static_cast<long int>(m_data_out[i*noutputs]);
+        }
     }
 
     // Create a new array to store probe data ordered by id, which will be printed to file.

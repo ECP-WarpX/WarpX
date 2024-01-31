@@ -21,7 +21,7 @@ namespace ablastr::utils::TextMsg
     * @return the formatted message
     */
     std::string
-    Err (const std::string &msg, const bool do_text_wrapping = true);
+    Err (const std::string &msg, bool do_text_wrapping = true);
 
     /** \brief This function formats a text message as an info message,
     *   adding the '### INFO: ' prefix and (by default) performing text wrapping
@@ -32,7 +32,7 @@ namespace ablastr::utils::TextMsg
     * @return the formatted message
     */
     std::string
-    Info (const std::string &msg, const bool do_text_wrapping = true);
+    Info (const std::string &msg, bool do_text_wrapping = true);
 
     /** \brief This function formats a text message as a warning message,
     *   adding the '### WARN: ' prefix and (by default) performing text wrapping.
@@ -45,7 +45,7 @@ namespace ablastr::utils::TextMsg
     * @return the formatted message
     */
     std::string
-    Warn (const std::string &msg, const bool do_text_wrapping = true);
+    Warn (const std::string &msg, bool do_text_wrapping = true);
 
     /** \brief This function is a wrapper around amrex::Assert, designed to ensure the uniform
     * formatting of the error messages. The function is designed to be used via the
@@ -57,7 +57,7 @@ namespace ablastr::utils::TextMsg
     * @param[in] msg the error message
     */
     void
-    Assert (const char *ex, const char *file, const int line, const std::string &msg);
+    Assert (const char *ex, const char *file, int line, const std::string &msg);
 
     /** \brief This function is a wrapper around amrex::Abort, designed to ensure the uniform
     * formatting of the error messages. The function is designed to be used via the
@@ -68,7 +68,7 @@ namespace ablastr::utils::TextMsg
     * @param[in] msg the error message
     */
     void
-    Abort (const char *file, const int line, const std::string &msg);
+    Abort (const char *file, int line, const std::string &msg);
 
 } // namespace ablastr::utils::TextMsg
 

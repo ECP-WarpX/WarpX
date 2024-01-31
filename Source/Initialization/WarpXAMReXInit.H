@@ -7,8 +7,6 @@
 #ifndef WARPX_AMREX_INIT_H_
 #define WARPX_AMREX_INIT_H_
 
-#include <AMReX_ccse-mpi.H>
-
 #include <AMReX_BaseFwd.H>
 
 namespace warpx::initialization
@@ -30,8 +28,8 @@ namespace warpx::initialization
     amrex_init(
         int& argc,
         char**& argv,
-        bool const build_parm_parse = true,
-        MPI_Comm const mpi_comm = MPI_COMM_WORLD
+        bool build_parm_parse = true
+        /*  MPI_Comm mpi_comm = MPI_COMM_WORLD */
     );
 
 }

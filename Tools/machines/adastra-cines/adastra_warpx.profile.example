@@ -24,6 +24,8 @@ module load cray-hdf5-parallel
 export CMAKE_PREFIX_PATH=${SHAREDHOMEDIR}/sw/adastra/gpu/c-blosc-1.21.1:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=${SHAREDHOMEDIR}/sw/adastra/gpu/adios2-2.8.3:$CMAKE_PREFIX_PATH
 
+export PATH=${HOME}/sw/adastra/gpu/adios2-2.8.3/bin:${PATH}
+
 # optional: for Python bindings or libEnsemble
 module load cray-python/3.11.5
 

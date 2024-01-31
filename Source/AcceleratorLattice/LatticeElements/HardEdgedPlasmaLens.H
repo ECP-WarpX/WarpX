@@ -27,8 +27,6 @@ struct HardEdgedPlasmaLens
 
     HardEdgedPlasmaLens ();
 
-    ~HardEdgedPlasmaLens () = default;
-
     /**
      * \brief Read in an element and add it to the lists
      *
@@ -55,7 +53,7 @@ struct HardEdgedPlasmaLens
     /**
      * \brief Returns the device level instance with the lattice information
      */
-    HardEdgedPlasmaLensDevice GetDeviceInstance () const;
+    [[nodiscard]] HardEdgedPlasmaLensDevice GetDeviceInstance () const;
 
 
 };

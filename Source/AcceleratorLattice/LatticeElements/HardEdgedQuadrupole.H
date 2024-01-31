@@ -27,8 +27,6 @@ struct HardEdgedQuadrupole
 
     HardEdgedQuadrupole ();
 
-    ~HardEdgedQuadrupole () = default;
-
     /**
      * \brief Read in an element and add it to the lists
      *
@@ -55,8 +53,8 @@ struct HardEdgedQuadrupole
     /**
      * \brief Returns the device level instance with the lattice information
      */
-    HardEdgedQuadrupoleDevice GetDeviceInstance () const;
-
+    [[nodiscard]] HardEdgedQuadrupoleDevice
+    GetDeviceInstance () const;
 
 };
 

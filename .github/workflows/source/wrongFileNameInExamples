@@ -18,6 +18,7 @@ do
        [[ ${file:0:12} != PICMI_inputs ]] &&
        [[ ${file:0:8 } != analysis     ]] &&
        [[ ${file:  -4} != yaml         ]] &&
+       [[ ${file:0:4 } != plot         ]] &&
        [[ ${file:0:6 } != README       ]]
     then
         files+=($file)

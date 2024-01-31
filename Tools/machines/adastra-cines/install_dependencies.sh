@@ -37,7 +37,7 @@ python3 -m pip uninstall -qqq -y mpi4py 2>/dev/null || true
 if [ -d $SHAREDHOMEDIR/src/blaspp ]
 then
   cd $SHAREDHOMEDIR/src/blaspp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -
@@ -53,7 +53,7 @@ rm -rf $SHAREDHOMEDIR/src/blaspp-adastra-gpu-build
 if [ -d $SHAREDHOMEDIR/src/lapackpp ]
 then
   cd $SHAREDHOMEDIR/src/lapackpp
-  git fetch
+  git fetch --prune
   git checkout master
   git pull
   cd -
@@ -101,7 +101,10 @@ rm -rf ${SW_DIR}/venvs/warpx-adastra
 python3 -m venv ${SW_DIR}/venvs/warpx-adastra
 source ${SW_DIR}/venvs/warpx-adastra/bin/activate
 python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade build
+python3 -m pip install --upgrade packaging
 python3 -m pip install --upgrade wheel
+python3 -m pip install --upgrade setuptools
 python3 -m pip install --upgrade cython
 python3 -m pip install --upgrade numpy
 python3 -m pip install --upgrade pandas

@@ -87,7 +87,7 @@ Main functions
 
 .. doxygenfunction:: PhysicalParticleContainer::PushPX
 
-.. doxygenfunction:: WarpXParticleContainer::DepositCurrent(amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &J, const amrex::Real dt, const amrex::Real relative_time)
+.. doxygenfunction:: WarpXParticleContainer::DepositCurrent(amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &J, amrex::Real dt, amrex::Real relative_time)
 
 .. note::
    The current deposition is used both by ``PhysicalParticleContainer`` and ``LaserParticleContainer``, so it is in the parent class ``WarpXParticleContainer``.
