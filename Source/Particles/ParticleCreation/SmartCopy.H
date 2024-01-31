@@ -26,7 +26,7 @@
  * type. Second, if a given component name is found in both the src
  * and the dst, then the src value is copied.
  *
- * Particle positions and id numbers are always copied.
+ * Particle structs - positions and id numbers  - are always copied.
  *
  * You don't create this directly - use the SmartCopyFactory object below.
  */
@@ -48,6 +48,9 @@ struct SmartCopy
     void operator() (DstData& dst, const SrcData& src, int i_src, int i_dst,
                      amrex::RandomEngine const& engine) const noexcept
     {
+        // the particle struct is always copied over
+        dst.m_aos[i_dst] = src.m_aos[i_src];
+
         // initialize the real components
         for (int j = 0; j < DstData::NAR; ++j) {
             dst.m_rdata[j][i_dst] = initializeRealValue(m_policy_real[j], engine);

@@ -61,7 +61,7 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
     // Initialize temporary arrays
     Gpu::DeviceVector<int> inexflag;
     inexflag.resize(np);
-    Gpu::DeviceVector<int> pid;
+    Gpu::DeviceVector<long> pid;
     pid.resize(np);
 
     // First, partition particles into the larger buffer
@@ -109,7 +109,7 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
             // - For each particle in the large buffer, find whether it is in
             // the smaller buffer, by looking up the mask. Store the answer in `inexflag`.
             amrex::ParallelFor( np - n_fine,
-               fillBufferFlagRemainingParticles(pti, bmasks, inexflag, Geom(lev), pid, int(n_fine)) );
+               fillBufferFlagRemainingParticles(pti, bmasks, inexflag, Geom(lev), pid, n_fine) );
             auto *const sep2 = stablePartition( sep, pid.end(), inexflag );
 
             if (bmasks == gather_masks) {

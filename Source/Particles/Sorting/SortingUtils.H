@@ -12,7 +12,6 @@
 
 #include <AMReX_Gpu.H>
 #include <AMReX_Partition.H>
-#include <AMReX_ParticleUtil.H>
 
 
 /** \brief Fill the elements of the input vector with consecutive integer,
@@ -20,7 +19,7 @@
  *
  * \param[inout] v Vector of integers, to be filled by this routine
  */
-void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<int>& v );
+void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v );
 
 /** \brief Find the indices that would reorder the elements of `predicate`
  * so that the elements with non-zero value precede the other elements
@@ -42,7 +41,7 @@ ForwardIterator stablePartition(ForwardIterator const index_begin,
     int const* AMREX_RESTRICT predicate_ptr = predicate.dataPtr();
     int N = static_cast<int>(std::distance(index_begin, index_end));
     auto num_true = amrex::StablePartition(&(*index_begin), N,
-        [predicate_ptr] AMREX_GPU_DEVICE (int i) { return predicate_ptr[i]; });
+        [predicate_ptr] AMREX_GPU_DEVICE (long i) { return predicate_ptr[i]; });
 
     ForwardIterator sep = index_begin;
     std::advance(sep, num_true);
@@ -50,7 +49,7 @@ ForwardIterator stablePartition(ForwardIterator const index_begin,
     // On CPU: Use std library
     ForwardIterator const sep = std::stable_partition(
         index_begin, index_end,
-        [&predicate](int i) { return predicate[i]; }
+        [&predicate](long i) { return predicate[i]; }
     );
 #endif
     return sep;
@@ -89,7 +88,7 @@ class fillBufferFlag
             // Extract simple structure that can be used directly on the GPU
             m_domain{geom.Domain()},
             m_inexflag_ptr{inexflag.dataPtr()},
-            m_ptd{pti.GetParticleTile().getConstParticleTileData()},
+            m_particles{pti.GetArrayOfStructs().data()},
             m_buffer_mask{(*bmasks)[pti].array()}
         {
             for (int idim=0; idim<AMREX_SPACEDIM; idim++) {
@@ -100,9 +99,11 @@ class fillBufferFlag
 
 
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-        void operator()( const int i ) const {
+        void operator()( const long i ) const {
+            // Select a particle
+            auto const& p = m_particles[i];
             // Find the index of the cell where this particle is located
-            amrex::IntVect const iv = amrex::getParticleCell( m_ptd, i,
+            amrex::IntVect const iv = amrex::getParticleCell( p,
                                 m_prob_lo, m_inv_cell_size, m_domain );
             // Find the value of the buffer flag in this cell and
             // store it at the corresponding particle position in the array `inexflag`
@@ -112,7 +113,7 @@ class fillBufferFlag
     private:
         amrex::Box m_domain;
         int* m_inexflag_ptr;
-        WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType m_ptd;
+        WarpXParticleContainer::ParticleType const* m_particles;
         amrex::Array4<int const> m_buffer_mask;
         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_prob_lo;
         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_inv_cell_size;
@@ -140,12 +141,12 @@ class fillBufferFlagRemainingParticles
                         amrex::iMultiFab const* bmasks,
                         amrex::Gpu::DeviceVector<int>& inexflag,
                         amrex::Geometry const& geom,
-                        amrex::Gpu::DeviceVector<int> const& particle_indices,
-                        int start_index ) :
+                        amrex::Gpu::DeviceVector<long> const& particle_indices,
+                        long const start_index ) :
             m_domain{geom.Domain()},
             // Extract simple structure that can be used directly on the GPU
             m_inexflag_ptr{inexflag.dataPtr()},
-            m_ptd{pti.GetParticleTile().getConstParticleTileData()},
+            m_particles{pti.GetArrayOfStructs().data()},
             m_buffer_mask{(*bmasks)[pti].array()},
             m_start_index{start_index},
             m_indices_ptr{particle_indices.dataPtr()}
@@ -158,11 +159,11 @@ class fillBufferFlagRemainingParticles
 
 
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-        void operator()( const int i ) const {
+        void operator()( const long i ) const {
             // Select a particle
-            auto const j = m_indices_ptr[i+m_start_index];
+            auto const& p = m_particles[m_indices_ptr[i+m_start_index]];
             // Find the index of the cell where this particle is located
-            amrex::IntVect const iv = amrex::getParticleCell( m_ptd, j,
+            amrex::IntVect const iv = amrex::getParticleCell( p,
                                 m_prob_lo, m_inv_cell_size, m_domain );
             // Find the value of the buffer flag in this cell and
             // store it at the corresponding particle position in the array `inexflag`
@@ -174,10 +175,10 @@ class fillBufferFlagRemainingParticles
         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_inv_cell_size;
         amrex::Box m_domain;
         int* m_inexflag_ptr;
-        WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType const m_ptd;
+        WarpXParticleContainer::ParticleType const* m_particles;
         amrex::Array4<int const> m_buffer_mask;
-        int const m_start_index;
-        int const* m_indices_ptr;
+        long const m_start_index;
+        long const* m_indices_ptr;
 };
 
 /** \brief Functor that copies the elements of `src` into `dst`,
@@ -194,7 +195,7 @@ class copyAndReorder
         copyAndReorder(
             amrex::Gpu::DeviceVector<T> const& src,
             amrex::Gpu::DeviceVector<T>& dst,
-            amrex::Gpu::DeviceVector<int> const& indices ):
+            amrex::Gpu::DeviceVector<long> const& indices ):
                 // Extract simple structure that can be used directly on the GPU
                 m_src_ptr{src.dataPtr()},
                 m_dst_ptr{dst.dataPtr()},
@@ -202,14 +203,14 @@ class copyAndReorder
         {}
 
         AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-        void operator()( const int ip ) const {
+        void operator()( const long ip ) const {
             m_dst_ptr[ip] = m_src_ptr[ m_indices_ptr[ip] ];
         }
 
     private:
         T const* m_src_ptr;
         T* m_dst_ptr;
-        int const* m_indices_ptr;
+        long const* m_indices_ptr;
 };
 
 #endif // WARPX_PARTICLES_SORTING_SORTINGUTILS_H_

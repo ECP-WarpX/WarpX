@@ -22,12 +22,10 @@
 
 namespace {
     // Define shortcuts for frequently-used type names
-    using SoaData_type = typename WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
-    using ParticleType = typename WarpXParticleContainer::ParticleType;
-    using ParticleTileType = typename WarpXParticleContainer::ParticleTileType;
-    using ParticleTileDataType = typename ParticleTileType::ParticleTileDataType;
-    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
-    using index_type = typename ParticleBins::index_type;
+    using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+    using ParticleType = WarpXParticleContainer::ParticleType;
+    using ParticleBins = amrex::DenseBins<ParticleType>;
+    using index_type = ParticleBins::index_type;
 
     /**
      * \brief This function initializes the momentum of the alpha particles produced from
