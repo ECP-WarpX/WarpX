@@ -313,7 +313,7 @@ protected:
      *  The first vector is for total number of snapshots and second vector loops
      *  over the total number of species selected for diagnostics.
      */
-    amrex::Vector< amrex::Vector <int> > m_totalParticles_flushed_already;
+    amrex::Vector< amrex::Vector <unsigned long> > m_totalParticles_flushed_already;
     /** Vector of total number of particles in the buffer, per species, per snapshot.
      *  The first vector is for total number of snapshots and second vector loops
      *  over the total number of species selected for diagnostics.

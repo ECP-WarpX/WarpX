@@ -1065,12 +1065,13 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
         }
     }
     m_flush_format->WriteToFile(
-        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        labtime, m_output_species[i_buffer], nlev_output, file_name, m_file_min_digits,
+        m_varnames, m_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
+        labtime,
+        m_totalParticles_flushed_already.at(i_buffer),
+        m_output_species.at(i_buffer), nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
-        use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter[i_buffer],
-        m_max_buffer_multifabs[i_buffer], m_geom_snapshot[i_buffer][0], isLastBTDFlush,
-        m_totalParticles_flushed_already[i_buffer]);
+        use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter.at(i_buffer),
+        m_max_buffer_multifabs.at(i_buffer), m_geom_snapshot.at(i_buffer).at(0), isLastBTDFlush);
 
     // Rescaling the box for plotfile after WriteToFile. This is because, for plotfiles, when writing particles, amrex checks if the particles are within the bounds defined by the box. However, in BTD, particles can be (at max) 1 cell outside the bounds of the geometry. So we keep a one-cell bigger box for plotfile when writing out the particle data and rescale after.
     if (m_format == "plotfile") {
@@ -1104,7 +1105,6 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
     NullifyFirstFlush(i_buffer);
     // if particles are selected for output then update and reset counters
     if (!m_output_species_names.empty()) {
-        UpdateTotalParticlesFlushed(i_buffer);
         ResetTotalParticlesInBuffer(i_buffer);
         ClearParticleBuffer(i_buffer);
     }
@@ -1486,15 +1486,6 @@ BTDiagnostics::PrepareParticleDataForOutput()
                                              m_snapshot_full[i_buffer]);
             }
         }
-    }
-}
-
-void
-BTDiagnostics::UpdateTotalParticlesFlushed(int i_buffer)
-{
-    for (int isp = 0; isp < m_totalParticles_flushed_already[i_buffer].size(); ++isp) {
-        m_totalParticles_flushed_already[i_buffer][isp] += static_cast<int>(
-            m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles());
     }
 }
 

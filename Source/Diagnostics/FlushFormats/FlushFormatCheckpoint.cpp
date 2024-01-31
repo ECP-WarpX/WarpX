@@ -31,6 +31,7 @@ FlushFormatCheckpoint::WriteToFile (
         const amrex::Vector<amrex::MultiFab>& /*mf*/,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double /*time*/,
+        amrex::Vector<unsigned long>& /* totalParticlesFlushedAlready*/,
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
         const std::string prefix, int file_min_digits,
         bool /*plot_raw_fields*/,
@@ -39,7 +40,7 @@ FlushFormatCheckpoint::WriteToFile (
         bool /*isBTD*/, int /*snapshotID*/,
         int /*bufferID*/, int /*numBuffers*/,
         const amrex::Geometry& /*full_BTD_snapshot*/,
-        bool /*isLastBTDFlush*/, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
+        bool /*isLastBTDFlush*/) const
 {
     WARPX_PROFILE("FlushFormatCheckpoint::WriteToFile()");
 

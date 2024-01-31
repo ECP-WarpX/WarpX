@@ -75,6 +75,16 @@ FullDiagnostics::InitializeParticleBuffer ()
             m_output_species[i_buffer].push_back(ParticleDiag(m_diag_name, species, mpc.GetParticleContainerPtr(idx)));
         }
     }
+
+    // Initialize total number of particles flushed
+    m_totalParticles_flushed_already.resize(m_num_buffers);
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        int const n_species = static_cast<int>(m_output_species_names.size());
+        m_totalParticles_flushed_already[i_buffer].resize(n_species);
+        for (int i_species=0; i_species<n_species; i_species++) {
+            m_totalParticles_flushed_already[i_buffer][i_species] = 0;
+        }
+    }
 }
 
 void
@@ -133,8 +143,10 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
     auto & warpx = WarpX::GetInstance();
 
     m_flush_format->WriteToFile(
-        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
+        m_varnames, m_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
+        warpx.gett_new(0),
+        m_totalParticles_flushed_already.at(i_buffer),
+        m_output_species.at(i_buffer), nlev_output, m_file_prefix,
         m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
 
     FlushRaw();

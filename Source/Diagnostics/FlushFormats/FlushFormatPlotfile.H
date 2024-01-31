@@ -27,6 +27,7 @@ public:
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,
+        amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
         std::string prefix, int file_min_digits,
         bool plot_raw_fields,
@@ -35,8 +36,7 @@ public:
         bool isBTD = false, int snapshotID = -1,
         int bufferID = 1, int numBuffers = 1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
-        bool isLastBTDFlush = false,
-        const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
+        bool isLastBTDFlush = false) const override;
 
     /** Write general info of the run into the plotfile */
     void WriteJobInfo(const std::string& dir) const;
@@ -49,11 +49,13 @@ public:
      * \param[in] dir name of output directory
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
      * \param[in] time the simulation time on the coarsest level
+     * \param[inout] totalParticlesFlushedAlready already flushed particles per species
      * \param[in] isBTD whether this is a back-transformed diagnostic
      */
     void WriteParticles(const std::string& dir,
                         const amrex::Vector<ParticleDiag>& particle_diags,
                         amrex::Real time,
+                        amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
                         bool isBTD = false) const;
 
     FlushFormatPlotfile () = default;

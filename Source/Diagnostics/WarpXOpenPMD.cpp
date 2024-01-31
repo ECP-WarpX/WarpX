@@ -519,9 +519,12 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
-                  const amrex::Real time, const bool use_pinned_pc,
-                  const bool isBTD, const bool isLastBTDFlush,
-                  const amrex::Vector<int>& totalParticlesFlushedAlready)
+                  const amrex::Real time,
+                  amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
+                  const bool use_pinned_pc,
+                  const bool isBTD,
+                  const bool isLastBTDFlush
+)
 {
 WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
 
@@ -618,31 +621,16 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
 
     // real_names contains a list of all real particle attributes.
     // real_flags is 1 or 0, whether quantity is dumped or not.
-    {
-        if (isBTD) {
-            DumpToFile(&tmp,
-                particle_diags[i].getSpeciesName(),
-                m_CurrentStep,
-                real_flags,
-                int_flags,
-                real_names, int_names,
-                pc->getCharge(), pc->getMass(),
-                isBTD, isLastBTDFlush,
-                totalParticlesFlushedAlready[i]
-            );
-        } else {
-            DumpToFile(&tmp,
-                particle_diags[i].getSpeciesName(),
-                m_CurrentStep,
-                real_flags,
-                int_flags,
-                real_names, int_names,
-                pc->getCharge(), pc->getMass(),
-                isBTD, isLastBTDFlush,
-                0
-            );
-        }
-    }
+    DumpToFile(&tmp,
+        particle_diags.at(i).getSpeciesName(),
+        m_CurrentStep,
+        real_flags,
+        int_flags,
+        real_names, int_names,
+        pc->getCharge(), pc->getMass(),
+        totalParticlesFlushedAlready.at(i),
+        isBTD, isLastBTDFlush
+    );
 }
 }
 
@@ -656,15 +644,20 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     const amrex::Vector<std::string>&  int_comp_names,
                     amrex::ParticleReal const charge,
                     amrex::ParticleReal const mass,
+                    unsigned long & ParticleFlushOffset,
                     const bool isBTD,
-                    const bool isLastBTDFlush,
-                    int ParticleFlushOffset) {
+                    const bool isLastBTDFlush
+)
+{
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
     AMREX_ALWAYS_ASSERT(write_real_comp.size() == pc->NumRealComps());
     AMREX_ALWAYS_ASSERT(write_int_comp.size() == pc->NumIntComps());
     AMREX_ALWAYS_ASSERT(real_comp_names.size() == pc->NumRealComps());
     AMREX_ALWAYS_ASSERT(int_comp_names.size() == pc->NumIntComps());
+
+    // only BTD writes multiple times into the same step, zero out for other methods
+    if (!isBTD) { ParticleFlushOffset = 0; }
 
     WarpXParticleCounter counter(pc);
     auto const num_dump_particles = counter.GetTotalNumParticles();
@@ -864,6 +857,9 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     }
 
     m_Series->flush();
+
+    // keep book of filtered-and-written particles
+    ParticleFlushOffset += num_dump_particles;
 }
 
 void

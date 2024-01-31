@@ -123,10 +123,10 @@ public:
   void WriteOpenPMDParticles (
               const amrex::Vector<ParticleDiag>& particle_diags,
               amrex::Real time,
+              amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
               bool use_pinned_pc = false,
               bool isBTD = false,
-              bool isLastBTDFlush = false,
-              const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>());
+              bool isLastBTDFlush = false);
 
   /** Write out all openPMD fields for all active MR levels
    *
@@ -290,9 +290,9 @@ private:
    * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] charge         Charge of the particles (note: fix for ions)
    * @param[in] mass           Mass of the particles
+   * @param[inout] ParticleFlushOffset previously flushed number of particles in BTD
    * @param[in] isBTD is this a backtransformed diagnostics (BTD) write?
    * @param[in] isLastBTDFlush is this the last time we will flush this BTD station?
-   * @param[in] ParticleFlushOffset previously flushed number of particles in BTD
    */
   void DumpToFile (ParticleContainer* pc,
             const std::string& name,
@@ -303,9 +303,9 @@ private:
             const amrex::Vector<std::string>&  int_comp_names,
             amrex::ParticleReal charge,
             amrex::ParticleReal mass,
+            unsigned long & ParticleFlushOffset,
             bool isBTD = false,
-            bool isLastBTDFlush = false,
-            int ParticleFlushOffset = 0);
+            bool isLastBTDFlush = false);
 
   /** Get the openPMD-api filename for openPMD::Series
    *
