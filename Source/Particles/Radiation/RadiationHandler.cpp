@@ -172,8 +172,7 @@ void RadiationHandler::add_radiation_contribution
 #ifdef AMREX_USE_OMP
             #pragma omp parallel
 #endif
-            {   amrex::Print() << "Je brille <<" << std::endl;
-
+            {   
                 for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti)
                 {
                     long const np = pti.numParticles();
@@ -270,15 +269,21 @@ void RadiationHandler::add_radiation_contribution
 
                                 const auto coeff = tot_q*phase_term/(one_minus_b_dot_n*one_minus_b_dot_n);
 
-                                const auto cx = coeff*n_cross_n_minus_beta_cross_bp_x;
-                                const auto cy = coeff*n_cross_n_minus_beta_cross_bp_y;
-                                const auto cz = coeff*n_cross_n_minus_beta_cross_bp_z;
-
                                 const int ncomp = 3;
                                 const int idx0 = (i_om*how_many_det_pos + i_det)*ncomp;
                                 const int idx1 = idx0 + 1;
                                 const int idx2 = idx0 + 2;
 
+                                auto cx = coeff*n_cross_n_minus_beta_cross_bp_x;
+                                auto cy = coeff*n_cross_n_minus_beta_cross_bp_y;
+                                auto cz = coeff*n_cross_n_minus_beta_cross_bp_z;
+
+                                // Nyquist limiter
+                                if(ablastr::constant::math::pi/(dt*one_minus_b_dot_n)*p_omegas[i_om] < 0){
+                                    cx = 0.0;
+                                    cy = 0.0;
+                                    cz = 0.0;
+                                }
 #ifdef AMREX_USE_OMP
                                 #pragma omp atomic
                                 p_radiation_data[idx0].m_real += cx.m_real;
@@ -294,7 +299,7 @@ void RadiationHandler::add_radiation_contribution
                                 p_radiation_data[idx2].m_imag += cz.m_imag;
 #else
                                 p_radiation_data[idx0] += cx;
-                                p_radiation_data[idx1] += cy;
+                                p_radiation_data[idx1 ] += cy;
                                 p_radiation_data[idx2] += cz;
 #endif
                             }
@@ -350,7 +355,7 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
 
 void RadiationHandler::Integral_overtime(const amrex::Real dt)
 {
-    const auto factor = dt/16/std::pow(ablastr::constant::math::pi,3)/PhysConst::ep0;
+    const auto factor = dt/16/std::pow(ablastr::constant::math::pi,3)/PhysConst::ep0/PhysConst::c;
     const auto how_many = m_det_pts[0]*m_det_pts[1];
     auto p_radiation_data = m_radiation_data.dataPtr();
     m_radiation_calculation.resize(how_many*m_omega_points);
@@ -358,7 +363,6 @@ void RadiationHandler::Integral_overtime(const amrex::Real dt)
             const int idx0 = idx*3;
             const int idx1 = idx0 + 1;
             const int idx2 = idx0 + 2;
-            amrex::Print() << (amrex::norm(p_radiation_data[idx0])+amrex::norm(p_radiation_data[idx1])+amrex::norm(p_radiation_data[idx2])) << std::endl;
             m_radiation_calculation[idx]=(amrex::norm(p_radiation_data[idx0])+amrex::norm(p_radiation_data[idx1])+amrex::norm(p_radiation_data[idx2]))*factor;
                             }
 }
