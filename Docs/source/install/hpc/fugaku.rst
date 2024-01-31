@@ -81,7 +81,7 @@ Use the following :ref:`cmake commands <building-cmake>` to compile the applicat
    export CXXFLAGS="-Nclang"
 
    cmake -S . -B build -DWarpX_COMPUTE=OMP \
-       -DWarpX_DIMS="1;2;3;RZ" \
+       -DWarpX_DIMS="1;2;3" \
        -DCMAKE_BUILD_TYPE=Release \
        -DCMAKE_CXX_FLAGS_RELEASE="-Ofast -mllvm -polly -mllvm -polly-parallel" \
        -DAMReX_DIFFERENT_COMPILER=ON \
