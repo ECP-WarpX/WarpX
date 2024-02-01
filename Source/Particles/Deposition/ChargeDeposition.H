@@ -252,7 +252,7 @@ void doChargeDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPositio
                                      const int n_rz_azimuthal_modes,
                                      amrex::Real* cost,
                                      const long load_balance_costs_update_algo,
-                                     const amrex::DenseBins<WarpXParticleContainer::ParticleTileType::ParticleTileDataType>& a_bins,
+                                     const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
                                      const amrex::Box& box,
                                      const amrex::Geometry& geom,
                                      const amrex::IntVect& a_tbox_max_size,

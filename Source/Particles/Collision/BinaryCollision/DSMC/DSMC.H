@@ -38,8 +38,7 @@ class DSMC final
     // Define shortcuts for frequently-used type names
     using ParticleType = WarpXParticleContainer::ParticleType;
     using ParticleTileType = WarpXParticleContainer::ParticleTileType;
-    using ParticleTileDataType = ParticleTileType::ParticleTileDataType;
-    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
+    using ParticleBins = amrex::DenseBins<ParticleType>;
     using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
     using index_type = ParticleBins::index_type;
 
