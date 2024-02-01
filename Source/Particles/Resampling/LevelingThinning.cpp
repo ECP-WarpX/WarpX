@@ -60,7 +60,8 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
     auto& ptile = pc->ParticlesAt(lev, pti);
     auto& soa = ptile.GetStructOfArrays();
     amrex::ParticleReal * const AMREX_RESTRICT w = soa.GetRealData(PIdx::w).data();
-    auto * const AMREX_RESTRICT idcpu = soa.GetIdCPUData().data();
+    WarpXParticleContainer::ParticleType * const AMREX_RESTRICT
+                                 particle_ptr = ptile.GetArrayOfStructs()().data();
 
     // Using this function means that we must loop over the cells in the ParallelFor. In the case
     // of the leveling thinning algorithm, it would have possibly been more natural and more
@@ -113,7 +114,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
                 // Remove particle with probability 1 - particle_weight/level_weight
                 if (random_number > w[indices[i]]/level_weight)
                 {
-                    amrex::ParticleIDWrapper{idcpu[indices[i]]} = -1;
+                    particle_ptr[indices[i]].id() = -1;
                 }
                 // Set particle weight to level weight otherwise
                 else

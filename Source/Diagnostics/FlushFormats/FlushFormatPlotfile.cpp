@@ -355,8 +355,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         Vector<int> int_flags;
         Vector<int> real_flags;
 
-        // note: positions skipped here, since we reconstruct a plotfile SoA from them
         real_names.push_back("weight");
+
         real_names.push_back("momentum_x");
         real_names.push_back("momentum_y");
         real_names.push_back("momentum_z");
@@ -366,20 +366,13 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 #endif
 
         // get the names of the real comps
-
-        //   note: skips the mandatory AMREX_SPACEDIM positions for pure SoA
-        real_names.resize(tmp.NumRealComps() - AMREX_SPACEDIM);
+        real_names.resize(tmp.NumRealComps());
         auto runtime_rnames = tmp.getParticleRuntimeComps();
-        for (auto const& x : runtime_rnames) {
-            real_names[x.second + PIdx::nattribs - AMREX_SPACEDIM] = x.first;
-        }
+        for (auto const& x : runtime_rnames) { real_names[x.second+PIdx::nattribs] = x.first; }
 
         // plot any "extra" fields by default
         real_flags = part_diag.m_plot_flags;
         real_flags.resize(tmp.NumRealComps(), 1);
-
-        //   note: skip the mandatory AMREX_SPACEDIM positions for pure SoA
-        real_flags.erase(real_flags.begin(), real_flags.begin() + AMREX_SPACEDIM);
 
         // and the names
         int_names.resize(tmp.NumIntComps());

@@ -75,13 +75,13 @@
 using namespace amrex;
 
 WarpXParIter::WarpXParIter (ContainerType& pc, int level)
-    : amrex::ParIterSoA<PIdx::nattribs, 0>(pc, level,
+    : amrex::ParIter<0,0,PIdx::nattribs>(pc, level,
              MFItInfo().SetDynamic(WarpX::do_dynamic_scheduling))
 {
 }
 
 WarpXParIter::WarpXParIter (ContainerType& pc, int level, MFItInfo& info)
-    : amrex::ParIterSoA<PIdx::nattribs, 0>(pc, level,
+    : amrex::ParIter<0,0,PIdx::nattribs>(pc, level,
                    info.SetDynamic(WarpX::do_dynamic_scheduling))
 {
 }
@@ -198,54 +198,52 @@ WarpXParticleContainer::AddNParticles (int /*lev*/, long n,
     // Redistribute() will move them to proper places.
     auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
-    using PinnedTile = typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType;
+    using PinnedTile = amrex::ParticleTile<Particle<NStructReal, NStructInt>,
+                                           NArrayReal, NArrayInt,
+                                           amrex::PinnedArenaAllocator>;
     PinnedTile pinned_tile;
     pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
 
     const std::size_t np = iend-ibegin;
 
 #ifdef WARPX_DIM_RZ
-    amrex::Vector<amrex::ParticleReal> r(np);
     amrex::Vector<amrex::ParticleReal> theta(np);
 #endif
 
     for (auto i = ibegin; i < iend; ++i)
     {
-        auto & idcpu_data = pinned_tile.GetStructOfArrays().GetIdCPUData();
-        idcpu_data.push_back(0);
-        if (id==-1) {
-            amrex::ParticleIDWrapper{idcpu_data.back()} = ParticleType::NextID();
+        ParticleType p;
+        if (id==-1)
+        {
+            p.id() = ParticleType::NextID();
         } else {
-            amrex::ParticleIDWrapper{idcpu_data.back()} = id;
+            p.id() = id;
         }
-        amrex::ParticleCPUWrapper(idcpu_data.back()) = ParallelDescriptor::MyProc();
-
+        p.cpu() = amrex::ParallelDescriptor::MyProc();
+#if defined(WARPX_DIM_3D)
+        p.pos(0) = x[i];
+        p.pos(1) = y[i];
+        p.pos(2) = z[i];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+        amrex::ignore_unused(y);
 #ifdef WARPX_DIM_RZ
-        r[i-ibegin] = std::sqrt(x[i]*x[i] + y[i]*y[i]);
         theta[i-ibegin] = std::atan2(y[i], x[i]);
+        p.pos(0) = std::sqrt(x[i]*x[i] + y[i]*y[i]);
+#else
+        p.pos(0) = x[i];
 #endif
+        p.pos(1) = z[i];
+#else //AMREX_SPACEDIM == 1
+        amrex::ignore_unused(x,y);
+        p.pos(0) = z[i];
+#endif
+
+        pinned_tile.push_back(p);
     }
 
     if (np > 0)
     {
-#if defined(WARPX_DIM_3D)
-        pinned_tile.push_back_real(PIdx::x, x.data() + ibegin, x.data() + iend);
-        pinned_tile.push_back_real(PIdx::y, y.data() + ibegin, y.data() + iend);
-        pinned_tile.push_back_real(PIdx::z, z.data() + ibegin, z.data() + iend);
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::ignore_unused(y);
-#ifdef WARPX_DIM_RZ
-        pinned_tile.push_back_real(PIdx::x, r.data(), r.data() + np);
-#else
-        pinned_tile.push_back_real(PIdx::x, x.data() + ibegin, x.data() + iend);
-#endif
-        pinned_tile.push_back_real(PIdx::z, z.data() + ibegin, z.data() + iend);
-#else //AMREX_SPACEDIM == 1
-        amrex::ignore_unused(x,y);
-        pinned_tile.push_back_real(PIdx::z, z.data() + ibegin, z.data() + iend);
-#endif
-
-        pinned_tile.push_back_real(PIdx::w, attr_real[0].data() + ibegin, attr_real[0].data() + iend);
+        pinned_tile.push_back_real(PIdx::w , attr_real[0].data() + ibegin, attr_real[0].data() + iend);
         pinned_tile.push_back_real(PIdx::ux, ux.data() + ibegin, ux.data() + iend);
         pinned_tile.push_back_real(PIdx::uy, uy.data() + ibegin, uy.data() + iend);
         pinned_tile.push_back_real(PIdx::uz, uz.data() + ibegin, uz.data() + iend);
@@ -477,14 +475,15 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
         //sort particles by bin
         WARPX_PROFILE_VAR_START(blp_sort);
-        amrex::DenseBins<ParticleTileType::ParticleTileDataType> bins;
+        amrex::DenseBins<ParticleType> bins;
         {
             auto& ptile = ParticlesAt(lev, pti);
-            auto ptd = ptile.getParticleTileData();
+            auto& aos = ptile.GetArrayOfStructs();
+            auto *pstruct_ptr = aos().dataPtr();
 
             const int ntiles = numTilesInBox(box, true, bin_size);
 
-            bins.build(ptile.numParticles(), ptd, ntiles,
+            bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
                     [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) -> unsigned int
                     {
                         Box tbox;
@@ -884,7 +883,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
 
         // HACK - sort particles by bin here.
         WARPX_PROFILE_VAR_START(blp_sort);
-        amrex::DenseBins<ParticleTileType::ParticleTileDataType> bins;
+        amrex::DenseBins<ParticleType> bins;
         {
             const Geometry& geom = Geom(lev);
             const auto dxi = geom.InvCellSizeArray();
@@ -892,15 +891,16 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
             const auto domain = geom.Domain();
 
             auto& ptile = ParticlesAt(lev, pti);
-            auto ptd = ptile.getParticleTileData();
+            auto& aos   = ptile.GetArrayOfStructs();
+            auto *pstruct_ptr = aos().dataPtr();
 
             Box box = pti.validbox();
             box.grow(ng_rho);
             const amrex::IntVect bin_size = WarpX::shared_tilesize;
             const int ntiles = numTilesInBox(box, true, bin_size);
 
-            bins.build(ptile.numParticles(), ptd, ntiles,
-                       [=] AMREX_GPU_HOST_DEVICE (ParticleType const & p) -> unsigned int
+            bins.build(ptile.numParticles(), pstruct_ptr, ntiles,
+                       [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) -> unsigned int
                        {
                            Box tbx;
                            auto iv = getParticleCell(p, plo, dxi, domain);
@@ -920,7 +920,8 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
             const auto domain = geom.Domain();
 
             auto& ptile = ParticlesAt(lev, pti);
-            auto ptd = ptile.getParticleTileData();
+            auto& aos   = ptile.GetArrayOfStructs();
+            auto *pstruct_ptr = aos().dataPtr();
 
             Box box = pti.validbox();
             box.grow(ng_rho);
@@ -934,10 +935,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector const& wp,
                                    const auto bin_start = offsets_ptr[ibin];
                                    const auto bin_stop = offsets_ptr[ibin+1];
                                    if (bin_start < bin_stop) {
-                                       // static_cast until https://github.com/AMReX-Codes/amrex/pull/3684
-                                       auto const i = static_cast<int>(permutation[bin_start]);
+                                       auto p = pstruct_ptr[permutation[bin_start]];
                                        Box tbx;
-                                       auto iv = getParticleCell(ptd, i, plo, dxi, domain);
+                                       auto iv = getParticleCell(p, plo, dxi, domain);
                                        AMREX_ASSERT(box.contains(iv));
                                        [[maybe_unused]] auto tid = getTileIndex(iv, box, true, bin_size, tbx);
                                        AMREX_ASSERT(tid == ibin);
@@ -1426,10 +1426,10 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
     // Tag particle if goes to higher level.
     // It will be split later in the loop
     if (pld.m_lev == lev+1
-        and p.id() != amrex::LongParticleIds::NoSplitParticleID
+        and p.id() != NoSplitParticleID
         and p.id() >= 0)
     {
-        p.id() = amrex::LongParticleIds::DoSplitParticleID;
+        p.id() = DoSplitParticleID;
     }
 
     if (pld.m_lev == lev-1){
@@ -1468,9 +1468,9 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
             const Real zmax = Geom(lev).ProbHi(WARPX_ZINDEX);
 
             ParticleTileType& ptile = ParticlesAt(lev, pti);
+            ParticleType * const pp = ptile.GetArrayOfStructs()().data();
 
             auto& soa = ptile.GetStructOfArrays();
-            uint64_t * const AMREX_RESTRICT idcpu = soa.GetIdCPUData().data();
             amrex::ParticleReal * const AMREX_RESTRICT ux = soa.GetRealData(PIdx::ux).data();
             amrex::ParticleReal * const AMREX_RESTRICT uy = soa.GetRealData(PIdx::uy).data();
             amrex::ParticleReal * const AMREX_RESTRICT uz = soa.GetRealData(PIdx::uz).data();
@@ -1479,9 +1479,10 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
             amrex::ParallelForRNG(
                 pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i, amrex::RandomEngine const& engine) {
+                    ParticleType& p = pp[i];
+
                     // skip particles that are already flagged for removal
-                    auto const id = amrex::ParticleIDWrapper{idcpu[i]};
-                    if (id < 0) { return; }
+                    if (p.id() < 0) { return; }
 
                     ParticleReal x, y, z;
                     GetPosition.AsStored(i, x, y, z);
@@ -1503,7 +1504,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (){
                                                               boundary_conditions, engine);
 
                     if (particle_lost) {
-                        amrex::ParticleIDWrapper{idcpu[i]} = -id;
+                        p.id() = -p.id();
                     } else {
                         SetPosition.AsStored(i, x, y, z);
                     }

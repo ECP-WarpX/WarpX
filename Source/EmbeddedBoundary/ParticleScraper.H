@@ -167,16 +167,17 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 #endif
         for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {
-            const auto getPosition = GetParticlePosition(pti);
+            const auto getPosition = GetParticlePosition<PIdx>(pti);
             auto& tile = pti.GetParticleTile();
             auto ptd = tile.getParticleTileData();
             const auto np = tile.numParticles();
+            amrex::Particle<0,0> * const particles = tile.GetArrayOfStructs()().data();
             auto phi = (*distance_to_eb[lev])[pti].array();  // signed distance function
             amrex::ParallelForRNG( np,
             [=] AMREX_GPU_DEVICE (const int ip, amrex::RandomEngine const& engine) noexcept
             {
                 // skip particles that are already flagged for removal
-                if (ptd.id(ip) < 0) return;
+                if (particles[ip].id() < 0) return;
 
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);

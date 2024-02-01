@@ -120,12 +120,12 @@ elec_wrapper = particle_containers.ParticleContainerWrapper('electrons')
 elec_count = elec_wrapper.nps
 
 # check that the runtime attributes have the right indices
-assert (elec_wrapper.particle_container.get_comp_index('prev_x') == 6)
-assert (elec_wrapper.particle_container.get_comp_index('prev_z') == 7)
+assert (elec_wrapper.particle_container.get_comp_index('prev_x') == 4)
+assert (elec_wrapper.particle_container.get_comp_index('prev_z') == 5)
 
 # sanity check that the prev_z values are reasonable and
 # that the correct number of values are returned
-prev_z_vals = elec_wrapper.get_particle_real_arrays('prev_z', 0)
+prev_z_vals = elec_wrapper.get_particle_arrays('prev_z', 0)
 running_count = 0
 
 for z_vals in prev_z_vals:
