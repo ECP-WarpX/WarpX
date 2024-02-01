@@ -10,3 +10,4 @@ Workflows
    testing
    documentation
    checksum
+   local_compile

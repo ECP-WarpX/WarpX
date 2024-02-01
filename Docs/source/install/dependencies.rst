@@ -12,6 +12,11 @@ Please see installation instructions below.
 - `AMReX <https://amrex-codes.github.io>`__: we automatically download and compile a copy of AMReX
 - `PICSAR <https://github.com/ECP-WarpX/picsar>`__: we automatically download and compile a copy of PICSAR
 
+and for Python bindings:
+
+- `pyAMReX <https://github.com/AMReX-Codes/pyamrex>`__: we automatically download and compile a copy of pyAMReX
+- `pybind11 <https://github.com/pybind/pybind11>`__: we automatically download and compile a copy of pybind11
+
 Optional dependencies include:
 
 - `MPI 3.0+ <https://www.mpi-forum.org/docs/>`__: for multi-node and/or multi-GPU execution
