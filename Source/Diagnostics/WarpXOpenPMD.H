@@ -123,7 +123,6 @@ public:
   void WriteOpenPMDParticles (
               const amrex::Vector<ParticleDiag>& particle_diags,
               amrex::Real time,
-              amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
               bool use_pinned_pc = false,
               bool isBTD = false,
               bool isLastBTDFlush = false);
@@ -303,7 +302,6 @@ private:
             const amrex::Vector<std::string>&  int_comp_names,
             amrex::ParticleReal charge,
             amrex::ParticleReal mass,
-            unsigned long & ParticleFlushOffset,
             bool isBTD = false,
             bool isLastBTDFlush = false);
 

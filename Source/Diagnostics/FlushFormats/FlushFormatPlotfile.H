@@ -27,7 +27,6 @@ public:
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,
-        amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
         std::string prefix, int file_min_digits,
         bool plot_raw_fields,
@@ -49,13 +48,11 @@ public:
      * \param[in] dir name of output directory
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
      * \param[in] time the simulation time on the coarsest level
-     * \param[inout] totalParticlesFlushedAlready already flushed particles per species
      * \param[in] isBTD whether this is a back-transformed diagnostic
      */
     void WriteParticles(const std::string& dir,
                         const amrex::Vector<ParticleDiag>& particle_diags,
                         amrex::Real time,
-                        amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
                         bool isBTD = false) const;
 
     FlushFormatPlotfile () = default;

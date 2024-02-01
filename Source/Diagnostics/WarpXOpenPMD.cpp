@@ -520,7 +520,6 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, bool isBTD)
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags,
                   const amrex::Real time,
-                  amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
                   const bool use_pinned_pc,
                   const bool isBTD,
                   const bool isLastBTDFlush
@@ -628,7 +627,6 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         int_flags,
         real_names, int_names,
         pc->getCharge(), pc->getMass(),
-        totalParticlesFlushedAlready.at(i),
         isBTD, isLastBTDFlush
     );
 }
@@ -644,7 +642,6 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     const amrex::Vector<std::string>&  int_comp_names,
                     amrex::ParticleReal const charge,
                     amrex::ParticleReal const mass,
-                    unsigned long & ParticleFlushOffset,
                     const bool isBTD,
                     const bool isLastBTDFlush
 )
@@ -656,14 +653,14 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     AMREX_ALWAYS_ASSERT(real_comp_names.size() == pc->NumRealComps());
     AMREX_ALWAYS_ASSERT(int_comp_names.size() == pc->NumIntComps());
 
-    // only BTD writes multiple times into the same step, zero out for other methods
-    if (!isBTD) { ParticleFlushOffset = 0; }
-
     WarpXParticleCounter counter(pc);
     auto const num_dump_particles = counter.GetTotalNumParticles();
 
     openPMD::Iteration currIteration = GetIteration(iteration, isBTD);
     openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
+
+    // only BTD writes multiple times into the same step, zero for other methods
+    unsigned long ParticleFlushOffset = isBTD ? num_already_flushed(currSpecies) : 0;
 
     // prepare data structures the first time BTD has non-zero particles
     //   we set some of them to zero extent, so we need to time that well
@@ -857,9 +854,6 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     }
 
     m_Series->flush();
-
-    // keep book of filtered-and-written particles
-    ParticleFlushOffset += num_dump_particles;
 }
 
 void

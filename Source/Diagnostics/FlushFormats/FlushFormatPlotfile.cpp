@@ -59,7 +59,6 @@ FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
-    amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,
@@ -100,7 +99,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards);
 
-    WriteParticles(filename, particle_diags, static_cast<amrex::Real>(time), totalParticlesFlushedAlready, isBTD);
+    WriteParticles(filename, particle_diags, static_cast<amrex::Real>(time), isBTD);
 
     WriteJobInfo(filename);
 
@@ -342,14 +341,9 @@ void
 FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                     const amrex::Vector<ParticleDiag>& particle_diags,
                                     const amrex::Real time,
-                                    amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
                                     bool isBTD) const
 {
-    int i = 0;
     for (const auto& part_diag : particle_diags) {
-        // only BTD writes multiple times into the same step, zero out for other methods
-        if (!isBTD) { totalParticlesFlushedAlready.at(i) = 0; }
-
         WarpXParticleContainer* pc = part_diag.getParticleContainer();
         PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
         auto tmp = isBTD ?
@@ -424,10 +418,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             dir, part_diag.getSpeciesName(),
             real_flags, int_flags,
             real_names, int_names);
-
-        // keep book of filtered-and-written particles
-        totalParticlesFlushedAlready[i] += tmp.TotalNumberOfParticles(false, true);
-        i++;
     }
 }
 

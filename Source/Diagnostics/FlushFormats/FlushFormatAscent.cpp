@@ -15,7 +15,6 @@ FlushFormatAscent::WriteToFile (
     const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
-    amrex::Vector<unsigned long>& /* totalParticlesFlushedAlready*/,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, int file_min_digits, bool plot_raw_fields,
     bool plot_raw_fields_guards,

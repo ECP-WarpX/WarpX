@@ -129,7 +129,6 @@ void BTDiagnostics::DerivedInitData ()
         }
     }
     m_particles_buffer.resize(m_num_buffers);
-    m_totalParticles_flushed_already.resize(m_num_buffers);
     m_totalParticles_in_buffer.resize(m_num_buffers);
 
     // check that simulation can fill all BTD snapshots
@@ -1067,7 +1066,6 @@ BTDiagnostics::Flush (int i_buffer, bool force_flush)
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
         labtime,
-        m_totalParticles_flushed_already.at(i_buffer),
         m_output_species.at(i_buffer), nlev_output, file_name, m_file_min_digits,
         m_plot_raw_fields, m_plot_raw_fields_guards,
         use_pinned_pc, isBTD, i_buffer, m_buffer_flush_counter.at(i_buffer),
@@ -1271,10 +1269,10 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
                 InterleaveSpeciesHeader(recent_species_Header,snapshot_species_Header,
                                         m_output_species_names[i], m_buffer_flush_counter[i_snapshot]);
                 if (BufferSpeciesHeader.m_total_particles == 0) { continue; }
-                if (m_totalParticles_flushed_already[i_snapshot][i]==0) {
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str()) == 0,
-                    std::string("Renaming ").append(recent_ParticleHdrFilename).append(" to ").append(snapshot_ParticleHdrFilename).append(" has failed"));
+                if (!amrex::FileExists(snapshot_ParticleHdrFilename)) {
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                        std::rename(recent_ParticleHdrFilename.c_str(), snapshot_ParticleHdrFilename.c_str()) == 0,
+                        std::string("Renaming ").append(recent_ParticleHdrFilename).append(" to ").append(snapshot_ParticleHdrFilename).append(" has failed"));
                 } else {
                     InterleaveParticleDataHeader(recent_ParticleHdrFilename,
                                                  snapshot_ParticleHdrFilename);
@@ -1435,10 +1433,8 @@ BTDiagnostics::InitializeParticleBuffer ()
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     for (int i = 0; i < m_num_buffers; ++i) {
         m_particles_buffer[i].resize(m_output_species_names.size());
-        m_totalParticles_flushed_already[i].resize(m_output_species_names.size());
         m_totalParticles_in_buffer[i].resize(m_output_species_names.size());
         for (int isp = 0; isp < m_particles_buffer[i].size(); ++isp) {
-            m_totalParticles_flushed_already[i][isp] = 0;
             m_totalParticles_in_buffer[i][isp] = 0;
             m_particles_buffer[i][isp] = std::make_unique<PinnedMemoryParticleContainer>(WarpX::GetInstance().GetParGDB());
             const int idx = mpc.getSpeciesID(m_output_species_names[isp]);

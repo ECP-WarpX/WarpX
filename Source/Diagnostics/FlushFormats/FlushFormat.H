@@ -16,7 +16,6 @@ public:
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         amrex::Vector<int> iteration, double time,
-        amrex::Vector<unsigned long>& totalParticlesFlushedAlready,
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
         std::string prefix, int file_min_digits,
         bool plot_raw_fields,
