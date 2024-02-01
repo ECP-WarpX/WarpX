@@ -1142,9 +1142,11 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
  *        particles positions are determined and in how the particle gamma is calculated.
  *
  * \tparam depos_order  deposition order
+ * \param xp_n,yp_n,zp_n  Pointer to arrays of particle position at time level n.
  * \param GetPosition  A functor for returning the particle position.
  * \param wp           Pointer to array of particle weights.
- * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
+ * \param uxp_n,uyp_n,uzp_n  Pointer to arrays of particle momentum at time level n.
+ * \param uxp_nph,uyp_nph,uzp_nph  Pointer to arrays of particle momentum at time level n + 1/2.
  * \param ion_lev      Pointer to array of particle ionization level. This is
                        required to have the charge of each macroparticle
                        since q is a scalar. For non-ionizable species,
