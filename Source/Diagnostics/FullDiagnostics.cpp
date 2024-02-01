@@ -53,11 +53,9 @@ FullDiagnostics::FullDiagnostics (int i, std::string name):
 {
     ReadParameters();
     BackwardCompatibility();
-    #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-    {
-        m_apply_filter_rho = true;
-        amrex::Print()<<" ***************** apply_filter_rho ***************** = "<<m_apply_filter_rho<<"\n";
-    }
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    m_apply_filter_rho = true;
 #endif
 }
 
