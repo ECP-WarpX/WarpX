@@ -23,13 +23,10 @@
  * \brief This functor performs pairwise Coulomb collision on a single cell by calling the function
  *        ElasticCollisionPerez. It also reads and contains the Coulomb logarithm.
  */
-class PairWiseCoulombCollisionFunc
-{
+class PairWiseCoulombCollisionFunc{
     // Define shortcuts for frequently-used type names
     using ParticleType = WarpXParticleContainer::ParticleType;
-    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
-    using ParticleTileDataType = ParticleTileType::ParticleTileDataType;
-    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
+    using ParticleBins = amrex::DenseBins<ParticleType>;
     using index_type = ParticleBins::index_type;
     using SoaData_type = WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
 

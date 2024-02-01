@@ -18,9 +18,11 @@
 #include "WarpX.H"
 #include "OpenPMDHelpFunction.H"
 
+#include <ablastr/particles/IndexHandling.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX.H>
+#include <AMReX_ArrayOfStructs.H>
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
 #include <AMReX_Config.H>
@@ -546,13 +548,6 @@ for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
     // see openPMD ED-PIC extension for namings
     // note: an underscore separates the record name from its component
     //       for non-scalar records
-#if !defined (WARPX_DIM_1D_Z)
-    real_names.push_back("position_x");
-#endif
-#if defined (WARPX_DIM_3D)
-    real_names.push_back("position_y");
-#endif
-    real_names.push_back("position_z");
     real_names.push_back("weighting");
     real_names.push_back("momentum_x");
     real_names.push_back("momentum_y");
@@ -737,7 +732,77 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
 
             contributed_particles = true;
 
-            //  save particle properties
+            // get position and particle ID from aos
+            // note: this implementation iterates the AoS 4x...
+            // if we flush late as we do now, we can also copy out the data in one go
+            const auto &aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
+            {
+                // Save positions
+#if defined(WARPX_DIM_RZ)
+                {
+                   const std::shared_ptr<amrex::ParticleReal> z(
+                           new amrex::ParticleReal[numParticleOnTile],
+                           [](amrex::ParticleReal const *p) { delete[] p; }
+                   );
+                   for (auto i = 0; i < numParticleOnTile; i++) {
+                       z.get()[i] = aos[i].pos(1);  // {0: "r", 1: "z"}
+                   }
+                   std::string const positionComponent = "z";
+                   currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTile64});
+                }
+
+                //   reconstruct x and y from polar coordinates r, theta
+                auto const& soa = pti.GetStructOfArrays();
+                amrex::ParticleReal const* theta = soa.GetRealData(PIdx::theta).dataPtr();
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: invalid theta pointer.");
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
+                                                 "openPMD: theta and tile size do not match");
+                {
+                    const std::shared_ptr< amrex::ParticleReal > x(
+                            new amrex::ParticleReal[numParticleOnTile],
+                            [](amrex::ParticleReal const *p){ delete[] p; }
+                    );
+                    const std::shared_ptr< amrex::ParticleReal > y(
+                            new amrex::ParticleReal[numParticleOnTile],
+                            [](amrex::ParticleReal const *p){ delete[] p; }
+                    );
+                    for (auto i=0; i<numParticleOnTile; i++) {
+                        auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
+                        x.get()[i] = r * std::cos(theta[i]);
+                        y.get()[i] = r * std::sin(theta[i]);
+                    }
+                    currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
+                    currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
+                }
+#else
+                auto const positionComponents = detail::getParticlePositionComponentLabels();
+                for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
+                    const std::shared_ptr<amrex::ParticleReal> curr(
+                            new amrex::ParticleReal[numParticleOnTile],
+                            [](amrex::ParticleReal const *p) { delete[] p; }
+                    );
+                    for (auto i = 0; i < numParticleOnTile; i++) {
+                        curr.get()[i] = aos[i].pos(currDim);
+                    }
+                    std::string const positionComponent = positionComponents[currDim];
+                    currSpecies["position"][positionComponent].storeChunk(curr, {offset},
+                                                                          {numParticleOnTile64});
+                }
+#endif
+
+                // save particle ID after converting it to a globally unique ID
+                const std::shared_ptr<uint64_t> ids(
+                        new uint64_t[numParticleOnTile],
+                        [](uint64_t const *p) { delete[] p; }
+                );
+                for (auto i = 0; i < numParticleOnTile; i++) {
+                    ids.get()[i] = ablastr::particles::localIDtoGlobal(static_cast<int>(aos[i].id()), static_cast<int>(aos[i].cpu()));
+                }
+                const auto *const scalar = openPMD::RecordComponent::SCALAR;
+                currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
+
+            }
+            //  save "extra" particle properties in AoS and SoA
             SaveRealProperty(pti,
                              currSpecies,
                              offset,
@@ -838,9 +903,10 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
 
     std::set< std::string > addedRecords; // add meta-data per record only once
     for (auto idx=0; idx<pc->NumRealComps(); idx++) {
-        if (write_real_comp[idx]) {
+        auto ii = ParticleContainer::NStructReal + idx; // jump over extra AoS names
+        if (write_real_comp[ii]) {
             // handle scalar and non-scalar records by name
-            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
+            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[ii]);
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
@@ -861,9 +927,10 @@ WarpXOpenPMDPlot::SetupRealProperties (ParticleContainer const * pc,
         }
     }
     for (auto idx=0; idx<int_counter; idx++) {
-        if (write_int_comp[idx]) {
+        auto ii = ParticleContainer::NStructInt + idx; // jump over extra AoS names
+        if (write_int_comp[ii]) {
             // handle scalar and non-scalar records by name
-            const auto [record_name, component_name] = detail::name2openPMD(int_comp_names[idx]);
+            const auto [record_name, component_name] = detail::name2openPMD(int_comp_names[ii]);
             auto currRecord = currSpecies[record_name];
 
             // meta data for ED-PIC extension
@@ -892,8 +959,33 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
 
 {
   auto const numParticleOnTile = pti.numParticles();
-  auto const numParticleOnTile64 = static_cast<uint64_t>(numParticleOnTile);
+  auto const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
+  auto const& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
   auto const& soa = pti.GetStructOfArrays();
+  // first we concatenate the AoS into contiguous arrays
+  {
+    // note: WarpX does not yet use extra AoS Real attributes
+    for( auto idx=0; idx<ParticleIter::ContainerType::NStructReal; idx++ ) {  // lgtm [cpp/constant-comparison]
+        if( write_real_comp[idx] ) {
+            // handle scalar and non-scalar records by name
+            const auto [record_name, component_name] = detail::name2openPMD(real_comp_names[idx]);
+            auto currRecord = currSpecies[record_name];
+            auto currRecordComp = currRecord[component_name];
+
+            const std::shared_ptr< amrex::ParticleReal > d(
+                new amrex::ParticleReal[numParticleOnTile],
+                [](amrex::ParticleReal const *p){ delete[] p; }
+            );
+
+            for( auto kk=0; kk<numParticleOnTile; kk++ ) {
+                d.get()[kk] = aos[kk].rdata(idx);
+            }
+
+            currRecordComp.storeChunk(d,
+                {offset}, {numParticleOnTile64});
+        }
+    }
+  }
 
   auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
     // handle scalar and non-scalar records by name
@@ -901,29 +993,24 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
     return currSpecies[record_name][component_name];
   };
 
-    // here we the save the SoA properties (idcpu)
-    {
-        // todo: add support to not write the particle index
-        getComponentRecord("id").storeChunkRaw(
-        soa.GetIdCPUData().data(), {offset}, {numParticleOnTile64});
-    }
-
   // here we the save the SoA properties (real)
   {
     auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
     for (auto idx=0; idx<real_counter; idx++) {
-      if (write_real_comp[idx]) {
-        getComponentRecord(real_comp_names[idx]).storeChunkRaw(
-          soa.GetRealData(idx).data(), {offset}, {numParticleOnTile64});
-      }
+        auto ii = ParticleIter::ContainerType::NStructReal + idx;  // jump over extra AoS names
+        if (write_real_comp[ii]) {
+            getComponentRecord(real_comp_names[ii]).storeChunkRaw(
+                soa.GetRealData(idx).data(), {offset}, {numParticleOnTile64});
+        }
     }
   }
   // and now SoA int properties
   {
     auto const int_counter = std::min(write_int_comp.size(), int_comp_names.size());
     for (auto idx=0; idx<int_counter; idx++) {
-        if (write_int_comp[idx]) {
-            getComponentRecord(int_comp_names[idx]).storeChunkRaw(
+        auto ii = ParticleIter::ContainerType::NStructInt + idx;  // jump over extra AoS names
+        if (write_int_comp[ii]) {
+            getComponentRecord(int_comp_names[ii]).storeChunkRaw(
                 soa.GetIntData(idx).data(), {offset}, {numParticleOnTile64});
         }
     }
