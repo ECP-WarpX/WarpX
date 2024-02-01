@@ -25,6 +25,8 @@ private:
      * before writing the diagnostic.
      */
     bool m_solver_deposits_current = true;
+    /** Whether to apply k-space filtering of the charge density */
+    bool m_apply_filter_rho = false;
     /** Flush m_mf_output and particles to file for the i^th buffer */
     void Flush (int i_buffer, bool /* force_flush */) override;
     /** Flush raw data */

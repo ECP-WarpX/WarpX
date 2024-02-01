@@ -20,11 +20,13 @@
 
 RhoFunctor::RhoFunctor (const int lev,
                         const amrex::IntVect crse_ratio,
+                        bool apply_filter_rho,
                         const int species_index,
                         bool convertRZmodes2cartesian,
                         const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio),
       m_lev(lev),
+      m_apply_filter_rho(apply_filter_rho),
       m_species_index(species_index),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)
 {}
@@ -57,6 +59,20 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     // Handle the parallel transfers of guard cells and
     // apply the filtering if requested.
     warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    // Apply k-space filtering when using the PSATD solver
+    if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
+    {
+        if (WarpX::use_kspace_filter && m_apply_filter_rho) {
+            auto & solver = warpx.get_spectral_solver_fp(m_lev);
+            const SpectralFieldIndex& Idx = solver.m_spectral_index;
+            solver.ForwardTransform(m_lev, *rho, Idx.rho_new);
+            solver.ApplyFilter(m_lev, Idx.rho_new);
+            solver.BackwardTransform(m_lev, *rho, Idx.rho_new);
+        }
+    }
+#endif
 
     InterpolateMFForDiag(mf_dst, *rho, dcomp, warpx.DistributionMap(m_lev),
                          m_convertRZmodes2cartesian);
