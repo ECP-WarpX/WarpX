@@ -13,9 +13,8 @@ import checksumAPI
 
 # Open plotfile specified in command line
 filename = sys.argv[1]
-ds = yt.load( filename )
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, fn, output_format='openpmd')
 
 ts_scraping = OpenPMDTimeSeries('../../../../warpx/Examples/Tests/point_of_contact_EB/diags/diag2/particles_at_eb/')
 
