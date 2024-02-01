@@ -116,7 +116,7 @@ By default, the most important dependencies of WarpX are automatically downloade
 CMake Option                  Default & Values                               Description
 ============================= ============================================== ===========================================================
 ``BUILD_SHARED_LIBS``         ON/**OFF**                                     `Build shared libraries for dependencies <https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html>`__
-``CCACHE_PROGRAM``            First found ``ccache`` executable.             Set to ``-DCCACHE_PROGRAM=NO`` to disable CCache.
+``WarpX_CCACHE``              **ON**/OFF                                     Search and use CCache to speed up rebuilds.
 ``AMReX_CUDA_PTX_VERBOSE``    ON/**OFF**                                     Print CUDA code generation statistics from ``ptxas``.
 ``WarpX_amrex_src``           *None*                                         Path to AMReX source directory (preferred if set)
 ``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git``   Repository URI to pull and build AMReX from
