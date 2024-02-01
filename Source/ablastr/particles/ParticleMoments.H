@@ -35,7 +35,7 @@ namespace particles {
             amrex::ParticleReal, amrex::ParticleReal>
     MinAndMaxPositions (T_PC const & pc)
     {
-        using ConstParticleTileDataType = typename T_PC::ParticleTileType::ConstParticleTileDataType;
+        using PType = typename T_PC::SuperParticleType;
 
         // Get min and max for the local rank
         amrex::ReduceOps<
@@ -46,11 +46,11 @@ namespace particles {
                               amrex::ParticleReal, amrex::ParticleReal, amrex::ParticleReal>
         >(
             pc,
-            [=] AMREX_GPU_DEVICE(const ConstParticleTileDataType& ptd, const int i) noexcept
+            [=] AMREX_GPU_DEVICE(PType const & p) noexcept
             {
-                const amrex::ParticleReal x = ptd.rdata(0)[i];
-                const amrex::ParticleReal y = ptd.rdata(1)[i];
-                const amrex::ParticleReal z = ptd.rdata(2)[i];
+                amrex::ParticleReal const x = p.pos(0);
+                amrex::ParticleReal const y = p.pos(1);
+                amrex::ParticleReal const z = p.pos(2);
 
                 return amrex::makeTuple(x, y, z, x, y, z);
             },
@@ -90,8 +90,7 @@ namespace particles {
             amrex::ParticleReal, amrex::ParticleReal>
     MeanAndStdPositions (T_PC const & pc)
     {
-
-        using ConstParticleTileDataType = typename T_PC::ParticleTileType::ConstParticleTileDataType;
+        using PType = typename T_PC::SuperParticleType;
 
         amrex::ReduceOps<
             amrex::ReduceOpSum, amrex::ReduceOpSum, amrex::ReduceOpSum,
@@ -104,14 +103,12 @@ namespace particles {
                 amrex::ParticleReal>
         >(
             pc,
-            [=] AMREX_GPU_DEVICE(const ConstParticleTileDataType& ptd, const int i) noexcept
+            [=] AMREX_GPU_DEVICE(const PType& p) noexcept
             {
-
-                const amrex::ParticleReal x = ptd.rdata(0)[i];
-                const amrex::ParticleReal y = ptd.rdata(1)[i];
-                const amrex::ParticleReal z = ptd.rdata(2)[i];
-
-                const amrex::ParticleReal w = ptd.rdata(T_RealSoAWeight)[i];
+                amrex::ParticleReal const x = p.pos(0);
+                amrex::ParticleReal const y = p.pos(1);
+                amrex::ParticleReal const z = p.pos(2);
+                amrex::ParticleReal const w = p.rdata(T_RealSoAWeight);
 
                 return amrex::makeTuple(x, x*x, y, y*y, z, z*z, w);
             },

@@ -49,10 +49,10 @@
 
 
 class WarpXParIter
-    : public amrex::ParIterSoA<PIdx::nattribs, 0>
+    : public amrex::ParIter<0,0,PIdx::nattribs>
 {
 public:
-    using amrex::ParIterSoA<PIdx::nattribs, 0>::ParIterSoA;
+    using amrex::ParIter<0,0,PIdx::nattribs>::ParIter;
 
     WarpXParIter (ContainerType& pc, int level);
 
@@ -89,7 +89,7 @@ public:
  * particle container classes (that store a collection of particles) derive. Derived
  * classes can be used for plasma particles, photon particles, or non-physical
  * particles (e.g., for the laser antenna).
- * It derives from amrex::ParticleContainerPureSoA<PIdx::nattribs>, where the
+ * It derives from amrex::ParticleContainer<0,0,PIdx::nattribs>, where the
  * template arguments stand for the number of int and amrex::Real SoA and AoS
  * data in amrex::Particle.
  *  - AoS amrex::Real: x, y, z (default), 0 additional (first template
@@ -164,9 +164,11 @@ public:
      * class.
      */
     virtual void DefaultInitializeRuntimeAttributes (
-        typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType& pinned_tile,
-        int n_external_attr_real,
-        int n_external_attr_int) = 0;
+                        amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
+                                            NArrayReal, NArrayInt,
+                                            amrex::PinnedArenaAllocator>& pinned_tile,
+                        int n_external_attr_real,
+                        int n_external_attr_int) = 0;
 
     ///
     /// This pushes the particle positions by one half time step.
