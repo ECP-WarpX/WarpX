@@ -166,7 +166,7 @@ scrapeParticles (PC& pc, const amrex::Vector<const amrex::MultiFab*>& distance_t
 #endif
         for(WarpXParIter pti(pc, lev); pti.isValid(); ++pti)
         {
-            const auto getPosition = GetParticlePosition(pti);
+            const auto getPosition = GetParticlePosition<PIdx>(pti);
             auto& tile = pti.GetParticleTile();
             auto ptd = tile.getParticleTileData();
             const auto np = tile.numParticles();
