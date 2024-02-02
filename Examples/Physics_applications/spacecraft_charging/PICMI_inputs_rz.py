@@ -7,7 +7,7 @@
 # ---     Spacecraft charging analysis with the implicit particle-in-cell code iPic3D.
 # ---     Part III. A. pages 3-4
 # ---     Phys. Plasmas 1 October 2013; 20 (10): 102902. https://doi.org/10.1063/1.4826951.
-# --- The sphere of charge starts with an initial potential of 1V and will interact with
+# --- The conducting sphere starts with an initial potential of 1V and will interact with
 # --- the surrounding plasma. The charging of the spacecraft by accumulation of electrons
 # --- leads to a decrease of the potential on the spacecraft over the time until reaching
 # --- an equilibrium floating potential of ~144.5 V (*).
