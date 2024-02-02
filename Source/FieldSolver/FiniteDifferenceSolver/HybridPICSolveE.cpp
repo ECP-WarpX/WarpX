@@ -870,7 +870,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
 #endif
                 // Interpolate to get the appropriate charge density in space
                 Real rho_val = Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0);
-                
+
                 // Interpolate current to appropriate staggering to match E field
                 Real jx_val = Interp(Jx, Jx_stag, Ex_stag, coarsen, i, j, k, 0);
                 Real jy_val = Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
