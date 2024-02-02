@@ -57,7 +57,7 @@ struct FindBoundaryIntersection {
                      int src_i, int dst_i) const noexcept
     {
         // Copy all particle attributes, from the source to the destination
-        dst.m_aos[dst_i] = src.m_aos[src_i];
+        dst.m_idcpu[dst_i] = src.m_idcpu[src_i];
         for (int j = 0; j < SrcData::NAR; ++j) {
             dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
         }
