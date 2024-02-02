@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # --- Input file for spacecraft charging testing in RZ.
-# --- This input defines a sphere of charge surrounded by a static thermal plasma with
+# --- This input defines a conducting sphere immersed in a static thermal plasma with
 # --- the same given initial conditions as in the article:
 # --- (*) J. Deca, G. Lapenta, R. Marchand, S. Markidis;
 # ---     Spacecraft charging analysis with the implicit particle-in-cell code iPic3D.
