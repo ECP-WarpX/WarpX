@@ -471,7 +471,9 @@ WarpX::WarpX ()
         spectral_solver_cp.resize(nlevs_max);
     }
 #endif
-    if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
+    if ((WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) ||
+       ((WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) &&
+        (evolve_scheme == EvolveScheme::ImplicitPicard))) {
         m_fdtd_solver_fp.resize(nlevs_max);
         m_fdtd_solver_cp.resize(nlevs_max);
     }
@@ -1263,8 +1265,9 @@ WarpX::ReadParameters ()
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-                electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC,
-                "Only the Yee EM solver is supported with the implicit and semi-implicit schemes");
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD,
+                "Only the Yee, CKC, and PSATD EM solvers are supported with the implicit and semi-implicit schemes");
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 particle_pusher_algo == ParticlePusherAlgo::Boris ||
@@ -2498,8 +2501,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   endif
 #endif
     } // ElectromagneticSolverAlgo::PSATD
-    else {
-        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(electromagnetic_solver_id, dx, grid_type);
+    if ((WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) ||
+        ((WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) &&
+         (evolve_scheme == EvolveScheme::ImplicitPicard))) {
+        auto solver_id = electromagnetic_solver_id;
+        if ((electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) &&
+            (evolve_scheme == EvolveScheme::ImplicitPicard)) {
+            solver_id = ElectromagneticSolverAlgo::Yee;
+        }
+        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(solver_id, dx, grid_type);
     }
 
     //
@@ -2774,6 +2784,10 @@ void WarpX::AllocLevelSpectralSolver (amrex::Vector<std::unique_ptr<SpectralSolv
 
     amrex::Real solver_dt = dt[lev];
     if (WarpX::do_multi_J) { solver_dt /= static_cast<amrex::Real>(WarpX::do_multi_J_n_depositions); }
+    if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+        // The step is Strang split into two half steps
+        solver_dt /= 2.;
+    }
 
     auto pss = std::make_unique<SpectralSolver>(lev,
                                                 realspace_ba,

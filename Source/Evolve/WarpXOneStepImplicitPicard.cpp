@@ -121,6 +121,27 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
         SaveParticlesAtImplicitStepStart (*pc, 0);
     }
 
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+        // Do the first piece of the Strang splitting, source free advance of E and B
+        // Save Efield_fp in Efield_n
+        amrex::MultiFab::Copy(*Efield_n[0][0], *Efield_fp[0][0], 0, 0, ncomps, Efield_n[0][0]->nGrowVect());
+        amrex::MultiFab::Copy(*Efield_n[0][1], *Efield_fp[0][1], 0, 0, ncomps, Efield_n[0][1]->nGrowVect());
+        amrex::MultiFab::Copy(*Efield_n[0][2], *Efield_fp[0][2], 0, 0, ncomps, Efield_n[0][2]->nGrowVect());
+        // Save Bfield_fp in Bfield_n
+        amrex::MultiFab::Copy(*Bfield_n[0][0], *Bfield_fp[0][0], 0, 0, ncomps, Bfield_n[0][0]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfield_n[0][1], *Bfield_fp[0][1], 0, 0, ncomps, Bfield_n[0][1]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, ncomps, Bfield_n[0][2]->nGrowVect());
+        // It would be more efficient to write a specialized PSATD advance that does not use J,
+        // but this works for now.
+        current_fp[0][0]->setVal(0._rt);
+        current_fp[0][1]->setVal(0._rt);
+        current_fp[0][2]->setVal(0._rt);
+        if (rho_fp[0]) { rho_fp[0]->setVal(0._rt); }
+        PushPSATD(); // Note that this does dt/2
+        FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+        FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    }
+
     // Save the fields at the start of the step
     amrex::MultiFab::Copy(*Efield_n[0][0], *Efield_fp[0][0], 0, 0, ncomps, Efield_fp[0][0]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_n[0][1], *Efield_fp[0][1], 0, 0, ncomps, Efield_fp[0][1]->nGrowVect());
@@ -146,6 +167,21 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
            (deltaE > picard_iteration_tolerance || deltaB > picard_iteration_tolerance)) {
         iteration_count++;
 
+        if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
+            // Save the E at n+1/2 from the previous iteration so that the change
+            // in this iteration can be calculated
+            amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, ncomps, 0);
+            amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, ncomps, 0);
+            amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, ncomps, 0);
+            if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+                // Save the B at n+1/2 from the previous iteration so that the change
+                // in this iteration can be calculated
+                amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, ncomps, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, ncomps, 0);
+                amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, ncomps, 0);
+            }
+        }
+
         // Advance the particle positions by 1/2 dt,
         // particle velocities by dt, then take average of old and new v,
         // deposit currents, giving J at n+1/2
@@ -156,44 +192,49 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
 
         SyncCurrentAndRho();
 
-        if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
-            // Save the E at n+1/2 from the previous iteration so that the change
-            // in this iteration can be calculated
-            amrex::MultiFab::Copy(*Efield_save[0][0], *Efield_fp[0][0], 0, 0, ncomps, 0);
-            amrex::MultiFab::Copy(*Efield_save[0][1], *Efield_fp[0][1], 0, 0, ncomps, 0);
-            amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, ncomps, 0);
-        }
-
-        // Copy Efield_n into Efield_fp since EvolveE updates Efield_fp in place
-        amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, ncomps, Efield_n[0][0]->nGrowVect());
-        amrex::MultiFab::Copy(*Efield_fp[0][1], *Efield_n[0][1], 0, 0, ncomps, Efield_n[0][1]->nGrowVect());
-        amrex::MultiFab::Copy(*Efield_fp[0][2], *Efield_n[0][2], 0, 0, ncomps, Efield_n[0][2]->nGrowVect());
-
-        // Updates Efield_fp so it holds the new E at n+1/2
-        EvolveE(0.5_rt*dt[0]);
-        // WarpX::sync_nodal_points is used to avoid instability
-        FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-        ApplyEfieldBoundary(0, PatchType::fine);
-
-        if (evolve_scheme == EvolveScheme::ImplicitPicard) {
-            if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
-                // Save the B at n+1/2 from the previous iteration so that the change
-                // in this iteration can be calculated
-                amrex::MultiFab::Copy(*Bfield_save[0][0], *Bfield_fp[0][0], 0, 0, ncomps, 0);
-                amrex::MultiFab::Copy(*Bfield_save[0][1], *Bfield_fp[0][1], 0, 0, ncomps, 0);
-                amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, ncomps, 0);
-            }
-
-            // Copy Bfield_n into Bfield_fp since EvolveB updates Bfield_fp in place
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+            // The middle part of the Strang splitting, advancing dE/dt = J
+            // Copy Efield_n into Efield_fp since EvolveE updates Efield_fp in place
+            amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, ncomps, Efield_n[0][0]->nGrowVect());
+            amrex::MultiFab::Copy(*Efield_fp[0][1], *Efield_n[0][1], 0, 0, ncomps, Efield_n[0][1]->nGrowVect());
+            amrex::MultiFab::Copy(*Efield_fp[0][2], *Efield_n[0][2], 0, 0, ncomps, Efield_n[0][2]->nGrowVect());
+            // Zero out B since the curl terms are not included here
+            // It would be more efficient to write a specialized routine for EvolveE, but this works for now
+            Bfield_fp[0][0]->setVal(0._rt);
+            Bfield_fp[0][1]->setVal(0._rt);
+            Bfield_fp[0][2]->setVal(0._rt);
+            EvolveE(0.5_rt*dt[0]);
+            FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+            // Restore the B since it will be needed by the particles in the next iteration, and at end of the iterations
             amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bfield_n[0][0], 0, 0, ncomps, Bfield_n[0][0]->nGrowVect());
             amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bfield_n[0][1], 0, 0, ncomps, Bfield_n[0][1]->nGrowVect());
             amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bfield_n[0][2], 0, 0, ncomps, Bfield_n[0][2]->nGrowVect());
 
-            // This updates Bfield_fp so it holds the new B at n+1/2
-            EvolveB(0.5_rt*dt[0], DtType::Full);
+        } else {
+            // Copy Efield_n into Efield_fp since EvolveE updates Efield_fp in place
+            amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, ncomps, Efield_n[0][0]->nGrowVect());
+            amrex::MultiFab::Copy(*Efield_fp[0][1], *Efield_n[0][1], 0, 0, ncomps, Efield_n[0][1]->nGrowVect());
+            amrex::MultiFab::Copy(*Efield_fp[0][2], *Efield_n[0][2], 0, 0, ncomps, Efield_n[0][2]->nGrowVect());
+
+            // Updates Efield_fp so it holds the new E at n+1/2
+            EvolveE(0.5_rt*dt[0]);
             // WarpX::sync_nodal_points is used to avoid instability
-            FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-            ApplyBfieldBoundary(0, PatchType::fine, DtType::Full);
+            FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+            ApplyEfieldBoundary(0, PatchType::fine);
+
+            if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+
+                // Copy Bfield_n into Bfield_fp since EvolveB updates Bfield_fp in place
+                amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bfield_n[0][0], 0, 0, ncomps, Bfield_n[0][0]->nGrowVect());
+                amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bfield_n[0][1], 0, 0, ncomps, Bfield_n[0][1]->nGrowVect());
+                amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bfield_n[0][2], 0, 0, ncomps, Bfield_n[0][2]->nGrowVect());
+
+                // This updates Bfield_fp so it holds the new B at n+1/2
+                EvolveB(0.5_rt*dt[0], DtType::Full);
+                // WarpX::sync_nodal_points is used to avoid instability
+                FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+                ApplyBfieldBoundary(0, PatchType::fine, DtType::Full);
+            }
         }
 
         // The B field update needs
@@ -253,14 +294,40 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
         FinishImplicitParticleUpdate(*pc, 0);
     }
 
-    // Advance fields to step n+1
-    // WarpX::sync_nodal_points is used to avoid instability
-    FinishImplicitFieldUpdate(Efield_fp, Efield_n);
-    FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-    if (evolve_scheme == EvolveScheme::ImplicitPicard) {
-        FinishImplicitFieldUpdate(Bfield_fp, Bfield_n);
+    if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+        // Finish the advance of longitudinal E, E(n+1) = 2*E(n+1/2) - E(n)
+        // Note that the transverse E is unchanged so it carries through the advance
+        FinishImplicitFieldUpdate(Efield_fp, Efield_n);
+        FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+        // Do the last piece of the String splitting, field free advance of E and B
+        // Save Efield_fp in Efield_n
+        amrex::MultiFab::Copy(*Efield_n[0][0], *Efield_fp[0][0], 0, 0, ncomps, Efield_n[0][0]->nGrowVect());
+        amrex::MultiFab::Copy(*Efield_n[0][1], *Efield_fp[0][1], 0, 0, ncomps, Efield_n[0][1]->nGrowVect());
+        amrex::MultiFab::Copy(*Efield_n[0][2], *Efield_fp[0][2], 0, 0, ncomps, Efield_n[0][2]->nGrowVect());
+        // Save Bfield_fp in Bfield_n
+        amrex::MultiFab::Copy(*Bfield_n[0][0], *Bfield_fp[0][0], 0, 0, ncomps, Bfield_n[0][0]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfield_n[0][1], *Bfield_fp[0][1], 0, 0, ncomps, Bfield_n[0][1]->nGrowVect());
+        amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, ncomps, Bfield_n[0][2]->nGrowVect());
+        // Note that erasing J messes up the J in the plot files since it uses the same data
+        // Writing a specialized PSATD advance without J would fix this issue
+        current_fp[0][0]->setVal(0._rt);
+        current_fp[0][1]->setVal(0._rt);
+        current_fp[0][2]->setVal(0._rt);
+        if (rho_fp[0]) { rho_fp[0]->setVal(0._rt); }
+        PushPSATD(); // Note that this does dt/2
+        FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
         FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    } else {
+        // Advance fields to step n+1
+        // WarpX::sync_nodal_points is used to avoid instability
+        FinishImplicitFieldUpdate(Efield_fp, Efield_n);
+        FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+        if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+            FinishImplicitFieldUpdate(Bfield_fp, Bfield_n);
+            FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+        }
     }
+
 
 }
 
@@ -380,8 +447,8 @@ WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev)
 }
 
 void
-WarpX::FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
-                                 amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n)
+WarpX::FinishImplicitFieldUpdate (amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
+                                  amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n)
 {
     using namespace amrex::literals;
 
