@@ -26,9 +26,10 @@ RhoFunctor::RhoFunctor (const int lev,
                         const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio),
       m_lev(lev),
+      m_apply_filter_rho(apply_filter_rho),
       m_species_index(species_index),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)
-{m_apply_filter_rho = apply_filter_rho;} // FIXME: choose better style to avoid the "unused var" warning
+{}
 
 void
 RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/ ) const
@@ -71,6 +72,8 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
             solver.BackwardTransform(m_lev, *rho, Idx.rho_new);
         }
     }
+#else
+    amrex::ignore_unused(m_apply_filter_rho);
 #endif
 
     InterpolateMFForDiag(mf_dst, *rho, dcomp, warpx.DistributionMap(m_lev),
