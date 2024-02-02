@@ -8,8 +8,8 @@
 # ---     Part III. A. pages 3-4
 # ---     Phys. Plasmas 1 October 2013; 20 (10): 102902. https://doi.org/10.1063/1.4826951.
 # --- The conducting sphere starts with an initial potential of 1V and will interact with
-# --- the surrounding plasma, initially static. The charging of the surface - by accumulation
-# --- of electrons - leads to a decrease of the potential on the spacecraft over the time
+# --- the surrounding plasma, initially static. The charging of the spacecraft - by accumulation
+# --- of electrons - leads to a decrease of the potential on the surface over the time
 # --- until reaching an equilibrium floating potential of ~144.5 V (*).
 
 from mpi4py import MPI as mpi
