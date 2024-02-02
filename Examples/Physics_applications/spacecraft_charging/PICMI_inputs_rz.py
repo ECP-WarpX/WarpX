@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+#
+# --- Input file for spacecraft charging testing in RZ. 
+# --- This input defines a sphere of charge surrounded by a static thermal plasma with
+# --- the same given initial conditions as in the article:
+# --- (*) J. Deca, G. Lapenta, R. Marchand, S. Markidis; 
+# ---     Spacecraft charging analysis with the implicit particle-in-cell code iPic3D. 
+# ---     Part III. A. pages 3-4
+# ---     Phys. Plasmas 1 October 2013; 20 (10): 102902. https://doi.org/10.1063/1.4826951. 
+# --- The sphere of charge starts with an initial potential of 1V and will interact with 
+# --- the surrounding plasma. The charging of the spacecraft by accumulation of electrons 
+# --- leads to a decrease of the potential on the spacecraft over the time until reaching 
+# --- an equilibrium floating potential of ~144.5 V (*).
+
 from mpi4py import MPI as mpi
 import numpy as np
 import scipy.constants as scc
@@ -8,10 +21,12 @@ from pywarpx.callbacks import installafterEsolve, installafterInitEsolve
 from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper
 from pywarpx.particle_containers import ParticleBoundaryBufferWrapper
 
-
 # Utilities
 class SpaceChargeFieldCorrector(object):
-
+    """
+    Class used by the callback functions to calculate the 
+    correct charge on the spacecraft at each initialisation.
+    """
     def __init__(self):
         self.saved_first_iteration_fields = False
         self.spacecraft_potential = 1. # Initial voltage: 1V
@@ -89,16 +104,10 @@ def compute_virtual_charge_on_spacecraft():
 
     # Compute integral of grad phi over surfaces of the domain
     r = np.linspace(rmin, rmax, len(phi), endpoint=False) + (rmax - rmin) / (2 * len(phi)) #shift of the r points because the derivaties are calculated in the middle
-
-
-
     face_z0 = 2 * np.pi *  1./dz * ( (phi[:,0]-phi[:,1]) * r ).sum() * dr #here I am assuming that phi is a numpy array that can handle elementwise mult
     face_zend = 2 * np.pi * 1./dz * ( (phi[:,-1]-phi[:,-2]) * r ).sum() * dr
     face_rend = 2 * np.pi * 1./dr*((phi[-1,:]-phi[-2,:]) * rmax).sum() * dz
     grad_phi_integral = face_z0 + face_zend + face_rend
-
-
-
 
     # Compute integral of rho over volume of the domain
     # (i.e. total charge of the plasma particles)
@@ -125,7 +134,6 @@ def compute_actual_charge_on_spacecraft():
     """
     charge = {'electrons': -scc.e, 'protons': scc.e}
     q_spacecraft = 0
-
     particle_buffer = ParticleBoundaryBufferWrapper()
     for species in charge.keys():
         weights = particle_buffer.get_particle_boundary_buffer(species, 'eb', 'w', 0)
@@ -140,20 +148,17 @@ def compute_actual_charge_on_spacecraft():
     return q_spacecraft
 
 
-
-
 ##########################
 # numerics parameters
 ##########################
 
 dt=1.27e-8
-# --- Nb time steps
 
+# --- Nb time steps
 max_steps = 1000
 diagnostic_interval = 10
 
 # --- grid
-
 nr = 40
 nz= 80
 
@@ -192,8 +197,6 @@ electrons = picmi.Species(particle_type='electron',
                           initial_distribution=[e_dist,e_dist2],
                           warpx_save_particles_at_eb=1)
 
-
-
 p_dist = picmi.UniformDistribution(density = n, rms_velocity=[v_pth, v_pth, v_pth] )
 p_dist2 = picmi.UniformFluxDistribution(
     flux=n*v_pth/(2*np.pi)**.5, # Flux for Gaussian with vmean=0
@@ -205,9 +208,6 @@ protons = picmi.Species(particle_type='proton',
                         name='protons',
                         initial_distribution=[p_dist,p_dist2],
                         warpx_save_particles_at_eb=1)
-
-
-
 
 
 ##########################
@@ -235,7 +235,6 @@ embedded_boundary = picmi.EmbeddedBoundary(
     potential=1., # arbitrary value ; this will be corrected by a callback function
     radius = 0.3277
 )
-
 
 
 ##########################
@@ -269,15 +268,15 @@ sim = picmi.Simulation(
     warpx_amrex_the_arena_is_managed=1,
 )
 
-
-layout1=picmi.GriddedLayout(n_macroparticle_per_cell=number_per_cell_each_dim, grid=grid)
-layout2=picmi.PseudoRandomLayout(n_macroparticles_per_cell=number_per_cell, grid=grid)
+layout1=picmi.GriddedLayout(n_macroparticle_per_cell=number_per_cell_each_dim, 
+                            grid=grid)
+layout2=picmi.PseudoRandomLayout(n_macroparticles_per_cell=number_per_cell, 
+                                 grid=grid)
 sim.add_species(electrons,
                 layout = [layout1,layout2])
 
 sim.add_species(protons,
                 layout = [layout1,layout2])
-
 
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(part_diag)
@@ -285,7 +284,6 @@ sim.add_diagnostic(part_diag)
 ##########################
 # simulation run
 ##########################
-
 
 spc = SpaceChargeFieldCorrector()
 
