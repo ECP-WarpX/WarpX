@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 """
-This script tests the potential-time profile on the surface of 
-a sphere of charge (spacecraft). The potential on the spacecraft 
+This script tests the potential-time profile on the surface of
+a sphere of charge (spacecraft). The potential on the spacecraft
 decreases over the time to reach an equilibrium floating potential.
 
-An input Python file PICMI_inputs_rz.py is used. 
+An input Python file PICMI_inputs_rz.py is used.
 
-The test will check the curve fitting parameters v0 and tau defined 
+The test will check the curve fitting parameters v0 and tau defined
 by the following exponential function: phi(t)=v0(1-exp(-t/tau))
 """
 

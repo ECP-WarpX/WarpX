@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 #
-# --- Input file for spacecraft charging testing in RZ. 
+# --- Input file for spacecraft charging testing in RZ.
 # --- This input defines a sphere of charge surrounded by a static thermal plasma with
 # --- the same given initial conditions as in the article:
-# --- (*) J. Deca, G. Lapenta, R. Marchand, S. Markidis; 
-# ---     Spacecraft charging analysis with the implicit particle-in-cell code iPic3D. 
+# --- (*) J. Deca, G. Lapenta, R. Marchand, S. Markidis;
+# ---     Spacecraft charging analysis with the implicit particle-in-cell code iPic3D.
 # ---     Part III. A. pages 3-4
-# ---     Phys. Plasmas 1 October 2013; 20 (10): 102902. https://doi.org/10.1063/1.4826951. 
-# --- The sphere of charge starts with an initial potential of 1V and will interact with 
-# --- the surrounding plasma. The charging of the spacecraft by accumulation of electrons 
-# --- leads to a decrease of the potential on the spacecraft over the time until reaching 
+# ---     Phys. Plasmas 1 October 2013; 20 (10): 102902. https://doi.org/10.1063/1.4826951.
+# --- The sphere of charge starts with an initial potential of 1V and will interact with
+# --- the surrounding plasma. The charging of the spacecraft by accumulation of electrons
+# --- leads to a decrease of the potential on the spacecraft over the time until reaching
 # --- an equilibrium floating potential of ~144.5 V (*).
 
 from mpi4py import MPI as mpi
@@ -21,10 +21,11 @@ from pywarpx.callbacks import installafterEsolve, installafterInitEsolve
 from pywarpx.fields import ExWrapper, EzWrapper, PhiFPWrapper, RhoFPWrapper
 from pywarpx.particle_containers import ParticleBoundaryBufferWrapper
 
+
 # Utilities
 class SpaceChargeFieldCorrector(object):
     """
-    Class used by the callback functions to calculate the 
+    Class used by the callback functions to calculate the
     correct charge on the spacecraft at each initialisation.
     """
     def __init__(self):
@@ -268,9 +269,9 @@ sim = picmi.Simulation(
     warpx_amrex_the_arena_is_managed=1,
 )
 
-layout1=picmi.GriddedLayout(n_macroparticle_per_cell=number_per_cell_each_dim, 
+layout1=picmi.GriddedLayout(n_macroparticle_per_cell=number_per_cell_each_dim,
                             grid=grid)
-layout2=picmi.PseudoRandomLayout(n_macroparticles_per_cell=number_per_cell, 
+layout2=picmi.PseudoRandomLayout(n_macroparticles_per_cell=number_per_cell,
                                  grid=grid)
 sim.add_species(electrons,
                 layout = [layout1,layout2])
