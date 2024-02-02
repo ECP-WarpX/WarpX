@@ -2,8 +2,8 @@
 
 """
 This script tests the potential-time profile on the surface of
-a conducting sphere (spacecraft) immersed in an initially static 
-thermal plasma. The potential on the spacecraft decreases over 
+a conducting sphere (spacecraft) immersed in an initially static
+thermal plasma. The potential on the spacecraft decreases over
 the time to reach an equilibrium floating potential.
 
 An input Python file PICMI_inputs_rz.py is used.
