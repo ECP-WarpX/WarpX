@@ -65,7 +65,7 @@ FlushFormatPlotfile::WriteToFile (
     const bool /*use_pinned_pc*/,
     bool isBTD, int snapshotID,  int bufferID, int numBuffers,
     const amrex::Geometry& /*full_BTD_snapshot*/,
-    bool isLastBTDFlush, const amrex::Vector<int>& /* totalParticlesFlushedAlready*/) const
+    bool isLastBTDFlush) const
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
@@ -340,9 +340,9 @@ FlushFormatPlotfile::WriteWarpXHeader(
 void
 FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                     const amrex::Vector<ParticleDiag>& particle_diags,
-                                    const amrex::Real time, bool isBTD) const
+                                    const amrex::Real time,
+                                    bool isBTD) const
 {
-
     for (const auto& part_diag : particle_diags) {
         WarpXParticleContainer* pc = part_diag.getParticleContainer();
         PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();

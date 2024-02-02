@@ -2984,7 +2984,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 
     const Dim3 lo = lbound(box);
 
-    bool galerkin_interpolation = WarpX::galerkin_interpolation;
+    int depos_type = WarpX::current_deposition_algo;
     int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
@@ -3107,8 +3107,8 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
             doGatherShapeNImplicit(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                                   nox, galerkin_interpolation);
+                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes, nox,
+                                   depos_type );
         }
 
         // Externally applied E and B-field in Cartesian co-ordinates
