@@ -5,8 +5,8 @@
 #
 # NOTE: We will reduce the libwarpx.py level of abstraction eventually!
 # Please add new functionality directly to pybind11-bound modules
-# and call them via sim.extension.libwarpx_so. ... and sim.extension.warpx.
-# ... from user code.
+# and call them via sim.extension.libwarpx_so. ... and sim.extension.Config and
+# sim.extension.warpx. ... from user code.
 #
 # Authors: Axel Huebl, Andrew Myers, David Grote, Remi Lehe, Weiqun Zhang
 #
@@ -108,6 +108,8 @@ class LibWarpX():
                 from . import warpx_pybind_3d as cxx_3d
                 self.libwarpx_so = cxx_3d
                 self.dim = 3
+
+            self.Config = self.libwarpx_so.Config
         except ImportError:
             raise Exception(f"Dimensionality '{self.geometry_dim}' was not compiled in this Python install. Please recompile with -DWarpX_DIMS={_dims}")
 

@@ -12,11 +12,11 @@
 void init_WarpXParIter (py::module& m)
 {
     py::class_<
-        WarpXParIter, amrex::ParIter<0,0,PIdx::nattribs>
+        WarpXParIter, amrex::ParIterSoA<PIdx::nattribs, 0>
     >(m, "WarpXParIter")
-        .def(py::init<amrex::ParIter<0,0,PIdx::nattribs>::ContainerType&, int>(),
+        .def(py::init<amrex::ParIterSoA<PIdx::nattribs, 0>::ContainerType&, int>(),
             py::arg("particle_container"), py::arg("level"))
-        .def(py::init<amrex::ParIter<0,0,PIdx::nattribs>::ContainerType&, int, amrex::MFItInfo&>(),
+        .def(py::init<amrex::ParIterSoA<PIdx::nattribs, 0>::ContainerType&, int, amrex::MFItInfo&>(),
             py::arg("particle_container"), py::arg("level"),
             py::arg("info"))
     ;
@@ -26,11 +26,11 @@ void init_WarpXParticleContainer (py::module& m)
 {
     py::class_<
         WarpXParticleContainer,
-        amrex::ParticleContainer<0, 0, PIdx::nattribs, 0>
+        amrex::ParticleContainerPureSoA<PIdx::nattribs, 0>
     > wpc (m, "WarpXParticleContainer");
     wpc
         .def("add_real_comp",
-            [](WarpXParticleContainer& pc, const std::string& name, bool const comm) { pc.AddRealComp(name, comm); },
+            [](WarpXParticleContainer& pc, const std::string& name, bool comm) { pc.AddRealComp(name, comm); },
             py::arg("name"), py::arg("comm")
         )
         .def("add_n_particles",
@@ -89,6 +89,14 @@ void init_WarpXParticleContainer (py::module& m)
             [](WarpXParticleContainer& pc, std::string comp_name)
             {
                 auto particle_comps = pc.getParticleComps();
+                return particle_comps.at(comp_name);
+            },
+            py::arg("comp_name")
+        )
+        .def("get_icomp_index",
+            [](WarpXParticleContainer& pc, std::string comp_name)
+            {
+                auto particle_comps = pc.getParticleiComps();
                 return particle_comps.at(comp_name);
             },
             py::arg("comp_name")
