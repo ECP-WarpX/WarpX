@@ -63,10 +63,11 @@ const std::map<std::string, int> particle_pusher_algo_to_int = {
 };
 
 const std::map<std::string, int> current_deposition_algo_to_int = {
-    {"esirkepov", CurrentDepositionAlgo::Esirkepov },
-    {"direct",    CurrentDepositionAlgo::Direct },
-    {"vay",       CurrentDepositionAlgo::Vay },
-    {"default",   CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD and Hybrid-PIC below
+    {"esirkepov",  CurrentDepositionAlgo::Esirkepov },
+    {"direct",     CurrentDepositionAlgo::Direct },
+    {"vay",        CurrentDepositionAlgo::Vay },
+    {"villasenor", CurrentDepositionAlgo::Villasenor },
+    {"default",    CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD and Hybrid-PIC below
 };
 
 const std::map<std::string, int> charge_deposition_algo_to_int = {

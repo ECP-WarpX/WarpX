@@ -118,19 +118,19 @@ struct FindBoundaryIntersection {
         DistanceToEB::normalize(normal);
 
 #if (defined WARPX_DIM_3D)
-        dst.m_aos[dst_i].pos(0) = x_temp;
-        dst.m_aos[dst_i].pos(1) = y_temp;
-        dst.m_aos[dst_i].pos(2) = z_temp;
+        dst.m_rdata[PIdx::x][dst_i] = x_temp;
+        dst.m_rdata[PIdx::y][dst_i] = y_temp;
+        dst.m_rdata[PIdx::z][dst_i] = z_temp;
 #elif (defined WARPX_DIM_XZ)
-        dst.m_aos[dst_i].pos(0) = x_temp;
-        dst.m_aos[dst_i].pos(1) = z_temp;
+        dst.m_rdata[PIdx::x][dst_i] = x_temp;
+        dst.m_rdata[PIdx::z][dst_i] = z_temp;
         amrex::ignore_unused(y_temp);
 #elif (defined WARPX_DIM_RZ)
-        dst.m_aos[dst_i].pos(0) = std::sqrt(x_temp*x_temp + y_temp*y_temp);
-        dst.m_aos[dst_i].pos(1) = z_temp;
+        dst.m_rdata[PIdx::x][dst_i] = std::sqrt(x_temp*x_temp + y_temp*y_temp);
+        dst.m_rdata[PIdx::z][dst_i] = z_temp;
         dst.m_rdata[PIdx::theta][dst_i] = std::atan2(y_temp, x_temp);
 #elif (defined WARPX_DIM_1D_Z)
-        dst.m_aos[dst_i].pos(0) = z_temp;
+        dst.m_rdata[PIdx::z][dst_i] = z_temp;
         amrex::ignore_unused(x_temp, y_temp);
 #else
         amrex::ignore_unused(x_temp, y_temp, z_temp);
