@@ -572,20 +572,20 @@ PhysicalParticleContainer::AddGaussianBeam (
                 amrex::Real v_bulk_y = u_bulk.y / gamma_bulk * PhysConst::c;
                 amrex::Real v_bulk_z = u_bulk.z / gamma_bulk * PhysConst::c;
 
-                amrex::Real x_f = x_m + focal_distance * u_bulk.x/u_bulk_norm; 
-                amrex::Real y_f = y_m + focal_distance * u_bulk.y/u_bulk_norm; 
-                amrex::Real z_f = z_m + focal_distance * u_bulk.z/u_bulk_norm; 
+                amrex::Real x_f = x_m + focal_distance * u_bulk.x/u_bulk_norm;
+                amrex::Real y_f = y_m + focal_distance * u_bulk.y/u_bulk_norm;
+                amrex::Real z_f = z_m + focal_distance * u_bulk.z/u_bulk_norm;
                 amrex::Real gamma = std::sqrt( 1._rt+(u.x*u.x+u.y*u.y+u.z*u.z) );
-                
+
                 amrex::Real v_x = u.x / gamma * PhysConst::c;
                 amrex::Real v_y = u.y / gamma * PhysConst::c;
                 amrex::Real v_z = u.z / gamma * PhysConst::c;
 
                 amrex::Real d = std::sqrt( std::pow(x_f-x,2) + std::pow(y_f-y,2) + std::pow(z_f-z,2)); //z_f - z ;
-                amrex::Real t = d / std::sqrt(v_x*v_x+v_y*v_y+v_z*v_z); // d / vz ; // 
+                amrex::Real t = d / std::sqrt(v_x*v_x+v_y*v_y+v_z*v_z); // d / vz ; //
                 x = x - (v_x - v_bulk_x) * t;
                 y = y - (v_y - v_bulk_y) * t;
-                z = z - (v_z - v_bulk_z) * t; 
+                z = z - (v_z - v_bulk_z) * t;
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;

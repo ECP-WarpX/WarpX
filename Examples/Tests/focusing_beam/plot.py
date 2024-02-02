@@ -1,12 +1,20 @@
-import os 
-import sys 
-import numpy as np
-import openpmd_api as io
-from scipy.constants import m_e, c, eV, micro, nano, milli, e as q_e
+import os
+
+from matplotlib import cm, rcParams, use
+from matplotlib.colors import (
+    LinearSegmentedColormap,
+    ListedColormap,
+    LogNorm,
+    Normalize,
+    SymLogNorm,
+)
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from matplotlib.colors import LogNorm, Normalize, SymLogNorm, ListedColormap, LinearSegmentedColormap
-from matplotlib import use, cm, rcParams
+import numpy as np
+import openpmd_api as io
+from scipy.constants import c
+from scipy.constants import e as q_e
+from scipy.constants import eV, m_e, micro, milli, nano
 
 mydir='.'
 path=os.path.join(mydir, 'diags/full')
@@ -20,7 +28,7 @@ for n,ts in enumerate(iterations):
 
     fig, ax = plt.subplots(ncols=1, nrows=3, figsize=(1500./my_dpi, 4500./my_dpi), dpi=my_dpi)
     it = series.iterations[ts]
-    
+
     ps = it.particles["beam1"]
     x = ps["position"]["x"].load_chunk()
     y = ps["position"]["y"].load_chunk()
@@ -47,7 +55,7 @@ for n,ts in enumerate(iterations):
     ax[2].set_ylabel(r'y')
 
 
-    image_file_name =os.path.join('TEST_%04d.png' % n) 
+    image_file_name =os.path.join('TEST_%04d.png' % n)
     plt.tight_layout()
-    plt.savefig(image_file_name,dpi=my_dpi, bbox_inches='tight') 
+    plt.savefig(image_file_name,dpi=my_dpi, bbox_inches='tight')
     plt.close("all")
