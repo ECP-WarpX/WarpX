@@ -2,7 +2,6 @@
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
     #include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
-    #include "Utils/WarpXAlgorithmSelection.H"
 #endif
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
@@ -50,13 +49,12 @@ FullDiagnostics::FullDiagnostics (int i, std::string name):
     m_solver_deposits_current{
         !(WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
         WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic)}
+    #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    , m_apply_filter_rho{true}
+    #endif
 {
     ReadParameters();
     BackwardCompatibility();
-
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-    m_apply_filter_rho = true;
-#endif
 }
 
 void
