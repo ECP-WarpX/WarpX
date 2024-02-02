@@ -109,7 +109,7 @@ public:
     amrex::Real y_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real z_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real q_tot = 0.0;
-    amrex::Real z_f;
+    amrex::Real focal_distance = 0.0;
     long npart;
     int do_symmetrize = 0;
     int symmetrization_order = 4;
