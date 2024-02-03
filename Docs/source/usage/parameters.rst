@@ -3104,6 +3104,9 @@ Reduced Diagnostics
             A species name must be provided,
             such that the diagnostics are done for this species.
 
+        * ``<reduced_diags_name>.file_min_digits`` (`int`) optional (default `6`)
+            The minimum number of digits used for the iteration number appended to the diagnostic file names.
+
         * ``<reduced_diags_name>.histogram_function_abs(t,x,y,z,ux,uy,uz,w)`` (`string`)
             A histogram function must be provided for the abscissa axis.
             `t` represents the physical time in seconds during the simulation.
