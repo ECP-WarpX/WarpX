@@ -138,15 +138,14 @@ solver = picmi.ElectromagneticSolver(
 # Diagnostics
 diag_field_list = ['B', 'E', 'J', 'rho', 'rho_electrons', 'rho_hydrogen']
 particle_diag = picmi.ParticleDiagnostic(
-    name='diag1',
+    name='Python_LaserIonAcc2d_plt',
     period=100,
     write_dir='./diags',
     species=[electrons],
     data_list=['weighting', 'position', 'momentum'],
     warpx_format='openpmd',
     warpx_openpmd_backend='bp',
-    # >500keV for electrons  (first term is m*c*c/q_e)
-    warpx_plot_filter_function='(x<1.0e-6) * (x>-1.0e-6) * (5.1100e+05*(sqrt(1.0+ux*ux+uy*uy+uz*uz)-1.0)>500.0e3)'
+    warpx_plot_filter_function='(x<1.0e-6) * (x>-1.0e-6)'
 )
 # reduce resolution of output fields
 coarsening_ratio = [4, 4]
@@ -154,7 +153,7 @@ ncell_field = []
 for (ncell_comp, cr) in zip([nx,nz], coarsening_ratio):
     ncell_field.append(int(ncell_comp/cr))
 field_diag = picmi.FieldDiagnostic(
-    name='diag1',
+    name='Python_LaserIonAcc2d_plt',
     grid=grid,
     period=100,
     number_of_cells=ncell_field,
