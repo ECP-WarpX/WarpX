@@ -136,7 +136,7 @@ def mirror_reflection():
 
         #step 1: extract the different parameters of the scraping buffer (normal, time, position)
         x = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0))
-        y = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'y', 0))
+        y = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'theta', 0))
         z = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'z', 0))
         ux = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'ux', 0))
         uy = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'uy', 0))
