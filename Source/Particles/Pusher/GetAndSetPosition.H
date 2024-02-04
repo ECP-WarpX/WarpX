@@ -34,7 +34,7 @@ void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
 
 #if defined(WARPX_DIM_RZ)
     amrex::ParticleReal const theta = p.rdata(T_PIdx::theta);
-    amrex::ParticleReal const r = p.pos(T_PIdx::x);
+    amrex::ParticleReal const r = p.pos(T_PIdx::r);
     x = r*std::cos(theta);
     y = r*std::sin(theta);
     z = p.pos(PIdx::z);
@@ -63,8 +63,11 @@ struct GetParticlePosition
 {
     using RType = amrex::ParticleReal;
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_XZ)
     const RType* AMREX_RESTRICT m_x = nullptr;
+    const RType* AMREX_RESTRICT m_z = nullptr;
+#elif defined(WARPX_DIM_RZ)
+    const RType* AMREX_RESTRICT m_r = nullptr;
     const RType* AMREX_RESTRICT m_z = nullptr;
 #elif defined(WARPX_DIM_3D)
     const RType* AMREX_RESTRICT m_x = nullptr;
@@ -97,8 +100,11 @@ struct GetParticlePosition
     {
         const auto& soa = a_pti.GetStructOfArrays();
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_XZ)
         m_x = soa.GetRealData(PIdx::x).dataPtr() + a_offset;
+        m_z = soa.GetRealData(PIdx::z).dataPtr() + a_offset;
+#elif defined(WARPX_DIM_RZ)
+        m_r = soa.GetRealData(PIdx::r).dataPtr() + a_offset;
         m_z = soa.GetRealData(PIdx::z).dataPtr() + a_offset;
 #elif defined(WARPX_DIM_3D)
         m_x = soa.GetRealData(PIdx::x).dataPtr() + a_offset;
@@ -119,7 +125,7 @@ struct GetParticlePosition
     void operator() (const long i, RType& x, RType& y, RType& z) const noexcept
     {
 #ifdef WARPX_DIM_RZ
-        RType const r = m_x[i];
+        RType const r = m_r[i];
         x = r*std::cos(m_theta[i]);
         y = r*std::sin(m_theta[i]);
         z = m_z[i];
@@ -147,7 +153,7 @@ struct GetParticlePosition
     void AsStored (const long i, RType& x, RType& y, RType& z) const noexcept
     {
 #ifdef WARPX_DIM_RZ
-        x = m_x[i];
+        x = m_r[i];
         y = m_theta[i];
         z = m_z[i];
 #elif WARPX_DIM_3D
@@ -178,8 +184,11 @@ struct SetParticlePosition
 {
     using RType = amrex::ParticleReal;
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_XZ)
     RType* AMREX_RESTRICT m_x;
+    RType* AMREX_RESTRICT m_z;
+#elif defined(WARPX_DIM_RZ)
+    RType* AMREX_RESTRICT m_r;
     RType* AMREX_RESTRICT m_z;
 #elif defined(WARPX_DIM_3D)
     RType* AMREX_RESTRICT m_x;
@@ -196,8 +205,11 @@ struct SetParticlePosition
     SetParticlePosition (const ptiType& a_pti, long a_offset = 0) noexcept
     {
         auto& soa = a_pti.GetStructOfArrays();
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_XZ)
         m_x = soa.GetRealData(PIdx::x).dataPtr() + a_offset;
+        m_z = soa.GetRealData(PIdx::z).dataPtr() + a_offset;
+#elif defined(WARPX_DIM_RZ)
+        m_r = soa.GetRealData(PIdx::r).dataPtr() + a_offset;
         m_z = soa.GetRealData(PIdx::z).dataPtr() + a_offset;
 #elif defined(WARPX_DIM_3D)
         m_x = soa.GetRealData(PIdx::x).dataPtr() + a_offset;
@@ -224,7 +236,7 @@ struct SetParticlePosition
 #endif
 #ifdef WARPX_DIM_RZ
         m_theta[i] = std::atan2(y, x);
-        m_x[i] = std::sqrt(x*x + y*y);
+        m_r[i] = std::sqrt(x*x + y*y);
         m_z[i] = z;
 #elif WARPX_DIM_3D
         m_x[i] = x;
@@ -252,7 +264,7 @@ struct SetParticlePosition
         amrex::ignore_unused(x,y);
 #endif
 #ifdef WARPX_DIM_RZ
-        m_x[i] = x;
+        m_r[i] = x;
         m_theta[i] = y;
         m_z[i] = z;
 #elif WARPX_DIM_3D

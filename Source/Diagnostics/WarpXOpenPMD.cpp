@@ -913,7 +913,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
         // reconstruct Cartesian positions for RZ simulations
         // r,z,theta -> x,y,z
 #if defined(WARPX_DIM_RZ)
-        auto const * const r = soa.GetRealData(PIdx::x).data();
+        auto const * const r = soa.GetRealData(PIdx::r).data();
         auto const * const theta = soa.GetRealData(PIdx::theta).data();
 
         if (write_real_comp[0]) {

@@ -23,19 +23,23 @@
 struct PIdx
 {
     enum {
-#if !defined (WARPX_DIM_1D_Z)
-        x,
+#ifdef WARPX_DIM_RZ
+        r,   ///< position in r
+#elif !defined (WARPX_DIM_1D_Z)
+        x,   ///< position in x
 #endif
 #if defined (WARPX_DIM_3D)
-        y,
+        y,   ///< position in y
 #endif
-        z,
-        w,      ///< weight
-        ux, uy, uz,
+        z,   ///< position in z
+        w,   ///< weight
+        ux,  ///< momentum in x
+        uy,  ///< momentum in y
+        uz,  ///< momentum in z
 #ifdef WARPX_DIM_RZ
-        theta,      ///< RZ needs all three position components
+        theta,  ///< azimuthal position angle
 #endif
-        nattribs    ///< number of compile-time attributes
+        nattribs  ///< number of compile-time attributes
     };
 };
 
@@ -78,7 +82,9 @@ public:
     NamedComponentParticleContainer (amrex::AmrParGDB* amr_pgdb)
     : amrex::ParticleContainerPureSoA<PIdx::nattribs, 0, T_Allocator>(amr_pgdb) {
         // build up the map of string names to particle component numbers
-#if !defined (WARPX_DIM_1D_Z)
+#ifdef WARPX_DIM_RZ
+        particle_comps["r"]  = PIdx::r;
+#elif !defined (WARPX_DIM_1D_Z)
         particle_comps["x"]  = PIdx::x;
 #endif
 #if defined (WARPX_DIM_3D)
@@ -89,6 +95,7 @@ public:
         particle_comps["ux"] = PIdx::ux;
         particle_comps["uy"] = PIdx::uy;
         particle_comps["uz"] = PIdx::uz;
+
 #ifdef WARPX_DIM_RZ
         particle_comps["theta"] = PIdx::theta;
 #endif
