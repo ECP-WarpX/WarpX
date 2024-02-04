@@ -18,6 +18,7 @@ import os
 import numpy as np
 
 from .Geometry import geometry
+from .WarpXParIter import register_WarpXParIter_extension
 
 
 class LibWarpX():
@@ -58,6 +59,9 @@ class LibWarpX():
             elif not name:
                 return ''
             cur = os.path.dirname(cur)
+
+    def _register_type_extensions(self):
+        register_WarpXParIter_extension(self.libwarpx_so)
 
     def load_library(self):
 
@@ -114,6 +118,8 @@ class LibWarpX():
             raise Exception(f"Dimensionality '{self.geometry_dim}' was not compiled in this Python install. Please recompile with -DWarpX_DIMS={_dims}")
 
         self.__version__ = self.libwarpx_so.__version__
+
+        self._register_type_extensions()
 
     def amrex_init(self, argv, mpi_comm=None):
         if mpi_comm is None: # or MPI is None:

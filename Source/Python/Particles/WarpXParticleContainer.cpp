@@ -26,13 +26,9 @@ void init_WarpXParticleContainer (py::module& m)
 {
     py::class_<
         WarpXParticleContainer,
-        amrex::ParticleContainerPureSoA<PIdx::nattribs, 0>
+        NamedComponentParticleContainer<amrex::DefaultAllocator>
     > wpc (m, "WarpXParticleContainer");
     wpc
-        .def("add_real_comp",
-            [](WarpXParticleContainer& pc, const std::string& name, bool comm) { pc.AddRealComp(name, comm); },
-            py::arg("name"), py::arg("comm")
-        )
         .def("add_n_particles",
             [](WarpXParticleContainer& pc, int lev,
                 int n, py::array_t<double> &x,
@@ -84,22 +80,6 @@ void init_WarpXParticleContainer (py::module& m)
             py::arg("nattr_real"), py::arg("attr_real"),
             py::arg("nattr_int"), py::arg("attr_int"),
             py::arg("uniqueparticles"), py::arg("id")=-1
-        )
-        .def("get_comp_index",
-            [](WarpXParticleContainer& pc, std::string comp_name)
-            {
-                auto particle_comps = pc.getParticleComps();
-                return particle_comps.at(comp_name);
-            },
-            py::arg("comp_name")
-        )
-        .def("get_icomp_index",
-            [](WarpXParticleContainer& pc, std::string comp_name)
-            {
-                auto particle_comps = pc.getParticleiComps();
-                return particle_comps.at(comp_name);
-            },
-            py::arg("comp_name")
         )
         .def("num_local_tiles_at_level",
             &WarpXParticleContainer::numLocalTilesAtLevel,
