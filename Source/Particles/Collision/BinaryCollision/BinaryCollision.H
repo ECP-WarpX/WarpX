@@ -110,8 +110,10 @@ public:
 
     BinaryCollision ( BinaryCollision const &)             = default;
     BinaryCollision& operator= ( BinaryCollision const & ) = default;
-    BinaryCollision ( BinaryCollision&& )            noexcept = default;
-    BinaryCollision& operator= ( BinaryCollision&& ) noexcept = default;
+
+
+    BinaryCollision ( BinaryCollision&& )                  = default;
+    BinaryCollision& operator= ( BinaryCollision&& )       = default;
 
     /** Perform the collisions
      *
