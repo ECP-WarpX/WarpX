@@ -173,6 +173,7 @@ public:
     std::string m_eta_expression = "0.0";
     std::unique_ptr<amrex::Parser> m_resistivity_parser;
     amrex::ParserExecutor<2> m_eta;
+    bool m_resistivity_has_J_dependence = false;
 
     /** External current */
     std::string m_Jx_ext_grid_function = "0.0";

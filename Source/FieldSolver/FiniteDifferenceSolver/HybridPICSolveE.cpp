@@ -433,6 +433,7 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
     // get hybrid model parameters
     const auto eta = hybrid_model->m_eta;
     const auto rho_floor = hybrid_model->m_n_floor * PhysConst::q_e;
+    const auto resistivity_has_J_dependence = hybrid_model->m_resistivity_has_J_dependence;
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
@@ -590,10 +591,13 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Real rho_val = Interp(rho, nodal, Er_stag, coarsen, i, j, 0, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jr_val = Interp(Jr, Jr_stag, Er_stag, coarsen, i, j, 0, 0);
-                Real jt_val = Interp(Jt, Jt_stag, Er_stag, coarsen, i, j, 0, 0);
-                Real jz_val = Interp(Jz, Jz_stag, Er_stag, coarsen, i, j, 0, 0);
-                Real jtot_val = sqrt(pow(jr_val, 2) + pow(jt_val, 2) + pow(jz_val,2));
+                Real jtot_val = 0.;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    Real jr_val = Interp(Jr, Jr_stag, Er_stag, coarsen, i, j, 0, 0);
+                    Real jt_val = Interp(Jt, Jt_stag, Er_stag, coarsen, i, j, 0, 0);
+                    Real jz_val = Interp(Jz, Jz_stag, Er_stag, coarsen, i, j, 0, 0);
+                    jtot_val = sqrt(pow(jr_val, 2) + pow(jt_val, 2) + pow(jz_val,2));
+                }
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
@@ -629,10 +633,13 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Real rho_val = Interp(rho, nodal, Er_stag, coarsen, i, j, 0, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jr_val = Interp(Jr, Jr_stag, Et_stag, coarsen, i, j, 0, 0);
-                Real jt_val = Interp(Jt, Jt_stag, Et_stag, coarsen, i, j, 0, 0);
-                Real jz_val = Interp(Jz, Jz_stag, Et_stag, coarsen, i, j, 0, 0);
-                Real jtot_val = sqrt(pow(jr_val, 2) + pow(jt_val, 2) + pow(jz_val,2));
+                Real jtot_val = 0.;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    Real jr_val = Interp(Jr, Jr_stag, Et_stag, coarsen, i, j, 0, 0);
+                    Real jt_val = Interp(Jt, Jt_stag, Et_stag, coarsen, i, j, 0, 0);
+                    Real jz_val = Interp(Jz, Jz_stag, Et_stag, coarsen, i, j, 0, 0);
+                    jtot_val = sqrt(pow(jr_val, 2) + pow(jt_val, 2) + pow(jz_val,2));
+                }
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
@@ -660,10 +667,13 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jr_val = Interp(Jr, Jr_stag, Ez_stag, coarsen, i, j, 0, 0);
-                Real jt_val = Interp(Jt, Jt_stag, Ez_stag, coarsen, i, j, 0, 0);
-                Real jz_val = Interp(Jz, Jz_stag, Ez_stag, coarsen, i, j, 0, 0);
-                Real jtot_val = sqrt(pow(jr_val, 2) + pow(jt_val, 2) + pow(jz_val,2));
+                Real jtot_val = 0.;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    Real jr_val = Interp(Jr, Jr_stag, Ez_stag, coarsen, i, j, 0, 0);
+                    Real jt_val = Interp(Jt, Jt_stag, Ez_stag, coarsen, i, j, 0, 0);
+                    Real jz_val = Interp(Jz, Jz_stag, Ez_stag, coarsen, i, j, 0, 0);
+                    jtot_val = sqrt(pow(jr_val, 2) + pow(jt_val, 2) + pow(jz_val,2));
+                }
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
@@ -717,6 +727,7 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
     // get hybrid model parameters
     const auto eta = hybrid_model->m_eta;
     const auto rho_floor = hybrid_model->m_n_floor * PhysConst::q_e;
+    const auto resistivity_has_J_dependence = hybrid_model->m_resistivity_has_J_dependence;
 
     // Index type required for interpolating fields from their respective
     // staggering to the Ex, Ey, Ez locations
@@ -872,10 +883,13 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Real rho_val = Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0);
                 
                 // Interpolate current to appropriate staggering to match E field
-                Real jx_val = Interp(Jx, Jx_stag, Ex_stag, coarsen, i, j, k, 0);
-                Real jy_val = Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
-                Real jz_val = Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
-                Real jtot_val = sqrt(pow(jx_val, 2) + pow(jy_val, 2) + pow(jz_val,2));
+                Real jtot_val = 0.;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    Real jx_val = Interp(Jx, Jx_stag, Ex_stag, coarsen, i, j, k, 0);
+                    Real jy_val = Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
+                    Real jz_val = Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
+                    jtot_val = sqrt(pow(jx_val, 2) + pow(jy_val, 2) + pow(jz_val,2));
+                }
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
@@ -908,10 +922,13 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Real rho_val = Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jx_val = Interp(Jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
-                Real jy_val = Interp(Jy, Jy_stag, Ey_stag, coarsen, i, j, k, 0);
-                Real jz_val = Interp(Jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
-                Real jtot_val = sqrt(pow(jx_val, 2) + pow(jy_val, 2) + pow(jz_val,2));
+                Real jtot_val = 0.;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    Real jx_val = Interp(Jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
+                    Real jy_val = Interp(Jy, Jy_stag, Ey_stag, coarsen, i, j, k, 0);
+                    Real jz_val = Interp(Jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
+                    jtot_val = sqrt(pow(jx_val, 2) + pow(jy_val, 2) + pow(jz_val,2));
+                }
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
@@ -938,10 +955,13 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jx_val = Interp(Jx, Jx_stag, Ex_stag, coarsen, i, j, k, 0);
-                Real jy_val = Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
-                Real jz_val = Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
-                Real jtot_val = sqrt(pow(jx_val, 2) + pow(jy_val, 2) + pow(jz_val,2));
+                Real jtot_val = 0.;
+                if (include_resistivity_term && resistivity_has_J_dependence) {
+                    Real jx_val = Interp(Jx, Jx_stag, Ex_stag, coarsen, i, j, k, 0);
+                    Real jy_val = Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
+                    Real jz_val = Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
+                    jtot_val = sqrt(pow(jx_val, 2) + pow(jy_val, 2) + pow(jz_val,2));
+                }
 
                 // safety condition since we divide by rho_val later
                 if (rho_val < rho_floor) { rho_val = rho_floor; }
