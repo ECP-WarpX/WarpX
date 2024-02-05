@@ -20,38 +20,6 @@ mkdir -p ${SW_DIR}
 # General extra dependencies ##################################################
 #
 
-# BLAS++ (for PSATD+RZ)
-if [ -d $HOME/src/blaspp ]
-then
-  cd $HOME/src/blaspp
-  git fetch --prune
-  git checkout master
-  git pull
-  cd -
-else
-  git clone https://github.com/icl-utk-edu/blaspp.git $HOME/src/blaspp
-fi
-rm -rf $HOME/src/blaspp-frontier-gpu-build
-cmake -S $HOME/src/blaspp -B $HOME/src/blaspp-frontier-gpu-build -Duse_openmp=OFF -Dgpu_backend=hip -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=${SW_DIR}/blaspp-master
-cmake --build $HOME/src/blaspp-frontier-gpu-build --target install --parallel 16
-rm -rf $HOME/src/blaspp-frontier-gpu-build
-
-# LAPACK++ (for PSATD+RZ)
-if [ -d $HOME/src/lapackpp ]
-then
-  cd $HOME/src/lapackpp
-  git fetch --prune
-  git checkout master
-  git pull
-  cd -
-else
-  git clone https://github.com/icl-utk-edu/lapackpp.git $HOME/src/lapackpp
-fi
-rm -rf $HOME/src/lapackpp-frontier-gpu-build
-CXXFLAGS="${CXXFLAGS} -DLAPACK_FORTRAN_ADD_" cmake -S $HOME/src/lapackpp -B $HOME/src/lapackpp-frontier-gpu-build -DCMAKE_CXX_STANDARD=17 -Dbuild_tests=OFF -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_PREFIX=${SW_DIR}/lapackpp-master
-cmake --build $HOME/src/lapackpp-frontier-gpu-build --target install --parallel 16
-rm -rf $HOME/src/lapackpp-frontier-gpu-build
-
 # c-blosc (I/O compression)
 if [ -d $HOME/src/c-blosc ]
 then
