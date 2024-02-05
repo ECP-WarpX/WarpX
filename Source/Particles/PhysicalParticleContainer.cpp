@@ -198,8 +198,8 @@ namespace
      * and avoid any possible undefined behavior before the next call to redistribute) and sets
      * the particle id to -1 so that it can be effectively deleted.
      *
-     * \param p particle aos data
-     * \param pa particle soa data
+     * \param idcpu particle id soa data
+     * \param pa particle real soa data
      * \param ip index for soa data
      * \param do_field_ionization whether species has ionization
      * \param pi ionization level data
@@ -210,20 +210,21 @@ namespace
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void ZeroInitializeAndSetNegativeID (
-        ParticleType& p, const GpuArray<ParticleReal*,PIdx::nattribs>& pa, long& ip,
+        uint64_t * AMREX_RESTRICT idcpu,
+        const GpuArray<ParticleReal*,PIdx::nattribs>& pa, long& ip,
         const bool& do_field_ionization, int* pi
 #ifdef WARPX_QED
-        ,const bool& has_quantum_sync, amrex::ParticleReal* p_optical_depth_QSR
-        ,const bool& has_breit_wheeler, amrex::ParticleReal* p_optical_depth_BW
+        ,const bool& has_quantum_sync, amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR
+        ,const bool& has_breit_wheeler, amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_BW
 #endif
         ) noexcept
     {
-        p.pos(0) = 0._rt;
+        pa[PIdx::z][ip] = 0._rt;
 #if (AMREX_SPACEDIM >= 2)
-        p.pos(1) = 0._rt;
+        pa[PIdx::x][ip] = 0._rt;
 #endif
 #if defined(WARPX_DIM_3D)
-        p.pos(2) = 0._rt;
+        pa[PIdx::y][ip] = 0._rt;
 #endif
         pa[PIdx::w ][ip] = 0._rt;
         pa[PIdx::ux][ip] = 0._rt;
@@ -238,7 +239,7 @@ namespace
         if (has_breit_wheeler) {p_optical_depth_BW[ip] = 0._rt;}
 #endif
 
-        p.id() = -1;
+        idcpu[ip] = amrex::ParticleIdCpus::Invalid;
     }
 }
 
@@ -780,11 +781,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(PlasmaInjector & plasma_injector,
 
 void
 PhysicalParticleContainer::DefaultInitializeRuntimeAttributes (
-                    amrex::ParticleTile<amrex::Particle<NStructReal, NStructInt>,
-                                        NArrayReal, NArrayInt,
-                                        amrex::PinnedArenaAllocator>& pinned_tile,
-                    const int n_external_attr_real,
-                    const int n_external_attr_int)
+    typename ContainerLike<amrex::PinnedArenaAllocator>::ParticleTileType& pinned_tile,
+    int n_external_attr_real,
+    int n_external_attr_int)
 {
     ParticleCreation::DefaultInitializeRuntimeAttributes(pinned_tile,
                                        n_external_attr_real, n_external_attr_int,
@@ -1084,7 +1083,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         const int max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
 
         // Update NextID to include particles created in this function
-        Long pid;
+        int pid;
 #ifdef AMREX_USE_OMP
 #pragma omp critical (add_plasma_nextid)
 #endif
@@ -1093,7 +1092,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             ParticleType::NextID(pid+max_new_particles);
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            static_cast<Long>(pid + max_new_particles) < LastParticleID,
+            static_cast<amrex::Long>(pid) + static_cast<amrex::Long>(max_new_particles) < LongParticleIds::LastParticleID,
             "ERROR: overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
@@ -1104,16 +1103,16 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             DefineAndReturnParticleTile(lev, grid_id, tile_id);
         }
 
-        auto old_size = particle_tile.GetArrayOfStructs().size();
+        auto old_size = particle_tile.size();
         auto new_size = old_size + max_new_particles;
         particle_tile.resize(new_size);
 
-        ParticleType* pp = particle_tile.GetArrayOfStructs()().data() + old_size;
         auto& soa = particle_tile.GetStructOfArrays();
         GpuArray<ParticleReal*,PIdx::nattribs> pa;
         for (int ia = 0; ia < PIdx::nattribs; ++ia) {
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
+        uint64_t * AMREX_RESTRICT pa_idcpu = soa.GetIdCPUData().data() + old_size;
         // user-defined integer and real attributes
         const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
         const auto n_user_real_attribs = static_cast<int>(m_user_real_attribs.size());
@@ -1226,9 +1225,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 long ip = poffset[index] + i_part;
-                ParticleType& p = pp[ip];
-                p.id() = pid+ip;
-                p.cpu() = cpuid;
+                pa_idcpu[ip] = amrex::SetParticleIDandCPU(pid+ip, cpuid);
                 const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
                   // In the refined injection region: use refinement ratio `lrrfac`
                   inj_pos->getPositionUnitBox(i_part, lrrfac, engine) :
@@ -1238,7 +1235,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
 #if defined(WARPX_DIM_3D)
                 if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
-                    ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+                    ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
@@ -1249,7 +1246,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
-                    ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+                    ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
@@ -1260,7 +1257,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 #else
                 amrex::ignore_unused(j,k);
                 if (!tile_realbox.contains(XDim3{pos.z,0.0_rt,0.0_rt})) {
-                    ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+                    ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
@@ -1299,7 +1296,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     const Real z0 = applyBallisticCorrection(pos, inj_mom, gamma_boost,
                                                              beta_boost, t);
                     if (!inj_pos->insideBounds(xb, yb, z0)) {
-                        ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+                        ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
@@ -1313,7 +1310,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
 
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
-                        ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+                        ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
@@ -1331,7 +1328,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     // If the particle is not within the lab-frame zmin, zmax, etc.
                     // go to the next generated particle.
                     if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
-                        ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+                        ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
@@ -1343,7 +1340,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                     dens = inj_rho->getDensity(pos.x, pos.y, z0_lab);
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
-                        ZeroInitializeAndSetNegativeID(p, pa, ip, loc_do_field_ionization, pi
+                        ZeroInitializeAndSetNegativeID(pa_idcpu, pa, ip, loc_do_field_ionization, pi
 #ifdef WARPX_QED
                                                    ,loc_has_quantum_sync, p_optical_depth_QSR
                                                    ,loc_has_breit_wheeler, p_optical_depth_BW
@@ -1410,17 +1407,17 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
                 pa[PIdx::uz][ip] = u.z;
 
 #if defined(WARPX_DIM_3D)
-                p.pos(0) = pos.x;
-                p.pos(1) = pos.y;
-                p.pos(2) = pos.z;
+                pa[PIdx::x][ip] = pos.x;
+                pa[PIdx::y][ip] = pos.y;
+                pa[PIdx::z][ip] = pos.z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 #ifdef WARPX_DIM_RZ
                 pa[PIdx::theta][ip] = theta;
 #endif
-                p.pos(0) = xb;
-                p.pos(1) = pos.z;
+                pa[PIdx::x][ip] = xb;
+                pa[PIdx::z][ip] = pos.z;
 #else
-                p.pos(0) = pos.z;
+                pa[PIdx::z][ip] = pos.z;
 #endif
             }
         });
@@ -1645,7 +1642,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         const int max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
 
         // Update NextID to include particles created in this function
-        Long pid;
+        int pid;
 #ifdef AMREX_USE_OMP
 #pragma omp critical (add_plasma_nextid)
 #endif
@@ -1654,23 +1651,23 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             ParticleType::NextID(pid+max_new_particles);
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            static_cast<Long>(pid + max_new_particles) < LastParticleID,
+            static_cast<amrex::Long>(pid) + static_cast<amrex::Long>(max_new_particles) < LongParticleIds::LastParticleID,
             "overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
 
         auto& particle_tile = tmp_pc.DefineAndReturnParticleTile(0, grid_id, tile_id);
 
-        auto old_size = particle_tile.GetArrayOfStructs().size();
+        auto old_size = particle_tile.size();
         auto new_size = old_size + max_new_particles;
         particle_tile.resize(new_size);
 
-        ParticleType* pp = particle_tile.GetArrayOfStructs()().data() + old_size;
         auto& soa = particle_tile.GetStructOfArrays();
         GpuArray<ParticleReal*,PIdx::nattribs> pa;
         for (int ia = 0; ia < PIdx::nattribs; ++ia) {
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
+        uint64_t * AMREX_RESTRICT pa_idcpu = soa.GetIdCPUData().data() + old_size;
 
         // user-defined integer and real attributes
         const auto n_user_int_attribs = static_cast<int>(m_user_int_attribs.size());
@@ -1768,9 +1765,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
             for (int i_part = 0; i_part < pcounts[index]; ++i_part)
             {
                 const long ip = poffset[index] + i_part;
-                ParticleType& p = pp[ip];
-                p.id() = pid+ip;
-                p.cpu() = cpuid;
+                pa_idcpu[ip] = amrex::SetParticleIDandCPU(pid+ip, cpuid);
 
                 // This assumes the flux_pos is of type InjectorPositionRandomPlane
                 const XDim3 r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv)) ?
@@ -1795,19 +1790,19 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // the particles will be within the domain.
 #if defined(WARPX_DIM_3D)
                 if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.x,ppos.y,ppos.z})) {
-                    p.id() = -1;
+                    pa_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
                     continue;
                 }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 amrex::ignore_unused(k);
                 if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.x,ppos.z,0.0_prt})) {
-                    p.id() = -1;
+                    pa_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
                     continue;
                 }
 #else
                 amrex::ignore_unused(j,k);
                 if (!ParticleUtils::containsInclusive(tile_realbox, XDim3{ppos.z,0.0_prt,0.0_prt})) {
-                    p.id() = -1;
+                    pa_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
                     continue;
                 }
 #endif
@@ -1815,7 +1810,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 // If the particle's initial position is not within or on the species's
                 // xmin, xmax, ymin, ymax, zmin, zmax, go to the next generated particle.
                 if (!flux_pos->insideBoundsInclusive(ppos.x, ppos.y, ppos.z)) {
-                    p.id() = -1;
+                    pa_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
                     continue;
                 }
 
@@ -1848,8 +1843,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 #endif
                 Real flux = inj_flux->getFlux(ppos.x, ppos.y, ppos.z, t);
                 // Remove particle if flux is negative or 0
-                if ( flux <=0 ){
-                    p.id() = -1;
+                if (flux <= 0) {
+                    pa_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
                     continue;
                 }
 
@@ -1858,7 +1853,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 }
 
 #ifdef WARPX_QED
-                if(loc_has_quantum_sync){
+                if (loc_has_quantum_sync) {
                     p_optical_depth_QSR[ip] = quantum_sync_get_opt(engine);
                 }
 
@@ -1908,18 +1903,18 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
                 UpdatePosition(ppos.x, ppos.y, ppos.z, pu.x, pu.y, pu.z, t_fract);
 
 #if defined(WARPX_DIM_3D)
-                p.pos(0) = ppos.x;
-                p.pos(1) = ppos.y;
-                p.pos(2) = ppos.z;
+                pa[PIdx::x][ip] = ppos.x;
+                pa[PIdx::y][ip] = ppos.y;
+                pa[PIdx::z][ip] = ppos.z;
 #elif defined(WARPX_DIM_RZ)
                 pa[PIdx::theta][ip] = std::atan2(ppos.y, ppos.x);
-                p.pos(0) = std::sqrt(ppos.x*ppos.x + ppos.y*ppos.y);
-                p.pos(1) = ppos.z;
+                pa[PIdx::x][ip] = std::sqrt(ppos.x*ppos.x + ppos.y*ppos.y);
+                pa[PIdx::z][ip] = ppos.z;
 #elif defined(WARPX_DIM_XZ)
-                p.pos(0) = ppos.x;
-                p.pos(1) = ppos.z;
+                pa[PIdx::x][ip] = ppos.x;
+                pa[PIdx::z][ip] = ppos.z;
 #else
-                p.pos(0) = ppos.z;
+                pa[PIdx::z][ip] = ppos.z;
 #endif
             }
         });
@@ -2342,20 +2337,22 @@ PhysicalParticleContainer::SplitParticles (int lev)
             split_offset[1] /= ppc_nd[1];
             split_offset[2] /= ppc_nd[2];
         }
-        // particle Array Of Structs data
-        auto& particles = pti.GetArrayOfStructs();
         // particle Struct Of Arrays data
         auto& attribs = pti.GetAttribs();
         auto& wp  = attribs[PIdx::w ];
         auto& uxp = attribs[PIdx::ux];
         auto& uyp = attribs[PIdx::uy];
         auto& uzp = attribs[PIdx::uz];
+
+        ParticleTileType& ptile = ParticlesAt(lev, pti);
+        auto& soa = ptile.GetStructOfArrays();
+        uint64_t * const AMREX_RESTRICT idcpu = soa.GetIdCPUData().data();
+
         const long np = pti.numParticles();
         for(int i=0; i<np; i++){
             ParticleReal xp, yp, zp;
             GetPosition(i, xp, yp, zp);
-            auto& p = particles[i];
-            if (p.id() == DoSplitParticleID){
+            if (idcpu[i] == LongParticleIds::DoSplitParticleID){
                 // If particle is tagged, split it and put the
                 // split particles in local arrays psplit_x etc.
                 np_split_to_add += np_split;
@@ -2460,7 +2457,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                 }
 #endif
                 // invalidate the particle
-                p.id() = -p.id();
+                idcpu[i] = amrex::ParticleIdCpus::Invalid;
             }
         }
     }
@@ -2483,10 +2480,16 @@ PhysicalParticleContainer::SplitParticles (int lev)
     amrex::Vector<amrex::Vector<int>> attr_int;
     pctmp_split.AddNParticles(lev,
                               np_split_to_add,
-                              xp,  yp,  zp, uxp, uyp, uzp,
-                              1, attr,
+                              xp,
+                              yp,
+                              zp,
+                              uxp,
+                              uyp,
+                              uzp,
+                              1,
+                              attr,
                               0, attr_int,
-                              1, NoSplitParticleID);
+                              1, LongParticleIds::NoSplitParticleID);
     // Copy particles from tmp to current particle container
     constexpr bool local_flag = true;
     addParticles(pctmp_split,local_flag);
@@ -2984,7 +2987,7 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
 
     const Dim3 lo = lbound(box);
 
-    bool galerkin_interpolation = WarpX::galerkin_interpolation;
+    int depos_type = WarpX::current_deposition_algo;
     int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
@@ -3107,8 +3110,8 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter& pti,
             doGatherShapeNImplicit(xp_n, yp_n, zp_n, xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                                   nox, galerkin_interpolation);
+                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes, nox,
+                                   depos_type );
         }
 
         // Externally applied E and B-field in Cartesian co-ordinates
