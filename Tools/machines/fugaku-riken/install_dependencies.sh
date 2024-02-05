@@ -35,6 +35,7 @@ fi
   rm -rf ${SRC_DIR}/c-blosc-fugaku-build
   cmake -S ${SRC_DIR}/c-blosc -B ${SRC_DIR}/c-blosc-fugaku-build -DBUILD_SHARED_LIBS=OFF -DBUILD_SHARED=OFF -DBUILD_STATIC=ON -DBUILD_TESTS=OFF -DBUILD_FUZZERS=OFF -DBUILD_BENCHMARKS=OFF -DDEACTIVATE_AVX2=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/c-blosc-1.21.1-install
   cmake --build ${SRC_DIR}/c-blosc-fugaku-build --target install --parallel 48
+  rm -rf ${SRC_DIR}/c-blosc-fugaku-build
 
 # ADIOS2 (I/O)
 if [ -d ${SRC_DIR}/c-blosc ]
@@ -49,3 +50,4 @@ fi
 rm -rf ${SRC_DIR}/adios2-fugaku-build
 cmake -S ${SRC_DIR}/adios2 -B ${SRC_DIR}/adios2-fugaku-build -DBUILD_SHARED_LIBS=OFF -DADIOS2_USE_Blosc=ON -DBUILD_TESTING=OFF -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DADIOS2_USE_ZeroMQ=OFF -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2-2.8.3-install
 cmake --build ${SRC_DIR}/adios2-fugaku-build --target install -j 48
+rm -rf ${SRC_DIR}/adios2-fugaku-build
