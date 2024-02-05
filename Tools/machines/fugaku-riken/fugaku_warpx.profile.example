@@ -21,10 +21,10 @@ export CMAKE_PREFIX_PATH=${HOME}/sw/fugaku/a64fx/c-blosc-1.21.1-install:$CMAKE_P
 export CMAKE_PREFIX_PATH=${HOME}/sw/fugaku/a64fx/adios2-2.8.3-install:$CMAKE_PREFIX_PATH
 
 # compiler environment hints
-export CC="${which mpifcc}"
-export CXX="${which mpiFCC}"
+export CC=$(which mpifcc)
+export CXX=$(which mpiFCC)
 export CFLAGS="-O3 -Nclang -Nlibomp -Klib -g -DNDEBUG"
-export CXXFLAGS="${CFLAGS}"
+export CXXFLAGS="-O3 -Nclang -Nlibomp -Klib -g -DNDEBUG"
 
 # avoid harmless warning messages "[WARN] xos LPG [...]"
 export LD_LIBRARY_PATH=/lib64:$LD_LIBRARY_PATH
