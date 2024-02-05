@@ -591,12 +591,12 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Real rho_val = Interp(rho, nodal, Er_stag, coarsen, i, j, 0, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jtot_val = 0.;
+                Real jtot_val = 0._rt;
                 if (include_resistivity_term && resistivity_has_J_dependence) {
                     Real jr_val = Interp(Jr, Jr_stag, Er_stag, coarsen, i, j, 0, 0);
                     Real jt_val = Interp(Jt, Jt_stag, Er_stag, coarsen, i, j, 0, 0);
                     Real jz_val = Interp(Jz, Jz_stag, Er_stag, coarsen, i, j, 0, 0);
-                    jtot_val = static_cast<Real>(sqrt(jr_val*jr_val + jt_val*jt_val + jz_val*jz_val));
+                    jtot_val = std::sqrt(jr_val*jr_val + jt_val*jt_val + jz_val*jz_val);
                 }
 
                 // safety condition since we divide by rho_val later
@@ -633,12 +633,12 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Real rho_val = Interp(rho, nodal, Er_stag, coarsen, i, j, 0, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jtot_val = 0.;
+                Real jtot_val = 0._rt;
                 if (include_resistivity_term && resistivity_has_J_dependence) {
                     Real jr_val = Interp(Jr, Jr_stag, Et_stag, coarsen, i, j, 0, 0);
                     Real jt_val = Interp(Jt, Jt_stag, Et_stag, coarsen, i, j, 0, 0);
                     Real jz_val = Interp(Jz, Jz_stag, Et_stag, coarsen, i, j, 0, 0);
-                    jtot_val = static_cast<Real>(sqrt(jr_val*jr_val + jt_val*jt_val + jz_val*jz_val));
+                    jtot_val = std::sqrt(jr_val*jr_val + jt_val*jt_val + jz_val*jz_val);
                 }
 
                 // safety condition since we divide by rho_val later
@@ -667,12 +667,12 @@ void FiniteDifferenceSolver::HybridPICSolveECylindrical (
                 Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jtot_val = 0.;
+                Real jtot_val = 0._rt;
                 if (include_resistivity_term && resistivity_has_J_dependence) {
                     Real jr_val = Interp(Jr, Jr_stag, Ez_stag, coarsen, i, j, 0, 0);
                     Real jt_val = Interp(Jt, Jt_stag, Ez_stag, coarsen, i, j, 0, 0);
                     Real jz_val = Interp(Jz, Jz_stag, Ez_stag, coarsen, i, j, 0, 0);
-                    jtot_val = static_cast<Real>(sqrt(jr_val*jr_val + jt_val*jt_val + jz_val*jz_val));
+                    jtot_val = std::sqrt(jr_val*jr_val + jt_val*jt_val + jz_val*jz_val);
                 }
 
                 // safety condition since we divide by rho_val later
@@ -883,12 +883,12 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Real rho_val = Interp(rho, nodal, Ex_stag, coarsen, i, j, k, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jtot_val = 0.;
+                Real jtot_val = 0._rt;
                 if (include_resistivity_term && resistivity_has_J_dependence) {
                     Real jx_val = Interp(Jx, Jx_stag, Ex_stag, coarsen, i, j, k, 0);
                     Real jy_val = Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
                     Real jz_val = Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
-                    jtot_val = static_cast<Real>(sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val));
+                    jtot_val = std::sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val);
                 }
 
                 // safety condition since we divide by rho_val later
@@ -922,12 +922,12 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Real rho_val = Interp(rho, nodal, Ey_stag, coarsen, i, j, k, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jtot_val = 0.;
+                Real jtot_val = 0._rt;
                 if (include_resistivity_term && resistivity_has_J_dependence) {
                     Real jx_val = Interp(Jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
                     Real jy_val = Interp(Jy, Jy_stag, Ey_stag, coarsen, i, j, k, 0);
                     Real jz_val = Interp(Jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
-                    jtot_val = static_cast<Real>(sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val));
+                    jtot_val = std::sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val);
                 }
 
                 // safety condition since we divide by rho_val later
@@ -955,12 +955,12 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 Real rho_val = Interp(rho, nodal, Ez_stag, coarsen, i, j, k, 0);
 
                 // Interpolate current to appropriate staggering to match E field
-                Real jtot_val = 0.;
+                Real jtot_val = 0._rt;
                 if (include_resistivity_term && resistivity_has_J_dependence) {
                     Real jx_val = Interp(Jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
                     Real jy_val = Interp(Jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
                     Real jz_val = Interp(Jz, Jz_stag, Ez_stag, coarsen, i, j, k, 0);
-                    jtot_val = static_cast<Real>(sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val));
+                    jtot_val = std::sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val);
                 }
 
                 // safety condition since we divide by rho_val later
