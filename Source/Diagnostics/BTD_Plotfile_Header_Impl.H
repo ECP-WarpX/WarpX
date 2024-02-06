@@ -88,7 +88,7 @@ public:
     /** Set the ith-dimension physical co-ordinate of the lower corner.
      *  \param[in] dim dimension modified.
      *  \param[in] lo  lower-corner physical coordinate to be stored in dimension, dim.
-    **/
+     **/
     void set_problo (int dim, amrex::Real lo) { m_prob_lo[dim] = lo;}
     /** Set the ith-dimension physical co-ordinate of the upper corner.
      *  \param[in] dim dimension modified.
