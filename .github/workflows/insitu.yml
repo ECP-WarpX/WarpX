@@ -28,7 +28,7 @@ jobs:
           -DWarpX_COMPUTE=NOACC
     - name: Build
       run: |
-        cmake --build build -j 2
+        cmake --build build -j 4
 
   ascent:
     name: Ascent
@@ -51,7 +51,7 @@ jobs:
     - name: Build
       run: |
         . /ascent_docker_setup_env.sh
-        cmake --build build -j 2
+        cmake --build build -j 4
     - name: Test
       run: |
         cp Examples/Physics_applications/laser_acceleration/inputs_3d .

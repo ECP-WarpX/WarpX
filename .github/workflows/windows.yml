@@ -38,7 +38,7 @@ jobs:
               -DWarpX_MPI=OFF             `
               -DWarpX_PYTHON=ON
         if(!$?) { Exit $LASTEXITCODE }
-        cmake --build build --config Debug --parallel 2
+        cmake --build build --config Debug --parallel 4
         if(!$?) { Exit $LASTEXITCODE }
 
         python3 -m pip install --upgrade pip
@@ -96,7 +96,7 @@ jobs:
               -DWarpX_MPI=OFF               ^
               -DWarpX_OPENPMD=ON
         if errorlevel 1 exit 1
-        cmake --build build --config Release --parallel 2
+        cmake --build build --config Release --parallel 4
         if errorlevel 1 exit 1
 
         cmake --build build --config Release --target install
