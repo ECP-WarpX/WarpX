@@ -17,7 +17,7 @@ jobs:
       # For macOS, Ninja is slower than the default:
       #CMAKE_GENERATOR: Ninja
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: install dependencies
       run: |
         set +e
@@ -45,7 +45,7 @@ jobs:
         python3 -m pip install --upgrade build packaging setuptools wheel
         python3 -m pip install --upgrade mpi4py
     - name: CCache Cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: /Users/runner/Library/Caches/ccache
         key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
@@ -97,7 +97,7 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
         run: |
           echo $PR_NUMBER > pr_number.txt
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: pr_number
           path: pr_number.txt
