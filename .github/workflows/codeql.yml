@@ -75,7 +75,7 @@ jobs:
           export CCACHE_MAXSIZE=100M
           ccache -z
 
-          $CMAKE --build build -j 2
+          $CMAKE --build build -j 4
 
           ccache -s
           du -hs ~/.cache/ccache
@@ -83,7 +83,7 @@ jobs:
           # Make sure CodeQL has something to do
           touch Source/Utils/WarpXVersion.cpp
           export CCACHE_DISABLE=1
-          $CMAKE --build build -j 2
+          $CMAKE --build build -j 4
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2

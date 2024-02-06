@@ -37,7 +37,7 @@ jobs:
 
         cmake -S . -B build_clang_tidy \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_DIMS="1;2;3;RZ"      \
+          -DWarpX_DIMS="1;2;RZ;3"      \
           -DWarpX_MPI=ON               \
           -DWarpX_COMPUTE=OMP          \
           -DWarpX_PSATD=ON             \
@@ -47,10 +47,10 @@ jobs:
           -DWarpX_PRECISION=SINGLE     \
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
-        cmake --build build_clang_tidy -j 2
+        cmake --build build_clang_tidy -j 4
 
         ${{github.workspace}}/.github/workflows/source/makeMakefileForClangTidy.py --input ${{github.workspace}}/ccache.log.txt
-        make -j2 --keep-going -f clang-tidy-ccache-misses.mak \
+        make -j4 --keep-going -f clang-tidy-ccache-misses.mak \
             CLANG_TIDY=clang-tidy \
             CLANG_TIDY_ARGS="--config-file=${{github.workspace}}/.clang-tidy --warnings-as-errors=*"
 
