@@ -112,8 +112,8 @@ public:
     BinaryCollision& operator= ( BinaryCollision const & ) = default;
 
 
-    BinaryCollision ( BinaryCollision&& )                  = default;
-    BinaryCollision& operator= ( BinaryCollision&& )       = default;
+    BinaryCollision ( BinaryCollision&& )                  = delete;
+    BinaryCollision& operator= ( BinaryCollision&& )       = delete;
 
     /** Perform the collisions
      *
