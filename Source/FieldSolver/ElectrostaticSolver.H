@@ -52,7 +52,7 @@ namespace ElectrostaticSolver {
         void buildParsers ();
         void buildParsersEB ();
 
-        /* \brief Sets the EB potential string and updates the parsers
+        /* \brief Sets the EB potential string and updates the function parser
          *
          * \param [in] potential The string value of the potential
          */

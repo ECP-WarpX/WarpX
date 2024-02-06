@@ -37,14 +37,14 @@ Create it now:
 
 .. code-block:: bash
 
-   cp $HOME/src/warpx/Tools/machines/quartz-llnl/quartz/quartz_warpx.profile.example $HOME/quartz_warpx.profile
+   cp $HOME/src/warpx/Tools/machines/quartz-llnl/quartz_warpx.profile.example $HOME/quartz_warpx.profile
 
 .. dropdown:: Script Details
    :color: light
    :icon: info
    :animate: fade-in-slide-down
 
-   .. literalinclude:: ../../../../Tools/machines/quartz-llnl/quartz/quartz_warpx.profile.example
+   .. literalinclude:: ../../../../Tools/machines/quartz-llnl/quartz_warpx.profile.example
       :language: bash
 
 Edit the 2nd line of this script, which sets the ``export proj=""`` variable.

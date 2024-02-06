@@ -87,7 +87,7 @@ Main functions
 
 .. doxygenfunction:: PhysicalParticleContainer::PushPX
 
-.. doxygenfunction:: WarpXParticleContainer::DepositCurrent(amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &J, const amrex::Real dt, const amrex::Real relative_time)
+.. doxygenfunction:: WarpXParticleContainer::DepositCurrent(amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3>> &J, amrex::Real dt, amrex::Real relative_time)
 
 .. note::
    The current deposition is used both by ``PhysicalParticleContainer`` and ``LaserParticleContainer``, so it is in the parent class ``WarpXParticleContainer``.
@@ -109,24 +109,26 @@ Particle attributes
 -------------------
 
 WarpX adds the following particle attributes by default to WarpX particles.
-These attributes are either stored in an Array-of-Struct (AoS) or Struct-of-Array (SoA) location of the AMReX particle containers.
+These attributes are stored in Struct-of-Array (SoA) locations of the AMReX particle containers: one SoA for ``amrex::ParticleReal`` attributes, one SoA for ``int`` attributes and one SoA for a ``uint64_t`` global particle index per particle.
 The data structures for those are either pre-described at compile-time (CT) or runtime (RT).
 
-====================  ================  ==================================  ===== ==== =====================
+====================  ================  ==================================  ===== ==== ======================
 Attribute name        ``int``/``real``  Description                         Where When Notes
-====================  ================  ==================================  ===== ==== =====================
-``position_x/y/z``    ``real``          Particle position.                  AoS   CT
-``cpu``               ``int``           CPU index where the particle        AoS   CT
+====================  ================  ==================================  ===== ==== ======================
+``position_x/y/z``    ``real``          Particle position.                  SoA   CT
+``weight``            ``real``          Particle position.                  SoA   CT
+``momentum_x/y/z``    ``real``          Particle position.                  SoA   CT
+``id``                ``amrex::Long``   CPU-local particle index            SoA   CT   First 40 bytes of
+                                        where the particle was created.                idcpu
+``cpu``               ``int``           CPU index where the particle        SoA   CT   Last 24 bytes of idcpu
                                         was created.
-``id``                ``int``           CPU-local particle index            AoS   CT
-                                        where the particle was created.
 ``ionizationLevel``   ``int``           Ion ionization level                SoA   RT   Added when ionization
                                                                                        physics is used.
 ``opticalDepthQSR``   ``real``          QED: optical depth of the Quantum-  SoA   RT   Added when PICSAR QED
                                         Synchrotron process                            physics is used.
 ``opticalDepthBW``    ``real``          QED: optical depth of the Breit-    SoA   RT   Added when PICSAR QED
                                         Wheeler process                                physics is used.
-====================  ================  ==================================  ===== ==== =====================
+====================  ================  ==================================  ===== ==== ======================
 
 WarpX allows extra runtime attributes to be added to particle containers (through ``AddRealComp("attrname")`` or ``AddIntComp("attrname")``).
 The attribute name can then be used to access the values of that attribute.

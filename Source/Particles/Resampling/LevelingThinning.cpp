@@ -60,8 +60,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
     auto& ptile = pc->ParticlesAt(lev, pti);
     auto& soa = ptile.GetStructOfArrays();
     amrex::ParticleReal * const AMREX_RESTRICT w = soa.GetRealData(PIdx::w).data();
-    WarpXParticleContainer::ParticleType * const AMREX_RESTRICT
-                                 particle_ptr = ptile.GetArrayOfStructs()().data();
+    auto * const AMREX_RESTRICT idcpu = soa.GetIdCPUData().data();
 
     // Using this function means that we must loop over the cells in the ParallelFor. In the case
     // of the leveling thinning algorithm, it would have possibly been more natural and more
@@ -71,8 +70,8 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
     auto bins = ParticleUtils::findParticlesInEachCell(lev, pti, ptile);
 
     const auto n_cells = static_cast<int>(bins.numBins());
-    const auto indices = bins.permutationPtr();
-    const auto cell_offsets = bins.offsetsPtr();
+    auto *const indices = bins.permutationPtr();
+    auto *const cell_offsets = bins.offsetsPtr();
 
     const amrex::Real target_ratio = m_target_ratio;
     const int min_ppc = m_min_ppc;
@@ -89,8 +88,9 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
 
             // do nothing for cells with less particles than min_ppc
             // (this intentionally includes skipping empty cells, too)
-            if (cell_numparts < min_ppc)
+            if (cell_numparts < min_ppc) {
                 return;
+            }
             amrex::Real average_weight = 0._rt;
 
             // First loop over cell particles to compute average particle weight in the cell
@@ -113,7 +113,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
                 // Remove particle with probability 1 - particle_weight/level_weight
                 if (random_number > w[indices[i]]/level_weight)
                 {
-                    particle_ptr[indices[i]].id() = -1;
+                    idcpu[indices[i]] = amrex::ParticleIdCpus::Invalid;
                 }
                 // Set particle weight to level weight otherwise
                 else

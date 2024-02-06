@@ -133,8 +133,9 @@ FullDiagnostics::Flush ( int i_buffer, bool /* force_flush */ )
     auto & warpx = WarpX::GetInstance();
 
     m_flush_format->WriteToFile(
-        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_output_species[i_buffer], nlev_output, m_file_prefix,
+        m_varnames, m_mf_output.at(i_buffer), m_geom_output.at(i_buffer), warpx.getistep(),
+        warpx.gett_new(0),
+        m_output_species.at(i_buffer), nlev_output, m_file_prefix,
         m_file_min_digits, m_plot_raw_fields, m_plot_raw_fields_guards);
 
     FlushRaw();
@@ -147,7 +148,7 @@ FullDiagnostics::FlushRaw () {}
 bool
 FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
 {
-    if (m_already_done) return false;
+    if (m_already_done) { return false; }
     if ( force_flush || (m_intervals.contains(step+1)) ){
         m_already_done = true;
         return true;
@@ -360,7 +361,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
 {
 #ifdef WARPX_DIM_RZ
 
-    if (!m_dump_rz_modes) return;
+    if (!m_dump_rz_modes) { return; }
 
     auto & warpx = WarpX::GetInstance();
     const int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0, 0)->nComp();
@@ -507,11 +508,13 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
         diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
         diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
         if ( std::fabs(warpx.Geom(lev).ProbLo(idim) - diag_dom.lo(idim))
-                               >  warpx.Geom(lev).CellSize(idim) )
+                               >  warpx.Geom(lev).CellSize(idim) ) {
              use_warpxba = false;
+        }
         if ( std::fabs(warpx.Geom(lev).ProbHi(idim) - diag_dom.hi(idim))
-                               > warpx.Geom(lev).CellSize(idim) )
+                               > warpx.Geom(lev).CellSize(idim) ) {
              use_warpxba = false;
+        }
 
         // User-defined value for coarsening should be an integer divisor of
         // blocking factor at level, lev. This assert is not relevant and thus
@@ -573,7 +576,7 @@ FullDiagnostics::InitializeBufferData (int i_buffer, int lev, bool restart ) {
     ba.coarsen(m_crse_ratio);
     // Generate a new distribution map if the physical m_lo and m_hi for the output
     // is different from the lo and hi physical co-ordinates of the simulation domain.
-    if (!use_warpxba) dmap = amrex::DistributionMapping{ba};
+    if (!use_warpxba) { dmap = amrex::DistributionMapping{ba}; }
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     const int ngrow = (m_format == "sensei" || m_format == "ascent") ? 1 : 0;
     int const ncomp = static_cast<int>(m_varnames.size());

@@ -9,6 +9,7 @@
 #define WARPX_PhotonParticleContainer_H_
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Particles/Gather/ScaleFields.H"
 #include "PhysicalParticleContainer.H"
 
@@ -25,7 +26,7 @@
 /**
  * Photon particles have no mass, they deposit no charge, and see specific QED
  * effects. For these reasons, they are stored in the separate particle
- * container PhotonParticleContainer, that inherts from
+ * container PhotonParticleContainer, that inherits from
  * PhysicalParticleContainer. The particle pusher and current deposition, in
  * particular, are overriden in this container.
  */
@@ -69,7 +70,8 @@ public:
                          amrex::Real t,
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full,
-                         bool skip_deposition=false) override;
+                         bool skip_deposition=false,
+                         PushType push_type=PushType::Explicit) override;
 
     void PushPX(WarpXParIter& pti,
                         amrex::FArrayBox const * exfab,
@@ -103,7 +105,7 @@ public:
                                 amrex::MultiFab* /*rho*/,
                                 int /*icomp*/,
                                 const long /*offset*/,
-                                const long /*np_to_depose*/,
+                                const long /*np_to_deposit*/,
                                 int /*thread_num*/,
                                 int /*lev*/,
                                 int /*depos_lev*/) override {}
@@ -119,12 +121,13 @@ public:
                                  amrex::MultiFab * const /*jy*/,
                                  amrex::MultiFab * const /*jz*/,
                                  long const /*offset*/,
-                                 long const /*np_to_depose*/,
+                                 long const /*np_to_deposit*/,
                                  int const /*thread_num*/,
                                  int const /*lev*/,
                                  int const /*depos_lev*/,
                                  amrex::Real const /*dt*/,
-                                 amrex::Real const /*relative_time*/) override {}
+                                 amrex::Real const /*relative_time*/,
+                                 PushType /*push_type*/) override {}
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_

@@ -24,6 +24,17 @@ struct MediumForEM {
 };
 
 /**
+  * \brief struct to select the overall evolve scheme
+  */
+struct EvolveScheme {
+    enum {
+        Explicit = 0,
+        ImplicitPicard = 1,
+        SemiImplicitPicard = 2
+    };
+};
+
+/**
   * \brief struct to select algorithm for macroscopic Maxwell solver
            LaxWendroff (semi-implicit) represents sigma*E = sigma*0.5*(E^(n) + E^(n+1))
            Backward Euler (fully-implicit) represents sigma*E = sigma*E^(n+1)
@@ -76,7 +87,8 @@ struct CurrentDepositionAlgo {
     enum {
         Esirkepov = 0,
         Direct = 1,
-        Vay = 2
+        Vay = 2,
+        Villasenor = 3
     };
 };
 

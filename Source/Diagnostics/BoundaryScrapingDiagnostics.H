@@ -14,8 +14,7 @@
 
 /** collect the particles that are absorbed at the embedded boundary, throughout the simulation
  */
-class
-BoundaryScrapingDiagnostics final : public Diagnostics
+class BoundaryScrapingDiagnostics final : public Diagnostics
 {
 public:
 

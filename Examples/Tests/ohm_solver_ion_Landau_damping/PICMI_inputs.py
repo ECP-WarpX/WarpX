@@ -2,7 +2,7 @@
 #
 # --- Test script for the kinetic-fluid hybrid model in WarpX wherein ions are
 # --- treated as kinetic particles and electrons as an isothermal, inertialess
-# --- background fluid. The script simulates ion Landau damping as descibed
+# --- background fluid. The script simulates ion Landau damping as described
 # --- in section 4.5 of Munoz et al. (2018).
 
 import argparse
@@ -56,7 +56,7 @@ class IonLandauDamping(object):
     # Plasma resistivity - used to dampen the mode excitation
     eta = 1e-7
     # Number of substeps used to update B
-    substeps = 100
+    substeps = 10
 
 
     def __init__(self, test, dim, m, T_ratio, verbose):

@@ -45,7 +45,7 @@ void NCIGodfreyFilter::ComputeStencils()
 {
     using namespace warpx::nci_godfrey;
 
-    // Sanity checks: filter length shoulz be 5 in z
+    // Sanity checks: filter length should be 5 in z
 #  if  defined(WARPX_DIM_3D)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.z==5,"ERROR: NCI filter requires 5 points in z");

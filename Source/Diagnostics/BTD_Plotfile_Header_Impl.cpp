@@ -118,7 +118,7 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     HeaderFile.open(m_Header_path.c_str(), std::ofstream::out |
                                            std::ofstream::trunc |
                                            std::ofstream::binary);
-    if ( !HeaderFile.good()) amrex::FileOpenFailed(m_Header_path);
+    if ( !HeaderFile.good()) { amrex::FileOpenFailed(m_Header_path); }
 
     HeaderFile.precision(17);
 
@@ -241,7 +241,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
         m_minval[ifab].resize(m_ncomp);
         for (int icomp = 0; icomp < m_ncomp; ++icomp) {
             is >> m_minval[ifab][icomp] >> ch;
-            if( ch != ',' ) amrex::Error("Expected a ',' got something else");
+            if( ch != ',' ) { amrex::Error("Expected a ',' got something else"); }
         }
     }
     ablastr::utils::text::goto_next_line(is);
@@ -251,7 +251,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
         m_maxval[ifab].resize(m_ncomp);
         for (int icomp = 0; icomp < m_ncomp; ++icomp) {
             is >> m_maxval[ifab][icomp] >> ch;
-            if( ch != ',' ) amrex::Error("Expected a ',' got something else");
+            if( ch != ',' ) { amrex::Error("Expected a ',' got something else"); }
         }
     }
 
@@ -266,9 +266,9 @@ BTDMultiFabHeaderImpl::WriteMultiFabHeader ()
     }
     std::ofstream FabHeaderFile;
     FabHeaderFile.open(m_Header_path.c_str(), std::ofstream::out |
-                                           std::ofstream::trunc |
-                                           std::ofstream::binary);
-    if ( !FabHeaderFile.good()) amrex::FileOpenFailed(m_Header_path);
+                                              std::ofstream::trunc |
+                                              std::ofstream::binary);
+    if ( !FabHeaderFile.good()) { amrex::FileOpenFailed(m_Header_path); }
 
     FabHeaderFile.precision(17);
 
@@ -421,7 +421,7 @@ BTDSpeciesHeaderImpl::WriteHeader ()
     HeaderFile.open(m_Header_path.c_str(), std::ofstream::out |
                                            std::ofstream::trunc |
                                            std::ofstream::binary);
-    if ( !HeaderFile.good()) amrex::FileOpenFailed(m_Header_path);
+    if ( !HeaderFile.good()) { amrex::FileOpenFailed(m_Header_path); }
 
     HeaderFile.precision(17);
 
@@ -516,7 +516,7 @@ BTDParticleDataHeaderImpl::ReadHeader ()
 }
 
 void
-BTDParticleDataHeaderImpl::WriteHeader ()
+BTDParticleDataHeaderImpl::WriteHeader () const
 {
     if (amrex::FileExists(m_Header_path)) {
         amrex::FileSystem::Remove(m_Header_path);
@@ -525,7 +525,7 @@ BTDParticleDataHeaderImpl::WriteHeader ()
     HeaderFile.open(m_Header_path.c_str(), std::ofstream::out |
                                            std::ofstream::trunc |
                                            std::ofstream::binary);
-    if ( !HeaderFile.good()) amrex::FileOpenFailed(m_Header_path);
+    if ( !HeaderFile.good()) { amrex::FileOpenFailed(m_Header_path); }
 
     HeaderFile.precision(17);
     m_ba.writeOn(HeaderFile);

@@ -27,8 +27,7 @@
  * \brief This class contains the macroscopic properties of the medium needed to
  * evaluate macroscopic Maxwell equation.
  */
-class
-MacroscopicProperties
+class MacroscopicProperties
 {
 public:
     MacroscopicProperties (); // constructor
@@ -102,7 +101,7 @@ private:
 
 /**
  * \brief
- * This struct contains only static functions to compute the co-efficients for the
+ * This struct contains only static functions to compute the coefficients for the
  * Lax-Wendroff scheme of macroscopic Maxwells equations using
  * macroscopic properties, namely, conductivity (sigma), permittivity (epsilon).
  * Permeability of the material, mu, is used as (beta/mu) for the E-update
@@ -134,7 +133,7 @@ struct LaxWendroffAlgo {
 
 /**
  * \brief
- * This struct contains only static functions to compute the co-efficients for the
+ * This struct contains only static functions to compute the coefficients for the
  * BackwardEuler scheme of macroscopic Maxwells equations using
  * macroscopic properties, namely, conductivity (sigma) and permittivity (epsilon).
  * Permeability of the material, mu, is used as (beta/mu) for the E-update

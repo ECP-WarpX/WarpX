@@ -24,8 +24,7 @@
 #include <memory>
 #include <string>
 
-class
-BTDiagnostics final : public Diagnostics
+class BTDiagnostics final : public Diagnostics
 {
 public:
 
@@ -276,7 +275,7 @@ private:
       * \param[in] t_lab   lab-frame time of the snapshot
       * \param[in] t_boost boosted-frame time at level, lev
       */
-    amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
+    [[nodiscard]] amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost) const
     {
         const amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
         return current_z_boost;
@@ -285,7 +284,7 @@ private:
       * \param[in] t_lab   lab-frame time of the snapshot
       * \param[in] t_boost boosted-frame time at level, lev
       */
-    amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost)
+    [[nodiscard]] amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost) const
     {
         const amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
         return current_z_lab;
@@ -295,13 +294,13 @@ private:
      *  \param[in] ref_ratio  refinement ratio in the z-direction at level, lev-1.
      *             The ref-ratio in the z-direction for single-level diagnostics is 1.
      */
-    amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio);
+    [[nodiscard]] amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio) const;
     /** Compute k-index corresponding to current lab-frame z co-ordinate (m_current_z_lab)
      *  for the ith buffer i_buffer, and at level, lev.
      * \param[in] i_buffer snapshot index
      * \param[in] lev      mesh-refinement level at which the lab-frame z-index is computed
      */
-    int k_index_zlab (int i_buffer, int lev);
+    [[nodiscard]] int k_index_zlab (int i_buffer, int lev) const;
     /** whether field buffer is full
      * \param[in] i_buffer buffer id for which the buffer size is checked.
      * returns bool = true is buffer is full, that is,
@@ -400,8 +399,6 @@ private:
         lab-frame data. */
     void InitializeParticleFunctors () override;
 
-    /** Update total number of particles flushed for all species for ith snapshot */
-    void UpdateTotalParticlesFlushed(int i_buffer);
     /** Reset total number of particles in the particle buffer to 0 for ith snapshot */
     void ResetTotalParticlesInBuffer(int i_buffer);
     /** Clear particle data stored in the particle buffer */

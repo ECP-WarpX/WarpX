@@ -12,13 +12,18 @@ Please see installation instructions below.
 - `AMReX <https://amrex-codes.github.io>`__: we automatically download and compile a copy of AMReX
 - `PICSAR <https://github.com/ECP-WarpX/picsar>`__: we automatically download and compile a copy of PICSAR
 
+and for Python bindings:
+
+- `pyAMReX <https://github.com/AMReX-Codes/pyamrex>`__: we automatically download and compile a copy of pyAMReX
+- `pybind11 <https://github.com/pybind/pybind11>`__: we automatically download and compile a copy of pybind11
+
 Optional dependencies include:
 
 - `MPI 3.0+ <https://www.mpi-forum.org/docs/>`__: for multi-node and/or multi-GPU execution
 - for on-node accelerated compute *one of either*:
 
   - `OpenMP 3.1+ <https://www.openmp.org>`__: for threaded CPU execution or
-  - `CUDA Toolkit 11.0+ (11.3+ recommended) <https://developer.nvidia.com/cuda-downloads>`__: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_) or
+  - `CUDA Toolkit 11.7+ <https://developer.nvidia.com/cuda-downloads>`__: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_) or
   - `ROCm 5.2+ (5.5+ recommended) <https://gpuopen.com/learn/amd-lab-notes/amd-lab-notes-rocm-installation-readme/>`__: for AMD GPU support
 - `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support when running on CPU or SYCL
 

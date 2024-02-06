@@ -94,7 +94,7 @@ public:
      * This function queries deprecated input parameters and aborts
      * the run if one of them is specified.
      */
-    void BackwardCompatibility ();
+    void BackwardCompatibility () const;
 
 };
 

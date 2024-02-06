@@ -41,8 +41,7 @@ public:
         bool isBTD = false, int snapshotID = -1,
         int bufferID = 1, int numBuffers = 1,
         const amrex::Geometry& full_BTD_snapshot = amrex::Geometry(),
-        bool isLastBTDFlush = false,
-        const amrex::Vector<int>& totalParticlesFlushedAlready = amrex::Vector<int>() ) const override;
+        bool isLastBTDFlush = false ) const override;
 
 #ifdef AMREX_USE_ASCENT
     /** \brief Do in-situ visualization for particle data.

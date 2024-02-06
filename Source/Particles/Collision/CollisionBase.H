@@ -29,7 +29,7 @@ public:
 
     virtual ~CollisionBase() = default;
 
-    int get_ndt() {return m_ndt;}
+    [[nodiscard]] int get_ndt() const {return m_ndt;}
 
 protected:
 

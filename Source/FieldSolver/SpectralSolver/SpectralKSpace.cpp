@@ -137,7 +137,7 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
  * specified by `i_dim`.
  *
  * (By default, we assume the FFT is done from/to a collocated grid in real space
- * It the FFT is performed from/to a cell-centered grid in real space,
+ * If the FFT is performed from/to a cell-centered grid in real space,
  * a correcting "shift" factor must be applied in spectral space.)
  */
 SpectralShiftFactor

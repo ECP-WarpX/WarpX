@@ -61,8 +61,9 @@ ParticleHistogram2D::ParticleHistogram2D (const std::string& rd_name)
 
     pp_rd_name.query("openpmd_backend", m_openpmd_backend);
     // pick first available backend if default is chosen
-    if( m_openpmd_backend == "default" )
+    if( m_openpmd_backend == "default" ) {
         m_openpmd_backend = WarpXOpenPMDFileType();
+    }
     pp_rd_name.add("openpmd_backend", m_openpmd_backend);
 
     // read species
@@ -130,7 +131,7 @@ ParticleHistogram2D::ParticleHistogram2D (const std::string& rd_name)
 void ParticleHistogram2D::ComputeDiags (int step)
 {
     // Judge if the diags should be done at this step
-    if (!m_intervals.contains(step+1)) return;
+    if (!m_intervals.contains(step+1)) { return; }
 
     // resize data array
     Array<int,2> tlo{0,0}; // lower bounds
@@ -215,9 +216,11 @@ void ParticleHistogram2D::ComputeDiags (int step)
                                        auto const uz = d_uz[i] / PhysConst::c;
 
                                        // don't count a particle if it is filtered out
-                                       if (do_parser_filter)
-                                           if(!static_cast<bool>(fun_filterparser(t, x, y, z, ux, uy, uz, w)))
+                                       if (do_parser_filter) {
+                                           if(!static_cast<bool>(fun_filterparser(t, x, y, z, ux, uy, uz, w))) {
                                                return;
+                                           }
+                                       }
 
                                        // continue function if particle is not filtered out
                                        auto const f_abs = fun_partparser_abs(t, x, y, z, ux, uy, uz, w);
@@ -226,10 +229,10 @@ void ParticleHistogram2D::ComputeDiags (int step)
 
                                        // determine particle bin
                                        int const bin_abs = int(Math::floor((f_abs-bin_min_abs)/bin_size_abs));
-                                       if ( bin_abs<0 || bin_abs>=num_bins_abs ) return; // discard if out-of-range
+                                       if ( bin_abs<0 || bin_abs>=num_bins_abs ) { return; } // discard if out-of-range
 
                                        int const bin_ord = int(Math::floor((f_ord-bin_min_ord)/bin_size_ord));
-                                       if ( bin_ord<0 || bin_ord>=num_bins_ord ) return; // discard if out-of-range
+                                       if ( bin_ord<0 || bin_ord>=num_bins_ord ) { return; } // discard if out-of-range
 
                                        amrex::Real &data = d_table(bin_abs, bin_ord);
                                        amrex::HostDevice::Atomic::Add(&data, weight);

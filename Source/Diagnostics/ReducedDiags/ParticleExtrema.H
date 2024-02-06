@@ -31,7 +31,7 @@ public:
     std::string m_species_name;
 
     /**
-     * This funciton computes the particle extrema
+     * This function computes the particle extrema
      *
      * @param[in] step current time step
      */

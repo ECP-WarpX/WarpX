@@ -12,8 +12,7 @@
 /**
  * \brief Functor to calculate per-cell averages of particle properties.
  */
-class
-ParticleReductionFunctor final : public ComputeDiagFunctor
+class ParticleReductionFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor.

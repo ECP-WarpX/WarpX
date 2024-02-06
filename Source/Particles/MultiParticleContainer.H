@@ -14,6 +14,7 @@
 #include "MultiParticleContainer_fwd.H"
 
 #include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXPushType.H"
 #include "Particles/Collision/CollisionHandler.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
@@ -107,18 +108,19 @@ public:
                  amrex::MultiFab* rho, amrex::MultiFab* crho,
                  const amrex::MultiFab* cEx, const amrex::MultiFab* cEy, const amrex::MultiFab* cEz,
                  const amrex::MultiFab* cBx, const amrex::MultiFab* cBy, const amrex::MultiFab* cBz,
-                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false);
+                 amrex::Real t, amrex::Real dt, DtType a_dt_type=DtType::Full, bool skip_deposition=false,
+                 PushType push_type=PushType::Explicit);
 
     ///
     /// This pushes the particle positions by one half time step for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initializaton
+    /// MultiParticleContainer. It is used to desynchronize the particles after initialization
     /// or when restarting from a checkpoint.
     ///
     void PushX (amrex::Real dt);
 
     ///
     /// This pushes the particle momenta by dt for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initializaton
+    /// MultiParticleContainer. It is used to desynchronize the particles after initialization
     /// or when restarting from a checkpoint.  It is also used to synchronize particles at the
     /// the end of the run.  This is the electromagnetic version.
     ///
@@ -193,7 +195,7 @@ public:
 
     /** This function computes the box outside which Schwinger process is disabled. The box is
      * defined by m_qed_schwinger_xmin/xmax/ymin/ymax/zmin/zmax and the warpx level 0 geometry
-     * object (to make the link between Real and int quatities).
+     * object (to make the link between Real and int quantities).
      */
     [[nodiscard]] amrex::Box ComputeSchwingerGlobalBox () const;
 #endif
@@ -330,6 +332,9 @@ public:
 #endif
 
     [[nodiscard]] int getSpeciesID (const std::string& product_str) const;
+
+    amrex::Vector<std::unique_ptr<WarpXParticleContainer>>::iterator begin() {return allcontainers.begin();}
+    amrex::Vector<std::unique_ptr<WarpXParticleContainer>>::iterator end() {return allcontainers.end();}
 
 protected:
 
