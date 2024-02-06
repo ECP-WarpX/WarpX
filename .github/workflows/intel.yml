@@ -53,7 +53,7 @@ jobs:
           -DWarpX_MPI=OFF             \
           -DWarpX_OPENPMD=ON          \
           -DWarpX_openpmd_internal=OFF
-        cmake --build build_dp -j 2
+        cmake --build build_dp -j 4
 
         cmake -S . -B build_sp \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
@@ -64,7 +64,7 @@ jobs:
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
           -DWarpX_PRECISION=SINGLE
-        cmake --build build_sp -j 2
+        cmake --build build_sp -j 4
         cmake --build build_sp --target pip_install
 
         ccache -s
@@ -120,7 +120,7 @@ jobs:
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
-        cmake --build build_sp -j 2
+        cmake --build build_sp -j 4
         cmake --build build_sp --target pip_install
 
         ccache -s
@@ -184,7 +184,7 @@ jobs:
           -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PRECISION=SINGLE
-        cmake --build build_sp -j 2
+        cmake --build build_sp -j 4
 
         ccache -s
         du -hs ~/.cache/ccache
