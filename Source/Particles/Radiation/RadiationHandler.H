@@ -62,6 +62,5 @@ private:
     amrex::Gpu::DeviceVector<ablastr::math::Complex> m_radiation_data;
     amrex::Gpu::DeviceVector<amrex::Real> m_radiation_calculation;
 
-
 };
 #endif // WARPX_PARTICLES_RADIATION_H

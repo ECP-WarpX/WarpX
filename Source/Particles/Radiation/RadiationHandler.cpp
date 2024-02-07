@@ -34,118 +34,107 @@ namespace
         const amrex::Real distance,
         const amrex::Array<amrex::Real,3>& orientation,
         const amrex::Array<int,2>& det_points,
-        const amrex::Array<amrex::Real,2>& theta_range)
+        const amrex::Array<amrex::Real,2>& theta_range,
+        const std::string type)
     {
-        /*WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            direction[0]*orientation[0] +
-            direction[1]*orientation[1] +
-            direction[2]*orientation[2] == 0,
-            "Radiation detector orientation cannot be aligned with detector direction");
-
-        auto u = amrex::Array<amrex::Real,3>{
-            orientation[0] - direction[0]*orientation[0],
-            orientation[1] - direction[1]*orientation[1],
-            orientation[2] - direction[2]*orientation[2]};
-        const auto one_over_u = 1.0_rt/std::sqrt(u[0]*u[0]+u[1]*u[1]+u[2]*u[2]);
-        u[0] *= one_over_u;
-        u[1] *= one_over_u;
-        u[2] *= one_over_u;
-
-        auto v = amrex::Array<amrex::Real,3>{
-            direction[1]*u[2]-direction[2]*u[1],
-            direction[2]*u[0]-direction[0]*u[2],
-            direction[0]*u[1]-direction[1]*u[0]};
-        const auto one_over_v = 1.0_rt/std::sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
-        v[0] *= one_over_v;
-        v[1] *= one_over_v;
-        v[2] *= one_over_v;
-
-        auto us = amrex::Vector<amrex::Real>(det_points[0]);
-        const auto ulim = distance*std::tan(theta_range[0]*0.5_rt);
-        ablastr::math::LinSpaceFill(-ulim,ulim, det_points[0], us.begin());
-
-        auto vs = amrex::Vector<amrex::Real>(det_points[1]);
-        const auto vlim = distance*std::tan(theta_range[1]*0.5_rt);
-        ablastr::math::LinSpaceFill(-vlim, vlim, det_points[1], vs.begin());
 
         const auto how_many = det_points[0]*det_points[1];
 
         auto host_det_x = amrex::Vector<amrex::Real>(how_many);
         auto host_det_y = amrex::Vector<amrex::Real>(how_many);
         auto host_det_z = amrex::Vector<amrex::Real>(how_many);
-
-        const auto one_over_direction = 1.0_rt/std::sqrt(
-            direction[0]*direction[0]+direction[1]*direction[1]+direction[2]*direction[2]);
-        const auto norm_direction = amrex::Array<amrex::Real,3>{
-            direction[0]*one_over_direction,
-            direction[1]*one_over_direction,
-            direction[2]*one_over_direction};
-
-        for (int i = 0; i < det_points[0]; ++i)
-        {
-            for (int j = 0; j < det_points[1]; ++j)
-            {
-                host_det_x[i*det_points[1] + j] = center[0] + distance * norm_direction[0] + us[i]*u[0] + vs[j]*v[0];
-                host_det_y[i*det_points[1] + j] = center[1] + distance * norm_direction[1] + us[i]*u[1] + vs[j]*v[1];
-                host_det_z[i*det_points[1] + j] = center[2] + distance * norm_direction[2] + us[i]*u[2] + vs[j]*v[2];
-            }
-        }
-
-        auto gpu_det_x = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
-        auto gpu_det_y = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
-        auto gpu_det_z = amrex::Gpu::DeviceVector<amrex::Real>(how_many);
-
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-            host_det_x.begin(), host_det_x.end(), gpu_det_x.begin());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-            host_det_y.begin(), host_det_y.end(), gpu_det_y.begin());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-            host_det_z.begin(), host_det_z.end(), gpu_det_z.begin());
-
-        amrex::Gpu::Device::streamSynchronize();
-
-        return std::make_tuple(gpu_det_x, gpu_det_y, gpu_det_z);
-        */
-
-        const auto Ntheta = det_points[0];
-        const auto Nphi = det_points[1];
-        const auto dtheta = theta_range[0]/Ntheta;
-        const auto dphi = theta_range[1]/Nphi;
-        const auto thetaOrigin = std::acos(direction[0]) - Ntheta/2*dtheta;
-        const auto phiOrigin = std::atan2(direction[1], direction[0]) - Nphi/2*dphi;
-
-        const auto how_many = det_points[0]*det_points[1];
-
-        auto host_det_x = amrex::Vector<amrex::Real>(how_many);
-        auto host_det_y = amrex::Vector<amrex::Real>(how_many);
-        auto host_det_z = amrex::Vector<amrex::Real>(how_many);
-
         auto host_det_theta = amrex::Vector<amrex::Real>(how_many);
         auto host_det_phi = amrex::Vector<amrex::Real>(how_many);
 
-        for (int i = 0; i < det_points[0]; ++i)
-        {
-            for (int j = 0; j < det_points[1]; ++j)
+        if(type == "cartesian"){
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                direction[0]*orientation[0] +
+                direction[1]*orientation[1] +
+                direction[2]*orientation[2] == 0,
+                "Radiation detector orientation cannot be aligned with detector direction");
+
+            auto u = amrex::Array<amrex::Real,3>{
+                orientation[0] - direction[0]*orientation[0],
+                orientation[1] - direction[1]*orientation[1],
+                orientation[2] - direction[2]*orientation[2]};
+            const auto one_over_u = 1.0_rt/std::sqrt(u[0]*u[0]+u[1]*u[1]+u[2]*u[2]);
+            u[0] *= one_over_u;
+            u[1] *= one_over_u;
+            u[2] *= one_over_u;
+
+            auto v = amrex::Array<amrex::Real,3>{
+                direction[1]*u[2]-direction[2]*u[1],
+                direction[2]*u[0]-direction[0]*u[2],
+                direction[0]*u[1]-direction[1]*u[0]};
+            const auto one_over_v = 1.0_rt/std::sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+            v[0] *= one_over_v;
+            v[1] *= one_over_v;
+            v[2] *= one_over_v;
+
+            auto us = amrex::Vector<amrex::Real>(det_points[0]);
+            const auto ulim = distance*std::tan(theta_range[0]*0.5_rt);
+            ablastr::math::LinSpaceFill(-ulim,ulim, det_points[0], us.begin());
+
+            auto vs = amrex::Vector<amrex::Real>(det_points[1]);
+            const auto vlim = distance*std::tan(theta_range[1]*0.5_rt);
+            ablastr::math::LinSpaceFill(-vlim, vlim, det_points[1], vs.begin());
+
+            const auto one_over_direction = 1.0_rt/std::sqrt(
+                direction[0]*direction[0]+direction[1]*direction[1]+direction[2]*direction[2]);
+            const auto norm_direction = amrex::Array<amrex::Real,3>{
+                direction[0]*one_over_direction,
+                direction[1]*one_over_direction,
+                direction[2]*one_over_direction};
+
+            for (int i = 0; i < det_points[0]; ++i)
             {
-                auto theta = thetaOrigin + i*dtheta;
-                auto phi = phiOrigin + j*dphi;
-                
-                //theta is in [0, pi] and phi is in [0, 2*pi]
-                if(theta < 0){
-                    theta *= -1;
-                    phi += ablastr::constant::math::pi;
+                for (int j = 0; j < det_points[1]; ++j)
+                {
+                    auto x = distance * norm_direction[0] + us[i]*u[0] + vs[j]*v[0];
+                    auto y = distance * norm_direction[1] + us[i]*u[1] + vs[j]*v[1];
+                    auto z = distance * norm_direction[2] + us[i]*u[2] + vs[j]*v[2];
+
+                    host_det_x[i*det_points[1] + j] = center[0] + x;
+                    host_det_y[i*det_points[1] + j] = center[1] + y;
+                    host_det_z[i*det_points[1] + j] = center[2] + z;
+
+                    host_det_theta[i*det_points[1] + j] = std::acos(z/distance);
+                    host_det_phi[i*det_points[1] + j] = std::atan2(y, x);
+
                 }
-                phi -= 2*ablastr::constant::math::pi*std::floor(phi/(2*ablastr::constant::math::pi));
+            }
+        }
+        
+        if(type == "spherical"){
+            const auto Ntheta = det_points[0];
+            const auto Nphi = det_points[1];
+            const auto dtheta = theta_range[0]/Ntheta;
+            const auto dphi = theta_range[1]/Nphi;
+            const auto thetaOrigin = std::acos(direction[2]) - Ntheta/2*dtheta;
+            const auto phiOrigin = std::atan2(direction[1], direction[0]) - Nphi/2*dphi;
+
+            for (int i = 0; i < det_points[0]; ++i)
+            {
+                for (int j = 0; j < det_points[1]; ++j)
+                {
+                    auto theta = thetaOrigin + i*dtheta;
+                    auto phi = phiOrigin + j*dphi;
+                    
+                    //theta is in [0, pi] and phi is in [0, 2*pi]
+                    if(theta < 0){
+                        theta *= -1;
+                        phi += ablastr::constant::math::pi;
+                    }
+                    phi -= 2*ablastr::constant::math::pi*std::floor(phi/(2*ablastr::constant::math::pi));
 
 
-                host_det_x[i*det_points[1] + j] = center[0] + distance*std::sin(theta)*std::sin(phi);
-                host_det_y[i*det_points[1] + j] = center[1] + distance*std::sin(theta)*std::cos(phi);
-                host_det_z[i*det_points[1] + j] = center[2] + distance*std::cos(theta);
+                    host_det_x[i*det_points[1] + j] = center[0] + distance*std::sin(theta)*std::cos(phi);
+                    host_det_y[i*det_points[1] + j] = center[1] + distance*std::sin(theta)*std::sin(phi);
+                    host_det_z[i*det_points[1] + j] = center[2] + distance*std::cos(theta);
 
-                host_det_theta[i*det_points[1] + j] = theta;
-                host_det_phi[i*det_points[1] + j] = phi;
-                
-                //amrex::Print() << phi << std::endl;
+                    host_det_theta[i*det_points[1] + j] = theta;
+                    host_det_phi[i*det_points[1] + j] = phi;
+                }
             }
         }
 
@@ -184,6 +173,10 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
     // Read in radiation input
     const amrex::ParmParse pp_radiation("radiation");
 
+    //type of detector
+    std::string type = "spherical";
+    pp_radiation.query("detector_type", type);
+
     //Resolution in frequency of the detector
     auto omega_range = std::vector<amrex::Real>(2);
     getArrWithParser(pp_radiation, "omega_range", omega_range);
@@ -212,7 +205,7 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
 
     std::tie(det_pos_x, det_pos_y, det_pos_z, det_pos_theta, det_pos_phi) = compute_detector_positions(
         center, m_det_direction, m_det_distance,
-        m_det_orientation, m_det_pts, m_theta_range);
+        m_det_orientation, m_det_pts, m_theta_range, type);
 
     constexpr auto ncomp = 3;
     m_radiation_data = amrex::Gpu::DeviceVector<ablastr::math::Complex>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
@@ -393,19 +386,19 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
         auto of = std::ofstream(filename, std::ios::binary);
 
         const auto how_many = m_det_pts[0]*m_det_pts[1];
-        /*auto det_pos_x_cpu = amrex::Vector<amrex::Real>(how_many);
+        auto det_pos_x_cpu = amrex::Vector<amrex::Real>(how_many);
         auto det_pos_y_cpu = amrex::Vector<amrex::Real>(how_many);
-        auto det_pos_z_cpu = amrex::Vector<amrex::Real>(how_many);*/
+        auto det_pos_z_cpu = amrex::Vector<amrex::Real>(how_many);
         auto det_pos_theta_cpu = amrex::Vector<amrex::Real>(how_many);
         auto det_pos_phi_cpu = amrex::Vector<amrex::Real>(how_many);
         auto omegas_cpu = amrex::Vector<amrex::Real>(m_omega_points);
 
-        /*amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
+        amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
             det_pos_x.begin(), det_pos_x.end(), det_pos_x_cpu.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
             det_pos_y.begin(), det_pos_y.end(), det_pos_y_cpu.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
-            det_pos_z.begin(), det_pos_z.end(), det_pos_z_cpu.begin());*/
+            det_pos_z.begin(), det_pos_z.end(), det_pos_z_cpu.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
             det_pos_theta.begin(), det_pos_theta.end(), det_pos_theta_cpu.begin());
         amrex::Gpu::copyAsync(amrex::Gpu::deviceToHost,
@@ -419,7 +412,7 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
         for(int i_om=0; i_om < m_omega_points; ++i_om){
             for (int i_det = 0; i_det < how_many; ++i_det)
             {
-                 of << omegas_cpu[i_om] << " " << det_pos_theta_cpu[i_det] << " " << det_pos_phi_cpu[i_det] << " " << radiation_data_cpu[++idx] << "\n";
+                 of << omegas_cpu[i_om] << " " << det_pos_theta_cpu[i_det] << " " << det_pos_phi_cpu[i_det] << " " << det_pos_x_cpu[i_det] << " " << det_pos_y_cpu[i_det] << " " << det_pos_z_cpu[i_det]  << " " << radiation_data_cpu[++idx] << "\n";
             }
         }
 
