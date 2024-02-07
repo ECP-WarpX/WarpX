@@ -772,9 +772,9 @@ class ParticleBoundaryBufferWrapper(object):
                 form x/y/z_hi/lo or eb.
 
             comp_name      : str
-                The component of the array data that will be returned. If
-                "step_scraped" the special attribute holding the timestep at
-                which a particle was scraped will be returned.
+                The component of the array data that will be returned.
+                "x", "y", "z", "ux", "uy", "uz", "w"
+                "timestamp", "nx", "ny", "nz"
 
             level          : int
                 Which AMR level to retrieve scraped particle data from.
