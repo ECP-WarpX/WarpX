@@ -4,14 +4,13 @@
 my_constants.mc2 = m_e*clight*clight
 my_constants.nano = 1.0e-9
 my_constants.micro = 1.e-6
-my_constants.milli = 1.e-3
 my_constants.GeV = q_e*1.e9
 
 # BEAMS
 my_constants.energy = 125.*GeV
 my_constants.gamma = energy/mc2
 my_constants.npart = 2.e10
-my_constants.nmacropart = 10000
+my_constants.nmacropart = 1000000
 my_constants.charge = q_e * npart
 
 my_constants.sigmax = 516.0*nano
@@ -43,15 +42,13 @@ my_constants.Lz = 20*sigmaz
 my_constants.nx = 256
 my_constants.ny = 256
 my_constants.nz = 256
-my_constants.dx = Lx/nx
-my_constants.dy = Ly/ny
-my_constants.dz = Lz/nz
+
 
 
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 0
+max_step = 2
 amr.n_cell = nx ny nz
 amr.max_grid_size = 256
 amr.blocking_factor = 2
@@ -102,15 +99,16 @@ beam1.uz_th = duz
 ######### DIAGNOSTICS ###########
 #################################
 # FULL
-diagnostics.diags_names =  full
+diagnostics.diags_names =  diag1
+
+diag1.intervals = 1
+diag1.diag_type = Full
+diag1.write_species = 1
+diag1.species = beam1
+diag1.beam1.variables = w 
+diag1.fields_to_plot = rho_beam1
+diag1.format = openpmd
+diag1.openpmd_backend = bp
+diag1.dump_last_timestep = 1
 
 
-full.intervals = 1
-full.diag_type = Full
-full.write_species = 1
-full.fields_to_plot = rho_beam1
-full.format = openpmd
-full.openpmd_backend = bp
-full.dump_last_timestep = 1
-full.coarsening_ratio = 1 1 1
-full.species = beam1
