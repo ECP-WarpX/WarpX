@@ -787,7 +787,7 @@ class ParticleBoundaryBufferWrapper(object):
         data_array = []
         if comp_name == 'step_scraped':
             # the step scraped is always the final integer component
-            comp_idx = part_container.num_int_comps - 1
+            comp_idx = part_container.num_real_comps - 1
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
                 data_array.append(xp.array(soa.GetIntData(comp_idx), copy=False))
