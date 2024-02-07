@@ -3,9 +3,10 @@
     "Er": 0.0
   },
   "lev=1": {
-    "Er": NaN
+    "Er": 0.0
   },
   "electron": {
+    "particle_position/theta": 0.0,
     "particle_positionOffset/y": 0.0,
     "particle_theta": 0.0,
     "particle_position_x": 0.0,
