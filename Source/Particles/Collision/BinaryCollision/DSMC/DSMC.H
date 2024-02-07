@@ -50,7 +50,7 @@ public:
      *
      * @param[in] collision_name the name of the collision
      */
-    DSMC (std::string collision_name);
+    DSMC (const std::string& collision_name);
 
     /** Perform the collisions
      *
