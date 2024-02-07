@@ -56,6 +56,8 @@ private:
     amrex::Gpu::DeviceVector<amrex::Real> det_pos_x;
     amrex::Gpu::DeviceVector<amrex::Real> det_pos_y;
     amrex::Gpu::DeviceVector<amrex::Real> det_pos_z;
+    amrex::Gpu::DeviceVector<amrex::Real> det_pos_theta;
+    amrex::Gpu::DeviceVector<amrex::Real> det_pos_phi;
 
     amrex::Gpu::DeviceVector<ablastr::math::Complex> m_radiation_data;
     amrex::Gpu::DeviceVector<amrex::Real> m_radiation_calculation;
