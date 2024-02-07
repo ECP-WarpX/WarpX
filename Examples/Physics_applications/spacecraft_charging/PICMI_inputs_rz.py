@@ -248,13 +248,17 @@ field_diag = picmi.FieldDiagnostic(
     period = diagnostic_interval,
     data_list = ['Er', 'Ez', 'phi', 'rho',
                  'rho_electrons', 'rho_protons'],
-    warpx_format = 'openpmd'
+    warpx_format = 'openpmd',
+    write_dir = '.',
+    warpx_file_prefix = 'spacecraft_charging_plt'
 )
 
 part_diag = picmi.ParticleDiagnostic(name = 'diag1',
     period = diagnostic_interval,
     species = [electrons, protons],
-    warpx_format = 'openpmd'
+    warpx_format = 'openpmd',
+    write_dir = '.',
+    warpx_file_prefix = 'spacecraft_charging_plt'
 )
 
 ##########################
