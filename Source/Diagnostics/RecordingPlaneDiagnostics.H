@@ -69,12 +69,16 @@ private:
 
     void ClearParticlesBuffer (int i_buffer);
 
+    void DefineSnapshotGeometry(const int i_buffer, const int lev);
+
     int m_buffer_size = 256;
     int m_slice_counter = 0;
     amrex::Real m_tmin = std::numeric_limits<amrex::Real>::lowest();
     amrex::Real m_tmax = std::numeric_limits<amrex::Real>::lowest();
     amrex::Box m_buffer_box;
     int m_flush_counter = 0;
+    amrex::Vector< amrex::Vector< amrex::Geometry> > m_geom_snapshot;
+    amrex::Vector<int> m_snapshot_geometry_defined;
 
     [[nodiscard]] bool GetZSliceInDomain (int lev) const;
     bool m_last_timeslice_filled = false;

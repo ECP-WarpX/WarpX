@@ -133,6 +133,13 @@ RecordingPlaneDiagnostics::ReadParameters ()
     m_particles_buffer.resize(m_num_buffers);
     m_totalParticles_in_buffer.resize(m_num_buffers);
     m_totalParticles_flushed_already.resize(m_num_buffers);
+    m_geom_snapshot.resize(m_num_buffers);
+    m_snapshot_geometry_defined.resize(m_num_buffers);
+    for(int i=0; i < m_num_buffers; ++i ){
+        int nlev_output = 1;
+        m_geom_snapshot[i].resize(nlev_output);
+        m_snapshot_geometry_defined[i] = 0;
+    }
 }
 
 bool
@@ -185,7 +192,7 @@ RecordingPlaneDiagnostics::InitializeBufferData (int /*i_buffer*/, int lev, bool
     m_buffer_box = domain;
     amrex::BoxArray diag_ba;
     diag_ba.define(m_buffer_box);
-    amrex::BoxArray ba = diag_ba.maxSize(256);
+    amrex::BoxArray ba = diag_ba.maxSize(m_buffer_size);
     amrex::IntVect typ(1);
     typ[WARPX_ZINDEX] = 0; // nodal except in z-direction
     ba.convert(typ);
@@ -205,6 +212,9 @@ RecordingPlaneDiagnostics::PrepareFieldDataForOutput ()
         for (auto& f : m_all_field_functors[lev]) {
             f->PrepareFunctorData(0, ZSliceInDomain, m_station_loc, m_buffer_box,
                                   m_slice_counter, m_buffer_size);
+        }
+        for( int i_buffer=0; i_buffer < m_num_buffers; ++i_buffer ) {
+            DefineSnapshotGeometry(i_buffer,lev);
         }
     }
 }
@@ -277,19 +287,21 @@ RecordingPlaneDiagnostics::PrepareParticleDataForOutput ()
 {
     const int lev = 0;
     auto& warpx = WarpX::GetInstance();
+
     for (int i = 0; i < m_particles_buffer.size(); ++i) {
+        DefineSnapshotGeometry(i,lev);
         for (int isp = 0; isp < m_all_particle_functors.size(); ++isp )
         {
             amrex::Box domain = (warpx.boxArray(lev)).minimalBox();
             domain.setSmall(WARPX_ZINDEX, 0);
-            domain.setBig(WARPX_ZINDEX, (m_buffer_size - 1));
+            domain.setBig(WARPX_ZINDEX, (1));
             amrex::BoxArray diag_ba;
-            diag_ba.define(m_buffer_box);
-            amrex::BoxArray ba = diag_ba.maxSize(256);
+            diag_ba.define(domain);
+            amrex::BoxArray ba = diag_ba.maxSize(m_buffer_size);
             amrex::DistributionMapping dmap(ba);
             m_particles_buffer[i][isp]->SetParticleBoxArray(lev, ba);
             m_particles_buffer[i][isp]->SetParticleDistributionMap(lev, dmap);
-            m_particles_buffer[i][isp]->SetParticleGeometry(lev, warpx.Geom(0));
+            m_particles_buffer[i][isp]->SetParticleGeometry(lev, m_geom_snapshot[0][0]);
         }
     }
     for (int isp = 0; isp < m_all_particle_functors.size(); ++isp)
@@ -297,6 +309,29 @@ RecordingPlaneDiagnostics::PrepareParticleDataForOutput ()
         m_all_particle_functors[isp]->PrepareFunctorData(0, GetZSliceInDomain(0), m_station_loc, 0._rt, 0._rt, 0);
     }
 }
+
+void
+RecordingPlaneDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
+{
+    if (m_snapshot_geometry_defined[i_buffer]) { return; }
+
+    if (lev == 0) {
+        auto& warpx = WarpX::GetInstance();
+        amrex::Box domain = (warpx.boxArray(lev)).minimalBox();
+        domain.setSmall(WARPX_ZINDEX,0);
+        domain.setBig(WARPX_ZINDEX, (domain.smallEnd(WARPX_ZINDEX)+1));
+        amrex::Real zlo = m_station_loc - warpx.Geom(lev).CellSize(WARPX_ZINDEX)*1.1;
+        amrex::Real zhi = m_station_loc + warpx.Geom(lev).CellSize(WARPX_ZINDEX)*1.1;
+        amrex::RealBox realdom = warpx.Geom(lev).ProbDomain();
+        realdom.setLo(WARPX_ZINDEX,zlo);
+        realdom.setHi(WARPX_ZINDEX,zhi);
+        amrex::Vector<int> periodicity(AMREX_SPACEDIM, 0);
+        m_geom_snapshot[i_buffer][lev].define(domain, &realdom, amrex::CoordSys::cartesian, periodicity.data());
+    } else if (lev > 0) {
+        m_geom_snapshot[i_buffer][lev] = amrex::refine(m_geom_snapshot[i_buffer][lev-1], WarpX::RefRatio(lev-1));
+    }
+}
+
 
 void
 RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
@@ -320,6 +355,10 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
         }
     }
     amrex::ParallelDescriptor::Barrier();
+    amrex::Vector<amrex::BoxArray> vba;
+    amrex::Vector<amrex::DistributionMapping> vdmap;
+    amrex::Vector<amrex::Geometry> vgeom;
+    amrex::Vector<amrex::IntVect> vrefratio;
     for (int lev = 0; lev < 1; ++lev) {
         std::string buffer_string = amrex::Concatenate("buffer-",m_flush_counter,1);
         amrex::Print() << " Writing station buffer " << buffer_string << "\n";
@@ -377,20 +416,44 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
         // particles buffer is saved in pinned particle container
         bool const use_pinned_pc = true;
         auto const& warpx = WarpX::GetInstance();
-        const amrex::Geometry& geom = warpx.Geom(0); // not used in WriteToFile
         bool const plot_raw_fields = false;
         bool const plot_raw_fields_guards = false;
 
         if (nparticles > 0) {
+
+            const int nlevels = m_particles_buffer[i_buffer][0]->numLevels();
+            for (int lev = 0 ; lev < nlevels; ++lev) {
+                // Store BoxArray, dmap, geometry, and refratio for every level
+                vba.push_back(m_particles_buffer[i_buffer][0]->ParticleBoxArray(lev));
+                vdmap.push_back(m_particles_buffer[i_buffer][0]->ParticleDistributionMap(lev));
+                vgeom.push_back(m_particles_buffer[i_buffer][0]->ParticleGeom(lev));
+                if (lev < nlevels - 1) {
+                    vrefratio.push_back(m_particles_buffer[i_buffer][0]->GetParGDB()->refRatio(lev));
+                }
+            }
+
+            amrex::Box domain = (m_particles_buffer[i_buffer][0]->ParticleBoxArray(0)).minimalBox();
+            domain.setSmall(WARPX_ZINDEX, (domain.smallEnd(WARPX_ZINDEX)));
+            domain.setBig(WARPX_ZINDEX, (domain.bigEnd(WARPX_ZINDEX)));
+            amrex::BoxArray diag_ba;
+            diag_ba.define(domain);
+            m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,diag_ba);
+            for (int isp = 0; isp < m_particles_buffer.at(i_buffer).size(); ++isp) {
+                m_particles_buffer[i_buffer][isp]->SetParGDB(vgeom[0], vdmap[0], diag_ba);
+                m_particles_buffer[i_buffer][isp]->Redistribute();
+            }
+            m_particles_buffer[i_buffer][0]->SetParticleBoxArray(0,vba.back());
+            m_particles_buffer[i_buffer][0]->SetParGDB(vgeom[0], vdmap[0], vba.back());
+
             m_flush_format->WriteToFile(m_varnames, {}, m_geom_output[i_buffer],
                                         warpx.getistep(), warpx.gett_new(0), m_output_species[i_buffer], nlev_output, filename,
                                         m_file_min_digits, plot_raw_fields, plot_raw_fields_guards, use_pinned_pc,
-                                        isBTD, i_buffer, m_flush_counter, maxBTDBuffers, geom,
+                                        isBTD, i_buffer, m_flush_counter, maxBTDBuffers, m_geom_snapshot[i_buffer][0],
                                         isLastBTD, m_totalParticles_flushed_already[i_buffer]);
         }
 
         for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
-            m_totalParticles_flushed_already[i_buffer][isp] += int(m_particles_buffer[i_buffer][isp]->TotalNumberOfParticles());
+            m_totalParticles_flushed_already[i_buffer][isp] += m_totalParticles_in_buffer[i_buffer][isp];
             m_totalParticles_in_buffer[i_buffer][isp] = 0;
         }
 
@@ -409,7 +472,7 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
         // slice
         for (int lev = 0; lev < 1; ++lev) {
             auto& out = m_mf_output[i_buffer][lev];
-            amrex::Box destbox = WarpX::GetInstance().Geom(lev).Domain();
+            amrex::Box destbox = m_geom_snapshot[i_buffer][lev].Domain();
             destbox.convert(out.ixType()).setRange(WARPX_ZINDEX,0);
             amrex::NonLocalBC::MultiBlockIndexMapping dtos;
             dtos.offset[WARPX_ZINDEX] = -(m_buffer_size-1);

@@ -126,6 +126,10 @@ struct PlaneCrossingTime
 #else
         amrex::ignore_unused(xp, yp, zp);
 #endif
+        // The particle may have crossed the computational domain and could be set to have a neg id
+        // But since the particle has crossed the recording plane location, this particle must be stored
+        // in the buffer
+        if (dst.m_aos[i_dst].id() < 0) dst.m_aos[i_dst].id() = dst.m_aos[i_dst].id()*-1;
         dst.m_rdata[PIdx::w][i_dst] = m_wpnew[i_src];
         dst.m_rdata[PIdx::ux][i_dst] = uxp;
         dst.m_rdata[PIdx::uy][i_dst] = uyp;
