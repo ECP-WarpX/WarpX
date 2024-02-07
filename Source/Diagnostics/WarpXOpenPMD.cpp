@@ -231,7 +231,7 @@ namespace detail
             //       and I/O in Cartesian.
             //       Other attributes like momentum are consequently
             //       stored in x,y,z internally.
-            positionComponents = vs{"x", "y", "z"};
+            positionComponents = vs{"x", "theta", "z"};
 #elif defined(WARPX_DIM_3D)
             positionComponents = vs{"x", "y", "z"};
 #else
