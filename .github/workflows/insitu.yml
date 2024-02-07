@@ -20,7 +20,7 @@ jobs:
     container:
       image: senseiinsitu/ci:fedora35-amrex-20220613
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Configure
       run: |
         cmake -S . -B build     \
@@ -28,7 +28,7 @@ jobs:
           -DWarpX_COMPUTE=NOACC
     - name: Build
       run: |
-        cmake --build build -j 2
+        cmake --build build -j 4
 
   ascent:
     name: Ascent
@@ -41,7 +41,7 @@ jobs:
     container:
       image: alpinedav/ascent:0.9.2
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Configure
       run: |
         . /ascent_docker_setup_env.sh
@@ -51,7 +51,7 @@ jobs:
     - name: Build
       run: |
         . /ascent_docker_setup_env.sh
-        cmake --build build -j 2
+        cmake --build build -j 4
     - name: Test
       run: |
         cp Examples/Physics_applications/laser_acceleration/inputs_3d .
@@ -61,7 +61,7 @@ jobs:
             max_step = 40              \
             diag1.intervals = 30:40:10 \
             diag1.format = ascent
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         name: ascent-test-artifacts
         path: |

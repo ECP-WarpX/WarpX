@@ -164,7 +164,7 @@ public:
     int maxlevel_extEMfield_init;
 
     // Algorithms
-    //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay)
+    //! Integer that corresponds to the current deposition algorithm (Esirkepov, direct, Vay, Villasenor)
     static short current_deposition_algo;
     //! Integer that corresponds to the charge deposition algorithm (only standard deposition)
     static short charge_deposition_algo;
