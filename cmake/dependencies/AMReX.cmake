@@ -257,6 +257,10 @@ macro(find_amrex)
         list(APPEND CMAKE_MODULE_PATH "${AMReX_DIR}/AMReXCMakeModules")
 
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
+
+        if(WarpX_COMPUTE STREQUAL CUDA)
+            enable_language(CUDA)
+        endif()
     endif()
 endmacro()
 

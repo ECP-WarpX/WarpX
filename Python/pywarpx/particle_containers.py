@@ -772,9 +772,9 @@ class ParticleBoundaryBufferWrapper(object):
                 form x/y/z_hi/lo or eb.
 
             comp_name      : str
-                The component of the array data that will be returned. If
-                "step_scraped" the special attribute holding the timestep at
-                which a particle was scraped will be returned.
+                The component of the array data that will be returned.
+                "x", "y", "z", "ux", "uy", "uz", "w"
+                "timestamp", "nx", "ny", "nz"
 
             level          : int
                 Which AMR level to retrieve scraped particle data from.
@@ -784,35 +784,12 @@ class ParticleBoundaryBufferWrapper(object):
         part_container = self.particle_buffer.get_particle_container(
             species_name, self._get_boundary_number(boundary)
         )
+        comp_idx = part_container.get_comp_index(comp_name)
         data_array = []
 
-        if comp_name == 'step_scraped':
-            # the step scraped is stored before the normal components
-            comp_idx = part_container.num_real_comps - 4
-            for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
-                soa = pti.soa()
-                data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
-        elif comp_name == 'nx':
-            comp_idx = part_container.num_real_comps - 3
-            for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
-                soa = pti.soa()
-                data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
-        elif comp_name == 'ny':
-            comp_idx = part_container.num_real_comps - 2
-            for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
-                soa = pti.soa()
-                data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
-        elif comp_name == 'nz':
-            comp_idx = part_container.num_real_comps - 1
-            for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
-                soa = pti.soa()
-                data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
-        else:
-            container_wrapper = ParticleContainerWrapper(species_name)
-            comp_idx = container_wrapper.particle_container(comp_name)
-            for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
-                soa = pti.soa()
-                data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
+        for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
+            soa = pti.soa()
+            data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
         return data_array
 
     def clear_buffer(self):

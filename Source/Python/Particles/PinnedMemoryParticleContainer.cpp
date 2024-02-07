@@ -15,4 +15,22 @@ void init_PinnedMemoryParticleContainer (py::module& m)
         PinnedMemoryParticleContainer,
         amrex::ParticleContainerPureSoA<PIdx::nattribs, 0, amrex::PinnedArenaAllocator>
     > pmpc (m, "PinnedMemoryParticleContainer");
+    pmpc
+        .def("get_comp_index",
+            [](PinnedMemoryParticleContainer& pc, std::string comp_name)
+            {
+                auto particle_comps = pc.getParticleComps();
+                return particle_comps.at(comp_name);
+            },
+            py::arg("comp_name")
+        )
+        .def("get_icomp_index",
+            [](PinnedMemoryParticleContainer& pc, std::string comp_name)
+            {
+                auto particle_comps = pc.getParticleiComps();
+                return particle_comps.at(comp_name);
+            },
+            py::arg("comp_name")
+        )
+    ;
 }
