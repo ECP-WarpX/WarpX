@@ -109,19 +109,19 @@ struct PlaneCrossingTime
         const amrex::ParticleReal uyp = m_uypold[i_src] * weight_old + m_uynew[i_src] * weight_new;
         const amrex::ParticleReal uzp = m_uzpold[i_src] * weight_old + m_uznew[i_src] * weight_new;
 #if defined (WARPX_DIM_3D)
-        dst.m_aos[i_dst].pos(0) = xp;
-        dst.m_aos[i_dst].pos(1) = yp;
-        dst.m_aos[i_dst].pos(2) = zp;
+        dst.m_rdata[PIdx::x][i_dst] = xp;
+        dst.m_rdata[PIdx::y][i_dst] = yp;
+        dst.m_rdata[PIdx::z][i_dst] = zp;
 #elif defined (WARPX_DIM_RZ)
-        dst.m_aos[i_dst].pos(0) = std::sqrt(xp*xp + yp*yp);
-        dst.m_aos[i_dst].pos(1) = zp;
+        dst.m_rdata[PIdx::x][i_dst] = std::sqrt(xp*xp + yp*yp);
+        dst.m_rdata[PIdx::z][i_dst] = zp;
         dst.m_rdata[PIdx::theta][i_dst] = std::atan2(yp, xp);
 #elif defined (WARPX_DIM_XZ)
-        dst.m_aos[i_dst].pos(0) = xp;
-        dst.m_aos[i_dst].pos(1) = zp;
+        dst.m_rdata[PIdx::x][i_dst] = xp;
+        dst.m_rdata[PIdx::z][i_dst] = zp;
         amrex::ignore_unused(yp);
 #elif defined (WARPX_DIM_1D_Z)
-        dst.m_aos[i_dst].pos(0) = zp;
+        dst.m_rdata[PIdx::z][i_dst] = zp;
         amrex::ignore_unused(xp, yp);
 #else
         amrex::ignore_unused(xp, yp, zp);
@@ -129,7 +129,9 @@ struct PlaneCrossingTime
         // The particle may have crossed the computational domain and could be set to have a neg id
         // But since the particle has crossed the recording plane location, this particle must be stored
         // in the buffer
-        if (dst.m_aos[i_dst].id() < 0) dst.m_aos[i_dst].id() = dst.m_aos[i_dst].id()*-1;
+        if ( ! amrex::ParticleIDWrapper{dst.m_idcpu[i_dst]}.is_valid() ) {
+            amrex::ParticleIDWrapper{dst.m_idcpu[i_dst]}.make_valid();
+        }
         dst.m_rdata[PIdx::w][i_dst] = m_wpnew[i_src];
         dst.m_rdata[PIdx::ux][i_dst] = uxp;
         dst.m_rdata[PIdx::uy][i_dst] = uyp;
