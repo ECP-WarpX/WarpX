@@ -132,7 +132,6 @@ RecordingPlaneDiagnostics::ReadParameters ()
     }
     m_particles_buffer.resize(m_num_buffers);
     m_totalParticles_in_buffer.resize(m_num_buffers);
-    m_totalParticles_flushed_already.resize(m_num_buffers);
     m_geom_snapshot.resize(m_num_buffers);
     m_snapshot_geometry_defined.resize(m_num_buffers);
     for(int i=0; i < m_num_buffers; ++i ){
@@ -252,11 +251,9 @@ RecordingPlaneDiagnostics::InitializeParticleFunctors ()
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     m_all_particle_functors.resize(m_output_species_names.size());
     m_totalParticles_in_buffer[0].resize(m_output_species_names.size());
-    m_totalParticles_flushed_already[0].resize(m_output_species_names.size());
     for (int i = 0; i < m_all_particle_functors.size(); ++i)
     {
         m_totalParticles_in_buffer[0][i] = 0;
-        m_totalParticles_flushed_already[0][i] = 0;
         const int idx = mpc.getSpeciesID(m_output_species_names[i]);
         m_all_particle_functors[i] = std::make_unique<RecordingPlaneParticleFunctor>(mpc.GetParticleContainerPtr(idx), m_output_species_names[i], num_station_buffers);
     }
@@ -449,11 +446,10 @@ RecordingPlaneDiagnostics::Flush (int i_buffer, bool /* force_flush */)
                                         warpx.getistep(), warpx.gett_new(0), m_output_species[i_buffer], nlev_output, filename,
                                         m_file_min_digits, plot_raw_fields, plot_raw_fields_guards, use_pinned_pc,
                                         isBTD, i_buffer, m_flush_counter, maxBTDBuffers, m_geom_snapshot[i_buffer][0],
-                                        isLastBTD, m_totalParticles_flushed_already[i_buffer]);
+                                        isLastBTD);
         }
 
         for (int isp = 0; isp < m_particles_buffer[0].size(); ++isp) {
-            m_totalParticles_flushed_already[i_buffer][isp] += m_totalParticles_in_buffer[i_buffer][isp];
             m_totalParticles_in_buffer[i_buffer][isp] = 0;
         }
 
