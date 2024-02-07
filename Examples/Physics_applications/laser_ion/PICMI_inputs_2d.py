@@ -144,7 +144,7 @@ particle_diag = picmi.ParticleDiagnostic(
     species=[electrons],
     data_list=['weighting', 'position', 'momentum'],
     warpx_format='openpmd',
-    warpx_openpmd_backend='bp',
+    warpx_openpmd_backend='h5',
     warpx_plot_filter_function='(x<1.0e-6) * (x>-1.0e-6)'
 )
 # reduce resolution of output fields
@@ -160,7 +160,7 @@ field_diag = picmi.FieldDiagnostic(
     data_list=diag_field_list,
     write_dir='./diags',
     warpx_format='openpmd',
-    warpx_openpmd_backend='bp'
+    warpx_openpmd_backend='h5'
 )
 
 particle_fw_diag = picmi.ParticleDiagnostic(
