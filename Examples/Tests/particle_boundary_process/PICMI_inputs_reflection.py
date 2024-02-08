@@ -134,9 +134,9 @@ assert n == 67
 scraped_steps = buffer.get_particle_boundary_buffer("electrons", 'z_hi', 'timestamp', 0)
 for arr in scraped_steps:
     # print(arr)
-    assert all(arr == 4)
+    assert all(arr == 4*dt)
 
 scraped_steps = buffer.get_particle_boundary_buffer("electrons", 'z_lo', 'timestamp', 0)
 for arr in scraped_steps:
     # print(arr)
-    assert all(arr == 8)
+    assert all(arr == 8*dt)
