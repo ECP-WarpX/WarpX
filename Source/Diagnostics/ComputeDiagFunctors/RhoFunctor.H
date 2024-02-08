@@ -27,7 +27,7 @@ public:
      */
     RhoFunctor (int lev,
                 amrex::IntVect crse_ratio,
-                bool apply_filter_rho = false,
+                bool apply_rz_psatd_filter = false,
                 int species_index = -1,
                 bool convertRZmodes2cartesian = true,
                 int ncomp = 1);
@@ -46,7 +46,7 @@ private:
     int const m_lev;
 
     // Whether to apply k-space filtering of charge density in the diagnostics output in RZ PSATD
-    bool m_apply_filter_rho;
+    bool m_apply_rz_psatd_filter;
 
     // Species index to dump rho per species
     const int m_species_index;
