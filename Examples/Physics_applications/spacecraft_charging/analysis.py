@@ -66,8 +66,8 @@ tolerance_tau=0.01
 print("tolerance for v0 = "+ str(tolerance_v0 *100) + '%')
 print("tolerance for tau = "+ str(tolerance_tau*100) + '%')
 
-mean_v0=-144.341
-mean_tau=0.000003637
+mean_v0=-151.347
+mean_tau=0.000004351
 
 diff_v0=np.abs((popt[0]-mean_v0)/mean_v0)
 diff_tau=np.abs((popt[1]-mean_tau)/mean_tau)
