@@ -19,8 +19,8 @@ jobs:
       CXXFLAGS: "-Werror"
       CMAKE_GENERATOR: Ninja
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       name: Install Python
       with:
         python-version: '3.x'
@@ -28,7 +28,7 @@ jobs:
       run: |
         .github/workflows/dependencies/nvcc11-3.sh
     - name: CCache Cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/ccache
         key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
@@ -73,7 +73,7 @@ jobs:
           -DWarpX_PSATD=ON             \
           -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
           -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
-        cmake --build build_sp -j 2
+        cmake --build build_sp -j 4
 
         python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade build packaging setuptools wheel
@@ -92,12 +92,12 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event.pull_request.draft == false
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: install dependencies
       run: |
         .github/workflows/dependencies/nvcc11-8.sh
     - name: CCache Cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/ccache
         key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
@@ -115,8 +115,8 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         git clone https://github.com/AMReX-Codes/amrex.git ../amrex
-        cd ../amrex && git checkout --detach 73b215557c0e842c3e829b683939bbb7a7e12373 && cd -
-        make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE USE_CCACHE=TRUE -j 2
+        cd ../amrex && git checkout --detach 296ed40e16ae1877640f5b78e9162dbd4ba1c279 && cd -
+        make COMP=gcc QED=FALSE USE_MPI=TRUE USE_GPU=TRUE USE_OMP=FALSE USE_PSATD=TRUE USE_CCACHE=TRUE -j 4
 
         ccache -s
         du -hs ~/.cache/ccache
@@ -129,11 +129,11 @@ jobs:
     #  # For NVHPC, Ninja is slower than the default:
     #  CMAKE_GENERATOR: Ninja
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Dependencies
       run: .github/workflows/dependencies/nvhpc.sh
     - name: CCache Cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/ccache
         key: ccache-${{ github.workflow }}-${{ github.job }}-git-${{ github.sha }}
@@ -171,7 +171,7 @@ jobs:
           -DWarpX_PSATD=ON             \
           -DAMReX_CUDA_ERROR_CROSS_EXECUTION_SPACE_CALL=ON \
           -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
-        cmake --build build -j 2
+        cmake --build build -j 4
 
         # work-around for mpi4py 3.1.1 build system issue with using
         # a GNU-built Python executable with non-GNU Python modules
@@ -197,7 +197,7 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
         run: |
           echo $PR_NUMBER > pr_number.txt
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: pr_number
           path: pr_number.txt

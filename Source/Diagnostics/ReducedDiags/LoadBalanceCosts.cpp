@@ -56,8 +56,7 @@ namespace
             auto const & plev  = pc.GetParticles(lev);
 
             auto const & ptile = plev.at(box_index);
-            auto const & aos   = ptile.GetArrayOfStructs();
-            auto const np = aos.numParticles();
+            auto const np = ptile.numParticles();
             num_macro_particles += np;
         }
 

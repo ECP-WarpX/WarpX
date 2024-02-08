@@ -13,6 +13,6 @@ void init_PinnedMemoryParticleContainer (py::module& m)
 {
     py::class_<
         PinnedMemoryParticleContainer,
-        amrex::ParticleContainer<0,0,PIdx::nattribs,0,amrex::PinnedArenaAllocator>
+        amrex::ParticleContainerPureSoA<PIdx::nattribs, 0, amrex::PinnedArenaAllocator>
     > pmpc (m, "PinnedMemoryParticleContainer");
 }
