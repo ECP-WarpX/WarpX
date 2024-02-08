@@ -1184,7 +1184,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         pywarpx.hybridpicmodel.gamma = self.gamma
         pywarpx.hybridpicmodel.n_floor = self.n_floor
         pywarpx.hybridpicmodel.__setattr__(
-            'plasma_resistivity(rho)',
+            'plasma_resistivity(rho,J)',
             pywarpx.my_constants.mangle_expression(self.plasma_resistivity, self.mangle_dict)
         )
         pywarpx.hybridpicmodel.substeps = self.substeps
@@ -1575,7 +1575,7 @@ class DSMCCollisions(picmistandard.base._ClassWithInit):
 
         self.handle_init(kw)
 
-    def initialize_inputs(self):
+    def collision_initialize_inputs(self):
         collision = pywarpx.Collisions.newcollision(self.name)
         collision.type = 'dsmc'
         collision.species = [species.name for species in self.species]

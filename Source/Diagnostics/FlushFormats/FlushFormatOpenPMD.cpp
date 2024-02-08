@@ -126,7 +126,7 @@ FlushFormatOpenPMD::WriteToFile (
     const bool use_pinned_pc,
     bool isBTD, int snapshotID, int bufferID, int numBuffers,
     const amrex::Geometry& full_BTD_snapshot,
-    bool isLastBTDFlush, const amrex::Vector<int>& totalParticlesFlushedAlready) const
+    bool isLastBTDFlush) const
 {
     WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
     const std::string& filename = amrex::Concatenate(prefix, iteration[0], file_min_digits);
@@ -164,7 +164,7 @@ FlushFormatOpenPMD::WriteToFile (
 
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(
-        particle_diags, static_cast<amrex::Real>(time), use_pinned_pc, isBTD, isLastBTDFlush, totalParticlesFlushedAlready);
+        particle_diags, static_cast<amrex::Real>(time), use_pinned_pc, isBTD, isLastBTDFlush);
 
     // signal that no further updates will be written to this iteration
     m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);
