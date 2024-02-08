@@ -250,7 +250,7 @@ We follow the same naming, but remove the ``SIG`` prefix, e.g., the WarpX signal
 
    .. code-block:: bash
 
-      #SBATCH --signal=B:1@360
+      #SBATCH --signal=1@360
 
       srun ...                   \
         warpx.break_signals=HUP  \
