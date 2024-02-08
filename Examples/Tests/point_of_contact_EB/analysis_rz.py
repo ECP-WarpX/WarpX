@@ -35,10 +35,10 @@ print('x=%5.4f, y=%5.4f, z=%5.4f' % (r_analytic, theta_analytic, z_analytic))
 tolerance=0.001
 print("tolerance = "+ str(tolerance *100) + '%')
 
-diff_x=np.abs((x[0]-x_analytic)/x_analytic)
-diff_y=np.abs((y[0]-y_analytic)/y_analytic)
+diff_r=np.abs((r[0]-r_analytic)/r_analytic)
+diff_theta=np.abs((theta[0]-theta_analytic)/theta_analytic)
 
-print("percentage error for x = %5.4f %%" %(diff_x *100))
-print("percentage error for y = %5.4f %%" %(diff_y *100))
+print("percentage error for r = %5.4f %%" %(diff_r *100))
+print("percentage error for theta = %5.4f %%" %(diff_theta *100))
 
-assert (diff_x < tolerance) and (diff_y < tolerance) and (np.abs(z[0]) < tolerance), 'Test point_of_contact did not pass'
+assert (diff_r < tolerance) and (diff_theta < tolerance) and (np.abs(z[0]) < tolerance), 'Test point_of_contact did not pass'
