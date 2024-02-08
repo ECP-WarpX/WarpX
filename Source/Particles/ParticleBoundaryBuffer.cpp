@@ -121,19 +121,36 @@ struct FindBoundaryIntersection {
         dst.m_rdata[PIdx::x][dst_i] = x_temp;
         dst.m_rdata[PIdx::y][dst_i] = y_temp;
         dst.m_rdata[PIdx::z][dst_i] = z_temp;
+        //save normal components
+        dst.m_runtime_rdata[m_index+1][dst_i] = normal[0];
+        dst.m_runtime_rdata[m_index+2][dst_i] = normal[1];
+        dst.m_runtime_rdata[m_index+3][dst_i] = normal[2];
 #elif (defined WARPX_DIM_XZ)
         dst.m_rdata[PIdx::x][dst_i] = x_temp;
         dst.m_rdata[PIdx::z][dst_i] = z_temp;
         amrex::ignore_unused(y_temp);
+        //save normal components
+        dst.m_runtime_rdata[m_index+1][dst_i] = normal[0];
+        dst.m_runtime_rdata[m_index+2][dst_i] = 0.0;
+        dst.m_runtime_rdata[m_index+3][dst_i] = normal[1];
 #elif (defined WARPX_DIM_RZ)
         dst.m_rdata[PIdx::x][dst_i] = std::sqrt(x_temp*x_temp + y_temp*y_temp);
         dst.m_rdata[PIdx::z][dst_i] = z_temp;
         dst.m_rdata[PIdx::theta][dst_i] = std::atan2(y_temp, x_temp);
+        //save normal components
+        amrex::Real theta=std::atan2(y_temp, x_temp);
+        dst.m_runtime_rdata[m_index+1][dst_i] = normal[0]*std::cos(theta);
+        dst.m_runtime_rdata[m_index+2][dst_i] = normal[0]*std::sin(theta);
+        dst.m_runtime_rdata[m_index+3][dst_i] = normal[1];
 #elif (defined WARPX_DIM_1D_Z)
         dst.m_rdata[PIdx::z][dst_i] = z_temp;
         amrex::ignore_unused(x_temp, y_temp);
+        //normal not defined
+        dst.m_runtime_rdata[m_index+1][dst_i] = 0.0;
+        dst.m_runtime_rdata[m_index+2][dst_i] = 0.0;
+        dst.m_runtime_rdata[m_index+3][dst_i] = 0.0;
 #else
-        amrex::ignore_unused(x_temp, y_temp, z_temp);
+        amrex::ignore_unused(x_temp, y_temp, z_temp, normal);
 #endif
     }
 };
