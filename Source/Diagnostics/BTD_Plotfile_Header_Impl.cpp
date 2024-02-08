@@ -22,7 +22,9 @@
 using namespace amrex::literals;
 
 BTDPlotfileHeaderImpl::BTDPlotfileHeaderImpl (std::string const & Headerfile_path)
-    : m_Header_path{Headerfile_path}
+    : m_Header_path{Headerfile_path},
+      m_glo{{AMREX_D_DECL(0., 0., 0.)}},
+      m_ghi{{AMREX_D_DECL(1., 1., 1.)}}
 {
 
 }
