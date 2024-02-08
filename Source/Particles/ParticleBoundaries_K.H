@@ -210,14 +210,14 @@ namespace {
             uy = ur*std::sin(y) + ut*std::cos(y);
         }
 #else
-        ux = amrex::RandomNormal(0, boundaries.u_th, engine);
-        uy = amrex::RandomNormal(0, boundaries.u_th, engine);
+        ux = PhysConst::c*amrex::RandomNormal(0, boundaries.u_th, engine);
+        uy = PhysConst::c*amrex::RandomNormal(0, boundaries.u_th, engine);
         // Generate particles with a Gaussian flux distribution in the direction normal to the boundary
-        if (change_sign_ux) { ux = -generateGaussianFluxDist(0, boundaries.u_th, engine ) * ( (ux>0)-(ux<0) ); }
-        if (change_sign_uy) { uy = -generateGaussianFluxDist(0, boundaries.u_th, engine ) * ( (uy>0)-(uy<0) ); }
+        if (change_sign_ux) { ux = -PhysConst::c*generateGaussianFluxDist(0, boundaries.u_th, engine ) * ( (ux>0)-(ux<0) ); }
+        if (change_sign_uy) { uy = -PhysConst::c*generateGaussianFluxDist(0, boundaries.u_th, engine ) * ( (uy>0)-(uy<0) ); }
 #endif
-        uz = amrex::RandomNormal(0, boundaries.u_th, engine);
-        if (change_sign_uz) { uz = -generateGaussianFluxDist(0, boundaries.u_th, engine ) * ( (uz>0)-(uz<0) ); }
+        uz = PhysConst::c*amrex::RandomNormal(0, boundaries.u_th, engine);
+        if (change_sign_uz) { uz = -PhysConst::c*generateGaussianFluxDist(0, boundaries.u_th, engine ) * ( (uz>0)-(uz<0) ); }
     }
 
 }
