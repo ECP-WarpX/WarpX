@@ -61,13 +61,13 @@ print('fit parameters between the min(phi) curve over the time and the function 
 print('v0=%5.3f, tau=%5.9f' % (popt[0], popt[1]))
 
 
-tolerance_v0=0.1
-tolerance_tau=0.1
+tolerance_v0=0.01
+tolerance_tau=0.01
 print("tolerance for v0 = "+ str(tolerance_v0 *100) + '%')
 print("tolerance for tau = "+ str(tolerance_tau*100) + '%')
 
-mean_v0=-147.075
-mean_tau=0.0000038725
+mean_v0=-144.341
+mean_tau=0.000003637
 
 diff_v0=np.abs((popt[0]-mean_v0)/mean_v0)
 diff_tau=np.abs((popt[1]-mean_tau)/mean_tau)
