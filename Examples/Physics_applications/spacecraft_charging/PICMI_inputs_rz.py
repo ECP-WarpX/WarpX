@@ -271,6 +271,7 @@ sim = picmi.Simulation(
     max_steps = max_steps,
     warpx_embedded_boundary=embedded_boundary,
     warpx_amrex_the_arena_is_managed=1,
+    warpx_random_seed=1
 )
 
 layout1=picmi.GriddedLayout(n_macroparticle_per_cell=number_per_cell_each_dim,
