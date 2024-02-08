@@ -135,7 +135,7 @@ assert n == 612
 
 scraped_steps = particle_buffer.get_particle_boundary_buffer("electrons", 'eb', 'timestamp', 0)
 for arr in scraped_steps:
-    assert all(np.array(arr, copy=False) > 40)
+    assert all(np.array(arr, copy=False) > 40*dt)
 
 weights = particle_buffer.get_particle_boundary_buffer("electrons", 'eb', 'w', 0)
 n = sum(len(arr) for arr in weights)
