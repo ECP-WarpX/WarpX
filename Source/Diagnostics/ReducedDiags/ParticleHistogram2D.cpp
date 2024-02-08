@@ -60,6 +60,7 @@ ParticleHistogram2D::ParticleHistogram2D (const std::string& rd_name)
     ParmParse pp_rd_name(rd_name);
 
     pp_rd_name.query("openpmd_backend", m_openpmd_backend);
+    pp_rd_name.query("file_min_digits", m_file_min_digits);
     // pick first available backend if default is chosen
     if( m_openpmd_backend == "default" ) {
         m_openpmd_backend = WarpXOpenPMDFileType();
@@ -260,10 +261,22 @@ void ParticleHistogram2D::WriteToFile (int step) const
     // only IO processor writes
     if ( !ParallelDescriptor::IOProcessor() ) { return; }
 
+    // TODO: support different filename templates
+    std::string filename = "openpmd";
+    // TODO: support also group-based encoding
+    const std::string fileSuffix = std::string("_%0") + std::to_string(m_file_min_digits) + std::string("T");
+    filename = filename.append(fileSuffix).append(".").append(m_openpmd_backend);
+
+    std::string filepath = m_path + m_rd_name + "/" + filename;
+    // transform paths for Windows
+    #ifdef _WIN32
+        filepath = openPMD::auxiliary::replace_all(filepath, "/", "\\");
+    #endif
+
     // Create the OpenPMD series
     auto series = io::Series(
-            m_path + m_rd_name + "/openpmd_%06T." + m_openpmd_backend,
-            io::Access::APPEND);
+            filepath,
+            io::Access::CREATE);
     auto i = series.iterations[step + 1];
     // record
     auto f_mesh = i.meshes["data"];

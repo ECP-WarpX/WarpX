@@ -144,9 +144,9 @@ private:
     /** Number of Fabs in the plotfile. */
     int m_numFabs;
     /** Lower corner physical coordinates of each fab in the plotfile. */
-    amrex::Vector<amrex::Array<amrex::Real, AMREX_SPACEDIM> > m_glo {{AMREX_D_DECL(0.,0.,0.)}};
+    amrex::Vector<amrex::Array<amrex::Real, AMREX_SPACEDIM> > m_glo;
     /** Upper corner physical coordinates of each fab in the plotfile. */
-    amrex::Vector<amrex::Array<amrex::Real, AMREX_SPACEDIM> > m_ghi {{AMREX_D_DECL(1.,1.,1.)}};
+    amrex::Vector<amrex::Array<amrex::Real, AMREX_SPACEDIM> > m_ghi;
     std::string m_CellPath;
 
 };
