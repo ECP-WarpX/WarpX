@@ -41,4 +41,4 @@ diff_y=np.abs((y[0]-y_analytic)/y_analytic)
 print("percentage error for x = %5.4f %%" %(diff_x *100))
 print("percentage error for y = %5.4f %%" %(diff_y *100))
 
-assert (diff_x < tolerance) and (diff_y < tolerance) , 'Test point_of_contact did not pass'
+assert (diff_x < tolerance) and (diff_y < tolerance) and (np.abs(z[0]) < tolerance) , 'Test point_of_contact did not pass'
