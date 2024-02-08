@@ -130,9 +130,9 @@ sim.initialize_warpx()
 def mirror_reflection():
     #global nb_steps_scraping
     buffer = particle_containers.ParticleBoundaryBufferWrapper()
-    if (len(buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0))!=0): #otherwise np.concatenate doesnt work
+    if (len(buffer.get_particle_boundary_buffer("electrons", 'eb', 'timestamp', 0))!=0): #otherwise np.concatenate doesnt work
         print('the particle hitted the EB')
-        time_steps = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'step_scraped', 0))
+        time_steps = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'timestamp', 0))
 
         #step 1: extract the different parameters of the scraping buffer (normal, time, position)
         x = np.concatenate(buffer.get_particle_boundary_buffer("electrons", 'eb', 'x', 0))
