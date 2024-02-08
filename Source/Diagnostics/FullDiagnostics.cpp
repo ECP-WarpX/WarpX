@@ -1,8 +1,4 @@
 #include "FullDiagnostics.H"
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-    #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
-    #include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
-#endif
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
