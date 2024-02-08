@@ -165,7 +165,7 @@ jobs:
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=CUDA         \
           -DWarpX_EB=ON                \
-          -DWarpX_PYTHON=ON            \
+          -DWarpX_PYTHON=OFF           \
           -DAMReX_CUDA_ARCH=8.0        \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_PSATD=ON             \
