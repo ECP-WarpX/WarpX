@@ -381,7 +381,7 @@ private:
      *  with the merged plotfile lab-frame data.
      */
     void InterleaveFabArrayHeader(const std::string& Buffer_FabHeader_path,
-                                  const std::string& snapshot_FabHeaderFilename,
+                                  const std::string& snapshot_FabHeader_path,
                                   const std::string& newsnapshot_FabFilename);
     /** Interleave lab-frame metadata of the species header file in the buffers to
      *  be consistent with the merged plotfile lab-frame data
