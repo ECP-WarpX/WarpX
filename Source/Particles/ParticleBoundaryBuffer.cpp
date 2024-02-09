@@ -95,7 +95,7 @@ struct FindBoundaryIntersection {
             [=] (amrex::Real dt_frac) {
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
+                amrex::ParticleReal x_temp=xp, y_temp=yp, z_temp=zp;
                 UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_frac*dt);
                 ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phiarr);
