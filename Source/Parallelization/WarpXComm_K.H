@@ -276,13 +276,11 @@ void warpx_interp (int j, int k, int l,
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-                auto const wj = 1.0_rt / static_cast<amrex::Real>(nj);
-                auto const wk = 1.0_rt / static_cast<amrex::Real>(nk);
-                auto const wl = 1.0_rt / static_cast<amrex::Real>(nl);
-                fine += wj * wk * wl * arr_fine_zeropad(jm+jj,km+kk,lm+ll);
+                fine += arr_fine_zeropad(jm+jj,km+kk,lm+ll);
             }
         }
     }
+    fine = fine/static_cast<amrex::Real>(nj*nk*nl);
 
     // Final result
     arr_aux(j,k,l) = tmp + (fine - coarse);
