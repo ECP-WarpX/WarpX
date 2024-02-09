@@ -60,7 +60,6 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         const int scomp = 0;
         // Generate slice of the cell-centered multifab containing boosted-frame field-data
         // at current z-boost location for the ith buffer
-
         if (m_mf_src != nullptr){
             slice = amrex::get_slice_data(
                 moving_window_dir,

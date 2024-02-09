@@ -175,11 +175,9 @@ SignalHandling::CheckSignals ()
     // Due to a bug in Cray's MPICH 8.1.13 implementation (CUDA builds on Perlmutter@NERSC in 2022),
     // we cannot use the MPI_CXX_BOOL C++ datatype here. See WarpX PR #3029 and NERSC INC0183281
     static_assert(sizeof(bool) == 1, "We communicate bools as 1 byte-sized type in MPI");
-
     BL_MPI_REQUIRE(MPI_Ibcast(signal_actions_requested, SIGNAL_REQUESTS_SIZE,
                               MPI_BYTE, 0, amrex::ParallelDescriptor::Communicator(),
                               &signal_mpi_ibcast_request));
-
 #endif
 }
 
