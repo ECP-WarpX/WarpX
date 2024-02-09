@@ -19,10 +19,9 @@
 # https://docs.olcf.ornl.gov/systems/frontier_user_guide.html#sbcasting-a-binary-with-libraries-stored-on-shared-file-systems
 #SBATCH -C nvme
 
-# In case you are using pywarpx, please set is_pywarpx to true.
+# In case you are using pywarpx, please uncomment the following line.
 # This is needed to select the correct strategy to broadcast the
 # warpx executable and the associated libraries to all the nodes.
-is_pywarpx=false
 #is_pywarpx=true
 
 if [ $is_pywarpx ]; then
