@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-import math
-
-import numpy as np
-
-=======
->>>>>>> ef1e962595decf0b2be4c24004b44886094e2cc5
 import matplotlib.pyplot as plt
 import numpy as np
 from openpmd_viewer import OpenPMDTimeSeries
