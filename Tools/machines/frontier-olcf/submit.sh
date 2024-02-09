@@ -74,25 +74,35 @@ else
     PYWARPX_PATH=$(python3 -c "import pywarpx; print(pywarpx.__path__[0])")
 
     # Broadcast all the files of the pywarpx module to the nodes
-    mkdir /mnt/bb/$USER/${exe}
-    mkdir /mnt/bb/$USER/${exe}_libs
+    mkdir /mnt/bb/$USER/pywarpx
+    mkdir /mnt/bb/$USER/pywarpx/__pycache__
     for FILE in $PYWARPX_PATH/*
     do
         if [ ! -d "$FILE" ]; then
-                # Broadcasting the libraries linked by the RZ version should be OK
-                # also for the other versions of WarpX.
-                export WARPX_RZ="warpx_pybind_rz.cpython-39-x86_64-linux-gnu.so"
-            if [ $(basename $FILE) == $WARPX_RZ ]; then
-                sbcast --send-libs --exclude=NONE -pf $FILE /mnt/bb/$USER/${exe}_libs
-            else
-                sbcast -pf $FILE /mnt/bb/$USER/${exe}/$(basename $FILE)
-            fi
+            sbcast -pf $FILE /mnt/bb/$USER/pywarpx/$(basename $FILE)
+        fi
+    done
+    for FILE in $PYWARPX_PATH/__pycache__/*
+    do
+        if [ ! -d "$FILE" ]; then
+            sbcast -pf $FILE /mnt/bb/$USER/pywarpx/__pycache__/$(basename $FILE)
         fi
     done
 
-    # All required libraries should be here now
-    export LD_LIBRARY_PATH="/mnt/bb/$USER/${exe}_libs"
+    # Broadcasting the libraries linked by the RZ version should be OK
+    # also for the other versions of WarpX.
+    sbcast --send-libs --exclude=NONE -pf ${exe} $PYWARPX_PATH/warpx_pybind_rz.cpython-39-x86_64-linux-gnu.so
+    if [ ! "$?" == "0" ]; then
+        # CHECK EXIT CODE. When SBCAST fails, it may leave partial
+        # files on the compute nodes, and if you continue to launch srun,
+        # your application may pick up partially complete shared library files,
+        # which would give you confusing errors.
+        echo "SBCAST failed!"
+        exit 1
+    fi
 
+    # All required libraries now reside in /mnt/bb/$USER/${exe}_libs
+    export LD_LIBRARY_PATH="/mnt/bb/$USER/${exe}_libs"
     # libfabric dlopen's several libraries:
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$(pkg-config --variable=libdir libfabric)"
     # cray-mpich dlopen's libhsa-runtime64.so and
@@ -102,13 +112,13 @@ else
         if [ -f libamdhip64.so.5 ]; then ln -s libamdhip64.so.5 libamdhip64.so; fi"
 
     # Update PYTHONPATH
-    export PYTHONPATH=/mnt/bb/$USER/${exe}:$PYTHONPATH
+    export PYTHONPATH=/mnt/bb/$USER:$PYTHONPATH
 
     echo "*************************************"
     python3 -c "import pywarpx; print('pywarpx.__path__: ', pywarpx.__path__)"
     echo ""
-    echo "ldd /mnt/bb/$USER/${exe}/${WARPX_RZ} :"
-    ldd /mnt/bb/$USER/${exe}/${WARPX_RZ}
+    echo "ldd /mnt/bb/$USER/pywarpx/warpx_pybind_rz.cpython-39-x86_64-linux-gnu.so :"
+    ldd /mnt/bb/$USER/pywarpx/warpx_pybind_rz.cpython-39-x86_64-linux-gnu.so
     echo "*************************************"
 fi
 
