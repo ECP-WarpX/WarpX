@@ -1202,7 +1202,7 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector const& plasma_injector, int
         const bool rz_random_theta = m_rz_random_theta;
 #endif
         amrex::ParallelForRNG(overlap_box,
-        [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
+        [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept //NOLINT(clang-analyzer-optin.performance.Padding)
         {
             const IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
@@ -1758,7 +1758,7 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
         // next redistribute.
         auto *const poffset = offset.data();
         amrex::ParallelForRNG(overlap_box,
-        [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
+        [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept //NOLINT(clang-analyzer-optin.performance.Padding)
         {
             const IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
@@ -2825,11 +2825,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     // Using this version of ParallelFor with compile time options
     // improves performance when qed or external EB are not used by reducing
     // register pressure.
-    amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
-                                CompileTimeOptions<no_qed  ,has_qed>>{},
-                       {exteb_runtime_flag, qed_runtime_flag},
-                       np_to_push, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
-                                                         auto qed_control)
+    amrex::ParallelFor(
+        TypeList<CompileTimeOptions<no_exteb,has_exteb>, CompileTimeOptions<no_qed  ,has_qed>>{},
+        {exteb_runtime_flag, qed_runtime_flag},
+        np_to_push,
+        [=] AMREX_GPU_DEVICE (long ip, auto exteb_control, auto qed_control) //NOLINT(clang-analyzer-optin.performance.Padding)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);

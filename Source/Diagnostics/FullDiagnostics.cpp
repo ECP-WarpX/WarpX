@@ -408,44 +408,39 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     // E
     for (int dim=0; dim<3; dim++){
         // 3 components, r theta z
-        m_all_field_functors[lev][icomp] =
+        m_all_field_functors[lev][icomp++] =
             std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, dim), lev,
                               m_crse_ratio, false, ncomp_multimodefab);
         AddRZModesToOutputNames(std::string("E") + coord[dim],
                                 warpx.get_pointer_Efield_aux(0, 0)->nComp());
-        icomp += 1;
     }
     // B
     for (int dim=0; dim<3; dim++){
         // 3 components, r theta z
-        m_all_field_functors[lev][icomp] =
+        m_all_field_functors[lev][icomp++] =
             std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, dim), lev,
                               m_crse_ratio, false, ncomp_multimodefab);
         AddRZModesToOutputNames(std::string("B") + coord[dim],
                                 warpx.get_pointer_Bfield_aux(0, 0)->nComp());
-        icomp += 1;
     }
     // j
     for (int dim=0; dim<3; dim++){
         // 3 components, r theta z
-        m_all_field_functors[lev][icomp] =
+        m_all_field_functors[lev][icomp++] =
             std::make_unique<JFunctor>(dim, lev, m_crse_ratio, false, deposit_current, ncomp_multimodefab);
         deposit_current = false;
-        icomp += 1;
         AddRZModesToOutputNames(std::string("J") + coord[dim],
                                 warpx.get_pointer_current_fp(0, 0)->nComp());
     }
     // divE
     if (divE_requested) {
-        m_all_field_functors[lev][icomp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev,
+        m_all_field_functors[lev][icomp++] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev,
                               m_crse_ratio, false, ncomp_multimodefab);
-        icomp += 1;
         AddRZModesToOutputNames(std::string("divE"), ncomp_multimodefab);
     }
     // rho
     if (rho_requested) {
-        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp_multimodefab);
-        icomp += 1;
+        m_all_field_functors[lev][icomp++] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp_multimodefab);
         AddRZModesToOutputNames(std::string("rho"), ncomp_multimodefab);
     }
     // Sum the number of components in input vector m_all_field_functors

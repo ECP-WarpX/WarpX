@@ -54,6 +54,12 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
         mypc.DepositCurrent(current_fp_temp, warpx.getdt(m_lev), 0.0);
     }
 
-    InterpolateMFForDiag(mf_dst, *m_mf_src, dcomp, warpx.DistributionMap(m_lev),
-                         m_convertRZmodes2cartesian);
+    if (m_mf_src != nullptr){
+        InterpolateMFForDiag(
+            mf_dst, *m_mf_src, dcomp,
+            warpx.DistributionMap(m_lev), m_convertRZmodes2cartesian);
+    }
+    else{
+        WARPX_ABORT_WITH_MESSAGE("m_mf_src can't be a nullptr.");
+    }
 }

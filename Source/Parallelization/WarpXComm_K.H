@@ -179,10 +179,6 @@ void warpx_interp (int j, int k, int l,
     amrex::Real fine = 0.0_rt;
     amrex::Real coarse = 0.0_rt;
 
-    amrex::Real wj;
-    amrex::Real wk;
-    amrex::Real wl;
-
     // 1) Interpolation from coarse nodal to fine nodal
 
     nj = 2;
@@ -197,20 +193,18 @@ void warpx_interp (int j, int k, int l,
     nl = 2;
 #endif
 
-    wj = 1.0_rt;
-    wk = 1.0_rt;
-    wl = 1.0_rt;
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-                wj = (rj - amrex::Math::abs(j - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
+                auto c =  arr_tmp_zeropad(jc+jj,kc+kk,lc+ll);
+                c *= (rj - amrex::Math::abs(j - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
 #if (AMREX_SPACEDIM >= 2)
-                wk = (rk - amrex::Math::abs(k - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
+                c *= (rk - amrex::Math::abs(k - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
 #endif
 #if (AMREX_SPACEDIM == 3)
-                wl = (rl - amrex::Math::abs(l - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
+                c *= (rl - amrex::Math::abs(l - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
 #endif
-                tmp += wj * wk * wl * arr_tmp_zeropad(jc+jj,kc+kk,lc+ll);
+                tmp += c;
             }
         }
     }
@@ -237,20 +231,18 @@ void warpx_interp (int j, int k, int l,
     kc = amrex::coarsen(kn, rk);
     lc = amrex::coarsen(ln, rl);
 
-    wj = 1.0_rt;
-    wk = 1.0_rt;
-    wl = 1.0_rt;
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-                wj = (rj - amrex::Math::abs(jn - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
+                auto c = arr_coarse_zeropad(jc+jj,kc+kk,lc+ll);
+                c *= (rj - amrex::Math::abs(jn - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
 #if (AMREX_SPACEDIM >= 2)
-                wk = (rk - amrex::Math::abs(kn - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
+                c *= (rk - amrex::Math::abs(kn - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
 #endif
 #if (AMREX_SPACEDIM == 3)
-                wl = (rl - amrex::Math::abs(ln - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
+                c *= (rl - amrex::Math::abs(ln - (lc + ll) * rl)) / static_cast<amrex::Real>(rl);
 #endif
-                coarse += wj * wk * wl * arr_coarse_zeropad(jc+jj,kc+kk,lc+ll);
+                coarse += c;
             }
         }
     }
@@ -284,9 +276,9 @@ void warpx_interp (int j, int k, int l,
     for         (int jj = 0; jj < nj; jj++) {
         for     (int kk = 0; kk < nk; kk++) {
             for (int ll = 0; ll < nl; ll++) {
-                wj = 1.0_rt / static_cast<amrex::Real>(nj);
-                wk = 1.0_rt / static_cast<amrex::Real>(nk);
-                wl = 1.0_rt / static_cast<amrex::Real>(nl);
+                auto const wj = 1.0_rt / static_cast<amrex::Real>(nj);
+                auto const wk = 1.0_rt / static_cast<amrex::Real>(nk);
+                auto const wl = 1.0_rt / static_cast<amrex::Real>(nl);
                 fine += wj * wk * wl * arr_fine_zeropad(jm+jj,km+kk,lm+ll);
             }
         }

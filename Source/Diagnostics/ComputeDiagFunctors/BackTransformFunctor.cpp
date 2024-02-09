@@ -60,13 +60,21 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         const int scomp = 0;
         // Generate slice of the cell-centered multifab containing boosted-frame field-data
         // at current z-boost location for the ith buffer
-        slice = amrex::get_slice_data(moving_window_dir,
-                                     m_current_z_boost[i_buffer],
-                                     *m_mf_src,
-                                     geom,
-                                     scomp,
-                                     m_mf_src->nComp(),
-                                     interpolate);
+
+        if (m_mf_src != nullptr){
+            slice = amrex::get_slice_data(
+                moving_window_dir,
+                m_current_z_boost[i_buffer],
+                *m_mf_src,
+                geom,
+                scomp,
+                m_mf_src->nComp(),
+                interpolate);
+        }
+        else{
+            WARPX_ABORT_WITH_MESSAGE("m_mf_src can't be a nullptr.");
+        }
+
         // Perform in-place Lorentz-transform of all the fields stored in the slice.
         LorentzTransformZ( *slice, gamma_boost, beta_boost);
 

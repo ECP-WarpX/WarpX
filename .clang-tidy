@@ -8,6 +8,7 @@ Checks: '
     cert-*,
         -cert-err58-cpp,
     clang-analyzer-*,
+        -clang-analyzer-optin.mpi.MPI-Checker
         -clang-analyzer-osx.*,
         -clang-analyzer-optin.osx.*,
     clang-diagnostic-*,
