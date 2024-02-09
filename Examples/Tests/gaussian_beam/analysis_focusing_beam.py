@@ -11,12 +11,10 @@ import os
 import sys
 
 import numpy as np
-from scipy.constants import c
-from scipy.constants import eV, m_e, micro, nano
+from scipy.constants import c, eV, m_e, micro, nano
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
-
 from openpmd_viewer import OpenPMDTimeSeries
 
 GeV=1e9*eV
@@ -71,6 +69,3 @@ sy_theory = s(subgrid, sigmay, emity/gamma)
 
 assert(np.allclose(sx, sx_theory, rtol=1., atol=0))
 assert(np.allclose(sy, sy_theory, rtol=1., atol=0))
-
-
-
