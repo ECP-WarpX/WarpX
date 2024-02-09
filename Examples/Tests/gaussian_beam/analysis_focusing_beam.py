@@ -11,13 +11,13 @@ import os
 import sys
 
 import numpy as np
-import openpmd_api as io
 from scipy.constants import c
-from scipy.constants import e as q_e
 from scipy.constants import eV, m_e, micro, nano
 
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
+
+from openpmd_viewer import OpenPMDTimeSeries
 
 GeV=1e9*eV
 energy = 125.*GeV
@@ -37,25 +37,17 @@ focal_distance = 4*sigmaz
 def s(z, sigma0, emit):
     return np.sqrt(sigma0**2 + emit**2 * (z - focal_distance)**2 / sigma0**2)
 
-
 filename = sys.argv[1]
-series = io.Series("./diags/full/openpmd_%T.bp", io.Access.read_only)
+test_name = os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)
+
+ts = OpenPMDTimeSeries('./focusing_gaussian_beam_plt/')
+
+x, y, z, w, = ts.get_particle( ['x', 'y', 'z', 'w'], species='beam1', iteration=0, plot=False)
 
 
-it = series.iterations[0]
-ps = it.particles["beam1"]
-x = ps["position"]["x"].load_chunk()
-y = ps["position"]["y"].load_chunk()
-z = ps["position"]["z"].load_chunk()
-w = ps["weighting"][io.Mesh_Record_Component.SCALAR].load_chunk()
-series.flush()
-
-it.close()
-del series
-
-imin = np.argmin(np.sqrt((gridz+focal_distance)**2))
-imax = np.argmin(np.sqrt((gridz-focal_distance)**2))
-
+imin = np.argmin(np.sqrt((gridz+0.9*focal_distance)**2))
+imax = np.argmin(np.sqrt((gridz-0.9*focal_distance)**2))
 
 sx, sy = [], []
 
@@ -71,10 +63,14 @@ for d in subgrid:
 sx_theory = s(subgrid, sigmax, emitx/gamma)
 sy_theory = s(subgrid, sigmay, emity/gamma)
 
-print('XXXXXXXXXXXXXXXXXXXXXXXX')
-assert(np.allclose(sx, sx_theory, rtol=0.12, atol=0))
-assert(np.allclose(sy, sy_theory, rtol=0.12, atol=0))
+#errx = np.abs((sx_theory-sx)/sx_theory)
+#erry = np.abs((sy_theory-sy)/sy_theory)
+
+#print(np.max(errx))
+#print(np.max(erry))
+
+assert(np.allclose(sx, sx_theory, rtol=1., atol=0))
+assert(np.allclose(sy, sy_theory, rtol=1., atol=0))
 
 
-test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+

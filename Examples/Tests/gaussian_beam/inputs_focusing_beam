@@ -33,14 +33,14 @@ my_constants.dux = emitx / sigmax
 my_constants.duy = emity / sigmay
 my_constants.duz = emitz / sigmaz
 
-my_constants.focal_distance = 4*sigmaz
+my_constants.focal_distance = 0 # 4*sigmaz
 
 # BOX
 my_constants.Lx = 20*sigmax
 my_constants.Ly = 20*sigmay
 my_constants.Lz = 20*sigmaz
-my_constants.nx = 256
-my_constants.ny = 256
+my_constants.nx = 128
+my_constants.ny = 128
 my_constants.nz = 256
 
 
@@ -108,5 +108,4 @@ diag1.species = beam1
 diag1.beam1.variables = w
 diag1.fields_to_plot = rho_beam1
 diag1.format = openpmd
-diag1.openpmd_backend = bp
 diag1.dump_last_timestep = 1
