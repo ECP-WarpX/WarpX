@@ -11,6 +11,8 @@ geometry.dims = 3
 geometry.prob_lo     = 0.    0.    0.
 geometry.prob_hi     = 8.    8.   16.
 
+warpx.random_seed = 4
+
 #################################
 ###### Boundary Condition #######
 #################################
