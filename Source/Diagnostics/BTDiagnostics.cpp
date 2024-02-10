@@ -699,7 +699,7 @@ BTDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
         } else if ( m_cellcenter_varnames_fields[comp] == "jz" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio, false, ncomp);
         } else if ( m_cellcenter_varnames_fields[comp] == "rho" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, -1, false, ncomp);
+            m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, false, -1, false, ncomp);
         }
     }
 
