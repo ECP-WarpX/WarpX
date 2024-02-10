@@ -905,11 +905,11 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
         // reconstruct Cartesian positions for RZ simulations
         // r,z,theta -> x,y,z
 #if defined(WARPX_DIM_RZ)
-        auto * r = soa.GetRealData(PIdx::x).data();
-        auto * theta = soa.GetRealData(PIdx::theta).data();
+        auto const * const r = soa.GetRealData(PIdx::x).data();
+        auto const * const theta = soa.GetRealData(PIdx::theta).data();
 
         if (write_real_comp[0]) {
-            const std::shared_ptr<amrex::ParticleReal> x(
+            std::shared_ptr<amrex::ParticleReal> const x(
                 new amrex::ParticleReal[numParticleOnTile],
                 [](amrex::ParticleReal const *p) { delete[] p; }
             );
@@ -920,7 +920,7 @@ WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
                 x, {offset}, {numParticleOnTile64});
         }
         if (write_real_comp[1]) {
-            const std::shared_ptr<amrex::ParticleReal> y(
+            std::shared_ptr<amrex::ParticleReal> const y(
                 new amrex::ParticleReal[numParticleOnTile],
                 [](amrex::ParticleReal const *p) { delete[] p; }
             );
