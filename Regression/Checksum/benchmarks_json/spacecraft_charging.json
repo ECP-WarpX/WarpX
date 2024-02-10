@@ -8,9 +8,8 @@
     "rho_protons": 6.98347902659172e-06
   },
   "electrons": {
-    "particle_theta": 46360.98014353502,
-    "particle_position_x": 59656.07603558921,
-    "particle_position_y": 0.0,
+    "particle_position_x": 38158.7364935527,
+    "particle_position_y": 37779.25499255196,
     "particle_position_z": 45010.371467374425,
     "particle_momentum_x": 8.27307207197173e-20,
     "particle_momentum_y": 8.264475255806164e-20,
@@ -18,9 +17,8 @@
     "particle_weight": 1140673608016.2212
   },
   "protons": {
-    "particle_theta": 673143.6230804407,
-    "particle_position_x": 1180416.5550460955,
-    "particle_position_y": 0.0,
+    "particle_position_x": 751407.372588289,
+    "particle_position_y": 751687.788498272,
     "particle_position_z": 644420.0485148785,
     "particle_momentum_x": 1.468116154656724e-17,
     "particle_momentum_y": 1.4650318746367807e-17,
