@@ -1783,8 +1783,8 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             }
 
             // loop over the number of segments and deposit
-            Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-            Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+            const Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+            const Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
             double dxp_seg, dyp_seg, dzp_seg;
             double x0_new, y0_new, z0_new;
             double x0_old = x_old;
@@ -1854,7 +1854,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5 );
 
                 if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
-                    Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
+                    const Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sx_old_cell[depos_order] = {0.};
                     double sx_new_cell[depos_order] = {0.};
                     double sy_old_cell[depos_order] = {0.};
@@ -1965,8 +1965,8 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             }
 
             // loop over the number of segments and deposit
-            Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-            Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+            const Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+            const Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
             double dxp_seg, dzp_seg;
             double x0_new, z0_new;
             double x0_old = x_old;
@@ -2015,7 +2015,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5 );
 
                 if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
-                    Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
+                    const Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sx_old_cell[depos_order] = {0.};
                     double sx_new_cell[depos_order] = {0.};
                     double sz_old_cell[depos_order] = {0.};
@@ -2125,8 +2125,8 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             double Zcell = static_cast<double>(k_old) + shift + 0.5*(1.-dirZ_sign);
 
             // loop over the number of segments and deposit
-            Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-            Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+            const Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+            const Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
             double dzp_seg;
             double z0_new;
             double z0_old = z_old;
@@ -2152,7 +2152,7 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
                 const int k0_cell = compute_shape_factor_cell( sz_cell, z0_bar-0.5 );
 
                 if constexpr (depos_order >= 3) { // higher-order correction to the cell-based weights
-                    Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
+                    const Compute_shape_factor_pair<depos_order-1> compute_shape_factors_cell;
                     double sz_old_cell[depos_order] = {0.};
                     double sz_new_cell[depos_order] = {0.};
                     const int k0_cell_2 = compute_shape_factors_cell( sz_old_cell, sz_new_cell, z0_old-0.5, z0_new-0.5 );
