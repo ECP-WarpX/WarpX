@@ -18,7 +18,6 @@ checksumAPI.evaluate_checksum(test_name, filename, output_format='openpmd')
 
 ts_scraping = OpenPMDTimeSeries('./diags/diag2/particles_at_eb/')
 
-
 it=ts_scraping.iterations
 x,y,z=ts_scraping.get_particle( ['x','y','z'], species='electron', iteration=it )
 
