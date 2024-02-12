@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+"""
+This script tests the coordinates of the point of contact of an electron hitting a sphere in 3D.
+It compares the numerical results with the analytical solutions.
+The sphere is centered on O and has a radius of 0.2. 
+The electron is initially at: (-0.25,0,0) and moves with a normalized momentum: (1,0.5,0)
+An input file PICMI_inputs_3d.py is used.
+"""
 import os
 import sys
 
@@ -21,6 +28,7 @@ ts_scraping = OpenPMDTimeSeries('./diags/diag2/particles_at_eb/')
 it=ts_scraping.iterations
 x,y,z=ts_scraping.get_particle( ['x','y','z'], species='electron', iteration=it )
 
+# Analytical results calculated
 x_analytic=-0.1983
 y_analytic=0.02584
 z_analytic=0.0000
