@@ -47,6 +47,7 @@ namespace
         auto host_det_phi = amrex::Vector<amrex::Real>(how_many);
 
         if(type == "cartesian"){
+
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 direction[0]*orientation[0] +
                 direction[1]*orientation[1] +
@@ -99,13 +100,14 @@ namespace
                     host_det_z[i*det_points[1] + j] = center[2] + z;
 
                     host_det_theta[i*det_points[1] + j] = std::acos(z/distance);
-                    host_det_phi[i*det_points[1] + j] = std::atan2(y, x);
+                    host_det_phi[i*det_points[1] + j] = std::atan2(y, x) + ablastr::constant::math::pi;
 
                 }
             }
         }
         
         if(type == "spherical"){
+
             const auto Ntheta = det_points[0];
             const auto Nphi = det_points[1];
             const auto dtheta = theta_range[0]/Ntheta;
@@ -290,8 +292,6 @@ void RadiationHandler::add_radiation_contribution
 
                         const auto tot_q = q*p_w[ip];
 
-                        //amrex::Print() << tot_q << std::endl;
-
                         for(int i_om=0; i_om < omega_points; ++i_om){
 
                             const auto i_omega_over_c = Complex{0.0_prt, 1.0_prt}*p_omegas[i_om]*inv_c;
@@ -334,12 +334,12 @@ void RadiationHandler::add_radiation_contribution
                                 auto cz = coeff*n_cross_n_minus_beta_cross_bp_z;
 
                                 // Nyquist limiter
-                                if(ablastr::constant::math::pi/(dt*one_minus_b_dot_n)*p_omegas[i_om] < 0){
+                                /*if(p_omegas[i_om] < ablastr::constant::math::pi/one_minus_b_dot_n/dt){
                                     cx = 0.0;
                                     cy = 0.0;
                                     cz = 0.0;
-                                    amrex::Print() << cx << std::endl;
-                                }
+                                }*/
+                                
                                 const int ncomp = 3;
                                 const int idx0 = (i_om*how_many_det_pos + i_det)*ncomp;
                                 const int idx1 = idx0 + 1;
@@ -422,7 +422,7 @@ void RadiationHandler::gather_and_write_radiation(const std::string& filename)
 
 void RadiationHandler::Integral_overtime(const amrex::Real dt)
 {
-    const auto factor = dt/16/std::pow(ablastr::constant::math::pi,3)/PhysConst::ep0/(PhysConst::c);
+    const auto factor = ablastr::constant::SI::q_e*dt/16/std::pow(ablastr::constant::math::pi,3)/PhysConst::ep0/(PhysConst::c);
     const auto how_many = m_det_pts[0]*m_det_pts[1];
     auto p_radiation_data = m_radiation_data.dataPtr();
     m_radiation_calculation.resize(how_many*m_omega_points);
@@ -432,5 +432,5 @@ void RadiationHandler::Integral_overtime(const amrex::Real dt)
             const int idx2 = idx0 + 2;
             //amrex::Print() << (amrex::norm(p_radiation_data[idx0])+amrex::norm(p_radiation_data[idx1])+amrex::norm(p_radiation_data[idx2])) << std::endl;
             m_radiation_calculation[idx]=(amrex::norm(p_radiation_data[idx0]) + amrex::norm(p_radiation_data[idx1]) + amrex::norm(p_radiation_data[idx2]))*factor;
-                            }
+    }
 }
