@@ -311,6 +311,7 @@ std::vector<MsgWithCounterAndRanks>
 Logger::one_rank_gather_msgs_with_counter_and_ranks() const
 {
     std::vector<MsgWithCounterAndRanks> res;
+    res.reserve(m_messages.size());
     for (const auto& el : m_messages)
     {
         res.emplace_back(

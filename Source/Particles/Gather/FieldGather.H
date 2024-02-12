@@ -610,8 +610,8 @@ void doGatherShapeNEsirkepovStencilImplicit (
     // --- Compute shape factors
     // Compute shape factors for position as they are now and at old positions
     // [ijk]_new: leftmost grid point that the particle touches
-    Compute_shape_factor< depos_order > compute_shape_factor;
-    Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
+    const Compute_shape_factor< depos_order > compute_shape_factor;
+    const Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
 
 #if !defined(WARPX_DIM_1D_Z)
     const int i_E_new = compute_shape_factor(sx_E_new+1, x_new);
@@ -679,7 +679,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
 
     for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
         for (int j=djl_E; j<=depos_order+2-dju_E; j++) {
-            amrex::Real sdzjk = one_third*(sy_E_new[j]*sz_E_new[k] + sy_E_old[j]*sz_E_old[k])
+            const amrex::Real sdzjk = one_third*(sy_E_new[j]*sz_E_new[k] + sy_E_old[j]*sz_E_old[k])
                                +one_sixth*(sy_E_new[j]*sz_E_old[k] + sy_E_old[j]*sz_E_new[k]);
             amrex::Real sdxi = 0._rt;
             for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
@@ -691,7 +691,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
         for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
-            amrex::Real sdyik = one_third*(sx_E_new[i]*sz_E_new[k] + sx_E_old[i]*sz_E_old[k])
+            const amrex::Real sdyik = one_third*(sx_E_new[i]*sz_E_new[k] + sx_E_old[i]*sz_E_old[k])
                                +one_sixth*(sx_E_new[i]*sz_E_old[k] + sx_E_old[i]*sz_E_new[k]);
             amrex::Real sdyj = 0._rt;
             for (int j=djl_E; j<=depos_order+1-dju_E; j++) {
@@ -703,7 +703,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     for (int j=djl_E; j<=depos_order+2-dju_E; j++) {
         for (int i=dil_E; i<=depos_order+2-diu_E; i++) {
-            amrex::Real sdzij = one_third*(sx_E_new[i]*sy_E_new[j] + sx_E_old[i]*sy_E_old[j])
+            const amrex::Real sdzij = one_third*(sx_E_new[i]*sy_E_new[j] + sx_E_old[i]*sy_E_old[j])
                                +one_sixth*(sx_E_new[i]*sy_E_old[j] + sx_E_old[i]*sy_E_new[j]);
             amrex::Real sdzk = 0._rt;
             for (int k=dkl_E; k<=depos_order+1-dku_E; k++) {
@@ -715,7 +715,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     for (int k=dkl_B; k<=depos_order+2-dku_B; k++) {
         for (int j=djl_B; j<=depos_order+2-dju_B; j++) {
-            amrex::Real sdzjk = one_third*(sy_B_new[j]*sz_B_new[k] + sy_B_old[j]*sz_B_old[k])
+            const amrex::Real sdzjk = one_third*(sy_B_new[j]*sz_B_new[k] + sy_B_old[j]*sz_B_old[k])
                                +one_sixth*(sy_B_new[j]*sz_B_old[k] + sy_B_old[j]*sz_B_new[k]);
             amrex::Real sdxi = 0._rt;
             for (int i=dil_B; i<=depos_order+1-diu_B; i++) {
@@ -727,7 +727,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     for (int k=dkl_B; k<=depos_order+2-dku_B; k++) {
         for (int i=dil_B; i<=depos_order+2-diu_B; i++) {
-            amrex::Real sdyik = one_third*(sx_B_new[i]*sz_B_new[k] + sx_B_old[i]*sz_B_old[k])
+            const amrex::Real sdyik = one_third*(sx_B_new[i]*sz_B_new[k] + sx_B_old[i]*sz_B_old[k])
                                +one_sixth*(sx_B_new[i]*sz_B_old[k] + sx_B_old[i]*sz_B_new[k]);
             amrex::Real sdyj = 0._rt;
             for (int j=djl_B; j<=depos_order+1-dju_B; j++) {
@@ -739,7 +739,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
     }
     for (int j=djl_B; j<=depos_order+2-dju_B; j++) {
         for (int i=dil_B; i<=depos_order+2-diu_B; i++) {
-            amrex::Real sdzij = one_third*(sx_B_new[i]*sy_B_new[j] + sx_B_old[i]*sy_B_old[j])
+            const amrex::Real sdzij = one_third*(sx_B_new[i]*sy_B_new[j] + sx_B_old[i]*sy_B_old[j])
                                +one_sixth*(sx_B_new[i]*sy_B_old[j] + sx_B_old[i]*sy_B_new[j]);
             amrex::Real sdzk = 0._rt;
             for (int k=dkl_B; k<=depos_order+1-dku_B; k++) {

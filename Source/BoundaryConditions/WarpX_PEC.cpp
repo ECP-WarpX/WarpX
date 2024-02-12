@@ -552,7 +552,7 @@ PEC::ApplyPECtoElectronPressure (amrex::MultiFab* Pefield, const int lev,
             amrex::ignore_unused(j,k);
 #endif
             // Store the array index
-            amrex::IntVect iv(AMREX_D_DECL(i,j,k));
+            const amrex::IntVect iv(AMREX_D_DECL(i,j,k));
 
             PEC::SetNeumannOnPEC(n, iv, Pe_array, mirrorfac, is_pec, fabbox);
         });
