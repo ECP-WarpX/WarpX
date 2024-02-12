@@ -525,12 +525,12 @@ void doGatherShapeNEsirkepovStencilImplicit (
 #endif
 
 #if !defined(WARPX_DIM_1D_Z)
-    ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
+    const ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-    ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
+    const ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
 #endif
-    ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
+    const ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
 
     // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
@@ -661,8 +661,8 @@ void doGatherShapeNEsirkepovStencilImplicit (
 #endif
 
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    Compute_shape_factor< depos_order-1 > compute_shape_factor_By;
-    Compute_shifted_shape_factor< depos_order-1 > compute_shifted_shape_factor_By;
+    const Compute_shape_factor< depos_order-1 > compute_shape_factor_By;
+    const Compute_shifted_shape_factor< depos_order-1 > compute_shifted_shape_factor_By;
     const int i_By_new = compute_shape_factor_By(sx_By_new+1, x_new - 0.5_rt);
     const int i_By_old = compute_shifted_shape_factor_By(sx_By_old, x_old - 0.5_rt, i_By_new);
     const int k_By_new = compute_shape_factor_By(sz_By_new+1, z_new - 0.5_rt);
@@ -753,7 +753,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
     for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
-        amrex::Real sdzk = 0.5_rt*(sz_E_new[k] + sz_E_old[k]);
+        const amrex::Real sdzk = 0.5_rt*(sz_E_new[k] + sz_E_old[k]);
         amrex::Real sdxi = 0._rt;
         for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
             sdxi += (sx_E_old[i] - sx_E_new[i]);
@@ -797,7 +797,7 @@ void doGatherShapeNEsirkepovStencilImplicit (
         // Gather field on particle Exp from field on grid ex_arr
         // Gather field on particle Bzp from field on grid bz_arr
         for (int k=dkl_E; k<=depos_order+2-dku_E; k++) {
-            amrex::Real sdzk = 0.5_rt*(sz_E_new[k] + sz_E_old[k]);
+            const amrex::Real sdzk = 0.5_rt*(sz_E_new[k] + sz_E_old[k]);
             amrex::Real sdxi = 0._rt;
             for (int i=dil_E; i<=depos_order+1-diu_E; i++) {
                 sdxi += (sx_E_old[i] - sx_E_new[i]);
@@ -950,12 +950,12 @@ void doGatherPicnicShapeN (
     Real const zmin = xyzmin[2];
 
 #if !defined(WARPX_DIM_1D_Z)
-    ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
+    const ParticleReal xp_np1 = 2._prt*xp_nph - xp_n;
 #endif
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-    ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
+    const ParticleReal yp_np1 = 2._prt*yp_nph - yp_n;
 #endif
-    ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
+    const ParticleReal zp_np1 = 2._prt*zp_nph - zp_n;
 
 #if !defined(WARPX_DIM_1D_Z)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
@@ -1019,19 +1019,19 @@ void doGatherPicnicShapeN (
     // compute cell crossings in X-direction
     const auto i_old = static_cast<int>(x_old-shift);
     const auto i_new = static_cast<int>(x_new-shift);
-    int cell_crossings_x = std::abs(i_new-i_old);
+    const int cell_crossings_x = std::abs(i_new-i_old);
     num_segments += cell_crossings_x;
 
     // compute cell crossings in Y-direction
     const auto j_old = static_cast<int>(y_old-shift);
     const auto j_new = static_cast<int>(y_new-shift);
-    int cell_crossings_y = std::abs(j_new-j_old);
+    const int cell_crossings_y = std::abs(j_new-j_old);
     num_segments += cell_crossings_y;
 
     // compute cell crossings in Z-direction
     const auto k_old = static_cast<int>(z_old-shift);
     const auto k_new = static_cast<int>(z_new-shift);
-    int cell_crossings_z = std::abs(k_new-k_old);
+    const int cell_crossings_z = std::abs(k_new-k_old);
     num_segments += cell_crossings_z;
 
     // need to assert that the number of cell crossings in each direction
@@ -1240,13 +1240,13 @@ void doGatherPicnicShapeN (
     // compute cell crossings in X-direction
     const auto i_old = static_cast<int>(x_old-shift);
     const auto i_new = static_cast<int>(x_new-shift);
-    int cell_crossings_x = std::abs(i_new-i_old);
+    const int cell_crossings_x = std::abs(i_new-i_old);
     num_segments += cell_crossings_x;
 
     // compute cell crossings in Z-direction
     const auto k_old = static_cast<int>(z_old-shift);
     const auto k_new = static_cast<int>(z_new-shift);
-    int cell_crossings_z = std::abs(k_new-k_old);
+    const int cell_crossings_z = std::abs(k_new-k_old);
     num_segments += cell_crossings_z;
 
     // need to assert that the number of cell crossings in each direction

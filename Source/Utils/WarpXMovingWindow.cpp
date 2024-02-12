@@ -88,7 +88,7 @@ WarpX::UpdateInjectionPosition (const amrex::Real a_dt)
             amrex::Real v_shift = 0._rt;
             if (plasma_injector != nullptr)
             {
-                amrex::XDim3 u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(
+                const amrex::XDim3 u_bulk = plasma_injector->getInjectorMomentumHost()->getBulkMomentum(
                     current_injection_position[0],
                     current_injection_position[1],
                     current_injection_position[2]);

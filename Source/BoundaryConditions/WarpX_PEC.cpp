@@ -500,7 +500,7 @@ PEC::ApplyPECtoElectronPressure (amrex::MultiFab* Pefield, const int lev,
 
     amrex::Box domain_box = warpx.Geom(lev).Domain();
     if (patch_type == PatchType::coarse) {
-        amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
+        const amrex::IntVect ref_ratio = ( (lev > 0) ? WarpX::RefRatio(lev-1) : amrex::IntVect(1) );
         domain_box.coarsen(ref_ratio);
     }
     domain_box.convert(Pefield->ixType());

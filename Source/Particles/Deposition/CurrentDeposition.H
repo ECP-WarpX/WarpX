@@ -1748,19 +1748,19 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             // compute cell crossings in X-direction
             const auto i_old = static_cast<int>(x_old-shift);
             const auto i_new = static_cast<int>(x_new-shift);
-            int cell_crossings_x = std::abs(i_new-i_old);
+            const int cell_crossings_x = std::abs(i_new-i_old);
             num_segments += cell_crossings_x;
 
             // compute cell crossings in Y-direction
             const auto j_old = static_cast<int>(y_old-shift);
             const auto j_new = static_cast<int>(y_new-shift);
-            int cell_crossings_y = std::abs(j_new-j_old);
+            const int cell_crossings_y = std::abs(j_new-j_old);
             num_segments += cell_crossings_y;
 
             // compute cell crossings in Z-direction
             const auto k_old = static_cast<int>(z_old-shift);
             const auto k_new = static_cast<int>(z_new-shift);
-            int cell_crossings_z = std::abs(k_new-k_old);
+            const int cell_crossings_z = std::abs(k_new-k_old);
             num_segments += cell_crossings_z;
 
             // need to assert that the number of cell crossings in each direction
@@ -1939,13 +1939,13 @@ void doVillasenorDepositionShapeNImplicit (const amrex::ParticleReal * const xp_
             // compute cell crossings in X-direction
             const auto i_old = static_cast<int>(x_old-shift);
             const auto i_new = static_cast<int>(x_new-shift);
-            int cell_crossings_x = std::abs(i_new-i_old);
+            const int cell_crossings_x = std::abs(i_new-i_old);
             num_segments += cell_crossings_x;
 
             // compute cell crossings in Z-direction
             const auto k_old = static_cast<int>(z_old-shift);
             const auto k_new = static_cast<int>(z_new-shift);
-            int cell_crossings_z = std::abs(k_new-k_old);
+            const int cell_crossings_z = std::abs(k_new-k_old);
             num_segments += cell_crossings_z;
 
             // need to assert that the number of cell crossings in each direction
