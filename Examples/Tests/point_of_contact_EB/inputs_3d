@@ -2,7 +2,6 @@ amr.max_level = 0
 
 max_step = 3
 
-
 amr.n_cell = 64 64 64
 amr.blocking_factor = 8
 amr.max_grid_size = 128
