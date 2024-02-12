@@ -665,7 +665,7 @@ WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
     openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
 
     // only BTD writes multiple times into the same step, zero for other methods
-    unsigned long ParticleFlushOffset = isBTD ? num_already_flushed(currSpecies) : 0;
+    const unsigned long ParticleFlushOffset = isBTD ? num_already_flushed(currSpecies) : 0;
 
     // prepare data structures the first time BTD has non-zero particles
     //   we set some of them to zero extent, so we need to time that well

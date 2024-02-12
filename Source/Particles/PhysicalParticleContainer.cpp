@@ -635,12 +635,12 @@ PhysicalParticleContainer::AddGaussianBeam (
     }
     // Add the temporary CPU vectors to the particle structure
     auto const np = static_cast<long>(particle_z.size());
-    amrex::Vector<ParticleReal> xp(particle_x.data(), particle_x.data() + np);
-    amrex::Vector<ParticleReal> yp(particle_y.data(), particle_y.data() + np);
-    amrex::Vector<ParticleReal> zp(particle_z.data(), particle_z.data() + np);
-    amrex::Vector<ParticleReal> uxp(particle_ux.data(), particle_ux.data() + np);
-    amrex::Vector<ParticleReal> uyp(particle_uy.data(), particle_uy.data() + np);
-    amrex::Vector<ParticleReal> uzp(particle_uz.data(), particle_uz.data() + np);
+    const amrex::Vector<ParticleReal> xp(particle_x.data(), particle_x.data() + np);
+    const amrex::Vector<ParticleReal> yp(particle_y.data(), particle_y.data() + np);
+    const amrex::Vector<ParticleReal> zp(particle_z.data(), particle_z.data() + np);
+    const amrex::Vector<ParticleReal> uxp(particle_ux.data(), particle_ux.data() + np);
+    const amrex::Vector<ParticleReal> uyp(particle_uy.data(), particle_uy.data() + np);
+    const amrex::Vector<ParticleReal> uzp(particle_uz.data(), particle_uz.data() + np);
 
     amrex::Vector<amrex::Vector<ParticleReal>> attr;
     amrex::Vector<ParticleReal> wp(particle_w.data(), particle_w.data() + np);
@@ -843,13 +843,13 @@ PhysicalParticleContainer::AddParticles (int lev)
                                           plasma_injector->single_particle_u[1],
                                           plasma_injector->single_particle_u[2]);
             }
-            amrex::Vector<ParticleReal> xp = {plasma_injector->single_particle_pos[0]};
-            amrex::Vector<ParticleReal> yp = {plasma_injector->single_particle_pos[1]};
-            amrex::Vector<ParticleReal> zp = {plasma_injector->single_particle_pos[2]};
-            amrex::Vector<ParticleReal> uxp = {plasma_injector->single_particle_u[0]};
-            amrex::Vector<ParticleReal> uyp = {plasma_injector->single_particle_u[1]};
-            amrex::Vector<ParticleReal> uzp = {plasma_injector->single_particle_u[2]};
-            amrex::Vector<amrex::Vector<ParticleReal>> attr = {{plasma_injector->single_particle_weight}};
+            const amrex::Vector<ParticleReal> xp = {plasma_injector->single_particle_pos[0]};
+            const amrex::Vector<ParticleReal> yp = {plasma_injector->single_particle_pos[1]};
+            const amrex::Vector<ParticleReal> zp = {plasma_injector->single_particle_pos[2]};
+            const amrex::Vector<ParticleReal> uxp = {plasma_injector->single_particle_u[0]};
+            const amrex::Vector<ParticleReal> uyp = {plasma_injector->single_particle_u[1]};
+            const amrex::Vector<ParticleReal> uzp = {plasma_injector->single_particle_u[2]};
+            const amrex::Vector<amrex::Vector<ParticleReal>> attr = {{plasma_injector->single_particle_weight}};
             amrex::Vector<amrex::Vector<int>> attr_int;
             AddNParticles(lev, 1, xp, yp, zp, uxp, uyp, uzp,
                           1, attr, 0, attr_int, 0);

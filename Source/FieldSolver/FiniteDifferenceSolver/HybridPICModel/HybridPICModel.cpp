@@ -19,7 +19,7 @@ HybridPICModel::HybridPICModel ( int nlevs_max )
 
 void HybridPICModel::ReadParameters ()
 {
-    ParmParse pp_hybrid("hybrid_pic_model");
+    const ParmParse pp_hybrid("hybrid_pic_model");
 
     // The B-field update is subcycled to improve stability - the number
     // of sub steps can be specified by the user (defaults to 50).
@@ -32,7 +32,7 @@ void HybridPICModel::ReadParameters ()
     if (!utils::parser::queryWithParser(pp_hybrid, "elec_temp", m_elec_temp)) {
         Abort("hybrid_pic_model.elec_temp must be specified when using the hybrid solver");
     }
-    bool n0_ref_given = utils::parser::queryWithParser(pp_hybrid, "n0_ref", m_n0_ref);
+    const bool n0_ref_given = utils::parser::queryWithParser(pp_hybrid, "n0_ref", m_n0_ref);
     if (m_gamma != 1.0 && !n0_ref_given) {
         Abort("hybrid_pic_model.n0_ref should be specified if hybrid_pic_model.gamma != 1");
     }
@@ -219,11 +219,11 @@ void HybridPICModel::InitData ()
     // Initialize external current - note that this approach skips the check
     // if the current is time dependent which is what needs to be done to
     // write time independent fields on the first step.
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > edge_lengths;
-
     for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
     {
 #ifdef AMREX_USE_EB
+        std::array< std::unique_ptr<amrex::MultiFab>, 3 > edge_lengths;
+
         auto& edge_lengths_x = warpx.getedgelengths(lev, 0);
         edge_lengths[0] = std::make_unique<amrex::MultiFab>(
             edge_lengths_x, amrex::make_alias, 0, edge_lengths_x.nComp()
@@ -236,8 +236,12 @@ void HybridPICModel::InitData ()
         edge_lengths[2] = std::make_unique<amrex::MultiFab>(
             edge_lengths_z, amrex::make_alias, 0, edge_lengths_z.nComp()
         );
-#endif
+
         GetCurrentExternal(edge_lengths, lev);
+#else
+        const std::array< std::unique_ptr<amrex::MultiFab>, 3 > edge_lengths;
+        GetCurrentExternal(edge_lengths, lev);
+#endif
     }
 }
 

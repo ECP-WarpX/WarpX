@@ -885,9 +885,9 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // Interpolate current to appropriate staggering to match E field
                 Real jtot_val = 0._rt;
                 if (include_resistivity_term && resistivity_has_J_dependence) {
-                    Real jx_val = Interp(Jx, Jx_stag, Ex_stag, coarsen, i, j, k, 0);
-                    Real jy_val = Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
-                    Real jz_val = Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
+                    const Real jx_val = Interp(Jx, Jx_stag, Ex_stag, coarsen, i, j, k, 0);
+                    const Real jy_val = Interp(Jy, Jy_stag, Ex_stag, coarsen, i, j, k, 0);
+                    const Real jz_val = Interp(Jz, Jz_stag, Ex_stag, coarsen, i, j, k, 0);
                     jtot_val = std::sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val);
                 }
 
@@ -924,9 +924,9 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // Interpolate current to appropriate staggering to match E field
                 Real jtot_val = 0._rt;
                 if (include_resistivity_term && resistivity_has_J_dependence) {
-                    Real jx_val = Interp(Jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
-                    Real jy_val = Interp(Jy, Jy_stag, Ey_stag, coarsen, i, j, k, 0);
-                    Real jz_val = Interp(Jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
+                    const Real jx_val = Interp(Jx, Jx_stag, Ey_stag, coarsen, i, j, k, 0);
+                    const Real jy_val = Interp(Jy, Jy_stag, Ey_stag, coarsen, i, j, k, 0);
+                    const Real jz_val = Interp(Jz, Jz_stag, Ey_stag, coarsen, i, j, k, 0);
                     jtot_val = std::sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val);
                 }
 
@@ -957,9 +957,9 @@ void FiniteDifferenceSolver::HybridPICSolveECartesian (
                 // Interpolate current to appropriate staggering to match E field
                 Real jtot_val = 0._rt;
                 if (include_resistivity_term && resistivity_has_J_dependence) {
-                    Real jx_val = Interp(Jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
-                    Real jy_val = Interp(Jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
-                    Real jz_val = Interp(Jz, Jz_stag, Ez_stag, coarsen, i, j, k, 0);
+                    const Real jx_val = Interp(Jx, Jx_stag, Ez_stag, coarsen, i, j, k, 0);
+                    const Real jy_val = Interp(Jy, Jy_stag, Ez_stag, coarsen, i, j, k, 0);
+                    const Real jz_val = Interp(Jz, Jz_stag, Ez_stag, coarsen, i, j, k, 0);
                     jtot_val = std::sqrt(jx_val*jx_val + jy_val*jy_val + jz_val*jz_val);
                 }
 

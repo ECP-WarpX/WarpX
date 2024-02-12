@@ -34,7 +34,7 @@ DSMC::DSMC (const std::string collision_name)
     // create a vector of ScatteringProcess objects from each scattering
     // process name
     for (const auto& scattering_process : scattering_process_names) {
-        std::string kw_cross_section = scattering_process + "_cross_section";
+        const std::string kw_cross_section = scattering_process + "_cross_section";
         std::string cross_section_file;
         pp_collision_name.query(kw_cross_section.c_str(), cross_section_file);
 

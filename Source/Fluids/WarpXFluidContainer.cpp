@@ -59,7 +59,7 @@ void WarpXFluidContainer::ReadParameters()
 {
 
     // Extract charge, mass, species type
-    std::string injection_style = "none";
+    const std::string injection_style = "none";
     SpeciesUtils::extractSpeciesProperties(species_name, injection_style, charge, mass, physical_species);
 
     const ParmParse pp_species_name(species_name);
@@ -141,7 +141,7 @@ void WarpXFluidContainer::ReadParameters()
 
 void WarpXFluidContainer::AllocateLevelMFs(int lev, const BoxArray &ba, const DistributionMapping &dm)
 {
-    int ncomps = 1;
+    const int ncomps = 1;
     const amrex::IntVect nguards(AMREX_D_DECL(2, 2, 2));
 
     // set human-readable tag for each MultiFab
@@ -189,14 +189,14 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
 
-        amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        amrex::Box const tile_box  = mfi.tilebox(N[lev]->ixType().toIntVect());
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
         amrex::Array4<Real> const &NUx_arr = NU[lev][0]->array(mfi);
         amrex::Array4<Real> const &NUy_arr = NU[lev][1]->array(mfi);
         amrex::Array4<Real> const &NUz_arr = NU[lev][2]->array(mfi);
 
         // Return the intersection of all cells and the ones we wish to update
-        amrex::Box init_box_intersection = init_box & tile_box;
+        amrex::Box const init_box_intersection = init_box & tile_box;
 
         amrex::ParallelFor(init_box_intersection,
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -232,9 +232,9 @@ void WarpXFluidContainer::InitData(int lev, amrex::Box init_box, amrex::Real cur
                 // Lorentz transform n, u (from lab to boosted frame)
                 if (n > 0.0){
                     if (gamma_boost > 1._rt){
-                        amrex::Real gamma = std::sqrt(1.0_rt + (u.x*u.x + u.y*u.y + u.z*u.z)/(clight*clight));
-                        amrex::Real n_boosted = gamma_boost*n*( 1.0_rt - beta_boost*u.z/(gamma*clight) );
-                        amrex::Real uz_boosted = gamma_boost*(u.z - beta_boost*clight*gamma);
+                        const amrex::Real gamma = std::sqrt(1.0_rt + (u.x*u.x + u.y*u.y + u.z*u.z)/(clight*clight));
+                        const amrex::Real n_boosted = gamma_boost*n*( 1.0_rt - beta_boost*u.z/(gamma*clight) );
+                        const amrex::Real uz_boosted = gamma_boost*(u.z - beta_boost*clight*gamma);
                         u.z = uz_boosted;
                         n = n_boosted;
                     }
@@ -320,10 +320,10 @@ void WarpXFluidContainer::ApplyBcFluidsAndComms (int lev)
 
         amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
 
-        amrex::Array4<Real> N_arr = N[lev]->array(mfi);
-        amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
-        amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
-        amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
+        const amrex::Array4<Real> N_arr = N[lev]->array(mfi);
+        const amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
+        const amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
+        const amrex::Array4<Real> NUz_arr = NU[lev][2]->array(mfi);
 
         //Grow the tilebox
         tile_box.grow(1);
@@ -413,28 +413,28 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const auto dx = geom.CellSizeArray();
     const amrex::Real clight = PhysConst::c;
 #if defined(WARPX_DIM_3D)
-    amrex::Real dt_over_dx = (dt/dx[0]);
-    amrex::Real dt_over_dy = (dt/dx[1]);
-    amrex::Real dt_over_dz = (dt/dx[2]);
-    amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
-    amrex::Real dt_over_dy_half = 0.5_rt*(dt/dx[1]);
-    amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[2]);
+    const amrex::Real dt_over_dx = (dt/dx[0]);
+    const amrex::Real dt_over_dy = (dt/dx[1]);
+    const amrex::Real dt_over_dz = (dt/dx[2]);
+    const amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
+    const amrex::Real dt_over_dy_half = 0.5_rt*(dt/dx[1]);
+    const amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[2]);
 #elif defined(WARPX_DIM_XZ)
-    amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
-    amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[1]);
-    amrex::Real dt_over_dx = (dt/dx[0]);
-    amrex::Real dt_over_dz = (dt/dx[1]);
+    const amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
+    const amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[1]);
+    const amrex::Real dt_over_dx = (dt/dx[0]);
+    const amrex::Real dt_over_dz = (dt/dx[1]);
 #elif defined(WARPX_DIM_RZ)
     const auto problo = geom.ProbLoArray();
-    amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
-    amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[1]);
-    amrex::Box const& domain = geom.Domain();
+    const amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
+    const amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[1]);
+    const amrex::Box const& domain = geom.Domain();
 #else
-    amrex::Real dt_over_dz = (dt/dx[0]);
-    amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[0]);
+    const amrex::Real dt_over_dz = (dt/dx[0]);
+    const amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[0]);
 #endif
 
-    amrex::BoxArray ba = N[lev]->boxArray();
+    const amrex::BoxArray ba = N[lev]->boxArray();
 
     // Temporary Half-step values
 #if defined(WARPX_DIM_3D)
@@ -464,7 +464,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         // Loop over a box with one extra gridpoint in the ghost region to avoid
         // an extra MPI communication between the edge value computation loop and
         // the flux calculation loop
-        amrex::Box tile_box = mfi.growntilebox(1);
+        const amrex::Box tile_box = mfi.growntilebox(1);
 
         // Limit the grown box for RZ at r = 0, r_max
 #if defined (WARPX_DIM_RZ)
@@ -500,20 +500,20 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         //(i.e. the 4 components correspond to N + the 3 components of U)
         // Extract the temporary arrays for edge values
 #if defined(WARPX_DIM_3D)
-        amrex::Array4<amrex::Real> U_minus_x = tmp_U_minus_x.array(mfi);
-        amrex::Array4<amrex::Real> U_plus_x = tmp_U_plus_x.array(mfi);
-        amrex::Array4<amrex::Real> U_minus_y = tmp_U_minus_y.array(mfi);
-        amrex::Array4<amrex::Real> U_plus_y = tmp_U_plus_y.array(mfi);
-        amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
-        amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
+        const amrex::Array4<amrex::Real> U_minus_x = tmp_U_minus_x.array(mfi);
+        const amrex::Array4<amrex::Real> U_plus_x = tmp_U_plus_x.array(mfi);
+        const amrex::Array4<amrex::Real> U_minus_y = tmp_U_minus_y.array(mfi);
+        const amrex::Array4<amrex::Real> U_plus_y = tmp_U_plus_y.array(mfi);
+        const amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
+        const amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-        amrex::Array4<amrex::Real> U_minus_x = tmp_U_minus_x.array(mfi);
-        amrex::Array4<amrex::Real> U_plus_x = tmp_U_plus_x.array(mfi);
-        amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
-        amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
+        const amrex::Array4<amrex::Real> U_minus_x = tmp_U_minus_x.array(mfi);
+        const amrex::Array4<amrex::Real> U_plus_x = tmp_U_plus_x.array(mfi);
+        const amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
+        const amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
 #else
-        amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
-        amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
+        const amrex::Array4<amrex::Real> U_minus_z = tmp_U_minus_z.array(mfi);
+        const amrex::Array4<amrex::Real> U_plus_z = tmp_U_plus_z.array(mfi);
 #endif
 
         amrex::ParallelFor(tile_box,
@@ -530,87 +530,87 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real Uz = (NUz_arr(i, j, k) / N_arr(i,j,k));
 
                     // Compute useful quantities for J
-                    amrex::Real c_sq = clight*clight;
-                    amrex::Real gamma = std::sqrt(1.0_rt + (Ux*Ux + Uy*Uy + Uz*Uz)/(c_sq) );
-                    amrex::Real inv_c2_gamma3 = 1._rt/(c_sq*gamma*gamma*gamma);
+                    const amrex::Real c_sq = clight*clight;
+                    const amrex::Real gamma = std::sqrt(1.0_rt + (Ux*Ux + Uy*Uy + Uz*Uz)/(c_sq) );
+                    const amrex::Real inv_c2_gamma3 = 1._rt/(c_sq*gamma*gamma*gamma);
 
                     // J represents are 4x4 matrices that show up in the advection
                     // equations written as a function of U = {N, Ux, Uy, Uz}:
                     // \partial_t U + Jx \partial_x U + Jy \partial_y U + Jz \partial_z U = 0
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_XZ)
-                    amrex::Real Vx = Ux/gamma;
+                    const amrex::Real Vx = Ux/gamma;
                     // Compute the non-zero element of Jx
-                    amrex::Real J00x = Vx;
-                    amrex::Real J01x = N_arr(i,j,k)*(1/gamma)*(1-Vx*Vx/c_sq);
-                    amrex::Real J02x = -N_arr(i,j,k)*Uy*Ux*inv_c2_gamma3;
-                    amrex::Real J03x = -N_arr(i,j,k)*Uz*Ux*inv_c2_gamma3;
-                    amrex::Real J11x = Vx;
-                    amrex::Real J22x = Vx;
-                    amrex::Real J33x = Vx;
+                    const amrex::Real J00x = Vx;
+                    const amrex::Real J01x = N_arr(i,j,k)*(1/gamma)*(1-Vx*Vx/c_sq);
+                    const amrex::Real J02x = -N_arr(i,j,k)*Uy*Ux*inv_c2_gamma3;
+                    const amrex::Real J03x = -N_arr(i,j,k)*Uz*Ux*inv_c2_gamma3;
+                    const amrex::Real J11x = Vx;
+                    const amrex::Real J22x = Vx;
+                    const amrex::Real J33x = Vx;
 
                     // Compute the cell slopes x
-                    amrex::Real dU0x = ave( DownDx_N(N_arr,i,j,k), UpDx_N(N_arr,i,j,k) );
-                    amrex::Real dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k), UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
-                    amrex::Real dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k), UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
-                    amrex::Real dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k), UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
+                    const amrex::Real dU0x = ave( DownDx_N(N_arr,i,j,k), UpDx_N(N_arr,i,j,k) );
+                    const amrex::Real dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k), UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    const amrex::Real dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k), UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    const amrex::Real dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k), UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
 
 #endif
 
 #if defined(WARPX_DIM_3D)
-                    amrex::Real Vy = Uy/gamma;
+                    const amrex::Real Vy = Uy/gamma;
                     // Compute the non-zero element of Jy
-                    amrex::Real J00y = Vy;
-                    amrex::Real J01y = -N_arr(i,j,k)*Ux*Uy*inv_c2_gamma3;
-                    amrex::Real J02y = N_arr(i,j,k)*(1/gamma)*(1-Vy*Vy/c_sq);
-                    amrex::Real J03y = -N_arr(i,j,k)*Uz*Uy*inv_c2_gamma3;
-                    amrex::Real J11y = Vy;
-                    amrex::Real J22y = Vy;
-                    amrex::Real J33y = Vy;
+                    const amrex::Real J00y = Vy;
+                    const amrex::Real J01y = -N_arr(i,j,k)*Ux*Uy*inv_c2_gamma3;
+                    const amrex::Real J02y = N_arr(i,j,k)*(1/gamma)*(1-Vy*Vy/c_sq);
+                    const amrex::Real J03y = -N_arr(i,j,k)*Uz*Uy*inv_c2_gamma3;
+                    const amrex::Real J11y = Vy;
+                    const amrex::Real J22y = Vy;
+                    const amrex::Real J33y = Vy;
 
                     // Compute the cell slopes y
-                    amrex::Real dU0y = ave( DownDy_N(N_arr,i,j,k), UpDy_N(N_arr,i,j,k) );
-                    amrex::Real dU1y = ave( DownDy_U(N_arr,NUx_arr,Ux,i,j,k), UpDy_U(N_arr,NUx_arr,Ux,i,j,k) );
-                    amrex::Real dU2y = ave( DownDy_U(N_arr,NUy_arr,Uy,i,j,k), UpDy_U(N_arr,NUy_arr,Uy,i,j,k) );
-                    amrex::Real dU3y = ave( DownDy_U(N_arr,NUz_arr,Uz,i,j,k), UpDy_U(N_arr,NUz_arr,Uz,i,j,k) );
+                    const amrex::Real dU0y = ave( DownDy_N(N_arr,i,j,k), UpDy_N(N_arr,i,j,k) );
+                    const amrex::Real dU1y = ave( DownDy_U(N_arr,NUx_arr,Ux,i,j,k), UpDy_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    const amrex::Real dU2y = ave( DownDy_U(N_arr,NUy_arr,Uy,i,j,k), UpDy_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    const amrex::Real dU3y = ave( DownDy_U(N_arr,NUz_arr,Uz,i,j,k), UpDy_U(N_arr,NUz_arr,Uz,i,j,k) );
 
 #endif
-                    amrex::Real Vz = Uz/gamma;
+                    const amrex::Real Vz = Uz/gamma;
                     // Compute the non-zero element of Jz
-                    amrex::Real J00z = Vz;
-                    amrex::Real J01z = -N_arr(i,j,k)*Ux*Uz*inv_c2_gamma3;
-                    amrex::Real J02z = -N_arr(i,j,k)*Uy*Uz*inv_c2_gamma3;
-                    amrex::Real J03z = N_arr(i,j,k)*(1/gamma)*(1-Vz*Vz/c_sq);
-                    amrex::Real J11z = Vz;
-                    amrex::Real J22z = Vz;
-                    amrex::Real J33z = Vz;
+                    const amrex::Real J00z = Vz;
+                    const amrex::Real J01z = -N_arr(i,j,k)*Ux*Uz*inv_c2_gamma3;
+                    const amrex::Real J02z = -N_arr(i,j,k)*Uy*Uz*inv_c2_gamma3;
+                    const amrex::Real J03z = N_arr(i,j,k)*(1/gamma)*(1-Vz*Vz/c_sq);
+                    const amrex::Real J11z = Vz;
+                    const amrex::Real J22z = Vz;
+                    const amrex::Real J33z = Vz;
 
                     // Compute the cell slopes z
-                    amrex::Real dU0z = ave( DownDz_N(N_arr,i,j,k), UpDz_N(N_arr,i,j,k) );
-                    amrex::Real dU1z = ave( DownDz_U(N_arr,NUx_arr,Ux,i,j,k), UpDz_U(N_arr,NUx_arr,Ux,i,j,k) );
-                    amrex::Real dU2z = ave( DownDz_U(N_arr,NUy_arr,Uy,i,j,k), UpDz_U(N_arr,NUy_arr,Uy,i,j,k) );
-                    amrex::Real dU3z = ave( DownDz_U(N_arr,NUz_arr,Uz,i,j,k), UpDz_U(N_arr,NUz_arr,Uz,i,j,k) );
+                    const amrex::Real dU0z = ave( DownDz_N(N_arr,i,j,k), UpDz_N(N_arr,i,j,k) );
+                    const amrex::Real dU1z = ave( DownDz_U(N_arr,NUx_arr,Ux,i,j,k), UpDz_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    const amrex::Real dU2z = ave( DownDz_U(N_arr,NUy_arr,Uy,i,j,k), UpDz_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    const amrex::Real dU3z = ave( DownDz_U(N_arr,NUz_arr,Uz,i,j,k), UpDz_U(N_arr,NUz_arr,Uz,i,j,k) );
 
 
                     // Select the specific implementation depending on dimensionality
 #if defined(WARPX_DIM_3D)
 
                     // Compute U ([ N, U]) at the halfsteps (U_tilde) using the slopes (dU)
-                    amrex::Real JdU0x = J00x*dU0x + J01x*dU1x + J02x*dU2x + J03x*dU3x;
-                    amrex::Real JdU1x = J11x*dU1x ;
-                    amrex::Real JdU2x = J22x*dU2x ;
-                    amrex::Real JdU3x = J33x*dU3x;
-                    amrex::Real JdU0y = J00y*dU0y + J01y*dU1y + J02y*dU2y + J03y*dU3y;
-                    amrex::Real JdU1y = J11y*dU1y;
-                    amrex::Real JdU2y = J22y*dU2y;
-                    amrex::Real JdU3y = J33y*dU3y;
-                    amrex::Real JdU0z = J00z*dU0z + J01z*dU1z + J02z*dU2z + J03z*dU3z;
-                    amrex::Real JdU1z = J11z*dU1z;
-                    amrex::Real JdU2z = J22z*dU2z;
-                    amrex::Real JdU3z = J33z*dU3z;
-                    amrex::Real U_tilde0 = N_arr(i,j,k)   - dt_over_dx_half*JdU0x - dt_over_dy_half*JdU0y - dt_over_dz_half*JdU0z;
-                    amrex::Real U_tilde1 = Ux - dt_over_dx_half*JdU1x - dt_over_dy_half*JdU1y - dt_over_dz_half*JdU1z;
-                    amrex::Real U_tilde2 = Uy - dt_over_dx_half*JdU2x - dt_over_dy_half*JdU2y - dt_over_dz_half*JdU2z;
-                    amrex::Real U_tilde3 = Uz - dt_over_dx_half*JdU3x - dt_over_dy_half*JdU3y - dt_over_dz_half*JdU3z;
+                    const amrex::Real JdU0x = J00x*dU0x + J01x*dU1x + J02x*dU2x + J03x*dU3x;
+                    const amrex::Real JdU1x = J11x*dU1x ;
+                    const amrex::Real JdU2x = J22x*dU2x ;
+                    const amrex::Real JdU3x = J33x*dU3x;
+                    const amrex::Real JdU0y = J00y*dU0y + J01y*dU1y + J02y*dU2y + J03y*dU3y;
+                    const amrex::Real JdU1y = J11y*dU1y;
+                    const amrex::Real JdU2y = J22y*dU2y;
+                    const amrex::Real JdU3y = J33y*dU3y;
+                    const amrex::Real JdU0z = J00z*dU0z + J01z*dU1z + J02z*dU2z + J03z*dU3z;
+                    const amrex::Real JdU1z = J11z*dU1z;
+                    const amrex::Real JdU2z = J22z*dU2z;
+                    const amrex::Real JdU3z = J33z*dU3z;
+                    const amrex::Real U_tilde0 = N_arr(i,j,k)   - dt_over_dx_half*JdU0x - dt_over_dy_half*JdU0y - dt_over_dz_half*JdU0z;
+                    const amrex::Real U_tilde1 = Ux - dt_over_dx_half*JdU1x - dt_over_dy_half*JdU1y - dt_over_dz_half*JdU1z;
+                    const amrex::Real U_tilde2 = Uy - dt_over_dx_half*JdU2x - dt_over_dy_half*JdU2y - dt_over_dz_half*JdU2z;
+                    const amrex::Real U_tilde3 = Uz - dt_over_dx_half*JdU3x - dt_over_dy_half*JdU3y - dt_over_dz_half*JdU3z;
 
 
                     // Predict U at the cell edges (x)
