@@ -428,7 +428,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
     const auto problo = geom.ProbLoArray();
     const amrex::Real dt_over_dx_half = 0.5_rt*(dt/dx[0]);
     const amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[1]);
-    const amrex::Box const& domain = geom.Domain();
+    const amrex::Box& domain = geom.Domain();
 #else
     const amrex::Real dt_over_dz = (dt/dx[0]);
     const amrex::Real dt_over_dz_half = 0.5_rt*(dt/dx[0]);
@@ -464,7 +464,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         // Loop over a box with one extra gridpoint in the ghost region to avoid
         // an extra MPI communication between the edge value computation loop and
         // the flux calculation loop
-        const amrex::Box tile_box = mfi.growntilebox(1);
+        amrex::Box tile_box = mfi.growntilebox(1);
 
         // Limit the grown box for RZ at r = 0, r_max
 #if defined (WARPX_DIM_RZ)
