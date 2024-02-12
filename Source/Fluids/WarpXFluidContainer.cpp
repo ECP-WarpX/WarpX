@@ -585,10 +585,10 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     const amrex::Real J33z = Vz;
 
                     // Compute the cell slopes z
-                    const amrex::Real dU0z = ave( DownDz_N(N_arr,i,j,k), UpDz_N(N_arr,i,j,k) );
-                    const amrex::Real dU1z = ave( DownDz_U(N_arr,NUx_arr,Ux,i,j,k), UpDz_U(N_arr,NUx_arr,Ux,i,j,k) );
-                    const amrex::Real dU2z = ave( DownDz_U(N_arr,NUy_arr,Uy,i,j,k), UpDz_U(N_arr,NUy_arr,Uy,i,j,k) );
-                    const amrex::Real dU3z = ave( DownDz_U(N_arr,NUz_arr,Uz,i,j,k), UpDz_U(N_arr,NUz_arr,Uz,i,j,k) );
+                    amrex::Real dU0z = ave( DownDz_N(N_arr,i,j,k), UpDz_N(N_arr,i,j,k) );
+                    amrex::Real dU1z = ave( DownDz_U(N_arr,NUx_arr,Ux,i,j,k), UpDz_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    amrex::Real dU2z = ave( DownDz_U(N_arr,NUy_arr,Uy,i,j,k), UpDz_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    amrex::Real dU3z = ave( DownDz_U(N_arr,NUz_arr,Uz,i,j,k), UpDz_U(N_arr,NUz_arr,Uz,i,j,k) );
 
 
                     // Select the specific implementation depending on dimensionality
