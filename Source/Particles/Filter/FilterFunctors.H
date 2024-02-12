@@ -165,9 +165,9 @@ struct GeometryFilter
     bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
         if ( !m_is_active ) { return true; }
-        return ! (AMREX_D_TERM( (p.pos(0) < m_domain.lo(0)) || (p.pos(0) > m_domain.hi(0) ),
-                            ||  (p.pos(1) < m_domain.lo(1)) || (p.pos(1) > m_domain.hi(1) ),
-                            ||  (p.pos(2) < m_domain.lo(2)) || (p.pos(2) > m_domain.hi(2) )));
+        return AMREX_D_TERM(    (p.pos(0) >= m_domain.lo(0)) && (p.pos(0) <= m_domain.hi(0) ),
+                            &&  (p.pos(1) >= m_domain.lo(1)) && (p.pos(1) <= m_domain.hi(1) ),
+                            &&  (p.pos(2) >= m_domain.lo(2)) && (p.pos(2) <= m_domain.hi(2) ));
     }
 private:
     /** Whether this diagnostics is activated. Select all particles if false */

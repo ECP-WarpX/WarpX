@@ -1205,7 +1205,7 @@ void doGatherPicnicShapeN (
 
     // gather magnetic field
     const int depos_order_B = 1; // second template parameter?
-    Compute_shape_factor< depos_order_B > compute_shape_factor_B;
+    const Compute_shape_factor< depos_order_B > compute_shape_factor_B;
     double sz_bar_node[depos_order_B+1] = {0.};
     double sz_bar_cell[depos_order_B+1] = {0.};
     const int k_bar_node = compute_shape_factor_B(sz_bar_node, z_bar);
@@ -1266,8 +1266,8 @@ void doGatherPicnicShapeN (
     }
 
     // loop over the number of segments and deposit
-    Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-    Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+    const Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+    const Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
     double dxp_seg, dzp_seg;
     double x0_new, z0_new;
     double x0_old = x_old;
@@ -1404,7 +1404,7 @@ void doGatherPicnicShapeN (
 
     // gather magnetic field and out-of-plane electric field
     const int depos_order_B = 1; // second template parameter?
-    Compute_shape_factor< depos_order_B > compute_shape_factor_B;
+    const Compute_shape_factor< depos_order_B > compute_shape_factor_B;
     double sz_bar_node[depos_order_B+1] = {0.};
     double sz_bar_cell[depos_order_B+1] = {0.};
     const int k_bar_node = compute_shape_factor_B(sz_bar_node, z_bar);
@@ -1459,7 +1459,7 @@ void doGatherPicnicShapeN (
     // compute cell crossings in Z-direction
     const auto k_old = static_cast<int>(z_old-shift);
     const auto k_new = static_cast<int>(z_new-shift);
-    int cell_crossings_z = std::abs(k_new-k_old);
+    const int cell_crossings_z = std::abs(k_new-k_old);
     num_segments += cell_crossings_z;
 
     // need to assert that the number of cell crossings in each direction
@@ -1472,8 +1472,8 @@ void doGatherPicnicShapeN (
     double Zcell = static_cast<double>(k_old) + shift + 0.5*(1.-dirZ_sign);
 
     // loop over the number of segments and deposit
-    Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
-    Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+    const Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+    const Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
     double dzp_seg;
     double z0_new;
     double z0_old = z_old;
@@ -1536,7 +1536,7 @@ void doGatherPicnicShapeN (
 
     // gather magnetic field
     const int depos_order_B = 1; // second template parameter?
-    Compute_shape_factor< depos_order_B > compute_shape_factor_B;
+    const Compute_shape_factor< depos_order_B > compute_shape_factor_B;
     double sz_bar_node[depos_order_B+1] = {0.};
     double sz_bar_cell[depos_order_B+1] = {0.};
     const int k_bar_node = compute_shape_factor_B(sz_bar_node, z_bar);
