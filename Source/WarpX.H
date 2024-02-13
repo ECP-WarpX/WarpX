@@ -122,6 +122,9 @@ public:
     void Evolve (int numsteps = -1);
 
     void EvolveImplicitPicardInit (int lev);
+    void PreRHSOpFromNonlinearIter ( const amrex::Real  cur_time, 
+                                     const amrex::Real  a_full_dt,
+                                     const int          a_nl_iter );
     void SaveParticlesAtImplicitStepStart (WarpXParticleContainer& pc, int lev);
     void FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev);
     void FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_fp,

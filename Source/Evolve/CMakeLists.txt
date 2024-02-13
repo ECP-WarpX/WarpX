@@ -5,5 +5,6 @@ foreach(D IN LISTS WarpX_DIMS)
         WarpXEvolve.cpp
         WarpXComputeDt.cpp
         WarpXOneStepImplicitPicard.cpp
+        WarpXImplicitOps.cpp
     )
 endforeach()
