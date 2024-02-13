@@ -29,4 +29,3 @@ void init_PinnedMemoryParticleContainer (py::module& m)
             }
         );
 }
-
