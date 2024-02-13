@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 """
-This script tests the coordinates of the point of contact of an electron hitting a sphere in 3D.
+This script tests the coordinates of the point of contact of an electron hitting a sphere in 3D and RZ.
 It compares the numerical results with the analytical solutions.
 The sphere is centered on O and has a radius of 0.2 (EB)
-The electron is initially at: (-0.25,0,0) and moves with a normalized momentum: (1,0.5,0)
-An input file PICMI_inputs_3d.py is used.
+The electron is initially at: (-0.25,0,0) and moves with 
+a normalized momentum: (1,0.5,0) in cartesian coordinates
+An input file PICMI_inputs_3d.py or PICMI_inputs_rz.py is used.
 """
 import os
 import sys
