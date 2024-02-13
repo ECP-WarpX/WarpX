@@ -464,15 +464,17 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
         // Loop over a box with one extra gridpoint in the ghost region to avoid
         // an extra MPI communication between the edge value computation loop and
         // the flux calculation loop
-        amrex::Box tile_box = mfi.growntilebox(1);
-
-        // Limit the grown box for RZ at r = 0, r_max
+        const amrex::Box tile_box = [&](){
+            auto tt = mfi.growntilebox(1);
 #if defined (WARPX_DIM_RZ)
-        const int idir = 0;
-        const int n_cell = -1;
-        tile_box.growLo(idir, n_cell);
-        tile_box.growHi(idir, n_cell);
+            // Limit the grown box for RZ at r = 0, r_max
+            const int idir = 0;
+            const int n_cell = -1;
+            tt.growLo(idir, n_cell);
+            tt.growHi(idir, n_cell);
 #endif
+           return tt;
+        }();
 
         amrex::Array4<Real> const &N_arr = N[lev]->array(mfi);
         amrex::Array4<Real> const &NUx_arr = NU[lev][0]->array(mfi);
@@ -548,11 +550,13 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     const amrex::Real J22x = Vx;
                     const amrex::Real J33x = Vx;
 
+                    amrex::Real dU0x, dU1x, dU2x, dU3x;
+
                     // Compute the cell slopes x
-                    amrex::Real dU0x = ave( DownDx_N(N_arr,i,j,k), UpDx_N(N_arr,i,j,k) );
-                    amrex::Real dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k), UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
-                    amrex::Real dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k), UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
-                    amrex::Real dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k), UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
+                    dU0x = ave( DownDx_N(N_arr,i,j,k), UpDx_N(N_arr,i,j,k) );
+                    dU1x = ave( DownDx_U(N_arr,NUx_arr,Ux,i,j,k), UpDx_U(N_arr,NUx_arr,Ux,i,j,k) );
+                    dU2x = ave( DownDx_U(N_arr,NUy_arr,Uy,i,j,k), UpDx_U(N_arr,NUy_arr,Uy,i,j,k) );
+                    dU3x = ave( DownDx_U(N_arr,NUz_arr,Uz,i,j,k), UpDx_U(N_arr,NUz_arr,Uz,i,j,k) );
 
 #endif
 
@@ -740,7 +744,7 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #endif
     for (MFIter mfi(*N[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-        amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
+        const amrex::Box tile_box = mfi.tilebox(N[lev]->ixType().toIntVect());
         const amrex::Array4<Real> N_arr = N[lev]->array(mfi);
         const amrex::Array4<Real> NUx_arr = NU[lev][0]->array(mfi);
         const amrex::Array4<Real> NUy_arr = NU[lev][1]->array(mfi);
