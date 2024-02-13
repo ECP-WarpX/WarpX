@@ -21,10 +21,11 @@ void init_PinnedMemoryParticleContainer (py::module& m)
             {
                 return pc.getParticleComps();
             }
-        )
+        );
         .def_property_readonly("int_comp_names",
             [](PinnedMemoryParticleContainer& pc)
             {
                 return pc.getParticleiComps();
             }
-        )
+        );
+}
