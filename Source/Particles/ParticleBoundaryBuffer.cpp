@@ -142,10 +142,10 @@ struct CopyAndTimestamp {
         for (int j = 0; j < SrcData::NAR; ++j) {
             dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
         }
-        for (int j = 0; j < src.m__runtime_real; ++j) {
+        for (int j = 0; j < src.m_num_runtime_real; ++j) {
             dst.m_runtime_rdata[j][dst_i] = src.m_runtime_rdata[j][src_i];
         }
-        for (int j = 0; j < src.m__runtime_int; ++j) {
+        for (int j = 0; j < src.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
         dst.m_runtime_idata[m_index][dst_i] = m_step;
@@ -156,14 +156,14 @@ struct CopyAndTimestamp {
 
 ParticleBoundaryBuffer::ParticleBoundaryBuffer ()
 {
-    m_particle_containers.resize(Boundaries());
-    m_do_boundary_buffer.resize(Boundaries());
-    m_do_any_boundary.resize(Boundaries(), 0);
-    m_boundary_names.resize(Boundaries());
+    m_particle_containers.resize(numBoundaries());
+    m_do_boundary_buffer.resize(numBoundaries());
+    m_do_any_boundary.resize(numBoundaries(), 0);
+    m_boundary_names.resize(numBoundaries());
 
-    for (int i = 0; i < Boundaries(); ++i)
+    for (int i = 0; i < numBoundaries(); ++i)
     {
-        m_particle_containers[i].resize(Species());
+        m_particle_containers[i].resize(numSpecies());
         m_do_boundary_buffer[i].resize(numSpecies(), 0);
     }
 
