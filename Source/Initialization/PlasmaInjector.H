@@ -109,11 +109,12 @@ public:
     amrex::Real y_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real z_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real q_tot = 0.0;
-    amrex::Real focal_distance = 0.0;
     long npart;
     int do_symmetrize = 0;
     int symmetrization_order = 4;
-
+    bool do_focusing = false;
+    amrex::Real focal_distance;
+    
     bool external_file = false; //! initialize from an openPMD file
     amrex::Real z_shift = 0.0; //! additional z offset for particle positions
 #ifdef WARPX_USE_OPENPMD

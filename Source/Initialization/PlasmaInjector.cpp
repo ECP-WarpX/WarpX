@@ -232,7 +232,11 @@ void PlasmaInjector::setupGaussianBeam (amrex::ParmParse const& pp_species)
     utils::parser::getWithParser(pp_species, source_name, "npart", npart);
     utils::parser::queryWithParser(pp_species, source_name, "do_symmetrize", do_symmetrize);
     utils::parser::queryWithParser(pp_species, source_name, "symmetrization_order", symmetrization_order);
-    utils::parser::queryWithParser(pp_species, source_name, "focal_distance", focal_distance);
+    const bool focusing_is_specified = pp_species.contains("focal_distance");
+    if(focusing_is_specified){
+        do_focusing = true; 
+        utils::parser::queryWithParser(pp_species, source_name, "focal_distance", focal_distance);
+    }
     const std::set<int> valid_symmetries = {4,8};
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( valid_symmetries.count(symmetrization_order),
         "Error: Symmetrization only supported to orders 4 or 8 ");

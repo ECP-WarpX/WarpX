@@ -555,24 +555,25 @@ PhysicalParticleContainer::AddGaussianBeam (
             Real z = amrex::RandomNormal(z_m, z_rms);
 #elif defined(WARPX_DIM_XZ)
             const Real weight = q_tot/(npart*charge*y_rms);
-            const Real x = amrex::RandomNormal(x_m, x_rms);
+            Real x = amrex::RandomNormal(x_m, x_rms);
             constexpr Real y = 0._prt;
-            const Real z = amrex::RandomNormal(z_m, z_rms);
+            Real z = amrex::RandomNormal(z_m, z_rms);
 #elif defined(WARPX_DIM_1D_Z)
             const Real weight = q_tot/(npart*charge*x_rms*y_rms);
             constexpr Real x = 0._prt;
             constexpr Real y = 0._prt;
-            const Real z = amrex::RandomNormal(z_m, z_rms);
+            Real z = amrex::RandomNormal(z_m, z_rms);
 #endif
             if (plasma_injector.insideBounds(x, y, z)  &&
                 std::abs( x - x_m ) <= x_cut * x_rms     &&
                 std::abs( y - y_m ) <= y_cut * y_rms     &&
                 std::abs( z - z_m ) <= z_cut * z_rms   ) {
                 XDim3 u = plasma_injector.getMomentum(x, y, z);
+
+            if (plasma_injector.do_focusing){
                 amrex::XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
                 amrex::Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
                 amrex::Real gamma_bulk = std::sqrt(1. + u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
-
                 amrex::Real v_bulk_x = u_bulk.x / gamma_bulk * PhysConst::c;
                 amrex::Real v_bulk_y = u_bulk.y / gamma_bulk * PhysConst::c;
                 amrex::Real v_bulk_z = u_bulk.z / gamma_bulk * PhysConst::c;
@@ -588,9 +589,18 @@ PhysicalParticleContainer::AddGaussianBeam (
 
                 amrex::Real d = std::sqrt( std::pow(x_f-x,2) + std::pow(y_f-y,2) + std::pow(z_f-z,2)); //z_f - z ;
                 amrex::Real t = d / std::sqrt(v_x*v_x+v_y*v_y+v_z*v_z); // d / vz ; //
+
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
                 x = x - (v_x - v_bulk_x) * t;
                 y = y - (v_y - v_bulk_y) * t;
                 z = z - (v_z - v_bulk_z) * t;
+#elif defined(WARPX_DIM_XZ)
+                x = x - (v_x - v_bulk_x) * t;
+                z = z - (v_z - v_bulk_z) * t;
+#elif defined(WARPX_DIM_1D_Z)
+                z = z - (v_z - v_bulk_z) * t;
+#endif
+            }
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
