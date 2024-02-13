@@ -4,6 +4,7 @@ foreach(D IN LISTS WarpX_DIMS)
       PRIVATE
         ElectrostaticSolver.cpp
         WarpXPushFieldsEM.cpp
+        WarpXImplicitFieldsEM.cpp
         WarpXPushFieldsHybridPIC.cpp
         WarpX_QED_Field_Pushers.cpp
     )

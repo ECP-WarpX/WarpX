@@ -619,6 +619,16 @@ public:
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    
+    /**
+     * \brief EM field functions used by implicit solvers.
+     */ 
+    void ComputeRHSE (         amrex::Real dt);
+    void ComputeRHSE (int lev, amrex::Real dt);
+    void ComputeRHSE (int lev, PatchType patch_type, amrex::Real dt);
+    void ComputeRHSB (         amrex::Real dt);
+    void ComputeRHSB (int lev, amrex::Real dt);
+    void ComputeRHSB (int lev, PatchType patch_type, amrex::Real dt);
 
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
@@ -1488,6 +1498,8 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_n;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_save;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_save;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_rhs;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_rhs;
 
     // Memory buffers for computing magnetostatic fields
     // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
