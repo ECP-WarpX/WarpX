@@ -595,7 +595,7 @@ PhysicalParticleContainer::AddGaussianBeam (
                 y = y - (v_y - v_bulk_y) * t;
                 z = z - (v_z - v_bulk_z) * t;
 #elif defined(WARPX_DIM_XZ)
-                amrex::Real v_bulk_y = u_bulk.y / gamma_bulk * PhysConst::c;
+                amrex::Real v_bulk_x = u_bulk.x / gamma_bulk * PhysConst::c;
                 x = x - (v_x - v_bulk_x) * t;
                 z = z - (v_z - v_bulk_z) * t;
 #elif defined(WARPX_DIM_1D_Z)
