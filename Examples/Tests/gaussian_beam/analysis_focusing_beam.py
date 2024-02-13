@@ -71,4 +71,3 @@ print(np.max(erry))
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename,output_format='openpmd')
-

@@ -234,7 +234,7 @@ void PlasmaInjector::setupGaussianBeam (amrex::ParmParse const& pp_species)
     utils::parser::queryWithParser(pp_species, source_name, "symmetrization_order", symmetrization_order);
     const bool focusing_is_specified = pp_species.contains("focal_distance");
     if(focusing_is_specified){
-        do_focusing = true; 
+        do_focusing = true;
         utils::parser::queryWithParser(pp_species, source_name, "focal_distance", focal_distance);
     }
     const std::set<int> valid_symmetries = {4,8};
