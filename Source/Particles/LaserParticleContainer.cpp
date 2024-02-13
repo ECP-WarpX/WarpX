@@ -538,9 +538,9 @@ LaserParticleContainer::InitData (int lev)
         }
     }
     const auto np = static_cast<int>(particle_z.size());
-    amrex::Vector<amrex::ParticleReal> particle_ux(np, 0.0);
-    amrex::Vector<amrex::ParticleReal> particle_uy(np, 0.0);
-    amrex::Vector<amrex::ParticleReal> particle_uz(np, 0.0);
+    const amrex::Vector<amrex::ParticleReal> particle_ux(np, 0.0);
+    const amrex::Vector<amrex::ParticleReal> particle_uy(np, 0.0);
+    const amrex::Vector<amrex::ParticleReal> particle_uz(np, 0.0);
 
     if (Verbose()) { amrex::Print() << Utils::TextMsg::Info("Adding laser particles"); }
     amrex::Vector<amrex::Vector<ParticleReal>> attr;

@@ -43,7 +43,7 @@ DSMC::DSMC (const std::string collision_name)
         amrex::ParticleReal energy = 0._prt;
         if (scattering_process.find("excitation") != std::string::npos ||
             scattering_process.find("ionization") != std::string::npos) {
-            std::string kw_energy = scattering_process + "_energy";
+            const std::string kw_energy = scattering_process + "_energy";
             utils::parser::getWithParser(
                 pp_collision_name, kw_energy.c_str(), energy);
         }
@@ -83,8 +83,8 @@ DSMC::doCollisions (amrex::Real /*cur_time*/, amrex::Real dt, MultiParticleConta
     // SmartCopy objects are created that will facilitate the particle splitting
     // operation involved in DSMC collisions between particles with arbitrary
     // weights.
-    SmartCopyFactory copy_factory_species1(species1, species1);
-    SmartCopyFactory copy_factory_species2(species2, species2);
+    const auto copy_factory_species1 = SmartCopyFactory{species1, species1};
+    const auto copy_factory_species2 = SmartCopyFactory{species2, species2};
     auto copy_species1 = copy_factory_species1.getSmartCopy();
     auto copy_species2 = copy_factory_species2.getSmartCopy();
 
@@ -158,13 +158,13 @@ DSMC::doCollisionsWithinTile(
     // - Species 1
     index_type* AMREX_RESTRICT indices_1 = bins_1.permutationPtr();
     index_type const* AMREX_RESTRICT cell_offsets_1 = bins_1.offsetsPtr();
-    amrex::ParticleReal m1 = species_1.getMass();
+    const amrex::ParticleReal m1 = species_1.getMass();
     const auto ptd_1 = ptile_1.getParticleTileData();
 
     // - Species 2
     index_type* AMREX_RESTRICT indices_2 = bins_2.permutationPtr();
     index_type const* AMREX_RESTRICT cell_offsets_2 = bins_2.offsetsPtr();
-    amrex::ParticleReal m2 = species_2.getMass();
+    const amrex::ParticleReal m2 = species_2.getMass();
     const auto ptd_2 = ptile_2.getParticleTileData();
 
     amrex::Geometry const& geom = WarpX::GetInstance().Geom(lev);
