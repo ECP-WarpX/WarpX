@@ -51,7 +51,7 @@
 #include <vector>
 
 void
-WarpX::EvolveImplicitPicardInit (int lev)
+WarpX::EvolveImplicitEMInit (int lev)
 {
 
     if (lev == 0) {
@@ -77,7 +77,7 @@ WarpX::EvolveImplicitPicardInit (int lev)
     Efield_n.resize(nlevs_max);
     Efield_save.resize(nlevs_max);
     Bfield_rhs.resize(nlevs_max);
-    if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+    if (evolve_scheme == EvolveScheme::ThetaImplicit) {
         Bfield_n.resize(nlevs_max);
         Bfield_save.resize(nlevs_max);
     }
@@ -99,7 +99,7 @@ WarpX::EvolveImplicitPicardInit (int lev)
     AllocInitMultiFabFromModel(Efield_save[lev][1], *Efield_fp[0][1], lev, "Efield_save[1]");
     AllocInitMultiFabFromModel(Efield_save[lev][2], *Efield_fp[0][2], lev, "Efield_save[2]");
 
-    if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+    if (evolve_scheme == EvolveScheme::ThetaImplicit) {
         AllocInitMultiFabFromModel(Bfield_n[lev][0], *Bfield_fp[0][0], lev, "Bfield_n[0]");
         AllocInitMultiFabFromModel(Bfield_n[lev][1], *Bfield_fp[0][1], lev, "Bfield_n[1]");
         AllocInitMultiFabFromModel(Bfield_n[lev][2], *Bfield_fp[0][2], lev, "Bfield_n[2]");
@@ -114,7 +114,7 @@ WarpX::EvolveImplicitPicardInit (int lev)
 }
 
 void
-WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
+WarpX::OneStep_ImplicitEM(amrex::Real cur_time)
 {
     using namespace amrex::literals;
 
@@ -134,11 +134,11 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
     amrex::MultiFab::Copy(*Efield_n[0][1], *Efield_fp[0][1], 0, 0, ncomps, Efield_fp[0][1]->nGrowVect());
     amrex::MultiFab::Copy(*Efield_n[0][2], *Efield_fp[0][2], 0, 0, ncomps, Efield_fp[0][2]->nGrowVect());
 
-    if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+    if (evolve_scheme == EvolveScheme::ThetaImplicit) {
         amrex::MultiFab::Copy(*Bfield_n[0][0], *Bfield_fp[0][0], 0, 0, ncomps, Bfield_fp[0][0]->nGrowVect());
         amrex::MultiFab::Copy(*Bfield_n[0][1], *Bfield_fp[0][1], 0, 0, ncomps, Bfield_fp[0][1]->nGrowVect());
         amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, ncomps, Bfield_fp[0][2]->nGrowVect());
-    } else if (evolve_scheme == EvolveScheme::SemiImplicitPicard) {
+    } else if (evolve_scheme == EvolveScheme::SemiImplicit) {
         // Compute Bfield at time n+1/2
         ComputeRHSB(dt[0]);
         Bfield_fp[0][0]->plus(*Bfield_rhs[0][0], 0, ncomps, 0);
@@ -185,7 +185,7 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
         FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
         ApplyEfieldBoundary(0, PatchType::fine);
 
-        if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+        if (evolve_scheme == EvolveScheme::ThetaImplicit) {
             if (picard_iteration_tolerance > 0. || iteration_count == max_picard_iterations) {
                 // Save the B at n+1/2 from the previous iteration so that the change
                 // in this iteration can be calculated
@@ -229,7 +229,7 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
             amrex::Real deltaE1 = Efield_save[0][1]->norm0(0, 0)/maxE1;
             amrex::Real deltaE2 = Efield_save[0][2]->norm0(0, 0)/maxE2;
             deltaE = std::max(std::max(deltaE0, deltaE1), deltaE2);
-            if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+            if (evolve_scheme == EvolveScheme::ThetaImplicit) {
                 Bfield_save[0][0]->minus(*Bfield_fp[0][0], 0, ncomps, 0);
                 Bfield_save[0][1]->minus(*Bfield_fp[0][1], 0, ncomps, 0);
                 Bfield_save[0][2]->minus(*Bfield_fp[0][2], 0, ncomps, 0);
@@ -270,7 +270,7 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
     // WarpX::sync_nodal_points is used to avoid instability
     FinishImplicitFieldUpdate(Efield_fp, Efield_n);
     FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-    if (evolve_scheme == EvolveScheme::ImplicitPicard) {
+    if (evolve_scheme == EvolveScheme::ThetaImplicit) {
         FinishImplicitFieldUpdate(Bfield_fp, Bfield_n);
         FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
     }

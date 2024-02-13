@@ -186,9 +186,9 @@ WarpX::Evolve (int numsteps)
 
         ExecutePythonCallback("particleinjection");
 
-        if (evolve_scheme == EvolveScheme::ImplicitPicard ||
-            evolve_scheme == EvolveScheme::SemiImplicitPicard) {
-            OneStep_ImplicitPicard(cur_time);
+        if (evolve_scheme == EvolveScheme::ThetaImplicit ||
+            evolve_scheme == EvolveScheme::SemiImplicit) {
+            OneStep_ImplicitEM(cur_time);
         }
         else if ( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
              electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )

@@ -24,10 +24,10 @@
 // and corresponding integer for use inside the code
 
 const std::map<std::string, int> evolve_scheme_to_int = {
-    {"explicit",             EvolveScheme::Explicit },
-    {"implicit_picard",      EvolveScheme::ImplicitPicard },
-    {"semi_implicit_picard", EvolveScheme::SemiImplicitPicard },
-    {"default",              EvolveScheme::Explicit }
+    {"explicit",       EvolveScheme::Explicit },
+    {"theta_implicit", EvolveScheme::ThetaImplicit },
+    {"semi_implicit",  EvolveScheme::SemiImplicit },
+    {"default",        EvolveScheme::Explicit }
 };
 
 const std::map<std::string, int> nonlinear_solver_to_int = {

@@ -38,7 +38,8 @@ warpx.const_dt = dt
 warpx.use_filter = 0
 
 algo.maxwell_solver = Yee
-algo.evolve_scheme = "implicit_picard"
+algo.evolve_scheme = "theta_implicit"
+algo.nonlinear_solver = "picard"
 algo.require_picard_convergence = 0
 algo.max_picard_iterations = 25
 algo.picard_iteration_tolerance = 0.0 #1.0e-12

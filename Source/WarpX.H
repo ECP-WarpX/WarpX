@@ -121,7 +121,7 @@ public:
 
     void Evolve (int numsteps = -1);
 
-    void EvolveImplicitPicardInit (int lev);
+    void EvolveImplicitEMInit (int lev);
     void PreRHSOpFromNonlinearIter ( const amrex::Real  cur_time, 
                                      const amrex::Real  a_full_dt,
                                      const int          a_nl_iter );
@@ -169,7 +169,7 @@ public:
     static short particle_pusher_algo;
     //! Integer that corresponds to the type of Maxwell solver (Yee, CKC, PSATD, ECT)
     static short electromagnetic_solver_id;
-    //! Integer that corresponds to the evolve scheme (explicit, implicit_picard, semi_implicit_picard)
+    //! Integer that corresponds to the evolve scheme (explicit, theta_implicit, semi_implicit)
     static short evolve_scheme;
     //! Integer that corresponds to the nonlinear solver (picard, newton)
     static short nonlinear_solver;
@@ -1289,7 +1289,7 @@ private:
     void OneStep_nosub (amrex::Real cur_time);
     void OneStep_sub1 (amrex::Real cur_time);
 
-    void OneStep_ImplicitPicard(amrex::Real cur_time);
+    void OneStep_ImplicitEM(amrex::Real cur_time);
 
     /**
      * \brief Perform one PIC iteration, with the multiple J deposition per time step

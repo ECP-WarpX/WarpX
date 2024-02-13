@@ -1189,8 +1189,8 @@ WarpX::ReadParameters ()
 
         if (current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                evolve_scheme == EvolveScheme::ImplicitPicard ||
-                evolve_scheme == EvolveScheme::SemiImplicitPicard,
+                evolve_scheme == EvolveScheme::ThetaImplicit ||
+                evolve_scheme == EvolveScheme::SemiImplicit,
                 "Villasenor current deposition can only"
                 "be used with Implicit evolve schemes.");
         }
@@ -1251,8 +1251,8 @@ WarpX::ReadParameters ()
             macroscopic_solver_algo = GetAlgorithmInteger(pp_algo,"macroscopic_sigma_method");
         }
 
-        if (evolve_scheme == EvolveScheme::ImplicitPicard ||
-            evolve_scheme == EvolveScheme::SemiImplicitPicard) {
+        if (evolve_scheme == EvolveScheme::ThetaImplicit ||
+            evolve_scheme == EvolveScheme::SemiImplicit) {
             utils::parser::queryWithParser(pp_algo, "max_picard_iterations", max_picard_iterations);
             utils::parser::queryWithParser(pp_algo, "picard_iteration_tolerance", picard_iteration_tolerance);
             utils::parser::queryWithParser(pp_algo, "require_picard_convergence", require_picard_convergence);
@@ -2149,9 +2149,9 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
                   guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
 
-    if (evolve_scheme == EvolveScheme::ImplicitPicard ||
-        evolve_scheme == EvolveScheme::SemiImplicitPicard) {
-        EvolveImplicitPicardInit(lev);
+    if (evolve_scheme == EvolveScheme::ThetaImplicit ||
+        evolve_scheme == EvolveScheme::SemiImplicit) {
+        EvolveImplicitEMInit(lev);
     }
 
     m_accelerator_lattice[lev] = std::make_unique<AcceleratorLattice>();
