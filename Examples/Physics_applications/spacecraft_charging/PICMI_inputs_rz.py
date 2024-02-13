@@ -249,8 +249,8 @@ field_diag = picmi.FieldDiagnostic(
     data_list = ['Er', 'Ez', 'phi', 'rho',
                  'rho_electrons', 'rho_protons'],
     warpx_format = 'openpmd',
-    #write_dir = '.',
-    #warpx_file_prefix = 'spacecraft_charging_plt'
+    write_dir = '.',
+    warpx_file_prefix = 'spacecraft_charging_plt'
 )
 
 part_diag = picmi.ParticleDiagnostic(name = 'diag1',
