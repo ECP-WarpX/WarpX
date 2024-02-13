@@ -18,10 +18,6 @@ sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 from openpmd_viewer import OpenPMDTimeSeries
 
-filename = sys.argv[1]
-
-
-
 GeV=1e9*eV
 energy = 125.*GeV
 gamma = energy/(m_e*c**2)
@@ -40,10 +36,12 @@ focal_distance = 4*sigmaz
 def s(z, sigma0, emit):
     return np.sqrt(sigma0**2 + emit**2 * (z - focal_distance)**2 / sigma0**2)
 
+filename = sys.argv[1]
 
 ts = OpenPMDTimeSeries('./focusing_gaussian_beam_plt/')
 
 x, y, z, w, = ts.get_particle( ['x', 'y', 'z', 'w'], species='beam1', iteration=0, plot=False)
+
 
 imin = np.argmin(np.sqrt((gridz+0.8*focal_distance)**2))
 imax = np.argmin(np.sqrt((gridz-0.8*focal_distance)**2))
@@ -70,7 +68,6 @@ print(np.max(erry))
 
 #assert(np.allclose(sx, sx_theory, rtol=1., atol=0))
 #assert(np.allclose(sy, sy_theory, rtol=1., atol=0))
-
 
 test_name = os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename,output_format='openpmd')
