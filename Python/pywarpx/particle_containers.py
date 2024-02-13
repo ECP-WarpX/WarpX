@@ -223,7 +223,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            idx = soa.GetRealData(comp_idx)
+            idx = soa.get_real_data(comp_idx)
             if copy_to_host:
                 data_array.append(idx.to_numpy(copy=True))
             else:
@@ -269,7 +269,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            idx = soa.GetIntData(comp_idx)
+            idx = soa.get_int_data(comp_idx)
             if copy_to_host:
                 data_array.append(idx.to_numpy(copy=True))
             else:
@@ -309,7 +309,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            idx = soa.GetIdCPUData()
+            idx = soa.get_idcpu_data()
             if copy_to_host:
                 data_array.append(idx.to_numpy(copy=True))
             else:
