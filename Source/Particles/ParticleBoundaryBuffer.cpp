@@ -80,8 +80,6 @@ struct FindEmbeddedBoundaryIntersection {
         amrex::ParticleReal const uy = dst.m_rdata[PIdx::uy][dst_i];
         amrex::ParticleReal const uz = dst.m_rdata[PIdx::uz][dst_i];
 
-        // Bisection algorithm to find the point where phi(x,y,z)=0 (i.e. on the embedded boundary)
-
         // Temporary variables to avoid implicit capture
         amrex::Real dt = m_dt;
         amrex::Array4<const amrex::Real> phiarr = m_phiarr;
