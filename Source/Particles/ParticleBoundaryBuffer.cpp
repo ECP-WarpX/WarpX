@@ -62,7 +62,7 @@ struct FindEmbeddedBoundaryIntersection {
         for (int j = 0; j < SrcData::NAR; ++j) {
             dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
         }
-        for (int j = 0; j < src.m_num_runtime_real; ++j) {
+        for (int j = 0; j < src.m_num_run_real; ++j) {
             dst.m_runtime_rdata[j][dst_i] = src.m_runtime_rdata[j][src_i];
         }
         for (int j = 0; j < src.m_num_runtime_int; ++j) {
@@ -398,7 +398,8 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
         if (!buffer[i].isDefined())
         {
             buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-            buffer[i].AddRealComp("step_scraped", false);
+            buffer[i].IntComp("step_scraped", false);
+            buffer[i].RealComp("time_scraped", false);
         }
         auto& species_buffer = buffer[i];
         for (int lev = 0; lev < pc.numLevels(); ++lev)
@@ -451,13 +452,13 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 }
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
-                const int step_scraped_index = ptile_buffer.NumRuntimeRealComps()-1;
-                const int timestep = warpx_instance.getistep(0);
+                const int step_scraped_index = ptile_buffer.NumRunRealComps()-1;
+                const int step = warpx_instance.getistep(0);
 
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
-                                                     FindEmbeddedBoundaryIntersection{step_scraped_index, timestep, dt, phiarr, dxi, plo}, 0, dst_index);
+                                                     FindEmbeddedBoundaryIntersection{step_scraped_index, step, dt, phiarr, dxi, plo}, 0, dst_index);
                 }
             }
         }
