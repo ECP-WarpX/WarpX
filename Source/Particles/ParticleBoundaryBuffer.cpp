@@ -85,7 +85,7 @@ struct FindEmbeddedBoundaryIntersection {
         amrex::Array4<const amrex::Real> phiarr = m_phiarr;
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dxi = m_dxi;
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> plo = m_plo;
-        
+
         // Bisection algorithm to find the point where phi(x,y,z)=0 (i.e. on the embedded boundary)
         amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
             [=] (amrex::Real dt_frac) {
