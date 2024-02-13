@@ -44,7 +44,7 @@ struct IsOutsideDomainBoundary {
     }
 };
 
-struct FindBoundaryIntersection {
+struct FindEmbeddedBoundaryIntersection {
     const int m_index;
     const int m_step;
     const amrex::Real m_dt;
@@ -83,13 +83,13 @@ struct FindBoundaryIntersection {
         amrex::ParticleReal const uy = dst.m_rdata[PIdx::uy][dst_i];
         amrex::ParticleReal const uz = dst.m_rdata[PIdx::uz][dst_i];
 
-        // Bisection algorithm to find the point where phi(x,y,z)=0 (i.e. on the embedded boundary)
-
         // Temporary variables to avoid implicit capture
         amrex::Real dt = m_dt;
         amrex::Array4<const amrex::Real> phiarr = m_phiarr;
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> dxi = m_dxi;
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> plo = m_plo;
+
+        // Bisection algorithm to find the point where phi(x,y,z)=0 (i.e. on the embedded boundary)
 
         amrex::Real dt_fraction = amrex::bisect( 0.0, 1.0,
             [=] (amrex::Real dt_frac) {
@@ -453,7 +453,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
-                                                     FindBoundaryIntersection{timestamp_index, timestep, dt, phiarr, dxi, plo}, 0, dst_index);
+                                                     FindEmbeddedBoundaryIntersection{timestamp_index, timestep, dt, phiarr, dxi, plo}, 0, dst_index);
                 }
             }
         }
