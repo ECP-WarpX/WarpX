@@ -99,7 +99,7 @@ beam1.uz_th = duz
 ######### DIAGNOSTICS ###########
 #################################
 # FULL
-diagnostics.diags_names =  diag1 openpmd 
+diagnostics.diags_names =  diag1 openpmd
 
 diag1.intervals = 1
 diag1.diag_type = Full
@@ -118,4 +118,3 @@ openpmd.beam1.variables = w x y z
 openpmd.fields_to_plot = none
 openpmd.format = openpmd
 openpmd.dump_last_timestep = 1
-
