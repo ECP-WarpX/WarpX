@@ -38,7 +38,7 @@ def s(z, sigma0, emit):
 
 filename = sys.argv[1]
 
-ts = OpenPMDTimeSeries('./focusing_gaussian_beam_plt/')
+ts = OpenPMDTimeSeries('./diags/openpmd/')
 
 x, y, z, w, = ts.get_particle( ['x', 'y', 'z', 'w'], species='beam1', iteration=0, plot=False)
 
@@ -60,14 +60,8 @@ for d in subgrid:
 sx_theory = s(subgrid, sigmax, emitx/gamma)
 sy_theory = s(subgrid, sigmay, emity/gamma)
 
-errx = np.abs((sx_theory-sx)/sx_theory)
-erry = np.abs((sy_theory-sy)/sy_theory)
-
-print(np.max(errx))
-print(np.max(erry))
-
-#assert(np.allclose(sx, sx_theory, rtol=1., atol=0))
-#assert(np.allclose(sy, sy_theory, rtol=1., atol=0))
+assert(np.allclose(sx, sx_theory, rtol=0.06, atol=0))
+assert(np.allclose(sy, sy_theory, rtol=0.17, atol=0))
 
 test_name = os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename,output_format='openpmd')
+checksumAPI.evaluate_checksum(test_name, filename)

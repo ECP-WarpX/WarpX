@@ -48,7 +48,7 @@ my_constants.nz = 256
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 2
+max_step = 0
 amr.n_cell = nx ny nz
 amr.max_grid_size = 256
 amr.blocking_factor = 2
@@ -99,13 +99,23 @@ beam1.uz_th = duz
 ######### DIAGNOSTICS ###########
 #################################
 # FULL
-diagnostics.diags_names =  diag1
+diagnostics.diags_names =  diag1 openpmd 
 
 diag1.intervals = 1
 diag1.diag_type = Full
 diag1.write_species = 1
 diag1.species = beam1
-diag1.beam1.variables = w x y z
 diag1.fields_to_plot = rho_beam1
-diag1.format = openpmd
+diag1.format = plotfile
 diag1.dump_last_timestep = 1
+
+
+openpmd.intervals = 1
+openpmd.diag_type = Full
+openpmd.write_species = 1
+openpmd.species = beam1
+openpmd.beam1.variables = w x y z
+openpmd.fields_to_plot = none
+openpmd.format = openpmd
+openpmd.dump_last_timestep = 1
+
