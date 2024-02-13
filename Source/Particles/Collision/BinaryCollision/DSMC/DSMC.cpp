@@ -15,7 +15,7 @@ DSMC::DSMC (const std::string collision_name)
     : CollisionBase(collision_name)
 {
     using namespace amrex::literals;
-    amrex::ParmParse pp_collision_name(collision_name);
+    const amrex::ParmParse pp_collision_name(collision_name);
 
 #if defined WARPX_DIM_RZ
     amrex::Abort("DSMC collisions are only implemented for Cartesian coordinates.");
@@ -176,7 +176,7 @@ DSMC::doCollisionsWithinTile(
     amrex::Box const& cbx = mfi.tilebox(amrex::IntVect::TheZeroVector()); //Cell-centered box
     const auto lo = lbound(cbx);
     const auto hi = ubound(cbx);
-    int nz = hi.y-lo.y+1;
+    const int nz = hi.y-lo.y+1;
     auto dr = geom.CellSize(0);
     auto dz = geom.CellSize(1);
 #elif defined(WARPX_DIM_3D)

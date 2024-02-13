@@ -674,10 +674,10 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
                     amrex::Real  JdU1x = J11x*dU1x;
                     amrex::Real  JdU2x = J22x*dU2x;
                     amrex::Real  JdU3x = J33x*dU3x;
-                    amrex::Real  JdU0z = J00z*dU0z + J01z*dU1z + J02z*dU2z + J03z*dU3z;
-                    amrex::Real  JdU1z = J11z*dU1z;
-                    amrex::Real  JdU2z = J22z*dU2z;
-                    amrex::Real  JdU3z = J33z*dU3z;
+                    const amrex::Real  JdU0z = J00z*dU0z + J01z*dU1z + J02z*dU2z + J03z*dU3z;
+                    const amrex::Real  JdU1z = J11z*dU1z;
+                    const amrex::Real  JdU2z = J22z*dU2z;
+                    const amrex::Real  JdU3z = J33z*dU3z;
                     amrex::Real  U_tilde0 = N_arr(i,j,k)   - dt_over_dx_half*JdU0x - dt_over_dz_half*JdU0z - (dt/2.0_rt)*N_source;
                     amrex::Real  U_tilde1 = Ux - dt_over_dx_half*JdU1x - dt_over_dz_half*JdU1z;
                     amrex::Real  U_tilde2 = Uy - dt_over_dx_half*JdU2x - dt_over_dz_half*JdU2z;
@@ -700,14 +700,14 @@ void WarpXFluidContainer::AdvectivePush_Muscl (int lev)
 #else
 
                     // Compute U ([ N, U]) at the halfsteps (U_tilde) using the slopes (dU)
-                    amrex::Real  JdU0z = J00z*dU0z + J01z*dU1z + J02z*dU2z + J03z*dU3z;
-                    amrex::Real  JdU1z = J11z*dU1z;
-                    amrex::Real  JdU2z = J22z*dU2z;
-                    amrex::Real  JdU3z = J33z*dU3z;
+                    const amrex::Real  JdU0z = J00z*dU0z + J01z*dU1z + J02z*dU2z + J03z*dU3z;
+                    const amrex::Real  JdU1z = J11z*dU1z;
+                    const amrex::Real  JdU2z = J22z*dU2z;
+                    const amrex::Real  JdU3z = J33z*dU3z;
                     amrex::Real  U_tilde0 = N_arr(i,j,k)   - dt_over_dz_half*JdU0z;
-                    amrex::Real  U_tilde1 = Ux - dt_over_dz_half*JdU1z;
-                    amrex::Real  U_tilde2 = Uy - dt_over_dz_half*JdU2z;
-                    amrex::Real  U_tilde3 = Uz - dt_over_dz_half*JdU3z;
+                    const amrex::Real  U_tilde1 = Ux - dt_over_dz_half*JdU1z;
+                    const amrex::Real  U_tilde2 = Uy - dt_over_dz_half*JdU2z;
+                    const amrex::Real  U_tilde3 = Uz - dt_over_dz_half*JdU3z;
 
                     // Predict U at the cell edges (z)
                     compute_U_edges(U_minus_z, U_plus_z, i, j, k, box_z, U_tilde0, U_tilde1, U_tilde2, U_tilde3, dU0z, dU1z, dU2z, dU3z,2);
