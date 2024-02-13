@@ -44,7 +44,7 @@ struct IsOutsideDomainBoundary {
     }
 };
 
-struct FindBoundaryIntersection {
+struct FindEmbeddedBoundaryIntersection {
     const int m_index;
     const int m_step;
     const amrex::Real m_dt;
@@ -92,7 +92,7 @@ struct FindBoundaryIntersection {
             [=] (amrex::Real dt_frac) {
                 int i, j, k;
                 amrex::Real W[AMREX_SPACEDIM][2];
-                amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
+                amrex::ParticleReal x_temp=xp, y_temp=yp, z_temp=zp;
                 UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_frac*dt);
                 ablastr::particles::compute_weights_nodal(x_temp, y_temp, z_temp, plo, dxi, i, j, k, W);
                 amrex::Real phi_value  = ablastr::particles::interp_field_nodal(i, j, k, W, phiarr);
@@ -105,7 +105,7 @@ struct FindBoundaryIntersection {
 
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
-        amrex::Real x_temp=xp, y_temp=yp, z_temp=zp;
+        amrex::ParticleReal x_temp=xp, y_temp=yp, z_temp=zp;
         UpdatePosition(x_temp, y_temp, z_temp, ux, uy, uz, -dt_fraction*m_dt);
 
 #if (defined WARPX_DIM_3D)
@@ -459,7 +459,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
-                                                     FindBoundaryIntersection{step_scraped_index, timestep, dt, phiarr, dxi, plo}, 0, dst_index);
+                                                     FindEmbeddedBoundaryIntersection{step_scraped_index, timestep, dt, phiarr, dxi, plo}, 0, dst_index);
                 }
             }
         }
