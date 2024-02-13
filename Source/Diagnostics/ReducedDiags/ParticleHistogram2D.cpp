@@ -269,8 +269,8 @@ void ParticleHistogram2D::WriteToFile (int step) const
 
     // transform paths for Windows
     #ifdef _WIN32
-        std::string filepath = m_path + m_rd_name + "/" + filename;
-        filepath = openPMD::auxiliary::replace_all(filepath, "/", "\\");
+        const std::string filepath = openPMD::auxiliary::replace_all(
+            m_path + m_rd_name + "/" + filename, "/", "\\");
     #else
         const std::string filepath = m_path + m_rd_name + "/" + filename;
     #endif
