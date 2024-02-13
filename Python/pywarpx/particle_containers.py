@@ -785,10 +785,7 @@ class ParticleBoundaryBufferWrapper(object):
             species_name, self._get_boundary_number(boundary)
         )
         comp = part_container.comp_names
-        data_array = []
-        for ii in comp:
-            data_array.append(comp)
-        return data_array
+        return comp
 
 
     def clear_buffer(self):
