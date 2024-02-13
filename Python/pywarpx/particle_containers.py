@@ -223,7 +223,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            idx = soa.get_real_data(comp_idx)
+            idx = soa.GetRealData(comp_idx)
             if copy_to_host:
                 data_array.append(idx.to_numpy(copy=True))
             else:
@@ -269,7 +269,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            idx = soa.get_int_data(comp_idx)
+            idx = soa.GetIntData(comp_idx)
             if copy_to_host:
                 data_array.append(idx.to_numpy(copy=True))
             else:
@@ -309,7 +309,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            idx = soa.get_idcpu_data()
+            idx = soa.GetIdCPUData()
             if copy_to_host:
                 data_array.append(idx.to_numpy(copy=True))
             else:
@@ -772,9 +772,9 @@ class ParticleBoundaryBufferWrapper(object):
                 form x/y/z_hi/lo or eb.
 
             comp_name      : str
-                The component of the array data that will be returned. If
-                "step_scraped" the special attribute holding the timestep at
-                which a particle was scraped will be returned.
+                The component of the array data that will be returned.
+                "x", "y", "z", "ux", "uy", "uz", "w"
+                "step_scraped","time_scraped", "nx", "ny", "nz"
 
             level          : int
                 Which AMR level to retrieve scraped particle data from.
@@ -784,19 +784,10 @@ class ParticleBoundaryBufferWrapper(object):
         part_container = self.particle_buffer.get_particle_container(
             species_name, self._get_boundary_number(boundary)
         )
+        comp = part_container.comp_names
         data_array = []
-        if comp_name == 'step_scraped':
-            # the step scraped is always the final integer component
-            comp_idx = part_container.num_int_comps - 1
-            for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
-                soa = pti.soa()
-                data_array.append(xp.array(soa.get_int_data(comp_idx), copy=False))
-        else:
-            container_wrapper = ParticleContainerWrapper(species_name)
-            comp_idx = container_wrapper.particle_container.get_comp_index(comp_name)
-            for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
-                soa = pti.soa()
-                data_array.append(xp.array(soa.get_real_data(comp_idx), copy=False))
+        for ii in comp:
+            data_array.append(comp)
         return data_array
 
 

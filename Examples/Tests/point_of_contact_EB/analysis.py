@@ -26,26 +26,35 @@ checksumAPI.evaluate_checksum(test_name, filename, output_format='openpmd')
 ts_scraping = OpenPMDTimeSeries('./diags/diag2/particles_at_eb/')
 
 it=ts_scraping.iterations
-x,y,z=ts_scraping.get_particle( ['x','y','z'], species='electron', iteration=it )
+step_scraped, time_scraped, x, y, z=ts_scraping.get_particle( ['step_scraped','time_scraped','x','y','z'], species='electron', iteration=it )
+time_scraped_reduced=time_scraped[0]*1e10
 
 # Analytical results calculated
 x_analytic=-0.1983
 y_analytic=0.02584
 z_analytic=0.0000
 
+#result obtained by analysis of simulations
+step=3
+time_reduced=3.58
+
 print('NUMERICAL coordinates of the point of contact:')
-print('x=%5.4f, y=%5.4f, z=%5.4f' % (x[0], y[0], z[0]))
+print('step_scraped=%d, time_stamp=%5.4f e-10, x=%5.4f, y=%5.4f, z=%5.4f' % (step_scraped[0],time_reduced,x[0], y[0], z[0]))
 print('\n')
 print('ANALYTICAL coordinates of the point of contact:')
-print('x=%5.4f, y=%5.4f, z=%5.4f' % (x_analytic, y_analytic, z_analytic))
+print('step_scraped=%d, time_stamp=%5.4f e-10, x=%5.4f, y=%5.4f, z=%5.4f' % (step, time_reduced, x_analytic, y_analytic, z_analytic))
 
 tolerance=0.001
+tolerance_t=0.003
 print("tolerance = "+ str(tolerance *100) + '%')
+print("tolerance for the time = "+ str(tolerance_t *100) + '%')
 
+diff_step=np.abs((step_scraped[0]-step)/step)
+diff_time=np.abs((time_scraped_reduced-time_reduced)/time_reduced)
 diff_x=np.abs((x[0]-x_analytic)/x_analytic)
 diff_y=np.abs((y[0]-y_analytic)/y_analytic)
 
 print("percentage error for x = %5.4f %%" %(diff_x *100))
 print("percentage error for y = %5.4f %%" %(diff_y *100))
 
-assert (diff_x < tolerance) and (diff_y < tolerance) and (np.abs(z[0]) < 1e-8) , 'Test point_of_contact did not pass'
+assert (diff_x < tolerance) and (diff_y < tolerance) and (np.abs(z[0]) < 1e-8) and (diff_step < 1e-8) and (diff_time < tolerance_t) , 'Test point_of_contact did not pass'
