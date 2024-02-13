@@ -30,6 +30,12 @@ const std::map<std::string, int> evolve_scheme_to_int = {
     {"default",              EvolveScheme::Explicit }
 };
 
+const std::map<std::string, int> nonlinear_solver_to_int = {
+    {"picard",  NonlinearSolver::Picard },
+    {"newton",  NonlinearSolver::Newton },
+    {"default", NonlinearSolver::Picard }
+};
+
 const std::map<std::string, int> grid_to_int = {
     {"collocated", GridType::Collocated},
     {"staggered", GridType::Staggered},
@@ -157,6 +163,8 @@ GetAlgorithmInteger(const amrex::ParmParse& pp, const char* pp_search_key ){
     std::map<std::string, int> algo_to_int;
     if (0 == std::strcmp(pp_search_key, "evolve_scheme")) {
         algo_to_int = evolve_scheme_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "nonlinear_solver")) {
+        algo_to_int = nonlinear_solver_to_int;
     } else if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
         algo_to_int = electromagnetic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "grid_type")) {

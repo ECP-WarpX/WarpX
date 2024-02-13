@@ -112,6 +112,7 @@ short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
 short WarpX::electromagnetic_solver_id;
 short WarpX::evolve_scheme;
+short WarpX::nonlinear_solver;
 int WarpX::max_picard_iterations = 10;
 Real WarpX::picard_iteration_tolerance = 1.e-7;
 bool WarpX::require_picard_convergence = true;
@@ -1150,6 +1151,7 @@ WarpX::ReadParameters ()
         charge_deposition_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "charge_deposition"));
         particle_pusher_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "particle_pusher"));
         evolve_scheme = static_cast<short>(GetAlgorithmInteger(pp_algo, "evolve_scheme"));
+        nonlinear_solver = static_cast<short>(GetAlgorithmInteger(pp_algo, "nonlinear_solver"));
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||

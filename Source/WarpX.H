@@ -171,6 +171,8 @@ public:
     static short electromagnetic_solver_id;
     //! Integer that corresponds to the evolve scheme (explicit, implicit_picard, semi_implicit_picard)
     static short evolve_scheme;
+    //! Integer that corresponds to the nonlinear solver (picard, newton)
+    static short nonlinear_solver;
     //! The maximum number of Picard iterations to do each time step
     static int max_picard_iterations;
     //! The tolerance for the Picard iteration convergence
