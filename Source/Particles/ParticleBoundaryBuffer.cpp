@@ -378,7 +378,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
 
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
-                                                             CopyAndTimestamp{step_scraped_index, timestep, dt},
+                                                             CopyAndTimestamp{timestamp_index, timestep, dt},
                                                              0, dst_index);
                         }
                     }
