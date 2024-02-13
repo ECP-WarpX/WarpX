@@ -310,7 +310,7 @@ PsatdAlgorithmGalileanRZ::CurrentCorrection (SpectralFieldDataRZ& field_data)
 
         // Local copy of member variables before GPU loop
         const amrex::Real vz = m_v_galilean[2];
-        const amrex::Real const dt = m_dt;
+        const amrex::Real dt = m_dt;
 
         // Loop over indices within one box
         int const modes = field_data.n_rz_azimuthal_modes;
