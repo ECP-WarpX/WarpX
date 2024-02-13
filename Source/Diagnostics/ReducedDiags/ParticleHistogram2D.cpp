@@ -267,10 +267,12 @@ void ParticleHistogram2D::WriteToFile (int step) const
     const std::string fileSuffix = std::string("_%0") + std::to_string(m_file_min_digits) + std::string("T");
     filename = filename.append(fileSuffix).append(".").append(m_openpmd_backend);
 
-    const std::string filepath = m_path + m_rd_name + "/" + filename;
     // transform paths for Windows
     #ifdef _WIN32
+        std::string filepath = m_path + m_rd_name + "/" + filename;
         filepath = openPMD::auxiliary::replace_all(filepath, "/", "\\");
+    #else
+        const std::string filepath = m_path + m_rd_name + "/" + filename;
     #endif
 
     // Create the OpenPMD series
