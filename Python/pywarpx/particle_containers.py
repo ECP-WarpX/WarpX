@@ -223,7 +223,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            idx = soa.GetRealData(comp_idx)
+            idx = soa.get_real_data(comp_idx)
             if copy_to_host:
                 data_array.append(idx.to_numpy(copy=True))
             else:
@@ -269,7 +269,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            idx = soa.GetIntData(comp_idx)
+            idx = soa.get_int_data(comp_idx)
             if copy_to_host:
                 data_array.append(idx.to_numpy(copy=True))
             else:
@@ -309,7 +309,7 @@ class ParticleContainerWrapper(object):
         data_array = []
         for pti in libwarpx.libwarpx_so.WarpXParIter(self.particle_container, level):
             soa = pti.soa()
-            idx = soa.GetIdCPUData()
+            idx = soa.get_idcpu_data()
             if copy_to_host:
                 data_array.append(idx.to_numpy(copy=True))
             else:
@@ -790,13 +790,13 @@ class ParticleBoundaryBufferWrapper(object):
             comp_idx = part_container.num_int_comps - 1
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
-                data_array.append(xp.array(soa.GetIntData(comp_idx), copy=False))
+                data_array.append(xp.array(soa.get_int_data(comp_idx), copy=False))
         else:
             container_wrapper = ParticleContainerWrapper(species_name)
             comp_idx = container_wrapper.particle_container.get_comp_index(comp_name)
             for ii, pti in enumerate(libwarpx.libwarpx_so.BoundaryBufferParIter(part_container, level)):
                 soa = pti.soa()
-                data_array.append(xp.array(soa.GetRealData(comp_idx), copy=False))
+                data_array.append(xp.array(soa.get_real_data(comp_idx), copy=False))
         return data_array
 
 
