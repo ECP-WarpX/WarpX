@@ -73,8 +73,10 @@ WarpX::EvolveImplicitPicardInit (int lev)
     // Initialize MultiFabs to hold the E and B fields at the start of the time steps
     // Only one refinement level is supported
     const int nlevs_max = maxLevel() + 1;
+    Efield_rhs.resize(nlevs_max);
     Efield_n.resize(nlevs_max);
     Efield_save.resize(nlevs_max);
+    Bfield_rhs.resize(nlevs_max);
     if (evolve_scheme == EvolveScheme::ImplicitPicard) {
         Bfield_n.resize(nlevs_max);
         Bfield_save.resize(nlevs_max);
@@ -90,6 +92,9 @@ WarpX::EvolveImplicitPicardInit (int lev)
     AllocInitMultiFabFromModel(Efield_n[lev][0], *Efield_fp[0][0], lev, "Efield_n[0]");
     AllocInitMultiFabFromModel(Efield_n[lev][1], *Efield_fp[0][1], lev, "Efield_n[1]");
     AllocInitMultiFabFromModel(Efield_n[lev][2], *Efield_fp[0][2], lev, "Efield_n[2]");
+    AllocInitMultiFabFromModel(Efield_rhs[lev][0], *Efield_fp[0][0], lev, "Efield_rhs[0]");
+    AllocInitMultiFabFromModel(Efield_rhs[lev][1], *Efield_fp[0][1], lev, "Efield_rhs[1]");
+    AllocInitMultiFabFromModel(Efield_rhs[lev][2], *Efield_fp[0][2], lev, "Efield_rhs[2]");
     AllocInitMultiFabFromModel(Efield_save[lev][0], *Efield_fp[0][0], lev, "Efield_save[0]");
     AllocInitMultiFabFromModel(Efield_save[lev][1], *Efield_fp[0][1], lev, "Efield_save[1]");
     AllocInitMultiFabFromModel(Efield_save[lev][2], *Efield_fp[0][2], lev, "Efield_save[2]");
@@ -102,6 +107,9 @@ WarpX::EvolveImplicitPicardInit (int lev)
         AllocInitMultiFabFromModel(Bfield_save[lev][1], *Bfield_fp[0][1], lev, "Bfield_save[1]");
         AllocInitMultiFabFromModel(Bfield_save[lev][2], *Bfield_fp[0][2], lev, "Bfield_save[2]");
     }
+    AllocInitMultiFabFromModel(Bfield_rhs[lev][0], *Bfield_fp[0][0], lev, "Bfield_rhs[0]");
+    AllocInitMultiFabFromModel(Bfield_rhs[lev][1], *Bfield_fp[0][1], lev, "Bfield_rhs[1]");
+    AllocInitMultiFabFromModel(Bfield_rhs[lev][2], *Bfield_fp[0][2], lev, "Bfield_rhs[2]");
 
 }
 
@@ -131,8 +139,12 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
         amrex::MultiFab::Copy(*Bfield_n[0][1], *Bfield_fp[0][1], 0, 0, ncomps, Bfield_fp[0][1]->nGrowVect());
         amrex::MultiFab::Copy(*Bfield_n[0][2], *Bfield_fp[0][2], 0, 0, ncomps, Bfield_fp[0][2]->nGrowVect());
     } else if (evolve_scheme == EvolveScheme::SemiImplicitPicard) {
-        // This updates Bfield_fp so it holds the new B at n+1/2
-        EvolveB(dt[0], DtType::Full);
+        // Compute Bfield at time n+1/2
+        ComputeRHSB(dt[0]);
+        Bfield_fp[0][0]->plus(*Bfield_rhs[0][0], 0, ncomps, 0);
+        Bfield_fp[0][1]->plus(*Bfield_rhs[0][1], 0, ncomps, 0);
+        Bfield_fp[0][2]->plus(*Bfield_rhs[0][2], 0, ncomps, 0);
+
         // WarpX::sync_nodal_points is used to avoid instability
         FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
         ApplyBfieldBoundary(0, PatchType::fine, DtType::Full);
@@ -164,13 +176,16 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
             amrex::MultiFab::Copy(*Efield_save[0][2], *Efield_fp[0][2], 0, 0, ncomps, 0);
         }
 
-        // Copy Efield_n into Efield_fp since EvolveE updates Efield_fp in place
+        // Compute Efield at time n+1/2
         amrex::MultiFab::Copy(*Efield_fp[0][0], *Efield_n[0][0], 0, 0, ncomps, Efield_n[0][0]->nGrowVect());
         amrex::MultiFab::Copy(*Efield_fp[0][1], *Efield_n[0][1], 0, 0, ncomps, Efield_n[0][1]->nGrowVect());
         amrex::MultiFab::Copy(*Efield_fp[0][2], *Efield_n[0][2], 0, 0, ncomps, Efield_n[0][2]->nGrowVect());
 
-        // Updates Efield_fp so it holds the new E at n+1/2
-        EvolveE(0.5_rt*dt[0]);
+        ComputeRHSE(0.5_rt*dt[0]);
+        Efield_fp[0][0]->plus(*Efield_rhs[0][0], 0, ncomps, 0);
+        Efield_fp[0][1]->plus(*Efield_rhs[0][1], 0, ncomps, 0);
+        Efield_fp[0][2]->plus(*Efield_rhs[0][2], 0, ncomps, 0);
+
         // WarpX::sync_nodal_points is used to avoid instability
         FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
         ApplyEfieldBoundary(0, PatchType::fine);
@@ -184,13 +199,16 @@ WarpX::OneStep_ImplicitPicard(amrex::Real cur_time)
                 amrex::MultiFab::Copy(*Bfield_save[0][2], *Bfield_fp[0][2], 0, 0, ncomps, 0);
             }
 
-            // Copy Bfield_n into Bfield_fp since EvolveB updates Bfield_fp in place
+            // Compute Bfield at time n+1/2
             amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bfield_n[0][0], 0, 0, ncomps, Bfield_n[0][0]->nGrowVect());
             amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bfield_n[0][1], 0, 0, ncomps, Bfield_n[0][1]->nGrowVect());
             amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bfield_n[0][2], 0, 0, ncomps, Bfield_n[0][2]->nGrowVect());
 
-            // This updates Bfield_fp so it holds the new B at n+1/2
-            EvolveB(0.5_rt*dt[0], DtType::Full);
+            ComputeRHSB(0.5_rt*dt[0]);
+            Bfield_fp[0][0]->plus(*Bfield_rhs[0][0], 0, ncomps, 0);
+            Bfield_fp[0][1]->plus(*Bfield_rhs[0][1], 0, ncomps, 0);
+            Bfield_fp[0][2]->plus(*Bfield_rhs[0][2], 0, ncomps, 0);
+
             // WarpX::sync_nodal_points is used to avoid instability
             FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
             ApplyBfieldBoundary(0, PatchType::fine, DtType::Full);
