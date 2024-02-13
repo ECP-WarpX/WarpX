@@ -131,7 +131,6 @@ struct FindEmbeddedBoundaryIntersection {
 struct CopyAndTimestamp {
     int m_index;
     int m_step;
-    amrex::Real m_dt;
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE
@@ -149,7 +148,6 @@ struct CopyAndTimestamp {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
         dst.m_runtime_idata[m_index][dst_i] = m_step;
-        dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt;
     }
 };
 
@@ -331,7 +329,6 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 if (!buffer[i].isDefined())
                 {
                     buffer[i] = pc.make_alike<amrex::PinnedArenaAllocator>();
-                    buffer[i].AddRealComp("time_scraped", false);
                     buffer[i].AddIntComp("step_scraped", false);
                 }
                 auto& species_buffer = buffer[i];
@@ -372,14 +369,12 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         }
                         {
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
-                          auto& warpx = WarpX::GetInstance();
-                          const auto dt = warpx.getdt(pti.GetLevel());
                           const int step_scraped_index = ptile_buffer.NumRealComps()-1;
                           const int timestep = warpx_instance.getistep(0);
 
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
-                                                             CopyAndTimestamp{step_scraped_index, timestep, dt},
+                                                             CopyAndTimestamp{step_scraped_index, timestep},
                                                              0, dst_index);
                         }
                     }
