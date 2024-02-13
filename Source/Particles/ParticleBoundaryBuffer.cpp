@@ -62,7 +62,7 @@ struct FindEmbeddedBoundaryIntersection {
         for (int j = 0; j < SrcData::NAR; ++j) {
             dst.m_rdata[j][dst_i] = src.m_rdata[j][src_i];
         }
-        for (int j = 0; j < src.m_num_run_real; ++j) {
+        for (int j = 0; j < src.m_num_runtime_real; ++j) {
             dst.m_runtime_rdata[j][dst_i] = src.m_runtime_rdata[j][src_i];
         }
         for (int j = 0; j < src.m_num_runtime_int; ++j) {
