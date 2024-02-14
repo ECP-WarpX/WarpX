@@ -369,7 +369,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                         }
                         {
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
-                          const int step_scraped_index = ptile_buffer.NumRealComps()-1;
+                          const int step_scraped_index = ptile_buffer.NumRuntimeIntComps()-1;
                           const int timestep = warpx_instance.getistep(0);
 
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
@@ -448,7 +448,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 }
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
-                const int step_scraped_index = ptile_buffer.NumRealComps()-1;
+                const int step_scraped_index = ptile_buffer.NumRuntimeIntComps()-1;
                 const int step = warpx_instance.getistep(0);
 
                 {
