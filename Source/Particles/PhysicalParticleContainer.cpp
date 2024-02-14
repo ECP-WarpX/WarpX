@@ -571,31 +571,31 @@ PhysicalParticleContainer::AddGaussianBeam (
                 XDim3 u = plasma_injector.getMomentum(x, y, z);
 
             if (plasma_injector.do_focusing){
-                amrex::XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
-                amrex::Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
-                amrex::Real gamma_bulk = std::sqrt(1. + u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
+                XDim3 u_bulk = plasma_injector.getInjectorMomentumHost()->getBulkMomentum(x,y,z);
+                Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
+                Real gamma_bulk = std::sqrt(1._rt + u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
 
-                amrex::Real x_f = x_m + focal_distance * u_bulk.x/u_bulk_norm;
-                amrex::Real y_f = y_m + focal_distance * u_bulk.y/u_bulk_norm;
-                amrex::Real z_f = z_m + focal_distance * u_bulk.z/u_bulk_norm;
-                amrex::Real gamma = std::sqrt( 1._rt+(u.x*u.x+u.y*u.y+u.z*u.z) );
+                Real x_f = x_m + focal_distance * u_bulk.x/u_bulk_norm;
+                Real y_f = y_m + focal_distance * u_bulk.y/u_bulk_norm;
+                Real z_f = z_m + focal_distance * u_bulk.z/u_bulk_norm;
+                Real gamma = std::sqrt( 1._rt + (u.x*u.x+u.y*u.y+u.z*u.z) );
 
-                amrex::Real v_x = u.x / gamma * PhysConst::c;
-                amrex::Real v_y = u.y / gamma * PhysConst::c;
-                amrex::Real v_z = u.z / gamma * PhysConst::c;
+                Real v_x = u.x / gamma * PhysConst::c;
+                Real v_y = u.y / gamma * PhysConst::c;
+                Real v_z = u.z / gamma * PhysConst::c;
 
-                amrex::Real d = std::sqrt( std::pow(x_f-x,2) + std::pow(y_f-y,2) + std::pow(z_f-z,2));
-                amrex::Real t = d / std::sqrt(v_x*v_x+v_y*v_y+v_z*v_z);
+                Real d = std::sqrt( std::pow(x_f-x,2) + std::pow(y_f-y,2) + std::pow(z_f-z,2));
+                Real t = d / std::sqrt(v_x*v_x+v_y*v_y+v_z*v_z);
 
                 amrex::Real v_bulk_z = u_bulk.z / gamma_bulk * PhysConst::c;
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
-                amrex::Real v_bulk_x = u_bulk.x / gamma_bulk * PhysConst::c;
-                amrex::Real v_bulk_y = u_bulk.y / gamma_bulk * PhysConst::c;
+                Real v_bulk_x = u_bulk.x / gamma_bulk * PhysConst::c;
+                Real v_bulk_y = u_bulk.y / gamma_bulk * PhysConst::c;
                 x = x - (v_x - v_bulk_x) * t;
                 y = y - (v_y - v_bulk_y) * t;
                 z = z - (v_z - v_bulk_z) * t;
 #elif defined(WARPX_DIM_XZ)
-                amrex::Real v_bulk_x = u_bulk.x / gamma_bulk * PhysConst::c;
+                Real v_bulk_x = u_bulk.x / gamma_bulk * PhysConst::c;
                 x = x - (v_x - v_bulk_x) * t;
                 z = z - (v_z - v_bulk_z) * t;
 #elif defined(WARPX_DIM_1D_Z)
