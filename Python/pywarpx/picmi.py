@@ -1649,13 +1649,16 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
 
     """
     def __init__(self, implicit_function=None, stl_file=None, stl_scale=None, stl_center=None, stl_reverse_normal=False,
-                 potential=None, cover_multiple_cuts=None, **kw):
+                 potential=None, cover_multiple_cuts=None, wkt_file=None, **kw):
 
-        assert stl_file is None or implicit_function is None, Exception('Only one between implicit_function and '
-                                                                            'stl_file can be specified')
+        assert sum(x is not None 
+                   for x in [stl_file, implicit_function, wkt_file]
+                   ) == 1, Exception('One between implicit_function, '
+                                'stl_file and wkt_file can be specified')
 
         self.implicit_function = implicit_function
         self.stl_file = stl_file
+        self.wkt_file = wkt_file
 
         if stl_file is None:
             assert stl_scale is None, Exception('EB can only be scaled only when using an stl file')
@@ -1699,6 +1702,9 @@ class EmbeddedBoundary(picmistandard.base._ClassWithInit):
             pywarpx.eb2.stl_reverse_normal = self.stl_reverse_normal
 
         pywarpx.eb2.cover_multiple_cuts = self.cover_multiple_cuts
+
+        if self.wkt_file is not None:
+            pywarpx.warpx.wkt_file = self.wkt_file
 
         if self.potential is not None:
             assert isinstance(solver, ElectrostaticSolver), Exception('The potential is only supported with the ElectrostaticSolver')
