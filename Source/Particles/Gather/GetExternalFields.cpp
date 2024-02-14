@@ -41,7 +41,9 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
     if (mypc.m_E_ext_particle_s == "parse_e_ext_particle_function" ||
         mypc.m_B_ext_particle_s == "parse_b_ext_particle_function" ||
         mypc.m_E_ext_particle_s == "repeated_plasma_lens" ||
-        mypc.m_B_ext_particle_s == "repeated_plasma_lens")
+        mypc.m_B_ext_particle_s == "repeated_plasma_lens" || 
+        mypc.m_E_ext_particle_s == "read_from_file" || 
+        mypc.m_B_ext_particle_s == "read_from_file")
     {
         m_time = warpx.gett_new(a_pti.GetLevel());
         m_get_position = GetParticlePosition<PIdx>(a_pti, a_offset);
@@ -82,6 +84,16 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, long a_offset
         m_repeated_plasma_lens_strengths_E = mypc.d_repeated_plasma_lens_strengths_E.data();
         m_repeated_plasma_lens_strengths_B = mypc.d_repeated_plasma_lens_strengths_B.data();
     }
+
+#if defined(WARPX_DIM_3D)
+    if (mypc.m_E_ext_particle_s == "read_from_file" || 
+        mypc.m_B_ext_particle_s == "read_from_file") 
+    {
+        if (mypc.m_E_ext_particle_s == "read_from_file") m_Etype = ReadFromFile;
+        if (mypc.m_B_ext_particle_s == "read_from_file") m_Btype = ReadFromFile;
+        Bfield_file_external_particle_cyl = mypc.external_field_from_file_B;
+    }
+#endif
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Etype != Unknown, "Unknown E_ext_particle_init_style");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_Btype != Unknown, "Unknown B_ext_particle_init_style");

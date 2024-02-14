@@ -146,6 +146,7 @@ MultiParticleContainer::ReadParameters ()
                        m_E_ext_particle_s.end(),
                        m_E_ext_particle_s.begin(),
                        ::tolower);
+        pp_particles.query("read_fields_from_path", m_read_fields_from_path);
 
         // if the input string for B_ext_particle_s is
         // "parse_b_ext_particle_function" then the mathematical expression
@@ -257,6 +258,61 @@ MultiParticleContainer::ReadParameters ()
             amrex::Gpu::synchronize();
         }
 
+#if defined(WARPX_DIM_3D)
+        if (m_E_ext_particle_s == "read_from_file" || 
+            m_B_ext_particle_s == "read_from_file") 
+        {
+            auto series = openPMD::Series(m_read_fields_from_path, openPMD::Access::READ_ONLY);
+            auto iseries = series.iterations.begin()->second;
+            auto F = iseries.meshes["B"];
+
+            auto axisLabels = F.getAttribute("axisLabels").get<std::vector<std::string>>();
+            auto fileGeom = F.getAttribute("geometry").get<std::string>();
+
+        if (fileGeom == "thetaMode")
+            {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(axisLabels[0] == "r" && axisLabels[1] == "z",
+                                                "RZ expects axisLabels {r, z}");
+
+                const auto offset = F.gridGlobalOffset();
+                const auto gridSpacing = F.gridSpacing<amrex::Real>();
+                auto FCr = F["r"];
+                auto FCz = F["z"];
+                const auto extent = FCr.getExtent();
+
+                const openPMD::Offset chunk_offset = {0,0,0};
+                const openPMD::Extent chunk_extent = {extent[0], extent[1], extent[2]};
+
+                auto FCr_chunk_data = FCr.loadChunk<amrex::Real>(chunk_offset,chunk_extent);
+                auto FCz_chunk_data = FCz.loadChunk<amrex::Real>(chunk_offset,chunk_extent);
+                series.flush();
+                auto FCr_data_host = FCr_chunk_data.get();
+                auto FCz_data_host = FCz_chunk_data.get();
+                const size_t total_extent = size_t(extent[0]) * extent[1] * extent[2];
+                amrex::Gpu::DeviceVector<amrex::Real> FCr_data_gpu(total_extent);
+                amrex::Gpu::DeviceVector<amrex::Real> FCz_data_gpu(total_extent);
+
+                amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCr_data_host, FCr_data_host + total_extent, FCr_data_gpu.data());
+                amrex::Gpu::copy(amrex::Gpu::hostToDevice, FCz_data_host, FCz_data_host + total_extent, FCz_data_gpu.data());
+
+                auto efff = new ExternalFieldFromFile3DCyl(
+                    amrex::RealVect {gridSpacing[0], gridSpacing[1], 0}, 
+                    amrex::RealVect {static_cast<amrex::Real>(offset[0]), static_cast<amrex::Real>(offset[1]), 0 }, 
+                    {static_cast<int>(extent[0]), static_cast<int>(extent[2]), static_cast<int>(extent[1])},
+                    FCr_data_gpu, FCz_data_gpu
+                );
+    #ifdef AMREX_USE_GPU
+                external_field_from_file_B = static_cast<ExternalFieldFromFile3DCyl*>
+                    (amrex::The_Arena()->alloc(sizeof(ExternalFieldFromFile3DCyl)));
+                amrex::Gpu::htod_memcpy_async(external_field_from_file_B, efff, sizeof(ExternalFieldFromFile3DCyl));
+    #else
+                external_field_from_file_B = efff;
+    #endif
+            } else {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(false, "3D can only read external fields from files with thetaMode geometry");
+            }
+        }
+#endif
 
         // particle species
         pp_particles.queryarr("species_names", species_names);

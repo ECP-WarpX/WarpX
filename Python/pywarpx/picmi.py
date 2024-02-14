@@ -1378,6 +1378,29 @@ class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
             pywarpx.particles.B_external_particle = [self.Bx or 0., self.By or 0., self.Bz or 0.]
 
 
+class LoadAppliedField(picmistandard.PICMI_LoadGriddedField):
+    """
+    The data read in is used as an applied field, with the values given by the E and B fields on the grid. 
+    The expected format is the file is OpenPMD with axes (x,y,z) in Cartesian, or (r,z) in Cylindrical geometry. 
+
+    Parameters
+    ----------
+    read_fields_from_path: string
+        Path to file with field data
+
+    load_B: bool, default=True
+        If False, do not load magnetic field
+
+    load_E: bool, default=True
+        If False, do not load electric field
+    """
+    def initialize_inputs(self):
+        pywarpx.particles.read_fields_from_path = self.read_fields_from_path
+        if self.load_E:
+            pywarpx.particles.E_ext_particle_init_style = 'read_from_file'
+        if self.load_B:
+            pywarpx.particles.B_ext_particle_init_style = 'read_from_file'
+
 class AnalyticAppliedField(picmistandard.PICMI_AnalyticAppliedField):
     def init(self, kw):
         self.mangle_dict = None

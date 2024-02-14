@@ -25,6 +25,7 @@
 #include "Utils/WarpXConst.H"
 #include "WarpXParticleContainer.H"
 #include "ParticleBoundaries.H"
+#include "Gather/GetExternalFields.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_Box.H>
@@ -307,6 +308,7 @@ public:
     std::unique_ptr<amrex::Parser> m_Ex_particle_parser;
     std::unique_ptr<amrex::Parser> m_Ey_particle_parser;
     std::unique_ptr<amrex::Parser> m_Ez_particle_parser;
+    std::string m_read_fields_from_path = "";
 
     amrex::ParticleReal m_repeated_plasma_lens_period;
     amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_starts;
@@ -317,6 +319,10 @@ public:
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_lengths;
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_strengths_E;
     amrex::Gpu::DeviceVector<amrex::ParticleReal> d_repeated_plasma_lens_strengths_B;
+
+#if defined(WARPX_DIM_3D)
+    ExternalFieldFromFile3DCyl* external_field_from_file_B = nullptr;
+#endif
 
 #ifdef WARPX_QED
     /**
