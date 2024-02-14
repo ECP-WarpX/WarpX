@@ -129,7 +129,7 @@ void FlushFormatPlotPlus::BTDWriter(const std::string& prefix,
                                     amrex::Vector<amrex::Geometry>& geom,
                                     const double time,
                                     const amrex::Vector<ParticleDiag>& particle_diags,
-                                    const bool use_pinned_pc,
+                                    const bool /*use_pinned_pc */,
                                     bool isLastBTDFlush,
                                     const amrex::Vector<int>& totalParticlesFlushedAlready
                                     ) const
@@ -161,8 +161,8 @@ void FlushFormatPlotPlus::BTDWriter(const std::string& prefix,
             static_cast<Real>(time)
             );
     }
+
     // write particles
-    //for (auto& part_diag : particle_diags) {
     for (unsigned whichDiag = 0, n = particle_diags.size(); whichDiag < n; ++whichDiag)
     {
       const ParticleDiag& part_diag = particle_diags[whichDiag];
@@ -174,18 +174,17 @@ void FlushFormatPlotPlus::BTDWriter(const std::string& prefix,
 
       CopyPtls(tmp, time, pc, pinned_pc, part_diag);
 
-    tmp.CountParticles();
+      tmp.CountParticles();
 
-    btdWriter -> AssignPtlOffset(totalParticlesFlushedAlready[whichDiag]);
+      btdWriter -> AssignPtlOffset(totalParticlesFlushedAlready[whichDiag]);
 
-    Vector<std::string> real_names;
-    Vector<std::string> int_names;
-    Vector<int> int_flags;
-    Vector<int> real_flags;
-    GetNames(part_diag, real_names, int_names, int_flags, real_flags);
+      Vector<std::string> real_names;
+      Vector<std::string> int_names;
+      Vector<int> int_flags;
+      Vector<int> real_flags;
+      GetNames(part_diag, real_names, int_names, int_flags, real_flags);
 
-    //m_Writer->WriteParticles(tmp, part_diag.getSpeciesName(), real_names, int_names, real_flags, int_flags,
-    m_Writer->m_UserHandler->m_Writer->DumpParticles(tmp,
+      m_Writer->m_UserHandler->m_Writer->DumpParticles(tmp,
                           part_diag.getSpeciesName(),
                           real_flags,
                           int_flags,
@@ -200,7 +199,6 @@ void FlushFormatPlotPlus::BTDWriter(const std::string& prefix,
                       btdWriter->SavePosId_RZ(pti, currSpecies, offset);
                     });
 
-    //openpmd_api::WriteParticles(tmp, part_diag.getSpeciesName(), real_names, int_names, real_flags, int_flags);
     }
 }
 
@@ -276,14 +274,12 @@ void FlushFormatPlotPlus::DefaultWriter(const std::string& prefix,
       PinnedMemoryParticleContainer* pinned_pc = part_diag.getPinnedParticleContainer();
       PinnedMemoryParticleContainer tmp;
       if (use_pinned_pc) {
-    tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
-
-    CopyPtls(tmp, time, pc, pinned_pc, part_diag);
+          tmp = pinned_pc->make_alike<amrex::PinnedArenaAllocator>();
+          CopyPtls(tmp, time, pc, pinned_pc, part_diag);
       } else {
-    tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
-    CopyPtls(tmp, time, pc, pc, part_diag);
+          tmp = pc->make_alike<amrex::PinnedArenaAllocator>();
+          CopyPtls(tmp, time, pc, pc, part_diag);
       }
-
 
     tmp.CountParticles();
 
@@ -307,7 +303,6 @@ void FlushFormatPlotPlus::DefaultWriter(const std::string& prefix,
                     {
                       warpxWriter->SavePosId_RZ(pti, currSpecies, offset);
                     });
-
     }
 }
 

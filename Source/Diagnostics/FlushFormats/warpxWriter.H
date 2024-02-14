@@ -55,8 +55,38 @@ private:
   std::vector<bool> m_fieldPMLdirections;
 
   std::vector< std::string > getFieldAxisLabels ( const amrex::openpmd_api::AMReX_VarNameParser& varName ) const;
+  inline void setOpenPMDUnit ( openPMD::Mesh mesh, std::string const& field_name ) const;
 };
 
+
+inline void AMReX_warpxWriter::setOpenPMDUnit ( openPMD::Mesh mesh, std::string const& field_name ) const
+{
+        if (field_name[0] == 'E'){  // Electric field
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::L,  1},
+                                          {openPMD::UnitDimension::M,  1},
+                                          {openPMD::UnitDimension::T, -3},
+                                          {openPMD::UnitDimension::I, -1},
+                                  });
+        } else if (field_name[0] == 'B'){ // Magnetic field
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::M,  1},
+                                          {openPMD::UnitDimension::I, -1},
+                                          {openPMD::UnitDimension::T, -2}
+                                  });
+        } else if (field_name[0] == 'j'){ // current
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::L, -2},
+                                          {openPMD::UnitDimension::I,  1},
+                                  });
+        } else if (field_name.substr(0,3) == "rho"){ // charge density
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::L, -3},
+                                          {openPMD::UnitDimension::I,  1},
+                                          {openPMD::UnitDimension::T,  1},
+                                  });
+        }
+}
 
 void AMReX_warpxWriter::SetupMeshComp (openPMD::Mesh& mesh,
                        const amrex::Geometry& full_geom,
@@ -102,7 +132,7 @@ void AMReX_warpxWriter::SetupMeshComp (openPMD::Mesh& mesh,
 
   mesh_comp.resetDataset(dataset);
 
-  amrex::openpmd_api::helper::setOpenPMDUnit( mesh, varName.m_FieldName );
+  setOpenPMDUnit( mesh, varName.m_FieldName );
 
   auto relative_cell_pos = amrex::openpmd_api::helper::getRelativeCellPosition(mf);     // AMReX Fortran index order
   std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
