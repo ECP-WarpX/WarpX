@@ -37,7 +37,7 @@ struct EvolveScheme {
 /**
   * \brief struct to select the nonlinear solver for implicit schemes
   */
-struct NonlinearSolver {
+struct NonlinearSolverType {
     enum {
         Picard = 0,
         Newton = 1

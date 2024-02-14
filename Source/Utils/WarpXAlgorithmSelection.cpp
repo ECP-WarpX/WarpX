@@ -31,9 +31,9 @@ const std::map<std::string, int> evolve_scheme_to_int = {
 };
 
 const std::map<std::string, int> nonlinear_solver_to_int = {
-    {"picard",  NonlinearSolver::Picard },
-    {"newton",  NonlinearSolver::Newton },
-    {"default", NonlinearSolver::Picard }
+    {"picard",  NonlinearSolverType::Picard },
+    {"newton",  NonlinearSolverType::Newton },
+    {"default", NonlinearSolverType::Picard }
 };
 
 const std::map<std::string, int> grid_to_int = {
