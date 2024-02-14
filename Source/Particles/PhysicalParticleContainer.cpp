@@ -556,7 +556,7 @@ PhysicalParticleContainer::AddGaussianBeam (
 #elif defined(WARPX_DIM_XZ)
             const Real weight = q_tot/(npart*charge*y_rms);
             Real x = amrex::RandomNormal(x_m, x_rms);
-            consttexpr Real y = 0._prt;
+            constexpr Real y = 0._prt;
             Real z = amrex::RandomNormal(z_m, z_rms);
 #elif defined(WARPX_DIM_1D_Z)
             const Real weight = q_tot/(npart*charge*x_rms*y_rms);
