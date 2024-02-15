@@ -40,6 +40,7 @@
 #include "Evolve/WarpXPushType.H"
 #include "FieldSolver/ElectrostaticSolver.H"
 #include "FieldSolver/MagnetostaticSolver/MagnetostaticSolver.H"
+#include "FieldSolver/ImplicitSolvers/ImplicitSolverEM.H"
 #include "Filter/BilinearFilter.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Utils/Parser/IntervalsParser.H"
@@ -121,14 +122,26 @@ public:
 
     void Evolve (int numsteps = -1);
 
-    void EvolveImplicitEMInit (int lev);
+    //
+    // Functions used by implicit solvers
+    //
     void PreRHSOpFromNonlinearIter ( const amrex::Real  cur_time, 
                                      const amrex::Real  a_full_dt,
                                      const int          a_nl_iter );
-    void SaveParticlesAtImplicitStepStart (WarpXParticleContainer& pc, int lev);
-    void FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev);
+    void SaveParticlesAtImplicitStepStart ( );
+    void FinishImplicitParticleUpdate ( );
+    void UpdateElectricField( WarpXFieldVec&  a_Efield_vec ); 
+    void UpdateMagneticField( WarpXFieldVec&  a_Bfield_vec ); 
+    void ApplyElectricFieldBCs( const bool a_apply = false ); 
+    void ApplyMagneticFieldBCs( const bool a_apply = false ); 
     void FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_fp,
                                    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield_n);
+    void ComputeRHSE (         amrex::Real dt, WarpXFieldVec& a_rhs_vec);
+    void ComputeRHSE (int lev, amrex::Real dt, WarpXFieldVec& a_rhs_vec);
+    void ComputeRHSE (int lev, PatchType patch_type, amrex::Real dt, WarpXFieldVec& a_rhs_vec);
+    void ComputeRHSB (         amrex::Real dt, WarpXFieldVec& a_rhs_vec);
+    void ComputeRHSB (int lev, amrex::Real dt, WarpXFieldVec& a_rhs_vec);
+    void ComputeRHSB (int lev, PatchType patch_type, amrex::Real dt, WarpXFieldVec& a_rhs_vec);
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
     MultiFluidContainer& GetFluidContainer () { return *myfl; }
@@ -171,14 +184,6 @@ public:
     static short electromagnetic_solver_id;
     //! Integer that corresponds to the evolve scheme (explicit, theta_implicit, semi_implicit)
     static short evolve_scheme;
-    //! Integer that corresponds to the nonlinear solver (picard, newton)
-    static short nonlinear_solver;
-    //! The maximum number of Picard iterations to do each time step
-    static int max_picard_iterations;
-    //! The tolerance for the Picard iteration convergence
-    static amrex::Real picard_iteration_tolerance;
-    //! Flags whether the Picard iterations are required to converge
-    static bool require_picard_convergence;
     /** Records a number corresponding to the load balance cost update strategy
      *  being used (0, 1, 2 corresponding to timers, heuristic, or gpuclock).
      */
@@ -568,7 +573,7 @@ public:
 
     /// object with all reduced diagnostics, similar to MultiParticleContainer for species.
     std::unique_ptr<MultiReducedDiags> reduced_diags;
-
+    
     void applyMirrors(amrex::Real time);
 
     /** Determine the timestep of the simulation. */
@@ -625,16 +630,6 @@ public:
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     void EvolveG (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
     
-    /**
-     * \brief EM field functions used by implicit solvers.
-     */ 
-    void ComputeRHSE (         amrex::Real dt);
-    void ComputeRHSE (int lev, amrex::Real dt);
-    void ComputeRHSE (int lev, PatchType patch_type, amrex::Real dt);
-    void ComputeRHSB (         amrex::Real dt);
-    void ComputeRHSB (int lev, amrex::Real dt);
-    void ComputeRHSB (int lev, PatchType patch_type, amrex::Real dt);
-
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
@@ -1273,6 +1268,8 @@ private:
     // Singleton is used when the code is run from python
     static WarpX* m_instance;
 
+    friend class ImplicitSolverEM;
+
     //! Complete the asynchronous broadcast of signal flags, and initiate a checkpoint if requested
     void HandleSignals ();
 
@@ -1288,8 +1285,6 @@ private:
 
     void OneStep_nosub (amrex::Real cur_time);
     void OneStep_sub1 (amrex::Real cur_time);
-
-    void OneStep_ImplicitEM(amrex::Real cur_time);
 
     /**
      * \brief Perform one PIC iteration, with the multiple J deposition per time step
@@ -1497,14 +1492,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
-
-    // Implicit, fields at start of step and from the previous iteration
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_n;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_n;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_save;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_save;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_rhs;
-    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_rhs;
 
     // Memory buffers for computing magnetostatic fields
     // Vector Potential A and previous step.  Time buffer needed for computing dA/dt to first order
@@ -1912,6 +1899,10 @@ private:
 
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
+    
+    // implicit solver object
+    std::unique_ptr<ImplicitSolverEM> m_implicit_solver;
+
 };
 
 #endif

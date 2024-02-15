@@ -11,6 +11,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Evolve/WarpXDtType.H"
 #include "Evolve/WarpXPushType.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
 #       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
@@ -71,17 +72,58 @@ WarpX::PreRHSOpFromNonlinearIter ( const amrex::Real  a_cur_time,
 }
 
 void
-WarpX::SaveParticlesAtImplicitStepStart (WarpXParticleContainer& pc, int lev)
+WarpX::UpdateElectricField( WarpXFieldVec&  a_Efield_vec ) 
 {
+    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Evec = a_Efield_vec.getVec();
+    amrex::MultiFab::Copy(*Efield_fp[0][0], *Evec[0][0], 0, 0, ncomps, Evec[0][0]->nGrowVect());
+    amrex::MultiFab::Copy(*Efield_fp[0][1], *Evec[0][1], 0, 0, ncomps, Evec[0][1]->nGrowVect());
+    amrex::MultiFab::Copy(*Efield_fp[0][2], *Evec[0][2], 0, 0, ncomps, Evec[0][2]->nGrowVect());
+    ApplyElectricFieldBCs( );
+
+    a_Efield_vec.Copy(Efield_fp);
+}
+
+void
+WarpX::ApplyElectricFieldBCs( const bool  a_apply )
+{
+    FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    if (a_apply) { ApplyEfieldBoundary(0, PatchType::fine); }
+}
+
+void
+WarpX::UpdateMagneticField( WarpXFieldVec&  a_Bfield_vec ) 
+{
+    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bvec = a_Bfield_vec.getVec();
+    amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bvec[0][0], 0, 0, ncomps, Bvec[0][0]->nGrowVect());
+    amrex::MultiFab::Copy(*Bfield_fp[0][1], *Bvec[0][1], 0, 0, ncomps, Bvec[0][1]->nGrowVect());
+    amrex::MultiFab::Copy(*Bfield_fp[0][2], *Bvec[0][2], 0, 0, ncomps, Bvec[0][2]->nGrowVect());
+    ApplyMagneticFieldBCs( );
+
+    a_Bfield_vec.Copy(Bfield_fp);
+}
+
+void
+WarpX::ApplyMagneticFieldBCs( const bool  a_apply ) 
+{
+    FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    if (a_apply) { ApplyBfieldBoundary(0, PatchType::fine, DtType::Full); }
+}
+
+void
+WarpX::SaveParticlesAtImplicitStepStart ( )
+{
+    const int lev = 0;
+
+    for (auto const& pc : *mypc) {
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
 
-    auto particle_comps = pc.getParticleComps();
+    auto particle_comps = pc->getParticleComps();
 
-    for (WarpXParIter pti(pc, lev); pti.isValid(); ++pti) {
+    for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti) {
 
         const auto getPosition = GetParticlePosition(pti);
 
@@ -124,21 +166,28 @@ WarpX::SaveParticlesAtImplicitStepStart (WarpXParticleContainer& pc, int lev)
 
     }
     }
+
+    }
+
 }
 
 void
-WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev)
+WarpX::FinishImplicitParticleUpdate ()
 {
     using namespace amrex::literals;
+
+    const int lev = 0;
+
+    for (auto const& pc : *mypc) {
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
 
-    auto particle_comps = pc.getParticleComps();
+    auto particle_comps = pc->getParticleComps();
 
-    for (WarpXParIter pti(pc, lev); pti.isValid(); ++pti) {
+    for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti) {
 
         const auto getPosition = GetParticlePosition(pti);
         const auto setPosition = SetParticlePosition(pti);
@@ -183,6 +232,9 @@ WarpX::FinishImplicitParticleUpdate (WarpXParticleContainer& pc, int lev)
 
     }
     }
+
+    }
+
 }
 
 void
@@ -226,4 +278,111 @@ WarpX::FinishImplicitFieldUpdate(amrex::Vector<std::array< std::unique_ptr<amrex
             });
         }
     }
+}
+
+void
+WarpX::ComputeRHSB (amrex::Real a_dt, WarpXFieldVec&  a_RHSB_vec)
+{
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        ComputeRHSB(lev, a_dt, a_RHSB_vec);
+    }
+}
+
+void
+WarpX::ComputeRHSB (int lev, amrex::Real a_dt, WarpXFieldVec& a_RHSB_vec)
+{
+    WARPX_PROFILE("WarpX::ComputeRHSB()");
+    ComputeRHSB(lev, PatchType::fine, a_dt, a_RHSB_vec);
+    if (lev > 0)
+    {
+        ComputeRHSB(lev, PatchType::coarse, a_dt, a_RHSB_vec);
+    }
+}
+
+void
+WarpX::ComputeRHSB (int lev, PatchType patch_type, amrex::Real a_dt, WarpXFieldVec& a_RHSB_vec)
+{
+
+    // set RHS to zero value
+    a_RHSB_vec.getVec()[lev][0]->setVal(0.0);
+    a_RHSB_vec.getVec()[lev][1]->setVal(0.0);
+    a_RHSB_vec.getVec()[lev][2]->setVal(0.0);
+
+    // Compute Bfield_rhs in regular cells by calling EvolveB
+    if (patch_type == PatchType::fine) {
+        m_fdtd_solver_fp[lev]->EvolveB(a_RHSB_vec.getVec()[lev], Efield_fp[lev], G_fp[lev],
+                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
+    } else {
+        m_fdtd_solver_cp[lev]->EvolveB(a_RHSB_vec.getVec()[lev], Efield_cp[lev], G_cp[lev],
+                                       m_face_areas[lev], m_area_mod[lev], ECTRhofield[lev], Venl[lev],
+                                       m_flag_info_face[lev], m_borrowing[lev], lev, a_dt);
+    }
+
+    // Compute Bfield_rhs in PML cells by calling EvolveBPML
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            //m_fdtd_solver_fp[lev]->EvolveBPML(
+            //    pml[lev]->GetRHSB_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning);
+        } else {
+            //m_fdtd_solver_cp[lev]->EvolveBPML(
+            //    pml[lev]->GetRHSB_cp(), pml[lev]->GetE_cp(), a_dt, WarpX::do_dive_cleaning);
+        }
+    }
+
+}
+
+void
+WarpX::ComputeRHSE (amrex::Real a_dt, WarpXFieldVec&  a_Erhs_vec)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        ComputeRHSE(lev, a_dt, a_Erhs_vec);
+    }
+}
+
+void
+WarpX::ComputeRHSE (int lev, amrex::Real a_dt, WarpXFieldVec&  a_Erhs_vec)
+{
+    WARPX_PROFILE("WarpX::ComputeRHSE()");
+    ComputeRHSE(lev, PatchType::fine, a_dt, a_Erhs_vec);
+    if (lev > 0)
+    {
+        ComputeRHSE(lev, PatchType::coarse, a_dt, a_Erhs_vec);
+    }
+}
+
+void
+WarpX::ComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, WarpXFieldVec&  a_Erhs_vec)
+{
+    // set RHS to zero value
+    a_Erhs_vec.getVec()[lev][0]->setVal(0.0);
+    a_Erhs_vec.getVec()[lev][1]->setVal(0.0);
+    a_Erhs_vec.getVec()[lev][2]->setVal(0.0);
+
+    // Compute Efield_rhs in regular cells by calling EvolveE
+    if (patch_type == PatchType::fine) {
+        m_fdtd_solver_fp[lev]->EvolveE( a_Erhs_vec.getVec()[lev], Bfield_fp[lev],
+                                        current_fp[lev], m_edge_lengths[lev],
+                                        m_face_areas[lev], ECTRhofield[lev],
+                                        F_fp[lev], lev, a_dt );
+    } else {
+        m_fdtd_solver_cp[lev]->EvolveE( a_Erhs_vec.getVec()[lev], Bfield_cp[lev],
+                                        current_cp[lev], m_edge_lengths[lev],
+                                        m_face_areas[lev], ECTRhofield[lev],
+                                        F_cp[lev], lev, a_dt );
+    }
+
+    // Compute Efield_rhs in PML cells by calling EvolveEPML
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            //m_fdtd_solver_fp[lev]->EvolveEPML(
+            //    pml[lev]->GetRHSE_fp(), pml[lev]->GetB_fp(),
+            //    pml[lev]->Getj_fp(), pml[lev]->Get_edge_lengths(),
+            //    pml[lev]->GetF_fp(),
+            //    pml[lev]->GetMultiSigmaBox_fp(),
+            //    a_dt, pml_has_particles );
+        }
+    }
+
 }

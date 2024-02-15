@@ -188,7 +188,7 @@ WarpX::Evolve (int numsteps)
 
         if (evolve_scheme == EvolveScheme::ThetaImplicit ||
             evolve_scheme == EvolveScheme::SemiImplicit) {
-            OneStep_ImplicitEM(cur_time);
+            m_implicit_solver->OneStep(cur_time, dt[0], step);
         }
         else if ( electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
              electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC )

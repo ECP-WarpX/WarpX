@@ -4,7 +4,6 @@ foreach(D IN LISTS WarpX_DIMS)
       PRIVATE
         ElectrostaticSolver.cpp
         WarpXPushFieldsEM.cpp
-        WarpXImplicitFieldsEM.cpp
         WarpXPushFieldsHybridPIC.cpp
         WarpX_QED_Field_Pushers.cpp
     )
@@ -12,6 +11,7 @@ endforeach()
 
 add_subdirectory(FiniteDifferenceSolver)
 add_subdirectory(MagnetostaticSolver)
+add_subdirectory(ImplicitSolvers)
 if(WarpX_PSATD)
     add_subdirectory(SpectralSolver)
 endif()

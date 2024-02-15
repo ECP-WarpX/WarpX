@@ -35,16 +35,6 @@ struct EvolveScheme {
 };
 
 /**
-  * \brief struct to select the nonlinear solver for implicit schemes
-  */
-struct NonlinearSolverType {
-    enum {
-        Picard = 0,
-        Newton = 1
-    };
-};
-
-/**
   * \brief struct to select algorithm for macroscopic Maxwell solver
            LaxWendroff (semi-implicit) represents sigma*E = sigma*0.5*(E^(n) + E^(n+1))
            Backward Euler (fully-implicit) represents sigma*E = sigma*E^(n+1)

@@ -112,10 +112,6 @@ short WarpX::field_gathering_algo;
 short WarpX::particle_pusher_algo;
 short WarpX::electromagnetic_solver_id;
 short WarpX::evolve_scheme;
-short WarpX::nonlinear_solver;
-int WarpX::max_picard_iterations = 10;
-Real WarpX::picard_iteration_tolerance = 1.e-7;
-bool WarpX::require_picard_convergence = true;
 short WarpX::psatd_solution_type;
 short WarpX::J_in_time;
 short WarpX::rho_in_time;
@@ -1151,7 +1147,11 @@ WarpX::ReadParameters ()
         charge_deposition_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "charge_deposition"));
         particle_pusher_algo = static_cast<short>(GetAlgorithmInteger(pp_algo, "particle_pusher"));
         evolve_scheme = static_cast<short>(GetAlgorithmInteger(pp_algo, "evolve_scheme"));
-        nonlinear_solver = static_cast<short>(GetAlgorithmInteger(pp_algo, "nonlinear_solver"));
+
+        if (evolve_scheme == EvolveScheme::ThetaImplicit ||
+            evolve_scheme == EvolveScheme::SemiImplicit) {
+            m_implicit_solver = std::make_unique<ImplicitSolverEM>();
+        }
 
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             current_deposition_algo != CurrentDepositionAlgo::Esirkepov ||
@@ -1253,9 +1253,6 @@ WarpX::ReadParameters ()
 
         if (evolve_scheme == EvolveScheme::ThetaImplicit ||
             evolve_scheme == EvolveScheme::SemiImplicit) {
-            utils::parser::queryWithParser(pp_algo, "max_picard_iterations", max_picard_iterations);
-            utils::parser::queryWithParser(pp_algo, "picard_iteration_tolerance", picard_iteration_tolerance);
-            utils::parser::queryWithParser(pp_algo, "require_picard_convergence", require_picard_convergence);
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 current_deposition_algo == CurrentDepositionAlgo::Esirkepov ||
@@ -2148,11 +2145,6 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
 
     AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
                   guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F, guard_cells.ng_alloc_G, aux_is_nodal);
-
-    if (evolve_scheme == EvolveScheme::ThetaImplicit ||
-        evolve_scheme == EvolveScheme::SemiImplicit) {
-        EvolveImplicitEMInit(lev);
-    }
 
     m_accelerator_lattice[lev] = std::make_unique<AcceleratorLattice>();
     m_accelerator_lattice[lev]->InitElementFinder(lev, ba, dm);
