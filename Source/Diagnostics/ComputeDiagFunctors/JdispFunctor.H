@@ -6,7 +6,7 @@
 #include <AMReX_BaseFwd.H>
 
 /**
- * \brief Functor to cell-center MF for displacement current density and store 
+ * \brief Functor to cell-center MF for displacement current density and store
  * result in mf_out.
  */
 class
