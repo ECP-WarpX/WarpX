@@ -195,6 +195,11 @@ deposit_charge (typename T_PC::ParIterType& pti,
                                     rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
                                     n_rz_azimuthal_modes, cost,
                                     load_balance_costs_update_algo);
+    } else if (nox == 4){
+        doChargeDepositionShapeN<4>(GetPosition, wp.dataPtr()+offset, ion_lev,
+                                    rho_fab, np_to_deposit.value(), dx, xyzmin, lo, charge,
+                                    n_rz_azimuthal_modes, cost,
+                                    load_balance_costs_update_algo);
     }
     ABLASTR_PROFILE_VAR_STOP(blp_ppc_chd, do_device_synchronize);
 

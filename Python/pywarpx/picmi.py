@@ -1184,7 +1184,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         pywarpx.hybridpicmodel.gamma = self.gamma
         pywarpx.hybridpicmodel.n_floor = self.n_floor
         pywarpx.hybridpicmodel.__setattr__(
-            'plasma_resistivity(rho)',
+            'plasma_resistivity(rho,J)',
             pywarpx.my_constants.mangle_expression(self.plasma_resistivity, self.mangle_dict)
         )
         pywarpx.hybridpicmodel.substeps = self.substeps
@@ -1575,7 +1575,7 @@ class DSMCCollisions(picmistandard.base._ClassWithInit):
 
         self.handle_init(kw)
 
-    def initialize_inputs(self):
+    def collision_initialize_inputs(self):
         collision = pywarpx.Collisions.newcollision(self.name)
         collision.type = 'dsmc'
         collision.species = [species.name for species in self.species]
@@ -1897,6 +1897,9 @@ class Simulation(picmistandard.PICMI_Simulation):
     warpx_sort_bin_size: list of int, optional (default 1 1 1)
         If `sort_intervals` is activated and `sort_particles_for_deposition` is false, particles are sorted in bins of `sort_bin_size` cells.
         In 2D, only the first two elements are read.
+
+    warpx_used_inputs_file: string, optional
+        The name of the text file that the used input parameters is written to,
     """
 
     # Set the C++ WarpX interface (see _libwarpx.LibWarpX) as an extension to
@@ -1939,6 +1942,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.sort_particles_for_deposition = kw.pop('warpx_sort_particles_for_deposition', None)
         self.sort_idx_type = kw.pop('warpx_sort_idx_type', None)
         self.sort_bin_size = kw.pop('warpx_sort_bin_size', None)
+        self.used_inputs_file = kw.pop('warpx_used_inputs_file', None)
 
         self.collisions = kw.pop('warpx_collisions', None)
         self.embedded_boundary = kw.pop('warpx_embedded_boundary', None)
@@ -1991,6 +1995,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.do_multi_J_n_depositions = self.do_multi_J_n_depositions
         pywarpx.warpx.serialize_initial_conditions = self.serialize_initial_conditions
         pywarpx.warpx.random_seed = self.random_seed
+        pywarpx.warpx.used_inputs_file = self.used_inputs_file
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
 
