@@ -2,16 +2,16 @@ amr.max_level = 0
 
 max_step = 3
 
-amr.n_cell = 64 64 64
+amr.n_cell = 64 64
 amr.blocking_factor = 8
 amr.max_grid_size = 128
 
-geometry.dims = 3
-geometry.prob_lo     = -0.26 -0.26 -0.26
-geometry.prob_hi     = 0.26 0.26 0.26
+geometry.dims = RZ
+geometry.prob_lo     = 0.0 -0.26
+geometry.prob_hi     = 0.26  0.26
 
-boundary.field_lo = pec pec pec
-boundary.field_hi = pec pec pec
+boundary.field_lo = none periodic
+boundary.field_hi = pec periodic
 boundary.potential_lo_x = 0
 boundary.potential_hi_x = 0
 boundary.potential_lo_y = 0
@@ -20,7 +20,7 @@ boundary.potential_lo_z = 0
 boundary.potential_hi_z = 0
 
 warpx.const_dt = 1e-10
-warpx.eb_implicit_function = "-(x**2+y**2+z**2-0.2**2)"
+warpx.eb_implicit_function = "-(x**2 -0.2**2)"
 
 # Do not evolve the E and B fields
 algo.maxwell_solver = none
@@ -41,7 +41,7 @@ diagnostics.diags_names = diag1 diag2
 
 diag1.intervals = 1
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex
+diag1.fields_to_plot = Er
 diag1.format = openpmd
 
 diag2.diag_type = BoundaryScraping
