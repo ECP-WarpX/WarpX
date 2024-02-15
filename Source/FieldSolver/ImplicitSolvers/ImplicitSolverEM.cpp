@@ -22,7 +22,6 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
     m_Brhs = m_B;
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) { 
         m_Bold  = m_B;
-        m_Bsave = m_B;
     }
     
     // parse implicit solver parameters
@@ -92,16 +91,12 @@ void ImplicitSolverEM::Initialize( )
 
     // initialize E vectors
     m_E.Copy( m_WarpX->Efield_fp );
-    //m_Erhs = m_E;
     m_Eold = m_E;
-    //m_Esave = m_E;
     
     // initialize B vectors
     m_B.Copy( m_WarpX->Bfield_fp );
-    //m_Brhs = m_B;
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) { 
         m_Bold = m_B;
-        //m_Bsave = m_B;
     }
 
 }
@@ -110,8 +105,6 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
                                 const amrex::Real  a_dt,
                                 const int          a_step )
 {  
-    //const amrex::Real half_time = a_old_time + a_dt/2.0;
-    //m_U = m_Uold;
     using namespace amrex::literals;
     amrex::ignore_unused(a_step);
 
@@ -119,6 +112,8 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
     // Particles have p^{n} and x^{n}.
     // With full implicit, B^{n}
     // With semi-implicit, B^{n-1/2}
+    
+    //const amrex::Real half_time = a_old_time + a_dt/2.0;
 
     // Save the values at the start of the time step,
     m_WarpX->SaveParticlesAtImplicitStepStart ( );
@@ -142,10 +137,9 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
     }
 
     // Start the iterations
-    amrex::Real deltaE = 1._rt;
-    amrex::Real deltaB = 1._rt;
+    amrex::Real norm, norm0;
     int iteration_count = 0;
-    while (iteration_count < m_max_iter && (deltaE > m_rtol || deltaB > m_rtol)) {
+    while (iteration_count < m_max_iter) {
         iteration_count++;
 
         // Advance the particle positions by 1/2 dt,
@@ -153,12 +147,9 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
         // deposit currents, giving J at n+1/2 used in ComputeRHSE below
         m_WarpX->PreRHSOpFromNonlinearIter( a_old_time, a_dt, iteration_count );
         
-        if (m_rtol > 0. || iteration_count == m_max_iter) {
-            // Save the E at n+1/2 from the previous iteration so that the change
-            // in this iteration can be calculated
-            //m_Esave = m_E;
-            m_Esave.Copy(m_WarpX->Efield_fp);
-        }
+        // Save E at n+1/2 from the previous iteration to compute step norm
+        //m_Esave = m_E;
+        m_Esave.Copy(m_WarpX->Efield_fp);
         
         // Compute Efield at time n+1/2
         m_E = m_Eold;
@@ -167,19 +158,11 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
         m_WarpX->UpdateElectricField( m_E );
         
         if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
-            if (m_rtol > 0. || iteration_count == m_max_iter) {
-                // Save the B at n+1/2 from the previous iteration so that the change
-                // in this iteration can be calculated
-                //m_Bsave = m_B;
-                m_Bsave.Copy(m_WarpX->Bfield_fp);
-            }
-
             // Compute Bfield at time n+1/2
             m_B = m_Bold;
             m_WarpX->ComputeRHSB(0.5_rt*a_dt, m_Brhs);
             m_B += m_Brhs;
             m_WarpX->UpdateMagneticField( m_B );
-
         }
 
         // The B field update needs
@@ -188,51 +171,38 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
             // E : guard cells are NOT up-to-date from the mirrors
             // B : guard cells are NOT up-to-date from the mirrors
         }
-
-        if (m_rtol > 0. || iteration_count == m_max_iter) {
-            // Calculate the change in E and B from this iteration
-            // deltaE = abs(Enew - Eold)/max(abs(Enew))
-            m_Esave.getVec()[0][0]->minus(*m_WarpX->Efield_fp[0][0], 0, 1, 0);
-            m_Esave.getVec()[0][1]->minus(*m_WarpX->Efield_fp[0][1], 0, 1, 0);
-            m_Esave.getVec()[0][2]->minus(*m_WarpX->Efield_fp[0][2], 0, 1, 0);
-            amrex::Real normE0 = m_Esave.getVec()[0][0]->norm0(0, 0);
-            amrex::Real normE1 = m_Esave.getVec()[0][1]->norm0(0, 0);
-            amrex::Real normE2 = m_Esave.getVec()[0][2]->norm0(0, 0);
-            amrex::Real maxE0 = std::max(1._rt, m_WarpX->Efield_fp[0][0]->norm0(0, 0));
-            amrex::Real maxE1 = std::max(1._rt, m_WarpX->Efield_fp[0][1]->norm0(0, 0));
-            amrex::Real maxE2 = std::max(1._rt, m_WarpX->Efield_fp[0][2]->norm0(0, 0));
-            amrex::Real deltaE0 = normE0/maxE0;
-            amrex::Real deltaE1 = normE1/maxE1;
-            amrex::Real deltaE2 = normE2/maxE2;
-            deltaE = std::max(std::max(deltaE0, deltaE1), deltaE2);
-            if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
-                m_Bsave.getVec()[0][0]->minus(*m_WarpX->Bfield_fp[0][0], 0, 1, 0);
-                m_Bsave.getVec()[0][1]->minus(*m_WarpX->Bfield_fp[0][1], 0, 1, 0);
-                m_Bsave.getVec()[0][2]->minus(*m_WarpX->Bfield_fp[0][2], 0, 1, 0);
-                amrex::Real maxB0 = std::max(1._rt, m_WarpX->Bfield_fp[0][0]->norm0(0, 0));
-                amrex::Real maxB1 = std::max(1._rt, m_WarpX->Bfield_fp[0][1]->norm0(0, 0));
-                amrex::Real maxB2 = std::max(1._rt, m_WarpX->Bfield_fp[0][2]->norm0(0, 0));
-                amrex::Real deltaB0 = m_Bsave.getVec()[0][0]->norm0(0, 0)/maxB0;
-                amrex::Real deltaB1 = m_Bsave.getVec()[0][1]->norm0(0, 0)/maxB1;
-                amrex::Real deltaB2 = m_Bsave.getVec()[0][2]->norm0(0, 0)/maxB2;
-                deltaB = std::max(std::max(deltaB0, deltaB1), deltaB2);
-            } else {
-                deltaB = 0.;
-            }
-            amrex::Print() << "Max delta " << iteration_count << " " << deltaE << " " << deltaB << "\n";
+        
+        // Compute the step norm for E and for B    
+        m_Esave.getVec()[0][0]->minus(*m_WarpX->Efield_fp[0][0], 0, 1, 0);
+        m_Esave.getVec()[0][1]->minus(*m_WarpX->Efield_fp[0][1], 0, 1, 0);
+        m_Esave.getVec()[0][2]->minus(*m_WarpX->Efield_fp[0][2], 0, 1, 0);
+        norm = m_Esave.norm();
+        if (iteration_count==1) { 
+            if (norm > 0.) { norm0 = norm; }
+            else { norm0 = 1._rt; }
+        }
+            
+        amrex::Real rnorm_E = norm/norm0;
+        if (m_verbose || iteration_count == m_max_iter) {
+            amrex::Print() << "Picard: iter = " << std::setw(3) << iteration_count <<  ", norm = " 
+                           << std::scientific << std::setprecision(5) << norm << " (abs.), " 
+                           << std::scientific << std::setprecision(5) << rnorm_E << " (rel.)" << "\n";
         }
 
-        // Now, the particle positions and velocities and the Efield_fp and Bfield_fp hold
-        // the new values at n+1/2
+        if (rnorm_E < m_rtol) {
+            amrex::Print() << "Picard: exiting at iter = " << std::setw(3) << iteration_count 
+                           << ". Satisified relative tolerance " << m_rtol << std::endl;
+            break;
+        }
 
     }
 
-    amrex::Print() << "Picard iterations = " << iteration_count << ", Eerror = " << deltaE << ", Berror = " << deltaB << "\n";
     if (m_rtol > 0. && iteration_count == m_max_iter) {
        std::stringstream convergenceMsg;
-       convergenceMsg << "The Picard implicit solver failed to converge after " << iteration_count << 
-                         " iterations, with Eerror = " << deltaE << ", Berror = " << deltaB << 
-                         " with a tolerance of " << m_rtol;
+       convergenceMsg << "Picard solver failed to converge after " << iteration_count << 
+                         " iterations. Relative norm is " << norm/norm0 << 
+                         " and the relative tolerance is " << m_rtol;
+       if (m_verbose) { amrex::Print() << convergenceMsg.str() << std::endl; }
        if (m_require_convergence) {
            WARPX_ABORT_WITH_MESSAGE(convergenceMsg.str());
        } else {

@@ -72,7 +72,7 @@ class WarpXFieldVec
             //amrex::Print(0) << "mf_model.DistributionMap() = " << mf_model.DistributionMap() << std::endl;
             //amrex::Print(0) << "mf_model.nGrowVect() = " << mf_model.nGrowVect() << std::endl;
             m_field_vec[lev][dir] = std::make_unique<amrex::MultiFab>(mf_model.boxArray(), mf_model.DistributionMap(),
-                                                                    mf_model.nComp(), mf_model.nGrowVect());
+                                                                      mf_model.nComp(), mf_model.nGrowVect());
         }
         //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][0], *a_field_vec[0][0], lev, "Efield_n[0]");
         //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][1], *a_field_vec[0][1], lev, "Efield_n[1]");
@@ -134,7 +134,8 @@ class WarpXFieldVec
       retval += a_vec;
       return retval;
     }
-    
+
+    inline
     void operator-= (const WarpXFieldVec& a_vec)
     {
         m_field_vec[0][0]->minus(*(a_vec.getVec()[0][0]), 0, 1, 0);
@@ -185,6 +186,7 @@ class WarpXFieldVec
         amrex::Real nF1 = m_field_vec[0][1]->norm0(0, 0);
         amrex::Real nF2 = m_field_vec[0][2]->norm0(0, 0);
         amrex::Real normF = std::sqrt(nF0*nF0 + nF1*nF1 + nF2*nF2);
+        //amrex::Real normF = std::max(nF0, std::max(nF1,nF2));
         return normF;
     }
 

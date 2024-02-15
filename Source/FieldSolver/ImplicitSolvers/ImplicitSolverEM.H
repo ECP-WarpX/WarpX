@@ -68,7 +68,7 @@ class ImplicitSolverEM
     NonlinearSolverType m_nlsolver_type;
 
     WarpXFieldVec m_E, m_Eold, m_Esave, m_Erhs;
-    WarpXFieldVec m_B, m_Bold, m_Bsave, m_Brhs;
+    WarpXFieldVec m_B, m_Bold, m_Brhs;
 
     // picard solver parameters
     bool m_require_convergence;
