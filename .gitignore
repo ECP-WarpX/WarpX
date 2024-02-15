@@ -13,7 +13,6 @@ AMReX_buildInfo.cpp
 Backtrace.*
 *.vth
 *.sw[opqrs]
-warpx_used_inputs*
 
 ####################
 # AMReX data files #
