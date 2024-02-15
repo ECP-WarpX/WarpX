@@ -13,7 +13,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
 
-#include <ablastr/math/Utils.H>
+#include <AMReX_Algorithm.H>
 
 #ifdef AMREX_USE_OMP
 #   include <omp.h>
@@ -74,11 +74,11 @@ namespace
 
             auto us = amrex::Vector<amrex::Real>(det_points[0]);
             const auto ulim = distance*std::tan(theta_range[0]*0.5_rt);
-            ablastr::math::LinSpaceFill(-ulim,ulim, det_points[0], us.begin());
+            amrex::linspace(us.begin(), us.end(), -ulim,ulim);
 
             auto vs = amrex::Vector<amrex::Real>(det_points[1]);
             const auto vlim = distance*std::tan(theta_range[1]*0.5_rt);
-            ablastr::math::LinSpaceFill(-vlim, vlim, det_points[1], vs.begin());
+            amrex::linspace(vs.begin(), vs.end(), -vlim, vlim);
 
             const auto one_over_direction = 1.0_rt/std::sqrt(
                 direction[0]*direction[0]+direction[1]*direction[1]+direction[2]*direction[2]);
@@ -105,7 +105,7 @@ namespace
                 }
             }
         }
-        
+
         if(type == "spherical"){
 
             const auto Ntheta = det_points[0];
@@ -121,7 +121,7 @@ namespace
                 {
                     auto theta = thetaOrigin + i*dtheta;
                     auto phi = phiOrigin + j*dphi;
-                    
+
                     //theta is in [0, pi] and phi is in [0, 2*pi]
                     if(theta < 0){
                         theta *= -1;
@@ -213,25 +213,23 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
     m_radiation_data = amrex::Gpu::DeviceVector<ablastr::math::Complex>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
 
     auto t_omegas = amrex::Vector<amrex::Real>(m_omega_points);
-    ablastr::math::LinSpaceFill(m_omega_range[0], m_omega_range[1], m_omega_points, t_omegas.begin());
+    amrex::linspace(t_omegas.begin(), t_omegas.end(), m_omega_range[0], m_omega_range[1]);
     m_omegas = amrex::Gpu::DeviceVector<amrex::Real>(m_omega_points);
     amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
             t_omegas.begin(), t_omegas.end(), m_omegas.begin());
     amrex::Gpu::Device::streamSynchronize();
-    
 }
 
 
 void RadiationHandler::add_radiation_contribution
     (const amrex::Real dt, std::unique_ptr<WarpXParticleContainer>& pc, amrex::Real current_time)
     {
-        
         for (int lev = 0; lev <= pc->finestLevel(); ++lev)
         {
 #ifdef AMREX_USE_OMP
             #pragma omp parallel
 #endif
-            {  
+            {
 
                 for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti)
                 {
@@ -339,7 +337,6 @@ void RadiationHandler::add_radiation_contribution
                                     cy = 0.0;
                                     cz = 0.0;
                                 }*/
-                                
                                 const int ncomp = 3;
                                 const int idx0 = (i_om*how_many_det_pos + i_det)*ncomp;
                                 const int idx1 = idx0 + 1;
