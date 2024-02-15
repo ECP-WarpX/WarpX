@@ -26,6 +26,16 @@ using namespace amrex;
 using namespace ablastr::math;
 using namespace utils::parser;
 
+enum class RadiationType
+{
+    cartesian,
+    spherical
+};
+auto const m_radiation_type  = std::map<std::string, RadiationType>{
+    {"cartesian", RadiationType::cartesian},
+    {"spherical", RadiationType::spherical}
+};
+
 namespace
 {
     auto compute_detector_positions(
@@ -35,7 +45,7 @@ namespace
         const amrex::Array<amrex::Real,3>& orientation,
         const amrex::Array<int,2>& det_points,
         const amrex::Array<amrex::Real,2>& theta_range,
-        const std::string type)
+        const std::string radiation_type)
     {
 
         const auto how_many = det_points[0]*det_points[1];
@@ -46,7 +56,7 @@ namespace
         auto host_det_theta = amrex::Vector<amrex::Real>(how_many);
         auto host_det_phi = amrex::Vector<amrex::Real>(how_many);
 
-        if(type == "cartesian"){
+        if(m_radiation_type.at(radiation_type) == RadiationType::cartesian){
 
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 direction[0]*orientation[0] +
@@ -106,7 +116,7 @@ namespace
             }
         }
         
-        if(type == "spherical"){
+        if(m_radiation_type.at(radiation_type) == RadiationType::spherical){
 
             const auto Ntheta = det_points[0];
             const auto Nphi = det_points[1];
@@ -176,8 +186,9 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
     const amrex::ParmParse pp_radiation("radiation");
 
     //type of detector
-    std::string type = "spherical";
-    pp_radiation.query("detector_type", type);
+    std::string radiation_type = "spherical";
+    pp_radiation.query("detector_type", radiation_type);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_radiation_type.find(radiation_type) != m_radiation_type.end(), radiation_type + " detector type is not supported yet");
 
     //Resolution in frequency of the detector
     auto omega_range = std::vector<amrex::Real>(2);
@@ -207,7 +218,7 @@ RadiationHandler::RadiationHandler(const amrex::Array<amrex::Real,3>& center)
 
     std::tie(det_pos_x, det_pos_y, det_pos_z, det_pos_theta, det_pos_phi) = compute_detector_positions(
         center, m_det_direction, m_det_distance,
-        m_det_orientation, m_det_pts, m_theta_range, type);
+        m_det_orientation, m_det_pts, m_theta_range, radiation_type);
 
     constexpr auto ncomp = 3;
     m_radiation_data = amrex::Gpu::DeviceVector<ablastr::math::Complex>(m_det_pts[0]*m_det_pts[1]*m_omega_points*ncomp);
@@ -243,7 +254,7 @@ void RadiationHandler::add_radiation_contribution
                     const auto* p_uz = attribs[PIdx::uz].data();
 
                     const auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
-                    auto& part=pc->GetParticles(lev)[index];
+                    auto& part = pc->GetParticles(lev)[index];
                     auto& soa = part.GetStructOfArrays();
 
                     const auto* p_ux_old = soa.GetRealData(pc->GetRealCompIndex("old_u_x")).data();
@@ -339,7 +350,7 @@ void RadiationHandler::add_radiation_contribution
                                     cy = 0.0;
                                     cz = 0.0;
                                 }*/
-                                
+
                                 const int ncomp = 3;
                                 const int idx0 = (i_om*how_many_det_pos + i_det)*ncomp;
                                 const int idx1 = idx0 + 1;
