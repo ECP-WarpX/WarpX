@@ -149,8 +149,6 @@ struct CopyAndTimestamp {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
         dst.m_runtime_idata[m_index][dst_i] = m_step;
-
-        amrex::Real dt = m_dt;
         dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt;
     }
 };
