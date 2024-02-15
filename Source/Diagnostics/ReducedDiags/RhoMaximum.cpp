@@ -76,7 +76,7 @@ RhoMaximum::RhoMaximum (std::string rd_name)
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 // Initialize functors for the charge density of each charged species
-                m_rho_functors[lev].push_back(std::make_unique<RhoFunctor>(lev, crse_ratio, i));
+                m_rho_functors[lev].push_back(std::make_unique<RhoFunctor>(lev, crse_ratio, false, i));
             }
         }
     }

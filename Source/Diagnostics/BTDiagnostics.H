@@ -399,8 +399,6 @@ private:
         lab-frame data. */
     void InitializeParticleFunctors () override;
 
-    /** Update total number of particles flushed for all species for ith snapshot */
-    void UpdateTotalParticlesFlushed(int i_buffer);
     /** Reset total number of particles in the particle buffer to 0 for ith snapshot */
     void ResetTotalParticlesInBuffer(int i_buffer);
     /** Clear particle data stored in the particle buffer */
