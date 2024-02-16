@@ -46,7 +46,7 @@ struct IsOutsideDomainBoundary {
 
 struct FindEmbeddedBoundaryIntersection {
     const int m_step_index;
-    const int m_time_index
+    const int m_time_index;
     const int m_step;
     const amrex::Real m_dt;
     amrex::Array4<const amrex::Real> m_phiarr;
