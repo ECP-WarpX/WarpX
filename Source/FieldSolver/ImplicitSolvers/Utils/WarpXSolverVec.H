@@ -1,5 +1,5 @@
-#ifndef _WarpXFieldVec_H_
-#define _WarpXFieldVec_H_
+#ifndef _WarpXSolverVec_H_
+#define _WarpXSolverVec_H_
 
 #include "Utils/TextMsg.H"
 
@@ -25,48 +25,48 @@
 #include <ostream>
 #include <vector>
 
-class WarpXFieldVec
+class WarpXSolverVec
 {
     public:
 
-    WarpXFieldVec() 
+    WarpXSolverVec() 
     { 
         m_is_defined = false;
     }
 
-    WarpXFieldVec(const WarpXFieldVec& a_vec)
+    WarpXSolverVec(const WarpXSolverVec& a_vec)
     {
         m_is_defined = false;
         Define(a_vec);
     }
 
-    ~WarpXFieldVec() = default;
+    ~WarpXSolverVec() = default;
 
     inline
     bool IsDefined() const { return m_is_defined; }
 
     inline
-    void Define(const WarpXFieldVec& a_vec)
+    void Define(const WarpXSolverVec& a_vec)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_vec.IsDefined(),
-            "WarpXFieldVec::Define(a_vec) called with undefined a_vec");
+            "WarpXSolverVec::Define(a_vec) called with undefined a_vec");
         Define( a_vec.getVec() );
         m_is_defined = true;
         return;
     }
 
     inline
-    void Define( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_field_vec )
+    void Define( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec )
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             !IsDefined(),
-            "WarpXFieldVec::Define() called on undefined WarpXFieldVec");
+            "WarpXSolverVec::Define() called on undefined WarpXSolverVec");
         //for (int lev = 0; lev <= finest_level; ++lev) {
         const int lev = 0;
         m_field_vec.resize(1); // size is number of levels
         for (int dir=0; dir<3; dir++) {
-            const amrex::MultiFab& mf_model = *a_field_vec[lev][dir];
+            const amrex::MultiFab& mf_model = *a_solver_vec[lev][dir];
             //amrex::Print(0) << "mf_model.nComp() = " << mf_model.nComp() << std::endl;
             //amrex::Print(0) << "mf_model.boxArray() = " << mf_model.boxArray() << std::endl;
             //amrex::Print(0) << "mf_model.DistributionMap() = " << mf_model.DistributionMap() << std::endl;
@@ -74,34 +74,34 @@ class WarpXFieldVec
             m_field_vec[lev][dir] = std::make_unique<amrex::MultiFab>(mf_model.boxArray(), mf_model.DistributionMap(),
                                                                       mf_model.nComp(), mf_model.nGrowVect());
         }
-        //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][0], *a_field_vec[0][0], lev, "Efield_n[0]");
-        //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][1], *a_field_vec[0][1], lev, "Efield_n[1]");
-        //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][2], *a_field_vec[0][2], lev, "Efield_n[2]");
+        //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][0], *a_solver_vec[0][0], lev, "Efield_n[0]");
+        //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][1], *a_solver_vec[0][1], lev, "Efield_n[1]");
+        //WarpX::AllocInitMultiFabFromModel(m_field_vec[lev][2], *a_solver_vec[0][2], lev, "Efield_n[2]");
         //}
         m_is_defined = true;
         return;
     }
     
     inline 
-    void Copy( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_field_vec )
+    void Copy( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& a_solver_vec )
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
-            "WarpXFieldVec::Copy() called on undefined WarpXFieldVec");
+            "WarpXSolverVec::Copy() called on undefined WarpXSolverVec");
         //CH_assert(a_vec.getVectorSize() == m_size);
         // NEED A WAY TO ASSSERT A_VEC IS SAME TYPE AS THIS VEC
         const int ncomps = 1;
-        amrex::MultiFab::Copy(*m_field_vec[0][0], *a_field_vec[0][0], 0, 0, ncomps, a_field_vec[0][0]->nGrowVect());
-        amrex::MultiFab::Copy(*m_field_vec[0][1], *a_field_vec[0][1], 0, 0, ncomps, a_field_vec[0][1]->nGrowVect());
-        amrex::MultiFab::Copy(*m_field_vec[0][2], *a_field_vec[0][2], 0, 0, ncomps, a_field_vec[0][2]->nGrowVect());
+        amrex::MultiFab::Copy(*m_field_vec[0][0], *a_solver_vec[0][0], 0, 0, ncomps, a_solver_vec[0][0]->nGrowVect());
+        amrex::MultiFab::Copy(*m_field_vec[0][1], *a_solver_vec[0][1], 0, 0, ncomps, a_solver_vec[0][1]->nGrowVect());
+        amrex::MultiFab::Copy(*m_field_vec[0][2], *a_solver_vec[0][2], 0, 0, ncomps, a_solver_vec[0][2]->nGrowVect());
     }
 
     inline 
-    void Copy(const WarpXFieldVec& a_vec)
+    void Copy(const WarpXSolverVec& a_vec)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             a_vec.IsDefined(),
-            "WarpXFieldVec::Copy(a_vec) called with undefined a_vec");
+            "WarpXSolverVec::Copy(a_vec) called with undefined a_vec");
         if (!IsDefined()) {
             Define(a_vec);
         } else {
@@ -113,13 +113,13 @@ class WarpXFieldVec
     }
 
     inline 
-    void operator= (const WarpXFieldVec& a_vec)
+    void operator= (const WarpXSolverVec& a_vec)
     {
       Copy(a_vec);
     }
 
     inline
-    void operator+= (const WarpXFieldVec& a_vec)
+    void operator+= (const WarpXSolverVec& a_vec)
     {
         m_field_vec[0][0]->plus(*(a_vec.getVec()[0][0]), 0, 1, 0);
         m_field_vec[0][1]->plus(*(a_vec.getVec()[0][1]), 0, 1, 0);
@@ -127,16 +127,16 @@ class WarpXFieldVec
     }
 
     inline
-    WarpXFieldVec operator+ ( const WarpXFieldVec& a_vec ) const
+    WarpXSolverVec operator+ ( const WarpXSolverVec& a_vec ) const
     {
-      WarpXFieldVec retval(*this);
+      WarpXSolverVec retval(*this);
       retval = *this;
       retval += a_vec;
       return retval;
     }
 
     inline
-    void operator-= (const WarpXFieldVec& a_vec)
+    void operator-= (const WarpXSolverVec& a_vec)
     {
         m_field_vec[0][0]->minus(*(a_vec.getVec()[0][0]), 0, 1, 0);
         m_field_vec[0][1]->minus(*(a_vec.getVec()[0][1]), 0, 1, 0);
@@ -144,9 +144,9 @@ class WarpXFieldVec
     }
 
     inline
-    WarpXFieldVec operator- ( const WarpXFieldVec& a_vec ) const
+    WarpXSolverVec operator- ( const WarpXSolverVec& a_vec ) const
     {
-      WarpXFieldVec retval(*this);
+      WarpXSolverVec retval(*this);
       retval = *this;
       retval -= a_vec;
       return retval;
@@ -157,7 +157,7 @@ class WarpXFieldVec
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
-            "WarpXFieldVec::zero() called on undefined WarpXFieldVec");
+            "WarpXSolverVec::zero() called on undefined WarpXSolverVec");
         const int lev = 0;
         m_field_vec[lev][0]->setVal(0.0);
         m_field_vec[lev][1]->setVal(0.0);
@@ -169,7 +169,7 @@ class WarpXFieldVec
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
-            "WarpXFieldVec::ones() called on undefined WarpXFieldVec");
+            "WarpXSolverVec::ones() called on undefined WarpXSolverVec");
         const int lev = 0;
         m_field_vec[lev][0]->setVal(1.0);
         m_field_vec[lev][1]->setVal(1.0);
@@ -181,7 +181,7 @@ class WarpXFieldVec
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             IsDefined(),
-            "WarpXFieldVec::norm() called on undefined WarpXFieldVec");
+            "WarpXSolverVec::norm() called on undefined WarpXSolverVec");
         amrex::Real nF0 = m_field_vec[0][0]->norm0(0, 0);
         amrex::Real nF1 = m_field_vec[0][1]->norm0(0, 0);
         amrex::Real nF2 = m_field_vec[0][2]->norm0(0, 0);

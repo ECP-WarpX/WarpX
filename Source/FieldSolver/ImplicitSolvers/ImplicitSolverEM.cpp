@@ -196,10 +196,10 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
   
 }
 
-void ImplicitSolverEM::PreRHSOp( const WarpXFieldVec&  a_Efield_vec,
-                                 const amrex::Real     a_time,
-                                 const amrex::Real     a_dt,
-                                 const int             a_nl_iter )
+void ImplicitSolverEM::PreRHSOp( const WarpXSolverVec&  a_Efield_vec,
+                                 const amrex::Real      a_time,
+                                 const amrex::Real      a_dt,
+                                 const int              a_nl_iter )
 {  
     amrex::ignore_unused(a_Efield_vec);
     
@@ -215,28 +215,28 @@ void ImplicitSolverEM::PreRHSOp( const WarpXFieldVec&  a_Efield_vec,
 
 }
 
-void ImplicitSolverEM::ComputeRHS( WarpXFieldVec&  a_Erhs_vec,
-                             const WarpXFieldVec&  a_Efield_vec,
-                             const amrex::Real     a_time,
-                             const amrex::Real     a_dt )
+void ImplicitSolverEM::ComputeRHS( WarpXSolverVec&  a_Erhs_vec,
+                             const WarpXSolverVec&  a_E_vec,
+                             const amrex::Real      a_time,
+                             const amrex::Real      a_dt )
 {  
   
   // this function is called from the nonlinear solvers
 
 }
 
-void ImplicitSolverEM::UpdateState( WarpXFieldVec&  a_E,
-                              const amrex::Real     a_time )
+void ImplicitSolverEM::UpdateState( WarpXSolverVec&  a_E,
+                              const amrex::Real      a_time )
 {
 
 }
 
-void ImplicitSolverEM::PostUpdateState( const WarpXFieldVec&  a_field_vec,
-                                        const amrex::Real     a_time,
-                                        const amrex::Real     a_dt )
+void ImplicitSolverEM::PostUpdateState( const WarpXSolverVec&  a_solver_vec,
+                                        const amrex::Real      a_time,
+                                        const amrex::Real      a_dt )
 {
     using namespace amrex::literals;
-    amrex::ignore_unused(a_field_vec, a_time);
+    amrex::ignore_unused(a_solver_vec, a_time);
 
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
         // Compute Bfield at time n+theta

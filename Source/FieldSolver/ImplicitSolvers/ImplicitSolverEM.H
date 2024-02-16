@@ -1,7 +1,7 @@
 #ifndef _IMPLICIT_SOLVER_EM_H_
 #define _IMPLICIT_SOLVER_EM_H_
 
-#include "FieldSolver/ImplicitSolvers/Utils/WarpXFieldVec.H"
+#include "FieldSolver/ImplicitSolvers/Utils/WarpXSolverVec.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
 
 #include <AMReX_Array.H>
@@ -47,22 +47,22 @@ class ImplicitSolverEM
                   const amrex::Real  a_dt,
                   const int          a_step );
 
-    void PreRHSOp( const WarpXFieldVec&  a_Efield_vec,
-                   const amrex::Real     a_time,
-                   const amrex::Real     a_dt,
-                   const int             a_nl_iter );
+    void PreRHSOp( const WarpXSolverVec&  a_Efield_vec,
+                   const amrex::Real      a_time,
+                   const amrex::Real      a_dt,
+                   const int              a_nl_iter );
 
-    void ComputeRHS( WarpXFieldVec&  a_Erhs_vec,
-               const WarpXFieldVec&  a_Efield_vec,
-               const amrex::Real     a_time,
-               const amrex::Real     a_dt );
+    void ComputeRHS( WarpXSolverVec&  a_Erhs_vec,
+               const WarpXSolverVec&  a_Efield_vec,
+               const amrex::Real      a_time,
+               const amrex::Real      a_dt );
 
-    void UpdateState( WarpXFieldVec&  a_Efield_vec,
-                const amrex::Real     a_time );
+    void UpdateState( WarpXSolverVec&  a_Efield_vec,
+                const amrex::Real      a_time );
 
-    void PostUpdateState( const WarpXFieldVec&  a_field_vec,
-                          const amrex::Real     a_time,
-                          const amrex::Real     a_dt );
+    void PostUpdateState( const WarpXSolverVec&  a_solver_vec,
+                          const amrex::Real      a_time,
+                          const amrex::Real      a_dt );
 
     private:
 
@@ -76,7 +76,7 @@ class ImplicitSolverEM
     
     NonlinearSolverType m_nlsolver_type;
 
-    WarpXFieldVec m_E, m_Eold, m_Esave, m_Erhs;
+    WarpXSolverVec m_E, m_Eold, m_Esave, m_Erhs;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > m_Bold;
 
     // picard solver parameters

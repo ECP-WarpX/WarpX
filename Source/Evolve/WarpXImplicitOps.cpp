@@ -72,7 +72,7 @@ WarpX::PreRHSOpFromNonlinearIter ( const amrex::Real  a_cur_time,
 }
 
 void
-WarpX::UpdateElectricField( const WarpXFieldVec&  a_Efield_vec, const bool a_apply ) 
+WarpX::UpdateElectricField( const WarpXSolverVec&  a_Efield_vec, const bool a_apply ) 
 {
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Evec = a_Efield_vec.getVec();
     amrex::MultiFab::Copy(*Efield_fp[0][0], *Evec[0][0], 0, 0, ncomps, Evec[0][0]->nGrowVect());
@@ -90,7 +90,7 @@ WarpX::ApplyElectricFieldBCs( const bool  a_apply )
 }
 
 void
-WarpX::UpdateMagneticField( const WarpXFieldVec&  a_Bfield_vec, const bool  a_apply ) 
+WarpX::UpdateMagneticField( const WarpXSolverVec&  a_Bfield_vec, const bool  a_apply ) 
 {
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bvec = a_Bfield_vec.getVec();
     amrex::MultiFab::Copy(*Bfield_fp[0][0], *Bvec[0][0], 0, 0, ncomps, Bvec[0][0]->nGrowVect());
@@ -283,7 +283,7 @@ WarpX::FinishImplicitFieldUpdate( amrex::Vector<std::array< std::unique_ptr<amre
 }
 
 void
-WarpX::ComputeRHSB (amrex::Real a_dt, WarpXFieldVec&  a_RHSB_vec)
+WarpX::ComputeRHSB (amrex::Real a_dt, WarpXSolverVec&  a_RHSB_vec)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
         ComputeRHSB(lev, a_dt, a_RHSB_vec);
@@ -291,7 +291,7 @@ WarpX::ComputeRHSB (amrex::Real a_dt, WarpXFieldVec&  a_RHSB_vec)
 }
 
 void
-WarpX::ComputeRHSB (int lev, amrex::Real a_dt, WarpXFieldVec& a_RHSB_vec)
+WarpX::ComputeRHSB (int lev, amrex::Real a_dt, WarpXSolverVec& a_RHSB_vec)
 {
     WARPX_PROFILE("WarpX::ComputeRHSB()");
     ComputeRHSB(lev, PatchType::fine, a_dt, a_RHSB_vec);
@@ -302,7 +302,7 @@ WarpX::ComputeRHSB (int lev, amrex::Real a_dt, WarpXFieldVec& a_RHSB_vec)
 }
 
 void
-WarpX::ComputeRHSB (int lev, PatchType patch_type, amrex::Real a_dt, WarpXFieldVec& a_RHSB_vec)
+WarpX::ComputeRHSB (int lev, PatchType patch_type, amrex::Real a_dt, WarpXSolverVec& a_RHSB_vec)
 {
 
     // set RHS to zero value
@@ -335,7 +335,7 @@ WarpX::ComputeRHSB (int lev, PatchType patch_type, amrex::Real a_dt, WarpXFieldV
 }
 
 void
-WarpX::ComputeRHSE (amrex::Real a_dt, WarpXFieldVec&  a_Erhs_vec)
+WarpX::ComputeRHSE (amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -344,7 +344,7 @@ WarpX::ComputeRHSE (amrex::Real a_dt, WarpXFieldVec&  a_Erhs_vec)
 }
 
 void
-WarpX::ComputeRHSE (int lev, amrex::Real a_dt, WarpXFieldVec&  a_Erhs_vec)
+WarpX::ComputeRHSE (int lev, amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
 {
     WARPX_PROFILE("WarpX::ComputeRHSE()");
     ComputeRHSE(lev, PatchType::fine, a_dt, a_Erhs_vec);
@@ -355,7 +355,7 @@ WarpX::ComputeRHSE (int lev, amrex::Real a_dt, WarpXFieldVec&  a_Erhs_vec)
 }
 
 void
-WarpX::ComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, WarpXFieldVec&  a_Erhs_vec)
+WarpX::ComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, WarpXSolverVec&  a_Erhs_vec)
 {
     // set RHS to zero value
     a_Erhs_vec.getVec()[lev][0]->setVal(0.0);
