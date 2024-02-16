@@ -53,12 +53,17 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         amrex::MultiFab::Subtract(Jdisp, *m_mf_j_external, 0, 0, 1, Jdisp.nGrowVect());
     } /** else { // Skeleton for future implementation for solvers other than HybridPIC.
 
-        Divide curl_b multifab by mu0
+        // Get curlB multifab
 
+        // Multiply J multifab by mu0
+        m_mf_j->mult(PhysConsts::mu0)
+
+        // Displacement current = curlB - mu0J
         amrex::MultiFab::LinComb(
             Jdisp, 1, *m_mf_curl_b, 0,
             -1, *m_mf_j, 0, 0, 1, Jdisp.nGrowVect()
         )
+
     } */
 
     InterpolateMFForDiag(mf_dst, Jdisp, dcomp, warpx.DistributionMap(m_lev), 

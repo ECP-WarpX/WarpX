@@ -93,6 +93,10 @@ Implementation details
     Various verification tests of the hybrid model implementation can be found in
     the :ref:`examples section <examples-hybrid-model>`.
 
+.. note::
+    WarpX's displacement current diagnostic is equivalent to electron current in 
+    the kinetic-fluid hybrid model.
+
 The kinetic-fluid hybrid extension mostly uses the same routines as the standard electromagnetic
 PIC algorithm with the only exception that the E-field is calculated from the
 above equation rather than it being updated from the full Maxwell-Ampere equation. The
