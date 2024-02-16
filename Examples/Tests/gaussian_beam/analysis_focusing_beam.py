@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2019 Maxence Thevenet, Revathi Jambunathan, Arianna Formenti
+# Copyright 2024 Arianna Formenti
 #
 # This file is part of WarpX.
 #
