@@ -13,7 +13,7 @@
 #include <AMReX_IntVect.H>
 #include <AMReX_MultiFab.H>
 
-JdispFunctor::JdispFunctor (int dir, int lev, 
+JdispFunctor::JdispFunctor (int dir, int lev,
         amrex::IntVect crse_ratio, bool convertRZmodes2cartesian, int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_dir(dir), m_lev(lev),
     m_convertRZmodes2cartesian(convertRZmodes2cartesian)
@@ -66,6 +66,6 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
 
     } */
 
-    InterpolateMFForDiag(mf_dst, Jdisp, dcomp, warpx.DistributionMap(m_lev), 
+    InterpolateMFForDiag(mf_dst, Jdisp, dcomp, warpx.DistributionMap(m_lev),
                          m_convertRZmodes2cartesian);
 }
