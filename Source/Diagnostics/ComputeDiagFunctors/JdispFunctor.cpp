@@ -44,7 +44,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         // Get curlB multifab
 
         // Multiply J multifab by mu0
-        m_mf_curlB->mult(1.0/PhysConsts::mu0) */
+        m_mf_curlB->mult(1.0/PhysConsts::mu0) 
     }
     // A Jdisp multifab is generated to hold displacement current.
     amrex::MultiFab Jdisp( m_mf_j->boxArray(), m_mf_j->DistributionMap(), 1, m_mf_j->nGrowVect() );
