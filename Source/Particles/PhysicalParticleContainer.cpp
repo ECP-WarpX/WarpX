@@ -575,7 +575,7 @@ PhysicalParticleContainer::AddGaussianBeam (
                 Real u_bulk_norm = std::sqrt( u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
                 Real gamma_bulk = std::sqrt(1._rt + u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z );
 
-// Compute the position of the focal plane 
+// Compute the position of the focal plane
 // (it is located at a distance `focal_distance` from the beam centroid, in the direction of the bulk velocity)
                 Real x_f = x_m + focal_distance * u_bulk.x/u_bulk_norm;
                 Real y_f = y_m + focal_distance * u_bulk.y/u_bulk_norm;
