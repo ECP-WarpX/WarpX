@@ -376,9 +376,9 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
                           auto& warpx = WarpX::GetInstance();
                           const auto dt = warpx.getdt(pti.GetLevel());
-                          auto string_to_index_intcomp = buffer[i].getParticleiComps(); 
-                          int step_scraped_index = string_to_index_intcomp.at('step_scraped'); 
-                          auto string_to_index_realcomp = buffer[i].getParticleComps(); 
+                          auto string_to_index_intcomp = buffer[i].getParticleiComps();
+                          int step_scraped_index = string_to_index_intcomp.at('step_scraped');
+                          auto string_to_index_realcomp = buffer[i].getParticleComps();
                           int time_scraped_index = string_to_index_realcomp.at('time_scraped');
                           const int step = warpx_instance.getistep(0);
 
@@ -458,9 +458,9 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 }
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
-                auto string_to_index_intcomp = buffer[i].getParticleiComps(); 
-                int step_scraped_index = string_to_index_intcomp.at('step_scraped'); 
-                auto string_to_index_realcomp = buffer[i].getParticleComps(); 
+                auto string_to_index_intcomp = buffer[i].getParticleiComps();
+                int step_scraped_index = string_to_index_intcomp.at('step_scraped');
+                auto string_to_index_realcomp = buffer[i].getParticleComps();
                 int time_scraped_index = string_to_index_realcomp.at('time_scraped');
                 const int step = warpx_instance.getistep(0);
 
