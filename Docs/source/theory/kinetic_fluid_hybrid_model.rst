@@ -94,7 +94,7 @@ Implementation details
     the :ref:`examples section <examples-hybrid-model>`.
 
 .. note::
-    WarpX's displacement current diagnostic is equivalent to electron current in 
+    WarpX's displacement current diagnostic is equivalent to electron current in
     the kinetic-fluid hybrid model.
 
 The kinetic-fluid hybrid extension mostly uses the same routines as the standard electromagnetic
