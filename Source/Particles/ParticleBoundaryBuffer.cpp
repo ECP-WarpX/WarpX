@@ -45,7 +45,8 @@ struct IsOutsideDomainBoundary {
 };
 
 struct FindEmbeddedBoundaryIntersection {
-    const int m_index;
+    const int m_step_index;
+    const int m_time_index
     const int m_step;
     const amrex::Real m_dt;
     amrex::Array4<const amrex::Real> m_phiarr;
@@ -99,8 +100,8 @@ struct FindEmbeddedBoundaryIntersection {
             } );
 
         // Also record the real time on the destination
-        dst.m_runtime_idata[m_index][dst_i] = m_step;
-        dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
+        dst.m_runtime_idata[m_step_index][dst_i] = m_step;
+        dst.m_runtime_rdata[m_time_index][dst_i] = m_step*m_dt + (1- dt_fraction)*m_dt;
 
         // Now that dt_fraction has be obtained (with bisect)
         // Save the corresponding position of the particle at the boundary
@@ -129,7 +130,8 @@ struct FindEmbeddedBoundaryIntersection {
 };
 
 struct CopyAndTimestamp {
-    int m_index;
+    int m_step_index;
+    int m_time_index;
     int m_step;
     const amrex::Real m_dt;
 
@@ -148,8 +150,8 @@ struct CopyAndTimestamp {
         for (int j = 0; j < src.m_num_runtime_int; ++j) {
             dst.m_runtime_idata[j][dst_i] = src.m_runtime_idata[j][src_i];
         }
-        dst.m_runtime_idata[m_index][dst_i] = m_step;
-        dst.m_runtime_rdata[m_index][dst_i] = m_step*m_dt;
+        dst.m_runtime_idata[m_step_index][dst_i] = m_step;
+        dst.m_runtime_rdata[m_time_index][dst_i] = m_step*m_dt;
     }
 };
 
@@ -374,12 +376,15 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                           WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterAndTransform");
                           auto& warpx = WarpX::GetInstance();
                           const auto dt = warpx.getdt(pti.GetLevel());
-                          const int step_scraped_index = ptile_buffer.NumRuntimeIntComps()-1;
-                          const int timestep = warpx_instance.getistep(0);
+                          auto string_to_index_intcomp = buffer[i].getParticleiComps(); 
+                          int step_scraped_index = string_to_index_intcomp.at('step_scraped'); 
+                          auto string_to_index_realcomp = buffer[i].getParticleComps(); 
+                          int time_scraped_index = string_to_index_realcomp.at('time_scraped');
+                          const int step = warpx_instance.getistep(0);
 
                           amrex::filterAndTransformParticles(ptile_buffer, ptile,
                                                              predicate,
-                                                             CopyAndTimestamp{step_scraped_index, timestep,dt},
+                                                             CopyAndTimestamp{step_scraped_index,time_scraped_index, step,dt},
                                                              0, dst_index);
                         }
                     }
@@ -453,13 +458,16 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                 }
                 auto& warpx = WarpX::GetInstance();
                 const auto dt = warpx.getdt(pti.GetLevel());
-                const int step_scraped_index = ptile_buffer.NumRuntimeIntComps()-1;
+                auto string_to_index_intcomp = buffer[i].getParticleiComps(); 
+                int step_scraped_index = string_to_index_intcomp.at('step_scraped'); 
+                auto string_to_index_realcomp = buffer[i].getParticleComps(); 
+                int time_scraped_index = string_to_index_realcomp.at('time_scraped');
                 const int step = warpx_instance.getistep(0);
 
                 {
                   WARPX_PROFILE("ParticleBoundaryBuffer::gatherParticles::filterTransformEB");
                   amrex::filterAndTransformParticles(ptile_buffer, ptile, predicate,
-                                                     FindEmbeddedBoundaryIntersection{step_scraped_index, step, dt, phiarr, dxi, plo}, 0, dst_index);
+                                                     FindEmbeddedBoundaryIntersection{step_scraped_index,time_scraped_index, step, dt, phiarr, dxi, plo}, 0, dst_index);
                 }
             }
         }
