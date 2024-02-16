@@ -114,7 +114,7 @@ void PicardSolver<Vec,Ops>::Solve( Vec&         a_U,
                              const amrex::Real  a_time,
                              const amrex::Real  a_dt ) const
 {
-    //WARPX_PROFILE("PicardSolver::Solve()");
+    BL_PROFILE("PicardSolver::Solve()");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_is_defined,
         "PicardSolver::Solve() called on undefined object");

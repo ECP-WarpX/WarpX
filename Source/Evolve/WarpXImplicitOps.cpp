@@ -89,6 +89,25 @@ WarpX::ApplyElectricFieldBCs( const bool  a_apply )
 }
 
 void
+WarpX::UpdateMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
+                            const amrex::Real                                                         a_thetadt )
+{
+    amrex::MultiFab::Copy(*Bfield_fp[0][0], *a_Bn[0][0], 0, 0, ncomps, a_Bn[0][0]->nGrowVect());
+    amrex::MultiFab::Copy(*Bfield_fp[0][1], *a_Bn[0][1], 0, 0, ncomps, a_Bn[0][1]->nGrowVect());
+    amrex::MultiFab::Copy(*Bfield_fp[0][2], *a_Bn[0][2], 0, 0, ncomps, a_Bn[0][2]->nGrowVect());
+    EvolveB(a_thetadt, DtType::Full);
+    ApplyMagneticFieldBCs( true );
+}
+
+void
+WarpX::FinishMagneticField( const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >&  a_Bn,
+                            const amrex::Real                                                         a_theta )
+{
+    FinishImplicitField(Bfield_fp, a_Bn, a_theta);
+    ApplyMagneticFieldBCs( false );
+}
+
+void
 WarpX::ApplyMagneticFieldBCs( const bool  a_apply ) 
 {
     FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
@@ -224,9 +243,9 @@ WarpX::FinishImplicitParticleUpdate ()
 }
 
 void
-WarpX::FinishImplicitFieldUpdate( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
-                            const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
-                            const amrex::Real theta )
+WarpX::FinishImplicitField( amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_fp,
+                      const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Field_n,
+                      const amrex::Real theta )
 {
     using namespace amrex::literals;
 

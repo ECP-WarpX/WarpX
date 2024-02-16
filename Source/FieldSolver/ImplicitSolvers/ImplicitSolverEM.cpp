@@ -20,11 +20,11 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
         const int lev = 0;
         m_Bold.resize(1); // size is number of levels
         for (int n=0; n<3; n++) {
-            const amrex::MultiFab& Bmf = *(m_WarpX->Bfield_fp[lev][n]);
-            m_Bold[lev][n] = std::make_unique<amrex::MultiFab>( Bmf.boxArray(), 
-                                                                Bmf.DistributionMap(),
-                                                                Bmf.nComp(), 
-                                                                Bmf.nGrowVect() );
+            const amrex::MultiFab& Bfp = *(m_WarpX->Bfield_fp[lev][n]);
+            m_Bold[lev][n] = std::make_unique<amrex::MultiFab>( Bfp.boxArray(), 
+                                                                Bfp.DistributionMap(),
+                                                                Bfp.nComp(), 
+                                                                Bfp.nGrowVect() );
         }
     }
     
@@ -40,11 +40,15 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
 
     std::string nlsolver_type_str;
     pp.query("nonlinear_solver", nlsolver_type_str);
-    if (nlsolver_type_str=="picard" || nlsolver_type_str=="Picard") {
+    if (nlsolver_type_str=="picard") {
         m_nlsolver_type = NonlinearSolverType::Picard;
     }
-    else if (nlsolver_type_str=="newton" || nlsolver_type_str=="Newton") {
+    else if (nlsolver_type_str=="newton") {
         m_nlsolver_type = NonlinearSolverType::Newton;
+    }
+    else {
+        WARPX_ABORT_WITH_MESSAGE(
+            "invalid nonlinear_solver specified. Valid options are picard and newton.");
     }
 
     // Define the nonlinear solver
@@ -105,7 +109,7 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
     m_E = m_Eold; // initial guess for E
 
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
-        int lev = 0;
+        const int lev = 0;
         for (int n=0; n<3; n++) {
             const amrex::MultiFab& Bfp  = *(m_WarpX->Bfield_fp[lev][n]);
             amrex::MultiFab& Bold = *m_Bold[lev][n];
@@ -129,11 +133,10 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
     m_WarpX->FinishImplicitParticleUpdate();
 
     // Advance fields to step n+1
-    m_WarpX->FinishImplicitFieldUpdate(m_E.getVec(), m_Eold.getVec(), m_theta);
+    m_WarpX->FinishImplicitField(m_E.getVec(), m_Eold.getVec(), m_theta);
     m_WarpX->UpdateElectricField( m_E, false ); // JRA not sure about false here. is what DG had.
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
-        m_WarpX->FinishImplicitFieldUpdate(m_WarpX->Bfield_fp, m_Bold, m_theta);
-        m_WarpX->ApplyMagneticFieldBCs( false );
+        m_WarpX->FinishMagneticField( m_Bold, m_theta );
     }
   
 }
@@ -163,7 +166,6 @@ void ImplicitSolverEM::ComputeRHS( WarpXSolverVec&  a_Erhs,
 {  
     amrex::ignore_unused(a_E, a_time);
     m_WarpX->ComputeRHSE(m_theta*a_dt, a_Erhs);
-
 }
 
 void ImplicitSolverEM::PostUpdateState( const WarpXSolverVec&  a_E,
@@ -176,17 +178,9 @@ void ImplicitSolverEM::PostUpdateState( const WarpXSolverVec&  a_E,
     // Update Efield_fp owned by WarpX
     m_WarpX->UpdateElectricField( a_E, true );
 
-    // Update Bfield_fp owned by WarpX
+    // Update Bfield owned by WarpX
     if (m_WarpX->evolve_scheme == EvolveScheme::ThetaImplicit) {
-        // Compute Bfield at time n+theta
-        const int lev = 0;
-        for (int n=0; n<3; n++) {
-            amrex::MultiFab& Bfp  = *(m_WarpX->Bfield_fp[lev][n]);
-            const amrex::MultiFab& Bold = *m_Bold[lev][n];
-            amrex::MultiFab::Copy(Bfp, Bold, 0, 0, 1, Bold.nGrowVect());
-        }
-        m_WarpX->EvolveB(m_theta*a_dt, DtType::Full);
-        m_WarpX->ApplyMagneticFieldBCs( true );
+        m_WarpX->UpdateMagneticField( m_Bold, m_theta*a_dt );
     }
 
     // The B field update needs. Talk to DG about this. Only needed when B updates?
