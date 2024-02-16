@@ -129,18 +129,21 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
     amrex::Real norm, norm0;
     int iteration_count = 0;
     while (iteration_count < m_max_iter) {
-
-        PreRHSOp( m_E, a_old_time, a_dt, iteration_count );
         
         // Save E from the previous iteration to compute step norm
         m_Esave = m_E;
         
+        // Particles are updated in PreRHSOp, and J is computed
+        PreRHSOp( m_E, a_old_time, a_dt, iteration_count );
+        
         // Compute Efield at time n+theta
-        m_WarpX->ComputeRHSE(m_theta*a_dt, m_Erhs);
+        ComputeRHS( m_Erhs, m_E, a_old_time, a_dt );
         m_E = m_Eold + m_Erhs;
-        m_WarpX->UpdateElectricField( m_E, true );
-        m_E.Copy(m_WarpX->Efield_fp);
 
+        // Update the physical state of E owned by WarpX
+        UpdateState( m_E, a_old_time, a_dt ); 
+        
+        // advance B owned by WarpX
         PostUpdateState( m_E, a_old_time, a_dt );
 
         // Compute the step norm of E
@@ -196,16 +199,16 @@ void ImplicitSolverEM::OneStep( const amrex::Real  a_old_time,
   
 }
 
-void ImplicitSolverEM::PreRHSOp( const WarpXSolverVec&  a_Efield_vec,
+void ImplicitSolverEM::PreRHSOp( const WarpXSolverVec&  a_E,
                                  const amrex::Real      a_time,
                                  const amrex::Real      a_dt,
                                  const int              a_nl_iter )
 {  
-    amrex::ignore_unused(a_Efield_vec);
+    amrex::ignore_unused(a_E);
     
     if (m_nlsolver_type!=NonlinearSolverType::Picard) {
-        m_WarpX->UpdateElectricField( a_Efield_vec, true );
-        PostUpdateState( a_Efield_vec, a_time, a_dt );
+        m_WarpX->UpdateElectricField( a_E, true );
+        PostUpdateState( a_E, a_time, a_dt );
     }
 
     // Advance the particle positions by 1/2 dt,
@@ -215,20 +218,22 @@ void ImplicitSolverEM::PreRHSOp( const WarpXSolverVec&  a_Efield_vec,
 
 }
 
-void ImplicitSolverEM::ComputeRHS( WarpXSolverVec&  a_Erhs_vec,
-                             const WarpXSolverVec&  a_E_vec,
+void ImplicitSolverEM::ComputeRHS( WarpXSolverVec&  a_Erhs,
+                             const WarpXSolverVec&  a_E,
                              const amrex::Real      a_time,
                              const amrex::Real      a_dt )
 {  
-  
-  // this function is called from the nonlinear solvers
+    amrex::ignore_unused(a_E, a_time);
+    m_WarpX->ComputeRHSE(m_theta*a_dt, a_Erhs);
 
 }
 
 void ImplicitSolverEM::UpdateState( WarpXSolverVec&  a_E,
-                              const amrex::Real      a_time )
+                              const amrex::Real      a_time,
+                              const amrex::Real      a_dt )
 {
-
+    amrex::ignore_unused(a_time,a_dt);
+    m_WarpX->UpdateElectricField( a_E, true );
 }
 
 void ImplicitSolverEM::PostUpdateState( const WarpXSolverVec&  a_solver_vec,

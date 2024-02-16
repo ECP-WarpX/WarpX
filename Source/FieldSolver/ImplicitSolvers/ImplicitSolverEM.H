@@ -47,20 +47,21 @@ class ImplicitSolverEM
                   const amrex::Real  a_dt,
                   const int          a_step );
 
-    void PreRHSOp( const WarpXSolverVec&  a_Efield_vec,
+    void PreRHSOp( const WarpXSolverVec&  a_E,
                    const amrex::Real      a_time,
                    const amrex::Real      a_dt,
                    const int              a_nl_iter );
 
-    void ComputeRHS( WarpXSolverVec&  a_Erhs_vec,
-               const WarpXSolverVec&  a_Efield_vec,
+    void ComputeRHS( WarpXSolverVec&  a_Erhs,
+               const WarpXSolverVec&  a_E,
                const amrex::Real      a_time,
                const amrex::Real      a_dt );
 
-    void UpdateState( WarpXSolverVec&  a_Efield_vec,
-                const amrex::Real      a_time );
+    void UpdateState( WarpXSolverVec&  a_E,
+                const amrex::Real      a_time,
+                const amrex::Real      a_dt );
 
-    void PostUpdateState( const WarpXSolverVec&  a_solver_vec,
+    void PostUpdateState( const WarpXSolverVec&  a_E,
                           const amrex::Real      a_time,
                           const amrex::Real      a_dt );
 
