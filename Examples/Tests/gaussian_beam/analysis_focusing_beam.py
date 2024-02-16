@@ -47,7 +47,7 @@ imin = np.argmin(np.sqrt((gridz+0.8*focal_distance)**2))
 imax = np.argmin(np.sqrt((gridz-0.8*focal_distance)**2))
 
 sx, sy = [], []
-
+# Compute the size of the beam in each z slice
 subgrid = gridz[imin:imax]
 for d in subgrid:
     i = np.sqrt((z - d)**2) < tol
