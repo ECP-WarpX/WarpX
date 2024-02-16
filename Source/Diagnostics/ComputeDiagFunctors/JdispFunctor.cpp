@@ -37,6 +37,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
     } else {
         // To finish this implementation, we need to implement a method to
         // calculate (∇ x B).
+        m_mf_curlB = nullptr;  // Remove when curlB implemented
         WARPX_ABORT_WITH_MESSAGE(
             "Displacement current diagnostic is only implemented for the HybridPICModel.");
 
