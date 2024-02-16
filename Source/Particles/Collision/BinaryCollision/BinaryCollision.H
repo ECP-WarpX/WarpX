@@ -395,36 +395,17 @@ public:
                     const int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
-                    // we will fix species_1 to be the larger set. i.e., max(NI1, NI2)
-                    // to reduce redundant computations and extra params in the functor
-                    if ((cell_half_1 - cell_start_1) > (cell_stop_1 - cell_half_1))
-                    {
-                        // Call the function in order to perform collisions
-                        // If there are product species, mask, p_pair_indices_1/2, and
-                        // p_pair_reaction_weight are filled here
-                        binary_collision_functor(
-                            cell_start_1, cell_half_1,
-                            cell_half_1, cell_stop_1,
-                            indices_1, indices_1,
-                            soa_1, soa_1, get_position_1, get_position_1,
-                            q1, q1, m1, m1, dt, dV, coll_idx,
-                            cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
-                            p_pair_reaction_weight, engine);
-                    }
-                    else
-                    {
-                        // Call the function in order to perform collisions
-                        // If there are product species, mask, p_pair_indices_1/2, and
-                        // p_pair_reaction_weight are filled here
-                        binary_collision_functor( // NOLINT(readability-suspicious-call-argument)
-                            cell_half_1, cell_stop_1, // NOLINT(readability-suspicious-call-argument)
-                            cell_start_1, cell_half_1, // NOLINT(readability-suspicious-call-argument)
-                            indices_1, indices_1, // NOLINT(readability-suspicious-call-argument)
-                            soa_1, soa_1, get_position_1, get_position_1, // NOLINT(readability-suspicious-call-argument)
-                            q1, q1, m1, m1, dt, dV, coll_idx, // NOLINT(readability-suspicious-call-argument)
-                            cell_start_pair, p_mask, p_pair_indices_2, p_pair_indices_1, // NOLINT(readability-suspicious-call-argument)
-                            p_pair_reaction_weight, engine); // NOLINT(readability-suspicious-call-argument)
-                    }
+                    // Call the function in order to perform collisions
+                    // If there are product species, mask, p_pair_indices_1/2, and
+                    // p_pair_reaction_weight are filled here
+                    binary_collision_functor(
+                        cell_start_1, cell_half_1,
+                        cell_half_1, cell_stop_1,
+                        indices_1, indices_1,
+                        soa_1, soa_1, get_position_1, get_position_1,
+                        q1, q1, m1, m1, dt, dV, coll_idx,
+                        cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
+                        p_pair_reaction_weight, engine);
                 }
             );
 
@@ -640,34 +621,16 @@ public:
                     const int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0_prt*ri+1.0_prt)*dr*dr*dz;
 #endif
-                    // we will fix species_1 to be the larger set. i.e., max(NI1, NI2)
-                    // to reduce redundant computations and extra params in the functor
-                    if ((cell_stop_1 - cell_start_1) > ((cell_stop_2 - cell_start_2)))
-                    {
-                        // Call the function in order to perform collisions
-                        // If there are product species, p_mask, p_pair_indices_1/2, and
-                        // p_pair_reaction_weight are filled here
-                        binary_collision_functor(
-                            cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
-                            indices_1, indices_2,
-                            soa_1, soa_2, get_position_1, get_position_2,
-                            q1, q2, m1, m2, dt, dV, coll_idx,
-                            cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
-                            p_pair_reaction_weight, engine);
-                    }
-                    else // swap sets 1 and 2 so that particle 1 remains the larger set
-                    {
-                        // Call the function in order to perform collisions
-                        // If there are product species, p_mask, p_pair_indices_1/2, and
-                        // p_pair_reaction_weight are filled here
-                        binary_collision_functor( // NOLINT(readability-suspicious-call-argument)
-                            cell_start_2, cell_stop_2, cell_start_1, cell_stop_1, // NOLINT(readability-suspicious-call-argument)
-                            indices_2, indices_1, // NOLINT(readability-suspicious-call-argument)
-                            soa_2, soa_1, get_position_2, get_position_1, // NOLINT(readability-suspicious-call-argument)
-                            q2, q1, m2, m1, dt, dV, coll_idx, // NOLINT(readability-suspicious-call-argument)
-                            cell_start_pair, p_mask, p_pair_indices_2, p_pair_indices_1, // NOLINT(readability-suspicious-call-argument)
-                            p_pair_reaction_weight, engine); // NOLINT(readability-suspicious-call-argument)
-                    }
+                    // Call the function in order to perform collisions
+                    // If there are product species, p_mask, p_pair_indices_1/2, and
+                    // p_pair_reaction_weight are filled here
+                    binary_collision_functor(
+                        cell_start_1, cell_stop_1, cell_start_2, cell_stop_2,
+                        indices_1, indices_2,
+                        soa_1, soa_2, get_position_1, get_position_2,
+                        q1, q2, m1, m2, dt, dV, coll_idx,
+                        cell_start_pair, p_mask, p_pair_indices_1, p_pair_indices_2,
+                        p_pair_reaction_weight, engine);
                 }
             );
 

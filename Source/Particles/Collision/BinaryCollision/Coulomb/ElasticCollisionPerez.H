@@ -58,9 +58,7 @@ void ElasticCollisionPerez (
     const T_index NI1 = I1e - I1s;
     const T_index NI2 = I2e - I2s;
     const T_index max_N = amrex::max(NI1,NI2);
-
-    // ensure this
-    AMREX_ASSERT(max_N == NI1);
+    const T_index min_N = amrex::max(NI1,NI2);
 
     T_PR * const AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
     T_PR * const AMREX_RESTRICT u1x = soa_1.m_rdata[PIdx::ux];
@@ -132,15 +130,12 @@ void ElasticCollisionPerez (
     // call UpdateMomentumPerezElastic()
     {
       T_index i1 = I1s + coll_idx;
-      const T_index i2 = I2s + coll_idx;
-
-      // NI2 is always the smaller set
-      const auto stride = NI2;
+      T_index i2 = I2s + coll_idx;
 
       // we will start from collision number = coll_idx and then add
       // stride (smaller set size) until we do all NI1 (laarger set size)
       // collisions as needed
-      for (T_index k = coll_idx; k < max_N; k += stride)
+      for (T_index k = coll_idx; k < max_N; k += min_N)
       {
 #if (defined WARPX_DIM_RZ)
           /* In RZ geometry, macroparticles can collide with other macroparticles
@@ -171,8 +166,8 @@ void ElasticCollisionPerez (
           u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
 #endif
 
-          // update the i1
-          i1 += stride;
+          if (max_N == NI1) i1 += min_N;
+          if (max_N == NI2) i2 += min_N;
       }
     }
 

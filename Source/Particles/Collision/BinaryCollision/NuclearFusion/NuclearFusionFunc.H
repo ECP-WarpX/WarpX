@@ -148,9 +148,7 @@ public:
             const index_type NI1 = I1e - I1s;
             const index_type NI2 = I2e - I2s;
             const index_type max_N = amrex::max(NI1,NI2);
-
-            // ensure this
-            AMREX_ASSERT(max_N == NI1);
+            const index_type min_N = amrex::min(NI1,NI2);
 
             index_type pair_index = cell_start_pair + coll_idx;
 
@@ -171,14 +169,12 @@ public:
             amrex::ParticleReal * const AMREX_RESTRICT theta1 = soa_1.m_rdata[PIdx::theta];
             amrex::ParticleReal * const AMREX_RESTRICT theta2 = soa_2.m_rdata[PIdx::theta];
 #endif
-            // NI2 is always the smaller set
-            const auto stride = NI2;
             index_type i1 = I1s + coll_idx;
-            const index_type i2 = I2s + coll_idx;
+            index_type i2 = I2s + coll_idx;
             // we will start from collision number = coll_idx and then add
             // stride (smaller set size) until we do all NI1 (laarger set size)
             // collisions as needed
-            for (index_type k = coll_idx; k < max_N; k += stride)
+            for (index_type k = coll_idx; k < max_N; k += min_N)
             {
                 // c1k : how many times the current particle of species 1 is paired with a particle
                 // of species 2. Same for c2k.
@@ -218,9 +214,10 @@ public:
 
                 p_pair_indices_1[pair_index] = I1[i1];
                 p_pair_indices_2[pair_index] = I2[i2];
-                // update i1 and pair_index
-                i1 += stride;
-                pair_index += stride;
+
+                if (max_N == NI1) i1 += min_N;
+                if (max_N == NI2) i2 += min_N;
+                pair_index += min_N;
             }
         }
 
