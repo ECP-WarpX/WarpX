@@ -39,7 +39,7 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         // calculate (∇ x B).
         WARPX_ABORT_WITH_MESSAGE(
             "Displacement current diagnostic is only implemented for the HybridPICModel.");
-            
+
         // Skeleton for future implementation for solvers other than HybridPIC.
         // Get curlB multifab
 
@@ -54,11 +54,11 @@ JdispFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buff
         Jdisp, 1, *m_mf_curlB, 0,
         -1, *m_mf_j, 0, 0, 1, Jdisp.nGrowVect()
     );
-    
+
     // subtract external current in the hybrid-PIC case
     if (hybrid_pic_model) {
         amrex::MultiFab::Subtract(Jdisp, *m_mf_j_external, 0, 0, 1, Jdisp.nGrowVect());
-    } 
+    }
 
     InterpolateMFForDiag(mf_dst, Jdisp, dcomp, warpx.DistributionMap(m_lev),
                          m_convertRZmodes2cartesian);
