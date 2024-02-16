@@ -583,7 +583,7 @@ PhysicalParticleContainer::AddGaussianBeam (
                 Real v_x = u.x / gamma * PhysConst::c;
                 Real v_y = u.y / gamma * PhysConst::c;
                 Real v_z = u.z / gamma * PhysConst::c;
-
+// Compute the time at which the particle will cross the focal plane
                 Real d = std::sqrt( (x_f-x)*(x_f-x) + (y_f-y)*(y_f-y) + (z_f-z)*(z_f-z) );
                 Real t = d / std::sqrt(v_x*v_x+v_y*v_y+v_z*v_z);
 
