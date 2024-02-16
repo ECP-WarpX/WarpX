@@ -375,34 +375,8 @@ public:
                     // to avoid type mismatch errors
                     auto ui_coll = (index_type)i_coll;
 
-                    // compute i_cell = upper_bound(p_coll_offsets[0:n_independent_
-                    int i_cell = 0;
-                    {
-                        int left = 0;
-                        int right = n_cells;
-
-                        for (;;)
-                        {
-                            int mid = left + (right - left) / 2;
-
-                            if (p_coll_offsets[mid] <= ui_coll)
-                            {
-                                if (p_coll_offsets[mid+1] > ui_coll)
-                                {
-                                    i_cell = mid;
-                                    break;
-                                }
-                                else
-                                {
-                                    left = mid+1;
-                                }
-                            }
-                            else
-                            {
-                                right = mid;
-                            }
-                        }
-                    }
+                    // Use a bisection algorithm to find the index of the cell in which this pair is located
+                    int i_cell = amrex::bisect( p_coll_offsets, 0, n_cells, ui_coll );
 
                     // The particles from species1 that are in the cell `i_cell` are
                     // given by the `indices_1[cell_start_1:cell_stop_1]`
@@ -640,33 +614,8 @@ public:
                     // to avoid type mismatch errors
                     auto ui_coll = (index_type)i_coll;
 
-                    // compute i_cell = upper_bound(coll_offsets[0:n_independent_pairs], i_coll);
-                    int i_cell = 0;
-                    {
-                        int left = 0;
-                        int right = n_cells;
-
-                        for (;;)
-                        {
-                            int mid = left + (right - left) / 2;
-                            if (p_coll_offsets[mid] <= ui_coll)
-                            {
-                                if (p_coll_offsets[mid+1] > ui_coll)
-                                {
-                                    i_cell = mid;
-                                    break;
-                                }
-                                else
-                                {
-                                    left = mid+1;
-                                }
-                            }
-                            else
-                            {
-                                right = mid;
-                            }
-                        }
-                    }
+                    // Use a bisection algorithm to find the index of the cell in which this pair is located
+                    int i_cell = amrex::bisect( p_coll_offsets, 0, n_cells, ui_coll );
 
                     // The particles from species1 that are in the cell `i_cell` are
                     // given by the `indices_1[cell_start_1:cell_stop_1]`
