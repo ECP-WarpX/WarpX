@@ -166,8 +166,12 @@ void ElasticCollisionPerez (
           u1y[I1[i1]] = u1xbuf_new*std::sin(-theta) + u1y[I1[i1]]*std::cos(-theta);
 #endif
 
-          if (max_N == NI1) i1 += min_N;
-          if (max_N == NI2) i2 += min_N;
+          if (max_N == NI1) {
+            i1 += min_N;
+          }
+          if (max_N == NI2) {
+            i2 += min_N;
+          }
       }
     }
 
