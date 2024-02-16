@@ -57,6 +57,7 @@ for d in subgrid:
         sx.append(np.sqrt(np.average((x[i]-mux)**2, weights=w[i])))
         sy.append(np.sqrt(np.average((y[i]-muy)**2, weights=w[i])))
 
+# Theoretical prediction for the size of the beam in each z slice
 sx_theory = s(subgrid, sigmax, emitx/gamma)
 sy_theory = s(subgrid, sigmay, emity/gamma)
 
