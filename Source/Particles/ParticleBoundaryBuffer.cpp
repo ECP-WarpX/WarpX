@@ -378,7 +378,7 @@ void ParticleBoundaryBuffer::gatherParticles (MultiParticleContainer& mypc,
                           const auto dt = warpx.getdt(pti.GetLevel());
                           auto string_to_index_intcomp = buffer[i].getParticleiComps();
                           const int step_scraped_index = string_to_index_intcomp.at("step_scraped");
-                          auto string_to_index_realcomp = buffer[i].getParticleComps();
+                          auto string_to_index_realcomp = buffer[i].getParticleRuntimeComps();
                           const int time_scraped_index = string_to_index_realcomp.at("time_scraped");
                           const int step = warpx_instance.getistep(0);
 
