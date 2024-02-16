@@ -35,7 +35,7 @@ class ImplicitSolverEM
     
     amrex::Real theta() const { return m_theta; }
     
-    void PrintParams() const;
+    void PrintParameters() const;
 
     void Initialize();
     

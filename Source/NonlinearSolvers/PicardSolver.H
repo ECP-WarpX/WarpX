@@ -43,10 +43,10 @@ class PicardSolver : public NonlinearSolver<Vec,Ops>
     
         void PrintParams( ) const
         {
-            amrex::Print()     << "picard absolute tolerance:  " << m_atol << std::endl;
-            amrex::Print()     << "picard relative tolerance:  " << m_rtol << std::endl;
-            amrex::Print()     << "picard max iterations:      " << m_maxits << std::endl;
-            amrex::Print()     << "picard require convergence: " << (m_require_convergence?"true":"false") << std::endl;
+            amrex::Print()     << "Picard absolute tolerance:  " << m_atol << std::endl;
+            amrex::Print()     << "Picard relative tolerance:  " << m_rtol << std::endl;
+            amrex::Print()     << "Picard max iterations:      " << m_maxits << std::endl;
+            amrex::Print()     << "Picard require convergence: " << (m_require_convergence?"true":"false") << std::endl;
         }
 
         virtual void Verbose( const bool  a_verbose ) { m_verbose = a_verbose; }

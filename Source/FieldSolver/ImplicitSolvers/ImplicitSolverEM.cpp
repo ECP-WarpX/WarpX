@@ -53,23 +53,26 @@ void ImplicitSolverEM::Define( WarpX* const  a_WarpX )
         m_nlsolver->Define(m_E, this);
     }
 
-    if (m_verbose) { PrintParams(); }
+    //if (m_verbose) { PrintParameters(); }
     m_is_defined = true;
 }
 
-void ImplicitSolverEM::PrintParams() const
+void ImplicitSolverEM::PrintParameters() const
 {
+    if (!m_verbose) { return; }
     amrex::Print() << std::endl;
-    amrex::Print() << "================== Implicit EM Solver ==================" << std::endl;
-    amrex::Print()     << "time-bias parameter theta:  " << m_theta << std::endl;
+    amrex::Print() << "-----------------------------------------------------------" << std::endl;
+    amrex::Print() << "-------------- IMPLICIT EM SOLVER PARAMETERS --------------" << std::endl;
+    amrex::Print() << "-----------------------------------------------------------" << std::endl;
+    amrex::Print()     << "Time-bias parameter theta:  " << m_theta << std::endl;
     if (m_nlsolver_type==NonlinearSolverType::Picard) {
-        amrex::Print() << "nonlinear solver type:      Picard" << std::endl;
+        amrex::Print() << "Nonlinear solver type:      Picard" << std::endl;
     }
     else if (m_nlsolver_type==NonlinearSolverType::Newton) {
-        amrex::Print() << "nonlinear solver type:      Newton" << std::endl;
+        amrex::Print() << "Nonlinear solver type:      Newton" << std::endl;
     }
     m_nlsolver->PrintParams();
-    amrex::Print() << "========================================================" << std::endl;
+    amrex::Print() << "-----------------------------------------------------------" << std::endl;
     amrex::Print() << std::endl;
 }
 
