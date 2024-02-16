@@ -797,7 +797,7 @@ Particle initialization
       If set to 4, symmetrization is in the x and y direction, (x,y) (-x,y) (x,-y) (-x,-y).
       If set to 8, symmetrization is also done with x and y exchanged, (y,x), (-y,x), (y,-x), (-y,-x)).
 
-      * ``<species_name>.focal_distance`` (optional, focal distance from the beam centroid along the direction of the beam mean velocity, space charge is ignored in the initialization of the particles)
+      * ``<species_name>.focal_distance`` (optional, distance between the beam centroid and the position of the focal plane of the beam, along the direction of the beam mean velocity ; space charge is ignored in the initialization of the particles)
 
     * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
       With it users can specify the additional arguments:
