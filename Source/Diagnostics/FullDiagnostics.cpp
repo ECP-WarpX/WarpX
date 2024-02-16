@@ -273,8 +273,8 @@ FullDiagnostics::InitializeFieldFunctorsRZopenPMD (int lev)
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jr_displacement"), ncomp);
             }
-        } else if ( m_varnames_fields[comp] == "jt_disp" ){
-            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio
+        } else if ( m_varnames_fields[comp] == "jt_displacement" ){
+            m_all_field_functors[lev][comp] = std::make_unique<JdispFunctor>(1, lev, m_crse_ratio,
                                                         false, ncomp);
             if (update_varnames) {
                 AddRZModesToOutputNames(std::string("jt_displacement"), ncomp);
